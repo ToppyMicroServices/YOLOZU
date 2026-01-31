@@ -1,0 +1,13 @@
+# Ruff configuration
+# See https://docs.astral.sh/ruff/configuration/
+
+[lint]
+# Allow module level imports not at top of file (E402) for scripts that need to modify sys.path
+extend-ignore = ["E402"]
+
+[lint.per-file-ignores]
+# Scripts in tools/ and tests/ directories need to modify sys.path before importing
+"tools/*.py" = ["E402"]
+"rtdetr_pose/tools/*.py" = ["E402"]
+"rtdetr_pose/tests/*.py" = ["E402"]
+"tests/*.py" = ["E402"]

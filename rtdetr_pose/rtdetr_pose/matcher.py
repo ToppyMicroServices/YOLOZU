@@ -6,7 +6,7 @@ Used for query-to-GT assignment in training-first scaffolds.
 
 from __future__ import annotations
 
-from typing import Iterable, List, Sequence, Tuple
+from typing import List, Tuple
 
 
 def _to_matrix(cost: object) -> List[List[float]]:

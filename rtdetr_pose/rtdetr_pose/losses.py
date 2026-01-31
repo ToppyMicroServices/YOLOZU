@@ -8,7 +8,6 @@ except ImportError:  # pragma: no cover
     F = None
 
 from .model import rot6d_to_matrix
-from .geometry import corrected_intrinsics, recover_translation
 
 
 def _first_present(mapping, keys):

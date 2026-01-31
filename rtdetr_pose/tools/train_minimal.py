@@ -11,7 +11,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise SystemExit("torch is required; install requirements-test.txt") from exc
 
-from rtdetr_pose.dataset import build_manifest, extract_pose_intrinsics_targets
+from rtdetr_pose.dataset import build_manifest
 from rtdetr_pose.dataset import extract_full_gt_targets, depth_at_bbox_center
 from rtdetr_pose.losses import Losses
 from rtdetr_pose.training import build_query_aligned_targets
