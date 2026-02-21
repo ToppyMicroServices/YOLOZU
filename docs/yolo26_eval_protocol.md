@@ -57,3 +57,29 @@ Targets live in `baselines/yolo26_targets.json` and are validated by:
 
 `python3 tools/validate_map_targets.py --targets baselines/yolo26_targets.json`
 
+## Pre-PR quality checklist (local)
+
+Run this single command before opening a PR:
+
+`bash scripts/pre_pr_quality.sh`
+
+What it runs (CI-aligned local gates):
+
+- Smoke gate: `bash scripts/smoke.sh`
+- Lint gate: `python3 -m ruff check tools yolozu tests`
+- Focused tests:
+	- `tests/test_eval_suite_export_settings.py`
+	- `tests/test_eval_suite_determinism.py`
+	- `tests/test_check_map_targets_contract.py`
+	- `tests/test_yolo26_protocol.py`
+	- `tests/test_predictions.py`
+
+Expected artifact:
+
+- `reports/smoke_coco_eval_dry_run.json` exists after the checklist
+
+Pass criteria:
+
+- Command exits with status `0`
+- Final line prints `pre-PR quality checklist passed`
+

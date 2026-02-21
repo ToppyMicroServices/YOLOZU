@@ -1247,6 +1247,53 @@
       ]
     },
     {
+      "id": "yolo26_quality_gate",
+      "entrypoint": "ruff",
+      "runner": "bash",
+      "summary": "Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks.",
+      "tags": ["quality", "gates", "yolo26"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["ruff", "pytest"] },
+      "inputs": [],
+      "effects": { "writes": [], "fixed_writes": [] },
+      "outputs": [{ "name": "stdout", "kind": "stdout", "description": "Lint/test pass-fail output." }],
+      "examples": [
+        {
+          "description": "Run lint + focused eval/predictions tests for YOLO26 tooling.",
+          "command": "ruff check tools yolozu tests && pytest -q tests/test_eval_suite_export_settings.py tests/test_eval_suite_determinism.py tests/test_check_map_targets_contract.py tests/test_yolo26_protocol.py tests/test_predictions.py"
+        }
+      ],
+      "docs": ["docs/yolo26_eval_protocol.md"]
+    },
+    {
+      "id": "yolo26_pre_pr_quality",
+      "entrypoint": "scripts/pre_pr_quality.sh",
+      "runner": "bash",
+      "summary": "Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests).",
+      "tags": ["quality", "checklist", "yolo26"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "inputs": [],
+      "effects": {
+        "writes": [],
+        "fixed_writes": [
+          {
+            "path": "reports/smoke_coco_eval_dry_run.json",
+            "kind": "file",
+            "scope": "path",
+            "description": "Smoke report from scripts/smoke.sh as first pre-PR quality checkpoint."
+          }
+        ]
+      },
+      "outputs": [{ "name": "stdout", "kind": "stdout", "description": "Checklist run output." }],
+      "examples": [
+        {
+          "description": "Run the single-command pre-PR quality checklist.",
+          "command": "bash scripts/pre_pr_quality.sh"
+        }
+      ],
+      "docs": ["docs/yolo26_eval_protocol.md", "docs/training_inference_export.md"]
+    },
+    {
       "id": "calibrate_scores",
       "entrypoint": "tools/calibrate_scores.py",
       "runner": "python3",

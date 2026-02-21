@@ -18,15 +18,58 @@ def _parse_args(argv):
     return parser.parse_args(argv)
 
 
+def _validate_suite_contract(suite: object) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(suite, dict):
+        return ["suite contract: root must be an object"]
+
+    for key in ("timestamp", "dataset", "bbox_format", "images", "results"):
+        if key not in suite:
+            errors.append(f"suite contract: missing top-level key `{key}`")
+
+    if "images" in suite and not isinstance(suite.get("images"), int):
+        errors.append("suite contract: `images` must be an integer")
+
+    results = suite.get("results")
+    if results is None:
+        return errors
+    if not isinstance(results, list):
+        errors.append("suite contract: `results` must be an array")
+        return errors
+
+    required_metric_keys = ("map50_95", "map50", "map75", "ar100")
+    for idx, result in enumerate(results):
+        path = f"results[{idx}]"
+        if not isinstance(result, dict):
+            errors.append(f"suite contract: `{path}` must be an object")
+            continue
+        for key in ("name", "path", "metrics"):
+            if key not in result:
+                errors.append(f"suite contract: missing key `{path}.{key}`")
+
+        metrics = result.get("metrics")
+        if metrics is None:
+            continue
+        if not isinstance(metrics, dict):
+            errors.append(f"suite contract: `{path}.metrics` must be an object")
+            continue
+        for metric_key in required_metric_keys:
+            if metric_key not in metrics:
+                errors.append(f"suite contract: missing key `{path}.metrics.{metric_key}`")
+
+    return errors
+
+
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
     suite = json.loads((repo_root / args.suite).read_text())
+    contract_errors = _validate_suite_contract(suite)
     targets_doc = load_map_targets_doc(repo_root / args.targets)
     targets = load_targets_map(repo_root / args.targets)
     doc_key = targets_doc.get("metric_key")
 
-    failures = []
+    failures = list(contract_errors)
     if doc_key and args.key != doc_key:
         failures.append(f"metric key mismatch: --key={args.key} but targets.metric_key={doc_key}")
 

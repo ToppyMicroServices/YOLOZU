@@ -25,6 +25,36 @@ jobs:
         run: |
           bash scripts/smoke.sh
 
+  quality_gate:
+    name: quality gate (ruff + focused pytest)
+    needs: [smoke_gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Ruff (focused paths)
+        run: |
+          ruff check tools yolozu tests
+
+      - name: Focused pytest (YOLO26 quality)
+        run: |
+          pytest -q \
+            tests/test_eval_suite_export_settings.py \
+            tests/test_eval_suite_determinism.py \
+            tests/test_check_map_targets_contract.py \
+            tests/test_yolo26_protocol.py \
+            tests/test_predictions.py
+
   pip_smoke:
     name: pip smoke (python ${{ matrix.python-version }})
     needs: [smoke_gate]
@@ -56,7 +86,7 @@ jobs:
           yolozu demo instance-seg --num-images 2 --image-size 48 --max-instances 2 --run-dir "${RUNNER_TEMP}/yolozu_demo"
 
   test:
-    needs: [smoke_gate]
+    needs: [smoke_gate, quality_gate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
