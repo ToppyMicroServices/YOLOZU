@@ -38,6 +38,8 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 - TensorRT (exported `.plan`): `python3 tools/export_predictions_trt.py ...`
 - Full TRT pipeline (engine build → export → parity → eval → latency): `python3 tools/run_trt_pipeline.py ...`
 
+**Static input shapes (ORT/TRT) 注意**: 多くのエクスポート済み ONNX は入力が固定（例: 1×3×64×64）。ONNXRuntime/TensorRT ではモデルが宣言する入力サイズに合わせたテンソルのみ受け付けるため、異なる解像度（例: 640×640）を与えると次元エラーになります。解像度を変えたい場合は動的軸付き ONNX を再エクスポートするか、モデル側を再エクスポートしてください。
+
 YOLO26 per-bucket entrypoints (n/s/m/l/x): `docs/yolo26_inference_adapters.md`
 
 These are the fastest way to iterate in **research/eval**. For production, you might prefer C++/Rust inference.

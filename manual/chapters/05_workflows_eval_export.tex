@@ -33,11 +33,14 @@ For production-oriented external inference, see \path{docs/external_inference.md
 \textbf{Conceptual (not copy-paste as-is):} repository-wrapper export shape.
 Use real paths from \path{tools/yolozu.py export --help} for execution.
 \begin{lstlisting}[language=bash]
-# ONNXRuntime backend
+# ONNXRuntime backend (input shape must match ONNX)
 python3 tools/yolozu.py export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --out reports/predictions.json
 
 # OpenCV DNN RT-DETR backend (no NMS)
 python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx /path/to/rtdetr.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.01 --out reports/pred_rtdetr_opencv_backend.json --force
+
+# OpenCV DNN YOLO backend (with NMS)
+python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.25 --nms-iou 0.45 --out reports/pred_opencv_dnn_yolo.json --force
 \end{lstlisting}
 
 For further details, consult:\
