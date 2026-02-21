@@ -31,6 +31,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 - PyTorch adapter (research scaffold): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - OpenCV DNN (YOLO-style heads): `python3 tools/export_predictions_opencv_dnn.py ...`
+- OpenCV DNN (YOLO-style heads via unified CLI): `python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.25 --output reports/pred_opencv_dnn_yolo.json --force`
 - OpenCV DNN (RT-DETR decode, no NMS):
   - Direct script: `python3 tools/export_predictions_opencv_dnn_rtdetr.py --dataset data/coco-yolo --onnx path/to/rtdetr.onnx --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_dnn.json`
   - Unified wrapper: `python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx path/to/rtdetr.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force`
