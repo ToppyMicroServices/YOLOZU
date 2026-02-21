@@ -72,6 +72,17 @@ yolozu eval-coco \
 
 Detailed option patterns are in [`docs/README.md`](docs/README.md).
 
+## Workflow policy (required vs optional)
+
+- Required PR gate: `.github/workflows/ci.yml` (`ci` workflow)
+- Optional publish workflow: `.github/workflows/container.yml` (`container` workflow)
+
+Interpretation:
+
+- PR quality is judged by `ci`.
+- `container` is for image publishing flows (tag/release/manual) and may fail independently
+  without blocking normal PR quality decisions.
+
 Optional extras:
 
 ```bash
@@ -474,6 +485,7 @@ Publish trigger:
 - Push a tag `vX.Y.Z` to run `.github/workflows/container.yml`.
 - If the tag existed before the workflow was added,
   run it manually via GitHub Actions (workflow_dispatch) or cut a new tag.
+- This workflow is optional publish automation and not the primary PR gate.
 
 Details: [deploy/docker/README.md](deploy/docker/README.md)
 

@@ -32,6 +32,10 @@ bash scripts/smoke.sh
 
 ## Provenance and copyright/license note
 
+- Quick legal note (source/license/modification): these files are derived from
+	`data/coco128` (Ultralytics package metadata with GPL-3.0 notice), then subset/copied
+	and converted into deterministic smoke predictions for validation use.
+
 - These smoke assets are generated from local `data/coco128` via
 	`python3 tools/generate_smoke_assets.py`.
 - Image/license provenance follows the source subset under `data/coco128`.
@@ -41,3 +45,11 @@ bash scripts/smoke.sh
 
 If you need strictly self-authored/CC0-only media, replace `images/val` +
 `labels/val` with your own assets and regenerate predictions accordingly.
+
+Debug tip (pretty-print one-line JSON):
+
+```bash
+python3 tools/format_json.py \
+	--input data/smoke/predictions/predictions_dummy.json \
+	--output reports/predictions_dummy.pretty.json
+```

@@ -1,16 +1,32 @@
 # YOLOZU docs
 
-Choose one of these 4 entry points.
-Use `data/smoke` as the default copy-paste dataset in this docs index
-to avoid path mistakes.
+Use this page as the docs index for both humans and agents.
+All examples below use repository-real paths (`data/smoke`, `reports/...`) to reduce copy-paste mistakes.
+
+## 0) Offline copy-paste smoke (single command)
+
+The fastest safety check from repo root is:
+
+```bash
+bash scripts/smoke.sh
+```
+
+Expected report output:
+
+- `reports/smoke_coco_eval_dry_run.json`
+
+---
 
 ## A) Evaluate from precomputed predictions (no inference deps)
+
+Use this path when predictions are exported elsewhere and you only need validation/evaluation here.
 
 Shortest 3 commands:
 
 ```bash
 python3 -m yolozu.cli validate dataset data/smoke --strict
-python3 -m yolozu.cli validate predictions data/smoke/predictions/predictions_dummy.json --strict
+python3 -m yolozu.cli validate predictions \
+	data/smoke/predictions/predictions_dummy.json --strict
 python3 -m yolozu.cli eval-coco \
 	--dataset data/smoke \
 	--split val \
@@ -25,11 +41,17 @@ Reference docs:
 
 ## B) Train → Export → Eval (RT-DETR scaffold)
 
-Shortest 3 commands (smoke-safe export/eval path):
+Use this path when you want a train-like flow with smoke-safe local artifacts.
+
+Shortest 3 commands:
 
 ```bash
 python3 -m yolozu.cli validate dataset data/smoke --strict
-python3 -m yolozu.cli export --backend labels --dataset data/smoke --output runs/smoke/predictions_labels.json --force
+python3 -m yolozu.cli export \
+	--backend labels \
+	--dataset data/smoke \
+	--output runs/smoke/predictions_labels.json \
+	--force
 python3 -m yolozu.cli eval-coco \
 	--dataset data/smoke \
 	--split val \
@@ -44,12 +66,17 @@ Reference docs:
 
 ## C) Contracts (predictions / adapter / TTT protocol)
 
+Use this path to confirm JSON contracts and manifest consistency before bigger runs.
+
 Shortest 3 commands:
 
 ```bash
-python3 -m yolozu.cli validate predictions data/smoke/predictions/predictions_dummy.json --strict
+python3 -m yolozu.cli validate predictions \
+	data/smoke/predictions/predictions_dummy.json --strict
 python3 -m yolozu.cli validate dataset data/smoke --strict
-python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 tools/validate_tool_manifest.py \
+	--manifest tools/manifest.json \
+	--require-declarative
 ```
 
 Reference docs:
@@ -57,7 +84,9 @@ Reference docs:
 - [Adapter contract](adapter_contract.md)
 - [TTT protocol](ttt_protocol.md)
 
-## D) Bench/Parity (parity check + latency benchmark docs)
+## D) Bench/Parity (parity check + benchmark entry)
+
+Use this path for quick parity sanity checks and to discover benchmark CLI options.
 
 Shortest 3 commands:
 
@@ -78,27 +107,26 @@ Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
 - [Benchmark latency](benchmark_latency.md)
 
-## 0) Copy-paste smoke check (offline, repo checkout)
+## E) LLM / MCP integrations
 
-- Run: `bash scripts/smoke.sh`
-- Bundled assets: `data/smoke`
-- Report output: `reports/smoke_coco_eval_dry_run.json`
+Use this path when integrating YOLOZU tools with MCP clients or Actions/OpenAPI routes.
 
-## E) LLM/MCP integrations (Gemini / Claude / Copilot / OpenAI)
+Shortest 3 commands:
 
-- Guide: [LLM integrations](llm_integrations.md)
-- OpenAI details: [OpenAI MCP / Actions](openai_mcp_actions.md)
-- Copilot details: [Copilot MCP integration](copilot_mcp_integration.md)
-- MCP templates: `docs/examples/mcp_clients/*.example.json`
-- MCP architecture: [MCP extension architecture](mcp_extension_architecture.md)
-- MCP server entrypoint: `python3 tools/run_mcp_server.py`
-- Optional OpenAPI route: `python3 tools/run_actions_api.py`
+```bash
+python3 tools/run_mcp_server.py
+python3 tools/run_actions_api.py
+python3 tools/export_actions_openapi.py --output reports/actions_openapi.json
+```
 
-## CI incident memo (2026-02-21)
+Reference docs:
+- [LLM integrations](llm_integrations.md)
+- [OpenAI MCP / Actions](openai_mcp_actions.md)
+- [Copilot MCP integration](copilot_mcp_integration.md)
+- [MCP extension architecture](mcp_extension_architecture.md)
 
-- Incident 1 (Hessian CLI smoke test):
-	- Cause: the test passed `--refine-offsets` but omitted `--enable`, while refinement is opt-in.
-	- Prevention: keep opt-in semantics explicit in smoke tests (`--enable --refine-offsets`) and avoid assuming feature flags auto-enable refinement.
-- Incident 2 (Training contract smoke in CI):
-	- Cause: `--image-size 32` with `--batch-size 1` hit a BatchNorm 1x1 path and failed at train-time.
-	- Prevention: keep CI smoke at `--image-size >= 64` for this path (or increase batch size) to avoid degenerate BatchNorm shapes.
+## CI incidents
+
+CI incident memo has moved to a dedicated page:
+
+- [CI incidents memo](ci_incidents.md)
