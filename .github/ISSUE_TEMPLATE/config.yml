@@ -1,6 +1,6 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security vulnerability report
-    url: https://github.com/thinksyncs/YOLOZU/security/advisories/new
+    url: https://github.com/ToppyMicroServices/YOLOZU/security/advisories/new
     about: Please report security issues privately via GitHub Security Advisories.
 

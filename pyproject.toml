@@ -34,10 +34,10 @@ classifiers = [
 dependencies = ["PyYAML>=6.0", "numpy>=1.24", "Pillow>=10.0"]
 
 [project.urls]
-Homepage = "https://github.com/thinksyncs/YOLOZU"
-Repository = "https://github.com/thinksyncs/YOLOZU"
-Issues = "https://github.com/thinksyncs/YOLOZU/issues"
-Changelog = "https://github.com/thinksyncs/YOLOZU/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ToppyMicroServices/YOLOZU"
+Repository = "https://github.com/ToppyMicroServices/YOLOZU"
+Issues = "https://github.com/ToppyMicroServices/YOLOZU/issues"
+Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 demo = ["torch>=2.1"]
