@@ -46,15 +46,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image="${REGISTRY}/${{ github.repository_owner }}/${{ matrix.image }}"
+          owner="${{ github.repository_owner }}"
+          owner="${owner,,}"
+          image="${REGISTRY}/${owner}/${{ matrix.image }}"
 
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             ref="${GITHUB_REF_NAME}"
-            version="${ref#v}"
+            safe_ref="${ref//\//-}"
+            version="${ref#release/}"
+            version="${version#v}"
             {
               echo "tags<<EOF"
               echo "${image}:${version}"
-              echo "${image}:${ref}"
+              echo "${image}:${safe_ref}"
               echo "${image}:latest"
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
@@ -136,15 +140,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image="${REGISTRY}/${{ github.repository_owner }}/${{ matrix.image }}"
+          owner="${{ github.repository_owner }}"
+          owner="${owner,,}"
+          image="${REGISTRY}/${owner}/${{ matrix.image }}"
 
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             ref="${GITHUB_REF_NAME}"
-            version="${ref#v}"
+            safe_ref="${ref//\//-}"
+            version="${ref#release/}"
+            version="${version#v}"
             {
               echo "tags<<EOF"
               echo "${image}:${version}"
-              echo "${image}:${ref}"
+              echo "${image}:${safe_ref}"
               echo "${image}:latest"
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
