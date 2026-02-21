@@ -25,6 +25,8 @@ bash scripts/smoke.sh
 This is the one-line copy-paste path. Detailed command breakdown is in
 the `Quickstart details` section below.
 
+Use `yolozu` (pip users) for install-safe commands, or `python3 tools/yolozu.py` (repo users) for full research/power-user workflows.
+
 ## Start here (choose 1 of 4 entry points)
 
 - **A: Evaluate from precomputed predictions (no inference deps)**
@@ -146,16 +148,9 @@ In one glance:
 - **Safe TTT**: guard rails + reset policies for online adaptation.
 - **Apache-2.0-only ops**: license policy + checks to keep the toolchain clean.
 - **Parity/bench**: diff stats + fixed-protocol benchmarks across backends.
-
-- **Bring-your-own inference + contract-first evaluation**:
-  run inference in PyTorch / ONNXRuntime / TensorRT / C++ / Rust,
-  export the same `predictions.json`, and compare apples-to-apples.
-- **Safe TTT (test-time training)**: presets + guard rails + reset policies (see `docs/ttt_protocol.md`).
-- **Apache-2.0-only ops**: license policy + checks to keep the toolchain clean (see `docs/license_policy.md`).
 - **Unified CLI**: `yolozu` (pip) + `python3 tools/yolozu.py` (repo)
   wrap backends with consistent args and caching (`--cache`),
   and always write run metadata (git SHA / env / GPU / config hash).
-- **Parity + benchmarks**: backend diff stats (torch vs onnxrt vs trt) and fixed-protocol latency/FPS reports.
 - **AI-friendly repo surface**: stable schemas + `tools/manifest.json` for tool discovery / automation.
 
 ## Feature highlights (what you can do)
@@ -199,73 +194,22 @@ In one glance:
 
 ## Instance segmentation (PNG masks)
 
-YOLOZU evaluates instance segmentation using **per-instance binary PNG masks** (no RLE/polygons required).
+YOLOZU evaluates instance segmentation with **per-instance binary PNG masks** (no RLE/polygons required).
 
-Predictions JSON (minimal):
-```json
-[
-  {
-    "image": "000001.png",
-    "instances": [
-      { "class_id": 0, "score": 0.9, "mask": "masks/000001_inst0.png" }
-    ]
-  }
-]
-```
+Shortest path:
 
-Validate an artifact:
 ```bash
-python3 tools/validate_instance_segmentation_predictions.py reports/instance_seg_predictions.json
-```
-
-Eval outputs:
-- mask mAP (`map50`, `map50_95`)
-- per-class AP table
-- per-image diagnostics (TP/FP/FN, mean IoU) and overlay selection
-  (`--overlay-sort {worst,best,first}`; default: `worst`)
-
-Run the synthetic demo and render overlays/HTML:
-```bash
+python3 -m yolozu.cli demo instance-seg
 python3 tools/eval_instance_segmentation.py \
   --dataset examples/instance_seg_demo/dataset \
   --split val2017 \
-  --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json \
-  --pred-root examples/instance_seg_demo/predictions \
-  --classes examples/instance_seg_demo/classes.txt \
-  --html reports/instance_seg_demo_eval.html \
-  --overlays-dir reports/instance_seg_demo_overlays \
-  --max-overlays 10
+  --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json
 ```
 
-Same via the unified CLI:
-```bash
-python3 tools/yolozu.py eval-instance-seg \
-  --dataset examples/instance_seg_demo/dataset \
-  --split val2017 \
-  --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json \
-  --pred-root examples/instance_seg_demo/predictions \
-  --classes examples/instance_seg_demo/classes.txt \
-  --html reports/instance_seg_demo_eval.html \
-  --overlays-dir reports/instance_seg_demo_overlays \
-  --max-overlays 10
-```
+Full examples and conversion workflows moved to:
 
-Optional: prepare COCO instance-seg dataset with per-instance PNG masks (requires `pycocotools`):
-```bash
-python3 tools/prepare_coco_instance_seg.py \
-  --coco-root data/coco128 \
-  --split train2017 \
-  --out data/smoke_instance_seg
-```
-
-Optional: convert COCO instance-seg predictions (RLE/polygons) into YOLOZU PNG masks (requires `pycocotools`):
-```bash
-python3 tools/convert_coco_instance_seg_predictions.py \
-  --predictions reports/smoke_coco_instance_seg_preds.json \
-  --instances-json data/coco/annotations/instances_val2017.json \
-  --output reports/instance_seg_predictions.json \
-  --masks-dir reports/instance_seg_masks
-```
+- [examples/instance_seg_demo/README.md](examples/instance_seg_demo/README.md)
+- [docs/tools_index.md](docs/tools_index.md)
 
 ## Documentation
 
