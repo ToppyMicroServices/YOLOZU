@@ -301,7 +301,7 @@ def _decode_raw_ultralytics(
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
-    input_size = 640  # pinned (YOLO26 protocol)
+    input_size = 640  # default fallback (YOLO26 protocol)
     dataset_root = repo_root / args.dataset
     manifest = build_manifest(dataset_root, split=args.split)
     records = manifest["images"]
@@ -366,6 +366,25 @@ def main(argv=None):
         providers = None
 
     sess = ort.InferenceSession(str(model_path), providers=providers)
+
+    # Derive fixed input size from ONNX if static.
+    def _dim_to_int(d):
+        try:
+            return int(d)
+        except Exception:
+            return None
+
+    input_shape = sess.get_inputs()[0].shape
+    model_h = _dim_to_int(input_shape[2]) if len(input_shape) >= 3 else None
+    model_w = _dim_to_int(input_shape[3]) if len(input_shape) >= 4 else None
+    if model_h is not None and model_w is not None:
+        if model_h != model_w:
+            raise SystemExit(f"ONNX input is non-square ({model_h}x{model_w}); export_predictions_onnxrt expects square. Use correct input.")
+        input_size = model_h
+
+    if int(input_size) != 640:
+        # guard against accidental mismatch when user assumes 640
+        print(f"[warn] using ONNX-fixed input size {input_size}x{input_size} (override not supported for this model)", file=sys.stderr)
 
     def preprocess(image_path: str):
         w, h = get_image_size(image_path)
@@ -557,4 +576,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
