@@ -2700,7 +2700,8 @@ class ManifestDataset(Dataset):
         if self.gaussian_noise_std > 0.0:
             prob = float(self.gaussian_noise_prob)
             if prob >= 1.0 or bool(torch.rand((), generator=gen) < prob):
-                image = image + torch.randn_like(image, generator=gen) * float(self.gaussian_noise_std)
+                noise = torch.randn(image.shape, generator=gen, device=image.device, dtype=image.dtype)
+                image = image + noise * float(self.gaussian_noise_std)
                 image = torch.clamp(image, 0.0, 1.0)
 
         depth_tensor = None

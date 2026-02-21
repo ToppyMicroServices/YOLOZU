@@ -1248,7 +1248,7 @@
     },
     {
       "id": "yolo26_quality_gate",
-      "entrypoint": "ruff",
+      "entrypoint": "tools/yolo26_quality_gate.sh",
       "runner": "bash",
       "summary": "Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks.",
       "tags": ["quality", "gates", "yolo26"],
