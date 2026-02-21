@@ -22,7 +22,8 @@ Depending on your deployment environment, several backends are available:
 \begin{itemize}
   \item \textbf{Torch backend (research):} Exports predictions directly from a training checkpoint.
   \item \textbf{ONNX Runtime:} Facilitates CPU-friendly exports and rigorous parity checks.
-  \item \textbf{OpenCV DNN:} An alternative ONNX execution path using OpenCV’s DNN module.
+  \item \textbf{OpenCV DNN (YOLO head):} Alternative ONNX execution via OpenCV DNN.
+  \item \textbf{OpenCV DNN (RT-DETR, no NMS):} Logits+boxes decode path for RT-DETR ONNX (CUDA/CPU).
   \item \textbf{TensorRT:} Provides a pinned Linux/NVIDIA pipeline optimized for maximum throughput.
 \end{itemize}
 
@@ -32,7 +33,11 @@ For production-oriented external inference, see \path{docs/external_inference.md
 \textbf{Conceptual (not copy-paste as-is):} repository-wrapper export shape.
 Use real paths from \path{tools/yolozu.py export --help} for execution.
 \begin{lstlisting}[language=bash]
+# ONNXRuntime backend
 python3 tools/yolozu.py export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --out reports/predictions.json
+
+# OpenCV DNN RT-DETR backend (no NMS)
+python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx /path/to/rtdetr.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.01 --out reports/pred_rtdetr_opencv_backend.json --force
 \end{lstlisting}
 
 For further details, consult:\

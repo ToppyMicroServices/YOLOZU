@@ -599,7 +599,7 @@ def _copy_file(src: Path, dst: Path) -> None:
 def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--backend",
-        choices=("dummy", "torch", "onnxrt", "trt"),
+        choices=("dummy", "torch", "onnxrt", "trt", "opencv-dnn-rtdetr"),
         default="dummy",
         help="Inference backend (default: dummy).",
     )
@@ -778,6 +778,31 @@ def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--min-score", type=float, default=0.0, help="Score threshold (default: 0.0).")
     p.add_argument("--topk", type=int, default=300, help="Top-K per image (default: 300).")
 
+    # OpenCV DNN RT-DETR backend.
+    p.add_argument("--onnx", default=None, help="ONNX model path for --backend opencv-dnn-rtdetr (alias: --model).")
+    p.add_argument("--imgsz", type=int, default=640, help="Input size for opencv-dnn-rtdetr backend (default: 640).")
+    p.add_argument(
+        "--score-thr",
+        type=float,
+        default=0.01,
+        help="Score threshold for opencv-dnn-rtdetr backend (default: 0.01).",
+    )
+    p.add_argument(
+        "--keep-aspect",
+        action="store_true",
+        help="Keep aspect ratio via letterbox in opencv-dnn-rtdetr backend (default: False).",
+    )
+    p.add_argument(
+        "--dnn-backend",
+        default="opencv",
+        help="OpenCV DNN backend for opencv-dnn-rtdetr (e.g. opencv, cuda) (default: opencv).",
+    )
+    p.add_argument(
+        "--dnn-target",
+        default="cpu",
+        help="OpenCV DNN target for opencv-dnn-rtdetr (e.g. cpu, cuda, cuda_fp16) (default: cpu).",
+    )
+
 
 def _export_with_backend(
     args: argparse.Namespace,
@@ -924,6 +949,24 @@ def _export_with_backend(
             "min_score": float(args.min_score),
             "topk": int(args.topk),
             "dry_run": bool(args.dry_run),
+        }
+    elif backend == "opencv-dnn-rtdetr":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-rtdetr")
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "onnx": str(onnx_model),
+            "onnx_sha256": _sha256_file(onnx_model),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "keep_aspect": bool(args.keep_aspect),
+            "dnn_backend": str(args.dnn_backend),
+            "dnn_target": str(args.dnn_target),
+            "topk": int(args.topk),
         }
     else:
         raise SystemExit(f"unknown backend: {backend}")
@@ -1127,6 +1170,37 @@ def _export_with_backend(
             cmd.extend(["--max-images", str(int(args.max_images))])
         if args.dry_run:
             cmd.append("--dry-run")
+        _subprocess_or_die(cmd)
+    elif backend == "opencv-dnn-rtdetr":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-rtdetr")
+        cmd = [
+            sys.executable,
+            "tools/export_predictions_opencv_dnn_rtdetr.py",
+            "--dataset",
+            str(dataset),
+            "--onnx",
+            str(onnx_model),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--output",
+            str(out_path),
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.keep_aspect:
+            cmd.append("--keep-aspect")
+        if args.dnn_backend:
+            cmd.extend(["--dnn-backend", str(args.dnn_backend)])
+        if args.dnn_target:
+            cmd.extend(["--dnn-target", str(args.dnn_target)])
+        if args.topk is not None:
+            cmd.extend(["--topk", str(int(args.topk))])
         _subprocess_or_die(cmd)
     else:  # pragma: no cover
         raise SystemExit(f"unknown backend: {backend}")
