@@ -62,9 +62,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--output-index", type=int, default=0, help="Which output to treat as the raw head (default: 0).")
     p.add_argument(
         "--raw-format",
-        choices=("yolo_84",),
+        choices=("yolo_84", "yolo_85_obj"),
         default="yolo_84",
-        help="Raw head format (default: yolo_84 for YOLOv8-style 1x84xN).",
+        help="Raw head format (default: yolo_84 for YOLOv8-style 1x84xN). Use yolo_85_obj for YOLOv5-style 85 with objectness.",
     )
     p.add_argument(
         "--boxes-scale",
@@ -144,6 +144,27 @@ def _normalize_raw_yolo84(raw: np.ndarray) -> np.ndarray:
     raise ValueError(f"unsupported raw output shape for yolo_84: {tuple(arr.shape)}")
 
 
+def _normalize_raw_yolo85_obj(raw: np.ndarray) -> np.ndarray:
+    # Accept common YOLOv5-style OpenCV-DNN outputs:
+    # - (1, N, 85) -> (N, 85)
+    # - (N, 85)    -> (N, 85)
+    # - (1, 85, N) -> (N, 85)
+    # - (85, N)    -> (N, 85)
+    arr = np.asarray(raw)
+    if arr.ndim == 3 and arr.shape[0] == 1:
+        a = arr[0]
+        if a.shape[0] == 85 and a.shape[1] != 85:
+            return np.transpose(a, (1, 0))
+        if a.shape[-1] == 85:
+            return a.reshape(-1, 85)
+    if arr.ndim == 2:
+        if arr.shape[0] == 85 and arr.shape[1] != 85:
+            return np.transpose(arr, (1, 0))
+        if arr.shape[1] == 85:
+            return arr
+    raise ValueError(f"unsupported raw output shape for yolo_85_obj: {tuple(arr.shape)}")
+
+
 def _decode_yolo84(
     raw: np.ndarray,
     *,
@@ -195,6 +216,68 @@ def _decode_yolo84(
                 max_det=int(max_det),
             )
             # map back to global indices
+            global_idx = np.nonzero(mask)[0][idx_c]
+            kept.extend(int(i) for i in global_idx.tolist())
+        kept = sorted(kept, key=lambda i: float(scores[i]), reverse=True)[: int(max_det)]
+        idx = np.asarray(kept, dtype=np.int64)
+
+    return boxes_xyxy[idx], scores[idx], class_ids[idx]
+
+
+def _decode_yolo85_obj(
+    raw: np.ndarray,
+    *,
+    boxes_scale: str,
+    input_size: int,
+    min_score: float,
+    iou_thresh: float,
+    max_det: int,
+    agnostic: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # YOLOv5-style: [cx, cy, w, h, obj, class_scores...]
+    data = _normalize_raw_yolo85_obj(raw).astype(np.float32, copy=False)
+    if data.shape[1] < 6:
+        raise ValueError(f"yolo_85_obj expects at least 6 columns (got {data.shape[1]})")
+    boxes_xywh = data[:, :4]
+    obj = data[:, 4]
+    class_scores = data[:, 5:]
+    class_ids = class_scores.argmax(axis=1).astype(np.int64)
+    cls = class_scores.max(axis=1)
+    scores = obj * cls
+
+    keep = scores >= float(min_score)
+    boxes_xywh = boxes_xywh[keep]
+    scores = scores[keep]
+    class_ids = class_ids[keep]
+
+    if boxes_scale == "norm":
+        boxes_xywh = boxes_xywh * float(input_size)
+
+    cx = boxes_xywh[:, 0]
+    cy = boxes_xywh[:, 1]
+    w = boxes_xywh[:, 2]
+    h = boxes_xywh[:, 3]
+    x1 = cx - w / 2.0
+    y1 = cy - h / 2.0
+    x2 = cx + w / 2.0
+    y2 = cy + h / 2.0
+    boxes_xyxy = np.stack([x1, y1, x2, y2], axis=1)
+
+    if boxes_xyxy.size == 0:
+        return boxes_xyxy, scores, class_ids
+
+    if agnostic:
+        idx = _nms(boxes_xyxy, scores, iou_thresh=float(iou_thresh), max_det=int(max_det))
+    else:
+        kept: list[int] = []
+        for cid in np.unique(class_ids):
+            mask = class_ids == cid
+            idx_c = _nms(
+                boxes_xyxy[mask],
+                scores[mask],
+                iou_thresh=float(iou_thresh),
+                max_det=int(max_det),
+            )
             global_idx = np.nonzero(mask)[0][idx_c]
             kept.extend(int(i) for i in global_idx.tolist())
         kept = sorted(kept, key=lambda i: float(scores[i]), reverse=True)[: int(max_det)]
@@ -356,15 +439,26 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"--output-index out of range: {idx} (have {len(outs)} outputs)")
         raw = outs[idx]
 
-        boxes_xyxy, scores, class_ids = _decode_yolo84(
-            raw,
-            boxes_scale=str(args.boxes_scale),
-            input_size=input_size,
-            min_score=float(args.min_score),
-            iou_thresh=float(args.nms_iou),
-            max_det=int(args.max_det),
-            agnostic=bool(args.agnostic_nms),
-        )
+        if str(args.raw_format) == "yolo_85_obj":
+            boxes_xyxy, scores, class_ids = _decode_yolo85_obj(
+                raw,
+                boxes_scale=str(args.boxes_scale),
+                input_size=input_size,
+                min_score=float(args.min_score),
+                iou_thresh=float(args.nms_iou),
+                max_det=int(args.max_det),
+                agnostic=bool(args.agnostic_nms),
+            )
+        else:
+            boxes_xyxy, scores, class_ids = _decode_yolo84(
+                raw,
+                boxes_scale=str(args.boxes_scale),
+                input_size=input_size,
+                min_score=float(args.min_score),
+                iou_thresh=float(args.nms_iou),
+                max_det=int(args.max_det),
+                agnostic=bool(args.agnostic_nms),
+            )
 
         dets: list[dict[str, Any]] = []
         for i in range(int(boxes_xyxy.shape[0])):

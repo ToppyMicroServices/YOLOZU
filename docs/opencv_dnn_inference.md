@@ -57,6 +57,22 @@ Current implementation targets YOLOv8-style raw heads:
 
 If your model exports a different head layout (e.g. YOLOv5-style `85` with objectness), you will need to adapt decoding.
 
+### YOLOv5-style (85 with objectness)
+
+YOLOv5 ONNX exports commonly produce a tensor like `(1, N, 85)`:
+
+- `[0:4]`: `cx, cy, w, h`
+- `[4]`: `objectness`
+- `[5:]`: class probabilities
+
+Use:
+
+```bash
+python3 tools/export_predictions_opencv_dnn.py ... --raw-format yolo_85_obj
+```
+
+Scoring uses `score = objectness * class_prob` before thresholding and NMS.
+
 ## Backend knobs (optional)
 
 If your OpenCV build supports it, you can try selecting a DNN backend/target:
@@ -66,4 +82,3 @@ python3 tools/export_predictions_opencv_dnn.py ... --dnn-backend cuda --dnn-targ
 ```
 
 These flags are best-effort; unsupported configurations are ignored by OpenCV.
-
