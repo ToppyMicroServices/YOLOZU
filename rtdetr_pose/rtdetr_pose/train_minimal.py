@@ -4059,6 +4059,7 @@ def main(argv: list[str] | None = None) -> int:
             model,
             device_ids=[int(local_rank)] if device.type == "cuda" else None,
             output_device=int(local_rank) if device.type == "cuda" else None,
+            find_unused_parameters=True,
         )
 
     terminate_requested = False
