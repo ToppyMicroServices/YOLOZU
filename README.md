@@ -37,7 +37,7 @@ pip users: go to [Install (pip users)](README.md#install-pip-users). Repo users:
 - **B: Train → Export → Eval (RT-DETR scaffold)**
   — reproducible run artifacts → ONNX → parity/eval.
   Start: [`docs/README.md`](docs/README.md)
-- **C: Contracts (predictions / adapter / ttt protocol)**
+- **C: Contracts (predictions / adapter / TTT protocol)**
   — stable schema + adapter boundary + safe adaptation protocol.
   Start: [`docs/README.md`](docs/README.md)
 - **D: Bench/Parity (TensorRT pipeline / latency benchmark)**
@@ -97,12 +97,7 @@ Interpretation:
 
 Optional extras:
 
-```bash
-python3 -m pip install 'yolozu[demo]'    # torch demos (CPU OK)
-python3 -m pip install 'yolozu[onnxrt]'  # ONNXRuntime CPU exporter
-python3 -m pip install 'yolozu[coco]'    # pycocotools COCOeval
-python3 -m pip install 'yolozu[full]'
-```
+See [Install (pip users)](README.md#install-pip-users).
 
 Docs index (start here): [`docs/README.md`](docs/README.md)
 
@@ -125,58 +120,14 @@ In one glance:
   and always write run metadata (git SHA / env / GPU / config hash).
 - **AI-friendly repo surface**: stable schemas + [tools/manifest.json](tools/manifest.json) + [docs/tools_index.md](docs/tools_index.md) for tool discovery / automation.
 
-## Feature highlights (what you can do)
+## Feature highlights and advanced workflows
 
-- Stable contracts: versioned predictions schema + adapter boundary.
-- Unified CLI: `yolozu` for install-safe usage, `python3 tools/yolozu.py` for power workflows.
-- Inference/export: torch/onnxrt/trt export paths with shared report conventions.
-- Evaluation stack: COCO mAP, suite scoring, and protocol-pinned gates.
-- Adaptation: TTA + torch-only opt-in TTT with guard rails.
-- Modalities: keypoints/segmentation/instance-seg evaluation helpers.
-- Training scaffold: RT-DETR pose run contract with reproducible artifacts.
-- Depth mode: boundary-safe design (`none|sidecar|fuse_mid`) with unit/scale controls.
+Moved to docs (entry-focused README policy):
 
-## Instance segmentation (PNG masks)
-
-YOLOZU evaluates instance segmentation with **per-instance binary PNG masks** (no RLE/polygons required).
-
-Shortest path:
-
-```bash
-python3 -m yolozu.cli demo instance-seg
-python3 tools/eval_instance_segmentation.py \
-  --dataset examples/instance_seg_demo/dataset \
-  --split val2017 \
-  --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json
-```
-
-Full examples and conversion workflows moved to:
-
-- [examples/instance_seg_demo/README.md](examples/instance_seg_demo/README.md)
-- [docs/tools_index.md](docs/tools_index.md)
-
-## Documentation
-
-Start here: [docs/README.md](docs/README.md)
-
-- Repo feature summary: [docs/yolozu_spec.md](docs/yolozu_spec.md)
-- Model/spec note: [docs/specs/rt_detr_6dof_geom_mim_spec_en_v0_4.md](docs/specs/rt_detr_6dof_geom_mim_spec_en_v0_4.md)
-- Training / inference / export quick steps: [docs/training_inference_export.md](docs/training_inference_export.md)
-- Hessian solver for regression refinement: [docs/hessian_solver.md](docs/hessian_solver.md)
-- Predictions schema (stable): [docs/predictions_schema.md](docs/predictions_schema.md)
-- Adapter contract (stable): [docs/adapter_contract.md](docs/adapter_contract.md)
-- Migration helpers: [docs/migrate.md](docs/migrate.md)
-- License policy: [docs/license_policy.md](docs/license_policy.md)
-- Tools index (AI-friendly): [docs/tools_index.md](docs/tools_index.md) / [tools/manifest.json](tools/manifest.json)
-- AI-first usage guide: [docs/ai_first.md](docs/ai_first.md)
-- PyInstaller/PyArmor packaging notes: [deploy/pyinstaller/README.md](deploy/pyinstaller/README.md)
-
-Advanced operations moved from README to docs:
-
-- Runtime/ops roadmap: [docs/roadmap.md](docs/roadmap.md)
-- Training contract details: [docs/run_contract.md](docs/run_contract.md)
-- CLI/tool catalog: [docs/tools_index.md](docs/tools_index.md)
-- Container publish workflow: [deploy/docker/README.md](deploy/docker/README.md)
+- Feature highlights and capability map: [docs/yolozu_spec.md](docs/yolozu_spec.md)
+- Instance segmentation examples: [examples/instance_seg_demo/README.md](examples/instance_seg_demo/README.md)
+- Tool/CLI catalog: [docs/tools_index.md](docs/tools_index.md)
+- Training/inference/export guide: [docs/training_inference_export.md](docs/training_inference_export.md)
 - YOLO26 protocol/gates: [docs/yolo26_eval_protocol.md](docs/yolo26_eval_protocol.md)
 
 ## Install (pip users)
@@ -217,6 +168,7 @@ This path unlocks the full repo tooling (`tools/`, `rtdetr_pose/`, scenarios, et
 ```bash
 python3 -m pip install -r requirements-test.txt
 python3 -m pip install -e .
+python3 tools/yolozu.py --help
 
 # Tiny smoke dataset (optional but useful for scenario runs)
 bash tools/fetch_coco128.sh
