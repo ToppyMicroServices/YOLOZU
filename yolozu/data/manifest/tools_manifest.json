@@ -84,6 +84,134 @@
       ]
     },
     {
+      "id": "generate_smoke_assets",
+      "entrypoint": "tools/generate_smoke_assets.py",
+      "runner": "python3",
+      "summary": "Generate deterministic offline smoke assets under data/smoke from local data/coco128.",
+      "tags": ["dataset", "smoke"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "network": false },
+      "inputs": [],
+      "effects": {
+        "writes": [],
+        "fixed_writes": [
+          {
+            "path": "data/smoke",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Creates/updates bundled smoke assets (images/val, labels/val, predictions)."
+          }
+        ]
+      },
+      "outputs": [
+        { "name": "dataset_root", "kind": "dir", "description": "Smoke dataset root.", "default": "data/smoke" },
+        {
+          "name": "predictions",
+          "kind": "file",
+          "description": "Fixed dummy predictions (schema v1).",
+          "default": "data/smoke/predictions/predictions_dummy.json"
+        }
+      ],
+      "examples": [
+        {
+          "description": "Rebuild bundled smoke assets deterministically.",
+          "command": "python3 tools/generate_smoke_assets.py"
+        }
+      ]
+    },
+    {
+      "id": "smoke",
+      "entrypoint": "scripts/smoke.sh",
+      "runner": "bash",
+      "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run).",
+      "tags": ["smoke", "validation", "eval"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "network": false },
+      "contracts": { "consumes": ["predictions_json"], "produces": ["coco_eval_report_json"] },
+      "inputs": [],
+      "effects": {
+        "writes": [],
+        "fixed_writes": [
+          {
+            "path": "reports/smoke_coco_eval_dry_run.json",
+            "kind": "file",
+            "scope": "path",
+            "description": "Dry-run COCO evaluation report produced by the smoke script."
+          }
+        ]
+      },
+      "outputs": [
+        {
+          "name": "smoke_report",
+          "kind": "file",
+          "description": "Smoke dry-run report.",
+          "default": "reports/smoke_coco_eval_dry_run.json"
+        }
+      ],
+      "examples": [
+        { "description": "Run full copy-paste smoke flow.", "command": "bash scripts/smoke.sh" }
+      ],
+      "docs": ["docs/README.md"]
+    },
+    {
+      "id": "run_mcp_server",
+      "entrypoint": "tools/run_mcp_server.py",
+      "runner": "python3",
+      "summary": "Run YOLOZU MCP server exposing doctor/validate/eval/scenario tools for LLM clients.",
+      "tags": ["mcp", "integration", "llm"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["mcp"] },
+      "inputs": [],
+      "effects": { "writes": [], "fixed_writes": [] },
+      "outputs": [{ "name": "transport", "kind": "string", "description": "MCP server stdio transport for compatible clients." }],
+      "examples": [
+        { "description": "Start MCP server locally.", "command": "python3 tools/run_mcp_server.py" }
+      ],
+      "docs": ["docs/llm_integrations.md", "docs/mcp_extension_architecture.md", "docs/copilot_mcp_integration.md", "manual/chapters/20_llm_mcp_integrations.tex"]
+    },
+    {
+      "id": "run_actions_api",
+      "entrypoint": "tools/run_actions_api.py",
+      "runner": "python3",
+      "summary": "Run FastAPI/OpenAPI endpoint for GPT Actions route using the same YOLOZU tool backend.",
+      "tags": ["openapi", "fastapi", "integration", "llm"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["fastapi", "uvicorn"] },
+      "inputs": [],
+      "effects": { "writes": [], "fixed_writes": [] },
+      "outputs": [{ "name": "openapi", "kind": "string", "description": "OpenAPI schema available at /openapi.json." }],
+      "examples": [
+        { "description": "Start Actions API server on :8080.", "command": "python3 tools/run_actions_api.py" }
+      ],
+      "docs": ["docs/llm_integrations.md", "docs/mcp_extension_architecture.md", "docs/openai_mcp_actions.md", "manual/chapters/20_llm_mcp_integrations.tex"]
+    },
+    {
+      "id": "export_actions_openapi",
+      "entrypoint": "tools/export_actions_openapi.py",
+      "runner": "python3",
+      "summary": "Export a static OpenAPI JSON schema for YOLOZU Actions API registration.",
+      "tags": ["openapi", "fastapi", "integration", "llm"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["fastapi"] },
+      "inputs": [
+        { "name": "output", "kind": "file", "required": false, "flag": "--output", "default": "reports/actions_openapi.json" },
+        { "name": "indent", "kind": "number", "required": false, "flag": "--indent", "default": 2 }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--output", "kind": "file", "scope": "path", "description": "Writes OpenAPI schema JSON." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "openapi_json", "kind": "file", "description": "Exported OpenAPI schema JSON." }
+      ],
+      "examples": [
+        { "description": "Export OpenAPI schema for GPT Actions registration.", "command": "python3 tools/export_actions_openapi.py --output reports/actions_openapi.json" }
+      ],
+      "docs": ["docs/openai_mcp_actions.md", "docs/mcp_extension_architecture.md", "docs/llm_integrations.md", "manual/chapters/20_llm_mcp_integrations.tex"]
+    },
+    {
       "id": "make_subset_dataset",
       "entrypoint": "tools/make_subset_dataset.py",
       "runner": "python3",
@@ -463,7 +591,7 @@
         { "name": "tta_flip_prob", "kind": "number", "required": false, "flag": "--tta-flip-prob" },
         { "name": "tta_norm_only", "kind": "string", "required": false, "flag": "--tta-norm-only" },
         { "name": "tta_log_out", "kind": "file", "required": false, "flag": "--tta-log-out" },
-        { "name": "ttt", "kind": "string", "required": false, "flag": "--ttt" },
+        { "name": "ttt", "kind": "string", "required": false, "flag": "--ttt", "description": "Enable in-memory test-time training during inference (default: off; opt-in)." },
         { "name": "ttt_preset", "kind": "string", "required": false, "flag": "--ttt-preset" },
         { "name": "ttt_method", "kind": "string", "required": false, "flag": "--ttt-method" },
         { "name": "ttt_reset", "kind": "string", "required": false, "flag": "--ttt-reset" },
@@ -658,7 +786,7 @@
         { "name": "tta_flip_prob", "kind": "number", "required": false, "flag": "--tta-flip-prob" },
         { "name": "tta_norm_only", "kind": "string", "required": false, "flag": "--tta-norm-only" },
         { "name": "tta_seed", "kind": "number", "required": false, "flag": "--tta-seed" },
-        { "name": "ttt", "kind": "string", "required": false, "flag": "--ttt" },
+        { "name": "ttt", "kind": "string", "required": false, "flag": "--ttt", "description": "Enable in-memory test-time training during inference (default: off; opt-in)." },
         { "name": "ttt_batch_size", "kind": "number", "required": false, "flag": "--ttt-batch-size" },
         { "name": "ttt_cotta_aggregation", "kind": "string", "required": false, "flag": "--ttt-cotta-aggregation" },
         { "name": "ttt_cotta_augmentations", "kind": "string", "required": false, "flag": "--ttt-cotta-augmentations" },
@@ -1119,6 +1247,53 @@
       ]
     },
     {
+      "id": "yolo26_quality_gate",
+      "entrypoint": "tools/yolo26_quality_gate.sh",
+      "runner": "bash",
+      "summary": "Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks.",
+      "tags": ["quality", "gates", "yolo26"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["ruff", "pytest"] },
+      "inputs": [],
+      "effects": { "writes": [], "fixed_writes": [] },
+      "outputs": [{ "name": "stdout", "kind": "stdout", "description": "Lint/test pass-fail output." }],
+      "examples": [
+        {
+          "description": "Run lint + focused eval/predictions tests for YOLO26 tooling.",
+          "command": "ruff check tools yolozu tests && pytest -q tests/test_eval_suite_export_settings.py tests/test_eval_suite_determinism.py tests/test_check_map_targets_contract.py tests/test_yolo26_protocol.py tests/test_predictions.py"
+        }
+      ],
+      "docs": ["docs/yolo26_eval_protocol.md"]
+    },
+    {
+      "id": "yolo26_pre_pr_quality",
+      "entrypoint": "scripts/pre_pr_quality.sh",
+      "runner": "bash",
+      "summary": "Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests).",
+      "tags": ["quality", "checklist", "yolo26"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "inputs": [],
+      "effects": {
+        "writes": [],
+        "fixed_writes": [
+          {
+            "path": "reports/smoke_coco_eval_dry_run.json",
+            "kind": "file",
+            "scope": "path",
+            "description": "Smoke report from scripts/smoke.sh as first pre-PR quality checkpoint."
+          }
+        ]
+      },
+      "outputs": [{ "name": "stdout", "kind": "stdout", "description": "Checklist run output." }],
+      "examples": [
+        {
+          "description": "Run the single-command pre-PR quality checklist.",
+          "command": "bash scripts/pre_pr_quality.sh"
+        }
+      ],
+      "docs": ["docs/yolo26_eval_protocol.md", "docs/training_inference_export.md"]
+    },
+    {
       "id": "calibrate_scores",
       "entrypoint": "tools/calibrate_scores.py",
       "runner": "python3",
@@ -1514,7 +1689,8 @@
           "description": "Enable offsets refinement in post-processing mode.",
           "command": "python3 tools/refine_predictions_hessian.py --predictions reports/predictions.json --output reports/predictions_refined.json --enable --refine-offsets --config configs/runtime/hessian_refine_example.yaml --wrap"
         }
-      ]
+      ],
+      "docs": ["docs/README.md", "docs/ttt_protocol.md", "docs/hessian_solver.md"]
     },
     {
       "id": "export_predictions_onnxrt",

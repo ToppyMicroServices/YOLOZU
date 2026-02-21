@@ -220,6 +220,10 @@ def _tensorrt_py_version() -> str | None:
     return None if v is None else str(v)
 
 
+def _tensorrt_py_available() -> bool:
+    return _tensorrt_py_version() is not None
+
+
 def _build_engine_python(
     *,
     onnx_path: Path,
@@ -365,7 +369,18 @@ def main(argv: list[str] | None = None) -> int:
 
     effective = builder_mode
     if builder_mode == "auto":
-        effective = "trtexec" if _trtexec_available(str(args.trtexec)) else "python"
+        if _trtexec_available(str(args.trtexec)):
+            effective = "trtexec"
+        elif _tensorrt_py_available():
+            effective = "python"
+        else:
+            meta["builder_effective"] = "none"
+            meta["error"] = (
+                "no TensorRT builder available: neither trtexec nor Python TensorRT detected. "
+                "Install TensorRT (trtexec) or `tensorrt` Python package, or rerun with --dry-run."
+            )
+            meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
+            raise SystemExit(meta["error"])
     meta["builder_effective"] = effective
 
     if effective == "trtexec":
@@ -374,6 +389,10 @@ def main(argv: list[str] | None = None) -> int:
         except FileNotFoundError as exc:
             raise SystemExit(f"trtexec not found: {args.trtexec} (try --builder python)") from exc
     else:
+        if not _tensorrt_py_available():
+            meta["error"] = "Python TensorRT package not available (install `tensorrt` or use --builder trtexec)."
+            meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
+            raise SystemExit(meta["error"])
         try:
             python_report = _build_engine_python(
                 onnx_path=onnx_path,

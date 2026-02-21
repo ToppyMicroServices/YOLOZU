@@ -110,6 +110,7 @@ python -m pytest -q tests/test_tool_manifest.py
 ## PR checklist snippet
 
 - [ ] `tools/manifest.json` updated for changed tool behavior
+- [ ] `yolozu/data/manifest/tools_manifest.json` synced (packaged copy for `yolozu resources cat manifest/tools_manifest.json`)
 - [ ] strict declarative validation passes
 - [ ] manifest regression tests pass
 - [ ] docs links/examples updated

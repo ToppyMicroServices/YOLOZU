@@ -55,6 +55,11 @@ It focuses on:
 - producing YOLOZU-compatible `predictions.json`
 - being easy to build inside Docker images that already contain TensorRT / ONNXRuntime headers + libs
 
+### Rust template (submodule-ready)
+
+See `examples/infer_rust/` for a minimal Rust starter. It intentionally builds a no-deps **stub** binary by default (contract wiring),
+so you can layer in ONNXRuntime/TensorRT/FFI later without changing the output JSON contract.
+
 ## Notes
 
 - Keep model weights / datasets out of git.

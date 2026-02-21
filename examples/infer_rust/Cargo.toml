@@ -1,0 +1,10 @@
+[package]
+name = "yolozu_infer_rust"
+version = "0.1.0"
+edition = "2021"
+
+# NOTE: This template intentionally avoids external crate dependencies so it can
+# be copied into environments without a Rust dependency cache.
+
+[dependencies]
+

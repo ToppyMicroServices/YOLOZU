@@ -1,0 +1,27 @@
+import json
+import unittest
+from pathlib import Path
+
+
+class TestPackagedToolsManifest(unittest.TestCase):
+    def test_packaged_tools_manifest_matches_repo_manifest(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        repo_manifest = repo_root / "tools" / "manifest.json"
+        packaged_manifest = repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json"
+
+        self.assertTrue(repo_manifest.is_file(), f"missing repo tool manifest: {repo_manifest}")
+        self.assertTrue(packaged_manifest.is_file(), f"missing packaged tool manifest: {packaged_manifest}")
+
+        repo_obj = json.loads(repo_manifest.read_text(encoding="utf-8"))
+        packaged_obj = json.loads(packaged_manifest.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            repo_obj,
+            packaged_obj,
+            "packaged manifest is out of sync. Update yolozu/data/manifest/tools_manifest.json to match tools/manifest.json.",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
+

@@ -25,6 +25,9 @@ Depending on your deployment environment, several backends are available:
   \item \textbf{TensorRT:} Provides a pinned Linux/NVIDIA pipeline optimized for maximum throughput.
 \end{itemize}
 
+For production-oriented external inference, see \path{docs/external_inference.md} and the submodule-ready templates:
+\path{examples/infer_cpp/} (CMake) and \path{examples/infer_rust/} (Rust).
+
 \textbf{Conceptual (not copy-paste as-is):} repository-wrapper export shape.
 Use real paths from \path{tools/yolozu.py export --help} for execution.
 \begin{lstlisting}[language=bash]
