@@ -1761,7 +1761,7 @@
       "id": "export_predictions_opencv_dnn",
       "entrypoint": "tools/export_predictions_opencv_dnn.py",
       "runner": "python3",
-      "summary": "Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8-style raw head supported).",
+      "summary": "Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8 84 or YOLOv5 85+obj raw heads supported).",
       "tags": ["export", "opencv", "dnn", "onnx", "predictions"],
       "platform": { "cpu_ok": true, "gpu_required": false, "linux_ok": true, "macos_ok": true },
       "requires": { "python_packages": ["numpy", "opencv-python"] },
@@ -1802,6 +1802,10 @@
         {
           "description": "Export OpenCV-DNN predictions (dry-run works without OpenCV installed).",
           "command": "python3 tools/export_predictions_opencv_dnn.py --dataset data/coco128 --dry-run --output reports/pred_opencv_dnn.json"
+        },
+        {
+          "description": "Export OpenCV-DNN predictions (YOLOv5-style 85+objectness raw head).",
+          "command": "python3 tools/export_predictions_opencv_dnn.py --dataset data/coco128 --raw-format yolo_85_obj --dry-run --output reports/pred_opencv_dnn_yolov5_raw.json"
         }
       ],
       "docs": ["docs/opencv_dnn_inference.md"]
