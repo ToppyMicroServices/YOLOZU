@@ -1758,6 +1758,55 @@
       "docs": ["docs/onnx_export_parity.md"]
     },
     {
+      "id": "export_predictions_opencv_dnn",
+      "entrypoint": "tools/export_predictions_opencv_dnn.py",
+      "runner": "python3",
+      "summary": "Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8-style raw head supported).",
+      "tags": ["export", "opencv", "dnn", "onnx", "predictions"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "linux_ok": true, "macos_ok": true },
+      "requires": { "python_packages": ["numpy", "opencv-python"] },
+      "inputs": [
+        { "name": "dataset", "kind": "dir", "required": true, "flag": "--dataset" },
+        { "name": "split", "kind": "string", "required": false, "flag": "--split" },
+        { "name": "max_images", "kind": "number", "required": false, "flag": "--max-images" },
+        { "name": "onnx", "kind": "file", "required": false, "flag": "--onnx" },
+        { "name": "input_size", "kind": "number", "required": false, "flag": "--input-size" },
+        { "name": "output_names", "kind": "string", "required": false, "flag": "--output-names" },
+        { "name": "output_index", "kind": "number", "required": false, "flag": "--output-index" },
+        { "name": "raw_format", "kind": "string", "required": false, "flag": "--raw-format" },
+        { "name": "boxes_scale", "kind": "string", "required": false, "flag": "--boxes-scale" },
+        { "name": "min_score", "kind": "number", "required": false, "flag": "--min-score" },
+        { "name": "nms_iou", "kind": "number", "required": false, "flag": "--nms-iou" },
+        { "name": "max_det", "kind": "number", "required": false, "flag": "--max-det" },
+        { "name": "agnostic_nms", "kind": "string", "required": false, "flag": "--agnostic-nms" },
+        { "name": "swap_rb", "kind": "string", "required": false, "flag": "--swap-rb" },
+        { "name": "dnn_backend", "kind": "string", "required": false, "flag": "--dnn-backend" },
+        { "name": "dnn_target", "kind": "string", "required": false, "flag": "--dnn-target" },
+        { "name": "strict", "kind": "string", "required": false, "flag": "--strict" },
+        { "name": "output", "kind": "file", "required": false, "flag": "--output" },
+        { "name": "meta_output", "kind": "file", "required": false, "flag": "--meta-output" },
+        { "name": "dry_run", "kind": "string", "required": false, "flag": "--dry-run" }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--output", "kind": "file", "scope": "path", "description": "Writes predictions JSON." },
+          { "flag": "--meta-output", "kind": "file", "scope": "path", "description": "Writes metadata JSON." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "predictions_json", "kind": "file", "default": "reports/pred_opencv_dnn.json" },
+        { "name": "meta_json", "kind": "file", "default": "reports/pred_opencv_dnn.json.meta.json" }
+      ],
+      "examples": [
+        {
+          "description": "Export OpenCV-DNN predictions (dry-run works without OpenCV installed).",
+          "command": "python3 tools/export_predictions_opencv_dnn.py --dataset data/coco128 --dry-run --output reports/pred_opencv_dnn.json"
+        }
+      ],
+      "docs": ["docs/opencv_dnn_inference.md"]
+    },
+    {
       "id": "build_trt_engine",
       "entrypoint": "tools/build_trt_engine.py",
       "runner": "python3",

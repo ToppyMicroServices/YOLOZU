@@ -19,6 +19,5 @@ python3 tools/validate_predictions.py reports/pred_custom_cpp.json --strict
 ```
 
 Notes:
-- The output is empty predictions with minimal `meta`. It is intended as a wiring/contract template, not a model runner.
+- The output is empty predictions and intentionally omits `meta` so `--strict` validation passes. It is intended as a wiring/contract template, not a model runner.
 - For integrating into YOLOZU parity checks, use `custom_cpp` (external backend) routes in `docs/external_inference.md`.
-

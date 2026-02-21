@@ -93,7 +93,8 @@ inline void yolozu_write_predictions_json(
     const std::string& image_path,
     const std::vector<YolozuDetection>& detections,
     const std::string& backend,
-    const std::string& model_path) {
+    const std::string& model_path,
+    bool include_meta = false) {
   std::ofstream file(output_path);
   if (!file) {
     throw std::runtime_error("failed to open predictions output: " + output_path);
@@ -120,11 +121,16 @@ inline void yolozu_write_predictions_json(
   }
   out << "      ]\n";
   out << "    }\n";
-  out << "  ],\n";
-  out << "  \"meta\": {\n";
-  out << "    \"backend\": \"" << yolozu_json_escape(backend) << "\",\n";
-  out << "    \"model\": \"" << yolozu_json_escape(model_path) << "\"\n";
-  out << "  }\n";
+  out << "  ]";
+  if (include_meta) {
+    out << ",\n";
+    out << "  \"meta\": {\n";
+    out << "    \"backend\": \"" << yolozu_json_escape(backend) << "\",\n";
+    out << "    \"model\": \"" << yolozu_json_escape(model_path) << "\"\n";
+    out << "  }\n";
+  } else {
+    out << "\n";
+  }
   out << "}\n";
 
   file << out.str();
@@ -132,4 +138,3 @@ inline void yolozu_write_predictions_json(
     throw std::runtime_error("failed to write predictions output: " + output_path);
   }
 }
-

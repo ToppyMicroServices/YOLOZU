@@ -39,8 +39,7 @@ int main(int argc, char** argv) {
   }
 
   std::vector<YolozuDetection> dets;
-  yolozu_write_predictions_json(output_path, image_path, dets, "stub", "");
+  yolozu_write_predictions_json(output_path, image_path, dets, "stub", "", false);
   std::cout << output_path << "\n";
   return 0;
 }
-

@@ -30,6 +30,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 
 - PyTorch adapter (research scaffold): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
+- OpenCV DNN (exported `.onnx`): `python3 tools/export_predictions_opencv_dnn.py ...`
 - TensorRT (exported `.plan`): `python3 tools/export_predictions_trt.py ...`
 - Full TRT pipeline (engine build → export → parity → eval → latency): `python3 tools/run_trt_pipeline.py ...`
 

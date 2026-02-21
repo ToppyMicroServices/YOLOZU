@@ -12,7 +12,7 @@ It is intentionally structured so you can:
 ## What it provides
 
 - `yolozu_infer_stub`: builds everywhere, emits schema-correct `predictions.json` with empty detections
-- Optional (when deps exist):
+  - Optional (when deps exist):
   - `yolozu_infer_onnxrt`: ONNXRuntime C++ runner (CPU)
   - `yolozu_infer_trt`: TensorRT C++ runner (Linux+NVIDIA)
 
@@ -30,6 +30,7 @@ python3 tools/eval_suite.py --predictions /path/to/predictions.json --dataset /p
 3) Use YOLOZU’s evaluator/suite to compare backends apples-to-apples.
 
 Note: the stub intentionally emits **empty detections**, so COCO mAP will be ~0. It is only a contract check.
+The stub intentionally omits `meta` to keep `python3 tools/validate_predictions.py ... --strict` passing; you can add backend metadata later.
 For a “sanity mAP” run without any inference backend, use:
 
 ```bash
