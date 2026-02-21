@@ -12,6 +12,49 @@ This is useful when:
 - Script: `tools/export_predictions_opencv_dnn.py`
 - Manifest id: `export_predictions_opencv_dnn`
 
+## RT-DETR (OpenCV-DNN + decode)
+
+RT-DETR-style models often emit a fixed number of **object queries** (no NMS expected), with outputs like:
+
+- `boxes`: `[B, N, 4]` (often `cxcywh` normalized to 0..1)
+- `logits`: `[B, N, C]` (often softmax with a background class)
+
+YOLOZU provides a dedicated exporter that runs OpenCV-DNN and decodes these outputs into `predictions.json` while recording
+preprocessing/export settings for parity:
+
+- Script: `tools/export_predictions_opencv_dnn_rtdetr.py`
+- Manifest id: `export_predictions_opencv_dnn_rtdetr`
+
+Dry-run (no OpenCV required):
+
+```bash
+python3 tools/export_predictions_opencv_dnn_rtdetr.py \
+  --dataset data/coco128 \
+  --dry-run \
+  --output reports/pred_rtdetr_opencv_dnn.json
+python3 tools/validate_predictions.py reports/pred_rtdetr_opencv_dnn.json --strict
+```
+
+Real inference (requires OpenCV):
+
+```bash
+python3 tools/export_predictions_opencv_dnn_rtdetr.py \
+  --dataset /path/to/coco-yolo \
+  --onnx /abs/path/rtdetr.onnx \
+  --imgsz 640 \
+  --keep-aspect \
+  --boxes-format cxcywh \
+  --boxes-scale norm \
+  --scores-activation softmax \
+  --background-class last \
+  --score-thr 0.01 \
+  --output reports/pred_rtdetr_opencv_dnn.json
+```
+
+Notes:
+- The exporter writes a separate `*.meta.json` file containing `export_settings.preprocess` and decode settings.
+- `predictions.json` remains schema-valid under `--strict` (no wrapped `meta` contract required).
+
 ### Dry-run (contract wiring)
 
 Dry-run does **not** import OpenCV, and writes schema-valid output with empty detections:

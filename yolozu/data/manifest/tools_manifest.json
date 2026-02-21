@@ -1807,6 +1807,64 @@
       "docs": ["docs/opencv_dnn_inference.md"]
     },
     {
+      "id": "export_predictions_opencv_dnn_rtdetr",
+      "entrypoint": "tools/export_predictions_opencv_dnn_rtdetr.py",
+      "runner": "python3",
+      "summary": "Run OpenCV-DNN inference on an RT-DETR ONNX model and export YOLOZU predictions JSON (no NMS), recording fixed preprocess/export_settings.",
+      "tags": ["export", "opencv", "dnn", "onnx", "rtdetr", "predictions"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "linux_ok": true, "macos_ok": true },
+      "requires": { "python_packages": ["numpy", "opencv-python"] },
+      "inputs": [
+        { "name": "dataset", "kind": "dir", "required": true, "flag": "--dataset" },
+        { "name": "split", "kind": "string", "required": false, "flag": "--split" },
+        { "name": "max_images", "kind": "number", "required": false, "flag": "--max-images" },
+        { "name": "onnx", "kind": "file", "required": false, "flag": "--onnx" },
+        { "name": "imgsz", "kind": "number", "required": false, "flag": "--imgsz" },
+        { "name": "keep_aspect", "kind": "string", "required": false, "flag": "--keep-aspect" },
+        { "name": "letterbox_fill", "kind": "string", "required": false, "flag": "--letterbox-fill" },
+        { "name": "input_color", "kind": "string", "required": false, "flag": "--input-color" },
+        { "name": "scale", "kind": "number", "required": false, "flag": "--scale" },
+        { "name": "mean", "kind": "string", "required": false, "flag": "--mean" },
+        { "name": "std", "kind": "string", "required": false, "flag": "--std" },
+        { "name": "outputs", "kind": "string", "required": false, "flag": "--outputs" },
+        { "name": "boxes_output", "kind": "string", "required": false, "flag": "--boxes-output" },
+        { "name": "logits_output", "kind": "string", "required": false, "flag": "--logits-output" },
+        { "name": "labels_output", "kind": "string", "required": false, "flag": "--labels-output" },
+        { "name": "scores_output", "kind": "string", "required": false, "flag": "--scores-output" },
+        { "name": "print_outputs", "kind": "string", "required": false, "flag": "--print-outputs" },
+        { "name": "boxes_format", "kind": "string", "required": false, "flag": "--boxes-format" },
+        { "name": "boxes_scale", "kind": "string", "required": false, "flag": "--boxes-scale" },
+        { "name": "scores_activation", "kind": "string", "required": false, "flag": "--scores-activation" },
+        { "name": "background_class", "kind": "string", "required": false, "flag": "--background-class" },
+        { "name": "score_thr", "kind": "number", "required": false, "flag": "--score-thr" },
+        { "name": "topk", "kind": "number", "required": false, "flag": "--topk" },
+        { "name": "dnn_backend", "kind": "string", "required": false, "flag": "--dnn-backend" },
+        { "name": "dnn_target", "kind": "string", "required": false, "flag": "--dnn-target" },
+        { "name": "strict", "kind": "string", "required": false, "flag": "--strict" },
+        { "name": "output", "kind": "file", "required": false, "flag": "--output" },
+        { "name": "meta_output", "kind": "file", "required": false, "flag": "--meta-output" },
+        { "name": "dry_run", "kind": "string", "required": false, "flag": "--dry-run" }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--output", "kind": "file", "scope": "path", "description": "Writes predictions JSON." },
+          { "flag": "--meta-output", "kind": "file", "scope": "path", "description": "Writes metadata JSON." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "predictions_json", "kind": "file", "default": "reports/pred_rtdetr_opencv_dnn.json" },
+        { "name": "meta_json", "kind": "file", "default": "reports/pred_rtdetr_opencv_dnn.json.meta.json" }
+      ],
+      "examples": [
+        {
+          "description": "Export RT-DETR OpenCV-DNN predictions (dry-run works without OpenCV installed).",
+          "command": "python3 tools/export_predictions_opencv_dnn_rtdetr.py --dataset data/coco128 --dry-run --output reports/pred_rtdetr_opencv_dnn.json"
+        }
+      ],
+      "docs": ["docs/opencv_dnn_inference.md"]
+    },
+    {
       "id": "build_trt_engine",
       "entrypoint": "tools/build_trt_engine.py",
       "runner": "python3",
