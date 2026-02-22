@@ -2349,6 +2349,71 @@
       "docs": ["docs/runpod_gpu_validation_split.md", "docs/doctor_diagnostics.md", "manual/chapters/17_realtime_batch_inference.tex"]
     },
     {
+      "id": "gen_ci_dummy_dets_onnx",
+      "entrypoint": "tools/ci/gen_dummy_dets_onnx.py",
+      "runner": "python3",
+      "summary": "Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks.",
+      "tags": ["ci", "onnx", "smoke", "tensorrt", "onnxruntime"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["onnx"] },
+      "inputs": [
+        { "name": "out", "kind": "file", "required": true, "flag": "--out" },
+        { "name": "input_name", "kind": "string", "required": false, "flag": "--input-name", "default": "images" },
+        { "name": "output_name", "kind": "string", "required": false, "flag": "--output-name", "default": "output0" },
+        { "name": "shape", "kind": "string", "required": false, "flag": "--shape", "default": "1x3x64x64" },
+        { "name": "opset", "kind": "number", "required": false, "flag": "--opset", "default": 17 },
+        { "name": "ir_version", "kind": "number", "required": false, "flag": "--ir-version", "default": 11 },
+        { "name": "alpha", "kind": "number", "required": false, "flag": "--alpha", "default": 0.001 }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--out", "kind": "file", "scope": "path", "description": "Writes deterministic CI dummy ONNX model." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "onnx_model", "kind": "file", "description": "Generated ONNX model file.", "default": "reports/ci_trt_smoke/model.onnx" }
+      ],
+      "examples": [
+        {
+          "description": "Generate CI dummy model with ORT-compatible IR version.",
+          "command": "python3 tools/ci/gen_dummy_dets_onnx.py --out reports/ci_trt_smoke/model.onnx --shape 1x3x64x64 --opset 17 --ir-version 11"
+        }
+      ],
+      "docs": ["docs/ci_incidents.md"]
+    },
+    {
+      "id": "gen_ci_smoke_dataset",
+      "entrypoint": "tools/ci/gen_smoke_dataset.py",
+      "runner": "python3",
+      "summary": "Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests.",
+      "tags": ["ci", "dataset", "smoke"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "requires": { "python_packages": ["numpy", "Pillow"] },
+      "inputs": [
+        { "name": "out", "kind": "dir", "required": true, "flag": "--out" },
+        { "name": "split", "kind": "string", "required": false, "flag": "--split", "default": "val" },
+        { "name": "image_stem", "kind": "string", "required": false, "flag": "--image-stem", "default": "000001" },
+        { "name": "hw", "kind": "string", "required": false, "flag": "--hw", "default": "48x64" }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--out", "kind": "dir", "scope": "tree", "description": "Writes minimal YOLO smoke dataset tree (images/ + labels/)." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "dataset_root", "kind": "dir", "description": "Generated smoke dataset root directory.", "default": "reports/ci_trt_smoke/dataset" }
+      ],
+      "examples": [
+        {
+          "description": "Generate tiny dataset for exporter smoke checks.",
+          "command": "python3 tools/ci/gen_smoke_dataset.py --out reports/ci_trt_smoke/dataset --split val --hw 48x64"
+        }
+      ],
+      "docs": ["docs/ci_incidents.md"]
+    },
+    {
       "id": "benchmark_latency",
       "entrypoint": "tools/benchmark_latency.py",
       "runner": "python3",

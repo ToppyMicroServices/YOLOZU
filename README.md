@@ -92,8 +92,8 @@ Detailed option patterns are in [`docs/README.md`](docs/README.md).
 Interpretation:
 
 - PR quality is judged by `ci`.
-- `container` is for image publishing flows (tag/release/manual) and may fail independently
-  without blocking normal PR quality decisions.
+- `container` now runs build checks on `main` pushes, and publishes images on tag/manual runs.
+- Container failures may still be treated independently from required PR quality decisions (`ci`).
 
 Optional extras:
 

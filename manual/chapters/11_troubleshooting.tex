@@ -26,7 +26,9 @@ python3 tools/validate_instance_segmentation_predictions.py /path/to/preds.json
   \item \textbf{Pathing issues}: Relative paths embedded within the JSON artifact fail to resolve correctly against the specified \cmd{--pred-root}.
   \item \textbf{Class mapping mismatches}: The ordering defined in \path{classes.txt} diverges from the internal mapping utilized by the model or exporter.
   \item \textbf{Backend discrepancies}: Pre-processing or post-processing logic varies subtly across different inference backends.
-  \item \textbf{TensorRT environment constraints}: TensorRT execution is strictly pinned to Linux/NVIDIA environments; you must utilize the documented container workflow to ensure compatibility.
+  \item \textbf{TensorRT environment constraints}: TensorRT execution is strictly pinned to Linux/NVIDIA environments; use the documented container workflow to keep CUDA/TRT/ORT compatibility pinned.
+  \item \textbf{Container workflow expectations}: \path{.github/workflows/container.yml} runs build validation on \texttt{main} pushes, while image publication is gated to tag/manual runs.
+  \item \textbf{ONNXRuntime model-load failures}: If ORT reports unsupported ONNX IR versions, regenerate artifacts with a compatible IR version (CI smoke pins IR v11 for compatibility).
 \end{itemize}
 
 \section{Further reading and resources}
@@ -35,4 +37,5 @@ python3 tools/validate_instance_segmentation_predictions.py /path/to/preds.json
   \item External inference documentation: \path{docs/external_inference.md}
   \item Predictions schema specification: \path{docs/predictions_schema.md}
   \item Training and export overview: \path{docs/training_inference_export.md}
+  \item CI incident logbook: \path{docs/ci_incidents.md}
 \end{itemize}
