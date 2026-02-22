@@ -27,26 +27,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       has_runner: ${{ steps.chk.outputs.has_runner }}
+      probe_status: ${{ steps.chk.outputs.probe_status }}
     steps:
       - name: Detect idle GPU self-hosted runner
         id: chk
         env:
           GH_TOKEN: ${{ github.token }}
+          RUNNER_DISCOVERY_TOKEN: ${{ secrets.RUNNER_DISCOVERY_TOKEN }}
           REPO: ${{ github.repository }}
           REQUIRED_LABEL: gpu
         shell: bash
         run: |
           set -euo pipefail
+          auth_token="${RUNNER_DISCOVERY_TOKEN:-${GH_TOKEN}}"
           api_url="https://api.github.com/repos/${REPO}/actions/runners?per_page=100"
           tmp_json="$(mktemp)"
           status_code="$(curl -sS -o "${tmp_json}" -w "%{http_code}" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Authorization: Bearer ${auth_token}" \
             -H "Accept: application/vnd.github+json" \
             "${api_url}" || true)"
 
           if [[ "${status_code}" != "200" ]]; then
             echo "has_runner=false" >> "${GITHUB_OUTPUT}"
-            echo "Runner discovery API returned status=${status_code}; defaulting to skip."
+            echo "probe_status=http_${status_code}" >> "${GITHUB_OUTPUT}"
+            if [[ "${status_code}" == "403" && -z "${RUNNER_DISCOVERY_TOKEN:-}" ]]; then
+              echo "Runner discovery API returned 403 with default GITHUB_TOKEN. Configure RUNNER_DISCOVERY_TOKEN secret to enable runner availability detection."
+            else
+              echo "Runner discovery API returned status=${status_code}; defaulting to skip."
+            fi
             exit 0
           fi
 
@@ -59,9 +67,11 @@ jobs:
           ' "${tmp_json}")"
           if [[ "${count}" -gt 0 ]]; then
             echo "has_runner=true" >> "${GITHUB_OUTPUT}"
+            echo "probe_status=ok" >> "${GITHUB_OUTPUT}"
             echo "Found ${count} eligible GPU runner(s)."
           else
             echo "has_runner=false" >> "${GITHUB_OUTPUT}"
+            echo "probe_status=ok" >> "${GITHUB_OUTPUT}"
             echo "No idle GPU self-hosted runner is available."
           fi
 
@@ -283,6 +293,7 @@ jobs:
             "actor": "${GITHUB_ACTOR}",
             "check_runner_result": "${{ needs.check_runner.result }}",
             "has_runner": "${{ needs.check_runner.outputs.has_runner }}",
+            "probe_status": "${{ needs.check_runner.outputs.probe_status }}",
             "no_runner_result": "${{ needs.no_runner.result }}",
             "gpu_job_result": "${{ needs.trt_and_opencv_cuda.result }}"
           }

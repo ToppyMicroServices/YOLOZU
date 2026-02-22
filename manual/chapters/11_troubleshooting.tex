@@ -30,7 +30,7 @@ python3 tools/validate_instance_segmentation_predictions.py /path/to/preds.json
   \item \textbf{CI scope optimization}: Required CI uses a change-scope fast path; docs/metadata-only commits skip heavy test jobs by design.
   \item \textbf{Container workflow expectations}: \path{.github/workflows/container.yml} runs build validation on \texttt{main} pushes, while image publication is gated to tag/manual runs.
   \item \textbf{Container trigger scope}: Container checks on \texttt{main} are restricted to container-related paths (workflow/deploy/packaging inputs) to avoid unnecessary runs.
-  \item \textbf{Self-hosted GPU workflow behavior}: \path{.github/workflows/ngc_test.yml} probes for an idle \texttt{self-hosted + gpu} runner first; if none is online/idle, the workflow exits via a deterministic skip job.
+  \item \textbf{Self-hosted GPU workflow behavior}: \path{.github/workflows/ngc_test.yml} probes for an idle \texttt{self-hosted + gpu} runner first; if none is online/idle, the workflow exits via a deterministic skip job. If probe API access is denied (\texttt{403}), configure repository secret \texttt{RUNNER\_DISCOVERY\_TOKEN} to enable runner discovery.
   \item \textbf{ONNXRuntime model-load failures}: If ORT reports unsupported ONNX IR versions, regenerate artifacts with a compatible IR version (CI smoke pins IR v11 for compatibility).
 \end{itemize}
 

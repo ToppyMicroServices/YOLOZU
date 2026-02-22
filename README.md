@@ -97,6 +97,7 @@ Interpretation:
 - `container` now runs build checks on `main` pushes, and publishes images on tag/manual runs.
 - `container` `main` runs are limited to container-related paths (Dockerfiles/deploy/packaging inputs).
 - `gpu-ngc` first checks for an idle `self-hosted + gpu` runner and skips cleanly when unavailable.
+- If `gpu-ngc` runner probing returns 403, set `RUNNER_DISCOVERY_TOKEN` secret (repo-scoped PAT with Actions read/admin visibility on self-hosted runners).
 - Container failures may still be treated independently from required PR quality decisions (`ci`).
 
 Optional extras:
