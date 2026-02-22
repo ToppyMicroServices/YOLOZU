@@ -8,7 +8,8 @@ permissions:
 
 jobs:
   gpu_smoke:
-    runs-on: machine
+    # machine.dev provisions a runner. Specify GPU explicitly to avoid CPU machines.
+    runs-on: [machine, gpu=t4]
     timeout-minutes: 60
     env:
       NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
