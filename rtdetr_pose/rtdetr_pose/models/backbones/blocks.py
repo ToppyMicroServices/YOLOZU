@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-import torch
-from torch import nn
+try:
+    import torch
+    from torch import nn
+except ImportError:  # pragma: no cover
+    from types import SimpleNamespace
+
+    torch = None  # type: ignore[assignment]
+    nn = SimpleNamespace(Module=object)  # type: ignore[assignment]
 
 
 def _normalize_activation_name(name: str) -> str:

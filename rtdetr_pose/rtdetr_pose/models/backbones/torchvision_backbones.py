@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from torch import Tensor
+try:
+    from torch import Tensor
+except ImportError:  # pragma: no cover
+    Tensor = None  # type: ignore[assignment,misc]
 
 from ...backbone_interface import BaseBackbone
 from .registry import register_backbone

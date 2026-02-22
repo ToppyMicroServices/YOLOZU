@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from torch import Tensor, nn
+try:
+    from torch import Tensor, nn
+except ImportError:  # pragma: no cover
+    from types import SimpleNamespace
+
+    Tensor = None  # type: ignore[assignment,misc]
+    nn = SimpleNamespace(Module=object)  # type: ignore[assignment]
 
 from ...backbone_interface import BaseBackbone
 from .blocks import CSPBlock, ConvNormAct, SPPF

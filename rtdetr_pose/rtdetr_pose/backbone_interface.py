@@ -3,7 +3,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Sequence
 
-from torch import Tensor, nn
+try:
+    from torch import Tensor, nn
+except ImportError:  # pragma: no cover
+    from types import SimpleNamespace
+
+    class _NNModuleStub:  # type: ignore[no-redef]
+        pass
+
+    Tensor = None  # type: ignore[assignment,misc]
+    nn = SimpleNamespace(Module=_NNModuleStub)  # type: ignore[assignment]
 
 
 class BaseBackbone(nn.Module, ABC):

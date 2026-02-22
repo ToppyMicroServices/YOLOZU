@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
-from torch import Tensor, nn
+try:
+    from torch import Tensor, nn
+except ImportError:  # pragma: no cover
+    from types import SimpleNamespace
+
+    Tensor = None  # type: ignore[assignment,misc]
+    nn = SimpleNamespace(Module=object)  # type: ignore[assignment]
 
 
 class BackboneProjector(nn.Module):
