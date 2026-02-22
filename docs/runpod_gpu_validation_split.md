@@ -86,7 +86,8 @@ If you are not using RunPod directly, use the machine-runner workflow:
 - Stage input:
   - `zisn1`: RT-DETR pose train/ONNX + ORT CUDA parity
   - `zisn2`: TensorRT build/export/parity/eval/latency
-  - `all`: run both stages in order and publish consolidated logs
+  - `zisn3`: OpenCV-DNN CPU/CUDA parity capture + Safe TTT/CTTA stability logs + doctor
+  - `all`: run all stages in order and publish consolidated logs
 
 Published logs branch:
 
@@ -96,3 +97,4 @@ Notes:
 
 - `zisn1` attempts 2-GPU DDP; when only one GPU is available, it records `single_gpu_fallback` in `ddp_status.json`.
 - `zisn2` requires `NGC_API_KEY` for `nvcr.io/nvidia/tensorrt:24.08-py3`. If absent, the stage exits with `skip_reason.txt`.
+- `zisn3` records OpenCV CUDA capability in `opencv_cuda_status.json`; CUDA parity artifacts are required only when status is `ok`.
