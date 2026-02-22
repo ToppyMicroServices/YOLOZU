@@ -122,6 +122,24 @@ class _CudaBackend:
         self.module = module
 
 
+def _to_int_handle(value: object) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return int(value)
+    for attr in ("value", "handle"):
+        try:
+            attr_value = getattr(value, attr)
+            if attr_value is not None:
+                return int(attr_value)
+        except Exception:
+            pass
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except Exception as exc:
+        raise RuntimeError(f"failed to convert CUDA handle/pointer to int: {value!r}") from exc
+
+
 def _load_cuda_backend() -> _CudaBackend:
     try:
         import pycuda.driver as cuda  # type: ignore
@@ -146,6 +164,9 @@ def _load_cuda_backend() -> _CudaBackend:
 
 class _TrtRunner:
     def __init__(self, *, engine_path: Path, input_name: str):
+        self.backend = _load_cuda_backend()
+        self.stream = self._create_stream()
+
         try:
             import tensorrt as trt  # type: ignore
         except Exception as exc:  # pragma: no cover
@@ -163,7 +184,6 @@ class _TrtRunner:
         if self.context is None:
             raise RuntimeError("failed to create TensorRT execution context")
 
-        self.backend = _load_cuda_backend()
         self.input_name = input_name
         self.mode = "v2"
         self.io_names: list[str] = []
@@ -174,7 +194,6 @@ class _TrtRunner:
         self.device_buffers: dict[str, object] = {}
         self.host_buffers: dict[str, np.ndarray] = {}
         self.last_shapes: dict[str, tuple[int, ...]] = {}
-        self.stream = self._create_stream()
 
         # TensorRT 10+ uses tensor-address v3 API; older uses bindings/v2.
         if hasattr(self.context, "execute_async_v3") and hasattr(self.engine, "num_io_tensors") and hasattr(self.engine, "get_tensor_name"):
@@ -216,10 +235,7 @@ class _TrtRunner:
             return self.backend.module.Stream()
         err, stream = self.backend.module.cudaStreamCreate()
         self._cuda_check(err, op="cudaStreamCreate")
-        try:
-            return int(stream)
-        except Exception:
-            return stream
+        return _to_int_handle(stream)
 
     def _alloc(self, name: str, shape: tuple[int, ...], dtype):
         size = int(np.prod(shape))
@@ -230,10 +246,7 @@ class _TrtRunner:
         else:
             err, device = self.backend.module.cudaMalloc(nbytes)
             self._cuda_check(err, op=f"cudaMalloc({name})")
-            try:
-                device = int(device)
-            except Exception:
-                pass
+            device = _to_int_handle(device)
         self.host_buffers[name] = host
         self.device_buffers[name] = device
         self.last_shapes[name] = shape
@@ -303,18 +316,18 @@ class _TrtRunner:
             return outputs
 
         err = self.backend.module.cudaMemcpyAsync(
-            self.device_buffers[input_name],
-            host_input,
+            _to_int_handle(self.device_buffers[input_name]),
+            int(host_input.ctypes.data),
             host_input.nbytes,
             self.backend.module.cudaMemcpyKind.cudaMemcpyHostToDevice,
-            self.stream,
+            _to_int_handle(self.stream),
         )
         self._cuda_check(err, op="cudaMemcpyAsync H2D")
 
         if self.mode == "v3":
-            ok = self.context.execute_async_v3(stream_handle=self.stream)
+            ok = self.context.execute_async_v3(stream_handle=_to_int_handle(self.stream))
         else:
-            ok = self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream)
+            ok = self.context.execute_async_v2(bindings=self.bindings, stream_handle=_to_int_handle(self.stream))
         if not ok:
             raise RuntimeError("TensorRT execution failed")
 
@@ -322,15 +335,15 @@ class _TrtRunner:
         for name in self.output_names:
             host = self.host_buffers[name]
             err = self.backend.module.cudaMemcpyAsync(
-                host,
-                self.device_buffers[name],
+                int(host.ctypes.data),
+                _to_int_handle(self.device_buffers[name]),
                 host.nbytes,
                 self.backend.module.cudaMemcpyKind.cudaMemcpyDeviceToHost,
-                self.stream,
+                _to_int_handle(self.stream),
             )
             self._cuda_check(err, op=f"cudaMemcpyAsync D2H({name})")
 
-        err = self.backend.module.cudaStreamSynchronize(self.stream)
+        err = self.backend.module.cudaStreamSynchronize(_to_int_handle(self.stream))
         self._cuda_check(err, op="cudaStreamSynchronize")
         for name in self.output_names:
             host = self.host_buffers[name]
