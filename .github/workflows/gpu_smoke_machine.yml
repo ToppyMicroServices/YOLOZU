@@ -2,6 +2,20 @@ name: gpu-smoke-machine
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - .github/workflows/gpu_smoke_machine.yml
+      - tools/build_trt_engine.py
+      - tools/ci/**
+      - tools/export_trt.py
+      - tools/export_predictions_trt.py
+      - tools/measure_trt_latency.py
+      - tools/run_trt_pipeline.py
+
+concurrency:
+  group: gpu-smoke-machine-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -74,9 +88,18 @@ jobs:
                 --meta-output "${meta_path}"
 
               if trtexec --help 2>&1 | grep -q -- "--warmUp"; then
-                trtexec --loadEngine="${engine_path}" --shapes=images:1x3x64x64 --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
+                trtexec --loadEngine="${engine_path}" --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
               else
-                trtexec --loadEngine="${engine_path}" --shapes=images:1x3x64x64 --iterations=1 > "${out_dir}/trtexec_load.log"
+                trtexec --loadEngine="${engine_path}" --iterations=1 > "${out_dir}/trtexec_load.log"
               fi
               ls -la "${out_dir}"
             '
+
+      - name: Upload TRT smoke artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: trt-smoke
+          if-no-files-found: ignore
+          path: |
+            reports/ci_trt_smoke/**
