@@ -26,7 +26,12 @@ def _now_utc() -> str:
 
 def _git_head(repo_root: Path) -> str | None:
     try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(repo_root), text=True).strip()
+        out = subprocess.check_output(
+            ["git", "-c", f"safe.directory={repo_root}", "rev-parse", "HEAD"],
+            cwd=str(repo_root),
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
     except Exception:
         return None
     return out if out else None
@@ -134,4 +139,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

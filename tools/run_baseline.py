@@ -123,7 +123,11 @@ def _parse_args(argv):
 
 def _git_sha(repo_root: Path) -> str | None:
     try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(repo_root)).decode("utf-8").strip()
+        out = subprocess.check_output(
+            ["git", "-c", f"safe.directory={repo_root}", "rev-parse", "HEAD"],
+            cwd=str(repo_root),
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8").strip()
         return out or None
     except Exception:
         return None

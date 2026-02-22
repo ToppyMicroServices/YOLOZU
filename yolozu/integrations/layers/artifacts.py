@@ -13,7 +13,13 @@ def _repo_root() -> Path:
 
 def _git_sha() -> str | None:
     try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(_repo_root()), text=True).strip()
+        root = _repo_root()
+        out = subprocess.check_output(
+            ["git", "-c", f"safe.directory={root}", "rev-parse", "HEAD"],
+            cwd=str(root),
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
         return out
     except Exception:
         return None

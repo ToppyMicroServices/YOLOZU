@@ -42,7 +42,11 @@ def _now_utc() -> str:
 
 def _git_head() -> str | None:
     try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo_root)
+        out = subprocess.check_output(
+            ["git", "-c", f"safe.directory={repo_root}", "rev-parse", "HEAD"],
+            cwd=repo_root,
+            stderr=subprocess.DEVNULL,
+        )
         return out.decode("utf-8").strip() or None
     except Exception:
         return None

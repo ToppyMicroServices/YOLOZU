@@ -46,11 +46,14 @@ jobs:
             -v "${{ github.workspace }}:/workspace" -w /workspace \
             nvcr.io/nvidia/tensorrt:24.08-py3 \
             bash -lc '
-              set -euo pipefail
-              nvidia-smi
-              python3 --version
-              python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir numpy onnx
+	              set -euo pipefail
+	              nvidia-smi
+	              python3 --version
+	              if command -v git >/dev/null 2>&1; then
+	                git config --global --add safe.directory /workspace || true
+	              fi
+	              python3 -m pip install --upgrade pip
+	              python3 -m pip install --no-cache-dir numpy onnx
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"
@@ -70,6 +73,10 @@ jobs:
                 --max-shape 1x3x64x64 \
                 --meta-output "${meta_path}"
 
-              trtexec --loadEngine="${engine_path}" --shapes=images:1x3x64x64 --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
-              ls -la "${out_dir}"
-            '
+	              if trtexec --help 2>&1 | grep -q -- "--warmUp"; then
+	                trtexec --loadEngine="${engine_path}" --shapes=images:1x3x64x64 --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
+	              else
+	                trtexec --loadEngine="${engine_path}" --shapes=images:1x3x64x64 --iterations=1 > "${out_dir}/trtexec_load.log"
+	              fi
+	              ls -la "${out_dir}"
+	            '

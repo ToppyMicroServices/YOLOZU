@@ -18,6 +18,9 @@ sys.path.insert(0, str(repo_root))
 from yolozu.dataset import build_manifest
 
 
+_TRTEXEC_HELP_CACHE: dict[str, str] = {}
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--onnx", required=True, help="Path to ONNX model.")
@@ -120,8 +123,10 @@ def _build_command(args: argparse.Namespace, *, onnx_path: Path, engine_path: Pa
         f"--minShapes={args.input_name}:{args.min_shape}",
         f"--optShapes={args.input_name}:{args.opt_shape}",
         f"--maxShapes={args.input_name}:{args.max_shape}",
-        f"--timingCacheFile={timing_cache}",
     ]
+    timing_cache_arg = _trtexec_timing_cache_arg(str(args.trtexec), timing_cache)
+    if timing_cache_arg:
+        cmd.append(timing_cache_arg)
     workspace_arg = _trtexec_workspace_arg(str(args.trtexec), int(args.workspace))
     if workspace_arg:
         cmd.append(workspace_arg)
@@ -145,6 +150,13 @@ def _trtexec_available(trtexec: str) -> bool:
     return shutil.which(str(trtexec)) is not None
 
 
+def _trtexec_timing_cache_arg(trtexec: str, timing_cache: Path) -> str | None:
+    help_text = _trtexec_help(str(trtexec))
+    if "--timingCacheFile" in help_text:
+        return f"--timingCacheFile={timing_cache}"
+    return None
+
+
 def _trtexec_workspace_arg(trtexec: str, workspace_mib: int) -> str | None:
     """Return the appropriate workspace/memory-pool arg for this trtexec.
 
@@ -153,7 +165,7 @@ def _trtexec_workspace_arg(trtexec: str, workspace_mib: int) -> str | None:
     `--memPoolSize=workspace:<MiB>`.
     """
 
-    help_text = _run_capture([trtexec, "--help"]) or _run_capture([trtexec, "-h"]) or ""
+    help_text = _trtexec_help(str(trtexec))
     if "--workspace" in help_text:
         return f"--workspace={int(workspace_mib)}"
     if "--memPoolSize" in help_text:
@@ -165,7 +177,7 @@ def _trtexec_workspace_arg(trtexec: str, workspace_mib: int) -> str | None:
 def _git_head() -> str | None:
     try:
         out = subprocess.check_output(
-            ["git", "-c", "safe.directory=*", "rev-parse", "HEAD"],
+            ["git", "-c", f"safe.directory={repo_root}", "rev-parse", "HEAD"],
             cwd=repo_root,
             stderr=subprocess.DEVNULL,
         )
@@ -183,6 +195,32 @@ def _run_capture(cmd: list[str]) -> str | None:
         return out.decode("utf-8", errors="replace").strip()
     except Exception:
         return None
+
+
+def _run_capture_allow_fail(cmd: list[str]) -> str | None:
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=repo_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+    except Exception:
+        return None
+    try:
+        return proc.stdout.decode("utf-8", errors="replace").strip()
+    except Exception:
+        return None
+
+
+def _trtexec_help(trtexec: str) -> str:
+    cached = _TRTEXEC_HELP_CACHE.get(str(trtexec))
+    if cached is not None:
+        return cached
+    text = _run_capture_allow_fail([trtexec, "--help"]) or _run_capture_allow_fail([trtexec, "-h"]) or ""
+    _TRTEXEC_HELP_CACHE[str(trtexec)] = text
+    return text
 
 
 def _parse_cuda_version(nvidia_smi_text: str) -> str | None:
