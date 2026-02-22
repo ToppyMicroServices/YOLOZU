@@ -88,6 +88,7 @@ Detailed option patterns are in [`docs/README.md`](docs/README.md).
 
 - Required PR gate: `.github/workflows/ci.yml` (`ci` workflow)
 - Optional publish workflow: `.github/workflows/container.yml` (`container` workflow)
+- Optional GPU self-hosted smoke: `.github/workflows/ngc_test.yml` (`gpu-ngc` workflow)
 
 Interpretation:
 
@@ -95,6 +96,7 @@ Interpretation:
 - `ci` uses a change-scope fast path: docs/metadata-only updates skip heavy test jobs.
 - `container` now runs build checks on `main` pushes, and publishes images on tag/manual runs.
 - `container` `main` runs are limited to container-related paths (Dockerfiles/deploy/packaging inputs).
+- `gpu-ngc` first checks for an idle `self-hosted + gpu` runner and skips cleanly when unavailable.
 - Container failures may still be treated independently from required PR quality decisions (`ci`).
 
 Optional extras:

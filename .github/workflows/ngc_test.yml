@@ -3,41 +3,229 @@ name: gpu-ngc
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - .github/workflows/ngc_test.yml
+      - tools/build_trt_engine.py
+      - tools/measure_trt_latency.py
+      - tools/export_predictions_trt.py
+      - tools/export_predictions_onnxrt.py
+      - tools/export_predictions_opencv_dnn.py
+      - tools/check_predictions_parity.py
+      - tools/ci/**
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: gpu-ngc-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  trt_and_opencv_cuda:
-    # まずはラベル絞って検証（通ったら gpu ラベル等を戻す）
-    runs-on: self-hosted
-    timeout-minutes: 60
+  check_runner:
+    runs-on: ubuntu-latest
+    outputs:
+      has_runner: ${{ steps.chk.outputs.has_runner }}
+    steps:
+      - name: Detect idle GPU self-hosted runner
+        id: chk
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REQUIRED_LABEL: gpu
+        shell: bash
+        run: |
+          set -euo pipefail
+          runners_json="$(curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/actions/runners?per_page=100")"
 
+          count="$(echo "${runners_json}" | jq -r --arg L "${REQUIRED_LABEL}" '
+            [.runners[]
+              | select(.status == "online")
+              | select(.busy == false)
+              | select(any(.labels[]?.name; . == $L))
+            ] | length
+          ')"
+          if [[ "${count}" -gt 0 ]]; then
+            echo "has_runner=true" >> "${GITHUB_OUTPUT}"
+            echo "Found ${count} eligible GPU runner(s)."
+          else
+            echo "has_runner=false" >> "${GITHUB_OUTPUT}"
+            echo "No idle GPU self-hosted runner is available."
+          fi
+
+  no_runner:
+    needs: check_runner
+    if: ${{ needs.check_runner.outputs.has_runner != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip (no GPU runner)
+        run: |
+          echo "Skipping gpu-ngc: no idle self-hosted GPU runner."
+
+  trt_and_opencv_cuda:
+    needs: check_runner
+    if: ${{ needs.check_runner.outputs.has_runner == 'true' }}
+    runs-on: [self-hosted, linux, x64, gpu]
+    timeout-minutes: 75
+    env:
+      NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Sanity (GPU visible)
+        shell: bash
         run: |
-          set -eux
+          set -euo pipefail
           nvidia-smi
           docker version
-          docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
 
-      - name: Login to NGC (verify)
-        env:
-          NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
+      - name: TensorRT + OpenCV-CUDA smoke in NGC
+        shell: bash
         run: |
-          set -eux
-          test -n "${NGC_API_KEY}"
+          set -euo pipefail
+          out_dir="reports/ci_trt_smoke"
+          mkdir -p "${out_dir}"
+
+          if [[ -z "${NGC_API_KEY:-}" ]]; then
+            echo "NGC_API_KEY is not configured; skipping GPU smoke." | tee "${out_dir}/skip_reason.txt"
+            exit 0
+          fi
+
+          set +x
           echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+          set -x
           docker pull nvcr.io/nvidia/tensorrt:24.08-py3
 
-      - name: TensorRT container smoke
-        run: |
-          set -eux
           docker run --rm --gpus all \
             -v "${{ github.workspace }}:/workspace" -w /workspace \
             nvcr.io/nvidia/tensorrt:24.08-py3 \
             bash -lc '
-              python3 --version
+              set -euo pipefail
               nvidia-smi
-              ls -la
+              python3 --version
+              git config --global --add safe.directory /workspace || true
+              python3 -m pip install --upgrade pip
+              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime opencv-python-headless cuda-python
+
+              out_dir="reports/ci_trt_smoke"
+              mkdir -p "${out_dir}"
+              onnx_path="${out_dir}/model.onnx"
+              engine_path="${out_dir}/model_fp16.plan"
+              meta_path="${out_dir}/engine.meta.json"
+
+              python3 tools/ci/gen_dummy_dets_onnx.py \
+                --out "${onnx_path}" \
+                --input-name images \
+                --output-name output0 \
+                --shape 1x3x64x64 \
+                --opset 17 \
+                --ir-version 11
+
+              python3 tools/build_trt_engine.py \
+                --onnx "${onnx_path}" \
+                --engine "${engine_path}" \
+                --precision fp16 \
+                --meta-output "${meta_path}" \
+                2>&1 | tee "${out_dir}/build_trt_engine.log"
+
+              python3 tools/measure_trt_latency.py \
+                --engine "${engine_path}" \
+                --input-name images \
+                --shape 1x3x64x64 \
+                --iterations 50 \
+                --warmup 10 \
+                --output "${out_dir}/latency_trt.json"
+
+              python3 tools/ci/gen_smoke_dataset.py --out "${out_dir}/dataset" --split val --hw 48x64
+
+              python3 tools/export_predictions_onnxrt.py \
+                --dataset "${out_dir}/dataset" \
+                --split val \
+                --onnx "${onnx_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_onnxrt.json"
+
+              python3 tools/export_predictions_trt.py \
+                --dataset "${out_dir}/dataset" \
+                --split val \
+                --engine "${engine_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_trt.json"
+
+              python3 tools/check_predictions_parity.py \
+                --reference "${out_dir}/pred_onnxrt.json" \
+                --candidate "${out_dir}/pred_trt.json" \
+                --image-size 64 \
+                --iou-thresh 0.99 \
+                --score-atol 1e-4 \
+                --bbox-atol 1e-4 \
+                2>&1 | tee "${out_dir}/parity_trt_vs_onnxrt.log"
+
+              ONNX_PATH="${onnx_path}" python3 - <<'"'"'PY'"'"'
+              import json
+              import os
+              from pathlib import Path
+              import cv2
+              import numpy as np
+
+              out_path = Path("reports/ci_trt_smoke/opencv_cuda_smoke.json")
+              summary = {
+                  "opencv_version": cv2.__version__,
+                  "cuda_devices": 0,
+                  "dnn_cuda_symbols": bool(hasattr(cv2.dnn, "DNN_BACKEND_CUDA") and hasattr(cv2.dnn, "DNN_TARGET_CUDA")),
+                  "status": "skipped",
+              }
+
+              if hasattr(cv2, "cuda") and hasattr(cv2.cuda, "getCudaEnabledDeviceCount"):
+                  try:
+                      summary["cuda_devices"] = int(cv2.cuda.getCudaEnabledDeviceCount())
+                  except Exception as exc:
+                      summary["cuda_query_error"] = str(exc)
+
+              if summary["cuda_devices"] > 0 and summary["dnn_cuda_symbols"]:
+                  try:
+                      net = cv2.dnn.readNetFromONNX(os.environ["ONNX_PATH"])
+                      net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+                      target = cv2.dnn.DNN_TARGET_CUDA_FP16 if hasattr(cv2.dnn, "DNN_TARGET_CUDA_FP16") else cv2.dnn.DNN_TARGET_CUDA
+                      net.setPreferableTarget(target)
+                      net.setInput(np.zeros((1, 3, 64, 64), dtype=np.float32))
+                      out = net.forward()
+                      summary["status"] = "ok"
+                      summary["output_shape"] = list(out.shape)
+                  except Exception as exc:
+                      summary["status"] = "error"
+                      summary["error"] = str(exc)
+              else:
+                  summary["reason"] = "OpenCV CUDA backend unavailable in current image/build"
+
+              out_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+              print(f"wrote {out_path}")
+              if summary["status"] == "error":
+                  raise SystemExit(1)
+              PY
             '
+
+      - name: Upload GPU smoke artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-ngc-smoke
+          if-no-files-found: ignore
+          path: |
+            reports/ci_trt_smoke/**
