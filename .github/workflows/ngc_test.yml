@@ -1,0 +1,43 @@
+name: gpu-ngc
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  trt_and_opencv_cuda:
+    # まずはラベル絞って検証（通ったら gpu ラベル等を戻す）
+    runs-on: self-hosted
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sanity (GPU visible)
+        run: |
+          set -eux
+          nvidia-smi
+          docker version
+          docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+
+      - name: Login to NGC (verify)
+        env:
+          NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
+        run: |
+          set -eux
+          test -n "${NGC_API_KEY}"
+          echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+          docker pull nvcr.io/nvidia/tensorrt:24.08-py3
+
+      - name: TensorRT container smoke
+        run: |
+          set -eux
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}:/workspace" -w /workspace \
+            nvcr.io/nvidia/tensorrt:24.08-py3 \
+            bash -lc '
+              python3 --version
+              nvidia-smi
+              ls -la
+            '
