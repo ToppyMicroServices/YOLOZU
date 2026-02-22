@@ -2311,6 +2311,44 @@
       "docs": ["deploy/runpod/README.md", "docs/tensorrt_pipeline.md"]
     },
     {
+      "id": "gpu_validation_preflight",
+      "entrypoint": "tools/gpu_validation_preflight.py",
+      "runner": "python3",
+      "summary": "Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks.",
+      "tags": ["gpu", "runpod", "validation", "doctor", "parity"],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true,
+        "notes": "Designed for local planning; reports GPU-required steps and runtime capability gaps."
+      },
+      "inputs": [
+        { "name": "output", "kind": "file", "required": false, "flag": "--output", "default": "reports/gpu_validation_preflight.json" },
+        { "name": "strict", "kind": "string", "required": false, "flag": "--strict" }
+      ],
+      "effects": {
+        "writes": [
+          { "flag": "--output", "kind": "file", "scope": "path", "description": "Writes preflight split report JSON." }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        { "name": "report_json", "kind": "file", "default": "reports/gpu_validation_preflight.json" }
+      ],
+      "examples": [
+        {
+          "description": "Generate local/GPU split report for the full GPU validation sweep.",
+          "command": "python3 tools/gpu_validation_preflight.py --output reports/gpu_validation_preflight.json"
+        },
+        {
+          "description": "Fail CI when local prerequisites are still blocked.",
+          "command": "python3 tools/gpu_validation_preflight.py --strict --output reports/gpu_validation_preflight.json"
+        }
+      ],
+      "docs": ["docs/runpod_gpu_validation_split.md", "docs/doctor_diagnostics.md", "manual/chapters/17_realtime_batch_inference.tex"]
+    },
+    {
       "id": "benchmark_latency",
       "entrypoint": "tools/benchmark_latency.py",
       "runner": "python3",

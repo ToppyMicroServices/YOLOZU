@@ -122,6 +122,21 @@ It is not typically enabled in production unless the added cost is explicitly bu
 If you develop on macOS, keep GPU/TensorRT runs on a Linux+NVIDIA box.
 The repo provides a Runpod-oriented path; see \path{deploy/runpod/README.md}.
 
+\subsection{Preflight split for GPU sweep tasks}
+Before reserving GPU runtime, generate a local preflight split report:
+\begin{lstlisting}[language=bash]
+python3 tools/gpu_validation_preflight.py --output reports/gpu_validation_preflight.json
+\end{lstlisting}
+
+The report separates:
+\begin{itemize}
+  \item \path{summary.local_executable_steps}: tasks you can complete locally
+  \item \path{summary.gpu_execution_required_steps}: tasks that require Linux+NVIDIA runtime
+  \item \path{summary.needs_gpu_runtime_steps}: tasks ready to run once GPU runtime is available
+\end{itemize}
+
+Operational runbook: \path{docs/runpod_gpu_validation_split.md}.
+
 \section{What to report in papers/notes}
 For real-time or deployment-relevant results, always report:
 \begin{itemize}

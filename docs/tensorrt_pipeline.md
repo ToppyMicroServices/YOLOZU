@@ -52,6 +52,7 @@ python3 tools/rtdetr_pose_backend_suite.py \
 
 If you're developing on macOS, keep GPU/TensorRT work on Runpod (or any Linux+NVIDIA machine):
 - Docs + Docker skeleton: `deploy/runpod/README.md`
+- Local/GPU split preflight: `python3 tools/gpu_validation_preflight.py --output reports/gpu_validation_preflight.json`
 - One-command runner: `python3 tools/run_trt_pipeline.py ...`
 - End-to-end `rtdetr_pose` export + parity + benchmark: `python3 tools/run_rtdetr_pose_backend_suite.py ...`
 

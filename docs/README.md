@@ -106,6 +106,7 @@ python3 tools/benchmark_latency.py --help
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
 - [Benchmark latency](benchmark_latency.md)
+- [RunPod GPU split preflight](runpod_gpu_validation_split.md)
 
 ## E) LLM / MCP integrations
 
