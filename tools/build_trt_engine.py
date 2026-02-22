@@ -115,15 +115,82 @@ def _parse_shape(value: str) -> tuple[int, ...]:
     return dims
 
 
+def _onnx_dynamic_input(onnx_path: Path, requested_input_name: str) -> dict[str, Any] | None:
+    """Best-effort ONNX input inspection.
+
+    Returns a dict like:
+      {"name": str, "dims": list[int|str]|None, "dynamic": bool}
+    or None if ONNX inspection is unavailable.
+    """
+
+    try:
+        import onnx  # type: ignore
+    except Exception:
+        return None
+
+    try:
+        model = onnx.load(str(onnx_path))
+    except Exception:
+        return None
+
+    inputs = getattr(getattr(model, "graph", None), "input", None)
+    if not inputs:
+        return None
+
+    def _dims(value_info) -> tuple[list[object] | None, bool]:
+        try:
+            tensor_type = value_info.type.tensor_type
+            shape = tensor_type.shape
+            dims = []
+            dynamic = False
+            for d in shape.dim:
+                dim_param = getattr(d, "dim_param", "") or ""
+                if dim_param:
+                    dims.append(str(dim_param))
+                    dynamic = True
+                    continue
+                dim_value = int(getattr(d, "dim_value", 0) or 0)
+                dims.append(dim_value)
+                if dim_value <= 0:
+                    dynamic = True
+            return dims, dynamic
+        except Exception:
+            return None, True
+
+    selected = None
+    for v in inputs:
+        if getattr(v, "name", None) == requested_input_name:
+            selected = v
+            break
+    if selected is None and len(inputs) == 1:
+        selected = inputs[0]
+    if selected is None:
+        return None
+
+    dims, dynamic = _dims(selected)
+    return {"name": str(getattr(selected, "name", requested_input_name)), "dims": dims, "dynamic": bool(dynamic)}
+
+
 def _build_command(args: argparse.Namespace, *, onnx_path: Path, engine_path: Path, timing_cache: Path) -> list[str]:
+    onnx_input = _onnx_dynamic_input(onnx_path, str(args.input_name))
+    dynamic_input = True if onnx_input is None else bool(onnx_input.get("dynamic"))
+    input_name = str(args.input_name)
+    if onnx_input is not None:
+        input_name = str(onnx_input.get("name") or input_name)
+
     cmd = [
         args.trtexec,
         f"--onnx={onnx_path}",
         f"--saveEngine={engine_path}",
-        f"--minShapes={args.input_name}:{args.min_shape}",
-        f"--optShapes={args.input_name}:{args.opt_shape}",
-        f"--maxShapes={args.input_name}:{args.max_shape}",
     ]
+    if dynamic_input:
+        cmd.extend(
+            [
+                f"--minShapes={input_name}:{args.min_shape}",
+                f"--optShapes={input_name}:{args.opt_shape}",
+                f"--maxShapes={input_name}:{args.max_shape}",
+            ]
+        )
     timing_cache_arg = _trtexec_timing_cache_arg(str(args.trtexec), timing_cache)
     if timing_cache_arg:
         cmd.append(timing_cache_arg)
@@ -412,6 +479,10 @@ def main(argv: list[str] | None = None) -> int:
         },
         "python": sys.version,
     }
+
+    onnx_input = _onnx_dynamic_input(onnx_path, str(args.input_name))
+    if onnx_input is not None:
+        meta["onnx_input"] = onnx_input
 
     meta_path = _resolve_path(args.meta_output)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
