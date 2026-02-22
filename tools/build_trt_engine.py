@@ -120,9 +120,11 @@ def _build_command(args: argparse.Namespace, *, onnx_path: Path, engine_path: Pa
         f"--minShapes={args.input_name}:{args.min_shape}",
         f"--optShapes={args.input_name}:{args.opt_shape}",
         f"--maxShapes={args.input_name}:{args.max_shape}",
-        f"--workspace={int(args.workspace)}",
         f"--timingCacheFile={timing_cache}",
     ]
+    workspace_arg = _trtexec_workspace_arg(str(args.trtexec), int(args.workspace))
+    if workspace_arg:
+        cmd.append(workspace_arg)
     if args.precision == "fp16":
         cmd.append("--fp16")
     elif args.precision == "int8":
@@ -143,9 +145,30 @@ def _trtexec_available(trtexec: str) -> bool:
     return shutil.which(str(trtexec)) is not None
 
 
+def _trtexec_workspace_arg(trtexec: str, workspace_mib: int) -> str | None:
+    """Return the appropriate workspace/memory-pool arg for this trtexec.
+
+    TensorRT has changed trtexec flags across major versions. Older builds accept
+    `--workspace=<MiB>`, while newer builds expose the same knob via
+    `--memPoolSize=workspace:<MiB>`.
+    """
+
+    help_text = _run_capture([trtexec, "--help"]) or _run_capture([trtexec, "-h"]) or ""
+    if "--workspace" in help_text:
+        return f"--workspace={int(workspace_mib)}"
+    if "--memPoolSize" in help_text:
+        return f"--memPoolSize=workspace:{int(workspace_mib)}"
+    # Unknown trtexec; omit rather than fail fast on an unsupported flag.
+    return None
+
+
 def _git_head() -> str | None:
     try:
-        out = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo_root)
+        out = subprocess.check_output(
+            ["git", "-c", "safe.directory=*", "rev-parse", "HEAD"],
+            cwd=repo_root,
+            stderr=subprocess.DEVNULL,
+        )
         return out.decode("utf-8").strip() or None
     except Exception:
         return None
