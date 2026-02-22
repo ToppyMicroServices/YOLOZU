@@ -290,6 +290,41 @@ def _trtexec_help(trtexec: str) -> str:
     return text
 
 
+def _run_stream_capture_tail(cmd: list[str], *, tail_chars: int = 20000) -> tuple[int, str]:
+    proc = subprocess.Popen(
+        cmd,
+        cwd=repo_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    tail = ""
+    if proc.stdout is not None:
+        for line in proc.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            tail += line
+            if len(tail) > int(tail_chars):
+                tail = tail[-int(tail_chars) :]
+    return int(proc.wait()), str(tail)
+
+
+def _has_trtexec_shape_args(cmd: list[str]) -> bool:
+    prefixes = ("--minShapes=", "--optShapes=", "--maxShapes=")
+    return any(str(arg).startswith(prefixes) for arg in cmd)
+
+
+def _strip_trtexec_shape_args(cmd: list[str]) -> list[str]:
+    prefixes = ("--minShapes=", "--optShapes=", "--maxShapes=")
+    return [str(arg) for arg in cmd if not str(arg).startswith(prefixes)]
+
+
+def _is_static_shapes_error(output: str) -> bool:
+    text = str(output or "")
+    return ("Static model does not take explicit shapes" in text) or ("does not take explicit shapes" in text)
+
+
 def _parse_cuda_version(nvidia_smi_text: str) -> str | None:
     m = re.search(r"CUDA Version:\s*([0-9]+(?:\.[0-9]+)?)", str(nvidia_smi_text))
     return None if not m else m.group(1)
@@ -516,10 +551,45 @@ def main(argv: list[str] | None = None) -> int:
     meta["builder_effective"] = effective
 
     if effective == "trtexec":
+        attempts: list[dict[str, Any]] = []
         try:
-            subprocess.run(cmd, check=True)
+            rc, tail = _run_stream_capture_tail(cmd)
         except FileNotFoundError as exc:
             raise SystemExit(f"trtexec not found: {args.trtexec} (try --builder python)") from exc
+        attempts.append(
+            {
+                "command": cmd,
+                "command_str": shlex.join(cmd),
+                "returncode": int(rc),
+                "output_tail": str(tail),
+            }
+        )
+        if int(rc) != 0 and _has_trtexec_shape_args(cmd) and _is_static_shapes_error(tail):
+            cmd2 = _strip_trtexec_shape_args(cmd)
+            print("note: retrying trtexec without explicit shapes (static ONNX detected by trtexec)", file=sys.stderr)
+            rc2, tail2 = _run_stream_capture_tail(cmd2)
+            attempts.append(
+                {
+                    "command": cmd2,
+                    "command_str": shlex.join(cmd2),
+                    "returncode": int(rc2),
+                    "output_tail": str(tail2),
+                }
+            )
+            if int(rc2) != 0:
+                meta["command_attempts"] = attempts
+                meta["error"] = "trtexec failed (static shapes retry also failed)"
+                meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
+                raise SystemExit("trtexec failed; see meta JSON for details")
+            cmd = cmd2
+            meta["command"] = cmd
+            meta["command_str"] = shlex.join(cmd)
+        elif int(rc) != 0:
+            meta["command_attempts"] = attempts
+            meta["error"] = "trtexec failed"
+            meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True))
+            raise SystemExit("trtexec failed; see meta JSON for details")
+        meta["command_attempts"] = attempts
     else:
         if not _tensorrt_py_available():
             meta["error"] = "Python TensorRT package not available (install `tensorrt` or use --builder trtexec)."
