@@ -92,7 +92,9 @@ Detailed option patterns are in [`docs/README.md`](docs/README.md).
 Interpretation:
 
 - PR quality is judged by `ci`.
+- `ci` uses a change-scope fast path: docs/metadata-only updates skip heavy test jobs.
 - `container` now runs build checks on `main` pushes, and publishes images on tag/manual runs.
+- `container` `main` runs are limited to container-related paths (Dockerfiles/deploy/packaging inputs).
 - Container failures may still be treated independently from required PR quality decisions (`ci`).
 
 Optional extras:

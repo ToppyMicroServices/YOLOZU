@@ -7,10 +7,21 @@ on:
     tags:
       - "v*"
       - "release/v*"
+    paths:
+      - ".github/workflows/container.yml"
+      - "deploy/docker/**"
+      - "deploy/runpod/**"
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "MANIFEST.in"
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   cpu:

@@ -25,3 +25,9 @@ This page records concrete CI failures and the guard rails added afterward.
 - Cause: `tools/ci/gen_dummy_dets_onnx.py` emitted an ONNX model with IR version 13, while the CI container ORT build supported up to IR 11.
 - Prevention: pin dummy model generation to IR version 11 (`--ir-version 11`) for GPU smoke compatibility.
 - Rule: for CI-generated ONNX artifacts, pin both opset and IR version explicitly rather than relying on library defaults.
+
+## 2026-02-22 — Incident 5 (CI over-triggering and queue inefficiency)
+
+- Cause: heavy CI jobs and container checks were triggered for commits that only changed docs/metadata.
+- Prevention: add change-scope detection in `ci.yml` and skip heavy jobs when no runtime/code paths changed; keep a fast-path job so workflow still reports status.
+- Rule: heavy CI should be path-scoped, while still leaving a deterministic lightweight status for docs-only commits.

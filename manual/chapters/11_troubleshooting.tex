@@ -27,7 +27,9 @@ python3 tools/validate_instance_segmentation_predictions.py /path/to/preds.json
   \item \textbf{Class mapping mismatches}: The ordering defined in \path{classes.txt} diverges from the internal mapping utilized by the model or exporter.
   \item \textbf{Backend discrepancies}: Pre-processing or post-processing logic varies subtly across different inference backends.
   \item \textbf{TensorRT environment constraints}: TensorRT execution is strictly pinned to Linux/NVIDIA environments; use the documented container workflow to keep CUDA/TRT/ORT compatibility pinned.
+  \item \textbf{CI scope optimization}: Required CI uses a change-scope fast path; docs/metadata-only commits skip heavy test jobs by design.
   \item \textbf{Container workflow expectations}: \path{.github/workflows/container.yml} runs build validation on \texttt{main} pushes, while image publication is gated to tag/manual runs.
+  \item \textbf{Container trigger scope}: Container checks on \texttt{main} are restricted to container-related paths (workflow/deploy/packaging inputs) to avoid unnecessary runs.
   \item \textbf{ONNXRuntime model-load failures}: If ORT reports unsupported ONNX IR versions, regenerate artifacts with a compatible IR version (CI smoke pins IR v11 for compatibility).
 \end{itemize}
 

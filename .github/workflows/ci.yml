@@ -4,9 +4,53 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  changes:
+    name: change scope
+    runs-on: ubuntu-latest
+    outputs:
+      full_ci: ${{ steps.filter.outputs.full_ci }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect change scope
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            full_ci:
+              - '.github/workflows/**'
+              - 'yolozu/**'
+              - 'tools/**'
+              - 'scripts/**'
+              - 'rtdetr_pose/**'
+              - 'tests/**'
+              - 'configs/**'
+              - 'data/**'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+              - 'pytest.ini'
+              - 'ruff.toml'
+              - 'MANIFEST.in'
+              - 'setup.py'
+              - 'setup.cfg'
+
+  docs_meta:
+    name: docs/metadata fast path
+    needs: [changes]
+    if: ${{ needs.changes.outputs.full_ci != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip heavy CI for docs-only/metadata-only changes
+        run: echo "No code/runtime changes detected. Heavy CI jobs are skipped."
+
   smoke_gate:
     name: smoke gate (README one-liner)
+    needs: [changes]
+    if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +71,8 @@ jobs:
 
   quality_gate:
     name: quality gate (ruff + focused pytest)
-    needs: [smoke_gate]
+    needs: [changes, smoke_gate]
+    if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +102,8 @@ jobs:
 
   pip_smoke:
     name: pip smoke (python ${{ matrix.python-version }})
-    needs: [smoke_gate]
+    needs: [changes, smoke_gate]
+    if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -86,7 +132,8 @@ jobs:
           yolozu demo instance-seg --num-images 2 --image-size 48 --max-instances 2 --run-dir "${RUNNER_TEMP}/yolozu_demo"
 
   test:
-    needs: [smoke_gate, quality_gate]
+    needs: [changes, smoke_gate, quality_gate]
+    if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
