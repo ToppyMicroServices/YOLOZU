@@ -2380,7 +2380,7 @@
           "command": "python3 tools/ci/gen_dummy_dets_onnx.py --out reports/ci_trt_smoke/model.onnx --shape 1x3x64x64 --opset 17 --ir-version 11"
         }
       ],
-      "docs": ["docs/ci_incidents.md"]
+      "docs": ["docs/ci_incidents.md", "README.md", "manual/chapters/11_troubleshooting.tex"]
     },
     {
       "id": "gen_ci_smoke_dataset",
@@ -2411,7 +2411,7 @@
           "command": "python3 tools/ci/gen_smoke_dataset.py --out reports/ci_trt_smoke/dataset --split val --hw 48x64"
         }
       ],
-      "docs": ["docs/ci_incidents.md"]
+      "docs": ["docs/ci_incidents.md", "README.md", "manual/chapters/11_troubleshooting.tex"]
     },
     {
       "id": "benchmark_latency",
