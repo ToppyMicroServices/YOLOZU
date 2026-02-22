@@ -76,3 +76,23 @@ PY
 2. Run GPU jobs in this order:
 - training (DDP) -> ONNX/ORT parity -> TRT build/export/eval/latency -> OpenCV-DNN CUDA -> TTT/CTTA stability -> final doctor capture.
 3. Archive artifacts under one run folder and attach them to issue closure.
+
+## GitHub Actions path (machine runner)
+
+If you are not using RunPod directly, use the machine-runner workflow:
+
+- Workflow: `.github/workflows/gpu_zisn_pipeline.yml`
+- Trigger: `workflow_dispatch`
+- Stage input:
+  - `zisn1`: RT-DETR pose train/ONNX + ORT CUDA parity
+  - `zisn2`: TensorRT build/export/parity/eval/latency
+  - `all`: run both stages in order and publish consolidated logs
+
+Published logs branch:
+
+- `ci-logs/gpu-zisn` with `ci_logs/ci_gpu_zisn/dod_summary.json`
+
+Notes:
+
+- `zisn1` attempts 2-GPU DDP; when only one GPU is available, it records `single_gpu_fallback` in `ddp_status.json`.
+- `zisn2` requires `NGC_API_KEY` for `nvcr.io/nvidia/tensorrt:24.08-py3`. If absent, the stage exits with `skip_reason.txt`.

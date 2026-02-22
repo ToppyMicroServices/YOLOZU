@@ -137,6 +137,11 @@ The report separates:
 
 Operational runbook: \path{docs/runpod_gpu_validation_split.md}.
 
+When operating via GitHub Actions machine runners instead of RunPod sessions, use
+\path{.github/workflows/gpu_zisn_pipeline.yml} (\cmd{workflow_dispatch}) and select
+stage \cmd{zisn1}, \cmd{zisn2}, or \cmd{all}. The workflow publishes deterministic
+DoD summaries to \path{ci-logs/gpu-zisn}.
+
 \section{What to report in papers/notes}
 For real-time or deployment-relevant results, always report:
 \begin{itemize}

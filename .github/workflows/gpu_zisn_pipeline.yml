@@ -1,0 +1,532 @@
+name: gpu-zisn-pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "GPU validation stage to run"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - zisn1
+          - zisn2
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: gpu-zisn-${{ github.ref }}-${{ github.event.inputs.stage }}
+  cancel-in-progress: true
+
+jobs:
+  zisn1_train_ort:
+    if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'zisn1' }}
+    runs-on: [machine, gpu=t4]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: GPU visible
+        shell: bash
+        run: |
+          set -euo pipefail
+          nvidia-smi
+
+      - name: RT-DETR pose train + ONNX + ORT CUDA parity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker not found; cannot run gpu-zisn stage."
+            exit 1
+          fi
+
+          docker pull runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04 \
+            bash -lc '
+              set -euo pipefail
+              nvidia-smi
+              python3 --version
+              git config --global --add safe.directory /workspace || true
+
+              python3 -m pip install --upgrade pip
+              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime-gpu
+
+              out_dir="reports/ci_zisn1"
+              dataset_dir="${out_dir}/dataset"
+              mkdir -p "${out_dir}"
+
+              python3 tools/ci/gen_smoke_dataset.py --out "${dataset_dir}" --split train --image-stem 000001 --hw 64x64
+              python3 tools/ci/gen_smoke_dataset.py --out "${dataset_dir}" --split val --image-stem 000002 --hw 64x64
+
+              gpu_count="$(python3 - <<'"'"'PY'"'"'
+              import torch
+              print(torch.cuda.device_count() if torch.cuda.is_available() else 0)
+              PY
+              )"
+              echo "detected_gpu_count=${gpu_count}"
+
+              if [[ "${gpu_count}" -ge 2 ]]; then
+                ddp_mode="ddp_2gpu"
+                export TORCH_DISTRIBUTED_DEFAULT_FIND_UNUSED_PARAMETERS=1
+                torchrun --nproc_per_node=2 rtdetr_pose/tools/train_minimal.py \
+                  --config rtdetr_pose/configs/base.json \
+                  --dataset-root "${dataset_dir}" --split train --val-split val \
+                  --device cuda --amp fp16 --ddp \
+                  --batch-size 2 --val-batch-size 2 \
+                  --epochs 2 --max-steps 3 \
+                  --log-every 1 --val-every 1 --checkpoint-every 2 \
+                  --run-dir "${out_dir}/train" \
+                  --export-onnx --onnx-out "${out_dir}/model.onnx" \
+                  --onnx-meta-out "${out_dir}/model.onnx.meta.json" \
+                  --parity-json-out "${out_dir}/parity_train_onnxrt_cpu.json" \
+                  --parity-policy warn
+              else
+                ddp_mode="single_gpu_fallback"
+                python3 rtdetr_pose/tools/train_minimal.py \
+                  --config rtdetr_pose/configs/base.json \
+                  --dataset-root "${dataset_dir}" --split train --val-split val \
+                  --device cuda --amp fp16 \
+                  --batch-size 2 --val-batch-size 2 \
+                  --epochs 2 --max-steps 3 \
+                  --log-every 1 --val-every 1 --checkpoint-every 2 \
+                  --run-dir "${out_dir}/train" \
+                  --export-onnx --onnx-out "${out_dir}/model.onnx" \
+                  --onnx-meta-out "${out_dir}/model.onnx.meta.json" \
+                  --parity-json-out "${out_dir}/parity_train_onnxrt_cpu.json" \
+                  --parity-policy warn
+              fi
+
+              export DDP_MODE="${ddp_mode}"
+              export GPU_COUNT="${gpu_count}"
+              python3 - <<'"'"'PY'"'"'
+              import json
+              import os
+              from pathlib import Path
+
+              out = Path("reports/ci_zisn1/ddp_status.json")
+              payload = {
+                  "ddp_mode": os.environ.get("DDP_MODE"),
+                  "gpu_count": int(os.environ.get("GPU_COUNT", "0") or 0),
+                  "checkpoint_bundle_exists": Path("reports/ci_zisn1/train/checkpoint_bundle.pt").exists(),
+                  "checkpoint_exists": Path("reports/ci_zisn1/train/checkpoint.pt").exists(),
+              }
+              out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+              print(f"wrote {out}")
+              PY
+
+              resume_from="${out_dir}/train/checkpoint_bundle.pt"
+              if [[ -f "${resume_from}" ]]; then
+                python3 rtdetr_pose/tools/train_minimal.py \
+                  --config rtdetr_pose/configs/base.json \
+                  --dataset-root "${dataset_dir}" --split train --val-split val \
+                  --device cuda --amp fp16 \
+                  --batch-size 2 --val-batch-size 2 \
+                  --epochs 1 --max-steps 1 --log-every 1 --val-every 1 \
+                  --resume-from "${resume_from}" \
+                  --run-dir "${out_dir}/resume" \
+                  --no-export-onnx
+              fi
+
+              python3 tools/rtdetr_pose_backend_suite.py \
+                --config rtdetr_pose/configs/base.json \
+                --checkpoint "${out_dir}/train/checkpoint.pt" \
+                --onnx "${out_dir}/model.onnx" \
+                --backends torch,onnxrt \
+                --device cuda \
+                --image-size 64 \
+                --batch 1 \
+                --samples 1 \
+                --warmup 2 \
+                --iterations 10 \
+                --output "${out_dir}/backend_suite_ort_cuda.json"
+
+              python3 - <<'"'"'PY'"'"'
+              import json
+              from pathlib import Path
+              import numpy as np
+              import onnxruntime as ort
+
+              onnx_path = Path("reports/ci_zisn1/model.onnx")
+              out_path = Path("reports/ci_zisn1/ort_cuda_provider_check.json")
+
+              sess = ort.InferenceSession(str(onnx_path), providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+              providers = list(sess.get_providers())
+              input_name = sess.get_inputs()[0].name
+              shape = [int(v) if isinstance(v, int) else v for v in sess.get_inputs()[0].shape]
+              array = np.zeros((1, 3, 64, 64), dtype=np.float32)
+              _ = sess.run(None, {input_name: array})
+
+              payload = {
+                  "providers": providers,
+                  "input_name": input_name,
+                  "input_shape": shape,
+                  "uses_cuda": "CUDAExecutionProvider" in providers,
+              }
+              out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+              print(f"wrote {out_path}")
+              if not payload["uses_cuda"]:
+                  raise SystemExit("CUDAExecutionProvider is unavailable")
+              PY
+
+              python3 tools/yolozu.py doctor --output "${out_dir}/doctor_gpu.json"
+              ls -la "${out_dir}"
+            '
+
+      - name: Upload zisn1 artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: zisn1-artifacts
+          if-no-files-found: ignore
+          path: |
+            reports/ci_zisn1/**
+
+  zisn2_trt:
+    if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'zisn2' }}
+    runs-on: [machine, gpu=t4]
+    timeout-minutes: 75
+    env:
+      NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download zisn1 artifacts (optional)
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: zisn1-artifacts
+          path: .tmp_zisn1
+
+      - name: TensorRT build/export/parity/eval/latency
+        shell: bash
+        run: |
+          set -euo pipefail
+          nvidia-smi
+
+          if [[ -z "${NGC_API_KEY:-}" ]]; then
+            echo "NGC_API_KEY is not configured; skipping zisn2 TensorRT stage."
+            mkdir -p reports/ci_zisn2
+            echo "missing NGC_API_KEY" > reports/ci_zisn2/skip_reason.txt
+            exit 0
+          fi
+
+          set +x
+          echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+          set -x
+          docker pull nvcr.io/nvidia/tensorrt:24.08-py3
+
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            nvcr.io/nvidia/tensorrt:24.08-py3 \
+            bash -lc '
+              set -euo pipefail
+              nvidia-smi
+              python3 --version
+              git config --global --add safe.directory /workspace || true
+
+              python3 -m pip install --upgrade pip
+              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime opencv-python-headless
+
+              out_dir="reports/ci_zisn2"
+              dataset_dir="${out_dir}/dataset"
+              mkdir -p "${out_dir}"
+
+              onnx_path="${out_dir}/model.onnx"
+              if [[ -f /workspace/.tmp_zisn1/reports/ci_zisn1/model.onnx ]]; then
+                cp /workspace/.tmp_zisn1/reports/ci_zisn1/model.onnx "${onnx_path}"
+              elif [[ -f /workspace/.tmp_zisn1/ci_zisn1/model.onnx ]]; then
+                cp /workspace/.tmp_zisn1/ci_zisn1/model.onnx "${onnx_path}"
+              elif [[ -f /workspace/.tmp_zisn1/model.onnx ]]; then
+                cp /workspace/.tmp_zisn1/model.onnx "${onnx_path}"
+              else
+                python3 tools/ci/gen_dummy_dets_onnx.py \
+                  --out "${onnx_path}" \
+                  --input-name images \
+                  --output-name output0 \
+                  --shape 1x3x64x64 \
+                  --opset 17 \
+                  --ir-version 11
+              fi
+
+              if [[ -d /workspace/.tmp_zisn1/reports/ci_zisn1/dataset ]]; then
+                cp -a /workspace/.tmp_zisn1/reports/ci_zisn1/dataset "${dataset_dir}"
+              elif [[ -d /workspace/.tmp_zisn1/ci_zisn1/dataset ]]; then
+                cp -a /workspace/.tmp_zisn1/ci_zisn1/dataset "${dataset_dir}"
+              elif [[ -d /workspace/.tmp_zisn1/dataset ]]; then
+                cp -a /workspace/.tmp_zisn1/dataset "${dataset_dir}"
+              else
+                python3 tools/ci/gen_smoke_dataset.py --out "${dataset_dir}" --split val --hw 48x64
+              fi
+
+              input_size="$(python3 - <<'"'"'PY'"'"'
+              from pathlib import Path
+              import onnx
+
+              onnx_path = Path("reports/ci_zisn2/model.onnx")
+              model = onnx.load(str(onnx_path))
+              shape = model.graph.input[0].type.tensor_type.shape.dim
+              h = shape[2].dim_value if len(shape) > 2 else 64
+              w = shape[3].dim_value if len(shape) > 3 else 64
+              if h <= 0:
+                  h = 64
+              if w <= 0:
+                  w = 64
+              print(int(max(h, w)))
+              PY
+              )"
+
+              engine_path="${out_dir}/model_fp16.plan"
+              engine_meta="${out_dir}/engine.meta.json"
+
+              python3 tools/build_trt_engine.py \
+                --onnx "${onnx_path}" \
+                --engine "${engine_path}" \
+                --precision fp16 \
+                --meta-output "${engine_meta}" \
+                2>&1 | tee "${out_dir}/build_trt_engine.log"
+
+              python3 tools/export_predictions_onnxrt.py \
+                --dataset "${dataset_dir}" \
+                --split val \
+                --onnx "${onnx_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_onnxrt.json"
+
+              python3 tools/export_predictions_trt.py \
+                --dataset "${dataset_dir}" \
+                --split val \
+                --engine "${engine_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --imgsz "${input_size}" \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_trt.json"
+
+              python3 tools/check_predictions_parity.py \
+                --reference "${out_dir}/pred_onnxrt.json" \
+                --candidate "${out_dir}/pred_trt.json" \
+                --image-size "${input_size}" \
+                --iou-thresh 0.99 \
+                --score-atol 1e-4 \
+                --bbox-atol 1e-4 \
+                --output "${out_dir}/parity_trt_vs_onnxrt.json" \
+                2>&1 | tee "${out_dir}/parity_trt_vs_onnxrt.log"
+
+              python3 tools/eval_suite.py \
+                --dataset "${dataset_dir}" \
+                --split val \
+                --predictions-glob "${out_dir}/pred_trt.json" \
+                --strict \
+                --dry-run \
+                --output "${out_dir}/eval_trt.json"
+
+              python3 tools/measure_trt_latency.py \
+                --engine "${engine_path}" \
+                --input-name images \
+                --shape "1x3x${input_size}x${input_size}" \
+                --iterations 50 \
+                --warmup 10 \
+                --output "${out_dir}/latency_trt.json"
+
+              if trtexec --help 2>&1 | grep -q -- "--warmUp"; then
+                trtexec --loadEngine="${engine_path}" --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
+              else
+                trtexec --loadEngine="${engine_path}" --iterations=1 > "${out_dir}/trtexec_load.log"
+              fi
+
+              python3 tools/yolozu.py doctor --output "${out_dir}/doctor_gpu.json"
+              ls -la "${out_dir}"
+            '
+
+      - name: Upload zisn2 artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: zisn2-artifacts
+          if-no-files-found: ignore
+          path: |
+            reports/ci_zisn2/**
+
+  publish_logs:
+    needs: [zisn1_train_ort, zisn2_trt]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      LOG_BRANCH: ci-logs/gpu-zisn
+      STAGE: ${{ github.event.inputs.stage }}
+      ZISN1_RESULT: ${{ needs.zisn1_train_ort.result }}
+      ZISN2_RESULT: ${{ needs.zisn2_trt.result }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download zisn1 artifacts
+        if: ${{ needs.zisn1_train_ort.result == 'success' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: zisn1-artifacts
+          path: .tmp_zisn1
+
+      - name: Download zisn2 artifacts
+        if: ${{ needs.zisn2_trt.result == 'success' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: zisn2-artifacts
+          path: .tmp_zisn2
+
+      - name: Build summary artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          out_dir=".tmp_gpu_zisn_summary"
+          mkdir -p "${out_dir}/ci_gpu_zisn"
+
+          if [[ -d .tmp_zisn1/reports/ci_zisn1 ]]; then
+            cp -a .tmp_zisn1/reports/ci_zisn1 "${out_dir}/ci_gpu_zisn/zisn1" || true
+          elif [[ -d .tmp_zisn1/ci_zisn1 ]]; then
+            cp -a .tmp_zisn1/ci_zisn1 "${out_dir}/ci_gpu_zisn/zisn1" || true
+          elif [[ -d .tmp_zisn1 ]]; then
+            cp -a .tmp_zisn1 "${out_dir}/ci_gpu_zisn/zisn1" || true
+          fi
+          if [[ -d .tmp_zisn2/reports/ci_zisn2 ]]; then
+            cp -a .tmp_zisn2/reports/ci_zisn2 "${out_dir}/ci_gpu_zisn/zisn2" || true
+          elif [[ -d .tmp_zisn2/ci_zisn2 ]]; then
+            cp -a .tmp_zisn2/ci_zisn2 "${out_dir}/ci_gpu_zisn/zisn2" || true
+          elif [[ -d .tmp_zisn2 ]]; then
+            cp -a .tmp_zisn2 "${out_dir}/ci_gpu_zisn/zisn2" || true
+          fi
+
+          rm -f "${out_dir}/ci_gpu_zisn/zisn2/"*.plan "${out_dir}/ci_gpu_zisn/zisn2/"*.engine 2>/dev/null || true
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          stage = os.environ.get("STAGE", "all")
+          zisn1_result = os.environ.get("ZISN1_RESULT", "")
+          zisn2_result = os.environ.get("ZISN2_RESULT", "")
+          root = Path(".tmp_gpu_zisn_summary/ci_gpu_zisn")
+
+          checks = {
+              "zisn1_model_onnx": (root / "zisn1" / "model.onnx").is_file(),
+              "zisn1_model_meta": (root / "zisn1" / "model.onnx.meta.json").is_file(),
+              "zisn1_ort_cuda_check": (root / "zisn1" / "ort_cuda_provider_check.json").is_file(),
+              "zisn2_engine_meta": (root / "zisn2" / "engine.meta.json").is_file(),
+              "zisn2_pred_trt": (root / "zisn2" / "pred_trt.json").is_file(),
+              "zisn2_parity_report": (root / "zisn2" / "parity_trt_vs_onnxrt.json").is_file(),
+              "zisn2_latency": (root / "zisn2" / "latency_trt.json").is_file(),
+              "zisn2_eval": (root / "zisn2" / "eval_trt.json").is_file(),
+          }
+
+          required = []
+          if stage in ("all", "zisn1"):
+              required.extend(["zisn1_model_onnx", "zisn1_model_meta", "zisn1_ort_cuda_check"])
+          if stage in ("all", "zisn2"):
+              required.extend(["zisn2_engine_meta", "zisn2_pred_trt", "zisn2_parity_report", "zisn2_latency", "zisn2_eval"])
+
+          missing = [k for k in required if not checks.get(k)]
+          if missing:
+              dod_status = "fail"
+          elif (stage in ("all", "zisn1") and zisn1_result != "success") or (
+              stage in ("all", "zisn2") and zisn2_result != "success"
+          ):
+              dod_status = "fail"
+          elif not required:
+              dod_status = "skip"
+          else:
+              dod_status = "pass"
+
+          run_info = {
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+              "ref": os.environ.get("GITHUB_REF"),
+              "sha": os.environ.get("GITHUB_SHA"),
+              "workflow": os.environ.get("GITHUB_WORKFLOW"),
+              "job": os.environ.get("GITHUB_JOB"),
+              "actor": os.environ.get("GITHUB_ACTOR"),
+              "stage": stage,
+              "zisn1_result": zisn1_result,
+              "zisn2_result": zisn2_result,
+          }
+
+          summary = {
+              "schema_version": 1,
+              "dod_status": dod_status,
+              "run_info": run_info,
+              "checks": checks,
+              "missing_required_artifacts": missing,
+          }
+
+          summary_path = root / "dod_summary.json"
+          summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+
+          lines = [
+              "# gpu-zisn DoD summary",
+              "",
+              f"- stage: `{stage}`",
+              f"- dod_status: `{dod_status}`",
+              f"- zisn1_result: `{zisn1_result}`",
+              f"- zisn2_result: `{zisn2_result}`",
+              "",
+              "## checks",
+          ]
+          for key, ok in checks.items():
+              lines.append(f"- {key}: {'ok' if ok else 'missing'}")
+          if missing:
+              lines.append("")
+              lines.append("## missing_required_artifacts")
+              for key in missing:
+                  lines.append(f"- {key}")
+
+          (root / "dod_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          (root / "run_info.json").write_text(json.dumps(run_info, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Publish logs branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan "${LOG_BRANCH}"
+          git rm -rf . >/dev/null 2>&1 || true
+
+          mkdir -p ci_logs
+          cp -a .tmp_gpu_zisn_summary/ci_gpu_zisn ci_logs/ci_gpu_zisn
+          git add ci_logs
+
+          if git diff --cached --quiet; then
+            echo "No gpu-zisn log changes to publish."
+            exit 0
+          fi
+
+          git commit -m "gpu-zisn logs ${GITHUB_RUN_ID} (${GITHUB_SHA})"
+          git push -f origin "${LOG_BRANCH}"

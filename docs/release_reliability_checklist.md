@@ -23,11 +23,13 @@ DoD:
 - `.github/workflows/ci.yml` (**required**): must be green on target commit.
 - `.github/workflows/container.yml` (**optional publish**): expected to run for container-related changes on `main`; publishes only on tag/manual.
 - `.github/workflows/ngc_test.yml` (**optional GPU smoke**): must produce deterministic `pass` or `skip` summary in `ci-logs/gpu-ngc`.
+- `.github/workflows/gpu_zisn_pipeline.yml` (**optional GPU validation split**): manual machine-runner path for `YOLOZU-zisn.1/.2` artifacts.
 
 DoD:
 - `ci` completed successfully.
 - `container` failures are triaged only if release depends on image artifacts.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
+- `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2/`.
 
 ## 3) GPU smoke interpretation (`gpu-ngc`)
 
