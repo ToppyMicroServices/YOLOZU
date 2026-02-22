@@ -85,7 +85,8 @@ jobs:
                 --min-shape 1x3x64x64 \
                 --opt-shape 1x3x64x64 \
                 --max-shape 1x3x64x64 \
-                --meta-output "${meta_path}"
+                --meta-output "${meta_path}" \
+                2>&1 | tee "${out_dir}/build_trt_engine.log"
 
               if trtexec --help 2>&1 | grep -q -- "--warmUp"; then
                 trtexec --loadEngine="${engine_path}" --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"
