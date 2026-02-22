@@ -229,3 +229,69 @@ jobs:
           if-no-files-found: ignore
           path: |
             reports/ci_trt_smoke/**
+
+  publish_logs:
+    needs: [check_runner, no_runner, trt_and_opencv_cuda]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      LOG_BRANCH: ci-logs/gpu-ngc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download smoke artifacts (if present)
+        uses: actions/download-artifact@v4
+        with:
+          name: gpu-ngc-smoke
+          path: .tmp_gpu_ngc
+          if-no-files-found: ignore
+
+      - name: Publish gpu-ngc logs branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$(mktemp -d)"
+          mkdir -p "${workdir}/ci_gpu_ngc"
+
+          if [[ -d .tmp_gpu_ngc ]]; then
+            cp -a .tmp_gpu_ngc/. "${workdir}/ci_gpu_ngc/" || true
+          fi
+
+          rm -f "${workdir}/ci_gpu_ngc/"*.plan "${workdir}/ci_gpu_ngc/"*.engine 2>/dev/null || true
+
+          cat > "${workdir}/ci_gpu_ngc/run_info.json" <<EOF
+          {
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "ref": "${GITHUB_REF}",
+            "sha": "${GITHUB_SHA}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "job": "${GITHUB_JOB}",
+            "actor": "${GITHUB_ACTOR}",
+            "check_runner_result": "${{ needs.check_runner.result }}",
+            "has_runner": "${{ needs.check_runner.outputs.has_runner }}",
+            "no_runner_result": "${{ needs.no_runner.result }}",
+            "gpu_job_result": "${{ needs.trt_and_opencv_cuda.result }}"
+          }
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan "${LOG_BRANCH}"
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p ci_logs
+          cp -a "${workdir}/ci_gpu_ngc" "ci_logs/ci_gpu_ngc"
+          git add ci_logs
+
+          if git diff --cached --quiet; then
+            echo "No gpu-ngc log changes to publish."
+            exit 0
+          fi
+
+          git commit -m "gpu-ngc logs ${GITHUB_RUN_ID} (${GITHUB_SHA})"
+          git push -f origin "${LOG_BRANCH}"
