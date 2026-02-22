@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   gpu_smoke:
@@ -103,3 +103,48 @@ jobs:
           if-no-files-found: ignore
           path: |
             reports/ci_trt_smoke/**
+
+      - name: Publish TRT smoke logs branch
+        if: ${{ always() }}
+        shell: bash
+        env:
+          LOG_BRANCH: ci-logs/gpu-smoke-machine
+        run: |
+          set -euo pipefail
+
+          if ! command -v git >/dev/null 2>&1; then
+            echo "git not found; skipping log publish."
+            exit 0
+          fi
+
+          workdir="$(mktemp -d)"
+          mkdir -p "${workdir}/ci_trt_smoke"
+          if [[ -d reports/ci_trt_smoke ]]; then
+            cp -a reports/ci_trt_smoke/. "${workdir}/ci_trt_smoke/" || true
+          fi
+
+          # Never publish large/binary artifacts to git.
+          rm -f "${workdir}/ci_trt_smoke/"*.plan "${workdir}/ci_trt_smoke/"*.engine 2>/dev/null || true
+
+          cat > "${workdir}/ci_trt_smoke/run_info.json" <<EOF
+          {
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "ref": "${GITHUB_REF}",
+            "sha": "${GITHUB_SHA}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "job": "${GITHUB_JOB}",
+            "actor": "${GITHUB_ACTOR}"
+          }
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan "${LOG_BRANCH}"
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p ci_logs
+          cp -a "${workdir}/ci_trt_smoke" "ci_logs/ci_trt_smoke"
+          git add ci_logs
+          git commit -m "gpu-smoke-machine logs ${GITHUB_RUN_ID} (${GITHUB_SHA})"
+          git push -f origin "${LOG_BRANCH}"
