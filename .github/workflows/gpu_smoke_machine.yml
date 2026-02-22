@@ -10,6 +10,8 @@ jobs:
   gpu_smoke:
     runs-on: machine
     timeout-minutes: 60
+    env:
+      NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,19 +28,19 @@ jobs:
           docker version
           docker info
 
-      - name: Login to NVIDIA NGC (nvcr.io)
-        if: ${{ secrets.NGC_API_KEY != '' }}
-        uses: docker/login-action@v3
-        with:
-          registry: nvcr.io
-          username: $oauthtoken
-          password: ${{ secrets.NGC_API_KEY }}
-
       - name: TensorRT smoke (NGC container)
-        if: ${{ secrets.NGC_API_KEY != '' }}
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -z "${NGC_API_KEY:-}" ]]; then
+            echo "NGC_API_KEY is not set; skipping TensorRT smoke."
+            exit 0
+          fi
+
+          set +x
+          echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+          set -x
+
           docker pull nvcr.io/nvidia/tensorrt:24.08-py3
           docker run --rm --gpus all \
             -v "${{ github.workspace }}:/workspace" -w /workspace \
