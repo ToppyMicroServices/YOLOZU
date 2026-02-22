@@ -34,6 +34,26 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
                 self.fail(f"C++ stub compile failed:\n{proc.stdout}\n{proc.stderr}")
 
             proc2 = subprocess.run(
+                [str(bin_path), "--help"],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc2.returncode, 0, msg=f"C++ --help failed:\n{proc2.stdout}\n{proc2.stderr}")
+
+            proc2b = subprocess.run(
+                [str(bin_path)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc2b.returncode, 2, msg=f"C++ missing-args behavior changed:\n{proc2b.stdout}\n{proc2b.stderr}")
+
+            proc2 = subprocess.run(
                 [str(bin_path), "--image", "/abs/path.jpg", "--output", str(out)],
                 cwd=str(repo_root),
                 stdout=subprocess.PIPE,
@@ -83,6 +103,26 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
                 self.fail(f"missing built binary: {bin_path}")
 
             proc2 = subprocess.run(
+                [str(bin_path), "--help"],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc2.returncode, 2, msg=f"rust --help behavior changed:\n{proc2.stdout}\n{proc2.stderr}")
+
+            proc2b = subprocess.run(
+                [str(bin_path)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc2b.returncode, 2, msg=f"rust missing-args behavior changed:\n{proc2b.stdout}\n{proc2b.stderr}")
+
+            proc2 = subprocess.run(
                 [str(bin_path), "--out", str(out)],
                 cwd=str(repo_root),
                 stdout=subprocess.PIPE,
@@ -107,4 +147,3 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

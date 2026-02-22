@@ -391,6 +391,37 @@ def _infer_engine_input_hw(runner: _TrtRunner) -> tuple[int | None, int | None, 
     return h, w, dynamic
 
 
+def _resolve_trt_input_size(
+    *,
+    requested_imgsz: int | None,
+    eng_h: int | None,
+    eng_w: int | None,
+    eng_dynamic: bool,
+) -> tuple[int, str | None]:
+    input_size = 640 if requested_imgsz is None else int(requested_imgsz)
+
+    if eng_h is not None and eng_w is not None and eng_h != eng_w and not eng_dynamic:
+        raise SystemExit(
+            f"engine input is non-square ({eng_h}x{eng_w}); export_predictions_trt expects square. Rebuild engine for square inputs."
+        )
+    if requested_imgsz is None and eng_h is not None and eng_w is not None and eng_h == eng_w:
+        input_size = int(eng_h)
+    if eng_h is not None and eng_w is not None and eng_h == eng_w and not eng_dynamic and int(input_size) != int(eng_h):
+        raise SystemExit(
+            f"engine expects input {eng_h}x{eng_w} but imgsz={input_size}. Rebuild engine for the desired size or pass a matching --imgsz."
+        )
+    if requested_imgsz is None and eng_dynamic:
+        return input_size, "[warn] TensorRT engine input is dynamic; using default imgsz=640. Pass --imgsz to pin preprocessing."
+    return input_size, None
+
+
+def _validate_decode_contract(*, exporter_name: str, boxes_format: str, boxes_scale: str, raw_output: str | None) -> None:
+    if boxes_format != "xyxy":
+        raise ValueError(f"only --boxes-format xyxy is supported in this {exporter_name}")
+    if raw_output and boxes_scale != "abs":
+        raise ValueError("--raw-output expects --boxes-scale abs (input-space pixels)")
+
+
 def _split_combined_output(values, *, fmt: str):
     if fmt != "xyxy_score_class":
         raise ValueError(f"unsupported combined format: {fmt}")
@@ -614,24 +645,21 @@ def main(argv=None):
 
         runner = _TrtRunner(engine_path=engine_path, input_name=args.input_name)
         eng_h, eng_w, eng_dyn = _infer_engine_input_hw(runner)
-        if eng_h is not None and eng_w is not None and eng_h != eng_w and not eng_dyn:
-            raise SystemExit(
-                f"engine input is non-square ({eng_h}x{eng_w}); export_predictions_trt expects square. "
-                "Rebuild engine for square inputs."
-            )
-        if args.imgsz is None and eng_h is not None and eng_w is not None and eng_h == eng_w:
-            input_size = int(eng_h)
-        if eng_h is not None and eng_w is not None and eng_h == eng_w and not eng_dyn:
-            if int(input_size) != int(eng_h):
-                raise SystemExit(
-                    f"engine expects input {eng_h}x{eng_w} but imgsz={input_size}. "
-                    "Rebuild engine for the desired size or pass a matching --imgsz."
-                )
-        elif args.imgsz is None and eng_dyn:
-            print(
-                "[warn] TensorRT engine input is dynamic; using default imgsz=640. Pass --imgsz to pin preprocessing.",
-                file=sys.stderr,
-            )
+        input_size, shape_warning = _resolve_trt_input_size(
+            requested_imgsz=args.imgsz,
+            eng_h=eng_h,
+            eng_w=eng_w,
+            eng_dynamic=eng_dyn,
+        )
+        if shape_warning:
+            print(shape_warning, file=sys.stderr)
+
+        _validate_decode_contract(
+            exporter_name="exporter",
+            boxes_format=str(args.boxes_format),
+            boxes_scale=str(args.boxes_scale),
+            raw_output=args.raw_output,
+        )
 
         def preprocess(image_path: str):
             w, h = get_image_size(image_path)
@@ -744,12 +772,6 @@ def main(argv=None):
                     raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
             for i in idx:
                 b = boxes[i].tolist()
-                if args.boxes_format != "xyxy":
-                    raise ValueError("only --boxes-format xyxy is supported in this exporter")
-
-                if args.raw_output and args.boxes_scale != "abs":
-                    raise ValueError("--raw-output expects --boxes-scale abs (input-space pixels)")
-
                 if args.boxes_scale == "norm":
                     x1, y1, x2, y2 = (
                         float(b[0]) * input_size,

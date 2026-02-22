@@ -86,6 +86,34 @@ def _parse_args(argv):
     return p.parse_args(argv)
 
 
+def _resolve_onnx_input_size(input_shape: object, *, default_size: int = 640) -> tuple[int, str | None]:
+    def _dim_to_int(value: object) -> int | None:
+        try:
+            return int(value)
+        except Exception:
+            return None
+
+    shape = list(input_shape) if isinstance(input_shape, (list, tuple)) else []
+    model_h = _dim_to_int(shape[2]) if len(shape) >= 3 else None
+    model_w = _dim_to_int(shape[3]) if len(shape) >= 4 else None
+
+    if model_h is None or model_w is None:
+        return int(default_size), None
+    if model_h != model_w:
+        raise SystemExit(f"ONNX input is non-square ({model_h}x{model_w}); export_predictions_onnxrt expects square. Use correct input.")
+    warning = None
+    if int(model_h) != int(default_size):
+        warning = f"[warn] using ONNX-fixed input size {model_h}x{model_h} (override not supported for this model)"
+    return int(model_h), warning
+
+
+def _validate_decode_contract(*, exporter_name: str, boxes_format: str, boxes_scale: str, raw_output: str | None) -> None:
+    if boxes_format != "xyxy":
+        raise ValueError(f"only --boxes-format xyxy is supported in this {exporter_name}")
+    if raw_output and boxes_scale != "abs":
+        raise ValueError("--raw-output expects --boxes-scale abs (input-space pixels)")
+
+
 def _now_utc():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -367,24 +395,17 @@ def main(argv=None):
 
     sess = ort.InferenceSession(str(model_path), providers=providers)
 
-    # Derive fixed input size from ONNX if static.
-    def _dim_to_int(d):
-        try:
-            return int(d)
-        except Exception:
-            return None
+    # Derive fixed input size from ONNX when static.
+    input_size, shape_warning = _resolve_onnx_input_size(sess.get_inputs()[0].shape, default_size=640)
+    if shape_warning:
+        print(shape_warning, file=sys.stderr)
 
-    input_shape = sess.get_inputs()[0].shape
-    model_h = _dim_to_int(input_shape[2]) if len(input_shape) >= 3 else None
-    model_w = _dim_to_int(input_shape[3]) if len(input_shape) >= 4 else None
-    if model_h is not None and model_w is not None:
-        if model_h != model_w:
-            raise SystemExit(f"ONNX input is non-square ({model_h}x{model_w}); export_predictions_onnxrt expects square. Use correct input.")
-        input_size = model_h
-
-    if int(input_size) != 640:
-        # guard against accidental mismatch when user assumes 640
-        print(f"[warn] using ONNX-fixed input size {input_size}x{input_size} (override not supported for this model)", file=sys.stderr)
+    _validate_decode_contract(
+        exporter_name="skeleton",
+        boxes_format=str(args.boxes_format),
+        boxes_scale=str(args.boxes_scale),
+        raw_output=args.raw_output,
+    )
 
     def preprocess(image_path: str):
         w, h = get_image_size(image_path)
@@ -497,12 +518,6 @@ def main(argv=None):
                 raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
         for i in idx:
             b = boxes[i].tolist()
-            if args.boxes_format != "xyxy":
-                raise ValueError("only --boxes-format xyxy is supported in this skeleton")
-
-            if args.raw_output:
-                if args.boxes_scale != "abs":
-                    raise ValueError("--raw-output expects --boxes-scale abs (input-space pixels)")
             if args.boxes_scale == "norm":
                 x1, y1, x2, y2 = (
                     float(b[0]) * input_size,

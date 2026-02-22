@@ -282,22 +282,23 @@ jobs:
 
           rm -f "${workdir}/ci_gpu_ngc/"*.plan "${workdir}/ci_gpu_ngc/"*.engine 2>/dev/null || true
 
-          cat > "${workdir}/ci_gpu_ngc/run_info.json" <<EOF
-          {
-            "run_id": "${GITHUB_RUN_ID}",
-            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
-            "ref": "${GITHUB_REF}",
-            "sha": "${GITHUB_SHA}",
-            "workflow": "${GITHUB_WORKFLOW}",
-            "job": "${GITHUB_JOB}",
-            "actor": "${GITHUB_ACTOR}",
-            "check_runner_result": "${{ needs.check_runner.result }}",
-            "has_runner": "${{ needs.check_runner.outputs.has_runner }}",
-            "probe_status": "${{ needs.check_runner.outputs.probe_status }}",
-            "no_runner_result": "${{ needs.no_runner.result }}",
-            "gpu_job_result": "${{ needs.trt_and_opencv_cuda.result }}"
-          }
-          EOF
+          python3 tools/ci/summarize_gpu_ngc_run.py \
+            --run-id "${GITHUB_RUN_ID}" \
+            --run-attempt "${GITHUB_RUN_ATTEMPT}" \
+            --ref "${GITHUB_REF}" \
+            --sha "${GITHUB_SHA}" \
+            --workflow "${GITHUB_WORKFLOW}" \
+            --job "${GITHUB_JOB}" \
+            --actor "${GITHUB_ACTOR}" \
+            --check-runner-result "${{ needs.check_runner.result }}" \
+            --has-runner "${{ needs.check_runner.outputs.has_runner }}" \
+            --probe-status "${{ needs.check_runner.outputs.probe_status }}" \
+            --no-runner-result "${{ needs.no_runner.result }}" \
+            --gpu-job-result "${{ needs.trt_and_opencv_cuda.result }}" \
+            --artifact-dir ".tmp_gpu_ngc" \
+            --out-run-info "${workdir}/ci_gpu_ngc/run_info.json" \
+            --out-summary-json "${workdir}/ci_gpu_ngc/dod_summary.json" \
+            --out-summary-md "${workdir}/ci_gpu_ngc/dod_summary.md"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

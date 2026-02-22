@@ -98,7 +98,10 @@ jobs:
             tests/test_eval_suite_determinism.py \
             tests/test_check_map_targets_contract.py \
             tests/test_yolo26_protocol.py \
-            tests/test_predictions.py
+            tests/test_predictions.py \
+            tests/test_manifest_docs_references.py \
+            tests/test_backend_shape_format_contracts.py \
+            tests/test_external_inference_templates_smoke.py
 
   pip_smoke:
     name: pip smoke (python ${{ matrix.python-version }})

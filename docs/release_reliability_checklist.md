@@ -1,0 +1,74 @@
+# Release reliability checklist
+
+Use this checklist before cutting a release tag. The goal is deterministic quality gates, explicit skip reasons, and reproducible artifacts.
+
+## 1) Required local checks (must pass)
+
+Run from repo root:
+
+```bash
+bash scripts/smoke.sh
+python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
+python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
+```
+
+DoD:
+- `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`.
+- Manifest validator returns `OK`.
+- Unit tests pass without unexpected failures.
+
+## 2) Required CI workflows
+
+- `.github/workflows/ci.yml` (**required**): must be green on target commit.
+- `.github/workflows/container.yml` (**optional publish**): expected to run for container-related changes on `main`; publishes only on tag/manual.
+- `.github/workflows/ngc_test.yml` (**optional GPU smoke**): must produce deterministic `pass` or `skip` summary in `ci-logs/gpu-ngc`.
+
+DoD:
+- `ci` completed successfully.
+- `container` failures are triaged only if release depends on image artifacts.
+- `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
+
+## 3) GPU smoke interpretation (`gpu-ngc`)
+
+Expected statuses:
+- `pass`: GPU smoke executed and produced TRT parity/latency artifacts.
+- `skip`: acceptable only with explicit reason (e.g., no idle runner or probe 403).
+- `fail`: release blocker for GPU-related deliverables.
+
+Known skip conditions:
+- No idle self-hosted GPU runner (`has_runner=false`).
+- Runner discovery API denied (`probe_status=http_403`): set `RUNNER_DISCOVERY_TOKEN`.
+- GPU job skipped after runner detection (e.g., `NGC_API_KEY` not set).
+
+DoD:
+- Every run has a clear `dod_status` and guidance text in summary artifacts.
+- No ambiguous “missing artifacts” state when `gpu_job_result=success`.
+
+## 4) Contract and artifact sanity
+
+- Validate representative predictions:
+  ```bash
+  python3 tools/validate_predictions.py data/smoke/predictions/predictions_dummy.json --strict
+  ```
+- Confirm docs/manifest sync:
+  ```bash
+  python3 -m unittest tests.test_manifest_docs_references
+  ```
+- Confirm backend contract guardrails:
+  ```bash
+  python3 -m unittest tests.test_backend_shape_format_contracts
+  ```
+
+DoD:
+- Predictions schema validation passes in strict mode.
+- Manifest docs references are synchronized and resolvable.
+- Shape/format mismatch guardrails are covered by tests.
+
+## 5) Release decision rule
+
+Release is ready when all are true:
+- Required CI (`ci`) is green.
+- Local required checks pass.
+- GPU workflow has either `pass` or justified `skip` with recorded reason.
+- No unresolved `P0/P1` reliability issues in `bd list`.

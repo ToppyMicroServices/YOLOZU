@@ -118,6 +118,9 @@ def _validate_tool(tool: Any, *, index: int, require_declarative: bool = False) 
                 if doc.startswith("/"):
                     errors.append(f"{where}.docs[{j}]: must be repo-relative, got absolute path")
                     continue
+                if ".." in Path(doc).parts:
+                    errors.append(f"{where}.docs[{j}]: must not contain '..'")
+                    continue
                 p = _resolve(doc)
                 if not p.exists():
                     errors.append(f"{where}.docs[{j}]: file not found: {doc}")
