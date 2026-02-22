@@ -75,7 +75,7 @@ jobs:
               engine_path="${out_dir}/model_fp16.plan"
               meta_path="${out_dir}/engine.meta.json"
 
-              python3 tools/ci/gen_dummy_dets_onnx.py --out "${onnx_path}" --input-name images --output-name output0 --shape 1x3x64x64 --opset 17
+              python3 tools/ci/gen_dummy_dets_onnx.py --out "${onnx_path}" --input-name images --output-name output0 --shape 1x3x64x64 --opset 17 --ir-version 11
 
               python3 tools/build_trt_engine.py \
                 --onnx "${onnx_path}" \

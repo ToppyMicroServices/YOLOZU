@@ -21,6 +21,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--shape", default="1x3x64x64", help="Input tensor shape (e.g. 1x3x64x64).")
     p.add_argument("--opset", type=int, default=17, help="ONNX opset to target (default: 17).")
     p.add_argument(
+        "--ir-version",
+        type=int,
+        default=11,
+        help="ONNX IR version to write (default: 11 for broad ONNXRuntime compatibility in CI containers).",
+    )
+    p.add_argument(
         "--alpha",
         type=float,
         default=0.001,
@@ -80,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
 
     graph = helper.make_graph([reduce, mul, add], "dummy_dets_graph", [x], [y], initializer=[init_const, init_alpha])
     model = helper.make_model(graph, opset_imports=[helper.make_operatorsetid("", int(args.opset))])
+    model.ir_version = int(args.ir_version)
     onnx.save(model, str(out_path))
 
     print("wrote", str(out_path))
@@ -88,4 +95,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
