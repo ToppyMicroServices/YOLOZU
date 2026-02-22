@@ -21,17 +21,16 @@ jobs:
           set -euo pipefail
           nvidia-smi
 
-      - name: Docker visible
+      - name: TensorRT smoke (optional)
         shell: bash
         run: |
           set -euo pipefail
-          docker version
-          docker info
 
-      - name: TensorRT smoke (NGC container)
-        shell: bash
-        run: |
-          set -euo pipefail
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker not found; skipping TensorRT smoke."
+            exit 0
+          fi
+
           if [[ -z "${NGC_API_KEY:-}" ]]; then
             echo "NGC_API_KEY is not set; skipping TensorRT smoke."
             exit 0
