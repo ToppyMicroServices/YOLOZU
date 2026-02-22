@@ -1864,6 +1864,10 @@
         {
           "description": "Export RT-DETR OpenCV-DNN predictions (dry-run works without OpenCV installed).",
           "command": "python3 tools/export_predictions_opencv_dnn_rtdetr.py --dataset data/coco128 --dry-run --output reports/pred_rtdetr_opencv_dnn.json"
+        },
+        {
+          "description": "Run via unified yolozu export backend",
+          "command": "python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx path/to/model.onnx --dataset data/coco128 --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force"
         }
       ],
       "docs": ["docs/opencv_dnn_inference.md"]
