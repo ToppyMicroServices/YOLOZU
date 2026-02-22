@@ -37,18 +37,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          runners_json="$(curl -fsSL \
+          api_url="https://api.github.com/repos/${REPO}/actions/runners?per_page=100"
+          tmp_json="$(mktemp)"
+          status_code="$(curl -sS -o "${tmp_json}" -w "%{http_code}" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/actions/runners?per_page=100")"
+            "${api_url}" || true)"
 
-          count="$(echo "${runners_json}" | jq -r --arg L "${REQUIRED_LABEL}" '
+          if [[ "${status_code}" != "200" ]]; then
+            echo "has_runner=false" >> "${GITHUB_OUTPUT}"
+            echo "Runner discovery API returned status=${status_code}; defaulting to skip."
+            exit 0
+          fi
+
+          count="$(jq -r --arg L "${REQUIRED_LABEL}" '
             [.runners[]
               | select(.status == "online")
               | select(.busy == false)
               | select(any(.labels[]?.name; . == $L))
             ] | length
-          ')"
+          ' "${tmp_json}")"
           if [[ "${count}" -gt 0 ]]; then
             echo "has_runner=true" >> "${GITHUB_OUTPUT}"
             echo "Found ${count} eligible GPU runner(s)."
@@ -244,11 +252,12 @@ jobs:
           fetch-depth: 0
 
       - name: Download smoke artifacts (if present)
+        if: ${{ needs.trt_and_opencv_cuda.result == 'success' }}
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: gpu-ngc-smoke
           path: .tmp_gpu_ngc
-          if-no-files-found: ignore
 
       - name: Publish gpu-ngc logs branch
         shell: bash
