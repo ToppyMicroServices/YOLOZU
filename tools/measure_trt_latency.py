@@ -163,7 +163,10 @@ class _TrtRunner:
             return self.backend.module.Stream()
         err, stream = self.backend.module.cudaStreamCreate()
         self._cuda_check(err, op="cudaStreamCreate")
-        return stream
+        try:
+            return int(stream)
+        except Exception:
+            return stream
 
     def _alloc(self, name: str, shape: tuple[int, ...], dtype, *, np):
         size = int(np.prod(shape))
@@ -174,6 +177,10 @@ class _TrtRunner:
         else:
             err, device = self.backend.module.cudaMalloc(nbytes)
             self._cuda_check(err, op=f"cudaMalloc({name})")
+            try:
+                device = int(device)
+            except Exception:
+                pass
         self.host_buffers[name] = host
         self.device_buffers[name] = device
         self.last_shapes[name] = shape

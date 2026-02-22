@@ -67,7 +67,7 @@ jobs:
                 git config --global --add safe.directory /workspace || true
               fi
               python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir numpy onnx
+              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime opencv-python-headless cuda-python
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"
@@ -75,7 +75,7 @@ jobs:
               engine_path="${out_dir}/model_fp16.plan"
               meta_path="${out_dir}/engine.meta.json"
 
-              python3 tools/ci/gen_identity_onnx.py --out "${onnx_path}" --input-name images --output-name output0 --shape 1x3x64x64 --opset 18
+              python3 tools/ci/gen_dummy_dets_onnx.py --out "${onnx_path}" --input-name images --output-name output0 --shape 1x3x64x64 --opset 17
 
               python3 tools/build_trt_engine.py \
                 --onnx "${onnx_path}" \
@@ -87,6 +87,51 @@ jobs:
                 --max-shape 1x3x64x64 \
                 --meta-output "${meta_path}" \
                 2>&1 | tee "${out_dir}/build_trt_engine.log"
+
+              python3 tools/measure_trt_latency.py \
+                --engine "${engine_path}" \
+                --input-name images \
+                --shape 1x3x64x64 \
+                --iterations 50 \
+                --warmup 10 \
+                --output "${out_dir}/latency_trt.json"
+
+              python3 tools/ci/gen_smoke_dataset.py --out "${out_dir}/dataset" --split val --hw 48x64
+
+              python3 tools/export_predictions_onnxrt.py \
+                --dataset "${out_dir}/dataset" \
+                --split val \
+                --onnx "${onnx_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_onnxrt.json"
+
+              python3 tools/export_predictions_trt.py \
+                --dataset "${out_dir}/dataset" \
+                --split val \
+                --engine "${engine_path}" \
+                --input-name images \
+                --combined-output output0 \
+                --boxes-scale norm \
+                --min-score 0.0 \
+                --topk 10 \
+                --wrap \
+                --strict \
+                --output "${out_dir}/pred_trt.json"
+
+              python3 tools/check_predictions_parity.py \
+                --reference "${out_dir}/pred_onnxrt.json" \
+                --candidate "${out_dir}/pred_trt.json" \
+                --image-size 64 \
+                --iou-thresh 0.99 \
+                --score-atol 1e-4 \
+                --bbox-atol 1e-4 \
+                2>&1 | tee "${out_dir}/parity_trt_vs_onnxrt.log"
 
               if trtexec --help 2>&1 | grep -q -- "--warmUp"; then
                 trtexec --loadEngine="${engine_path}" --iterations=1 --warmUp=0 > "${out_dir}/trtexec_load.log"

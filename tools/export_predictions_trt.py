@@ -28,6 +28,12 @@ def _parse_args(argv):
     p.add_argument("--split", default=None, help="Split under images/ and labels/ (default: auto).")
     p.add_argument("--max-images", type=int, default=None, help="Optional cap for quick runs.")
     p.add_argument("--engine", default=None, help="Path to TensorRT engine plan (required unless --dry-run).")
+    p.add_argument(
+        "--imgsz",
+        type=int,
+        default=None,
+        help="Input image size (square). If omitted, tries to infer from the TensorRT engine; defaults to 640.",
+    )
     p.add_argument("--input-name", default="images", help="TensorRT input binding name (default: images).")
     p.add_argument("--boxes-output", default="boxes", help="Output name for boxes tensor (default: boxes).")
     p.add_argument("--scores-output", default="scores", help="Output name for scores tensor (default: scores).")
@@ -210,7 +216,10 @@ class _TrtRunner:
             return self.backend.module.Stream()
         err, stream = self.backend.module.cudaStreamCreate()
         self._cuda_check(err, op="cudaStreamCreate")
-        return stream
+        try:
+            return int(stream)
+        except Exception:
+            return stream
 
     def _alloc(self, name: str, shape: tuple[int, ...], dtype):
         size = int(np.prod(shape))
@@ -221,6 +230,10 @@ class _TrtRunner:
         else:
             err, device = self.backend.module.cudaMalloc(nbytes)
             self._cuda_check(err, op=f"cudaMalloc({name})")
+            try:
+                device = int(device)
+            except Exception:
+                pass
         self.host_buffers[name] = host
         self.device_buffers[name] = device
         self.last_shapes[name] = shape
@@ -323,6 +336,46 @@ class _TrtRunner:
             host = self.host_buffers[name]
             outputs[name] = host.reshape(self.last_shapes[name]).copy()
         return outputs
+
+
+def _shape_to_ints(value: object) -> tuple[int, ...] | None:
+    if value is None:
+        return None
+    try:
+        return tuple(int(v) for v in value)
+    except Exception:
+        return None
+
+
+def _infer_engine_input_hw(runner: _TrtRunner) -> tuple[int | None, int | None, bool]:
+    """Return (H, W, dynamic) best-effort from TensorRT engine input shape."""
+
+    shape = None
+    if runner.mode == "v3":
+        try:
+            shape = runner.engine.get_tensor_shape(runner.input_name)
+        except Exception:
+            shape = None
+    else:
+        try:
+            idx = runner.binding_indices[runner.input_name]
+            shape = runner.engine.get_binding_shape(int(idx))
+        except Exception:
+            shape = None
+
+    dims = _shape_to_ints(shape)
+    if not dims:
+        return None, None, True
+
+    dynamic = any(int(d) <= 0 for d in dims)
+    if len(dims) >= 2:
+        h, w = int(dims[-2]), int(dims[-1])
+    else:
+        return None, None, True
+
+    if h <= 0 or w <= 0:
+        return None, None, True
+    return h, w, dynamic
 
 
 def _split_combined_output(values, *, fmt: str):
@@ -517,7 +570,7 @@ def _decode_raw_ultralytics(
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
-    input_size = 640  # pinned (YOLO26 protocol)
+    input_size = 640 if args.imgsz is None else int(args.imgsz)
     dataset_root = repo_root / args.dataset
     manifest = build_manifest(dataset_root, split=args.split)
     records = manifest["images"]
@@ -547,6 +600,25 @@ def main(argv=None):
             raise SystemExit(f"engine not found: {engine_path}")
 
         runner = _TrtRunner(engine_path=engine_path, input_name=args.input_name)
+        eng_h, eng_w, eng_dyn = _infer_engine_input_hw(runner)
+        if eng_h is not None and eng_w is not None and eng_h != eng_w and not eng_dyn:
+            raise SystemExit(
+                f"engine input is non-square ({eng_h}x{eng_w}); export_predictions_trt expects square. "
+                "Rebuild engine for square inputs."
+            )
+        if args.imgsz is None and eng_h is not None and eng_w is not None and eng_h == eng_w:
+            input_size = int(eng_h)
+        if eng_h is not None and eng_w is not None and eng_h == eng_w and not eng_dyn:
+            if int(input_size) != int(eng_h):
+                raise SystemExit(
+                    f"engine expects input {eng_h}x{eng_w} but imgsz={input_size}. "
+                    "Rebuild engine for the desired size or pass a matching --imgsz."
+                )
+        elif args.imgsz is None and eng_dyn:
+            print(
+                "[warn] TensorRT engine input is dynamic; using default imgsz=640. Pass --imgsz to pin preprocessing.",
+                file=sys.stderr,
+            )
 
         def preprocess(image_path: str):
             w, h = get_image_size(image_path)

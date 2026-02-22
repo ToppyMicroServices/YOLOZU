@@ -2129,6 +2129,7 @@
       "contracts": { "produces": ["predictions_json"] },
       "inputs": [
         { "name": "engine", "kind": "file", "required": false, "flag": "--engine", "default": null },
+        { "name": "imgsz", "kind": "number", "required": false, "flag": "--imgsz", "default": null },
         { "name": "output", "kind": "file", "required": false, "flag": "--output", "default": "reports/predictions_trt.json" },
         { "name": "dataset", "kind": "dir", "required": false, "flag": "--dataset" },
         { "name": "split", "kind": "string", "required": false, "flag": "--split" },
