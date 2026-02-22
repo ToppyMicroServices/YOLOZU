@@ -50,14 +50,28 @@ jobs:
           owner="${owner,,}"
           image="${REGISTRY}/${owner}/${{ matrix.image }}"
 
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            ref="${GITHUB_REF_NAME}"
-            safe_ref="${ref//\//-}"
+          ref_type="${{ github.ref_type }}"
+          ref_name="${{ github.ref_name }}"
+
+          sanitize_tag() {
+            # Docker tags allow [A-Za-z0-9_.-] only.
+            # Map everything else (including '/', '+', spaces) to '-'.
+            echo "${1}" | sed -E 's/[^A-Za-z0-9_.-]+/-/g'
+          }
+
+          if [[ "${ref_type}" == "tag" ]]; then
+            ref="${ref_name}"
+            safe_ref="$(sanitize_tag "${ref}")"
             version="${ref#release/}"
             version="${version#v}"
+            safe_version="$(sanitize_tag "${version}")"
+            safe_version="${safe_version#[-.]}"
+            if [[ -z "${safe_version}" ]]; then
+              safe_version="${safe_ref}"
+            fi
             {
               echo "tags<<EOF"
-              echo "${image}:${version}"
+              echo "${image}:${safe_version}"
               echo "${image}:${safe_ref}"
               echo "${image}:latest"
               echo "EOF"
@@ -144,14 +158,28 @@ jobs:
           owner="${owner,,}"
           image="${REGISTRY}/${owner}/${{ matrix.image }}"
 
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            ref="${GITHUB_REF_NAME}"
-            safe_ref="${ref//\//-}"
+          ref_type="${{ github.ref_type }}"
+          ref_name="${{ github.ref_name }}"
+
+          sanitize_tag() {
+            # Docker tags allow [A-Za-z0-9_.-] only.
+            # Map everything else (including '/', '+', spaces) to '-'.
+            echo "${1}" | sed -E 's/[^A-Za-z0-9_.-]+/-/g'
+          }
+
+          if [[ "${ref_type}" == "tag" ]]; then
+            ref="${ref_name}"
+            safe_ref="$(sanitize_tag "${ref}")"
             version="${ref#release/}"
             version="${version#v}"
+            safe_version="$(sanitize_tag "${version}")"
+            safe_version="${safe_version#[-.]}"
+            if [[ -z "${safe_version}" ]]; then
+              safe_version="${safe_ref}"
+            fi
             {
               echo "tags<<EOF"
-              echo "${image}:${version}"
+              echo "${image}:${safe_version}"
               echo "${image}:${safe_ref}"
               echo "${image}:latest"
               echo "EOF"
