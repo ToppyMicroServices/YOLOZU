@@ -137,6 +137,8 @@ python3 tools/export_predictions_trt.py \
   --output reports/pred_trt_yolo26n.json
 ```
 
+Note on input size: ONNX/TRT execution is usually shape-pinned unless you export with dynamic shapes / profiles. `export_predictions_trt.py` will try to infer `imgsz` from the engine input shape when possible; pass `--imgsz <N>` to override (especially for dynamic engines).
+
 ## 5) Parity vs ONNX
 
 Use the ONNXRuntime exporter to generate the reference JSON, then compare with the TRT JSON:
