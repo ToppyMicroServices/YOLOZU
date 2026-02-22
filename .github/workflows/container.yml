@@ -56,7 +56,9 @@ jobs:
           sanitize_tag() {
             # Docker tags allow [A-Za-z0-9_.-] only.
             # Map everything else (including '/', '+', spaces) to '-'.
-            echo "${1}" | sed -E 's/[^A-Za-z0-9_.-]+/-/g'
+            echo "${1}" \
+              | sed -E 's/[^A-Za-z0-9_.-]+/-/g' \
+              | sed -E 's/^[^A-Za-z0-9_]+//'
           }
 
           if [[ "${ref_type}" == "tag" ]]; then
@@ -65,7 +67,6 @@ jobs:
             version="${ref#release/}"
             version="${version#v}"
             safe_version="$(sanitize_tag "${version}")"
-            safe_version="${safe_version#[-.]}"
             if [[ -z "${safe_version}" ]]; then
               safe_version="${safe_ref}"
             fi
@@ -164,7 +165,9 @@ jobs:
           sanitize_tag() {
             # Docker tags allow [A-Za-z0-9_.-] only.
             # Map everything else (including '/', '+', spaces) to '-'.
-            echo "${1}" | sed -E 's/[^A-Za-z0-9_.-]+/-/g'
+            echo "${1}" \
+              | sed -E 's/[^A-Za-z0-9_.-]+/-/g' \
+              | sed -E 's/^[^A-Za-z0-9_]+//'
           }
 
           if [[ "${ref_type}" == "tag" ]]; then
@@ -173,7 +176,6 @@ jobs:
             version="${ref#release/}"
             version="${version#v}"
             safe_version="$(sanitize_tag "${version}")"
-            safe_version="${safe_version#[-.]}"
             if [[ -z "${safe_version}" ]]; then
               safe_version="${safe_ref}"
             fi
