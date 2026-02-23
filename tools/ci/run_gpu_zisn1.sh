@@ -7,7 +7,22 @@ python3 --version
 git config --global --add safe.directory /workspace || true
 
 python3 -m pip install --upgrade pip
-python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime-gpu
+python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime-gpu nvidia-cudnn-cu12
+
+cudnn_lib="$(python3 - <<'PY'
+from pathlib import Path
+
+try:
+    import nvidia.cudnn  # type: ignore[attr-defined]
+except Exception:
+    print("")
+else:
+    print(str((Path(nvidia.cudnn.__file__).resolve().parent / "lib")))
+PY
+)"
+if [[ -n "${cudnn_lib}" && -d "${cudnn_lib}" ]]; then
+  export LD_LIBRARY_PATH="${cudnn_lib}:${LD_LIBRARY_PATH:-}"
+fi
 
 out_dir="reports/ci_zisn1"
 dataset_dir="${out_dir}/dataset"

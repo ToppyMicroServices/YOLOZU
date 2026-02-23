@@ -7,7 +7,22 @@ python3 --version
 git config --global --add safe.directory /workspace || true
 
 python3 -m pip install --upgrade pip
-python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime-gpu opencv-python-headless
+python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime-gpu nvidia-cudnn-cu12 opencv-python-headless
+
+cudnn_lib="$(python3 - <<'PY'
+from pathlib import Path
+
+try:
+    import nvidia.cudnn  # type: ignore[attr-defined]
+except Exception:
+    print("")
+else:
+    print(str((Path(nvidia.cudnn.__file__).resolve().parent / "lib")))
+PY
+)"
+if [[ -n "${cudnn_lib}" && -d "${cudnn_lib}" ]]; then
+  export LD_LIBRARY_PATH="${cudnn_lib}:${LD_LIBRARY_PATH:-}"
+fi
 
 out_dir="reports/ci_zisn3"
 dataset_dir="${out_dir}/dataset"
@@ -42,35 +57,43 @@ fi
 
 if [[ ! -f "${onnx_path}" ]]; then
   python3 - <<'PY'
-import numpy as np
-import onnx
-from onnx import TensorProto, helper
+from pathlib import Path
 
-out_path = "reports/ci_zisn3/model_rtdetr_like.onnx"
-x = helper.make_tensor_value_info("images", TensorProto.FLOAT, [1, 3, 64, 64])
-y_boxes = helper.make_tensor_value_info("boxes", TensorProto.FLOAT, [1, 2, 4])
-y_logits = helper.make_tensor_value_info("logits", TensorProto.FLOAT, [1, 2, 3])
+import torch
 
-boxes = np.asarray(
-    [[[0.5, 0.5, 0.4, 0.4], [0.3, 0.4, 0.2, 0.2]]],
-    dtype=np.float32,
+
+class DummyRtDetr(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        boxes = torch.tensor(
+            [[[0.5, 0.5, 0.4, 0.4], [0.3, 0.4, 0.2, 0.2]]],
+            dtype=torch.float32,
+        )
+        logits = torch.tensor(
+            [[[0.1, 2.0, -1.0], [1.5, 0.2, -0.5]]],
+            dtype=torch.float32,
+        )
+        self.register_buffer("boxes_template", boxes)
+        self.register_buffer("logits_template", logits)
+
+    def forward(self, images: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        anchor = images[:, :1, :1, :1] * 0.0
+        boxes = self.boxes_template + anchor.view(1, 1, 1)
+        logits = self.logits_template + anchor.view(1, 1, 1)
+        return boxes, logits
+
+
+out_path = Path("reports/ci_zisn3/model_rtdetr_like.onnx")
+model = DummyRtDetr().eval()
+dummy_input = torch.zeros((1, 3, 64, 64), dtype=torch.float32)
+torch.onnx.export(
+    model,
+    dummy_input,
+    str(out_path),
+    input_names=["images"],
+    output_names=["boxes", "logits"],
+    opset_version=17,
 )
-logits = np.asarray(
-    [[[0.1, 2.0, -1.0], [1.5, 0.2, -0.5]]],
-    dtype=np.float32,
-)
-c_boxes = helper.make_tensor("const_boxes", TensorProto.FLOAT, boxes.shape, boxes.flatten().tolist())
-c_logits = helper.make_tensor("const_logits", TensorProto.FLOAT, logits.shape, logits.flatten().tolist())
-n_boxes = helper.make_node("Constant", inputs=[], outputs=["boxes"], value=c_boxes)
-n_logits = helper.make_node("Constant", inputs=[], outputs=["logits"], value=c_logits)
-graph = helper.make_graph([n_boxes, n_logits], "rtdetr_like_dummy", [x], [y_boxes, y_logits])
-model = helper.make_model(
-    graph,
-    producer_name="yolozu-ci",
-    opset_imports=[helper.make_operatorsetid("", 17)],
-)
-model.ir_version = 11
-onnx.save(model, out_path)
 print("wrote", out_path)
 PY
 fi
