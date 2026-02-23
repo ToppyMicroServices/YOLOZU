@@ -29,7 +29,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \midrule
 \cmd{yolozu doctor} & Executes environment diagnostics (verifying dependencies, GPU status, and backend availability). \\
 \cmd{yolozu list models} & Lists curated model IDs available for reproducible downloads. \\
-\cmd{yolozu fetch <model\_id> --accept-license} & Downloads a model artifact with cache reuse and records \path{models/<id>/meta.json}. \\
+\cmd{yolozu fetch <model\_id> --accept-license} & Downloads a model artifact with cache reuse, sha256 verification, and license gating; records \path{models/<id>/meta.json}. (Custom registries may require \cmd{--allow-unsafe} / \cmd{--allow-non-apache}.) \\
 \cmd{bash scripts/smoke.sh} & Runs the one-command offline smoke flow (doctor + validate + eval-coco dry-run + SynthGen intake smoke on \path{data/smoke}). \\
 \cmd{bash scripts/smoke.sh --help} & Shows smoke CLI options (\cmd{--dataset}, \cmd{--predictions}, \cmd{--report}, \cmd{--synthgen-root}, \cmd{--synthgen-predictions}, \cmd{--output-dir}). \\
 \cmd{yolozu train} & Initiates YAML/JSON config-driven RT-DETR training (fully supporting the run contract and resumption capabilities). \\

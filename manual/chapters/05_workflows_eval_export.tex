@@ -73,8 +73,8 @@ For CI command-surface checks, prefer each exporter's \cmd{--dry-run} mode so sc
 To standardize external checkpoints before running exporters, use the model fetch flow:
 \begin{lstlisting}[language=bash]
 yolozu list models
-yolozu fetch ultralytics-yolo11n-pt --out models --accept-license
-cat models/ultralytics-yolo11n-pt/meta.json
+yolozu fetch yolox-s-coco --out models --accept-license
+cat models/yolox-s-coco/meta.json
 \end{lstlisting}
 
 The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created\_at}.

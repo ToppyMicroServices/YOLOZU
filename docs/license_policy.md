@@ -7,6 +7,7 @@ This repository is intended to be **Apache-2.0** code only.
 - Do **not** vendor or depend on GPL/AGPL code in this repository.
 - To compare against external baselines (e.g., YOLO26), run them in a separate environment and **only import predictions JSON** into this repo for evaluation.
 - Keep datasets and model weights out of git.
+- The packaged model registry for `yolozu fetch` is curated to Apache-friendly licenses only. Use a custom registry + `--allow-non-apache` only when you explicitly accept the risk and boundary the baseline environment.
 
 ## Company release policy (naming + provenance)
 

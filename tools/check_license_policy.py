@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import json
 from pathlib import Path
 
 
@@ -118,11 +119,41 @@ def check_repo_text_no_license_texts() -> None:
                 _fail(f"found GPL/AGPL license text marker in {path.relative_to(REPO_ROOT)}: {pat}")
 
 
+def check_model_zoo_registry_policy() -> None:
+    zoo = REPO_ROOT / "yolozu" / "data" / "manifest" / "model_zoo.json"
+    if not zoo.exists():
+        return
+    try:
+        obj = json.loads(zoo.read_text(encoding="utf-8"))
+    except Exception as exc:
+        _fail(f"failed to parse model zoo registry JSON: {zoo}: {exc}")
+
+    models = obj.get("models") or []
+    if not isinstance(models, list):
+        _fail(f"invalid model zoo registry: models must be a list: {zoo}")
+
+    for item in models:
+        if not isinstance(item, dict):
+            continue
+        model_id = str(item.get("id") or "").strip() or "<missing-id>"
+        lic = str(item.get("license") or "").strip()
+        sha = item.get("sha256")
+
+        # Repository policy: shipped registry must be Apache-friendly only.
+        if lic != "Apache-2.0":
+            _fail(f"model zoo contains non-Apache license entry: id={model_id} license={lic!r} (expected Apache-2.0)")
+
+        # Registry integrity: shipped entries must pin sha256 for reproducibility.
+        if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", sha.strip() or ""):
+            _fail(f"model zoo entry missing/invalid sha256: id={model_id} sha256={sha!r}")
+
+
 def main() -> int:
     check_license_file()
     check_no_git_submodules()
     check_requirements_no_denylist()
     check_fetch_script_is_official()
+    check_model_zoo_registry_policy()
     check_repo_text_no_license_texts()
     print("OK: license policy checks passed")
     return 0

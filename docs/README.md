@@ -204,8 +204,8 @@ Use this path to download curated model artifacts with license gating, cache reu
 
 ```bash
 python3 tools/yolozu.py list models
-python3 tools/yolozu.py fetch ultralytics-yolo11n-pt --out models --accept-license
-cat models/ultralytics-yolo11n-pt/meta.json
+python3 tools/yolozu.py fetch yolox-s-coco --out models --accept-license
+cat models/yolox-s-coco/meta.json
 ```
 
 The metadata interface contract at `models/<id>/meta.json` always includes:

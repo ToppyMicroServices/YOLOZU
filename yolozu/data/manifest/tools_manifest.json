@@ -110,7 +110,7 @@
       "id": "fetch_model",
       "entrypoint": "tools/yolozu.py",
       "runner": "python3",
-      "summary": "Download a model artifact with cache + sha256 verification and license acknowledgment.",
+      "summary": "Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates.",
       "tags": [
         "models",
         "download",
@@ -167,6 +167,36 @@
           "kind": "string"
         },
         {
+          "name": "allow_unsafe",
+          "required": false,
+          "flag": "--allow-unsafe",
+          "description": "Allow fetching models without sha256 in the registry (not recommended).",
+          "kind": "string"
+        },
+        {
+          "name": "allow_non_apache",
+          "required": false,
+          "flag": "--allow-non-apache",
+          "description": "Allow fetching models with non-Apache-friendly licenses (not recommended).",
+          "kind": "string"
+        },
+        {
+          "name": "retries",
+          "required": false,
+          "flag": "--retries",
+          "default": 3,
+          "description": "Download retry count (default: 3).",
+          "kind": "number"
+        },
+        {
+          "name": "timeout",
+          "required": false,
+          "flag": "--timeout",
+          "default": 60,
+          "description": "Download timeout in seconds (default: 60).",
+          "kind": "number"
+        },
+        {
           "name": "force",
           "required": false,
           "flag": "--force",
@@ -207,7 +237,7 @@
       "examples": [
         {
           "description": "Fetch a packaged model ID to ./models.",
-          "command": "python3 tools/yolozu.py fetch ultralytics-yolo11n-pt --out models --accept-license"
+          "command": "python3 tools/yolozu.py fetch yolox-s-coco --out models --accept-license"
         },
         {
           "description": "Fetch with explicit cache location.",
