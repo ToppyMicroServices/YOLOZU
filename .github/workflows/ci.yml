@@ -372,7 +372,7 @@ jobs:
 
       - name: Golden compatibility gate
         run: |
-          python tools/check_golden_compatibility.py
+          python3 tools/check_golden_compatibility.py
 
       - name: Migration smoke (migrate + validate)
         run: |
