@@ -65,7 +65,8 @@ Current API surface:
 - Path traversal (`..`) is rejected.
 - Absolute paths outside workspace are rejected.
 - CLI execution has a timeout guard (default 600s).
-- `stdout`/`stderr` are capped and marked with truncation metadata in response payloads.
+- MCP route: `stdout`/`stderr` are capped and marked with truncation metadata in response payloads.
+- Actions API route: CLI `stdout`/`stderr` are redacted by default (`limits.stdio_redacted=true`) and errors are genericized to avoid leaking exception details.
 
 ## AI clarity checklist (recommended)
 

@@ -41,7 +41,8 @@ Return format policy:
   - `tool` (string)
   - `summary` (short sentence)
   - `exit_code` (int)
-  - `stdout` / `stderr` (string)
+  - `stdout` / `stderr` (string, MCP route; capped + truncation metadata)
+  - `stdout` / `stderr` (omitted on Actions API route by default; see `limits.stdio_redacted`)
   - optional parsed JSON artifacts (e.g. `report_json`)
 
 This format is designed so Claude/Copilot/other MCP-capable clients can summarize consistently.
