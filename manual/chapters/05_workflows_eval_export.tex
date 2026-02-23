@@ -8,6 +8,55 @@ It standardizes the generation of \path{predictions.json} and evaluation reports
 You will require a dataset root and one or more prediction artifacts; backend-specific operations may necessitate additional dependencies.
 }
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=5pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+% Row A
+\node[box] (a_in) {\textbf{A}\\existing\\\path{predictions.json}};
+\node[box, right=12mm of a_in] (a_val) {validate\\(\cmd{--strict})};
+\node[box, right=12mm of a_val] (a_eval) {eval\\(suite / COCO)};
+\node[box, right=12mm of a_eval] (a_rep) {reports\\JSON/HTML};
+\draw[arrow] (a_in) -- (a_val);
+\draw[arrow] (a_val) -- (a_eval);
+\draw[arrow] (a_eval) -- (a_rep);
+
+% Row B
+\node[box, below=10mm of a_in] (b_in) {\textbf{B}\\backend\\inference};
+\node[box, right=12mm of b_in] (b_exp) {export\\\path{predictions.json}\\+\texttt{export\_settings}};
+\node[box, right=12mm of b_exp] (b_val) {validate};
+\node[box, right=12mm of b_val] (b_rep) {eval + reports};
+\draw[arrow] (b_in) -- (b_exp);
+\draw[arrow] (b_exp) -- (b_val);
+\draw[arrow] (b_val) -- (b_rep);
+
+% Row C
+\node[box, below=10mm of b_in] (c_in) {\textbf{C}\\image folder\\or split};
+\node[box, right=12mm of c_in] (c_run) {\cmd{predict-images}\\(+ overlays)};
+\node[box, right=12mm of c_run] (c_out) {\path{predictions.json}\\+ HTML summary};
+\draw[arrow] (c_in) -- (c_run);
+\draw[arrow] (c_run) -- (c_out);
+
+% Row D
+\node[box, below=10mm of c_in] (d_in) {\textbf{D}\\dataset defs\\\path{data.yaml}/COCO};
+\node[box, right=12mm of d_in] (d_mig) {migrate\\\path{dataset.json}\\labels/classes};
+\node[box, right=12mm of d_mig] (d_out) {\path{predictions.json}\\(converted/exported)};
+\node[box, right=12mm of d_out] (d_rep) {validate + eval};
+\draw[arrow] (d_in) -- (d_mig);
+\draw[arrow] (d_mig) -- (d_out);
+\draw[arrow] (d_out) -- (d_rep);
+
+\end{tikzpicture}
+}
+\caption{Workflow overview (A--D): keep inference flexible, fix the interface boundary at \path{predictions.json}.}
+\end{figure}
+
 \section{Workflow A: Evaluate existing predictions.json}
 If you have already generated a \path{predictions.json} artifact from any inference backend, you can evaluate it directly:
 \begin{lstlisting}[language=bash]
@@ -168,6 +217,28 @@ Following inference or evaluation, YOLOZU generates both machine-readable artifa
 \end{longtable}
 
 \subsection{Recommended result inspection sequence}
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (v) {\textbf{1) Validate}\\schema + paths\\(\cmd{--strict})};
+\node[box, right=16mm of v] (h) {\textbf{2) Review HTML}\\quick qualitative\\debug};
+\node[box, right=16mm of h] (m) {\textbf{3) Inspect metrics}\\JSON/CSV/MD\\CI-friendly};
+
+\draw[arrow] (v) -- (h);
+\draw[arrow] (h) -- (m);
+
+\end{tikzpicture}
+}
+\caption{Recommended result inspection order for fast iteration and reproducible reporting.}
+\end{figure}
+
 \begin{enumerate}
   \item \textbf{Validate the schema:}
   \begin{lstlisting}[language=bash]

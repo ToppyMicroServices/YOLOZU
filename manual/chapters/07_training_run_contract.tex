@@ -42,6 +42,34 @@ Core tenets of the run contract (codified within the documentation and enforced 
   \item Full-state resumption is standardized using the \cmd{--resume} flag, defaulting to \path{runs/<run_id>/checkpoints/last.pt}.
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (root) {\textbf{runs/<run\_id>/}\\stable artifact root};
+
+\node[box, below=14mm of root, xshift=-55mm] (ckpt) {\textbf{checkpoints/}\\\path{last.pt}\\\path{best.pt}};
+\node[box, below=14mm of root] (reports) {\textbf{reports/}\\\path{train\_metrics.jsonl}\\\path{val\_metrics.jsonl}\\\path{config\_resolved.yaml}\\\path{run\_meta.json}};
+\node[box, below=14mm of root, xshift=55mm] (exports) {\textbf{exports/} (optional)\\\path{model.onnx}\\\path{model.onnx.meta.json}};
+
+\node[box, below=12mm of reports] (parity) {\textbf{parity/eval artifacts} (optional)\\\path{reports/onnx\_parity.json}\\\path{reports/*.json}};
+
+\draw[arrow] (root) -- (ckpt);
+\draw[arrow] (root) -- (reports);
+\draw[arrow] (root) -- (exports);
+\draw[arrow] (reports) -- (parity);
+
+\end{tikzpicture}
+}
+\caption{Run directory layout: fixed locations make resume, parity, and cross-branch comparisons reproducible.}
+\end{figure}
+
 \subsection{Artifact contract: required vs optional}
 \begin{longtable}{@{}p{0.24\textwidth}p{0.26\textwidth}p{0.42\textwidth}@{}}
 \toprule
@@ -68,6 +96,33 @@ The training entry point ingests YAML/JSON configurations via \cmd{--config}, su
 \end{center}
 
 Configuration keys must correspond exactly to their argparse destination names (e.g., \cmd{--weight-decay} maps to \texttt{weight\_decay}). In run-contract mode (triggered by \texttt{run\_contract} or \texttt{run\_id}), any unrecognized keys are immediately rejected, thereby eliminating the risk of silent configuration drift.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (cli) {\textbf{CLI flags}\\explicit overrides\\(\cmd{--lr}, \cmd{--amp}, ...)};
+\node[box, below=10mm of cli] (cfg) {\textbf{Config file}\\YAML/JSON via \cmd{--config}};
+\node[box, below=10mm of cfg] (def) {\textbf{Built-in defaults}\\conservative baseline};
+
+\node[box, right=28mm of cfg] (resolved) {\textbf{Resolved config}\\\path{config\_resolved.yaml}\\(run artifact)};
+\node[box, right=28mm of resolved] (strict) {\textbf{Strict mode}\\unknown keys fail\\(no silent drift)};
+
+\draw[arrow] (cli) -- (resolved);
+\draw[arrow] (cfg) -- (resolved);
+\draw[arrow] (def) -- (resolved);
+\draw[arrow] (resolved) -- (strict);
+
+\end{tikzpicture}
+}
+\caption{Configuration resolution: the run contract enforces explicit keys and produces a resolved config artifact.}
+\end{figure}
 
 \section{YAML workflows: train / resume / test}
 A unified project structure supports YAML-driven execution for both training and testing scenarios.

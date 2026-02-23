@@ -26,6 +26,57 @@ Core interface contracts include:
   \item \textbf{SynthGen Intake Contract}: \path{docs/synthgen_contract.md}
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  group/.style={draw, rounded corners, inner sep=8pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+% Left to right: ingest -> adapter -> predictions -> eval
+\node[box] (dataset) {\textbf{Dataset input}\\
+\path{images/<split>/}, \path{labels/<split>/}\\
+optional: \path{dataset.json}, \path{classes.json}};
+
+\node[box, right=18mm of dataset] (adapter) {\textbf{Adapter / inference}\\
+torch / onnxrt / trt / opencv-dnn\\
+or external C++/Rust};
+
+\node[box, right=18mm of adapter] (pred) {\textbf{Interface contract}\\
+\path{predictions.json}\\
+\texttt{meta.export\_settings}};
+
+\node[box, right=18mm of pred] (eval) {\textbf{Validate \& evaluate}\\
+schema validators\\
+metrics reports};
+
+\node[box, above=12mm of pred] (contracts) {\textbf{Other interface contracts}\\
+adapter boundary\\
+run artifacts\\
+SynthGen intake};
+
+% Connections
+\draw[arrow] (dataset) -- (adapter);
+\draw[arrow] (adapter) -- (pred);
+\draw[arrow] (pred) -- (eval);
+\draw[arrow] (contracts) -- (adapter);
+\draw[arrow] (contracts) -- (pred);
+
+% Group boxes
+\node[group, fit=(dataset), label={[align=left]above:Ingest}] {};
+\node[group, fit=(adapter), label={[align=left]above:Backends}] {};
+\node[group, fit=(pred), label={[align=left]above:Stable I/O}] {};
+\node[group, fit=(eval), label={[align=left]above:Common scoring}] {};
+
+\end{tikzpicture}
+}
+\caption{YOLOZU uses stable interface contracts to decouple inference backends from evaluation.}
+\end{figure}
+
 When links and prose disagree, treat these interface contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
 
 \section{Datasets}
@@ -41,6 +92,47 @@ In practice, migration commands yield:
 \end{itemize}
 
 The overarching objective is to preserve the integrity of source datasets while rendering evaluation inputs explicit and versionable.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (ultra) {\textbf{Ultralytics}\\
+\path{data.yaml}\\
+\path{images/<split>/}};
+\node[box, below=10mm of ultra] (coco) {\textbf{COCO dataset}\\
+\path{instances\_*.json}\\
+category\_id};
+\node[box, below=10mm of coco] (extpred) {\textbf{External results}\\
+COCO results JSON\\
+or framework output};
+
+\node[box, right=22mm of coco] (wrapper) {\textbf{Wrapper / mapping}\\
+\path{dataset.json}\\
+\path{classes.json}};
+\node[box, right=22mm of extpred] (pred) {\textbf{predictions.json}\\
+schema-valid\\
+relocatable paths};
+\node[box, right=22mm of wrapper] (eval) {\textbf{Validate \& eval}\\
+same evaluator\\
+same metrics};
+
+\draw[arrow] (ultra) -- (wrapper);
+\draw[arrow] (coco) -- node[midway, right]{\scriptsize convert labels} (wrapper);
+\draw[arrow] (extpred) -- (pred);
+\draw[arrow] (wrapper) -- (eval);
+\draw[arrow] (pred) -- (eval);
+
+\end{tikzpicture}
+}
+\caption{Migration map: keep native training ecosystems, convert only the interface boundary artifacts.}
+\end{figure}
 
 \subsection{Ultralytics Datasets (YOLOv8/YOLO11)}
 If your dataset is already defined by an Ultralytics-style \path{data.yaml} (referencing \path{images/<split>/} and \path{labels/<split>/}), \yolozu{} can generate a lightweight \path{dataset.json} wrapper, leaving the original dataset entirely unmodified.

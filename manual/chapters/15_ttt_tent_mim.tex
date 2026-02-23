@@ -29,6 +29,33 @@ This makes comparisons sensitive to domain shift, random seeds, and reset policy
   \item \textbf{Reset recommendation}: for controlled comparisons, prefer \cmd{--ttt-reset sample}; for streaming latency operation, use bounded \cmd{--ttt-reset stream} with explicit \cmd{--ttt-max-batches}.
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (all) {\textbf{Model parameters}\\(backbone + encoder + heads)};
+\node[box, below=10mm of all] (filter) {\textbf{Update filter}\\(\cmd{--ttt-update-filter})};
+
+\node[box, below=12mm of filter, xshift=-40mm] (norm) {\textbf{norm-only}\\(BN/LN/GN affine)};
+\node[box, below=12mm of filter] (lora) {\textbf{LoRA-only}\\(low-rank adapters)};
+\node[box, below=12mm of filter, xshift=40mm] (full) {\textbf{full-model}\\(avoid by default)};
+
+\draw[arrow] (all) -- (filter);
+\draw[arrow] (filter) -- (norm);
+\draw[arrow] (filter) -- (lora);
+\draw[arrow] (filter) -- (full);
+
+\end{tikzpicture}
+}
+\caption{TTT update scope: start with constrained update filters (norm/LoRA) and keep full-model updates opt-in.}
+\end{figure}
+
 \section{When TTT is meaningful}
 On clean COCO-style validation, TTT can be neutral or harmful.
 To demonstrate improvements, you typically need a clear domain shift (e.g., corruptions, style shift, different camera).
@@ -296,6 +323,43 @@ These bounds are there to prevent runaway adaptation and to keep comparisons rep
   \item[\cmd{--ttt-reset stream}] Adapt once (up to \cmd{--ttt-max-batches}) then reuse adapted weights for subsequent images.
   \item[\cmd{--ttt-reset sample}] Restore base state per image, adapt on that image/batch, then predict. Slower but cleaner ablations.
 \end{description}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick},
+  dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed}
+]
+
+% Stream row
+\node[box] (s0) {\textbf{Base}\\weights};
+\node[box, right=14mm of s0] (s1) {adapt\\(bounded)};
+\node[box, right=14mm of s1] (s2) {\textbf{Adapted}\\weights};
+\node[box, right=14mm of s2] (s3) {predict\\(many images)};
+\draw[arrow] (s0) -- (s1);
+\draw[arrow] (s1) -- (s2);
+\draw[arrow] (s2) -- (s3);
+
+\node[box, below=14mm of s0] (p0) {\textbf{Base}\\weights};
+\node[box, right=14mm of p0] (p1) {adapt\\(per image)};
+\node[box, right=14mm of p1] (p2) {predict\\(one image)};
+\node[box, right=14mm of p2] (p3) {reset\\to base};
+\draw[arrow] (p0) -- (p1);
+\draw[arrow] (p1) -- (p2);
+\draw[dashedarrow] (p2) -- (p3);
+\draw[dashedarrow] (p3) -- (p0);
+
+\node[box, above=6mm of s1] (lbls) {\textbf{stream}};
+\node[box, above=6mm of p1] (lblp) {\textbf{sample}};
+
+\end{tikzpicture}
+}
+\caption{Reset policies: \cmd{stream} keeps adapted state across images; \cmd{sample} resets per image for clean ablations.}
+\end{figure}
 
 For plots and controlled comparisons, start with \cmd{--ttt-reset sample}.
 

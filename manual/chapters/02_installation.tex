@@ -61,4 +61,49 @@ PyTorch \(\to\) ONNX \(\to\) TensorRT
 
 On macOS, you can typically run CPU-bound tooling (validation, evaluation, and ONNX Runtime CPU export). In contrast, TensorRT execution is generally Linux/NVIDIA-centric.
 TensorRT workflows are covered in the Real-Time vs. Batch Inference chapter. The canonical pipeline strictly follows PyTorch $\rightarrow$ ONNX $\rightarrow$ TensorRT and includes parity checks at each stage.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick},
+  dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed}
+]
+
+\node[box] (torch) {\textbf{PyTorch}\\
+train/checkpoint\\
+\path{runs/<run_id>/checkpoints/*}};
+\node[box, right=18mm of torch] (onnx) {\textbf{ONNX export}\\
+\path{model.onnx}\\
+\path{model.onnx.meta.json}};
+\node[box, right=18mm of onnx] (trt) {\textbf{TensorRT build}\\
+\path{engine.plan}\\
+\path{engine.meta.json}};
+
+\node[box, below=14mm of onnx] (export) {\textbf{Export predictions}\\
+torch / onnxrt / opencv-dnn / trt};
+\node[box, right=20mm of export] (pred) {\textbf{predictions.json}\\
+schema-valid + relocatable\\
+\texttt{meta.export\_settings}};
+\node[box, right=20mm of pred] (eval) {\textbf{Validate \& eval}\\
+\path{eval\_suite.json}\\
+\path{metrics\_report.json}};
+
+\draw[arrow] (torch) -- (onnx);
+\draw[arrow] (onnx) -- (trt);
+
+\draw[dashedarrow] (torch) -- node[midway, left]{\scriptsize torch} (export);
+\draw[dashedarrow] (onnx) -- node[midway, right]{\scriptsize onnxrt / opencv} (export);
+\draw[dashedarrow] (trt) -- node[midway, right]{\scriptsize tensorrt} (export);
+
+\draw[arrow] (export) -- (pred);
+\draw[arrow] (pred) -- (eval);
+
+\end{tikzpicture}
+}
+\caption{Recommended deployment flow and where key interface-contract artifacts are produced.}
+\end{figure}
 %

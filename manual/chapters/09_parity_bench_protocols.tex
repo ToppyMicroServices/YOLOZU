@@ -11,6 +11,42 @@ Execution requires a minimum of two comparable prediction artifacts for parity a
 \section{Backend parity}
 When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtime, TensorRT), it is critical to detect any silent numerical drift. Parity tooling systematically compares two prediction artifacts and generates a comprehensive report of any discrepancies.
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick},
+  dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed}
+]
+
+\node[box] (inputs) {\textbf{Fixed inputs}\\same image subset\\same preprocessing};
+
+\node[box, right=18mm of inputs, yshift=10mm] (a) {\textbf{Backend A}\\torch / onnxrt};
+\node[box, right=18mm of inputs, yshift=-10mm] (b) {\textbf{Backend B}\\trt / opencv-dnn};
+
+\node[box, right=20mm of a] (pa) {\path{predictions\_a.json}};
+\node[box, right=20mm of b] (pb) {\path{predictions\_b.json}};
+
+\node[box, below=14mm of pa, xshift=10mm] (par) {\textbf{Parity report}\\diff stats\\(\path{parity.json})};
+\node[box, right=20mm of par] (eval) {\textbf{Eval reports}\\metrics JSON\\protocol-pinned};
+
+\draw[dashedarrow] (inputs) -- (a);
+\draw[dashedarrow] (inputs) -- (b);
+\draw[arrow] (a) -- (pa);
+\draw[arrow] (b) -- (pb);
+\draw[arrow] (pa) -- (par);
+\draw[arrow] (pb) -- (par);
+\draw[arrow] (pa) -- (eval);
+\draw[arrow] (pb) -- (eval);
+
+\end{tikzpicture}
+}
+\caption{Apples-to-apples parity: keep inputs fixed, compare exported artifacts, and score with the same evaluator/protocol.}
+\end{figure}
+
 \textbf{Conceptual (not copy-paste as-is):} parity command shape.
 For a runnable shortest command, use Chapter~5 Workflow A with real artifact paths.
 \begin{lstlisting}[language=bash]

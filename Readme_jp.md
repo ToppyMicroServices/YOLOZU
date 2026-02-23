@@ -87,6 +87,9 @@ python3 -m pip install 'yolozu[full]'
 （スキーマ: [`schemas/predictions.schema.json`](schemas/predictions.schema.json)
 / 解説: [`docs/predictions_schema.md`](docs/predictions_schema.md)）。
 
+推論は PyTorch / ONNXRuntime / TensorRT / C++ など好きな環境で実行し、結果だけを共通形式 `predictions.json` に保存します。
+YOLOZU はその JSON を同じ評価器で採点するので、バックエンド差を「同一条件」で比較でき、再現も容易です。
+
 - どのバックエンドでも **同じスキーマ**で出力
 - 変換・評価・差分（parity）を統一
 

@@ -14,6 +14,37 @@ Real-time TensorRT paths are typically Linux with an NVIDIA GPU; parity requires
   \item[Real-time/streaming] Optimize end-to-end latency and stability; avoid expensive per-frame extras.
 \end{description}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick},
+  opt/.style={draw, rounded corners, align=left, inner sep=6pt, dashed}
+]
+
+\node[box] (in) {\textbf{Input}\\frame / batch};
+\node[box, right=16mm of in] (pre) {\textbf{Preprocess}\\resize/letterbox\\normalize};
+\node[opt, right=16mm of pre] (ttt) {\textbf{TTT} (optional)\\bounded-cost};
+\node[box, right=16mm of ttt] (eng) {\textbf{Engine}\\torch / onnxrt / trt};
+\node[box, right=16mm of eng] (post) {\textbf{Postprocess}\\decode / NMS\\format convert};
+\node[opt, right=16mm of post] (ref) {\textbf{Refine / gates} (optional)\\constraints / symmetry};
+\node[box, right=16mm of ref] (out) {\textbf{Emit}\\\path{predictions.json}\\+ reports};
+
+\draw[arrow] (in) -- (pre);
+\draw[arrow] (pre) -- (ttt);
+\draw[arrow] (ttt) -- (eng);
+\draw[arrow] (eng) -- (post);
+\draw[arrow] (post) -- (ref);
+\draw[arrow] (ref) -- (out);
+
+\end{tikzpicture}
+}
+\caption{Real-time vs batch inference share the same artifact boundary (\path{predictions.json}); optional extras must be explicitly budgeted.}
+\end{figure}
+
 \section{Non-goals (operational boundaries)}
 \begin{itemize}
   \item TTT is \textbf{not} a real-time default. Keep it disabled unless explicitly budgeted and enabled.
@@ -61,6 +92,34 @@ In this repo, the main safeguards are implemented as \textbf{tooling and contrac
 \subsection{Keep symmetry/commonsense logic out of TensorRT graphs}
 The TensorRT export/build pipeline is designed to focus on the model forward pass.
 Symmetry, template scoring, commonsense constraints, and gates are intended to run in \textbf{postprocess} where possible.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  group/.style={draw, rounded corners, inner sep=10pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (pre) {\textbf{Preprocess}\\resize/letterbox\\normalize};
+\node[box, right=18mm of pre] (fwd) {\textbf{Model forward}\\(TensorRT engine)};
+\node[box, right=18mm of fwd] (post) {\textbf{Postprocess}\\decode / NMS\\format};
+\node[box, below=10mm of post] (logic) {\textbf{Keep outside engine}\\constraints / symmetry\\TTT / refinement};
+
+\draw[arrow] (pre) -- (fwd);
+\draw[arrow] (fwd) -- (post);
+\draw[arrow] (post) -- (logic);
+
+\node[group, fit=(fwd), label={[align=left]above:TRT graph}] {};
+\node[group, fit=(pre) (post) (logic), label={[align=left]above:Python/C++ glue}] {};
+
+\end{tikzpicture}
+}
+\caption{Boundary rule: keep non-forward logic out of the TensorRT graph to simplify deployment and make drift diagnosable.}
+\end{figure}
 
 In particular:
 \begin{itemize}

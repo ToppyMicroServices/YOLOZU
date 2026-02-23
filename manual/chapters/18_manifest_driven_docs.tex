@@ -44,6 +44,34 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
   \item Cross-reference and verify all documentation examples against the manifest's \texttt{examples[].command} fields.
 \end{enumerate}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (code) {\textbf{1) Code change}\\tool behavior};
+\node[box, right=14mm of code] (man) {\textbf{2) Update manifest}\\\path{tools/manifest.json}};
+\node[box, right=14mm of man] (val) {\textbf{3) Validate}\\manifest rules};
+\node[box, right=14mm of val] (docs) {\textbf{4) Sync docs}\\examples + index};
+\node[box, right=14mm of docs] (pdf) {\textbf{5) Sync manual}\\chapter examples};
+\node[box, right=14mm of pdf] (gate) {\textbf{6) Quality gates}\\tests + CI};
+
+\draw[arrow] (code) -- (man);
+\draw[arrow] (man) -- (val);
+\draw[arrow] (val) -- (docs);
+\draw[arrow] (docs) -- (pdf);
+\draw[arrow] (pdf) -- (gate);
+
+\end{tikzpicture}
+}
+\caption{Manifest-driven update loop: \path{tools/manifest.json} is the canonical source, and docs/manual must follow it.}
+\end{figure}
+
 \section{Verification Criteria for Manual Updates}
 For each affected command family, rigorously verify the following:
 \begin{itemize}

@@ -18,12 +18,76 @@ Key conventions used across docs in this repo:
   \item Depth \cmd{z} uses the dataset's length unit (YOLOZU does not convert mm\,$\leftrightarrow$\,m).
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (img) {\textbf{Image frame}\\pixels \((u,v)\)};
+\node[box, below=10mm of img] (k) {\textbf{Intrinsics}\\\(K=(f_x,f_y,c_x,c_y)\)};
+\node[box, right=24mm of k] (z) {\textbf{Depth}\\\(Z=z\)};
+\node[box, right=24mm of img] (cam) {\textbf{Camera frame}\\\((X,Y,Z)\)};
+\node[box, right=24mm of cam] (pose) {\textbf{Pose}\\\(R,t\)};
+\node[box, right=24mm of pose] (obj) {\textbf{Object frame}\\(model/CAD)};
+
+\draw[arrow] (img) -- (cam);
+\draw[arrow] (k) -- (cam);
+\draw[arrow] (z) -- (cam);
+\draw[arrow] (cam) -- (pose);
+\draw[arrow] (pose) -- (obj);
+
+\end{tikzpicture}
+}
+\caption{Coordinate frames: intrinsics and depth connect image pixels to 3D camera coordinates, which are then related to object frame via pose.}
+\end{figure}
+
 Depth integration modes in the scaffold trainer:
 \begin{itemize}
   \item \cmd{none}: depth disabled (compatibility default).
   \item \cmd{sidecar}: depth is read from sidecar metadata (\cmd{depth_path}/\cmd{depth}) and tracked via \cmd{depth_valid}.
   \item \cmd{fuse_mid}: depth is fused after projector (outside backbone \([P3,P4,P5]\) swap boundary).
 \end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick},
+  dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed}
+]
+
+\node[box] (rgb) {\textbf{RGB image}};
+\node[box, below=10mm of rgb] (depth) {\textbf{Depth sidecar} (optional)\\\cmd{depth\_path}/\cmd{depth}};
+\node[box, right=20mm of rgb] (pre) {\textbf{Preprocess}\\resize/letterbox\\normalize};
+\node[box, right=20mm of pre] (bb) {\textbf{Backbone}\\\([P3,P4,P5]\)};
+\node[box, right=20mm of bb] (proj) {\textbf{Projector}\\1x1 convs\\(boundary stable)};
+\node[box, right=20mm of proj] (heads) {\textbf{Heads}\\boxes/pose/depth};
+\node[box, right=20mm of heads] (pred) {\textbf{Outputs}\\\path{predictions.json}};
+
+\node[box, below=10mm of heads] (fuse) {\textbf{Fuse\_mid} (optional)\\depth fusion\\after projector};
+
+\draw[arrow] (rgb) -- (pre);
+\draw[arrow] (pre) -- (bb);
+\draw[arrow] (bb) -- (proj);
+\draw[arrow] (proj) -- (heads);
+\draw[arrow] (heads) -- (pred);
+
+\draw[dashedarrow] (proj) -- (fuse);
+\draw[dashedarrow] (fuse) -- (heads);
+\draw[dashedarrow] (depth) -- (fuse);
+
+\end{tikzpicture}
+}
+\caption{Depth modes: \cmd{sidecar} carries depth as metadata; \cmd{fuse\_mid} fuses depth after the projector (outside the backbone swap boundary).}
+\end{figure}
 
 Metric safety rule:
 \begin{itemize}
@@ -232,6 +296,34 @@ $$
   L_{rot}^{sym} = \min_{S \in G} d(R_{pred}, R_{gt} \cdot S)
 $$
 where $G$ is the symmetry group for the object.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=10mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (rgt) {\textbf{GT rotation}\\\(R_{gt}\)};
+\node[box, right=18mm of rgt] (sym) {\textbf{Symmetry group}\\\(S \in G\)};
+\node[box, right=18mm of sym] (eq) {\textbf{Equivalent GT}\\\(R_{gt}\cdot S\)};
+\node[box, below=12mm of eq] (rpred) {\textbf{Pred rotation}\\\(R_{pred}\)};
+\node[box, left=18mm of rpred] (dist) {\textbf{Distance}\\\(d(\cdot,\cdot)\)};
+\node[box, left=18mm of dist] (min) {\textbf{Take min}\\over \(S \in G\)};
+
+\draw[arrow] (rgt) -- (sym);
+\draw[arrow] (sym) -- (eq);
+\draw[arrow] (eq) -- (dist);
+\draw[arrow] (rpred) -- (dist);
+\draw[arrow] (dist) -- (min);
+
+\end{tikzpicture}
+}
+\caption{Symmetry-aware scoring: evaluate rotation error modulo the object's symmetry group.}
+\end{figure}
 
 For context and intended gates (including real-time constraints), see:
 \begin{itemize}
