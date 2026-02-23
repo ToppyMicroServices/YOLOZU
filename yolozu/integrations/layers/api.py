@@ -198,8 +198,8 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
     try:
         for token in args:
             _guard_path_token(token)
-    except Exception as exc:
-        return fail_response(name, message=str(exc), exc=exc)
+    except Exception:
+        return fail_response(name, message="invalid command arguments")
 
     cmd = [sys.executable, "-m", "yolozu.cli", *args]
     try:
@@ -213,6 +213,15 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
         )
     except subprocess.TimeoutExpired:
         payload = fail_response(name, message=f"cli timeout after {_DEFAULT_TIMEOUT_SEC}s", exit_code=124)
+        payload["command"] = cmd
+        payload["artifacts"] = {}
+        payload["limits"] = {
+            "timeout_sec": _DEFAULT_TIMEOUT_SEC,
+            "stdio_redacted": True,
+        }
+        return payload
+    except Exception:
+        payload = fail_response(name, message="cli execution failed", exit_code=1)
         payload["command"] = cmd
         payload["artifacts"] = {}
         payload["limits"] = {
