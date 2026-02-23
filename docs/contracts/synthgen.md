@@ -1,4 +1,4 @@
-# SynthGen contract (moved)
+# SynthGen interface contract (moved)
 
 Canonical location:
 

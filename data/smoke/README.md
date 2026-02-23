@@ -8,7 +8,7 @@ This directory is a **network-free minimal dataset** used by the project smoke f
 - `labels/val/*.txt` — YOLO bbox labels (`class cx cy w h`, normalized)
 - `labels/val/classes.json` — class/category mapping helper
 - `predictions/predictions_dummy.json` — fixed predictions artifact (`schema_version: 1`)
-- `synthgen_minishard/` — tiny SynthGen shard fixture (animal/mechanical) for contract smoke
+- `synthgen_minishard/` — tiny SynthGen shard fixture (animal/mechanical) for interface-contract smoke
 
 ## What is guaranteed
 
@@ -31,7 +31,7 @@ One-command equivalent:
 bash scripts/smoke.sh
 ```
 
-SynthGen intake smoke (contract + overlay + eval):
+SynthGen intake smoke (interface contract + overlay + eval):
 
 ```bash
 python3 tools/validate_synthgen_contract.py --input data/smoke/synthgen_minishard/shards/train_000.jsonl --max-samples 2

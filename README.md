@@ -10,9 +10,9 @@
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-Contract-first evaluation harness for detection / segmentation / pose.
+Interface-contract-first evaluation harness for detection / segmentation / pose.
 
-YOLOZU supports different models and datasets through unified contracts and adapters.
+YOLOZU supports different models and datasets through unified interface contracts and adapters.
 Run inference in any backend, export a common `predictions.json`,
 and evaluate apples-to-apples with the same validators and metrics.
 
@@ -37,7 +37,7 @@ pip users: go to [Install (pip users)](README.md#install-pip-users). Repo users:
 - **B: Train → Export → Eval (RT-DETR scaffold)**
   — reproducible run artifacts → ONNX → parity/eval.
   Start: [`docs/README.md`](docs/README.md)
-- **C: Contracts (predictions / adapter / TTT protocol)**
+- **C: Interface Contracts (predictions / adapter / TTT protocol)**
   — stable schema + adapter boundary + safe adaptation protocol.
   Start: [`docs/README.md`](docs/README.md)
 - **D: Bench/Parity (TensorRT pipeline / latency benchmark)**
@@ -131,8 +131,8 @@ python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predic
 python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports
 ```
 
-See `docs/synthgen_intake.md` and `docs/synthgen_contract.md` for the full contract and schema-specific templates.
-Generation logic/assets manifest remain external (e.g. `YOLOZU-synthgen`); YOLOZU only guarantees intake for supported contract versions.
+See `docs/synthgen_intake.md` and `docs/synthgen_contract.md` for the full interface contract and schema-specific templates.
+Generation logic/assets manifest remain external (e.g. `YOLOZU-synthgen`); YOLOZU only guarantees intake for supported interface-contract versions.
 
 ## Quickstart details
 
@@ -194,7 +194,7 @@ Moved to docs: [docs/tools_index.md](docs/tools_index.md).
 
 In one glance:
 
-- **BYO inference + contract-first eval**: export the same `predictions.json` and compare apples-to-apples.
+- **BYO inference + interface-contract-first eval**: export the same `predictions.json` and compare apples-to-apples.
 - **Safe TTT**: guard rails + reset policies for online adaptation.
 - **Apache-2.0-only ops**: license policy + checks to keep the toolchain clean.
 - **Parity/bench**: diff stats + fixed-protocol benchmarks across backends.
@@ -274,7 +274,7 @@ Detailed training/eval/export recipes are maintained in docs:
 
 - Training/inference/export quick guide: [docs/training_inference_export.md](docs/training_inference_export.md)
 - Run contract and artifact policy: [docs/run_contract.md](docs/run_contract.md)
-- Dataset and schema contracts: [docs/predictions_schema.md](docs/predictions_schema.md)
+- Dataset and schema interface contracts: [docs/predictions_schema.md](docs/predictions_schema.md)
 - Adapter and backend integration: [docs/adapter_contract.md](docs/adapter_contract.md)
 - COCO/eval-suite protocol and gates: [docs/yolo26_eval_protocol.md](docs/yolo26_eval_protocol.md)
 - External baseline import flow: [docs/yolo26_baseline_repro.md](docs/yolo26_baseline_repro.md)

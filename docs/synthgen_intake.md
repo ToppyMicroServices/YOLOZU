@@ -1,11 +1,11 @@
 # SynthGen intake (YOLOZU side)
 
 YOLOZU does **not** generate synthetic data.  
-`YOLOZU-synthgen` (external repo) produces shards; YOLOZU consumes them through a stable contract.
+`YOLOZU-synthgen` (external repo) produces shards; YOLOZU consumes them through a stable interface contract.
 
 ## Contract boundary
 
-- Contract spec: `docs/synthgen_contract.md` (compat alias: `docs/contracts/synthgen.md`)
+- Interface contract spec: `docs/synthgen_contract.md` (compat alias: `docs/contracts/synthgen.md`)
 - JSON schema: `schemas/synthgen_sample.schema.json`
 - Runtime validator/coercion: `yolozu/contracts/synthgen.py`
 - Required fields:
@@ -34,7 +34,7 @@ These templates pin:
 
 ## Commands
 
-Validate contract:
+Validate interface contract:
 
 ```bash
 python3 tools/validate_synthgen_contract.py \
@@ -66,4 +66,4 @@ python3 tools/eval_synthgen.py \
 
 - Asset manifests, prompt generation, and rendering logic are owned by external SynthGen repos.
 - YOLOZU only guarantees ingestion for records that satisfy `schema_version="1"` of `synthgen_sample`.
-- If generator-side schema evolves, add a new version contract here before enabling it in YOLOZU adapters.
+- If generator-side schema evolves, add a new versioned interface contract here before enabling it in YOLOZU adapters.

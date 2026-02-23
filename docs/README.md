@@ -64,9 +64,9 @@ Reference docs:
 - [Training / inference / export](training_inference_export.md)
 - [Run contract](run_contract.md)
 
-## C) Contracts (predictions / adapter / TTT protocol)
+## C) Interface Contracts (predictions / adapter / TTT protocol)
 
-Use this path to confirm JSON contracts and manifest consistency before bigger runs.
+Use this path to confirm JSON interface contracts and manifest consistency before bigger runs.
 
 Shortest 3 commands:
 
@@ -129,7 +129,7 @@ Reference docs:
 
 ## F) YOLO migration (v5/v8/11/26)
 
-Use this path when you keep training/inference in YOLO tooling and only want YOLOZU contract/eval.
+Use this path when you keep training/inference in YOLO tooling and only want YOLOZU interface-contract/eval.
 
 Shortest 3 commands:
 
@@ -147,7 +147,7 @@ If predictions contain COCO `category_id`, pass `--classes data/ultra_wrapper/la
 
 ## G) Detectron2/MMDetection migration
 
-Use this path when you keep Detectron2/MMDetection training/inference and only export results into YOLOZU contracts.
+Use this path when you keep Detectron2/MMDetection training/inference and only export results into YOLOZU interface contracts.
 
 Shortest flow:
 
@@ -187,7 +187,7 @@ Reference: [OpenCV-DNN inference exporter](opencv_dnn_inference.md)
 
 ## I) YOLOX migration
 
-Use this path when YOLOX is your training/inference stack and you want YOLOZU contract validation + eval.
+Use this path when YOLOX is your training/inference stack and you want YOLOZU interface-contract validation + eval.
 Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
 
 ```bash
@@ -208,7 +208,7 @@ python3 tools/yolozu.py fetch ultralytics-yolo11n-pt --out models --accept-licen
 cat models/ultralytics-yolo11n-pt/meta.json
 ```
 
-The metadata contract at `models/<id>/meta.json` always includes:
+The metadata interface contract at `models/<id>/meta.json` always includes:
 - `source`
 - `version`
 - `license`
@@ -219,7 +219,7 @@ Reference: [Model fetch](model_fetch.md)
 
 ## K) SynthGen intake (external generator boundary)
 
-Use this path when synthetic shards are produced outside YOLOZU and you only need intake/contract/eval here.
+Use this path when synthetic shards are produced outside YOLOZU and you only need intake/interface-contract/eval here.
 
 ```bash
 python3 tools/validate_synthgen_contract.py --input /path/to/synthgen_dataset/shards/train_000.jsonl --max-samples 200
@@ -230,7 +230,7 @@ python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --o
 
 References:
 - [SynthGen intake guide](synthgen_intake.md)
-- [SynthGen contract](synthgen_contract.md)
+- [SynthGen interface contract](synthgen_contract.md)
 
 ## CI incidents
 

@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "repo": {
     "name": "YOLOZU",
-    "description": "Apache-2.0-only contract-first evaluation + tooling harness (CPU-first) for detection/pose workflows across model families."
+    "description": "Apache-2.0-only interface-contract-first evaluation + tooling harness (CPU-first) for detection/pose workflows across model families."
   },
   "contracts": {
     "predictions_json": {
@@ -55,7 +55,7 @@
       "validator": "python3 tools/validate_run_meta.py <path>"
     },
     "synthgen_sample_contract": {
-      "summary": "SynthGen intake sample contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
+      "summary": "SynthGen intake sample interface contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
       "spec": "docs/synthgen_contract.md",
       "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]",
       "schema": "schemas/synthgen_sample.schema.json"
@@ -847,7 +847,7 @@
       "id": "validate_synthgen_contract",
       "entrypoint": "tools/validate_synthgen_contract.py",
       "runner": "python3",
-      "summary": "Validate SynthGen sample/shard contract fields, dtypes, shapes, and ranges before training/eval.",
+      "summary": "Validate SynthGen sample/shard interface-contract fields, dtypes, shapes, and ranges before training/eval.",
       "tags": [
         "synthgen",
         "dataset",
@@ -1092,7 +1092,7 @@
       "id": "smoke_synthgen",
       "entrypoint": "tools/smoke_synthgen.py",
       "runner": "python3",
-      "summary": "Run deterministic SynthGen smoke (contract validate + one overlay + eval) using local mini-shard fixtures.",
+      "summary": "Run deterministic SynthGen smoke (interface-contract validate + one overlay + eval) using local mini-shard fixtures.",
       "tags": [
         "synthgen",
         "smoke",

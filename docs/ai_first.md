@@ -4,7 +4,7 @@ This page defines the stable AI/agent surface for YOLOZU 1.0.x.
 
 ## 1) Purpose
 
-Use YOLOZU as a contract-first execution layer where agents:
+Use YOLOZU as an interface-contract-first execution layer where agents:
 
 - discover tools from `tools/manifest.json`
 - generate deterministic run configs
@@ -44,7 +44,7 @@ python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_c
 python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json
 ```
 
-SynthGen-safe fast path (contract-only, CPU):
+SynthGen-safe fast path (interface-contract-only, CPU):
 
 ```bash
 python3 tools/validate_synthgen_contract.py --input data/smoke/synthgen_minishard/shards/train_000.jsonl --max-samples 2
@@ -58,7 +58,7 @@ Start MCP stdio server:
 python3 tools/run_mcp_server.py
 ```
 
-## 5) JSON contracts for AI surface
+## 5) JSON interface contracts for AI surface
 
 ### 5.1 `doctor` response
 
@@ -109,7 +109,7 @@ Agent-facing tools in `tools/manifest.json` should provide:
 For SynthGen intake tools, also include:
 - explicit `schema_id` controls
 - deterministic fixture examples under `data/smoke/synthgen_minishard`
-- contract reference `docs/synthgen_contract.md`
+- interface contract reference `docs/synthgen_contract.md`
 
 Safe defaults for AI execution:
 

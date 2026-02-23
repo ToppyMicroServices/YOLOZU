@@ -2,15 +2,15 @@
 
 English README: [`README.md`](README.md)
 
-YOLOZU は Apache-2.0 の **contract-first evaluation + tooling harness** です。  
+YOLOZU は Apache-2.0 の **interface-contract-first evaluation + tooling harness** です。  
 推論バックエンド（PyTorch / ONNXRuntime / TensorRT / C++ / Rust など）は自由に選び、
-**同一の `predictions.json` 契約**に落として評価・比較できることを最重視します。
+**同一の `predictions.json` interface contract** に落として評価・比較できることを最重視します。
 
 対象:
 - リアルタイム単眼 RGB **検出**
 - 単眼 **depth + 6DoF pose**（RT-DETRベースの最小学習スキャフォールド）
 - **セマンティックセグ**（データ準備 + mIoU評価）
-- **インスタンスセグ**（PNGマスク契約 + mask mAP評価）
+- **インスタンスセグ**（PNG mask interface contract + mask mAP評価）
 
 推奨デプロイ（標準パス）: **PyTorch → ONNX → TensorRT**
 
@@ -54,7 +54,7 @@ python3 -m pip install 'yolozu[full]'
 
 ## 何が“売り”か（設計の中心）
 
-- **Bring-your-own inference + 契約ファースト評価**  
+- **Bring-your-own inference + interface-contract-first evaluation**  
   推論はどこで回してもよく、評価は `predictions.json` に統一して **公平に比較**できます。
 - **Safe TTT（test-time training）**  
   Tent / MIM のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
@@ -81,7 +81,7 @@ python3 -m pip install 'yolozu[full]'
 
 ---
 
-## 予測JSON（評価契約）
+## 予測JSON（evaluation interface contract）
 
 評価の中心は `predictions.json` です
 （スキーマ: [`schemas/predictions.schema.json`](schemas/predictions.schema.json)
@@ -188,7 +188,7 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --dry-run
 ```
 
-契約された成果物（固定パス）:
+interface contract で固定された成果物（固定パス）:
 - `runs/<run_id>/checkpoints/{last,best}.pt`
 - `runs/<run_id>/reports/{train_metrics.jsonl,val_metrics.jsonl,config_resolved.yaml,run_meta.json,onnx_parity.json}`
 - `runs/<run_id>/exports/model.onnx`（+ meta）
@@ -257,4 +257,3 @@ yolozu onnxrt quantize --onnx model.onnx --output model_int8.onnx --weight-type 
 .venv/bin/ruff check .
 .venv/bin/python -m unittest
 ```
-

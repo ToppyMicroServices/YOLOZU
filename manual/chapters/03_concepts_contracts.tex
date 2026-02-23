@@ -1,7 +1,7 @@
-\chapter{Core Concepts and Contracts}
+\chapter{Core Concepts and Interface Contracts}
 
 \ChapterMeta{
-This chapter elucidates the core contracts (schemas) and the dataset and prediction migration methodologies employed throughout the repository.
+This chapter elucidates the core interface contracts (schemas) and the dataset and prediction migration methodologies employed throughout the repository.
 }{
 
 It ensures evaluation stability across diverse backends and over time by mandating explicit, versionable inputs and outputs.
@@ -11,14 +11,14 @@ This documentation assumes adherence to the specified schemas and treats generat
 }
 
 \section{Contract-First Evaluation}
-The contracts (schemas) are the foundational product of this repository. They empower you to:
+The interface contracts (schemas) are the foundational product of this repository. They empower you to:
 \begin{itemize}
   \item Conduct equitable comparisons across disparate inference backends.
   \item Guarantee the reproducibility of evaluations over time.
   \item Maintain tooling stability, even as underlying models undergo architectural evolution.
 \end{itemize}
 
-Core contracts include:
+Core interface contracts include:
 \begin{itemize}
   \item \textbf{Predictions Schema}: \path{docs/predictions_schema.md}
   \item \textbf{Adapter Contract}: \path{docs/adapter_contract.md}
@@ -26,7 +26,7 @@ Core contracts include:
   \item \textbf{SynthGen Intake Contract}: \path{docs/synthgen_contract.md}
 \end{itemize}
 
-When links and prose disagree, treat these contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
+When links and prose disagree, treat these interface contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
 
 \section{Datasets}
 The majority of tools anticipate a YOLO-style dataset hierarchy (comprising \path{images/}, \path{labels/}, and splits), supplemented by optional metadata.
@@ -99,7 +99,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 \end{lstlisting}
 
 \section{Adapters (Bring-Your-Own Inference)}
-An adapter functions as a thin interface layer bridging a specific inference implementation and \yolozu{}'s standardized contracts. If your system can generate a compliant \path{predictions.json}, it can be evaluated.
+An adapter functions as a thin interface layer bridging a specific inference implementation and \yolozu{}'s standardized interface contracts. If your system can generate a compliant \path{predictions.json}, it can be evaluated.
 
 In practical terms, this entails:
 \begin{itemize}

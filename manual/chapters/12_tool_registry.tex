@@ -3,7 +3,7 @@
 \ChapterMeta{
 This chapter elucidates the machine-readable tool registry (comprising the manifest and schemas) and its role in facilitating safe discovery and execution for both human operators and autonomous agents.
 }{
-It underpins reproducible automation and Continuous Integration (CI)-style workflows by strictly pinning tool I/O contracts and validating the registry's surface area.
+It underpins reproducible automation and Continuous Integration (CI)-style workflows by strictly pinning tool I/O interface contracts and validating the registry's surface area.
 }{
 This documentation assumes that tools are invoked exclusively via their declared entrypoints and validated using \cmd{python3 tools/validate_tool_manifest.py}. Path-resolution rules are critical for robust automation.
 }
@@ -19,7 +19,7 @@ Research workflows frequently accumulate disparate scripts. \yolozu{} addresses 
 This architecture is explicitly designed to serve:
 \begin{itemize}
   \item \textbf{Human Operators}: Providing a clear answer to "What command do I run to achieve X?"
-  \item \textbf{Agentic Automation}: Enabling safe, programmatic discovery of entrypoints and I/O contracts.
+  \item \textbf{Agentic Automation}: Enabling safe, programmatic discovery of entrypoints and I/O interface contracts.
   \item \textbf{CI-Style Reproducibility}: Ensuring stable commands and deterministic artifact generation.
 \end{itemize}
 
@@ -39,7 +39,7 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
 \end{lstlisting}
 
 \section{Declarative Fields: Mandatory Tool Metadata}
-The manifest functions as a declarative contract. At a practical minimum, every tool entry must expose:
+The manifest functions as a declarative interface contract. At a practical minimum, every tool entry must expose:
 \begin{itemize}
   \item \textbf{Identity and Execution}: \texttt{id}, \texttt{entrypoint}, \texttt{runner}, and \texttt{summary}.
   \item \textbf{Environment}: \texttt{platform} constraints and optional \texttt{requires} dependencies.
@@ -108,7 +108,7 @@ For autonomous or semi-autonomous operations, the recommended stable entrypoints
   \item \textbf{Usage Guide}: \path{docs/ai_first.md}
 \end{itemize}
 
-This represents an explicit design objective of \yolozu{}: AI agents must be capable of discovering, validating, executing, and extending workflows utilizing stable, well-defined contracts.
+This represents an explicit design objective of \yolozu{}: AI agents must be capable of discovering, validating, executing, and extending workflows utilizing stable, well-defined interface contracts.
 
 \section{Manifest-Synchronized Documentation Workflow}
 When introducing or modifying a tool, adhere to the following workflow:
@@ -133,10 +133,10 @@ The registry now exposes explicit intake utilities for externally generated synt
   \item \cmd{validate\_synthgen\_contract}: validate required SynthGen fields and tensor/range constraints.
   \item \cmd{render\_synthgen\_overlay}: generate semantic/instance/keypoint debug overlays.
   \item \cmd{eval\_synthgen}: compute keypoint, segmentation, and depth summaries for SynthGen predictions.
-  \item \cmd{smoke\_synthgen}: run a deterministic contract+overlay+eval smoke pass on \path{data/smoke/synthgen\_minishard}.
+  \item \cmd{smoke\_synthgen}: run a deterministic interface-contract+overlay+eval smoke pass on \path{data/smoke/synthgen\_minishard}.
 \end{itemize}
 
-These tools reference the canonical SynthGen contract at \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}.
+These tools reference the canonical SynthGen interface contract at \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}.
 
 \section{Release Automation: Manual PDF DOI as a Separate Record}
 For release operations, YOLOZU intentionally keeps software DOI and manual DOI lifecycles independent:

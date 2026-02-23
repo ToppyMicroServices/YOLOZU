@@ -1,9 +1,9 @@
-# SynthGen sample contract (v1)
+# SynthGen sample interface contract (v1)
 
-This document defines the **YOLOZU intake contract** for synthetic samples generated in external repos (for example `YOLOZU-synthgen`).
+This document defines the **YOLOZU intake interface contract** for synthetic samples generated in external repos (for example `YOLOZU-synthgen`).
 
 YOLOZU scope is intentionally limited to:
-- contract validation
+- interface-contract validation
 - dataset loading/adaptation
 - visualization/evaluation
 
@@ -75,7 +75,7 @@ MVP training/eval policy in YOLOZU uses `vis == 2` for keypoint regression metri
 
 ## Canonical ingestion path
 
-1. Validate contract:
+1. Validate interface contract:
 
 ```bash
 python3 tools/validate_synthgen_contract.py \
