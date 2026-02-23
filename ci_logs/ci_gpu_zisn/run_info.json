@@ -1,0 +1,13 @@
+{
+  "run_id": "22288814723",
+  "run_attempt": "1",
+  "ref": "refs/heads/main",
+  "sha": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7",
+  "workflow": "gpu-zisn-pipeline",
+  "job": "publish_logs",
+  "actor": "thinksyncs",
+  "stage": "all",
+  "zisn1_result": "success",
+  "zisn2_result": "success",
+  "zisn3_result": "success"
+}

@@ -1,0 +1,45 @@
+{
+  "methods": {
+    "tent": {
+      "status": "ok",
+      "steps_run": 0,
+      "rollback_steps": 0,
+      "non_finite_steps": 0,
+      "stopped_early": false,
+      "stop_reason": null,
+      "warnings": []
+    },
+    "cotta": {
+      "status": "ok",
+      "steps_run": 0,
+      "rollback_steps": 0,
+      "non_finite_steps": 0,
+      "stopped_early": false,
+      "stop_reason": null,
+      "warnings": []
+    },
+    "eata": {
+      "status": "ok",
+      "steps_run": 0,
+      "rollback_steps": 0,
+      "non_finite_steps": 0,
+      "stopped_early": false,
+      "stop_reason": null,
+      "warnings": []
+    },
+    "sar": {
+      "status": "ok",
+      "steps_run": 0,
+      "rollback_steps": 0,
+      "non_finite_steps": 0,
+      "stopped_early": false,
+      "stop_reason": null,
+      "warnings": []
+    }
+  },
+  "totals": {
+    "rollback_steps": 0,
+    "instability_events": 0,
+    "stopped_early": 0
+  }
+}

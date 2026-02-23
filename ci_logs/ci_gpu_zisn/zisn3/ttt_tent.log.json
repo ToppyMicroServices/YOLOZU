@@ -1,0 +1,104 @@
+{
+  "output": "/workspace/reports/ci_zisn3/pred_ttt_tent.json",
+  "timestamp": "2026-02-23T00:36:53Z",
+  "ttt": {
+    "batch_size": 1,
+    "cotta": {
+      "aggregation": "confidence_weighted_mean",
+      "augmentations": [
+        "identity",
+        "hflip"
+      ],
+      "ema_momentum": 0.999,
+      "restore_interval": 1,
+      "restore_prob": 0.01
+    },
+    "eata": {
+      "anchor_lambda": 0.001,
+      "conf_min": 0.2,
+      "entropy_max": 3.0,
+      "entropy_min": 0.05,
+      "max_skip_streak": 3,
+      "min_valid_dets": 1,
+      "selected_ratio_min": 0.0
+    },
+    "enabled": true,
+    "exclude": null,
+    "include": null,
+    "lr": 0.0001,
+    "max_batches": 1,
+    "max_grad_norm": 1.0,
+    "max_loss_increase": null,
+    "max_loss_ratio": 3.0,
+    "max_total_update_norm": 1.0,
+    "max_update_norm": 1.0,
+    "method": "tent",
+    "mim": {
+      "mask_prob": 0.6,
+      "mask_value": 0.0,
+      "patch_size": 16
+    },
+    "report": {
+      "mode": "sample",
+      "per_sample": [
+        {
+          "image": "reports/ci_zisn3/dataset/images/val/000001.jpg",
+          "index": 0,
+          "report": {
+            "batches_used": 1,
+            "enabled": true,
+            "loss_summary": {
+              "count": 1,
+              "last": 4.223911285400391,
+              "max": 4.223911285400391,
+              "mean": 4.223911285400391,
+              "min": 4.223911285400391
+            },
+            "losses": [
+              4.223911285400391
+            ],
+            "losses_total": 1,
+            "losses_truncated": false,
+            "mask_ratio": null,
+            "method": "tent",
+            "reset": "sample",
+            "seconds": 1.3424875736236572,
+            "step_metrics": [
+              {
+                "grad_norm": 0.17588837444782257,
+                "grad_norm_clipped": 0.17588837444782257,
+                "loss": 4.223911285400391,
+                "rolled_back": false,
+                "step": 0,
+                "total_update_norm": 0.012787850573658943,
+                "update_norm": 0.012787850573658943
+              }
+            ],
+            "step_metrics_total": 1,
+            "step_metrics_truncated": false,
+            "steps_requested": 1,
+            "steps_run": 1,
+            "stop_reason": null,
+            "stopped_early": false,
+            "updated_param_count": 16384,
+            "warnings": []
+          }
+        }
+      ],
+      "samples_kept": 1,
+      "samples_total": 1,
+      "samples_truncated": false
+    },
+    "reset": "sample",
+    "rollback_on_stop": true,
+    "sar": {
+      "adaptive": false,
+      "first_step_scale": 1.0,
+      "rho": 0.05
+    },
+    "seed": null,
+    "steps": 1,
+    "stop_on_non_finite": true,
+    "update_filter": "norm_only"
+  }
+}

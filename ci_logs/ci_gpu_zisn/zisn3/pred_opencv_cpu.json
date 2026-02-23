@@ -1,0 +1,44 @@
+{
+  "predictions": [
+    {
+      "detections": [
+        {
+          "bbox": {
+            "cx": 0.5,
+            "cy": 0.5,
+            "h": 0.3999999761581421,
+            "w": 0.3999999761581421
+          },
+          "class_id": 1,
+          "score": 0.8337810039520264
+        },
+        {
+          "bbox": {
+            "cx": 0.30000001192092896,
+            "cy": 0.4000000059604645,
+            "h": 0.19999998807907104,
+            "w": 0.19999998807907104
+          },
+          "class_id": 0,
+          "score": 0.7102943062782288
+        }
+      ],
+      "image": "/workspace/reports/ci_zisn3/dataset/images/val/000001.jpg",
+      "image_size": {
+        "height": 64,
+        "width": 64
+      },
+      "preprocess": {
+        "input_color": "RGB",
+        "input_size": {
+          "height": 64,
+          "width": 64
+        },
+        "keep_aspect": false,
+        "method": "resize",
+        "normalize": "0_1",
+        "resize_interp": "linear"
+      }
+    }
+  ]
+}

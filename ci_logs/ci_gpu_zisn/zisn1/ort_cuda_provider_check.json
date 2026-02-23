@@ -1,0 +1,14 @@
+{
+  "providers": [
+    "CUDAExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "input_name": "images",
+  "input_shape": [
+    "batch",
+    3,
+    64,
+    64
+  ],
+  "uses_cuda": true
+}

@@ -1,0 +1,400 @@
+{
+  "benchmark": {
+    "enabled": true,
+    "results": [
+      {
+        "memory_after": {
+          "raw": "279, 15360",
+          "total_mib": 15360,
+          "used_mib": 279
+        },
+        "memory_before": {
+          "raw": "279, 15360",
+          "total_mib": 15360,
+          "used_mib": 279
+        },
+        "metrics": {
+          "fps": 106.79971575896452,
+          "iterations": 10,
+          "latency_ms": {
+            "max": 9.523,
+            "mean": 9.362,
+            "min": 9.26,
+            "p50": 9.344,
+            "p90": 9.48,
+            "p95": 9.501,
+            "p99": 9.518
+          },
+          "total_sec": 0.09363320799999997,
+          "warmup": 2
+        },
+        "name": "torch"
+      },
+      {
+        "memory_after": {
+          "raw": "279, 15360",
+          "total_mib": 15360,
+          "used_mib": 279
+        },
+        "memory_before": {
+          "raw": "279, 15360",
+          "total_mib": 15360,
+          "used_mib": 279
+        },
+        "metrics": {
+          "fps": 144.95745839250668,
+          "iterations": 10,
+          "latency_ms": {
+            "max": 6.915,
+            "mean": 6.898,
+            "min": 6.872,
+            "p50": 6.904,
+            "p90": 6.914,
+            "p95": 6.915,
+            "p99": 6.915
+          },
+          "total_sec": 0.06898575699997878,
+          "warmup": 2
+        },
+        "name": "onnxrt"
+      }
+    ]
+  },
+  "meta": {
+    "argv": [
+      "tools/rtdetr_pose_backend_suite.py",
+      "--config",
+      "rtdetr_pose/configs/base.json",
+      "--checkpoint",
+      "reports/ci_zisn1/train/checkpoint.pt",
+      "--onnx",
+      "reports/ci_zisn1/model.onnx",
+      "--backends",
+      "torch,onnxrt",
+      "--device",
+      "cuda",
+      "--image-size",
+      "64",
+      "--batch",
+      "1",
+      "--samples",
+      "1",
+      "--warmup",
+      "2",
+      "--iterations",
+      "10",
+      "--output",
+      "reports/ci_zisn1/backend_suite_ort_cuda.json"
+    ],
+    "backends": [
+      "torch",
+      "onnxrt"
+    ],
+    "batch": 1,
+    "checkpoint": "/workspace/reports/ci_zisn1/train/checkpoint.pt",
+    "config": "/workspace/rtdetr_pose/configs/base.json",
+    "cwd": "/workspace",
+    "dry_run": false,
+    "engine": null,
+    "engine_meta": null,
+    "env": {
+      "CUDA_VISIBLE_DEVICES": null,
+      "NVIDIA_VISIBLE_DEVICES": "void",
+      "PYTHONHASHSEED": null
+    },
+    "image_size": 64,
+    "input_name": "images",
+    "onnx": "/workspace/reports/ci_zisn1/model.onnx",
+    "onnx_meta": null,
+    "platform": {
+      "machine": "x86_64",
+      "release": "6.8.0-1044-aws",
+      "system": "Linux"
+    },
+    "run_record": {
+      "accelerator": {
+        "cuda": {
+          "available": true,
+          "cuda_visible_devices": null,
+          "cudnn": 90100,
+          "device_count": 1,
+          "devices": [
+            {
+              "capability": [
+                7,
+                5
+              ],
+              "index": 0,
+              "name": "Tesla T4",
+              "total_memory_bytes": 15642329088
+            }
+          ],
+          "version": "12.4"
+        },
+        "mps": {
+          "available": false
+        },
+        "torch_available": true
+      },
+      "args": {
+        "backends": "torch,onnxrt",
+        "batch": 1,
+        "bbox_atol": 0.0001,
+        "checkpoint": "reports/ci_zisn1/train/checkpoint.pt",
+        "config": "rtdetr_pose/configs/base.json",
+        "device": "cuda",
+        "dry_run": false,
+        "embed_meta": false,
+        "engine": null,
+        "engine_meta": null,
+        "image_size": 64,
+        "input_name": "images",
+        "iterations": 10,
+        "onnx": "reports/ci_zisn1/model.onnx",
+        "onnx_meta": null,
+        "output": "reports/ci_zisn1/backend_suite_ort_cuda.json",
+        "reference": "torch",
+        "samples": 1,
+        "score_atol": 0.0001,
+        "seed": 0,
+        "trtexec": "trtexec",
+        "warmup": 2
+      },
+      "argv": [
+        "tools/rtdetr_pose_backend_suite.py",
+        "--config",
+        "rtdetr_pose/configs/base.json",
+        "--checkpoint",
+        "reports/ci_zisn1/train/checkpoint.pt",
+        "--onnx",
+        "reports/ci_zisn1/model.onnx",
+        "--backends",
+        "torch,onnxrt",
+        "--device",
+        "cuda",
+        "--image-size",
+        "64",
+        "--batch",
+        "1",
+        "--samples",
+        "1",
+        "--warmup",
+        "2",
+        "--iterations",
+        "10",
+        "--output",
+        "reports/ci_zisn1/backend_suite_ort_cuda.json"
+      ],
+      "command": {
+        "argv": [
+          "tools/rtdetr_pose_backend_suite.py",
+          "--config",
+          "rtdetr_pose/configs/base.json",
+          "--checkpoint",
+          "reports/ci_zisn1/train/checkpoint.pt",
+          "--onnx",
+          "reports/ci_zisn1/model.onnx",
+          "--backends",
+          "torch,onnxrt",
+          "--device",
+          "cuda",
+          "--image-size",
+          "64",
+          "--batch",
+          "1",
+          "--samples",
+          "1",
+          "--warmup",
+          "2",
+          "--iterations",
+          "10",
+          "--output",
+          "reports/ci_zisn1/backend_suite_ort_cuda.json"
+        ],
+        "command": [
+          "/usr/bin/python3",
+          "tools/rtdetr_pose_backend_suite.py",
+          "--config",
+          "rtdetr_pose/configs/base.json",
+          "--checkpoint",
+          "reports/ci_zisn1/train/checkpoint.pt",
+          "--onnx",
+          "reports/ci_zisn1/model.onnx",
+          "--backends",
+          "torch,onnxrt",
+          "--device",
+          "cuda",
+          "--image-size",
+          "64",
+          "--batch",
+          "1",
+          "--samples",
+          "1",
+          "--warmup",
+          "2",
+          "--iterations",
+          "10",
+          "--output",
+          "reports/ci_zisn1/backend_suite_ort_cuda.json"
+        ],
+        "command_str": "/usr/bin/python3 tools/rtdetr_pose_backend_suite.py --config rtdetr_pose/configs/base.json --checkpoint reports/ci_zisn1/train/checkpoint.pt --onnx reports/ci_zisn1/model.onnx --backends torch,onnxrt --device cuda --image-size 64 --batch 1 --samples 1 --warmup 2 --iterations 10 --output reports/ci_zisn1/backend_suite_ort_cuda.json",
+        "cwd": "/workspace",
+        "python_executable": "/usr/bin/python3"
+      },
+      "dependency_lock": {
+        "package_count": 153,
+        "package_set_sha256": "a010552db69abe64e1d73f5149fbd614a0b9ae5f5c4afbf85f523e23c9769997",
+        "python_version": "3.11.10",
+        "requirements_files_sha256": {
+          "requirements-dev.txt": "6d4bdda6e5ad229f9333bad24b51689ad07691706f87ec2ac6fbb0a6705212b5",
+          "requirements-test.txt": "ba68d888d342cca025b830788304ff5c0f0f2fe7bf80fca5004c801e92ec9ef9",
+          "requirements.txt": "30469404bf9246a844172fe07181561459f6a9a6439abde4565c60d373e6685b"
+        }
+      },
+      "git": {
+        "dirty": false,
+        "sha": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7"
+      },
+      "hardware": {
+        "accelerator": {
+          "cuda": {
+            "available": true,
+            "cuda_visible_devices": null,
+            "cudnn": 90100,
+            "device_count": 1,
+            "devices": [
+              {
+                "capability": [
+                  7,
+                  5
+                ],
+                "index": 0,
+                "name": "Tesla T4",
+                "total_memory_bytes": 15642329088
+              }
+            ],
+            "version": "12.4"
+          },
+          "mps": {
+            "available": false
+          },
+          "torch_available": true
+        },
+        "host": {
+          "fqdn": "b9aae583e002",
+          "hostname": "b9aae583e002",
+          "node": "b9aae583e002",
+          "pid": 128
+        }
+      },
+      "host": {
+        "fqdn": "b9aae583e002",
+        "hostname": "b9aae583e002",
+        "node": "b9aae583e002",
+        "pid": 128
+      },
+      "preprocess": {
+        "image_size": 64,
+        "multiscale": false,
+        "scale_max": null,
+        "scale_min": null
+      },
+      "runtime": {
+        "platform": "Linux-6.8.0-1044-aws-x86_64-with-glibc2.35",
+        "python_executable": "/usr/bin/python3",
+        "python_version": "3.11.10"
+      },
+      "schema_version": 1,
+      "versions": {
+        "Pillow": "10.2.0",
+        "PyYAML": "6.0.2",
+        "numpy": "1.26.3",
+        "platform": "Linux-6.8.0-1044-aws-x86_64-with-glibc2.35",
+        "python": "3.11.10",
+        "torch": "2.4.1+cu124"
+      }
+    },
+    "samples": 1,
+    "seed": 0,
+    "system": {
+      "nvidia": {
+        "cuda_version": "12.5",
+        "gpus": [
+          {
+            "compute_cap": "7.5",
+            "driver_version": "555.58.02",
+            "name": "Tesla T4",
+            "sm": "75",
+            "uuid": "GPU-9f548467-9237-ce09-3b14-55586760607d"
+          }
+        ],
+        "raw": "Mon Feb 23 00:37:10 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 555.58.02              Driver Version: 555.58.02      CUDA Version: 12.5     |\n|-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  Tesla T4                       Off |   00000000:00:1E.0 Off |                    0 |\n| N/A   21C    P0             24W /   70W |       3MiB /  15360MiB |      0%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n                                                                                         \n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+"
+      },
+      "onnxruntime": {
+        "available_providers": [
+          "TensorrtExecutionProvider",
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "version": "1.24.2"
+      },
+      "tensorrt": {
+        "tensorrt_py": null,
+        "trtexec": "trtexec",
+        "trtexec_version": null
+      }
+    }
+  },
+  "parity": {
+    "candidates": {
+      "onnxrt": {
+        "available": true,
+        "bbox": {
+          "max_over_samples": 1.4901161193847656e-07,
+          "per_sample": [
+            {
+              "max": 1.4901161193847656e-07,
+              "mean": 3.0845403671264646e-08,
+              "ok": true,
+              "p50": 2.9802322387695312e-08,
+              "p90": 5.960464477539063e-08,
+              "p95": 5.960464477539063e-08,
+              "p99": 1.1920928955078125e-07,
+              "shape": [
+                1,
+                300,
+                4
+              ]
+            }
+          ]
+        },
+        "passed": true,
+        "score": {
+          "max_over_samples": 2.60770320892334e-08,
+          "per_sample": [
+            {
+              "max": 2.60770320892334e-08,
+              "mean": 6.531675656636556e-09,
+              "ok": true,
+              "p50": 7.450580596923828e-09,
+              "p90": 1.4901161193847656e-08,
+              "p95": 1.862645149230957e-08,
+              "p99": 2.2351741790771484e-08,
+              "shape": [
+                1,
+                300
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "enabled": true,
+    "reference": "torch",
+    "thresholds": {
+      "bbox_atol": 0.0001,
+      "score_atol": 0.0001
+    }
+  },
+  "timestamp_utc": "2026-02-23T00:37:10Z"
+}

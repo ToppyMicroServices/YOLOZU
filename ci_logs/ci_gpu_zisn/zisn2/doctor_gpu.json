@@ -1,0 +1,117 @@
+{
+  "cwd": "/workspace",
+  "drift_hints": [],
+  "env": {
+    "MKL_NUM_THREADS": null,
+    "OMP_NUM_THREADS": null,
+    "PYTHONHASHSEED": null
+  },
+  "errors": [],
+  "git": {
+    "dirty": false,
+    "head": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7"
+  },
+  "gpu": {
+    "cuda_visible_devices": null,
+    "nvidia_smi_list": [
+      "GPU 0: Tesla T4 (UUID: GPU-4d973e5a-f830-05be-a97f-bd94dad8588d)"
+    ],
+    "onnxruntime": {
+      "providers": [
+        "AzureExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "version": "1.23.2"
+    },
+    "torch": null
+  },
+  "guidance_links": {
+    "backend_parity": "docs/backend_parity_matrix.md",
+    "baseline_repro": "docs/yolo26_baseline_repro.md",
+    "onnx_parity": "docs/onnx_export_parity.md",
+    "tensorrt": "docs/tensorrt_pipeline.md"
+  },
+  "kind": "yolozu_doctor",
+  "packages": {
+    "installed_versions": {
+      "Pillow": "10.4.0",
+      "PyYAML": "6.0.3",
+      "numpy": "2.2.6",
+      "onnxruntime": "1.23.2",
+      "tensorrt": "10.3.0",
+      "torch": null,
+      "yolozu": null
+    },
+    "required": {
+      "Pillow": {
+        "available": true,
+        "version": "10.4.0"
+      },
+      "PyYAML": {
+        "available": true,
+        "version": "6.0.3"
+      },
+      "numpy": {
+        "available": true,
+        "version": "2.2.6"
+      }
+    }
+  },
+  "platform": {
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "release": "6.8.0-1044-aws",
+    "system": "Linux",
+    "version": "#46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025"
+  },
+  "python": "3.10.12 (main, Jul 29 2024, 16:56:48) [GCC 11.4.0]",
+  "runtime_capabilities": {
+    "cuda": {
+      "cuda_visible_devices": null,
+      "gpu_count_from_nvidia_smi": 1,
+      "nvidia_smi_available": true
+    },
+    "onnxruntime": {
+      "cuda_provider": false,
+      "installed": true,
+      "providers": [
+        "AzureExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "tensorrt_provider": false,
+      "version": "1.23.2"
+    },
+    "opencv": {
+      "cuda_enabled_device_count": 0,
+      "module_available": true,
+      "python_package_version": "4.13.0.92"
+    },
+    "tensorrt": {
+      "python_module_available": true,
+      "python_package_version": "10.3.0",
+      "trtexec_available": false,
+      "trtexec_version": null
+    },
+    "torch": {
+      "cuda_available": false,
+      "cuda_version": null,
+      "cudnn_version": null,
+      "device_count": 0,
+      "installed": false,
+      "version": null
+    }
+  },
+  "schema_version": 1,
+  "timestamp": "2026-02-23T00:36:45Z",
+  "tools": {
+    "git": true,
+    "nvidia_smi": true,
+    "trtexec": false
+  },
+  "warnings": [
+    "trtexec not found (TensorRT engine build requires it)"
+  ],
+  "yolozu": {
+    "version": "0.1.2"
+  }
+}

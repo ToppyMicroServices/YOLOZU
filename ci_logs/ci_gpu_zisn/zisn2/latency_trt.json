@@ -1,0 +1,44 @@
+{
+  "losses": {},
+  "meta": {
+    "dry_run": false,
+    "engine": "/workspace/reports/ci_zisn2/model_fp16.plan",
+    "engine_sha256": "76c9609d6de820d6aa3ea4a25217b47b2c0ba784fab6366d3e58b7851e34d7bd",
+    "env": {
+      "PYTHONHASHSEED": null
+    },
+    "exporter": "tensorrt",
+    "git_head": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7",
+    "input_name": "images",
+    "iterations": 50,
+    "notes": null,
+    "platform": {
+      "machine": "x86_64",
+      "processor": "x86_64",
+      "release": "6.8.0-1044-aws",
+      "system": "Linux",
+      "version": "#46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025"
+    },
+    "python": "3.10.12 (main, Jul 29 2024, 16:56:48) [GCC 11.4.0]",
+    "shape": "1x3x64x64",
+    "timestamp": "2026-02-23T00:36:34Z",
+    "warmup": 10
+  },
+  "metrics": {
+    "fps": 9200.922006005381,
+    "iterations": 50,
+    "latency_ms": {
+      "max": 0.135,
+      "mean": 0.108,
+      "min": 0.102,
+      "p50": 0.105,
+      "p90": 0.12,
+      "p95": 0.128,
+      "p99": 0.134
+    },
+    "total_sec": 0.00543423799999232,
+    "warmup": 10
+  },
+  "schema_version": 1,
+  "timestamp": "2026-02-23T00:36:36Z"
+}

@@ -1,0 +1,6 @@
+{
+  "opencv_version": "4.13.0",
+  "has_dnn_cuda_symbols": true,
+  "cuda_device_count": 0,
+  "cuda_path_ready": false
+}

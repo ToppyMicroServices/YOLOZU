@@ -1,0 +1,6 @@
+{
+  "ddp_mode": "single_gpu_fallback",
+  "gpu_count": 1,
+  "checkpoint_bundle_exists": true,
+  "checkpoint_exists": true
+}

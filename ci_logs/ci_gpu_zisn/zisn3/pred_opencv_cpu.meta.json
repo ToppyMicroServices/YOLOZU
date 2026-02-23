@@ -1,0 +1,66 @@
+{
+  "cv2_version": "4.13.0",
+  "dataset": "reports/ci_zisn3/dataset",
+  "decode": {
+    "background_class": "last",
+    "boxes_format": "cxcywh",
+    "boxes_scale": "norm",
+    "scores_activation": "softmax",
+    "topk": 20
+  },
+  "dnn": {
+    "backend": "opencv",
+    "target": "cpu"
+  },
+  "dry_run": false,
+  "env": {
+    "CUDA_VISIBLE_DEVICES": null,
+    "NVIDIA_VISIBLE_DEVICES": "void",
+    "PYTHONHASHSEED": null
+  },
+  "export_settings": {
+    "bbox_format": "cxcywh_norm",
+    "imgsz": 64,
+    "preprocess": {
+      "input_color": "RGB",
+      "input_size": {
+        "height": 64,
+        "width": 64
+      },
+      "keep_aspect": false,
+      "method": "resize",
+      "normalize": "0_1",
+      "resize_interp": "linear"
+    },
+    "score_threshold": 0.0
+  },
+  "exporter": "opencv_dnn_rtdetr",
+  "max_images": null,
+  "onnx": "/workspace/reports/ci_zisn3/model_rtdetr_like.onnx",
+  "onnx_sha256": "84a388a88307281d47faddca66e09233c00b4794aaf2a3ab0fb41f1e8902579b",
+  "output_names_effective": [
+    "boxes",
+    "logits"
+  ],
+  "outputs": {
+    "boxes_output": "boxes",
+    "labels_output": null,
+    "logits_output": "logits",
+    "names": null,
+    "scores_output": null
+  },
+  "outputs_effective": {
+    "boxes": "boxes",
+    "labels": null,
+    "logits": "logits",
+    "scores": null
+  },
+  "platform": {
+    "machine": "x86_64",
+    "release": "6.8.0-1044-aws",
+    "system": "Linux"
+  },
+  "python": "3.11.10 (main, Sep  7 2024, 18:35:41) [GCC 11.4.0]",
+  "split": "val",
+  "timestamp": "2026-02-23T00:36:47Z"
+}

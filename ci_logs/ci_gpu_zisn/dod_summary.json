@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "dod_status": "pass",
+  "run_info": {
+    "run_id": "22288814723",
+    "run_attempt": "1",
+    "ref": "refs/heads/main",
+    "sha": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7",
+    "workflow": "gpu-zisn-pipeline",
+    "job": "publish_logs",
+    "actor": "thinksyncs",
+    "stage": "all",
+    "zisn1_result": "success",
+    "zisn2_result": "success",
+    "zisn3_result": "success"
+  },
+  "checks": {
+    "zisn1_model_onnx": true,
+    "zisn1_model_meta": true,
+    "zisn1_ort_cuda_check": true,
+    "zisn2_engine_meta": true,
+    "zisn2_pred_trt": true,
+    "zisn2_parity_report": true,
+    "zisn2_latency": true,
+    "zisn2_eval": true,
+    "zisn3_opencv_cpu_pred": true,
+    "zisn3_opencv_cpu_meta": true,
+    "zisn3_opencv_cuda_status": true,
+    "zisn3_ttt_summary": true,
+    "zisn3_doctor": true,
+    "zisn3_ttt_tent_log": true,
+    "zisn3_ttt_cotta_log": true,
+    "zisn3_ttt_eata_log": true,
+    "zisn3_ttt_sar_log": true,
+    "zisn3_opencv_cuda_pred": false,
+    "zisn3_opencv_cuda_meta": false,
+    "zisn3_opencv_parity": false
+  },
+  "missing_required_artifacts": []
+}

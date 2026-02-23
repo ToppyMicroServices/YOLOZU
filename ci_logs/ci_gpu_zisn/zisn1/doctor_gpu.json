@@ -1,0 +1,138 @@
+{
+  "cwd": "/workspace",
+  "drift_hints": [
+    {
+      "detail": "ORT lists TensorrtExecutionProvider, while `trtexec --version` is unavailable.",
+      "id": "trt_provider_without_trtexec",
+      "likely_cause": "TensorRT runtime pieces are partially installed on PATH.",
+      "remediation": "docs/tensorrt_pipeline.md",
+      "title": "ONNXRuntime TensorRT provider found, but trtexec missing"
+    },
+    {
+      "detail": "Multiple GPU runtimes are available; identical inputs can still produce small differences.",
+      "id": "backend_kernel_variance",
+      "likely_cause": "Different kernels/precision paths (Torch/ORT/TRT/OpenCV) are not bit-identical.",
+      "remediation": "docs/onnx_export_parity.md",
+      "title": "Cross-backend numeric drift is still possible"
+    }
+  ],
+  "env": {
+    "MKL_NUM_THREADS": null,
+    "OMP_NUM_THREADS": null,
+    "PYTHONHASHSEED": null
+  },
+  "errors": [],
+  "git": {
+    "dirty": false,
+    "head": "e06683f7c8b9ed67c2b7a1e4ad434a94bd58fcb7"
+  },
+  "gpu": {
+    "cuda_visible_devices": null,
+    "nvidia_smi_list": [
+      "GPU 0: Tesla T4 (UUID: GPU-9f548467-9237-ce09-3b14-55586760607d)"
+    ],
+    "onnxruntime": {
+      "providers": [
+        "TensorrtExecutionProvider",
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "version": "1.24.2"
+    },
+    "torch": {
+      "cuda_available": true,
+      "device_count": 1,
+      "version": "2.4.1+cu124"
+    }
+  },
+  "guidance_links": {
+    "backend_parity": "docs/backend_parity_matrix.md",
+    "baseline_repro": "docs/yolo26_baseline_repro.md",
+    "onnx_parity": "docs/onnx_export_parity.md",
+    "tensorrt": "docs/tensorrt_pipeline.md"
+  },
+  "kind": "yolozu_doctor",
+  "packages": {
+    "installed_versions": {
+      "Pillow": "10.2.0",
+      "PyYAML": "6.0.2",
+      "numpy": "1.26.3",
+      "onnxruntime": null,
+      "tensorrt": null,
+      "torch": "2.4.1+cu124",
+      "yolozu": null
+    },
+    "required": {
+      "Pillow": {
+        "available": true,
+        "version": "10.2.0"
+      },
+      "PyYAML": {
+        "available": true,
+        "version": "6.0.2"
+      },
+      "numpy": {
+        "available": true,
+        "version": "1.26.3"
+      }
+    }
+  },
+  "platform": {
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "release": "6.8.0-1044-aws",
+    "system": "Linux",
+    "version": "#46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025"
+  },
+  "python": "3.11.10 (main, Sep  7 2024, 18:35:41) [GCC 11.4.0]",
+  "runtime_capabilities": {
+    "cuda": {
+      "cuda_visible_devices": null,
+      "gpu_count_from_nvidia_smi": 1,
+      "nvidia_smi_available": true
+    },
+    "onnxruntime": {
+      "cuda_provider": true,
+      "installed": true,
+      "providers": [
+        "TensorrtExecutionProvider",
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "tensorrt_provider": true,
+      "version": "1.24.2"
+    },
+    "opencv": {
+      "cuda_enabled_device_count": null,
+      "module_available": false,
+      "python_package_version": null
+    },
+    "tensorrt": {
+      "python_module_available": false,
+      "python_package_version": null,
+      "trtexec_available": false,
+      "trtexec_version": null
+    },
+    "torch": {
+      "cuda_available": true,
+      "cuda_version": "12.4",
+      "cudnn_version": 90100,
+      "device_count": 1,
+      "installed": true,
+      "version": "2.4.1+cu124"
+    }
+  },
+  "schema_version": 1,
+  "timestamp": "2026-02-23T00:37:41Z",
+  "tools": {
+    "git": true,
+    "nvidia_smi": true,
+    "trtexec": false
+  },
+  "warnings": [
+    "trtexec not found (TensorRT engine build requires it)"
+  ],
+  "yolozu": {
+    "version": "0.1.2"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "bbox_format": "cxcywh_norm",
+  "dataset": "reports/ci_zisn2/dataset",
+  "images": 1,
+  "protocol": null,
+  "protocol_hash": null,
+  "protocol_id": null,
+  "protocol_schema_version": null,
+  "report_schema_version": 1,
+  "results": [
+    {
+      "counts": {
+        "detections": 2,
+        "images": 1
+      },
+      "dry_run": true,
+      "export_settings": {
+        "image_size": {
+          "height": 64,
+          "width": 64
+        },
+        "imgsz": 64,
+        "iou_threshold": 0.7,
+        "max_detections": 10,
+        "preprocess": {
+          "input_color": "RGB",
+          "letterbox_fill": [
+            114,
+            114,
+            114
+          ],
+          "method": "letterbox",
+          "normalize": "0_1",
+          "resize_interp": "linear"
+        },
+        "score_threshold": 0.0
+      },
+      "metrics": {
+        "ar100": null,
+        "map50": null,
+        "map50_95": null,
+        "map75": null
+      },
+      "name": "pred_trt",
+      "path": "/workspace/reports/ci_zisn2/pred_trt.json",
+      "predictions_meta_ref": {
+        "engine": "/workspace/reports/ci_zisn2/model_fp16.plan",
+        "engine_sha256": "76c9609d6de820d6aa3ea4a25217b47b2c0ba784fab6366d3e58b7851e34d7bd",
+        "exporter": "tensorrt",
+        "protocol_id": "yolo26"
+      },
+      "protocol_check": {
+        "mismatches": [],
+        "ok": true
+      },
+      "stats": [],
+      "warnings": []
+    }
+  ],
+  "split": "val",
+  "split_requested": "val",
+  "timestamp": "2026-02-23T00:36:34Z"
+}
