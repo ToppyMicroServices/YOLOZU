@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import traceback
 from typing import Any
 
 
@@ -31,5 +30,4 @@ def fail_response(name: str, *, message: str, exit_code: int = 1, exc: Exception
     }
     if exc is not None:
         payload["error_type"] = exc.__class__.__name__
-        payload["traceback"] = "".join(traceback.format_exception_only(exc.__class__, exc)).strip()
     return payload
