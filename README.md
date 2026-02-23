@@ -12,9 +12,16 @@
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-Interface-contract-first evaluation harness for detection / segmentation / pose.
+Interface-contract-first evaluation + learning research harness for detection / segmentation / pose (keypoints / 6DoF).
 
-**YOLOZU supports learning and operational research by providing a robust system for evaluation, training, and deployment workflows.** See the new "Learning Features" section below for more details.
+YOLOZU also supports **learning + operations research**, not just evaluation: artifact-first training outputs via a **run interface contract (Run Contract)**, continual learning (anti-forgetting), and protocol-pinned test-time training (TTT). See: [Learning features](#learning-features).
+
+Learning / research highlights:
+- **Run interface contract training (Run Contract)** — reproducible `runs/<run_id>/...` artifacts for detection + keypoints + 6DoF pose.
+- **Continual learning (anti-forgetting)** — self-distillation + optional replay/LoRA + forgetting evaluation.
+- **Test-time training (TTT)** — Tent / MIM / CoTTA / EATA / SAR under a protocol-pinned, bounded-cost setup.
+- **Prediction distillation** — offline blending of teacher/student `predictions.json` artifacts for faster ablations.
+- **Hessian-based refinement** — optional engine-external postprocess over `predictions.json` (experimental).
 
 Run inference in any backend, export a stable `predictions.json` **predictions interface contract**, and evaluate apples-to-apples with the same validators and metrics.
 
@@ -30,33 +37,123 @@ Output artifact: `reports/smoke_coco_eval_dry_run.json`.
 
 Docs index (start here): [`docs/README.md`](docs/README.md).
 
-## Learning Features
+## Learning features
 
-### 1. Run Contract Training
-- **Value:** Consolidates training artifacts (checkpoints, metrics, exports, parity reports) under `runs/<run_id>/`, ensuring easy comparison, regression detection, and reproducibility.
-- **Example Command:** `yolozu train ... --run-id exp01` (contract example)
-- **Artifacts:** Checkpoints, metrics JSONL, ONNX exports, parity reports.
+### 1) Run interface contract training (Run Contract: reproducible artifacts)
 
-### 2. Continual Learning (破壊的忘却対策)
-- **Value:** Enables fine-tuning across task/domain sequences while providing mechanisms to evaluate and mitigate forgetting.
-  - **Core Ideas:** Memoryless self-distillation, optional replay buffer, and parameter-efficient updates like LoRA.
-- **Entry Points:**
-  - Training: `python3 rtdetr_pose/tools/train_continual.py --config ...`
-  - Evaluation: `python3 tools/eval_continual.py --run-json ...` (can run on CPU)
-- **Artifacts:** `continual_run.json` (single source of truth), replay_buffer.json.
+Value: Reproducible training operations for detection + keypoints + 6DoF pose: pin artifacts (checkpoints / metrics / exports / parity) under `runs/<run_id>/` so runs are easy to compare, regression-check, and fully resume.
 
-### 3. Test-Time Training (TTT: Tent/MIM/CoTTA/EATA/SAR):推論時学習
-- **Value:** Provides reproducible test-time adaptation under domain shifts with constraints on cost, reset protocols, and evaluation conditions.
-- **Details:** Includes methods like Tent, MIM, CoTTA, EATA, SAR and ensures fixed datasets, batch limits, and seed/reset controls.
+Representative command:
 
-### 4. (Quasi-training feature) Prediction Distillation  (蒸留機能)
-- **Value:** Fast-tracks research loops and ablation by generating distilled predictions from teacher/student predictions.
-- **Example Command:** `python3 tools/distill_predictions.py --student ... --teacher ... --dataset ...`
+```bash
+yolozu train configs/examples/train_contract.yaml --run-id exp01
+```
+
+Artifacts (fixed paths):
+- `runs/<run_id>/checkpoints/{last,best}.pt`
+- `runs/<run_id>/reports/{train_metrics,val_metrics}.jsonl`
+- `runs/<run_id>/reports/{config_resolved.yaml,run_meta.json,onnx_parity.json}`
+- `runs/<run_id>/exports/model.onnx` (+ meta)
+
+Model variants: swap backbones (ResNet/ConvNeXt/CSP/...) while keeping the same artifact layout: [`docs/backbones.md`](docs/backbones.md).
+
+Details: [`docs/run_contract.md`](docs/run_contract.md), [`docs/training_inference_export.md`](docs/training_inference_export.md).
+
+### 2) Continual learning (anti-forgetting across task/domain sequences)
+
+Value: Fine-tune across a task/domain sequence while measuring and mitigating catastrophic forgetting via (a) memoryless self-distillation, (b) optional replay buffer, and (c) optional parameter-efficient updates (LoRA) + regularizers (EWC/SI/DER++).
+
+Representative commands:
+
+```bash
+python3 rtdetr_pose/tools/train_continual.py \
+  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
+
+python3 tools/eval_continual.py \
+  --run-json runs/continual/<run>/continual_run.json \
+  --device cpu \
+  --max-images 50
+```
+
+Artifacts:
+- `runs/continual/<run>/continual_run.json` (single source of truth)
+- `runs/continual/<run>/replay_buffer.json` (+ per-task `replay_records.json`)
+- `runs/continual/<run>/continual_eval.{json,html}` (from `eval_continual.py`)
+
+Details: [`docs/continual_learning.md`](docs/continual_learning.md).
+
+### 3) Test-time training (TTT) under domain shift (Tent / MIM / CoTTA / EATA / SAR)
+
+Value: Reproducible test-time adaptation with bounded cost caps, reset policies (`stream` vs `sample`), and fixed eval subsets for fair comparisons.
+
+Representative command (export predictions with TTT enabled):
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset data/coco128 \
+  --split train2017 \
+  --checkpoint runs/exp01/checkpoints/best.pt \
+  --device cuda \
+  --max-images 50 \
+  --ttt --ttt-preset safe --ttt-reset sample \
+  --ttt-log-out reports/ttt_log_safe.json \
+  --output reports/pred_ttt_safe.json
+```
+
+Artifacts:
+- `reports/pred_ttt_safe.json` (predictions interface contract)
+- `reports/ttt_log_safe.json` (TTT step log)
+- Optional: fixed subset artifacts via `tools/make_subset_dataset.py` (`subset.json`, `subset_images.txt`)
+
+Details: [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+
+### 4) (Research helper) Prediction distillation (offline)
+
+Value: Blend teacher/student `predictions.json` artifacts to accelerate ablations without retraining.
+
+Representative command:
+
+```bash
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json \
+  --add-missing
+```
+
+Artifacts:
+- `reports/predictions_distilled.json` (+ `reports/distill_report.json`)
+
+Details: [`docs/distillation.md`](docs/distillation.md).
+
+### 5) Hessian-based refinement (post-inference, per-detection; experimental)
+
+Value: A safe Newton / finite-diff Hessian stepper to refine pose-related prediction fields as an engine-external postprocess over `predictions.json`.
+
+Representative command:
+
+```bash
+python3 tools/refine_predictions_hessian.py \
+  --predictions reports/predictions.json \
+  --output reports/predictions_hessian.json \
+  --enable \
+  --device cpu \
+  --log-output reports/hessian_log.json
+```
+
+Artifacts:
+- `reports/predictions_hessian.json` (predictions interface contract)
+- `reports/hessian_log.json` (optional)
+
+Details: [`docs/hessian_solver.md`](docs/hessian_solver.md).
 
 ## Start here (choose 1 of 4 entry points)
 
 - **A: Evaluate from precomputed predictions (no inference deps)** — `predictions.json` → validate → eval.
-- **B: Train → Export → Eval (RT-DETR scaffold)** — run artifacts → ONNX → parity/eval.
+- **B: Train → Export → Eval (RT-DETR scaffold + run interface contract / Run Contract)** — run artifacts → ONNX → parity/eval.
 - **C: Interface contracts (predictions / adapter / TTT protocol)** — schemas + adapter interface contract boundary + safe adaptation protocol.
 - **D: Bench/Parity (TensorRT / latency benchmark)** — parity checks + pinned-protocol benchmarks.
 

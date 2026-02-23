@@ -61,11 +61,16 @@ python3 -m pip install 'yolozu[full]'
 
 - **Bring-your-own inference + interface-contract-first evaluation**  
   推論はどこで回してもよく、評価は `predictions.json` に統一して **公平に比較**できます。
+- **再現性/運用性（Run interface contract / Run Contract）**  
+  `yolozu train` の run interface contract で、成果物の置き場・run_meta・resume・export/parity を固定（`docs/run_contract.md`）。
+- **Continual learning（反忘却: self-distillation + replay + LoRA）**  
+  タスク/ドメイン列の継続微調整と、忘却の評価/抑制のための runner と成果物を提供（`docs/continual_learning.md`）。
 - **Safe TTT（test-time training）**  
-  Tent / MIM のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
-- **再現性/運用性（Run interface contract）**  
-  `yolozu train` の run interface contract で、成果物の置き場・run_meta・resume・
-  export/parity を固定（`docs/run_contract.md`）。
+  Tent / MIM / CoTTA / EATA / SAR のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
+- **Prediction distillation（準・学習: offline）**  
+  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化（`docs/distillation.md`）。
+- **Hessian-based refinement（準・学習: post-inference）**  
+  `predictions.json` に対する per-detection の局所 refinement（engine外の後処理; `docs/hessian_solver.md`）。
 
 ---
 
