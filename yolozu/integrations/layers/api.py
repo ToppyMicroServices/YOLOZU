@@ -182,3 +182,72 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
         _guard_path_token(raw_path)
         payload["artifacts"][key] = raw_path
     return payload
+
+
+def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
+    """Run a yolozu CLI subcommand without returning stdout/stderr.
+
+    This is intended for public-facing REST surfaces where raw process output may
+    contain stack traces or sensitive environment details.
+    """
+    if not args:
+        return fail_response(name, message="empty command")
+    if args[0] not in _ALLOWED_TOP_LEVEL:
+        return fail_response(name, message=f"command not allowed: {args[0]}")
+
+    try:
+        for token in args:
+            _guard_path_token(token)
+    except Exception as exc:
+        return fail_response(name, message=str(exc), exc=exc)
+
+    cmd = [sys.executable, "-m", "yolozu.cli", *args]
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(repo_root()),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=_DEFAULT_TIMEOUT_SEC,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        payload = fail_response(name, message=f"cli timeout after {_DEFAULT_TIMEOUT_SEC}s", exit_code=124)
+        payload["command"] = cmd
+        payload["artifacts"] = {}
+        payload["limits"] = {
+            "timeout_sec": _DEFAULT_TIMEOUT_SEC,
+            "stdio_redacted": True,
+        }
+        return payload
+
+    if proc.returncode != 0:
+        payload = fail_response(
+            name,
+            message=f"cli failed with exit code {proc.returncode}",
+            exit_code=proc.returncode,
+        )
+        payload["command"] = cmd
+        payload["artifacts"] = {}
+        payload["limits"] = {
+            "timeout_sec": _DEFAULT_TIMEOUT_SEC,
+            "stdio_redacted": True,
+        }
+        return payload
+
+    payload = ok_response(
+        name,
+        exit_code=proc.returncode,
+        data={
+            "command": cmd,
+            "artifacts": {},
+            "limits": {
+                "timeout_sec": _DEFAULT_TIMEOUT_SEC,
+                "stdio_redacted": True,
+            },
+        },
+    )
+    for key, raw_path in (artifacts or {}).items():
+        _guard_path_token(raw_path)
+        payload["artifacts"][key] = raw_path
+    return payload

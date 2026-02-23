@@ -4,28 +4,28 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from .tool_runner import (
-    ctta_job,
-    calibrate_predictions,
-    convert_dataset,
-    doctor,
-    eval_coco,
-    eval_instance_seg,
-    eval_long_tail,
-    export_predictions_job,
-    export_onnx_job,
+    ctta_job_public as ctta_job,
+    calibrate_predictions_public as calibrate_predictions,
+    convert_dataset_public as convert_dataset,
+    doctor_public as doctor,
+    eval_coco_public as eval_coco,
+    eval_instance_seg_public as eval_instance_seg,
+    eval_long_tail_public as eval_long_tail,
+    export_predictions_job_public as export_predictions_job,
+    export_onnx_job_public as export_onnx_job,
     jobs_cancel,
     jobs_list,
     jobs_status,
-    parity_check,
-    predict_images,
-    run_scenarios,
+    parity_check_public as parity_check,
+    predict_images_public as predict_images,
+    run_scenarios_public as run_scenarios,
     runs_describe,
     runs_list,
-    train_job,
-    test_job,
-    ttt_job,
-    validate_dataset,
-    validate_predictions,
+    train_job_public as train_job,
+    test_job_public as test_job,
+    ttt_job_public as ttt_job,
+    validate_dataset_public as validate_dataset,
+    validate_predictions_public as validate_predictions,
 )
 
 
@@ -36,16 +36,15 @@ _SENSITIVE_RESPONSE_KEYS = {
     # Can contain stack traces from CLI failures.
     "stdout",
     "stderr",
-    # May include exception-only trace info from integration layers.
-    "traceback",
 }
 
 
-def _sanitize_response(payload: dict) -> dict:
-    out = dict(payload)
-    for key in _SENSITIVE_RESPONSE_KEYS:
-        out.pop(key, None)
-    return out
+def _sanitize_response(payload):  # type: ignore[no-untyped-def]
+    if isinstance(payload, dict):
+        return {k: _sanitize_response(v) for k, v in payload.items() if k not in _SENSITIVE_RESPONSE_KEYS}
+    if isinstance(payload, list):
+        return [_sanitize_response(item) for item in payload]
+    return payload
 
 
 class DoctorRequest(BaseModel):
