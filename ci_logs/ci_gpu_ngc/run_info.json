@@ -1,0 +1,14 @@
+{
+  "run_id": "22293141309",
+  "run_attempt": "1",
+  "ref": "refs/heads/main",
+  "sha": "5839e89fd57c09f14189b43680c47dbf828742fa",
+  "workflow": "gpu-ngc",
+  "job": "publish_logs",
+  "actor": "thinksyncs",
+  "check_runner_result": "success",
+  "has_runner": "false",
+  "probe_status": "http_403",
+  "no_runner_result": "success",
+  "gpu_job_result": "skipped"
+}
