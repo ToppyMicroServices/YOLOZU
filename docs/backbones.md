@@ -1,4 +1,7 @@
-# Backbones (RT-DETR pose)
+# Backbones (`rtdetr_pose` adapter)
+
+YOLOZU core contracts are model-family agnostic. This page documents the
+adapter-scoped backbone contract for the in-repo `rtdetr_pose` training path.
 
 ## Output contract (required)
 
@@ -20,6 +23,17 @@ Strides other than `[8,16,32]` are not supported directly.
 - `C5 -> d_model`
 
 This keeps transformer input shape stable even when swapping backbones.
+
+## Neck/encoder parity (current behavior)
+
+After projection, the `HybridEncoder` applies:
+
+- FPN + PAN multi-scale fusion (`FPNPAN`)
+- optional level embeddings
+- optional transformer encoder layers
+
+This is the active path used by `build_model()` and is no longer a per-scale
+identity/stub neck.
 
 ## Supported backbone names
 
@@ -78,6 +92,7 @@ model:
    - projector channel alignment
    - NaN-free forward
    - ONNX smoke export
+   - neck/encoder contract (`tests/test_rtdetr_backbone_neck_parity.py`)
 
 ## Norm notes (DDP)
 

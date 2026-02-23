@@ -27,12 +27,10 @@ track tasks in `docs/roadmaps/yolo26_competition.md` and Beads issues.
 
 ### Model (RT-DETR)
 - [x] Minimal DETR-style scaffold wired to pose heads (shape-correct)
-- [x] Backbone stub: simple strided conv stages (not RT-DETR-grade)
-- [x] Neck stub: per-scale 1x1 projections to `hidden_dim`
-- [x] Decoder stub: `torch.nn.TransformerDecoder` with learned queries
+- [x] Historical scaffold phase completed (backbone/neck/decoder stubs were replaced)
 - [x] Positional embedding: 2D sin/cos
-- [ ] Full RT-DETR backbone + neck (parity with spec / real RT-DETR)
-- [ ] RT-DETR hybrid encoder / multi-scale fusion (if required for parity)
+- [x] Full RT-DETR-style backbone + neck (CSPResNet/CSPDarknet + FPN/PAN path)
+- [x] RT-DETR hybrid encoder / multi-scale fusion path
 - [x] RT-DETR training-time tricks (e.g., denoising queries) if targeting published behavior
 
 ### Heads / geometry
@@ -64,8 +62,8 @@ Status (2026-01-18)
 - RT-DETR-style backbone/neck/encoder/decoder (CSPResNet + FPN/PAN + transformer encoder/decoder) is in place.
 
 Current priorities (auto)
-1) Stage 2/3: upgrade the model from the current scaffold toward RT-DETR parity while keeping losses/metrics wired.
-2) Stage 7: CI smoke run on tiny COCO subset.
+1) Stage 7: CI smoke run on tiny COCO subset.
+2) Maintain backend parity and reproducibility contracts.
 
 ### Training-first next steps (recommended order)
 - [x] Dataset returns per-instance GT: `M`, `D_obj`, `R_gt`, `t_gt`, `K_gt` (+ optional `K_gt'`, `cad_points`)

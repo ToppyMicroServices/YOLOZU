@@ -2,13 +2,14 @@
 
 ## Purpose
 YOLOZU is a lightweight evaluation and scaffolding repo for real-time monocular RGB
-object detection + depth + 6DoF pose (RT-DETR-based).
+object detection + depth + 6DoF pose.
 
 It emphasizes:
 
 - CPU-minimum development/tests (GPU optional)
 - precomputed inference JSON ingestion
 - reproducible evaluation
+- model-family-agnostic contracts (predictions/eval/reporting)
 
 ## Core capabilities
 
@@ -31,7 +32,7 @@ If YOLO txt labels are missing and a mask is provided, bbox+class can be derived
 - Instance mask (single-channel IDs): non-zero IDs become instances; class via
   `mask_class_id` (or `mask_class_map`)
 
-### 3) Training scaffold (RT-DETR pose)
+### 3) Training scaffold (reference adapter: `rtdetr_pose`)
 
 - Minimal training loop scaffold: `rtdetr_pose/tools/train_minimal.py`
 - Production-style run contract (`--run-contract`): fixed artifact paths under
@@ -45,6 +46,23 @@ If YOLO txt labels are missing and a mask is provided, bbox+class can be derived
 - Progress bar + per-step loss logging
 - Metrics outputs: JSONL/CSV + TensorBoard logging
 - Default ONNX export at end of training
+
+### 3.1) Backbone/neck swap boundary (adapter-scoped)
+
+The repository-wide contracts are model-family agnostic, but the in-repo training
+adapter (`rtdetr_pose`) defines a strict backbone boundary:
+
+- `model.backbone.*` selects the backbone implementation
+- backbone must output `P3/P4/P5` with strides `[8,16,32]`
+- projector + neck/encoder keep a fixed transformer input contract (`d_model`)
+
+Current in-repo `rtdetr_pose` backbone choices:
+
+- `cspresnet`
+- `cspdarknet_s`
+- `tiny_cnn`
+- `resnet50` (torchvision)
+- `convnext_tiny` (torchvision)
 
 ### 4) Inference + constraints
 
@@ -89,6 +107,9 @@ Installed CLI:
 - `yolozu resources`
 - `yolozu demo`
 - `yolozu test`
+
+These commands are backend-facing and can evaluate predictions produced by external
+YOLO/RT-DETR/other model families as long as outputs follow the predictions schema.
 
 Training scaffold:
 

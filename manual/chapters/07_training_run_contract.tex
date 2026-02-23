@@ -8,8 +8,8 @@ Adhering to the run contract ensures rigorous reproducibility, facilitates parit
 It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or \cmd{--run-contract}) and mandates strict adherence to configuration keys; standard training dependencies apply.
 }
 
-\section{RT-DETR pose training stack}
-The repository incorporates an RT-DETR-based training pipeline located under \path{rtdetr_pose/}. The critical aspect of this architecture is not the specific model implementation, but rather the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs.
+\section{Model-family policy and reference training stack}
+YOLOZU contracts (predictions schema, evaluation reports, scenario outputs) are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical aspect is the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs, independent of the producing model family.
 
 \section{The Run Contract: Rationale and implementation}
 A standardized run directory typically encompasses:
@@ -211,12 +211,13 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 \end{lstlisting}
 
-\section{Backbone modification (model architecture switch)}
+\section{Backbone modification (adapter-scoped architecture switch)}
 Backbone-specific configurations are not primarily governed by solver flags; rather, they are derived from the model configuration file specified by \texttt{model\_config} in the training YAML.
+This section applies to the in-repo \path{rtdetr_pose} adapter boundary.
 
 Comprehensive notes and examples regarding the backbone contract are maintained in \path{docs/backbones.md}.
 
-The backbone output contract strictly mandates three feature maps: \texttt{[P3, P4, P5]} with corresponding strides of \texttt{[8, 16, 32]}. Each level is independently projected to the transformer's \texttt{d\_model} dimension via 1x1 convolutions.
+The backbone output contract strictly mandates three feature maps: \texttt{[P3, P4, P5]} with corresponding strides of \texttt{[8, 16, 32]}. Each level is independently projected to the transformer's \texttt{d\_model} dimension via 1x1 convolutions, then processed by the RT-DETR-style FPN/PAN + hybrid encoder path.
 
 Supported backbone architectures in the current codebase include:
 \texttt{cspresnet}, \texttt{tiny\_cnn}, \texttt{cspdarknet\_s}, \texttt{resnet50}, and \texttt{convnext\_tiny}.

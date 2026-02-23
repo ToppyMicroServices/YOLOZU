@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "repo": {
     "name": "YOLOZU",
-    "description": "Apache-2.0-only evaluation + tooling harness (CPU-first) for detection/pose workflows."
+    "description": "Apache-2.0-only contract-first evaluation + tooling harness (CPU-first) for detection/pose workflows across model families."
   },
   "contracts": {
     "predictions_json": {
@@ -561,7 +561,7 @@
       "id": "export_predictions",
       "entrypoint": "tools/export_predictions.py",
       "runner": "python3",
-      "summary": "Run an adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose).",
+      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter).",
       "tags": ["predictions", "adapter"],
       "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
       "contracts": { "produces": ["predictions_json"] },
@@ -669,7 +669,7 @@
       "id": "yolozu",
       "entrypoint": "tools/yolozu.py",
       "runner": "python3",
-      "summary": "Unified CLI: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose scaffold (none/sidecar/fuse_mid with safety gating).",
+      "summary": "Unified CLI for model-family-agnostic contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose scaffold (none/sidecar/fuse_mid with safety gating).",
       "tags": ["cli", "predictions", "diagnostics", "report", "sweep", "long_tail", "import"],
       "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
       "contracts": { "produces": ["predictions_json"] },
