@@ -23,7 +23,7 @@ As a best practice, always initiate discovery with:\\
 For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}.
 
 \section{Common Commands}
-\begin{longtable}{@{}p{0.40\textwidth}p{0.55\textwidth}@{=}
+\begin{longtable}{@{}p{0.40\textwidth}p{0.55\textwidth}@{}}
 \toprule
 \textbf{Command} & \textbf{Purpose} \\
 \midrule
@@ -46,7 +46,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \yolozu{} supports the ingestion of a YAML or JSON configuration file as its primary positional argument.
 Internally, \cmd{yolozu train} delegates the \cmd{--config <file>} argument to \path{rtdetr_pose.train_minimal}, whereas \cmd{yolozu test} maps YAML keys directly to \path{yolozu.scenarios_cli} arguments.
 
-<begin{longtable}{@{}p{0.18\textwidth}p{0.30\textwidth}p{0.46\textwidth}@{=}
+\begin{longtable}{@{}p{0.18\textwidth}p{0.30\textwidth}p{0.46\textwidth}@{}}
 \toprule
 \textbf{Use Case} & \textbf{YAML File} & \textbf{Command Pattern} \\
 \midrule
@@ -58,7 +58,7 @@ Test (Scenario) & \path{configs/examples/test_setting.yaml} & \cmd{yolozu test <
 \end{longtable}
 
 Concrete execution examples:
-\begin{lstlisting][language=bash]
+\begin{lstlisting}[language=bash]
 yolozu train configs/examples/train_setting.yaml
 yolozu train configs/examples/train_contract.yaml --run-id exp01
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
@@ -75,10 +75,10 @@ For comprehensive details regarding the backbone contract and supported architec
 
 \subsection{Test YAML and the Override Rule}
 The default test YAML configuration is intentionally minimalist (typically specifying only the adapter, dataset, split, and max\_images). Runtime-specific parameters are conventionally supplied as CLI overrides:
-\begin{lstlisting][language=bash]
+\begin{lstlisting}[language=bash]
 yolozu test configs/examples/test_setting.yaml \
   --adapter rtdetr_pose \
-  --config rtetr_pose/configs/base.json \
+  --config rtdetr_pose/configs/base.json \
   --checkpoint /path/to/checkpoint.pt \
   --dataset data/smoke \
   --max-images 50
