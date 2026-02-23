@@ -47,10 +47,12 @@ CLI note:
 - Tooling stays CPU-friendly by default (GPU optional).
 - Apache-2.0-only ops policy is enforced in repo tooling.
 
-## Why `predictions.json`?
+## Why YOLOZU?
 
-Run inference in any environment you prefer (PyTorch / ONNXRuntime / TensorRT / C++ / etc.) and save only the results to the common `predictions.json` interface contract.
-YOLOZU validates and scores that JSON with the same evaluator, so you can compare backend differences under identical conditions and reproduce results more easily.
+- Run inference in any environment you prefer (PyTorch / ONNXRuntime / TensorRT / C++ / etc.) and save only the results to the common `predictions.json` interface contract.
+- YOLOZU validates and scores that JSON with the same evaluator, so you can compare backend differences under identical conditions and reproduce results more easily.
+- `export_settings` records preprocessing/protocol settings, making comparisons reproducible over time.
+- Details: [`docs/yolozu_spec.md`](docs/yolozu_spec.md).
 
 ## Install (pip users)
 
@@ -60,9 +62,7 @@ yolozu --help
 yolozu doctor --output -
 ```
 
-Optional extras are documented in:
-- [`docs/yolozu_spec.md`](docs/yolozu_spec.md)
-- [`docs/tools_index.md`](docs/tools_index.md)
+Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 
 ## Source checkout (repo users)
 
@@ -81,8 +81,7 @@ Printable manual source: [`manual/`](manual/README.md).
 
 - Contact: develop@toppymicros.com
 - © 2026 ToppyMicroServices OÜ
-- Legal address: Karamelli tn 2, 11317 Tallinn, Harju County, Estonia
-- Registry code: 16551297
+Full support/legal: [`docs/support.md`](docs/support.md).
 
 ## License
 
