@@ -14,6 +14,8 @@
 
 Interface-contract-first evaluation harness for detection / segmentation / pose.
 
+**YOLOZU supports learning and operational research by providing a robust system for evaluation, training, and deployment workflows.** See the new "Learning Features" section below for more details.
+
 Run inference in any backend, export a stable `predictions.json` **predictions interface contract**, and evaluate apples-to-apples with the same validators and metrics.
 
 This pattern makes backend comparisons fair (same dataset + same evaluator), and keeps results reproducible over time by pinning preprocessing/protocol settings in `export_settings`.
@@ -27,6 +29,29 @@ bash scripts/smoke.sh
 Output artifact: `reports/smoke_coco_eval_dry_run.json`.
 
 Docs index (start here): [`docs/README.md`](docs/README.md).
+
+## Learning Features
+
+### 1. Run Contract Training (再現可能な学習運用)
+- **Value:** Consolidates training artifacts (checkpoints, metrics, exports, parity reports) under `runs/<run_id>/`, ensuring easy comparison, regression detection, and reproducibility.
+- **Example Command:** `yolozu train ... --run-id exp01` (contract example)
+- **Artifacts:** Checkpoints, metrics JSONL, ONNX exports, parity reports.
+
+### 2. Continual Learning (反忘却：タスク列の継続微調整)
+- **Value:** Enables fine-tuning across task/domain sequences while providing mechanisms to evaluate and mitigate forgetting.
+  - **Core Ideas:** Memoryless self-distillation, optional replay buffer, and parameter-efficient updates like LoRA.
+- **Entry Points:**
+  - Training: `python3 rtdetr_pose/tools/train_continual.py --config ...`
+  - Evaluation: `python3 tools/eval_continual.py --run-json ...` (can run on CPU)
+- **Artifacts:** `continual_run.json` (single source of truth), replay_buffer.json.
+
+### 3. Test-Time Training (TTT: Tent/MIM/CoTTA/EATA/SAR)
+- **Value:** Provides reproducible test-time adaptation under domain shifts with constraints on cost, reset protocols, and evaluation conditions.
+- **Details:** Includes methods like Tent, MIM, CoTTA, EATA, SAR and ensures fixed datasets, batch limits, and seed/reset controls.
+
+### 4. (Quasi-training feature) Prediction Distillation (教師pred → 生徒predのブレンド)
+- **Value:** Fast-tracks research loops and ablation by generating distilled predictions from teacher/student predictions.
+- **Example Command:** `python3 tools/distill_predictions.py --student ... --teacher ... --dataset ...`
 
 ## Start here (choose 1 of 4 entry points)
 
