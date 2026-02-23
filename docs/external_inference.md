@@ -29,6 +29,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 ## Fast paths already in this repo
 
 - PyTorch adapter (research scaffold): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
+- YOLOX backend wrapper: `python3 tools/yolozu.py export --backend yolox --dataset data/coco-yolo --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json --force`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - OpenCV DNN (single-backend UX): `python3 tools/yolozu.py export --backend opencv-dnn --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json --force`
 - OpenCV DNN (single-backend script): `python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json`

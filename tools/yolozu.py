@@ -599,7 +599,7 @@ def _copy_file(src: Path, dst: Path) -> None:
 def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--backend",
-        choices=("dummy", "torch", "onnxrt", "trt", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
+        choices=("dummy", "torch", "onnxrt", "trt", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
         default="dummy",
         help="Inference backend (default: dummy).",
     )
@@ -768,6 +768,8 @@ def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
 
     # ONNXRuntime/TensorRT backend (YOLO26 exporters).
     p.add_argument("--model", default=None, help="Model path (.onnx for onnxrt, .plan for trt).")
+    p.add_argument("--exp", default=None, help="YOLOX exp file path for --backend yolox.")
+    p.add_argument("--weights", default=None, help="YOLOX checkpoint path for --backend yolox.")
     p.add_argument("--input-name", default="images", help="Input tensor/binding name (default: images).")
     p.add_argument("--combined-output", default="output0", help="Combined output name (default: output0).")
     p.add_argument(
@@ -979,6 +981,22 @@ def _export_with_backend(
             "combined_output": str(args.combined_output),
             "boxes_scale": str(args.boxes_scale),
             "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    elif backend == "yolox":
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "exp": str(args.exp) if args.exp else None,
+            "weights": str(args.weights) if args.weights else None,
+            "weights_sha256": _sha256_file(args.weights) if args.weights else None,
+            "device": str(args.device),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "nms_thr": float(args.nms_iou),
             "topk": int(args.topk),
             "dry_run": bool(args.dry_run),
         }
@@ -1243,6 +1261,38 @@ def _export_with_backend(
             cmd.extend(["--max-images", str(int(args.max_images))])
         if args.dry_run:
             cmd.append("--dry-run")
+        _subprocess_or_die(cmd)
+    elif backend == "yolox":
+        cmd = [
+            sys.executable,
+            "tools/export_predictions_yolox.py",
+            "--dataset",
+            str(dataset),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--nms-thr",
+            str(float(args.nms_iou)),
+            "--topk",
+            str(int(args.topk)),
+            "--device",
+            str(args.device),
+            "--output",
+            str(out_path),
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.exp:
+            cmd.extend(["--exp", str(args.exp)])
+        if args.weights:
+            cmd.extend(["--weights", str(args.weights)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
         _subprocess_or_die(cmd)
     elif backend == "opencv-dnn":
         onnx_model = args.onnx or args.model

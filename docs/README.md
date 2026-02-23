@@ -183,6 +183,18 @@ Runtime switches:
 
 Reference: [OpenCV-DNN inference exporter](opencv_dnn_inference.md)
 
+## I) YOLOX migration
+
+Use this path when YOLOX is your training/inference stack and you want YOLOZU contract validation + eval.
+
+```bash
+python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
+python3 tools/validate_predictions.py reports/pred_yolox.json --strict
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
+```
+
+Reference: [YOLOX interop](interop_yolox.md)
+
 ## CI incidents
 
 CI incident memo has moved to a dedicated page:

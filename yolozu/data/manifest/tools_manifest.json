@@ -9975,6 +9975,156 @@
           "command": "python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --split val2017 --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dnn-backend opencv --dnn-target cpu --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json"
         }
       ]
+    },
+    {
+      "id": "export_predictions_yolox",
+      "entrypoint": "tools/export_predictions_yolox.py",
+      "runner": "python3",
+      "summary": "Run YOLOX inference (or dry-run) and export YOLOZU predictions.json with exp parameter capture.",
+      "tags": [
+        "export",
+        "yolox",
+        "coco",
+        "predictions",
+        "interop",
+        "nms"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "yolox",
+          "torch",
+          "numpy",
+          "opencv-python"
+        ]
+      },
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset"
+        },
+        {
+          "name": "split",
+          "kind": "string",
+          "required": false,
+          "flag": "--split"
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": true,
+          "flag": "--output"
+        },
+        {
+          "name": "exp",
+          "kind": "file",
+          "required": false,
+          "flag": "--exp"
+        },
+        {
+          "name": "weights",
+          "kind": "file",
+          "required": false,
+          "flag": "--weights"
+        },
+        {
+          "name": "device",
+          "kind": "string",
+          "required": false,
+          "flag": "--device",
+          "default": "cuda"
+        },
+        {
+          "name": "imgsz",
+          "kind": "number",
+          "required": false,
+          "flag": "--imgsz",
+          "default": 640
+        },
+        {
+          "name": "score_thr",
+          "kind": "number",
+          "required": false,
+          "flag": "--score-thr",
+          "default": 0.01
+        },
+        {
+          "name": "nms_thr",
+          "kind": "number",
+          "required": false,
+          "flag": "--nms-thr",
+          "default": 0.65
+        },
+        {
+          "name": "topk",
+          "kind": "number",
+          "required": false,
+          "flag": "--topk",
+          "default": 300
+        },
+        {
+          "name": "protocol",
+          "kind": "string",
+          "required": false,
+          "flag": "--protocol",
+          "default": "nms_applied"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run"
+        },
+        {
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "flag": "--strict"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes YOLOZU predictions JSON from YOLOX backend."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "description": "Predictions JSON at --output."
+        }
+      ],
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/interop_yolox.md",
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ],
+      "examples": [
+        {
+          "description": "YOLOX export from exp/checkpoint to predictions.json.",
+          "command": "python3 tools/export_predictions_yolox.py --dataset data/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-thr 0.65 --output reports/pred_yolox.json"
+        }
+      ]
     }
   ]
 }

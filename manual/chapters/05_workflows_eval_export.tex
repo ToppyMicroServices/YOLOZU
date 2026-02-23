@@ -68,6 +68,16 @@ When outputs contain COCO \texttt{category\_id}, evaluate with class-id normaliz
 yolozu eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --classes data/ultra_wrapper/labels/val/classes.json --output reports/coco_eval_ultra.json
 \end{lstlisting}
 
+\subsection{YOLOX interoperability path}
+For teams already operating YOLOX experiments (\path{exp.py} + checkpoints), keep native inference and export directly to the YOLOZU contract:
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
+python3 tools/validate_predictions.py reports/pred_yolox.json --strict
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
+\end{lstlisting}
+
+The exporter records \path{weights\_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export\_settings}.
+
 \section{Workflow C: Folder inference (pip CLI)}
 A highly convenient, user-facing approach for batch inference is:
 \begin{lstlisting}[language=bash]
