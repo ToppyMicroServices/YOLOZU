@@ -97,6 +97,16 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 
 `predictions.json` includes `weights_sha256` and projected exp parameters in `export_settings` for reproducibility.
 
+## Model fetch quick path
+
+```bash
+yolozu list models
+yolozu fetch ultralytics-yolo11n-pt --out models --accept-license
+cat models/ultralytics-yolo11n-pt/meta.json
+```
+
+`meta.json` records `source`, `version`, `license`, `sha256`, and `created_at` for artifact provenance.
+
 ## Quickstart details
 
 With this repo checkout, run:

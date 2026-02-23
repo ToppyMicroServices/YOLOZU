@@ -49,6 +49,16 @@ python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx /path/to/yolo.on
 For further details, consult:\\
 \path{docs/training_inference_export.md}, \path{docs/external_inference.md}, and \path{docs/opencv_dnn_inference.md}.
 
+\subsection{Model intake before export (registry fetch)}
+To standardize external checkpoints before running exporters, use the model fetch flow:
+\begin{lstlisting}[language=bash]
+yolozu list models
+yolozu fetch ultralytics-yolo11n-pt --out models --accept-license
+cat models/ultralytics-yolo11n-pt/meta.json
+\end{lstlisting}
+
+The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created\_at}.
+
 \subsection{YOLO user migration entrypoint (v5/v8/11/26)}
 For users already operating within Ultralytics/YOLO pipelines, \yolozu{} provides a direct contract-first migration path:
 \begin{lstlisting}[language=bash]

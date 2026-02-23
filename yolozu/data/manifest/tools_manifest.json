@@ -101,6 +101,172 @@
       ]
     },
     {
+      "id": "fetch_model",
+      "entrypoint": "tools/yolozu.py",
+      "runner": "python3",
+      "summary": "Download a model artifact with cache + sha256 verification and license acknowledgment.",
+      "tags": [
+        "models",
+        "download",
+        "interop",
+        "yolo",
+        "yolox",
+        "detectron2",
+        "mmdetection"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "inputs": [
+        {
+          "name": "model_id",
+          "required": true,
+          "description": "Model identifier from `yolozu list models`.",
+          "kind": "string"
+        },
+        {
+          "name": "out",
+          "required": false,
+          "flag": "--out",
+          "default": "models",
+          "description": "Output root for fetched artifacts.",
+          "kind": "string"
+        },
+        {
+          "name": "cache_dir",
+          "required": false,
+          "flag": "--cache-dir",
+          "default": "~/.cache/yolozu/models",
+          "description": "Download cache root.",
+          "kind": "string"
+        },
+        {
+          "name": "registry",
+          "required": false,
+          "flag": "--registry",
+          "description": "Optional registry JSON override.",
+          "kind": "string"
+        },
+        {
+          "name": "accept_license",
+          "required": true,
+          "flag": "--accept-license",
+          "description": "Required license acceptance gate before download.",
+          "kind": "string"
+        },
+        {
+          "name": "force",
+          "required": false,
+          "flag": "--force",
+          "description": "Force re-download into cache and overwrite output.",
+          "kind": "string"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes models/<id>/<artifact> and meta.json."
+          },
+          {
+            "flag": "--cache-dir",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes cached downloads."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "artifact",
+          "kind": "file",
+          "description": "Fetched model artifact under models/<id>/."
+        },
+        {
+          "name": "meta_json",
+          "kind": "file",
+          "description": "Metadata file with source/version/license/sha256/created_at.",
+          "default": "models/<model_id>/meta.json"
+        }
+      ],
+      "examples": [
+        {
+          "description": "Fetch a packaged model ID to ./models.",
+          "command": "python3 tools/yolozu.py fetch ultralytics-yolo11n-pt --out models --accept-license"
+        },
+        {
+          "description": "Fetch with explicit cache location.",
+          "command": "python3 tools/yolozu.py fetch yolox-s-coco --out models --cache-dir ~/.cache/yolozu/models --accept-license"
+        }
+      ]
+    },
+    {
+      "id": "list_models",
+      "entrypoint": "tools/yolozu.py",
+      "runner": "python3",
+      "summary": "List fetchable model IDs from the built-in (or custom) model registry.",
+      "tags": [
+        "models",
+        "registry",
+        "interop"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "inputs": [
+        {
+          "name": "registry",
+          "required": false,
+          "flag": "--registry",
+          "description": "Optional registry JSON override.",
+          "kind": "string"
+        },
+        {
+          "name": "json",
+          "required": false,
+          "flag": "--json",
+          "description": "Emit JSON list output.",
+          "kind": "string"
+        }
+      ],
+      "effects": {
+        "writes": [],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "kind": "stdout",
+          "description": "Model list table or JSON."
+        }
+      ],
+      "examples": [
+        {
+          "description": "List packaged model IDs.",
+          "command": "python3 tools/yolozu.py list models"
+        },
+        {
+          "description": "List with custom registry in JSON.",
+          "command": "python3 tools/yolozu.py list models --registry path/to/model_registry.json --json"
+        }
+      ]
+    },
+    {
       "id": "generate_smoke_assets",
       "entrypoint": "tools/generate_smoke_assets.py",
       "runner": "python3",

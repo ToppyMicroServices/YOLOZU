@@ -1,3 +1,4 @@
+import hashlib
 import json
 import subprocess
 import sys
@@ -739,6 +740,161 @@ class TestYOLOZUCLI(unittest.TestCase):
             report = json.loads(out_report.read_text(encoding="utf-8"))
             self.assertEqual(report.get("method"), "temperature")
             self.assertEqual((report.get("calibration") or {}).get("method"), "temperature")
+
+    def test_list_models_with_custom_registry(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            registry_path = root / "registry.json"
+            registry_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "models": [
+                            {
+                                "id": "toy-model",
+                                "summary": "toy",
+                                "family": "test",
+                                "source": {"type": "official_url", "url": "file:///tmp/toy.bin"},
+                                "version": "v1",
+                                "license": "Apache-2.0",
+                                "sha256": None,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "list",
+                    "models",
+                    "--registry",
+                    str(registry_path),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu list models failed:\n{proc.stdout}\n{proc.stderr}")
+            self.assertIn("toy-model", proc.stdout)
+
+    def test_fetch_requires_license_and_uses_cache(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            src = root / "weights.bin"
+            src.write_bytes(b"abc123")
+            sha = hashlib.sha256(src.read_bytes()).hexdigest()
+            registry_path = root / "registry.json"
+            registry_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "models": [
+                            {
+                                "id": "toy-model",
+                                "summary": "toy",
+                                "family": "test",
+                                "source": {"type": "official_url", "url": src.resolve().as_uri()},
+                                "version": "v1",
+                                "license": "Apache-2.0",
+                                "sha256": sha,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_dir = root / "models"
+            cache_dir = root / "cache"
+
+            no_accept = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertNotEqual(no_accept.returncode, 0)
+            self.assertIn("--accept-license", no_accept.stderr)
+
+            yes_accept = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if yes_accept.returncode != 0:
+                self.fail(f"yolozu fetch failed:\n{yes_accept.stdout}\n{yes_accept.stderr}")
+            fetched = out_dir / "toy-model" / "weights.bin"
+            meta = out_dir / "toy-model" / "meta.json"
+            self.assertTrue(fetched.is_file())
+            self.assertTrue(meta.is_file())
+            payload = json.loads(meta.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("sha256"), sha)
+            self.assertEqual(payload.get("source"), "official_url")
+
+            src.unlink()
+            out_dir_2 = root / "models2"
+            cached_run = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir_2),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if cached_run.returncode != 0:
+                self.fail(f"yolozu fetch (cache) failed:\n{cached_run.stdout}\n{cached_run.stderr}")
+            self.assertTrue((out_dir_2 / "toy-model" / "weights.bin").is_file())
 
 
 if __name__ == "__main__":

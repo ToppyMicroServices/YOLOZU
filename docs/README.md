@@ -195,6 +195,25 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 
 Reference: [YOLOX interop](interop_yolox.md)
 
+## J) Model fetch (portable weights intake)
+
+Use this path to download curated model artifacts with license gating, cache reuse, and metadata recording.
+
+```bash
+python3 tools/yolozu.py list models
+python3 tools/yolozu.py fetch ultralytics-yolo11n-pt --out models --accept-license
+cat models/ultralytics-yolo11n-pt/meta.json
+```
+
+The metadata contract at `models/<id>/meta.json` always includes:
+- `source`
+- `version`
+- `license`
+- `sha256`
+- `created_at`
+
+Reference: [Model fetch](model_fetch.md)
+
 ## CI incidents
 
 CI incident memo has moved to a dedicated page:

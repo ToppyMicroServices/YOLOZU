@@ -1,0 +1,205 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+import tempfile
+import urllib.request
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import importlib.resources as resources
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@dataclass(frozen=True)
+class ModelSpec:
+    model_id: str
+    summary: str
+    family: str
+    source_type: str
+    source_url: str
+    version: str
+    license: str
+    expected_sha256: str | None
+    file_name: str
+
+
+def _source_url(source: dict[str, Any]) -> str:
+    source_type = str(source.get("type") or "").strip()
+    if source_type in {"official_url", "url"}:
+        url = str(source.get("url") or "").strip()
+        if not url:
+            raise ValueError("source.url is required for official_url")
+        return url
+    if source_type == "github_release":
+        repo = str(source.get("repo") or "").strip()
+        tag = str(source.get("tag") or "").strip()
+        asset = str(source.get("asset") or "").strip()
+        if not repo or not tag or not asset:
+            raise ValueError("github_release requires source.repo, source.tag, source.asset")
+        return f"https://github.com/{repo}/releases/download/{tag}/{asset}"
+    if source_type == "hf_hub":
+        repo = str(source.get("repo") or "").strip()
+        revision = str(source.get("revision") or "main").strip()
+        path = str(source.get("path") or "").strip()
+        if not repo or not path:
+            raise ValueError("hf_hub requires source.repo and source.path")
+        return f"https://huggingface.co/{repo}/resolve/{revision}/{path}"
+    raise ValueError(f"unsupported source.type: {source_type}")
+
+
+def _source_asset_name(source: dict[str, Any], url: str) -> str:
+    source_type = str(source.get("type") or "").strip()
+    if source_type == "github_release":
+        return str(source.get("asset"))
+    if source_type == "hf_hub":
+        return Path(str(source.get("path"))).name
+    explicit = str(source.get("file_name") or "").strip()
+    if explicit:
+        return explicit
+    return Path(url.split("?")[0]).name
+
+
+def _builtin_registry_path() -> Path:
+    data_root = resources.files("yolozu.data")
+    path = data_root.joinpath("manifest/model_zoo.json")
+    with resources.as_file(path) as on_disk:
+        return Path(on_disk)
+
+
+def load_registry(registry_path: str | Path | None = None) -> dict[str, Any]:
+    path = Path(registry_path).expanduser() if registry_path else _builtin_registry_path()
+    return _read_json(path)
+
+
+def resolve_model_spec(model_id: str, registry_path: str | Path | None = None) -> ModelSpec:
+    registry = load_registry(registry_path)
+    models = registry.get("models") or []
+    for item in models:
+        if str(item.get("id")) != model_id:
+            continue
+        source = dict(item.get("source") or {})
+        source_type = str(source.get("type") or "")
+        url = _source_url(source)
+        file_name = _source_asset_name(source, url)
+        expected_sha = item.get("sha256")
+        if isinstance(expected_sha, str) and expected_sha.strip():
+            expected_sha = expected_sha.strip().lower()
+        else:
+            expected_sha = None
+        return ModelSpec(
+            model_id=model_id,
+            summary=str(item.get("summary") or ""),
+            family=str(item.get("family") or "generic"),
+            source_type=source_type,
+            source_url=url,
+            version=str(item.get("version") or "unknown"),
+            license=str(item.get("license") or "UNKNOWN"),
+            expected_sha256=expected_sha,
+            file_name=file_name,
+        )
+    raise KeyError(model_id)
+
+
+def list_models(registry_path: str | Path | None = None) -> list[ModelSpec]:
+    registry = load_registry(registry_path)
+    models = registry.get("models") or []
+    specs: list[ModelSpec] = []
+    for item in models:
+        model_id = str(item.get("id") or "").strip()
+        if not model_id:
+            continue
+        specs.append(resolve_model_spec(model_id, registry_path))
+    specs.sort(key=lambda spec: spec.model_id)
+    return specs
+
+
+def _download(url: str, out_path: Path) -> None:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with urllib.request.urlopen(url) as response:
+        with out_path.open("wb") as handle:
+            shutil.copyfileobj(response, handle)
+
+
+def fetch_model(
+    *,
+    model_id: str,
+    out_dir: str | Path,
+    cache_dir: str | Path | None,
+    accept_license: bool,
+    registry_path: str | Path | None = None,
+    force: bool = False,
+) -> tuple[Path, Path]:
+    spec = resolve_model_spec(model_id, registry_path)
+    if not accept_license:
+        raise PermissionError(
+            f"model `{model_id}` requires explicit license acceptance "
+            f"(license={spec.license}). Re-run with --accept-license."
+        )
+
+    out_root = Path(out_dir).expanduser()
+    model_root = out_root / model_id
+    model_root.mkdir(parents=True, exist_ok=True)
+    output_path = model_root / spec.file_name
+
+    cache_root = Path(cache_dir).expanduser() if cache_dir else (Path.home() / ".cache" / "yolozu" / "models")
+    cached_path = cache_root / model_id / spec.version / spec.file_name
+    cached_path.parent.mkdir(parents=True, exist_ok=True)
+
+    should_download = force or (not cached_path.exists())
+    if should_download:
+        with tempfile.NamedTemporaryFile(prefix="yolozu_fetch_", suffix=".tmp", dir=str(cached_path.parent), delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+        try:
+            _download(spec.source_url, tmp_path)
+            downloaded_sha = _sha256(tmp_path)
+            if spec.expected_sha256 and downloaded_sha != spec.expected_sha256:
+                raise RuntimeError(
+                    f"sha256 mismatch for {model_id}: expected {spec.expected_sha256}, got {downloaded_sha}"
+                )
+            tmp_path.replace(cached_path)
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink(missing_ok=True)
+
+    cached_sha = _sha256(cached_path)
+    if spec.expected_sha256 and cached_sha != spec.expected_sha256:
+        raise RuntimeError(
+            f"cached sha256 mismatch for {model_id}: expected {spec.expected_sha256}, got {cached_sha}"
+        )
+
+    if force or (not output_path.exists()) or (_sha256(output_path) != cached_sha):
+        shutil.copy2(cached_path, output_path)
+
+    meta = {
+        "model_id": model_id,
+        "source": spec.source_type,
+        "source_url": spec.source_url,
+        "version": spec.version,
+        "license": spec.license,
+        "sha256": cached_sha,
+        "created_at": _utc_now(),
+        "cached_path": str(cached_path),
+        "file_name": spec.file_name,
+    }
+    meta_path = model_root / "meta.json"
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return output_path, meta_path

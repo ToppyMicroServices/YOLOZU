@@ -1901,11 +1901,26 @@ def _eval_instance_seg(args: argparse.Namespace) -> int:
 def _passthrough_pkg_cli(args: argparse.Namespace) -> int:
     from yolozu.cli import main as pkg_main
 
-    cmd = str(getattr(args, "_pkg_cmd"))
     forwarded = getattr(args, "forward_args", None)
-    argv = [cmd]
+    prefix = getattr(args, "_pkg_argv", None)
+    if isinstance(prefix, list) and prefix:
+        argv = [str(token) for token in prefix]
+    else:
+        cmd = str(getattr(args, "_pkg_cmd"))
+        argv = [cmd]
     if isinstance(forwarded, list):
         argv.extend(str(token) for token in forwarded)
+    return int(pkg_main(argv))
+
+
+def _passthrough_list_models(args: argparse.Namespace) -> int:
+    from yolozu.cli import main as pkg_main
+
+    argv = ["list", "models"]
+    if getattr(args, "registry", None):
+        argv.extend(["--registry", str(args.registry)])
+    if bool(getattr(args, "json", False)):
+        argv.append("--json")
     return int(pkg_main(argv))
 
 
@@ -2073,6 +2088,17 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_ltr = sub.add_parser("long-tail-recipe", help="Delegate to yolozu package CLI long-tail-recipe command.")
     p_ltr.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu long-tail-recipe`.")
     p_ltr.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="long-tail-recipe")
+
+    p_fetch = sub.add_parser("fetch", help="Delegate to yolozu package CLI fetch command.")
+    p_fetch.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu fetch`.")
+    p_fetch.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="fetch")
+
+    p_list = sub.add_parser("list", help="Delegate to yolozu package CLI list command.")
+    list_sub = p_list.add_subparsers(dest="list_cmd", required=True)
+    p_list_models = list_sub.add_parser("models", help="Delegate to `yolozu list models`.")
+    p_list_models.add_argument("--registry", default=None, help="Optional registry JSON path override.")
+    p_list_models.add_argument("--json", action="store_true", help="Emit JSON output.")
+    p_list_models.set_defaults(_fn=_passthrough_list_models)
 
     p_reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from tools/manifest.json.")
     reg = p_reg.add_subparsers(dest="registry_cmd", required=True)

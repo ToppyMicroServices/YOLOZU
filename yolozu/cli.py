@@ -201,6 +201,55 @@ def _cmd_doctor(output: str) -> int:
     return int(write_doctor_report(output=output))
 
 
+def _cmd_list_models(args: argparse.Namespace) -> int:
+    from yolozu.model_fetch import list_models
+
+    specs = list_models(registry_path=getattr(args, "registry", None))
+    if bool(getattr(args, "json", False)):
+        payload = {
+            "models": [
+                {
+                    "id": spec.model_id,
+                    "family": spec.family,
+                    "version": spec.version,
+                    "license": spec.license,
+                    "source": spec.source_type,
+                    "source_url": spec.source_url,
+                }
+                for spec in specs
+            ]
+        }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+    if not specs:
+        print("no models found in registry")
+        return 0
+    for spec in specs:
+        print(f"{spec.model_id}\t{spec.family}\t{spec.version}\t{spec.license}")
+    return 0
+
+
+def _cmd_fetch_model(args: argparse.Namespace) -> int:
+    from yolozu.model_fetch import fetch_model
+
+    try:
+        model_path, meta_path = fetch_model(
+            model_id=str(args.model_id),
+            out_dir=str(args.out),
+            cache_dir=getattr(args, "cache_dir", None),
+            accept_license=bool(getattr(args, "accept_license", False)),
+            registry_path=getattr(args, "registry", None),
+            force=bool(getattr(args, "force", False)),
+        )
+    except PermissionError as exc:
+        raise SystemExit(str(exc)) from exc
+    except KeyError as exc:
+        raise SystemExit(f"unknown model id: {exc.args[0]} (use `yolozu list models`)") from exc
+    print(str(model_path))
+    print(str(meta_path))
+    return 0
+
+
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 
@@ -1327,6 +1376,20 @@ def main(argv: list[str] | None = None) -> int:
     doctor_imp.add_argument("--include-crowd", action="store_true", help="(dataset-from coco-instances) Include iscrowd annotations.")
     doctor_imp.add_argument("--config", default=None, help="(config-from mmdet/yolox/detectron2) config file path.")
 
+    list_p = sub.add_parser("list", help="List registries and built-in catalogs.")
+    list_sub = list_p.add_subparsers(dest="list_command", required=True)
+    list_models = list_sub.add_parser("models", help="List fetchable model IDs.")
+    list_models.add_argument("--registry", default=None, help="Optional registry JSON path (default: packaged model zoo).")
+    list_models.add_argument("--json", action="store_true", help="Emit JSON.")
+
+    fetch = sub.add_parser("fetch", help="Download a model artifact from the built-in (or custom) model registry.")
+    fetch.add_argument("model_id", help="Model id from `yolozu list models`.")
+    fetch.add_argument("--out", default="models", help="Output root directory (default: models).")
+    fetch.add_argument("--cache-dir", default=None, help="Cache directory (default: ~/.cache/yolozu/models).")
+    fetch.add_argument("--registry", default=None, help="Optional registry JSON path override.")
+    fetch.add_argument("--accept-license", action="store_true", help="Required acknowledgment to download the selected model.")
+    fetch.add_argument("--force", action="store_true", help="Re-download to cache and overwrite output artifact.")
+
     export = sub.add_parser("export", help="Export predictions.json artifacts.")
     export.add_argument(
         "--backend",
@@ -1821,6 +1884,12 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
         return _cmd_doctor(str(args.output))
+    if args.command == "list":
+        if args.list_command == "models":
+            return _cmd_list_models(args)
+        raise SystemExit("unknown list command")
+    if args.command == "fetch":
+        return _cmd_fetch_model(args)
     if args.command == "export":
         return _cmd_export(args)
     if args.command == "predict-images":
