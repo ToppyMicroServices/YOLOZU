@@ -496,7 +496,7 @@ def run_instance_segmentation_eval(
 
             combined = _concat_h([img_r, ov_gt, ov_pred])
             stem = Path(image_path).stem
-            digest = hashlib.md5(str(image_path).encode("utf-8")).hexdigest()[:8]
+            digest = hashlib.sha256(str(image_path).encode("utf-8")).hexdigest()[:8]
             out_path = overlays_dir_p / f"{idx:06d}_{stem}_{digest}.png"
             try:
                 combined.save(out_path)

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import shutil
 import tempfile
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -78,6 +80,36 @@ def _source_asset_name(source: dict[str, Any], url: str) -> str:
     return Path(url.split("?")[0]).name
 
 
+def _validated_download_url(url: str) -> urllib.parse.ParseResult:
+    parsed = urllib.parse.urlparse(url)
+    scheme = (parsed.scheme or "").lower()
+    if scheme not in {"https", "file"}:
+        raise ValueError(f"unsupported download URL scheme: {scheme or '<empty>'}")
+    if scheme == "file":
+        path = Path(urllib.request.url2pathname(parsed.path))
+        if not path.is_absolute():
+            raise ValueError("file:// model URLs must use absolute paths")
+        return parsed
+
+    host = (parsed.hostname or "").strip().lower()
+    if not host:
+        raise ValueError("https model URL must include host")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    if ip is not None and (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    ):
+        raise ValueError(f"refusing insecure/private download host: {host}")
+    return parsed
+
+
 def _builtin_registry_path() -> Path:
     data_root = resources.files("yolozu.data")
     path = data_root.joinpath("manifest/model_zoo.json")
@@ -133,8 +165,23 @@ def list_models(registry_path: str | Path | None = None) -> list[ModelSpec]:
 
 
 def _download(url: str, out_path: Path) -> None:
+    parsed = _validated_download_url(url)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url) as response:
+    if parsed.scheme == "file":
+        src_path = Path(urllib.request.url2pathname(parsed.path))
+        if not src_path.exists():
+            raise FileNotFoundError(src_path)
+        shutil.copy2(src_path, out_path)
+        return
+
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "YOLOZU-model-fetch/1.0",
+            "Accept": "*/*",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=60.0) as response:
         with out_path.open("wb") as handle:
             shutil.copyfileobj(response, handle)
 
