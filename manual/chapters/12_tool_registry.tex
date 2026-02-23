@@ -127,6 +127,14 @@ Validate the tool registry using:
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 \end{lstlisting}
 
+\subsection*{SynthGen intake tools (registry additions)}
+The registry now exposes explicit intake utilities for externally generated synthetic shards:
+\begin{itemize}
+  \item \cmd{validate\_synthgen\_contract}: validate required SynthGen fields and tensor/range constraints.
+  \item \cmd{render\_synthgen\_overlay}: generate semantic/instance/keypoint debug overlays.
+  \item \cmd{eval\_synthgen}: compute keypoint, segmentation, and depth summaries for SynthGen predictions.
+\end{itemize}
+
 \section{Release Automation: Manual PDF DOI as a Separate Record}
 For release operations, YOLOZU intentionally keeps software DOI and manual DOI lifecycles independent:
 \begin{itemize}

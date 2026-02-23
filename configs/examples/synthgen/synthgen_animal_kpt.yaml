@@ -1,0 +1,45 @@
+config_version: 1
+task_name: synthgen_animal_kpt
+schema_id: animal_v1
+schema_version: "1"
+
+dataset:
+  kind: synthgen_shard
+  root: /path/to/synthgen_dataset
+  split: train
+  schema_filter: animal_v1
+  required_fields:
+    - image
+    - sem_id
+    - inst_id
+    - depth_ndc
+    - kpts2d
+
+model:
+  heads:
+    keypoints_2d: true
+    pose6d: false
+  keypoints:
+    num_keypoints: 17
+    visibility_mode: coco
+
+loss:
+  keypoints_regression: l1
+  keypoints_visibility: ce
+  visible_only: true
+  visibility_target: 2
+
+evaluation:
+  keypoints:
+    metric: mean_pixel_error_visible
+  segmentation:
+    metric: miou
+  depth:
+    metric: mae_mse
+
+visualization:
+  overlay:
+    semantic: true
+    instance_contour: true
+    keypoints: true
+    schema_skeleton: animal_v1

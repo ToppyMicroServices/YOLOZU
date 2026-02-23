@@ -53,6 +53,11 @@
       "summary": "Run provenance metadata contract emitted at runs/<run_id>/reports/run_meta.json.",
       "schema": "docs/schemas/run_meta.schema.json",
       "validator": "python3 tools/validate_run_meta.py <path>"
+    },
+    "synthgen_sample_contract": {
+      "summary": "SynthGen intake sample contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
+      "spec": "docs/contracts/synthgen.md",
+      "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]"
     }
   },
   "tools": [
@@ -834,6 +839,251 @@
         {
           "description": "Create a frozen 50-image subset for ablations.",
           "command": "python3 tools/make_subset_dataset.py --dataset data/coco128 --split train2017 --n 50 --seed 0 --out reports/coco128_50"
+        }
+      ]
+    },
+    {
+      "id": "validate_synthgen_contract",
+      "entrypoint": "tools/validate_synthgen_contract.py",
+      "runner": "python3",
+      "summary": "Validate SynthGen sample/shard contract fields, dtypes, shapes, and ranges before training/eval.",
+      "tags": [
+        "synthgen",
+        "dataset",
+        "contract",
+        "validation",
+        "keypoints",
+        "segmentation",
+        "depth"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "inputs": [
+        {
+          "name": "input",
+          "kind": "file",
+          "required": true,
+          "flag": "--input"
+        },
+        {
+          "name": "max_samples",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-samples",
+          "default": 100
+        }
+      ],
+      "effects": {
+        "writes": [],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "status",
+          "kind": "stdout",
+          "description": "Validation status and error summary."
+        }
+      ],
+      "contracts": {
+        "consumes": [
+          "synthgen_sample_contract"
+        ]
+      },
+      "docs": [
+        "docs/synthgen_intake.md",
+        "docs/contracts/synthgen.md"
+      ],
+      "examples": [
+        {
+          "description": "Validate first 200 records from a SynthGen shard file.",
+          "command": "python3 tools/validate_synthgen_contract.py --input /path/to/synthgen_dataset/shards/train_000.jsonl --max-samples 200"
+        }
+      ]
+    },
+    {
+      "id": "render_synthgen_overlay",
+      "entrypoint": "tools/render_synthgen_overlay.py",
+      "runner": "python3",
+      "summary": "Render semantic + instance + keypoint overlays from SynthGen shard samples.",
+      "tags": [
+        "synthgen",
+        "visualization",
+        "overlay",
+        "keypoints",
+        "segmentation",
+        "depth"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "inputs": [
+        {
+          "name": "dataset_root",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset-root"
+        },
+        {
+          "name": "schema_id",
+          "kind": "string",
+          "required": false,
+          "flag": "--schema-id"
+        },
+        {
+          "name": "sample_index",
+          "kind": "number",
+          "required": false,
+          "flag": "--sample-index",
+          "default": 0
+        },
+        {
+          "name": "alpha",
+          "kind": "number",
+          "required": false,
+          "flag": "--alpha",
+          "default": 0.45
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": true,
+          "flag": "--output"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes rendered SynthGen overlay image."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "overlay_png",
+          "kind": "file",
+          "description": "Rendered overlay PNG."
+        }
+      ],
+      "contracts": {
+        "consumes": [
+          "synthgen_sample_contract"
+        ]
+      },
+      "docs": [
+        "docs/synthgen_intake.md",
+        "docs/contracts/synthgen.md"
+      ],
+      "examples": [
+        {
+          "description": "Render one animal_v1 sample overlay.",
+          "command": "python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay_animal.png"
+        }
+      ]
+    },
+    {
+      "id": "eval_synthgen",
+      "entrypoint": "tools/eval_synthgen.py",
+      "runner": "python3",
+      "summary": "Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth.",
+      "tags": [
+        "synthgen",
+        "evaluation",
+        "keypoints",
+        "segmentation",
+        "depth",
+        "metrics"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "inputs": [
+        {
+          "name": "dataset_root",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset-root"
+        },
+        {
+          "name": "predictions",
+          "kind": "file",
+          "required": true,
+          "flag": "--predictions"
+        },
+        {
+          "name": "schema_id",
+          "kind": "string",
+          "required": false,
+          "flag": "--schema-id"
+        },
+        {
+          "name": "max_samples",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-samples",
+          "default": 0
+        },
+        {
+          "name": "num_classes",
+          "kind": "number",
+          "required": false,
+          "flag": "--num-classes",
+          "default": 0
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": false,
+          "flag": "--output",
+          "default": "reports/synthgen_eval.json"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes SynthGen evaluation report JSON."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "report_json",
+          "kind": "file",
+          "default": "reports/synthgen_eval.json",
+          "description": "SynthGen evaluation report."
+        }
+      ],
+      "contracts": {
+        "consumes": [
+          "synthgen_sample_contract"
+        ]
+      },
+      "docs": [
+        "docs/synthgen_intake.md",
+        "docs/contracts/synthgen.md",
+        "recipes/synthgen/README.md"
+      ],
+      "examples": [
+        {
+          "description": "Evaluate animal_v1 predictions exported from external inference.",
+          "command": "python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval_animal.json"
         }
       ]
     },

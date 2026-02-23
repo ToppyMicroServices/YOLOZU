@@ -120,6 +120,18 @@ cat models/ultralytics-yolo11n-pt/meta.json
 
 `meta.json` records `source`, `version`, `license`, `sha256`, and `created_at` for artifact provenance.
 
+## SynthGen intake quick path
+
+YOLOZU keeps synthetic generation outside this repo and provides the intake/eval side.
+
+```bash
+python3 tools/validate_synthgen_contract.py --input /path/to/synthgen_dataset/shards/train_000.jsonl --max-samples 200
+python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png
+python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval.json
+```
+
+See `docs/synthgen_intake.md` and `docs/contracts/synthgen.md` for the full contract and schema-specific templates.
+
 ## Quickstart details
 
 With this repo checkout, run:

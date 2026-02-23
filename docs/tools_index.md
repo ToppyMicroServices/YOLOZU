@@ -22,6 +22,7 @@ For most day-to-day flows, start with:
 ## Dataset helpers
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
+- `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
 ## Evaluation helpers
 
@@ -29,6 +30,8 @@ For most day-to-day flows, start with:
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
 - Keypoints parity (backend output diffs): `python3 tools/check_keypoints_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --iou-thresh 0.99 --kp-atol 1e-4`
 - Keypoints eval benchmark: `python3 tools/benchmark_keypoints_eval.py --dataset /path/to/yolo --predictions reports/predictions.json --max-images 50 --warmup 1 --iterations 5 --output reports/benchmark_keypoints_eval.json`
+- SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval.json`
+- SynthGen overlay renderer: `python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png`
 
 ## Continual learning (anti-forgetting)
 
@@ -88,6 +91,7 @@ When driving tools from an agent:
 Most flows in this repo pass data as JSON artifacts:
 - `predictions_json`: per-image detections JSON (validate with `tools/validate_predictions.py`)
 - `metrics_report_json`: stable report payloads (`yolozu.metrics_report.build_report`)
+- `synthgen_sample_contract`: external synthetic sample intake contract (validate with `tools/validate_synthgen_contract.py`)
 - JSON Schemas live under `docs/schemas/` and are referenced from `tools/manifest.json` contracts.
 
 When adding a new tool, prefer:
