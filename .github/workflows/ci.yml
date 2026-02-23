@@ -2,6 +2,9 @@ name: ci
 
 on:
   push:
+    branches-ignore:
+      - beads-sync
+      - "ci-logs/**"
   pull_request:
 
 permissions:
@@ -539,6 +542,23 @@ jobs:
           assert "command" in meta and isinstance(meta["command"], dict)
           print("run_meta keys OK")
           PY
+
+      - name: DDP smoke (torchrun, CPU gloo, rank0-only artifacts)
+        run: |
+          TORCH_DISTRIBUTED_DEFAULT_FIND_UNUSED_PARAMETERS=1 \
+          torchrun --standalone --nproc_per_node=2 rtdetr_pose/tools/train_minimal.py \
+            --config rtdetr_pose/configs/base.json \
+            --dataset-root "${RUNNER_TEMP}/yolozu_tiny_dataset" --split train2017 --val-split val2017 \
+            --device cpu --amp none --batch-size 1 --val-batch-size 1 --epochs 1 \
+            --log-every 1 --val-every 0 --checkpoint-every 100 \
+            --run-contract --run-id ci_smoke_ddp --dry-run
+
+          test -f runs/ci_smoke_ddp/reports/run_meta.json
+          test -f runs/ci_smoke_ddp/reports/config_resolved.yaml
+          test -f runs/ci_smoke_ddp/checkpoints/last.pt
+          test -f runs/ci_smoke_ddp/checkpoints/best.pt
+          test -f runs/ci_smoke_ddp/exports/model.onnx
+          test -f runs/ci_smoke_ddp/reports/onnx_parity.json
 
       - name: Backend parity matrix smoke (JSON + HTML)
         run: |

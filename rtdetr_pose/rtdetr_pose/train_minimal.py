@@ -3408,6 +3408,13 @@ def main(argv: list[str] | None = None) -> int:
         torch.distributed.init_process_group(backend=backend, init_method="env://")
 
     is_main = rank == 0
+    if ddp_enabled and not is_main:
+        # Keep multi-rank runs readable by silencing stdout on non-main ranks.
+        # Stderr is preserved for tracebacks and error diagnostics.
+        try:
+            sys.stdout = open(os.devnull, "w", encoding="utf-8")
+        except TypeError:  # pragma: no cover
+            sys.stdout = open(os.devnull, "w")
 
     sim_profile = None
     if args.sim_jitter:
