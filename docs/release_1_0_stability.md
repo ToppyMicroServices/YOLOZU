@@ -69,7 +69,7 @@ Policy:
 
 ## CI gates that enforce this boundary
 
-1. Schema compatibility gate (`.github/workflows/ci.yml`)
+1. Schema compatibility gate (`python3 tools/check_schema_compatibility.py`)
 2. Manifest declarative validation gate (`tools/validate_tool_manifest.py --require-declarative`)
 3. Golden compatibility gate (`python3 tools/check_golden_compatibility.py`)
 4. Wheel/sdist contents gates (required packaged artifacts)

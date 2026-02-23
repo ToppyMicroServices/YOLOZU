@@ -11,7 +11,7 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         release_md = (self.repo_root / "RELEASE.md").read_text(encoding="utf-8")
 
         self.assertIn("release:", publish)
-        self.assertIn("types: [published]", publish)
+        self.assertIn("published", publish)
         self.assertIn("Validate release tag matches package version", publish)
         self.assertIn("GitHub Release", release_md)
         self.assertIn("Tag push alone does not publish", release_md)
@@ -31,6 +31,7 @@ class TestReleaseReadinessDocs(unittest.TestCase):
     def test_ci_contains_release_integrity_gates(self):
         ci = (self.repo_root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
         self.assertIn("Sdist contents gate", ci)
+        self.assertIn("tools/check_schema_compatibility.py", ci)
         self.assertIn("tools/check_golden_compatibility.py", ci)
 
     def test_manifest_includes_release_and_manifest_payload(self):

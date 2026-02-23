@@ -13,6 +13,7 @@ Run from repo root:
 ```bash
 bash scripts/smoke.sh
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
@@ -21,6 +22,7 @@ python3 -m unittest tests.test_backend_shape_format_contracts tests.test_externa
 DoD:
 - `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`.
 - Manifest validator returns `OK`.
+- Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.
 - Unit tests pass without unexpected failures.
 
@@ -35,7 +37,7 @@ DoD:
 DoD:
 - `ci` completed successfully.
 - `container` failures are triaged only if release depends on image artifacts.
-- `ci` includes golden compatibility and sdist/wheel package-content gates.
+- `ci` includes schema compatibility, golden compatibility, and sdist/wheel package-content gates.
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.
