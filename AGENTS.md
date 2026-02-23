@@ -2,6 +2,30 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
 
+## Interface Contract Terminology (重要)
+
+- ドキュメント/README/manual/manifest では、曖昧な `contract` 単独表現は避ける。
+- 原則として **`interface contract`** を使う（例: `predictions interface contract`）。
+- 日本語文中でもソフトウェア用語は無理に翻訳せず、`interface contract` を保持する。
+
+## Source of Truth / 同期ルール
+
+CLIやworkflowを変更したら、次を**同一PRで同期**すること:
+
+1. 実装コード（`tools/`, `yolozu/`, `scripts/`）
+2. `tools/manifest.json`
+3. `yolozu/data/manifest/tools_manifest.json`（packaged copy）
+4. 関連docs（`README.md`, `Readme_jp.md`, `docs/`, `manual/chapters/`）
+
+乖離を残さないこと。
+
+## CLI Rule: `--help` 必須
+
+- 追加/変更するCLIは **`-h/--help` を必ずサポート**する。
+- 既存CLI改修時も `--help` が壊れていないことを確認する。
+- shell CLI（例: `scripts/*.sh`）にも `--help` usage を実装する。
+- `--help` 追加に伴い、manifestの `inputs` / `examples` / `effects` / `outputs` を更新し、挙動と一致させる。
+
 ## Quick Reference
 
 ```bash
@@ -47,6 +71,21 @@ bd update <id> --external-ref gh-123
 5. **Clean up** - Clear stashes, prune remote branches
 6. **Verify** - All changes committed AND pushed
 7. **Hand off** - Provide context for next session
+
+## Required Quality Gates (when code/docs/manifest changed)
+
+```bash
+python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references
+```
+
+CLIを変更した場合は追加で:
+
+```bash
+# 対象CLIの --help を直接確認（python/bashどちらでも）
+python3 tools/<cli>.py --help
+bash scripts/<cli>.sh --help
+```
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds

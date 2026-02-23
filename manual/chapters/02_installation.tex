@@ -27,7 +27,8 @@ bash scripts/smoke.sh
 \end{lstlisting}
 
 The smoke script uses committed assets under \path{data/smoke} and writes
-\path{reports/smoke_coco_eval_dry_run.json}.
+\path{reports/smoke_coco_eval_dry_run.json} plus SynthGen smoke artifacts
+under \path{reports/} (\path{smoke_synthgen_summary.json}, \path{smoke_synthgen_eval.json}, \path{smoke_synthgen_overlay.png}).
 
 If your predictions come from another backend, validate first:
 \begin{lstlisting}[language=bash]

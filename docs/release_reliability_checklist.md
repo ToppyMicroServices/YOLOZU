@@ -20,7 +20,7 @@ python3 -m unittest tests.test_backend_shape_format_contracts tests.test_externa
 ```
 
 DoD:
-- `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`.
+- `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json` and SynthGen smoke artifacts (`reports/smoke_synthgen_summary.json`, `reports/smoke_synthgen_eval.json`, `reports/smoke_synthgen_overlay.png`).
 - Manifest validator returns `OK`.
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.

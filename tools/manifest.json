@@ -327,7 +327,7 @@
       "id": "smoke",
       "entrypoint": "scripts/smoke.sh",
       "runner": "bash",
-      "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run).",
+      "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke).",
       "tags": [
         "smoke",
         "validation",
@@ -350,34 +350,107 @@
           "coco_eval_report_json"
         ]
       },
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": false,
+          "flag": "--dataset",
+          "default": "data/smoke"
+        },
+        {
+          "name": "predictions",
+          "kind": "file",
+          "required": false,
+          "flag": "--predictions",
+          "default": "data/smoke/predictions/predictions_dummy.json"
+        },
+        {
+          "name": "report",
+          "kind": "file",
+          "required": false,
+          "flag": "--report",
+          "default": "reports/smoke_coco_eval_dry_run.json"
+        },
+        {
+          "name": "synthgen_root",
+          "kind": "dir",
+          "required": false,
+          "flag": "--synthgen-root",
+          "default": "data/smoke/synthgen_minishard"
+        },
+        {
+          "name": "synthgen_predictions",
+          "kind": "file",
+          "required": false,
+          "flag": "--synthgen-predictions",
+          "default": "data/smoke/synthgen_minishard/predictions_synthgen_smoke.json"
+        },
+        {
+          "name": "output_dir",
+          "kind": "dir",
+          "required": false,
+          "flag": "--output-dir",
+          "default": "reports"
+        }
+      ],
       "effects": {
-        "writes": [],
-        "fixed_writes": [
+        "writes": [
           {
-            "path": "reports/smoke_coco_eval_dry_run.json",
+            "flag": "--report",
             "kind": "file",
             "scope": "path",
-            "description": "Dry-run COCO evaluation report produced by the smoke script."
+            "description": "Writes COCO dry-run smoke report JSON."
+          },
+          {
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes SynthGen smoke artifacts under output dir."
           }
-        ]
+        ],
+        "fixed_writes": []
       },
       "outputs": [
         {
           "name": "smoke_report",
           "kind": "file",
-          "description": "Smoke dry-run report.",
+          "description": "COCO dry-run smoke report.",
           "default": "reports/smoke_coco_eval_dry_run.json"
+        },
+        {
+          "name": "synthgen_summary",
+          "kind": "file",
+          "description": "SynthGen smoke summary artifact.",
+          "default": "reports/smoke_synthgen_summary.json"
+        },
+        {
+          "name": "synthgen_eval_report",
+          "kind": "file",
+          "description": "SynthGen smoke evaluation report.",
+          "default": "reports/smoke_synthgen_eval.json"
+        },
+        {
+          "name": "synthgen_overlay",
+          "kind": "file",
+          "description": "SynthGen smoke overlay image.",
+          "default": "reports/smoke_synthgen_overlay.png"
         }
       ],
       "examples": [
         {
           "description": "Run full copy-paste smoke flow.",
           "command": "bash scripts/smoke.sh"
+        },
+        {
+          "description": "Show smoke CLI options.",
+          "command": "bash scripts/smoke.sh --help"
         }
       ],
       "docs": [
-        "docs/README.md"
+        "docs/README.md",
+        "docs/synthgen_intake.md",
+        "data/smoke/README.md"
       ]
     },
     {
