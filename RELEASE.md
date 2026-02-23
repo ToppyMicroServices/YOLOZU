@@ -93,6 +93,11 @@ Recommended repository variable:
 
 - `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid used for versioned `newversion` publishing)
 
+First-time release note:
+
+- If you do not yet have a software concept DOI (no prior Zenodo record), the release-triggered `manual-doi` workflow will skip automatically.
+  After the software DOI exists, re-run `manual-doi` via `workflow_dispatch` with `software_concept_doi`, then set `YOLOZU_SOFTWARE_CONCEPT_DOI` for future releases.
+
 Workflow artifact:
 
 - `reports/manual_doi_publish.json` (DOI, concept DOI, conceptrecid, deposition id, URL, state)

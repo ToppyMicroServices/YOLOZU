@@ -51,9 +51,27 @@ jobs:
       INPUT_SOFTWARE_CONCEPT_DOI: ${{ github.event.inputs.software_concept_doi || '' }}
       INPUT_PUBLISH_RECORD: ${{ github.event.inputs.publish_record || 'true' }}
     steps:
+      - name: Preflight (release-trigger safety)
+        id: preflight
+        run: |
+          set -euo pipefail
+
+          # For the very first software release, the software concept DOI may not be known yet.
+          # In that case, we skip automatic publishing on the release trigger (and keep the workflow green),
+          # and expect a follow-up workflow_dispatch run with `software_concept_doi` (or a repo variable).
+          if [[ "${EVENT_NAME}" != "workflow_dispatch" && -z "${DEFAULT_SOFTWARE_CONCEPT_DOI}" ]]; then
+            echo "SKIP_MANUAL_DOI=true" >> "$GITHUB_ENV"
+            echo "skip_reason=Missing vars.YOLOZU_SOFTWARE_CONCEPT_DOI" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "SKIP_MANUAL_DOI=false" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
 
       - name: Build manual PDF
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         uses: xu-cheng/latex-action@v3
         with:
           working_directory: manual
@@ -62,17 +80,20 @@ jobs:
           pre_compile: python3 ../tools/generate_manual_import_graphs.py
 
       - name: Verify manual artifact
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         run: |
           test -f manual/build/yolozu_manual.pdf
           ls -lh manual/build/yolozu_manual.pdf
 
       - name: Upload manual PDF artifact
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: manual_pdf
           path: manual/build/yolozu_manual.pdf
 
       - name: Resolve Zenodo context
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         id: ctx
         env:
           ZENODO_TOKEN_PRODUCTION: ${{ secrets.ZENODO_TOKEN }}
@@ -149,6 +170,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create/newversion deposition, upload PDF, publish
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         id: zenodo
         run: |
           python3 - <<'PY'
@@ -290,13 +312,27 @@ jobs:
           PY
 
       - name: Upload Zenodo publish report
+        if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: manual_doi_publish
           path: reports/manual_doi_publish.json
 
       - name: Job summary
+        if: ${{ always() }}
         run: |
+          if [[ "${SKIP_MANUAL_DOI:-false}" == "true" ]]; then
+            {
+              echo "## Manual DOI publish skipped"
+              echo ""
+              echo "This run was triggered by a GitHub Release, but \`vars.YOLOZU_SOFTWARE_CONCEPT_DOI\` is not set."
+              echo ""
+              echo "To publish the manual DOI:"
+              echo "1) Obtain the **software concept DOI** (e.g., from Zenodo GitHub integration for the release)."
+              echo "2) Set repo variable \`YOLOZU_SOFTWARE_CONCEPT_DOI\`, or re-run this workflow via \`workflow_dispatch\` and provide \`software_concept_doi\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           {
             echo "## Manual DOI publish result"
             echo "- environment: ${{ steps.ctx.outputs.selected_env }}"
