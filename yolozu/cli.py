@@ -647,6 +647,7 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
     from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
     from yolozu.dataset import build_manifest
     from yolozu.predictions import load_predictions_entries, validate_predictions_entries
+    from yolozu.predictions_transform import load_classes_json, normalize_class_ids
 
     dataset_root = Path(str(args.dataset)).expanduser()
     if not dataset_root.is_absolute():
@@ -664,6 +665,18 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
     if not predictions_path.is_absolute():
         predictions_path = Path.cwd() / predictions_path
     predictions = load_predictions_entries(predictions_path)
+    normalization_warnings: list[str] = []
+    if args.classes or args.assume_class_id_is_category_id:
+        if not args.classes:
+            raise SystemExit("--classes is required when --assume-class-id-is-category-id is enabled")
+        classes = load_classes_json(Path(str(args.classes)).expanduser())
+        transformed = normalize_class_ids(
+            predictions,
+            classes_json=classes,
+            assume_class_id_is_category_id=bool(args.assume_class_id_is_category_id),
+        )
+        predictions = transformed.entries
+        normalization_warnings = list(transformed.warnings)
     validation = validate_predictions_entries(predictions, strict=False)
     detections = predictions_to_coco_detections(
         predictions,
@@ -678,11 +691,11 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
             "stats": [],
             "dry_run": True,
             "counts": {"images": int(len(records)), "detections": int(len(detections))},
-            "warnings": validation.warnings,
+            "warnings": [*validation.warnings, *normalization_warnings],
         }
     else:
         result = evaluate_coco_map(gt, detections)
-        result["warnings"] = validation.warnings
+        result["warnings"] = [*validation.warnings, *normalization_warnings]
 
     payload: dict[str, object] = {
         "report_schema_version": 1,
@@ -693,6 +706,10 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
         "predictions": str(predictions_path),
         "bbox_format": str(args.bbox_format),
         "max_images": int(args.max_images) if args.max_images is not None else None,
+        "normalization": {
+            "classes": str(args.classes) if args.classes else None,
+            "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
+        },
         **result,
     }
 
@@ -1371,6 +1388,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     eval_coco.add_argument("--dry-run", action="store_true", help="Skip COCOeval; only validate/convert predictions.")
     eval_coco.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images.")
+    eval_coco.add_argument("--classes", default=None, help="Optional labels/<split>/classes.json for class-id normalization.")
+    eval_coco.add_argument(
+        "--assume-class-id-is-category-id",
+        action="store_true",
+        help="Treat class_id in predictions as COCO category_id when --classes is set.",
+    )
     eval_coco.add_argument("--output", default="reports/coco_eval.json", help="Output report path.")
 
     calibrate = sub.add_parser("calibrate", help="Apply post-hoc FRACAL calibration to bbox or instance-seg predictions JSON.")

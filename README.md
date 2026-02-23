@@ -57,6 +57,16 @@ pip users: go to [Install (pip users)](README.md#install-pip-users). Repo users:
 - TTT is torch-backend-only and opt-in, with guard-railed presets.
 - Depth mode keeps backbone boundary stable and includes unit/scale safety controls.
 
+## YOLO users (v5/v8/11/26) quick path
+
+```bash
+python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
+python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
+python3 -m yolozu.cli eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --output reports/coco_eval_ultra.json
+```
+
+If your predictions include COCO `category_id`, add `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco` for automatic class-id normalization.
+
 ## Quickstart details
 
 With this repo checkout, run:

@@ -126,6 +126,24 @@ Reference docs:
 - [Copilot MCP integration](copilot_mcp_integration.md)
 - [MCP extension architecture](mcp_extension_architecture.md)
 
+## F) YOLO migration (v5/v8/11/26)
+
+Use this path when you keep training/inference in YOLO tooling and only want YOLOZU contract/eval.
+
+Shortest 3 commands:
+
+```bash
+python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
+python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
+python3 -m yolozu.cli eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --output reports/coco_eval_ultra.json
+```
+
+Protocol guidance:
+- `nms_applied`: YOLOv5/YOLOv8/YOLO11 style post-NMS exports.
+- `e2e_nms_free`: YOLO26 / RT-DETR style NMS-free exports.
+
+If predictions contain COCO `category_id`, pass `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco`.
+
 ## CI incidents
 
 CI incident memo has moved to a dedicated page:

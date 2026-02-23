@@ -19,7 +19,7 @@ def _parse_args(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--protocol",
-        choices=("yolo26",),
+        choices=("yolo26", "nms_applied", "e2e_nms_free"),
         default=None,
         help="Apply canonical evaluation protocol presets (pins split/bbox_format).",
     )

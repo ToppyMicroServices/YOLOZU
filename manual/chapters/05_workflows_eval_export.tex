@@ -46,6 +46,25 @@ python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx /path/to/yolo.on
 For further details, consult:\\
 \path{docs/training_inference_export.md} and \path{docs/external_inference.md}.
 
+\subsection{YOLO user migration entrypoint (v5/v8/11/26)}
+For users already operating within Ultralytics/YOLO pipelines, \yolozu{} provides a direct contract-first migration path:
+\begin{lstlisting}[language=bash]
+python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
+python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
+python3 tools/export_predictions_yolov5.py --dataset data/ultra_wrapper --split val --labels-dir runs/detect/exp/labels --protocol nms_applied --output reports/pred_yolov5.json
+\end{lstlisting}
+
+Protocol policy for fair comparisons:
+\begin{itemize}
+  \item \texttt{nms\_applied}: intended for YOLOv5/YOLOv8/YOLO11 post-NMS outputs.
+  \item \texttt{e2e\_nms\_free}: intended for YOLO26/RT-DETR no-NMS outputs.
+\end{itemize}
+
+When outputs contain COCO \texttt{category\_id}, evaluate with class-id normalization:
+\begin{lstlisting}[language=bash]
+yolozu eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --classes data/ultra_wrapper/labels/val/classes.json --output reports/coco_eval_ultra.json
+\end{lstlisting}
+
 \section{Workflow C: Folder inference (pip CLI)}
 A highly convenient, user-facing approach for batch inference is:
 \begin{lstlisting}[language=bash]

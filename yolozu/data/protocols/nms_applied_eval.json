@@ -1,0 +1,36 @@
+{
+  "protocol_schema_version": 1,
+  "id": "nms_applied",
+  "task": "detect",
+  "dataset": "coco",
+  "split": "val2017",
+  "imgsz": 640,
+  "bbox_format": "cxcywh_norm",
+  "fixed_conditions": {
+    "imgsz": 640,
+    "score_threshold": 0.25,
+    "iou_threshold": 0.45,
+    "max_detections": 300,
+    "bbox_format": "cxcywh_norm",
+    "preprocess": {
+      "method": "letterbox",
+      "input_color": "RGB",
+      "normalize": "0_1",
+      "resize_interp": "linear",
+      "letterbox_fill": [114, 114, 114]
+    }
+  },
+  "metric_key": "map50_95",
+  "metric_label": "mAP@[.5:.95] (bbox, exporter NMS applied)",
+  "e2e": {
+    "nms": "applied",
+    "notes": [
+      "Evaluator scores detections exactly as exported.",
+      "Use this protocol for YOLOv5/YOLOv8/YOLO11 style post-NMS outputs."
+    ]
+  },
+  "reports": {
+    "suite": "reports/eval_suite.json",
+    "single": "reports/coco_eval.json"
+  }
+}

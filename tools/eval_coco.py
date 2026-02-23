@@ -11,13 +11,14 @@ from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predict
 from yolozu.dataset import build_manifest
 from yolozu.eval_protocol import apply_eval_protocol_args, load_eval_protocol
 from yolozu.predictions import load_predictions_entries
+from yolozu.predictions_transform import load_classes_json, normalize_class_ids
 
 
 def _parse_args(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--protocol",
-        choices=("yolo26",),
+        choices=("yolo26", "nms_applied", "e2e_nms_free"),
         default=None,
         help="Apply canonical evaluation protocol presets (pins split/bbox_format).",
     )
@@ -45,6 +46,16 @@ def _parse_args(argv):
         default=None,
         help="Optional cap for number of images (for quick smoke runs).",
     )
+    parser.add_argument(
+        "--classes",
+        default=None,
+        help="Optional labels/<split>/classes.json path for category_id↔class_id normalization before eval.",
+    )
+    parser.add_argument(
+        "--assume-class-id-is-category-id",
+        action="store_true",
+        help="Treat class_id in predictions as COCO category_id when --classes is provided.",
+    )
     parser.add_argument("--output", default="reports/coco_eval.json", help="Where to write evaluation JSON.")
     return parser.parse_args(argv)
 
@@ -71,6 +82,18 @@ def main(argv=None):
     image_sizes = {img["id"]: (int(img["width"]), int(img["height"])) for img in gt["images"]}
 
     preds = load_predictions_entries(repo_root / args.predictions)
+    normalization_warnings: list[str] = []
+    if args.classes or args.assume_class_id_is_category_id:
+        if not args.classes:
+            raise SystemExit("--classes is required when --assume-class-id-is-category-id is enabled")
+        classes = load_classes_json(repo_root / args.classes)
+        transformed = normalize_class_ids(
+            preds,
+            classes_json=classes,
+            assume_class_id_is_category_id=bool(args.assume_class_id_is_category_id),
+        )
+        preds = transformed.entries
+        normalization_warnings = list(transformed.warnings)
     # Validate shape early; useful even in dry-run mode.
     # (Strict mode is optional; keep default permissive for external baselines.)
     from yolozu.predictions import validate_predictions_entries
@@ -89,11 +112,11 @@ def main(argv=None):
             "stats": [],
             "dry_run": True,
             "counts": {"images": len(records), "detections": len(dt)},
-            "warnings": validation.warnings,
+            "warnings": [*validation.warnings, *normalization_warnings],
         }
     else:
         result = evaluate_coco_map(gt, dt)
-        result["warnings"] = validation.warnings
+        result["warnings"] = [*validation.warnings, *normalization_warnings]
 
     payload = {
         "report_schema_version": 1,
@@ -106,6 +129,10 @@ def main(argv=None):
         "predictions": str(args.predictions),
         "bbox_format": args.bbox_format,
         "max_images": args.max_images,
+        "normalization": {
+            "classes": str(args.classes) if args.classes else None,
+            "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
+        },
         **result,
     }
 

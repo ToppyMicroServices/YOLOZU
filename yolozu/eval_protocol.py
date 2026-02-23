@@ -10,6 +10,8 @@ from yolozu import resources as yz_resources
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_PROTOCOLS = {
     "yolo26": "protocols/yolo26_eval.json",
+    "nms_applied": "protocols/nms_applied_eval.json",
+    "e2e_nms_free": "protocols/e2e_nms_free_eval.json",
 }
 
 
@@ -127,4 +129,3 @@ def apply_eval_protocol_args(args: Any, protocol: dict[str, Any]) -> Any:
 def eval_protocol_hash(protocol: dict[str, Any]) -> str:
     canonical = json.dumps(protocol, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
