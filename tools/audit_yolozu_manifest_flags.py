@@ -6,12 +6,13 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 YOLOZU = ROOT / "tools" / "yolozu.py"
 MANIFEST = ROOT / "tools" / "manifest.json"
-PYTHON = str(ROOT / ".venv" / "bin" / "python")
+PYTHON = sys.executable
 FLAG_PATTERN = re.compile(r"--[a-zA-Z0-9][a-zA-Z0-9_-]*")
 
 SUBCOMMANDS = [
