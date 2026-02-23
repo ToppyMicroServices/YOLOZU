@@ -82,14 +82,13 @@ def _looks_like_path_token(token: str) -> bool:
 def _guard_path_token(token: str) -> None:
     if not _looks_like_path_token(token):
         return
+    if token.startswith("~"):
+        raise ValueError(f"home-dir paths are not allowed: {token}")
     p = Path(token)
     if ".." in p.parts:
         raise ValueError(f"path traversal is not allowed: {token}")
     if p.is_absolute():
-        root = repo_root().resolve()
-        resolved = p.resolve()
-        if root not in resolved.parents and resolved != root:
-            raise ValueError(f"absolute path outside workspace is not allowed: {token}")
+        raise ValueError(f"absolute paths are not allowed: {token}")
 
 
 def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
@@ -180,11 +179,6 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
         },
     )
     for key, raw_path in (artifacts or {}).items():
-        path = Path(raw_path)
-        payload["artifacts"][key] = str(path)
-        if path.suffix.lower() == ".json" and path.exists():
-            try:
-                payload[f"{key}_json"] = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                pass
+        _guard_path_token(raw_path)
+        payload["artifacts"][key] = raw_path
     return payload
