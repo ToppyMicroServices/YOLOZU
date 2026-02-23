@@ -326,11 +326,11 @@ for \path{tools/export_predictions.py} and \path{tools/yolozu.py}.
 TTT comparisons must be run on the exact same images.
 Use \path{tools/make_subset_dataset.py} to create a deterministic subset dataset root:
 \begin{lstlisting}[language=bash]
-python3 tools/make_subset_dataset.py \
-  --dataset data/smoke \
-  --split val \
-  --n 50 \
-  --seed 0 \
+python3 tools/make_subset_dataset.py \\
+  --dataset data/smoke \\
+  --split val \\
+  --n 50 \\
+  --seed 0 \\
   --out reports/smoke_50
 \end{lstlisting}
 
@@ -339,29 +339,29 @@ This writes \path{subset.json} (including an image hash) and a frozen image list
 \section{Example: baseline vs TTT}
 Baseline export:
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py export \
-  --backend torch \
-  --dataset reports/smoke_50 \
-  --split val \
-  --checkpoint /path/to.ckpt \
-  --device cuda \
-  --max-images 50 \
+python3 tools/yolozu.py export \\
+  --backend torch \\
+  --dataset reports/smoke_50 \\
+  --split val \\
+  --checkpoint /path/to.ckpt \\
+  --device cuda \\
+  --max-images 50 \\
   --output reports/pred_baseline.json
 \end{lstlisting}
 
 TTT export (safe preset, per-sample reset, with a log):
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py export \
-  --backend torch \
-  --dataset reports/smoke_50 \
-  --split val \
-  --checkpoint /path/to.ckpt \
-  --device cuda \
-  --max-images 50 \
-  --ttt \
-  --ttt-preset safe \
-  --ttt-reset sample \
-  --ttt-log-out reports/ttt_log_safe.json \
+python3 tools/yolozu.py export \\
+  --backend torch \\
+  --dataset reports/smoke_50 \\
+  --split val \\
+  --checkpoint /path/to.ckpt \\
+  --device cuda \\
+  --max-images 50 \\
+  --ttt \\
+  --ttt-preset safe \\
+  --ttt-reset sample \\
+  --ttt-log-out reports/ttt_log_safe.json \\
   --output reports/pred_ttt_safe.json
 \end{lstlisting}
 

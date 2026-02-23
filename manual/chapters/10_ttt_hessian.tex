@@ -31,33 +31,33 @@ It is strongly advised to avoid this technique by default in strict, real-time p
 \section{CLI quickstart}
 To enable refinement (opt-in behavior):
 \begin{lstlisting}[language=bash]
-python3 tools/refine_predictions_hessian.py \
-  --predictions reports/predictions.json \
-  --dataset data/smoke \
-  --output reports/predictions_refined.json \
-  --enable \
-  --refine-offsets \
+python3 tools/refine_predictions_hessian.py \\
+  --predictions reports/predictions.json \\
+  --dataset data/smoke \\
+  --output reports/predictions_refined.json \\
+  --enable \\
+  --refine-offsets \\
   --wrap
 \end{lstlisting}
 
 To explicitly disable refinement (pass-through behavior):
 \begin{lstlisting}[language=bash]
-python3 tools/refine_predictions_hessian.py \
-  --predictions reports/predictions.json \
-  --output reports/predictions_refined.json \
-  --disable \
+python3 tools/refine_predictions_hessian.py \\
+  --predictions reports/predictions.json \\
+  --output reports/predictions_refined.json \\
+  --disable \\
   --wrap
 \end{lstlisting}
 
 To enable refinement with customized solver parameters:
 \begin{lstlisting}[language=bash]
-python3 tools/refine_predictions_hessian.py \
-  --predictions reports/predictions.json \
-  --dataset data/smoke \
-  --output reports/predictions_refined.json \
-  --enable \
-  --refine-offsets \
-  --steps 10 \
+python3 tools/refine_predictions_hessian.py \\
+  --predictions reports/predictions.json \\
+  --dataset data/smoke \\
+  --output reports/predictions_refined.json \\
+  --enable \\
+  --refine-offsets \\
+  --steps 10 \\
   --damping 1e-2
 \end{lstlisting}
 

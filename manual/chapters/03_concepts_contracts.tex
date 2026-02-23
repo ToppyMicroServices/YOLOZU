@@ -63,11 +63,11 @@ Frameworks such as Detectron2, MMDetection, and YOLOX frequently export detectio
 
 \yolozu{} seamlessly converts these outputs into a compliant \path{predictions.json}:
 \begin{lstlisting}[language=bash]
-yolozu migrate predictions \
-  --from coco-results \
-  --results /path/to/coco_results.json \
-  --instances /path/to/instances_val2017.json \
-  --output reports/predictions.json \
+yolozu migrate predictions \\
+  --from coco-results \\
+  --results /path/to/coco_results.json \\
+  --instances /path/to/instances_val2017.json \\
+  --output reports/predictions.json \\
   --force
 \end{lstlisting}
 

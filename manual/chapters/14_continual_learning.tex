@@ -24,7 +24,7 @@ The default strategy combines:
 \subsection{Train}
 Run continual fine-tuning using a config (start from the example):
 \begin{lstlisting}[language=bash]
-python3 rtdetr_pose/tools/train_continual.py \
+python3 rtdetr_pose/tools/train_continual.py \\
   --config configs/continual/rtdetr_pose_domain_inc_example.yaml
 \end{lstlisting}
 
@@ -37,19 +37,19 @@ The separate tool \path{tools/distill_predictions.py} performs \textbf{offline p
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:
 \begin{lstlisting}[language=bash]
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --device cpu \
+python3 tools/eval_continual.py \\
+  --run-json runs/continual/<run>/continual_run.json \\
+  --device cpu \\
   --max-images 50
 \end{lstlisting}
 
 If your dataset provides pose sidecar metadata (e.g., under \path{labels/<split>/*.json}), you can request pose metrics:
 \begin{lstlisting}[language=bash]
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --device cpu \
-  --max-images 50 \
-  --metric pose \
+python3 tools/eval_continual.py \\
+  --run-json runs/continual/<run>/continual_run.json \\
+  --device cpu \\
+  --max-images 50 \\
+  --metric pose \\
   --metric-key pose_success
 \end{lstlisting}
 
@@ -69,20 +69,20 @@ Notes:
 Examples for metric-key switching:
 \begin{lstlisting}[language=bash]
 # depth error summary
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --metric pose \
+python3 tools/eval_continual.py \\
+  --run-json runs/continual/<run>/continual_run.json \\
+  --metric pose \\
   --metric-key depth_abs_mean
 
 # ADD / ADDS (requires CAD points)
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --metric pose \
+python3 tools/eval_continual.py \\
+  --run-json runs/continual/<run>/continual_run.json \\
+  --metric pose \\
   --metric-key add_mean
 
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --metric pose \
+python3 tools/eval_continual.py \\
+  --run-json runs/continual/<run>/continual_run.json \\
+  --metric pose \\
   --metric-key adds_mean
 \end{lstlisting}
 

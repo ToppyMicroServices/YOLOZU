@@ -74,12 +74,12 @@ A unified project structure supports YAML-driven execution for both training and
 
 \begin{longtable}{@{}p{0.18\textwidth}p{0.30\textwidth}p{0.46\textwidth}@{}}
 \toprule
-\textbf{Workflow} & \textbf{Primary config} & \textbf{Reference command} \
+\textbf{Workflow} & \textbf{Primary config} & \textbf{Reference command} \\
 \midrule
-Train (scaffold) & \path{configs/examples/train_setting.yaml} & \cmd{yolozu train <train_setting.yaml>} \
-Train (contract) & \path{configs/examples/train_contract.yaml} & \cmd{yolozu train <train_contract.yaml> --run-id <id>} \
-Resume (full state) & Same as contract & \cmd{yolozu train <train_contract.yaml> --run-id <id> --resume} \
-Test (scenario runner) & \path{configs/examples/test_setting.yaml} & \cmd{yolozu test <test_setting.yaml> [test_args...]} \
+Train (scaffold) & \path{configs/examples/train_setting.yaml} & \cmd{yolozu train <train_setting.yaml>} \\
+Train (contract) & \path{configs/examples/train_contract.yaml} & \cmd{yolozu train <train_contract.yaml> --run-id <id>} \\
+Resume (full state) & Same as contract & \cmd{yolozu train <train_contract.yaml> --run-id <id> --resume} \\
+Test (scenario runner) & \path{configs/examples/test_setting.yaml} & \cmd{yolozu test <test_setting.yaml> [test_args...]} \\
 \bottomrule
 \end{longtable}
 
@@ -92,27 +92,27 @@ yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictio
 \end{lstlisting}
 
 
-oindent For \cmd{yolozu test}, YAML keys are dynamically translated into \cmd{--key value} arguments (with booleans converted to flags), allowing subsequent CLI arguments to override them as necessary.
+\noindent For \cmd{yolozu test}, YAML keys are dynamically translated into \cmd{--key value} arguments (with booleans converted to flags), allowing subsequent CLI arguments to override them as necessary.
 
 \section{Solver (optimizer) parameters and defaults}
 The supported optimizers are \texttt{adamw} (the default) and \texttt{sgd}.
 
 \begin{longtable}{@{}p{0.40\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.30\textwidth}@{}}
 \toprule
-\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \
+\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \\
 \midrule
-\cmd{--optimizer} / \texttt{optimizer} & str & \texttt{adamw} & \texttt{adamw}, \texttt{sgd} \
-\cmd{--lr} / \texttt{lr} & float & \texttt{1e-4} & Base learning rate \
-\cmd{--weight-decay} / \texttt{weight\_decay} & float & \texttt{0.01} & Base weight decay \
-\cmd{--momentum} / \texttt{momentum} & float & \texttt{0.9} & Applicable to SGD only \
-\cmd{--nesterov} / \texttt{nesterov} & bool & \texttt{false} & Applicable to SGD only \
-\cmd{--use-param-groups} / \texttt{use\_param\_groups} & bool & \texttt{false} & Enables separate backbone/head parameter groups \
-\cmd{--backbone-lr-mult} / \texttt{backbone\_lr\_mult} & float & \texttt{1.0} & Learning rate multiplier for the backbone \
-\cmd{--head-lr-mult} / \texttt{head\_lr\_mult} & float & \texttt{1.0} & Learning rate multiplier for the head \
-\cmd{--backbone-wd-mult} / \texttt{backbone\_wd\_mult} & float & \texttt{1.0} & Weight decay multiplier for the backbone \
-\cmd{--head-wd-mult} / \texttt{head\_wd\_mult} & float & \texttt{1.0} & Weight decay multiplier for the head \
-\cmd{--wd-exclude-bias} / \texttt{wd\_exclude\_bias} & bool & \texttt{true} & Sets bias decay to 0 \
-\cmd{--wd-exclude-norm} / \texttt{wd\_exclude\_norm} & bool & \texttt{true} & Sets normalization decay to 0 \
+\cmd{--optimizer} / \texttt{optimizer} & str & \texttt{adamw} & \texttt{adamw}, \texttt{sgd} \\
+\cmd{--lr} / \texttt{lr} & float & \texttt{1e-4} & Base learning rate \\
+\cmd{--weight-decay} / \texttt{weight\_decay} & float & \texttt{0.01} & Base weight decay \\
+\cmd{--momentum} / \texttt{momentum} & float & \texttt{0.9} & Applicable to SGD only \\
+\cmd{--nesterov} / \texttt{nesterov} & bool & \texttt{false} & Applicable to SGD only \\
+\cmd{--use-param-groups} / \texttt{use\_param\_groups} & bool & \texttt{false} & Enables separate backbone/head parameter groups \\
+\cmd{--backbone-lr-mult} / \texttt{backbone\_lr\_mult} & float & \texttt{1.0} & Learning rate multiplier for the backbone \\
+\cmd{--head-lr-mult} / \texttt{head\_lr\_mult} & float & \texttt{1.0} & Learning rate multiplier for the head \\
+\cmd{--backbone-wd-mult} / \texttt{backbone\_wd\_mult} & float & \texttt{1.0} & Weight decay multiplier for the backbone \\
+\cmd{--head-wd-mult} / \texttt{head\_wd\_mult} & float & \texttt{1.0} & Weight decay multiplier for the head \\
+\cmd{--wd-exclude-bias} / \texttt{wd\_exclude\_bias} & bool & \texttt{true} & Sets bias decay to 0 \\
+\cmd{--wd-exclude-norm} / \texttt{wd\_exclude\_norm} & bool & \texttt{true} & Sets normalization decay to 0 \\
 \bottomrule
 \end{longtable}
 
@@ -121,14 +121,14 @@ Supported learning rate scheduler configurations include \texttt{none} (default)
 
 \begin{longtable}{@{}p{0.40\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.30\textwidth}@{}}
 \toprule
-\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \
+\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \\
 \midrule
-\cmd{--scheduler} / \texttt{scheduler} & str & \texttt{none} & \texttt{none}, \texttt{cosine}, \texttt{onecycle}, \texttt{multistep} \
-\cmd{--min-lr} / \texttt{min\_lr} & float & \texttt{0.0} & Corresponds to cosine \texttt{eta\_min} \
-\cmd{--scheduler-milestones} / \texttt{scheduler\_milestones} & str/list & \texttt{""} & Comma-separated list for multistep scheduling \
-\cmd{--scheduler-gamma} / \texttt{scheduler\_gamma} & float & \texttt{0.1} & Decay factor for multistep scheduling \
-\cmd{--lr-warmup-steps} / \texttt{lr\_warmup\_steps} & int & \texttt{0} & Number of linear warmup steps \
-\cmd{--lr-warmup-init} / \texttt{lr\_warmup\_init} & float & \texttt{0.0} & Initial learning rate during warmup \
+\cmd{--scheduler} / \texttt{scheduler} & str & \texttt{none} & \texttt{none}, \texttt{cosine}, \texttt{onecycle}, \texttt{multistep} \\
+\cmd{--min-lr} / \texttt{min\_lr} & float & \texttt{0.0} & Corresponds to cosine \texttt{eta\_min} \\
+\cmd{--scheduler-milestones} / \texttt{scheduler\_milestones} & str/list & \texttt{""} & Comma-separated list for multistep scheduling \\
+\cmd{--scheduler-gamma} / \texttt{scheduler\_gamma} & float & \texttt{0.1} & Decay factor for multistep scheduling \\
+\cmd{--lr-warmup-steps} / \texttt{lr\_warmup\_steps} & int & \texttt{0} & Number of linear warmup steps \\
+\cmd{--lr-warmup-init} / \texttt{lr\_warmup\_init} & float & \texttt{0.0} & Initial learning rate during warmup \\
 \bottomrule
 \end{longtable}
 
@@ -140,17 +140,17 @@ Low-Rank Adaptation (LoRA) is activated when \texttt{lora\_r > 0}.
 
 \begin{longtable}{@{}p{0.40\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.30\textwidth}@{}}
 \toprule
-\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \
+\textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \\
 \midrule
-\cmd{--lora-r} / \texttt{lora\_r} & int & \texttt{0} & Values \texttt{>0} enable LoRA \
-\cmd{--lora-alpha} / \texttt{lora\_alpha} & float/null & \texttt{null} & A null value implies \(\alpha=r\) \
-\cmd{--lora-dropout} / \texttt{lora\_dropout} & float & \texttt{0.0} & Specifies LoRA input dropout \
-\cmd{--lora-target} / \texttt{lora\_target} & str & \texttt{head} & Options: \texttt{head}, \texttt{all\_linear}, \texttt{all\_conv1x1}, \texttt{all\_linear\_conv1x1} \
-\cmd{--lora-freeze-base} / \texttt{lora\_freeze\_base} & bool & \texttt{true} & Restricts training exclusively to LoRA parameters \
-\cmd{--lora-train-bias} / \texttt{lora\_train\_bias} & str & \texttt{none} & Options: \texttt{none}, \texttt{all} \
-\cmd{--torchao-quant} / \texttt{torchao\_quant} & str & \texttt{none} & Options: \texttt{none}, \texttt{int8wo}, \texttt{int4wo} \
-\cmd{--torchao-required} / \texttt{torchao\_required} & bool & \texttt{false} & Triggers a failure if the quantization backend is absent \
-\cmd{--qlora} / \texttt{qlora} & bool & \texttt{false} & Requires LoRA; strictly enforces int4wo quantization and base freezing \
+\cmd{--lora-r} / \texttt{lora\_r} & int & \texttt{0} & Values \texttt{>0} enable LoRA \\
+\cmd{--lora-alpha} / \texttt{lora\_alpha} & float/null & \texttt{null} & A null value implies \(\alpha=r\) \\
+\cmd{--lora-dropout} / \texttt{lora\_dropout} & float & \texttt{0.0} & Specifies LoRA input dropout \\
+\cmd{--lora-target} / \texttt{lora\_target} & str & \texttt{head} & Options: \texttt{head}, \texttt{all\_linear}, \texttt{all\_conv1x1}, \texttt{all\_linear\_conv1x1} \\
+\cmd{--lora-freeze-base} / \texttt{lora\_freeze\_base} & bool & \texttt{true} & Restricts training exclusively to LoRA parameters \\
+\cmd{--lora-train-bias} / \texttt{lora\_train\_bias} & str & \texttt{none} & Options: \texttt{none}, \texttt{all} \\
+\cmd{--torchao-quant} / \texttt{torchao\_quant} & str & \texttt{none} & Options: \texttt{none}, \texttt{int8wo}, \texttt{int4wo} \\
+\cmd{--torchao-required} / \texttt{torchao\_required} & bool & \texttt{false} & Triggers a failure if the quantization backend is absent \\
+\cmd{--qlora} / \texttt{qlora} & bool & \texttt{false} & Requires LoRA; strictly enforces int4wo quantization and base freezing \\
 \bottomrule
 \end{longtable}
 
@@ -165,22 +165,22 @@ The canonical default configurations are maintained within:
 Frequently modified default parameters include:
 \begin{longtable}{@{}p{0.34\textwidth}p{0.20\textwidth}p{0.40\textwidth}@{}}
 \toprule
-\textbf{Config key} & \textbf{Default} & \textbf{Meaning} \
+\textbf{Config key} & \textbf{Default} & \textbf{Meaning} \\
 \midrule
-\texttt{optimizer} & \texttt{adamw} & Optimizer family \
-\texttt{lr} & \texttt{1e-4} & Base learning rate \
-\texttt{weight\_decay} & \texttt{0.01} & Base weight decay \
-\texttt{scheduler} & \texttt{none} & Learning rate scheduler mode \
-\texttt{lr\_warmup\_steps} & \texttt{0} & Warmup is disabled by default \
-\texttt{lora\_r} & \texttt{0} & LoRA is disabled by default \
-\texttt{gradient\_accumulation\_steps} & \texttt{1} & Gradient accumulation is disabled \
-\texttt{clip\_grad\_norm} & \texttt{0.0} & Gradient clipping is disabled \
-\texttt{use\_ema} & \texttt{false} & Exponential Moving Average (EMA) is disabled \
-\texttt{amp} & \texttt{none} & Automatic Mixed Precision (AMP) is disabled \
-\texttt{metrics\_jsonl} & \path{reports/train_metrics.jsonl} & Output stream for training metrics \
-\texttt{metrics\_csv} & \path{reports/train_metrics.csv} & Tabular format for metrics \
-\texttt{export\_onnx} & \texttt{true} & ONNX export is enabled \
-\texttt{onnx\_out} & \path{reports/rtdetr_pose.onnx} & Designated ONNX output path \
+\texttt{optimizer} & \texttt{adamw} & Optimizer family \\
+\texttt{lr} & \texttt{1e-4} & Base learning rate \\
+\texttt{weight\_decay} & \texttt{0.01} & Base weight decay \\
+\texttt{scheduler} & \texttt{none} & Learning rate scheduler mode \\
+\texttt{lr\_warmup\_steps} & \texttt{0} & Warmup is disabled by default \\
+\texttt{lora\_r} & \texttt{0} & LoRA is disabled by default \\
+\texttt{gradient\_accumulation\_steps} & \texttt{1} & Gradient accumulation is disabled \\
+\texttt{clip\_grad\_norm} & \texttt{0.0} & Gradient clipping is disabled \\
+\texttt{use\_ema} & \texttt{false} & Exponential Moving Average (EMA) is disabled \\
+\texttt{amp} & \texttt{none} & Automatic Mixed Precision (AMP) is disabled \\
+\texttt{metrics\_jsonl} & \path{reports/train_metrics.jsonl} & Output stream for training metrics \\
+\texttt{metrics\_csv} & \path{reports/train_metrics.csv} & Tabular format for metrics \\
+\texttt{export\_onnx} & \texttt{true} & ONNX export is enabled \\
+\texttt{onnx\_out} & \path{reports/rtdetr_pose.onnx} & Designated ONNX output path \\
 \bottomrule
 \end{longtable}
 
@@ -226,15 +226,15 @@ While legacy compatibility fields (e.g., \texttt{backbone\_name}, \texttt{backbo
 
 \begin{longtable}{@{}p{0.28\textwidth}p{0.24\textwidth}p{0.42\textwidth}@{}}
 \toprule
-\textbf{Location} & \textbf{Key} & \textbf{Role} \
+\textbf{Location} & \textbf{Key} & \textbf{Role} \\
 \midrule
-Train YAML & \texttt{model\_config} & References the model JSON (e.g., \path{rtdetr_pose/configs/base.json}) \
-Model JSON (\texttt{model.backbone.*}) & \texttt{name} & Specifies the backbone family (e.g., \texttt{cspresnet}, \texttt{cspdarknet\_s}, \texttt{resnet50}, \texttt{convnext\_tiny}) \
-Model JSON (\texttt{model.backbone.*}) & \texttt{norm} & Defines the normalization type (\texttt{bn|syncbn|frozenbn|gn}) \
-Model JSON (\texttt{model.backbone.*}) & \texttt{args} & Optional, backbone-specific constructor arguments \
-Model JSON (\texttt{model.projector.*}) & \texttt{d\_model} & Sets the projection/output channel size for transformer input \
-Solver YAML/CLI & \texttt{backbone\_lr\_mult} & Learning rate multiplier applied to backbone parameters \
-Solver YAML/CLI & \texttt{backbone\_wd\_mult} & Weight decay multiplier applied to backbone parameters \
+Train YAML & \texttt{model\_config} & References the model JSON (e.g., \path{rtdetr_pose/configs/base.json}) \\
+Model JSON (\texttt{model.backbone.*}) & \texttt{name} & Specifies the backbone family (e.g., \texttt{cspresnet}, \texttt{cspdarknet\_s}, \texttt{resnet50}, \texttt{convnext\_tiny}) \\
+Model JSON (\texttt{model.backbone.*}) & \texttt{norm} & Defines the normalization type (\texttt{bn|syncbn|frozenbn|gn}) \\
+Model JSON (\texttt{model.backbone.*}) & \texttt{args} & Optional, backbone-specific constructor arguments \\
+Model JSON (\texttt{model.projector.*}) & \texttt{d\_model} & Sets the projection/output channel size for transformer input \\
+Solver YAML/CLI & \texttt{backbone\_lr\_mult} & Learning rate multiplier applied to backbone parameters \\
+Solver YAML/CLI & \texttt{backbone\_wd\_mult} & Weight decay multiplier applied to backbone parameters \\
 \bottomrule
 \end{longtable}
 

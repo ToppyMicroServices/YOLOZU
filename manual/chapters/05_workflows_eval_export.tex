@@ -43,7 +43,7 @@ python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx /path/to/rtdet
 python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.25 --nms-iou 0.45 --out reports/pred_opencv_dnn_yolo.json --force
 \end{lstlisting}
 
-For further details, consult:\
+For further details, consult:\\
 \path{docs/training_inference_export.md} and \path{docs/external_inference.md}.
 
 \section{Workflow C: Folder inference (pip CLI)}
@@ -59,16 +59,16 @@ Following inference or evaluation, YOLOZU generates both machine-readable artifa
 
 \begin{longtable}{@{}p{0.34\textwidth}p{0.30\textwidth}p{0.30\textwidth}@{}}
 \toprule
-\textbf{Command family} & \textbf{Typical output} & \textbf{Usage} \
+\textbf{Command family} & \textbf{Typical output} & \textbf{Usage} \\
 \midrule
-\cmd{yolozu predict-images} & \path{reports/predict_images.json} & Normalized predictions artifact \
-\cmd{yolozu predict-images} & \path{reports/predict_images.html} & Visual summary page \
-\cmd{yolozu predict-images} & \path{reports/predict_images_overlays/} & Per-image visual overlays \
-\cmd{python3 tools/eval_suite.py} & \path{reports/eval_suite.json} & Protocol-pinned comparison report \
-\cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.jsonl} & Trial-level raw history \
-\cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.csv}, \path{reports/hpo_sweep.md} & Leaderboard and table views \
-\cmd{yolozu eval-instance-seg} & \path{reports/instance_seg_eval.json} & Instance segmentation metrics \
-\cmd{yolozu eval-instance-seg} & \path{reports/instance_seg_eval.html} & HTML report with optional overlays \
+\cmd{yolozu predict-images} & \path{reports/predict_images.json} & Normalized predictions artifact \\
+\cmd{yolozu predict-images} & \path{reports/predict_images.html} & Visual summary page \\
+\cmd{yolozu predict-images} & \path{reports/predict_images_overlays/} & Per-image visual overlays \\
+\cmd{python3 tools/eval_suite.py} & \path{reports/eval_suite.json} & Protocol-pinned comparison report \\
+\cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.jsonl} & Trial-level raw history \\
+\cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.csv}, \path{reports/hpo_sweep.md} & Leaderboard and table views \\
+\cmd{yolozu eval-instance-seg} & \path{reports/instance_seg_eval.json} & Instance segmentation metrics \\
+\cmd{yolozu eval-instance-seg} & \path{reports/instance_seg_eval.html} & HTML report with optional overlays \\
 \bottomrule
 \end{longtable}
 
