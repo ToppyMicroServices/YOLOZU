@@ -9,7 +9,7 @@ class TestIntegrationsMcpActionsParity(unittest.TestCase):
     def test_surface_parity_has_no_drift(self):
         reference = build_tool_surface_reference()
         errors = collect_surface_parity_errors(reference)
-        self.assertEqual(errors, [], f"parity drift detected:\n- " + "\n- ".join(errors))
+        self.assertEqual(errors, [], "parity drift detected:\n- " + "\n- ".join(errors))
 
     def test_tool_runner_responses_keep_contract_keys(self):
         required = {"ok", "tool", "summary", "exit_code"}
