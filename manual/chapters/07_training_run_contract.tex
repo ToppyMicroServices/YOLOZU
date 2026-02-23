@@ -277,7 +277,7 @@ The backbone output contract strictly mandates three feature maps: \texttt{[P3, 
 Supported backbone architectures in the current codebase include:
 \texttt{cspresnet}, \texttt{tiny\_cnn}, \texttt{cspdarknet\_s}, \texttt{resnet50}, and \texttt{convnext\_tiny}.
 
-While legacy compatibility fields (e.g., \texttt{backbone\_name}, \texttt{backbone\_channels}) remain functional, the strongly preferred convention utilizes \texttt{model.backbone.*} in conjunction with \texttt{model.projector.d\_model}.
+While legacy compatibility fields (e.g., \texttt{backbone\_name}, \texttt{backbone\_channels}) remain functional, the strongly preferred convention is to use \path{model.backbone.*} together with \path{model.projector.d_model}.
 
 \begin{longtable}{@{}p{0.28\textwidth}p{0.24\textwidth}p{0.42\textwidth}@{}}
 \toprule

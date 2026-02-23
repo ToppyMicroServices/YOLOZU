@@ -30,6 +30,7 @@
 \setlist{nosep}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{fancyhdr}
 
 % Code blocks (no shell-escape dependency)
 \usepackage{listings}
@@ -76,6 +77,20 @@
 \author{YOLOZU contributors}
 \date{\today}
 
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[L]{\textcopyright{} 2026 ToppyMicroServices O\"U}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[L]{\textcopyright{} 2026 ToppyMicroServices O\"U}
+  \fancyfoot[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
 \begin{document}
 \maketitle
 
@@ -118,11 +133,13 @@ practical commands needed to use the repository effectively.
 \appendix
 \include{chapters/19_appendix_dependency_graphs}
 
-\clearpage
-\chapter*{References}
-\addcontentsline{toc}{chapter}{References}
-\nocite{*}
-\bibliographystyle{plain}
-\bibliography{references}
+\IfFileExists{references.bib}{%
+  \clearpage
+  \chapter*{References}
+  %\addcontentsline{toc}{chapter}{References}
+  \nocite{*}
+  \bibliographystyle{plain}
+  \bibliography{references}
+}{}
 
 \end{document}
