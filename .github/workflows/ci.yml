@@ -201,6 +201,58 @@ jobs:
           print("wheel contents OK:", whl)
           PY
 
+      - name: Sdist contents gate (schemas/protocols/docs/manifest)
+        run: |
+          python -m pip install build
+          python -m build --sdist
+          python - <<'PY'
+          import glob
+          import tarfile
+          import sys
+
+          sdist_files = sorted(glob.glob("dist/*.tar.gz"))
+          if not sdist_files:
+            raise SystemExit("no sdist found in dist/")
+          sdist = sdist_files[-1]
+
+          required = [
+            "LICENSE",
+            "NOTICE",
+            "COPYRIGHT",
+            "SECURITY.md",
+            "RELEASE.md",
+            "tools/manifest.json",
+            "yolozu/data/schemas/predictions.schema.json",
+            "yolozu/data/protocols/yolo26_eval.json",
+            "yolozu/data/manifest/tools_manifest.json",
+            "yolozu/data/docs/README.md",
+            "yolozu/data/docs/proof_onepager.md",
+            "yolozu/data/docs/backend_parity_matrix.md",
+            "yolozu/data/docs/onnx_export_parity.md",
+            "yolozu/data/docs/tensorrt_pipeline.md",
+            "yolozu/data/docs/yolo26_baseline_repro.md",
+            "yolozu/data/docs/tta_support_matrix.md",
+            "yolozu/data/docs/adapter_strategy.md",
+          ]
+
+          with tarfile.open(sdist, "r:gz") as tf:
+            names = tf.getnames()
+
+          def has_suffix(path_suffix: str) -> bool:
+            suffix = "/" + path_suffix
+            return any(name.endswith(suffix) for name in names)
+
+          missing = [path for path in required if not has_suffix(path)]
+          if missing:
+            print("sdist:", sdist)
+            print("missing:")
+            for path in missing:
+              print(" -", path)
+            sys.exit(1)
+
+          print("sdist contents OK:", sdist)
+          PY
+
       - name: License policy
         run: |
           python tools/check_license_policy.py
@@ -317,6 +369,10 @@ jobs:
 
           print("schema compatibility gate passed")
           PY
+
+      - name: Golden compatibility gate
+        run: |
+          python tools/check_golden_compatibility.py
 
       - name: Migration smoke (migrate + validate)
         run: |

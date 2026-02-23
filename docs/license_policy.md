@@ -8,6 +8,12 @@ This repository is intended to be **Apache-2.0** code only.
 - To compare against external baselines (e.g., YOLO26), run them in a separate environment and **only import predictions JSON** into this repo for evaluation.
 - Keep datasets and model weights out of git.
 
+## Company release policy (naming + provenance)
+
+- Use consistent product/repo naming in release artifacts: `YOLOZU` (`ToppyMicroServices/YOLOZU`).
+- Keep `LICENSE`, `NOTICE`, `COPYRIGHT`, and `SECURITY.md` at repository root and included in distribution artifacts.
+- Release notes should state the contract boundary (`docs/release_1_0_stability.md`) and any non-contract experimental areas.
+
 ## COCO / coco128
 
 The `coco128` helper dataset is fetched from **official COCO hosting** and converted to YOLO-format labels locally.
@@ -42,3 +48,9 @@ Notes:
 - This is **best-effort**: it only inspects installed Python distributions' metadata.
 - It does **not** audit CUDA/TensorRT/system libraries, datasets, or model weights.
 - For real commercial deployment, you should also do a formal review with legal counsel.
+
+## Third-party dependencies policy (release-time)
+
+- Python packages: tracked via lock/report tooling (`tools/report_dependency_licenses.py`).
+- System/runtime dependencies (CUDA, cuDNN, TensorRT, OpenCV builds): deployment-team responsibility; validate in target runtime and keep SBOM/license evidence outside this repository when required by policy.
+- Datasets/weights are separate artifacts with independent license terms; they are never implicitly covered by this repo's Apache-2.0 license.

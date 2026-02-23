@@ -138,3 +138,4 @@ Power-user in-repo CLI (source checkout):
 - Internal schema versioning for predictions JSON (v1)
 - Backward-compatible additions are allowed
 - Breaking changes require version bump
+- 1.0 contract stability boundary: `docs/release_1_0_stability.md`

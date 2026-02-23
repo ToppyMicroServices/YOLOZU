@@ -1,21 +1,14 @@
 # Releasing to PyPI
 
-## Recent notable changes (2026-02-19)
-
-- Added pluggable RT-DETR pose backbone architecture with a strict P3/P4/P5 contract (`[8,16,32]` strides).
-- Added CSP-style YOLO backbone support (`cspdarknet_s`) and registry-based backbone selection.
-- Added channel projector (`1x1` per level) so backbone output channels are aligned to transformer `d_model`.
-- Added config path for swaps: `model.backbone.name|norm|args` and `model.projector.d_model` (legacy fields remain compatible).
-- Added smoke/shape/ONNX tests and corresponding docs updates (`docs/backbones.md`, training docs, manual updates).
-- Hardened `run_meta` provenance contract: required git SHA/dependency lock/preprocess/runtime/command fields, validator tool, and CI gate checks.
-- Added adapter suite expansion assets: framework starter templates (MMDet/Detectron2/Ultralytics/RT-DETR/OpenCV-dnn/custom C++), adapter parity suite tool, and onboarding docs.
-- Added backend parity matrix automation (`tools/backend_parity_matrix.py`) to generate JSON+HTML parity reports across Torch/ONNXRuntime/TensorRT/OpenCV-dnn/custom C++ with reproducible fixed-input fingerprinting under `runs/.../reports`.
-- Extended `yolozu doctor` diagnostics with runtime capability matrix (CUDA/Torch/ONNXRuntime/TensorRT/OpenCV), drift explanation hints, and remediation links for parity/debug workflows.
-- Added RFC workflow + golden compatibility assets (`baselines/golden/v1/*`) and a hash-pinned compatibility gate (`tools/check_golden_compatibility.py`) to prevent silent schema/protocol drift.
-- Added contract-first benchmark publication loop with `tools/publish_benchmark_table.py` and `docs/benchmark_publication.md` to generate official JSON/Markdown benchmark tables traceable to source run ids under fixed protocol.
-
 YOLOZU is configured for **PyPI Trusted Publishing** (OIDC) via GitHub Actions.
 This avoids long-lived PyPI API tokens.
+
+## Trigger model (authoritative)
+
+- PyPI publish workflow: `.github/workflows/publish.yml`
+- Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
+- **Tag push alone does not publish to PyPI**
+- Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs
 
 ## One-time setup (PyPI)
 
@@ -29,35 +22,50 @@ This avoids long-lived PyPI API tokens.
      - Workflow file: `.github/workflows/publish.yml`
      - Environment: `pypi`
 
+## Release quality gates (must be green)
+
+- Local checks: `docs/release_reliability_checklist.md`
+- Required CI: `.github/workflows/ci.yml`
+- Compatibility gates:
+  - schema compatibility
+  - golden compatibility (`python3 tools/check_golden_compatibility.py`)
+  - wheel/sdist contents gates
+
 ## Each release
 
 1) Bump version in `yolozu/__init__.py` (`__version__`).
 
-2) Run tests locally:
-
-```bash
-python3 -m unittest -q
-```
+2) Update `CHANGELOG.md`:
+   - create/update `[X.Y.Z] - YYYY-MM-DD`
+   - keep `[Unreleased]` empty (or with new post-release changes only)
+   - make `Breaking` / `Changed` / `Deprecated` explicit
 
 3) Push to `main`.
 
-4) Create an annotated git tag and push it:
+4) Create and push an annotated tag:
 
 ```bash
 git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-This triggers `.github/workflows/publish.yml` which builds and publishes to PyPI.
+5) Create a GitHub Release from that tag and click **Publish release**.
 
-If configured, `.github/workflows/container.yml` also publishes Docker images to GHCR for the same tag.
+This action triggers `.github/workflows/publish.yml`, which builds and publishes to PyPI.
 
-5) Optional: create a GitHub Release for human-friendly notes (does not affect publishing).
+6) Verify publish result:
+   - GitHub Actions `publish` job is green
+   - PyPI project page shows the new version
+
+## Optional manual publish trigger
+
+`publish.yml` also supports manual execution (`workflow_dispatch`) for operational recovery.
+Use only when release metadata (tag/release/version/changelog) is already aligned.
 
 ## Notes
 
-- You cannot upload the same version twice to PyPI. Always bump `__version__` before releasing.
-- If you prefer manual publishing, use `python -m build` + `python -m twine upload dist/*` with a PyPI API token.
-- If the publish workflow fails immediately with: `Tag "vX.Y.Z" is not allowed to deploy to pypi due to environment protection rules.`,
-  update GitHub **Settings → Environments → pypi** and allow tag pattern `v*` (or allow all branches/tags), then re-run
-  the workflow for that tag.
+- You cannot upload the same version twice to PyPI. Always bump `__version__` before publishing.
+- If you prefer manual Twine publish, use `python -m build` + `python -m twine upload dist/*` with a PyPI API token.
+- If publish is blocked by environment protection, update GitHub **Settings → Environments → pypi** deployment rules and rerun the release workflow.
+- 1.0 compatibility boundary is defined in `docs/release_1_0_stability.md`.
+- Security reporting/support policy is defined in `SECURITY.md`; dependency/license policy is in `docs/license_policy.md`.

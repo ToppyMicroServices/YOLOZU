@@ -132,3 +132,4 @@ CI incident memo has moved to a dedicated page:
 
 - [CI incidents memo](ci_incidents.md)
 - [Release reliability checklist](release_reliability_checklist.md)
+- [1.0 stability boundary](release_1_0_stability.md)

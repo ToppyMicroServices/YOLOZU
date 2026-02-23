@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No user-facing entries yet.
+
+## [1.0.0] - 2026-02-23
+
+### Breaking
+- None.
+
 ### Added
 - FRACAL calibration now supports both bbox and instance-segmentation predictions via `yolozu calibrate --task {bbox,seg,auto}`.
 - FRACAL class-frequency stats can now be exported/reused through `--stats-out` and `--stats-in`, enabling stable calibration across runs.
@@ -18,11 +25,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added projector-post mid-fusion path (`fuse_mid`) with optional modality dropout via `--depth-dropout`, while preserving the backbone `[P3,P4,P5]` swap boundary.
 - Added depth safety controls: `--depth-unit {unspecified,relative,metric}` and `--depth-scale`; absolute-depth matcher terms are disabled outside metric mode.
 - Documented depth-mode operation and safety semantics across manifest/readme/docs/manual surfaces.
+- Added an explicit 1.0.0 contract stability boundary document (`docs/release_1_0_stability.md`).
+- Added generated MCP↔Actions contract reference artifacts and parity drift checks.
+
+### Changed
+- Release operation is now explicitly documented as GitHub Release `published` trigger for PyPI Trusted Publishing.
+- Added CI golden compatibility gate execution and sdist required-files gate.
+- Promoted package classifier from Alpha to Production/Stable.
+
+### Deprecated
+- `export_onnx_job` naming is kept as compatibility alias; canonical MCP/Actions job name is `export_predictions_job`.
 
 ### Tests
 - Added regression coverage for FRACAL stats reuse and instance-segmentation calibration behavior.
 - Added run-contract default-path coverage for FRACAL stats artifact output.
 - Added depth-mode acceptance tests for no-depth no-op, mixed depth/no-depth batch collation, and `fuse_mid` forward stability.
+- Added MCP↔Actions contract parity tests and generated-reference drift tests.
 
 ## [0.1.2] - 2026-02-17
 
