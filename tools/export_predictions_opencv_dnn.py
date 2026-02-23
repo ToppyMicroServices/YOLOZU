@@ -289,8 +289,8 @@ def _decode_yolo85_obj(
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
-    if np is None:
-        raise SystemExit("numpy is required for OpenCV-DNN exporter")
+    if np is None and not bool(args.dry_run):
+        raise SystemExit("numpy is required for OpenCV-DNN exporter (or use --dry-run)")
 
     dataset_root = _resolve(str(args.dataset))
     manifest = build_manifest(dataset_root, split=str(args.split) if args.split else None)
