@@ -56,8 +56,9 @@
     },
     "synthgen_sample_contract": {
       "summary": "SynthGen intake sample contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
-      "spec": "docs/contracts/synthgen.md",
-      "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]"
+      "spec": "docs/synthgen_contract.md",
+      "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]",
+      "schema": "schemas/synthgen_sample.schema.json"
     }
   },
   "tools": [
@@ -895,7 +896,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
-        "docs/contracts/synthgen.md"
+        "docs/synthgen_contract.md"
       ],
       "examples": [
         {
@@ -982,7 +983,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
-        "docs/contracts/synthgen.md"
+        "docs/synthgen_contract.md"
       ],
       "examples": [
         {
@@ -1077,13 +1078,117 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
-        "docs/contracts/synthgen.md",
-        "recipes/synthgen/README.md"
+        "recipes/synthgen/README.md",
+        "docs/synthgen_contract.md"
       ],
       "examples": [
         {
           "description": "Evaluate animal_v1 predictions exported from external inference.",
           "command": "python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval_animal.json"
+        }
+      ]
+    },
+    {
+      "id": "smoke_synthgen",
+      "entrypoint": "tools/smoke_synthgen.py",
+      "runner": "python3",
+      "summary": "Run deterministic SynthGen smoke (contract validate + one overlay + eval) using local mini-shard fixtures.",
+      "tags": [
+        "synthgen",
+        "smoke",
+        "contract",
+        "viz",
+        "evaluation",
+        "ai-safe"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "inputs": [
+        {
+          "name": "dataset_root",
+          "kind": "dir",
+          "required": false,
+          "flag": "--dataset-root",
+          "default": "data/smoke/synthgen_minishard"
+        },
+        {
+          "name": "schema_id",
+          "kind": "string",
+          "required": false,
+          "flag": "--schema-id",
+          "default": "animal_v1"
+        },
+        {
+          "name": "predictions",
+          "kind": "file",
+          "required": false,
+          "flag": "--predictions",
+          "default": "data/smoke/synthgen_minishard/predictions_synthgen_smoke.json"
+        },
+        {
+          "name": "max_samples",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-samples",
+          "default": 2
+        },
+        {
+          "name": "output_dir",
+          "kind": "dir",
+          "required": false,
+          "flag": "--output-dir",
+          "default": "reports"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes SynthGen smoke artifacts under output dir."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "summary_json",
+          "kind": "file",
+          "default": "reports/smoke_synthgen_summary.json",
+          "description": "SynthGen smoke summary artifact."
+        },
+        {
+          "name": "overlay_png",
+          "kind": "file",
+          "default": "reports/smoke_synthgen_overlay.png",
+          "description": "Rendered SynthGen overlay artifact."
+        },
+        {
+          "name": "eval_report_json",
+          "kind": "file",
+          "default": "reports/smoke_synthgen_eval.json",
+          "description": "SynthGen smoke evaluation report."
+        }
+      ],
+      "contracts": {
+        "consumes": [
+          "synthgen_sample_contract"
+        ]
+      },
+      "docs": [
+        "docs/synthgen_intake.md",
+        "docs/synthgen_contract.md",
+        "data/smoke/synthgen_minishard/README.md"
+      ],
+      "examples": [
+        {
+          "description": "Run SynthGen smoke on bundled fixture.",
+          "command": "python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports"
         }
       ]
     },

@@ -180,6 +180,43 @@ class TestSynthGenContract(unittest.TestCase):
                 self.fail(f"validate_synthgen_contract.py failed:\n{proc.stdout}\n{proc.stderr}")
             self.assertIn("OK:", proc.stdout + proc.stderr)
 
+    def test_smoke_fixture_contract_and_schema_filter(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        smoke_root = repo_root / "data" / "smoke" / "synthgen_minishard"
+        self.assertTrue((smoke_root / "shards" / "train_000.jsonl").exists())
+
+        ds_all = SynthGenShardDataset(smoke_root)
+        self.assertGreaterEqual(len(ds_all), 2)
+        schema_ids = {str(ds_all[i].get("schema_id")) for i in range(len(ds_all))}
+        self.assertIn("animal_v1", schema_ids)
+        self.assertIn("mechanical_v1", schema_ids)
+
+        ds_animal = SynthGenShardDataset(smoke_root, schema_id="animal_v1")
+        ds_mech = SynthGenShardDataset(smoke_root, schema_id="mechanical_v1")
+        self.assertGreaterEqual(len(ds_animal), 1)
+        self.assertGreaterEqual(len(ds_mech), 1)
+
+    def test_synthgen_json_schema_file_exists_and_required_fields(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        schema_path = repo_root / "schemas" / "synthgen_sample.schema.json"
+        self.assertTrue(schema_path.exists(), "missing schemas/synthgen_sample.schema.json")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        required = set(schema.get("required") or [])
+        for field in (
+            "image",
+            "depth_ndc",
+            "inst_id",
+            "sem_id",
+            "kpts2d",
+            "prompt",
+            "scene_spec",
+            "schema_id",
+            "schema_version",
+            "asset_ids",
+            "inst_map",
+        ):
+            self.assertIn(field, required, f"required field missing in schema: {field}")
+
 
 if __name__ == "__main__":
     unittest.main()

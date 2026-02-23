@@ -130,9 +130,16 @@ python3 tools/eval_synthgen.py \\
 
 Schema-specific task templates are provided under:
 \begin{itemize}
-  \item \path{configs/examples/synthgen/synthgen_animal_kpt.yaml}
-  \item \path{configs/examples/synthgen/synthgen_mechanical_kpt.yaml}
+  \item \path{configs/tasks/synthgen_animal_kpt.yaml}
+  \item \path{configs/tasks/synthgen_mechanical_kpt.yaml}
 \end{itemize}
+
+For offline CI-safe smoke checks, use the bundled mini-shard fixture:
+\begin{lstlisting}[language=bash]
+python3 tools/smoke_synthgen.py \
+  --dataset-root data/smoke/synthgen_minishard \
+  --output-dir reports
+\end{lstlisting}
 
 \section{Workflow C: Folder inference (pip CLI)}
 A highly convenient, user-facing approach for batch inference is:

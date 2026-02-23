@@ -133,7 +133,10 @@ The registry now exposes explicit intake utilities for externally generated synt
   \item \cmd{validate\_synthgen\_contract}: validate required SynthGen fields and tensor/range constraints.
   \item \cmd{render\_synthgen\_overlay}: generate semantic/instance/keypoint debug overlays.
   \item \cmd{eval\_synthgen}: compute keypoint, segmentation, and depth summaries for SynthGen predictions.
+  \item \cmd{smoke\_synthgen}: run a deterministic contract+overlay+eval smoke pass on \path{data/smoke/synthgen\_minishard}.
 \end{itemize}
+
+These tools reference the canonical SynthGen contract at \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}.
 
 \section{Release Automation: Manual PDF DOI as a Separate Record}
 For release operations, YOLOZU intentionally keeps software DOI and manual DOI lifecycles independent:

@@ -32,6 +32,7 @@ For most day-to-day flows, start with:
 - Keypoints eval benchmark: `python3 tools/benchmark_keypoints_eval.py --dataset /path/to/yolo --predictions reports/predictions.json --max-images 50 --warmup 1 --iterations 5 --output reports/benchmark_keypoints_eval.json`
 - SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval.json`
 - SynthGen overlay renderer: `python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png`
+- SynthGen smoke (contract + overlay + eval): `python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports`
 
 ## Continual learning (anti-forgetting)
 
@@ -92,7 +93,7 @@ Most flows in this repo pass data as JSON artifacts:
 - `predictions_json`: per-image detections JSON (validate with `tools/validate_predictions.py`)
 - `metrics_report_json`: stable report payloads (`yolozu.metrics_report.build_report`)
 - `synthgen_sample_contract`: external synthetic sample intake contract (validate with `tools/validate_synthgen_contract.py`)
-- JSON Schemas live under `docs/schemas/` and are referenced from `tools/manifest.json` contracts.
+- JSON Schemas live under `docs/schemas/` (report/tool contracts) and `schemas/` (runtime data contracts such as SynthGen), and are referenced from `tools/manifest.json` contracts.
 
 When adding a new tool, prefer:
 1) reading inputs from file paths / flags

@@ -1,0 +1,16 @@
+[
+  {
+    "sample_id": "animal_v1_s0",
+    "sem_id": "animal_v1_s0_sem.npy",
+    "inst_id": "animal_v1_s0_inst.npy",
+    "depth_ndc": "animal_v1_s0_depth.npy",
+    "kpts2d": "animal_v1_s0_kpts.npy"
+  },
+  {
+    "sample_id": "mechanical_v1_s1",
+    "sem_id": "mechanical_v1_s1_sem.npy",
+    "inst_id": "mechanical_v1_s1_inst.npy",
+    "depth_ndc": "mechanical_v1_s1_depth.npy",
+    "kpts2d": "mechanical_v1_s1_kpts.npy"
+  }
+]

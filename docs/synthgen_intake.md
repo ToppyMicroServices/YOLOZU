@@ -5,7 +5,8 @@ YOLOZU does **not** generate synthetic data.
 
 ## Contract boundary
 
-- Contract spec: `docs/contracts/synthgen.md`
+- Contract spec: `docs/synthgen_contract.md` (compat alias: `docs/contracts/synthgen.md`)
+- JSON schema: `schemas/synthgen_sample.schema.json`
 - Runtime validator/coercion: `yolozu/contracts/synthgen.py`
 - Required fields:
   - `image`, `depth_ndc`, `inst_id`, `sem_id`, `kpts2d`
@@ -20,6 +21,8 @@ Schema filter is first-class (`schema_id`), so `animal_v1` and `mechanical_v1` c
 
 ## Task templates
 
+- `configs/tasks/synthgen_animal_kpt.yaml`
+- `configs/tasks/synthgen_mechanical_kpt.yaml`
 - `configs/examples/synthgen/synthgen_animal_kpt.yaml`
 - `configs/examples/synthgen/synthgen_mechanical_kpt.yaml`
 
@@ -58,3 +61,9 @@ python3 tools/eval_synthgen.py \
   --schema-id animal_v1 \
   --output reports/synthgen_eval.json
 ```
+
+## External source-of-truth policy
+
+- Asset manifests, prompt generation, and rendering logic are owned by external SynthGen repos.
+- YOLOZU only guarantees ingestion for records that satisfy `schema_version="1"` of `synthgen_sample`.
+- If generator-side schema evolves, add a new version contract here before enabling it in YOLOZU adapters.

@@ -26,6 +26,9 @@ Guaranteed (1.0.x, deterministic/lightweight):
 - `generate_config`
 - `review_config`
 - `validate_predictions`
+- `validate_synthgen_contract`
+- `render_synthgen_overlay`
+- `smoke_synthgen`
 
 Best-effort (environment dependent, not in stable AI-safe guarantee):
 
@@ -39,6 +42,14 @@ Best-effort (environment dependent, not in stable AI-safe guarantee):
 python3 tools/run_mcp_server.py --print-tools
 python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
 python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json
+```
+
+SynthGen-safe fast path (contract-only, CPU):
+
+```bash
+python3 tools/validate_synthgen_contract.py --input data/smoke/synthgen_minishard/shards/train_000.jsonl --max-samples 2
+python3 tools/render_synthgen_overlay.py --dataset-root data/smoke/synthgen_minishard --schema-id animal_v1 --sample-index 0 --output reports/smoke_synthgen_overlay.png
+python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports
 ```
 
 Start MCP stdio server:
@@ -94,6 +105,11 @@ Agent-facing tools in `tools/manifest.json` should provide:
 - `examples`
 - `effects` (side-effects / write locations)
 - `requires` (network/GPU constraints)
+
+For SynthGen intake tools, also include:
+- explicit `schema_id` controls
+- deterministic fixture examples under `data/smoke/synthgen_minishard`
+- contract reference `docs/synthgen_contract.md`
 
 Safe defaults for AI execution:
 

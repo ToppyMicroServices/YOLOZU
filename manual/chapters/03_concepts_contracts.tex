@@ -23,7 +23,7 @@ Core contracts include:
   \item \textbf{Predictions Schema}: \path{docs/predictions_schema.md}
   \item \textbf{Adapter Contract}: \path{docs/adapter_contract.md}
   \item \textbf{Training Run Contract}: \path{docs/run_contract.md}
-  \item \textbf{SynthGen Intake Contract}: \path{docs/contracts/synthgen.md}
+  \item \textbf{SynthGen Intake Contract}: \path{docs/synthgen_contract.md}
 \end{itemize}
 
 When links and prose disagree, treat these contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
@@ -76,7 +76,7 @@ Following conversion, proceed with standard validation and evaluation.
 
 \subsection{External SynthGen intake contract}
 For synthetic data pipelines, \yolozu{} intentionally limits scope to \textbf{intake and evaluation}; generation remains in an external repository.
-The intake boundary is fixed by \path{docs/contracts/synthgen.md}, with required fields such as \cmd{image}, \cmd{depth\_ndc}, \cmd{inst\_id}, \cmd{sem\_id}, and \cmd{kpts2d}.
+The intake boundary is fixed by \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}, with required fields such as \cmd{image}, \cmd{depth\_ndc}, \cmd{inst\_id}, \cmd{sem\_id}, and \cmd{kpts2d}.
 
 Validate shard metadata before training/evaluation:
 \begin{lstlisting}[language=bash]

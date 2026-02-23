@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toppymicroservices.github.io/yolozu/schemas/synthgen_sample.schema.json",
+  "title": "YOLOZU SynthGen Sample Contract v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "image",
+    "depth_ndc",
+    "inst_id",
+    "sem_id",
+    "kpts2d",
+    "prompt",
+    "scene_spec",
+    "schema_id",
+    "schema_version",
+    "asset_ids",
+    "inst_map"
+  ],
+  "properties": {
+    "image": {
+      "description": "RGB image payload (inline array or file reference).",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "depth_ndc": {
+      "description": "Normalized depth payload in [0,1] (inline array or file reference).",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "inst_id": {
+      "description": "Instance id map payload (inline array or file reference).",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "sem_id": {
+      "description": "Semantic id map payload (inline array or file reference).",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "kpts2d": {
+      "description": "2D keypoints payload [N_inst,K,3] (inline array or file reference).",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scene_spec": {
+      "description": "Scene metadata JSON object or JSON string.",
+      "oneOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "schema_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "asset_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "inst_map": {
+      "description": "Instance mapping JSON object or JSON string.",
+      "oneOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "kpts3d_object": {
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "pose_obj2cam": {
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    }
+  }
+}

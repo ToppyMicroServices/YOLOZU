@@ -1,0 +1,49 @@
+config_version: 1
+task_name: synthgen_mechanical_kpt
+schema_id: mechanical_v1
+schema_version: "1"
+
+dataset:
+  kind: synthgen_shard
+  root: /path/to/synthgen_dataset
+  split: train
+  schema_filter: mechanical_v1
+  required_fields:
+    - image
+    - sem_id
+    - inst_id
+    - depth_ndc
+    - kpts2d
+
+model:
+  heads:
+    keypoints_2d: true
+    pose6d: true
+  keypoints:
+    num_keypoints: 9
+    visibility_mode: synthgen_v1
+
+loss:
+  keypoints_regression: l2
+  keypoints_visibility: ce
+  visible_only: true
+  visibility_target: 2
+  pose6d:
+    enabled: true
+    rotation: geodesic
+    translation: l1
+
+evaluation:
+  keypoints:
+    metric: mean_pixel_error_visible
+  segmentation:
+    metric: miou
+  depth:
+    metric: mae_mse
+
+visualization:
+  overlay:
+    semantic: true
+    instance_contour: true
+    keypoints: true
+    schema_skeleton: mechanical_v1
