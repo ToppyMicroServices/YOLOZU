@@ -25,6 +25,7 @@ Return payload policy (for all clients):
   \item machine-readable JSON
   \item short textual summary in \cmd{summary}
   \item stable top-level keys: \cmd{ok}, \cmd{tool}, \cmd{summary}, \cmd{exit\_code}
+  \item optional metadata: \cmd{meta.git\_sha}, \cmd{meta.manifest\_sha256}, runtime details
 \end{itemize}
 
 \section{Layer model (fixed)}
@@ -35,6 +36,26 @@ Return payload policy (for all clients):
   \item Job layer: long-running operations with \cmd{job\_id} tracking.
   \item Artifact layer: run artifacts and metadata return (git SHA / manifest hash / environment).
 \end{enumerate}
+
+\section{Quick start (MCP + Actions API)}
+
+\subsection{MCP server}
+\begin{lstlisting}[language=bash]
+python3 tools/run_mcp_server.py
+\end{lstlisting}
+
+\subsection{Actions API (optional route)}
+\begin{lstlisting}[language=bash]
+python3 tools/run_actions_api.py
+curl -sS http://127.0.0.1:8080/healthz
+\end{lstlisting}
+
+\subsection{Minimal end-to-end check}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py doctor --output reports/doctor.json
+python3 tools/yolozu.py validate predictions data/smoke/predictions/predictions_dummy.json --strict
+python3 tools/yolozu.py eval-coco --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --dry-run --output reports/mcp_eval_coco_dry.json
+\end{lstlisting}
 
 \section{Client routing}
 
@@ -62,9 +83,46 @@ Maintain feature parity by implementing behavior once in backend runner and expo
 
 Operational guards in v2 layer implementation:
 \begin{itemize}
+  \item Allowlist is manifest-first (\path{tools/manifest.json}) with conservative fallback defaults.
+  \item Path tokens are guarded (\cmd{..} rejected; absolute paths outside workspace rejected).
   \item Job state persistence to \cmd{runs/mcp\_jobs/*.json} for restart-safe status retrieval.
   \item Stale in-flight states (queued/running after restart) are surfaced as \cmd{unknown}.
   \item CLI execution timeout and output-size caps with explicit truncation metadata.
+\end{itemize}
+
+\section{Tool map (actual MCP/Actions surface)}
+
+\subsection{Synchronous tools}
+\begin{itemize}
+  \item Data/validation: \cmd{doctor}, \cmd{validate\_predictions}, \cmd{validate\_dataset}, \cmd{convert\_dataset}
+  \item Inference/calibration: \cmd{predict\_images}, \cmd{parity\_check}, \cmd{calibrate\_predictions}
+  \item Evaluation: \cmd{eval\_coco}, \cmd{eval\_instance\_seg}, \cmd{eval\_long\_tail}, \cmd{run\_scenarios}
+\end{itemize}
+
+\subsection{Asynchronous job tools}
+\begin{itemize}
+  \item \cmd{train\_job}, \cmd{export\_onnx\_job}, \cmd{test\_job}, \cmd{ttt\_job}, \cmd{ctta\_job}
+  \item control/query: \cmd{jobs.list}, \cmd{jobs.status}, \cmd{jobs.cancel}, \cmd{runs.list}, \cmd{runs.describe}
+\end{itemize}
+
+\section{AI operation pitfalls (high-impact)}
+
+\begin{enumerate}
+  \item Always pass \cmd{dataset} as a YOLO root and specify \cmd{split} explicitly.
+  \item Prefer workspace-relative paths to avoid API-layer path guard rejections.
+  \item Treat \cmd{ok/tool/summary/exit\_code} as the canonical status contract.
+  \item For long tasks, do not poll stdout; use \cmd{job\_id} with \cmd{jobs.status}.
+  \item Assume post-restart in-flight jobs become \cmd{unknown}; requeue deterministically if needed.
+  \item Set \cmd{dry\_run}/\cmd{strict}/\cmd{force} explicitly to avoid client-default drift.
+\end{enumerate}
+
+\section{Efficiency backlog for MCP hardening}
+
+High-value follow-ups that reduce AI ambiguity and integration drift:
+\begin{itemize}
+  \item Auto-generate MCP/Actions tool reference from \path{yolozu.integrations.tool\_runner}.
+  \item Add parity tests that assert MCP tool signatures and Actions request models stay aligned.
+  \item Add explicit error-code taxonomy for allowlist/path/timeout failures in integration responses.
 \end{itemize}
 
 \section{CI no-abandon policy}

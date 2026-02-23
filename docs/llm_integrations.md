@@ -20,6 +20,12 @@ Exposed tools (minimum):
 - `run_scenarios`
 - `convert_dataset` (optional but available)
 
+Also available in the same backend surface:
+- inference/calibration: `predict_images`, `parity_check`, `calibrate_predictions`
+- evaluation: `eval_instance_seg`, `eval_long_tail`
+- async jobs: `train_job`, `export_onnx_job`, `test_job`, `ttt_job`, `ctta_job`
+- job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
+
 Return format policy:
 - Always machine-readable JSON with stable top-level keys:
   - `ok` (bool)
@@ -30,6 +36,14 @@ Return format policy:
   - optional parsed JSON artifacts (e.g. `report_json`)
 
 This format is designed so Claude/Copilot/other MCP-capable clients can summarize consistently.
+
+## 1.1) AI-facing guardrails (important)
+
+- Path policy: `..` is rejected; absolute paths outside workspace are rejected by integration layer guards.
+- Use workspace-relative paths whenever possible.
+- For long-running tasks, use `job_id` + `jobs_status` instead of waiting on one synchronous call.
+- Treat `ok/tool/summary/exit_code` as canonical status and `meta` as optional provenance.
+- Set `dry_run`, `strict`, and `force` explicitly to avoid client-specific default drift.
 
 ## 2) OpenAI (ChatGPT) routes
 

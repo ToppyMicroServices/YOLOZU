@@ -47,6 +47,12 @@ Main endpoints:
 - `POST /eval/coco`
 - `POST /run/scenarios`
 - `POST /convert/dataset`
+- `POST /predict/images`
+- `POST /parity/check`
+- `POST /calibrate/predictions`
+- `POST /eval/instance-seg`
+- `POST /eval/long-tail`
+- `POST /jobs/*` and `GET /runs/*` style equivalents for async control/reporting
 
 ## Request example
 
@@ -61,3 +67,9 @@ curl -sS -X POST http://127.0.0.1:8080/eval/coco \
     "output": "reports/actions_eval_coco_dry_run.json"
   }'
 ```
+
+## Operational notes
+
+- Prefer MCP for day-to-day automation; add Actions only when OpenAPI registration is mandatory.
+- Keep payload handling contract-first: check `ok/tool/summary/exit_code` first, then parse optional artifact JSON fields.
+- For heavy work, submit async jobs and poll status instead of relying on long request timeouts.
