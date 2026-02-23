@@ -131,6 +131,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--strict", action="store_true", help="Strictly validate output predictions JSON.")
     p.add_argument("--output", default="reports/pred_rtdetr_opencv_dnn.json", help="Where to write predictions JSON.")
     p.add_argument("--meta-output", default=None, help="Where to write metadata JSON (default: <output>.meta.json).")
+    p.add_argument("--dump-io", default=None, help="Optional JSON path to dump input/output tensor IO summary.")
     p.add_argument("--dry-run", action="store_true", help="Write outputs without importing/running OpenCV DNN.")
     return p.parse_args(argv)
 
@@ -307,6 +308,8 @@ def main(argv: list[str] | None = None) -> int:
         },
         "dry_run": bool(args.dry_run),
     }
+    if args.dump_io:
+        meta["dump_io"] = str(args.dump_io)
 
     if args.dry_run:
         predictions: list[dict[str, Any]] = []
@@ -322,6 +325,21 @@ def main(argv: list[str] | None = None) -> int:
         validate_predictions_entries(predictions, strict=bool(args.strict))
         output_path.write_text(json.dumps({"predictions": predictions}, indent=2, sort_keys=True), encoding="utf-8")
         meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
+        if args.dump_io:
+            dump_path = _resolve(str(args.dump_io))
+            dump_path.parent.mkdir(parents=True, exist_ok=True)
+            dump_path.write_text(
+                json.dumps(
+                    {
+                        "input": {"name": "images", "shape": [1, 3, int(args.imgsz), int(args.imgsz)], "dtype": "float32"},
+                        "outputs": [],
+                        "dry_run": True,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
         print(output_path)
         return 0
 
@@ -347,6 +365,8 @@ def main(argv: list[str] | None = None) -> int:
             net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         elif b == "cuda":
             net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        elif b == "openvino" and hasattr(cv2.dnn, "DNN_BACKEND_INFERENCE_ENGINE"):
+            net.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
     except Exception:
         pass
     try:
@@ -357,6 +377,10 @@ def main(argv: list[str] | None = None) -> int:
             net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         elif t == "cuda_fp16":
             net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+        elif t == "opencl" and hasattr(cv2.dnn, "DNN_TARGET_OPENCL"):
+            net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL)
+        elif t == "opencl_fp16" and hasattr(cv2.dnn, "DNN_TARGET_OPENCL_FP16"):
+            net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL_FP16)
     except Exception:
         pass
 
@@ -381,6 +405,13 @@ def main(argv: list[str] | None = None) -> int:
     dummy = np.zeros((1, 3, int(args.imgsz), int(args.imgsz)), dtype=np.float32)
     net.setInput(dummy)
     probe_outs = {name: out for name, out in zip(output_names, net.forward(output_names))}
+    io_probe = {
+        "input": {"name": "images", "shape": [1, 3, int(args.imgsz), int(args.imgsz)], "dtype": "float32"},
+        "outputs": [
+            {"name": str(name), "shape": list(np.asarray(out).shape), "dtype": str(np.asarray(out).dtype)}
+            for name, out in probe_outs.items()
+        ],
+    }
 
     def _pick_by_name(name: str | None) -> Any | None:
         if not name:
@@ -572,6 +603,10 @@ def main(argv: list[str] | None = None) -> int:
     validate_predictions_entries(predictions, strict=bool(args.strict))
     output_path.write_text(json.dumps({"predictions": predictions}, indent=2, sort_keys=True), encoding="utf-8")
     meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
+    if args.dump_io:
+        dump_path = _resolve(str(args.dump_io))
+        dump_path.parent.mkdir(parents=True, exist_ok=True)
+        dump_path.write_text(json.dumps(io_probe, indent=2, sort_keys=True), encoding="utf-8")
     print(output_path)
     return 0
 

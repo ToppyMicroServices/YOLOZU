@@ -599,7 +599,7 @@ def _copy_file(src: Path, dst: Path) -> None:
 def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--backend",
-        choices=("dummy", "torch", "onnxrt", "trt", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
+        choices=("dummy", "torch", "onnxrt", "trt", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
         default="dummy",
         help="Inference backend (default: dummy).",
     )
@@ -622,6 +622,7 @@ def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--seed", type=int, default=None, help="Optional seed to store in meta.run.")
     p.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
     p.add_argument("--dry-run", action="store_true", help="Backend dry-run when supported (onnxrt/trt).")
+    p.add_argument("--strict", action="store_true", help="Enable strict predictions validation when backend supports it.")
 
     # Torch backend (rtdetr_pose adapter).
     p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="Torch config path (rtdetr_pose).")
@@ -816,6 +817,23 @@ def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
         default="yolo_84",
         help="Raw head layout for opencv-dnn-yolo backend (default: yolo_84).",
     )
+    p.add_argument(
+        "--decode",
+        choices=("auto", "yolo_84", "yolo_85_obj", "rtdetr"),
+        default="auto",
+        help="Unified OpenCV decode selection for --backend opencv-dnn (default: auto).",
+    )
+    p.add_argument(
+        "--preprocess",
+        choices=("yolo_letterbox_640", "rtdetr_resize_640", "rtdetr_letterbox_640"),
+        default=None,
+        help="Unified OpenCV preprocess preset for --backend opencv-dnn.",
+    )
+    p.add_argument(
+        "--dump-io",
+        default=None,
+        help="Optional IO probe dump path for OpenCV backends (input/output tensor names/shapes/dtypes).",
+    )
 
 
 def _export_with_backend(
@@ -964,6 +982,28 @@ def _export_with_backend(
             "topk": int(args.topk),
             "dry_run": bool(args.dry_run),
         }
+    elif backend == "opencv-dnn":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn")
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "onnx": str(onnx_model),
+            "onnx_sha256": _sha256_file(onnx_model),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "nms_iou": float(args.nms_iou),
+            "topk": int(args.topk),
+            "decode": str(args.decode),
+            "preprocess": str(args.preprocess) if args.preprocess else None,
+            "dnn_backend": str(args.dnn_backend),
+            "dnn_target": str(args.dnn_target),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
+            "dry_run": bool(args.dry_run),
+        }
     elif backend == "opencv-dnn-rtdetr":
         onnx_model = args.onnx or args.model
         if not onnx_model:
@@ -981,6 +1021,7 @@ def _export_with_backend(
             "dnn_backend": str(args.dnn_backend),
             "dnn_target": str(args.dnn_target),
             "topk": int(args.topk),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
         }
     elif backend == "opencv-dnn-yolo":
         onnx_model = args.onnx or args.model
@@ -998,6 +1039,7 @@ def _export_with_backend(
             "nms_iou": float(args.nms_iou),
             "agnostic_nms": bool(args.agnostic_nms),
             "raw_format": str(args.raw_format),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
         }
     else:
         raise SystemExit(f"unknown backend: {backend}")
@@ -1202,6 +1244,45 @@ def _export_with_backend(
         if args.dry_run:
             cmd.append("--dry-run")
         _subprocess_or_die(cmd)
+    elif backend == "opencv-dnn":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn")
+        cmd = [
+            sys.executable,
+            "tools/export_predictions_opencv_dnn_unified.py",
+            "--dataset",
+            str(dataset),
+            "--onnx",
+            str(onnx_model),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--nms-iou",
+            str(float(args.nms_iou)),
+            "--topk",
+            str(int(args.topk)),
+            "--decode",
+            str(args.decode),
+            "--dnn-backend",
+            str(args.dnn_backend),
+            "--dnn-target",
+            str(args.dnn_target),
+            "--output",
+            str(out_path),
+        ]
+        if args.preprocess:
+            cmd.extend(["--preprocess", str(args.preprocess)])
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.strict:
+            cmd.append("--strict")
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        _subprocess_or_die(cmd)
     elif backend == "opencv-dnn-rtdetr":
         onnx_model = args.onnx or args.model
         if not onnx_model:
@@ -1232,6 +1313,12 @@ def _export_with_backend(
             cmd.extend(["--dnn-target", str(args.dnn_target)])
         if args.topk is not None:
             cmd.extend(["--topk", str(int(args.topk))])
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
         _subprocess_or_die(cmd)
     elif backend == "opencv-dnn-yolo":
         onnx_model = args.onnx or args.model
@@ -1261,6 +1348,12 @@ def _export_with_backend(
             cmd.append("--agnostic-nms")
         if args.raw_format:
             cmd.extend(["--raw-format", str(args.raw_format)])
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
         _subprocess_or_die(cmd)
     else:  # pragma: no cover
         raise SystemExit(f"unknown backend: {backend}")

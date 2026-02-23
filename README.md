@@ -77,6 +77,16 @@ python3 tools/export_predictions_mmdet.py --dataset data/coco_yolo_like --split 
 
 Then validate/evaluate with `--classes data/coco_yolo_like/labels/<split>/classes.json` to normalize COCO `category_id` safely.
 
+## OpenCV-DNN users quick path
+
+```bash
+python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/coco-yolo --split val2017 --imgsz 640 --preprocess rtdetr_resize_640 --decode rtdetr --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json
+python3 tools/validate_predictions.py reports/pred_opencv.json --strict
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_opencv.json --output reports/eval_opencv.json
+```
+
+Use `--dnn-backend opencv|cuda|openvino` and `--dnn-target cpu|cuda|cuda_fp16|opencl|opencl_fp16` to compare runtime backends.
+
 ## Quickstart details
 
 With this repo checkout, run:

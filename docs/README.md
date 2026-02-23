@@ -165,6 +165,24 @@ python3 tools/eval_coco.py --dataset data/coco_yolo_like --split val2017 --predi
 
 Reference: [Detectron2/MMDetection interop](interop_detectron2_mmdet.md)
 
+## H) OpenCV-DNN migration (CPU/CUDA/OpenVINO)
+
+Use this path when OpenCV DNN is your runtime of record (C++/embedded/field inference) and you want YOLOZU validation/eval/parity.
+
+Shortest flow:
+
+```bash
+python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/coco-yolo --split val2017 --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json
+python3 tools/validate_predictions.py reports/pred_opencv.json --strict
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_opencv.json --output reports/eval_opencv.json
+```
+
+Runtime switches:
+- `--dnn-backend opencv|cuda|openvino`
+- `--dnn-target cpu|cuda|cuda_fp16|opencl|opencl_fp16`
+
+Reference: [OpenCV-DNN inference exporter](opencv_dnn_inference.md)
+
 ## CI incidents
 
 CI incident memo has moved to a dedicated page:

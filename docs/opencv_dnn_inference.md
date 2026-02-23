@@ -7,10 +7,31 @@ This is useful when:
 - you are targeting environments where ONNXRuntime is undesirable, or
 - you want to compare multiple ONNX backends (`onnxrt` vs `opencv_dnn`) using the same postprocessing + validation.
 
+## 5-minute unified path
+
+```bash
+python3 tools/yolozu.py export \
+  --backend opencv-dnn \
+  --onnx /abs/path/model.onnx \
+  --dataset /path/to/coco-yolo \
+  --split val2017 \
+  --imgsz 640 \
+  --preprocess rtdetr_resize_640 \
+  --decode rtdetr \
+  --dump-io reports/opencv_dump_io.json \
+  --output reports/pred_opencv.json
+
+python3 tools/validate_predictions.py reports/pred_opencv.json --strict
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_opencv.json --output reports/eval_opencv.json
+```
+
+The `*.meta.json` sidecar stores reproducibility metadata (`export_settings`, backend/target/version, decode and preprocessing knobs), and `--dump-io` stores model IO tensor signatures for debugging.
+
 ## Tool
 
 - Script: `tools/export_predictions_opencv_dnn.py`
 - Manifest id: `export_predictions_opencv_dnn`
+- Unified wrapper: `tools/export_predictions_opencv_dnn_unified.py`
 
 ## RT-DETR (OpenCV-DNN + decode)
 
@@ -63,6 +84,7 @@ Dry-run does **not** import OpenCV, and writes schema-valid output with empty de
 python3 tools/export_predictions_opencv_dnn.py \
   --dataset data/coco128 \
   --dry-run \
+  --dump-io reports/pred_opencv_dnn.io.json \
   --output reports/pred_opencv_dnn.json
 python3 tools/validate_predictions.py reports/pred_opencv_dnn.json --strict
 ```
@@ -125,3 +147,8 @@ python3 tools/export_predictions_opencv_dnn.py ... --dnn-backend cuda --dnn-targ
 ```
 
 These flags are best-effort; unsupported configurations are ignored by OpenCV.
+
+Supported selectors in YOLOZU CLI:
+
+- `--dnn-backend opencv|cuda|openvino`
+- `--dnn-target cpu|cuda|cuda_fp16|opencl|opencl_fp16`

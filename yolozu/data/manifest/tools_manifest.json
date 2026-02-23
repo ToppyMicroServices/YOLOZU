@@ -5659,6 +5659,12 @@
           "kind": "string",
           "required": false,
           "flag": "--dry-run"
+        },
+        {
+          "name": "dump_io",
+          "kind": "file",
+          "required": false,
+          "flag": "--dump-io"
         }
       ],
       "effects": {
@@ -5701,7 +5707,9 @@
         }
       ],
       "docs": [
-        "docs/opencv_dnn_inference.md"
+        "docs/opencv_dnn_inference.md",
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex"
       ]
     },
     {
@@ -5903,6 +5911,12 @@
           "kind": "string",
           "required": false,
           "flag": "--dry-run"
+        },
+        {
+          "name": "dump_io",
+          "kind": "file",
+          "required": false,
+          "flag": "--dump-io"
         }
       ],
       "effects": {
@@ -5945,7 +5959,9 @@
         }
       ],
       "docs": [
-        "docs/opencv_dnn_inference.md"
+        "docs/opencv_dnn_inference.md",
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex"
       ]
     },
     {
@@ -9796,6 +9812,168 @@
         "docs/README.md",
         "docs/interop_detectron2_mmdet.md",
         "manual/chapters/05_workflows_eval_export.tex"
+      ]
+    },
+    {
+      "id": "export_predictions_opencv_dnn_unified",
+      "entrypoint": "tools/export_predictions_opencv_dnn_unified.py",
+      "runner": "python3",
+      "summary": "Unified OpenCV-DNN exporter with preprocess/decode presets, IO dump, and backend/target controls.",
+      "tags": [
+        "export",
+        "opencv",
+        "opencv-dnn",
+        "onnx",
+        "interop",
+        "benchmark",
+        "parity"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset"
+        },
+        {
+          "name": "split",
+          "kind": "string",
+          "required": false,
+          "flag": "--split"
+        },
+        {
+          "name": "onnx",
+          "kind": "file",
+          "required": true,
+          "flag": "--onnx"
+        },
+        {
+          "name": "imgsz",
+          "kind": "number",
+          "required": false,
+          "flag": "--imgsz",
+          "default": 640
+        },
+        {
+          "name": "preprocess",
+          "kind": "string",
+          "required": false,
+          "flag": "--preprocess"
+        },
+        {
+          "name": "decode",
+          "kind": "string",
+          "required": false,
+          "flag": "--decode",
+          "default": "auto"
+        },
+        {
+          "name": "score_thr",
+          "kind": "number",
+          "required": false,
+          "flag": "--score-thr",
+          "default": 0.01
+        },
+        {
+          "name": "nms_iou",
+          "kind": "number",
+          "required": false,
+          "flag": "--nms-iou",
+          "default": 0.45
+        },
+        {
+          "name": "topk",
+          "kind": "number",
+          "required": false,
+          "flag": "--topk",
+          "default": 300
+        },
+        {
+          "name": "dnn_backend",
+          "kind": "string",
+          "required": false,
+          "flag": "--dnn-backend",
+          "default": "opencv"
+        },
+        {
+          "name": "dnn_target",
+          "kind": "string",
+          "required": false,
+          "flag": "--dnn-target",
+          "default": "cpu"
+        },
+        {
+          "name": "dump_io",
+          "kind": "file",
+          "required": false,
+          "flag": "--dump-io"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run"
+        },
+        {
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "flag": "--strict"
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": true,
+          "flag": "--output"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes YOLOZU predictions JSON via OpenCV DNN."
+          },
+          {
+            "flag": "--dump-io",
+            "kind": "file",
+            "scope": "path",
+            "description": "Optional IO tensor dump JSON for debugging."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "description": "Predictions JSON at --output."
+        }
+      ],
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/opencv_dnn_inference.md",
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ],
+      "examples": [
+        {
+          "description": "Unified OpenCV-DNN export with auto decode and IO dump.",
+          "command": "python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --split val2017 --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dnn-backend opencv --dnn-target cpu --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json"
+        }
       ]
     }
   ]
