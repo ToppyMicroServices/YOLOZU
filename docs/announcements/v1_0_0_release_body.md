@@ -19,5 +19,4 @@ bash scripts/smoke.sh
 
 **For experts (keywords):** Safe TTT (Tent/MIM), LoRA/norm-only scopes, Hessian diagnostics, continual learning hooks, run interface contract.
 
-More copy/paste templates: `docs/announcements/v1_0_0.md`.
-
+More copy/paste templates: https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/announcements/v1_0_0.md
