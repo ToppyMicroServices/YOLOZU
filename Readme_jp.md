@@ -2,6 +2,11 @@
 
 English README: [`README.md`](README.md)
 
+[![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
+[![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
+[![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
+[![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml)
+
 YOLOZU は Apache-2.0 の **interface-contract-first evaluation + tooling harness** です。  
 推論バックエンド（PyTorch / ONNXRuntime / TensorRT / C++ / Rust など）は自由に選び、
 **同一の `predictions.json` interface contract** に落として評価・比較できることを最重視します。
@@ -58,8 +63,8 @@ python3 -m pip install 'yolozu[full]'
   推論はどこで回してもよく、評価は `predictions.json` に統一して **公平に比較**できます。
 - **Safe TTT（test-time training）**  
   Tent / MIM のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
-- **再現性/運用性（Run Contract）**  
-  `yolozu train` の run contract で、成果物の置き場・run_meta・resume・
+- **再現性/運用性（Run interface contract）**  
+  `yolozu train` の run interface contract で、成果物の置き場・run_meta・resume・
   export/parity を固定（`docs/run_contract.md`）。
 
 ---
@@ -81,7 +86,7 @@ python3 -m pip install 'yolozu[full]'
 
 ---
 
-## 予測JSON（evaluation interface contract）
+## 予測JSON（predictions interface contract）
 
 評価の中心は `predictions.json` です
 （スキーマ: [`schemas/predictions.schema.json`](schemas/predictions.schema.json)
@@ -165,7 +170,7 @@ python3 tools/yolozu.py export \
 
 ---
 
-## Training scaffold（RT-DETR pose）+ Run Contract（本番級の再現性）
+## Training scaffold（RT-DETR pose）+ Run interface contract（本番級の再現性）
 
 実装: `rtdetr_pose/rtdetr_pose/train_minimal.py`（ラッパ: `rtdetr_pose/tools/train_minimal.py`）
 
@@ -191,7 +196,7 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --dry-run
 ```
 
-interface contract で固定された成果物（固定パス）:
+run interface contract で固定された成果物（固定パス）:
 - `runs/<run_id>/checkpoints/{last,best}.pt`
 - `runs/<run_id>/reports/{train_metrics.jsonl,val_metrics.jsonl,config_resolved.yaml,run_meta.json,onnx_parity.json}`
 - `runs/<run_id>/exports/model.onnx`（+ meta）
