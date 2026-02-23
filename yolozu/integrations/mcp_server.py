@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
+from .ai_surface import (
+    generate_config,
+    list_manifest_tools,
+    review_config,
+    supported_mcp_tool_ids,
+)
 from .tool_runner import (
     ctta_job,
     calibrate_predictions,
@@ -29,6 +35,69 @@ from .tool_runner import (
 
 
 app = FastMCP("yolozu")
+
+
+@app.tool()
+def ai_tools_tool(manifest_path: str | None = None) -> dict:
+    """List supported AI-first MCP tools plus manifest-backed metadata."""
+    tools = list_manifest_tools(manifest_path=manifest_path, only_supported=False)
+    return {
+        "ok": True,
+        "tool": "ai_tools",
+        "summary": "listed AI/MCP tool surface",
+        "exit_code": 0,
+        "supported_mcp_tools": supported_mcp_tool_ids(),
+        "manifest_tools": tools,
+    }
+
+
+@app.tool()
+def generate_config_tool(
+    goal: str = "evaluate_predictions",
+    dataset: str = "data/smoke",
+    predictions: str = "data/smoke/predictions/predictions_dummy.json",
+    split: str = "val",
+    output: str = "reports/ai_eval.json",
+    max_images: int = 50,
+    dry_run: bool = True,
+) -> dict:
+    """Generate deterministic, safe-default config for agent runs."""
+    payload = generate_config(
+        goal=goal,
+        dataset=dataset,
+        predictions=predictions,
+        split=split,
+        output=output,
+        max_images=max_images,
+        dry_run=dry_run,
+    )
+    return {
+        "ok": True,
+        "tool": "generate_config",
+        "summary": "generated config",
+        "exit_code": 0,
+        "config": payload,
+    }
+
+
+@app.tool()
+def review_config_tool(config_json: str, workspace_root: str = ".") -> dict:
+    """Review agent config JSON and return issues/warnings."""
+    import json
+    from pathlib import Path
+
+    p = Path(config_json).expanduser()
+    if not p.is_absolute():
+        p = (Path.cwd() / p).resolve()
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    review = review_config(doc, workspace_root=workspace_root)
+    return {
+        "ok": bool(review.get("ok")),
+        "tool": "review_config",
+        "summary": str(review.get("summary")),
+        "exit_code": 0 if bool(review.get("ok")) else 1,
+        "review": review,
+    }
 
 
 @app.tool()

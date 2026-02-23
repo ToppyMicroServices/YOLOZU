@@ -14,6 +14,8 @@ python3 tools/run_mcp_server.py
 
 Exposed tools (minimum):
 - `doctor`
+- `generate_config`
+- `review_config`
 - `validate_predictions`
 - `validate_dataset`
 - `eval_coco`
@@ -26,6 +28,12 @@ Also available in the same backend surface:
 - async jobs: `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`
 - compatibility alias: `export_onnx_job` (same behavior as `export_predictions_job`)
 - job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
+
+Official AI-safe support (1.0.x guarantee):
+- `doctor`, `generate_config`, `review_config`, `validate_predictions`
+
+Best-effort only (environment-dependent):
+- training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths
 
 Return format policy:
 - Always machine-readable JSON with stable top-level keys:

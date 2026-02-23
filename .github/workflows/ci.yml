@@ -105,7 +105,15 @@ jobs:
             tests/test_predictions.py \
             tests/test_manifest_docs_references.py \
             tests/test_backend_shape_format_contracts.py \
-            tests/test_external_inference_templates_smoke.py
+            tests/test_external_inference_templates_smoke.py \
+            tests/test_ai_first_mcp_surface.py
+
+      - name: MCP/AI surface smoke
+        run: |
+          python3 tools/run_mcp_server.py --help
+          python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config_ci.json
+          python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config_ci.json
+          python3 tools/run_actions_api.py --help
 
   pip_smoke:
     name: pip smoke (python ${{ matrix.python-version }})

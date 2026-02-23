@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Generate Config",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "goal",
+    "tool",
+    "arguments",
+    "safety",
+    "recommended_sequence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "goal": {
+      "type": "string"
+    },
+    "tool": {
+      "type": "string"
+    },
+    "arguments": {
+      "type": "object"
+    },
+    "safety": {
+      "type": "object"
+    },
+    "recommended_sequence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "tool",
+          "arguments"
+        ],
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "arguments": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -32,7 +32,13 @@ python3 tools/run_actions_api.py
 ```
 
 OpenAPI schema URL:
-- `http://<host>:8080/openapi.json`
+- `http://127.0.0.1:8080/openapi.json`
+
+Custom bind settings:
+
+```bash
+python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1
+```
 
 Optional static export for registration workflows:
 

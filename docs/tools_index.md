@@ -13,6 +13,12 @@ For most day-to-day flows, start with:
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
 - `python3 tools/yolozu.py sweep --config docs/hpo_sweep_example.json ...`
 
+## AI/MCP entrypoints
+
+- MCP server (stdio): `python3 tools/run_mcp_server.py`
+- MCP surface inspection: `python3 tools/run_mcp_server.py --print-tools`
+- Actions/OpenAPI server: `python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1`
+
 ## Dataset helpers
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
@@ -55,6 +61,27 @@ For most day-to-day flows, start with:
 The manifest is intended for:
 - AI agents that need to discover available CLI entrypoints + their I/O contracts
 - humans who want a quick map of “what command do I run to do X?”
+
+### AI-required manifest fields
+
+For AI-safe automation, treat these fields as required per tool:
+
+- `id`
+- `summary`
+- `inputs` (argument schema)
+- `examples`
+- `effects` (write side-effects)
+- `requires` (network/GPU dependency hints)
+
+### Determinism / safety defaults
+
+When driving tools from an agent:
+
+- prefer `--dry-run` when supported
+- cap work with `--max-images` (e.g. 50)
+- keep outputs in `reports/`
+- assume `no-network` unless the tool explicitly requires network
+- route execution through `python3 tools/yolozu.py registry run ...` for allowlist checks
 
 ## Contracts (recommended)
 

@@ -1,88 +1,111 @@
 # AI-first usage guide
 
-This page is for agentic workflows (Codex/CLI agents, scripting copilots, CI bots).
-Goal: make safe, deterministic automation easy.
+This page defines the stable AI/agent surface for YOLOZU 1.0.x.
 
-## Stable entry points
+## 1) Purpose
 
-- Unified command surface: `python3 tools/yolozu.py --help`
-- AI-first tool registry surface: `python3 tools/yolozu.py registry --help`
-- Machine-readable tool registry: `tools/manifest.json`
-- Contract schemas: `docs/schemas/*.schema.json`
-- Predictions contract docs: `docs/predictions_schema.md`
-- Adapter contract docs: `docs/adapter_contract.md`
+Use YOLOZU as a contract-first execution layer where agents:
 
-The `registry` subcommands are the recommended interface for agents because they provide:
+- discover tools from `tools/manifest.json`
+- generate deterministic run configs
+- review configs against safety constraints
+- execute only allowlisted operations
 
-- Stable discovery (`registry list --json`, `registry show --json`)
-- Built-in safety gates for side effects (`registry run ...`)
-- Best-effort post-run contract validation (when `contract_outputs` is declared in the manifest)
+## 2) Safety principles
 
-## Recommended automation flow
+- **Determinism first**: prefer `--dry-run`, fixed `--max-images`, stable output paths.
+- **Reproducibility**: always emit JSON artifacts under `reports/` with explicit config fields.
+- **Allowlist execution**: use `python3 tools/yolozu.py registry run ...` for side-effect checks.
+- **No-network by default**: network/GPU operations are opt-in and not part of the default AI-safe set.
 
-1) **Validate inputs/contracts**
-```bash
-python3 tools/validate_dataset.py --dataset /path/to/yolo --strict
-python3 tools/validate_predictions.py /path/to/predictions.json --strict
-```
+## 3) Official MCP support boundary
 
-2) **Run protocol-pinned evaluation**
-```bash
-python3 tools/eval_suite.py \
-  --protocol yolo26 \
-  --dataset /path/to/yolo \
-  --predictions-glob '/path/to/pred_*.json' \
-  --output reports/eval_suite.json
-```
+Guaranteed (1.0.x, deterministic/lightweight):
 
-3) **Store report artifacts**
-- JSON output path from stdout
-- Optional HTML report paths when a tool supports `--html`
+- `doctor`
+- `generate_config`
+- `review_config`
+- `validate_predictions`
 
-## Path rules (for robust agents)
+Best-effort (environment dependent, not in stable AI-safe guarantee):
 
-- CLI relative input paths: resolve from current working directory.
-- Config-file relative paths (where supported, e.g. `tools/tune_gate_weights.py`):
-  resolve from config-file directory.
-- Relative outputs: write under current working directory.
-- Input compatibility fallback: repo-root fallback remains enabled for legacy scripts.
+- training jobs (`train`, `ttt`, `ctta`)
+- TensorRT build/export
+- OpenCV CUDA/OpenVINO backend execution
 
-## Safety checks before write actions
-
-- Dry runs where available (`--dry-run`)
-- Validate caps/ranges (`--max-images`, thresholds)
-- Keep outputs under `reports/` or explicit run dirs
-
-For agent automation, prefer running tools through the registry runner:
+## 4) Fast path (3 commands)
 
 ```bash
-# Machine-readable registry discovery (stable JSON)
-python3 tools/yolozu.py registry list > reports/tool_registry.txt
-
-# Safe execution with explicit side-effect allowlists
-python3 tools/yolozu.py registry run normalize_predictions -- \
-  --input reports/predictions.json \
-  --output reports/predictions_norm.json
+python3 tools/run_mcp_server.py --print-tools
+python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
+python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json
 ```
 
-For tools that write outside `reports/` (for example dataset preparation under `data/`), add an explicit allowlist:
+Start MCP stdio server:
 
 ```bash
-python3 tools/yolozu.py registry run prepare_coco_yolo -- \
-  --coco-root /path/to/coco \
-  --out data/coco-yolo
+python3 tools/run_mcp_server.py
 ```
 
-`registry run` blocks common footguns by default:
+## 5) JSON contracts for AI surface
 
-- tools that require network unless `--allow-network`
-- tools that require GPU unless `--allow-gpu`
-- writes outside allowlisted roots (default: `reports/`)
-- absolute paths / `..` segments unless `--allow-unsafe-paths`
+### 5.1 `doctor` response
 
-## Quality gate command (recommended handoff)
+`doctor` writes JSON with environment/runtime diagnostics. Required top-level keys for AI consumption:
 
-```bash
-./.venv/bin/ruff check .
-python3 -m unittest -q
-```
+- `timestamp`
+- `gpu`
+- `env`
+- `runtime_capabilities`
+- `drift_hints`
+
+### 5.2 `generate_config` response schema
+
+Schema file: `docs/schemas/ai_generate_config.schema.json`
+
+Required top-level keys:
+
+- `schema_version`
+- `goal`
+- `tool`
+- `arguments`
+- `safety`
+- `recommended_sequence`
+
+### 5.3 `review_config` response schema
+
+Schema file: `docs/schemas/ai_review_config.schema.json`
+
+Required top-level keys:
+
+- `schema_version`
+- `ok`
+- `issues`
+- `warnings`
+- `summary`
+
+## 6) Manifest requirements for AI use
+
+Agent-facing tools in `tools/manifest.json` should provide:
+
+- `id`
+- `summary`
+- `inputs` (args schema)
+- `examples`
+- `effects` (side-effects / write locations)
+- `requires` (network/GPU constraints)
+
+Safe defaults for AI execution:
+
+- `dry_run=true` when supported
+- bounded `max_images` (e.g. 50)
+- outputs under `reports/`
+- no network unless explicitly needed
+
+## 7) CI gate for AI/MCP surface
+
+The CI gate should verify:
+
+- `python3 tools/run_mcp_server.py --help`
+- manifest validation (`tools/validate_tool_manifest.py --require-declarative`)
+- deterministic sample contracts (`generate_config` / `review_config`) via tests

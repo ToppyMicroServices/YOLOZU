@@ -125,6 +125,7 @@ Reference docs:
 - [OpenAI MCP / Actions](openai_mcp_actions.md)
 - [Copilot MCP integration](copilot_mcp_integration.md)
 - [MCP extension architecture](mcp_extension_architecture.md)
+- [AI-first guide (supported MCP scope)](ai_first.md)
 
 ## F) YOLO migration (v5/v8/11/26)
 

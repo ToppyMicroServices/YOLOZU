@@ -378,11 +378,13 @@
       "id": "run_mcp_server",
       "entrypoint": "tools/run_mcp_server.py",
       "runner": "python3",
-      "summary": "Run YOLOZU MCP server exposing doctor/validate/eval/scenario tools for LLM clients.",
+      "summary": "Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config).",
       "tags": [
         "mcp",
         "integration",
-        "llm"
+        "llm",
+        "ai-first",
+        "deterministic"
       ],
       "platform": {
         "cpu_ok": true,
@@ -395,7 +397,53 @@
           "mcp"
         ]
       },
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "transport",
+          "kind": "string",
+          "required": false,
+          "flag": "--transport",
+          "default": "stdio",
+          "description": "MCP transport (stdio supported by wrapper)."
+        },
+        {
+          "name": "manifest",
+          "kind": "file",
+          "required": false,
+          "flag": "--manifest",
+          "default": "tools/manifest.json",
+          "description": "Manifest path used for tool-surface introspection commands."
+        },
+        {
+          "name": "print_tools",
+          "kind": "string",
+          "required": false,
+          "flag": "--print-tools",
+          "description": "Print manifest-backed tool metadata JSON and exit."
+        },
+        {
+          "name": "sample_generate_config",
+          "kind": "string",
+          "required": false,
+          "flag": "--sample-generate-config",
+          "description": "Print deterministic sample generate_config payload and exit."
+        },
+        {
+          "name": "sample_review_config",
+          "kind": "file",
+          "required": false,
+          "flag": "--sample-review-config",
+          "description": "Review config JSON file and print review payload."
+        },
+        {
+          "name": "workspace_root",
+          "kind": "dir",
+          "required": false,
+          "flag": "--workspace-root",
+          "default": ".",
+          "description": "Workspace root for review path-safety checks."
+        }
+      ],
       "effects": {
         "writes": [],
         "fixed_writes": []
@@ -404,27 +452,52 @@
         {
           "name": "transport",
           "kind": "string",
-          "description": "MCP server stdio transport for compatible clients."
+          "description": "MCP stdio transport for compatible clients."
+        },
+        {
+          "name": "tool_surface_json",
+          "kind": "stdout",
+          "description": "When --print-tools is used, prints manifest-backed tool surface JSON."
+        },
+        {
+          "name": "sample_generate_config_json",
+          "kind": "stdout",
+          "description": "When --sample-generate-config is used, prints deterministic sample config JSON."
+        },
+        {
+          "name": "sample_review_config_json",
+          "kind": "stdout",
+          "description": "When --sample-review-config is used, prints review JSON."
         }
       ],
       "examples": [
         {
-          "description": "Start MCP server locally.",
+          "description": "Start MCP stdio server.",
           "command": "python3 tools/run_mcp_server.py"
+        },
+        {
+          "description": "Inspect manifest-backed tool surface as JSON.",
+          "command": "python3 tools/run_mcp_server.py --print-tools --manifest tools/manifest.json"
+        },
+        {
+          "description": "Generate deterministic sample config and review it.",
+          "command": "python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json && python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json"
         }
       ],
       "docs": [
         "docs/llm_integrations.md",
         "docs/mcp_extension_architecture.md",
         "docs/copilot_mcp_integration.md",
-        "manual/chapters/20_llm_mcp_integrations.tex"
+        "manual/chapters/20_llm_mcp_integrations.tex",
+        "docs/ai_first.md",
+        "docs/tools_index.md"
       ]
     },
     {
       "id": "run_actions_api",
       "entrypoint": "tools/run_actions_api.py",
       "runner": "python3",
-      "summary": "Run FastAPI/OpenAPI endpoint for GPT Actions route using the same YOLOZU tool backend.",
+      "summary": "Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend.",
       "tags": [
         "openapi",
         "fastapi",
@@ -443,7 +516,39 @@
           "uvicorn"
         ]
       },
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "host",
+          "kind": "string",
+          "required": false,
+          "flag": "--host",
+          "default": "0.0.0.0",
+          "description": "Bind host."
+        },
+        {
+          "name": "port",
+          "kind": "number",
+          "required": false,
+          "flag": "--port",
+          "default": 8080,
+          "description": "Bind port."
+        },
+        {
+          "name": "workers",
+          "kind": "number",
+          "required": false,
+          "flag": "--workers",
+          "default": 1,
+          "description": "Uvicorn worker count."
+        },
+        {
+          "name": "reload",
+          "kind": "string",
+          "required": false,
+          "flag": "--reload",
+          "description": "Enable auto-reload for local development."
+        }
+      ],
       "effects": {
         "writes": [],
         "fixed_writes": []
@@ -457,8 +562,12 @@
       ],
       "examples": [
         {
-          "description": "Start Actions API server on :8080.",
+          "description": "Start Actions API on default bind.",
           "command": "python3 tools/run_actions_api.py"
+        },
+        {
+          "description": "Start Actions API with explicit host/port/workers.",
+          "command": "python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1"
         }
       ],
       "docs": [

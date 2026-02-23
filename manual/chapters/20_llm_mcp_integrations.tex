@@ -13,6 +13,8 @@ python3 tools/run_mcp_server.py
 Core exposed tools:
 \begin{itemize}
   \item \cmd{doctor}
+  \item \cmd{generate\_config}
+  \item \cmd{review\_config}
   \item \cmd{validate\_predictions}
   \item \cmd{validate\_dataset}
   \item \cmd{eval\_coco}
@@ -46,7 +48,7 @@ python3 tools/run_mcp_server.py
 
 \subsection{Actions API (optional route)}
 \begin{lstlisting}[language=bash]
-python3 tools/run_actions_api.py
+python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1
 curl -sS http://127.0.0.1:8080/healthz
 \end{lstlisting}
 
@@ -73,8 +75,8 @@ Use MCP first; add GPT Actions when OpenAPI registration is required.
 
 Optional API route:
 \begin{lstlisting}[language=bash]
-python3 tools/run_actions_api.py
-# OpenAPI: http://<host>:8080/openapi.json
+python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1
+# OpenAPI: http://127.0.0.1:8080/openapi.json
 \end{lstlisting}
 
 \section{Operational recommendation}
@@ -91,6 +93,12 @@ Operational guards in v2 layer implementation:
 \end{itemize}
 
 \section{Tool map (actual MCP/Actions surface)}
+
+\subsection{Official support boundary (1.0.x)}
+\begin{itemize}
+  \item Guaranteed (deterministic/lightweight): \cmd{doctor}, \cmd{generate\_config}, \cmd{review\_config}, \cmd{validate\_predictions}
+  \item Best-effort (environment dependent): long training jobs, TensorRT build/export, OpenCV CUDA/OpenVINO backends
+\end{itemize}
 
 \subsection{Synchronous tools}
 \begin{itemize}

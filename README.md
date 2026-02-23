@@ -189,6 +189,12 @@ In one glance:
   and always write run metadata (git SHA / env / GPU / config hash).
 - **AI-friendly repo surface**: stable schemas + [tools/manifest.json](tools/manifest.json) + [docs/tools_index.md](docs/tools_index.md) for tool discovery / automation.
 
+## AI / MCP support scope (1.0.x)
+
+- Guaranteed AI-safe MCP tools: `doctor`, `generate_config`, `review_config`, `validate_predictions`.
+- Best-effort only (environment-dependent): training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO.
+- See [docs/ai_first.md](docs/ai_first.md) for safety rules, 3-command fast path, and JSON contracts.
+
 ## Feature highlights and advanced workflows
 
 Moved to docs (entry-focused README policy):
