@@ -545,13 +545,44 @@ jobs:
 
       - name: DDP smoke (torchrun, CPU gloo, rank0-only artifacts)
         run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          dataset_root = Path(os.environ["RUNNER_TEMP"]) / "yolozu_tiny_dataset"
+          cfg = Path(os.environ["RUNNER_TEMP"]) / "rtdetr_pose_ci_ddp.yaml"
+          cfg.write_text(
+              "\n".join(
+                  [
+                      "config_version: 1",
+                      f"dataset_root: {dataset_root.as_posix()}",
+                      "split: train2017",
+                      "val_split: val2017",
+                      "seed: 0",
+                      "device: cpu",
+                      "amp: none",
+                      "ddp: true",
+                      "batch_size: 1",
+                      "val_batch_size: 1",
+                      "epochs: 1",
+                      "log_every: 1",
+                      "val_every: 0",
+                      "checkpoint_every: 100",
+                      "run_id: ci_smoke_ddp",
+                      "dry_run: true",
+                      "model_config: rtdetr_pose/configs/base.json",
+                  ]
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          print(cfg)
+          PY
+
           TORCH_DISTRIBUTED_DEFAULT_FIND_UNUSED_PARAMETERS=1 \
           torchrun --standalone --nproc_per_node=2 rtdetr_pose/tools/train_minimal.py \
-            --config rtdetr_pose/configs/base.json \
-            --dataset-root "${RUNNER_TEMP}/yolozu_tiny_dataset" --split train2017 --val-split val2017 \
-            --device cpu --amp none --batch-size 1 --val-batch-size 1 --epochs 1 \
-            --log-every 1 --val-every 0 --checkpoint-every 100 \
-            --run-contract --run-id ci_smoke_ddp --dry-run
+            --config "${RUNNER_TEMP}/rtdetr_pose_ci_ddp.yaml" \
+            --run-contract
 
           test -f runs/ci_smoke_ddp/reports/run_meta.json
           test -f runs/ci_smoke_ddp/reports/config_resolved.yaml
