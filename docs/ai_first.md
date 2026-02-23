@@ -20,18 +20,22 @@ Use YOLOZU as an interface-contract-first execution layer where agents:
 
 ## 3) Official MCP support boundary
 
-Guaranteed (1.0.x, deterministic/lightweight):
+Guaranteed (1.0.x, deterministic/lightweight MCP tool ids):
 
 - `doctor`
 - `generate_config`
 - `review_config`
 - `validate_predictions`
+
+AI-safe tool scripts (CLI; not exposed as MCP tool ids in 1.0.x):
+
 - `validate_synthgen_contract`
 - `render_synthgen_overlay`
 - `smoke_synthgen`
 
 Best-effort (environment dependent, not in stable AI-safe guarantee):
 
+- tool-runner operations beyond the guaranteed MCP tool ids (for example `eval_coco`, `validate_dataset`, `parity_check`)
 - training jobs (`train`, `ttt`, `ctta`)
 - TensorRT build/export
 - OpenCV CUDA/OpenVINO backend execution

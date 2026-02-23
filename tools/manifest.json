@@ -4513,6 +4513,12 @@
           "flag": "--protocol"
         },
         {
+          "name": "allow_protocol_mismatches",
+          "kind": "string",
+          "required": false,
+          "flag": "--allow-protocol-mismatches"
+        },
+        {
           "name": "dataset",
           "kind": "dir",
           "required": false,
@@ -10058,6 +10064,12 @@
           "flag": "--split"
         },
         {
+          "name": "source",
+          "kind": "string",
+          "required": false,
+          "flag": "--source"
+        },
+        {
           "name": "output",
           "kind": "file",
           "required": true,
@@ -10092,10 +10104,49 @@
           "default": 32
         },
         {
+          "name": "max_det",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-det",
+          "default": 300
+        },
+        {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
+        },
+        {
+          "name": "batch",
+          "kind": "number",
+          "required": false,
+          "flag": "--batch",
+          "default": 1
+        },
+        {
+          "name": "device",
+          "kind": "string",
+          "required": false,
+          "flag": "--device",
+          "default": "cuda"
+        },
+        {
+          "name": "half",
+          "kind": "string",
+          "required": false,
+          "flag": "--half"
+        },
+        {
           "name": "letterbox",
           "kind": "string",
           "required": false,
           "flag": "--letterbox"
+        },
+        {
+          "name": "no_letterbox",
+          "kind": "string",
+          "required": false,
+          "flag": "--no-letterbox"
         },
         {
           "name": "protocol",
@@ -10108,6 +10159,12 @@
           "kind": "string",
           "required": false,
           "flag": "--end2end"
+        },
+        {
+          "name": "no_end2end",
+          "kind": "string",
+          "required": false,
+          "flag": "--no-end2end"
         },
         {
           "name": "wrap",
@@ -10216,6 +10273,19 @@
           "flag": "--output"
         },
         {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
+        },
+        {
+          "name": "conf_default",
+          "kind": "number",
+          "required": false,
+          "flag": "--conf-default",
+          "default": 1.0
+        },
+        {
           "name": "protocol",
           "kind": "string",
           "required": false,
@@ -10255,6 +10325,12 @@
           "kind": "string",
           "required": false,
           "flag": "--letterbox"
+        },
+        {
+          "name": "no_letterbox",
+          "kind": "string",
+          "required": false,
+          "flag": "--no-letterbox"
         },
         {
           "name": "strict",
@@ -10353,6 +10429,12 @@
           "flag": "--output"
         },
         {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
+        },
+        {
           "name": "score_thr",
           "kind": "number",
           "required": false,
@@ -10374,11 +10456,60 @@
           "default": "cuda"
         },
         {
+          "name": "imgsz",
+          "kind": "number",
+          "required": false,
+          "flag": "--imgsz",
+          "default": 640
+        },
+        {
           "name": "protocol",
           "kind": "string",
           "required": false,
           "flag": "--protocol",
           "default": "nms_applied"
+        },
+        {
+          "name": "input_color",
+          "kind": "string",
+          "required": false,
+          "flag": "--input-color",
+          "default": "BGR"
+        },
+        {
+          "name": "normalize_scale",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-scale",
+          "default": "1.0"
+        },
+        {
+          "name": "normalize_mean",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-mean",
+          "default": ""
+        },
+        {
+          "name": "normalize_std",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-std",
+          "default": ""
+        },
+        {
+          "name": "resize_policy",
+          "kind": "string",
+          "required": false,
+          "flag": "--resize-policy",
+          "default": "config_shortest_edge"
+        },
+        {
+          "name": "pad_policy",
+          "kind": "string",
+          "required": false,
+          "flag": "--pad-policy",
+          "default": "config_pad_to_stride"
         },
         {
           "name": "dry_run",
@@ -10491,6 +10622,12 @@
           "flag": "--output"
         },
         {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
+        },
+        {
           "name": "score_thr",
           "kind": "number",
           "required": false,
@@ -10512,11 +10649,60 @@
           "default": "cuda:0"
         },
         {
+          "name": "imgsz",
+          "kind": "number",
+          "required": false,
+          "flag": "--imgsz",
+          "default": 640
+        },
+        {
           "name": "protocol",
           "kind": "string",
           "required": false,
           "flag": "--protocol",
           "default": "nms_applied"
+        },
+        {
+          "name": "input_color",
+          "kind": "string",
+          "required": false,
+          "flag": "--input-color",
+          "default": "BGR"
+        },
+        {
+          "name": "normalize_scale",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-scale",
+          "default": "1.0"
+        },
+        {
+          "name": "normalize_mean",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-mean",
+          "default": ""
+        },
+        {
+          "name": "normalize_std",
+          "kind": "string",
+          "required": false,
+          "flag": "--normalize-std",
+          "default": ""
+        },
+        {
+          "name": "resize_policy",
+          "kind": "string",
+          "required": false,
+          "flag": "--resize-policy",
+          "default": "config_resize"
+        },
+        {
+          "name": "pad_policy",
+          "kind": "string",
+          "required": false,
+          "flag": "--pad-policy",
+          "default": "config_pad"
         },
         {
           "name": "dry_run",
@@ -10668,6 +10854,12 @@
           "flag": "--dump-io"
         },
         {
+          "name": "meta_output",
+          "kind": "file",
+          "required": false,
+          "flag": "--meta-output"
+        },
+        {
           "name": "dry_run",
           "kind": "string",
           "required": false,
@@ -10693,6 +10885,12 @@
             "kind": "file",
             "scope": "path",
             "description": "Writes YOLOZU predictions JSON via OpenCV DNN."
+          },
+          {
+            "flag": "--meta-output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes export meta JSON alongside predictions."
           },
           {
             "flag": "--dump-io",
@@ -10774,6 +10972,12 @@
           "kind": "file",
           "required": true,
           "flag": "--output"
+        },
+        {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
         },
         {
           "name": "exp",

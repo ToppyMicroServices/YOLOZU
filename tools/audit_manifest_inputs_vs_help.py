@@ -51,7 +51,13 @@ def _collect_declared_flags(tool: dict[str, Any]) -> set[str]:
 
 
 def _extract_long_flags(help_text: str, *, include_help: bool) -> set[str]:
-    flags = {f for f in _FLAG_RE.findall(help_text) if not f.endswith("-")}
+    flags: set[str] = set()
+    for line in help_text.splitlines():
+        stripped = line.lstrip()
+        if not stripped.startswith("-") or "--" not in stripped:
+            continue
+        head = re.split(r"\s{2,}", stripped, maxsplit=1)[0]
+        flags |= {f for f in _FLAG_RE.findall(head) if not f.endswith("-")}
     if not include_help:
         flags.discard("--help")
     return flags
