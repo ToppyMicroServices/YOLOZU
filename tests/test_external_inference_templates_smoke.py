@@ -5,6 +5,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore[no-redef]
+
 
 class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
     def test_cpp_stub_emits_strict_valid_predictions_when_compiler_available(self):
@@ -143,6 +148,36 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
             )
             if proc3.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc3.stdout}\n{proc3.stderr}")
+
+            proc4 = subprocess.run(
+                [
+                    str(bin_path),
+                    "--mode",
+                    "onnxrt",
+                    "--onnx",
+                    "/tmp/model.onnx",
+                    "--out",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc4.returncode, 2, msg=f"rust onnxrt fallback behavior changed:\n{proc4.stdout}\n{proc4.stderr}")
+            self.assertIn("without the 'onnxruntime' feature", proc4.stderr)
+
+    def test_rust_template_declares_optional_onnxruntime_feature(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        cargo_toml = repo_root / "examples" / "infer_rust" / "Cargo.toml"
+        self.assertTrue(cargo_toml.is_file(), f"missing Rust template Cargo.toml: {cargo_toml}")
+
+        parsed = tomllib.loads(cargo_toml.read_text(encoding="utf-8"))
+        features = parsed.get("features") or {}
+
+        self.assertIn("onnxruntime", features, "expected onnxruntime feature in Rust template")
+        self.assertEqual(features.get("default"), [], "Rust template default features should stay empty")
 
 
 if __name__ == "__main__":

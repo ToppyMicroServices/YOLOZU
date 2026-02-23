@@ -5552,10 +5552,11 @@
       "id": "export_predictions_onnxrt",
       "entrypoint": "tools/export_predictions_onnxrt.py",
       "runner": "python3",
-      "summary": "Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv).",
+      "summary": "Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv; see Rust ONNXRuntime template notes in external inference docs).",
       "tags": [
         "predictions",
-        "onnxruntime"
+        "onnxruntime",
+        "rust"
       ],
       "platform": {
         "cpu_ok": true,
@@ -5787,7 +5788,10 @@
         }
       ],
       "docs": [
-        "docs/onnx_export_parity.md"
+        "docs/onnx_export_parity.md",
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex",
+        "examples/infer_rust/README.md"
       ]
     },
     {

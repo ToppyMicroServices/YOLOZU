@@ -6,5 +6,8 @@ edition = "2021"
 # NOTE: This template intentionally avoids external crate dependencies so it can
 # be copied into environments without a Rust dependency cache.
 
-[dependencies]
+[features]
+default = []
+onnxruntime = []
 
+[dependencies]

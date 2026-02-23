@@ -67,8 +67,28 @@ It focuses on:
 
 ### Rust template (submodule-ready)
 
-See `examples/infer_rust/` for a minimal Rust starter. It intentionally builds a no-deps **stub** binary by default (contract wiring),
-so you can layer in ONNXRuntime/TensorRT/FFI later without changing the output JSON contract.
+See `examples/infer_rust/` for a minimal Rust starter. It keeps a no-deps **stub** binary as the default contract path, and also provides an
+optional ONNXRuntime mode behind a Cargo feature:
+
+```bash
+# no-deps stub (always available)
+cargo build --release --manifest-path examples/infer_rust/Cargo.toml
+examples/infer_rust/target/release/yolozu_infer_rust --out reports/pred_rust_stub.json
+
+# optional ONNXRuntime runner
+cargo build --release --features onnxruntime --manifest-path examples/infer_rust/Cargo.toml
+examples/infer_rust/target/release/yolozu_infer_rust \
+  --mode onnxrt \
+  --onnx /abs/path/model.onnx \
+  --input-shape 1,3,64,64 \
+  --image images/val/000001.jpg \
+  --out reports/pred_rust_onnxrt.json
+```
+
+Expected production environment for `--features onnxruntime`:
+- Linux `x86_64` base image with Rust toolchain.
+- Python 3 with `onnxruntime` and `numpy` installed (the optional Rust mode shells out to Python ORT for the forward pass).
+- Keep the stub mode as CI baseline, and run ONNXRuntime mode in dedicated runtime images where ORT dependencies are intentionally provisioned.
 
 ## Notes
 

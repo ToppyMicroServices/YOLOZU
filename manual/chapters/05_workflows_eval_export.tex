@@ -30,6 +30,25 @@ Depending on your deployment environment, several backends are available:
 For production-oriented external inference, see \path{docs/external_inference.md} and the submodule-ready templates:
 \path{examples/infer_cpp/} (CMake) and \path{examples/infer_rust/} (Rust).
 
+\subsection{Rust template: optional ONNXRuntime mode}
+The Rust template defaults to a no-dependency stub (contract wiring), and can optionally enable ONNXRuntime via Cargo feature flags:
+\begin{lstlisting}[language=bash]
+# Stub (always available)
+cargo build --release --manifest-path examples/infer_rust/Cargo.toml
+examples/infer_rust/target/release/yolozu_infer_rust --out reports/pred_rust_stub.json
+
+# Optional ONNXRuntime mode
+cargo build --release --features onnxruntime --manifest-path examples/infer_rust/Cargo.toml
+examples/infer_rust/target/release/yolozu_infer_rust \
+  --mode onnxrt \
+  --onnx /abs/path/model.onnx \
+  --input-shape 1,3,64,64 \
+  --image images/val/000001.jpg \
+  --out reports/pred_rust_onnxrt.json
+\end{lstlisting}
+
+\noindent\textbf{Environment note:} The ONNXRuntime feature is intended for pinned Linux production images where Rust toolchains and ONNXRuntime shared libraries are provisioned explicitly.
+
 \textbf{Conceptual (not copy-paste as-is):} repository-wrapper export shape.
 Use real paths from \path{tools/yolozu.py export --help} for execution.
 \begin{lstlisting}[language=bash]
