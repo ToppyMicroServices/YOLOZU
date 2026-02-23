@@ -896,6 +896,170 @@ class TestYOLOZUCLI(unittest.TestCase):
                 self.fail(f"yolozu fetch (cache) failed:\n{cached_run.stdout}\n{cached_run.stderr}")
             self.assertTrue((out_dir_2 / "toy-model" / "weights.bin").is_file())
 
+    def test_fetch_requires_sha256_unless_allow_unsafe(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            src = root / "weights.bin"
+            src.write_bytes(b"abc123")
+            sha = hashlib.sha256(src.read_bytes()).hexdigest()
+
+            registry_path = root / "registry.json"
+            registry_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "models": [
+                            {
+                                "id": "toy-model",
+                                "summary": "toy",
+                                "family": "test",
+                                "source": {"type": "official_url", "url": src.resolve().as_uri()},
+                                "version": "v1",
+                                "license": "Apache-2.0",
+                                "sha256": None,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_dir = root / "models"
+            cache_dir = root / "cache"
+
+            no_sha = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertNotEqual(no_sha.returncode, 0)
+            self.assertIn("--allow-unsafe", no_sha.stderr)
+
+            yes_sha = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                    "--allow-unsafe",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if yes_sha.returncode != 0:
+                self.fail(f"yolozu fetch --allow-unsafe failed:\n{yes_sha.stdout}\n{yes_sha.stderr}")
+            meta = out_dir / "toy-model" / "meta.json"
+            self.assertTrue(meta.is_file())
+            payload = json.loads(meta.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("sha256"), sha)
+
+    def test_fetch_requires_allow_non_apache_for_copyleft_license(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            src = root / "weights.bin"
+            src.write_bytes(b"abc123")
+            sha = hashlib.sha256(src.read_bytes()).hexdigest()
+
+            registry_path = root / "registry.json"
+            registry_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "models": [
+                            {
+                                "id": "toy-model",
+                                "summary": "toy",
+                                "family": "test",
+                                "source": {"type": "official_url", "url": src.resolve().as_uri()},
+                                "version": "v1",
+                                "license": "AGPL-3.0",
+                                "sha256": sha,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_dir = root / "models"
+            cache_dir = root / "cache"
+
+            blocked = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertNotEqual(blocked.returncode, 0)
+            self.assertIn("--allow-non-apache", blocked.stderr)
+
+            allowed = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "fetch",
+                    "toy-model",
+                    "--registry",
+                    str(registry_path),
+                    "--out",
+                    str(out_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                    "--accept-license",
+                    "--allow-non-apache",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if allowed.returncode != 0:
+                self.fail(f"yolozu fetch --allow-non-apache failed:\n{allowed.stdout}\n{allowed.stderr}")
+
 
 if __name__ == "__main__":
     unittest.main()

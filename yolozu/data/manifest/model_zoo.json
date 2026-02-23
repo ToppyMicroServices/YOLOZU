@@ -2,20 +2,6 @@
   "schema_version": 1,
   "models": [
     {
-      "id": "ultralytics-yolo11n-pt",
-      "summary": "Ultralytics YOLO11n PyTorch weights.",
-      "family": "yolo",
-      "source": {
-        "type": "github_release",
-        "repo": "ultralytics/assets",
-        "tag": "v8.3.0",
-        "asset": "yolo11n.pt"
-      },
-      "version": "v8.3.0",
-      "license": "AGPL-3.0",
-      "sha256": null
-    },
-    {
       "id": "yolox-s-coco",
       "summary": "YOLOX-S COCO checkpoint.",
       "family": "yolox",

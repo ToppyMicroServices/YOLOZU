@@ -5,6 +5,7 @@ import ipaddress
 import json
 import shutil
 import tempfile
+import time
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -42,6 +43,30 @@ class ModelSpec:
     license: str
     expected_sha256: str | None
     file_name: str
+
+
+_APACHE_FRIENDLY_LICENSES = {
+    "apache-2.0",
+    "mit",
+    "bsd-2-clause",
+    "bsd-3-clause",
+    "isc",
+    "0bsd",
+    "unlicense",
+    "cc0-1.0",
+}
+
+
+def _is_apache_friendly_license(license_id: str) -> bool:
+    normalized = (license_id or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in _APACHE_FRIENDLY_LICENSES:
+        return True
+    # Conservative heuristic for non-standard strings: treat any GPL-family token as non-Apache-friendly.
+    if "agpl" in normalized or "gpl" in normalized or "lgpl" in normalized:
+        return False
+    return False
 
 
 def _source_url(source: dict[str, Any]) -> str:
@@ -165,6 +190,10 @@ def list_models(registry_path: str | Path | None = None) -> list[ModelSpec]:
 
 
 def _download(url: str, out_path: Path) -> None:
+    return _download_with_retry(url=url, out_path=out_path, timeout=60.0, retries=3)
+
+
+def _download_with_retry(*, url: str, out_path: Path, timeout: float, retries: int) -> None:
     parsed = _validated_download_url(url)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if parsed.scheme == "file":
@@ -181,9 +210,25 @@ def _download(url: str, out_path: Path) -> None:
             "Accept": "*/*",
         },
     )
-    with urllib.request.urlopen(request, timeout=60.0) as response:
-        with out_path.open("wb") as handle:
-            shutil.copyfileobj(response, handle)
+    if retries <= 0:
+        raise ValueError("--retries must be >= 1")
+    if timeout <= 0:
+        raise ValueError("--timeout must be > 0")
+
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                with out_path.open("wb") as handle:
+                    shutil.copyfileobj(response, handle)
+            return
+        except Exception as exc:  # pragma: no cover
+            last_exc = exc
+            if attempt >= retries:
+                raise
+            time.sleep(min(2 ** (attempt - 1), 8))
+    if last_exc is not None:  # pragma: no cover
+        raise last_exc
 
 
 def fetch_model(
@@ -192,14 +237,31 @@ def fetch_model(
     out_dir: str | Path,
     cache_dir: str | Path | None,
     accept_license: bool,
+    allow_unsafe: bool = False,
+    allow_non_apache: bool = False,
+    retries: int = 3,
+    timeout: float = 60.0,
     registry_path: str | Path | None = None,
     force: bool = False,
 ) -> tuple[Path, Path]:
     spec = resolve_model_spec(model_id, registry_path)
+    apache_friendly = _is_apache_friendly_license(spec.license)
     if not accept_license:
+        extra = " --allow-non-apache" if not apache_friendly else ""
         raise PermissionError(
             f"model `{model_id}` requires explicit license acceptance "
-            f"(license={spec.license}). Re-run with --accept-license."
+            f"(license={spec.license}). Re-run with --accept-license{extra}."
+        )
+    if not apache_friendly and not allow_non_apache:
+        raise PermissionError(
+            f"model `{model_id}` is not Apache-friendly (license={spec.license}). "
+            f"Use a separate baseline environment and import only predictions.json when possible. "
+            f"To proceed anyway, re-run with --allow-non-apache."
+        )
+    if spec.expected_sha256 is None and not allow_unsafe:
+        raise PermissionError(
+            f"model `{model_id}` is missing sha256 in the registry (unsafe to fetch reproducibly). "
+            f"Update the registry to include sha256, or re-run with --allow-unsafe."
         )
 
     out_root = Path(out_dir).expanduser()
@@ -216,7 +278,7 @@ def fetch_model(
         with tempfile.NamedTemporaryFile(prefix="yolozu_fetch_", suffix=".tmp", dir=str(cached_path.parent), delete=False) as tmp:
             tmp_path = Path(tmp.name)
         try:
-            _download(spec.source_url, tmp_path)
+            _download_with_retry(url=spec.source_url, out_path=tmp_path, timeout=float(timeout), retries=int(retries))
             downloaded_sha = _sha256(tmp_path)
             if spec.expected_sha256 and downloaded_sha != spec.expected_sha256:
                 raise RuntimeError(

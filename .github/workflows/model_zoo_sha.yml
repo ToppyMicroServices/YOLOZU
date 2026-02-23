@@ -1,0 +1,43 @@
+name: model-zoo-sha
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Compute sha256 for model_zoo.json URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/model_zoo_sha
+
+          cat > reports/model_zoo_sha/urls.txt <<'EOF'
+          yolox-s-coco https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth
+          detectron2-faster-rcnn-r50-fpn-1x-coco https://dl.fbaipublicfiles.com/detectron2/COCO-Detection/faster_rcnn_R_50_FPN_1x/137257794/model_final_b275ba.pkl
+          mmdet-faster-rcnn-r50-fpn-1x-coco https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
+          EOF
+
+          echo "Computing sha256 (this downloads large files; workflow_dispatch only)."
+          while read -r model_id url; do
+            echo "== ${model_id} =="
+            echo "${url}"
+            tmp="reports/model_zoo_sha/${model_id}.bin"
+            curl -L --fail --retry 3 --retry-all-errors --connect-timeout 20 --max-time 600 -o "${tmp}" "${url}"
+            sha="$(sha256sum "${tmp}" | awk '{print $1}')"
+            bytes="$(stat -c %s "${tmp}")"
+            echo "size_bytes=${bytes}"
+            echo "sha256=${sha}"
+            echo
+          done < reports/model_zoo_sha/urls.txt
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: model_zoo_sha
+          path: reports/model_zoo_sha

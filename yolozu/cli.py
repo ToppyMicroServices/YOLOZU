@@ -213,6 +213,8 @@ def _cmd_list_models(args: argparse.Namespace) -> int:
                     "family": spec.family,
                     "version": spec.version,
                     "license": spec.license,
+                    "sha256": spec.expected_sha256,
+                    "sha256_present": bool(spec.expected_sha256),
                     "source": spec.source_type,
                     "source_url": spec.source_url,
                 }
@@ -225,7 +227,8 @@ def _cmd_list_models(args: argparse.Namespace) -> int:
         print("no models found in registry")
         return 0
     for spec in specs:
-        print(f"{spec.model_id}\t{spec.family}\t{spec.version}\t{spec.license}")
+        sha_status = "present" if spec.expected_sha256 else "missing"
+        print(f"{spec.model_id}\t{spec.family}\t{spec.version}\t{spec.license}\tsha256:{sha_status}")
     return 0
 
 
@@ -238,6 +241,10 @@ def _cmd_fetch_model(args: argparse.Namespace) -> int:
             out_dir=str(args.out),
             cache_dir=getattr(args, "cache_dir", None),
             accept_license=bool(getattr(args, "accept_license", False)),
+            allow_unsafe=bool(getattr(args, "allow_unsafe", False)),
+            allow_non_apache=bool(getattr(args, "allow_non_apache", False)),
+            retries=int(getattr(args, "retries", 3) or 3),
+            timeout=float(getattr(args, "timeout", 60.0) or 60.0),
             registry_path=getattr(args, "registry", None),
             force=bool(getattr(args, "force", False)),
         )
@@ -245,6 +252,8 @@ def _cmd_fetch_model(args: argparse.Namespace) -> int:
         raise SystemExit(str(exc)) from exc
     except KeyError as exc:
         raise SystemExit(f"unknown model id: {exc.args[0]} (use `yolozu list models`)") from exc
+    except Exception as exc:
+        raise SystemExit(str(exc)) from exc
     print(str(model_path))
     print(str(meta_path))
     return 0
@@ -1388,6 +1397,10 @@ def main(argv: list[str] | None = None) -> int:
     fetch.add_argument("--cache-dir", default=None, help="Cache directory (default: ~/.cache/yolozu/models).")
     fetch.add_argument("--registry", default=None, help="Optional registry JSON path override.")
     fetch.add_argument("--accept-license", action="store_true", help="Required acknowledgment to download the selected model.")
+    fetch.add_argument("--allow-unsafe", action="store_true", help="Allow fetching models without sha256 in the registry.")
+    fetch.add_argument("--allow-non-apache", action="store_true", help="Allow fetching models with non-Apache-friendly licenses.")
+    fetch.add_argument("--retries", type=int, default=3, help="Download retry count (default: 3).")
+    fetch.add_argument("--timeout", type=float, default=60.0, help="Download timeout in seconds (default: 60).")
     fetch.add_argument("--force", action="store_true", help="Re-download to cache and overwrite output artifact.")
 
     export = sub.add_parser("export", help="Export predictions.json artifacts.")
