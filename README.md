@@ -32,12 +32,12 @@ Docs index (start here): [`docs/README.md`](docs/README.md).
 
 ## Learning Features
 
-### 1. Run Contract Training (再現可能な学習運用)
+### 1. Run Contract Training
 - **Value:** Consolidates training artifacts (checkpoints, metrics, exports, parity reports) under `runs/<run_id>/`, ensuring easy comparison, regression detection, and reproducibility.
 - **Example Command:** `yolozu train ... --run-id exp01` (contract example)
 - **Artifacts:** Checkpoints, metrics JSONL, ONNX exports, parity reports.
 
-### 2. Continual Learning (反忘却：タスク列の継続微調整)
+### 2. Continual Learning (破壊的忘却対策)
 - **Value:** Enables fine-tuning across task/domain sequences while providing mechanisms to evaluate and mitigate forgetting.
   - **Core Ideas:** Memoryless self-distillation, optional replay buffer, and parameter-efficient updates like LoRA.
 - **Entry Points:**
@@ -45,11 +45,11 @@ Docs index (start here): [`docs/README.md`](docs/README.md).
   - Evaluation: `python3 tools/eval_continual.py --run-json ...` (can run on CPU)
 - **Artifacts:** `continual_run.json` (single source of truth), replay_buffer.json.
 
-### 3. Test-Time Training (TTT: Tent/MIM/CoTTA/EATA/SAR)
+### 3. Test-Time Training (TTT: Tent/MIM/CoTTA/EATA/SAR):推論時学習
 - **Value:** Provides reproducible test-time adaptation under domain shifts with constraints on cost, reset protocols, and evaluation conditions.
 - **Details:** Includes methods like Tent, MIM, CoTTA, EATA, SAR and ensures fixed datasets, batch limits, and seed/reset controls.
 
-### 4. (Quasi-training feature) Prediction Distillation (教師pred → 生徒predのブレンド)
+### 4. (Quasi-training feature) Prediction Distillation  (蒸留機能)
 - **Value:** Fast-tracks research loops and ablation by generating distilled predictions from teacher/student predictions.
 - **Example Command:** `python3 tools/distill_predictions.py --student ... --teacher ... --dataset ...`
 
