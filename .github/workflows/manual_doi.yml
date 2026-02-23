@@ -229,7 +229,7 @@ jobs:
             raise SystemExit("Zenodo draft response missing links.bucket")
 
           upload_target = f"{bucket.rstrip('/')}/{urllib.parse.quote(pdf_path.name)}"
-          request_json("PUT", upload_target, data=pdf_path.read_bytes(), content_type="application/pdf")
+          request_json("PUT", upload_target, data=pdf_path.read_bytes(), content_type="application/octet-stream")
 
           metadata = {
             "title": f"YOLOZU Manual {version}",
