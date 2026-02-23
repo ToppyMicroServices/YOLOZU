@@ -32,6 +32,11 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertIn("Sdist contents gate", ci)
         self.assertIn("tools/check_golden_compatibility.py", ci)
 
+    def test_manifest_includes_release_and_manifest_payload(self):
+        manifest_in = (self.repo_root / "MANIFEST.in").read_text(encoding="utf-8")
+        self.assertIn("include RELEASE.md", manifest_in)
+        self.assertIn("include tools/manifest.json", manifest_in)
+
     def test_security_doc_contains_reporting_and_support_scope(self):
         security = (self.repo_root / "SECURITY.md").read_text(encoding="utf-8")
         self.assertIn("Reporting a vulnerability", security)

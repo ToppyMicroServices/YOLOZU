@@ -4,9 +4,11 @@ include LICENSE
 include NOTICE
 include COPYRIGHT
 include SECURITY.md
+include RELEASE.md
 include CODE_OF_CONDUCT.md
 include CONTRIBUTING.md
 include CITATION.cff
+include tools/manifest.json
 
 recursive-include yolozu/data *.json *.yaml *.yml
 recursive-include docs *.md *.json
