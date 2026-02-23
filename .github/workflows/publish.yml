@@ -15,6 +15,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate release tag matches package version
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          python - <<'PY'
+          import pathlib
+          import re
+
+          tag = "${{ github.event.release.tag_name }}"
+          expected = tag[1:] if tag.startswith("v") else tag
+          source = pathlib.Path("yolozu/__init__.py").read_text(encoding="utf-8")
+          match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', source)
+          if not match:
+            raise SystemExit("Could not parse __version__ from yolozu/__init__.py")
+          package_version = match.group(1)
+          if package_version != expected:
+            raise SystemExit(
+              f"Release tag/version mismatch: tag={tag} expected={expected} package={package_version}"
+            )
+          print(f"release tag matches package version: {package_version}")
+          PY
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

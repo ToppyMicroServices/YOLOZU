@@ -127,6 +127,32 @@ Validate the tool registry using:
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 \end{lstlisting}
 
+\section{Release Automation: Manual PDF DOI as a Separate Record}
+For release operations, YOLOZU intentionally keeps software DOI and manual DOI lifecycles independent:
+\begin{itemize}
+  \item Software release and PyPI publish are handled by \path{.github/workflows/publish.yml}.
+  \item Manual PDF DOI publishing is handled by \path{.github/workflows/manual_doi.yml}.
+\end{itemize}
+
+The manual DOI workflow builds \path{manual/build/yolozu_manual.pdf} and publishes it to Zenodo either as:
+\begin{itemize}
+  \item a new version (\texttt{actions/newversion}) when a manual \texttt{conceptrecid} is configured, or
+  \item a first deposition when no prior concept record exists.
+\end{itemize}
+
+To preserve machine-readable linkage between records, manual metadata sets:
+\begin{itemize}
+  \item \texttt{related\_identifiers[].relation = isSupplementTo}
+  \item \texttt{related\_identifiers[].scheme = doi}
+  \item \texttt{related\_identifiers[].identifier =} software concept DOI
+\end{itemize}
+
+Operationally, configure repository variables:
+\begin{itemize}
+  \item \texttt{YOLOZU\_SOFTWARE\_CONCEPT\_DOI} (required)
+  \item \texttt{YOLOZU\_MANUAL\_CONCEPTRECID} (recommended for versioned manual updates)
+\end{itemize}
+
 \section{Path Resolution Behavior (Critical for Automation)}
 Many tools adhere to consistent path resolution rules (summarized in \path{docs/tools_index.md} and \path{docs/ai_first.md}):
 \begin{itemize}

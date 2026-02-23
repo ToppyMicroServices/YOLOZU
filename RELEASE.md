@@ -9,6 +9,7 @@ This avoids long-lived PyPI API tokens.
 - Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
 - **Tag push alone does not publish to PyPI**
 - Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs
+- `publish.yml` now validates that release tag `vX.Y.Z` matches `yolozu/__init__.py::__version__`.
 
 ## One-time setup (PyPI)
 
@@ -61,6 +62,38 @@ This action triggers `.github/workflows/publish.yml`, which builds and publishes
 
 `publish.yml` also supports manual execution (`workflow_dispatch`) for operational recovery.
 Use only when release metadata (tag/release/version/changelog) is already aligned.
+
+## Manual PDF DOI (separate from software DOI)
+
+YOLOZU publishes software artifacts via GitHub Release/PyPI and can publish the manual PDF as a separate Zenodo record:
+
+- Workflow: `.github/workflows/manual_doi.yml`
+- Trigger: GitHub Release `published` (or manual `workflow_dispatch`)
+- Build: `manual/build/yolozu_manual.pdf`
+- Zenodo flow:
+  - If `YOLOZU_MANUAL_CONCEPTRECID` exists: call `actions/newversion`
+  - Else: create a new deposition
+  - Upload PDF to bucket, set metadata, and publish (or keep draft on manual runs)
+- Linkage:
+  - `related_identifiers` is written with relation `isSupplementTo`
+  - Identifier source: repo variable `YOLOZU_SOFTWARE_CONCEPT_DOI`
+
+Required repository secrets:
+
+- `ZENODO_TOKEN` (production Zenodo)
+- `ZENODO_SANDBOX_TOKEN` (optional, for sandbox runs)
+
+Required repository variables:
+
+- `YOLOZU_SOFTWARE_CONCEPT_DOI` (software concept DOI; stable cross-version reference)
+
+Recommended repository variable:
+
+- `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid used for versioned `newversion` publishing)
+
+Workflow artifact:
+
+- `reports/manual_doi_publish.json` (DOI, concept DOI, conceptrecid, deposition id, URL, state)
 
 ## Notes
 

@@ -12,6 +12,7 @@ class TestReleaseReadinessDocs(unittest.TestCase):
 
         self.assertIn("release:", publish)
         self.assertIn("types: [published]", publish)
+        self.assertIn("Validate release tag matches package version", publish)
         self.assertIn("GitHub Release", release_md)
         self.assertIn("Tag push alone does not publish", release_md)
 
@@ -36,6 +37,14 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         manifest_in = (self.repo_root / "MANIFEST.in").read_text(encoding="utf-8")
         self.assertIn("include RELEASE.md", manifest_in)
         self.assertIn("include tools/manifest.json", manifest_in)
+
+    def test_manual_doi_workflow_exists_and_links_to_software_concept_doi(self):
+        workflow = (self.repo_root / ".github" / "workflows" / "manual_doi.yml").read_text(encoding="utf-8")
+        self.assertIn("types: [published]", workflow)
+        self.assertIn("actions/newversion", workflow)
+        self.assertIn("related_identifiers", workflow)
+        self.assertIn("isSupplementTo", workflow)
+        self.assertIn("YOLOZU_SOFTWARE_CONCEPT_DOI", workflow)
 
     def test_security_doc_contains_reporting_and_support_scope(self):
         security = (self.repo_root / "SECURITY.md").read_text(encoding="utf-8")

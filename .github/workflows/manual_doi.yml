@@ -1,0 +1,310 @@
+name: manual-doi
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      zenodo_environment:
+        description: "Target Zenodo environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - sandbox
+      manual_version:
+        description: "Manual version override (default: release tag/ref)"
+        required: false
+        default: ""
+      manual_conceptrecid:
+        description: "Zenodo conceptrecid for manual record (override)"
+        required: false
+        default: ""
+      software_concept_doi:
+        description: "Software concept DOI override (doi:10.... or 10....)"
+        required: false
+        default: ""
+      publish_record:
+        description: "Publish record (false keeps a draft)"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish_manual_doi:
+    runs-on: ubuntu-latest
+    env:
+      ZENODO_URL_PRODUCTION: "https://zenodo.org"
+      ZENODO_URL_SANDBOX: "https://sandbox.zenodo.org"
+      DEFAULT_SOFTWARE_CONCEPT_DOI: ${{ vars.YOLOZU_SOFTWARE_CONCEPT_DOI }}
+      DEFAULT_MANUAL_CONCEPTRECID: ${{ vars.YOLOZU_MANUAL_CONCEPTRECID }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      REF_NAME: ${{ github.ref_name }}
+      EVENT_NAME: ${{ github.event_name }}
+      INPUT_ZENODO_ENV: ${{ github.event.inputs.zenodo_environment || 'production' }}
+      INPUT_MANUAL_VERSION: ${{ github.event.inputs.manual_version || '' }}
+      INPUT_MANUAL_CONCEPTRECID: ${{ github.event.inputs.manual_conceptrecid || '' }}
+      INPUT_SOFTWARE_CONCEPT_DOI: ${{ github.event.inputs.software_concept_doi || '' }}
+      INPUT_PUBLISH_RECORD: ${{ github.event.inputs.publish_record || 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build manual PDF
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: manual
+          root_file: main.tex
+          args: -pdf -interaction=nonstopmode -halt-on-error -outdir=build -jobname=yolozu_manual
+          pre_compile: python3 ../tools/generate_manual_import_graphs.py
+
+      - name: Verify manual artifact
+        run: |
+          test -f manual/build/yolozu_manual.pdf
+          ls -lh manual/build/yolozu_manual.pdf
+
+      - name: Upload manual PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual_pdf
+          path: manual/build/yolozu_manual.pdf
+
+      - name: Resolve Zenodo context
+        id: ctx
+        env:
+          ZENODO_TOKEN_PRODUCTION: ${{ secrets.ZENODO_TOKEN }}
+          ZENODO_TOKEN_SANDBOX: ${{ secrets.ZENODO_SANDBOX_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          selected_env="${INPUT_ZENODO_ENV}"
+          if [[ "${selected_env}" == "sandbox" ]]; then
+            zenodo_url="${ZENODO_URL_SANDBOX}"
+            zenodo_token="${ZENODO_TOKEN_SANDBOX}"
+          else
+            selected_env="production"
+            zenodo_url="${ZENODO_URL_PRODUCTION}"
+            zenodo_token="${ZENODO_TOKEN_PRODUCTION}"
+          fi
+
+          if [[ -z "${zenodo_token}" ]]; then
+            if [[ "${selected_env}" == "sandbox" ]]; then
+              echo "Missing secret: ZENODO_SANDBOX_TOKEN"
+            else
+              echo "Missing secret: ZENODO_TOKEN"
+            fi
+            exit 1
+          fi
+
+          manual_version="${INPUT_MANUAL_VERSION}"
+          if [[ -z "${manual_version}" ]]; then
+            if [[ -n "${RELEASE_TAG}" ]]; then
+              manual_version="${RELEASE_TAG}"
+            else
+              manual_version="${REF_NAME}"
+            fi
+          fi
+          if [[ "${manual_version}" == v* ]]; then
+            manual_version="${manual_version#v}"
+          fi
+
+          manual_conceptrecid="${INPUT_MANUAL_CONCEPTRECID}"
+          if [[ -z "${manual_conceptrecid}" ]]; then
+            manual_conceptrecid="${DEFAULT_MANUAL_CONCEPTRECID}"
+          fi
+
+          software_concept_doi="${INPUT_SOFTWARE_CONCEPT_DOI}"
+          if [[ -z "${software_concept_doi}" ]]; then
+            software_concept_doi="${DEFAULT_SOFTWARE_CONCEPT_DOI}"
+          fi
+
+          publish_record="${INPUT_PUBLISH_RECORD}"
+          if [[ "${EVENT_NAME}" != "workflow_dispatch" ]]; then
+            publish_record="true"
+          fi
+
+          if [[ -z "${software_concept_doi}" ]]; then
+            echo "Missing software concept DOI. Set repo variable YOLOZU_SOFTWARE_CONCEPT_DOI or provide workflow input software_concept_doi."
+            exit 1
+          fi
+
+          {
+            echo "ZENODO_URL=${zenodo_url}"
+            echo "ZENODO_ACCESS_TOKEN=${zenodo_token}"
+            echo "MANUAL_VERSION=${manual_version}"
+            echo "MANUAL_CONCEPTRECID_ACTIVE=${manual_conceptrecid}"
+            echo "SOFTWARE_CONCEPT_DOI_ACTIVE=${software_concept_doi}"
+            echo "MANUAL_PUBLISH_RECORD=${publish_record}"
+          } >> "$GITHUB_ENV"
+
+          {
+            echo "selected_env=${selected_env}"
+            echo "manual_version=${manual_version}"
+            echo "manual_conceptrecid=${manual_conceptrecid}"
+            echo "software_concept_doi=${software_concept_doi}"
+            echo "publish_record=${publish_record}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create/newversion deposition, upload PDF, publish
+        id: zenodo
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          zenodo_url = os.environ["ZENODO_URL"].rstrip("/")
+          token = os.environ["ZENODO_ACCESS_TOKEN"]
+          version = os.environ["MANUAL_VERSION"]
+          conceptrecid = os.environ.get("MANUAL_CONCEPTRECID_ACTIVE", "").strip()
+          software_concept_doi_raw = os.environ.get("SOFTWARE_CONCEPT_DOI_ACTIVE", "").strip()
+          publish_record = os.environ.get("MANUAL_PUBLISH_RECORD", "true").strip().lower() == "true"
+          pdf_path = Path("manual/build/yolozu_manual.pdf")
+
+          if not pdf_path.is_file():
+            raise SystemExit(f"manual PDF not found: {pdf_path}")
+
+          def normalize_doi(value: str) -> str:
+            value = value.strip()
+            value = re.sub(r"^https?://(dx\.)?doi\.org/", "", value, flags=re.IGNORECASE)
+            value = re.sub(r"^doi:\s*", "", value, flags=re.IGNORECASE)
+            return value.strip()
+
+          software_concept_doi = normalize_doi(software_concept_doi_raw)
+          if not software_concept_doi:
+            raise SystemExit("software concept DOI is empty after normalization")
+
+          def request_json(method: str, endpoint: str, payload: dict | None = None, data: bytes | None = None, content_type: str | None = None) -> dict:
+            if endpoint.startswith("http://") or endpoint.startswith("https://"):
+              url = endpoint
+            else:
+              url = f"{zenodo_url}{endpoint}"
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}access_token={urllib.parse.quote(token)}"
+
+            body = None
+            headers: dict[str, str] = {}
+            if payload is not None:
+              body = json.dumps(payload).encode("utf-8")
+              headers["Content-Type"] = "application/json"
+            elif data is not None:
+              body = data
+              if content_type:
+                headers["Content-Type"] = content_type
+
+            req = urllib.request.Request(url, method=method, headers=headers, data=body)
+            try:
+              with urllib.request.urlopen(req) as response:
+                text = response.read().decode("utf-8")
+            except urllib.error.HTTPError as exc:
+              details = exc.read().decode("utf-8", errors="replace")
+              raise SystemExit(f"Zenodo API error [{exc.code}] {method} {endpoint}: {details}") from exc
+
+            text = text.strip()
+            return json.loads(text) if text else {}
+
+          if conceptrecid:
+            newversion = request_json("POST", f"/api/deposit/depositions/{conceptrecid}/actions/newversion", payload={})
+            latest_draft = ((newversion.get("links") or {}).get("latest_draft") or "").strip()
+            if not latest_draft:
+              raise SystemExit("Zenodo newversion response missing links.latest_draft")
+            draft = request_json("GET", latest_draft)
+          else:
+            draft = request_json("POST", "/api/deposit/depositions", payload={})
+
+          draft_id = draft.get("id")
+          if not draft_id:
+            raise SystemExit("Zenodo draft response missing id")
+          bucket = ((draft.get("links") or {}).get("bucket") or "").strip()
+          if not bucket:
+            raise SystemExit("Zenodo draft response missing links.bucket")
+
+          upload_target = f"{bucket.rstrip('/')}/{urllib.parse.quote(pdf_path.name)}"
+          request_json("PUT", upload_target, data=pdf_path.read_bytes(), content_type="application/pdf")
+
+          metadata = {
+            "title": f"YOLOZU Manual {version}",
+            "upload_type": "publication",
+            "publication_type": "other",
+            "description": (
+              "YOLOZU manual PDF for release "
+              f"{version}. This record is versioned independently and links to the YOLOZU software concept DOI."
+            ),
+            "creators": [{"name": "YOLOZU contributors"}],
+            "version": version,
+            "language": "eng",
+            "license": "Apache-2.0",
+            "prereserve_doi": True,
+            "related_identifiers": [
+              {
+                "identifier": software_concept_doi,
+                "relation": "isSupplementTo",
+                "scheme": "doi",
+                "resource_type": "software",
+              }
+            ],
+          }
+
+          updated = request_json("PUT", f"/api/deposit/depositions/{draft_id}", payload={"metadata": metadata})
+          final_doc = updated
+          state = "draft"
+          if publish_record:
+            final_doc = request_json("POST", f"/api/deposit/depositions/{draft_id}/actions/publish", payload={})
+            state = "published"
+
+          meta = final_doc.get("metadata") or {}
+          reserved = meta.get("prereserve_doi") or {}
+          result = {
+            "state": state,
+            "zenodo_url": zenodo_url,
+            "deposition_id": final_doc.get("id") or draft_id,
+            "manual_version": version,
+            "doi": final_doc.get("doi") or reserved.get("doi") or "",
+            "conceptdoi": final_doc.get("conceptdoi") or "",
+            "conceptrecid": str(final_doc.get("conceptrecid") or draft.get("conceptrecid") or ""),
+            "record_url": ((final_doc.get("links") or {}).get("html") or ""),
+            "software_concept_doi": software_concept_doi,
+            "pdf_path": str(pdf_path),
+          }
+
+          out_path = Path("reports/manual_doi_publish.json")
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          out_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          print(json.dumps(result, indent=2, ensure_ascii=False))
+          output_file = os.environ.get("GITHUB_OUTPUT")
+          if output_file:
+            with Path(output_file).open("a", encoding="utf-8") as f:
+              for key in ["state", "deposition_id", "doi", "conceptdoi", "conceptrecid", "record_url", "manual_version"]:
+                value = str(result.get(key) or "")
+                f.write(f"{key}={value}\n")
+          PY
+
+      - name: Upload Zenodo publish report
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual_doi_publish
+          path: reports/manual_doi_publish.json
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Manual DOI publish result"
+            echo "- environment: ${{ steps.ctx.outputs.selected_env }}"
+            echo "- state: ${{ steps.zenodo.outputs.state }}"
+            echo "- version: ${{ steps.zenodo.outputs.manual_version }}"
+            echo "- deposition_id: ${{ steps.zenodo.outputs.deposition_id }}"
+            echo "- doi: ${{ steps.zenodo.outputs.doi }}"
+            echo "- conceptdoi: ${{ steps.zenodo.outputs.conceptdoi }}"
+            echo "- conceptrecid: ${{ steps.zenodo.outputs.conceptrecid }}"
+            echo "- record_url: ${{ steps.zenodo.outputs.record_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
