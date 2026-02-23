@@ -1,0 +1,2131 @@
+{
+  "schema_version": 1,
+  "source": "yolozu.integrations",
+  "tools": [
+    {
+      "canonical_name": "doctor",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "doctor",
+        "params": [
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/doctor.json"
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "doctor",
+        "function": "doctor_tool",
+        "params": [
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/doctor.json"
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/doctor",
+        "route_fn": "doctor_route",
+        "request_model": "DoctorRequest",
+        "params": [
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/doctor.json"
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "validate_predictions",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "validate_predictions",
+        "params": [
+          {
+            "name": "path",
+            "required": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "validate_predictions",
+        "function": "validate_predictions_tool",
+        "params": [
+          {
+            "name": "path",
+            "required": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/validate/predictions",
+        "route_fn": "validate_predictions_route",
+        "request_model": "ValidatePredictionsRequest",
+        "params": [
+          {
+            "name": "path",
+            "required": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "validate_dataset",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "validate_dataset",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "fail"
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "validate_dataset",
+        "function": "validate_dataset_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "fail"
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/validate/dataset",
+        "route_fn": "validate_dataset_route",
+        "request_model": "ValidateDatasetRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "fail"
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "eval_coco",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "eval_coco",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_coco_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "eval_coco",
+        "function": "eval_coco_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_coco_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/eval/coco",
+        "route_fn": "eval_coco_route",
+        "request_model": "EvalCocoRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_coco_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "predict_images",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "predict_images",
+        "params": [
+          {
+            "name": "input_dir",
+            "required": true
+          },
+          {
+            "name": "backend",
+            "required": false,
+            "default": "dummy"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_predict_images.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "predict_images",
+        "function": "predict_images_tool",
+        "params": [
+          {
+            "name": "input_dir",
+            "required": true
+          },
+          {
+            "name": "backend",
+            "required": false,
+            "default": "dummy"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_predict_images.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/predict/images",
+        "route_fn": "predict_images_route",
+        "request_model": "PredictImagesRequest",
+        "params": [
+          {
+            "name": "input_dir",
+            "required": true
+          },
+          {
+            "name": "backend",
+            "required": false,
+            "default": "dummy"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_predict_images.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "dry_run",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "strict",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "parity_check",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "parity_check",
+        "params": [
+          {
+            "name": "reference",
+            "required": true
+          },
+          {
+            "name": "candidate",
+            "required": true
+          },
+          {
+            "name": "iou_thresh",
+            "required": false,
+            "default": 0.5
+          },
+          {
+            "name": "score_atol",
+            "required": false,
+            "default": 1e-06
+          },
+          {
+            "name": "bbox_atol",
+            "required": false,
+            "default": 0.0001
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "image_size",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "parity_check",
+        "function": "parity_check_tool",
+        "params": [
+          {
+            "name": "reference",
+            "required": true
+          },
+          {
+            "name": "candidate",
+            "required": true
+          },
+          {
+            "name": "iou_thresh",
+            "required": false,
+            "default": 0.5
+          },
+          {
+            "name": "score_atol",
+            "required": false,
+            "default": 1e-06
+          },
+          {
+            "name": "bbox_atol",
+            "required": false,
+            "default": 0.0001
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "image_size",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/parity/check",
+        "route_fn": "parity_check_route",
+        "request_model": "ParityCheckRequest",
+        "params": [
+          {
+            "name": "reference",
+            "required": true
+          },
+          {
+            "name": "candidate",
+            "required": true
+          },
+          {
+            "name": "iou_thresh",
+            "required": false,
+            "default": 0.5
+          },
+          {
+            "name": "score_atol",
+            "required": false,
+            "default": 1e-06
+          },
+          {
+            "name": "bbox_atol",
+            "required": false,
+            "default": 0.0001
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "image_size",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "calibrate_predictions",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "calibrate_predictions",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "fracal"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": "auto"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_calibrated_predictions.json"
+          },
+          {
+            "name": "output_report",
+            "required": false,
+            "default": "reports/mcp_calibration_report.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "calibrate_predictions",
+        "function": "calibrate_predictions_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "fracal"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": "auto"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_calibrated_predictions.json"
+          },
+          {
+            "name": "output_report",
+            "required": false,
+            "default": "reports/mcp_calibration_report.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/calibrate/predictions",
+        "route_fn": "calibrate_predictions_route",
+        "request_model": "CalibratePredictionsRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "fracal"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": "auto"
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_calibrated_predictions.json"
+          },
+          {
+            "name": "output_report",
+            "required": false,
+            "default": "reports/mcp_calibration_report.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "eval_instance_seg",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "eval_instance_seg",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_instance_seg_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "min_score",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "allow_rgb_masks",
+            "required": false,
+            "default": false
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "eval_instance_seg",
+        "function": "eval_instance_seg_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_instance_seg_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "min_score",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "allow_rgb_masks",
+            "required": false,
+            "default": false
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/eval/instance-seg",
+        "route_fn": "eval_instance_seg_route",
+        "request_model": "EvalInstanceSegRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_instance_seg_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "min_score",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "allow_rgb_masks",
+            "required": false,
+            "default": false
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "eval_long_tail",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "eval_long_tail",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_long_tail_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "max_detections",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "eval_long_tail",
+        "function": "eval_long_tail_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_long_tail_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "max_detections",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/eval/long-tail",
+        "route_fn": "eval_long_tail_route",
+        "request_model": "EvalLongTailRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "predictions",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": "reports/mcp_long_tail_eval.json"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "max_detections",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "run_scenarios",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "run_scenarios",
+        "params": [
+          {
+            "name": "config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "run_scenarios",
+        "function": "run_scenarios_tool",
+        "params": [
+          {
+            "name": "config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/run/scenarios",
+        "route_fn": "run_scenarios_route",
+        "request_model": "RunScenariosRequest",
+        "params": [
+          {
+            "name": "config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "convert_dataset",
+      "category": "sync",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "convert_dataset",
+        "params": [
+          {
+            "name": "from_format",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "data",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "args_yaml",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "coco_root",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "instances_json",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "manifest"
+          },
+          {
+            "name": "include_crowd",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "convert_dataset",
+        "function": "convert_dataset_tool",
+        "params": [
+          {
+            "name": "from_format",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "data",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "args_yaml",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "coco_root",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "instances_json",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "manifest"
+          },
+          {
+            "name": "include_crowd",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/convert/dataset",
+        "route_fn": "convert_dataset_route",
+        "request_model": "ConvertDatasetRequest",
+        "params": [
+          {
+            "name": "from_format",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "data",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "args_yaml",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "task",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "coco_root",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "instances_json",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "default": "manifest"
+          },
+          {
+            "name": "include_crowd",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "train_job",
+      "category": "job",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "train_job",
+        "params": [
+          {
+            "name": "train_config",
+            "required": true
+          },
+          {
+            "name": "run_id",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "resume",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "train_job",
+        "function": "train_job_tool",
+        "params": [
+          {
+            "name": "train_config",
+            "required": true
+          },
+          {
+            "name": "run_id",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "resume",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/train",
+        "route_fn": "train_job_route",
+        "request_model": "TrainJobRequest",
+        "params": [
+          {
+            "name": "train_config",
+            "required": true
+          },
+          {
+            "name": "run_id",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "resume",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "export_predictions_job",
+      "category": "job",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "export_predictions_job",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": [
+          {
+            "name": "export_onnx_job",
+            "params": [
+              {
+                "name": "dataset",
+                "required": true
+              },
+              {
+                "name": "output",
+                "required": true
+              },
+              {
+                "name": "split",
+                "required": false,
+                "default": null
+              },
+              {
+                "name": "force",
+                "required": false,
+                "default": true
+              }
+            ],
+            "parity_with_tool_runner": true
+          }
+        ]
+      },
+      "mcp": {
+        "tool": "export_predictions_job",
+        "function": "export_predictions_job_tool",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": [
+          {
+            "name": "export_onnx_job",
+            "function": "export_onnx_job_tool",
+            "params": [
+              {
+                "name": "dataset",
+                "required": true
+              },
+              {
+                "name": "output",
+                "required": true
+              },
+              {
+                "name": "split",
+                "required": false,
+                "default": null
+              },
+              {
+                "name": "force",
+                "required": false,
+                "default": true
+              }
+            ],
+            "parity_with_tool_runner": true
+          }
+        ]
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/export-predictions",
+        "route_fn": "export_predictions_job_route",
+        "request_model": "ExportPredictionsJobRequest",
+        "params": [
+          {
+            "name": "dataset",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": true
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
+          }
+        ],
+        "aliases": [
+          {
+            "method": "POST",
+            "path": "/jobs/export-onnx",
+            "route_fn": "export_onnx_job_route",
+            "request_model": "ExportOnnxJobRequest",
+            "params": [
+              {
+                "name": "dataset",
+                "required": true
+              },
+              {
+                "name": "output",
+                "required": true
+              },
+              {
+                "name": "split",
+                "required": false,
+                "default": null
+              },
+              {
+                "name": "force",
+                "required": false,
+                "default": true
+              }
+            ],
+            "parity_with_tool_runner": true
+          }
+        ]
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "test_job",
+      "category": "job",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "test_job",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "test_job",
+        "function": "test_job_tool",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/test",
+        "route_fn": "test_job_route",
+        "request_model": "TestJobRequest",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "ttt_job",
+      "category": "job",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "ttt_job",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "tent"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "ttt_job",
+        "function": "ttt_job_tool",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "tent"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/ttt",
+        "route_fn": "ttt_job_route",
+        "request_model": "TTTJobRequest",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "tent"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "ctta_job",
+      "category": "job",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "ctta_job",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "cotta"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "ctta_job",
+        "function": "ctta_job_tool",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "cotta"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/ctta",
+        "route_fn": "ctta_job_route",
+        "request_model": "CTTAJobRequest",
+        "params": [
+          {
+            "name": "test_config",
+            "required": true
+          },
+          {
+            "name": "method",
+            "required": false,
+            "default": "cotta"
+          },
+          {
+            "name": "preset",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "steps",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "reset",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "extra_args",
+            "required": false,
+            "default": null
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "jobs_list",
+      "category": "control",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "jobs_list",
+        "params": [],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "jobs_list",
+        "function": "jobs_list_tool",
+        "params": [],
+        "aliases": []
+      },
+      "actions": {
+        "method": "GET",
+        "path": "/jobs",
+        "route_fn": "jobs_list_route",
+        "request_model": null,
+        "params": [],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "jobs_status",
+      "category": "control",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "jobs_status",
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "jobs_status",
+        "function": "jobs_status_tool",
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "GET",
+        "path": "/jobs/{job_id}",
+        "route_fn": "jobs_status_route",
+        "request_model": null,
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "jobs_cancel",
+      "category": "control",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "jobs_cancel",
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "jobs_cancel",
+        "function": "jobs_cancel_tool",
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "POST",
+        "path": "/jobs/{job_id}/cancel",
+        "route_fn": "jobs_cancel_route",
+        "request_model": null,
+        "params": [
+          {
+            "name": "job_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "runs_list",
+      "category": "control",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "runs_list",
+        "params": [
+          {
+            "name": "limit",
+            "required": false,
+            "default": 20
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "runs_list",
+        "function": "runs_list_tool",
+        "params": [
+          {
+            "name": "limit",
+            "required": false,
+            "default": 20
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "GET",
+        "path": "/runs",
+        "route_fn": "runs_list_route",
+        "request_model": null,
+        "params": [
+          {
+            "name": "limit",
+            "required": false,
+            "default": 20
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    },
+    {
+      "canonical_name": "runs_describe",
+      "category": "control",
+      "response_keys": [
+        "ok",
+        "tool",
+        "summary",
+        "exit_code"
+      ],
+      "tool_runner": {
+        "function": "runs_describe",
+        "params": [
+          {
+            "name": "run_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "mcp": {
+        "tool": "runs_describe",
+        "function": "runs_describe_tool",
+        "params": [
+          {
+            "name": "run_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "actions": {
+        "method": "GET",
+        "path": "/runs/{run_id}",
+        "route_fn": "runs_describe_route",
+        "request_model": null,
+        "params": [
+          {
+            "name": "run_id",
+            "required": true
+          }
+        ],
+        "aliases": []
+      },
+      "parity": {
+        "mcp_vs_tool_runner": true,
+        "actions_vs_tool_runner": true,
+        "tool_runner_aliases": true,
+        "mcp_aliases": true,
+        "actions_aliases": true
+      }
+    }
+  ]
+}

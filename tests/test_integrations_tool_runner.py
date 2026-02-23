@@ -199,14 +199,37 @@ class TestIntegrationToolRunner(unittest.TestCase):
         self.assertTrue(out["ok"])
         submit_job.assert_called_once_with("train", ["train", "configs/train.yaml", "--run-id", "exp01", "--resume", "runs/exp00"])
 
-    def test_d11_export_job_args(self):
+    def test_d11_export_predictions_job_args(self):
+        with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:
+            submit_job.return_value = {"ok": True, "tool": "jobs.submit", "job_id": "job_x"}
+            out = tool_runner.export_predictions_job("data/smoke", "reports/export_predictions.json", split="val", force=True)
+
+        self.assertTrue(out["ok"])
+        submit_job.assert_called_once_with(
+            "export_predictions",
+            [
+                "export",
+                "--backend",
+                "labels",
+                "--dataset",
+                "data/smoke",
+                "--output",
+                "reports/export_predictions.json",
+                "--split",
+                "val",
+                "--force",
+            ],
+            artifacts={"predictions": "reports/export_predictions.json"},
+        )
+
+    def test_d11_export_onnx_job_alias_args(self):
         with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:
             submit_job.return_value = {"ok": True, "tool": "jobs.submit", "job_id": "job_x"}
             out = tool_runner.export_onnx_job("data/smoke", "reports/export_predictions.json", split="val", force=True)
 
         self.assertTrue(out["ok"])
         submit_job.assert_called_once_with(
-            "export",
+            "export_predictions",
             [
                 "export",
                 "--backend",

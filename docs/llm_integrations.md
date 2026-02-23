@@ -23,7 +23,8 @@ Exposed tools (minimum):
 Also available in the same backend surface:
 - inference/calibration: `predict_images`, `parity_check`, `calibrate_predictions`
 - evaluation: `eval_instance_seg`, `eval_long_tail`
-- async jobs: `train_job`, `export_onnx_job`, `test_job`, `ttt_job`, `ctta_job`
+- async jobs: `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`
+- compatibility alias: `export_onnx_job` (same behavior as `export_predictions_job`)
 - job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
 
 Return format policy:
@@ -139,6 +140,10 @@ This keeps Gemini, OpenAI, and Copilot integrations aligned on one implementatio
 - OpenAI: MCP first, GPT Actions optional
 
 All four routes should share the same backend implementation in `yolozu.integrations.tool_runner`.
+
+Generated contract reference:
+- `docs/generated/mcp_actions_tool_reference.json`
+- `docs/generated/mcp_actions_tool_reference.md`
 
 ## 7) Connection templates (examples)
 

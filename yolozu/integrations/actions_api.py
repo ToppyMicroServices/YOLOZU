@@ -11,6 +11,7 @@ from .tool_runner import (
     eval_coco,
     eval_instance_seg,
     eval_long_tail,
+    export_predictions_job,
     export_onnx_job,
     jobs_cancel,
     jobs_list,
@@ -52,14 +53,14 @@ class EvalCocoRequest(BaseModel):
     predictions: str
     split: str | None = None
     dry_run: bool = True
-    output: str = "reports/actions_coco_eval.json"
+    output: str = "reports/mcp_coco_eval.json"
     max_images: int | None = None
 
 
 class PredictImagesRequest(BaseModel):
     input_dir: str
     backend: str = "dummy"
-    output: str = "reports/actions_predict_images.json"
+    output: str = "reports/mcp_predict_images.json"
     max_images: int | None = None
     dry_run: bool = True
     strict: bool = True
@@ -82,8 +83,8 @@ class CalibratePredictionsRequest(BaseModel):
     method: str = "fracal"
     split: str | None = None
     task: str = "auto"
-    output: str = "reports/actions_calibrated_predictions.json"
-    output_report: str = "reports/actions_calibration_report.json"
+    output: str = "reports/mcp_calibrated_predictions.json"
+    output_report: str = "reports/mcp_calibration_report.json"
     max_images: int | None = None
     force: bool = True
 
@@ -92,7 +93,7 @@ class EvalInstanceSegRequest(BaseModel):
     dataset: str
     predictions: str
     split: str | None = None
-    output: str = "reports/actions_instance_seg_eval.json"
+    output: str = "reports/mcp_instance_seg_eval.json"
     max_images: int | None = None
     min_score: float | None = None
     allow_rgb_masks: bool = False
@@ -102,7 +103,7 @@ class EvalLongTailRequest(BaseModel):
     dataset: str
     predictions: str
     split: str | None = None
-    output: str = "reports/actions_long_tail_eval.json"
+    output: str = "reports/mcp_long_tail_eval.json"
     max_images: int | None = None
     max_detections: int | None = None
 
@@ -132,11 +133,15 @@ class TrainJobRequest(BaseModel):
     resume: str | None = None
 
 
-class ExportOnnxJobRequest(BaseModel):
+class ExportPredictionsJobRequest(BaseModel):
     dataset: str
     output: str
     split: str | None = None
     force: bool = True
+
+
+class ExportOnnxJobRequest(ExportPredictionsJobRequest):
+    pass
 
 
 class TestJobRequest(BaseModel):
@@ -285,6 +290,11 @@ def convert_dataset_route(req: ConvertDatasetRequest) -> dict:
 @app.post("/jobs/train")
 def train_job_route(req: TrainJobRequest) -> dict:
     return train_job(train_config=req.train_config, run_id=req.run_id, resume=req.resume)
+
+
+@app.post("/jobs/export-predictions")
+def export_predictions_job_route(req: ExportPredictionsJobRequest) -> dict:
+    return export_predictions_job(dataset=req.dataset, output=req.output, split=req.split, force=req.force)
 
 
 @app.post("/jobs/export-onnx")

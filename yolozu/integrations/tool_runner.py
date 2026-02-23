@@ -271,6 +271,7 @@ def submit_job(name: str, args: list[str], *, artifacts: dict[str, str] | None =
         "ok": True,
         "tool": "jobs.submit",
         "summary": f"job queued: {job_id}",
+        "exit_code": 0,
         "job_id": job_id,
         "status": "queued",
         "meta": collect_artifact_metadata(),
@@ -282,6 +283,7 @@ def jobs_list() -> dict[str, Any]:
         "ok": True,
         "tool": "jobs.list",
         "summary": "listed jobs",
+        "exit_code": 0,
         "jobs": _JOBS.list(),
         "meta": collect_artifact_metadata(),
     }
@@ -294,6 +296,7 @@ def jobs_status(job_id: str) -> dict[str, Any]:
             "ok": False,
             "tool": "jobs.status",
             "summary": "job not found",
+            "exit_code": 1,
             "job_id": job_id,
             "meta": collect_artifact_metadata(),
         }
@@ -301,6 +304,7 @@ def jobs_status(job_id: str) -> dict[str, Any]:
         "ok": True,
         "tool": "jobs.status",
         "summary": f"job status: {status.get('status')}",
+        "exit_code": 0,
         "job": status,
         "meta": collect_artifact_metadata(),
     }
@@ -313,13 +317,16 @@ def jobs_cancel(job_id: str) -> dict[str, Any]:
             "ok": False,
             "tool": "jobs.cancel",
             "summary": "job not found",
+            "exit_code": 1,
             "job_id": job_id,
             "meta": collect_artifact_metadata(),
         }
+    cancelled = bool(out.get("cancelled"))
     return {
-        "ok": bool(out.get("cancelled")),
+        "ok": cancelled,
         "tool": "jobs.cancel",
         "summary": f"cancelled={out.get('cancelled')}",
+        "exit_code": 0 if cancelled else 1,
         **out,
         "meta": collect_artifact_metadata(),
     }
@@ -330,6 +337,7 @@ def runs_list(limit: int = 20) -> dict[str, Any]:
         "ok": True,
         "tool": "runs.list",
         "summary": "listed runs",
+        "exit_code": 0,
         "runs": list_runs(limit=limit),
         "meta": collect_artifact_metadata(),
     }
@@ -342,6 +350,7 @@ def runs_describe(run_id: str) -> dict[str, Any]:
             "ok": False,
             "tool": "runs.describe",
             "summary": "run not found",
+            "exit_code": 1,
             "run_id": run_id,
             "meta": collect_artifact_metadata(),
         }
@@ -349,6 +358,7 @@ def runs_describe(run_id: str) -> dict[str, Any]:
         "ok": True,
         "tool": "runs.describe",
         "summary": "run described",
+        "exit_code": 0,
         "run": details,
         "meta": collect_artifact_metadata(),
     }
@@ -363,13 +373,17 @@ def train_job(train_config: str, *, run_id: str | None = None, resume: str | Non
     return submit_job("train", args)
 
 
-def export_onnx_job(dataset: str, output: str, *, split: str | None = None, force: bool = True) -> dict[str, Any]:
+def export_predictions_job(dataset: str, output: str, *, split: str | None = None, force: bool = True) -> dict[str, Any]:
     args = ["export", "--backend", "labels", "--dataset", dataset, "--output", output]
     if split:
         args.extend(["--split", split])
     if force:
         args.append("--force")
-    return submit_job("export", args, artifacts={"predictions": output})
+    return submit_job("export_predictions", args, artifacts={"predictions": output})
+
+
+def export_onnx_job(dataset: str, output: str, *, split: str | None = None, force: bool = True) -> dict[str, Any]:
+    return export_predictions_job(dataset=dataset, output=output, split=split, force=force)
 
 
 def test_job(test_config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:

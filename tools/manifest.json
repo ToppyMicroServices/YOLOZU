@@ -212,6 +212,76 @@
       "docs": ["docs/openai_mcp_actions.md", "docs/mcp_extension_architecture.md", "docs/llm_integrations.md", "manual/chapters/20_llm_mcp_integrations.tex"]
     },
     {
+      "id": "generate_integration_tool_reference",
+      "entrypoint": "tools/generate_integration_tool_reference.py",
+      "runner": "python3",
+      "summary": "Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode.",
+      "tags": ["mcp", "actions", "docs", "contract", "automation"],
+      "platform": { "cpu_ok": true, "gpu_required": false, "macos_ok": true, "linux_ok": true },
+      "inputs": [
+        {
+          "name": "json_out",
+          "kind": "file",
+          "required": false,
+          "flag": "--json-out",
+          "default": "docs/generated/mcp_actions_tool_reference.json"
+        },
+        {
+          "name": "md_out",
+          "kind": "file",
+          "required": false,
+          "flag": "--md-out",
+          "default": "docs/generated/mcp_actions_tool_reference.md"
+        },
+        {
+          "name": "check",
+          "kind": "string",
+          "required": false,
+          "flag": "--check"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--json-out",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes generated MCP/Actions contract JSON."
+          },
+          {
+            "flag": "--md-out",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes generated MCP/Actions contract Markdown."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "contract_json",
+          "kind": "file",
+          "description": "Generated machine-readable MCP/Actions contract."
+        },
+        {
+          "name": "contract_md",
+          "kind": "file",
+          "description": "Generated human-readable MCP/Actions contract."
+        }
+      ],
+      "examples": [
+        {
+          "description": "Generate checked-in MCP/Actions reference docs.",
+          "command": "python3 tools/generate_integration_tool_reference.py"
+        },
+        {
+          "description": "CI drift gate: fail when generated reference is stale.",
+          "command": "python3 tools/generate_integration_tool_reference.py --check"
+        }
+      ],
+      "docs": ["docs/llm_integrations.md", "docs/mcp_extension_architecture.md", "docs/generated/mcp_actions_tool_reference.md", "manual/chapters/20_llm_mcp_integrations.tex"]
+    },
+    {
       "id": "make_subset_dataset",
       "entrypoint": "tools/make_subset_dataset.py",
       "runner": "python3",

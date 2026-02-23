@@ -93,8 +93,10 @@ class TestIntegrationLayers(unittest.TestCase):
     def test_jobs_api_shape(self):
         lst = jobs_list()
         self.assertTrue(lst["ok"])
+        self.assertIn("exit_code", lst)
         unknown = jobs_status("job_unknown")
         self.assertFalse(unknown["ok"])
+        self.assertIn("exit_code", unknown)
 
     def test_api_layer_includes_limits_metadata(self):
         completed = subprocess.CompletedProcess(args=["x"], returncode=0, stdout="ok", stderr="")

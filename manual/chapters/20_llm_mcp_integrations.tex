@@ -101,7 +101,8 @@ Operational guards in v2 layer implementation:
 
 \subsection{Asynchronous job tools}
 \begin{itemize}
-  \item \cmd{train\_job}, \cmd{export\_onnx\_job}, \cmd{test\_job}, \cmd{ttt\_job}, \cmd{ctta\_job}
+  \item \cmd{train\_job}, \cmd{export\_predictions\_job}, \cmd{test\_job}, \cmd{ttt\_job}, \cmd{ctta\_job}
+  \item compatibility alias: \cmd{export\_onnx\_job} (same behavior as \cmd{export\_predictions\_job})
   \item control/query: \cmd{jobs.list}, \cmd{jobs.status}, \cmd{jobs.cancel}, \cmd{runs.list}, \cmd{runs.describe}
 \end{itemize}
 
@@ -120,8 +121,12 @@ Operational guards in v2 layer implementation:
 
 High-value follow-ups that reduce AI ambiguity and integration drift:
 \begin{itemize}
-  \item Auto-generate MCP/Actions tool reference from \path{yolozu.integrations.tool\_runner}.
-  \item Add parity tests that assert MCP tool signatures and Actions request models stay aligned.
+  \item Generated MCP/Actions reference now lives at:
+  \begin{itemize}
+    \item \path{docs/generated/mcp\_actions\_tool\_reference.json}
+    \item \path{docs/generated/mcp\_actions\_tool\_reference.md}
+  \end{itemize}
+  \item Regenerate/check command: \cmd{python3 tools/generate\_integration\_tool\_reference.py --check}
   \item Add explicit error-code taxonomy for allowlist/path/timeout failures in integration responses.
 \end{itemize}
 

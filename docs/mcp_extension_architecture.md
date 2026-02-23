@@ -38,7 +38,7 @@ Evaluation tools (C7-C9) are implemented in the same shared backend and exposed 
 
 Training tools (D10-D12) are implemented as async jobs in the same shared backend and exposed via both MCP and Actions API:
 - D10: `train_job`
-- D11: `export_onnx_job`
+- D11: `export_predictions_job` (compatibility alias: `export_onnx_job`)
 - D12: `test_job`
 
 TTT/CTTA tools (E13-E14) are implemented as async jobs in the same shared backend and exposed via both MCP and Actions API:
@@ -74,6 +74,11 @@ Current API surface:
 - Prefer explicit parameter passing (`split`, `dry_run`, `strict`, `force`) over implicit defaults.
 - Keep response contracts stable (`ok`, `tool`, `summary`, `exit_code`) and add fields compatibly.
 - Include actionable error categories for common failures: allowlist, path guard, timeout, command failure.
+
+Generated parity reference:
+- `docs/generated/mcp_actions_tool_reference.json`
+- `docs/generated/mcp_actions_tool_reference.md`
+- regenerate/check: `python3 tools/generate_integration_tool_reference.py --check`
 
 ## CI no-abandon rule
 

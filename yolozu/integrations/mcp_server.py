@@ -10,6 +10,7 @@ from .tool_runner import (
     eval_coco,
     eval_instance_seg,
     eval_long_tail,
+    export_predictions_job,
     export_onnx_job,
     jobs_cancel,
     jobs_list,
@@ -223,8 +224,14 @@ def train_job_tool(train_config: str, run_id: str | None = None, resume: str | N
 
 
 @app.tool()
+def export_predictions_job_tool(dataset: str, output: str, split: str | None = None, force: bool = True) -> dict:
+    """Queue predictions export command as asynchronous job and return job_id."""
+    return export_predictions_job(dataset=dataset, output=output, split=split, force=force)
+
+
+@app.tool()
 def export_onnx_job_tool(dataset: str, output: str, split: str | None = None, force: bool = True) -> dict:
-    """Queue export command as asynchronous job and return job_id."""
+    """Compatibility alias for export_predictions_job_tool."""
     return export_onnx_job(dataset=dataset, output=output, split=split, force=force)
 
 
