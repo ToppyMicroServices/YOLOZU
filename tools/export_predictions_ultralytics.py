@@ -52,6 +52,7 @@ def _parse_args(argv):
         help="Evaluation protocol annotation. Default resolves from --end2end.",
     )
     parser.add_argument("--wrap", action="store_true", help="Wrap as {predictions:[...], meta:{...}}.")
+    parser.add_argument("--dry-run", action="store_true", help="Write schema-valid output without ultralytics runtime.")
     parser.add_argument("--strict", action="store_true", help="Strict prediction schema validation.")
     return parser.parse_args(argv)
 
@@ -98,11 +99,6 @@ def _default_wrap_meta(*, adapter: str, config: str, images: int) -> dict[str, A
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
-    try:
-        from ultralytics import YOLO
-    except Exception as exc:  # pragma: no cover
-        raise SystemExit("ultralytics package is required (pip install ultralytics)") from exc
-
     manifest = build_manifest(args.dataset, split=args.split)
     records = manifest["images"]
     if args.max_images is not None:
@@ -122,61 +118,72 @@ def main(argv=None):
     if not Path(source).exists():
         raise SystemExit(f"source not found: {source}")
 
-    model = YOLO(args.model)
-    results = model.predict(
-        source=source,
-        imgsz=int(args.image_size),
-        conf=float(args.conf),
-        iou=float(args.iou),
-        max_det=int(args.max_det),
-        batch=int(args.batch),
-        device=args.device,
-        half=bool(args.half),
-        end2end=bool(args.end2end),
-        stream=True,
-        verbose=False,
-    )
+    results = None
+    runtime_error = None
+    if not args.dry_run:
+        try:
+            from ultralytics import YOLO
+        except Exception as exc:  # pragma: no cover
+            raise SystemExit("ultralytics package is required (pip install ultralytics) unless --dry-run is set") from exc
+        model = YOLO(args.model)
+        results = model.predict(
+            source=source,
+            imgsz=int(args.image_size),
+            conf=float(args.conf),
+            iou=float(args.iou),
+            max_det=int(args.max_det),
+            batch=int(args.batch),
+            device=args.device,
+            half=bool(args.half),
+            end2end=bool(args.end2end),
+            stream=True,
+            verbose=False,
+        )
+    else:
+        runtime_error = "dry_run"
 
     outputs = []
-    for result in results:
-        image_path = _result_path(result)
-        if image_path is None:
-            # Fallback to sequential mapping if result doesn't expose a path.
-            if image_paths:
-                image_path = image_paths[len(outputs)]
+    if args.dry_run:
+        outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
+    else:
+        for result in results or []:
+            image_path = _result_path(result)
+            if image_path is None:
+                if image_paths:
+                    image_path = image_paths[len(outputs)]
+                else:
+                    image_path = ""
             else:
-                image_path = ""
-        else:
-            resolved = str(Path(image_path).resolve())
-            image_path = path_to_manifest.get(resolved) or base_to_manifest.get(Path(image_path).name) or image_path
+                resolved = str(Path(image_path).resolve())
+                image_path = path_to_manifest.get(resolved) or base_to_manifest.get(Path(image_path).name) or image_path
 
-        dets = []
-        boxes = getattr(result, "boxes", None)
-        if boxes is not None and len(boxes) > 0:
-            xywhn = boxes.xywhn
-            conf = boxes.conf
-            cls = boxes.cls
-            if xywhn is not None and conf is not None and cls is not None:
-                xywhn_list = xywhn.detach().cpu().tolist()
-                conf_list = conf.detach().cpu().tolist()
-                cls_list = cls.detach().cpu().tolist()
-                for bbox, score, class_id in zip(xywhn_list, conf_list, cls_list):
-                    if len(bbox) != 4:
-                        continue
-                    dets.append(
-                        {
-                            "class_id": int(class_id),
-                            "score": float(score),
-                            "bbox": {
-                                "cx": float(bbox[0]),
-                                "cy": float(bbox[1]),
-                                "w": float(bbox[2]),
-                                "h": float(bbox[3]),
-                            },
-                        }
-                    )
+            dets = []
+            boxes = getattr(result, "boxes", None)
+            if boxes is not None and len(boxes) > 0:
+                xywhn = boxes.xywhn
+                conf = boxes.conf
+                cls = boxes.cls
+                if xywhn is not None and conf is not None and cls is not None:
+                    xywhn_list = xywhn.detach().cpu().tolist()
+                    conf_list = conf.detach().cpu().tolist()
+                    cls_list = cls.detach().cpu().tolist()
+                    for bbox, score, class_id in zip(xywhn_list, conf_list, cls_list):
+                        if len(bbox) != 4:
+                            continue
+                        dets.append(
+                            {
+                                "class_id": int(class_id),
+                                "score": float(score),
+                                "bbox": {
+                                    "cx": float(bbox[0]),
+                                    "cy": float(bbox[1]),
+                                    "w": float(bbox[2]),
+                                    "h": float(bbox[3]),
+                                },
+                            }
+                        )
 
-        outputs.append({"image": image_path, "detections": dets})
+            outputs.append({"image": image_path, "detections": dets})
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
@@ -223,6 +230,8 @@ def main(argv=None):
                 "machine": platform.machine(),
                 "processor": platform.processor(),
             },
+            "dry_run": bool(args.dry_run),
+            "runtime_error": runtime_error,
         }
         try:
             import torch  # type: ignore

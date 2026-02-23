@@ -9549,6 +9549,13 @@
           "kind": "string",
           "required": false,
           "flag": "--strict"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run",
+          "description": "Write schema-valid predictions without ultralytics runtime."
         }
       ],
       "effects": {
@@ -9573,6 +9580,10 @@
         {
           "description": "Ultralytics export with NMS-applied protocol metadata.",
           "command": "python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --conf 0.25 --iou 0.45 --protocol nms_applied --wrap --output reports/pred_ultralytics.json"
+        },
+        {
+          "description": "CI-friendly contract smoke without ultralytics runtime.",
+          "command": "python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/smoke --split val --max-images 1 --protocol nms_applied --dry-run --wrap --strict --output reports/pred_ultralytics_dry_run.json"
         }
       ]
     },

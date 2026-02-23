@@ -44,6 +44,11 @@ pip users: go to [Install (pip users)](README.md#install-pip-users). Repo users:
   — backend parity checks + fixed-protocol latency benchmarking.
   Start: [`docs/README.md`](docs/README.md)
 
+CLI note:
+- `yolozu ...` is the pip/package CLI.
+- `python3 tools/yolozu.py ...` is the repo wrapper CLI.
+- For equivalent commands, swap only the executable (`yolozu` ↔ `python3 tools/yolozu.py`).
+
 ## Key points
 
 - Bring-your-own inference → stable `predictions.json`.
@@ -59,6 +64,8 @@ pip users: go to [Install (pip users)](README.md#install-pip-users). Repo users:
 
 ## YOLO users (v5/v8/11/26) quick path
 
+Repo tool scripts are used below. (No pip-only equivalent for `tools/*.py` wrappers.)
+
 ```bash
 python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
 python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
@@ -68,6 +75,8 @@ python3 -m yolozu.cli eval-coco --dataset data/ultra_wrapper --split val --predi
 If your predictions include COCO `category_id`, add `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco` for automatic class-id normalization.
 
 ## Detectron2/MMDetection users quick path
+
+Repo tool scripts are used below. (No pip-only equivalent for `tools/*.py` wrappers.)
 
 ```bash
 yolozu migrate dataset --from coco --coco-root /path/to/coco --split val2017 --output data/coco_yolo_like --mode manifest
@@ -79,6 +88,8 @@ Then validate/evaluate with `--classes data/coco_yolo_like/labels/<split>/classe
 
 ## OpenCV-DNN users quick path
 
+Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
+
 ```bash
 python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/coco-yolo --split val2017 --imgsz 640 --preprocess rtdetr_resize_640 --decode rtdetr --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json
 python3 tools/validate_predictions.py reports/pred_opencv.json --strict
@@ -88,6 +99,8 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 Use `--dnn-backend opencv|cuda|openvino` and `--dnn-target cpu|cuda|cuda_fp16|opencl|opencl_fp16` to compare runtime backends.
 
 ## YOLOX users quick path
+
+Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
 
 ```bash
 python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json

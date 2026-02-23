@@ -168,6 +168,7 @@ Reference: [Detectron2/MMDetection interop](interop_detectron2_mmdet.md)
 ## H) OpenCV-DNN migration (CPU/CUDA/OpenVINO)
 
 Use this path when OpenCV DNN is your runtime of record (C++/embedded/field inference) and you want YOLOZU validation/eval/parity.
+Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
 
 Shortest flow:
 
@@ -186,6 +187,7 @@ Reference: [OpenCV-DNN inference exporter](opencv_dnn_inference.md)
 ## I) YOLOX migration
 
 Use this path when YOLOX is your training/inference stack and you want YOLOZU contract validation + eval.
+Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
 
 ```bash
 python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json

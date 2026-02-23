@@ -123,6 +123,64 @@ class TestYoloMigrationTools(unittest.TestCase):
             self.assertEqual(payload["meta"].get("adapter"), "yolov5")
             self.assertEqual(payload["meta"].get("ttt", {}).get("enabled"), False)
 
+    def test_export_predictions_ultralytics_dry_run_generates_strict_payload(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "export_predictions_ultralytics.py"
+        validator = repo_root / "tools" / "validate_predictions.py"
+        dataset = repo_root / "data" / "smoke"
+
+        self.assertTrue(script.is_file(), "missing tools/export_predictions_ultralytics.py")
+        self.assertTrue(dataset.is_dir(), "missing data/smoke")
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "pred_ultralytics.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--model",
+                    "yolo11n.pt",
+                    "--dataset",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--max-images",
+                    "1",
+                    "--protocol",
+                    "nms_applied",
+                    "--dry-run",
+                    "--wrap",
+                    "--strict",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"export_predictions_ultralytics.py failed:\n{proc.stdout}\n{proc.stderr}")
+            self.assertTrue(out.is_file())
+
+            proc_validate = subprocess.run(
+                [sys.executable, str(validator), str(out), "--strict"],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc_validate.returncode != 0:
+                self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertIn("predictions", payload)
+            self.assertIn("meta", payload)
+            self.assertEqual(payload["meta"].get("adapter"), "ultralytics")
+            self.assertTrue(bool((payload.get("meta", {}).get("extra", {}) or {}).get("dry_run")))
+
 
 if __name__ == "__main__":
     unittest.main()
