@@ -67,6 +67,16 @@ python3 -m yolozu.cli eval-coco --dataset data/ultra_wrapper --split val --predi
 
 If your predictions include COCO `category_id`, add `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco` for automatic class-id normalization.
 
+## Detectron2/MMDetection users quick path
+
+```bash
+yolozu migrate dataset --from coco --coco-root /path/to/coco --split val2017 --output data/coco_yolo_like --mode manifest
+python3 tools/export_predictions_detectron2.py --dataset data/coco_yolo_like --split val2017 --config /path/to/d2_config.yaml --weights /path/to/model_final.pth --protocol nms_applied --output reports/pred_detectron2.json
+python3 tools/export_predictions_mmdet.py --dataset data/coco_yolo_like --split val2017 --config /path/to/mmdet_config.py --checkpoint /path/to/epoch_12.pth --protocol nms_applied --output reports/pred_mmdet.json
+```
+
+Then validate/evaluate with `--classes data/coco_yolo_like/labels/<split>/classes.json` to normalize COCO `category_id` safely.
+
 ## Quickstart details
 
 With this repo checkout, run:

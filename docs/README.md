@@ -144,6 +144,27 @@ Protocol guidance:
 
 If predictions contain COCO `category_id`, pass `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco`.
 
+## G) Detectron2/MMDetection migration
+
+Use this path when you keep Detectron2/MMDetection training/inference and only export results into YOLOZU contracts.
+
+Shortest flow:
+
+```bash
+yolozu migrate dataset --from coco --coco-root /path/to/coco --split val2017 --output data/coco_yolo_like --mode manifest
+python3 tools/export_predictions_detectron2.py --dataset data/coco_yolo_like --split val2017 --config /path/to/d2_config.yaml --weights /path/to/model_final.pth --protocol nms_applied --output reports/pred_detectron2.json
+python3 tools/export_predictions_mmdet.py --dataset data/coco_yolo_like --split val2017 --config /path/to/mmdet_config.py --checkpoint /path/to/epoch_12.pth --protocol nms_applied --output reports/pred_mmdet.json
+```
+
+Validation/eval:
+
+```bash
+python3 tools/validate_predictions.py reports/pred_detectron2.json --strict
+python3 tools/eval_coco.py --dataset data/coco_yolo_like --split val2017 --predictions reports/pred_detectron2.json --protocol nms_applied --classes data/coco_yolo_like/labels/val2017/classes.json --output reports/coco_eval_detectron2.json
+```
+
+Reference: [Detectron2/MMDetection interop](interop_detectron2_mmdet.md)
+
 ## CI incidents
 
 CI incident memo has moved to a dedicated page:

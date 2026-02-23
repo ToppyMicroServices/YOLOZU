@@ -9523,6 +9523,280 @@
           "command": "python3 tools/export_predictions_yolov5.py --dataset data/coco-yolo --split val2017 --labels-dir runs/detect/exp/labels --protocol nms_applied --output reports/pred_yolov5.json"
         }
       ]
+    },
+    {
+      "id": "export_predictions_detectron2",
+      "entrypoint": "tools/export_predictions_detectron2.py",
+      "runner": "python3",
+      "summary": "Run Detectron2 inference and export YOLOZU predictions.json with protocol/export_settings metadata.",
+      "tags": [
+        "export",
+        "detectron2",
+        "coco",
+        "predictions",
+        "nms",
+        "e2e",
+        "interop"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "detectron2",
+          "torch",
+          "opencv-python",
+          "numpy"
+        ]
+      },
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset"
+        },
+        {
+          "name": "split",
+          "kind": "string",
+          "required": false,
+          "flag": "--split"
+        },
+        {
+          "name": "config",
+          "kind": "file",
+          "required": true,
+          "flag": "--config"
+        },
+        {
+          "name": "weights",
+          "kind": "file",
+          "required": true,
+          "flag": "--weights"
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": true,
+          "flag": "--output"
+        },
+        {
+          "name": "score_thr",
+          "kind": "number",
+          "required": false,
+          "flag": "--score-thr",
+          "default": 0.25
+        },
+        {
+          "name": "topk",
+          "kind": "number",
+          "required": false,
+          "flag": "--topk",
+          "default": 300
+        },
+        {
+          "name": "device",
+          "kind": "string",
+          "required": false,
+          "flag": "--device",
+          "default": "cuda"
+        },
+        {
+          "name": "protocol",
+          "kind": "string",
+          "required": false,
+          "flag": "--protocol",
+          "default": "nms_applied"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run"
+        },
+        {
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "flag": "--strict"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes YOLOZU predictions JSON from Detectron2 outputs."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "description": "Predictions JSON at --output."
+        }
+      ],
+      "examples": [
+        {
+          "description": "Detectron2 export for YOLOZU eval.",
+          "command": "python3 tools/export_predictions_detectron2.py --dataset data/coco-yolo --split val2017 --config configs/detectron2/faster_rcnn_R_50_FPN_1x.yaml --weights runs/d2/model_final.pth --score-thr 0.25 --protocol nms_applied --output reports/pred_detectron2.json"
+        }
+      ],
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/interop_detectron2_mmdet.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ]
+    },
+    {
+      "id": "export_predictions_mmdet",
+      "entrypoint": "tools/export_predictions_mmdet.py",
+      "runner": "python3",
+      "summary": "Run MMDetection inference and export YOLOZU predictions.json with protocol/export_settings metadata.",
+      "tags": [
+        "export",
+        "mmdetection",
+        "mmdet",
+        "coco",
+        "predictions",
+        "nms",
+        "e2e",
+        "interop"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "mmdet",
+          "mmengine",
+          "mmcv",
+          "torch",
+          "numpy"
+        ]
+      },
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset"
+        },
+        {
+          "name": "split",
+          "kind": "string",
+          "required": false,
+          "flag": "--split"
+        },
+        {
+          "name": "config",
+          "kind": "file",
+          "required": true,
+          "flag": "--config"
+        },
+        {
+          "name": "checkpoint",
+          "kind": "file",
+          "required": true,
+          "flag": "--checkpoint"
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": true,
+          "flag": "--output"
+        },
+        {
+          "name": "score_thr",
+          "kind": "number",
+          "required": false,
+          "flag": "--score-thr",
+          "default": 0.25
+        },
+        {
+          "name": "topk",
+          "kind": "number",
+          "required": false,
+          "flag": "--topk",
+          "default": 300
+        },
+        {
+          "name": "device",
+          "kind": "string",
+          "required": false,
+          "flag": "--device",
+          "default": "cuda:0"
+        },
+        {
+          "name": "protocol",
+          "kind": "string",
+          "required": false,
+          "flag": "--protocol",
+          "default": "nms_applied"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run"
+        },
+        {
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "flag": "--strict"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes YOLOZU predictions JSON from MMDetection outputs."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "description": "Predictions JSON at --output."
+        }
+      ],
+      "examples": [
+        {
+          "description": "MMDetection export for YOLOZU eval.",
+          "command": "python3 tools/export_predictions_mmdet.py --dataset data/coco-yolo --split val2017 --config configs/mmdet/faster_rcnn_r50_fpn_1x_coco.py --checkpoint runs/mmdet/epoch_12.pth --score-thr 0.25 --protocol nms_applied --output reports/pred_mmdet.json"
+        }
+      ],
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/interop_detectron2_mmdet.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ]
     }
   ]
 }

@@ -135,6 +135,22 @@ yolozu migrate dataset   --from coco   --coco-root /path/to/coco_like_root   --s
 yolozu validate dataset data/coco_yolo_like --strict
 \end{lstlisting}
 
+\subsection{Detectron2 / MMDetection predictions interop}
+For Detectron2/MMDetection users, keep framework-native inference and only export detections into \path{predictions.json}:
+\begin{lstlisting}[language=bash]
+python3 tools/export_predictions_detectron2.py   --dataset data/coco_yolo_like   --split val2017   --config /path/to/d2_config.yaml   --weights /path/to/model_final.pth   --protocol nms_applied   --output reports/pred_detectron2.json
+
+python3 tools/export_predictions_mmdet.py   --dataset data/coco_yolo_like   --split val2017   --config /path/to/mmdet_config.py   --checkpoint /path/to/epoch_12.pth   --protocol nms_applied   --output reports/pred_mmdet.json
+\end{lstlisting}
+
+Evaluate with explicit class-id normalization to avoid COCO \texttt{category\_id} drift:
+\begin{lstlisting}[language=bash]
+python3 tools/validate_predictions.py reports/pred_detectron2.json --strict
+python3 tools/eval_coco.py   --dataset data/coco_yolo_like   --split val2017   --predictions reports/pred_detectron2.json   --protocol nms_applied   --classes data/coco_yolo_like/labels/val2017/classes.json   --output reports/coco_eval_detectron2.json
+\end{lstlisting}
+
+The exporters preserve raw framework box convention (\texttt{xyxy\_abs}) in \path{export\_settings.raw\_output\_bbox\_format}, while normalizing contract output to \texttt{cxcywh\_norm} for strict schema validation.
+
 \subsection{COCO results (inference outputs) \texorpdfstring{$\rightarrow$}{->} predictions.json}
 To convert COCO-style detection results into the standardized YOLOZU predictions contract:
 \begin{lstlisting}[language=bash]
