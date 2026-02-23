@@ -20,8 +20,7 @@ Fallback channel:
 ## Supported versions
 
 Security fixes are provided for:
-- the latest published major/minor release line on PyPI
-- release branches explicitly marked as supported in release notes
+- the latest released version on PyPI only
 
 ## Supported runtime scope (security maintenance target)
 
@@ -34,7 +33,3 @@ Security fixes are provided for:
 - Python dependency/license policy: `docs/license_policy.md`
 - Release-time contract boundary: `docs/release_1_0_stability.md`
 - Required release gates include compatibility checks (`tools/check_golden_compatibility.py`) and packaging integrity gates (wheel/sdist content checks in CI)
-
-## Supported versions
-
-Only the latest released version on PyPI is supported for security fixes.

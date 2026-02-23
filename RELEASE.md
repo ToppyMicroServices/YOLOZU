@@ -50,6 +50,8 @@ git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
+Tag push prepares release metadata but does **not** trigger PyPI publish.
+
 5) Create a GitHub Release from that tag and click **Publish release**.
 
 This action triggers `.github/workflows/publish.yml`, which builds and publishes to PyPI.

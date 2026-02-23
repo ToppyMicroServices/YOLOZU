@@ -17,7 +17,7 @@ No user-facing entries yet.
 ### Added
 - FRACAL calibration now supports both bbox and instance-segmentation predictions via `yolozu calibrate --task {bbox,seg,auto}`.
 - FRACAL class-frequency stats can now be exported/reused through `--stats-out` and `--stats-in`, enabling stable calibration across runs.
-- Trainer now emits FRACAL stats from training records via `--fracal-stats-out`; with `--run-contract`, default output is `runs/<run-id>/reports/fracal_stats_bbox.json`.
+- Trainer now emits FRACAL stats from training records via `--fracal-stats-out`; with `--run-contract`, default output is `runs/<run_id>/reports/fracal_stats_bbox.json`.
 - Added alternative calibration methods in `yolozu calibrate`: Logit Adjustment (`--method la --tau`) and NorCal (`--method norcal --gamma`) for side-by-side comparison with FRACAL.
 - Added temperature scaling in `yolozu calibrate` (`--method temperature --temperature`, optional `--fit-temperature` with `--temperature-grid`).
 - RT-DETR pose scaffold now supports depth integration modes `--depth-mode {none,sidecar,fuse_mid}` with safe default `none`.
