@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.2] - 2026-02-25
+
+### Fixed
+- Manual DOI publishing: hardened Zenodo `actions/newversion` logic to resolve `conceptrecid` → latest record id before creating a new version, preventing 404 failures.
+
+### Changed
+- Manual: added a concise “YOLOZU at a glance” summary to the Overview.
+
 ## [1.0.1] - 2026-02-24
 
 ### Changed
