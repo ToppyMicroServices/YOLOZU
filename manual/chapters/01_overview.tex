@@ -1,7 +1,7 @@
 \chapter{Overview}
 
 \ChapterMeta{
-This chapter introduces \yolozu{}'s contract-first evaluation paradigm, delineates the primary repository entry points, and clarifies the distinction between its two Command Line Interface (CLI) surfaces.
+This chapter introduces \yolozu{}'s interface-contract-first evaluation paradigm (predictions-first artifacts for continual learning and test-time adaptation), delineates the primary repository entry points, and clarifies the distinction between its two Command Line Interface (CLI) surfaces.
 }{
 
 It is designed to expedite workflow selection and eliminate ambiguity regarding command execution and artifact management.
@@ -10,20 +10,25 @@ No prerequisites are required beyond reading. Rely on the \cmd{--help} flag for 
 }
 
 \section{What \yolozu{} Is}
-\yolozu{} operates as a \textbf{contract-first evaluation harness}.
-The foundational philosophy is straightforward: \textit{execute inference in any environment}, export a standardized \path{predictions.json} artifact, and subsequently perform consistent, reproducible evaluations.
+\yolozu{} is a framework-agnostic evaluation toolkit for vision models, designed to address \textbf{catastrophic forgetting} and \textbf{domain shift} through reproducible continual learning and test-time adaptation (TTT).
+
+\yolozu{} treats \textbf{predictions---not models---as the stable interface contract}.
+The foundational philosophy is straightforward: \textit{execute inference in any environment}, export a standardized \path{predictions.json} artifact, and subsequently perform consistent, reproducible evaluations and comparisons.
+
+The evaluation surface supports object detection, segmentation, keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation}.
+Training implementations are optional and decoupled; most workflows operate on versioned artifacts.
 
 
 \section{AI-First Design Intent}
 This repository is architected as an \textbf{AI-first} codebase.
 In practical terms, this implies:
 \begin{itemize}
-  \item AI agents must be capable of \textbf{utilizing} the codebase safely via stable command surfaces and well-defined contracts.
+  \item AI agents must be capable of \textbf{utilizing} the codebase safely via stable command surfaces and well-defined interface contracts.
   \item AI agents must be able to \textbf{extend} workflows (e.g., introducing new experiments, scripts, or reports) without violating existing interfaces.
   \item JSON schemas and machine-readable registries are treated as first-class interfaces, rather than optional metadata.
 \end{itemize}
 
-Operational guidance for both human operators and agentic workflows dictates that artifacts must be treated as first-class entities, contracts must be validated early in the pipeline, and evaluation protocols must remain strictly pinned.
+Operational guidance for both human operators and agentic workflows dictates that artifacts must be treated as first-class entities, interface contracts must be validated early in the pipeline, and evaluation protocols must remain strictly pinned.
 
 High-level objectives include:
 \begin{itemize}
@@ -31,7 +36,7 @@ High-level objectives include:
   \item Ensuring CPU-minimum compatibility for development and testing; GPU acceleration remains optional for training and inference.
   \item Facilitating backend-agnostic workflows (supporting PyTorch, ONNX Runtime, TensorRT, and custom C++/Rust implementations).
   \item Streamlining migration by accepting prevalent dataset ecosystems (e.g., Ultralytics/YOLO formats, COCO JSON) via lightweight wrapper artifacts, thereby preserving the integrity of original datasets.
-  \item Enforcing a production-oriented run contract for training operations, which standardizes artifact paths, resumption capabilities, and model exports.
+  \item Enforcing a production-oriented run interface contract (Run Contract) for training operations, which standardizes artifact paths, resumption capabilities, and model exports.
   \item Maintaining a strict Apache-2.0 operational posture, ensuring no non-Apache dependencies are present in shipped code paths.
 \end{itemize}
 

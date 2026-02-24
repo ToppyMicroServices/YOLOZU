@@ -1,15 +1,22 @@
 # YOLOZU Spec (repo feature summary)
 
 ## Purpose
-YOLOZU is a lightweight evaluation and scaffolding repo for real-time monocular RGB
-object detection + depth + 6DoF pose.
+YOLOZU is a framework-agnostic evaluation toolkit for vision models,
+designed to address **catastrophic forgetting** and **domain shift**
+through reproducible continual learning and test-time adaptation (TTT).
+
+It treats **predictions—not models—as the stable interface contract**, so continual learning
+and test-time training are comparable, restartable, and CI-friendly across frameworks and runtimes.
+
+The repo also includes an optional training scaffold (`rtdetr_pose`) for real-time monocular RGB
+object detection + depth + 6DoF pose, while keeping training implementations decoupled from the evaluation surface.
 
 It emphasizes:
 
 - CPU-minimum development/tests (GPU optional)
 - precomputed inference JSON ingestion
 - reproducible evaluation
-- model-family-agnostic contracts (predictions/eval/reporting)
+- model-family-agnostic interface contracts (predictions/eval/reporting)
 
 ## Core capabilities
 
@@ -35,7 +42,7 @@ If YOLO txt labels are missing and a mask is provided, bbox+class can be derived
 ### 3) Training scaffold (reference adapter: `rtdetr_pose`)
 
 - Minimal training loop scaffold: `rtdetr_pose/tools/train_minimal.py`
-- Production-style run contract (`--run-contract`): fixed artifact paths under
+- Production-style run interface contract (Run Contract; `--run-contract`): fixed artifact paths under
   `runs/<run_id>/...`, full resume, export + parity gate
 - Optional Hungarian matcher with staged cost terms
 - MIM masking + teacher distillation schedules
@@ -49,12 +56,12 @@ If YOLO txt labels are missing and a mask is provided, bbox+class can be derived
 
 ### 3.1) Backbone/neck swap boundary (adapter-scoped)
 
-The repository-wide contracts are model-family agnostic, but the in-repo training
+The repository-wide interface contracts are model-family agnostic, but the in-repo training
 adapter (`rtdetr_pose`) defines a strict backbone boundary:
 
 - `model.backbone.*` selects the backbone implementation
 - backbone must output `P3/P4/P5` with strides `[8,16,32]`
-- projector + neck/encoder keep a fixed transformer input contract (`d_model`)
+- projector + neck/encoder keep a fixed transformer input interface contract (`d_model`)
 
 Current in-repo `rtdetr_pose` backbone choices:
 
@@ -75,7 +82,7 @@ Current in-repo `rtdetr_pose` backbone choices:
 - Symmetry-aware template scoring utilities
 - Low-FP gate via `score_tmp_sym`
 
-### 6) Predictions JSON contract
+### 6) Predictions JSON interface contract
 
 - Stable schema for evaluation ingestion
 - Supported shapes: list entries, wrapped object, or map (`image -> detections`)
@@ -126,11 +133,11 @@ Power-user in-repo CLI (source checkout):
 ## Contracts
 
 - Predictions schema: `docs/predictions_schema.md`
-- Adapter contract: `docs/adapter_contract.md`
+- Adapter interface contract: `docs/adapter_contract.md`
 
 ## Non-goals
 
-- Full training framework (this repo focuses on scaffold + artifact contract)
+- Full training framework (this repo focuses on scaffold + artifact layout + run interface contract)
 - Heavy dependencies required for local evaluation
 
 ## Versioning
@@ -138,4 +145,4 @@ Power-user in-repo CLI (source checkout):
 - Internal schema versioning for predictions JSON (v1)
 - Backward-compatible additions are allowed
 - Breaking changes require version bump
-- 1.0 contract stability boundary: `docs/release_1_0_stability.md`
+- 1.0 interface contract stability boundary: `docs/release_1_0_stability.md`

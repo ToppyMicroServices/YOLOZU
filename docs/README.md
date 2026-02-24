@@ -1,7 +1,30 @@
-# YOLOZU docs
+# YOLOZU
 
-Use this page as the docs index for both humans and agents.
-All examples below use repository-real paths (`data/smoke`, `reports/...`) to reduce copy-paste mistakes.
+YOLOZU is a framework-agnostic evaluation toolkit for vision models,
+designed to address **catastrophic forgetting** and **domain shift**
+through reproducible continual learning and test-time adaptation (TTT).
+
+**YOLOZU exists to measure, compare, and control catastrophic forgetting
+and inference-time adaptation in a reproducible way.**
+
+YOLOZU treats **predictions—not models—as the stable interface contract**,
+making continual learning and test-time training comparable,
+restartable, and CI-friendly across frameworks and runtimes.
+
+YOLOZU supports evaluation workflows for object detection, segmentation,
+keypoint estimation, **monocular depth estimation**, and **6DoF pose estimation**,
+while keeping training implementations optional and decoupled.
+
+YOLOZU supports ONNX export and deployment across PyTorch, ONNX Runtime,
+and TensorRT, with C++ and Rust inference templates.
+
+YOLOZU is built for interface-contract-first, AI-first development:
+every experiment produces versioned artifacts that can be
+compared and regression-tested automatically in CI.
+
+## Docs index
+
+Use this page as the docs index for both humans and agents. All examples below use repository-real paths (`data/smoke`, `reports/...`) to reduce copy-paste mistakes.
 
 ## 0) Offline copy-paste smoke (single command)
 

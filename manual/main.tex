@@ -95,9 +95,27 @@
 \maketitle
 
 \begin{abstract}
-\yolozu{} is an Apache-2.0-only, contract-first evaluation and tooling harness.
-This manual is a printable, searchable reference that explains the concepts, workflows, and
-practical commands needed to use the repository effectively.
+\yolozu{} is a framework-agnostic evaluation toolkit for vision models,
+designed to address \textbf{catastrophic forgetting} and \textbf{domain shift}
+through reproducible continual learning and test-time adaptation (TTT).
+
+\textbf{\yolozu{} exists to measure, compare, and control catastrophic forgetting
+and inference-time adaptation in a reproducible way.}
+
+\yolozu{} treats \textbf{predictions---not models---as the stable interface contract},
+making continual learning and test-time training comparable,
+restartable, and CI-friendly across frameworks and runtimes.
+
+\yolozu{} supports evaluation workflows for object detection, segmentation,
+keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation},
+while keeping training implementations optional and decoupled.
+
+\yolozu{} supports ONNX export and deployment across PyTorch, ONNX Runtime,
+and TensorRT, with C++ and Rust inference templates.
+
+\yolozu{} is built for interface-contract-first, AI-first development:
+every experiment produces versioned artifacts that can be
+compared and regression-tested automatically in CI.
 \end{abstract}
 
 \noindent\textbf{Support / legal:}

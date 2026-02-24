@@ -1,4 +1,4 @@
-# YOLOZU (萬)
+# YOLOZU
 
 日本語: [`Readme_jp.md`](Readme_jp.md)
 
@@ -12,20 +12,27 @@
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-Interface-contract-first evaluation + learning research harness for detection / segmentation / pose (keypoints / 6DoF).
+YOLOZU is a framework-agnostic evaluation toolkit for vision models,
+designed to address **catastrophic forgetting** and **domain shift**
+through reproducible continual learning and test-time adaptation (TTT).
 
-YOLOZU also supports **learning + operations research**, not just evaluation: artifact-first training outputs via a **run interface contract (Run Contract)**, continual learning (anti-forgetting), and protocol-pinned test-time training (TTT). See: [Learning features](#learning-features).
+**YOLOZU exists to measure, compare, and control catastrophic forgetting
+and inference-time adaptation in a reproducible way.**
 
-Learning / research highlights:
-- **Run interface contract training (Run Contract)** — reproducible `runs/<run_id>/...` artifacts for detection + keypoints + 6DoF pose.
-- **Continual learning (anti-forgetting)** — self-distillation + optional replay/LoRA + forgetting evaluation.
-- **Test-time training (TTT)** — Tent / MIM / CoTTA / EATA / SAR under a protocol-pinned, bounded-cost setup.
-- **Prediction distillation** — offline blending of teacher/student `predictions.json` artifacts for faster ablations.
-- **Hessian-based refinement** — optional engine-external postprocess over `predictions.json` (experimental).
+YOLOZU treats **predictions—not models—as the stable interface contract**,
+making continual learning and test-time training comparable,
+restartable, and CI-friendly across frameworks and runtimes.
 
-Run inference in any backend, export a stable `predictions.json` **predictions interface contract**, and evaluate apples-to-apples with the same validators and metrics.
+YOLOZU supports evaluation workflows for object detection, segmentation,
+keypoint estimation, **monocular depth estimation**, and **6DoF pose estimation**,
+while keeping training implementations optional and decoupled.
 
-This pattern makes backend comparisons fair (same dataset + same evaluator), and keeps results reproducible over time by pinning preprocessing/protocol settings in `export_settings`.
+YOLOZU supports ONNX export and deployment across PyTorch, ONNX Runtime,
+and TensorRT, with C++ and Rust inference templates.
+
+YOLOZU is built for interface-contract-first, AI-first development:
+every experiment produces versioned artifacts that can be
+compared and regression-tested automatically in CI.
 
 ## Quickstart (run this first)
 
