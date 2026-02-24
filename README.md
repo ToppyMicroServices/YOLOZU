@@ -25,6 +25,10 @@ Output artifact: `reports/smoke_coco_eval_dry_run.json`.
 
 Docs index (start here): [`docs/README.md`](docs/README.md).
 
+AI-friendly tool registry (source of truth): [`tools/manifest.json`](tools/manifest.json).
+
+Tool list + args examples: [`docs/tools_index.md`](docs/tools_index.md).
+
 Learning features (training / continual learning / TTT / distillation): [`docs/learning_features.md`](docs/learning_features.md).
 
 ## Start here (choose 1 of 4 entry points)

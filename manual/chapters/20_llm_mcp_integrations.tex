@@ -46,6 +46,20 @@ Return payload policy (for all clients):
 python3 tools/run_mcp_server.py
 \end{lstlisting}
 
+Official MCP Lite surface (deterministic, intended for AI-safe clients):
+\begin{itemize}
+  \item \cmd{doctor}
+  \item \cmd{generate\_config}
+  \item \cmd{review\_config}
+\end{itemize}
+
+Copy-paste sanity checks:
+\begin{lstlisting}[language=bash]
+python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
+python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
+python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+\end{lstlisting}
+
 \subsection{Actions API (optional route)}
 \begin{lstlisting}[language=bash]
 python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1

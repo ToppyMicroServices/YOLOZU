@@ -29,8 +29,22 @@ Also available in the same backend surface:
 - compatibility alias: `export_onnx_job` (same behavior as `export_predictions_job`)
 - job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
 
-Official AI-safe support (1.0.x guarantee):
-- `doctor`, `generate_config`, `review_config`, `validate_predictions`
+Official AI-safe support (1.0.x guarantee, MCP Lite):
+- `doctor`, `generate_config`, `review_config`
+
+MCP Lite quickstart (copy-paste):
+
+```bash
+# Start MCP server (stdio)
+python3 tools/run_mcp_server.py
+
+# Inspect exposed tools as JSON
+python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
+
+# Deterministic sample I/O (useful for client wiring tests)
+python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
+python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+```
 
 Best-effort only (environment-dependent):
 - training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths

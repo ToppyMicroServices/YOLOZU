@@ -2,6 +2,10 @@
 
 This repo treats `tools/` as a stable, scriptable interface layer on top of the lightweight `yolozu/` core.
 
+Source of truth:
+- Tool manifest: `tools/manifest.json`
+- Manifest validator: `python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative`
+
 ## Unified CLI (recommended entrypoint)
 
 For most day-to-day flows, start with:
@@ -18,6 +22,25 @@ For most day-to-day flows, start with:
 - MCP server (stdio): `python3 tools/run_mcp_server.py`
 - MCP surface inspection: `python3 tools/run_mcp_server.py --print-tools`
 - Actions/OpenAPI server: `python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1`
+
+### MCP Lite (official) quickstart (copy-paste)
+
+YOLOZU's official MCP surface is intentionally small and deterministic:
+`doctor`, `generate_config`, `review_config`.
+
+```bash
+# 1) Start MCP server (stdio)
+python3 tools/run_mcp_server.py
+
+# 2) Inspect exposed tools as JSON (sanity check)
+python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
+
+# 3) Generate a deterministic sample config payload
+python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
+
+# 4) Review that config payload (deterministic output)
+python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+```
 
 ## Dataset helpers
 
