@@ -1,4 +1,4 @@
-# YOLOZU
+# YOLOZU (萬)
 
 日本語: [`Readme_jp.md`](Readme_jp.md)
 
@@ -12,8 +12,21 @@
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/ci.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-Contract-first evaluation toolkit for vision models (detection / segmentation / pose).
-Run inference anywhere, export outputs as a stable `predictions.json` (+ `export_settings`), then evaluate with a fixed protocol for reproducible, apples-to-apples comparisons.
+
+A framework-agnostic evaluation toolkit for vision models, YOLOZU is designed for reproducible continual learning and test-time adaptation (TTT) under domain shift.
+
+It helps mitigate catastrophic forgetting by standardizing reproducible workflows—such as self-distillation, replay, and parameter-efficient updates—and by making forgetting measurable and comparable across runs. It does not guarantee elimination of forgetting.
+
+At its core, the project exists to measure, compare, and control catastrophic forgetting and inference-time adaptation in a reproducible way.
+
+A key design choice is to treat predictions—not models—as the stable interface contract, so continual learning and test-time training become comparable, restartable, and CI-friendly across frameworks and runtimes.
+
+The toolkit supports evaluation workflows for object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation, while keeping training implementations optional and decoupled.
+
+For deployment, it supports ONNX export and runs across PyTorch, ONNX Runtime, and TensorRT, with C++ and Rust inference templates.
+
+Finally, it follows an interface-contract-first, AI-first workflow: every experiment emits versioned artifacts that can be compared and regression-tested automatically in CI.
+
 
 ## Quickstart (run this first)
 
