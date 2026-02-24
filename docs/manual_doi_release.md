@@ -36,7 +36,9 @@ Workflow inputs:
 ## Zenodo behavior
 
 1. Build manual PDF.
-2. If conceptrecid exists, call `POST /api/deposit/depositions/{conceptrecid}/actions/newversion`.
+2. If conceptrecid exists, resolve the latest **record id** via Zenodo Records API:
+  - `GET /api/records/?q=conceptrecid:<conceptrecid>&sort=mostrecent&size=1`
+  - Then call `POST /api/deposit/depositions/<record id>/actions/newversion`.
 3. Else create a new deposition.
 4. Upload PDF to deposition bucket.
 5. Set metadata with:

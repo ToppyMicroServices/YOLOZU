@@ -73,7 +73,7 @@ YOLOZU publishes software artifacts via GitHub Release/PyPI and can publish the 
 - Trigger: GitHub Release `published` (or manual `workflow_dispatch`)
 - Build: `manual/build/yolozu_manual.pdf`
 - Zenodo flow:
-  - If `YOLOZU_MANUAL_CONCEPTRECID` exists: call `actions/newversion`
+  - If `YOLOZU_MANUAL_CONCEPTRECID` exists: resolve latest record id via Zenodo Records API, then call `actions/newversion`
   - Else: create a new deposition
   - Upload PDF to bucket, set metadata, and publish (or keep draft on manual runs)
 - Linkage:
@@ -91,7 +91,7 @@ Required repository variables:
 
 Recommended repository variable:
 
-- `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid used for versioned `newversion` publishing)
+- `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid; workflow resolves this to the latest record id before calling `actions/newversion`)
 
 First-time release note:
 

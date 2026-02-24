@@ -13,31 +13,15 @@ Japanese: [`Readme_jp.md`](Readme_jp.md)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
 
-  •	Framework-agnostic evaluation toolkit for vision models
-  Designed for reproducible continual learning and test-time adaptation under domain shift.
-	
-  •	Training-capable workflows for mitigating catastrophic forgetting
-  Supports training and evaluation workflows based on self-distillation, replay, and parameter-efficient updates (PEFT).
-  These approaches reduce forgetting and make it measurable and comparable across runs, though complete elimination is not guaranteed.
-	
-  •	Support for inference-time adaptation (TTT)
-  Allows model parameters to be adjusted during inference, enabling continual adaptation to domain shift in deployment.
-	
-  •	Predictions as the stable interface contract
-  Treats predictions—not models—as the primary contract, making training, continual learning, and inference-time adaptation
-  comparable, restartable, and CI-friendly across frameworks and runtimes.
-	
-  •	Multi-task evaluation support
-  Covers object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation.
-  Training implementations remain configurable and decoupled, rather than fixed to a specific framework.
-	
-  •	Production-ready deployment path
-  Supports ONNX export and execution across PyTorch, ONNX Runtime, and TensorRT,
-  with reference inference templates in C++ and Rust.
-	
-  •	Interface-contract-first, AI-first workflow
-  Every experiment emits versioned artifacts that can be automatically compared
-  and regression-tested in CI.
+## YOLOZU at a glance
+
+- **Framework-agnostic evaluation toolkit for vision models**: designed for reproducible continual learning and test-time adaptation under domain shift.
+- **Training-capable workflows for mitigating catastrophic forgetting**: supports training and evaluation workflows based on self-distillation, replay, and parameter-efficient updates (PEFT). These approaches reduce forgetting and make it measurable and comparable across runs, though complete elimination is not guaranteed.
+- **Support for inference-time adaptation (TTT)**: allows model parameters to be adjusted during inference, enabling continual adaptation to domain shift in deployment.
+- **Predictions as the stable interface contract**: treats predictions---not models---as the primary contract, making training, continual learning, and inference-time adaptation comparable, restartable, and CI-friendly across frameworks and runtimes.
+- **Multi-task evaluation support**: covers object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation. Training implementations remain configurable and decoupled, rather than fixed to a specific framework.
+- **Production-ready deployment path**: supports ONNX export and execution across PyTorch, ONNX Runtime, and TensorRT, with reference inference templates in C++ and Rust.
+- **Interface-contract-first, AI-first workflow**: every experiment emits versioned artifacts that can be automatically compared and regression-tested in CI.
 
 
 

@@ -234,8 +234,34 @@ jobs:
             text = text.strip()
             return json.loads(text) if text else {}
 
+          def resolve_latest_record_id_for_conceptrecid(conceptrecid_value: str) -> str:
+            q = urllib.parse.quote_plus(f"conceptrecid:{conceptrecid_value}")
+            records = request_json("GET", f"/api/records/?q={q}&sort=mostrecent&size=1")
+            hits = (records.get("hits") or {}).get("hits") or []
+            if not hits:
+              raise SystemExit(
+                "Zenodo records lookup returned no hits for conceptrecid="
+                f"{conceptrecid_value}. Check the Zenodo environment (production vs sandbox) and the conceptrecid value."
+              )
+            record_id = str(hits[0].get("id") or "").strip()
+            if not record_id:
+              raise SystemExit("Zenodo records lookup hit is missing id")
+            return record_id
+
+          def is_http_error(exc: SystemExit, code: int) -> bool:
+            return f"[{code}]" in str(exc)
+
           if conceptrecid:
-            newversion = request_json("POST", f"/api/deposit/depositions/{conceptrecid}/actions/newversion", payload={})
+            # Zenodo depositions API expects a deposition (record) id for newversion.
+            # Historically, we stored a conceptrecid in repo vars/inputs; resolve it via the public records API.
+            try:
+              newversion = request_json("POST", f"/api/deposit/depositions/{conceptrecid}/actions/newversion", payload={})
+            except SystemExit as exc:
+              if not is_http_error(exc, 404):
+                raise
+              resolved_id = resolve_latest_record_id_for_conceptrecid(conceptrecid)
+              newversion = request_json("POST", f"/api/deposit/depositions/{resolved_id}/actions/newversion", payload={})
+
             latest_draft = ((newversion.get("links") or {}).get("latest_draft") or "").strip()
             if not latest_draft:
               raise SystemExit("Zenodo newversion response missing links.latest_draft")
