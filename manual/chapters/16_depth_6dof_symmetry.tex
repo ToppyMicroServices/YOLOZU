@@ -97,12 +97,12 @@ Metric safety rule:
 
 Example:
 \begin{lstlisting}[language=bash]
-python3 rtdetr_pose/tools/train_minimal.py \\
-  --dataset-root data/coco128 \\
-  --config rtdetr_pose/configs/base.json \\
-  --use-matcher \\
-  --depth-mode sidecar \\
-  --depth-unit metric \\
+python3 rtdetr_pose/tools/train_minimal.py \
+  --dataset-root data/coco128 \
+  --config rtdetr_pose/configs/base.json \
+  --use-matcher \
+  --depth-mode sidecar \
+  --depth-unit metric \
   --depth-scale 1.0
 \end{lstlisting}
 
@@ -236,24 +236,28 @@ regression head outputs per detection \cite{levenberg1944,marquardt1963lm}.
 Key idea: refine per-detection parameters (depth/rotation/offsets) with bounded iterations; treat it as a research postprocess (not a default real-time feature).
 
 \subsection{CLI}
-Refine depth (example):
+Refine offsets (example):
 \begin{lstlisting}[language=bash]
-python tools/refine_predictions_hessian.py \\
-  --predictions reports/predictions.json \\
-  --dataset data/coco128 \\
-  --output reports/predictions_refined.json \\
-  --refine-depth
+python3 tools/refine_predictions_hessian.py \
+  --predictions reports/predictions.json \
+  --dataset data/coco128 \
+  --output reports/predictions_refined.json \
+  --enable \
+  --refine-offsets \
+  --wrap
 \end{lstlisting}
 
-Refine depth + rotation (bounded iterations):
+Refine offsets (bounded iterations):
 \begin{lstlisting}[language=bash]
-python tools/refine_predictions_hessian.py \\
-  --predictions reports/predictions.json \\
-  --dataset data/coco128 \\
-  --output reports/predictions_refined.json \\
-  --refine-depth \\
-  --refine-rotation \\
-  --max-iterations 10
+python3 tools/refine_predictions_hessian.py \
+  --predictions reports/predictions.json \
+  --dataset data/coco128 \
+  --output reports/predictions_refined.json \
+  --enable \
+  --refine-offsets \
+  --steps 10 \
+  --damping 1e-2 \
+  --wrap
 \end{lstlisting}
 
 \subsection{How it differs from calibration}

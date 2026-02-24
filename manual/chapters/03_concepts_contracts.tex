@@ -113,10 +113,10 @@ category\_id};
 COCO results JSON\\
 or framework output};
 
-\node[box, right=22mm of coco] (wrapper) {\textbf{Wrapper / mapping}\\
+\node[box, right=28mm of coco] (wrapper) {\textbf{Wrapper / mapping}\\
 \path{dataset.json}\\
 \path{classes.json}};
-\node[box, right=22mm of extpred] (pred) {\textbf{predictions.json}\\
+\node[box, right=28mm of extpred] (pred) {\textbf{predictions.json}\\
 schema-valid\\
 relocatable paths};
 \node[box, right=22mm of wrapper] (eval) {\textbf{Validate \& eval}\\
@@ -124,7 +124,7 @@ same evaluator\\
 same metrics};
 
 \draw[arrow] (ultra) -- (wrapper);
-\draw[arrow] (coco) -- node[midway, right]{\scriptsize convert labels} (wrapper);
+\draw[arrow] (coco) -- node[midway, above, sloped]{\scriptsize convert labels} (wrapper);
 \draw[arrow] (extpred) -- (pred);
 \draw[arrow] (wrapper) -- (eval);
 \draw[arrow] (pred) -- (eval);
@@ -156,11 +156,11 @@ Frameworks such as Detectron2, MMDetection, and YOLOX frequently export detectio
 
 \yolozu{} seamlessly converts these outputs into a compliant \path{predictions.json}:
 \begin{lstlisting}[language=bash]
-yolozu migrate predictions \\
-  --from coco-results \\
-  --results /path/to/coco_results.json \\
-  --instances /path/to/instances_val2017.json \\
-  --output reports/predictions.json \\
+yolozu migrate predictions \
+  --from coco-results \
+  --results /path/to/coco_results.json \
+  --instances /path/to/instances_val2017.json \
+  --output reports/predictions.json \
   --force
 \end{lstlisting}
 
@@ -172,8 +172,8 @@ The intake boundary is fixed by \path{docs/synthgen_contract.md} and \path{schem
 
 Validate shard metadata before training/evaluation:
 \begin{lstlisting}[language=bash]
-python3 tools/validate_synthgen_contract.py \\
-  --input /path/to/synthgen_dataset/shards/train_000.jsonl \\
+python3 tools/validate_synthgen_contract.py \
+  --input /path/to/synthgen_dataset/shards/train_000.jsonl \
   --max-samples 200
 \end{lstlisting}
 

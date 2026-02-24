@@ -30,7 +30,7 @@ When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtim
 \node[box, right=20mm of a] (pa) {\path{predictions\_a.json}};
 \node[box, right=20mm of b] (pb) {\path{predictions\_b.json}};
 
-\node[box, below=14mm of pa, xshift=10mm] (par) {\textbf{Parity report}\\diff stats\\(\path{parity.json})};
+\node[box, below=12mm of pb] (par) {\textbf{Parity report}\\diff stats\\(\path{parity.json})};
 \node[box, right=20mm of par] (eval) {\textbf{Eval reports}\\metrics JSON\\protocol-pinned};
 
 \draw[dashedarrow] (inputs) -- (a);

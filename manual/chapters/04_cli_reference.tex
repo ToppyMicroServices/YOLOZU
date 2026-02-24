@@ -70,7 +70,7 @@ yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictio
 
 Backbone substitutions are governed exclusively by the model configuration JSON, rather than by modifying adapter commands directly:
 \begin{lstlisting}[language=bash]
-yolozu train configs/examples/train_setting.yaml \\
+yolozu train configs/examples/train_setting.yaml \
   --model-config rtdetr_pose/configs/base.json
 \end{lstlisting}
 
@@ -79,11 +79,11 @@ For comprehensive details regarding the backbone contract and supported architec
 \subsection{Test YAML and the Override Rule}
 The default test YAML configuration is intentionally minimalist (typically specifying only the adapter, dataset, split, and max\_images). Runtime-specific parameters are conventionally supplied as CLI overrides:
 \begin{lstlisting}[language=bash]
-yolozu test configs/examples/test_setting.yaml \\
-  --adapter rtdetr_pose \\
-  --config rtdetr_pose/configs/base.json \\
-  --checkpoint /path/to/checkpoint.pt \\
-  --dataset data/smoke \\
+yolozu test configs/examples/test_setting.yaml \
+  --adapter rtdetr_pose \
+  --config rtdetr_pose/configs/base.json \
+  --checkpoint /path/to/checkpoint.pt \
+  --dataset data/smoke \
   --max-images 50
 \end{lstlisting}
 

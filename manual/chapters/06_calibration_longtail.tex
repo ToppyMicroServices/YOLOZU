@@ -19,23 +19,23 @@ The command writes (1) a calibrated predictions artifact and (2) a small JSON st
 
 Example: fit FRACAL statistics for bounding boxes and write calibrated outputs:
 \begin{lstlisting}[language=bash]
-yolozu calibrate \\
-  --method fracal \\
-  --task bbox \\
-  --dataset /path/to/yolo-dataset \\
-  --predictions reports/predictions.json \\
-  --out reports/predictions_calibrated.json \\
+yolozu calibrate \
+  --method fracal \
+  --task bbox \
+  --dataset /path/to/yolo-dataset \
+  --predictions reports/predictions.json \
+  --out reports/predictions_calibrated.json \
   --stats-out reports/fracal_stats_bbox.json
 \end{lstlisting}
 
 Example: reuse previously computed statistics:
 \begin{lstlisting}[language=bash]
-yolozu calibrate \\
-  --method fracal \\
-  --task bbox \\
-  --dataset /path/to/yolo-dataset \\
-  --predictions reports/predictions.json \\
-  --out reports/predictions_calibrated.json \\
+yolozu calibrate \
+  --method fracal \
+  --task bbox \
+  --dataset /path/to/yolo-dataset \
+  --predictions reports/predictions.json \
+  --out reports/predictions_calibrated.json \
   --stats-in reports/fracal_stats_bbox.json
 \end{lstlisting}
 
