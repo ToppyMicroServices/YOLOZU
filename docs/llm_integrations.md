@@ -147,6 +147,11 @@ This keeps Gemini, OpenAI, and Copilot integrations aligned on one implementatio
 - Claude: MCP first
 - Copilot: MCP-backed extension/participant
 - OpenAI: MCP first, GPT Actions optional
+- Ollama (local): use an MCP-capable client with an OpenAI-compatible base URL
+
+Ollama note (local LLM):
+- Run Ollama locally and point an OpenAI-compatible client to `http://127.0.0.1:11434/v1`.
+- This only changes the LLM provider/model; the backend tool surface remains the same YOLOZU MCP server.
 
 All four routes should share the same backend implementation in `yolozu.integrations.tool_runner`.
 
