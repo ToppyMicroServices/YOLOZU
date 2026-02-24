@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.1] - 2026-02-24
+
+### Changed
+- Documentation: refocused `README.md` as an entrypoint and moved training/TTT/continual-learning details to `docs/learning_features.md`.
+- Manual: updated the “What YOLOZU Is” overview wording for clarity and consistency.
+- LLM/MCP: added Ollama (local LLM) setup notes and clarified client routing.
+
 ## [1.0.0] - 2026-02-23
 
 ### Breaking
