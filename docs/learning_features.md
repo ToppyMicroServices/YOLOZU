@@ -1,0 +1,115 @@
+# Learning features
+
+This page collects training and adaptation workflows that are intentionally *optional* in YOLOZU.
+The README stays focused on evaluation entrypoints; use this doc when you want continual learning / test-time adaptation / distillation workflows.
+
+## 1) Run interface contract training (Run Contract: reproducible artifacts)
+
+Value: Reproducible training operations for detection + keypoints + 6DoF pose: pin artifacts (checkpoints / metrics / exports / parity) under `runs/<run_id>/` so runs are easy to compare, regression-check, and fully resume.
+
+Representative command:
+
+```bash
+yolozu train configs/examples/train_contract.yaml --run-id exp01
+```
+
+Artifacts (fixed paths):
+- `runs/<run_id>/checkpoints/{last,best}.pt`
+- `runs/<run_id>/reports/{train_metrics,val_metrics}.jsonl`
+- `runs/<run_id>/reports/{config_resolved.yaml,run_meta.json,onnx_parity.json}`
+- `runs/<run_id>/exports/model.onnx` (+ meta)
+
+Model variants: swap backbones (ResNet/ConvNeXt/CSP/...) while keeping the same artifact layout: [`docs/backbones.md`](backbones.md).
+
+Details: [`docs/run_contract.md`](run_contract.md), [`docs/training_inference_export.md`](training_inference_export.md).
+
+## 2) Continual learning (anti-forgetting across task/domain sequences)
+
+Value: Fine-tune across a task/domain sequence while measuring and mitigating catastrophic forgetting via (a) memoryless self-distillation, (b) optional replay buffer, and (c) optional parameter-efficient updates (LoRA) + regularizers (EWC/SI/DER++).
+
+Representative commands:
+
+```bash
+python3 rtdetr_pose/tools/train_continual.py \
+  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
+
+python3 tools/eval_continual.py \
+  --run-json runs/continual/<run>/continual_run.json \
+  --device cpu \
+  --max-images 50
+```
+
+Artifacts:
+- `runs/continual/<run>/continual_run.json` (single source of truth)
+- `runs/continual/<run>/replay_buffer.json` (+ per-task `replay_records.json`)
+- `runs/continual/<run>/continual_eval.{json,html}` (from `eval_continual.py`)
+
+Details: [`docs/continual_learning.md`](continual_learning.md).
+
+## 3) Test-time training (TTT) under domain shift (Tent / MIM / CoTTA / EATA / SAR)
+
+Value: Reproducible test-time adaptation with bounded cost caps, reset policies (`stream` vs `sample`), and fixed eval subsets for fair comparisons.
+
+Representative command (export predictions with TTT enabled):
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset data/coco128 \
+  --split train2017 \
+  --checkpoint runs/exp01/checkpoints/best.pt \
+  --device cuda \
+  --max-images 50 \
+  --ttt --ttt-preset safe --ttt-reset sample \
+  --ttt-log-out reports/ttt_log_safe.json \
+  --output reports/pred_ttt_safe.json
+```
+
+Artifacts:
+- `reports/pred_ttt_safe.json` (predictions interface contract)
+- `reports/ttt_log_safe.json` (TTT step log)
+- Optional: fixed subset artifacts via `tools/make_subset_dataset.py` (`subset.json`, `subset_images.txt`)
+
+Details: [`docs/ttt_protocol.md`](ttt_protocol.md).
+
+## 4) (Research helper) Prediction distillation (offline)
+
+Value: Blend teacher/student `predictions.json` artifacts to accelerate ablations without retraining.
+
+Representative command:
+
+```bash
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json \
+  --add-missing
+```
+
+Artifacts:
+- `reports/predictions_distilled.json` (+ `reports/distill_report.json`)
+
+Details: [`docs/distillation.md`](distillation.md).
+
+## 5) Hessian-based refinement (post-inference, per-detection; experimental)
+
+Value: A safe Newton / finite-diff Hessian stepper to refine pose-related prediction fields as an engine-external postprocess over `predictions.json`.
+
+Representative command:
+
+```bash
+python3 tools/refine_predictions_hessian.py \
+  --predictions reports/predictions.json \
+  --output reports/predictions_hessian.json \
+  --enable \
+  --device cpu \
+  --log-output reports/hessian_log.json
+```
+
+Artifacts:
+- `reports/predictions_hessian.json` (predictions interface contract)
+- `reports/hessian_log.json` (optional)
+
+Details: [`docs/hessian_solver.md`](hessian_solver.md).

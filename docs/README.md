@@ -45,6 +45,8 @@ Install (pip + optional extras): [`docs/install.md`](install.md)
 
 Support/legal: [`docs/support.md`](support.md)
 
+Learning features (training / continual learning / TTT / distillation): [`docs/learning_features.md`](learning_features.md)
+
 ---
 
 ## A) Evaluate from precomputed predictions (no inference deps)
