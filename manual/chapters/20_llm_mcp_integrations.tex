@@ -99,9 +99,19 @@ OPENAI_API_KEY=ollama
 OPENAI_MODEL=llama3.1
 \end{lstlisting}
 
+Optional sanity checks:
+\begin{lstlisting}[language=bash]
+# Native Ollama API
+curl -sS http://127.0.0.1:11434/api/tags
+
+# OpenAI-compatible API
+curl -sS http://127.0.0.1:11434/v1/models
+\end{lstlisting}
+
 Notes:
 \begin{itemize}
   \item MCP tool execution still routes to \cmd{python3 tools/run\_mcp\_server.py}; only the LLM provider/model changes.
+  \item Environment variable names are client-specific; some clients use \cmd{OPENAI\_API\_BASE} instead of \cmd{OPENAI\_BASE\_URL}.
   \item Model capability varies by local weights; if tool selection is unstable, prefer a stronger local model and keep prompts/tool wrappers thin.
   \item Verify the endpoint is reachable via \cmd{http://127.0.0.1:11434/v1/models} (OpenAI-compatible) in environments that support it.
 \end{itemize}

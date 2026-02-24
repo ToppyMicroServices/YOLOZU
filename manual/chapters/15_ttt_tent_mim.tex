@@ -337,7 +337,7 @@ These bounds are there to prevent runaway adaptation and to keep comparisons rep
 
 % Stream row
 \node[box] (s0) {\textbf{Base}\\weights};
-\node[box, right=14mm of s0] (s1) {adapt\\(bounded)};
+\node[box, right=14mm of s0, label={[font=\small]above:\cmd{stream}}] (s1) {adapt\\(bounded)};
 \node[box, right=14mm of s1] (s2) {\textbf{Adapted}\\weights};
 \node[box, right=14mm of s2] (s3) {predict\\(many images)};
 \draw[arrow] (s0) -- (s1);
@@ -345,16 +345,13 @@ These bounds are there to prevent runaway adaptation and to keep comparisons rep
 \draw[arrow] (s2) -- (s3);
 
 \node[box, below=14mm of s0] (p0) {\textbf{Base}\\weights};
-\node[box, right=14mm of p0] (p1) {adapt\\(per image)};
+\node[box, right=14mm of p0, label={[font=\small]above:\cmd{sample}}] (p1) {adapt\\(per image)};
 \node[box, right=14mm of p1] (p2) {predict\\(one image)};
 \node[box, right=14mm of p2] (p3) {reset\\to base};
 \draw[arrow] (p0) -- (p1);
 \draw[arrow] (p1) -- (p2);
 \draw[dashedarrow] (p2) -- (p3);
 \draw[dashedarrow] (p3) -- (p0);
-
-\node[box, above=6mm of s1] (lbls) {\textbf{stream}};
-\node[box, above=6mm of p1] (lblp) {\textbf{sample}};
 
 \end{tikzpicture}
 }
