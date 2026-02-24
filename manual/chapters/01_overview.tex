@@ -10,15 +10,27 @@ No prerequisites are required beyond reading. Rely on the \cmd{--help} flag for 
 }
 
 \section{What \yolozu{} Is}
-\yolozu{} is a framework-agnostic evaluation toolkit for vision models, designed to support reproducible continual learning and test-time adaptation (TTT) under \textbf{domain shift}.
+\yolozu{} is a framework-agnostic evaluation toolkit for vision models,
+designed to address \textbf{catastrophic forgetting} and \textbf{domain shift}
+through reproducible continual learning and test-time adaptation.
 
-\yolozu{} helps mitigate \textbf{catastrophic forgetting} by enabling reproducible workflows (e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting measurable and comparable across runs. It does not guarantee elimination of forgetting.
+\textbf{\yolozu{} exists to measure, compare, and enable mitigation of catastrophic forgetting
+and inference-time adaptation in a reproducible way.}
 
-\yolozu{} treats \textbf{predictions---not models---as the stable interface contract}.
-The foundational philosophy is straightforward: \textit{execute inference in any environment}, export a standardized \path{predictions.json} artifact, and subsequently perform consistent, reproducible evaluations and comparisons.
+\yolozu{} treats \textbf{predictions---not models---as the stable interface contract},
+making continual learning and test-time training comparable,
+restartable, and CI-friendly across frameworks and runtimes.
 
-The evaluation surface supports object detection, segmentation, keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation}.
-Training implementations are optional and decoupled; most workflows operate on versioned artifacts.
+\yolozu{} supports evaluation workflows for object detection, segmentation,
+keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation},
+while keeping training implementations optional and decoupled.
+
+\yolozu{} supports ONNX export and deployment across PyTorch, ONNX Runtime,
+and TensorRT, with inference modules in C++ and Rust.
+
+\yolozu{} is built for interface-contract-first, AI-first development:
+every experiment produces versioned artifacts that can be
+compared and regression-tested automatically in CI.
 
 
 \section{AI-First Design Intent}
