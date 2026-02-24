@@ -13,8 +13,11 @@
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
 YOLOZU is a framework-agnostic evaluation toolkit for vision models,
-designed to address **catastrophic forgetting** and **domain shift**
-through reproducible continual learning and test-time adaptation (TTT).
+designed to support reproducible continual learning and test-time adaptation (TTT) under **domain shift**.
+
+YOLOZU helps mitigate catastrophic forgetting by enabling reproducible workflows
+(e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting
+measurable and comparable across runs. It does not guarantee elimination of forgetting.
 
 **YOLOZU exists to measure, compare, and control catastrophic forgetting
 and inference-time adaptation in a reproducible way.**

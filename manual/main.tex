@@ -96,8 +96,11 @@
 
 \begin{abstract}
 \yolozu{} is a framework-agnostic evaluation toolkit for vision models,
-designed to address \textbf{catastrophic forgetting} and \textbf{domain shift}
-through reproducible continual learning and test-time adaptation (TTT).
+designed to support reproducible continual learning and test-time adaptation (TTT) under \textbf{domain shift}.
+
+\yolozu{} helps mitigate \textbf{catastrophic forgetting} by enabling reproducible workflows
+(e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting
+measurable and comparable across runs. It does not guarantee elimination of forgetting.
 
 \textbf{\yolozu{} exists to measure, compare, and control catastrophic forgetting
 and inference-time adaptation in a reproducible way.}

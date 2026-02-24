@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "yolozu"
 dynamic = ["version"]
-description = "Interface-contract-first evaluation toolkit for reproducible continual learning and test-time adaptation."
+description = "Interface-contract-first evaluation toolkit for mitigating catastrophic forgetting and domain shift via reproducible workflows."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

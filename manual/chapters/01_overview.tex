@@ -10,7 +10,9 @@ No prerequisites are required beyond reading. Rely on the \cmd{--help} flag for 
 }
 
 \section{What \yolozu{} Is}
-\yolozu{} is a framework-agnostic evaluation toolkit for vision models, designed to address \textbf{catastrophic forgetting} and \textbf{domain shift} through reproducible continual learning and test-time adaptation (TTT).
+\yolozu{} is a framework-agnostic evaluation toolkit for vision models, designed to support reproducible continual learning and test-time adaptation (TTT) under \textbf{domain shift}.
+
+\yolozu{} helps mitigate \textbf{catastrophic forgetting} by enabling reproducible workflows (e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting measurable and comparable across runs. It does not guarantee elimination of forgetting.
 
 \yolozu{} treats \textbf{predictions---not models---as the stable interface contract}.
 The foundational philosophy is straightforward: \textit{execute inference in any environment}, export a standardized \path{predictions.json} artifact, and subsequently perform consistent, reproducible evaluations and comparisons.
