@@ -93,7 +93,7 @@ def run_instance_seg_demo(
     np.random.seed(int(seed))
 
     if run_dir is None:
-        run_dir = Path("runs") / "yolozu_demos" / "instance_seg" / _utc_run_id()
+        run_dir = Path("demo_output") / "instance_seg" / _utc_run_id()
     else:
         run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)

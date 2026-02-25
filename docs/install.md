@@ -30,10 +30,13 @@ These demos are optional and intended as fast end-to-end smoke checks.
 They typically require `pip install 'yolozu[demo]'`.
 
 ```bash
+yolozu demo  # defaults to: instance-seg
 yolozu demo instance-seg
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
+
+Demo outputs are written under `demo_output/` by default.
 
 ## Repository checkout (dev path)
 

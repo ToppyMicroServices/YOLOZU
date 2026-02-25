@@ -14,6 +14,7 @@ rtdetr_pose/reports/
 
 # Training / build artifacts
 runs/
+demo_output/
 build/
 dist/
 *.egg-info/

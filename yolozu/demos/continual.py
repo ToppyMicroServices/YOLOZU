@@ -259,7 +259,7 @@ def run_continual_demo(
     )
 
     if output is None:
-        out_path = Path("runs") / "yolozu_demos" / "continual" / f"continual_demo_{_utc_run_id()}.json"
+        out_path = Path("demo_output") / "continual" / f"continual_demo_{_utc_run_id()}.json"
     else:
         out_path = Path(output)
         if out_path.is_dir() or str(output).endswith(("/", "\\")):
@@ -298,7 +298,7 @@ def run_continual_demo_suite(
 
     prefix = "continual_demo_suite"
     if output is None:
-        run_dir = Path("runs") / "yolozu_demos" / "continual" / f"suite_{run_id}"
+        run_dir = Path("demo_output") / "continual" / f"suite_{run_id}"
         suite_path = run_dir / "suite.json"
     else:
         out_path = Path(output)

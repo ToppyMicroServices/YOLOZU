@@ -1831,7 +1831,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
-    demo_sub = demo.add_subparsers(dest="demo_command", required=True)
+    demo_sub = demo.add_subparsers(dest="demo_command", required=False)
 
     demo_is = demo_sub.add_parser("instance-seg", help="Synthetic instance-seg eval demo (numpy + Pillow).")
     demo_is.add_argument("--run-dir", default=None, help="Run directory (default: runs/yolozu_demos/instance_seg/<utc>).")
@@ -1934,25 +1934,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "import":
         return _cmd_import(args)
     if args.command == "demo":
-        if args.demo_command == "instance-seg":
+        if args.demo_command in (None, "instance-seg"):
             from yolozu.demos.instance_seg import run_instance_seg_demo
 
             out = run_instance_seg_demo(
-                run_dir=args.run_dir,
-                seed=int(args.seed),
-                num_images=int(args.num_images),
-                image_size=int(args.image_size),
-                max_instances=int(args.max_instances),
+                run_dir=getattr(args, "run_dir", None),
+                seed=int(getattr(args, "seed", 0)),
+                num_images=int(getattr(args, "num_images", 8)),
+                image_size=int(getattr(args, "image_size", 96)),
+                max_instances=int(getattr(args, "max_instances", 2)),
             )
             try:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
                 res = payload.get("result", {})
                 counts = res.get("counts", {})
+                meta = payload.get("meta", {})
                 print(
                     "instance-seg demo: "
                     f"mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f} "
                     f"(images={counts.get('images')} gt={counts.get('gt_instances')} pred={counts.get('pred_instances')} classes={counts.get('classes')})"
                 )
+                if isinstance(meta, dict) and meta.get("run_dir"):
+                    print(f"output_dir: {meta.get('run_dir')}")
             except Exception:
                 pass
             print(str(out))
@@ -2038,7 +2041,8 @@ def main(argv: list[str] | None = None) -> int:
                     f"continual demo ({method}): "
                     f"accA {a.get('acc_a'):.3f}→{b.get('acc_a'):.3f} "
                     f"accB {a.get('acc_b'):.3f}→{b.get('acc_b'):.3f} "
-                    f"forget={forgetting:.3f} gain={gain:.3f}"
+                    f"forget={forgetting:.3f} gain={gain:.3f} "
+                    f"(output_dir={Path(out).parent})"
                 )
                 if args.markdown:
                     md = format_continual_demo_suite_markdown({"runs": [{"method": method, "metrics": metrics}]})
