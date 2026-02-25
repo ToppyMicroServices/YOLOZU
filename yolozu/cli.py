@@ -2027,38 +2027,109 @@ def main(argv: list[str] | None = None) -> int:
                     images_dir.mkdir(parents=True, exist_ok=True)
                     instances_path = fixture_dir / "instances_val.json"
 
-                    # Keep this extremely small and dependency-light.
-                    from PIL import Image
+                    # Keep this dependency-light (Pillow only), but generate something that
+                    # looks more like a real segmentation dataset: textured background,
+                    # multiple instances, varied polygon shapes, and occasional multi-polygons.
+                    import math
+                    import random
 
-                    Image.new("RGB", (96, 64), (240, 240, 240)).save(images_dir / "000000000001.jpg")
-                    Image.new("RGB", (96, 64), (240, 240, 240)).save(images_dir / "000000000002.jpg")
+                    from PIL import Image, ImageDraw
 
-                    coco = {
-                        "images": [
-                            {"id": 1, "file_name": "000000000001.jpg", "width": 96, "height": 64},
-                            {"id": 2, "file_name": "000000000002.jpg", "width": 96, "height": 64},
-                        ],
-                        "annotations": [
-                            {
-                                "id": 1,
-                                "image_id": 1,
-                                "category_id": 3,
-                                "iscrowd": 0,
-                                "segmentation": [[10, 10, 70, 12, 60, 50, 12, 45]],
-                            },
-                            {
-                                "id": 2,
-                                "image_id": 2,
-                                "category_id": 4,
-                                "iscrowd": 0,
-                                "segmentation": [[20, 8, 85, 10, 80, 40, 25, 42]],
-                            },
-                        ],
-                        "categories": [
-                            {"id": 3, "name": "thingA"},
-                            {"id": 4, "name": "thingB"},
-                        ],
-                    }
+                    rng = random.Random(0)
+                    width, height = 320, 240
+                    num_images = 6
+
+                    categories = [
+                        {"id": 1, "name": "person"},
+                        {"id": 2, "name": "bicycle"},
+                        {"id": 3, "name": "dog"},
+                    ]
+
+                    def _jitter_color(base: tuple[int, int, int], j: int = 25) -> tuple[int, int, int]:
+                        return (
+                            max(0, min(255, base[0] + rng.randint(-j, j))),
+                            max(0, min(255, base[1] + rng.randint(-j, j))),
+                            max(0, min(255, base[2] + rng.randint(-j, j))),
+                        )
+
+                    def _make_textured_bg() -> Image.Image:
+                        base = Image.new("RGB", (width, height), _jitter_color((205, 210, 215), 15))
+                        draw = ImageDraw.Draw(base)
+                        # A few broad color blocks + faint lines (cheap texture).
+                        for _ in range(12):
+                            x0 = rng.randint(-40, width - 1)
+                            y0 = rng.randint(-40, height - 1)
+                            x1 = x0 + rng.randint(40, 160)
+                            y1 = y0 + rng.randint(30, 140)
+                            draw.rectangle([x0, y0, x1, y1], fill=_jitter_color((190, 195, 200), 30), outline=None)
+                        for _ in range(16):
+                            x0 = rng.randint(0, width - 1)
+                            y0 = rng.randint(0, height - 1)
+                            x1 = max(0, min(width - 1, x0 + rng.randint(-120, 120)))
+                            y1 = max(0, min(height - 1, y0 + rng.randint(-90, 90)))
+                            draw.line([x0, y0, x1, y1], fill=_jitter_color((120, 125, 130), 35), width=1)
+                        return base
+
+                    def _make_polygon(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
+                        n = rng.randint(8, 14)
+                        pts: list[tuple[float, float]] = []
+                        phase = rng.random() * (2.0 * math.pi)
+                        for k in range(n):
+                            a = phase + (2.0 * math.pi * k / n)
+                            rr = r * (0.65 + 0.55 * rng.random())
+                            x = cx + rr * math.cos(a)
+                            y = cy + rr * math.sin(a)
+                            x = max(2.0, min(float(width) - 3.0, x))
+                            y = max(2.0, min(float(height) - 3.0, y))
+                            pts.append((x, y))
+                        return pts
+
+                    images: list[dict[str, Any]] = []
+                    annotations: list[dict[str, Any]] = []
+                    ann_id = 1
+
+                    for image_id in range(1, num_images + 1):
+                        file_name = f"{image_id:012d}.jpg"
+                        img = _make_textured_bg()
+                        draw = ImageDraw.Draw(img)
+
+                        num_inst = rng.randint(2, 5)
+                        for _ in range(num_inst):
+                            cat = rng.choice(categories)
+                            cx = rng.uniform(60.0, float(width) - 60.0)
+                            cy = rng.uniform(50.0, float(height) - 50.0)
+                            r = rng.uniform(18.0, 55.0)
+
+                            # Some instances are multi-polygons (COCO supports list of polygons).
+                            segs: list[list[float]] = []
+                            poly1 = _make_polygon(cx, cy, r)
+                            segs.append([v for xy in poly1 for v in xy])
+                            if rng.random() < 0.25:
+                                poly2 = _make_polygon(cx + rng.uniform(-25.0, 25.0), cy + rng.uniform(-20.0, 20.0), r * 0.55)
+                                segs.append([v for xy in poly2 for v in xy])
+
+                            fill = _jitter_color((60, 140, 220) if (int(cat["id"]) % 2) == 0 else (220, 120, 60), 20)
+                            outline = (0, 0, 0)
+                            for poly in segs:
+                                pts = [(float(poly[i]), float(poly[i + 1])) for i in range(0, len(poly) - 1, 2)]
+                                draw.polygon(pts, fill=fill, outline=outline)
+                                draw.line(pts + [pts[0]], fill=outline, width=2)
+
+                            annotations.append(
+                                {
+                                    "id": ann_id,
+                                    "image_id": image_id,
+                                    "category_id": int(cat["id"]),
+                                    "iscrowd": 0,
+                                    "segmentation": segs,
+                                }
+                            )
+                            ann_id += 1
+
+                        img.save(images_dir / file_name)
+                        images.append({"id": image_id, "file_name": file_name, "width": width, "height": height})
+
+                    coco = {"images": images, "annotations": annotations, "categories": categories}
                     instances_path.write_text(json.dumps(coco), encoding="utf-8")
                     return instances_path, images_dir
 
