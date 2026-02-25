@@ -30,6 +30,7 @@ class TestDemoCliDefaults(unittest.TestCase):
             # Default should run the demo suite (at least instance-seg synthetic).
             self.assertIn("instance-seg demo:", proc.stdout)
             self.assertIn("== instance-seg (synthetic) ==", proc.stdout)
+            self.assertIn("== instance-seg (coco-instances) ==", proc.stdout)
             self.assertIn("output_dir:", proc.stdout)
             # Default output folder should be demo_output.
             self.assertIn("demo_output", proc.stdout)

@@ -2021,6 +2021,47 @@ def main(argv: list[str] | None = None) -> int:
                 default_instances = Path("data") / "coco" / "annotations" / "instances_val2017.json"
                 default_images = Path("data") / "coco" / "images" / "val2017"
 
+                def _ensure_tiny_coco_instances_fixture(*, fixture_dir: Path) -> tuple[Path, Path]:
+                    fixture_dir.mkdir(parents=True, exist_ok=True)
+                    images_dir = fixture_dir / "images"
+                    images_dir.mkdir(parents=True, exist_ok=True)
+                    instances_path = fixture_dir / "instances_val.json"
+
+                    # Keep this extremely small and dependency-light.
+                    from PIL import Image
+
+                    Image.new("RGB", (96, 64), (240, 240, 240)).save(images_dir / "000000000001.jpg")
+                    Image.new("RGB", (96, 64), (240, 240, 240)).save(images_dir / "000000000002.jpg")
+
+                    coco = {
+                        "images": [
+                            {"id": 1, "file_name": "000000000001.jpg", "width": 96, "height": 64},
+                            {"id": 2, "file_name": "000000000002.jpg", "width": 96, "height": 64},
+                        ],
+                        "annotations": [
+                            {
+                                "id": 1,
+                                "image_id": 1,
+                                "category_id": 3,
+                                "iscrowd": 0,
+                                "segmentation": [[10, 10, 70, 12, 60, 50, 12, 45]],
+                            },
+                            {
+                                "id": 2,
+                                "image_id": 2,
+                                "category_id": 4,
+                                "iscrowd": 0,
+                                "segmentation": [[20, 8, 85, 10, 80, 40, 25, 42]],
+                            },
+                        ],
+                        "categories": [
+                            {"id": 3, "name": "thingA"},
+                            {"id": 4, "name": "thingB"},
+                        ],
+                    }
+                    instances_path.write_text(json.dumps(coco), encoding="utf-8")
+                    return instances_path, images_dir
+
                 suite_instances = getattr(args, "coco_instances_json", None)
                 suite_images = getattr(args, "coco_images_dir", None)
                 if suite_instances or suite_images:
@@ -2029,8 +2070,16 @@ def main(argv: list[str] | None = None) -> int:
                     if instances_path is None or images_path is None:
                         raise ValueError("demo suite requires both --coco-instances-json and --coco-images-dir")
                 else:
-                    instances_path = default_instances
-                    images_path = default_images
+                    if default_instances.exists() and default_images.exists():
+                        instances_path = default_instances
+                        images_path = default_images
+                    else:
+                        instances_path, images_path = _ensure_tiny_coco_instances_fixture(
+                            fixture_dir=Path("demo_output")
+                            / "instance_seg"
+                            / f"suite_{suite_id}"
+                            / "_coco_instances_fixture"
+                        )
 
                 if instances_path.exists() and images_path.exists():
                     out_ci = run_instance_seg_demo(
