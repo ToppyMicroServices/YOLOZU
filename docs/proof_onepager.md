@@ -12,7 +12,7 @@ yolozu demo instance-seg --num-images 2 --image-size 96
 
 What you should see:
 - `yolozu doctor` prints environment diagnostics (Python, optional backends, resource paths).
-- `yolozu demo` writes a small self-contained run directory (JSON + overlays/HTML if enabled).
+- `yolozu demo` runs a small demo suite and writes self-contained outputs under demo_output/ (JSON + overlays).
 
 ## If you already have predictions.json
 

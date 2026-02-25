@@ -1940,7 +1940,97 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "import":
         return _cmd_import(args)
     if args.command == "demo":
-        if args.demo_command in (None, "instance-seg"):
+        def _print_instance_seg_report(*, out_path: Path, label: str | None = None) -> None:
+            try:
+                payload = json.loads(Path(out_path).read_text(encoding="utf-8"))
+                res = payload.get("result", {})
+                counts = res.get("counts", {})
+                meta = payload.get("meta", {})
+                if label:
+                    print(label)
+                print(
+                    "instance-seg demo: "
+                    f"mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f} "
+                    f"(images={counts.get('images')} gt={counts.get('gt_instances')} pred={counts.get('pred_instances')} classes={counts.get('classes')})"
+                )
+                if isinstance(meta, dict) and meta.get("run_dir"):
+                    print(f"output_dir: {meta.get('run_dir')}")
+            except Exception:
+                if label:
+                    print(label)
+            print(str(out_path))
+
+        if args.demo_command is None:
+            import time
+
+            from yolozu.demos.instance_seg import run_instance_seg_demo
+
+            suite_id = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
+            ok = 0
+
+            # 1) Synthetic instance-seg
+            out_syn = run_instance_seg_demo(
+                run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "synthetic",
+                seed=0,
+                num_images=4,
+                image_size=96,
+                max_instances=2,
+                background="synthetic",
+            )
+            _print_instance_seg_report(out_path=Path(out_syn), label="== instance-seg (synthetic) ==")
+            ok += 1
+
+            # 2) COCO128-backed instance-seg (skip if dataset missing)
+            try:
+                out_coco = run_instance_seg_demo(
+                    run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "coco128",
+                    seed=0,
+                    num_images=2,
+                    image_size=96,
+                    max_instances=2,
+                    background="coco128",
+                )
+                _print_instance_seg_report(out_path=Path(out_coco), label="== instance-seg (coco128) ==")
+                ok += 1
+            except FileNotFoundError as exc:
+                print("== instance-seg (coco128) ==")
+                print(f"skipped: {exc}")
+
+            # 3) Continual demo (skip if torch missing)
+            try:
+                from yolozu.demos.continual import run_continual_demo
+
+                out = run_continual_demo(
+                    output=None,
+                    seed=0,
+                    device="cpu",
+                    method="naive",
+                    steps_a=50,
+                    steps_b=50,
+                    batch_size=64,
+                    hidden=32,
+                    lr=1e-2,
+                    corr=2.0,
+                    noise=0.6,
+                    n_train=1024,
+                    n_eval=256,
+                    ewc_lambda=20.0,
+                    fisher_batches=8,
+                    replay_capacity=256,
+                    replay_k=32,
+                )
+                if out is not None:
+                    print("== continual ==")
+                    print(f"output_dir: {Path(out).parent}")
+                    print(str(out))
+                    ok += 1
+            except Exception as exc:
+                print("== continual ==")
+                print(f"skipped: {exc}")
+
+            return 0 if ok > 0 else 1
+
+        if args.demo_command == "instance-seg":
             from yolozu.demos.instance_seg import run_instance_seg_demo
 
             out = run_instance_seg_demo(
@@ -1951,21 +2041,7 @@ def main(argv: list[str] | None = None) -> int:
                 max_instances=int(getattr(args, "max_instances", 2)),
                 background=str(getattr(args, "background", "synthetic")),
             )
-            try:
-                payload = json.loads(Path(out).read_text(encoding="utf-8"))
-                res = payload.get("result", {})
-                counts = res.get("counts", {})
-                meta = payload.get("meta", {})
-                print(
-                    "instance-seg demo: "
-                    f"mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f} "
-                    f"(images={counts.get('images')} gt={counts.get('gt_instances')} pred={counts.get('pred_instances')} classes={counts.get('classes')})"
-                )
-                if isinstance(meta, dict) and meta.get("run_dir"):
-                    print(f"output_dir: {meta.get('run_dir')}")
-            except Exception:
-                pass
-            print(str(out))
+            _print_instance_seg_report(out_path=Path(out))
             return 0
 
         if args.demo_command == "continual":

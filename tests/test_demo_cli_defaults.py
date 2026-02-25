@@ -7,7 +7,7 @@ import os
 
 
 class TestDemoCliDefaults(unittest.TestCase):
-    def test_demo_defaults_to_instance_seg(self):
+    def test_demo_defaults_to_demo_suite(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             cwd = Path(td)
@@ -26,7 +26,9 @@ class TestDemoCliDefaults(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            # Default should run the demo suite (at least instance-seg synthetic).
             self.assertIn("instance-seg demo:", proc.stdout)
+            self.assertIn("== instance-seg (synthetic) ==", proc.stdout)
             self.assertIn("output_dir:", proc.stdout)
             # Default output folder should be demo_output.
             self.assertIn("demo_output", proc.stdout)
