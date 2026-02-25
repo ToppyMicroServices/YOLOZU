@@ -2600,6 +2600,20 @@ def main(argv: list[str] | None = None) -> int:
                 run_continual_demo_suite,
             )
 
+            def _friendly_demo_deps_error(exc: Exception) -> SystemExit:
+                msg = str(exc)
+                if "requires torchvision" in msg:
+                    return SystemExit(
+                        "demo continual (--problem mnist_rotate) requires torchvision. "
+                        "Install: python3 -m pip install -U 'yolozu[demo]'"
+                    )
+                if "requires torch" in msg:
+                    return SystemExit(
+                        "demo continual requires torch. "
+                        "Install: python3 -m pip install -U 'yolozu[demo]'"
+                    )
+                return SystemExit(msg)
+
             methods = None
             if args.methods:
                 methods = [str(m) for m in args.methods]
@@ -2607,27 +2621,30 @@ def main(argv: list[str] | None = None) -> int:
                 methods = ["naive", "ewc", "replay", "ewc_replay"]
 
             if methods and len(methods) > 1:
-                out = run_continual_demo_suite(
-                    methods=methods,
-                    output=args.output,
-                    seed=int(args.seed),
-                    device=str(args.device),
-                    problem=str(getattr(args, "problem", "toy2d")),
-                    data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
-                    steps_a=int(args.steps_a),
-                    steps_b=int(args.steps_b),
-                    batch_size=int(args.batch_size),
-                    hidden=int(args.hidden),
-                    lr=float(args.lr),
-                    corr=float(args.corr),
-                    noise=float(args.noise),
-                    n_train=int(args.n_train),
-                    n_eval=int(args.n_eval),
-                    ewc_lambda=float(args.ewc_lambda),
-                    fisher_batches=int(args.fisher_batches),
-                    replay_capacity=int(args.replay_capacity),
-                    replay_k=int(args.replay_k),
-                )
+                try:
+                    out = run_continual_demo_suite(
+                        methods=methods,
+                        output=args.output,
+                        seed=int(args.seed),
+                        device=str(args.device),
+                        problem=str(getattr(args, "problem", "toy2d")),
+                        data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
+                        steps_a=int(args.steps_a),
+                        steps_b=int(args.steps_b),
+                        batch_size=int(args.batch_size),
+                        hidden=int(args.hidden),
+                        lr=float(args.lr),
+                        corr=float(args.corr),
+                        noise=float(args.noise),
+                        n_train=int(args.n_train),
+                        n_eval=int(args.n_eval),
+                        ewc_lambda=float(args.ewc_lambda),
+                        fisher_batches=int(args.fisher_batches),
+                        replay_capacity=int(args.replay_capacity),
+                        replay_k=int(args.replay_k),
+                    )
+                except RuntimeError as exc:
+                    raise _friendly_demo_deps_error(exc)
                 try:
                     payload = json.loads(Path(out).read_text(encoding="utf-8"))
                     md = format_continual_demo_suite_markdown(payload)
@@ -2645,27 +2662,30 @@ def main(argv: list[str] | None = None) -> int:
             if methods and len(methods) == 1:
                 method = str(methods[0])
 
-            out = run_continual_demo(
-                output=args.output,
-                seed=int(args.seed),
-                device=str(args.device),
-                method=method,
-                problem=str(getattr(args, "problem", "toy2d")),
-                data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
-                steps_a=int(args.steps_a),
-                steps_b=int(args.steps_b),
-                batch_size=int(args.batch_size),
-                hidden=int(args.hidden),
-                lr=float(args.lr),
-                corr=float(args.corr),
-                noise=float(args.noise),
-                n_train=int(args.n_train),
-                n_eval=int(args.n_eval),
-                ewc_lambda=float(args.ewc_lambda),
-                fisher_batches=int(args.fisher_batches),
-                replay_capacity=int(args.replay_capacity),
-                replay_k=int(args.replay_k),
-            )
+            try:
+                out = run_continual_demo(
+                    output=args.output,
+                    seed=int(args.seed),
+                    device=str(args.device),
+                    method=method,
+                    problem=str(getattr(args, "problem", "toy2d")),
+                    data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
+                    steps_a=int(args.steps_a),
+                    steps_b=int(args.steps_b),
+                    batch_size=int(args.batch_size),
+                    hidden=int(args.hidden),
+                    lr=float(args.lr),
+                    corr=float(args.corr),
+                    noise=float(args.noise),
+                    n_train=int(args.n_train),
+                    n_eval=int(args.n_eval),
+                    ewc_lambda=float(args.ewc_lambda),
+                    fisher_batches=int(args.fisher_batches),
+                    replay_capacity=int(args.replay_capacity),
+                    replay_k=int(args.replay_k),
+                )
+            except RuntimeError as exc:
+                raise _friendly_demo_deps_error(exc)
             try:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
                 metrics = payload.get("metrics", {})
