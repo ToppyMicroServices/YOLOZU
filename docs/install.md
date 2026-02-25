@@ -34,6 +34,17 @@ yolozu demo  # runs a small demo suite (instance-seg synthetic + coco128 + conti
 yolozu demo instance-seg
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
+
+# COCO instances (polygon) mask demo
+
+If you have a COCO-style instances annotations JSON (polygons) and the matching images directory, you can run:
+
+```bash
+yolozu demo instance-seg \
+	--background coco-instances \
+	--coco-instances-json /path/to/annotations/instances_val2017.json \
+	--coco-images-dir /path/to/images/val2017
+```
 ```
 
 Demo outputs are written under `demo_output/` by default.

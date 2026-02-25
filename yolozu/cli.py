@@ -1841,9 +1841,19 @@ def main(argv: list[str] | None = None) -> int:
     demo_is.add_argument("--max-instances", type=int, default=2, help="Max instances per image (default: 2).")
     demo_is.add_argument(
         "--background",
-        choices=("synthetic", "coco128"),
+        choices=("synthetic", "coco128", "coco-instances"),
         default="synthetic",
-        help="Background source: synthetic shapes or real COCO128 images (default: synthetic).",
+        help="Background source: synthetic shapes, COCO128 (bbox-derived), or COCO instances polygons (default: synthetic).",
+    )
+    demo_is.add_argument(
+        "--coco-instances-json",
+        default=None,
+        help="(background=coco-instances) Path to COCO instances_*.json (polygon segmentations).",
+    )
+    demo_is.add_argument(
+        "--coco-images-dir",
+        default=None,
+        help="(background=coco-instances) Root images dir for the COCO split (joined with image.file_name).",
     )
 
     demo_cl = demo_sub.add_parser("continual", help="Toy continual-learning demo (requires torch; CPU OK).")
@@ -1996,6 +2006,30 @@ def main(argv: list[str] | None = None) -> int:
                 print("== instance-seg (coco128) ==")
                 print(f"skipped: {exc}")
 
+            # 2b) COCO instances (polygon) instance-seg (skip unless default paths exist)
+            try:
+                default_instances = Path("data") / "coco" / "annotations" / "instances_val2017.json"
+                default_images = Path("data") / "coco" / "images" / "val2017"
+                if default_instances.exists() and default_images.exists():
+                    out_ci = run_instance_seg_demo(
+                        run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "coco_instances",
+                        seed=0,
+                        num_images=2,
+                        image_size=96,
+                        max_instances=2,
+                        background="coco-instances",
+                        coco_instances_json=default_instances,
+                        coco_images_dir=default_images,
+                    )
+                    _print_instance_seg_report(out_path=Path(out_ci), label="== instance-seg (coco-instances) ==")
+                    ok += 1
+                else:
+                    print("== instance-seg (coco-instances) ==")
+                    print("skipped: COCO instances dataset not found under data/coco")
+            except Exception as exc:
+                print("== instance-seg (coco-instances) ==")
+                print(f"skipped: {exc}")
+
             # 3) Continual demo (skip if torch missing)
             try:
                 from yolozu.demos.continual import run_continual_demo
@@ -2040,6 +2074,8 @@ def main(argv: list[str] | None = None) -> int:
                 image_size=int(getattr(args, "image_size", 96)),
                 max_instances=int(getattr(args, "max_instances", 2)),
                 background=str(getattr(args, "background", "synthetic")),
+                coco_instances_json=getattr(args, "coco_instances_json", None),
+                coco_images_dir=getattr(args, "coco_images_dir", None),
             )
             _print_instance_seg_report(out_path=Path(out))
             return 0

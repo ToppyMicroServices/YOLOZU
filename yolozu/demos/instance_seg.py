@@ -57,6 +57,70 @@ def _yolo_bbox_to_xyxy(*, w: int, h: int, xc: float, yc: float, bw: float, bh: f
     return x0, y0, x1, y1
 
 
+def _load_coco_instances(
+    *,
+    instances_json: Path,
+) -> tuple[dict[int, dict[str, Any]], dict[int, list[dict[str, Any]]]]:
+    payload = json.loads(instances_json.read_text(encoding="utf-8"))
+    images = payload.get("images") or []
+    anns = payload.get("annotations") or []
+    if not isinstance(images, list) or not isinstance(anns, list):
+        raise ValueError("invalid COCO instances JSON: expected 'images' and 'annotations' lists")
+
+    images_by_id: dict[int, dict[str, Any]] = {}
+    for im in images:
+        if not isinstance(im, dict):
+            continue
+        try:
+            image_id = int(im.get("id"))
+        except Exception:
+            continue
+        images_by_id[image_id] = dict(im)
+
+    anns_by_image_id: dict[int, list[dict[str, Any]]] = {}
+    for a in anns:
+        if not isinstance(a, dict):
+            continue
+        try:
+            image_id = int(a.get("image_id"))
+        except Exception:
+            continue
+        anns_by_image_id.setdefault(image_id, []).append(dict(a))
+
+    return images_by_id, anns_by_image_id
+
+
+def _coco_polygons_to_mask(*, w: int, h: int, segmentation: Any) -> Any:
+    np, (Image, ImageDraw) = _require_deps()
+    if not isinstance(segmentation, list):
+        # RLE dict or invalid shape.
+        return None
+
+    img = Image.new("L", (int(w), int(h)), 0)
+    draw = ImageDraw.Draw(img)
+    drew_any = False
+    for poly in segmentation:
+        if not isinstance(poly, list):
+            continue
+        if len(poly) < 6:
+            continue
+        pts: list[tuple[float, float]] = []
+        for k in range(0, len(poly) - 1, 2):
+            try:
+                x = float(poly[k])
+                y = float(poly[k + 1])
+            except Exception:
+                continue
+            pts.append((x, y))
+        if len(pts) >= 3:
+            draw.polygon(pts, fill=255)
+            drew_any = True
+
+    if not drew_any:
+        return None
+    return np.array(img) != 0
+
+
 def _draw_mask_circle(*, size: int, cx: int, cy: int, r: int) -> Any:
     np, (Image, ImageDraw) = _require_deps()
     img = Image.new("L", (int(size), int(size)), 0)
@@ -118,6 +182,8 @@ def run_instance_seg_demo(
     image_size: int = 96,
     max_instances: int = 2,
     background: str = "synthetic",
+    coco_instances_json: str | Path | None = None,
+    coco_images_dir: str | Path | None = None,
     output_name: str = "instance_seg_demo_report.json",
 ) -> Path:
     """Create a tiny synthetic instance-seg dataset + predictions, then evaluate mask mAP.
@@ -149,8 +215,8 @@ def run_instance_seg_demo(
     predictions: list[dict[str, Any]] = []
 
     bg_mode = str(background).strip().lower()
-    if bg_mode not in ("synthetic", "coco128"):
-        raise ValueError(f"unknown background: {background} (expected: synthetic|coco128)")
+    if bg_mode not in ("synthetic", "coco128", "coco-instances"):
+        raise ValueError(f"unknown background: {background} (expected: synthetic|coco128|coco-instances)")
 
     coco_pairs: list[tuple[Path, Path]] | None = None
     if bg_mode == "coco128":
@@ -158,6 +224,41 @@ def run_instance_seg_demo(
         if int(num_images) > len(coco_pairs):
             num_images = len(coco_pairs)
         coco_pairs = rng.sample(coco_pairs, k=int(num_images))
+
+    coco_images_by_id: dict[int, dict[str, Any]] | None = None
+    coco_anns_by_image_id: dict[int, list[dict[str, Any]]] | None = None
+    coco_image_ids: list[int] | None = None
+    coco_images_root: Path | None = None
+    if bg_mode == "coco-instances":
+        if coco_instances_json is None or coco_images_dir is None:
+            raise ValueError("background=coco-instances requires coco_instances_json and coco_images_dir")
+        instances_path = Path(coco_instances_json)
+        images_root = Path(coco_images_dir)
+        if not instances_path.exists():
+            raise FileNotFoundError(f"instances json not found: {instances_path}")
+        if not images_root.exists():
+            raise FileNotFoundError(f"images dir not found: {images_root}")
+        coco_images_by_id, coco_anns_by_image_id = _load_coco_instances(instances_json=instances_path)
+        coco_images_root = images_root
+
+        candidate_ids: list[int] = []
+        for image_id, anns in coco_anns_by_image_id.items():
+            if image_id not in coco_images_by_id:
+                continue
+            has_poly = False
+            for a in anns:
+                if int(a.get("iscrowd") or 0) == 1:
+                    continue
+                if isinstance(a.get("segmentation"), list):
+                    has_poly = True
+                    break
+            if has_poly:
+                candidate_ids.append(int(image_id))
+        if not candidate_ids:
+            raise FileNotFoundError("no polygon segmentations found in instances json (or only crowd/RLE)")
+        if int(num_images) > len(candidate_ids):
+            num_images = len(candidate_ids)
+        coco_image_ids = rng.sample(candidate_ids, k=int(num_images))
 
     for i in range(int(num_images)):
         image_name = f"img_{i:04d}.png"
@@ -169,7 +270,96 @@ def run_instance_seg_demo(
         pred_masks_for_overlay: list[Any] = []
         pred_instances: list[dict[str, Any]] = []
 
-        if bg_mode == "coco128":
+        if bg_mode == "coco-instances":
+            assert coco_images_by_id is not None
+            assert coco_anns_by_image_id is not None
+            assert coco_image_ids is not None
+            assert coco_images_root is not None
+
+            image_id = int(coco_image_ids[i])
+            im = coco_images_by_id.get(image_id) or {}
+            file_name = str(im.get("file_name") or "")
+            if not file_name:
+                raise FileNotFoundError(f"COCO image file_name missing for id={image_id}")
+            src_img = coco_images_root / file_name
+            if not src_img.exists():
+                raise FileNotFoundError(f"COCO image not found: {src_img}")
+
+            img_rgb = Image.open(src_img).convert("RGB")
+            draw_rgb = ImageDraw.Draw(img_rgb)
+            w, h = img_rgb.size
+
+            anns = coco_anns_by_image_id.get(image_id) or []
+            kept = 0
+            for j, a in enumerate(anns):
+                if kept >= max(1, int(max_instances)):
+                    break
+                if int(a.get("iscrowd") or 0) == 1:
+                    continue
+                seg = a.get("segmentation")
+                gt_mask = _coco_polygons_to_mask(w=int(w), h=int(h), segmentation=seg)
+                if gt_mask is None:
+                    continue
+
+                class_id = int(a.get("category_id") or 0)
+
+                # Optional outline to make visual inspection easy.
+                fill = (40, 140, 220) if (class_id % 2) == 0 else (220, 120, 40)
+                if isinstance(seg, list):
+                    for poly in seg:
+                        if not isinstance(poly, list) or len(poly) < 6:
+                            continue
+                        pts = []
+                        for k in range(0, len(poly) - 1, 2):
+                            try:
+                                pts.append((float(poly[k]), float(poly[k + 1])))
+                            except Exception:
+                                pass
+                        if len(pts) >= 3:
+                            draw_rgb.line(pts + [pts[0]], fill=fill, width=2)
+
+                gt_path = gt_dir / f"gt_{i:04d}_{kept:02d}.png"
+                Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
+                gt_paths.append(str(gt_path))
+                gt_classes.append(int(class_id))
+                gt_masks_for_overlay.append(gt_mask)
+
+                if rng.random() < 0.9:
+                    pred_mask = gt_mask.copy()
+                    if rng.random() < 0.25:
+                        shift_y = rng.choice([-2, -1, 1, 2])
+                        shift_x = rng.choice([-2, -1, 1, 2])
+                        pred_mask = np.roll(pred_mask, shift=shift_y, axis=0)
+                        pred_mask = np.roll(pred_mask, shift=shift_x, axis=1)
+
+                    pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{kept:02d}.png"
+                    Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
+                    pred_masks_for_overlay.append(pred_mask)
+                    pred_instances.append(
+                        {
+                            "class_id": int(class_id),
+                            "score": float(0.9 - 0.1 * rng.random()),
+                            "mask": str(pred_path_rel),
+                        }
+                    )
+
+                kept += 1
+
+            if kept == 0:
+                # No usable polygons for this image; still write it out for transparency.
+                img_rgb.save(image_path)
+            else:
+                # False positive patch.
+                if rng.random() < 0.25:
+                    fp_mask = np.zeros((int(h), int(w)), dtype=bool)
+                    fp_mask[5:15, 5:15] = True
+                    fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
+                    Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
+                    pred_masks_for_overlay.append(fp_mask)
+                    pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+                img_rgb.save(image_path)
+
+        elif bg_mode == "coco128":
             assert coco_pairs is not None
             src_img, src_lab = coco_pairs[i]
             img_rgb = Image.open(src_img).convert("RGB")
