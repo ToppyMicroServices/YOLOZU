@@ -57,12 +57,15 @@ To run *real* instance segmentation inference (Mask R-CNN via `torchvision`) on 
 ```bash
 yolozu demo instance-seg \
 	--background coco-instances \
-	--coco-instances-json data/coco/annotations/instances_val2017.json \
-	--coco-images-dir data/coco/images/val2017 \
 	--inference torchvision \
-	--device auto \
 	--score-threshold 0.5
 ```
+
+If your COCO data is under the default paths, you can omit `--coco-instances-json` and `--coco-images-dir`.
+Defaults:
+
+- `data/coco/annotations/instances_val2017.json`
+- `data/coco/images/val2017`
 
 If you omit `--inference`, the demo will generate synthetic (GT-derived) predictions for evaluation/visualization.
 

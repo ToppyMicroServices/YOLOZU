@@ -298,8 +298,11 @@ def run_instance_seg_demo(
     coco_image_ids: list[int] | None = None
     coco_images_root: Path | None = None
     if bg_mode == "coco-instances":
-        if coco_instances_json is None or coco_images_dir is None:
-            raise ValueError("background=coco-instances requires coco_instances_json and coco_images_dir")
+        if coco_instances_json is None:
+            coco_instances_json = Path("data") / "coco" / "annotations" / "instances_val2017.json"
+        if coco_images_dir is None:
+            coco_images_dir = Path("data") / "coco" / "images" / "val2017"
+
         instances_path = Path(coco_instances_json)
         images_root = Path(coco_images_dir)
         if not instances_path.exists():

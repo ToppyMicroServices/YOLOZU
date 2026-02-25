@@ -1858,12 +1858,18 @@ def main(argv: list[str] | None = None) -> int:
     demo_is.add_argument(
         "--coco-instances-json",
         default=None,
-        help="(background=coco-instances) Path to COCO instances_*.json (polygon segmentations).",
+        help=(
+            "(background=coco-instances) Path to COCO instances_*.json (polygon segmentations). "
+            "If omitted, defaults to data/coco/annotations/instances_val2017.json."
+        ),
     )
     demo_is.add_argument(
         "--coco-images-dir",
         default=None,
-        help="(background=coco-instances) Root images dir for the COCO split (joined with image.file_name).",
+        help=(
+            "(background=coco-instances) Root images dir for the COCO split (joined with image.file_name). "
+            "If omitted, defaults to data/coco/images/val2017."
+        ),
     )
     demo_is.add_argument(
         "--inference",
@@ -1873,8 +1879,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     demo_is.add_argument(
         "--device",
-        default="cpu",
-        help="(inference) Torch device (cpu|cuda|mps|auto) (default: cpu).",
+        default="auto",
+        help="(inference) Torch device (cpu|cuda|mps|auto) (default: auto).",
     )
     demo_is.add_argument(
         "--score-threshold",
@@ -2498,15 +2504,24 @@ def main(argv: list[str] | None = None) -> int:
         if args.demo_command == "instance-seg":
             from yolozu.demos.instance_seg import run_instance_seg_demo
 
+            bg = str(getattr(args, "background", "synthetic"))
+            resolved_instances = getattr(args, "coco_instances_json", None)
+            resolved_images = getattr(args, "coco_images_dir", None)
+            if str(bg).strip().lower() == "coco-instances":
+                if resolved_instances is None:
+                    resolved_instances = str(Path("data") / "coco" / "annotations" / "instances_val2017.json")
+                if resolved_images is None:
+                    resolved_images = str(Path("data") / "coco" / "images" / "val2017")
+
             out = run_instance_seg_demo(
                 run_dir=getattr(args, "run_dir", None),
                 seed=int(getattr(args, "seed", 0)),
                 num_images=int(getattr(args, "num_images", 8)),
                 image_size=int(getattr(args, "image_size", 96)),
                 max_instances=int(getattr(args, "max_instances", 2)),
-                background=str(getattr(args, "background", "synthetic")),
-                coco_instances_json=getattr(args, "coco_instances_json", None),
-                coco_images_dir=getattr(args, "coco_images_dir", None),
+                background=bg,
+                coco_instances_json=resolved_instances,
+                coco_images_dir=resolved_images,
                 inference=str(getattr(args, "inference", "none")),
                 device=str(getattr(args, "device", "cpu")),
                 score_threshold=float(getattr(args, "score_threshold", 0.5)),
@@ -2518,19 +2533,19 @@ def main(argv: list[str] | None = None) -> int:
                         {
                             "kind": "demo_config",
                             "demo": "instance-seg",
-                            "background": str(getattr(args, "background", "synthetic")),
+                            "background": bg,
                             "seed": int(getattr(args, "seed", 0)),
                             "num_images": int(getattr(args, "num_images", 8)),
                             "image_size": int(getattr(args, "image_size", 96)),
                             "max_instances": int(getattr(args, "max_instances", 2)),
                             "coco_instances_json": (
-                                str(getattr(args, "coco_instances_json", None))
-                                if getattr(args, "coco_instances_json", None)
+                                str(resolved_instances)
+                                if resolved_instances
                                 else None
                             ),
                             "coco_images_dir": (
-                                str(getattr(args, "coco_images_dir", None))
-                                if getattr(args, "coco_images_dir", None)
+                                str(resolved_images)
+                                if resolved_images
                                 else None
                             ),
                             "inference": str(getattr(args, "inference", "none")),
