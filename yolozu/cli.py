@@ -2028,16 +2028,20 @@ def main(argv: list[str] | None = None) -> int:
                     instances_path = fixture_dir / "instances_val.json"
 
                     # Keep this dependency-light (Pillow only), but generate something that
-                    # looks more like a real segmentation dataset: textured background,
-                    # multiple instances, varied polygon shapes, and occasional multi-polygons.
+                    # looks more like a real segmentation dataset.
+                    #
+                    # If coco128 is available locally, prefer using real photos + bbox labels
+                    # to create polygon masks that at least match *object locations*.
+                    # (coco128 does not ship true segmentation polygons in this repo.)
                     import math
                     import random
+                    import shutil
 
                     from PIL import Image, ImageDraw
 
                     rng = random.Random(0)
-                    width, height = 320, 240
-                    num_images = 6
+                    fallback_width, fallback_height = 320, 240
+                    fallback_num_images = 6
 
                     categories = [
                         {"id": 1, "name": "person"},
@@ -2052,7 +2056,7 @@ def main(argv: list[str] | None = None) -> int:
                             max(0, min(255, base[2] + rng.randint(-j, j))),
                         )
 
-                    def _make_textured_bg() -> Image.Image:
+                    def _make_textured_bg(*, width: int, height: int) -> Image.Image:
                         # Procedural "photo-like" background: combine noise layers,
                         # colorize, blur, add gentle gradient + vignette.
                         from PIL import ImageChops, ImageEnhance, ImageFilter, ImageOps
@@ -2102,30 +2106,6 @@ def main(argv: list[str] | None = None) -> int:
 
                         return base
 
-                    def _make_photo_bg_from_coco128() -> Image.Image | None:
-                        # Prefer real photos from the repo if present. This keeps the demo
-                        # offline and avoids bundling external assets.
-                        coco128_images = Path("data") / "coco128" / "images"
-                        if not coco128_images.exists():
-                            return None
-                        candidates = [
-                            p
-                            for p in coco128_images.rglob("*")
-                            if p.is_file() and p.suffix.lower() in (".jpg", ".jpeg", ".png")
-                        ]
-                        if not candidates:
-                            return None
-                        # Deterministic choice based on rng.
-                        src = candidates[rng.randrange(0, len(candidates))]
-                        try:
-                            im = Image.open(src).convert("RGB")
-                        except Exception:
-                            return None
-                        # Center-crop/fit to fixture size.
-                        from PIL import ImageOps
-
-                        return ImageOps.fit(im, (width, height), method=Image.Resampling.BICUBIC)
-
                     def _make_polygon(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
                         n = rng.randint(8, 14)
                         pts: list[tuple[float, float]] = []
@@ -2140,50 +2120,159 @@ def main(argv: list[str] | None = None) -> int:
                             pts.append((x, y))
                         return pts
 
+                    def _iter_coco128_pairs() -> list[tuple[Path, Path]]:
+                        coco128_root = Path("data") / "coco128"
+                        images_base = coco128_root / "images"
+                        labels_base = coco128_root / "labels"
+                        if not images_base.exists() or not labels_base.exists():
+                            return []
+                        pairs: list[tuple[Path, Path]] = []
+                        for img in sorted(images_base.rglob("*")):
+                            if not img.is_file() or img.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+                                continue
+                            rel = img.relative_to(images_base)
+                            lab = labels_base / rel.with_suffix(".txt")
+                            if lab.exists():
+                                pairs.append((img, lab))
+                        return pairs
+
+                    def _yolo_bbox_to_xyxy(*, w: int, h: int, xc: float, yc: float, bw: float, bh: float) -> tuple[int, int, int, int]:
+                        x0 = int((float(xc) - float(bw) / 2.0) * float(w))
+                        y0 = int((float(yc) - float(bh) / 2.0) * float(h))
+                        x1 = int((float(xc) + float(bw) / 2.0) * float(w))
+                        y1 = int((float(yc) + float(bh) / 2.0) * float(h))
+                        x0 = max(0, min(int(w) - 1, x0))
+                        y0 = max(0, min(int(h) - 1, y0))
+                        x1 = max(0, min(int(w), x1))
+                        y1 = max(0, min(int(h), y1))
+                        if x1 <= x0:
+                            x1 = min(int(w), x0 + 1)
+                        if y1 <= y0:
+                            y1 = min(int(h), y0 + 1)
+                        return x0, y0, x1, y1
+
+                    def _bbox_to_polygon(*, x0: int, y0: int, x1: int, y1: int) -> list[float]:
+                        # Create a jittered ellipse-like polygon inside bbox.
+                        cx = (x0 + x1) / 2.0
+                        cy = (y0 + y1) / 2.0
+                        rx = max(2.0, (x1 - x0) / 2.0)
+                        ry = max(2.0, (y1 - y0) / 2.0)
+                        n = rng.randint(10, 18)
+                        phase = rng.random() * (2.0 * math.pi)
+                        pts: list[float] = []
+                        for k in range(n):
+                            a = phase + (2.0 * math.pi * k / n)
+                            # Alternate radius a bit to avoid perfect ellipse.
+                            s = 0.75 + 0.30 * rng.random()
+                            if (k % 2) == 0:
+                                s *= 0.92
+                            x = cx + (rx * s) * math.cos(a)
+                            y = cy + (ry * s) * math.sin(a)
+                            x = max(float(x0), min(float(x1 - 1), x))
+                            y = max(float(y0), min(float(y1 - 1), y))
+                            pts.extend([float(x), float(y)])
+                        return pts
+
                     images: list[dict[str, Any]] = []
                     annotations: list[dict[str, Any]] = []
                     ann_id = 1
 
-                    for image_id in range(1, num_images + 1):
-                        file_name = f"{image_id:012d}.jpg"
-                        img = _make_photo_bg_from_coco128() or _make_textured_bg()
-                        draw = ImageDraw.Draw(img)
+                    coco128_pairs = _iter_coco128_pairs()
+                    if coco128_pairs:
+                        # Use real photos + their bbox labels (converted into polygons).
+                        rng.shuffle(coco128_pairs)
+                        selected = coco128_pairs[: min(6, len(coco128_pairs))]
+                        seen_class_ids: set[int] = set()
+                        for image_id, (src_img, src_lab) in enumerate(selected, start=1):
+                            file_name = f"{image_id:012d}{src_img.suffix.lower()}"
+                            dst_img = images_dir / file_name
+                            shutil.copyfile(src_img, dst_img)
+                            img = Image.open(dst_img).convert("RGB")
+                            w, h = img.size
 
-                        num_inst = rng.randint(2, 5)
-                        for _ in range(num_inst):
-                            cat = rng.choice(categories)
-                            cx = rng.uniform(60.0, float(width) - 60.0)
-                            cy = rng.uniform(50.0, float(height) - 50.0)
-                            r = rng.uniform(18.0, 55.0)
+                            lines = [ln.strip() for ln in src_lab.read_text(encoding="utf-8").splitlines() if ln.strip()]
+                            # Bound runtime.
+                            lines = lines[:10]
+                            for ln in lines:
+                                parts = ln.split()
+                                if len(parts) < 5:
+                                    continue
+                                class_id = int(float(parts[0]))
+                                xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
+                                x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
+                                if (x1 - x0) < 4 or (y1 - y0) < 4:
+                                    continue
 
-                            # Some instances are multi-polygons (COCO supports list of polygons).
-                            segs: list[list[float]] = []
-                            poly1 = _make_polygon(cx, cy, r)
-                            segs.append([v for xy in poly1 for v in xy])
-                            if rng.random() < 0.25:
-                                poly2 = _make_polygon(cx + rng.uniform(-25.0, 25.0), cy + rng.uniform(-20.0, 20.0), r * 0.55)
-                                segs.append([v for xy in poly2 for v in xy])
+                                seg = [_bbox_to_polygon(x0=x0, y0=y0, x1=x1, y1=y1)]
+                                # Map YOLO class_id to category_id space (just keep it as-is).
+                                cat_id = int(class_id)
+                                seen_class_ids.add(cat_id)
 
-                            fill = _jitter_color((60, 140, 220) if (int(cat["id"]) % 2) == 0 else (220, 120, 60), 20)
-                            outline = (0, 0, 0)
-                            for poly in segs:
-                                pts = [(float(poly[i]), float(poly[i + 1])) for i in range(0, len(poly) - 1, 2)]
-                                draw.polygon(pts, fill=fill, outline=outline)
-                                draw.line(pts + [pts[0]], fill=outline, width=2)
+                                annotations.append(
+                                    {
+                                        "id": ann_id,
+                                        "image_id": image_id,
+                                        "category_id": cat_id,
+                                        "iscrowd": 0,
+                                        "segmentation": seg,
+                                    }
+                                )
+                                ann_id += 1
 
-                            annotations.append(
-                                {
-                                    "id": ann_id,
-                                    "image_id": image_id,
-                                    "category_id": int(cat["id"]),
-                                    "iscrowd": 0,
-                                    "segmentation": segs,
-                                }
-                            )
-                            ann_id += 1
+                            images.append({"id": image_id, "file_name": file_name, "width": w, "height": h})
 
-                        img.save(images_dir / file_name)
-                        images.append({"id": image_id, "file_name": file_name, "width": width, "height": height})
+                        # Provide minimal categories list for the ids we used.
+                        used_categories = [{"id": int(cid), "name": f"class_{int(cid)}"} for cid in sorted(seen_class_ids)]
+                        if used_categories:
+                            categories = used_categories
+                    else:
+                        # Fallback: fully synthetic photos + shapes.
+                        width, height = fallback_width, fallback_height
+                        num_images = fallback_num_images
+                        for image_id in range(1, num_images + 1):
+                            file_name = f"{image_id:012d}.jpg"
+                            img = _make_textured_bg(width=width, height=height)
+                            draw = ImageDraw.Draw(img)
+
+                            num_inst = rng.randint(2, 5)
+                            for _ in range(num_inst):
+                                cat = rng.choice(categories)
+                                cx = rng.uniform(60.0, float(width) - 60.0)
+                                cy = rng.uniform(50.0, float(height) - 50.0)
+                                r = rng.uniform(18.0, 55.0)
+
+                                # Some instances are multi-polygons (COCO supports list of polygons).
+                                segs: list[list[float]] = []
+                                poly1 = _make_polygon(cx, cy, r)
+                                segs.append([v for xy in poly1 for v in xy])
+                                if rng.random() < 0.25:
+                                    poly2 = _make_polygon(
+                                        cx + rng.uniform(-25.0, 25.0),
+                                        cy + rng.uniform(-20.0, 20.0),
+                                        r * 0.55,
+                                    )
+                                    segs.append([v for xy in poly2 for v in xy])
+
+                                fill = _jitter_color((60, 140, 220) if (int(cat["id"]) % 2) == 0 else (220, 120, 60), 20)
+                                outline = (0, 0, 0)
+                                for poly in segs:
+                                    pts = [(float(poly[i]), float(poly[i + 1])) for i in range(0, len(poly) - 1, 2)]
+                                    draw.polygon(pts, fill=fill, outline=outline)
+                                    draw.line(pts + [pts[0]], fill=outline, width=2)
+
+                                annotations.append(
+                                    {
+                                        "id": ann_id,
+                                        "image_id": image_id,
+                                        "category_id": int(cat["id"]),
+                                        "iscrowd": 0,
+                                        "segmentation": segs,
+                                    }
+                                )
+                                ann_id += 1
+
+                            img.save(images_dir / file_name)
+                            images.append({"id": image_id, "file_name": file_name, "width": width, "height": height})
 
                     coco = {"images": images, "annotations": annotations, "categories": categories}
                     instances_path.write_text(json.dumps(coco), encoding="utf-8")
