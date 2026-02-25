@@ -184,6 +184,9 @@ def run_instance_seg_demo(
     background: str = "synthetic",
     coco_instances_json: str | Path | None = None,
     coco_images_dir: str | Path | None = None,
+    inference: str = "none",
+    device: str = "cpu",
+    score_threshold: float = 0.5,
     output_name: str = "instance_seg_demo_report.json",
 ) -> Path:
     """Create a tiny synthetic instance-seg dataset + predictions, then evaluate mask mAP.
@@ -215,6 +218,69 @@ def run_instance_seg_demo(
     predictions: list[dict[str, Any]] = []
 
     gt_mask_kinds: dict[str, int] = {}
+
+    inference_mode = str(inference).strip().lower()
+    if inference_mode not in ("none", "auto", "torchvision"):
+        raise ValueError(f"unknown inference: {inference} (expected: none|auto|torchvision)")
+    if inference_mode != "none" and str(background).strip().lower() != "coco-instances":
+        raise ValueError("inference is only supported for background=coco-instances")
+
+    inference_meta: dict[str, Any] = {
+        "mode": inference_mode,
+        "used": False,
+    }
+
+    tv_model = None
+    tv_device = None
+    if inference_mode in ("auto", "torchvision"):
+        try:
+            import torch  # type: ignore
+            import torchvision  # type: ignore
+            import torchvision.transforms.functional as TVF  # type: ignore
+
+            weights_name: str | None = None
+            try:
+                from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights  # type: ignore
+
+                weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT
+                weights_name = getattr(weights, "name", None) or str(weights)
+                tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=weights)
+            except Exception:
+                tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+                weights_name = "pretrained=True"
+
+            if str(device).strip().lower() == "auto":
+                if torch.cuda.is_available():
+                    tv_device = torch.device("cuda")
+                elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+                    tv_device = torch.device("mps")
+                else:
+                    tv_device = torch.device("cpu")
+            else:
+                tv_device = torch.device(str(device))
+
+            tv_model.to(tv_device)
+            tv_model.eval()
+
+            inference_meta.update(
+                {
+                    "backend": "torchvision.maskrcnn_resnet50_fpn",
+                    "device": str(tv_device),
+                    "weights": weights_name,
+                    "torch": getattr(torch, "__version__", None),
+                    "torchvision": getattr(torchvision, "__version__", None),
+                    "score_threshold": float(score_threshold),
+                }
+            )
+
+            # Stash for inner loop without importing again.
+            inference_meta["_TVF"] = TVF
+        except Exception as exc:
+            inference_meta.update({"available": False, "error": repr(exc)})
+            if inference_mode == "torchvision":
+                raise RuntimeError(
+                    "inference=torchvision requested but torch/torchvision could not be initialized"
+                ) from exc
 
     bg_mode = str(background).strip().lower()
     if bg_mode not in ("synthetic", "coco128", "coco-instances"):
@@ -287,7 +353,8 @@ def run_instance_seg_demo(
             if not src_img.exists():
                 raise FileNotFoundError(f"COCO image not found: {src_img}")
 
-            img_rgb = Image.open(src_img).convert("RGB")
+            img_rgb_raw = Image.open(src_img).convert("RGB")
+            img_rgb = img_rgb_raw.copy()
             draw_rgb = ImageDraw.Draw(img_rgb)
             w, h = img_rgb.size
 
@@ -326,39 +393,92 @@ def run_instance_seg_demo(
                 gt_classes.append(int(class_id))
                 gt_masks_for_overlay.append(gt_mask)
 
-                if rng.random() < 0.9:
-                    pred_mask = gt_mask.copy()
-                    if rng.random() < 0.25:
-                        shift_y = rng.choice([-2, -1, 1, 2])
-                        shift_x = rng.choice([-2, -1, 1, 2])
-                        pred_mask = np.roll(pred_mask, shift=shift_y, axis=0)
-                        pred_mask = np.roll(pred_mask, shift=shift_x, axis=1)
-
-                    pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{kept:02d}.png"
-                    Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
-                    pred_masks_for_overlay.append(pred_mask)
-                    pred_instances.append(
-                        {
-                            "class_id": int(class_id),
-                            "score": float(0.9 - 0.1 * rng.random()),
-                            "mask": str(pred_path_rel),
-                        }
-                    )
-
                 kept += 1
+
+            # Predictions
+            if tv_model is not None and tv_device is not None:
+                try:
+                    import torch  # type: ignore
+
+                    TVF = inference_meta.get("_TVF")
+                    if TVF is None:
+                        raise RuntimeError("torchvision transforms not available")
+
+                    with torch.no_grad():
+                        x = TVF.to_tensor(img_rgb_raw).to(tv_device)
+                        out = tv_model([x])[0]
+
+                    labels = out.get("labels")
+                    scores = out.get("scores")
+                    masks = out.get("masks")
+                    if labels is None or scores is None or masks is None:
+                        raise RuntimeError("unexpected torchvision output (missing labels/scores/masks)")
+
+                    labels_list = [int(v) for v in labels.detach().cpu().tolist()]
+                    scores_list = [float(v) for v in scores.detach().cpu().tolist()]
+                    masks_t = masks.detach().cpu()
+
+                    inference_meta["used"] = True
+
+                    kept_pred = 0
+                    for k in range(len(scores_list)):
+                        if kept_pred >= max(1, int(max_instances)):
+                            break
+                        score = float(scores_list[k])
+                        if score < float(score_threshold):
+                            continue
+
+                        m = masks_t[k, 0]
+                        # Ensure mask matches image size (H, W)
+                        if tuple(m.shape) != (int(h), int(w)):
+                            m_img = Image.fromarray((m.numpy() * 255).astype("uint8"), mode="L").resize(
+                                (int(w), int(h)), resample=Image.NEAREST
+                            )
+                            mask_bool = (np.array(m_img) > 127).astype(bool)
+                        else:
+                            mask_bool = (m.numpy() > 0.5).astype(bool)
+
+                        pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{kept_pred:02d}.png"
+                        Image.fromarray((mask_bool.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
+                        pred_masks_for_overlay.append(mask_bool)
+                        pred_instances.append(
+                            {
+                                "class_id": int(labels_list[k]),
+                                "score": float(score),
+                                "mask": str(pred_path_rel),
+                            }
+                        )
+                        kept_pred += 1
+                except Exception as exc:
+                    # Fall back to synthetic-ish predictions if inference fails mid-run.
+                    inference_meta.setdefault("warnings", []).append(f"torchvision inference failed: {exc!r}")
+
+            if not pred_instances:
+                # Fallback: generate pseudo predictions from GT so evaluation has something to show.
+                for j, gt_mask in enumerate(gt_masks_for_overlay):
+                    if rng.random() < 0.9:
+                        pred_mask = gt_mask.copy()
+                        if rng.random() < 0.25:
+                            shift_y = rng.choice([-2, -1, 1, 2])
+                            shift_x = rng.choice([-2, -1, 1, 2])
+                            pred_mask = np.roll(pred_mask, shift=shift_y, axis=0)
+                            pred_mask = np.roll(pred_mask, shift=shift_x, axis=1)
+
+                        pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
+                        Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
+                        pred_masks_for_overlay.append(pred_mask)
+                        pred_instances.append(
+                            {
+                                "class_id": int(gt_classes[j]) if j < len(gt_classes) else 0,
+                                "score": float(0.9 - 0.1 * rng.random()),
+                                "mask": str(pred_path_rel),
+                            }
+                        )
 
             if kept == 0:
                 # No usable polygons for this image; still write it out for transparency.
                 img_rgb.save(image_path)
             else:
-                # False positive patch.
-                if rng.random() < 0.25:
-                    fp_mask = np.zeros((int(h), int(w)), dtype=bool)
-                    fp_mask[5:15, 5:15] = True
-                    fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
-                    Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
-                    pred_masks_for_overlay.append(fp_mask)
-                    pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
                 img_rgb.save(image_path)
 
         elif bg_mode == "coco128":
@@ -547,6 +667,19 @@ def run_instance_seg_demo(
                 "coco128 labels are bbox-only; gt_masks are pseudo (ellipse-in-bbox) and will not match object boundaries"
             )
 
+    if bg_mode == "coco-instances":
+        if inference_mode == "none":
+            warnings.append("inference disabled: predictions are synthetic (GT-derived)")
+        elif not bool(inference_meta.get("used")):
+            warnings.append("inference not used: falling back to synthetic (GT-derived) predictions")
+            err = inference_meta.get("error")
+            if err:
+                warnings.append(f"inference init error: {err}")
+        else:
+            warnings.append(
+                "inference used: torchvision Mask R-CNN; note class_id space is assumed to match COCO category_id"
+            )
+
     report = {
         "kind": "instance_seg_demo",
         "schema_version": 1,
@@ -555,6 +688,7 @@ def run_instance_seg_demo(
             "run_dir": str(run_dir),
             "background": str(bg_mode),
             "gt_mask_kinds": dict(gt_mask_kinds),
+            "inference": {k: v for k, v in dict(inference_meta).items() if not str(k).startswith("_")},
         },
         "result": {
             "map50_95": float(result.map50_95),

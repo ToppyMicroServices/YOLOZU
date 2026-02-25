@@ -6,6 +6,15 @@ import json
 
 class TestInstanceSegDemoEval(unittest.TestCase):
     def test_instance_seg_eval_with_relative_pred_root(self):
+        try:
+            import numpy as _np  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("numpy not installed") from exc
+        try:
+            from PIL import Image as _Image  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("Pillow not installed") from exc
+
         # Regression test: pred_root may be a *relative* path (common in demos).
         # Evaluation must still be able to resolve predicted mask paths.
         from yolozu.demos.instance_seg import run_instance_seg_demo
@@ -30,6 +39,15 @@ class TestInstanceSegDemoEval(unittest.TestCase):
         self.assertGreater(float(result.get("map50", 0.0)), 0.0)
 
     def test_instance_seg_demo_coco_instances_polygons(self):
+        try:
+            import numpy as _np  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("numpy not installed") from exc
+        try:
+            from PIL import Image  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("Pillow not installed") from exc
+
         from yolozu.demos.instance_seg import run_instance_seg_demo
 
         repo_root = Path(__file__).resolve().parents[1]
@@ -40,10 +58,6 @@ class TestInstanceSegDemoEval(unittest.TestCase):
 
             # Create a tiny image.
             img_path = images_dir / "000000000001.jpg"
-            try:
-                from PIL import Image
-            except Exception as exc:
-                raise unittest.SkipTest("Pillow not installed") from exc
             img = Image.new("RGB", (64, 48), (240, 240, 240))
             img.save(img_path)
 

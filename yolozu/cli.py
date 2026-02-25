@@ -1865,6 +1865,23 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="(background=coco-instances) Root images dir for the COCO split (joined with image.file_name).",
     )
+    demo_is.add_argument(
+        "--inference",
+        choices=("none", "auto", "torchvision"),
+        default="none",
+        help="(background=coco-instances) Instance-seg inference backend (default: none).",
+    )
+    demo_is.add_argument(
+        "--device",
+        default="cpu",
+        help="(inference) Torch device (cpu|cuda|mps|auto) (default: cpu).",
+    )
+    demo_is.add_argument(
+        "--score-threshold",
+        type=float,
+        default=0.5,
+        help="(inference) Score threshold for predicted instances (default: 0.5).",
+    )
 
     demo_cl = demo_sub.add_parser("continual", help="Toy continual-learning demo (requires torch; CPU OK).")
     demo_cl.add_argument("--output", default=None, help="Output JSON path or dir (default: runs/yolozu_demos/continual/...).")
@@ -1973,6 +1990,18 @@ def main(argv: list[str] | None = None) -> int:
                     f"mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f} "
                     f"(images={counts.get('images')} gt={counts.get('gt_instances')} pred={counts.get('pred_instances')} classes={counts.get('classes')})"
                 )
+                if isinstance(meta, dict):
+                    inf = meta.get("inference")
+                    if isinstance(inf, dict):
+                        used = bool(inf.get("used"))
+                        backend = inf.get("backend")
+                        weights = inf.get("weights")
+                        dev = inf.get("device")
+                        mode = inf.get("mode")
+                        if used and backend:
+                            print(f"inference: {backend} weights={weights} device={dev}")
+                        elif mode:
+                            print(f"inference: {mode} (used={used})")
                 if isinstance(meta, dict) and meta.get("run_dir"):
                     print(f"output_dir: {meta.get('run_dir')}")
             except Exception:
@@ -2373,6 +2402,9 @@ def main(argv: list[str] | None = None) -> int:
                             "coco_instances_json": str(instances_path),
                             "coco_images_dir": str(images_path),
                             "coco_source": coco_source,
+                            "inference": "auto",
+                            "device": "cpu",
+                            "score_threshold": 0.5,
                         },
                         indent=2,
                         ensure_ascii=False,
@@ -2392,6 +2424,9 @@ def main(argv: list[str] | None = None) -> int:
                         background="coco-instances",
                         coco_instances_json=instances_path,
                         coco_images_dir=images_path,
+                        inference="auto",
+                        device="cpu",
+                        score_threshold=0.5,
                     )
                     print(f"config: {ci_cfg_path}")
                     _print_instance_seg_report(out_path=Path(out_ci), label="== instance-seg (coco-instances) ==")
@@ -2472,6 +2507,9 @@ def main(argv: list[str] | None = None) -> int:
                 background=str(getattr(args, "background", "synthetic")),
                 coco_instances_json=getattr(args, "coco_instances_json", None),
                 coco_images_dir=getattr(args, "coco_images_dir", None),
+                inference=str(getattr(args, "inference", "none")),
+                device=str(getattr(args, "device", "cpu")),
+                score_threshold=float(getattr(args, "score_threshold", 0.5)),
             )
             try:
                 cfg_path = Path(out).parent / "demo_config.json"
@@ -2495,6 +2533,9 @@ def main(argv: list[str] | None = None) -> int:
                                 if getattr(args, "coco_images_dir", None)
                                 else None
                             ),
+                            "inference": str(getattr(args, "inference", "none")),
+                            "device": str(getattr(args, "device", "cpu")),
+                            "score_threshold": float(getattr(args, "score_threshold", 0.5)),
                         },
                         indent=2,
                         ensure_ascii=False,

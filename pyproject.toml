@@ -40,7 +40,7 @@ Issues = "https://github.com/ToppyMicroServices/YOLOZU/issues"
 Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-demo = ["torch>=2.1"]
+demo = ["torch>=2.1", "torchvision>=0.16"]
 onnxrt = ["onnx>=1.14", "onnxruntime>=1.17"]
 train = ["torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "safetensors>=0.4"]
 coco = ["pycocotools>=2.0.7"]

@@ -13,7 +13,7 @@ yolozu doctor --output -
 Install only what you need:
 
 ```bash
-python3 -m pip install 'yolozu[demo]'     # torch demos (CPU OK)
+python3 -m pip install 'yolozu[demo]'     # torch/torchvision demos (CPU OK)
 python3 -m pip install 'yolozu[onnxrt]'   # ONNX Runtime tooling
 python3 -m pip install 'yolozu[train]'    # RT-DETR pose training scaffold
 python3 -m pip install 'yolozu[coco]'     # COCOeval support (pycocotools)
@@ -51,6 +51,20 @@ This writes:
 - `data/coco/images/val2017/` (a few JPEGs)
 
 Then `yolozu demo` will auto-detect it and run the polygon-mask instance-seg demo.
+
+To run *real* instance segmentation inference (Mask R-CNN via `torchvision`) on those images, use:
+
+```bash
+yolozu demo instance-seg \
+	--background coco-instances \
+	--coco-instances-json data/coco/annotations/instances_val2017.json \
+	--coco-images-dir data/coco/images/val2017 \
+	--inference torchvision \
+	--device auto \
+	--score-threshold 0.5
+```
+
+If you omit `--inference`, the demo will generate synthetic (GT-derived) predictions for evaluation/visualization.
 
 If you have a COCO-style instances annotations JSON (polygons) and the matching images directory, you can run:
 

@@ -9,6 +9,15 @@ import json
 
 class TestDemoCliDefaults(unittest.TestCase):
     def test_demo_defaults_to_demo_suite(self):
+        try:
+            import numpy as _np  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("numpy not installed") from exc
+        try:
+            from PIL import Image as _Image  # noqa: F401
+        except Exception as exc:
+            raise unittest.SkipTest("Pillow not installed") from exc
+
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             cwd = Path(td)
