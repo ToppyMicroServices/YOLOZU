@@ -36,6 +36,43 @@ def _draw_mask_rect(*, size: int, x0: int, y0: int, x1: int, y1: int) -> Any:
     return np.array(img) != 0
 
 
+def _overlay_masks(
+    *,
+    base_rgb_path: Path,
+    output_path: Path,
+    gt_masks: list[Any],
+    pred_masks: list[Any],
+    alpha: float = 0.45,
+) -> None:
+    np, (Image, _) = _require_deps()
+
+    base = Image.open(base_rgb_path).convert("RGBA")
+    w, h = base.size
+
+    def _mask_to_rgba(mask_bool: Any, *, rgb: tuple[int, int, int]) -> Any:
+        m = np.asarray(mask_bool, dtype=bool)
+        if m.shape != (h, w):
+            # Demo should always be consistent; keep this safe.
+            m = np.resize(m, (h, w)).astype(bool)
+        arr = np.zeros((h, w, 4), dtype="uint8")
+        arr[..., 0] = int(rgb[0])
+        arr[..., 1] = int(rgb[1])
+        arr[..., 2] = int(rgb[2])
+        arr[..., 3] = (m.astype("uint8") * int(max(0, min(1.0, float(alpha))) * 255))
+        return Image.fromarray(arr, mode="RGBA")
+
+    # Green = GT, Red = Pred (overlap becomes yellow-ish).
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    for m in gt_masks:
+        overlay = Image.alpha_composite(overlay, _mask_to_rgba(m, rgb=(0, 255, 0)))
+    for m in pred_masks:
+        overlay = Image.alpha_composite(overlay, _mask_to_rgba(m, rgb=(255, 0, 0)))
+
+    out = Image.alpha_composite(base, overlay).convert("RGB")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    out.save(output_path)
+
+
 def run_instance_seg_demo(
     *,
     run_dir: str | Path | None = None,
@@ -64,9 +101,11 @@ def run_instance_seg_demo(
     images_dir = run_dir / "images"
     gt_dir = run_dir / "gt_masks"
     pred_dir = run_dir / "pred_masks"
+    overlays_dir = run_dir / "overlays"
     images_dir.mkdir(parents=True, exist_ok=True)
     gt_dir.mkdir(parents=True, exist_ok=True)
     pred_dir.mkdir(parents=True, exist_ok=True)
+    overlays_dir.mkdir(parents=True, exist_ok=True)
 
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
@@ -82,6 +121,9 @@ def run_instance_seg_demo(
         n_inst = rng.randint(1, max(1, int(max_instances)))
         gt_paths: list[str] = []
         gt_classes: list[int] = []
+
+        gt_masks_for_overlay: list[Any] = []
+        pred_masks_for_overlay: list[Any] = []
 
         pred_instances: list[dict[str, Any]] = []
 
@@ -105,6 +147,7 @@ def run_instance_seg_demo(
             Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
             gt_paths.append(str(gt_path))
             gt_classes.append(int(class_id))
+            gt_masks_for_overlay.append(gt_mask)
 
             # Predictions: mostly correct, with a bit of noise (shift / dropout / FP).
             if rng.random() < 0.85:
@@ -115,6 +158,7 @@ def run_instance_seg_demo(
                 pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
                 pred_path = run_dir / pred_path_rel
                 Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(pred_path)
+                pred_masks_for_overlay.append(pred_mask)
                 pred_instances.append(
                     {
                         "class_id": int(class_id),
@@ -129,7 +173,17 @@ def run_instance_seg_demo(
             fp_mask[5:15, 5:15] = True
             fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
             Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
+            pred_masks_for_overlay.append(fp_mask)
             pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+
+        # Convenience artifact: visualize masks overlaid on the RGB image.
+        overlay_path = overlays_dir / f"overlay_{image_name}"
+        _overlay_masks(
+            base_rgb_path=image_path,
+            output_path=overlay_path,
+            gt_masks=gt_masks_for_overlay,
+            pred_masks=pred_masks_for_overlay,
+        )
 
         records.append(
             {
@@ -160,6 +214,7 @@ def run_instance_seg_demo(
             "images_dir": str(images_dir),
             "gt_masks_dir": str(gt_dir),
             "pred_masks_dir": str(pred_dir),
+            "overlays_dir": str(overlays_dir),
         },
     }
 
