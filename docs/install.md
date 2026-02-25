@@ -36,6 +36,12 @@ yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
 
+More practical continual example (vision backbone):
+
+```bash
+yolozu demo continual --problem mnist_rotate --method ewc
+```
+
 # COCO instances (polygon) mask demo
 
 If you don't have COCO instances data yet, you can download a tiny subset (2 images) locally:

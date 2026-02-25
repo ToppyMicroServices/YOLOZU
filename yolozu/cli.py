@@ -1896,6 +1896,17 @@ def main(argv: list[str] | None = None) -> int:
     demo_cl.add_argument("--output", default=None, help="Output JSON path or dir (default: runs/yolozu_demos/continual/...).")
     demo_cl.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
     demo_cl.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
+    demo_cl.add_argument(
+        "--problem",
+        default="toy2d",
+        choices=("toy2d", "mnist_rotate"),
+        help="Continual-learning problem: toy2d or MNIST rotation shift (default: toy2d).",
+    )
+    demo_cl.add_argument(
+        "--data-dir",
+        default=str(Path("data") / "torchvision"),
+        help="(problem=mnist_rotate) Torchvision dataset root dir (default: data/torchvision).",
+    )
     demo_cl.add_argument("--method", default="ewc_replay", choices=("naive", "ewc", "replay", "ewc_replay"))
     demo_cl.add_argument(
         "--methods",
@@ -2601,6 +2612,8 @@ def main(argv: list[str] | None = None) -> int:
                     output=args.output,
                     seed=int(args.seed),
                     device=str(args.device),
+                    problem=str(getattr(args, "problem", "toy2d")),
+                    data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
                     steps_a=int(args.steps_a),
                     steps_b=int(args.steps_b),
                     batch_size=int(args.batch_size),
@@ -2637,6 +2650,8 @@ def main(argv: list[str] | None = None) -> int:
                 seed=int(args.seed),
                 device=str(args.device),
                 method=method,
+                problem=str(getattr(args, "problem", "toy2d")),
+                data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
                 steps_a=int(args.steps_a),
                 steps_b=int(args.steps_b),
                 batch_size=int(args.batch_size),
@@ -2654,17 +2669,30 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
                 metrics = payload.get("metrics", {})
+                settings = payload.get("settings", {})
                 a = metrics.get("after_task_a", {})
                 b = metrics.get("after_task_b", {})
                 forgetting = metrics.get("forgetting_acc_a")
                 gain = metrics.get("gain_acc_b")
-                print(
-                    f"continual demo ({method}): "
+                prob = ""
+                model = ""
+                bb = ""
+                if isinstance(settings, dict):
+                    prob = str(settings.get("problem") or "")
+                    model = str(settings.get("model") or "")
+                    bb = str(settings.get("backbone") or "")
+                msg = f"continual demo ({method}): "
+                if prob or model:
+                    msg += f"problem={prob} model={model} "
+                if bb:
+                    msg += f"backbone={bb} "
+                msg += (
                     f"accA {a.get('acc_a'):.3f}→{b.get('acc_a'):.3f} "
                     f"accB {a.get('acc_b'):.3f}→{b.get('acc_b'):.3f} "
                     f"forget={forgetting:.3f} gain={gain:.3f} "
                     f"(output_dir={Path(out).parent})"
                 )
+                print(msg)
                 if args.markdown:
                     md = format_continual_demo_suite_markdown({"runs": [{"method": method, "metrics": metrics}]})
                     md_path = Path(out).with_suffix(".md")
