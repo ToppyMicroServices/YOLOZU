@@ -42,11 +42,38 @@ Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md
 [project.optional-dependencies]
 demo = ["torch>=2.1"]
 onnxrt = ["onnx>=1.14", "onnxruntime>=1.17"]
-train = ["torch>=2.1", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "safetensors>=0.4"]
+train = ["torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "safetensors>=0.4"]
 coco = ["pycocotools>=2.0.7"]
-full = ["torch>=2.1", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "safetensors>=0.4", "pycocotools>=2.0.7"]
 mcp = ["mcp>=1.0.0"]
-actions = ["fastapi>=0.110", "uvicorn>=0.30"]
+actions = ["fastapi>=0.110", "uvicorn>=0.30", "pydantic>=2.0"]
+
+# Tools / integrations (optional)
+opencv = ["opencv-python>=4.8"]
+viz = ["matplotlib>=3.8"]
+
+# Config import adapters (optional)
+mmdet = ["mmengine"]
+detectron2 = ["detectron2"]
+yolox = ["yolox"]
+
+# Local development / testing (optional)
+test = ["pytest>=7.0", "torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1"]
+dev = ["pytest>=7.0", "torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "ruff>=0.5"]
+
+# Everything in the docs install list (demo/onnxrt/train/coco/mcp/actions)
+full = [
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "onnx>=1.14",
+  "onnxruntime>=1.17",
+  "onnxscript>=0.1",
+  "safetensors>=0.4",
+  "pycocotools>=2.0.7",
+  "mcp>=1.0.0",
+  "fastapi>=0.110",
+  "uvicorn>=0.30",
+  "pydantic>=2.0",
+]
 
 [project.scripts]
 yolozu = "yolozu.cli:main"
