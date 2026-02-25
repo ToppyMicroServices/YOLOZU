@@ -34,6 +34,7 @@ yolozu demo  # runs a small demo suite (instance-seg synthetic + coco128 + conti
 yolozu demo instance-seg
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
+```
 
 # COCO instances (polygon) mask demo
 
@@ -42,6 +43,14 @@ If you have a COCO-style instances annotations JSON (polygons) and the matching 
 ```bash
 yolozu demo instance-seg \
 	--background coco-instances \
+	--coco-instances-json /path/to/annotations/instances_val2017.json \
+	--coco-images-dir /path/to/images/val2017
+```
+
+To run the demo suite (no subcommand) but still include the COCO instances polygon demo:
+
+```bash
+yolozu demo \
 	--coco-instances-json /path/to/annotations/instances_val2017.json \
 	--coco-images-dir /path/to/images/val2017
 ```

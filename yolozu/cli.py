@@ -1831,6 +1831,16 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
+    demo.add_argument(
+        "--coco-instances-json",
+        default=None,
+        help="(demo suite) COCO instances_*.json path to enable the polygon-mask instance-seg demo.",
+    )
+    demo.add_argument(
+        "--coco-images-dir",
+        default=None,
+        help="(demo suite) COCO images dir (joined with image.file_name) for the polygon-mask instance-seg demo.",
+    )
     demo_sub = demo.add_subparsers(dest="demo_command", required=False)
 
     demo_is = demo_sub.add_parser("instance-seg", help="Instance-seg eval demo (numpy + Pillow).")
@@ -2010,7 +2020,19 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 default_instances = Path("data") / "coco" / "annotations" / "instances_val2017.json"
                 default_images = Path("data") / "coco" / "images" / "val2017"
-                if default_instances.exists() and default_images.exists():
+
+                suite_instances = getattr(args, "coco_instances_json", None)
+                suite_images = getattr(args, "coco_images_dir", None)
+                if suite_instances or suite_images:
+                    instances_path = Path(str(suite_instances)) if suite_instances else None
+                    images_path = Path(str(suite_images)) if suite_images else None
+                    if instances_path is None or images_path is None:
+                        raise ValueError("demo suite requires both --coco-instances-json and --coco-images-dir")
+                else:
+                    instances_path = default_instances
+                    images_path = default_images
+
+                if instances_path.exists() and images_path.exists():
                     out_ci = run_instance_seg_demo(
                         run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "coco_instances",
                         seed=0,
@@ -2018,14 +2040,14 @@ def main(argv: list[str] | None = None) -> int:
                         image_size=96,
                         max_instances=2,
                         background="coco-instances",
-                        coco_instances_json=default_instances,
-                        coco_images_dir=default_images,
+                        coco_instances_json=instances_path,
+                        coco_images_dir=images_path,
                     )
                     _print_instance_seg_report(out_path=Path(out_ci), label="== instance-seg (coco-instances) ==")
                     ok += 1
                 else:
                     print("== instance-seg (coco-instances) ==")
-                    print("skipped: COCO instances dataset not found under data/coco")
+                    print(f"skipped: not found: instances={instances_path} images_dir={images_path}")
             except Exception as exc:
                 print("== instance-seg (coco-instances) ==")
                 print(f"skipped: {exc}")
