@@ -27,11 +27,11 @@ class TestDemoCliDefaults(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
-            # Default should run the demo suite (at least instance-seg synthetic).
+            # Default should run the demo suite (at least the instance-seg coco-instances section).
             self.assertIn("instance-seg demo:", proc.stdout)
-            self.assertIn("== instance-seg (synthetic) ==", proc.stdout)
             self.assertIn("== instance-seg (coco-instances) ==", proc.stdout)
             self.assertIn("output_dir:", proc.stdout)
+            self.assertIn("suite_config:", proc.stdout)
             # Default output folder should be demo_output.
             self.assertIn("demo_output", proc.stdout)
 

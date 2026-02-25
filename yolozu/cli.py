@@ -1986,37 +1986,94 @@ def main(argv: list[str] | None = None) -> int:
             from yolozu.demos.instance_seg import run_instance_seg_demo
 
             suite_id = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
+            suite_root = Path("demo_output") / "instance_seg" / f"suite_{suite_id}"
             ok = 0
 
-            # 1) Synthetic instance-seg
-            out_syn = run_instance_seg_demo(
-                run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "synthetic",
-                seed=0,
-                num_images=4,
-                image_size=96,
-                max_instances=2,
-                background="synthetic",
-            )
-            _print_instance_seg_report(out_path=Path(out_syn), label="== instance-seg (synthetic) ==")
-            ok += 1
+            suite_instances = getattr(args, "coco_instances_json", None)
+            suite_images = getattr(args, "coco_images_dir", None)
+            if suite_instances or suite_images:
+                if not (suite_instances and suite_images):
+                    raise ValueError("demo suite requires both --coco-instances-json and --coco-images-dir")
+                has_real_coco_instances = True
+            else:
+                default_instances = Path("data") / "coco" / "annotations" / "instances_val2017.json"
+                default_images = Path("data") / "coco" / "images" / "val2017"
+                has_real_coco_instances = default_instances.exists() and default_images.exists()
 
-            # 2) COCO128-backed instance-seg (skip if dataset missing)
-            try:
-                out_coco = run_instance_seg_demo(
-                    run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "coco128",
+            if not has_real_coco_instances:
+                # 1) Synthetic instance-seg
+                syn_run_dir = suite_root / "synthetic"
+                syn_run_dir.mkdir(parents=True, exist_ok=True)
+                syn_cfg_path = syn_run_dir / "demo_config.json"
+                syn_cfg_path.write_text(
+                    json.dumps(
+                        {
+                            "kind": "demo_config",
+                            "demo": "instance-seg",
+                            "background": "synthetic",
+                            "seed": 0,
+                            "num_images": 4,
+                            "image_size": 96,
+                            "max_instances": 2,
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                out_syn = run_instance_seg_demo(
+                    run_dir=syn_run_dir,
                     seed=0,
-                    num_images=2,
+                    num_images=4,
                     image_size=96,
                     max_instances=2,
-                    background="coco128",
+                    background="synthetic",
                 )
-                _print_instance_seg_report(out_path=Path(out_coco), label="== instance-seg (coco128) ==")
+                print(f"config: {syn_cfg_path}")
+                _print_instance_seg_report(out_path=Path(out_syn), label="== instance-seg (synthetic) ==")
                 ok += 1
-            except FileNotFoundError as exc:
-                print("== instance-seg (coco128) ==")
-                print(f"skipped: {exc}")
 
-            # 2b) COCO instances (polygon) instance-seg (skip unless default paths exist)
+                # 2) COCO128-backed instance-seg (skip if dataset missing)
+                try:
+                    coco128_run_dir = suite_root / "coco128"
+                    coco128_run_dir.mkdir(parents=True, exist_ok=True)
+                    coco128_cfg_path = coco128_run_dir / "demo_config.json"
+                    coco128_cfg_path.write_text(
+                        json.dumps(
+                            {
+                                "kind": "demo_config",
+                                "demo": "instance-seg",
+                                "background": "coco128",
+                                "seed": 0,
+                                "num_images": 2,
+                                "image_size": 96,
+                                "max_instances": 2,
+                            },
+                            indent=2,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                    out_coco = run_instance_seg_demo(
+                        run_dir=coco128_run_dir,
+                        seed=0,
+                        num_images=2,
+                        image_size=96,
+                        max_instances=2,
+                        background="coco128",
+                    )
+                    print(f"config: {coco128_cfg_path}")
+                    _print_instance_seg_report(out_path=Path(out_coco), label="== instance-seg (coco128) ==")
+                    ok += 1
+                except FileNotFoundError as exc:
+                    print("== instance-seg (coco128) ==")
+                    print(f"skipped: {exc}")
+
+            # 2b) COCO instances (polygon) instance-seg
             try:
                 default_instances = Path("data") / "coco" / "annotations" / "instances_val2017.json"
                 default_images = Path("data") / "coco" / "images" / "val2017"
@@ -2285,10 +2342,12 @@ def main(argv: list[str] | None = None) -> int:
                     images_path = Path(str(suite_images)) if suite_images else None
                     if instances_path is None or images_path is None:
                         raise ValueError("demo suite requires both --coco-instances-json and --coco-images-dir")
+                    coco_source = "cli"
                 else:
                     if default_instances.exists() and default_images.exists():
                         instances_path = default_instances
                         images_path = default_images
+                        coco_source = "data/coco"
                     else:
                         instances_path, images_path = _ensure_tiny_coco_instances_fixture(
                             fixture_dir=Path("demo_output")
@@ -2296,10 +2355,36 @@ def main(argv: list[str] | None = None) -> int:
                             / f"suite_{suite_id}"
                             / "_coco_instances_fixture"
                         )
+                        coco_source = "fixture"
+
+                ci_run_dir = suite_root / "coco_instances"
+                ci_run_dir.mkdir(parents=True, exist_ok=True)
+                ci_cfg_path = ci_run_dir / "demo_config.json"
+                ci_cfg_path.write_text(
+                    json.dumps(
+                        {
+                            "kind": "demo_config",
+                            "demo": "instance-seg",
+                            "background": "coco-instances",
+                            "seed": 0,
+                            "num_images": 2,
+                            "image_size": 96,
+                            "max_instances": 2,
+                            "coco_instances_json": str(instances_path),
+                            "coco_images_dir": str(images_path),
+                            "coco_source": coco_source,
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
 
                 if instances_path.exists() and images_path.exists():
                     out_ci = run_instance_seg_demo(
-                        run_dir=Path("demo_output") / "instance_seg" / f"suite_{suite_id}" / "coco_instances",
+                        run_dir=ci_run_dir,
                         seed=0,
                         num_images=2,
                         image_size=96,
@@ -2308,6 +2393,7 @@ def main(argv: list[str] | None = None) -> int:
                         coco_instances_json=instances_path,
                         coco_images_dir=images_path,
                     )
+                    print(f"config: {ci_cfg_path}")
                     _print_instance_seg_report(out_path=Path(out_ci), label="== instance-seg (coco-instances) ==")
                     ok += 1
                 else:
@@ -2316,6 +2402,29 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as exc:
                 print("== instance-seg (coco-instances) ==")
                 print(f"skipped: {exc}")
+
+            try:
+                suite_root.mkdir(parents=True, exist_ok=True)
+                suite_cfg_path = suite_root / "suite_config.json"
+                suite_cfg_path.write_text(
+                    json.dumps(
+                        {
+                            "kind": "demo_suite_config",
+                            "suite_id": suite_id,
+                            "has_real_coco_instances": bool(has_real_coco_instances),
+                            "cli_coco_instances_json": str(suite_instances) if suite_instances else None,
+                            "cli_coco_images_dir": str(suite_images) if suite_images else None,
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                print(f"suite_config: {suite_cfg_path}")
+            except Exception:
+                pass
 
             # 3) Continual demo (skip if torch missing)
             try:
@@ -2364,6 +2473,39 @@ def main(argv: list[str] | None = None) -> int:
                 coco_instances_json=getattr(args, "coco_instances_json", None),
                 coco_images_dir=getattr(args, "coco_images_dir", None),
             )
+            try:
+                cfg_path = Path(out).parent / "demo_config.json"
+                cfg_path.write_text(
+                    json.dumps(
+                        {
+                            "kind": "demo_config",
+                            "demo": "instance-seg",
+                            "background": str(getattr(args, "background", "synthetic")),
+                            "seed": int(getattr(args, "seed", 0)),
+                            "num_images": int(getattr(args, "num_images", 8)),
+                            "image_size": int(getattr(args, "image_size", 96)),
+                            "max_instances": int(getattr(args, "max_instances", 2)),
+                            "coco_instances_json": (
+                                str(getattr(args, "coco_instances_json", None))
+                                if getattr(args, "coco_instances_json", None)
+                                else None
+                            ),
+                            "coco_images_dir": (
+                                str(getattr(args, "coco_images_dir", None))
+                                if getattr(args, "coco_images_dir", None)
+                                else None
+                            ),
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                print(f"config: {cfg_path}")
+            except Exception:
+                pass
             _print_instance_seg_report(out_path=Path(out))
             return 0
 

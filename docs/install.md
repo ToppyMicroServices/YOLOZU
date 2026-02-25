@@ -30,13 +30,27 @@ These demos are optional and intended as fast end-to-end smoke checks.
 They typically require `pip install 'yolozu[demo]'`.
 
 ```bash
-yolozu demo  # runs a small demo suite (instance-seg synthetic + coco128 + continual if torch is available)
+yolozu demo  # runs a small demo suite (prefers COCO instances if available)
 yolozu demo instance-seg
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
 
 # COCO instances (polygon) mask demo
+
+If you don't have COCO instances data yet, you can download a tiny subset (2 images) locally:
+
+```bash
+python3 scripts/download_coco_instances_tiny.py --num-images 2
+python3 scripts/download_coco_instances_tiny.py --help
+```
+
+This writes:
+
+- `data/coco/annotations/instances_val2017.json`
+- `data/coco/images/val2017/` (a few JPEGs)
+
+Then `yolozu demo` will auto-detect it and run the polygon-mask instance-seg demo.
 
 If you have a COCO-style instances annotations JSON (polygons) and the matching images directory, you can run:
 
