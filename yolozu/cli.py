@@ -1947,7 +1947,12 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
                 res = payload.get("result", {})
-                print(f"instance-seg demo: mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f}")
+                counts = res.get("counts", {})
+                print(
+                    "instance-seg demo: "
+                    f"mAP50-95={res.get('map50_95'):.3f} mAP50={res.get('map50'):.3f} "
+                    f"(images={counts.get('images')} gt={counts.get('gt_instances')} pred={counts.get('pred_instances')} classes={counts.get('classes')})"
+                )
             except Exception:
                 pass
             print(str(out))

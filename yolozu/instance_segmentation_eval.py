@@ -305,6 +305,9 @@ def evaluate_instance_map(
 
     np, _ = _try_import_deps()
 
+    if pred_root is not None:
+        pred_root = Path(pred_root).resolve()
+
     thresholds = [float(x) for x in iou_thresholds]
     if not thresholds:
         thresholds = [0.5]
