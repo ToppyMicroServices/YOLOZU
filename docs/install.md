@@ -31,7 +31,7 @@ They typically require `pip install 'yolozu[demo]'`.
 
 ```bash
 yolozu demo  # runs a small demo suite (prefers COCO instances if available)
-yolozu demo instance-seg  # defaults to --background coco-instances
+yolozu demo instance-seg  # defaults to --background coco-instances and --inference auto (requires torch/torchvision)
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
@@ -56,9 +56,7 @@ To run *real* instance segmentation inference (Mask R-CNN via `torchvision`) on 
 
 ```bash
 yolozu demo instance-seg \
-	--background coco-instances \
-	--inference torchvision \
-	--score-threshold 0.5
+	--inference torchvision
 ```
 
 If your COCO data is under the default paths, you can omit `--coco-instances-json` and `--coco-images-dir`.
@@ -67,7 +65,12 @@ Defaults:
 - `data/coco/annotations/instances_val2017.json`
 - `data/coco/images/val2017`
 
-If you omit `--inference`, the demo will generate synthetic (GT-derived) predictions for evaluation/visualization.
+For `--background coco-instances`, if you omit `--inference`, it defaults to `auto` (real inference when available).
+To force the lightweight GT-derived fallback (no torch needed), use:
+
+```bash
+yolozu demo instance-seg --inference none
+```
 
 To run the fully synthetic variant explicitly:
 

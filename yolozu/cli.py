@@ -1874,8 +1874,11 @@ def main(argv: list[str] | None = None) -> int:
     demo_is.add_argument(
         "--inference",
         choices=("none", "auto", "torchvision"),
-        default="none",
-        help="(background=coco-instances) Instance-seg inference backend (default: none).",
+        default=None,
+        help=(
+            "(background=coco-instances) Instance-seg inference backend. "
+            "Default: auto when background=coco-instances, otherwise none."
+        ),
     )
     demo_is.add_argument(
         "--device",
@@ -2513,6 +2516,20 @@ def main(argv: list[str] | None = None) -> int:
                 if resolved_images is None:
                     resolved_images = str(Path("data") / "coco" / "images" / "val2017")
 
+            resolved_inference = getattr(args, "inference", None)
+            if resolved_inference is None:
+                resolved_inference = "auto" if str(bg).strip().lower() == "coco-instances" else "none"
+
+            if str(resolved_inference).strip().lower() != "none":
+                try:
+                    import torch  # noqa: F401
+                    import torchvision  # noqa: F401
+                except Exception as exc:
+                    raise SystemExit(
+                        "instance-seg inference requires torch+torchvision. "
+                        "Install: pip install 'yolozu[demo]'"
+                    ) from exc
+
             out = run_instance_seg_demo(
                 run_dir=getattr(args, "run_dir", None),
                 seed=int(getattr(args, "seed", 0)),
@@ -2522,7 +2539,7 @@ def main(argv: list[str] | None = None) -> int:
                 background=bg,
                 coco_instances_json=resolved_instances,
                 coco_images_dir=resolved_images,
-                inference=str(getattr(args, "inference", "none")),
+                inference=str(resolved_inference),
                 device=str(getattr(args, "device", "cpu")),
                 score_threshold=float(getattr(args, "score_threshold", 0.5)),
             )
@@ -2548,7 +2565,7 @@ def main(argv: list[str] | None = None) -> int:
                                 if resolved_images
                                 else None
                             ),
-                            "inference": str(getattr(args, "inference", "none")),
+                            "inference": str(resolved_inference),
                             "device": str(getattr(args, "device", "cpu")),
                             "score_threshold": float(getattr(args, "score_threshold", 0.5)),
                         },
