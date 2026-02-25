@@ -20,6 +20,43 @@ def _require_deps() -> tuple[Any, Any]:
     return np, (Image, ImageDraw)
 
 
+def _iter_coco128_pairs(*, coco128_root: Path) -> list[tuple[Path, Path]]:
+    images_base = coco128_root / "images"
+    labels_base = coco128_root / "labels"
+    if not images_base.exists() or not labels_base.exists():
+        raise FileNotFoundError(f"coco128 not found under: {coco128_root}")
+
+    pairs: list[tuple[Path, Path]] = []
+    for img in sorted(images_base.rglob("*")):
+        if not img.is_file():
+            continue
+        if img.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+            continue
+        rel = img.relative_to(images_base)
+        lab = labels_base / rel.with_suffix(".txt")
+        if lab.exists():
+            pairs.append((img, lab))
+    if not pairs:
+        raise FileNotFoundError(f"no image/label pairs found under: {coco128_root}")
+    return pairs
+
+
+def _yolo_bbox_to_xyxy(*, w: int, h: int, xc: float, yc: float, bw: float, bh: float) -> tuple[int, int, int, int]:
+    x0 = int((float(xc) - float(bw) / 2.0) * float(w))
+    y0 = int((float(yc) - float(bh) / 2.0) * float(h))
+    x1 = int((float(xc) + float(bw) / 2.0) * float(w))
+    y1 = int((float(yc) + float(bh) / 2.0) * float(h))
+    x0 = max(0, min(int(w) - 1, x0))
+    y0 = max(0, min(int(h) - 1, y0))
+    x1 = max(0, min(int(w), x1))
+    y1 = max(0, min(int(h), y1))
+    if x1 <= x0:
+        x1 = min(int(w), x0 + 1)
+    if y1 <= y0:
+        y1 = min(int(h), y0 + 1)
+    return x0, y0, x1, y1
+
+
 def _draw_mask_circle(*, size: int, cx: int, cy: int, r: int) -> Any:
     np, (Image, ImageDraw) = _require_deps()
     img = Image.new("L", (int(size), int(size)), 0)
@@ -44,7 +81,7 @@ def _overlay_masks(
     pred_masks: list[Any],
     alpha: float = 0.45,
 ) -> None:
-    np, (Image, _) = _require_deps()
+    np, (Image, ImageDraw) = _require_deps()
 
     base = Image.open(base_rgb_path).convert("RGBA")
     w, h = base.size
@@ -80,6 +117,7 @@ def run_instance_seg_demo(
     num_images: int = 8,
     image_size: int = 96,
     max_instances: int = 2,
+    background: str = "synthetic",
     output_name: str = "instance_seg_demo_report.json",
 ) -> Path:
     """Create a tiny synthetic instance-seg dataset + predictions, then evaluate mask mAP.
@@ -87,7 +125,7 @@ def run_instance_seg_demo(
     This demo is designed to run on CPU with only numpy + Pillow.
     """
 
-    np, (Image, _) = _require_deps()
+    np, (Image, ImageDraw) = _require_deps()
 
     rng = random.Random(int(seed))
     np.random.seed(int(seed))
@@ -110,71 +148,154 @@ def run_instance_seg_demo(
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
 
+    bg_mode = str(background).strip().lower()
+    if bg_mode not in ("synthetic", "coco128"):
+        raise ValueError(f"unknown background: {background} (expected: synthetic|coco128)")
+
+    coco_pairs: list[tuple[Path, Path]] | None = None
+    if bg_mode == "coco128":
+        coco_pairs = _iter_coco128_pairs(coco128_root=Path("data") / "coco128")
+        if int(num_images) > len(coco_pairs):
+            num_images = len(coco_pairs)
+        coco_pairs = rng.sample(coco_pairs, k=int(num_images))
+
     for i in range(int(num_images)):
         image_name = f"img_{i:04d}.png"
         image_path = images_dir / image_name
 
-        # Simple textured background so overlays look sane if users open it.
-        bg = (np.random.rand(int(image_size), int(image_size), 3) * 20).astype("uint8") + 220
-        Image.fromarray(bg, mode="RGB").save(image_path)
-
-        n_inst = rng.randint(1, max(1, int(max_instances)))
         gt_paths: list[str] = []
         gt_classes: list[int] = []
-
         gt_masks_for_overlay: list[Any] = []
         pred_masks_for_overlay: list[Any] = []
-
         pred_instances: list[dict[str, Any]] = []
 
-        for j in range(int(n_inst)):
-            class_id = int(rng.randint(0, 1))
-            is_circle = bool(rng.random() < 0.6)
+        if bg_mode == "coco128":
+            assert coco_pairs is not None
+            src_img, src_lab = coco_pairs[i]
+            img_rgb = Image.open(src_img).convert("RGB")
+            draw_rgb = ImageDraw.Draw(img_rgb)
+            w, h = img_rgb.size
 
-            if is_circle:
-                r = rng.randint(int(image_size * 0.08), int(image_size * 0.18))
-                cx = rng.randint(r + 2, int(image_size) - r - 3)
-                cy = rng.randint(r + 2, int(image_size) - r - 3)
-                gt_mask = _draw_mask_circle(size=int(image_size), cx=cx, cy=cy, r=r)
-            else:
-                w = rng.randint(int(image_size * 0.12), int(image_size * 0.25))
-                h = rng.randint(int(image_size * 0.12), int(image_size * 0.25))
-                x0 = rng.randint(2, int(image_size) - w - 3)
-                y0 = rng.randint(2, int(image_size) - h - 3)
-                gt_mask = _draw_mask_rect(size=int(image_size), x0=x0, y0=y0, x1=x0 + w, y1=y0 + h)
+            lines = [ln.strip() for ln in src_lab.read_text(encoding="utf-8").splitlines() if ln.strip()]
+            # Keep runtime bounded; coco128 images can have many objects.
+            lines = lines[: max(1, int(max_instances))]
 
-            gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
-            Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
-            gt_paths.append(str(gt_path))
-            gt_classes.append(int(class_id))
-            gt_masks_for_overlay.append(gt_mask)
+            for j, ln in enumerate(lines):
+                parts = ln.split()
+                if len(parts) < 5:
+                    continue
+                class_id = int(float(parts[0]))
+                xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
+                x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
 
-            # Predictions: mostly correct, with a bit of noise (shift / dropout / FP).
-            if rng.random() < 0.85:
-                pred_mask = gt_mask.copy()
-                if rng.random() < 0.25:
-                    shift = rng.choice([-2, -1, 1, 2])
-                    pred_mask = np.roll(pred_mask, shift=shift, axis=0)
-                pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
-                pred_path = run_dir / pred_path_rel
-                Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(pred_path)
-                pred_masks_for_overlay.append(pred_mask)
-                pred_instances.append(
-                    {
-                        "class_id": int(class_id),
-                        "score": float(0.9 - 0.1 * rng.random()),
-                        "mask": str(pred_path_rel),
-                    }
-                )
+                gt_mask = np.zeros((int(h), int(w)), dtype=bool)
+                gt_mask[int(y0) : int(y1), int(x0) : int(x1)] = True
 
-        # Occasional false positive.
-        if rng.random() < 0.25:
-            fp_mask = np.zeros((int(image_size), int(image_size)), dtype=bool)
-            fp_mask[5:15, 5:15] = True
-            fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
-            Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
-            pred_masks_for_overlay.append(fp_mask)
-            pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+                # Lightly annotate the image so masks are visually traceable.
+                fill = (40, 140, 220) if (class_id % 2) == 0 else (220, 120, 40)
+                draw_rgb.rectangle([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
+                draw_rgb.rectangle([x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)], outline=fill, fill=None)
+
+                gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
+                Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
+                gt_paths.append(str(gt_path))
+                gt_classes.append(int(class_id))
+                gt_masks_for_overlay.append(gt_mask)
+
+                if rng.random() < 0.9:
+                    pred_mask = gt_mask.copy()
+                    if rng.random() < 0.25:
+                        shift_y = rng.choice([-2, -1, 1, 2])
+                        shift_x = rng.choice([-2, -1, 1, 2])
+                        pred_mask = np.roll(pred_mask, shift=shift_y, axis=0)
+                        pred_mask = np.roll(pred_mask, shift=shift_x, axis=1)
+
+                    pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
+                    Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
+                    pred_masks_for_overlay.append(pred_mask)
+                    pred_instances.append(
+                        {
+                            "class_id": int(class_id),
+                            "score": float(0.9 - 0.1 * rng.random()),
+                            "mask": str(pred_path_rel),
+                        }
+                    )
+
+            # False positive patch.
+            if rng.random() < 0.25:
+                fp_mask = np.zeros((int(h), int(w)), dtype=bool)
+                fp_mask[5:15, 5:15] = True
+                fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
+                Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
+                pred_masks_for_overlay.append(fp_mask)
+                pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+
+            img_rgb.save(image_path)
+        else:
+            # Simple textured background.
+            # (Previously this was very close to white; we now also paint the GT shapes on top
+            # so users can visually confirm masks align with the image content.)
+            bg = (np.random.rand(int(image_size), int(image_size), 3) * 25).astype("uint8") + 200
+            img_rgb = Image.fromarray(bg, mode="RGB")
+            draw_rgb = ImageDraw.Draw(img_rgb)
+
+            n_inst = rng.randint(1, max(1, int(max_instances)))
+            for j in range(int(n_inst)):
+                class_id = int(rng.randint(0, 1))
+                is_circle = bool(rng.random() < 0.6)
+
+                fill = (40, 140, 220) if int(class_id) == 0 else (220, 120, 40)
+                outline = (0, 0, 0)
+
+                if is_circle:
+                    r = rng.randint(int(image_size * 0.08), int(image_size * 0.18))
+                    cx = rng.randint(r + 2, int(image_size) - r - 3)
+                    cy = rng.randint(r + 2, int(image_size) - r - 3)
+                    gt_mask = _draw_mask_circle(size=int(image_size), cx=cx, cy=cy, r=r)
+                    draw_rgb.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fill, outline=outline)
+                else:
+                    w = rng.randint(int(image_size * 0.12), int(image_size * 0.25))
+                    h = rng.randint(int(image_size * 0.12), int(image_size * 0.25))
+                    x0 = rng.randint(2, int(image_size) - w - 3)
+                    y0 = rng.randint(2, int(image_size) - h - 3)
+                    gt_mask = _draw_mask_rect(size=int(image_size), x0=x0, y0=y0, x1=x0 + w, y1=y0 + h)
+                    draw_rgb.rectangle([x0, y0, x0 + w, y0 + h], fill=fill, outline=outline)
+
+                gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
+                Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
+                gt_paths.append(str(gt_path))
+                gt_classes.append(int(class_id))
+                gt_masks_for_overlay.append(gt_mask)
+
+                # Predictions: mostly correct, with a bit of noise (shift / dropout / FP).
+                if rng.random() < 0.85:
+                    pred_mask = gt_mask.copy()
+                    if rng.random() < 0.25:
+                        shift = rng.choice([-2, -1, 1, 2])
+                        pred_mask = np.roll(pred_mask, shift=shift, axis=0)
+                    pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
+                    pred_path = run_dir / pred_path_rel
+                    Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(pred_path)
+                    pred_masks_for_overlay.append(pred_mask)
+                    pred_instances.append(
+                        {
+                            "class_id": int(class_id),
+                            "score": float(0.9 - 0.1 * rng.random()),
+                            "mask": str(pred_path_rel),
+                        }
+                    )
+
+            # Occasional false positive.
+            if rng.random() < 0.25:
+                fp_mask = np.zeros((int(image_size), int(image_size)), dtype=bool)
+                fp_mask[5:15, 5:15] = True
+                fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
+                Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
+                pred_masks_for_overlay.append(fp_mask)
+                pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+
+            # Save the RGB image after painting all GT instances.
+            img_rgb.save(image_path)
 
         # Convenience artifact: visualize masks overlaid on the RGB image.
         overlay_path = overlays_dir / f"overlay_{image_name}"

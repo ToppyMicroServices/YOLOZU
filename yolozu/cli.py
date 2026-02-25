@@ -1833,12 +1833,18 @@ def main(argv: list[str] | None = None) -> int:
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
     demo_sub = demo.add_subparsers(dest="demo_command", required=False)
 
-    demo_is = demo_sub.add_parser("instance-seg", help="Synthetic instance-seg eval demo (numpy + Pillow).")
-    demo_is.add_argument("--run-dir", default=None, help="Run directory (default: runs/yolozu_demos/instance_seg/<utc>).")
+    demo_is = demo_sub.add_parser("instance-seg", help="Instance-seg eval demo (numpy + Pillow).")
+    demo_is.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/instance_seg/<utc>).")
     demo_is.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
     demo_is.add_argument("--num-images", type=int, default=8, help="Number of images (default: 8).")
     demo_is.add_argument("--image-size", type=int, default=96, help="Square image size (default: 96).")
     demo_is.add_argument("--max-instances", type=int, default=2, help="Max instances per image (default: 2).")
+    demo_is.add_argument(
+        "--background",
+        choices=("synthetic", "coco128"),
+        default="synthetic",
+        help="Background source: synthetic shapes or real COCO128 images (default: synthetic).",
+    )
 
     demo_cl = demo_sub.add_parser("continual", help="Toy continual-learning demo (requires torch; CPU OK).")
     demo_cl.add_argument("--output", default=None, help="Output JSON path or dir (default: runs/yolozu_demos/continual/...).")
@@ -1943,6 +1949,7 @@ def main(argv: list[str] | None = None) -> int:
                 num_images=int(getattr(args, "num_images", 8)),
                 image_size=int(getattr(args, "image_size", 96)),
                 max_instances=int(getattr(args, "max_instances", 2)),
+                background=str(getattr(args, "background", "synthetic")),
             )
             try:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
