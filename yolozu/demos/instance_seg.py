@@ -214,6 +214,8 @@ def run_instance_seg_demo(
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
 
+    gt_mask_kinds: dict[str, int] = {}
+
     bg_mode = str(background).strip().lower()
     if bg_mode not in ("synthetic", "coco128", "coco-instances"):
         raise ValueError(f"unknown background: {background} (expected: synthetic|coco128|coco-instances)")
@@ -375,21 +377,44 @@ def run_instance_seg_demo(
                 if len(parts) < 5:
                     continue
                 class_id = int(float(parts[0]))
-                xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
-                x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
 
-                # COCO128 in this repo is YOLO *bbox* labels, not segmentation polygons.
-                # To make overlays look less "blocky" and easier to eyeball, we create a
-                # simple ellipse pseudo-mask inside the bbox.
-                mask_img = Image.new("L", (int(w), int(h)), 0)
-                mask_draw = ImageDraw.Draw(mask_img)
-                mask_draw.ellipse([x0, y0, x1, y1], fill=255)
-                gt_mask = np.array(mask_img) != 0
-
-                # Lightly annotate the image so masks are visually traceable (match the ellipse mask).
                 fill = (40, 140, 220) if (class_id % 2) == 0 else (220, 120, 40)
-                draw_rgb.ellipse([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
-                draw_rgb.ellipse([x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)], outline=fill, fill=None)
+
+                # COCO128 in this repo is YOLO *bbox* labels (5 columns). Some users may
+                # provide a YOLO-seg variant where each row is: class x1 y1 x2 y2 ...
+                # (normalized polygon points). If polygons are present, use them to
+                # generate masks that better match the image.
+                if len(parts) > 5 and (len(parts) - 1) % 2 == 0:
+                    pts: list[tuple[float, float]] = []
+                    for k in range(1, len(parts) - 1, 2):
+                        try:
+                            x = float(parts[k]) * float(w)
+                            y = float(parts[k + 1]) * float(h)
+                        except Exception:
+                            continue
+                        pts.append((x, y))
+                    if len(pts) < 3:
+                        continue
+                    mask_img = Image.new("L", (int(w), int(h)), 0)
+                    mask_draw = ImageDraw.Draw(mask_img)
+                    mask_draw.polygon(pts, fill=255)
+                    gt_mask = np.array(mask_img) != 0
+                    draw_rgb.line(pts + [pts[0]], fill=fill, width=2)
+                    gt_mask_kinds["yolo_seg_polygon"] = int(gt_mask_kinds.get("yolo_seg_polygon", 0)) + 1
+                else:
+                    xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
+                    x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
+
+                    # bbox-only fallback: ellipse pseudo-mask inside the bbox.
+                    mask_img = Image.new("L", (int(w), int(h)), 0)
+                    mask_draw = ImageDraw.Draw(mask_img)
+                    mask_draw.ellipse([x0, y0, x1, y1], fill=255)
+                    gt_mask = np.array(mask_img) != 0
+
+                    # Lightly annotate the image so masks are visually traceable.
+                    draw_rgb.ellipse([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
+                    draw_rgb.ellipse([x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)], outline=fill, fill=None)
+                    gt_mask_kinds["yolo_bbox_ellipse"] = int(gt_mask_kinds.get("yolo_bbox_ellipse", 0)) + 1
 
                 gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
                 Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
@@ -514,16 +539,29 @@ def run_instance_seg_demo(
 
     result = evaluate_instance_map(records=records, predictions_entries=predictions, pred_root=run_dir, return_per_image=True)
 
+    warnings = list(result.warnings)
+    if bg_mode == "coco128":
+        # If we didn't use any polygon labels, be explicit that these are pseudo masks.
+        if int(gt_mask_kinds.get("yolo_seg_polygon", 0)) == 0:
+            warnings.append(
+                "coco128 labels are bbox-only; gt_masks are pseudo (ellipse-in-bbox) and will not match object boundaries"
+            )
+
     report = {
         "kind": "instance_seg_demo",
         "schema_version": 1,
-        "meta": {"seed": int(seed), "run_dir": str(run_dir)},
+        "meta": {
+            "seed": int(seed),
+            "run_dir": str(run_dir),
+            "background": str(bg_mode),
+            "gt_mask_kinds": dict(gt_mask_kinds),
+        },
         "result": {
             "map50_95": float(result.map50_95),
             "map50": float(result.map50),
             "per_class": dict(result.per_class),
             "counts": dict(result.counts),
-            "warnings": list(result.warnings),
+            "warnings": warnings,
             "per_image": list(result.per_image or []),
         },
         "artifacts": {
