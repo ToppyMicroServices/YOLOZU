@@ -84,6 +84,9 @@ Optional (CPU) demos:
 python3 -m pip install -U 'yolozu[demo]'
 yolozu demo
 yolozu demo instance-seg
+yolozu demo keypoints
+yolozu demo depth
+yolozu demo train
 yolozu demo continual --compare --markdown
 ```
 

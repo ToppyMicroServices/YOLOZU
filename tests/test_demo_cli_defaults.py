@@ -8,6 +8,69 @@ import json
 
 
 class TestDemoCliDefaults(unittest.TestCase):
+    def test_demo_keypoints_help_works(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            cwd = Path(td)
+            env = dict(os.environ)
+            py_path = str(repo_root)
+            if env.get("PYTHONPATH"):
+                py_path = py_path + os.pathsep + str(env["PYTHONPATH"])
+            env["PYTHONPATH"] = py_path
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "demo", "keypoints", "--help"],
+                cwd=str(cwd),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            self.assertIn("--score-threshold", proc.stdout)
+
+    def test_demo_depth_help_works(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            cwd = Path(td)
+            env = dict(os.environ)
+            py_path = str(repo_root)
+            if env.get("PYTHONPATH"):
+                py_path = py_path + os.pathsep + str(env["PYTHONPATH"])
+            env["PYTHONPATH"] = py_path
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "demo", "depth", "--help"],
+                cwd=str(cwd),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            self.assertIn("--model", proc.stdout)
+
+    def test_demo_train_help_works(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            cwd = Path(td)
+            env = dict(os.environ)
+            py_path = str(repo_root)
+            if env.get("PYTHONPATH"):
+                py_path = py_path + os.pathsep + str(env["PYTHONPATH"])
+            env["PYTHONPATH"] = py_path
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "demo", "train", "--help"],
+                cwd=str(cwd),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            self.assertIn("--max-steps", proc.stdout)
+
     def test_demo_defaults_to_demo_suite(self):
         try:
             import numpy as _np  # noqa: F401

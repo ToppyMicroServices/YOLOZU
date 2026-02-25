@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.3] - 2026-02-26
+
+### Added
+- Added practical CPU-friendly demos backed by real model inference/training:
+	- `yolozu demo keypoints` (torchvision Keypoint R-CNN; image overlay + JSON report)
+	- `yolozu demo depth` (MiDaS via `torch.hub`; depth images + JSON report; downloads weights on first run)
+	- `yolozu demo train` (MNIST fine-tune; checkpoint + JSON report; bounded by `--max-steps`)
+
+### Changed
+- `yolozu[demo]` extra now includes `timm` and `opencv-python` to reduce first-run demo friction.
+- `tools/yolozu.py` supports `demo` as a passthrough to the package CLI for repo workflows.
+- Continual demo: added `--practical` and `--fast` presets to keep CPU runs short while using a realistic vision shift.
+
 ## [1.0.2] - 2026-02-25
 
 ### Fixed

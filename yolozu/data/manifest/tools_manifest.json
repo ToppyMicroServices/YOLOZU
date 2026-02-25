@@ -3611,6 +3611,18 @@
           "command": "python3 tools/yolozu.py doctor --output reports/doctor.json"
         },
         {
+          "description": "Keypoints inference demo (passthrough to package CLI).",
+          "command": "python3 tools/yolozu.py demo keypoints"
+        },
+        {
+          "description": "Monocular depth demo (MiDaS via torch.hub; downloads weights on first run).",
+          "command": "python3 tools/yolozu.py demo depth"
+        },
+        {
+          "description": "Training demo (MNIST fine-tune; bounded by --max-steps).",
+          "command": "python3 tools/yolozu.py demo train --max-steps 40"
+        },
+        {
           "description": "Doctor import auto-detect (config).",
           "command": "python3 -m yolozu doctor import --config-from auto --args /path/to/args.yaml --output -"
         },

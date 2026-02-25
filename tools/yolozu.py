@@ -2089,6 +2089,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_ltr.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu long-tail-recipe`.")
     p_ltr.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="long-tail-recipe")
 
+    p_demo = sub.add_parser("demo", help="Delegate to yolozu package CLI demo command.")
+    p_demo.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu demo`.")
+    p_demo.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="demo")
+
     p_fetch = sub.add_parser("fetch", help="Delegate to yolozu package CLI fetch command.")
     p_fetch.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu fetch`.")
     p_fetch.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="fetch")

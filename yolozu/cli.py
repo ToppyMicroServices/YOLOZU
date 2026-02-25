@@ -1897,6 +1897,19 @@ def main(argv: list[str] | None = None) -> int:
     demo_cl.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
     demo_cl.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
     demo_cl.add_argument(
+        "--practical",
+        action="store_true",
+        help=(
+            "Run a more practical vision demo (MNIST rotation shift + ResNet18 backbone) "
+            "with CPU-friendly fast defaults. Equivalent to setting --problem mnist_rotate with smaller steps/sizes."
+        ),
+    )
+    demo_cl.add_argument(
+        "--fast",
+        action="store_true",
+        help="Reduce steps and sample counts to keep CPU runs short (applies to toy2d and mnist_rotate).",
+    )
+    demo_cl.add_argument(
         "--problem",
         default="toy2d",
         choices=("toy2d", "mnist_rotate"),
@@ -1938,6 +1951,54 @@ def main(argv: list[str] | None = None) -> int:
     demo_cl.add_argument("--fisher-batches", type=int, default=64, help="Batches for Fisher estimate (default: 64).")
     demo_cl.add_argument("--replay-capacity", type=int, default=512, help="Replay buffer capacity (default: 512).")
     demo_cl.add_argument("--replay-k", type=int, default=64, help="Replay samples per step (default: 64).")
+
+    demo_kp = demo_sub.add_parser("keypoints", help="Keypoints inference demo (torchvision Keypoint R-CNN).")
+    demo_kp.add_argument("--image", default=None, help="Input image path (default: a bundled smoke image if present).")
+    demo_kp.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/keypoints/<utc>).")
+    demo_kp.add_argument("--device", default="auto", help="Torch device (cpu|cuda|mps|auto) (default: auto).")
+    demo_kp.add_argument("--score-threshold", type=float, default=0.7, help="Min score to keep persons (default: 0.7).")
+    demo_kp.add_argument("--max-persons", type=int, default=3, help="Max persons to render (default: 3).")
+
+    demo_depth = demo_sub.add_parser("depth", help="Monocular depth inference demo (MiDaS via torch.hub).")
+    demo_depth.add_argument("--image", default=None, help="Input image path (default: a bundled smoke image if present).")
+    demo_depth.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/depth/<utc>).")
+    demo_depth.add_argument("--device", default="auto", help="Torch device (cpu|cuda|mps|auto) (default: auto).")
+    demo_depth.add_argument(
+        "--model",
+        default="midas_small",
+        choices=("midas_small", "dpt_hybrid", "dpt_large"),
+        help="Depth model preset (default: midas_small).",
+    )
+    demo_depth.add_argument(
+        "--invert",
+        action="store_true",
+        help="Invert visualization (closer=brighter) (default: enabled).",
+    )
+    demo_depth.add_argument(
+        "--no-invert",
+        dest="invert",
+        action="store_false",
+        help="Disable inversion (farther=brighter).",
+    )
+    demo_depth.set_defaults(invert=True)
+
+    demo_tr = demo_sub.add_parser("train", help="Training demo (MNIST fine-tune; requires torch+torchvision).")
+    demo_tr.add_argument(
+        "--output",
+        default=None,
+        help="Output JSON path or run directory (default: demo_output/train/<utc>/train_demo_report.json).",
+    )
+    demo_tr.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
+    demo_tr.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
+    demo_tr.add_argument(
+        "--data-dir",
+        default=str(Path("data") / "torchvision"),
+        help="Torchvision dataset root dir (default: data/torchvision).",
+    )
+    demo_tr.add_argument("--epochs", type=int, default=1, help="Epochs (default: 1).")
+    demo_tr.add_argument("--max-steps", type=int, default=80, help="Max train steps (default: 80).")
+    demo_tr.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64).")
+    demo_tr.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4).")
 
     args = parser.parse_args(argv)
     if args.command == "train":
@@ -2640,6 +2701,36 @@ def main(argv: list[str] | None = None) -> int:
             elif args.compare:
                 methods = ["naive", "ewc", "replay", "ewc_replay"]
 
+            # Convenience presets to keep the command short.
+            problem = str(getattr(args, "problem", "toy2d"))
+            method_override = None
+            steps_a = int(args.steps_a)
+            steps_b = int(args.steps_b)
+            n_train = int(args.n_train)
+            n_eval = int(args.n_eval)
+            fisher_batches = int(args.fisher_batches)
+            replay_capacity = int(args.replay_capacity)
+            replay_k = int(args.replay_k)
+
+            if bool(getattr(args, "practical", False)):
+                problem = "mnist_rotate"
+                # Keep this simple and fast on CPU.
+                method_override = "ewc"
+                steps_a = min(steps_a, 60)
+                steps_b = min(steps_b, 60)
+                n_train = min(n_train, 2048)
+                n_eval = min(n_eval, 512)
+                fisher_batches = min(fisher_batches, 16)
+
+            if bool(getattr(args, "fast", False)):
+                steps_a = min(steps_a, 60)
+                steps_b = min(steps_b, 60)
+                n_train = min(n_train, 2048)
+                n_eval = min(n_eval, 512)
+                fisher_batches = min(fisher_batches, 16)
+                replay_capacity = min(replay_capacity, 256)
+                replay_k = min(replay_k, 32)
+
             if methods and len(methods) > 1:
                 try:
                     out = run_continual_demo_suite(
@@ -2647,21 +2738,21 @@ def main(argv: list[str] | None = None) -> int:
                         output=args.output,
                         seed=int(args.seed),
                         device=str(args.device),
-                        problem=str(getattr(args, "problem", "toy2d")),
+                        problem=str(problem),
                         data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
-                        steps_a=int(args.steps_a),
-                        steps_b=int(args.steps_b),
+                        steps_a=int(steps_a),
+                        steps_b=int(steps_b),
                         batch_size=int(args.batch_size),
                         hidden=int(args.hidden),
                         lr=float(args.lr),
                         corr=float(args.corr),
                         noise=float(args.noise),
-                        n_train=int(args.n_train),
-                        n_eval=int(args.n_eval),
+                        n_train=int(n_train),
+                        n_eval=int(n_eval),
                         ewc_lambda=float(args.ewc_lambda),
-                        fisher_batches=int(args.fisher_batches),
-                        replay_capacity=int(args.replay_capacity),
-                        replay_k=int(args.replay_k),
+                        fisher_batches=int(fisher_batches),
+                        replay_capacity=int(replay_capacity),
+                        replay_k=int(replay_k),
                     )
                 except RuntimeError as exc:
                     raise _friendly_demo_deps_error(exc)
@@ -2681,6 +2772,8 @@ def main(argv: list[str] | None = None) -> int:
             method = str(args.method)
             if methods and len(methods) == 1:
                 method = str(methods[0])
+            if method_override is not None:
+                method = str(method_override)
 
             try:
                 out = run_continual_demo(
@@ -2688,21 +2781,21 @@ def main(argv: list[str] | None = None) -> int:
                     seed=int(args.seed),
                     device=str(args.device),
                     method=method,
-                    problem=str(getattr(args, "problem", "toy2d")),
+                    problem=str(problem),
                     data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
-                    steps_a=int(args.steps_a),
-                    steps_b=int(args.steps_b),
+                    steps_a=int(steps_a),
+                    steps_b=int(steps_b),
                     batch_size=int(args.batch_size),
                     hidden=int(args.hidden),
                     lr=float(args.lr),
                     corr=float(args.corr),
                     noise=float(args.noise),
-                    n_train=int(args.n_train),
-                    n_eval=int(args.n_eval),
+                    n_train=int(n_train),
+                    n_eval=int(n_eval),
                     ewc_lambda=float(args.ewc_lambda),
-                    fisher_batches=int(args.fisher_batches),
-                    replay_capacity=int(args.replay_capacity),
-                    replay_k=int(args.replay_k),
+                    fisher_batches=int(fisher_batches),
+                    replay_capacity=int(replay_capacity),
+                    replay_k=int(replay_k),
                 )
             except RuntimeError as exc:
                 raise _friendly_demo_deps_error(exc)
@@ -2738,6 +2831,116 @@ def main(argv: list[str] | None = None) -> int:
                     md_path = Path(out).with_suffix(".md")
                     md_path.write_text(md, encoding="utf-8")
                     print(str(md_path))
+            except Exception:
+                pass
+            print(str(out))
+            return 0
+
+        if args.demo_command == "keypoints":
+            try:
+                import torch  # noqa: F401
+                import torchvision  # noqa: F401
+            except Exception as exc:
+                raise SystemExit(
+                    "demo keypoints requires torch+torchvision. "
+                    "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+                ) from exc
+
+            from yolozu.demos.keypoints import run_keypoints_demo
+
+            out = run_keypoints_demo(
+                image=getattr(args, "image", None),
+                run_dir=getattr(args, "run_dir", None),
+                device=str(getattr(args, "device", "auto")),
+                score_threshold=float(getattr(args, "score_threshold", 0.7)),
+                max_persons=int(getattr(args, "max_persons", 3)),
+            )
+            try:
+                payload = json.loads(Path(out).read_text(encoding="utf-8"))
+                res = payload.get("result", {})
+                settings = payload.get("settings", {})
+                n = res.get("num_persons")
+                img = settings.get("image")
+                run_dir = settings.get("run_dir")
+                print(f"keypoints demo: persons={n} image={img} (output_dir={run_dir})")
+            except Exception:
+                pass
+            print(str(out))
+            return 0
+
+        if args.demo_command == "depth":
+            try:
+                import torch  # noqa: F401
+            except Exception as exc:
+                raise SystemExit(
+                    "demo depth requires torch. "
+                    "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+                ) from exc
+
+            from yolozu.demos.depth import run_depth_demo
+
+            try:
+                out = run_depth_demo(
+                    image=getattr(args, "image", None),
+                    run_dir=getattr(args, "run_dir", None),
+                    device=str(getattr(args, "device", "auto")),
+                    model=str(getattr(args, "model", "midas_small")),
+                    invert=bool(getattr(args, "invert", True)),
+                )
+            except Exception as exc:
+                msg = str(exc)
+                if "intel-isl/MiDaS" in msg or "torch.hub" in msg:
+                    raise SystemExit(
+                        "demo depth uses MiDaS via torch.hub and downloads weights on first run; ensure network access. "
+                        f"error: {exc}"
+                    )
+                raise
+
+            try:
+                payload = json.loads(Path(out).read_text(encoding="utf-8"))
+                res = payload.get("result", {})
+                settings = payload.get("settings", {})
+                d = (res.get("depth") or {})
+                run_dir = settings.get("run_dir")
+                print(f"depth demo: model={settings.get('model')} depth_range=[{d.get('min'):.3g}, {d.get('max'):.3g}] (output_dir={run_dir})")
+            except Exception:
+                pass
+            print(str(out))
+            return 0
+
+        if args.demo_command == "train":
+            try:
+                import torch  # noqa: F401
+                import torchvision  # noqa: F401
+            except Exception as exc:
+                raise SystemExit(
+                    "demo train requires torch+torchvision. "
+                    "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+                ) from exc
+
+            from yolozu.demos.train import run_train_demo
+
+            out = run_train_demo(
+                output=getattr(args, "output", None),
+                seed=int(getattr(args, "seed", 0)),
+                device=str(getattr(args, "device", "cpu")),
+                data_dir=str(getattr(args, "data_dir", str(Path("data") / "torchvision"))),
+                epochs=int(getattr(args, "epochs", 1)),
+                max_steps=int(getattr(args, "max_steps", 80)),
+                batch_size=int(getattr(args, "batch_size", 64)),
+                lr=float(getattr(args, "lr", 3e-4)),
+            )
+            try:
+                payload = json.loads(Path(out).read_text(encoding="utf-8"))
+                res = payload.get("result", {})
+                train = res.get("train", {})
+                val = res.get("val", {})
+                settings = payload.get("settings", {})
+                print(
+                    "train demo: "
+                    f"steps={train.get('steps')} loss_mean={train.get('loss_mean'):.3f} "
+                    f"val_acc={val.get('acc'):.3f} (output_dir={settings.get('run_dir')})"
+                )
             except Exception:
                 pass
             print(str(out))
