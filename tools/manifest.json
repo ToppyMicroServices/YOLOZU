@@ -107,6 +107,116 @@
       ]
     },
     {
+      "id": "download_coco_instances_tiny",
+      "entrypoint": "scripts/download_coco_instances_tiny.py",
+      "runner": "python3",
+      "summary": "Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git.",
+      "tags": [
+        "dataset",
+        "coco",
+        "demo",
+        "instance_seg"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "inputs": [
+        {
+          "name": "out_root",
+          "required": false,
+          "flag": "--out-root",
+          "default": "data/coco",
+          "description": "Output COCO root (writes annotations/ + images/ under this root).",
+          "kind": "string"
+        },
+        {
+          "name": "split",
+          "required": false,
+          "flag": "--split",
+          "default": "val2017",
+          "description": "COCO split name.",
+          "kind": "string"
+        },
+        {
+          "name": "num_images",
+          "required": false,
+          "flag": "--num-images",
+          "default": 2,
+          "description": "How many images to download (default: 2).",
+          "kind": "number"
+        },
+        {
+          "name": "seed",
+          "required": false,
+          "flag": "--seed",
+          "default": 0,
+          "description": "Shuffle seed for selecting images.",
+          "kind": "number"
+        },
+        {
+          "name": "timeout",
+          "required": false,
+          "flag": "--timeout",
+          "default": 60,
+          "description": "HTTP timeout seconds.",
+          "kind": "number"
+        },
+        {
+          "name": "force",
+          "required": false,
+          "flag": "--force",
+          "description": "Overwrite existing subset JSON and images.",
+          "kind": "string"
+        },
+        {
+          "name": "keep_zip",
+          "required": false,
+          "flag": "--keep-zip",
+          "description": "Keep the downloaded annotations zip.",
+          "kind": "string"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--out-root",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes a minimal COCO layout under <out_root>/annotations and <out_root>/images/<split> for demos."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "dataset_root",
+          "kind": "dir",
+          "description": "Created COCO root containing annotations + images.",
+          "default": "data/coco"
+        }
+      ],
+      "examples": [
+        {
+          "description": "Download the default tiny subset (2 images) under data/coco.",
+          "command": "python3 scripts/download_coco_instances_tiny.py"
+        },
+        {
+          "description": "Show CLI options.",
+          "command": "python3 scripts/download_coco_instances_tiny.py --help"
+        }
+      ],
+      "docs": [
+        "docs/install.md",
+        "docs/proof_onepager.md"
+      ]
+    },
+    {
       "id": "fetch_model",
       "entrypoint": "tools/yolozu.py",
       "runner": "python3",

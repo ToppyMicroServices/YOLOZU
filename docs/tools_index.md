@@ -45,6 +45,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 ## Dataset helpers
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
+- Tiny COCO instances subset for demos (downloads 2 images + polygons JSON): `python3 scripts/download_coco_instances_tiny.py`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
 ## Evaluation helpers

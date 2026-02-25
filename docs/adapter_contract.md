@@ -74,7 +74,7 @@ Adapters may optionally support test-time training (Tent, MIM) by implementing:
 Adapters should fail fast with clear messages. Recommended patterns:
 
 - Missing optional dependency:
-  - raise `RuntimeError("missing optional dependency: torch (pip install 'yolozu[demo]')")`
+  - raise `RuntimeError("missing optional dependency: torch (python3 -m pip install -U 'yolozu[demo]' or python3 -m pip install -e '.[demo]')")`
 - Missing config/checkpoint:
   - raise `FileNotFoundError(<path>)`
 - Unsupported option/backend:

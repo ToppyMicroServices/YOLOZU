@@ -43,6 +43,26 @@ python3 -m pip install 'yolozu[coco]'    # COCOeval support
 python3 -m pip install 'yolozu[full]'    # Comprehensive installation
 \end{lstlisting}
 
+If you are operating from a source checkout (editable install), extras use the dot-prefix form:
+\begin{lstlisting}[language=bash]
+python3 -m pip install -e '.[demo]'
+\end{lstlisting}
+
+\subsection{Optional demos (CPU)}
+The demo commands are intentionally designed to keep the invocation short:
+\begin{lstlisting}[language=bash]
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo
+yolozu demo instance-seg
+yolozu demo continual --compare --markdown
+\end{lstlisting}
+
+To enable the COCO instances (polygon) background for the instance-seg demo without long flags:
+\begin{lstlisting}[language=bash]
+python3 scripts/download_coco_instances_tiny.py
+yolozu demo instance-seg
+\end{lstlisting}
+
 
 \section{Source Checkout (Repository Path)}
 If you are operating directly within the repository (e.g., utilizing the training stack or power-user scripts), follow this procedure:

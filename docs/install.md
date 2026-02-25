@@ -22,6 +22,12 @@ python3 -m pip install 'yolozu[actions]'  # Actions/OpenAPI integration (FastAPI
 python3 -m pip install 'yolozu[full]'     # everything above
 ```
 
+If you are running from a source checkout (editable install), install extras like:
+
+```bash
+python3 -m pip install -e '.[demo]'
+```
+
 Note: PyTorch wheels are platform-dependent. If `pip install 'yolozu[demo]'` fails, follow the official PyTorch install selector for your platform, then re-install `yolozu[demo]`.
 
 ## CPU demos (quick sanity checks)
@@ -31,7 +37,7 @@ They typically require `pip install 'yolozu[demo]'`.
 
 ```bash
 yolozu demo  # runs a small demo suite (prefers COCO instances if available)
-yolozu demo instance-seg  # defaults to --background coco-instances and --inference auto (requires torch/torchvision)
+yolozu demo instance-seg  # short path: uses COCO instances if present, otherwise falls back to a synthetic demo
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
@@ -110,5 +116,13 @@ Demo outputs are written under `demo_output/` by default.
 python3 -m pip install -r requirements-test.txt
 python3 -m pip install -e .
 python3 -m unittest -q
+```
+
+To enable demos in a source checkout:
+
+```bash
+python3 -m pip install -e '.[demo]'
+python3 scripts/download_coco_instances_tiny.py  # optional: enables coco-instances background without long flags
+yolozu demo instance-seg
 ```
 

@@ -35,6 +35,7 @@ docker run --rm ghcr.io/toppymicroservices/yolozu:1.0.0 demo instance-seg
 Demo image:
 
 ```bash
+docker run --rm ghcr.io/toppymicroservices/yolozu-demo:1.0.0 demo instance-seg
 docker run --rm ghcr.io/toppymicroservices/yolozu-demo:1.0.0 demo continual --method ewc_replay
 ```
 
@@ -51,5 +52,6 @@ Demo:
 
 ```bash
 docker build -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
+docker run --rm yolozu-demo:local demo instance-seg
 docker run --rm yolozu-demo:local demo continual --method ewc_replay
 ```

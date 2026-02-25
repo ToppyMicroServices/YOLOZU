@@ -15,7 +15,10 @@ def _require_torch() -> Any:
     try:
         import torch  # type: ignore
     except Exception as exc:  # pragma: no cover
-        raise RuntimeError("demo continual requires torch (try: pip install 'yolozu[demo]' or pip install torch)") from exc
+        raise RuntimeError(
+            "demo continual requires torch (try: python3 -m pip install -U 'yolozu[demo]' (pip) or "
+            "python3 -m pip install -e '.[demo]' (repo checkout), or pip install torch)"
+        ) from exc
     return torch
 
 
@@ -174,7 +177,8 @@ def run_continual_demo(
             import torchvision.transforms.functional as TVF  # type: ignore
         except Exception as exc:
             raise RuntimeError(
-                "problem=mnist_rotate requires torchvision (try: pip install 'yolozu[demo]' or pip install torchvision)"
+                "problem=mnist_rotate requires torchvision (try: python3 -m pip install -U 'yolozu[demo]' (pip) or "
+                "python3 -m pip install -e '.[demo]' (repo checkout), or pip install torchvision)"
             ) from exc
 
         data_root = Path(data_dir)

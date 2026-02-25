@@ -2522,10 +2522,30 @@ def main(argv: list[str] | None = None) -> int:
             resolved_instances = getattr(args, "coco_instances_json", None)
             resolved_images = getattr(args, "coco_images_dir", None)
             if str(bg).strip().lower() == "coco-instances":
+                instances_was_default = resolved_instances is None
+                images_was_default = resolved_images is None
                 if resolved_instances is None:
                     resolved_instances = str(Path("data") / "coco" / "annotations" / "instances_val2017.json")
                 if resolved_images is None:
                     resolved_images = str(Path("data") / "coco" / "images" / "val2017")
+
+                # Keep the UX short: `yolozu demo instance-seg` should run even if
+                # the user hasn't downloaded COCO instances yet.
+                try:
+                    instances_ok = Path(str(resolved_instances)).exists() if resolved_instances else False
+                    images_ok = Path(str(resolved_images)).exists() if resolved_images else False
+                except Exception:
+                    instances_ok = False
+                    images_ok = False
+
+                if instances_was_default and images_was_default and (not (instances_ok and images_ok)):
+                    print(
+                        "note: COCO instances not found at the default paths; falling back to --background synthetic. "
+                        "To enable coco-instances: python3 scripts/download_coco_instances_tiny.py"
+                    )
+                    bg = "synthetic"
+                    resolved_instances = None
+                    resolved_images = None
 
             resolved_inference = getattr(args, "inference", None)
             if resolved_inference is None:
@@ -2538,7 +2558,7 @@ def main(argv: list[str] | None = None) -> int:
                 except Exception as exc:
                     raise SystemExit(
                         "instance-seg inference requires torch+torchvision. "
-                        "Install: pip install 'yolozu[demo]'"
+                        "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
                     ) from exc
 
             out = run_instance_seg_demo(
@@ -2605,12 +2625,12 @@ def main(argv: list[str] | None = None) -> int:
                 if "requires torchvision" in msg:
                     return SystemExit(
                         "demo continual (--problem mnist_rotate) requires torchvision. "
-                        "Install: python3 -m pip install -U 'yolozu[demo]'"
+                        "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
                     )
                 if "requires torch" in msg:
                     return SystemExit(
                         "demo continual requires torch. "
-                        "Install: python3 -m pip install -U 'yolozu[demo]'"
+                        "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
                     )
                 return SystemExit(msg)
 

@@ -7,7 +7,7 @@ This is a minimal, concrete “does it work?” artifact: **shortest path + expe
 ```bash
 python3 -m pip install yolozu
 yolozu doctor --output -
-yolozu demo instance-seg --num-images 2 --image-size 96
+yolozu demo instance-seg
 ```
 
 What you should see:

@@ -78,6 +78,15 @@ yolozu --help
 yolozu doctor --output -
 ```
 
+Optional (CPU) demos:
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo
+yolozu demo instance-seg
+yolozu demo continual --compare --markdown
+```
+
 Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 
 ## Source checkout (repo users)
@@ -87,6 +96,12 @@ python3 -m pip install -r requirements-test.txt
 python3 -m pip install -e .
 python3 tools/yolozu.py --help
 python3 -m unittest -q
+```
+
+If you want the optional demo dependencies in a source checkout:
+
+```bash
+python3 -m pip install -e '.[demo]'
 ```
 
 ## Manual (PDF)
