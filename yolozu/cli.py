@@ -2053,22 +2053,78 @@ def main(argv: list[str] | None = None) -> int:
                         )
 
                     def _make_textured_bg() -> Image.Image:
-                        base = Image.new("RGB", (width, height), _jitter_color((205, 210, 215), 15))
-                        draw = ImageDraw.Draw(base)
-                        # A few broad color blocks + faint lines (cheap texture).
-                        for _ in range(12):
-                            x0 = rng.randint(-40, width - 1)
-                            y0 = rng.randint(-40, height - 1)
-                            x1 = x0 + rng.randint(40, 160)
-                            y1 = y0 + rng.randint(30, 140)
-                            draw.rectangle([x0, y0, x1, y1], fill=_jitter_color((190, 195, 200), 30), outline=None)
-                        for _ in range(16):
-                            x0 = rng.randint(0, width - 1)
-                            y0 = rng.randint(0, height - 1)
-                            x1 = max(0, min(width - 1, x0 + rng.randint(-120, 120)))
-                            y1 = max(0, min(height - 1, y0 + rng.randint(-90, 90)))
-                            draw.line([x0, y0, x1, y1], fill=_jitter_color((120, 125, 130), 35), width=1)
+                        # Procedural "photo-like" background: combine noise layers,
+                        # colorize, blur, add gentle gradient + vignette.
+                        from PIL import ImageChops, ImageEnhance, ImageFilter, ImageOps
+
+                        # Base noise (low frequency)
+                        n1 = Image.effect_noise((width, height), rng.uniform(35.0, 65.0)).convert("L")
+                        n1 = n1.filter(ImageFilter.GaussianBlur(radius=rng.uniform(1.5, 3.5)))
+                        # Detail noise (high frequency)
+                        n2 = Image.effect_noise((width, height), rng.uniform(10.0, 25.0)).convert("L")
+                        n2 = n2.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.3, 1.1)))
+
+                        mix = ImageChops.add(n1, n2, scale=2.0)
+
+                        # Choose a palette that looks like real-world scenes.
+                        palettes = [
+                            ((35, 55, 90), (210, 205, 170)),  # blue -> tan
+                            ((25, 70, 45), (200, 200, 205)),  # green -> gray
+                            ((70, 50, 35), (215, 210, 195)),  # brown -> beige
+                            ((40, 45, 55), (205, 210, 220)),  # slate -> light gray
+                        ]
+                        dark, light = rng.choice(palettes)
+                        base = ImageOps.colorize(mix, black=dark, white=light).convert("RGB")
+
+                        # Gentle global gradient (simulate lighting)
+                        grad = Image.new("L", (width, height), 0)
+                        gd = ImageDraw.Draw(grad)
+                        top = rng.randint(40, 90)
+                        bottom = rng.randint(170, 230)
+                        for y in range(height):
+                            v = int(top + (bottom - top) * (y / max(1, height - 1)))
+                            gd.line([0, y, width, y], fill=v)
+                        grad_rgb = ImageOps.colorize(grad, black=(0, 0, 0), white=(255, 255, 255)).convert("RGB")
+                        base = ImageChops.multiply(base, grad_rgb)
+
+                        # Mild sharpening/contrast like a camera pipeline
+                        base = base.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.2, 0.8)))
+                        base = ImageEnhance.Contrast(base).enhance(rng.uniform(1.05, 1.25))
+                        base = ImageEnhance.Color(base).enhance(rng.uniform(1.05, 1.20))
+
+                        # Vignette
+                        vig = Image.new("L", (width, height), 255)
+                        vd = ImageDraw.Draw(vig)
+                        inset = rng.randint(10, 35)
+                        vd.ellipse([inset, inset, width - inset, height - inset], fill=210)
+                        vig = vig.filter(ImageFilter.GaussianBlur(radius=rng.uniform(10.0, 18.0)))
+                        base = ImageChops.multiply(base, ImageOps.colorize(vig, black=(0, 0, 0), white=(255, 255, 255)).convert("RGB"))
+
                         return base
+
+                    def _make_photo_bg_from_coco128() -> Image.Image | None:
+                        # Prefer real photos from the repo if present. This keeps the demo
+                        # offline and avoids bundling external assets.
+                        coco128_images = Path("data") / "coco128" / "images"
+                        if not coco128_images.exists():
+                            return None
+                        candidates = [
+                            p
+                            for p in coco128_images.rglob("*")
+                            if p.is_file() and p.suffix.lower() in (".jpg", ".jpeg", ".png")
+                        ]
+                        if not candidates:
+                            return None
+                        # Deterministic choice based on rng.
+                        src = candidates[rng.randrange(0, len(candidates))]
+                        try:
+                            im = Image.open(src).convert("RGB")
+                        except Exception:
+                            return None
+                        # Center-crop/fit to fixture size.
+                        from PIL import ImageOps
+
+                        return ImageOps.fit(im, (width, height), method=Image.Resampling.BICUBIC)
 
                     def _make_polygon(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
                         n = rng.randint(8, 14)
@@ -2090,7 +2146,7 @@ def main(argv: list[str] | None = None) -> int:
 
                     for image_id in range(1, num_images + 1):
                         file_name = f"{image_id:012d}.jpg"
-                        img = _make_textured_bg()
+                        img = _make_photo_bg_from_coco128() or _make_textured_bg()
                         draw = ImageDraw.Draw(img)
 
                         num_inst = rng.randint(2, 5)
