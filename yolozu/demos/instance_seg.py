@@ -188,13 +188,18 @@ def run_instance_seg_demo(
                 xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
                 x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
 
-                gt_mask = np.zeros((int(h), int(w)), dtype=bool)
-                gt_mask[int(y0) : int(y1), int(x0) : int(x1)] = True
+                # COCO128 in this repo is YOLO *bbox* labels, not segmentation polygons.
+                # To make overlays look less "blocky" and easier to eyeball, we create a
+                # simple ellipse pseudo-mask inside the bbox.
+                mask_img = Image.new("L", (int(w), int(h)), 0)
+                mask_draw = ImageDraw.Draw(mask_img)
+                mask_draw.ellipse([x0, y0, x1, y1], fill=255)
+                gt_mask = np.array(mask_img) != 0
 
-                # Lightly annotate the image so masks are visually traceable.
+                # Lightly annotate the image so masks are visually traceable (match the ellipse mask).
                 fill = (40, 140, 220) if (class_id % 2) == 0 else (220, 120, 40)
-                draw_rgb.rectangle([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
-                draw_rgb.rectangle([x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)], outline=fill, fill=None)
+                draw_rgb.ellipse([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
+                draw_rgb.ellipse([x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)], outline=fill, fill=None)
 
                 gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
                 Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
