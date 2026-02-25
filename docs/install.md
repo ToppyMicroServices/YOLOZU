@@ -31,7 +31,7 @@ They typically require `pip install 'yolozu[demo]'`.
 
 ```bash
 yolozu demo  # runs a small demo suite (prefers COCO instances if available)
-yolozu demo instance-seg
+yolozu demo instance-seg  # defaults to --background coco-instances
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
@@ -68,6 +68,12 @@ Defaults:
 - `data/coco/images/val2017`
 
 If you omit `--inference`, the demo will generate synthetic (GT-derived) predictions for evaluation/visualization.
+
+To run the fully synthetic variant explicitly:
+
+```bash
+yolozu demo instance-seg --background synthetic
+```
 
 If you have a COCO-style instances annotations JSON (polygons) and the matching images directory, you can run:
 

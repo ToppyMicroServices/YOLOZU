@@ -1852,8 +1852,8 @@ def main(argv: list[str] | None = None) -> int:
     demo_is.add_argument(
         "--background",
         choices=("synthetic", "coco128", "coco-instances"),
-        default="synthetic",
-        help="Background source: synthetic shapes, COCO128 (bbox-derived), or COCO instances polygons (default: synthetic).",
+        default="coco-instances",
+        help="Background source: synthetic shapes, COCO128 (bbox-derived), or COCO instances polygons (default: coco-instances).",
     )
     demo_is.add_argument(
         "--coco-instances-json",
