@@ -142,7 +142,10 @@ def _run_depth_anything(
 ) -> tuple[Any, dict[str, Any]]:
     AutoImageProcessor, AutoModelForDepthEstimation = _require_transformers()
 
-    processor = AutoImageProcessor.from_pretrained(str(model_id))
+    try:
+        processor = AutoImageProcessor.from_pretrained(str(model_id), use_fast=False)
+    except TypeError:
+        processor = AutoImageProcessor.from_pretrained(str(model_id))
     model = AutoModelForDepthEstimation.from_pretrained(str(model_id))
     model.to(torch_device)
     model.eval()
