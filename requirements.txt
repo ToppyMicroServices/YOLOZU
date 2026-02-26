@@ -2,6 +2,10 @@
 #
 # NOTE: Torch is intentionally kept out of runtime requirements because
 # many users will want a platform-specific install (CPU vs CUDA).
+#
+# NOTE: Demo dependencies (including transformers for `yolozu demo depth`) are
+# intentionally excluded here. Install via extras: `pip install 'yolozu[demo]'`
+# or from a repo checkout: `pip install -e '.[demo]'` (or `-r requirements-demo.txt`).
 
 PyYAML>=6.0
 # NumPy is optional in some modules, but recommended and used in validation.

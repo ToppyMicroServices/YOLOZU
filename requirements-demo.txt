@@ -1,0 +1,9 @@
+# Demo dependencies (optional)
+#
+# This file is for repo users who prefer requirements.txt workflows.
+# For pip users, prefer extras: `pip install -U 'yolozu[demo]'`.
+# For repo editable installs, prefer: `pip install -e '.[demo]'`.
+#
+# Keep heavy/demo dependencies out of requirements.txt (minimal runtime).
+
+-e '.[demo]'
