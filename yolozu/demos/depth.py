@@ -27,7 +27,8 @@ def _require_transformers() -> tuple[Any, Any]:
     except Exception as exc:  # pragma: no cover
         raise RuntimeError(
             "demo depth (depth_anything) requires transformers. "
-            "Install: python3 -m pip install -U 'yolozu[demo]'"
+            "Install (pip): python3 -m pip install -U 'yolozu[demo]'. "
+            "Install (repo/editable): python3 -m pip install -e '.[demo]'"
         ) from exc
     return AutoImageProcessor, AutoModelForDepthEstimation
 
