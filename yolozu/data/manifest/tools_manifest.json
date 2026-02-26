@@ -3615,8 +3615,12 @@
           "command": "python3 tools/yolozu.py demo keypoints"
         },
         {
-          "description": "Monocular depth demo (MiDaS via torch.hub; downloads weights on first run).",
+          "description": "Monocular depth demo (default: Depth Anything via Transformers; optional MiDaS/DPT).",
           "command": "python3 tools/yolozu.py demo depth"
+        },
+        {
+          "description": "Monocular depth compare (runs Depth Anything + MiDaS + DPT; writes suffixed images).",
+          "command": "python3 tools/yolozu.py demo depth --compare"
         },
         {
           "description": "Training demo (MNIST fine-tune; bounded by --max-steps).",

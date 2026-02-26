@@ -49,6 +49,8 @@ class TestDemoCliDefaults(unittest.TestCase):
             )
             self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
             self.assertIn("--model", proc.stdout)
+            self.assertIn("depth_anything", proc.stdout)
+            self.assertIn("--compare", proc.stdout)
 
     def test_demo_train_help_works(self):
         repo_root = Path(__file__).resolve().parents[1]

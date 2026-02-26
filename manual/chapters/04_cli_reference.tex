@@ -31,7 +31,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \cmd{yolozu demo} & Runs a small CPU-friendly demo suite and writes artifacts under \path{demo\_output/}. \\
 \cmd{yolozu demo instance-seg} & Instance-seg demo (short path; uses COCO instances if present, else synthetic fallback). \\
 \cmd{yolozu demo keypoints} & Keypoint R-CNN inference demo (torchvision; writes overlay under \path{demo\_output/keypoints/}). \\
-\cmd{yolozu demo depth} & Monocular depth inference demo (MiDaS via \cmd{torch.hub}; writes images under \path{demo\_output/depth/}). \\
+\cmd{yolozu demo depth} & Monocular depth inference demo (default: Depth Anything via Transformers; optional MiDaS/DPT; writes images under \path{demo\_output/depth/}). \\
 \cmd{yolozu demo train} & Training demo (MNIST fine-tune; bounded by \cmd{--max-steps}; writes under \path{demo\_output/train/}). \\
 \cmd{yolozu demo continual} & Continual-learning demo (toy synthetic by default; \cmd{--problem mnist\_rotate} uses a vision backbone). \\
 \cmd{yolozu list models} & Lists curated model IDs available for reproducible downloads. \\

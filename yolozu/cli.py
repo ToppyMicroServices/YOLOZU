@@ -1959,15 +1959,22 @@ def main(argv: list[str] | None = None) -> int:
     demo_kp.add_argument("--score-threshold", type=float, default=0.7, help="Min score to keep persons (default: 0.7).")
     demo_kp.add_argument("--max-persons", type=int, default=3, help="Max persons to render (default: 3).")
 
-    demo_depth = demo_sub.add_parser("depth", help="Monocular depth inference demo (MiDaS via torch.hub).")
+    demo_depth = demo_sub.add_parser(
+        "depth", help="Monocular depth inference demo (Depth Anything / MiDaS / DPT; relative depth)."
+    )
     demo_depth.add_argument("--image", default=None, help="Input image path (default: a bundled smoke image if present).")
     demo_depth.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/depth/<utc>).")
     demo_depth.add_argument("--device", default="auto", help="Torch device (cpu|cuda|mps|auto) (default: auto).")
     demo_depth.add_argument(
         "--model",
-        default="midas_small",
-        choices=("midas_small", "dpt_hybrid", "dpt_large"),
-        help="Depth model preset (default: midas_small).",
+        default="depth_anything",
+        choices=("depth_anything", "midas_small", "dpt_hybrid", "dpt_large"),
+        help="Depth model preset (default: depth_anything).",
+    )
+    demo_depth.add_argument(
+        "--compare",
+        action="store_true",
+        help="Run 3-model comparison (midas_small, dpt_hybrid, depth_anything) and write suffixed outputs.",
     )
     demo_depth.add_argument(
         "--invert",
@@ -2886,6 +2893,7 @@ def main(argv: list[str] | None = None) -> int:
                     device=str(getattr(args, "device", "auto")),
                     model=str(getattr(args, "model", "midas_small")),
                     invert=bool(getattr(args, "invert", True)),
+                    compare=bool(getattr(args, "compare", False)),
                 )
             except Exception as exc:
                 msg = str(exc)
@@ -2900,9 +2908,17 @@ def main(argv: list[str] | None = None) -> int:
                 payload = json.loads(Path(out).read_text(encoding="utf-8"))
                 res = payload.get("result", {})
                 settings = payload.get("settings", {})
-                d = (res.get("depth") or {})
                 run_dir = settings.get("run_dir")
-                print(f"depth demo: model={settings.get('model')} depth_range=[{d.get('min'):.3g}, {d.get('max'):.3g}] (output_dir={run_dir})")
+
+                models = res.get("models")
+                if isinstance(models, list) and models:
+                    names = ",".join([str(m.get("model")) for m in models])
+                    print(f"depth demo: compare=[{names}] (output_dir={run_dir})")
+                else:
+                    d = (res.get("depth") or {})
+                    print(
+                        f"depth demo: model={settings.get('model')} depth_range=[{d.get('min'):.3g}, {d.get('max'):.3g}] (output_dir={run_dir})"
+                    )
             except Exception:
                 pass
             print(str(out))

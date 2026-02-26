@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.4] - 2026-02-26
+
+### Added
+- `yolozu demo depth`: added Depth Anything inference via Transformers.
+- `yolozu demo depth --compare`: runs Depth Anything + MiDaS + DPT in one run and writes suffixed artifacts.
+
+### Changed
+- `yolozu demo depth` now defaults to `depth_anything`.
+- `yolozu[demo]` extra now includes Transformers dependencies for the depth demo.
+
 ## [1.0.3] - 2026-02-26
 
 ### Added

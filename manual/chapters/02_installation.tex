@@ -37,7 +37,7 @@ yolozu validate predictions data/smoke/predictions/predictions_dummy.json --stri
 
 Optional extras let you install only the dependencies you need for a given workflow:
 \begin{lstlisting}[language=bash]
-python3 -m pip install 'yolozu[demo]'    # PyTorch demonstration utilities (includes timm + opencv for depth demo)
+python3 -m pip install 'yolozu[demo]'    # PyTorch demonstration utilities (includes timm + opencv + transformers for depth demo)
 python3 -m pip install 'yolozu[onnxrt]'  # ONNX Runtime tooling
 python3 -m pip install 'yolozu[coco]'    # COCOeval support
 python3 -m pip install 'yolozu[full]'    # Comprehensive installation
@@ -56,11 +56,12 @@ yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
 yolozu demo depth
+yolozu demo depth --compare
 yolozu demo train
 yolozu demo continual --compare --markdown
 \end{lstlisting}
 
-\noindent Note: \cmd{yolozu demo depth} uses MiDaS via \cmd{torch.hub} and downloads weights on the first run.
+\noindent Note: \cmd{yolozu demo depth} defaults to Depth Anything (via Transformers) and can also run MiDaS/DPT. Both paths download weights on the first run.
 
 To enable the COCO instances (polygon) background for the instance-seg demo without long flags:
 \begin{lstlisting}[language=bash]
