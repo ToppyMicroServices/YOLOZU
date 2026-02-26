@@ -2870,6 +2870,10 @@ def main(argv: list[str] | None = None) -> int:
                 img = settings.get("image")
                 run_dir = settings.get("run_dir")
                 print(f"keypoints demo: persons={n} image={img} (output_dir={run_dir})")
+                artifacts = res.get("artifacts", {}) if isinstance(res, dict) else {}
+                overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
+                if overlay:
+                    print(str(overlay))
             except Exception:
                 pass
             print(str(out))
