@@ -98,6 +98,42 @@ def _make_aruco_image(*, cv2: Any, aruco: Any, dict_name: str, marker_id: int, m
     return canvas
 
 
+def _make_textured_bg(*, np: Any, cv2: Any, width: int, height: int) -> Any:
+    rng = np.random.default_rng(1234)
+    noise = rng.normal(loc=210.0, scale=18.0, size=(height, width, 1)).astype("float32")
+    noise = np.clip(noise, 0.0, 255.0)
+    grad = np.linspace(0.9, 1.1, height, dtype="float32").reshape(height, 1, 1)
+    base = noise * grad
+    base = np.clip(base, 0.0, 255.0)
+    base = np.repeat(base, 3, axis=2)
+    tint = np.array([0.96, 0.98, 1.02], dtype="float32").reshape(1, 1, 3)
+    base = np.clip(base * tint, 0.0, 255.0).astype("uint8")
+    base = cv2.GaussianBlur(base, (0, 0), 1.2)
+    return base
+
+
+def _warp_marker_to_bg(*, np: Any, cv2: Any, marker: Any, canvas_w: int, canvas_h: int) -> tuple[Any, Any]:
+    h, w = marker.shape[:2]
+    src = np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]])
+    dst = np.float32(
+        [
+            [int(canvas_w * 0.22), int(canvas_h * 0.20)],
+            [int(canvas_w * 0.72), int(canvas_h * 0.15)],
+            [int(canvas_w * 0.78), int(canvas_h * 0.78)],
+            [int(canvas_w * 0.18), int(canvas_h * 0.80)],
+        ]
+    )
+    M = cv2.getPerspectiveTransform(src, dst)
+    warped = cv2.warpPerspective(marker, M, (canvas_w, canvas_h), borderValue=255)
+    mask = cv2.warpPerspective(
+        np.ones((h, w), dtype="uint8") * 255,
+        M,
+        (canvas_w, canvas_h),
+        borderValue=0,
+    )
+    return warped, mask
+
+
 def _ensure_sample_image(
     *,
     cv2: Any,
@@ -139,12 +175,19 @@ def _ensure_aruco_sample(
     if sample_path.exists():
         return sample_path
     aruco = _ensure_aruco_support(cv2)
-    marker = _make_aruco_image(cv2=cv2, aruco=aruco, dict_name=dict_name, marker_id=marker_id, marker_px=240)
-    canvas = np.full((480, 640, 3), 255, dtype=np.uint8)
-    h, w = marker.shape[:2]
-    y0 = (canvas.shape[0] - h) // 2
-    x0 = (canvas.shape[1] - w) // 2
-    canvas[y0 : y0 + h, x0 : x0 + w] = marker
+    marker = _make_aruco_image(cv2=cv2, aruco=aruco, dict_name=dict_name, marker_id=marker_id, marker_px=260)
+    canvas = _make_textured_bg(np=np, cv2=cv2, width=640, height=480)
+    warped, mask = _warp_marker_to_bg(np=np, cv2=cv2, marker=marker, canvas_w=640, canvas_h=480)
+
+    shadow = cv2.dilate(mask, np.ones((9, 9), dtype="uint8"), iterations=1)
+    shadow = cv2.GaussianBlur(shadow, (0, 0), 9.0)
+    shadow = (shadow.astype("float32") / 255.0) * 60.0
+    for c in range(3):
+        canvas[:, :, c] = np.clip(canvas[:, :, c].astype("float32") - shadow, 0.0, 255.0).astype("uint8")
+
+    inv = cv2.bitwise_not(mask)
+    canvas = cv2.bitwise_and(canvas, canvas, mask=inv)
+    canvas = cv2.add(canvas, warped)
     cv2.imwrite(str(sample_path), canvas)
     return sample_path
 
