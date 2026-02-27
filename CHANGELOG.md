@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Multi-task SDFT distillation**: `yolozu/sdft.py` now supports task-specific losses for
+  6D pose (`rot6d` — geodesic MSE proxy), keypoints (smooth-L1), depth (scale-invariant L1),
+  and segmentation (BCE with teacher sigmoid targets). Per-key weights configurable via
+  `SdftConfig` fields (`rot6d_weight`, `keypoints_weight`, `depth_weight`, `seg_weight`, etc.).
+- **SDFT convenience constructors**: `make_pose_sdft_config()`, `make_keypoints_sdft_config()`,
+  `make_depth_sdft_config()`, `make_seg_sdft_config()`, `make_full_sdft_config()`.
+- **Multi-task Tent TTT**: `TentRunner` supports auxiliary consistency losses for pose, keypoints,
+  depth, and segmentation heads via `aux_pose_weight`, `aux_keypoints_weight`,
+  `aux_depth_weight`, `aux_seg_weight` in `TentConfig`.
+- **TTT task presets**: Added `pose_safe`, `keypoints_safe`, `depth_safe`, `seg_safe`, `pose_mim`
+  presets with task-tuned hyperparameters. `_choose_default_preset_id()` auto-selects
+  task-specific presets when `sdft_task` is set.
+- **TTTConfig multi-task fields**: `aux_pose_weight`, `aux_keypoints_weight`, `aux_depth_weight`,
+  `aux_seg_weight`, `aux_temperature`, `sdft_task`.
+- **Tests**: 65 new tests in `test_sdft_multitask.py` and `test_tta_multitask.py` covering all
+  task-specific losses, dispatch, convenience constructors, aux consistency, and presets.
+
 ### Fixed
 - **calibration package shadowing**: Standalone `yolozu/calibration.py` was shadowed by
   `yolozu/calibration/` package — merged `apply_temperature()` and

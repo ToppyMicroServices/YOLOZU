@@ -76,3 +76,19 @@ class TTTConfig:
     sar_rho: float = 0.05
     sar_adaptive: bool = False
     sar_first_step_scale: float = 1.0
+
+    # Multi-task TTT options (pose / keypoints / depth / seg).
+    # When any auxiliary loss weight > 0 and the corresponding output key is
+    # present in the model output dict, the loss is included alongside the
+    # primary entropy loss.
+    aux_pose_weight: float = 0.0
+    aux_keypoints_weight: float = 0.0
+    aux_depth_weight: float = 0.0
+    aux_seg_weight: float = 0.0
+    # Self-distillation temperature for auxiliary heads during TTT.
+    aux_temperature: float = 1.0
+    # SDFT task preset (optional shortcut).
+    # Setting this to one of "pose", "keypoints", "depth", "seg", "full" will
+    # construct a matching SdftConfig and use it as an aux distillation loss
+    # against the model's own frozen-copy outputs (teacher-free SDFT).
+    sdft_task: str | None = None

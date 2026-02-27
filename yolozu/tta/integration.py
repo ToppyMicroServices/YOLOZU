@@ -458,6 +458,10 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     exclude=config.exclude,
                     update_filter=str(config.update_filter),
                     max_grad_norm=config.max_grad_norm,
+                    aux_pose_weight=float(getattr(config, "aux_pose_weight", 0.0)),
+                    aux_keypoints_weight=float(getattr(config, "aux_keypoints_weight", 0.0)),
+                    aux_depth_weight=float(getattr(config, "aux_depth_weight", 0.0)),
+                    aux_seg_weight=float(getattr(config, "aux_seg_weight", 0.0)),
                 ),
             )
             params = list(getattr(runner, "params", []))

@@ -96,12 +96,87 @@ PRESETS: dict[str, TTTPreset] = {
         max_total_update_norm=1.0,
         max_loss_ratio=3.0,
     ),
+    # -- Task-specific presets (pose / keypoints / depth / seg) --
+    "pose_safe": TTTPreset(
+        method="tent",
+        steps=3,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="lora_norm_only",
+        max_batches=1,
+        max_grad_norm=1.0,
+        max_update_norm=1.0,
+        max_total_update_norm=2.0,
+        max_loss_ratio=3.0,
+    ),
+    "keypoints_safe": TTTPreset(
+        method="tent",
+        steps=2,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="lora_norm_only",
+        max_batches=1,
+        max_grad_norm=1.0,
+        max_update_norm=1.0,
+        max_total_update_norm=2.0,
+        max_loss_ratio=3.0,
+    ),
+    "depth_safe": TTTPreset(
+        method="tent",
+        steps=2,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="norm_only",
+        max_batches=1,
+        max_grad_norm=1.0,
+        max_update_norm=1.0,
+        max_total_update_norm=2.0,
+        max_loss_ratio=3.0,
+    ),
+    "seg_safe": TTTPreset(
+        method="tent",
+        steps=2,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="norm_only",
+        max_batches=1,
+        max_grad_norm=1.0,
+        max_update_norm=1.0,
+        max_total_update_norm=2.0,
+        max_loss_ratio=3.0,
+    ),
+    "pose_mim": TTTPreset(
+        method="mim",
+        steps=3,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="adapter_only",
+        max_batches=1,
+        max_grad_norm=5.0,
+        max_update_norm=5.0,
+        max_total_update_norm=5.0,
+        max_loss_ratio=3.0,
+    ),
 }
 
 
 def _choose_default_preset_id(args: Any) -> str:
     method = str(getattr(args, "ttt_method", "tent") or "tent").lower()
     update_filter = str(getattr(args, "ttt_update_filter", "all") or "all").lower()
+    sdft_task = str(getattr(args, "ttt_sdft_task", "") or "").lower()
+
+    # Task-specific presets take priority when a task is explicitly requested.
+    if sdft_task == "pose" and method in ("tent", "all"):
+        return "pose_safe"
+    if sdft_task == "keypoints" and method in ("tent", "all"):
+        return "keypoints_safe"
+    if sdft_task == "depth" and method in ("tent", "all"):
+        return "depth_safe"
+    if sdft_task == "seg" and method in ("tent", "all"):
+        return "seg_safe"
+    if sdft_task == "pose" and method == "mim":
+        return "pose_mim"
+
     if method == "sar":
         return "sar_safe"
     if method == "eata":
