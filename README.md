@@ -86,9 +86,10 @@ yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
 yolozu demo pose  # chessboard default; use --backend aruco for marker-based pose
+yolozu demo pose --backend aruco  # cached sample in demo_output/pose/_samples (delete to regenerate)
 yolozu demo pose --backend densefusion  # heavy: CUDA + large downloads
 yolozu demo depth  # default: Depth Anything (Transformers); use --compare to run MiDaS/DPT too
-yolozu demo train
+yolozu demo train  # downloads ResNet18 weights on first run
 yolozu demo continual --compare --markdown
 ```
 

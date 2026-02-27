@@ -3619,6 +3619,14 @@
           "command": "python3 tools/yolozu.py demo pose"
         },
         {
+          "description": "6D pose demo (ArUco marker pose; cached sample under demo_output/pose/_samples).",
+          "command": "python3 tools/yolozu.py demo pose --backend aruco"
+        },
+        {
+          "description": "6D pose demo (DenseFusion backend; CUDA + large downloads).",
+          "command": "python3 tools/yolozu.py demo pose --backend densefusion"
+        },
+        {
           "description": "Monocular depth demo (default: Depth Anything via Transformers; optional MiDaS/DPT).",
           "command": "python3 tools/yolozu.py demo depth"
         },
@@ -3627,7 +3635,7 @@
           "command": "python3 tools/yolozu.py demo depth --compare"
         },
         {
-          "description": "Training demo (MNIST fine-tune; bounded by --max-steps).",
+          "description": "Training demo (MNIST fine-tune; bounded by --max-steps; downloads ResNet18 on first run).",
           "command": "python3 tools/yolozu.py demo train --max-steps 40"
         },
         {

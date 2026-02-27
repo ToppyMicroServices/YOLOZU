@@ -40,11 +40,11 @@ yolozu demo  # runs a small demo suite (prefers COCO instances if available)
 yolozu demo instance-seg  # short path: uses COCO instances if present, otherwise falls back to a synthetic demo
 yolozu demo keypoints  # Keypoint R-CNN inference on a sample image
 yolozu demo pose  # 6D pose demo (chessboard + OpenCV solvePnP)
-yolozu demo pose --backend aruco  # ArUco marker pose (requires opencv-contrib)
+yolozu demo pose --backend aruco  # ArUco marker pose (requires opencv-contrib; cached sample in demo_output/pose/_samples)
 yolozu demo pose --backend densefusion  # heavy: CUDA + large downloads
 yolozu demo depth  # monocular depth inference (default: Depth Anything; downloads weights on first run)
 yolozu demo depth --compare  # compare Depth Anything + MiDaS + DPT in one run
-yolozu demo train  # MNIST fine-tune demo (bounded by --max-steps)
+yolozu demo train  # MNIST fine-tune demo (bounded by --max-steps; downloads ResNet18 on first run)
 yolozu demo continual --method ewc_replay
 yolozu demo continual --compare --markdown
 ```
