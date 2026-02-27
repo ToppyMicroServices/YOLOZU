@@ -36,6 +36,19 @@ def _require_torch() -> None:
         raise RuntimeError("torch is required for yolozu.sdft")
 
 
+def _validate_config(cfg: SdftConfig) -> None:
+    if cfg.weight < 0.0:
+        raise ValueError("weight must be >= 0")
+    if cfg.temperature <= 0.0:
+        raise ValueError("temperature must be > 0")
+    if cfg.logits_weight < 0.0:
+        raise ValueError("logits_weight must be >= 0")
+    if cfg.bbox_weight < 0.0:
+        raise ValueError("bbox_weight must be >= 0")
+    if cfg.other_l1_weight < 0.0:
+        raise ValueError("other_l1_weight must be >= 0")
+
+
 def kl_divergence_from_logits(
     student_logits: "torch.Tensor",
     teacher_logits: "torch.Tensor",
@@ -97,6 +110,7 @@ def compute_sdft_loss(
     cfg: SdftConfig,
 ) -> tuple["torch.Tensor", dict[str, "torch.Tensor"]]:
     _require_torch()
+    _validate_config(cfg)
     if not isinstance(student_outputs, Mapping) or not isinstance(teacher_outputs, Mapping):
         raise TypeError("student_outputs and teacher_outputs must be Mapping")
 
@@ -121,6 +135,15 @@ def compute_sdft_loss(
         t_val = teacher_outputs[key]
         if not isinstance(s_val, torch.Tensor) or not isinstance(t_val, torch.Tensor):
             continue
+
+        if s_val.shape != t_val.shape:
+            raise ValueError(
+                f"sdft shape mismatch for '{key}': student={tuple(s_val.shape)} teacher={tuple(t_val.shape)}"
+            )
+
+        t_val = t_val.detach()
+        if t_val.device != s_val.device:
+            t_val = t_val.to(device=s_val.device)
 
         if key == "logits":
             loss_k = kl_divergence_from_logits(
@@ -147,5 +170,14 @@ def compute_sdft_loss(
             total = torch.zeros((), device=reference.device, dtype=reference.dtype)
         else:  # pragma: no cover
             total = torch.tensor(0.0)
+    if total is None:
+        if reference is not None:
+            total = torch.zeros((), device=reference.device, dtype=reference.dtype)
+        else:  # pragma: no cover
+            total = torch.tensor(0.0)
+    total = total * float(cfg.weight)
+    if float(cfg.weight) != 1.0:
+        for name in list(parts.keys()):
+            parts[name] = parts[name] * float(cfg.weight)
     parts["loss_sdft"] = total
     return total, parts
