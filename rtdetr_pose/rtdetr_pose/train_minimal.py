@@ -1842,33 +1842,48 @@ def main(argv: list[str] | None = None) -> int:
         try:
             from rtdetr_pose.export import export_onnx
         except Exception as exc:  # pragma: no cover
-            raise SystemExit("rtdetr_pose.export.export_onnx is required for ONNX export") from exc
+            print(
+                f"WARNING: ONNX export skipped — could not import rtdetr_pose.export ({exc}). "
+                "Install 'onnx' to enable post-training ONNX export.",
+                file=sys.stderr,
+            )
+            export_onnx = None  # type: ignore[assignment]
 
-        onnx_path = Path(str(args.onnx_out))
-        onnx_path.parent.mkdir(parents=True, exist_ok=True)
-        if run_contract is not None and getattr(args, "best_checkpoint_out", None):
-            best_path = Path(str(args.best_checkpoint_out))
-            if best_path.exists():
-                load_checkpoint_into(unwrap_model(model), None, str(best_path), restore_rng=False)
-        dummy = torch.zeros((1, 3, int(args.image_size), int(args.image_size)), dtype=torch.float32, device=device)
-        export_onnx(
-            unwrap_model(model).eval(),
-            dummy,
-            str(onnx_path),
-            opset_version=int(args.onnx_opset),
-            dynamic_hw=bool(args.onnx_dynamic_hw),
-        )
-        meta_path = Path(str(args.onnx_meta_out)) if args.onnx_meta_out else onnx_path.with_suffix(onnx_path.suffix + ".meta.json")
-        meta_path.parent.mkdir(parents=True, exist_ok=True)
-        meta = {
-            "timestamp_utc": _now_utc(),
-            "onnx": str(onnx_path),
-            "opset": int(args.onnx_opset),
-            "dynamic_hw": bool(args.onnx_dynamic_hw),
-            "dummy_input": {"shape": [1, 3, int(args.image_size), int(args.image_size)], "dtype": "float32"},
-            "run_record": run_record,
-        }
-        meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
+        onnx_path = Path(str(args.onnx_out)) if export_onnx is not None else None
+        if onnx_path is not None:
+            onnx_path.parent.mkdir(parents=True, exist_ok=True)
+            if run_contract is not None and getattr(args, "best_checkpoint_out", None):
+                best_path = Path(str(args.best_checkpoint_out))
+                if best_path.exists():
+                    load_checkpoint_into(unwrap_model(model), None, str(best_path), restore_rng=False)
+            dummy = torch.zeros((1, 3, int(args.image_size), int(args.image_size)), dtype=torch.float32, device=device)
+            try:
+                export_onnx(
+                    unwrap_model(model).eval(),
+                    dummy,
+                    str(onnx_path),
+                    opset_version=int(args.onnx_opset),
+                    dynamic_hw=bool(args.onnx_dynamic_hw),
+                )
+            except RuntimeError as exc:
+                print(
+                    f"WARNING: ONNX export failed — {exc}. Training results are saved; "
+                    "install 'onnx' to enable post-training ONNX export.",
+                    file=sys.stderr,
+                )
+                onnx_path = None
+            if onnx_path is not None:
+                meta_path = Path(str(args.onnx_meta_out)) if args.onnx_meta_out else onnx_path.with_suffix(onnx_path.suffix + ".meta.json")
+                meta_path.parent.mkdir(parents=True, exist_ok=True)
+                meta = {
+                    "timestamp_utc": _now_utc(),
+                    "onnx": str(onnx_path),
+                    "opset": int(args.onnx_opset),
+                    "dynamic_hw": bool(args.onnx_dynamic_hw),
+                    "dummy_input": {"shape": [1, 3, int(args.image_size), int(args.image_size)], "dtype": "float32"},
+                    "run_record": run_record,
+                }
+                meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
 
     parity_out = getattr(args, "parity_json_out", None)
     if is_main and parity_out:

@@ -25,6 +25,36 @@ def _sha256_json(obj: Any) -> str:
     return _sha256_bytes(data)
 
 
+def _default_tta_meta() -> dict[str, Any]:
+    """Return a disabled-TTA meta block satisfying the interface contract."""
+    return {
+        "enabled": False,
+        "seed": None,
+        "flip_prob": 0.0,
+        "norm_only": False,
+        "warnings": [],
+        "summary": None,
+    }
+
+
+def _default_ttt_meta() -> dict[str, Any]:
+    """Return a disabled-TTT meta block satisfying the interface contract."""
+    return {
+        "enabled": False,
+        "method": "none",
+        "steps": 0,
+        "batch_size": 0,
+        "lr": 0.0,
+        "update_filter": "none",
+        "include": None,
+        "exclude": None,
+        "max_batches": 0,
+        "seed": None,
+        "mim": {"mask_prob": 0.0, "patch_size": 0, "mask_value": 0.0},
+        "report": None,
+    }
+
+
 def _pick_bbox_from_labels(labels: Any) -> dict[str, float]:
     if isinstance(labels, list) and labels:
         lbl = labels[0]
@@ -108,7 +138,11 @@ def export_dummy_predictions(
         "schema_version": 1,
         "timestamp": _now_utc(),
         "generator": "yolozu export --backend dummy",
+        "adapter": "dummy",
+        "config": str(dataset_root),
         "images": int(len(preds)),
+        "tta": _default_tta_meta(),
+        "ttt": _default_ttt_meta(),
         "run": {
             "config_fingerprint": config_fingerprint,
             "config_hash": _sha256_json(config_fingerprint),
@@ -196,7 +230,11 @@ def export_labels_predictions(
         "schema_version": 1,
         "timestamp": _now_utc(),
         "generator": "yolozu export --backend labels",
+        "adapter": "labels",
+        "config": str(dataset_root),
         "images": int(len(preds)),
+        "tta": _default_tta_meta(),
+        "ttt": _default_ttt_meta(),
         "run": {
             "config_fingerprint": config_fingerprint,
             "config_hash": _sha256_json(config_fingerprint),
