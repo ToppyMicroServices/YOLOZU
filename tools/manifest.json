@@ -3615,6 +3615,10 @@
           "command": "python3 tools/yolozu.py demo keypoints"
         },
         {
+          "description": "6D pose demo (chessboard + OpenCV solvePnP).",
+          "command": "python3 tools/yolozu.py demo pose"
+        },
+        {
           "description": "Monocular depth demo (default: Depth Anything via Transformers; optional MiDaS/DPT).",
           "command": "python3 tools/yolozu.py demo depth"
         },

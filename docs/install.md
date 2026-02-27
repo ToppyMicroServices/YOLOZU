@@ -39,6 +39,7 @@ They typically require `pip install 'yolozu[demo]'`.
 yolozu demo  # runs a small demo suite (prefers COCO instances if available)
 yolozu demo instance-seg  # short path: uses COCO instances if present, otherwise falls back to a synthetic demo
 yolozu demo keypoints  # Keypoint R-CNN inference on a sample image
+yolozu demo pose  # 6D pose demo (chessboard + OpenCV solvePnP)
 yolozu demo depth  # monocular depth inference (default: Depth Anything; downloads weights on first run)
 yolozu demo depth --compare  # compare Depth Anything + MiDaS + DPT in one run
 yolozu demo train  # MNIST fine-tune demo (bounded by --max-steps)

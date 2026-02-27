@@ -52,6 +52,28 @@ class TestDemoCliDefaults(unittest.TestCase):
             self.assertIn("depth_anything", proc.stdout)
             self.assertIn("--compare", proc.stdout)
 
+    def test_demo_pose_help_works(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            cwd = Path(td)
+            env = dict(os.environ)
+            py_path = str(repo_root)
+            if env.get("PYTHONPATH"):
+                py_path = py_path + os.pathsep + str(env["PYTHONPATH"])
+            env["PYTHONPATH"] = py_path
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "demo", "pose", "--help"],
+                cwd=str(cwd),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            self.assertIn("--pattern-cols", proc.stdout)
+            self.assertIn("--square-size", proc.stdout)
+
     def test_demo_train_help_works(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

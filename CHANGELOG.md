@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.5] - 2026-02-27
+
+### Added
+- `yolozu demo pose`: 6D pose demo using chessboard detection + OpenCV solvePnP with overlay output.
+
 ## [1.0.4] - 2026-02-26
 
 ### Added

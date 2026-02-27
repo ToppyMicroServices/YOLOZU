@@ -1959,6 +1959,23 @@ def main(argv: list[str] | None = None) -> int:
     demo_kp.add_argument("--score-threshold", type=float, default=0.7, help="Min score to keep persons (default: 0.7).")
     demo_kp.add_argument("--max-persons", type=int, default=3, help="Max persons to render (default: 3).")
 
+    demo_pose = demo_sub.add_parser("pose", help="6D pose demo (chessboard + OpenCV solvePnP).")
+    demo_pose.add_argument("--image", default=None, help="Input image path (default: a generated chessboard sample).")
+    demo_pose.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/pose/<utc>).")
+    demo_pose.add_argument("--pattern-cols", type=int, default=None, help="Chessboard inner corners (cols).")
+    demo_pose.add_argument("--pattern-rows", type=int, default=None, help="Chessboard inner corners (rows).")
+    demo_pose.add_argument("--square-size", type=float, default=0.04, help="Chessboard square size in meters (default: 0.04).")
+    demo_pose.add_argument("--camera-fx", type=float, default=None, help="Camera fx (default: inferred from image).")
+    demo_pose.add_argument("--camera-fy", type=float, default=None, help="Camera fy (default: inferred from image).")
+    demo_pose.add_argument("--camera-cx", type=float, default=None, help="Camera cx (default: image center).")
+    demo_pose.add_argument("--camera-cy", type=float, default=None, help="Camera cy (default: image center).")
+    demo_pose.add_argument(
+        "--sample-source",
+        choices=("auto", "download", "synthetic"),
+        default="auto",
+        help="Sample source when --image is omitted (default: auto).",
+    )
+
     demo_depth = demo_sub.add_parser(
         "depth", help="Monocular depth inference demo (Depth Anything / MiDaS / DPT; relative depth)."
     )
@@ -2870,6 +2887,46 @@ def main(argv: list[str] | None = None) -> int:
                 img = settings.get("image")
                 run_dir = settings.get("run_dir")
                 print(f"keypoints demo: persons={n} image={img} (output_dir={run_dir})")
+                artifacts = res.get("artifacts", {}) if isinstance(res, dict) else {}
+                overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
+                if overlay:
+                    print(str(overlay))
+            except Exception:
+                pass
+            print(str(out))
+            return 0
+
+        if args.demo_command == "pose":
+            try:
+                import cv2  # noqa: F401
+                import numpy as np  # noqa: F401
+            except Exception as exc:
+                raise SystemExit(
+                    "demo pose requires opencv-python and numpy. "
+                    "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+                ) from exc
+
+            from yolozu.demos.pose6d import run_pose6d_demo
+
+            out = run_pose6d_demo(
+                image=getattr(args, "image", None),
+                run_dir=getattr(args, "run_dir", None),
+                pattern_cols=getattr(args, "pattern_cols", None),
+                pattern_rows=getattr(args, "pattern_rows", None),
+                square_size=float(getattr(args, "square_size", 0.04)),
+                camera_fx=getattr(args, "camera_fx", None),
+                camera_fy=getattr(args, "camera_fy", None),
+                camera_cx=getattr(args, "camera_cx", None),
+                camera_cy=getattr(args, "camera_cy", None),
+                sample_source=str(getattr(args, "sample_source", "auto")),
+            )
+            try:
+                payload = json.loads(Path(out).read_text(encoding="utf-8"))
+                res = payload.get("result", {})
+                settings = payload.get("settings", {})
+                run_dir = settings.get("run_dir")
+                t_xyz = res.get("t_xyz")
+                print(f"pose demo: t_xyz={t_xyz} (output_dir={run_dir})")
                 artifacts = res.get("artifacts", {}) if isinstance(res, dict) else {}
                 overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
                 if overlay:
