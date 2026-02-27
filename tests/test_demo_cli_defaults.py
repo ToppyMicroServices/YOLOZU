@@ -73,6 +73,8 @@ class TestDemoCliDefaults(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
             self.assertIn("--pattern-cols", proc.stdout)
             self.assertIn("--square-size", proc.stdout)
+            self.assertIn("--backend", proc.stdout)
+            self.assertIn("--aruco-dict", proc.stdout)
 
     def test_demo_train_help_works(self):
         repo_root = Path(__file__).resolve().parents[1]

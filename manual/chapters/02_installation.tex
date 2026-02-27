@@ -37,7 +37,7 @@ yolozu validate predictions data/smoke/predictions/predictions_dummy.json --stri
 
 Optional extras let you install only the dependencies you need for a given workflow:
 \begin{lstlisting}[language=bash]
-python3 -m pip install 'yolozu[demo]'    # PyTorch demonstration utilities (includes timm + opencv + transformers for depth demo)
+python3 -m pip install 'yolozu[demo]'    # PyTorch demonstration utilities (includes timm + opencv-contrib + transformers for depth demo)
 python3 -m pip install 'yolozu[onnxrt]'  # ONNX Runtime tooling
 python3 -m pip install 'yolozu[coco]'    # COCOeval support
 python3 -m pip install 'yolozu[full]'    # Comprehensive installation
@@ -56,6 +56,7 @@ yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
 yolozu demo pose
+yolozu demo pose --backend aruco
 yolozu demo depth
 yolozu demo depth --compare
 yolozu demo train

@@ -1959,12 +1959,21 @@ def main(argv: list[str] | None = None) -> int:
     demo_kp.add_argument("--score-threshold", type=float, default=0.7, help="Min score to keep persons (default: 0.7).")
     demo_kp.add_argument("--max-persons", type=int, default=3, help="Max persons to render (default: 3).")
 
-    demo_pose = demo_sub.add_parser("pose", help="6D pose demo (chessboard + OpenCV solvePnP).")
+    demo_pose = demo_sub.add_parser("pose", help="6D pose demo (chessboard or ArUco + OpenCV solvePnP).")
     demo_pose.add_argument("--image", default=None, help="Input image path (default: a generated chessboard sample).")
     demo_pose.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/pose/<utc>).")
+    demo_pose.add_argument(
+        "--backend",
+        choices=("chessboard", "aruco"),
+        default="chessboard",
+        help="Pose backend (default: chessboard).",
+    )
     demo_pose.add_argument("--pattern-cols", type=int, default=None, help="Chessboard inner corners (cols).")
     demo_pose.add_argument("--pattern-rows", type=int, default=None, help="Chessboard inner corners (rows).")
     demo_pose.add_argument("--square-size", type=float, default=0.04, help="Chessboard square size in meters (default: 0.04).")
+    demo_pose.add_argument("--aruco-dict", default="DICT_4X4_50", help="ArUco dictionary name (default: DICT_4X4_50).")
+    demo_pose.add_argument("--aruco-id", type=int, default=23, help="ArUco marker id (default: 23).")
+    demo_pose.add_argument("--marker-length", type=float, default=0.05, help="ArUco marker length in meters (default: 0.05).")
     demo_pose.add_argument("--camera-fx", type=float, default=None, help="Camera fx (default: inferred from image).")
     demo_pose.add_argument("--camera-fy", type=float, default=None, help="Camera fy (default: inferred from image).")
     demo_pose.add_argument("--camera-cx", type=float, default=None, help="Camera cx (default: image center).")
@@ -2902,7 +2911,7 @@ def main(argv: list[str] | None = None) -> int:
                 import numpy as np  # noqa: F401
             except Exception as exc:
                 raise SystemExit(
-                    "demo pose requires opencv-python and numpy. "
+                    "demo pose requires opencv-python and numpy (aruco backend needs opencv-contrib-python). "
                     "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
                 ) from exc
 
@@ -2911,9 +2920,13 @@ def main(argv: list[str] | None = None) -> int:
             out = run_pose6d_demo(
                 image=getattr(args, "image", None),
                 run_dir=getattr(args, "run_dir", None),
+                backend=str(getattr(args, "backend", "chessboard")),
                 pattern_cols=getattr(args, "pattern_cols", None),
                 pattern_rows=getattr(args, "pattern_rows", None),
                 square_size=float(getattr(args, "square_size", 0.04)),
+                aruco_dict=str(getattr(args, "aruco_dict", "DICT_4X4_50")),
+                aruco_id=int(getattr(args, "aruco_id", 23)),
+                marker_length=float(getattr(args, "marker_length", 0.05)),
                 camera_fx=getattr(args, "camera_fx", None),
                 camera_fy=getattr(args, "camera_fy", None),
                 camera_cx=getattr(args, "camera_cx", None),
@@ -2926,7 +2939,8 @@ def main(argv: list[str] | None = None) -> int:
                 settings = payload.get("settings", {})
                 run_dir = settings.get("run_dir")
                 t_xyz = res.get("t_xyz")
-                print(f"pose demo: t_xyz={t_xyz} (output_dir={run_dir})")
+                backend = settings.get("backend")
+                print(f"pose demo ({backend}): t_xyz={t_xyz} (output_dir={run_dir})")
                 artifacts = res.get("artifacts", {}) if isinstance(res, dict) else {}
                 overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
                 if overlay:

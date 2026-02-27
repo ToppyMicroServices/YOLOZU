@@ -13,7 +13,7 @@ yolozu doctor --output -
 Install only what you need:
 
 ```bash
-python3 -m pip install 'yolozu[demo]'     # torch/torchvision demos (CPU OK; includes timm + opencv + transformers for depth demo)
+python3 -m pip install 'yolozu[demo]'     # torch/torchvision demos (CPU OK; includes timm + opencv-contrib + transformers for depth demo)
 python3 -m pip install 'yolozu[onnxrt]'   # ONNX Runtime tooling
 python3 -m pip install 'yolozu[train]'    # RT-DETR pose training scaffold
 python3 -m pip install 'yolozu[coco]'     # COCOeval support (pycocotools)
@@ -40,6 +40,7 @@ yolozu demo  # runs a small demo suite (prefers COCO instances if available)
 yolozu demo instance-seg  # short path: uses COCO instances if present, otherwise falls back to a synthetic demo
 yolozu demo keypoints  # Keypoint R-CNN inference on a sample image
 yolozu demo pose  # 6D pose demo (chessboard + OpenCV solvePnP)
+yolozu demo pose --backend aruco  # ArUco marker pose (requires opencv-contrib)
 yolozu demo depth  # monocular depth inference (default: Depth Anything; downloads weights on first run)
 yolozu demo depth --compare  # compare Depth Anything + MiDaS + DPT in one run
 yolozu demo train  # MNIST fine-tune demo (bounded by --max-steps)

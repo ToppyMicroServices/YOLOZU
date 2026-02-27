@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.6] - 2026-02-27
+
+### Added
+- `yolozu demo pose --backend aruco`: marker-based 6D pose demo using OpenCV ArUco detection.
+
+### Changed
+- `yolozu[demo]` now uses `opencv-contrib-python` to enable ArUco support.
+
 ## [1.0.5] - 2026-02-27
 
 ### Added
