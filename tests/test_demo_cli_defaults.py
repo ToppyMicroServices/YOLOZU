@@ -75,6 +75,7 @@ class TestDemoCliDefaults(unittest.TestCase):
             self.assertIn("--square-size", proc.stdout)
             self.assertIn("--backend", proc.stdout)
             self.assertIn("--aruco-dict", proc.stdout)
+            self.assertIn("--densefusion-root", proc.stdout)
 
     def test_demo_train_help_works(self):
         repo_root = Path(__file__).resolve().parents[1]

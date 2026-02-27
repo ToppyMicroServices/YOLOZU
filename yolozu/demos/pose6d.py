@@ -181,6 +181,11 @@ def run_pose6d_demo(
     image: str | None = None,
     run_dir: str | None = None,
     backend: str = "chessboard",
+    densefusion_root: str | None = None,
+    densefusion_object: str = "ape",
+    densefusion_auto_download: bool = True,
+    densefusion_model: str | None = None,
+    densefusion_refine_model: str | None = None,
     pattern_cols: int | None = None,
     pattern_rows: int | None = None,
     square_size: float = 0.04,
@@ -202,6 +207,19 @@ def run_pose6d_demo(
     else:
         run_dir_p = Path("demo_output") / "pose" / _utc_run_id()
     run_dir_p.mkdir(parents=True, exist_ok=True)
+
+    if backend_name == "densefusion":
+        from yolozu.demos.densefusion_demo import run_densefusion_demo
+
+        return run_densefusion_demo(
+            run_dir=str(run_dir_p),
+            image=image,
+            object_name=str(densefusion_object),
+            auto_download=bool(densefusion_auto_download),
+            densefusion_root=densefusion_root,
+            model_path=densefusion_model,
+            refine_model_path=densefusion_refine_model,
+        )
 
     img_path = Path(image) if image else None
     if img_path is None:

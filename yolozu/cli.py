@@ -1964,7 +1964,7 @@ def main(argv: list[str] | None = None) -> int:
     demo_pose.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/pose/<utc>).")
     demo_pose.add_argument(
         "--backend",
-        choices=("chessboard", "aruco"),
+        choices=("chessboard", "aruco", "densefusion"),
         default="chessboard",
         help="Pose backend (default: chessboard).",
     )
@@ -1974,6 +1974,22 @@ def main(argv: list[str] | None = None) -> int:
     demo_pose.add_argument("--aruco-dict", default="DICT_4X4_50", help="ArUco dictionary name (default: DICT_4X4_50).")
     demo_pose.add_argument("--aruco-id", type=int, default=23, help="ArUco marker id (default: 23).")
     demo_pose.add_argument("--marker-length", type=float, default=0.05, help="ArUco marker length in meters (default: 0.05).")
+    demo_pose.add_argument("--densefusion-root", default=None, help="DenseFusion repo root (default: demo_output/pose/_densefusion).")
+    demo_pose.add_argument("--densefusion-object", default="ape", help="LineMOD object for DenseFusion demo (default: ape).")
+    demo_pose.add_argument(
+        "--densefusion-auto-download",
+        action="store_true",
+        help="Auto-download DenseFusion assets (large) (default: enabled).",
+    )
+    demo_pose.add_argument(
+        "--no-densefusion-auto-download",
+        dest="densefusion_auto_download",
+        action="store_false",
+        help="Disable auto-download for DenseFusion assets.",
+    )
+    demo_pose.set_defaults(densefusion_auto_download=True)
+    demo_pose.add_argument("--densefusion-model", default=None, help="DenseFusion pose model checkpoint path.")
+    demo_pose.add_argument("--densefusion-refine-model", default=None, help="DenseFusion refiner checkpoint path.")
     demo_pose.add_argument("--camera-fx", type=float, default=None, help="Camera fx (default: inferred from image).")
     demo_pose.add_argument("--camera-fy", type=float, default=None, help="Camera fy (default: inferred from image).")
     demo_pose.add_argument("--camera-cx", type=float, default=None, help="Camera cx (default: image center).")
@@ -2911,7 +2927,8 @@ def main(argv: list[str] | None = None) -> int:
                 import numpy as np  # noqa: F401
             except Exception as exc:
                 raise SystemExit(
-                    "demo pose requires opencv-python and numpy (aruco backend needs opencv-contrib-python). "
+                    "demo pose requires opencv-python and numpy (aruco backend needs opencv-contrib-python; "
+                    "densefusion backend requires CUDA + DenseFusion assets). "
                     "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
                 ) from exc
 
@@ -2921,6 +2938,11 @@ def main(argv: list[str] | None = None) -> int:
                 image=getattr(args, "image", None),
                 run_dir=getattr(args, "run_dir", None),
                 backend=str(getattr(args, "backend", "chessboard")),
+                densefusion_root=getattr(args, "densefusion_root", None),
+                densefusion_object=str(getattr(args, "densefusion_object", "ape")),
+                densefusion_auto_download=bool(getattr(args, "densefusion_auto_download", True)),
+                densefusion_model=getattr(args, "densefusion_model", None),
+                densefusion_refine_model=getattr(args, "densefusion_refine_model", None),
                 pattern_cols=getattr(args, "pattern_cols", None),
                 pattern_rows=getattr(args, "pattern_rows", None),
                 square_size=float(getattr(args, "square_size", 0.04)),

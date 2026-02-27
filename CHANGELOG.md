@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No user-facing entries yet.
 
+## [1.0.7] - 2026-02-27
+
+### Added
+- `yolozu demo pose --backend densefusion`: optional DenseFusion backend (CUDA + large downloads required).
+
 ## [1.0.6] - 2026-02-27
 
 ### Added

@@ -86,6 +86,7 @@ yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
 yolozu demo pose  # chessboard default; use --backend aruco for marker-based pose
+yolozu demo pose --backend densefusion  # heavy: CUDA + large downloads
 yolozu demo depth  # default: Depth Anything (Transformers); use --compare to run MiDaS/DPT too
 yolozu demo train
 yolozu demo continual --compare --markdown
