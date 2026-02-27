@@ -94,7 +94,7 @@ def _detect_config_source_from_path(path_like: str | Path) -> str:
             return "mmdet"
         if "_base_" in lower:
             return "mmdet"
-        return "mmdet"
+        raise SystemExit(f"could not auto-detect config source from Python file: {p}")
 
     raise SystemExit(f"could not auto-detect config source from file: {p}")
 

@@ -46,5 +46,8 @@ def calibrate_predictions_entries(
             det_out = dict(det)
             det_out["score"] = score
             dets.append(det_out)
-        out.append({"image": entry.get("image"), "detections": dets})
+        # Preserve all original entry keys (image_size, preprocess, etc.).
+        entry_out = dict(entry)
+        entry_out["detections"] = dets
+        out.append(entry_out)
     return out

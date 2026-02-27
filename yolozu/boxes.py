@@ -4,7 +4,7 @@ from typing import Any
 
 
 def cxcywh_norm_to_xyxy_abs(
-    cxcywh: tuple[float, float, float, float], *, width: int, height: int
+    cxcywh: tuple[float, float, float, float], *, width: int | float, height: int | float
 ) -> tuple[float, float, float, float]:
     cx, cy, w, h = cxcywh
     cx_abs = float(cx) * float(width)
@@ -80,15 +80,16 @@ def xyxy_to_cxcywh_abs(xyxy: tuple[float, float, float, float]) -> tuple[float, 
 
 
 def cxcywh_abs_to_norm(
-    cxcywh: tuple[float, float, float, float], *, width: int, height: int
+    cxcywh: tuple[float, float, float, float], *, width: int | float, height: int | float
 ) -> tuple[float, float, float, float]:
     cx, cy, w, h = cxcywh
+    width, height = float(width), float(height)
     if width <= 0 or height <= 0:
         raise ValueError("width/height must be positive")
     return cx / width, cy / height, w / width, h / height
 
 
 def xyxy_abs_to_cxcywh_norm(
-    xyxy: tuple[float, float, float, float], *, width: int, height: int
+    xyxy: tuple[float, float, float, float], *, width: int | float, height: int | float
 ) -> tuple[float, float, float, float]:
     return cxcywh_abs_to_norm(xyxy_to_cxcywh_abs(xyxy), width=width, height=height)

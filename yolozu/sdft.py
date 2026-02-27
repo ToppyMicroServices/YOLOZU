@@ -170,11 +170,6 @@ def compute_sdft_loss(
             total = torch.zeros((), device=reference.device, dtype=reference.dtype)
         else:  # pragma: no cover
             total = torch.tensor(0.0)
-    if total is None:
-        if reference is not None:
-            total = torch.zeros((), device=reference.device, dtype=reference.dtype)
-        else:  # pragma: no cover
-            total = torch.tensor(0.0)
     total = total * float(cfg.weight)
     if float(cfg.weight) != 1.0:
         for name in list(parts.keys()):

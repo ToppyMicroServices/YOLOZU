@@ -61,14 +61,26 @@ def apply_constraints(
     t_xyz,
     r_mat,
     z_pred,
+    *,
+    eps: float = 1e-9,
 ):
-    enabled = cfg.get("enabled", {})
+    enabled = cfg.get("enabled", {}) if isinstance(cfg, dict) else {}
     result = {
         "depth_prior_penalty": 0.0,
         "depth_range_violation": 0.0,
         "plane_ok": True,
         "upright_violation": 0.0,
     }
+
+    # Validate r_mat: must be a 3x3 nested list; supply identity as safe default.
+    if r_mat is None:
+        r_mat = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    elif not (
+        isinstance(r_mat, (list, tuple))
+        and len(r_mat) == 3
+        and all(isinstance(row, (list, tuple)) and len(row) == 3 for row in r_mat)
+    ):
+        r_mat = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
 
     if enabled.get("depth_prior", False):
         depth_cfg = cfg.get("depth_prior", {})

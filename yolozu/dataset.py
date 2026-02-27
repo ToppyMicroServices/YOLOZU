@@ -387,8 +387,13 @@ def load_yolo_dataset(
     dataset_root = Path(dataset_root) if dataset_root is not None else labels_dir.parent.parent
     label_format = str(label_format or "detect").strip().lower()
     images: list[Path] = []
-    for ext in ("*.jpg", "*.jpeg", "*.png"):
+    for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"):
         images.extend(images_dir.glob(ext))
+    # Also match uppercase extensions (common on Windows / cameras).
+    for ext in ("*.JPG", "*.JPEG", "*.PNG", "*.BMP", "*.TIF", "*.TIFF", "*.WEBP", "*.GIF"):
+        for p in images_dir.glob(ext):
+            if p not in images:
+                images.append(p)
     images = sorted(images)
     records = []
     for image_path in images:

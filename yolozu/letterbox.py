@@ -13,21 +13,37 @@ class Letterbox:
     new_h: int
 
 
-def compute_letterbox(*, orig_w: int, orig_h: int, input_size: int = 640) -> Letterbox:
+def compute_letterbox(
+    *,
+    orig_w: int,
+    orig_h: int,
+    input_size: int | tuple[int, int] = 640,
+) -> Letterbox:
+    """Compute letterbox parameters.
+
+    ``input_size`` may be a single int (square) **or** a (width, height) tuple
+    for rectangular targets.
+    """
     if orig_w <= 0 or orig_h <= 0:
         raise ValueError("invalid image size")
-    scale = min(float(input_size) / float(orig_w), float(input_size) / float(orig_h))
+    if isinstance(input_size, (list, tuple)):
+        target_w, target_h = int(input_size[0]), int(input_size[1])
+    else:
+        target_w = target_h = int(input_size)
+    if target_w <= 0 or target_h <= 0:
+        raise ValueError("input_size must be positive")
+    scale = min(float(target_w) / float(orig_w), float(target_h) / float(orig_h))
     new_w = int(round(orig_w * scale))
     new_h = int(round(orig_h * scale))
-    pad_w = float(input_size) - float(new_w)
-    pad_h = float(input_size) - float(new_h)
+    pad_w = float(target_w) - float(new_w)
+    pad_h = float(target_h) - float(new_h)
     pad_x = pad_w / 2.0
     pad_y = pad_h / 2.0
     # Match Ultralytics LetterBox rounding for top/left padding.
     left = float(round(pad_x - 0.1))
     top = float(round(pad_y - 0.1))
     return Letterbox(
-        input_size=int(input_size),
+        input_size=int(target_w),
         scale=float(scale),
         pad_x=float(left),
         pad_y=float(top),

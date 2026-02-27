@@ -82,7 +82,10 @@ def distill_predictions(
                 student_dets.append(det_out)
                 added += 1
 
-        out_entries.append({"image": image, "detections": student_dets})
+        # Preserve all original entry keys (image_size, preprocess, etc.).
+        entry_out = dict(entry)
+        entry_out["detections"] = student_dets
+        out_entries.append(entry_out)
 
     avg_gap = total_gap / float(max(1, matched))
     return out_entries, DistillStats(matched=matched, added=added, avg_score_gap=float(avg_gap))
