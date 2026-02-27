@@ -2565,6 +2565,48 @@
           "kind": "number",
           "required": false,
           "flag": "--ttt-sar-first-step-scale"
+        },
+        {
+          "name": "ttt_sdft_task",
+          "kind": "string",
+          "required": false,
+          "flag": "--ttt-sdft-task",
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg)."
+        },
+        {
+          "name": "ttt_aux_pose_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-pose-weight",
+          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables."
+        },
+        {
+          "name": "ttt_aux_keypoints_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-keypoints-weight",
+          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_depth_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-depth-weight",
+          "description": "Auxiliary consistency loss weight for depth heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_seg_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-seg-weight",
+          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_temperature",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-temperature",
+          "description": "Temperature for auxiliary consistency losses. Default 1.0."
         }
       ],
       "effects": {
@@ -3534,6 +3576,48 @@
           "kind": "string",
           "required": false,
           "flag": "--ttt-update-filter"
+        },
+        {
+          "name": "ttt_sdft_task",
+          "kind": "string",
+          "required": false,
+          "flag": "--ttt-sdft-task",
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg)."
+        },
+        {
+          "name": "ttt_aux_pose_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-pose-weight",
+          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables."
+        },
+        {
+          "name": "ttt_aux_keypoints_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-keypoints-weight",
+          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_depth_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-depth-weight",
+          "description": "Auxiliary consistency loss weight for depth heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_seg_weight",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-seg-weight",
+          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables."
+        },
+        {
+          "name": "ttt_aux_temperature",
+          "kind": "number",
+          "required": false,
+          "flag": "--ttt-aux-temperature",
+          "description": "Temperature for auxiliary consistency losses. Default 1.0."
         }
       ],
       "effects": {
