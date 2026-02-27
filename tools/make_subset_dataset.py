@@ -37,7 +37,7 @@ def _pick_split(dataset_root: Path, requested: str | None) -> str:
 
 def _iter_images(images_dir: Path) -> list[Path]:
     paths: list[Path] = []
-    for ext in ("*.jpg", "*.jpeg", "*.png"):
+    for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"):
         paths.extend(images_dir.glob(ext))
     return sorted(paths)
 

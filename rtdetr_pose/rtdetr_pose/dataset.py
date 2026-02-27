@@ -350,7 +350,7 @@ def load_yolo_dataset(root, split="train2017"):
     labels_dir = root / "labels" / split
     records = []
     images = []
-    for ext in ("*.jpg", "*.jpeg", "*.png"):
+    for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"):
         images.extend(images_dir.glob(ext))
     for image_path in sorted(images):
         label_path = labels_dir / f"{image_path.stem}.txt"

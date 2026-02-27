@@ -92,7 +92,7 @@ def iter_ade20k_samples(
         raise ValueError(f"ADE20K images split dir not found: {images_dir}")
 
     images: list[Path] = []
-    for ext in ("*.jpg", "*.jpeg", "*.png"):
+    for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"):
         images.extend(images_dir.glob(ext))
     images = sorted(images)
 

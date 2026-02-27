@@ -217,4 +217,4 @@ Top-level keys:
 ## Notes / caveats
 
 - The current continual evaluation uses `yolozu.simple_map` (CPU-friendly proxy). For full COCO mAP you can switch your workflow to `tools/eval_coco.py` with `pycocotools` installed.
-- `rtdetr_pose` dataset loading scans `*.jpg`, `*.jpeg`, and `*.png` under `images/<split>/`.
+- `rtdetr_pose` dataset loading scans `*.jpg`, `*.jpeg`, `*.png`, `*.bmp`, `*.tif`, `*.tiff`, `*.webp`, and `*.gif` under `images/<split>/`.

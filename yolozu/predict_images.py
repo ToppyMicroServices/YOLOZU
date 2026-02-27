@@ -219,7 +219,7 @@ def predict_images(
     if not input_dir_path.is_dir():
         raise FileNotFoundError(f"input dir not found: {input_dir_path}")
 
-    patterns = glob_patterns if glob_patterns else ["*.jpg", "*.jpeg", "*.png"]
+    patterns = glob_patterns if glob_patterns else ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"]
     images = _iter_images(input_dir_path, patterns=patterns)
     if max_images is not None:
         images = images[: max(0, int(max_images))]

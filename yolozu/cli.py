@@ -2344,7 +2344,7 @@ def main(argv: list[str] | None = None) -> int:
                             return []
                         pairs: list[tuple[Path, Path]] = []
                         for img in sorted(images_base.rglob("*")):
-                            if not img.is_file() or img.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+                            if not img.is_file() or img.suffix.lower() not in (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".gif"):
                                 continue
                             rel = img.relative_to(images_base)
                             lab = labels_base / rel.with_suffix(".txt")

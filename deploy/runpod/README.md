@@ -8,7 +8,7 @@ It also includes a one-command runner for the **RTDETRPose backend suite** (PyTo
 ## Inputs
 
 - **YOLO-format COCO dataset root** (images + labels):
-  - `.../images/<split>/*.jpg`
+  - `.../images/<split>/*.{jpg,jpeg,png,bmp,tif,tiff,webp,gif}`
   - `.../labels/<split>/*.txt`
 - **ONNX models** per bucket (file names are flexible; use a template):
   - `yolo26n`, `yolo26s`, `yolo26m`, `yolo26l`, `yolo26x`

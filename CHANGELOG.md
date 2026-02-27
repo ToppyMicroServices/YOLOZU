@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No user-facing entries yet.
+### Fixed
+- **calibration package shadowing**: Standalone `yolozu/calibration.py` was shadowed by
+  `yolozu/calibration/` package — merged `apply_temperature()` and
+  `calibrate_predictions_entries()` into the package `__init__.py` so imports work correctly.
+- **calibration/distillation key preservation**: `calibrate_predictions_entries()` and
+  `distill_predictions()` now preserve all original entry keys (e.g. `image_size`, `preprocess`)
+  instead of dropping them.
+
+### Changed
+- **Image format support**: All image-loading code paths (dataset, CLI, predict, rtdetr_pose, demos,
+  pascal_voc, ade20k, make_subset) now accept BMP, TIFF, WebP, and GIF alongside JPEG/PNG.
+- **image_size**: Added native header parsers for BMP, GIF, TIFF, WebP; PIL fallback for other formats.
+- **letterbox**: `compute_letterbox()` accepts rectangular `(w, h)` tuples in addition to int.
+- **geometry**: Zero-division protection in `recover_translation()`; fixed variable shadowing in
+  `corrected_intrinsics()`.
+- **boxes**: `width`/`height` params accept `int | float`.
+- **gates**: `final_score()` uses safe `.get()` with defaults; handles non-dict weights gracefully.
+- **constraints**: `apply_constraints()` validates `r_mat` shape (falls back to identity); accepts
+  non-dict cfg.
+- **cli**: `_detect_config_source_from_path()` raises clear error on unknown `.py` config instead of
+  silently defaulting to mmdet.
+- **sdft**: Removed duplicate `if total is None:` block.
+
+### Added
+- `tests/test_dataset_formats_quality.py`: 26 unit tests covering new image format parsers,
+  dataset discovery, letterbox, geometry, calibration, distillation, constraints, and gates.
 
 ## [1.0.7] - 2026-02-27
 

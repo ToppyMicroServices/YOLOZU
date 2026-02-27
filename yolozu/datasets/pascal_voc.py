@@ -154,7 +154,7 @@ def iter_pascal_voc_seg_samples(
 
     for sample_id in _read_split_ids(split_file):
         img_path = None
-        for ext in (".jpg", ".jpeg", ".png"):
+        for ext in (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".gif"):
             cand = images_dir / f"{sample_id}{ext}"
             if cand.exists():
                 img_path = cand

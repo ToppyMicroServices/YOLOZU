@@ -25,7 +25,7 @@ It emphasizes:
 
 ### 1) Dataset I/O (YOLO format)
 
-- Image layout: `images/<split>/*.jpg`
+- Image layout: `images/<split>/*.{jpg,jpeg,png,bmp,tif,tiff,webp,gif}`
 - Labels: `labels/<split>/*.txt` (YOLO: `class cx cy w h`, normalized)
 - Optional metadata: `labels/<split>/<image>.json`
   - masks/seg: `mask_path` / `mask` / `M`

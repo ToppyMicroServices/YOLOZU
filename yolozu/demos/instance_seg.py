@@ -30,7 +30,7 @@ def _iter_coco128_pairs(*, coco128_root: Path) -> list[tuple[Path, Path]]:
     for img in sorted(images_base.rglob("*")):
         if not img.is_file():
             continue
-        if img.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+        if img.suffix.lower() not in (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".gif"):
             continue
         rel = img.relative_to(images_base)
         lab = labels_base / rel.with_suffix(".txt")

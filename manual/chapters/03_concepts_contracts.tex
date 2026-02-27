@@ -81,6 +81,7 @@ When links and prose disagree, treat these interface contract documents as canon
 
 \section{Datasets}
 The majority of tools anticipate a YOLO-style dataset hierarchy (comprising \path{images/}, \path{labels/}, and splits), supplemented by optional metadata.
+Supported image formats: JPEG (\texttt{.jpg}, \texttt{.jpeg}), PNG, BMP, TIFF (\texttt{.tif}, \texttt{.tiff}), WebP, and GIF.
 
 \subsection{Frictionless Migration (Utilizing Datasets "As-Is")}
 \yolozu{} is engineered to evaluate prevalent training ecosystems with minimal friction. The central paradigm is to circumvent manual dataset restructuring by generating lightweight \textbf{descriptor artifacts}.

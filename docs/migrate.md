@@ -158,6 +158,6 @@ yolozu validate predictions reports/predictions.json --strict
   - Coordinates should be normalized to `[0,1]` (Ultralytics default).
   - If your labels include `class cx cy w h + poly(...)`, YOLOZU skips the first 4 numbers automatically.
 - `yolozu validate dataset` complains about image size:
-  - Ensure images are real `.jpg/.png` files (not empty placeholders), or use `--no-check-images` for label-only validation.
+  - Ensure images are real `.jpg/.png/.bmp/.tif/.tiff/.webp/.gif` files (not empty placeholders), or use `--no-check-images` for label-only validation.
 - `yolozu migrate seg-dataset` (VOC/Cityscapes/ADE20K) can’t find files:
   - Double-check `--root` points at the dataset root (see each dataset’s expected layout) and `--split` exists.

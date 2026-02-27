@@ -1676,7 +1676,7 @@ def _predict_images(args: argparse.Namespace) -> int:
     if not input_dir.exists():
         raise SystemExit(f"input dir not found: {input_dir}")
 
-    patterns = args.glob if args.glob else ["*.jpg", "*.jpeg", "*.png"]
+    patterns = args.glob if args.glob else ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"]
     images = _iter_images(input_dir, patterns=patterns)
     if args.max_images is not None:
         images = images[: int(args.max_images)]
