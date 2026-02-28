@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 
 
-from .cli_args import parse_image_size_arg, require_non_negative_int
-from .config import simple_yaml_load
+from yolozu.core.cli_args import parse_image_size_arg, require_non_negative_int
+from yolozu.core.config import simple_yaml_load
 
 __all__: list[str] = []
 
