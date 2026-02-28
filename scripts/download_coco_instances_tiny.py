@@ -21,10 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
-import ssl
-import sys
 import urllib.error
 import urllib.request
 import zipfile

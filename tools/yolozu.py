@@ -17,7 +17,6 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.inference.export_orchestrator import (  # noqa: E402
-    DEFAULT_PREDICTIONS_PATH,
     ensure_wrapper as _ensure_wrapper,
     export_with_backend as _run_export_with_backend,
     load_json as _load_json,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import random
 import time
 from pathlib import Path
 from typing import Any
@@ -43,7 +42,6 @@ def run_train_demo(
 
     torch, torchvision, transforms = _require_deps()
 
-    rng = random.Random(int(seed))
     torch.manual_seed(int(seed))
 
     if output is None:

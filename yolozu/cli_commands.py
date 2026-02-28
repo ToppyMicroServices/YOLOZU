@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from yolozu import __version__
 
 from .cli_args import parse_image_size_arg, require_non_negative_int
 from .config import simple_yaml_load

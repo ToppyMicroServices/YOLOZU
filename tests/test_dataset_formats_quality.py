@@ -8,7 +8,6 @@ Covers:
   - calibration/distillation: preserving extra entry keys
 """
 
-import json
 import struct
 import sys
 import tempfile

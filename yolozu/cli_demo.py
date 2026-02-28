@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from .cli_commands import *  # noqa: F401,F403 - reuse shared CLI utilities
+import argparse
+import json
+from pathlib import Path
+from typing import Any
 
 
 def handle_demo_command(args: argparse.Namespace) -> int:

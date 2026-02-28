@@ -2,9 +2,33 @@
 
 from __future__ import annotations
 
-from .cli_commands import *  # re-export helper commands for local dispatch
+from .cli_commands import (
+    _cmd_train_import_preview,
+    _cmd_train,
+    _cmd_test,
+    _cmd_doctor_import,
+    _cmd_doctor,
+    _cmd_list_models,
+    _cmd_fetch_model,
+    _cmd_export,
+    _cmd_predict_images,
+    _cmd_eval_coco,
+    _cmd_calibrate,
+    _cmd_eval_long_tail,
+    _cmd_long_tail_recipe,
+    _cmd_parity,
+    _cmd_validate,
+    _cmd_eval_instance_seg,
+    _cmd_onnxrt_export,
+    _cmd_onnxrt_quantize,
+    _cmd_resources,
+    _cmd_migrate,
+    _cmd_import,
+)
 from .cli_demo import handle_demo_command
 from yolozu import __version__
+import argparse
+from pathlib import Path
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(

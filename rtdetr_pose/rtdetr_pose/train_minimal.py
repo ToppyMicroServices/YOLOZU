@@ -6,9 +6,7 @@ The heavy lifting is split across submodules:
 - train_dataset: ManifestDataset, collate, _pad_field
 """
 
-import argparse
 import json
-import math
 import os
 import random
 import socket
@@ -27,7 +25,6 @@ except ImportError:  # pragma: no cover
     Dataset = object
 
 from rtdetr_pose.dataset import build_manifest
-from rtdetr_pose.dataset import extract_full_gt_targets, depth_at_bbox_center
 
 if torch is not None:
     from rtdetr_pose.factory import build_losses, build_model
@@ -46,11 +43,11 @@ else:  # pragma: no cover
     EMA = None  # type: ignore[assignment]
     build_scheduler = None  # type: ignore[assignment]
 
-from yolozu.metrics_report import append_jsonl, build_report, write_csv_row, write_json
-from yolozu.jitter import default_jitter_profile, sample_intrinsics_jitter, sample_extrinsics_jitter
+from yolozu.metrics_report import append_jsonl, build_report
+from yolozu.jitter import default_jitter_profile
 from yolozu.long_tail_metrics import build_fracal_stats
 from yolozu.run_record import build_run_record, validate_run_record_contract
-from yolozu.sdft import SdftConfig, compute_sdft_loss
+from yolozu.sdft import compute_sdft_loss
 from rtdetr_pose.train_finalize import finalize_training
 from rtdetr_pose.train_records import enforce_strict_task_data, load_train_records, log_dataset_stats_and_update_run_record, maybe_write_run_meta_and_fracal_stats, resolve_val_records
 from rtdetr_pose.train_runtime import build_validation_loader, install_termination_handlers, run_validation, setup_continual_regularizers, setup_distillation_and_derpp

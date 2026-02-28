@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import signal
-from contextlib import nullcontext
 from typing import Any, Callable
 
 try:
