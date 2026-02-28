@@ -6493,6 +6493,124 @@
       ]
     },
     {
+      "id": "export_predictions_executorch",
+      "entrypoint": "tools/export_predictions_executorch.py",
+      "runner": "python3",
+      "summary": "Run ExecuTorch export flow and emit YOLOZU predictions JSON (dry-run supported for interface-contract validation).",
+      "tags": [
+        "predictions",
+        "executorch"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "macos_ok": true,
+        "linux_ok": true,
+        "notes": "Non-dry-run requires ExecuTorch runtime availability in the execution environment."
+      },
+      "requires": {
+        "python_packages": [
+          "executorch"
+        ]
+      },
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dataset",
+          "kind": "dir",
+          "required": true,
+          "flag": "--dataset"
+        },
+        {
+          "name": "split",
+          "kind": "string",
+          "required": false,
+          "flag": "--split"
+        },
+        {
+          "name": "max_images",
+          "kind": "number",
+          "required": false,
+          "flag": "--max-images"
+        },
+        {
+          "name": "model",
+          "kind": "file",
+          "required": false,
+          "flag": "--model"
+        },
+        {
+          "name": "min_score",
+          "kind": "number",
+          "required": false,
+          "flag": "--min-score"
+        },
+        {
+          "name": "topk",
+          "kind": "number",
+          "required": false,
+          "flag": "--topk"
+        },
+        {
+          "name": "output",
+          "kind": "file",
+          "required": false,
+          "flag": "--output",
+          "default": "reports/predictions_executorch.json"
+        },
+        {
+          "name": "wrap",
+          "kind": "string",
+          "required": false,
+          "flag": "--wrap"
+        },
+        {
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "flag": "--strict"
+        },
+        {
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "flag": "--dry-run"
+        }
+      ],
+      "effects": {
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes predictions JSON."
+          }
+        ],
+        "fixed_writes": []
+      },
+      "outputs": [
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "default": "reports/predictions_executorch.json"
+        }
+      ],
+      "examples": [
+        {
+          "description": "Dry-run ExecuTorch exporter for schema/interface-contract validation.",
+          "command": "python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --dry-run --wrap --output reports/pred_executorch.json"
+        }
+      ],
+      "docs": [
+        "docs/external_inference.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ]
+    },
+    {
       "id": "export_predictions_opencv_dnn",
       "entrypoint": "tools/export_predictions_opencv_dnn.py",
       "runner": "python3",

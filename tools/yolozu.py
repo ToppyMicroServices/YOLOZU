@@ -547,12 +547,35 @@ def _ensure_wrapper(payload: Any) -> dict[str, Any]:
 
 
 def _subprocess_or_die(cmd: list[str]) -> str:
+    if len(cmd) >= 2:
+        candidate = Path(str(cmd[1]))
+        if candidate.suffix == ".py":
+            script_path = candidate if candidate.is_absolute() else (repo_root / candidate)
+            if not script_path.is_file():
+                raise SystemExit(f"required script not found: {candidate}")
     proc = subprocess.run(cmd, cwd=str(repo_root), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if proc.stderr and proc.stderr.strip():
         print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
     if proc.returncode != 0:
         raise SystemExit(f"command failed ({proc.returncode}): {' '.join(cmd)}\n{proc.stdout}\n{proc.stderr}")
     return proc.stdout
+
+
+def _validate_export_numeric_args(args: argparse.Namespace) -> None:
+    if args.max_images is not None and int(args.max_images) < 0:
+        raise SystemExit("--max-images must be >= 0")
+    if int(args.topk) <= 0:
+        raise SystemExit("--topk must be >= 1")
+    if int(args.max_detections) <= 0:
+        raise SystemExit("--max-detections must be >= 1")
+    if float(args.min_score) < 0.0 or float(args.min_score) > 1.0:
+        raise SystemExit("--min-score must be in [0, 1]")
+    if float(args.score_threshold) < 0.0 or float(args.score_threshold) > 1.0:
+        raise SystemExit("--score-threshold must be in [0, 1]")
+    if float(args.score_thr) < 0.0 or float(args.score_thr) > 1.0:
+        raise SystemExit("--score-thr must be in [0, 1]")
+    if float(args.nms_iou) < 0.0 or float(args.nms_iou) > 1.0:
+        raise SystemExit("--nms-iou must be in [0, 1]")
 
 
 def _resolve_path(path: str | Path) -> Path:
@@ -979,6 +1002,8 @@ def _export_with_backend(
     dataset_override: str | None = None,
     dataset_meta: str | None = None,
 ) -> Path:
+    _validate_export_numeric_args(args)
+
     dataset = dataset_override or (args.dataset if args.dataset else str(repo_root / "data" / "coco128"))
     dataset_fp = dataset_meta or dataset
 

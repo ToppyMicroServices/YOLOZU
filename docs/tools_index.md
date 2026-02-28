@@ -11,7 +11,7 @@ Source of truth:
 For most day-to-day flows, start with:
 
 - `python3 tools/yolozu.py doctor ...`
-- `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt} ...`
+- `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
 - `python3 tools/yolozu.py predict-images --input-dir /path/to/images ...`
 - `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`

@@ -76,6 +76,68 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("torch_cross_entropy", proc.stdout)
         self.assertIn("torch_reduce_on_plateau", proc.stdout)
 
+    def test_export_rejects_invalid_topk(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+        dataset = repo_root / "data" / "smoke"
+
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "export",
+                "--backend",
+                "dummy",
+                "--dataset",
+                str(dataset),
+                "--split",
+                "val",
+                "--topk",
+                "0",
+                "--output",
+                "reports/_tmp_invalid_topk.json",
+                "--force",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("--topk must be >= 1", proc.stderr)
+
+    def test_export_rejects_negative_max_images(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+        dataset = repo_root / "data" / "smoke"
+
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "export",
+                "--backend",
+                "dummy",
+                "--dataset",
+                str(dataset),
+                "--split",
+                "val",
+                "--max-images",
+                "-1",
+                "--output",
+                "reports/_tmp_invalid_max_images.json",
+                "--force",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("--max-images must be >= 0", proc.stderr)
+
     def test_export_dummy_injects_run_meta(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
@@ -127,7 +189,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertIn("git", run)
             self.assertIn("env", run)
 
-    def test_export_executorch_missing_exporter_is_actionable(self):
+    def test_export_executorch_dry_run_succeeds(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
 
@@ -162,9 +224,13 @@ class TestYOLOZUCLI(unittest.TestCase):
                 check=False,
                 text=True,
             )
-            self.assertNotEqual(proc.returncode, 0)
-            self.assertIn("missing exporter script", proc.stderr)
-            self.assertIn("export_predictions_executorch.py", proc.stderr)
+            if proc.returncode != 0:
+                self.fail(f"yolozu export --backend executorch failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertIn("predictions", payload)
+            meta = payload.get("meta", {})
+            self.assertEqual(meta.get("adapter"), "executorch")
+            self.assertEqual((meta.get("extra") or {}).get("exporter"), "executorch")
 
     def test_export_cache_reuses_by_fingerprint(self):
         repo_root = Path(__file__).resolve().parents[1]

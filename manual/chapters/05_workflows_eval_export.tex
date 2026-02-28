@@ -104,6 +104,9 @@ Use real paths from \path{tools/yolozu.py export --help} for execution.
 # ONNXRuntime backend (input shape must match ONNX)
 python3 tools/yolozu.py export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --out reports/predictions.json
 
+# ExecuTorch backend (.pte model; dry-run available for contract checks)
+python3 tools/yolozu.py export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --out reports/pred_executorch.json --dry-run
+
 # OpenCV DNN unified backend (auto decode + preset preprocess + IO dump)
 python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --out reports/pred_opencv_dnn_unified.json --force
 

@@ -35,7 +35,7 @@ TTT(Test time training)による推論時の重み調整による継続的な学
   精度安定性や評価の信頼性を高めるための多様な手法を取り込める設計としている。
 
 
-推論バックエンド（PyTorch / ONNXRuntime / TensorRT / C++ / Rust など）は自由に選び、
+推論バックエンド（PyTorch / ONNXRuntime / TensorRT / ExecuTorch / C++ / Rust など）は自由に選び、
 **同一の `predictions.json` interface contract** に落として評価・比較できることを最重視します。
 
 対象:
