@@ -34,11 +34,32 @@ Optional flags:
 - Licenses are treated as part of the safety boundary. If a model license is not Apache-friendly, `yolozu fetch` requires `--allow-non-apache`.
 - Cached artifacts are stored under `~/.cache/yolozu/models` by default.
 - Each download writes `models/<model_id>/meta.json` containing:
-  - `source` (`hf_hub`, `github_release`, `official_url`)
+  - `source` (`hf_hub`, `github_release`, `official_url`, `mirror_urls`)
+  - `source_url_used` (actual URL used when multiple mirrors are configured)
   - `version`
   - `license`
   - `sha256`
   - `created_at`
+
+## Mirror fallback (`mirror_urls`)
+
+When a registry entry uses `source.type = "mirror_urls"`, `yolozu fetch` tries URLs in order and
+stops on the first successful download that passes SHA-256 verification.
+
+Minimal registry snippet:
+
+```json
+{
+  "id": "example-model",
+  "source": {
+    "type": "mirror_urls",
+    "urls": [
+      "https://mirror-a.example.com/model.bin",
+      "https://mirror-b.example.com/model.bin"
+    ]
+  }
+}
+```
 
 ## Registry priority policy
 

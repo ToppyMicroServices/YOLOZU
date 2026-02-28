@@ -53,6 +53,7 @@ class ModelSpec:
     family: str
     source_type: str
     source_url: str
+    source_urls: list[str]
     version: str
     license: str
     expected_sha256: str | None
@@ -83,27 +84,32 @@ def _is_apache_friendly_license(license_id: str) -> bool:
     return False
 
 
-def _source_url(source: dict[str, Any]) -> str:
+def _source_urls(source: dict[str, Any]) -> list[str]:
     source_type = str(source.get("type") or "").strip()
     if source_type in {"official_url", "url"}:
         url = str(source.get("url") or "").strip()
         if not url:
             raise ValueError("source.url is required for official_url")
-        return url
+        return [url]
+    if source_type == "mirror_urls":
+        urls = [str(v).strip() for v in (source.get("urls") or []) if str(v).strip()]
+        if not urls:
+            raise ValueError("mirror_urls requires non-empty source.urls")
+        return urls
     if source_type == "github_release":
         repo = str(source.get("repo") or "").strip()
         tag = str(source.get("tag") or "").strip()
         asset = str(source.get("asset") or "").strip()
         if not repo or not tag or not asset:
             raise ValueError("github_release requires source.repo, source.tag, source.asset")
-        return f"https://github.com/{repo}/releases/download/{tag}/{asset}"
+        return [f"https://github.com/{repo}/releases/download/{tag}/{asset}"]
     if source_type == "hf_hub":
         repo = str(source.get("repo") or "").strip()
         revision = str(source.get("revision") or "main").strip()
         path = str(source.get("path") or "").strip()
         if not repo or not path:
             raise ValueError("hf_hub requires source.repo and source.path")
-        return f"https://huggingface.co/{repo}/resolve/{revision}/{path}"
+        return [f"https://huggingface.co/{repo}/resolve/{revision}/{path}"]
     raise ValueError(f"unsupported source.type: {source_type}")
 
 
@@ -169,7 +175,8 @@ def resolve_model_spec(model_id: str, registry_path: str | Path | None = None) -
             continue
         source = dict(item.get("source") or {})
         source_type = str(source.get("type") or "")
-        url = _source_url(source)
+        urls = _source_urls(source)
+        url = urls[0]
         file_name = _source_asset_name(source, url)
         expected_sha = item.get("sha256")
         if isinstance(expected_sha, str) and expected_sha.strip():
@@ -182,6 +189,7 @@ def resolve_model_spec(model_id: str, registry_path: str | Path | None = None) -
             family=str(item.get("family") or "generic"),
             source_type=source_type,
             source_url=url,
+            source_urls=urls,
             version=str(item.get("version") or "unknown"),
             license=str(item.get("license") or "UNKNOWN"),
             expected_sha256=expected_sha,
@@ -288,11 +296,30 @@ def fetch_model(
     cached_path.parent.mkdir(parents=True, exist_ok=True)
 
     should_download = force or (not cached_path.exists())
+    source_url_used = spec.source_url
     if should_download:
         with tempfile.NamedTemporaryFile(prefix="yolozu_fetch_", suffix=".tmp", dir=str(cached_path.parent), delete=False) as tmp:
             tmp_path = Path(tmp.name)
         try:
-            _download_with_retry(url=spec.source_url, out_path=tmp_path, timeout=float(timeout), retries=int(retries))
+            last_exc: Exception | None = None
+            for candidate_url in spec.source_urls:
+                try:
+                    _download_with_retry(
+                        url=candidate_url,
+                        out_path=tmp_path,
+                        timeout=float(timeout),
+                        retries=int(retries),
+                    )
+                    source_url_used = candidate_url
+                    last_exc = None
+                    break
+                except Exception as exc:
+                    last_exc = exc
+                    continue
+            if last_exc is not None:
+                raise RuntimeError(
+                    f"failed to download model `{model_id}` from all candidate URLs"
+                ) from last_exc
             downloaded_sha = _sha256(tmp_path)
             if spec.expected_sha256 and downloaded_sha != spec.expected_sha256:
                 raise RuntimeError(
@@ -316,6 +343,7 @@ def fetch_model(
         "model_id": model_id,
         "source": spec.source_type,
         "source_url": spec.source_url,
+        "source_url_used": source_url_used,
         "version": spec.version,
         "license": spec.license,
         "sha256": cached_sha,

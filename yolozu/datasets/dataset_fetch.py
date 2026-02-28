@@ -178,6 +178,12 @@ def _extract_urls(source: dict[str, Any]) -> tuple[str, list[str]]:
             raise ValueError("source.url is required")
         return stype, [url]
 
+    if stype == "mirror_urls":
+        urls = [str(v).strip() for v in (source.get("urls") or []) if str(v).strip()]
+        if not urls:
+            raise ValueError("mirror_urls requires non-empty source.urls")
+        return stype, urls
+
     if stype == "hf_hub":
         repo = str(source.get("repo") or "").strip()
         revision = str(source.get("revision") or "main").strip()
@@ -337,7 +343,47 @@ def fetch_dataset(
 
     # -- download each URL --------------------------------------------------
     archive_paths: list[Path] = []
-    for idx, url in enumerate(spec.urls):
+    urls_to_fetch = spec.urls
+    if spec.source_type == "mirror_urls":
+        urls_to_fetch = []
+        last_exc: Exception | None = None
+        for candidate_url in spec.urls:
+            file_name = Path(candidate_url.split("?")[0]).name or "dataset_asset"
+            cached = cache_root / dataset_id / file_name
+            cached.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                if force or not cached.exists():
+                    with tempfile.NamedTemporaryFile(
+                        prefix="yolozu_ds_", suffix=".tmp",
+                        dir=str(cached.parent), delete=False,
+                    ) as tmp:
+                        tmp_path = Path(tmp.name)
+                    try:
+                        allow_http = _needs_http(candidate_url)
+                        _download_with_retry(
+                            url=candidate_url,
+                            out_path=tmp_path,
+                            timeout=timeout,
+                            retries=retries,
+                            allow_http=allow_http,
+                        )
+                        tmp_path.replace(cached)
+                    finally:
+                        if tmp_path.exists():
+                            tmp_path.unlink(missing_ok=True)
+                urls_to_fetch = [candidate_url]
+                archive_paths.append(cached)
+                last_exc = None
+                break
+            except Exception as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(
+                f"failed to fetch dataset `{dataset_id}` from all mirror_urls candidates"
+            ) from last_exc
+
+    for idx, url in enumerate(urls_to_fetch):
         file_name = Path(url.split("?")[0]).name
         if not file_name:
             file_name = f"part_{idx}"
@@ -397,7 +443,7 @@ def fetch_dataset(
         "num_classes": spec.num_classes,
         "splits": spec.splits,
         "source_type": spec.source_type,
-        "urls": spec.urls,
+        "urls": urls_to_fetch,
         "sha256": spec.expected_sha256,
         "effective_root": str(effective_root),
         "created_at": _utc_now(),
