@@ -8,6 +8,13 @@ Two usage modes:
 
 ## Key paths
 - `yolozu/`: pip-installable package (CLI + schemas + demos)
+  - `yolozu/core/`: foundational utilities (config, boxes, keypoints, image_keys, letterbox, resources)
+  - `yolozu/datasets/`: dataset adapters, registry, fetch, validation, migration (COCO, VOC, ADE20K, Cityscapes)
+  - `yolozu/eval/`: evaluation metrics (COCO AP, keypoints, segmentation, long-tail, continual, pose)
+  - `yolozu/predictions/`: predictions I/O, schema governance, transforms, parity checks
+  - `yolozu/inference/`: model adapters, inference engine, pipeline, ONNX export, model fetch
+  - `yolozu/geometry/`: 3-D geometry, camera intrinsics, constraints, template verification
+  - `yolozu/training/`: training helpers (distillation, gates, replay buffer, SDFT, continual regularizers)
 - `docs/`: user-facing docs (protocols, pipelines, recipes)
 - `tests/`: unit/integration tests (CPU-friendly by default; GPU optional)
 - `tools/`: repo-only scripts (exporters, suites, benchmarks, smoke runs)
