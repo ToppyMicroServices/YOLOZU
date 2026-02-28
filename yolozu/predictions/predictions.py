@@ -24,8 +24,8 @@ __all__ = [
     "load_predictions_index",
 ]
 
-from .image_keys import add_image_aliases, require_image_key
-from .keypoints import normalize_keypoints
+from yolozu.core.image_keys import add_image_aliases, require_image_key
+from yolozu.core.keypoints import normalize_keypoints
 from .schema_governance import validate_payload_schema_version
 
 

@@ -7,7 +7,7 @@ try:
 except ImportError:  # pragma: no cover
     torch = None
 
-from yolozu.sdft import (
+from yolozu.training.sdft import (
     POSE_KEYS,
     KEYPOINTS_KEYS,
     DEPTH_KEYS,

@@ -1,8 +1,35 @@
+"""Cityscapes dataset adapter (semantic segmentation).
+
+Supports the standard Cityscapes directory layout::
+
+    <root>/
+        leftImg8bit/
+            train/ val/ test/
+                <city>/
+                    <city>_000000_000000_leftImg8bit.png
+        gtFine/
+            train/ val/ test/
+                <city>/
+                    <city>_000000_000000_gtFine_labelTrainIds.png
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Any, Iterable, Iterator
+
+from .registry import DatasetInfo, DatasetSample, register_adapter
+
+__all__ = [
+    "CITYSCAPES_TRAIN_CLASSES_19",
+    "CITYSCAPES_IGNORE_INDEX",
+    "CityscapesPaths",
+    "CityscapesSample",
+    "resolve_cityscapes_paths",
+    "iter_cityscapes_samples",
+    "CityscapesAdapter",
+]
 
 
 CITYSCAPES_TRAIN_CLASSES_19: list[str] = [
@@ -136,3 +163,57 @@ def iter_cityscapes_samples(
             sample_id=sample_id,
         )
 
+
+# ---------------------------------------------------------------------------
+# Adapter class (registered in the global registry)
+# ---------------------------------------------------------------------------
+
+class CityscapesAdapter:
+    """Cityscapes dataset adapter for the unified registry."""
+
+    format_name = "cityscapes"
+
+    def probe(self, root: Path) -> DatasetInfo | None:
+        """Return ``DatasetInfo`` if *root* has a Cityscapes layout, else ``None``."""
+        try:
+            paths = resolve_cityscapes_paths(root)
+        except ValueError:
+            return None
+
+        splits: list[str] = []
+        for name in ("train", "val", "test"):
+            if (paths.images_root / name).is_dir():
+                splits.append(name)
+
+        if not splits:
+            return None
+
+        return DatasetInfo(
+            format_name=self.format_name,
+            root=paths.images_root.parent,
+            splits=splits,
+            task="segmentation",
+            num_classes=19,
+            class_names=CITYSCAPES_TRAIN_CLASSES_19,
+        )
+
+    def iter_samples(
+        self,
+        root: Path,
+        *,
+        split: str = "train",
+        **kwargs: Any,
+    ) -> Iterator[DatasetSample]:
+        """Yield ``DatasetSample`` wrapping Cityscapes segmentation pairs."""
+        for cs in iter_cityscapes_samples(root, split=split, **kwargs):
+            yield DatasetSample(
+                image_path=cs.image_path,
+                split=cs.split,
+                sample_id=cs.sample_id,
+                mask_path=cs.mask_path,
+                extra={"city": cs.city},
+            )
+
+
+# Auto-register on import.
+register_adapter(CityscapesAdapter())

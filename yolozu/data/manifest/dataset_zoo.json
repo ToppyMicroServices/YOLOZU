@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "datasets": [
+    {
+      "id": "coco128",
+      "summary": "First 128 images of COCO val2017 with YOLO-format labels. Ideal for smoke tests.",
+      "format": "yolo",
+      "task": "detection",
+      "license": "CC-BY-4.0",
+      "num_classes": 80,
+      "source": {
+        "type": "github_release",
+        "repo": "ultralytics/assets",
+        "tag": "v0.0.0",
+        "asset": "coco128.zip"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "zip",
+        "strip_components": 0
+      },
+      "splits": ["train"],
+      "tags": ["smoke", "coco", "detection"]
+    },
+    {
+      "id": "coco-val2017",
+      "summary": "COCO 2017 validation set (5 000 images, 80 classes).",
+      "format": "coco_instances",
+      "task": "detection",
+      "license": "CC-BY-4.0",
+      "num_classes": 80,
+      "source": {
+        "type": "multi",
+        "parts": [
+          {
+            "name": "images",
+            "url": "http://images.cocodataset.org/zips/val2017.zip",
+            "sha256": null
+          },
+          {
+            "name": "annotations",
+            "url": "http://images.cocodataset.org/annotations/annotations_trainval2017.zip",
+            "sha256": null
+          }
+        ]
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "zip",
+        "strip_components": 0,
+        "annotations_json": "annotations/instances_val2017.json",
+        "images_dir": "val2017"
+      },
+      "splits": ["val"],
+      "tags": ["benchmark", "coco", "detection", "segmentation"]
+    },
+    {
+      "id": "coco-train2017",
+      "summary": "COCO 2017 training set (118 287 images, 80 classes).",
+      "format": "coco_instances",
+      "task": "detection",
+      "license": "CC-BY-4.0",
+      "num_classes": 80,
+      "source": {
+        "type": "multi",
+        "parts": [
+          {
+            "name": "images",
+            "url": "http://images.cocodataset.org/zips/train2017.zip",
+            "sha256": null
+          },
+          {
+            "name": "annotations",
+            "url": "http://images.cocodataset.org/annotations/annotations_trainval2017.zip",
+            "sha256": null
+          }
+        ]
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "zip",
+        "strip_components": 0,
+        "annotations_json": "annotations/instances_train2017.json",
+        "images_dir": "train2017"
+      },
+      "splits": ["train"],
+      "tags": ["training", "coco", "detection", "segmentation"]
+    },
+    {
+      "id": "voc2012",
+      "summary": "Pascal VOC 2012 trainval (detection + segmentation, 20 classes).",
+      "format": "pascal_voc",
+      "task": "multi",
+      "license": "custom-academic",
+      "num_classes": 20,
+      "source": {
+        "type": "official_url",
+        "url": "http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "tar",
+        "strip_components": 0,
+        "root_subdir": "VOCdevkit/VOC2012"
+      },
+      "splits": ["train", "val", "trainval"],
+      "tags": ["benchmark", "voc", "detection", "segmentation"]
+    },
+    {
+      "id": "voc2007",
+      "summary": "Pascal VOC 2007 trainval+test (detection + segmentation, 20 classes).",
+      "format": "pascal_voc",
+      "task": "multi",
+      "license": "custom-academic",
+      "num_classes": 20,
+      "source": {
+        "type": "multi",
+        "parts": [
+          {
+            "name": "trainval",
+            "url": "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar",
+            "sha256": null
+          },
+          {
+            "name": "test",
+            "url": "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar",
+            "sha256": null
+          }
+        ]
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "tar",
+        "strip_components": 0,
+        "root_subdir": "VOCdevkit/VOC2007"
+      },
+      "splits": ["train", "val", "trainval", "test"],
+      "tags": ["benchmark", "voc", "detection", "segmentation"]
+    },
+    {
+      "id": "ade20k",
+      "summary": "ADE20K (MIT Scene Parsing Benchmark, 150 semantic classes).",
+      "format": "ade20k",
+      "task": "segmentation",
+      "license": "BSD-3-Clause",
+      "num_classes": 150,
+      "source": {
+        "type": "official_url",
+        "url": "http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "zip",
+        "strip_components": 0,
+        "root_subdir": "ADEChallengeData2016"
+      },
+      "splits": ["train", "val"],
+      "tags": ["benchmark", "segmentation", "scene-parsing"]
+    },
+    {
+      "id": "cityscapes",
+      "summary": "Cityscapes fine annotations (19 classes, urban driving). Requires manual download.",
+      "format": "cityscapes",
+      "task": "segmentation",
+      "license": "custom-academic",
+      "num_classes": 19,
+      "source": {
+        "type": "manual",
+        "instructions": "Register at https://www.cityscapes-dataset.com/ and download leftImg8bit_trainvaltest.zip + gtFine_trainvaltest.zip"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "manual"
+      },
+      "splits": ["train", "val", "test"],
+      "tags": ["benchmark", "segmentation", "driving", "manual-download"]
+    },
+    {
+      "id": "objects365-val-tiny",
+      "summary": "Objects365 validation subset (first 5 000 images). Large-scale detection benchmark.",
+      "format": "coco_instances",
+      "task": "detection",
+      "license": "CC-BY-NC-SA-4.0",
+      "num_classes": 365,
+      "source": {
+        "type": "official_url",
+        "url": "https://dorc.ks3-cn-beijing.ksyuncs.com/data-set/2020Objects365%E6%95%B0%E6%8D%AE%E9%9B%86/val/zhiyuan_objv2_val.json"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "json",
+        "annotations_json": "zhiyuan_objv2_val.json"
+      },
+      "splits": ["val"],
+      "tags": ["benchmark", "detection", "large-scale"]
+    },
+    {
+      "id": "lvis-val-v1",
+      "summary": "LVIS v1.0 validation annotations (uses COCO 2017 images, 1 203 classes).",
+      "format": "coco_instances",
+      "task": "detection",
+      "license": "CC-BY-4.0",
+      "num_classes": 1203,
+      "source": {
+        "type": "official_url",
+        "url": "https://dl.fbaipublicfiles.com/LVIS/lvis_v1_val.json.zip"
+      },
+      "sha256": null,
+      "post_extract": {
+        "layout": "zip",
+        "strip_components": 0,
+        "annotations_json": "lvis_v1_val.json",
+        "images_dir": null,
+        "note": "Reuses coco-val2017 images. Fetch coco-val2017 first."
+      },
+      "splits": ["val"],
+      "tags": ["benchmark", "detection", "long-tail", "lvis"]
+    }
+  ]
+}

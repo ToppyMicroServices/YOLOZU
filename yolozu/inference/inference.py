@@ -11,8 +11,8 @@ from typing import Any, Iterable
 
 __all__ = ["infer_constraints"]
 
-from .constraints import apply_constraints
-from .geometry import corrected_intrinsics, recover_translation
+from yolozu.geometry.constraints import apply_constraints
+from yolozu.geometry.geometry import corrected_intrinsics, recover_translation
 
 
 def _image_size(entry: dict[str, Any]) -> tuple[float | None, float | None]:

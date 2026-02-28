@@ -1,8 +1,33 @@
+"""ADE20K dataset adapter (semantic segmentation).
+
+Supports the standard ADE20K Challenge layout::
+
+    <root>/
+        ADEChallengeData2016/
+            images/
+                training/ validation/
+            annotations/
+                training/ validation/
+            objectInfo150.txt
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
+
+from .registry import DatasetInfo, DatasetSample, register_adapter
+
+__all__ = [
+    "ADE20K_IGNORE_INDEX",
+    "ADE20KPaths",
+    "ADE20KSample",
+    "resolve_ade20k_paths",
+    "iter_ade20k_samples",
+    "load_ade20k_classes",
+    "ADE20KAdapter",
+]
 
 
 ADE20K_IGNORE_INDEX: int = 255
@@ -157,3 +182,59 @@ def load_ade20k_classes(root: str | Path) -> list[str] | None:
         return ordered
     return ["background", *ordered]
 
+
+# ---------------------------------------------------------------------------
+# Adapter class (registered in the global registry)
+# ---------------------------------------------------------------------------
+
+class ADE20KAdapter:
+    """ADE20K dataset adapter for the unified registry."""
+
+    format_name = "ade20k"
+
+    def probe(self, root: Path) -> DatasetInfo | None:
+        """Return ``DatasetInfo`` if *root* has an ADE20K layout, else ``None``."""
+        try:
+            paths = resolve_ade20k_paths(root)
+        except ValueError:
+            return None
+
+        splits: list[str] = []
+        for alias, src_name in (("train", "training"), ("val", "validation"), ("test", "test")):
+            if (paths.images_root / src_name).is_dir():
+                splits.append(alias)
+
+        if not splits:
+            return None
+
+        class_names = load_ade20k_classes(paths.root)
+        num_classes = (len(class_names) - 1) if class_names else 150  # minus background
+
+        return DatasetInfo(
+            format_name=self.format_name,
+            root=paths.root,
+            splits=splits,
+            task="segmentation",
+            num_classes=num_classes,
+            class_names=class_names,
+        )
+
+    def iter_samples(
+        self,
+        root: Path,
+        *,
+        split: str = "train",
+        **kwargs: Any,
+    ) -> Iterator[DatasetSample]:
+        """Yield ``DatasetSample`` wrapping ADE20K segmentation pairs."""
+        for ade in iter_ade20k_samples(root, split=split, **kwargs):
+            yield DatasetSample(
+                image_path=ade.image_path,
+                split=ade.split,
+                sample_id=ade.sample_id,
+                mask_path=ade.mask_path,
+            )
+
+
+# Auto-register on import.
+register_adapter(ADE20KAdapter())
