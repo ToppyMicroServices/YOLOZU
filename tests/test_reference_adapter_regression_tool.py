@@ -24,7 +24,7 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
 
             common = [
                 "--dataset",
-                "data/real_multitask_fewshot",
+                "data/smoke",
                 "--split",
                 "val",
                 "--max-images",

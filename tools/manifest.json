@@ -9202,7 +9202,7 @@
           {
             "description": "Default baseline path used by the reference adapter regression flow.",
             "kind": "file",
-            "path": "baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json",
+            "path": "baselines/reference_adapter/rtdetr_pose_smoke_val.json",
             "scope": "path"
           }
         ],
@@ -9224,18 +9224,18 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
           "description": "Run schema/consistency/metric/speed regression gates for the RT-DETR reference adapter."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
           "description": "Refresh the pinned baseline after an intentional adapter/output contract change."
         }
       ],
       "id": "run_reference_adapter_regression",
       "inputs": [
         {
-          "default": "data/real_multitask_fewshot",
+          "default": "data/smoke",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
@@ -9256,7 +9256,7 @@
           "required": false
         },
         {
-          "default": "baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json",
+          "default": "baselines/reference_adapter/rtdetr_pose_smoke_val.json",
           "flag": "--baseline",
           "kind": "file",
           "name": "baseline",

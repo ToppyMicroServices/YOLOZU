@@ -14,24 +14,24 @@
   "baseline": {
     "contract": {
       "prediction_images": [
-        "images/val/000000468577.jpg",
-        "images/val/000000512194.jpg"
+        "images/val/000000000009.jpg",
+        "images/val/000000000025.jpg"
       ],
-      "prediction_images_sha256": "108be85ec52b562043f6a27252f59cce64c4194f58e2d390cf721eade1d2ef1c",
+      "prediction_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c",
       "record_images": [
-        "images/val/000000468577.jpg",
-        "images/val/000000512194.jpg"
+        "images/val/000000000009.jpg",
+        "images/val/000000000025.jpg"
       ],
-      "record_images_sha256": "108be85ec52b562043f6a27252f59cce64c4194f58e2d390cf721eade1d2ef1c"
+      "record_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c"
     },
-    "predictions_sha256": "dab9c9a221375c89f8b081880ce53bfa3205b2b8a3a49924b152411ab10a889f",
+    "predictions_sha256": "a8f79f56477b28252fb4fe03ebfa73a078f72e47acab5e8be735e3c543de5cbe",
     "speed": {
-      "fps": 1.606205,
+      "fps": 1.894672,
       "images": 2,
-      "seconds": 1.245171
+      "seconds": 1.055592
     },
     "summary": {
-      "bbox_checksum": 94.824465,
+      "bbox_checksum": 94.824458,
       "class_hist": {
         "18": 2,
         "2": 2,
@@ -53,10 +53,10 @@
   },
   "dataset": {
     "max_images": 2,
-    "path": "data/real_multitask_fewshot",
+    "path": "data/smoke",
     "split": "val"
   },
-  "generated_utc": "2026-02-28T14:25:28Z",
+  "generated_utc": "2026-02-28T14:33:50Z",
   "reference_adapter": "rtdetr_pose",
   "schema_version": 1,
   "thresholds": {

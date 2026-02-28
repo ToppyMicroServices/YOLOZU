@@ -23,8 +23,8 @@ from yolozu.core.cli_args import (
 from yolozu.dataset import build_manifest
 from yolozu.predictions import validate_predictions_entries
 
-DEFAULT_BASELINE = "baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json"
-DEFAULT_DATASET = "data/real_multitask_fewshot"
+DEFAULT_BASELINE = "baselines/reference_adapter/rtdetr_pose_smoke_val.json"
+DEFAULT_DATASET = "data/smoke"
 DEFAULT_SPLIT = "val"
 
 

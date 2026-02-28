@@ -111,7 +111,7 @@ python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multi
 Reference adapter regression (RT-DETR, real-image baseline):
 
 ```bash
-python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json
+python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json
 ```
 
 ## Source checkout (repo users)

@@ -55,7 +55,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 ## Evaluation helpers
 
 - Reference adapter regression gate (real-image baseline; schema/consistency/metric/speed):
-  - `python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json`
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
 - External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).

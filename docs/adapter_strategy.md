@@ -33,10 +33,10 @@ Reference regression command:
 
 ```bash
 python3 tools/run_reference_adapter_regression.py \
-  --dataset data/real_multitask_fewshot \
+  --dataset data/smoke \
   --split val \
   --max-images 2 \
-  --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression.json
 ```
 
