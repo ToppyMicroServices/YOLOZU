@@ -215,6 +215,8 @@ python3 tools/yolozu.py export \
 ### 最短（ソースチェックアウト）
 ```bash
 python3 -m pip install -r requirements-test.txt
+# 任意: CI推奨tier（固定依存）をローカル再現
+python3 -m pip install -r requirements-ci.lock
 python3 rtdetr_pose/tools/train_minimal.py \
   --dataset-root data/smoke \
   --config rtdetr_pose/configs/base.json \
@@ -317,11 +319,12 @@ python3 tools/run_reference_adapter_regression.py \
   --split val \
   --max-images 2 \
   --repro-policy relaxed \
+  --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression.json
 ```
 
-Contractのみ（hard gate）:
+interface contractのみ（hard gate）:
 
 ```bash
 python3 tools/run_reference_adapter_regression.py \
@@ -330,6 +333,9 @@ python3 tools/run_reference_adapter_regression.py \
   --max-images 2 \
   --score-gate-mode off \
   --perf-gate-mode off \
+  --runtime-lock requirements-ci.lock \
+  --enforce-runtime-lock \
+  --enforce-weights-hash \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression_contract.json
 ```
@@ -345,6 +351,8 @@ python3 tools/run_reference_adapter_regression.py \
   --consistency-gate-mode off \
   --score-gate-mode warn \
   --perf-gate-mode warn \
+  --runtime-lock requirements-ci.lock \
+  --enforce-runtime-lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression_behavior.json
 ```
@@ -356,6 +364,7 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --write-baseline \
   --output reports/reference_adapter_regression_baseline_write.json

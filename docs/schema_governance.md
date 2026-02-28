@@ -21,6 +21,8 @@ Current version:
 
 - `current_schema_version = 1`
 - `minimum_supported_schema_version = 1`
+- `current_entry_schema_version = 2`
+- `minimum_supported_entry_schema_version = 1`
 
 ## Lifecycle rules
 
@@ -40,13 +42,16 @@ Current version:
 - `schema_version` missing in wrapped payload:
   - accepted for backward compatibility
   - validator emits warning and treats payload as legacy mode
+- entry-level `schema_version` missing:
+  - treated as legacy entry v1
+  - canonicalization migrates to entry v2
 
 ## Breaking-change process (checklist)
 
 When proposing a schema-breaking change:
 
 1. Open an RFC issue describing:
-   - old vs new contract
+   - old vs new interface contract
    - expected migration cost
    - affected tools/adapters/protocols
 2. Add/update migration utility for old artifacts.
@@ -77,8 +82,9 @@ CI includes a schema compatibility gate that asserts:
 
 - v1 wrapped payloads pass validation
 - v2 wrapped payloads fail while current is v1
+- entry v1 payloads are migrated to entry v2 during canonicalization/load paths
 
-This prevents silent schema drift and guarantees contract-first behavior.
+This prevents silent schema drift and guarantees interface-contract-first behavior.
 
 In addition, golden compatibility assets are versioned under `baselines/golden/` and validated by:
 

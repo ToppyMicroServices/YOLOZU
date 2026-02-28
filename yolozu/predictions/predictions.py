@@ -31,6 +31,9 @@ from yolozu.core.image_keys import add_image_aliases, require_image_key
 from yolozu.core.keypoints import normalize_keypoints
 from .schema_governance import validate_payload_schema_version
 
+CURRENT_ENTRY_SCHEMA_VERSION = 2
+MIN_SUPPORTED_ENTRY_SCHEMA_VERSION = 1
+
 
 @dataclass(frozen=True)
 class ValidationResult:
@@ -139,6 +142,7 @@ def _validate_detection(det: Any, *, strict: bool, where: str) -> list[str]:
 
 _ENTRY_ALLOWED_KEYS = frozenset(
     {
+        "schema_version",
         "image",
         "detections",
         "image_size",
@@ -199,6 +203,45 @@ def _stable_detection_sort_key(det: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
+def _coerce_entry_schema_version(
+    entry: dict[str, Any],
+    *,
+    where: str,
+    warnings: list[str],
+) -> tuple[int, dict[str, Any]]:
+    raw = entry.get("schema_version")
+    if raw is None:
+        migrated = dict(entry)
+        migrated["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
+        warnings.append(
+            f"{where}.schema_version: missing; assumed v{MIN_SUPPORTED_ENTRY_SCHEMA_VERSION} and migrated to v{CURRENT_ENTRY_SCHEMA_VERSION}"
+        )
+        return CURRENT_ENTRY_SCHEMA_VERSION, migrated
+
+    if not isinstance(raw, int) or isinstance(raw, bool):
+        raise ValueError(f"{where}.schema_version: must be int")
+    if raw < MIN_SUPPORTED_ENTRY_SCHEMA_VERSION:
+        raise ValueError(
+            f"{where}.schema_version: {raw} is older than minimum supported {MIN_SUPPORTED_ENTRY_SCHEMA_VERSION}"
+        )
+    if raw > CURRENT_ENTRY_SCHEMA_VERSION:
+        raise ValueError(
+            f"{where}.schema_version: {raw} is newer than supported {CURRENT_ENTRY_SCHEMA_VERSION}"
+        )
+
+    if raw == CURRENT_ENTRY_SCHEMA_VERSION:
+        return raw, dict(entry)
+
+    # One-generation migration policy: v1 -> v2.
+    if raw == 1 and CURRENT_ENTRY_SCHEMA_VERSION == 2:
+        migrated = dict(entry)
+        migrated["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
+        warnings.append(f"{where}.schema_version: migrated entry schema from v1 to v2")
+        return CURRENT_ENTRY_SCHEMA_VERSION, migrated
+
+    raise ValueError(f"{where}.schema_version: no migration path from v{raw} to v{CURRENT_ENTRY_SCHEMA_VERSION}")
+
+
 def _range_fix(
     value: float,
     *,
@@ -254,20 +297,22 @@ def canonicalize_predictions(
         if not isinstance(entry, dict):
             raise ValueError(f"{where}: entry must be an object")
 
+        _, migrated_entry = _coerce_entry_schema_version(entry, where=where, warnings=warnings)
+
         _validate_unknown_keys(
-            set(entry.keys()),
+            set(migrated_entry.keys()),
             allowed=_ENTRY_ALLOWED_KEYS,
             where=where,
             policy=unknown_mode,
             warnings=warnings,
         )
 
-        image = require_image_key(entry.get("image"), where=f"{where}.image")
+        image = require_image_key(migrated_entry.get("image"), where=f"{where}.image")
         if image in seen_images:
             raise ValueError(f"{where}.image: duplicate image entry '{image}'")
         seen_images.add(image)
 
-        dets = entry.get("detections")
+        dets = migrated_entry.get("detections")
         if dets is None:
             dets = []
         if not isinstance(dets, list):
@@ -385,7 +430,8 @@ def canonicalize_predictions(
             dets_out.append(det_out)
 
         dets_out.sort(key=_stable_detection_sort_key)
-        entry_out = dict(entry)
+        entry_out = dict(migrated_entry)
+        entry_out["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
         entry_out["image"] = image
         entry_out["detections"] = dets_out
         out.append(entry_out)

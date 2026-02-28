@@ -4,7 +4,7 @@ This page defines the test philosophy for `tools/run_reference_adapter_regressio
 
 ## Invariants
 
-### Hard invariants (contract)
+### Hard invariants (interface contract)
 
 - `predictions` interface contract schema is valid.
 - Image keys are canonicalized and record/prediction mapping is preserved.
@@ -36,13 +36,28 @@ Every run writes reproducibility metadata (`run_meta`) including:
 - config/checkpoint/weights hash
 - dataset hash
 - git SHA
+- runtime lock metadata (`runtime_lock_sha256`, `runtime_lock_versions`)
+
+CI hard mode should use `--runtime-lock ... --enforce-runtime-lock`.
+When strict parity is required, enable `--enforce-weights-hash`.
+
+## Failure Codes
+
+Regression failures emit grep-friendly codes:
+
+- `E_SCHEMA_*` (schema/validation)
+- `E_CANON_*` (canonicalization/consistency)
+- `E_SCORE_*` (metric drift)
+- `E_PERF_*` (performance drift)
+
+Reports also include `failure_records` with `{gate, mode, code, message}` and gate-level minimal counterexamples.
 
 ## Baseline lifecycle
 
 `baselines/reference_adapter/rtdetr_pose_smoke_val.json` stores not only results but also:
 
 - gate policy
-- protocol contract
+- protocol interface contract
 - baseline metadata (`baseline_meta`)
 
 Baseline updates must be intentional and reviewed in PR.

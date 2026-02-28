@@ -36,6 +36,7 @@ GATE_SCHEMA = "schema_drift"
 GATE_CONSISTENCY = "consistency_drift"
 GATE_METRIC = "metric_drift"
 GATE_SPEED = "speed_drift"
+RUNTIME_LOCK_KEYS = ("torch", "onnxruntime")
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -58,6 +59,21 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--write-baseline",
         action="store_true",
         help="Write/update baseline JSON from current run instead of comparing.",
+    )
+    p.add_argument(
+        "--runtime-lock",
+        default="requirements-ci.lock",
+        help="Pinned runtime lock file used for CI/runtime reproducibility checks.",
+    )
+    p.add_argument(
+        "--enforce-runtime-lock",
+        action="store_true",
+        help="Fail if run-time torch/onnxruntime versions differ from --runtime-lock pins.",
+    )
+    p.add_argument(
+        "--enforce-weights-hash",
+        action="store_true",
+        help="Fail consistency gate if baseline/current weights_hash differ (even checkpoint-free).",
     )
 
     p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="RT-DETR config path.")
@@ -189,6 +205,30 @@ def _sha256_file(path: Path) -> str:
                 break
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _normalize_pkg_name(name: str) -> str:
+    return name.strip().lower().replace("_", "-")
+
+
+def _parse_runtime_lock(path: Path) -> dict[str, str]:
+    pins: dict[str, str] = {}
+    if not path.exists():
+        return pins
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("-"):
+            continue
+        base = line.split(";", 1)[0].strip()
+        if "==" not in base:
+            continue
+        name, version = base.split("==", 1)
+        key = _normalize_pkg_name(name)
+        if key in RUNTIME_LOCK_KEYS:
+            pins[key] = version.strip()
+    return pins
 
 
 def _hash_list(items: list[str]) -> str:
@@ -587,6 +627,7 @@ def _collect_run_meta(
     dataset_fingerprint: dict[str, Any],
     repro_details: dict[str, Any],
     canonicalization: dict[str, Any],
+    runtime_lock: dict[str, Any],
 ) -> dict[str, Any]:
     model_dtype: str | None = None
     model_state_hash: str | None = None
@@ -644,6 +685,9 @@ def _collect_run_meta(
         "dataset_missing": list(dataset_fingerprint.get("missing") or []),
         "canonical_decimals": int(canonicalization.get("canonical_decimals", 6)),
         "bbox_format": str(canonicalization.get("bbox_format", "cxcywh_norm")),
+        "runtime_lock_path": runtime_lock.get("path"),
+        "runtime_lock_sha256": runtime_lock.get("sha256"),
+        "runtime_lock_versions": dict(runtime_lock.get("versions") or {}),
     }
 
 
@@ -708,6 +752,31 @@ def _new_gate(*, mode: str, category: str) -> dict[str, Any]:
     }
 
 
+def _failure_code(gate_key: str, message: str) -> str:
+    text = str(message).lower()
+    if gate_key == GATE_SCHEMA:
+        if "unknown keys" in text:
+            return "E_SCHEMA_UNKNOWN_KEYS"
+        if "missing" in text:
+            return "E_SCHEMA_MISSING_FIELD"
+        return "E_SCHEMA_VALIDATION"
+    if gate_key == GATE_CONSISTENCY:
+        if "runtime lock" in text:
+            return "E_CANON_RUNTIME_LOCK"
+        if "weights_hash mismatch" in text:
+            return "E_CANON_WEIGHTS_HASH"
+        if "image order mismatch" in text:
+            return "E_CANON_IMAGE_ORDER"
+        if "duplicate" in text:
+            return "E_CANON_DUPLICATE_IMAGE"
+        return "E_CANON_CONSISTENCY"
+    if gate_key == GATE_METRIC:
+        return "E_SCORE_DRIFT"
+    if gate_key == GATE_SPEED:
+        return "E_PERF_DRIFT"
+    return "E_UNKNOWN"
+
+
 def _append_gate_failure(
     *,
     gate_key: str,
@@ -715,13 +784,23 @@ def _append_gate_failure(
     gate_policy: dict[str, str],
     hard_failures: list[str],
     soft_failures: list[str],
+    failure_records: list[dict[str, Any]],
 ) -> None:
     mode = str(gate_policy.get(gate_key, "hard"))
-    line = f"[{gate_key}] {message}"
+    code = _failure_code(gate_key, message)
+    line = f"[{gate_key}][{code}] {message}"
     if mode == "hard":
         hard_failures.append(line)
     elif mode == "warn":
         soft_failures.append(line)
+    failure_records.append(
+        {
+            "gate": gate_key,
+            "mode": mode,
+            "code": code,
+            "message": str(message),
+        }
+    )
 
 
 def _compare_against_baseline(
@@ -736,6 +815,10 @@ def _compare_against_baseline(
     consistency_errors: list[str],
     contract_errors: list[str],
     gate_policy: dict[str, str],
+    predictions: list[dict[str, Any]],
+    enforce_runtime_lock: bool,
+    enforce_weights_hash: bool,
+    failure_records: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[str], list[str]]:
     hard_failures: list[str] = []
     soft_failures: list[str] = []
@@ -771,6 +854,7 @@ def _compare_against_baseline(
                 gate_policy=gate_policy,
                 hard_failures=hard_failures,
                 soft_failures=soft_failures,
+                failure_records=failure_records,
             )
         for msg in schema_errors:
             schema_gate["ok"] = False
@@ -780,6 +864,7 @@ def _compare_against_baseline(
                 gate_policy=gate_policy,
                 hard_failures=hard_failures,
                 soft_failures=soft_failures,
+                failure_records=failure_records,
             )
     else:
         schema_gate["details"]["skipped"] = True
@@ -813,13 +898,54 @@ def _compare_against_baseline(
             if ref != cur:
                 consistency_mismatches.append(f"{key} mismatch: baseline={ref} current={cur}")
 
+        ref_lock_sha = baseline_meta.get("runtime_lock_sha256")
+        cur_lock_sha = run_meta.get("runtime_lock_sha256")
+        ref_lock_versions = dict(baseline_meta.get("runtime_lock_versions") or {})
+        cur_lock_versions = dict(run_meta.get("runtime_lock_versions") or {})
+
+        if bool(enforce_runtime_lock):
+            if not ref_lock_sha:
+                consistency_mismatches.append("runtime lock baseline missing runtime_lock_sha256")
+            elif not cur_lock_sha:
+                consistency_mismatches.append("runtime lock current run missing runtime_lock_sha256")
+            elif ref_lock_sha != cur_lock_sha:
+                consistency_mismatches.append(
+                    f"runtime lock sha mismatch: baseline={ref_lock_sha} current={cur_lock_sha}"
+                )
+
+            if not ref_lock_versions:
+                consistency_mismatches.append("runtime lock baseline missing runtime_lock_versions")
+            elif not cur_lock_versions:
+                consistency_mismatches.append("runtime lock current run missing runtime_lock_versions")
+            elif ref_lock_versions != cur_lock_versions:
+                consistency_mismatches.append(
+                    f"runtime lock versions mismatch: baseline={ref_lock_versions} current={cur_lock_versions}"
+                )
+        else:
+            if ref_lock_sha is not None and ref_lock_sha != cur_lock_sha:
+                consistency_mismatches.append(
+                    f"runtime_lock_sha256 mismatch: baseline={ref_lock_sha} current={cur_lock_sha}"
+                )
+            if ref_lock_versions and ref_lock_versions != cur_lock_versions:
+                consistency_mismatches.append(
+                    f"runtime_lock_versions mismatch: baseline={ref_lock_versions} current={cur_lock_versions}"
+                )
+
         ref_weights_hash = baseline_meta.get("weights_hash")
         cur_weights_hash = run_meta.get("weights_hash")
         ref_checkpoint_hash = baseline_meta.get("checkpoint_hash")
         cur_checkpoint_hash = run_meta.get("checkpoint_hash")
-        if ref_weights_hash is not None:
-            # Only enforce weights hash as a hard contract when both sides are checkpoint-backed.
-            # Checkpoint-free runs may vary across torch/python versions even with fixed seed.
+        if bool(enforce_weights_hash):
+            if not ref_weights_hash:
+                consistency_mismatches.append("weights_hash missing in baseline_meta")
+            elif not cur_weights_hash:
+                consistency_mismatches.append("weights_hash missing in run_meta")
+            elif ref_weights_hash != cur_weights_hash:
+                consistency_mismatches.append(
+                    f"weights_hash mismatch: baseline={ref_weights_hash} current={cur_weights_hash}"
+                )
+        elif ref_weights_hash is not None:
+            # Default mode: checkpoint-backed comparisons are hard, checkpoint-free are warnings.
             if ref_checkpoint_hash is not None and cur_checkpoint_hash is not None:
                 if ref_weights_hash != cur_weights_hash:
                     consistency_mismatches.append(
@@ -842,9 +968,35 @@ def _compare_against_baseline(
                     gate_policy=gate_policy,
                     hard_failures=hard_failures,
                     soft_failures=soft_failures,
+                    failure_records=failure_records,
                 )
     else:
         consistency_gate["details"]["skipped"] = True
+    if consistency_mismatches:
+        first_image = None
+        for key in ("prediction_images", "record_images"):
+            images = contract.get(key)
+            if isinstance(images, list) and images:
+                first_image = str(images[0])
+                break
+        excerpt: list[dict[str, Any]] = []
+        if predictions:
+            first = predictions[0]
+            for det in list(first.get("detections") or [])[:2]:
+                excerpt.append(
+                    {
+                        "class_id": det.get("class_id"),
+                        "score": det.get("score"),
+                        "bbox": det.get("bbox"),
+                    }
+                )
+            if first_image is None:
+                first_image = str(first.get("image"))
+        consistency_gate["details"]["first_counterexample"] = {
+            "image": first_image,
+            "detections_excerpt": excerpt,
+            "mismatch": consistency_mismatches[0],
+        }
     consistency_gate["details"]["mismatches"] = consistency_mismatches
     consistency_gate["details"]["warnings"] = consistency_warnings
 
@@ -879,8 +1031,33 @@ def _compare_against_baseline(
                     gate_policy=gate_policy,
                     hard_failures=hard_failures,
                     soft_failures=soft_failures,
+                    failure_records=failure_records,
                 )
-        metric_gate["details"] = {"metrics": metric_deltas}
+        class_hist_cur = summary.get("class_hist") or {}
+        class_hist_ref = baseline_summary.get("class_hist") or {}
+        class_delta_rows: list[dict[str, Any]] = []
+        for class_id in sorted(set(class_hist_cur.keys()) | set(class_hist_ref.keys()), key=lambda x: int(str(x))):
+            cur_v = int(class_hist_cur.get(class_id, 0))
+            ref_v = int(class_hist_ref.get(class_id, 0))
+            delta = cur_v - ref_v
+            if delta != 0:
+                class_delta_rows.append(
+                    {
+                        "class_id": int(class_id),
+                        "baseline": ref_v,
+                        "current": cur_v,
+                        "delta": delta,
+                        "abs_delta": abs(delta),
+                    }
+                )
+        class_delta_rows.sort(key=lambda row: int(row["abs_delta"]), reverse=True)
+
+        failing_metrics = [name for name, row in metric_deltas.items() if not bool(row.get("ok"))]
+        metric_gate["details"] = {
+            "metrics": metric_deltas,
+            "failed_metric_names": failing_metrics,
+            "class_hist_topk": class_delta_rows[:5],
+        }
 
     speed_gate = gates[GATE_SPEED]
     if str(speed_gate["mode"]) == "off":
@@ -893,12 +1070,23 @@ def _compare_against_baseline(
         required_fps = max(floor, baseline_fps * min_ratio)
         speed_ok = bool(current_fps >= required_fps)
         speed_gate["ok"] = speed_ok
+        ratio_vs_baseline = (current_fps / baseline_fps) if baseline_fps > 0 else None
         speed_gate["details"] = {
             "baseline_fps": baseline_fps,
             "current_fps": current_fps,
+            "ratio_vs_baseline": ratio_vs_baseline,
             "required_min_fps": required_fps,
             "min_fps_ratio": min_ratio,
             "absolute_floor_fps": floor,
+            "measurement": {
+                "mode": "single_shot",
+                "images": int(speed.get("images", 0)),
+                "seconds": float(speed.get("seconds", 0.0)),
+                "percentiles_fps": {
+                    "p50": current_fps,
+                    "p95": current_fps,
+                },
+            },
             "ok": speed_ok,
         }
         if not speed_ok:
@@ -911,6 +1099,7 @@ def _compare_against_baseline(
                 gate_policy=gate_policy,
                 hard_failures=hard_failures,
                 soft_failures=soft_failures,
+                failure_records=failure_records,
             )
 
     return gates, hard_failures, soft_failures
@@ -958,8 +1147,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     baseline_path = resolve_output_path(args.baseline, cwd=cwd)
     output_path = resolve_output_path(args.output, cwd=cwd)
+    runtime_lock_path = resolve_input_path(args.runtime_lock, cwd=cwd, repo_root=repo_root)
     _ensure_repo_write_target(baseline_path, flag_name="--baseline")
     _ensure_repo_write_target(output_path, flag_name="--output")
+    if args.enforce_runtime_lock and not runtime_lock_path.exists():
+        raise SystemExit(f"--runtime-lock not found: {runtime_lock_path}")
+
+    runtime_lock_meta = {
+        "path": _repo_relative_display(runtime_lock_path),
+        "sha256": (_sha256_file(runtime_lock_path) if runtime_lock_path.exists() else None),
+        "versions": _parse_runtime_lock(runtime_lock_path),
+    }
 
     image_size = _image_size(list(args.image_size))
     manifest = build_manifest(dataset_root, split=args.split)
@@ -1036,7 +1234,21 @@ def main(argv: list[str] | None = None) -> int:
         dataset_fingerprint=dataset_fingerprint,
         repro_details=repro_details,
         canonicalization=canonicalization,
+        runtime_lock=runtime_lock_meta,
     )
+    if bool(args.enforce_runtime_lock):
+        pinned_versions = dict(runtime_lock_meta.get("versions") or {})
+        for key in RUNTIME_LOCK_KEYS:
+            expected = pinned_versions.get(key)
+            if expected is None:
+                consistency_errors.append(f"runtime lock missing pin for package '{key}'")
+                continue
+            actual = (run_meta.get("versions") or {}).get(key)
+            if actual is None:
+                consistency_errors.append(f"runtime package '{key}' not installed (expected {expected})")
+                continue
+            if str(actual) != str(expected):
+                consistency_errors.append(f"runtime lock mismatch for {key}: expected={expected} actual={actual}")
 
     run_context = {
         "started_utc": started_utc,
@@ -1060,6 +1272,7 @@ def main(argv: list[str] | None = None) -> int:
 
     hard_failures: list[str] = []
     soft_failures: list[str] = []
+    failure_records: list[dict[str, Any]] = []
     gates: dict[str, Any]
     baseline_payload: dict[str, Any]
 
@@ -1104,6 +1317,7 @@ def main(argv: list[str] | None = None) -> int:
                     gate_policy=gate_policy,
                     hard_failures=hard_failures,
                     soft_failures=soft_failures,
+                    failure_records=failure_records,
                 )
             for msg in schema_errors:
                 gates[GATE_SCHEMA]["ok"] = False
@@ -1113,6 +1327,7 @@ def main(argv: list[str] | None = None) -> int:
                     gate_policy=gate_policy,
                     hard_failures=hard_failures,
                     soft_failures=soft_failures,
+                    failure_records=failure_records,
                 )
         else:
             gates[GATE_SCHEMA]["details"] = {"skipped": True, "mode": "baseline_write"}
@@ -1132,6 +1347,7 @@ def main(argv: list[str] | None = None) -> int:
                         gate_policy=gate_policy,
                         hard_failures=hard_failures,
                         soft_failures=soft_failures,
+                        failure_records=failure_records,
                     )
         else:
             gates[GATE_CONSISTENCY]["details"] = {"skipped": True, "mode": "baseline_write"}
@@ -1155,6 +1371,10 @@ def main(argv: list[str] | None = None) -> int:
             consistency_errors=consistency_errors,
             contract_errors=contract_errors,
             gate_policy=gate_policy,
+            predictions=predictions,
+            enforce_runtime_lock=bool(args.enforce_runtime_lock),
+            enforce_weights_hash=bool(args.enforce_weights_hash),
+            failure_records=failure_records,
         )
 
     report = {
@@ -1174,6 +1394,7 @@ def main(argv: list[str] | None = None) -> int:
         "failures": hard_failures,
         "hard_failures": hard_failures,
         "soft_failures": soft_failures,
+        "failure_records": failure_records,
         "warnings": soft_failures,
         "baseline_path": str(baseline_path),
     }

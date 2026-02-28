@@ -54,10 +54,10 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 ## Evaluation helpers
 
-- Reference adapter regression gate (real-image baseline; contract hard + behavior warn):
-  - full run: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
-  - contract-only hard gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
-  - behavior-only warn gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
+- Reference adapter regression gate (real-image baseline; interface contract hard + behavior warn):
+  - full run: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
+  - interface-contract-only hard gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
+  - behavior-only warn gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
   - policy docs: `docs/reference_adapter_regression_policy.md`
 - External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`

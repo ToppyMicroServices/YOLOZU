@@ -30,6 +30,20 @@ python3 -m pip install -e '.[demo]'
 
 Note: PyTorch wheels are platform-dependent. If `pip install 'yolozu[demo]'` fails, follow the official PyTorch install selector for your platform, then re-install `yolozu[demo]`.
 
+## CI dependency tiers
+
+YOLOZU CI uses three install tiers to reduce optional-extras combinatorial noise:
+
+- `core`: `pip install .` only (packaging + CLI smoke)
+- `recommended`: pinned lock install via `requirements-ci.lock` (interface contract/behavior regression gates)
+- `full`: GPU/backends (`tensorrt`, CUDA providers) in optional/nightly/manual workflows
+
+For deterministic CI reproduction, install the same lock file locally:
+
+```bash
+python3 -m pip install -r requirements-ci.lock
+```
+
 ## CPU demos (quick sanity checks)
 
 These demos are optional and intended as fast end-to-end smoke checks.
@@ -134,4 +148,3 @@ python3 -m pip install -e '.[demo]'
 python3 scripts/download_coco_instances_tiny.py  # optional: enables coco-instances background without long flags
 yolozu demo instance-seg
 ```
-

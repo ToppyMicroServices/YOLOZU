@@ -62,6 +62,12 @@
       "type": "object",
       "required": ["image"],
       "properties": {
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "description": "Entry-level schema version. Missing value is treated as legacy v1 and migrated to v2 by canonicalization."
+        },
         "image": { "type": "string" },
         "detections": {
           "type": "array",
@@ -93,4 +99,3 @@
     }
   }
 }
-

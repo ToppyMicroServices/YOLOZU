@@ -31,7 +31,12 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = ["PyYAML>=6.0", "numpy>=1.24", "Pillow>=10.0", "typing_extensions>=4.8; python_version < '3.11'"]
+dependencies = [
+  "PyYAML>=6.0",
+  "numpy>=1.24",
+  "Pillow>=10.0",
+  "typing_extensions>=4.8; python_version < '3.11'",
+]
 
 [project.urls]
 Homepage = "https://github.com/ToppyMicroServices/YOLOZU"
@@ -50,7 +55,14 @@ demo = [
   "safetensors>=0.4",
 ]
 onnxrt = ["onnx>=1.14", "onnxruntime>=1.17"]
-train = ["torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "safetensors>=0.4"]
+train = [
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "onnx>=1.14",
+  "onnxruntime>=1.17",
+  "onnxscript>=0.1",
+  "safetensors>=0.4",
+]
 coco = ["pycocotools>=2.0.7"]
 mcp = ["mcp>=1.0.0"]
 actions = ["fastapi>=0.110", "uvicorn>=0.30", "pydantic>=2.0"]
@@ -65,8 +77,23 @@ detectron2 = ["detectron2"]
 yolox = ["yolox"]
 
 # Local development / testing (optional)
-test = ["pytest>=7.0", "torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1"]
-dev = ["pytest>=7.0", "torch>=2.1", "torchvision>=0.16", "onnx>=1.14", "onnxruntime>=1.17", "onnxscript>=0.1", "ruff>=0.5"]
+test = [
+  "pytest>=7.0",
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "onnx>=1.14",
+  "onnxruntime>=1.17",
+  "onnxscript>=0.1",
+]
+dev = [
+  "pytest>=7.0",
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "onnx>=1.14",
+  "onnxruntime>=1.17",
+  "onnxscript>=0.1",
+  "ruff>=0.5",
+]
 
 # Everything in the docs install list (demo/onnxrt/train/coco/mcp/actions)
 full = [

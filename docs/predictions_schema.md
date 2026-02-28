@@ -1,14 +1,16 @@
-# Predictions JSON schema (v1)
+# Predictions JSON schema (entry v2)
 
-This document defines the stable Predictions JSON contract used by YOLOZU evaluation tools.
+This document defines the stable Predictions JSON interface contract used by YOLOZU evaluation tools.
 The goal is simple: run inference anywhere, then compare results fairly in one place.
 
 ## Versioning
 
-- `schema_version`: integer (current: `1`)
+- Wrapped payload `schema_version`: integer (current wrapper policy: `1`)
+- Entry-level `schema_version`: integer (current entry policy: `2`)
 - Backward-compatible additions are allowed (new optional fields)
 - Breaking changes require bumping `schema_version`
 - Lifecycle/migration policy: `docs/schema_governance.md`
+- Hard/Soft boundary: `docs/predictions_interface_contract_policy.md`
 
 ## Allowed top-level shapes
 
@@ -36,6 +38,7 @@ The goal is simple: run inference anywhere, then compare results fairly in one p
   "schema_version": 1,
   "predictions": [
     {
+      "schema_version": 2,
       "image": "path/or/name.jpg",
       "detections": [
         {
@@ -82,6 +85,12 @@ Recommendations:
 - Prefer basename-style keys for portability across machines/OS path separators
 - Keep basenames unique per evaluated split
 - Do not treat prediction file location as an implicit base path for `image`
+
+## Entry schema migration
+
+- Legacy entries without `schema_version` are treated as v1 and migrated to v2 during canonicalization.
+- Supported migration window is one generation: `v1 -> v2`.
+- Entries declaring unsupported future versions are rejected.
 
 ## Detection fields
 

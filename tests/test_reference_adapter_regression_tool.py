@@ -277,6 +277,172 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
                 msg=f"expected checkpoint-free weights warning, got: {warnings}",
             )
 
+    def test_contract_gate_enforces_weights_hash_when_flag_enabled(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+        self.assertTrue(script.is_file())
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            baseline_path = root / "baseline.json"
+            write_report = root / "write_report.json"
+            check_report = root / "check_report.json"
+
+            common = [
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--max-images",
+                "1",
+                "--device",
+                "cpu",
+                "--image-size",
+                "96",
+                "--score-threshold",
+                "0.05",
+                "--max-detections",
+                "10",
+                "--init-seed",
+                "2026",
+                "--score-gate-mode",
+                "off",
+                "--perf-gate-mode",
+                "off",
+                "--baseline",
+                str(baseline_path.relative_to(repo_root)),
+            ]
+
+            write_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--output",
+                str(write_report.relative_to(repo_root)),
+                "--write-baseline",
+            ]
+            write_proc = self._run(write_cmd, cwd=repo_root)
+            if write_proc.returncode != 0:
+                self.fail(
+                    "baseline write failed:\n"
+                    f"STDOUT:\n{write_proc.stdout}\nSTDERR:\n{write_proc.stderr}"
+                )
+
+            baseline_payload = json.loads(baseline_path.read_text(encoding="utf-8"))
+            baseline_meta = baseline_payload.get("baseline_meta") or {}
+            baseline_meta["weights_hash"] = "deadbeef"
+            baseline_payload["baseline_meta"] = baseline_meta
+            baseline_path.write_text(json.dumps(baseline_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            check_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--enforce-weights-hash",
+                "--output",
+                str(check_report.relative_to(repo_root)),
+            ]
+            check_proc = self._run(check_cmd, cwd=repo_root)
+            self.assertNotEqual(
+                check_proc.returncode,
+                0,
+                msg=(
+                    "enforced weights_hash mismatch must fail hard gate:\n"
+                    f"STDOUT:\n{check_proc.stdout}\nSTDERR:\n{check_proc.stderr}"
+                ),
+            )
+
+            payload = json.loads(check_report.read_text(encoding="utf-8"))
+            hard_failures = payload.get("hard_failures") or []
+            self.assertTrue(any("E_CANON_WEIGHTS_HASH" in str(item) for item in hard_failures))
+
+    def test_contract_gate_enforces_runtime_lock_hash_when_flag_enabled(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+        self.assertTrue(script.is_file())
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            baseline_path = root / "baseline.json"
+            write_report = root / "write_report.json"
+            check_report = root / "check_report.json"
+
+            common = [
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--max-images",
+                "1",
+                "--device",
+                "cpu",
+                "--image-size",
+                "96",
+                "--score-threshold",
+                "0.05",
+                "--max-detections",
+                "10",
+                "--init-seed",
+                "2026",
+                "--score-gate-mode",
+                "off",
+                "--perf-gate-mode",
+                "off",
+                "--runtime-lock",
+                "requirements-ci.lock",
+                "--baseline",
+                str(baseline_path.relative_to(repo_root)),
+            ]
+
+            write_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--output",
+                str(write_report.relative_to(repo_root)),
+                "--write-baseline",
+            ]
+            write_proc = self._run(write_cmd, cwd=repo_root)
+            if write_proc.returncode != 0:
+                self.fail(
+                    "baseline write failed:\n"
+                    f"STDOUT:\n{write_proc.stdout}\nSTDERR:\n{write_proc.stderr}"
+                )
+
+            baseline_payload = json.loads(baseline_path.read_text(encoding="utf-8"))
+            baseline_meta = baseline_payload.get("baseline_meta") or {}
+            baseline_meta["runtime_lock_sha256"] = "deadbeef"
+            baseline_payload["baseline_meta"] = baseline_meta
+            baseline_path.write_text(json.dumps(baseline_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            check_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--enforce-runtime-lock",
+                "--output",
+                str(check_report.relative_to(repo_root)),
+            ]
+            check_proc = self._run(check_cmd, cwd=repo_root)
+            self.assertNotEqual(
+                check_proc.returncode,
+                0,
+                msg=(
+                    "enforced runtime lock mismatch must fail hard gate:\n"
+                    f"STDOUT:\n{check_proc.stdout}\nSTDERR:\n{check_proc.stderr}"
+                ),
+            )
+
+            payload = json.loads(check_report.read_text(encoding="utf-8"))
+            hard_failures = payload.get("hard_failures") or []
+            self.assertTrue(any("E_CANON_RUNTIME_LOCK" in str(item) for item in hard_failures))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,13 +22,13 @@ Baseline report (real outputs + fps):
 - `python3 tools/run_baseline.py --adapter rtdetr_pose --dataset data/coco128 --max-images 50 --output reports/baseline.json`
 
 Reference adapter regression (real-image pinned baseline + CI gates):
-- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
+- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
 - Baseline refresh after intentional behavior changes:
-  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
-- Contract-only gate (hard):
-  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
+- Interface-contract-only gate (hard):
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
 - Behavior-only gate (warn):
-  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
 
 Export (ONNX):
 - Prefer `train_minimal.py --run-dir ...` (writes `model.onnx` + `model.onnx.meta.json`).

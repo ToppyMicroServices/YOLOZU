@@ -15,6 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Dependency tier policy:
+  # - core:       pip install . (packaging + CLI smoke)
+  # - recommended: requirements-ci.lock (regression + schema/manifest gates)
+  # - full:       GPU/backends in separate manual/nightly workflows
   changes:
     name: change scope
     runs-on: ubuntu-latest
@@ -37,6 +41,7 @@ jobs:
               - 'configs/**'
               - 'data/**'
               - 'requirements*.txt'
+              - 'requirements*.lock'
               - 'pyproject.toml'
               - 'pytest.ini'
               - 'ruff.toml'
@@ -55,7 +60,7 @@ jobs:
         run: echo "No code/runtime changes detected. Heavy CI jobs are skipped."
 
   smoke_gate:
-    name: smoke gate (README one-liner)
+    name: "ci tier: core (runtime smoke)"
     needs:
       - changes
     if: ${{ needs.changes.outputs.full_ci == 'true' }}
@@ -78,7 +83,7 @@ jobs:
           bash scripts/smoke.sh
 
   quality_gate:
-    name: quality gate (ruff + focused pytest)
+    name: "ci tier: recommended (ruff + focused pytest)"
     needs:
       - changes
       - smoke_gate
@@ -95,7 +100,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          python -m pip install -r requirements-ci.lock
 
       - name: Ruff (focused paths)
         run: |
@@ -122,7 +127,7 @@ jobs:
           python3 tools/run_actions_api.py --help
 
   pip_smoke:
-    name: pip smoke (python ${{ matrix.python-version }})
+    name: "ci tier: core (pip smoke, py${{ matrix.python-version }})"
     needs:
       - changes
       - smoke_gate
@@ -158,6 +163,7 @@ jobs:
           yolozu demo instance-seg --num-images 2 --image-size 48 --max-instances 2 --run-dir "${RUNNER_TEMP}/yolozu_demo"
 
   test:
+    name: "ci tier: recommended (full gate suite)"
     needs: [changes, smoke_gate, quality_gate]
     if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
@@ -172,8 +178,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
-          python -m pip install safetensors
+          python -m pip install -r requirements-ci.lock
 
       - name: Packaging smoke (pip install + yolozu doctor)
         run: |
@@ -312,6 +317,9 @@ jobs:
             --repro-policy relaxed \
             --score-gate-mode off \
             --perf-gate-mode off \
+            --runtime-lock requirements-ci.lock \
+            --enforce-runtime-lock \
+            --enforce-weights-hash \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
             --output reports/reference_adapter_regression_contract_ci.json
 
@@ -331,6 +339,8 @@ jobs:
             --consistency-gate-mode off \
             --score-gate-mode warn \
             --perf-gate-mode warn \
+            --runtime-lock requirements-ci.lock \
+            --enforce-runtime-lock \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
             --output reports/reference_adapter_regression_behavior_ci.json
 

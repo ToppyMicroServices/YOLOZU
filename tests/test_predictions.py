@@ -25,6 +25,7 @@ class TestPredictionsIO(unittest.TestCase):
             entries = load_predictions_entries(p)
             self.assertEqual(len(entries), 1)
             self.assertEqual(entries[0]["image"], "a.jpg")
+            self.assertEqual(entries[0]["schema_version"], 2)
 
     def test_load_entries_wrapped_format(self):
         with tempfile.TemporaryDirectory() as td:
@@ -197,14 +198,65 @@ class TestPredictionsIO(unittest.TestCase):
         with self.assertRaises(ValueError):
             canonicalize_predictions(entries, strict=True, policy="error", unknown_keys="error")
 
+    def test_canonicalize_entry_schema_version_migration(self):
+        entries = [{"image": "a.jpg", "detections": [{"score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}]}]
+        migrated = canonicalize_predictions(entries, strict=False, policy="clamp")
+        self.assertEqual(migrated.entries[0]["schema_version"], 2)
+        self.assertTrue(any("schema_version" in w and "migrated" in w for w in migrated.warnings))
+
+        entries_v1 = [
+            {
+                "schema_version": 1,
+                "image": "b.jpg",
+                "detections": [{"score": 0.7, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+            }
+        ]
+        migrated_v1 = canonicalize_predictions(entries_v1, strict=False, policy="clamp")
+        self.assertEqual(migrated_v1.entries[0]["schema_version"], 2)
+
+        with self.assertRaises(ValueError):
+            canonicalize_predictions(
+                [
+                    {
+                        "schema_version": 99,
+                        "image": "c.jpg",
+                        "detections": [{"score": 0.6, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}],
+                    }
+                ],
+                strict=False,
+                policy="clamp",
+            )
+
     def test_canonicalize_bbox_optional_non_strict_but_required_strict(self):
         entries = [{"image": "a.jpg", "detections": [{"score": 0.5}]}]
         out = canonicalize_predictions(entries, strict=False, policy="clamp")
         self.assertEqual(out.entries[0]["detections"][0]["score"], 0.5)
         self.assertNotIn("bbox", out.entries[0]["detections"][0])
-
         with self.assertRaises(ValueError):
             canonicalize_predictions(entries, strict=True, policy="error")
+
+    def test_canonicalize_golden_snapshot(self):
+        entries = [
+            {
+                "image": "z.jpg",
+                "detections": [
+                    {"schema_noise": 1, "class_id": 2, "score": 0.2, "bbox": {"cx": 0.2, "cy": 0.2, "w": 0.2, "h": 0.2}},
+                    {"class_id": 1, "score": 0.8, "bbox": {"cx": 0.1, "cy": 0.1, "w": 0.1, "h": 0.1}},
+                ],
+            }
+        ]
+        got = canonicalize_predictions(entries, strict=False, policy="clamp", unknown_keys="allow").entries
+        expected = [
+            {
+                "schema_version": 2,
+                "image": "z.jpg",
+                "detections": [
+                    {"class_id": 1, "score": 0.8, "bbox": {"cx": 0.1, "cy": 0.1, "w": 0.1, "h": 0.1}},
+                    {"schema_noise": 1, "class_id": 2, "score": 0.2, "bbox": {"cx": 0.2, "cy": 0.2, "w": 0.2, "h": 0.2}},
+                ],
+            }
+        ]
+        self.assertEqual(got, expected)
 
 
 if __name__ == "__main__":

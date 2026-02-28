@@ -23,6 +23,8 @@ __all__ = [
     "RTDETRPoseAdapter",
 ]
 
+ENTRY_SCHEMA_VERSION = 2
+
 
 class ModelAdapter:
     """Abstract base adapter — subclass to integrate a new backend."""
@@ -47,7 +49,8 @@ class ModelAdapter:
 class DummyAdapter(ModelAdapter):
     def predict(self, records):
         return [
-            {"image": record["image"], "detections": []} for record in records
+            {"schema_version": ENTRY_SCHEMA_VERSION, "image": record["image"], "detections": []}
+            for record in records
         ]
 
 
@@ -93,7 +96,13 @@ class PrecomputedAdapter(ModelAdapter):
                 raise ValueError(f"records[{idx}] must be an object")
             image_key = require_image_key(record.get("image"), where=f"records[{idx}].image")
             dets = lookup_image_alias(self._index, image_key)
-            outputs.append({"image": image_key, "detections": dets if dets is not None else []})
+            outputs.append(
+                {
+                    "schema_version": ENTRY_SCHEMA_VERSION,
+                    "image": image_key,
+                    "detections": dets if dets is not None else [],
+                }
+            )
         return outputs
 
 
@@ -508,6 +517,7 @@ class RTDETRPoseAdapter(ModelAdapter):
             )
 
             entry = {
+                "schema_version": ENTRY_SCHEMA_VERSION,
                 "image": image_path,
                 "detections": detections,
                 "image_size": pp_meta.get("input_size"),

@@ -1,0 +1,22 @@
+# CI lockfile (python3.11, ubuntu-latest)
+# Generated from successful CI install-deps resolution to reduce dependency drift noise.
+#
+# NOTE:
+# - Keep this file pinned.
+# - Update intentionally in PRs that also refresh baseline/runtime metadata.
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+PyYAML==6.0.3
+numpy==2.4.2
+Pillow==12.1.1
+typing-extensions==4.15.0
+
+torch==2.10.0+cpu
+onnx==1.20.1
+onnxruntime==1.24.2
+onnxscript==0.6.2
+
+pytest==9.0.2
+ruff==0.15.4
+safetensors==0.7.0
