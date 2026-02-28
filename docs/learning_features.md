@@ -143,3 +143,23 @@ print(model_info(compiled))
 with amp_inference_context(device.type):
     output = compiled(images)
 ```
+
+## 8) PyTorch inference acceleration (`yolozu.inference.torch_export`, `yolozu.inference.profiler`)
+
+Value: Export and compile PyTorch models for production inference, with kernel-level profiling.
+
+| Module | PyTorch API | Purpose |
+|--------|------------|---------|
+| `torch_export.compile_for_inference()` | `torch.compile` | JIT-compile any model for faster inference |
+| `torch_export.export_model_onnx()` | `torch.onnx.export` | Export model to ONNX with dynamic axes |
+| `profiler.profile_inference()` | `torch.profiler` | Profile adapter inference with Chrome trace output |
+
+## 9) Training AMP + transforms bridge (`yolozu.training.amp_utils`, `yolozu.training.transforms_bridge`)
+
+Value: Standardize AMP across all training loops (SDFT, TTA, custom), and provide composable detection transforms via torchvision v2.
+
+| Module | PyTorch API | Purpose |
+|--------|------------|---------|
+| `amp_utils.make_amp_context()` | `torch.amp` + `torch.GradScaler` | Unified AMP context + scaler for training |
+| `transforms_bridge.build_detection_transforms()` | `torchvision.transforms.v2` | Joint image + bbox + keypoint augmentation |
+| `transforms_bridge.build_eval_transforms()` | `torchvision.transforms.v2` | Eval-time resize + normalize |
