@@ -1,6 +1,14 @@
+"""Read image dimensions by parsing file headers.
+
+Supports PNG, JPEG, BMP, GIF, TIFF, and WebP natively (no external
+dependency).  Falls back to Pillow when available.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
+
+__all__ = ["ImageSizeError", "get_image_size"]
 
 
 class ImageSizeError(RuntimeError):

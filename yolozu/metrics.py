@@ -1,7 +1,15 @@
+"""6-DoF pose-estimation metrics.
+
+Symmetry-aware geodesic rotation distance and ADD-S (average closest
+point distance under symmetry).
+"""
+
 import math
 
 from .math3d import mat_mul, rotation_matrix_axis_angle
 from .symmetry import enumerate_symmetry_rotations, min_symmetry_geodesic, normalize_symmetry
+
+__all__ = ["symmetry_geodesic", "add_s"]
 
 
 def symmetry_geodesic(r_pred, r_gt, sym_spec, sample_count=8):

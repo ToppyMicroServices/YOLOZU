@@ -1,9 +1,17 @@
+"""Shipped data-resource accessors.
+
+Provides ``importlib.resources``-based helpers to read bundled files
+under ``yolozu/data/``.
+"""
+
 from __future__ import annotations
 
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+
+__all__ = ["list_resource_paths", "read_text", "as_file_path", "copy_to"]
 
 
 def _files():

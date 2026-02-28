@@ -1,7 +1,15 @@
+"""Dynamic int8 quantisation of ONNX models.
+
+Uses ONNX Runtime's dynamic quantisation (no calibration data
+required) to produce a smaller, faster int8 model.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
+
+__all__ = ["quantize_onnx_dynamic"]
 
 
 def quantize_onnx_dynamic(

@@ -1,3 +1,10 @@
+"""End-to-end 6-DoF pose evaluation.
+
+Computes geodesic rotation error, translation error, and ADD-S
+against ground-truth annotations, producing per-image and aggregate
+results.
+"""
+
 from __future__ import annotations
 
 import json
@@ -5,6 +12,8 @@ import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = ["PoseEvalResult", "evaluate_pose"]
 
 from .boxes import iou_cxcywh_norm_dict
 from .geometry import corrected_intrinsics, recover_translation

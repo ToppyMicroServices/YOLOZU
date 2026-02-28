@@ -1,6 +1,19 @@
+"""Discrete and continuous rotation-symmetry groups.
+
+Handles C2, C4, Cn, and Cinf symmetry for geodesic distance
+computation and template scoring.
+"""
+
 import math
 
 from .math3d import geodesic_distance, mat_identity, mat_mul, rotation_matrix_axis_angle
+
+__all__ = [
+    "normalize_symmetry",
+    "enumerate_symmetry_rotations",
+    "min_symmetry_geodesic",
+    "score_template_sym",
+]
 
 
 _SUPPORTED = {"none", "C2", "C4", "Cn", "Cinf"}

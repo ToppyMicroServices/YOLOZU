@@ -1,8 +1,16 @@
+"""Symmetry-aware template verification.
+
+Applies template scoring to the top-K detections in prediction
+entries and writes the resulting ``score_tmp_sym`` field.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Iterable
 
 from .symmetry import score_template_sym
+
+__all__ = ["compute_score_tmp_sym", "apply_template_verification"]
 
 
 def _matrix_from_det(det: dict[str, Any]) -> list[list[float]] | None:

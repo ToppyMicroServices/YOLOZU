@@ -1,9 +1,25 @@
+"""Instance-segmentation prediction I/O.
+
+Normalises, validates, and loads instance-segmentation prediction
+JSON payloads into a canonical entry format suitable for evaluation.
+"""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "ValidationResult",
+    "normalize_instance_segmentation_predictions_json",
+    "normalize_instance_segmentation_predictions_payload",
+    "validate_instance_segmentation_predictions_entries",
+    "validate_instance_segmentation_predictions_payload",
+    "load_instance_segmentation_predictions_entries",
+    "iter_instances",
+]
 
 from .schema_governance import validate_payload_schema_version
 

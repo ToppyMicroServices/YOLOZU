@@ -1,3 +1,9 @@
+"""Adapter-based image inference.
+
+Runs an adapter’s ``predict()`` on a directory of images, producing
+schema-correct ``predictions.json`` and optional overlay images.
+"""
+
 from __future__ import annotations
 
 import os
@@ -5,6 +11,8 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
+
+__all__ = ["predict_images"]
 from typing import Any, Iterable
 
 from yolozu.export import export_dummy_predictions, write_predictions_json

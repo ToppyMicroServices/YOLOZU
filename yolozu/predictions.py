@@ -1,9 +1,28 @@
+"""Core predictions I/O.
+
+Loading, normalising (multiple JSON shapes), validating
+schema / structure, and building image-keyed indexes for
+detection prediction payloads.
+"""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "ValidationResult",
+    "normalize_predictions_json",
+    "normalize_predictions_payload",
+    "validate_wrapped_meta",
+    "validate_predictions_entries",
+    "load_predictions_entries",
+    "load_predictions_payload",
+    "validate_predictions_payload",
+    "load_predictions_index",
+]
 
 from .image_keys import add_image_aliases, require_image_key
 from .keypoints import normalize_keypoints

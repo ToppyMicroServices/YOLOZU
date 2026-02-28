@@ -1,3 +1,9 @@
+"""Reproducibility-oriented run-record builder.
+
+Captures host info, accelerator details, git state, dependency
+versions, and runtime config into a structured JSON record.
+"""
+
 from __future__ import annotations
 
 import os
@@ -5,6 +11,18 @@ import platform
 import socket
 import subprocess
 import sys
+
+__all__ = [
+    "host_info",
+    "accelerator_info",
+    "git_info",
+    "versions",
+    "dependency_lock_info",
+    "preprocess_config",
+    "runtime_info",
+    "validate_run_record_contract",
+    "build_run_record",
+]
 import hashlib
 import shlex
 from pathlib import Path

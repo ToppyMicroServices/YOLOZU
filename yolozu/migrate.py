@@ -1,9 +1,24 @@
+"""Dataset format migration utilities.
+
+Converts external dataset layouts (Ultralytics YAML, COCO JSON,
+segmentation descriptors) into YOLOZU’s native wrapper format.
+"""
+
 from __future__ import annotations
 
 import json
 import shutil
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "write_dataset_wrapper",
+    "migrate_ultralytics_dataset_wrapper",
+    "migrate_coco_dataset_wrapper",
+    "migrate_coco_results_predictions",
+    "write_seg_dataset_descriptor",
+    "migrate_seg_dataset_descriptor",
+]
 
 from .config import simple_yaml_load
 

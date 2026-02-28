@@ -1,9 +1,23 @@
+"""Model registry download and caching.
+
+Fetches pre-trained model weights from a registry with SHA-256
+verification, license checks, and SSRF-safe URL validation.
+"""
+
 from __future__ import annotations
 
 import hashlib
 import ipaddress
 import json
 import shutil
+
+__all__ = [
+    "ModelSpec",
+    "load_registry",
+    "resolve_model_spec",
+    "list_models",
+    "fetch_model",
+]
 import tempfile
 import time
 import urllib.parse

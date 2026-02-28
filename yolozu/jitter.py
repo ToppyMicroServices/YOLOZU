@@ -1,4 +1,17 @@
+"""Random perturbation (jitter) sampling for camera parameters.
+
+Used for data-augmentation and robustness testing of intrinsics /
+extrinsics pipelines.
+"""
+
 import random
+
+__all__ = [
+    "default_jitter_profile",
+    "sample_intrinsics_jitter",
+    "sample_extrinsics_jitter",
+    "jitter_off",
+]
 
 
 def default_jitter_profile():

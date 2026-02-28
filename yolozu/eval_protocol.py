@@ -1,3 +1,10 @@
+"""Evaluation protocol loading, validation, and application.
+
+An eval protocol fixes experimental conditions (image size, score threshold,
+bbox format, preprocessing) so that results from different systems are
+comparable.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,6 +13,13 @@ from pathlib import Path
 from typing import Any
 
 from yolozu import resources as yz_resources
+
+__all__ = [
+    "load_eval_protocol",
+    "validate_eval_protocol",
+    "apply_eval_protocol_args",
+    "eval_protocol_hash",
+]
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_PROTOCOLS = {

@@ -1,3 +1,12 @@
+"""Camera geometry helpers.
+
+Intrinsics correction and 3-D translation recovery from 2-D detections
+combined with depth estimates.
+"""
+
+__all__ = ["corrected_intrinsics", "recover_translation"]
+
+
 def corrected_intrinsics(k, delta):
     """Apply multiplicative/additive intrinsics correction.
 

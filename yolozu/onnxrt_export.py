@@ -1,9 +1,18 @@
+"""ONNX Runtime inference and prediction export.
+
+Runs ONNX Runtime inference on image datasets with letterbox
+preprocessing, optional NMS, and raw-output decoding, then writes
+schema-correct ``predictions.json``.
+"""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import os
 import platform
+
+__all__ = ["export_predictions_onnxrt", "write_predictions_json"]
 import time
 from pathlib import Path
 from typing import Any

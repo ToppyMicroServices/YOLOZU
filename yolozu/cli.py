@@ -1,3 +1,10 @@
+"""YOLOZU command-line interface.
+
+Provides the ``yolozu`` CLI with subcommands for training, evaluation,
+export, doctor diagnostics, dataset migration, model fetching, and
+demo pipelines.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -10,6 +17,8 @@ from yolozu import __version__
 
 from .cli_args import parse_image_size_arg, require_non_negative_int
 from .config import simple_yaml_load
+
+__all__ = ["main"]
 
 
 def _load_config(path: Path) -> dict:

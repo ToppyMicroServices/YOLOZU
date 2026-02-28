@@ -1,9 +1,26 @@
+"""Lightweight latency / throughput benchmarking helpers.
+
+Public API
+----------
+run_benchmark   -- simple throughput measurement (iterations / elapsed).
+measure_latency -- percentile-aware latency profiler used by ``yolozu benchmark``.
+"""
+
+from __future__ import annotations
+
 import math
 import time
 from typing import Callable
 
+__all__ = ["run_benchmark", "measure_latency"]
 
-def run_benchmark(iterations=100, sleep_s=0.0):
+
+def run_benchmark(iterations: int = 100, sleep_s: float = 0.0) -> float:
+    """Return throughput (iterations/sec) for *iterations* empty loops.
+
+    When *sleep_s* > 0 each iteration sleeps, making this useful for
+    calibrating the timer overhead.
+    """
     start = time.perf_counter()
     for _ in range(iterations):
         if sleep_s:
@@ -15,6 +32,7 @@ def run_benchmark(iterations=100, sleep_s=0.0):
 
 
 def _percentile(values: list[float], percent: float) -> float:
+    """Linear-interpolation percentile (like ``numpy.percentile``)."""
     if not values:
         return 0.0
     if percent <= 0:
@@ -39,6 +57,25 @@ def measure_latency(
     sleep_s: float = 0.0,
     step: Callable[[], None] | None = None,
 ) -> dict[str, float | int | dict[str, float]]:
+    """Profile *step* latency and return a percentile report.
+
+    Parameters
+    ----------
+    iterations : int
+        How many timed calls.
+    warmup : int
+        How many un-timed warm-up calls.
+    sleep_s : float
+        Default per-step sleep when *step* is ``None``.
+    step : callable or None
+        Zero-arg function to measure.  Defaults to a no-op (or sleep).
+
+    Returns
+    -------
+    dict
+        Keys: *iterations*, *warmup*, *total_sec*, *fps*, *latency_ms* (sub-dict
+        with *mean*, *p50*, *p90*, *p95*, *p99*, *min*, *max*).
+    """
     if iterations <= 0:
         raise ValueError("iterations must be > 0")
     if warmup < 0:

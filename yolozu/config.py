@@ -1,5 +1,22 @@
+"""Configuration loading, constraints validation, and minimal YAML parser.
+
+Provides ``load_constraints``, ``load_symmetry_map``, and a self-contained
+``simple_yaml_load`` fallback for environments where PyYAML is not installed.
+"""
+
 import json
 from pathlib import Path
+
+__all__ = [
+    "DEFAULT_CONSTRAINTS",
+    "default_runtime_config_path",
+    "load_symmetry_map",
+    "get_symmetry_spec",
+    "load_constraints",
+    "merge_defaults",
+    "validate_constraints",
+    "simple_yaml_load",
+]
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _RUNTIME_CONFIG_DIR = _REPO_ROOT / "configs" / "runtime"

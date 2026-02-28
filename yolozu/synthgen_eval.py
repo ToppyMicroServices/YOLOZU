@@ -1,9 +1,18 @@
+"""Synthetic-generation prediction evaluation.
+
+Evaluates depth, keypoints, instance-segmentation, and
+semantic-segmentation predictions produced by synthetic data
+generation pipelines.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+__all__ = ["SynthGenEvalState", "evaluate_synthgen_predictions"]
 
 from .segmentation_eval import compute_confusion_matrix, compute_iou_metrics
 

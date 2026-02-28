@@ -1,3 +1,9 @@
+"""Simple mAP evaluator (mAP@50, mAP@50:95).
+
+IoU-based matching of normalised bounding boxes with multi-threshold
+average-precision computation.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,6 +11,8 @@ from typing import Any, Iterable
 
 from .boxes import iou_cxcywh_norm_dict
 from .image_keys import add_image_aliases, image_key_aliases, lookup_image_alias
+
+__all__ = ["MapResult", "evaluate_map"]
 
 
 @dataclass(frozen=True)

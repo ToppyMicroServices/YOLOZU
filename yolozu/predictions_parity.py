@@ -1,3 +1,9 @@
+"""Prediction parity comparison.
+
+Compares two prediction files for numerical agreement by matching
+detections via IoU, score tolerance, and bbox tolerance.
+"""
+
 from __future__ import annotations
 
 import math
@@ -5,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from yolozu.boxes import cxcywh_norm_to_xyxy_abs, iou_xyxy_abs
+
+__all__ = ["compare_predictions"]
 from yolozu.image_keys import add_image_aliases
 from yolozu.image_size import get_image_size
 from yolozu.predictions import load_predictions_entries

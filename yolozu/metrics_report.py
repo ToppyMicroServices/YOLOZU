@@ -1,9 +1,23 @@
+"""Structured metrics report builder.
+
+Builds timestamped run reports and writes them as JSON, JSONL, or CSV.
+"""
+
 from __future__ import annotations
 
 import csv
 import json
 import time
 from pathlib import Path
+
+__all__ = [
+    "now_utc_iso",
+    "flatten_metrics",
+    "build_report",
+    "append_jsonl",
+    "write_json",
+    "write_csv_row",
+]
 from typing import Any
 
 

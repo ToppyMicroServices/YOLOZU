@@ -1,9 +1,17 @@
+"""CLI entry point for running a YOLOZU scenario pass.
+
+Builds an adapter + dataset manifest from argparse arguments and
+executes the inference / evaluation pipeline.
+"""
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
 from pathlib import Path
+
+__all__ = ["main"]
 
 from yolozu.adapter import DummyAdapter, PrecomputedAdapter, RTDETRPoseAdapter
 from yolozu.dataset import build_manifest

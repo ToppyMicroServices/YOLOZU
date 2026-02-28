@@ -1,7 +1,17 @@
+"""Canonical data structures shared by YOLOZU's pipeline.
+
+These frozen dataclasses form the *internal* representation.  Most tools
+consume / produce plain ``dict`` records (via ``to_record_dict`` /
+``to_dict``) so downstream code never needs to depend on the classes
+directly.
+"""
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from typing import Any
+
+__all__ = ["BBox", "Label", "SampleRecord", "TrainConfig"]
 
 
 @dataclass(frozen=True)

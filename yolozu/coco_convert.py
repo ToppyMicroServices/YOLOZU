@@ -1,8 +1,21 @@
+"""COCO-to-YOLO label conversion utilities.
+
+Converts COCO instances annotations into YOLO-format ``<class> cx cy w h``
+label files, and builds a deterministic category ↔ class mapping.
+"""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
+
+__all__ = [
+    "CocoCategoryMap",
+    "build_category_map_from_coco",
+    "yolo_line_from_coco_bbox",
+    "convert_coco_instances_to_yolo_labels",
+]
 
 
 @dataclass(frozen=True)

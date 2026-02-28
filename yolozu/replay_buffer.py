@@ -1,8 +1,16 @@
+"""Reservoir-sampling replay buffer for continual learning.
+
+Stores arbitrary JSON records with per-task capacity capping,
+using reservoir sampling for unbiased retention.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 import random
 from typing import Any, Iterable
+
+__all__ = ["ReplayBuffer"]
 
 
 @dataclass

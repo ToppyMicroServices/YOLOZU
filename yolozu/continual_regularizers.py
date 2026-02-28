@@ -1,8 +1,28 @@
+"""Continual-learning regularisers (EWC and Synaptic Intelligence).
+
+Provides diagonal EWC (Elastic Weight Consolidation) and SI (Synaptic
+Intelligence) accumulators, penalty functions, and state
+serialisation helpers.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "EwcState",
+    "EwcAccumulator",
+    "ewc_penalty",
+    "save_ewc_state",
+    "load_ewc_state",
+    "SiState",
+    "SiAccumulator",
+    "si_penalty",
+    "save_si_state",
+    "load_si_state",
+]
 
 try:
     import torch

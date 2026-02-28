@@ -1,9 +1,23 @@
+"""Semantic-segmentation dataset descriptor loader.
+
+Loads and validates a ``dataset.json`` descriptor that specifies
+samples, class names, paths, and split information for segmentation
+tasks.
+"""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "SegDatasetSample",
+    "SegDatasetDescriptor",
+    "load_seg_dataset_descriptor",
+    "resolve_dataset_path",
+]
 
 
 @dataclass(frozen=True)

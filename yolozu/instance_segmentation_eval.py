@@ -1,8 +1,23 @@
+"""Instance segmentation evaluation.
+
+Mask loading, IoU computation, and GT-vs-prediction instance-map
+matching with configurable IoU thresholds.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "load_mask_bool",
+    "load_mask_int",
+    "mask_iou",
+    "InstanceMapResult",
+    "extract_gt_instances_from_record",
+    "evaluate_instance_map",
+]
 
 from .image_keys import image_basename, image_key_aliases, lookup_image_alias
 

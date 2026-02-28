@@ -1,3 +1,9 @@
+"""COCO-style mAP evaluation (bbox).
+
+Builds GT from YOLOZU dataset records, converts prediction entries to COCO
+detections, then delegates to ``pycocotools.COCOeval`` for metric computation.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,6 +12,13 @@ from typing import Any, Iterable
 
 from .image_size import get_image_size
 from .image_keys import add_image_aliases, lookup_image_alias, require_image_key
+
+__all__ = [
+    "CocoIndex",
+    "build_coco_ground_truth",
+    "predictions_to_coco_detections",
+    "evaluate_coco_map",
+]
 
 
 @dataclass(frozen=True)

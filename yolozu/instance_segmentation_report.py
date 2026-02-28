@@ -1,9 +1,17 @@
+"""End-to-end instance-segmentation evaluation pipeline.
+
+Loads dataset + predictions, runs instance-map matching, and
+generates JSON / HTML evaluation reports.
+"""
+
 from __future__ import annotations
 
 import hashlib
 import json
 from pathlib import Path
 from typing import Any
+
+__all__ = ["run_instance_segmentation_eval"]
 
 from yolozu.dataset import build_manifest
 from yolozu.instance_segmentation_eval import extract_gt_instances_from_record, load_mask_bool, evaluate_instance_map

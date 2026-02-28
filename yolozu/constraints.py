@@ -1,7 +1,32 @@
+"""Geometric constraints for 6-DoF pose post-processing.
+
+Constraints include depth priors, table-plane checks, and upright / roll–pitch
+range filtering.  ``apply_constraints`` is the single entry point used by
+the evaluation and refinement pipelines.
+"""
+
+from __future__ import annotations
+
 import math
 
+__all__ = [
+    "depth_prior",
+    "depth_prior_penalty",
+    "plane_signed_distance",
+    "is_above_plane",
+    "roll_pitch_yaw",
+    "upright_violation_deg",
+    "apply_constraints",
+]
 
-def depth_prior(bbox_wh, size_wh, intrinsics_fx_fy, eps=1e-6):
+
+def depth_prior(
+    bbox_wh: tuple[float, float],
+    size_wh: tuple[float, float],
+    intrinsics_fx_fy: tuple[float, float],
+    eps: float = 1e-6,
+) -> float:
+    """Estimate object depth from bounding-box and physical size via pinhole model."""
     bbox_w, bbox_h = bbox_wh
     size_w, size_h = size_wh
     fx, fy = intrinsics_fx_fy
@@ -10,27 +35,47 @@ def depth_prior(bbox_wh, size_wh, intrinsics_fx_fy, eps=1e-6):
     return 0.5 * (z_w + z_h)
 
 
-def depth_prior_penalty(z_pred, z_prior, eps=1e-6):
+def depth_prior_penalty(z_pred: float, z_prior: float, eps: float = 1e-6) -> float:
+    """Return absolute log-ratio between predicted and prior depth."""
     return abs(math.log(max(z_pred, eps)) - math.log(max(z_prior, eps)))
 
 
-def plane_signed_distance(t_xyz, n, d):
+def plane_signed_distance(
+    t_xyz: tuple[float, float, float],
+    n: list[float],
+    d: float,
+) -> float:
+    """Signed distance from point *t_xyz* to the plane defined by (n, d)."""
     x, y, z = t_xyz
     return n[0] * x + n[1] * y + n[2] * z + d
 
 
-def is_above_plane(t_xyz, n, d, tol=0.0):
+def is_above_plane(
+    t_xyz: tuple[float, float, float],
+    n: list[float],
+    d: float,
+    tol: float = 0.0,
+) -> bool:
+    """Return ``True`` if *t_xyz* is on or above the plane (within *tol*)."""
     return plane_signed_distance(t_xyz, n, d) >= -abs(tol)
 
 
-def roll_pitch_yaw(r):
+def roll_pitch_yaw(
+    r: list[list[float]],
+) -> tuple[float, float, float]:
+    """Extract (roll, pitch, yaw) Euler angles from a 3×3 rotation matrix."""
     pitch = math.asin(max(-1.0, min(1.0, -r[2][0])))
     roll = math.atan2(r[2][1], r[2][2])
     yaw = math.atan2(r[1][0], r[0][0])
     return roll, pitch, yaw
 
 
-def upright_violation_deg(r, roll_range_deg, pitch_range_deg):
+def upright_violation_deg(
+    r: list[list[float]],
+    roll_range_deg: tuple[float, float],
+    pitch_range_deg: tuple[float, float],
+) -> float:
+    """Sum of roll and pitch limit violations in degrees."""
     roll, pitch, _yaw = roll_pitch_yaw(r)
     roll_deg = math.degrees(roll)
     pitch_deg = math.degrees(pitch)

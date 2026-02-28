@@ -1,9 +1,23 @@
+"""Training-time long-tail mitigation recipe builder.
+
+Produces class priors, logit-adjustment biases, class-balanced loss
+weights, and per-sample weights from dataset statistics.
+"""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import math
 from typing import Any
+
+__all__ = [
+    "build_class_priors",
+    "build_logit_adjustment_bias",
+    "build_class_balanced_weights",
+    "build_sample_weights",
+    "build_long_tail_recipe",
+]
 
 from .long_tail_metrics import class_frequency_counts
 

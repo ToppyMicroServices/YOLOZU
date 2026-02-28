@@ -1,6 +1,14 @@
+"""Camera intrinsics parsing.
+
+Converts various intrinsic representations (3×3 matrix, dict,
+OpenCV FileStorage XML) into a canonical ``{fx, fy, cx, cy}`` dict.
+"""
+
 from __future__ import annotations
 
 from typing import Any
+
+__all__ = ["parse_intrinsics"]
 
 
 def _maybe_to_list(value: Any) -> Any:

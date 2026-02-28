@@ -1,7 +1,15 @@
+"""3-D pose inference from 2-D detections.
+
+Reconstructs translation, rotation, and depth from bounding-box
+detections using camera intrinsics and geometric constraints.
+"""
+
 from __future__ import annotations
 
 import math
 from typing import Any, Iterable
+
+__all__ = ["infer_constraints"]
 
 from .constraints import apply_constraints
 from .geometry import corrected_intrinsics, recover_translation

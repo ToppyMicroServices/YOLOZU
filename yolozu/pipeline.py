@@ -1,5 +1,13 @@
+"""6-DoF pose candidate evaluation pipeline.
+
+Combines intrinsics correction, translation recovery, and geometric
+constraint scoring into a single ``evaluate_candidate`` call.
+"""
+
 from .constraints import apply_constraints
 from .geometry import corrected_intrinsics, recover_translation
+
+__all__ = ["evaluate_candidate"]
 
 
 def evaluate_candidate(

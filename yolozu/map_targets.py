@@ -1,8 +1,16 @@
+"""mAP target loading and validation.
+
+Loads per-model-bucket expected-accuracy thresholds used by the
+YOLO26 benchmark suite to gate pass/fail decisions.
+"""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
+
+__all__ = ["load_map_targets_doc", "validate_map_targets_doc", "load_targets_map"]
 
 
 _YOLO26_BUCKETS = ("yolo26n", "yolo26s", "yolo26m", "yolo26l", "yolo26x")

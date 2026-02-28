@@ -1,9 +1,17 @@
+"""Deterministic train/val splitting.
+
+Uses SHA-256 hashing of file paths for reproducible,
+deterministic train/val assignment.
+"""
+
 from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+
+__all__ = ["Split", "deterministic_split_paths"]
 
 
 @dataclass(frozen=True)

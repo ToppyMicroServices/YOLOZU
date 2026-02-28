@@ -1,3 +1,10 @@
+"""Prediction transforms: class-ID normalisation, TTA, score fusion.
+
+Maps COCO category IDs to contiguous class IDs, applies test-time
+augmentation, and fuses detection scores via configurable gate
+weights.
+"""
+
 from __future__ import annotations
 
 import json
@@ -5,6 +12,15 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "TransformResult",
+    "load_classes_json",
+    "build_category_id_to_class_id_map",
+    "normalize_class_ids",
+    "apply_tta",
+    "fuse_detection_scores",
+]
 
 from .gates import final_score, passes_template_gate
 

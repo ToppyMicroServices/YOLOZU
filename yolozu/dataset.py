@@ -1,3 +1,10 @@
+"""YOLO-format dataset loading and manifest building.
+
+Reads images + labels directories, COCO instances JSON descriptors,
+Ultralytics-style data YAML, and optional sidecar metadata to
+produce a unified list of sample records.
+"""
+
 from __future__ import annotations
 
 import json
@@ -7,6 +14,12 @@ from typing import TYPE_CHECKING, Any
 from .config import simple_yaml_load
 from .coco_convert import build_category_map_from_coco
 from .keypoints import normalize_keypoints
+
+__all__ = [
+    "load_yolo_dataset",
+    "load_coco_instances_dataset",
+    "build_manifest",
+]
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy as np

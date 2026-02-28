@@ -1,7 +1,30 @@
+"""SDFT multi-task self-distillation loss.
+
+Computes KL-divergence-based distillation losses across detection,
+pose, keypoints, depth, and segmentation heads using a frozen
+teacher for continual fine-tuning.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Mapping, Literal
+
+__all__ = [
+    "SdftConfig",
+    "KlMode",
+    "kl_divergence_from_logits",
+    "compute_sdft_loss",
+    "make_pose_sdft_config",
+    "make_keypoints_sdft_config",
+    "make_depth_sdft_config",
+    "make_seg_sdft_config",
+    "make_full_sdft_config",
+    "POSE_KEYS",
+    "KEYPOINTS_KEYS",
+    "DEPTH_KEYS",
+    "SEG_KEYS",
+]
 
 try:
     import torch

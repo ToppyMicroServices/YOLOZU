@@ -1,8 +1,27 @@
+"""Config and dataset import adapters.
+
+Projects training configurations and COCO datasets from Ultralytics,
+MMDet, Detectron2, and YOLOX formats into YOLOZU's canonical
+representation.
+"""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any, Callable
+
+__all__ = [
+    "project_ultralytics_args",
+    "project_mmdet_config",
+    "project_detectron2_config",
+    "project_yolox_exp",
+    "import_coco_instances_dataset",
+    "import_ultralytics_config",
+    "import_mmdet_config",
+    "import_detectron2_config",
+    "import_yolox_config",
+]
 
 from .canonical import TrainConfig
 from .config import simple_yaml_load

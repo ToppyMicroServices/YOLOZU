@@ -1,6 +1,21 @@
+"""Bounding-box coordinate conversion and IoU utilities.
+
+All ``cxcywh_norm`` values are **normalised to [0, 1]** relative to image
+width / height.  Absolute (``abs``) values are in pixels.
+"""
+
 from __future__ import annotations
 
 from typing import Any
+
+__all__ = [
+    "cxcywh_norm_to_xyxy_abs",
+    "iou_xyxy_abs",
+    "iou_cxcywh_norm_dict",
+    "xyxy_to_cxcywh_abs",
+    "cxcywh_abs_to_norm",
+    "xyxy_abs_to_cxcywh_norm",
+]
 
 
 def cxcywh_norm_to_xyxy_abs(

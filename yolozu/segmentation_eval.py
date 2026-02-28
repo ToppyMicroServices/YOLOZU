@@ -1,7 +1,20 @@
+"""Semantic-segmentation IoU / mIoU evaluation.
+
+Computes per-class IoU metrics from ground-truth and predicted
+masks via confusion matrices.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
+__all__ = [
+    "load_mask_array",
+    "ConfusionStats",
+    "compute_confusion_matrix",
+    "compute_iou_metrics",
+]
 
 
 def _try_import_deps():  # pragma: no cover

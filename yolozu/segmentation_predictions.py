@@ -1,9 +1,25 @@
+"""Segmentation prediction I/O.
+
+Normalises, validates, and loads segmentation prediction JSON in
+multiple supported formats (list, wrapped, id-map).
+"""
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+__all__ = [
+    "ValidationResult",
+    "normalize_segmentation_predictions_json",
+    "normalize_segmentation_predictions_payload",
+    "validate_segmentation_predictions_entries",
+    "validate_segmentation_predictions_payload",
+    "load_segmentation_predictions_entries",
+    "build_id_to_mask",
+]
 
 from .schema_governance import validate_payload_schema_version
 

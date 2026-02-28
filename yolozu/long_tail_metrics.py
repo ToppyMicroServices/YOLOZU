@@ -1,9 +1,29 @@
+"""Long-tail class-imbalance metrics and score calibration.
+
+Provides FraCaL, logit-adjustment, NorCal, and temperature-scaling
+calibration for detection and instance-segmentation predictions,
+plus a unified ``evaluate_long_tail_detection`` evaluator.
+"""
+
 from __future__ import annotations
 
 import math
 from typing import Any, Iterable
 
 from .boxes import iou_cxcywh_norm_dict
+
+__all__ = [
+    "class_frequency_counts",
+    "class_frequency_counts_instance_segmentation",
+    "build_fracal_stats",
+    "fit_temperature_from_score_targets",
+    "build_frequency_bins",
+    "fracal_calibrate_predictions",
+    "la_calibrate_predictions",
+    "norcal_calibrate_predictions",
+    "temperature_calibrate_predictions",
+    "evaluate_long_tail_detection",
+]
 from .simple_map import evaluate_map
 
 

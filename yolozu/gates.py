@@ -1,3 +1,13 @@
+"""Scoring gates for filtering detections.
+
+Combines detection, template-symmetry, and uncertainty scores into a
+final gate score, optionally rejecting candidates that fall below
+configurable thresholds.
+"""
+
+__all__ = ["final_score", "passes_template_gate", "passes_low_fp_gate"]
+
+
 def final_score(score_det, score_tmp_sym, sigma_z, sigma_rot, weights):
     """Compute final detection score from components.
 

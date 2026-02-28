@@ -1,8 +1,17 @@
+"""High-level inference utilities.
+
+Wraps constraint inference and template verification into a single
+``apply_inference_utilities`` call that mutates prediction entries
+in-place.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Iterable
 
 from .inference import infer_constraints
+
+__all__ = ["apply_inference_utilities"]
 from .template_verification import apply_template_verification
 
 

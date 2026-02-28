@@ -1,7 +1,22 @@
+"""Image-path key normalisation and alias lookups.
+
+Provides helpers to build alias dicts (basename, stem, relative path)
+so that prediction and ground-truth entries keyed by different path
+formats can be matched reliably.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Mapping, TypeVar
+
+__all__ = [
+    "image_key_aliases",
+    "image_basename",
+    "add_image_aliases",
+    "lookup_image_alias",
+    "require_image_key",
+]
 
 T = TypeVar("T")
 

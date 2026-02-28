@@ -1,7 +1,16 @@
+"""Continual-learning evaluation metrics.
+
+Provides ``summarize_continual_matrix`` which computes standard CL metrics
+(average accuracy, forgetting, backward/forward transfer) from a
+task-by-time performance matrix.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
+__all__ = ["ContinualSummary", "summarize_continual_matrix"]
 
 
 @dataclass(frozen=True)

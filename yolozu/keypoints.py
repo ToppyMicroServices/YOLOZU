@@ -1,6 +1,14 @@
+"""Keypoint normalisation and coordinate helpers.
+
+Handles flat-list and dict keypoint formats, auto-detects
+normalised-vs-pixel coordinates, and converts between them.
+"""
+
 from __future__ import annotations
 
 from typing import Any
+
+__all__ = ["normalize_keypoints", "infer_keypoints_normalized", "keypoints_to_pixels"]
 
 
 def _is_number(value: Any) -> bool:

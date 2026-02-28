@@ -1,6 +1,18 @@
+"""Prediction payload schema-version governance.
+
+Validates ``schema_version`` lifecycle and compatibility rules for
+wrapped prediction payloads.
+"""
+
 from __future__ import annotations
 
 from typing import Any
+
+__all__ = [
+    "CURRENT_SCHEMA_VERSION",
+    "MIN_SUPPORTED_SCHEMA_VERSION",
+    "validate_payload_schema_version",
+]
 
 CURRENT_SCHEMA_VERSION = 1
 MIN_SUPPORTED_SCHEMA_VERSION = 1

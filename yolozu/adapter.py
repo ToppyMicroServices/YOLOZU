@@ -1,14 +1,44 @@
+"""Model adapter interface and built-in adapter implementations.
+
+Adapters provide a uniform ``predict(records) -> list[dict]`` interface so
+that the evaluation, TTA, TTT, and distillation pipelines stay backend-
+agnostic.
+
+Public adapters
+---------------
+ModelAdapter         -- abstract base.
+DummyAdapter         -- returns empty detections (smoke-testing).
+PrecomputedAdapter   -- loads predictions from a JSON file.
+RTDETRPoseAdapter    -- runs the RT-DETR pose scaffold (optional ``torch``).
+"""
+
+from __future__ import annotations
+
+__all__ = [
+    "ModelAdapter",
+    "DummyAdapter",
+    "PrecomputedAdapter",
+    "RTDETRPoseAdapter",
+]
+
+
 class ModelAdapter:
-    def predict(self, records):
+    """Abstract base adapter — subclass to integrate a new backend."""
+
+    def predict(self, records: list[dict]) -> list[dict]:
+        """Run inference on a batch of record dicts and return detections."""
         raise NotImplementedError
 
     def supports_ttt(self) -> bool:
+        """Return ``True`` if this adapter supports test-time training."""
         return False
 
     def get_model(self):
+        """Return the underlying model object, or ``None``."""
         return None
 
     def build_loader(self, records, *, batch_size: int = 1):
+        """Yield preprocessed batches for TTT (torch tensors)."""
         raise RuntimeError("this adapter does not support TTT")
 
 

@@ -1,6 +1,20 @@
+"""Letterbox padding / scaling utilities.
+
+Computes the padding, scale, and offset needed to fit an image into a
+fixed input size while preserving aspect ratio, and maps coordinates
+between input-space and original-image-space.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+__all__ = [
+    "Letterbox",
+    "compute_letterbox",
+    "input_xyxy_to_orig_xyxy",
+    "orig_xyxy_to_cxcywh_norm",
+]
 
 
 @dataclass(frozen=True)

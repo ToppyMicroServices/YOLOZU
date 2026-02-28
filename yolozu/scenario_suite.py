@@ -1,5 +1,13 @@
+"""Synthetic scenario-suite benchmark report generator.
+
+Builds per-scenario metrics (fps, mAP, recall, depth/pose error,
+rejection rate) from a predefined set of scenario configurations.
+"""
+
 import json
 import time
+
+__all__ = ["SCENARIOS", "build_report", "main"]
 
 
 SCENARIOS = [

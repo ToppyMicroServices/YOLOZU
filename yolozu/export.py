@@ -1,3 +1,10 @@
+"""Prediction export utilities (dummy / labels backends).
+
+These functions produce schema-correct ``predictions.json`` artifacts that
+satisfy ``validate_predictions_payload``, useful for smoke-testing the
+evaluation pipeline without actual inference.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -5,6 +12,13 @@ import json
 import time
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "DEFAULT_PREDICTIONS_PATH",
+    "export_dummy_predictions",
+    "export_labels_predictions",
+    "write_predictions_json",
+]
 
 
 DEFAULT_PREDICTIONS_PATH = "reports/predictions.json"

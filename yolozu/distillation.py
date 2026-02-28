@@ -1,3 +1,10 @@
+"""Score-level knowledge distillation for detections.
+
+``distill_predictions`` blends teacher scores into student predictions
+and optionally injects unmatched teacher detections, following a simple
+label-free distillation recipe.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,6 +12,8 @@ from typing import Any
 
 from .image_keys import add_image_aliases, lookup_image_alias
 from .simple_map import _bbox_iou_cxcywh_norm
+
+__all__ = ["DistillStats", "distill_predictions"]
 
 
 @dataclass(frozen=True)

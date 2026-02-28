@@ -1,8 +1,16 @@
+"""Keypoint detection evaluation (PCK metric).
+
+Matches predictions to ground-truth via bbox IoU, then measures
+PCK (Percentage of Correct Keypoints) at configurable thresholds.
+"""
+
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 from typing import Any
+
+__all__ = ["KeypointsMatch", "match_keypoints_detections", "evaluate_keypoints_pck"]
 
 from .boxes import iou_cxcywh_norm_dict
 from .image_keys import add_image_aliases, lookup_image_alias

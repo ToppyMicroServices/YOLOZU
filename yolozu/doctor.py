@@ -1,3 +1,10 @@
+"""Environment diagnostics (``yolozu doctor``).
+
+Builds a structured JSON report covering Python version, package versions,
+GPU capabilities, runtime backend availability, and drift hints that flag
+common cross-backend parity pitfalls.
+"""
+
 from __future__ import annotations
 
 import json
@@ -8,6 +15,8 @@ import sys
 import time
 from pathlib import Path
 from typing import Any
+
+__all__ = ["build_doctor_report", "write_doctor_report"]
 
 
 def _now_utc() -> str:

@@ -1,3 +1,10 @@
+"""COCO-style OKS mAP evaluation (keypoints).
+
+Parallels ``coco_eval.py`` but uses ``iouType='keypoints'`` and builds
+annotation entries that carry the ``keypoints`` / ``num_keypoints`` fields
+required by ``pycocotools.COCOeval``.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,6 +14,14 @@ from typing import Any, Iterable
 from .image_size import get_image_size
 from .image_keys import add_image_aliases, lookup_image_alias, require_image_key
 from .keypoints import normalize_keypoints
+
+__all__ = [
+    "CocoKeypointsIndex",
+    "COCO17_KPT_OKS_SIGMAS",
+    "build_coco_keypoints_ground_truth",
+    "predictions_to_coco_keypoints",
+    "evaluate_coco_oks_map",
+]
 
 
 @dataclass(frozen=True)

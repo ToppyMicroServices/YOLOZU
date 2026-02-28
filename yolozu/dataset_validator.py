@@ -1,3 +1,9 @@
+"""Validation helpers for YOLO-format dataset records.
+
+``validate_dataset_records`` checks image existence, label schema, normalised
+bbox ranges, and optional metadata sanity — used by ``yolozu validate dataset``.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,6 +11,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .image_size import get_image_size
+
+__all__ = ["DatasetValidationResult", "validate_dataset_records"]
 
 
 @dataclass(frozen=True)

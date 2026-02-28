@@ -1,9 +1,26 @@
+"""CLI argument parsing and path resolution helpers.
+
+Used internally by ``yolozu.cli`` to validate flags before they reach the
+core library functions.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
+__all__ = [
+    "parse_image_size_arg",
+    "require_non_negative_int",
+    "require_positive_int",
+    "require_non_negative_float",
+    "require_float_in_range",
+    "resolve_input_path",
+    "resolve_output_path",
+]
+
 
 def parse_image_size_arg(value: str | None, *, flag_name: str = "--image-size") -> tuple[int, int] | None:
+    """Parse ``'N'`` or ``'W,H'`` (or ``'WxH'``) into an ``(width, height)`` pair."""
     if value is None:
         return None
     raw = str(value).strip()

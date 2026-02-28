@@ -1,4 +1,22 @@
+"""Pure-Python 3×3 matrix math for rotations.
+
+Axis-angle transforms, matrix multiply, transpose, trace, and
+geodesic distance on SO(3).
+"""
+
 import math
+
+__all__ = [
+    "clamp",
+    "mat_identity",
+    "mat_mul",
+    "mat_t",
+    "mat_trace",
+    "normalize_axis",
+    "rotation_matrix_axis_angle",
+    "rotation_z",
+    "geodesic_distance",
+]
 
 
 def clamp(value, min_value, max_value):
