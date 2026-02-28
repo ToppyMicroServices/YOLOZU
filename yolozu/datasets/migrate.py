@@ -461,7 +461,7 @@ def migrate_seg_dataset_descriptor(
     source: dict[str, Any] = {"from": from_format, "root": str(root_path), "split": str(split)}
 
     if from_format in ("voc", "pascal_voc", "pascal-voc"):
-        from .datasets.pascal_voc import (
+        from .pascal_voc import (
             PASCAL_VOC_IGNORE_INDEX,
             PASCAL_VOC_SEG_CLASSES_21,
             resolve_pascal_voc_root,
@@ -500,7 +500,7 @@ def migrate_seg_dataset_descriptor(
         )
 
     if from_format in ("cityscapes",):
-        from .datasets.cityscapes import (
+        from .cityscapes import (
             CITYSCAPES_IGNORE_INDEX,
             CITYSCAPES_TRAIN_CLASSES_19,
             resolve_cityscapes_paths,
@@ -533,7 +533,7 @@ def migrate_seg_dataset_descriptor(
         )
 
     if from_format in ("ade20k", "ade"):
-        from .datasets.ade20k import ADE20K_IGNORE_INDEX, resolve_ade20k_paths, iter_ade20k_samples, load_ade20k_classes
+        from .ade20k import ADE20K_IGNORE_INDEX, resolve_ade20k_paths, iter_ade20k_samples, load_ade20k_classes
 
         paths = resolve_ade20k_paths(root_path)
         samples_out = []

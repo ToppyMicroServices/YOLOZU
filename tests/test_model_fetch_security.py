@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from yolozu import model_fetch
+from yolozu.inference import model_fetch
 
 
 class TestModelFetchSecurity(unittest.TestCase):

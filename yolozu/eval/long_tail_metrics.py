@@ -24,6 +24,9 @@ __all__ = [
     "temperature_calibrate_predictions",
     "evaluate_long_tail_detection",
     "fracal_calibrate_instance_segmentation",
+    "la_calibrate_instance_segmentation",
+    "norcal_calibrate_instance_segmentation",
+    "temperature_calibrate_instance_segmentation",
 ]
 from .simple_map import evaluate_map
 

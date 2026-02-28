@@ -181,7 +181,7 @@ class RTDETRPoseAdapter(ModelAdapter):
             # Source-checkout fallback (when rtdetr_pose isn't installed as a package).
             import importlib
 
-            repo_root = Path(__file__).resolve().parents[1]
+            repo_root = Path(__file__).resolve().parents[2]
             candidate = repo_root / "rtdetr_pose"
             if candidate.exists():
                 sys.path.insert(0, str(candidate))

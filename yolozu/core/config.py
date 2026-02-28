@@ -18,7 +18,7 @@ __all__ = [
     "simple_yaml_load",
 ]
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 _RUNTIME_CONFIG_DIR = _REPO_ROOT / "configs" / "runtime"
 
 
