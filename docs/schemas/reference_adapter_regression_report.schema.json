@@ -8,7 +8,8 @@
     "gates",
     "summary",
     "speed",
-    "run"
+    "run",
+    "gate_policy"
   ],
   "properties": {
     "schema_version": {
@@ -19,6 +20,25 @@
     },
     "run": {
       "type": "object"
+    },
+    "run_meta": {
+      "type": "object"
+    },
+    "baseline_meta": {
+      "type": "object"
+    },
+    "protocol": {
+      "type": "object"
+    },
+    "gate_policy": {
+      "type": "object",
+      "required": [
+        "schema_drift",
+        "consistency_drift",
+        "metric_drift",
+        "speed_drift"
+      ],
+      "additionalProperties": false
     },
     "summary": {
       "type": "object"
@@ -54,6 +74,24 @@
       "additionalProperties": true
     },
     "failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hard_failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "soft_failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
       "type": "array",
       "items": {
         "type": "string"

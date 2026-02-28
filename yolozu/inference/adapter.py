@@ -148,6 +148,7 @@ class RTDETRPoseAdapter(ModelAdapter):
         channels_last: bool = False,
         use_inference_mode: bool = True,
         init_seed: int | None = None,
+        repro_policy: str = "relaxed",
     ):
         self.config_path = str(config_path)
         self.checkpoint_path = checkpoint_path
@@ -165,6 +166,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         self.channels_last = bool(channels_last)
         self.use_inference_mode = bool(use_inference_mode)
         self.init_seed = (int(init_seed) if init_seed is not None else None)
+        self.repro_policy = str(repro_policy).strip().lower()
+        if self.repro_policy not in ("strict", "relaxed", "off"):
+            raise ValueError("repro_policy must be one of: strict, relaxed, off")
 
         self.lora_r = int(lora_r)
         self.lora_alpha = float(lora_alpha) if lora_alpha is not None else None
@@ -215,8 +219,21 @@ class RTDETRPoseAdapter(ModelAdapter):
         cfg = load_config(self.config_path)
         num_classes_fg = int(getattr(cfg.model, "num_classes", 80))
 
+        if self.repro_policy == "strict":
+            try:
+                torch.use_deterministic_algorithms(True)
+            except Exception:
+                # Some runtime combos may not expose strict deterministic toggles.
+                pass
+            if hasattr(torch.backends, "cudnn"):
+                try:
+                    torch.backends.cudnn.deterministic = True
+                    torch.backends.cudnn.benchmark = False
+                except Exception:
+                    pass
+
         # Keep reference-adapter baselines reproducible without forcing global RNG.
-        if self.init_seed is None:
+        if self.repro_policy == "off" or self.init_seed is None:
             model = build_model(cfg.model).eval()
         else:
             with torch.random.fork_rng(devices=[]):
@@ -478,6 +495,17 @@ class RTDETRPoseAdapter(ModelAdapter):
                     det["sigma_rot"] = float(torch.exp(log_sigma_rot[q_idx]).item())
 
                 detections.append(det)
+
+            detections.sort(
+                key=lambda d: (
+                    -float(d.get("score", 0.0)),
+                    int(d.get("class_id", -1)),
+                    float((d.get("bbox") or {}).get("cx", 0.0)),
+                    float((d.get("bbox") or {}).get("cy", 0.0)),
+                    float((d.get("bbox") or {}).get("w", 0.0)),
+                    float((d.get("bbox") or {}).get("h", 0.0)),
+                )
+            )
 
             entry = {
                 "image": image_path,

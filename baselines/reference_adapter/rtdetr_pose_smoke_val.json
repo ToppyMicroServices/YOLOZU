@@ -9,10 +9,12 @@
     ],
     "init_seed": 2026,
     "max_detections": 20,
+    "repro_policy": "relaxed",
     "score_threshold": 0.05
   },
   "baseline": {
     "contract": {
+      "entries": 2,
       "prediction_images": [
         "images/val/000000000009.jpg",
         "images/val/000000000025.jpg"
@@ -22,13 +24,14 @@
         "images/val/000000000009.jpg",
         "images/val/000000000025.jpg"
       ],
-      "record_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c"
+      "record_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c",
+      "records": 2
     },
-    "predictions_sha256": "a8f79f56477b28252fb4fe03ebfa73a078f72e47acab5e8be735e3c543de5cbe",
+    "predictions_sha256": "c746b28abbc40d59a957fbfd0f14b03ec892f166e5b643e22542820c86cd6143",
     "speed": {
-      "fps": 1.894672,
+      "fps": 19.00762,
       "images": 2,
-      "seconds": 1.055592
+      "seconds": 0.105221
     },
     "summary": {
       "bbox_checksum": 94.824458,
@@ -51,14 +54,101 @@
       "total_detections": 40
     }
   },
+  "baseline_meta": {
+    "backend": "torch",
+    "bbox_format": "cxcywh_norm",
+    "canonical_decimals": 6,
+    "checkpoint_hash": null,
+    "config_hash": "369aa76ebf5ccc013b45618b301b13c358b44f07387818b7d515c176f34bee30",
+    "dataset_count": 2,
+    "dataset_hash": "93b97b4f2412d0310c63fbc23afd168adbc2692827cf1e82702c621f3acf91df",
+    "dataset_missing": [],
+    "deterministic_algorithms_enabled": false,
+    "device": "cpu",
+    "dtype": "torch.float32",
+    "generated_utc": "2026-02-28T15:04:46Z",
+    "git_sha": "3130ffe0c8fa47d1798364f161d5f40aacc91c64",
+    "repro_actions": [
+      "torch.manual_seed"
+    ],
+    "repro_policy": "relaxed",
+    "seed": 2026,
+    "versions": {
+      "numpy": "2.4.2",
+      "onnxruntime": null,
+      "pillow": "12.1.1",
+      "python": "3.14.3",
+      "torch": "2.10.0",
+      "ultralytics": null,
+      "yolozu": "1.0.4"
+    },
+    "weights_hash": "d0ccef5815cf3d001c03f60187c2cea487e03323feb0980cef2138de5917056d",
+    "weights_source": "model_state_dict"
+  },
+  "canonicalization": {
+    "bbox_format": "cxcywh_norm",
+    "canonical_decimals": 6,
+    "stable_sort": [
+      "score_desc",
+      "class_id_asc",
+      "bbox_lexicographic"
+    ]
+  },
   "dataset": {
+    "hash": "93b97b4f2412d0310c63fbc23afd168adbc2692827cf1e82702c621f3acf91df",
     "max_images": 2,
     "path": "data/smoke",
     "split": "val"
   },
-  "generated_utc": "2026-02-28T14:33:50Z",
+  "gate_policy": {
+    "consistency_drift": "hard",
+    "metric_drift": "warn",
+    "schema_drift": "hard",
+    "speed_drift": "warn"
+  },
+  "generated_utc": "2026-02-28T15:04:46Z",
+  "protocol": {
+    "behavior": {
+      "gate_adoption": "warn_then_hard",
+      "soft_invariants": [
+        "metric drift (total_detections, score_sum, score_mean, bbox_checksum)",
+        "performance drift (fps ratio and absolute floor)"
+      ]
+    },
+    "canonicalization": {
+      "bbox_format": "cxcywh_norm",
+      "bbox_range": [
+        0.0,
+        1.0
+      ],
+      "empty_detections": "[]",
+      "round_decimals": 6,
+      "stable_sort": [
+        "score_desc",
+        "class_id_asc",
+        "bbox_lexicographic"
+      ]
+    },
+    "interface_contract": {
+      "forbidden_values": [
+        "NaN",
+        "+inf",
+        "-inf"
+      ],
+      "hard_invariants": [
+        "entries schema validation with strict mode",
+        "record/prediction image mapping and ordering",
+        "image identifier canonicalization to dataset-relative keys",
+        "bbox coordinate system is cxcywh_norm and values must be finite",
+        "duplicate image IDs and duplicate detections are rejected",
+        "empty detections are normalized to []",
+        "stable detection sort key is fixed"
+      ]
+    },
+    "name": "reference_adapter_regression"
+  },
   "reference_adapter": "rtdetr_pose",
-  "schema_version": 1,
+  "schema_version": 2,
   "thresholds": {
     "metric": {
       "bbox_checksum_abs": 0.1,

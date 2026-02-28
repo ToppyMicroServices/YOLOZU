@@ -9195,7 +9195,8 @@
       "docs": [
         "docs/adapter_contract.md",
         "docs/adapter_strategy.md",
-        "docs/real_model_interface.md"
+        "docs/real_model_interface.md",
+        "docs/reference_adapter_regression_policy.md"
       ],
       "effects": {
         "fixed_writes": [
@@ -9224,12 +9225,20 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
-          "description": "Run schema/consistency/metric/speed regression gates for the RT-DETR reference adapter."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
+          "description": "Run full reference-adapter regression (contract hard + behavior warn)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
-          "description": "Refresh the pinned baseline after an intentional adapter/output contract change."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
+          "description": "Run contract-only hard gate (schema + consistency)."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
+          "description": "Run behavior-only warn gate (metric + speed)."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "description": "Refresh the pinned baseline after an intentional interface contract/behavior change."
         }
       ],
       "id": "run_reference_adapter_regression",
@@ -9364,6 +9373,48 @@
           "kind": "number",
           "name": "absolute_floor_fps",
           "required": false
+        },
+        {
+          "default": "relaxed",
+          "flag": "--repro-policy",
+          "kind": "string",
+          "name": "repro_policy",
+          "required": false
+        },
+        {
+          "default": "hard",
+          "flag": "--schema-gate-mode",
+          "kind": "string",
+          "name": "schema_gate_mode",
+          "required": false
+        },
+        {
+          "default": "hard",
+          "flag": "--consistency-gate-mode",
+          "kind": "string",
+          "name": "consistency_gate_mode",
+          "required": false
+        },
+        {
+          "default": "warn",
+          "flag": "--score-gate-mode",
+          "kind": "string",
+          "name": "score_gate_mode",
+          "required": false
+        },
+        {
+          "default": "warn",
+          "flag": "--perf-gate-mode",
+          "kind": "string",
+          "name": "perf_gate_mode",
+          "required": false
+        },
+        {
+          "default": 6,
+          "flag": "--canonical-decimals",
+          "kind": "number",
+          "name": "canonical_decimals",
+          "required": false
         }
       ],
       "outputs": [
@@ -9381,7 +9432,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run RT-DETR reference-adapter regression gates (schema/consistency/metric/speed) on a fixed real-image sample and compare against baseline.",
+      "summary": "Run RT-DETR reference-adapter regression with contract gates (schema/consistency) and behavior gates (metric/speed), including reproducibility metadata and warn-to-hard adoption.",
       "tags": [
         "adapter",
         "regression",

@@ -8,12 +8,15 @@ detection prediction payloads.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
 __all__ = [
     "ValidationResult",
+    "CanonicalizationResult",
+    "canonicalize_predictions",
     "normalize_predictions_json",
     "normalize_predictions_payload",
     "validate_wrapped_meta",
@@ -34,6 +37,12 @@ class ValidationResult:
     warnings: list[str]
 
 
+@dataclass(frozen=True)
+class CanonicalizationResult:
+    entries: list[dict[str, Any]]
+    warnings: list[str]
+
+
 def _where(where: str, key: str) -> str:
     return f"{where}.{key}" if where else key
 
@@ -47,7 +56,13 @@ def _as_list(value: Any) -> list[Any]:
 
 
 def _is_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if isinstance(value, bool):
+        return False
+    if not isinstance(value, (int, float)):
+        return False
+    if isinstance(value, float) and not math.isfinite(value):
+        return False
+    return True
 
 
 def _validate_bbox(bbox: Any, *, strict: bool, where: str) -> list[str]:
@@ -59,6 +74,19 @@ def _validate_bbox(bbox: Any, *, strict: bool, where: str) -> list[str]:
             raise ValueError(f"{where}: bbox missing '{key}'")
         if strict and not _is_number(bbox[key]):
             raise ValueError(f"{where}: bbox.{key} must be a number")
+    if strict:
+        cx = float(bbox["cx"])
+        cy = float(bbox["cy"])
+        w = float(bbox["w"])
+        h = float(bbox["h"])
+        if not (0.0 <= cx <= 1.0):
+            raise ValueError(f"{where}: bbox.cx must be in [0,1]")
+        if not (0.0 <= cy <= 1.0):
+            raise ValueError(f"{where}: bbox.cy must be in [0,1]")
+        if not (0.0 < w <= 1.0):
+            raise ValueError(f"{where}: bbox.w must be in (0,1]")
+        if not (0.0 < h <= 1.0):
+            raise ValueError(f"{where}: bbox.h must be in (0,1]")
     return warnings
 
 
@@ -81,7 +109,9 @@ def _validate_detection(det: Any, *, strict: bool, where: str) -> list[str]:
         if strict and not isinstance(det["class_id"], int):
             raise ValueError(f"{where}: detection.class_id must be int")
     else:
-        warnings.append(f"{where}: detection missing 'class_id' (ok for some flows)")
+        if strict:
+            raise ValueError(f"{where}: detection missing 'class_id'")
+        warnings.append(f"{where}: detection missing 'class_id' (ok for non-strict flows)")
 
     # Optional fields (RTDETRPoseAdapter schema)
     if "rot6d" in det:
@@ -105,6 +135,241 @@ def _validate_detection(det: Any, *, strict: bool, where: str) -> list[str]:
             normalize_keypoints(det["keypoints"], where=f"{where}.keypoints")
 
     return warnings
+
+
+_ENTRY_ALLOWED_KEYS = frozenset(
+    {
+        "image",
+        "detections",
+        "image_size",
+        "preprocess",
+        "intrinsics",
+        "task",
+        "meta",
+    }
+)
+_DETECTION_ALLOWED_KEYS = frozenset(
+    {
+        "class_id",
+        "score",
+        "bbox",
+        "rot6d",
+        "offsets",
+        "k_delta",
+        "keypoints",
+        "log_z",
+        "log_sigma_z",
+        "log_sigma_rot",
+        "sigma_z",
+        "sigma_rot",
+        "category_id",
+        "bbox_abs",
+        "mask",
+        "meta",
+    }
+)
+
+
+def _validate_unknown_keys(
+    keys: set[str],
+    *,
+    allowed: frozenset[str],
+    where: str,
+    policy: str,
+    warnings: list[str],
+) -> None:
+    unknown = sorted(key for key in keys if key not in allowed)
+    if not unknown:
+        return
+    if policy == "error":
+        raise ValueError(f"{where}: unknown keys {unknown}")
+    if policy == "warn":
+        warnings.append(f"{where}: unknown keys {unknown}")
+
+
+def _stable_detection_sort_key(det: dict[str, Any]) -> tuple[Any, ...]:
+    bbox = det.get("bbox") or {}
+    return (
+        -float(det.get("score", 0.0)),
+        int(det.get("class_id", -1)),
+        float(bbox.get("cx", 0.0)),
+        float(bbox.get("cy", 0.0)),
+        float(bbox.get("w", 0.0)),
+        float(bbox.get("h", 0.0)),
+    )
+
+
+def _range_fix(
+    value: float,
+    *,
+    minimum: float,
+    maximum: float,
+    clamp: bool,
+    where: str,
+    warnings: list[str],
+) -> float:
+    out = float(value)
+    if minimum <= out <= maximum:
+        return out
+    if not clamp:
+        raise ValueError(f"{where}: must be in [{minimum},{maximum}]")
+    clamped = min(max(out, minimum), maximum)
+    warnings.append(f"{where}: out of range ({out}); clamped to {clamped}")
+    return clamped
+
+
+def canonicalize_predictions(
+    entries: Iterable[dict[str, Any]],
+    *,
+    policy: str = "clamp",
+    strict: bool = False,
+    unknown_keys: str | None = None,
+) -> CanonicalizationResult:
+    """Canonicalize prediction entries for stable evaluation and regression.
+
+    Rules:
+    - image key is normalized via ``require_image_key``.
+    - detections list is normalized to ``[]`` when null.
+    - score/bbox values must be finite numbers.
+    - score and bbox range checks use either clamp policy or strict errors.
+    - detections are stable-sorted by ``(-score, class_id, bbox)``.
+    - duplicate image entries are rejected.
+    """
+
+    mode = str(policy).strip().lower()
+    if mode not in ("clamp", "error"):
+        raise ValueError("policy must be one of: clamp, error")
+
+    unknown_mode = str(unknown_keys or ("warn" if strict else "allow")).strip().lower()
+    if unknown_mode not in ("allow", "warn", "error"):
+        raise ValueError("unknown_keys must be one of: allow, warn, error")
+
+    warnings: list[str] = []
+    out: list[dict[str, Any]] = []
+    seen_images: set[str] = set()
+    clamp = bool(mode == "clamp" and not strict)
+
+    for idx, entry in enumerate(entries):
+        where = f"predictions[{idx}]"
+        if not isinstance(entry, dict):
+            raise ValueError(f"{where}: entry must be an object")
+
+        _validate_unknown_keys(
+            set(entry.keys()),
+            allowed=_ENTRY_ALLOWED_KEYS,
+            where=where,
+            policy=unknown_mode,
+            warnings=warnings,
+        )
+
+        image = require_image_key(entry.get("image"), where=f"{where}.image")
+        if image in seen_images:
+            raise ValueError(f"{where}.image: duplicate image entry '{image}'")
+        seen_images.add(image)
+
+        dets = entry.get("detections")
+        if dets is None:
+            dets = []
+        if not isinstance(dets, list):
+            raise ValueError(f"{where}.detections: must be a list")
+
+        dets_out: list[dict[str, Any]] = []
+        for det_idx, det in enumerate(dets):
+            det_where = f"{where}.detections[{det_idx}]"
+            if not isinstance(det, dict):
+                raise ValueError(f"{det_where}: detection must be an object")
+
+            _validate_unknown_keys(
+                set(det.keys()),
+                allowed=_DETECTION_ALLOWED_KEYS,
+                where=det_where,
+                policy=unknown_mode,
+                warnings=warnings,
+            )
+
+            if "class_id" not in det:
+                if strict:
+                    raise ValueError(f"{det_where}: detection missing 'class_id'")
+                warnings.append(f"{det_where}: detection missing 'class_id' (ok for non-strict flows)")
+
+            score = det.get("score")
+            if not _is_number(score):
+                raise ValueError(f"{det_where}.score: must be finite number")
+            score_f = _range_fix(
+                float(score),
+                minimum=0.0,
+                maximum=1.0,
+                clamp=clamp,
+                where=f"{det_where}.score",
+                warnings=warnings,
+            )
+
+            bbox = det.get("bbox")
+            if not isinstance(bbox, dict):
+                raise ValueError(f"{det_where}.bbox: must be an object")
+            for key in ("cx", "cy", "w", "h"):
+                if key not in bbox:
+                    raise ValueError(f"{det_where}.bbox: missing '{key}'")
+                if not _is_number(bbox[key]):
+                    raise ValueError(f"{det_where}.bbox.{key}: must be finite number")
+
+            cx = _range_fix(
+                float(bbox["cx"]),
+                minimum=0.0,
+                maximum=1.0,
+                clamp=clamp,
+                where=f"{det_where}.bbox.cx",
+                warnings=warnings,
+            )
+            cy = _range_fix(
+                float(bbox["cy"]),
+                minimum=0.0,
+                maximum=1.0,
+                clamp=clamp,
+                where=f"{det_where}.bbox.cy",
+                warnings=warnings,
+            )
+            w = _range_fix(
+                float(bbox["w"]),
+                minimum=0.0,
+                maximum=1.0,
+                clamp=clamp,
+                where=f"{det_where}.bbox.w",
+                warnings=warnings,
+            )
+            h = _range_fix(
+                float(bbox["h"]),
+                minimum=0.0,
+                maximum=1.0,
+                clamp=clamp,
+                where=f"{det_where}.bbox.h",
+                warnings=warnings,
+            )
+            if w <= 0.0:
+                raise ValueError(f"{det_where}.bbox.w: must be > 0")
+            if h <= 0.0:
+                raise ValueError(f"{det_where}.bbox.h: must be > 0")
+
+            det_out = dict(det)
+            det_out["score"] = float(score_f)
+            det_out["bbox"] = {
+                "cx": float(cx),
+                "cy": float(cy),
+                "w": float(w),
+                "h": float(h),
+            }
+            if "class_id" in det_out:
+                if strict and not isinstance(det_out["class_id"], int):
+                    raise ValueError(f"{det_where}.class_id: must be int")
+            dets_out.append(det_out)
+
+        dets_out.sort(key=_stable_detection_sort_key)
+        entry_out = dict(entry)
+        entry_out["image"] = image
+        entry_out["detections"] = dets_out
+        out.append(entry_out)
+
+    return CanonicalizationResult(entries=out, warnings=warnings)
 
 
 def normalize_predictions_json(data: Any) -> list[dict[str, Any]]:
@@ -256,8 +521,10 @@ def validate_wrapped_meta(meta: dict[str, Any], *, where: str = "meta") -> None:
 
 
 def validate_predictions_entries(entries: Iterable[dict[str, Any]], *, strict: bool = False) -> ValidationResult:
+    canonical = canonicalize_predictions(entries, strict=bool(strict), policy="clamp")
     warnings: list[str] = []
-    for idx, entry in enumerate(entries):
+    warnings.extend(canonical.warnings)
+    for idx, entry in enumerate(canonical.entries):
         where = f"predictions[{idx}]"
         if not isinstance(entry, dict):
             raise ValueError(f"{where}: entry must be an object")
@@ -278,13 +545,15 @@ def load_predictions_entries(path: str | Path) -> list[dict[str, Any]]:
     path = Path(path)
     data = json.loads(path.read_text())
     entries, _ = normalize_predictions_payload(data)
-    return entries
+    return canonicalize_predictions(entries, strict=False, policy="clamp").entries
 
 
 def load_predictions_payload(path: str | Path) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     path = Path(path)
     data = json.loads(path.read_text())
-    return normalize_predictions_payload(data)
+    entries, meta = normalize_predictions_payload(data)
+    canonical = canonicalize_predictions(entries, strict=False, policy="clamp")
+    return canonical.entries, meta
 
 
 def validate_predictions_payload(payload: Any, *, strict: bool = False) -> ValidationResult:

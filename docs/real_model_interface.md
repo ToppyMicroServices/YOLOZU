@@ -22,9 +22,13 @@ Baseline report (real outputs + fps):
 - `python3 tools/run_baseline.py --adapter rtdetr_pose --dataset data/coco128 --max-images 50 --output reports/baseline.json`
 
 Reference adapter regression (real-image pinned baseline + CI gates):
-- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
+- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
 - Baseline refresh after intentional behavior changes:
-  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
+- Contract-only gate (hard):
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
+- Behavior-only gate (warn):
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
 
 Export (ONNX):
 - Prefer `train_minimal.py --run-dir ...` (writes `model.onnx` + `model.onnx.meta.json`).
@@ -70,6 +74,7 @@ Input records (from `yolozu.datasets.dataset.build_manifest`):
 Output per image (from `RTDETRPoseAdapter`):
 - `image`: original path
 - `detections`: list of dicts with `class_id`, `score`, `bbox` (cxcywh_norm), and optional pose fields
+- For mAP/eval flows, `class_id` is required as part of the `predictions` interface contract (strict validation).
 
 ### Units & intrinsics (common pitfall)
 
@@ -82,6 +87,7 @@ Output per image (from `RTDETRPoseAdapter`):
 
 - Use fixed seeds (`--seed`) and `--deterministic` in `train_minimal.py`
 - For `RTDETRPoseAdapter` inference without a checkpoint, use `--init-seed` in `tools/run_reference_adapter_regression.py`
+- Use `--repro-policy {strict,relaxed,off}` to make determinism policy explicit in metadata.
 - Limit to `data/coco128` and set `--max-images` for quick runs
 - Keep `--image-size`, `--score-threshold`, and `--max-detections` fixed
 - Record the config + checkpoint hash in run notes

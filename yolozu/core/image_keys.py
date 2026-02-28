@@ -1,6 +1,6 @@
 """Image-path key normalisation and alias lookups.
 
-Provides helpers to build alias dicts (basename, stem, relative path)
+Provides helpers to build alias dicts (normalized path, basename, stem)
 so that prediction and ground-truth entries keyed by different path
 formats can be matched reliably.
 """
@@ -40,6 +40,9 @@ def image_key_aliases(value: Any) -> tuple[str, ...]:
     base = key_unix.rsplit("/", 1)[-1]
     if base and base not in out:
         out.append(base)
+    stem = Path(base).stem if base else ""
+    if stem and stem not in out:
+        out.append(stem)
     return tuple(out)
 
 
@@ -47,7 +50,8 @@ def image_basename(value: Any) -> str:
     aliases = image_key_aliases(value)
     if not aliases:
         return ""
-    return aliases[-1]
+    primary = aliases[0].replace("\\", "/")
+    return primary.rsplit("/", 1)[-1]
 
 
 def add_image_aliases(

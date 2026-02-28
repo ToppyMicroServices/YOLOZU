@@ -48,14 +48,23 @@ def _group_ground_truth(records: list[dict[str, Any]]) -> tuple[dict[str, dict[i
 def _group_predictions(predictions_entries: Iterable[dict[str, Any]]) -> tuple[list[dict[str, Any]], set[int]]:
     preds: list[dict[str, Any]] = []
     classes: set[int] = set()
-    for entry in predictions_entries:
+    for entry_idx, entry in enumerate(predictions_entries):
         image = str(entry.get("image", ""))
         if not image:
             continue
-        for det in entry.get("detections", []) or []:
+        for det_idx, det in enumerate(entry.get("detections", []) or []):
             if "bbox" not in det:
                 continue
-            class_id = int(det.get("class_id", 0))
+            if "class_id" not in det:
+                raise ValueError(
+                    f"predictions[{entry_idx}].detections[{det_idx}]: missing class_id is not allowed for mAP"
+                )
+            class_id_raw = det.get("class_id")
+            if not isinstance(class_id_raw, int):
+                raise ValueError(
+                    f"predictions[{entry_idx}].detections[{det_idx}].class_id must be int for mAP"
+                )
+            class_id = int(class_id_raw)
             classes.add(class_id)
             preds.append(
                 {

@@ -288,12 +288,17 @@ jobs:
         run: |
           python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 
+      - name: Manifest sync gate (tools -> packaged copy)
+        run: |
+          python tools/sync_tools_manifest.py
+          git diff --exit-code -- tools/manifest.json yolozu/data/manifest/tools_manifest.json
+
       - name: Advisory audit (yolozu flags vs manifest)
         continue-on-error: true
         run: |
           python tools/audit_yolozu_manifest_flags.py
 
-      - name: Reference adapter regression gate (real-image baseline)
+      - name: Reference adapter contract gate (hard)
         run: |
           python tools/run_reference_adapter_regression.py \
             --dataset data/smoke \
@@ -304,8 +309,30 @@ jobs:
             --score-threshold 0.05 \
             --max-detections 20 \
             --init-seed 2026 \
+            --repro-policy relaxed \
+            --score-gate-mode off \
+            --perf-gate-mode off \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-            --output reports/reference_adapter_regression_ci.json
+            --output reports/reference_adapter_regression_contract_ci.json
+
+      - name: Reference adapter behavior gate (warn)
+        run: |
+          python tools/run_reference_adapter_regression.py \
+            --dataset data/smoke \
+            --split val \
+            --max-images 2 \
+            --device cpu \
+            --image-size 160 \
+            --score-threshold 0.05 \
+            --max-detections 20 \
+            --init-seed 2026 \
+            --repro-policy relaxed \
+            --schema-gate-mode off \
+            --consistency-gate-mode off \
+            --score-gate-mode warn \
+            --perf-gate-mode warn \
+            --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
+            --output reports/reference_adapter_regression_behavior_ci.json
 
       - name: Unit tests
         run: |

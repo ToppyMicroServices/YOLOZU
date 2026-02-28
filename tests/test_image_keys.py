@@ -9,11 +9,13 @@ class TestImageKeys(unittest.TestCase):
         self.assertIn(r"C:\tmp\foo\0001.jpg", aliases)
         self.assertIn("C:/tmp/foo/0001.jpg", aliases)
         self.assertIn("0001.jpg", aliases)
+        self.assertIn("0001", aliases)
 
     def test_add_and_lookup_alias(self):
         index: dict[str, int] = {}
         add_image_aliases(index, r"C:\tmp\foo\0001.jpg", 7)
         self.assertEqual(lookup_image_alias(index, "0001.jpg"), 7)
+        self.assertEqual(lookup_image_alias(index, "0001"), 7)
         self.assertEqual(lookup_image_alias(index, "C:/tmp/foo/0001.jpg"), 7)
 
     def test_image_basename_and_require_key(self):

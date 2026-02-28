@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from yolozu.predictions import (
+    canonicalize_predictions,
     load_predictions_entries,
     load_predictions_index,
     load_predictions_payload,
@@ -141,6 +142,60 @@ class TestPredictionsIO(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             validate_predictions_entries(entries, strict=False)
         self.assertIn("image must be a non-empty string", str(ctx.exception))
+
+    def test_canonicalize_enforces_finite_and_stable_sort(self):
+        entries = [
+            {
+                "image": "a.jpg",
+                "detections": [
+                    {"class_id": 2, "score": 0.1, "bbox": {"cx": 0.2, "cy": 0.2, "w": 0.2, "h": 0.2}},
+                    {"class_id": 1, "score": 0.9, "bbox": {"cx": 0.6, "cy": 0.6, "w": 0.1, "h": 0.1}},
+                ],
+            }
+        ]
+        out = canonicalize_predictions(entries, strict=True, policy="error")
+        dets = out.entries[0]["detections"]
+        self.assertEqual(int(dets[0]["class_id"]), 1)
+        self.assertEqual(int(dets[1]["class_id"]), 2)
+
+        bad = [
+            {
+                "image": "a.jpg",
+                "detections": [
+                    {"class_id": 1, "score": float("nan"), "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}
+                ],
+            }
+        ]
+        with self.assertRaises(ValueError):
+            canonicalize_predictions(bad, strict=True, policy="error")
+
+    def test_canonicalize_rejects_duplicate_images(self):
+        entries = [
+            {"image": "a.jpg", "detections": []},
+            {"image": "a.jpg", "detections": []},
+        ]
+        with self.assertRaises(ValueError):
+            canonicalize_predictions(entries, strict=False, policy="clamp")
+
+    def test_canonicalize_unknown_keys_warn_or_error(self):
+        entries = [
+            {
+                "image": "a.jpg",
+                "extra_entry": 1,
+                "detections": [
+                    {
+                        "class_id": 0,
+                        "score": 0.9,
+                        "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2},
+                        "extra_det": 1,
+                    }
+                ],
+            }
+        ]
+        warned = canonicalize_predictions(entries, strict=True, policy="error", unknown_keys="warn")
+        self.assertTrue(any("unknown keys" in w for w in warned.warnings))
+        with self.assertRaises(ValueError):
+            canonicalize_predictions(entries, strict=True, policy="error", unknown_keys="error")
 
 
 if __name__ == "__main__":

@@ -242,18 +242,18 @@
           "required": false
         },
         {
+          "description": "Backend key to run without --dry-run (repeatable).",
           "flag": "--non-dry-backend",
           "kind": "string",
           "name": "non_dry_backend",
-          "required": false,
-          "description": "Backend key to run without --dry-run (repeatable)."
+          "required": false
         },
         {
+          "description": "Fail when no non-dry backend is configured.",
           "flag": "--require-non-dry",
           "kind": "string",
           "name": "require_non_dry",
-          "required": false,
-          "description": "Fail when no non-dry backend is configured."
+          "required": false
         }
       ],
       "outputs": [
@@ -3736,33 +3736,33 @@
           "required": false
         },
         {
+          "description": "TTA mode: postprocess (default) or model.",
           "flag": "--tta-mode",
           "kind": "string",
           "name": "tta_mode",
-          "required": false,
-          "description": "TTA mode: postprocess (default) or model."
+          "required": false
         },
         {
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
           "flag": "--tta-keypoint-swap-pairs",
           "kind": "string",
           "name": "tta_keypoint_swap_pairs",
-          "required": false,
-          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4')."
+          "required": false
         },
         {
+          "description": "IoU threshold for model-space TTA branch merge.",
           "flag": "--tta-model-merge-iou",
           "kind": "number",
           "name": "tta_model_merge_iou",
-          "required": false,
-          "description": "IoU threshold for model-space TTA branch merge."
+          "required": false
         }
       ],
       "outputs": [
         {
           "default": "reports/predictions.json",
+          "description": "Predictions JSON (wrapped meta includes task_coverage and extended TTA settings).",
           "kind": "file",
-          "name": "predictions_json",
-          "description": "Predictions JSON (wrapped meta includes task_coverage and extended TTA settings)."
+          "name": "predictions_json"
         }
       ],
       "platform": {
@@ -7813,11 +7813,11 @@
           "required": false
         },
         {
+          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license).",
           "flag": "--download-if-missing",
           "kind": "string",
           "name": "download_if_missing",
-          "required": false,
-          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license)."
+          "required": false
         },
         {
           "flag": "--download-num-images",
@@ -7844,32 +7844,32 @@
           "required": false
         },
         {
+          "description": "Allow automatic tiny COCO download.",
           "flag": "--allow-auto-download",
           "kind": "string",
           "name": "allow_auto_download",
-          "required": false,
-          "description": "Allow automatic tiny COCO download."
+          "required": false
         },
         {
+          "description": "Acknowledge dataset license terms before auto download.",
           "flag": "--accept-dataset-license",
           "kind": "string",
           "name": "accept_dataset_license",
-          "required": false,
-          "description": "Acknowledge dataset license terms before auto download."
+          "required": false
         },
         {
+          "description": "Fail if model-inference-generated labels are detected.",
           "flag": "--strict-provenance",
           "kind": "string",
           "name": "strict_provenance",
-          "required": false,
-          "description": "Fail if model-inference-generated labels are detected."
+          "required": false
         },
         {
+          "description": "Fail if heuristic/scaffold labels are present.",
           "flag": "--strict-realism",
           "kind": "string",
           "name": "strict_realism",
-          "required": false,
-          "description": "Fail if heuristic/scaffold labels are present."
+          "required": false
         }
       ],
       "outputs": [
@@ -9019,11 +9019,11 @@
           "required": false
         },
         {
+          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license).",
           "flag": "--download-if-missing",
           "kind": "string",
           "name": "download_if_missing",
-          "required": false,
-          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license)."
+          "required": false
         },
         {
           "flag": "--download-num-images",
@@ -9126,32 +9126,32 @@
           "required": false
         },
         {
+          "description": "Forward --allow-auto-download to preparation step.",
           "flag": "--allow-auto-download",
           "kind": "string",
           "name": "allow_auto_download",
-          "required": false,
-          "description": "Forward --allow-auto-download to preparation step."
+          "required": false
         },
         {
+          "description": "Forward --accept-dataset-license to preparation step.",
           "flag": "--accept-dataset-license",
           "kind": "string",
           "name": "accept_dataset_license",
-          "required": false,
-          "description": "Forward --accept-dataset-license to preparation step."
+          "required": false
         },
         {
+          "description": "Fail if model-inference-generated labels are detected.",
           "flag": "--strict-provenance",
           "kind": "string",
           "name": "strict_provenance",
-          "required": false,
-          "description": "Fail if model-inference-generated labels are detected."
+          "required": false
         },
         {
+          "description": "Fail if heuristic/scaffold labels are present.",
           "flag": "--strict-realism",
           "kind": "string",
           "name": "strict_realism",
-          "required": false,
-          "description": "Fail if heuristic/scaffold labels are present."
+          "required": false
         }
       ],
       "outputs": [
@@ -9195,7 +9195,8 @@
       "docs": [
         "docs/adapter_contract.md",
         "docs/adapter_strategy.md",
-        "docs/real_model_interface.md"
+        "docs/real_model_interface.md",
+        "docs/reference_adapter_regression_policy.md"
       ],
       "effects": {
         "fixed_writes": [
@@ -9224,12 +9225,20 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
-          "description": "Run schema/consistency/metric/speed regression gates for the RT-DETR reference adapter."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
+          "description": "Run full reference-adapter regression (contract hard + behavior warn)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
-          "description": "Refresh the pinned baseline after an intentional adapter/output contract change."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
+          "description": "Run contract-only hard gate (schema + consistency)."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
+          "description": "Run behavior-only warn gate (metric + speed)."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "description": "Refresh the pinned baseline after an intentional interface contract/behavior change."
         }
       ],
       "id": "run_reference_adapter_regression",
@@ -9364,6 +9373,48 @@
           "kind": "number",
           "name": "absolute_floor_fps",
           "required": false
+        },
+        {
+          "default": "relaxed",
+          "flag": "--repro-policy",
+          "kind": "string",
+          "name": "repro_policy",
+          "required": false
+        },
+        {
+          "default": "hard",
+          "flag": "--schema-gate-mode",
+          "kind": "string",
+          "name": "schema_gate_mode",
+          "required": false
+        },
+        {
+          "default": "hard",
+          "flag": "--consistency-gate-mode",
+          "kind": "string",
+          "name": "consistency_gate_mode",
+          "required": false
+        },
+        {
+          "default": "warn",
+          "flag": "--score-gate-mode",
+          "kind": "string",
+          "name": "score_gate_mode",
+          "required": false
+        },
+        {
+          "default": "warn",
+          "flag": "--perf-gate-mode",
+          "kind": "string",
+          "name": "perf_gate_mode",
+          "required": false
+        },
+        {
+          "default": 6,
+          "flag": "--canonical-decimals",
+          "kind": "number",
+          "name": "canonical_decimals",
+          "required": false
         }
       ],
       "outputs": [
@@ -9381,7 +9432,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run RT-DETR reference-adapter regression gates (schema/consistency/metric/speed) on a fixed real-image sample and compare against baseline.",
+      "summary": "Run RT-DETR reference-adapter regression with contract gates (schema/consistency) and behavior gates (metric/speed), including reproducibility metadata and warn-to-hard adoption.",
       "tags": [
         "adapter",
         "regression",
@@ -12187,53 +12238,53 @@
           "required": false
         },
         {
+          "description": "TTA mode for export: postprocess or model.",
           "flag": "--tta-mode",
           "kind": "string",
           "name": "tta_mode",
-          "required": false,
-          "description": "TTA mode for export: postprocess or model."
+          "required": false
         },
         {
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
           "flag": "--tta-keypoint-swap-pairs",
           "kind": "string",
           "name": "tta_keypoint_swap_pairs",
-          "required": false,
-          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4')."
+          "required": false
         },
         {
+          "description": "IoU threshold for model-space TTA merge.",
           "flag": "--tta-model-merge-iou",
           "kind": "number",
           "name": "tta_model_merge_iou",
-          "required": false,
-          "description": "IoU threshold for model-space TTA merge."
+          "required": false
         },
         {
+          "description": "Enable score-only TTT-lite for non-torch backends.",
           "flag": "--ttt-lite-non-torch",
           "kind": "string",
           "name": "ttt_lite_non_torch",
-          "required": false,
-          "description": "Enable score-only TTT-lite for non-torch backends."
+          "required": false
         },
         {
+          "description": "Temperature for non-torch TTT-lite score scaling.",
           "flag": "--ttt-lite-temperature",
           "kind": "number",
           "name": "ttt_lite_temperature",
-          "required": false,
-          "description": "Temperature for non-torch TTT-lite score scaling."
+          "required": false
         },
         {
+          "description": "Entropy penalty weight for non-torch TTT-lite.",
           "flag": "--ttt-lite-entropy-weight",
           "kind": "number",
           "name": "ttt_lite_entropy_weight",
-          "required": false,
-          "description": "Entropy penalty weight for non-torch TTT-lite."
+          "required": false
         },
         {
+          "description": "Enable min-max score normalization for non-torch TTT-lite.",
           "flag": "--ttt-lite-minmax",
           "kind": "string",
           "name": "ttt_lite_minmax",
-          "required": false,
-          "description": "Enable min-max score normalization for non-torch TTT-lite."
+          "required": false
         }
       ],
       "outputs": [
