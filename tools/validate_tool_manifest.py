@@ -265,6 +265,20 @@ def validate_manifest(obj: Any, *, require_declarative: bool = False) -> list[st
         errors.append("manifest.tools: required non-empty list")
         return errors
 
+    # Deterministic ordering gate: keep tools sorted by id for stable diffs and
+    # reproducible packaged-manifest sync.
+    tool_ids_in_order: list[str] = []
+    for tool in tools:
+        if isinstance(tool, dict) and isinstance(tool.get("id"), str) and tool.get("id"):
+            tool_ids_in_order.append(str(tool.get("id")))
+    if tool_ids_in_order:
+        sorted_ids = sorted(tool_ids_in_order)
+        if tool_ids_in_order != sorted_ids:
+            errors.append(
+                "manifest.tools: entries must be sorted by id for deterministic updates "
+                f"(current head: {tool_ids_in_order[:3]}, expected head: {sorted_ids[:3]})"
+            )
+
     contracts_map, contract_errors = _validate_contracts(obj.get("contracts"))
     errors.extend(contract_errors)
 

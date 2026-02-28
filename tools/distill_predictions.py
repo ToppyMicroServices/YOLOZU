@@ -8,9 +8,11 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.dataset import build_manifest
+from yolozu.core.cli_args import (require_float_in_range, require_non_negative_float, require_non_negative_int)
 from yolozu.distillation import distill_predictions
 from yolozu.metrics_report import build_report, write_json
 from yolozu.predictions import load_predictions_entries
+from yolozu.predictions import validate_predictions_payload
 from yolozu.simple_map import evaluate_map
 
 
@@ -27,12 +29,52 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--alpha", type=float, default=0.5, help="Blend factor for student/teacher scores.")
     p.add_argument("--add-missing", action="store_true", help="Add unmatched teacher detections.")
     p.add_argument("--add-score-scale", type=float, default=0.5, help="Scale for added teacher scores.")
+    p.add_argument(
+        "--teacher-min-score",
+        type=float,
+        default=0.0,
+        help="Minimum teacher score for unmatched detection injection.",
+    )
+    p.add_argument(
+        "--max-added-per-image",
+        type=int,
+        default=None,
+        help="Maximum unmatched teacher detections to inject per image.",
+    )
+    p.add_argument(
+        "--add-duplicate-iou-threshold",
+        type=float,
+        default=0.9,
+        help="IoU threshold for duplicate-suppression when injecting missing detections.",
+    )
     return p.parse_args(argv)
 
 
 def _safe_metrics(records: list[dict[str, Any]], entries: list[dict[str, Any]]) -> dict[str, float]:
     result = evaluate_map(records, entries, iou_thresholds=[0.5 + 0.05 * i for i in range(10)])
     return {"map50": result.map50, "map50_95": result.map50_95}
+
+
+def _validate_distill_params(params: dict[str, Any]) -> None:
+    try:
+        require_float_in_range(params.get("iou_threshold"), flag_name="--iou-threshold", minimum=0.0, maximum=1.0)
+        require_float_in_range(params.get("alpha"), flag_name="--alpha", minimum=0.0, maximum=1.0)
+        require_non_negative_float(params.get("add_score_scale"), flag_name="--add-score-scale")
+        require_float_in_range(
+            params.get("teacher_min_score"),
+            flag_name="--teacher-min-score",
+            minimum=0.0,
+            maximum=1.0,
+        )
+        require_non_negative_int(params.get("max_added_per_image"), flag_name="--max-added-per-image")
+        require_float_in_range(
+            params.get("add_duplicate_iou_threshold"),
+            flag_name="--add-duplicate-iou-threshold",
+            minimum=0.0,
+            maximum=1.0,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +89,10 @@ def main(argv: list[str] | None = None) -> int:
 
     enabled = bool(config.get("enabled", True))
 
+    student_raw = json.loads(Path(args.student).read_text(encoding="utf-8"))
+    teacher_raw = json.loads(Path(args.teacher).read_text(encoding="utf-8"))
+    validate_predictions_payload(student_raw, strict=False)
+    validate_predictions_payload(teacher_raw, strict=False)
     student_entries = load_predictions_entries(args.student)
     teacher_entries = load_predictions_entries(args.teacher)
 
@@ -55,7 +101,13 @@ def main(argv: list[str] | None = None) -> int:
         "alpha": float(config.get("alpha", args.alpha)),
         "add_missing": bool(config.get("add_missing", args.add_missing)),
         "add_score_scale": float(config.get("add_score_scale", args.add_score_scale)),
+        "teacher_min_score": float(config.get("teacher_min_score", args.teacher_min_score)),
+        "max_added_per_image": config.get("max_added_per_image", args.max_added_per_image),
+        "add_duplicate_iou_threshold": float(
+            config.get("add_duplicate_iou_threshold", args.add_duplicate_iou_threshold)
+        ),
     }
+    _validate_distill_params(distill_params)
 
     if enabled:
         distilled_entries, stats = distill_predictions(student_entries, teacher_entries, **distill_params)
@@ -65,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
 
     output_path = repo_root / args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    validate_predictions_payload(distilled_entries, strict=False)
     output_path.write_text(json.dumps(distilled_entries, indent=2, sort_keys=True))
 
     metrics = {}

@@ -19,6 +19,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
     p.add_argument("--split", default=None, help="Dataset split (default: auto).")
+    p.add_argument("--max-images", type=int, default=None, help="Optional cap for quick runs.")
     p.add_argument("--onnx", required=True, help="ONNX model path.")
     p.add_argument("--imgsz", type=int, default=640, help="Input size (default: 640).")
     p.add_argument(
@@ -112,6 +113,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--keep-aspect")
         if args.split:
             cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
         if dump_io_path:
             cmd.extend(["--dump-io", str(dump_io_path)])
         if args.strict:
@@ -151,6 +154,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--swap-rb")
         if args.split:
             cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
         if dump_io_path:
             cmd.extend(["--dump-io", str(dump_io_path)])
         if args.strict:

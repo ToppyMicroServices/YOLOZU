@@ -42,13 +42,19 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 ```
 
-4. Run regression tests:
+4. Sync packaged manifest copy (single source of truth sync):
 
 ```bash
-python -m pytest -q tests/test_tool_manifest.py
+python3 tools/sync_tools_manifest.py
 ```
 
-5. Update related docs if command surface changed:
+5. Run regression tests:
+
+```bash
+python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manifest.py tests/test_manifest_docs_references.py
+```
+
+6. Update related docs if command surface changed:
    - `docs/tools_index.md`
    - workflow/protocol docs that reference the tool
 
@@ -110,7 +116,7 @@ python -m pytest -q tests/test_tool_manifest.py
 ## PR checklist snippet
 
 - [ ] `tools/manifest.json` updated for changed tool behavior
-- [ ] `yolozu/data/manifest/tools_manifest.json` synced (packaged copy for `yolozu resources cat manifest/tools_manifest.json`)
+- [ ] `python3 tools/sync_tools_manifest.py` run (`yolozu/data/manifest/tools_manifest.json` synced)
 - [ ] strict declarative validation passes
-- [ ] manifest regression tests pass
+- [ ] manifest regression tests pass (`test_packaged_tools_manifest`, `test_manifest_docs_references`)
 - [ ] docs links/examples updated

@@ -232,6 +232,90 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertEqual(meta.get("adapter"), "executorch")
             self.assertEqual((meta.get("extra") or {}).get("exporter"), "executorch")
 
+    def test_export_rejects_torch_only_flags_on_yolox(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+        dataset = repo_root / "data" / "smoke"
+
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "export",
+                "--backend",
+                "yolox",
+                "--dataset",
+                str(dataset),
+                "--split",
+                "val",
+                "--tta",
+                "--output",
+                "reports/_tmp_invalid_torch_only_flags.json",
+                "--force",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("--tta/--ttt/--lora-* are only supported", proc.stderr)
+
+    def test_export_opencv_dnn_dry_run_respects_max_images(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = root / "dataset"
+            images = dataset_root / "images" / "train2017"
+            labels = dataset_root / "labels" / "train2017"
+            images.mkdir(parents=True, exist_ok=True)
+            labels.mkdir(parents=True, exist_ok=True)
+
+            (images / "000001.jpg").write_bytes(b"")
+            (images / "000002.jpg").write_bytes(b"")
+            (labels / "000001.txt").write_text("0 0.5 0.5 0.2 0.2\n")
+            (labels / "000002.txt").write_text("0 0.4 0.4 0.2 0.2\n")
+
+            onnx_path = root / "dummy.onnx"
+            onnx_path.write_bytes(b"dummy")
+            out_path = root / "preds.json"
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "export",
+                    "--backend",
+                    "opencv-dnn",
+                    "--dataset",
+                    str(dataset_root),
+                    "--split",
+                    "train2017",
+                    "--onnx",
+                    str(onnx_path),
+                    "--max-images",
+                    "1",
+                    "--dry-run",
+                    "--output",
+                    str(out_path),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu export --backend opencv-dnn --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            preds = payload.get("predictions") or []
+            self.assertEqual(len(preds), 1)
+
     def test_export_cache_reuses_by_fingerprint(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

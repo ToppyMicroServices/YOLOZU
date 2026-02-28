@@ -23,6 +23,27 @@ class DistillStats:
     avg_score_gap: float
 
 
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _is_near_duplicate(
+    existing: list[dict[str, Any]],
+    candidate: dict[str, Any],
+    *,
+    iou_threshold: float,
+) -> bool:
+    candidate_class = int(candidate.get("class_id", -1))
+    candidate_bbox = candidate.get("bbox", {})
+    for det in existing:
+        if int(det.get("class_id", -2)) != candidate_class:
+            continue
+        iou = _bbox_iou_cxcywh_norm(det.get("bbox", {}), candidate_bbox)
+        if iou >= iou_threshold:
+            return True
+    return False
+
+
 def _index_by_image(entries: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     index: dict[str, list[dict[str, Any]]] = {}
     for entry in entries:
@@ -42,11 +63,22 @@ def distill_predictions(
     alpha: float = 0.5,
     add_missing: bool = True,
     add_score_scale: float = 0.5,
+    teacher_min_score: float = 0.0,
+    max_added_per_image: int | None = None,
+    add_duplicate_iou_threshold: float = 0.9,
 ) -> tuple[list[dict[str, Any]], DistillStats]:
     if not 0.0 <= alpha <= 1.0:
         raise ValueError("alpha must be in [0,1]")
-    if iou_threshold < 0.0:
-        raise ValueError("iou_threshold must be >= 0")
+    if not 0.0 <= iou_threshold <= 1.0:
+        raise ValueError("iou_threshold must be in [0,1]")
+    if add_score_scale < 0.0:
+        raise ValueError("add_score_scale must be >= 0")
+    if not 0.0 <= teacher_min_score <= 1.0:
+        raise ValueError("teacher_min_score must be in [0,1]")
+    if max_added_per_image is not None and max_added_per_image < 0:
+        raise ValueError("max_added_per_image must be >= 0 or None")
+    if not 0.0 <= add_duplicate_iou_threshold <= 1.0:
+        raise ValueError("add_duplicate_iou_threshold must be in [0,1]")
 
     teacher_index = _index_by_image(teacher_entries)
 
@@ -79,17 +111,35 @@ def distill_predictions(
                 s_score = float(det.get("score", 0.0))
                 total_gap += abs(t_score - s_score)
                 matched += 1
-                det["score"] = max(s_score, alpha * t_score + (1.0 - alpha) * s_score)
+                det["score"] = _clamp01(max(s_score, alpha * t_score + (1.0 - alpha) * s_score))
 
         if add_missing:
-            for idx, tdet in enumerate(teacher_dets):
+            added_in_image = 0
+            teacher_order = sorted(
+                range(len(teacher_dets)),
+                key=lambda idx: float(teacher_dets[idx].get("score", 0.0)),
+                reverse=True,
+            )
+            for idx in teacher_order:
+                tdet = teacher_dets[idx]
                 if teacher_used[idx]:
                     continue
-                score = float(tdet.get("score", 0.0)) * float(add_score_scale)
+                if float(tdet.get("score", 0.0)) < teacher_min_score:
+                    continue
+                if max_added_per_image is not None and added_in_image >= max_added_per_image:
+                    break
+                if _is_near_duplicate(
+                    student_dets,
+                    tdet,
+                    iou_threshold=add_duplicate_iou_threshold,
+                ):
+                    continue
+                score = _clamp01(float(tdet.get("score", 0.0)) * float(add_score_scale))
                 det_out = dict(tdet)
                 det_out["score"] = score
                 student_dets.append(det_out)
                 added += 1
+                added_in_image += 1
 
         # Preserve all original entry keys (image_size, preprocess, etc.).
         entry_out = dict(entry)

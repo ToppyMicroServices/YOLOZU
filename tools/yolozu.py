@@ -18,6 +18,12 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.tta.presets import apply_ttt_preset_args  # noqa: E402
+from yolozu.core.cli_args import (  # noqa: E402
+    require_float_in_range,
+    require_non_negative_int,
+    require_positive_int,
+)
+from yolozu.predictions import normalize_predictions_payload  # noqa: E402
 
 DEFAULT_PREDICTIONS_PATH = "reports/predictions.json"
 
@@ -532,18 +538,11 @@ def _write_json(path: Path, obj: Any) -> None:
 
 
 def _ensure_wrapper(payload: Any) -> dict[str, Any]:
-    if isinstance(payload, dict) and "predictions" in payload:
-        preds = payload.get("predictions")
-        meta = payload.get("meta")
-        if isinstance(preds, list) and (meta is None or isinstance(meta, dict)):
-            return {"predictions": preds, "meta": dict(meta or {})}
-    if isinstance(payload, list):
-        return {"predictions": payload, "meta": {}}
-    if isinstance(payload, dict):
-        # Legacy mapping format.
-        preds = [{"image": str(k), "detections": v if isinstance(v, list) else []} for k, v in payload.items()]
-        return {"predictions": preds, "meta": {}}
-    raise ValueError("unsupported predictions payload")
+    entries, meta = normalize_predictions_payload(payload)
+    return {
+        "predictions": entries,
+        "meta": dict(meta or {}),
+    }
 
 
 def _subprocess_or_die(cmd: list[str]) -> str:
@@ -562,20 +561,24 @@ def _subprocess_or_die(cmd: list[str]) -> str:
 
 
 def _validate_export_numeric_args(args: argparse.Namespace) -> None:
-    if args.max_images is not None and int(args.max_images) < 0:
-        raise SystemExit("--max-images must be >= 0")
-    if int(args.topk) <= 0:
-        raise SystemExit("--topk must be >= 1")
-    if int(args.max_detections) <= 0:
-        raise SystemExit("--max-detections must be >= 1")
-    if float(args.min_score) < 0.0 or float(args.min_score) > 1.0:
-        raise SystemExit("--min-score must be in [0, 1]")
-    if float(args.score_threshold) < 0.0 or float(args.score_threshold) > 1.0:
-        raise SystemExit("--score-threshold must be in [0, 1]")
-    if float(args.score_thr) < 0.0 or float(args.score_thr) > 1.0:
-        raise SystemExit("--score-thr must be in [0, 1]")
-    if float(args.nms_iou) < 0.0 or float(args.nms_iou) > 1.0:
-        raise SystemExit("--nms-iou must be in [0, 1]")
+    try:
+        require_non_negative_int(args.max_images, flag_name="--max-images")
+        require_positive_int(args.topk, flag_name="--topk")
+        require_positive_int(args.max_detections, flag_name="--max-detections")
+        require_float_in_range(args.min_score, flag_name="--min-score", minimum=0.0, maximum=1.0)
+        require_float_in_range(
+            args.score_threshold,
+            flag_name="--score-threshold",
+            minimum=0.0,
+            maximum=1.0,
+        )
+        require_float_in_range(args.score_thr, flag_name="--score-thr", minimum=0.0, maximum=1.0)
+        require_float_in_range(args.nms_iou, flag_name="--nms-iou", minimum=0.0, maximum=1.0)
+    except ValueError as exc:
+        msg = str(exc)
+        msg = msg.replace("--topk must be > 0", "--topk must be >= 1")
+        msg = msg.replace("--max-detections must be > 0", "--max-detections must be >= 1")
+        raise SystemExit(msg) from exc
 
 
 def _resolve_path(path: str | Path) -> Path:
@@ -625,9 +628,16 @@ _ACCEL_EXPORT_SCRIPTS = {
     "executorch": "tools/export_predictions_executorch.py",
 }
 
+_NON_ACCEL_EXPORT_SCRIPTS = {
+    "yolox": "tools/export_predictions_yolox.py",
+    "opencv-dnn": "tools/export_predictions_opencv_dnn_unified.py",
+    "opencv-dnn-rtdetr": "tools/export_predictions_opencv_dnn_rtdetr.py",
+    "opencv-dnn-yolo": "tools/export_predictions_opencv_dnn.py",
+}
+
 
 def _ensure_exporter_script_exists(*, backend: str) -> str:
-    relpath = _ACCEL_EXPORT_SCRIPTS.get(str(backend))
+    relpath = _ACCEL_EXPORT_SCRIPTS.get(str(backend)) or _NON_ACCEL_EXPORT_SCRIPTS.get(str(backend))
     if not isinstance(relpath, str) or not relpath:
         raise SystemExit(f"internal error: unknown accelerator backend: {backend}")
     script_path = repo_root / relpath
@@ -1331,9 +1341,11 @@ def _export_with_backend(
         cmd = _build_accel_backend_command(args=args, backend=backend, dataset=str(dataset), out_path=out_path)
         _subprocess_or_die(cmd)
     elif backend == "yolox":
+        _validate_torch_only_flags(args=args, backend=backend)
+        script = _ensure_exporter_script_exists(backend=backend)
         cmd = [
             sys.executable,
-            "tools/export_predictions_yolox.py",
+            script,
             "--dataset",
             str(dataset),
             "--imgsz",
@@ -1363,12 +1375,14 @@ def _export_with_backend(
             cmd.append("--strict")
         _subprocess_or_die(cmd)
     elif backend == "opencv-dnn":
+        _validate_torch_only_flags(args=args, backend=backend)
         onnx_model = args.onnx or args.model
         if not onnx_model:
             raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn")
+        script = _ensure_exporter_script_exists(backend=backend)
         cmd = [
             sys.executable,
-            "tools/export_predictions_opencv_dnn_unified.py",
+            script,
             "--dataset",
             str(dataset),
             "--onnx",
@@ -1390,6 +1404,8 @@ def _export_with_backend(
             "--output",
             str(out_path),
         ]
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
         if args.preprocess:
             cmd.extend(["--preprocess", str(args.preprocess)])
         if args.split:
@@ -1402,12 +1418,14 @@ def _export_with_backend(
             cmd.extend(["--dump-io", str(args.dump_io)])
         _subprocess_or_die(cmd)
     elif backend == "opencv-dnn-rtdetr":
+        _validate_torch_only_flags(args=args, backend=backend)
         onnx_model = args.onnx or args.model
         if not onnx_model:
             raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-rtdetr")
+        script = _ensure_exporter_script_exists(backend=backend)
         cmd = [
             sys.executable,
-            "tools/export_predictions_opencv_dnn_rtdetr.py",
+            script,
             "--dataset",
             str(dataset),
             "--onnx",
@@ -1439,12 +1457,14 @@ def _export_with_backend(
             cmd.append("--strict")
         _subprocess_or_die(cmd)
     elif backend == "opencv-dnn-yolo":
+        _validate_torch_only_flags(args=args, backend=backend)
         onnx_model = args.onnx or args.model
         if not onnx_model:
             raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-yolo")
+        script = _ensure_exporter_script_exists(backend=backend)
         cmd = [
             sys.executable,
-            "tools/export_predictions_opencv_dnn.py",
+            script,
             "--dataset",
             str(dataset),
             "--onnx",

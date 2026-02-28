@@ -10,6 +10,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
+from yolozu.core.diagnostics import format_cli_error
 from yolozu.dataset import build_manifest
 from yolozu.eval_protocol import apply_eval_protocol_args, eval_protocol_hash, load_eval_protocol
 from yolozu.predictions import load_predictions_payload, validate_predictions_entries
@@ -331,6 +332,14 @@ def main(argv=None):
     split_effective = manifest["split"]
     if args.max_images is not None:
         records = records[: args.max_images]
+    if not records:
+        raise SystemExit(
+            format_cli_error(
+                code="E_DATASET_EMPTY",
+                message=f"no dataset images resolved for split={split_effective!r} under {dataset_root}",
+                hint="check --dataset/--split or remove overly restrictive --max-images",
+            )
+        )
 
     gt, index = build_coco_ground_truth(records)
     image_sizes = {img["id"]: (int(img["width"]), int(img["height"])) for img in gt["images"]}
@@ -346,6 +355,14 @@ def main(argv=None):
     protocol_mismatches: list[str] = []
     for path in pred_paths:
         entries, meta = load_predictions_payload(path)
+        if not entries:
+            raise SystemExit(
+                format_cli_error(
+                    code="E_PREDICTIONS_EMPTY",
+                    message=f"no prediction entries found in {path}",
+                    hint="each file must contain at least one image entry for evaluation",
+                )
+            )
         validation = validate_predictions_entries(entries, strict=args.strict)
         dt = predictions_to_coco_detections(
             entries, coco_index=index, image_sizes=image_sizes, bbox_format=args.bbox_format

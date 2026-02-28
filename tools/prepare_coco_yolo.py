@@ -8,6 +8,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.coco_convert import convert_coco_instances_to_yolo_labels
+from yolozu.core.diagnostics import format_cli_error
 
 
 def _parse_args(argv):
@@ -65,6 +66,15 @@ def main(argv=None):
     labels_out.mkdir(parents=True, exist_ok=True)
 
     instances = json.loads(instances_path.read_text())
+    instance_images = instances.get("images") or []
+    if not isinstance(instance_images, list) or not instance_images:
+        raise SystemExit(
+            format_cli_error(
+                code="E_COCO_IMAGES_EMPTY",
+                message=f"instances JSON has no images entries: {instances_path}",
+                hint="check source annotations or split selection",
+            )
+        )
     convert_coco_instances_to_yolo_labels(
         instances_json=instances,
         images_dir=images_src,
@@ -74,8 +84,7 @@ def main(argv=None):
 
     if args.copy_images:
         # Copy only images referenced in COCO JSON.
-        images = instances.get("images") or []
-        for img in images:
+        for img in instance_images:
             file_name = str(img.get("file_name") or "")
             if not file_name:
                 continue

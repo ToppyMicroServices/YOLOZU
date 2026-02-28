@@ -21,6 +21,17 @@ class TestPackagedToolsManifest(unittest.TestCase):
             "packaged manifest is out of sync. Update yolozu/data/manifest/tools_manifest.json to match tools/manifest.json.",
         )
 
+    def test_tools_are_sorted_by_id_for_deterministic_diff(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        for path in (
+            repo_root / "tools" / "manifest.json",
+            repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json",
+        ):
+            obj = json.loads(path.read_text(encoding="utf-8"))
+            tools = obj.get("tools") or []
+            ids = [str(tool.get("id")) for tool in tools if isinstance(tool, dict) and tool.get("id")]
+            self.assertEqual(ids, sorted(ids), f"tools array must be sorted by id in {path}")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ sys.path.insert(0, str(repo_root))
 from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
 from yolozu.dataset import build_manifest
 from yolozu.eval_protocol import apply_eval_protocol_args, load_eval_protocol
+from yolozu.core.diagnostics import format_cli_error
 from yolozu.predictions import load_predictions_entries
 from yolozu.predictions_transform import load_classes_json, normalize_class_ids
 
@@ -77,11 +78,27 @@ def main(argv=None):
     split_effective = manifest["split"]
     if args.max_images is not None:
         records = records[: args.max_images]
+    if not records:
+        raise SystemExit(
+            format_cli_error(
+                code="E_DATASET_EMPTY",
+                message=f"no dataset images resolved for split={split_effective!r} under {dataset_root}",
+                hint="check --dataset/--split or remove overly restrictive --max-images",
+            )
+        )
 
     gt, index = build_coco_ground_truth(records)
     image_sizes = {img["id"]: (int(img["width"]), int(img["height"])) for img in gt["images"]}
 
     preds = load_predictions_entries(repo_root / args.predictions)
+    if not preds:
+        raise SystemExit(
+            format_cli_error(
+                code="E_PREDICTIONS_EMPTY",
+                message=f"no prediction entries found in {args.predictions}",
+                hint="provide at least one image entry in predictions interface contract format",
+            )
+        )
     normalization_warnings: list[str] = []
     if args.classes or args.assume_class_id_is_category_id:
         if not args.classes:

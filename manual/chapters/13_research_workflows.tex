@@ -105,11 +105,15 @@ Key distillation configuration parameters include:
   \item \cmd{alpha}
   \item \cmd{add_missing}
   \item \cmd{add_score_scale}
+  \item \cmd{teacher_min_score}
+  \item \cmd{max_added_per_image}
+  \item \cmd{add_duplicate_iou_threshold}
 \end{itemize}
 
 Important notes:
 \begin{itemize}
   \item The utility intelligently blends teacher predictions into the student's output and generates a concise distillation report JSON.
+  \item This is a score-level / label-free helper, intended for fast ablations. For safer practical usage, set a non-zero \cmd{teacher_min_score}, set finite \cmd{max_added_per_image}, and keep \cmd{add_duplicate_iou_threshold} high to avoid duplicate amplification.
   \item For rapid, preliminary comparisons, you may utilize the lightweight \cmd{yolozu.simple_map} proxy on a fixed subset (providing fast CPU-bound feedback). However, you must invariably follow up with the full evaluator when formally reporting results.
 \end{itemize}
 
