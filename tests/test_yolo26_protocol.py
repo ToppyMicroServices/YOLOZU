@@ -79,6 +79,51 @@ class TestYOLO26Protocol(unittest.TestCase):
         self.assertEqual(args.split, "val2017")
         self.assertEqual(args.bbox_format, "cxcywh_norm")
 
+    # --- T8: e2e (no NMS) semantics tests ---
+
+    def test_protocol_e2e_nms_field_yolo26(self):
+        """yolo26 protocol declares e2e.nms = 'none'."""
+        protocol = load_eval_protocol("yolo26")
+        self.assertIn("e2e", protocol)
+        self.assertEqual(protocol["e2e"]["nms"], "none")
+        self.assertIn("no NMS", protocol.get("metric_label", ""))
+
+    def test_protocol_e2e_nms_field_e2e_nms_free(self):
+        """e2e_nms_free protocol declares e2e.nms = 'none'."""
+        protocol = load_eval_protocol("e2e_nms_free")
+        self.assertIn("e2e", protocol)
+        self.assertEqual(protocol["e2e"]["nms"], "none")
+
+    def test_protocol_e2e_nms_field_nms_applied(self):
+        """nms_applied protocol declares e2e.nms = 'applied'."""
+        protocol = load_eval_protocol("nms_applied")
+        self.assertIn("e2e", protocol)
+        self.assertEqual(protocol["e2e"]["nms"], "applied")
+
+    def test_all_protocols_have_e2e_block(self):
+        """Every registered protocol must declare an e2e block with nms field."""
+        for proto_id in ("yolo26", "e2e_nms_free", "nms_applied"):
+            with self.subTest(proto_id=proto_id):
+                protocol = load_eval_protocol(proto_id)
+                self.assertIn("e2e", protocol, f"{proto_id} missing e2e block")
+                self.assertIn("nms", protocol["e2e"], f"{proto_id} missing e2e.nms")
+                self.assertIn(
+                    protocol["e2e"]["nms"],
+                    ("none", "applied"),
+                    f"{proto_id} has invalid e2e.nms value",
+                )
+
+    def test_eval_coco_all_protocols_resolve(self):
+        """All three --protocol choices resolve correctly via eval_coco."""
+        mod = _load_module(self.repo_root / "tools" / "eval_coco.py", "eval_coco")
+        for proto_id in ("yolo26", "e2e_nms_free", "nms_applied"):
+            with self.subTest(proto_id=proto_id):
+                args, protocol = mod._resolve_args(
+                    ["--protocol", proto_id, "--predictions", "reports/predictions.json"]
+                )
+                self.assertIsNotNone(protocol)
+                self.assertEqual(protocol["id"], proto_id)
+
 
 if __name__ == "__main__":
     unittest.main()

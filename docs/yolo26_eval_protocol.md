@@ -37,7 +37,17 @@ If any artifact deviates, `eval_suite` exits non-zero.
 
 “End-to-end” means **the evaluator scores detections exactly as provided**; it does not apply NMS.
 If your exporter runs NMS, you are not measuring e2e performance.
+### `--protocol` values and e2e semantics
 
+| `--protocol` value | `e2e.nms` | Meaning |
+|---|---|---|
+| `yolo26` | `none` | YOLO26 competition: RT-DETR-style NMS-free output. Evaluator receives raw detections. |
+| `e2e_nms_free` | `none` | Generic NMS-free protocol (same e2e semantics, different fixed conditions may apply). |
+| `nms_applied` | `applied` | Exporter already ran NMS (YOLOv5/v8/v11 style). `score_threshold=0.25`, `iou_threshold=0.45`. |
+
+The evaluator **never applies NMS** regardless of protocol. The `e2e.nms` field records
+whether the *exporter* applied NMS, so downstream consumers can distinguish the two modes
+programmatically. This field is propagated into evaluation report JSON.
 ## Reporting schema
 
 Evaluation outputs are JSON and include protocol metadata:
