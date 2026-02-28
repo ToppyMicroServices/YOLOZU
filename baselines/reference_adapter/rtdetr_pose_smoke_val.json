@@ -88,7 +88,7 @@
       "ultralytics": null,
       "yolozu": "1.0.4"
     },
-    "weights_hash": "d0ccef5815cf3d001c03f60187c2cea487e03323feb0980cef2138de5917056d",
+    "weights_hash": "3d3d3b25adfeee0eddda0e173745c4e75ad22849ee18f8c8f83dc2e71cdf0c17",
     "weights_source": "model_state_dict"
   },
   "canonicalization": {
