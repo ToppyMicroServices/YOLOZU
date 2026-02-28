@@ -304,60 +304,81 @@ def canonicalize_predictions(
                 warnings=warnings,
             )
 
-            bbox = det.get("bbox")
-            if not isinstance(bbox, dict):
-                raise ValueError(f"{det_where}.bbox: must be an object")
-            for key in ("cx", "cy", "w", "h"):
-                if key not in bbox:
-                    raise ValueError(f"{det_where}.bbox: missing '{key}'")
-                if not _is_number(bbox[key]):
-                    raise ValueError(f"{det_where}.bbox.{key}: must be finite number")
+            bbox_raw = det.get("bbox")
+            if isinstance(bbox_raw, (list, tuple)):
+                if len(bbox_raw) != 4 or not all(_is_number(v) for v in bbox_raw):
+                    raise ValueError(f"{det_where}.bbox: list bbox must contain 4 finite numbers")
+                bbox_raw = {
+                    "cx": float(bbox_raw[0]),
+                    "cy": float(bbox_raw[1]),
+                    "w": float(bbox_raw[2]),
+                    "h": float(bbox_raw[3]),
+                }
+                warnings.append(f"{det_where}.bbox: converted legacy list format to object")
 
-            cx = _range_fix(
-                float(bbox["cx"]),
-                minimum=0.0,
-                maximum=1.0,
-                clamp=clamp,
-                where=f"{det_where}.bbox.cx",
-                warnings=warnings,
-            )
-            cy = _range_fix(
-                float(bbox["cy"]),
-                minimum=0.0,
-                maximum=1.0,
-                clamp=clamp,
-                where=f"{det_where}.bbox.cy",
-                warnings=warnings,
-            )
-            w = _range_fix(
-                float(bbox["w"]),
-                minimum=0.0,
-                maximum=1.0,
-                clamp=clamp,
-                where=f"{det_where}.bbox.w",
-                warnings=warnings,
-            )
-            h = _range_fix(
-                float(bbox["h"]),
-                minimum=0.0,
-                maximum=1.0,
-                clamp=clamp,
-                where=f"{det_where}.bbox.h",
-                warnings=warnings,
-            )
-            if w <= 0.0:
-                raise ValueError(f"{det_where}.bbox.w: must be > 0")
-            if h <= 0.0:
-                raise ValueError(f"{det_where}.bbox.h: must be > 0")
+            bbox_out: dict[str, float] | None = None
+            if bbox_raw is None:
+                if strict:
+                    raise ValueError(f"{det_where}.bbox: missing 'bbox'")
+                warnings.append(f"{det_where}.bbox: missing 'bbox' (ok for non-strict flows)")
+            elif not isinstance(bbox_raw, dict):
+                raise ValueError(f"{det_where}.bbox: must be an object")
+            else:
+                for key in ("cx", "cy", "w", "h"):
+                    if key not in bbox_raw:
+                        raise ValueError(f"{det_where}.bbox: missing '{key}'")
+                    if not _is_number(bbox_raw[key]):
+                        raise ValueError(f"{det_where}.bbox.{key}: must be finite number")
+
+                cx = _range_fix(
+                    float(bbox_raw["cx"]),
+                    minimum=0.0,
+                    maximum=1.0,
+                    clamp=clamp,
+                    where=f"{det_where}.bbox.cx",
+                    warnings=warnings,
+                )
+                cy = _range_fix(
+                    float(bbox_raw["cy"]),
+                    minimum=0.0,
+                    maximum=1.0,
+                    clamp=clamp,
+                    where=f"{det_where}.bbox.cy",
+                    warnings=warnings,
+                )
+                w = _range_fix(
+                    float(bbox_raw["w"]),
+                    minimum=0.0,
+                    maximum=1.0,
+                    clamp=clamp,
+                    where=f"{det_where}.bbox.w",
+                    warnings=warnings,
+                )
+                h = _range_fix(
+                    float(bbox_raw["h"]),
+                    minimum=0.0,
+                    maximum=1.0,
+                    clamp=clamp,
+                    where=f"{det_where}.bbox.h",
+                    warnings=warnings,
+                )
+                if w <= 0.0:
+                    raise ValueError(f"{det_where}.bbox.w: must be > 0")
+                if h <= 0.0:
+                    raise ValueError(f"{det_where}.bbox.h: must be > 0")
+                bbox_out = {
+                    "cx": float(cx),
+                    "cy": float(cy),
+                    "w": float(w),
+                    "h": float(h),
+                }
 
             det_out = dict(det)
             det_out["score"] = float(score_f)
-            det_out["bbox"] = {
-                "cx": float(cx),
-                "cy": float(cy),
-                "w": float(w),
-                "h": float(h),
-            }
+            if bbox_out is None:
+                det_out.pop("bbox", None)
+            else:
+                det_out["bbox"] = bbox_out
             if "class_id" in det_out:
                 if strict and not isinstance(det_out["class_id"], int):
                     raise ValueError(f"{det_where}.class_id: must be int")

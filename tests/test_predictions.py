@@ -197,6 +197,15 @@ class TestPredictionsIO(unittest.TestCase):
         with self.assertRaises(ValueError):
             canonicalize_predictions(entries, strict=True, policy="error", unknown_keys="error")
 
+    def test_canonicalize_bbox_optional_non_strict_but_required_strict(self):
+        entries = [{"image": "a.jpg", "detections": [{"score": 0.5}]}]
+        out = canonicalize_predictions(entries, strict=False, policy="clamp")
+        self.assertEqual(out.entries[0]["detections"][0]["score"], 0.5)
+        self.assertNotIn("bbox", out.entries[0]["detections"][0])
+
+        with self.assertRaises(ValueError):
+            canonicalize_predictions(entries, strict=True, policy="error")
+
 
 if __name__ == "__main__":
     unittest.main()
