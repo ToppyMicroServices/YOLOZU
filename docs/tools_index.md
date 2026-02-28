@@ -12,6 +12,7 @@ For most day-to-day flows, start with:
 
 - `python3 tools/yolozu.py doctor ...`
 - `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
+  - Torch backend can use `--infer-batch-size` and `--torch-compile*` for lightweight inference acceleration.
 - `python3 tools/yolozu.py predict-images --input-dir /path/to/images ...`
 - `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`

@@ -251,6 +251,9 @@ class TestYOLOZUCLI(unittest.TestCase):
                 "--split",
                 "val",
                 "--tta",
+                "--torch-compile",
+                "--infer-batch-size",
+                "2",
                 "--output",
                 "reports/_tmp_invalid_torch_only_flags.json",
                 "--force",
@@ -263,6 +266,7 @@ class TestYOLOZUCLI(unittest.TestCase):
         )
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("--tta/--ttt/--lora-* are only supported", proc.stderr)
+        self.assertIn("--torch-compile*", proc.stderr)
 
     def test_export_opencv_dnn_dry_run_respects_max_images(self):
         repo_root = Path(__file__).resolve().parents[1]

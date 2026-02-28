@@ -43,6 +43,12 @@ def _parse_args(argv):
         help="Device for rtdetr_pose adapter (default: cpu).",
     )
     parser.add_argument(
+        "--infer-batch-size",
+        type=int,
+        default=1,
+        help="Inference batch size for rtdetr_pose adapter (default: 1).",
+    )
+    parser.add_argument(
         "--image-size",
         type=int,
         nargs="+",
@@ -103,6 +109,21 @@ def _parse_args(argv):
         help="If LoRA is enabled, optionally train biases too (default: none).",
     )
     parser.add_argument(
+        "--torch-compile",
+        action="store_true",
+        help="Enable torch.compile for rtdetr_pose inference (PyTorch 2.x).",
+    )
+    parser.add_argument(
+        "--torch-compile-backend",
+        default="inductor",
+        help="torch.compile backend (default: inductor).",
+    )
+    parser.add_argument(
+        "--torch-compile-mode",
+        default="reduce-overhead",
+        help="torch.compile mode (default: reduce-overhead).",
+    )
+    parser.add_argument(
         "--max-images",
         type=int,
         default=None,
@@ -155,8 +176,21 @@ def main(argv=None):
 
     apply_ttt_preset_args(args)
 
+    if int(args.infer_batch_size) <= 0:
+        raise SystemExit("--infer-batch-size must be >= 1")
+
     if args.adapter == "dummy" and int(args.lora_r) > 0:
         raise SystemExit("--lora-* flags are only supported with --adapter rtdetr_pose")
+    if args.adapter == "dummy":
+        compile_opts_changed = bool(
+            bool(args.torch_compile)
+            or str(args.torch_compile_backend) != "inductor"
+            or str(args.torch_compile_mode) != "reduce-overhead"
+        )
+        if compile_opts_changed or int(args.infer_batch_size) != 1:
+            raise SystemExit(
+                "--torch-compile* and --infer-batch-size are only supported with --adapter rtdetr_pose"
+            )
 
     dataset_root = Path(args.dataset) if args.dataset else (repo_root / "data" / "coco128")
     manifest = build_manifest(dataset_root, split=args.split)
@@ -182,12 +216,16 @@ def main(argv=None):
             image_size=image_size or (320, 320),
             score_threshold=args.score_threshold,
             max_detections=args.max_detections,
+            infer_batch_size=int(args.infer_batch_size),
             lora_r=int(args.lora_r),
             lora_alpha=(float(args.lora_alpha) if args.lora_alpha is not None else None),
             lora_dropout=float(args.lora_dropout),
             lora_target=str(args.lora_target),
             lora_freeze_base=bool(args.lora_freeze_base),
             lora_train_bias=str(args.lora_train_bias),
+            compile_model=bool(args.torch_compile),
+            compile_backend=str(args.torch_compile_backend),
+            compile_mode=str(args.torch_compile_mode),
         )
 
     def _ttt_or_die(_records):
@@ -335,6 +373,14 @@ def main(argv=None):
                     "freeze_base": bool(args.lora_freeze_base),
                     "train_bias": str(args.lora_train_bias),
                     "report": lora_report,
+                },
+                "inference": {
+                    "infer_batch_size": int(args.infer_batch_size),
+                    "torch_compile": {
+                        "enabled": bool(args.torch_compile),
+                        "backend": (str(args.torch_compile_backend) if bool(args.torch_compile) else None),
+                        "mode": (str(args.torch_compile_mode) if bool(args.torch_compile) else None),
+                    },
                 },
                 "tta": {
                     "enabled": bool(args.tta),

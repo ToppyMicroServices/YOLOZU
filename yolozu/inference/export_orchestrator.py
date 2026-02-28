@@ -60,6 +60,7 @@ def ensure_wrapper(payload: Any) -> dict[str, Any]:
 def validate_export_numeric_args(args: argparse.Namespace) -> None:
     try:
         require_non_negative_int(args.max_images, flag_name="--max-images")
+        require_positive_int(args.infer_batch_size, flag_name="--infer-batch-size")
         require_positive_int(args.topk, flag_name="--topk")
         require_positive_int(args.max_detections, flag_name="--max-detections")
         require_float_in_range(args.min_score, flag_name="--min-score", minimum=0.0, maximum=1.0)
@@ -153,8 +154,17 @@ def ensure_exporter_script_exists(*, backend: str) -> str:
 
 
 def validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None:
-    if args.tta or args.ttt or int(args.lora_r) > 0:
-        raise SystemExit(f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend})")
+    compile_opts_changed = bool(
+        bool(args.torch_compile)
+        or str(args.torch_compile_backend) != "inductor"
+        or str(args.torch_compile_mode) != "reduce-overhead"
+    )
+    infer_batch_changed = int(args.infer_batch_size) != 1
+    if args.tta or args.ttt or int(args.lora_r) > 0 or compile_opts_changed or infer_batch_changed:
+        raise SystemExit(
+            f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend}); "
+            "--torch-compile* and --infer-batch-size require --backend torch"
+        )
 
 
 def require_backend_model(*, args: argparse.Namespace, backend: str) -> str:
@@ -298,9 +308,17 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="Torch config path (rtdetr_pose).")
     p.add_argument("--checkpoint", default=None, help="Torch checkpoint path (optional).")
     p.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
+    p.add_argument("--infer-batch-size", type=int, default=1, help="Torch inference batch size (default: 1).")
     p.add_argument("--image-size", type=int, nargs="+", default=None, help="Torch image size (one or two ints).")
     p.add_argument("--score-threshold", type=float, default=0.3, help="Torch score threshold (default: 0.3).")
     p.add_argument("--max-detections", type=int, default=50, help="Torch max detections (default: 50).")
+    p.add_argument("--torch-compile", action="store_true", help="Enable torch.compile for torch backend inference.")
+    p.add_argument("--torch-compile-backend", default="inductor", help="torch.compile backend (default: inductor).")
+    p.add_argument(
+        "--torch-compile-mode",
+        default="reduce-overhead",
+        help="torch.compile mode (default: reduce-overhead).",
+    )
     p.add_argument("--lora-r", type=int, default=0, help="Enable LoRA by setting rank r>0 (default: 0 disables).")
     p.add_argument("--lora-alpha", type=float, default=None, help="LoRA alpha scaling (default: r).")
     p.add_argument("--lora-dropout", type=float, default=0.0, help="LoRA dropout on inputs (default: 0.0).")
@@ -417,10 +435,21 @@ def export_with_backend(
     config_fp: dict[str, Any]
 
     if backend in ("dummy", "torch"):
+        if backend == "dummy":
+            compile_opts_changed = bool(
+                bool(args.torch_compile)
+                or str(args.torch_compile_backend) != "inductor"
+                or str(args.torch_compile_mode) != "reduce-overhead"
+            )
+            if compile_opts_changed or int(args.infer_batch_size) != 1:
+                raise SystemExit(
+                    "--torch-compile* and --infer-batch-size are only supported for --backend torch"
+                )
         adapter = "dummy" if backend == "dummy" else "rtdetr_pose"
         lora_enabled = bool(backend == "torch" and int(args.lora_r) > 0)
         tta_enabled = bool(args.tta)
         ttt_enabled = bool(args.ttt)
+        torch_compile_enabled = bool(backend == "torch" and bool(args.torch_compile))
         if ttt_enabled:
             apply_ttt_preset_args(args)
         config_fp = {
@@ -437,6 +466,12 @@ def export_with_backend(
             "image_size": list(args.image_size) if backend == "torch" and args.image_size else None,
             "score_threshold": float(args.score_threshold) if backend == "torch" else None,
             "max_detections": int(args.max_detections) if backend == "torch" else None,
+            "infer_batch_size": int(args.infer_batch_size) if backend == "torch" else None,
+            "torch_compile": {
+                "enabled": torch_compile_enabled,
+                "backend": (str(args.torch_compile_backend) if backend == "torch" else None),
+                "mode": (str(args.torch_compile_mode) if backend == "torch" else None),
+            },
             "lora": {
                 "enabled": lora_enabled,
                 "r": int(args.lora_r) if lora_enabled else 0,
@@ -664,6 +699,12 @@ def export_with_backend(
                     str(float(args.score_threshold)),
                     "--max-detections",
                     str(int(args.max_detections)),
+                    "--infer-batch-size",
+                    str(int(args.infer_batch_size)),
+                    "--torch-compile-backend",
+                    str(args.torch_compile_backend),
+                    "--torch-compile-mode",
+                    str(args.torch_compile_mode),
                     "--lora-r",
                     str(int(args.lora_r)),
                     "--lora-dropout",
@@ -680,6 +721,8 @@ def export_with_backend(
                 cmd.extend(["--image-size", *[str(int(x)) for x in args.image_size]])
             if args.lora_alpha is not None:
                 cmd.extend(["--lora-alpha", str(float(args.lora_alpha))])
+            if bool(args.torch_compile):
+                cmd.append("--torch-compile")
             cmd.append("--lora-freeze-base" if bool(args.lora_freeze_base) else "--no-lora-freeze-base")
 
         subprocess_or_die(cmd)

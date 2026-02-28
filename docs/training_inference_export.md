@@ -440,6 +440,13 @@ Use the adapter tools to run inference and produce predictions JSON.
 
 - python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --checkpoint /path/to.ckpt --max-images 50 --wrap --output reports/predictions.json
 
+Torch推論の軽量拡張（PyTorch 2.x）:
+- `--infer-batch-size N`: 推論バッチサイズ（既定 `1`）
+- `--torch-compile`: `torch.compile` 有効化
+- `--torch-compile-backend` / `--torch-compile-mode`: compile backend/mode 指定
+
+- python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --max-images 50 --wrap --output reports/predictions_torch_compiled.json
+
 Optional TTA:
 - python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-seed 0 --tta-flip-prob 0.5 --wrap --output reports/predictions_tta.json
 

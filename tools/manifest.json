@@ -3532,6 +3532,33 @@
           "kind": "number",
           "name": "ttt_aux_temperature",
           "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--infer-batch-size",
+          "kind": "number",
+          "name": "infer_batch_size",
+          "required": false
+        },
+        {
+          "flag": "--torch-compile",
+          "kind": "string",
+          "name": "torch_compile",
+          "required": false
+        },
+        {
+          "default": "inductor",
+          "flag": "--torch-compile-backend",
+          "kind": "string",
+          "name": "torch_compile_backend",
+          "required": false
+        },
+        {
+          "default": "reduce-overhead",
+          "flag": "--torch-compile-mode",
+          "kind": "string",
+          "name": "torch_compile_mode",
+          "required": false
         }
       ],
       "outputs": [
@@ -3548,7 +3575,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter).",
+      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch.compile and batched inference.",
       "tags": [
         "predictions",
         "adapter"

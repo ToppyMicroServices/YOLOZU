@@ -54,6 +54,10 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             "--lora-target",
             "--lora-freeze-base",
             "--lora-train-bias",
+            "--infer-batch-size",
+            "--torch-compile",
+            "--torch-compile-backend",
+            "--torch-compile-mode",
         ):
             self.assertIn(flag, out)
 
@@ -82,6 +86,26 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
         self.assertNotEqual(proc2.returncode, 0)
         msg = proc2.stdout + proc2.stderr
         self.assertIn("--lora-* flags are only supported", msg)
+
+    def test_dummy_adapter_rejects_compile_and_batch_flags(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "dummy",
+                "--torch-compile",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        msg = proc.stdout + proc.stderr
+        self.assertIn("--torch-compile* and --infer-batch-size are only supported", msg)
 
     def test_rtdetr_pose_export_smoke_with_lora(self):
         if torch is None:
@@ -126,6 +150,13 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
                     "1.1",  # force empty detections for stability
                     "--max-detections",
                     "5",
+                    "--infer-batch-size",
+                    "1",
+                    "--torch-compile",
+                    "--torch-compile-backend",
+                    "inductor",
+                    "--torch-compile-mode",
+                    "reduce-overhead",
                     "--max-images",
                     "1",
                     "--wrap",
@@ -148,6 +179,8 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             meta = payload.get("meta") or {}
             self.assertTrue(meta.get("lora", {}).get("enabled"))
             self.assertTrue(meta.get("lora", {}).get("freeze_base"))
+            self.assertEqual(int((meta.get("inference") or {}).get("infer_batch_size", 0)), 1)
+            self.assertTrue(((meta.get("inference") or {}).get("torch_compile") or {}).get("enabled"))
 
             report = meta.get("lora", {}).get("report")
             self.assertIsInstance(report, dict)
