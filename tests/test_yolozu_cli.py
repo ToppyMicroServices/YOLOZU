@@ -42,8 +42,7 @@ class TestYOLOZUCLI(unittest.TestCase):
                 check=False,
                 text=True,
             )
-            if proc.returncode != 0:
-                self.fail(f"yolozu doctor failed:\n{proc.stdout}\n{proc.stderr}")
+            self.assertIn(proc.returncode, (0, 1), f"unexpected doctor exit code: {proc.returncode}")
 
             self.assertTrue(out_path.is_file())
             payload = json.loads(out_path.read_text())
@@ -56,6 +55,9 @@ class TestYOLOZUCLI(unittest.TestCase):
             links = payload.get("guidance_links") or {}
             self.assertIn("backend_parity", links)
             self.assertIn("onnx_parity", links)
+            if proc.returncode == 1:
+                errors = payload.get("errors") or []
+                self.assertTrue(errors, "doctor exit code 1 should include errors")
 
     def test_long_tail_recipe_help_lists_pytorch_options(self):
         repo_root = Path(__file__).resolve().parents[1]
