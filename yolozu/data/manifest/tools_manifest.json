@@ -13,7 +13,7 @@
     "metrics_report_json": {
       "summary": "Stable metrics report schema emitted by yolozu.metrics_report.build_report().",
       "schema": "docs/schemas/metrics_report.schema.json",
-      "builder": "yolozu/metrics_report.py"
+      "builder": "yolozu/eval/metrics_report.py"
     },
     "coco_eval_report_json": {
       "summary": "Report payload emitted by tools/eval_coco.py (COCOeval or dry-run conversion).",

@@ -36,7 +36,7 @@ It emphasizes:
 ### 2) Mask-only label derivation
 
 If YOLO txt labels are missing and a mask is provided, bbox+class can be derived from masks
-(implemented in `yolozu.dataset`).
+(implemented in `yolozu.datasets.dataset`).
 
 - Color mask (RGB): unique colors become classes (optionally `mask_class_map`)
 - Instance mask (single-channel IDs): non-zero IDs become instances; class via

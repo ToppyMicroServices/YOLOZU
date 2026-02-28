@@ -75,6 +75,13 @@ The primary entry points for navigating the project are:
   \item \path{tools/}: Houses power-user scripts and the repository's wrapper CLI.
 \end{itemize}
 
+\paragraph{Module path policy.}
+Canonical Python modules are organized in categorized packages such as
+\path{yolozu/core}, \path{yolozu/datasets}, \path{yolozu/eval},
+\path{yolozu/inference}, \path{yolozu/predictions}, \path{yolozu/training}, and
+\path{yolozu/geometry}. New code should import these canonical paths directly.
+Legacy top-level imports are preserved through package-level aliasing for compatibility.
+
 
 \section{Dual CLI Surfaces: Pip vs. Repository}
 \yolozu{} exposes two distinct command surfaces to accommodate different user needs:

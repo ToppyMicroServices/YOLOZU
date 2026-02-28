@@ -21,3 +21,8 @@ Two usage modes:
 - `rtdetr_pose/`: RT-DETR pose scaffold (training/inference/export helpers)
 - `data/smoke/`: committed offline smoke assets (10 images + labels + fixed predictions)
 - `data/coco128/`: tiny COCO dataset for extended local checks (downloaded via `tools/fetch_coco128.sh`)
+
+## Module path policy
+- Canonical modules are the categorized package paths above.
+- Top-level shim files under `yolozu/*.py` were removed; legacy imports are resolved via `yolozu.__init__` module aliasing.
+- New code should import canonical paths directly (example: `from yolozu.datasets.dataset import build_manifest`).

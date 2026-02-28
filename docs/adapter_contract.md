@@ -14,7 +14,7 @@ An adapter must implement:
 
 ### Input: `records`
 
-`records` are built from YOLO-format datasets via `yolozu.dataset.build_manifest(...)`.
+`records` are built from YOLO-format datasets via `yolozu.datasets.dataset.build_manifest(...)`.
 
 Each record is a dict with at least:
 

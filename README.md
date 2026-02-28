@@ -55,6 +55,10 @@ CLI note:
 - `python3 tools/yolozu.py ...` is the repo wrapper CLI.
 - For equivalent commands, swap only the executable (`yolozu` ↔ `python3 tools/yolozu.py`).
 
+Module path note:
+- Canonical Python modules live under categorized packages (`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`).
+- Legacy imports such as `from yolozu.dataset import build_manifest` remain available via package-level aliasing in `yolozu/__init__.py`.
+
 ## Key points
 
 - Bring-your-own inference → stable `predictions.json` interface contract.

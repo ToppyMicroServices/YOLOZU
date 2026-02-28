@@ -103,6 +103,10 @@ python3 -m pip install 'yolozu[full]'
 
 ## CLIの使い分け（pip vs ソースチェックアウト）
 
+### モジュールパスについて（重要）
+- canonical な Python モジュールはカテゴリ別パッケージ配下（`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`）に配置されています。
+- 旧 import（例: `from yolozu.dataset import build_manifest`）は `yolozu/__init__.py` の package-level alias により互換維持されます。
+
 ### pip: `yolozu`（インストール安全・CPU中心）
 - `yolozu doctor`（環境診断）
 - `yolozu validate dataset|predictions|instance-seg`（成果物検証）

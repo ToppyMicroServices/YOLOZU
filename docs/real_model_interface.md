@@ -58,7 +58,7 @@ python3 tools/run_scenarios.py \
 
 ## Adapter interface (expected inputs/outputs)
 
-Input records (from `yolozu.dataset.build_manifest`):
+Input records (from `yolozu.datasets.dataset.build_manifest`):
 - list of dicts with `image` path and optional labels
 
 Output per image (from `RTDETRPoseAdapter`):

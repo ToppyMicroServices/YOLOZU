@@ -227,7 +227,7 @@ refined = refine_detection_hessian(detection, config=config, gt_rotation=gt_rota
 ### Example 3: Batch Refinement with Dataset
 
 ```python
-from yolozu.dataset import build_manifest
+from yolozu.datasets.dataset import build_manifest
 
 # Load predictions
 predictions = load_predictions("reports/predictions.json")
