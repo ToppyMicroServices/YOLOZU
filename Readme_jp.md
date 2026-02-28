@@ -82,6 +82,8 @@ python3 -m pip install 'yolozu[full]'
 
 ドキュメント入口: [`docs/README.md`](docs/README.md)
 
+学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
+
 ---
 
 ## 何が“売り”か（設計の中心）

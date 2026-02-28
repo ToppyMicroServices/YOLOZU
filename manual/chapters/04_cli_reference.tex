@@ -45,12 +45,32 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
 \cmd{yolozu parity} & Compares two distinct predictions artifacts to detect backend drift or discrepancies. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
+\cmd{yolozu long-tail-recipe} & Generates a long-tail training recipe JSON with selectable sampler/loss/metric/lr scheduler plugins. \\
 \cmd{python3 tools/eval_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
 \cmd{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
 \bottomrule
 \end{longtable}
+
+\subsection{Long-tail recipe plugin options (PyTorch)}
+\cmd{yolozu long-tail-recipe} supports explicit plugin choices for loss, validation metric, and learning-rate scheduler.
+
+\begin{lstlisting}[language=bash]
+yolozu long-tail-recipe \
+  --dataset data/smoke --split val \
+  --loss-plugin torch_cross_entropy \
+  --metric-plugin torch_top1_accuracy \
+  --lr-scheduler torch_step_lr \
+  --output reports/long_tail_recipe_torch.json --force
+\end{lstlisting}
+
+Primary plugin flags:
+\begin{itemize}
+  \item \cmd{--loss-plugin}: \cmd{none}, \cmd{focal}, \cmd{ldam}, \cmd{torch\_cross\_entropy}, \cmd{torch\_nll\_loss}, \cmd{torch\_bce\_with\_logits}
+  \item \cmd{--metric-plugin}: \cmd{none}, \cmd{torch\_top1\_accuracy}, \cmd{torch\_top5\_accuracy}, \cmd{torch\_cross\_entropy}
+  \item \cmd{--lr-scheduler}: \cmd{none}, \cmd{torch\_step\_lr}, \cmd{torch\_cosine\_annealing\_lr}, \cmd{torch\_reduce\_on\_plateau}, \cmd{torch\_one\_cycle\_lr}
+\end{itemize}
 
 \section{YAML Config-Driven Usage (Train/Test/Resume)}
 \yolozu{} supports the ingestion of a YAML or JSON configuration file as its primary positional argument.

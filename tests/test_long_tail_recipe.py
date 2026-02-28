@@ -43,6 +43,8 @@ class TestLongTailRecipe(unittest.TestCase):
             stage2_epochs=10,
             rebalance_sampler="class_balanced",
             loss_plugin="focal",
+            metric_plugin="torch_top1_accuracy",
+            lr_scheduler="none",
             logit_adjustment_tau=1.0,
             lort_tau=0.3,
             class_balanced_beta=0.999,
@@ -63,8 +65,36 @@ class TestLongTailRecipe(unittest.TestCase):
         plugins = recipe["plugins"]
         self.assertEqual(plugins["sampler"]["name"], "class_balanced")
         self.assertEqual(plugins["loss"]["name"], "focal")
+        self.assertEqual(plugins["metric"]["name"], "torch_top1_accuracy")
+        self.assertEqual(plugins["lr_scheduler"]["name"], "none")
         self.assertTrue(plugins["logit_adjustment"]["enabled"])
         self.assertTrue(plugins["lort"]["enabled"])
+
+    def test_build_recipe_supports_pytorch_plugins(self):
+        recipe = build_long_tail_recipe(
+            self._records(),
+            seed=0,
+            stage1_epochs=10,
+            stage2_epochs=0,
+            rebalance_sampler="class_balanced",
+            loss_plugin="torch_cross_entropy",
+            metric_plugin="torch_cross_entropy",
+            lr_scheduler="torch_reduce_on_plateau",
+            logit_adjustment_tau=0.0,
+            lort_tau=0.0,
+            class_balanced_beta=0.99,
+            focal_gamma=2.0,
+            ldam_margin=0.5,
+        )
+
+        plugins = recipe["plugins"]
+        self.assertEqual(plugins["loss"]["name"], "torch_cross_entropy")
+        self.assertEqual(plugins["loss"]["library"], "torch.nn")
+        self.assertEqual(plugins["metric"]["name"], "torch_cross_entropy")
+        self.assertEqual(plugins["metric"]["monitor_key"], "val/cross_entropy")
+        self.assertFalse(plugins["metric"]["higher_is_better"])
+        self.assertEqual(plugins["lr_scheduler"]["name"], "torch_reduce_on_plateau")
+        self.assertEqual(plugins["lr_scheduler"]["monitor_key"], "val/cross_entropy")
 
 
 if __name__ == "__main__":

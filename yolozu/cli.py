@@ -1122,6 +1122,8 @@ def _cmd_long_tail_recipe(args: argparse.Namespace) -> int:
         stage2_epochs=int(args.stage2_epochs),
         rebalance_sampler=str(args.rebalance_sampler),
         loss_plugin=str(args.loss_plugin),
+        metric_plugin=str(args.metric_plugin),
+        lr_scheduler=str(args.lr_scheduler),
         logit_adjustment_tau=float(args.logit_adjustment_tau),
         lort_tau=float(args.lort_tau),
         class_balanced_beta=float(args.class_balanced_beta),
@@ -1527,7 +1529,24 @@ def main(argv: list[str] | None = None) -> int:
     lt_recipe.add_argument("--stage1-epochs", type=int, default=90, help="Representation learning stage epochs.")
     lt_recipe.add_argument("--stage2-epochs", type=int, default=30, help="Classifier re-training stage epochs.")
     lt_recipe.add_argument("--rebalance-sampler", choices=("none", "class_balanced"), default="class_balanced", help="Sampler plugin selection.")
-    lt_recipe.add_argument("--loss-plugin", choices=("none", "focal", "ldam"), default="focal", help="Loss plugin selection.")
+    lt_recipe.add_argument(
+        "--loss-plugin",
+        choices=("none", "focal", "ldam", "torch_cross_entropy", "torch_nll_loss", "torch_bce_with_logits"),
+        default="focal",
+        help="Loss plugin selection.",
+    )
+    lt_recipe.add_argument(
+        "--metric-plugin",
+        choices=("none", "torch_top1_accuracy", "torch_top5_accuracy", "torch_cross_entropy"),
+        default="torch_top1_accuracy",
+        help="Validation metric plugin selection.",
+    )
+    lt_recipe.add_argument(
+        "--lr-scheduler",
+        choices=("none", "torch_step_lr", "torch_cosine_annealing_lr", "torch_reduce_on_plateau", "torch_one_cycle_lr"),
+        default="none",
+        help="Learning-rate scheduler selection.",
+    )
     lt_recipe.add_argument("--logit-adjustment-tau", type=float, default=1.0, help="Logit adjustment strength (0 disables).")
     lt_recipe.add_argument("--lort-tau", type=float, default=0.0, help="Frequency-free logits retargeting strength (0 disables).")
     lt_recipe.add_argument("--class-balanced-beta", type=float, default=0.999, help="Effective-number beta for class-balanced weights.")

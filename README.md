@@ -39,7 +39,7 @@ AI-friendly tool registry (source of truth): [`tools/manifest.json`](tools/manif
 
 Tool list + args examples: [`docs/tools_index.md`](docs/tools_index.md).
 
-Learning features (training / continual learning / TTT / distillation): [`docs/learning_features.md`](docs/learning_features.md).
+Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](docs/learning_features.md).
 
 ## Start here (choose 1 of 4 entry points)
 

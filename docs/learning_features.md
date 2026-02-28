@@ -114,6 +114,30 @@ Artifacts:
 
 Details: [`docs/hessian_solver.md`](hessian_solver.md).
 
+## 6) Long-tail recipe with PyTorch-selectable plugins
+
+Value: Generate a reproducible long-tail training plan with explicit PyTorch-ready choices for loss, validation metric, and lr scheduler.
+
+Representative command:
+
+```bash
+python3 tools/yolozu.py long-tail-recipe \
+  --dataset data/smoke \
+  --split val \
+  --loss-plugin torch_cross_entropy \
+  --metric-plugin torch_top1_accuracy \
+  --lr-scheduler torch_step_lr \
+  --output reports/long_tail_recipe_torch.json \
+  --force
+```
+
+PyTorch-oriented options:
+- `--loss-plugin`: `torch_cross_entropy`, `torch_nll_loss`, `torch_bce_with_logits`
+- `--metric-plugin`: `torch_top1_accuracy`, `torch_top5_accuracy`, `torch_cross_entropy`
+- `--lr-scheduler`: `torch_step_lr`, `torch_cosine_annealing_lr`, `torch_reduce_on_plateau`, `torch_one_cycle_lr`
+
+Output (`recipe.plugins`) now includes `loss`, `metric`, and `lr_scheduler` selections and monitor metadata for downstream training wiring.
+
 ## 7) PyTorch utility wrappers (`yolozu.training.torch_utils`)
 
 Value: Thin, composable helpers wrapping core PyTorch APIs (`torch.amp`, `torch.compile`, `torch.profiler`, `torch.nn`) for common training/inference tasks.

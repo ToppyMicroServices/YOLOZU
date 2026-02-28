@@ -57,6 +57,25 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertIn("backend_parity", links)
             self.assertIn("onnx_parity", links)
 
+    def test_long_tail_recipe_help_lists_pytorch_options(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "long-tail-recipe", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"long-tail-recipe --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--metric-plugin", proc.stdout)
+        self.assertIn("--lr-scheduler", proc.stdout)
+        self.assertIn("torch_cross_entropy", proc.stdout)
+        self.assertIn("torch_reduce_on_plateau", proc.stdout)
+
     def test_export_dummy_injects_run_meta(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

@@ -3025,6 +3025,12 @@
           "flag": "--loss-plugin"
         },
         {
+          "name": "metric_plugin",
+          "kind": "string",
+          "required": false,
+          "flag": "--metric-plugin"
+        },
+        {
           "name": "max_detections",
           "kind": "number",
           "required": false,
@@ -3035,6 +3041,12 @@
           "kind": "number",
           "required": false,
           "flag": "--max-images"
+        },
+        {
+          "name": "lr_scheduler",
+          "kind": "string",
+          "required": false,
+          "flag": "--lr-scheduler"
         },
         {
           "name": "max_overlays",
