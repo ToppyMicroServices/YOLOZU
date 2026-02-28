@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Contract change
+- Reference adapter regression metadata now records provenance/SBOM snapshots in `baseline_meta.provenance` (`pip freeze`, `python -VV`, OS/CPU/torch build hashes).
+- Added matrix baseline layout support for reference adapter regression paths (`baselines/<adapter>/<backend>/<device>/<version>/<profile>.json`).
+- Added robust behavior metrics for regression gates (`map50`, `map50_95`, worst-k/median class AP, recall@K, IoU quantiles, mismatch counts).
+
 ### Added
 - **Multi-task SDFT distillation**: `yolozu/sdft.py` now supports task-specific losses for
   6D pose (`rot6d` — geodesic MSE proxy), keypoints (smooth-L1), depth (scale-invariant L1),

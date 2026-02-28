@@ -318,6 +318,7 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --repro-policy relaxed \
   --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
@@ -331,6 +332,7 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --score-gate-mode off \
   --perf-gate-mode off \
   --runtime-lock requirements-ci.lock \
@@ -347,6 +349,7 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --schema-gate-mode off \
   --consistency-gate-mode off \
   --score-gate-mode warn \
@@ -364,6 +367,8 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
+  --capture-provenance full \
   --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --write-baseline \

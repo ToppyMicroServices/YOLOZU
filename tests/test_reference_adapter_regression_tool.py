@@ -8,6 +8,16 @@ from pathlib import Path
 
 
 class TestReferenceAdapterRegressionTool(unittest.TestCase):
+    def _load_tool_module(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+        spec = importlib.util.spec_from_file_location("reference_adapter_regression_tool", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
     def _run(self, cmd: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             cmd,
@@ -17,6 +27,107 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
             text=True,
             check=False,
         )
+
+    def test_matrix_baseline_path_resolution(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        mod = self._load_tool_module()
+        args = mod._parse_args(
+            [
+                "--baseline-layout",
+                "matrix",
+                "--baseline-root",
+                "baselines/reference_adapter",
+                "--adapter-id",
+                "rtdetr_pose",
+                "--backend-id",
+                "onnxrt",
+                "--device",
+                "cuda:0",
+                "--baseline-version",
+                "v3",
+                "--profile",
+                "full",
+            ]
+        )
+        path = mod._resolve_baseline_path(args=args, cwd=repo_root)
+        expected = repo_root / "baselines/reference_adapter/rtdetr_pose/onnxrt/cuda-0/v3/full.json"
+        self.assertEqual(path, expected)
+
+    def test_collect_provenance_minimal(self):
+        mod = self._load_tool_module()
+        provenance = mod._collect_provenance(
+            capture_mode="minimal",
+            runtime_lock={"sha256": "abc123", "path": "requirements-ci.lock"},
+        )
+        self.assertEqual(provenance.get("capture_mode"), "minimal")
+        snapshot = provenance.get("snapshot") or {}
+        self.assertTrue(bool(snapshot.get("enabled")))
+        self.assertEqual(snapshot.get("runtime_lock_sha256"), "abc123")
+        self.assertIn("pip_freeze_sha256", snapshot)
+        self.assertIn("generator", provenance)
+
+    def test_metric_gate_checks_robust_metrics(self):
+        mod = self._load_tool_module()
+        baseline_payload = {
+            "baseline": {
+                "summary": {
+                    "total_detections": 10,
+                    "score_sum": 5.0,
+                    "score_mean": 0.5,
+                    "bbox_checksum": 2.0,
+                },
+                "robust_metrics": {
+                    "map50": 0.8,
+                },
+                "speed": {"fps": 10.0},
+                "contract": {},
+            },
+            "thresholds": {
+                "metric": {
+                    "total_detections_abs": 0.0,
+                    "score_sum_abs": 0.0,
+                    "score_mean_abs": 0.0,
+                    "bbox_checksum_abs": 0.0,
+                    "map50_abs": 0.01,
+                },
+                "speed": {"min_fps_ratio": 0.0, "absolute_floor_fps": 0.0},
+            },
+            "baseline_meta": {},
+        }
+        failure_records: list[dict[str, object]] = []
+        gates, hard_failures, soft_failures = mod._compare_against_baseline(
+            baseline_payload=baseline_payload,
+            summary={
+                "total_detections": 10,
+                "score_sum": 5.0,
+                "score_mean": 0.5,
+                "bbox_checksum": 2.0,
+                "class_hist": {},
+            },
+            robust_metrics={"map50": 0.6},
+            speed={"fps": 10.0, "images": 1, "seconds": 0.1},
+            contract={},
+            run_meta={},
+            schema_warnings=[],
+            schema_errors=[],
+            consistency_errors=[],
+            contract_errors=[],
+            gate_policy={
+                mod.GATE_SCHEMA: "off",
+                mod.GATE_CONSISTENCY: "off",
+                mod.GATE_METRIC: "hard",
+                mod.GATE_SPEED: "off",
+            },
+            predictions=[],
+            enforce_runtime_lock=False,
+            enforce_weights_hash=False,
+            peer_robust_metrics=None,
+            backend_parity={"mode": "off"},
+            failure_records=failure_records,
+        )
+        self.assertFalse(bool(gates[mod.GATE_METRIC]["ok"]))
+        self.assertTrue(any("map50" in item for item in hard_failures))
+        self.assertEqual(soft_failures, [])
 
     def test_write_and_check_baseline(self):
         if importlib.util.find_spec("torch") is None:

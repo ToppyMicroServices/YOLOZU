@@ -13,6 +13,8 @@
 - [ ] If this PR changes schema/protocol behavior, linked RFC is approved.
 - [ ] Golden assets under `baselines/golden/` were updated (or confirmed unchanged).
 - [ ] Compatibility gates pass in CI.
+- [ ] If reference adapter baselines changed, explain interface contract / canonicalization / metric / model/runtime deltas.
+- [ ] If reference adapter baselines changed, include old-vs-new regression summary in PR description.
+- [ ] If reference adapter baselines changed, explicitly state `dataset_hash` / `weights_hash` change status.
 
 ## Notes
-

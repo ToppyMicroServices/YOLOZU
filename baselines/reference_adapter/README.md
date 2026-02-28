@@ -1,62 +1,78 @@
-# Reference Adapter Baseline
+# Reference Adapter Baselines
 
-This directory pins the in-repo reference adapter baseline used by CI:
+This directory stores reference-adapter baselines used by regression tooling.
+
+## Legacy flat baseline (current CI default)
 
 - adapter: `RTDETRPoseAdapter`
 - dataset: `data/smoke` (`split=val`, `max_images=2`)
-- gate runner: `tools/run_reference_adapter_regression.py`
-- baseline metadata: `baseline_meta` (weights/config/dataset/env hashes)
-- protocol metadata: `protocol` + `gate_policy`
+- baseline: `baselines/reference_adapter/rtdetr_pose_smoke_val.json`
+- runner: `tools/run_reference_adapter_regression.py`
 
-Check against baseline:
+Check against flat baseline:
 
 ```bash
 python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --repro-policy relaxed \
+  --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression.json
 ```
 
-Contract-only hard gate:
+## Matrix baseline layout
+
+Enable matrix layout with:
 
 ```bash
-python3 tools/run_reference_adapter_regression.py \
-  --dataset data/smoke \
-  --split val \
-  --max-images 2 \
-  --score-gate-mode off \
-  --perf-gate-mode off \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --output reports/reference_adapter_regression_contract.json
+--baseline-layout matrix \
+--baseline-root baselines/reference_adapter \
+--adapter-id rtdetr_pose \
+--backend-id torch \
+--baseline-version v1 \
+--profile micro
 ```
 
-Behavior-only warn gate:
+This resolves to:
+
+`baselines/reference_adapter/rtdetr_pose/torch/<device>/v1/<profile>.json`
+
+Example full profile:
 
 ```bash
 python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
-  --schema-gate-mode off \
-  --consistency-gate-mode off \
-  --score-gate-mode warn \
-  --perf-gate-mode warn \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --output reports/reference_adapter_regression_behavior.json
+  --profile full \
+  --baseline-layout matrix \
+  --baseline-root baselines/reference_adapter \
+  --adapter-id rtdetr_pose \
+  --backend-id torch \
+  --device cpu \
+  --baseline-version v1 \
+  --repro-policy strict \
+  --capture-provenance full \
+  --runtime-lock requirements-ci.lock \
+  --output reports/reference_adapter_regression_full.json
 ```
 
-Refresh baseline only for intentional interface/behavior changes:
+## Baseline refresh
+
+Refresh baseline only for intentional interface contract or behavior changes:
 
 ```bash
 python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --repro-policy relaxed \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
+  --runtime-lock requirements-ci.lock \
   --write-baseline \
+  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression_baseline_write.json
 ```

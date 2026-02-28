@@ -304,18 +304,20 @@ jobs:
         run: |
           python tools/audit_yolozu_manifest_flags.py
 
-      - name: Reference adapter contract gate (hard)
+      - name: Reference adapter micro gate - interface contract (hard)
         run: |
           python tools/run_reference_adapter_regression.py \
             --dataset data/smoke \
             --split val \
             --max-images 2 \
+            --profile micro \
             --device cpu \
             --image-size 160 \
             --score-threshold 0.05 \
             --max-detections 20 \
             --init-seed 2026 \
             --repro-policy relaxed \
+            --capture-provenance minimal \
             --score-gate-mode off \
             --perf-gate-mode off \
             --runtime-lock requirements-ci.lock \
@@ -324,18 +326,20 @@ jobs:
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
             --output reports/reference_adapter_regression_contract_ci.json
 
-      - name: Reference adapter behavior gate (warn)
+      - name: Reference adapter micro gate - behavior (warn)
         run: |
           python tools/run_reference_adapter_regression.py \
             --dataset data/smoke \
             --split val \
             --max-images 2 \
+            --profile micro \
             --device cpu \
             --image-size 160 \
             --score-threshold 0.05 \
             --max-detections 20 \
             --init-seed 2026 \
             --repro-policy relaxed \
+            --capture-provenance minimal \
             --schema-gate-mode off \
             --consistency-gate-mode off \
             --score-gate-mode warn \

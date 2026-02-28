@@ -63,6 +63,10 @@ When proposing a schema-breaking change:
    - this governance doc
    - schema-specific docs (e.g., predictions schema pages)
    - release notes with migration steps
+6. Update release/process metadata:
+   - add a `Contract change` note in `CHANGELOG.md`
+   - include baseline lifecycle impact (`dataset_hash`, `weights_hash`, baseline version path)
+   - update PR checklist entries for baseline updates
 
 See also: [RFC workflow + golden compatibility assets](rfc_workflow.md).
 

@@ -5,8 +5,10 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -17,6 +19,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.adapter import RTDETRPoseAdapter
+from yolozu.core.boxes import iou_cxcywh_norm_dict
 from yolozu.core.cli_args import (
     require_float_in_range,
     require_non_negative_int,
@@ -26,11 +29,14 @@ from yolozu.core.cli_args import (
 )
 from yolozu.core.image_keys import require_image_key
 from yolozu.dataset import build_manifest
+from yolozu.eval.simple_map import evaluate_map
 from yolozu.predictions import canonicalize_predictions, validate_predictions_entries
 
 DEFAULT_BASELINE = "baselines/reference_adapter/rtdetr_pose_smoke_val.json"
 DEFAULT_DATASET = "data/smoke"
 DEFAULT_SPLIT = "val"
+DEFAULT_BASELINE_ROOT = "baselines/reference_adapter"
+DEFAULT_PROFILE = "micro"
 
 GATE_SCHEMA = "schema_drift"
 GATE_CONSISTENCY = "consistency_drift"
@@ -49,7 +55,44 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--dataset", default=DEFAULT_DATASET, help="YOLO-format dataset root.")
     p.add_argument("--split", default=DEFAULT_SPLIT, help="Dataset split (default: val).")
     p.add_argument("--max-images", type=int, default=2, help="Max images to evaluate (default: 2).")
+    p.add_argument(
+        "--profile",
+        choices=("micro", "full", "custom"),
+        default=DEFAULT_PROFILE,
+        help="Regression profile label used for matrix baselines/reporting (default: micro).",
+    )
     p.add_argument("--baseline", default=DEFAULT_BASELINE, help="Baseline JSON path.")
+    p.add_argument(
+        "--baseline-layout",
+        choices=("flat", "matrix"),
+        default="flat",
+        help="Baseline path layout: flat (use --baseline) or matrix (derive from backend/device/version).",
+    )
+    p.add_argument(
+        "--baseline-root",
+        default=DEFAULT_BASELINE_ROOT,
+        help="Root directory for matrix baseline layout (default: baselines/reference_adapter).",
+    )
+    p.add_argument(
+        "--adapter-id",
+        default="rtdetr_pose",
+        help="Adapter id for matrix baseline layout (default: rtdetr_pose).",
+    )
+    p.add_argument(
+        "--backend-id",
+        default="torch",
+        help="Backend id for matrix baseline layout (default: torch).",
+    )
+    p.add_argument(
+        "--matrix-device",
+        default=None,
+        help="Optional device id override for matrix baseline layout (default: --device).",
+    )
+    p.add_argument(
+        "--baseline-version",
+        default="v1",
+        help="Baseline version segment used by matrix baseline layout (default: v1).",
+    )
     p.add_argument(
         "--output",
         default="reports/reference_adapter_regression.json",
@@ -74,6 +117,27 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--enforce-weights-hash",
         action="store_true",
         help="Fail consistency gate if baseline/current weights_hash differ (even checkpoint-free).",
+    )
+    p.add_argument(
+        "--expected-dataset-hash",
+        default=None,
+        help="Optional expected dataset SHA256. Mismatch fails consistency gate.",
+    )
+    p.add_argument(
+        "--expected-weights-hash",
+        default=None,
+        help="Optional expected weights SHA256. Mismatch fails consistency gate.",
+    )
+    p.add_argument(
+        "--expected-checkpoint-hash",
+        default=None,
+        help="Optional expected checkpoint SHA256. Mismatch fails consistency gate.",
+    )
+    p.add_argument(
+        "--capture-provenance",
+        choices=("full", "minimal", "off"),
+        default="full",
+        help="Capture SBOM/environment provenance snapshot in baseline_meta (default: full).",
     )
 
     p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="RT-DETR config path.")
@@ -158,6 +222,101 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="Allowed absolute drift for bbox_checksum.",
     )
     p.add_argument(
+        "--metric-map50-abs",
+        type=float,
+        default=0.03,
+        help="Allowed absolute drift for robust metric map50.",
+    )
+    p.add_argument(
+        "--metric-map50-95-abs",
+        type=float,
+        default=0.03,
+        help="Allowed absolute drift for robust metric map50_95.",
+    )
+    p.add_argument(
+        "--metric-worst-k-map50-abs",
+        type=float,
+        default=0.05,
+        help="Allowed absolute drift for robust metric worst_k_map50.",
+    )
+    p.add_argument(
+        "--metric-median-class-map50-abs",
+        type=float,
+        default=0.05,
+        help="Allowed absolute drift for robust metric median_class_map50.",
+    )
+    p.add_argument(
+        "--metric-recall-at-k-abs",
+        type=float,
+        default=0.05,
+        help="Allowed absolute drift for robust metric recall_at_k.",
+    )
+    p.add_argument(
+        "--metric-iou-p10-abs",
+        type=float,
+        default=0.1,
+        help="Allowed absolute drift for robust metric iou_p10.",
+    )
+    p.add_argument(
+        "--metric-iou-p50-abs",
+        type=float,
+        default=0.1,
+        help="Allowed absolute drift for robust metric iou_p50.",
+    )
+    p.add_argument(
+        "--metric-missing-count-abs",
+        type=float,
+        default=2.0,
+        help="Allowed absolute drift for robust metric missing_count.",
+    )
+    p.add_argument(
+        "--metric-extra-count-abs",
+        type=float,
+        default=2.0,
+        help="Allowed absolute drift for robust metric extra_count.",
+    )
+    p.add_argument(
+        "--metric-class-mismatch-abs",
+        type=float,
+        default=2.0,
+        help="Allowed absolute drift for robust metric class_mismatch_count.",
+    )
+    p.add_argument(
+        "--metric-worst-k",
+        type=int,
+        default=3,
+        help="Worst-k class mAP aggregation size for robust metrics (default: 3).",
+    )
+    p.add_argument(
+        "--metric-recall-k",
+        type=int,
+        default=20,
+        help="K for recall@K robust metric (default: 20).",
+    )
+    p.add_argument(
+        "--peer-report",
+        default=None,
+        help="Optional peer backend regression report for backend parity drift checks.",
+    )
+    p.add_argument(
+        "--backend-parity-mode",
+        choices=("off", "warn", "hard"),
+        default="off",
+        help="Backend parity drift policy against --peer-report (default: off).",
+    )
+    p.add_argument(
+        "--backend-parity-map50-abs",
+        type=float,
+        default=0.03,
+        help="Allowed absolute map50 delta vs peer backend report.",
+    )
+    p.add_argument(
+        "--backend-parity-map50-95-abs",
+        type=float,
+        default=0.03,
+        help="Allowed absolute map50_95 delta vs peer backend report.",
+    )
+    p.add_argument(
         "--min-fps-ratio",
         type=float,
         default=0.25,
@@ -205,6 +364,165 @@ def _sha256_file(path: Path) -> str:
                 break
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(str(text).encode("utf-8")).hexdigest()
+
+
+def _sanitize_segment(value: str) -> str:
+    clean = re.sub(r"[^A-Za-z0-9_.-]+", "-", str(value).strip())
+    clean = clean.strip("-")
+    return clean or "unknown"
+
+
+def _resolve_baseline_path(*, args: argparse.Namespace, cwd: Path) -> Path:
+    if str(args.baseline_layout) != "matrix":
+        return resolve_output_path(args.baseline, cwd=cwd)
+    root = resolve_output_path(args.baseline_root, cwd=cwd)
+    adapter_id = _sanitize_segment(str(args.adapter_id))
+    backend_id = _sanitize_segment(str(args.backend_id))
+    device_id = _sanitize_segment(str(args.matrix_device or args.device))
+    version_id = _sanitize_segment(str(args.baseline_version))
+    profile_id = _sanitize_segment(str(args.profile))
+    return root / adapter_id / backend_id / device_id / version_id / f"{profile_id}.json"
+
+
+def _capture_cmd_lines(cmd: list[str]) -> list[str]:
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+    except Exception:
+        return []
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def _cpu_flags() -> list[str]:
+    linux_cpuinfo = Path("/proc/cpuinfo")
+    if linux_cpuinfo.exists():
+        for raw in linux_cpuinfo.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if raw.lower().startswith("flags"):
+                _, _, rhs = raw.partition(":")
+                return sorted({x.strip() for x in rhs.split() if x.strip()})
+    candidates = [
+        ["sysctl", "-n", "machdep.cpu.features"],
+        ["sysctl", "-n", "machdep.cpu.leaf7_features"],
+    ]
+    out: set[str] = set()
+    for cmd in candidates:
+        for line in _capture_cmd_lines(cmd):
+            out.update({x.strip() for x in line.split() if x.strip()})
+    return sorted(out)
+
+
+def _safe_torch_build_info(capture_mode: str) -> dict[str, Any]:
+    try:
+        import torch
+    except Exception:
+        return {"available": False}
+
+    info: dict[str, Any] = {
+        "available": True,
+        "version": str(getattr(torch, "__version__", "")),
+        "cuda": str(getattr(getattr(torch, "version", object()), "cuda", None)),
+        "git_version": str(getattr(getattr(torch, "version", object()), "git_version", None)),
+        "cuda_available": bool(getattr(torch.cuda, "is_available", lambda: False)()),
+    }
+    if hasattr(torch.backends, "cudnn"):
+        try:
+            info["cudnn_version"] = torch.backends.cudnn.version()
+        except Exception:
+            info["cudnn_version"] = None
+    try:
+        cfg_text = str(torch.__config__.show())
+    except Exception:
+        cfg_text = ""
+    info["config_sha256"] = _sha256_text(cfg_text)
+    if capture_mode == "full" and cfg_text:
+        info["config"] = cfg_text
+    return info
+
+
+def _git_tag() -> str | None:
+    try:
+        out = subprocess.check_output(
+            ["git", "describe", "--tags", "--exact-match"],
+            cwd=str(repo_root),
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+        return out or None
+    except Exception:
+        return None
+
+
+def _ci_metadata() -> dict[str, Any]:
+    env = os.environ
+    run_id = env.get("GITHUB_RUN_ID")
+    run_attempt = env.get("GITHUB_RUN_ATTEMPT")
+    repository = env.get("GITHUB_REPOSITORY")
+    server = env.get("GITHUB_SERVER_URL")
+    ci_url: str | None = None
+    if server and repository and run_id:
+        ci_url = f"{server.rstrip('/')}/{repository}/actions/runs/{run_id}"
+    return {
+        "ci": bool(env.get("CI")),
+        "provider": ("github_actions" if run_id else None),
+        "run_id": run_id,
+        "run_attempt": run_attempt,
+        "workflow": env.get("GITHUB_WORKFLOW"),
+        "job": env.get("GITHUB_JOB"),
+        "run_url": ci_url,
+    }
+
+
+def _collect_provenance(*, capture_mode: str, runtime_lock: dict[str, Any]) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "generator": {
+            "tool": "tools/run_reference_adapter_regression.py",
+            "generated_utc": _now_utc(),
+            "user": os.environ.get("USER") or os.environ.get("USERNAME"),
+        },
+        "git": {
+            "sha": _git_sha(),
+            "tag": _git_tag(),
+            "ref": os.environ.get("GITHUB_REF"),
+            "ref_name": os.environ.get("GITHUB_REF_NAME"),
+        },
+        "ci": _ci_metadata(),
+        "capture_mode": str(capture_mode),
+    }
+    if capture_mode == "off":
+        base["snapshot"] = {"enabled": False}
+        return base
+
+    freeze_lines = _capture_cmd_lines([sys.executable, "-m", "pip", "freeze"])
+    python_vv = "".join(_capture_cmd_lines([sys.executable, "-VV"])) or None
+    cpu_flags = _cpu_flags()
+    platform_payload = {
+        "system": platform.system(),
+        "release": platform.release(),
+        "version": platform.version(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+    }
+
+    snapshot: dict[str, Any] = {
+        "enabled": True,
+        "python_vv": python_vv,
+        "python_vv_sha256": (_sha256_text(python_vv) if python_vv else None),
+        "pip_freeze_sha256": _sha256_text("\n".join(freeze_lines)),
+        "pip_package_count": int(len(freeze_lines)),
+        "platform": platform_payload,
+        "cpu_flags_sha256": _sha256_text("\n".join(cpu_flags)),
+        "runtime_lock_sha256": runtime_lock.get("sha256"),
+        "runtime_lock_path": runtime_lock.get("path"),
+        "torch_build": _safe_torch_build_info(capture_mode),
+    }
+    if capture_mode == "full":
+        snapshot["pip_freeze"] = freeze_lines
+        snapshot["cpu_flags"] = cpu_flags
+    base["snapshot"] = snapshot
+    return base
 
 
 def _normalize_pkg_name(name: str) -> str:
@@ -426,6 +744,242 @@ def _build_summary(predictions: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _quantile(values: list[float], q: float) -> float:
+    if not values:
+        return 0.0
+    q = float(max(0.0, min(1.0, q)))
+    data = sorted(float(v) for v in values)
+    if len(data) == 1:
+        return float(data[0])
+    pos = q * float(len(data) - 1)
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return float(data[lo])
+    frac = pos - float(lo)
+    return float(data[lo] * (1.0 - frac) + data[hi] * frac)
+
+
+def _label_bbox(label: dict[str, Any]) -> dict[str, float] | None:
+    bbox_obj = label.get("bbox")
+    if isinstance(bbox_obj, dict):
+        try:
+            return {
+                "cx": float(bbox_obj.get("cx")),
+                "cy": float(bbox_obj.get("cy")),
+                "w": float(bbox_obj.get("w")),
+                "h": float(bbox_obj.get("h")),
+            }
+        except Exception:
+            return None
+    try:
+        return {
+            "cx": float(label.get("cx")),
+            "cy": float(label.get("cy")),
+            "w": float(label.get("w")),
+            "h": float(label.get("h")),
+        }
+    except Exception:
+        return None
+
+
+def _extract_gt_records(
+    records: list[dict[str, Any]],
+    *,
+    dataset_root: Path,
+) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    eval_records: list[dict[str, Any]] = []
+    gt_by_image: dict[str, list[dict[str, Any]]] = {}
+    for idx, record in enumerate(records):
+        where = f"records[{idx}].image"
+        try:
+            image_key = require_image_key(record.get("image"), where=where)
+        except ValueError:
+            continue
+        canonical_image = _canonical_image_key(image_key, dataset_root=dataset_root)
+        labels_out: list[dict[str, Any]] = []
+        for label in record.get("labels", []) or []:
+            bbox = _label_bbox(label)
+            if bbox is None:
+                continue
+            try:
+                class_id = int(label.get("class_id"))
+            except Exception:
+                continue
+            labels_out.append(
+                {
+                    "class_id": class_id,
+                    "cx": float(bbox["cx"]),
+                    "cy": float(bbox["cy"]),
+                    "w": float(bbox["w"]),
+                    "h": float(bbox["h"]),
+                }
+            )
+        eval_records.append({"image": canonical_image, "labels": labels_out})
+        gt_by_image[canonical_image] = [
+            {"class_id": int(lbl["class_id"]), "bbox": {"cx": lbl["cx"], "cy": lbl["cy"], "w": lbl["w"], "h": lbl["h"]}}
+            for lbl in labels_out
+        ]
+    return eval_records, gt_by_image
+
+
+def _preds_by_image(predictions: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    out: dict[str, list[dict[str, Any]]] = {}
+    for entry in predictions:
+        image = str(entry.get("image", ""))
+        if not image:
+            continue
+        rows: list[dict[str, Any]] = out.setdefault(image, [])
+        for det in entry.get("detections", []) or []:
+            bbox = det.get("bbox") or {}
+            try:
+                rows.append(
+                    {
+                        "class_id": int(det.get("class_id")),
+                        "score": float(det.get("score", 0.0)),
+                        "bbox": {
+                            "cx": float(bbox.get("cx")),
+                            "cy": float(bbox.get("cy")),
+                            "w": float(bbox.get("w")),
+                            "h": float(bbox.get("h")),
+                        },
+                    }
+                )
+            except Exception:
+                continue
+        rows.sort(key=lambda row: float(row["score"]), reverse=True)
+    return out
+
+
+def _class_aware_counts(
+    *,
+    gt_by_image: dict[str, list[dict[str, Any]]],
+    pred_by_image: dict[str, list[dict[str, Any]]],
+    iou_threshold: float,
+    top_k: int | None,
+) -> tuple[int, int, int, list[float]]:
+    tp = 0
+    fp = 0
+    fn = 0
+    matched_ious: list[float] = []
+
+    image_ids = sorted(set(gt_by_image.keys()) | set(pred_by_image.keys()))
+    for image in image_ids:
+        gt_items = list(gt_by_image.get(image) or [])
+        pred_items = list(pred_by_image.get(image) or [])
+        if top_k is not None:
+            pred_items = pred_items[: max(0, int(top_k))]
+
+        used_gt: set[int] = set()
+        for pred in pred_items:
+            best_iou = 0.0
+            best_idx = -1
+            for idx, gt in enumerate(gt_items):
+                if idx in used_gt:
+                    continue
+                if int(gt.get("class_id", -1)) != int(pred.get("class_id", -2)):
+                    continue
+                iou = float(iou_cxcywh_norm_dict(pred.get("bbox") or {}, gt.get("bbox") or {}))
+                if iou > best_iou:
+                    best_iou = iou
+                    best_idx = idx
+            if best_idx >= 0 and best_iou >= float(iou_threshold):
+                used_gt.add(best_idx)
+                tp += 1
+                matched_ious.append(float(best_iou))
+            else:
+                fp += 1
+        fn += max(0, len(gt_items) - len(used_gt))
+    return tp, fp, fn, matched_ious
+
+
+def _class_mismatch_count(
+    *,
+    gt_by_image: dict[str, list[dict[str, Any]]],
+    pred_by_image: dict[str, list[dict[str, Any]]],
+    iou_threshold: float,
+) -> int:
+    mismatch = 0
+    for image, preds in pred_by_image.items():
+        gts = list(gt_by_image.get(image) or [])
+        if not gts:
+            continue
+        for pred in preds:
+            best_iou = 0.0
+            best_class = None
+            for gt in gts:
+                iou = float(iou_cxcywh_norm_dict(pred.get("bbox") or {}, gt.get("bbox") or {}))
+                if iou > best_iou:
+                    best_iou = iou
+                    best_class = int(gt.get("class_id", -1))
+            if best_iou >= float(iou_threshold) and best_class is not None:
+                if int(pred.get("class_id", -2)) != int(best_class):
+                    mismatch += 1
+    return int(mismatch)
+
+
+def _build_robust_metrics(
+    *,
+    records: list[dict[str, Any]],
+    predictions: list[dict[str, Any]],
+    dataset_root: Path,
+    worst_k: int,
+    recall_k: int,
+) -> dict[str, Any]:
+    eval_records, gt_by_image = _extract_gt_records(records, dataset_root=dataset_root)
+    pred_by_image = _preds_by_image(predictions)
+
+    thresholds = [round(0.5 + 0.05 * i, 2) for i in range(10)]
+    map_result = evaluate_map(eval_records, predictions, iou_thresholds=thresholds)
+    per_class_map50 = {
+        str(int(class_id)): float(round(metrics.get("ap@0.50", 0.0), 6))
+        for class_id, metrics in (map_result.per_class or {}).items()
+    }
+    class_scores = sorted(float(v) for v in per_class_map50.values())
+    worst_k = max(1, int(worst_k))
+    worst_values = class_scores[: min(worst_k, len(class_scores))]
+    worst_k_map50 = (sum(worst_values) / float(len(worst_values))) if worst_values else 0.0
+    median_class_map50 = _quantile(class_scores, 0.5) if class_scores else 0.0
+
+    tp_all, fp_all, fn_all, ious = _class_aware_counts(
+        gt_by_image=gt_by_image,
+        pred_by_image=pred_by_image,
+        iou_threshold=0.5,
+        top_k=None,
+    )
+    tp_k, _fp_k, fn_k, _ious_k = _class_aware_counts(
+        gt_by_image=gt_by_image,
+        pred_by_image=pred_by_image,
+        iou_threshold=0.5,
+        top_k=max(1, int(recall_k)),
+    )
+    gt_count = int(tp_all + fn_all)
+    recall_at_k = (float(tp_k) / float(tp_k + fn_k)) if (tp_k + fn_k) > 0 else 0.0
+    mismatch = _class_mismatch_count(gt_by_image=gt_by_image, pred_by_image=pred_by_image, iou_threshold=0.5)
+    pred_count = int(sum(len(v) for v in pred_by_image.values()))
+
+    return {
+        "map50": float(round(float(map_result.map50), 6)),
+        "map50_95": float(round(float(map_result.map50_95), 6)),
+        "per_class_map50": per_class_map50,
+        "class_count": int(len(class_scores)),
+        "worst_k": int(worst_k),
+        "worst_k_map50": float(round(worst_k_map50, 6)),
+        "median_class_map50": float(round(median_class_map50, 6)),
+        "recall_k": int(max(1, int(recall_k))),
+        "recall_at_k": float(round(recall_at_k, 6)),
+        "iou_p10": float(round(_quantile(ious, 0.10), 6)),
+        "iou_p50": float(round(_quantile(ious, 0.50), 6)),
+        "iou_p90": float(round(_quantile(ious, 0.90), 6)),
+        "matched_count": int(tp_all),
+        "missing_count": int(fn_all),
+        "extra_count": int(fp_all),
+        "class_mismatch_count": int(mismatch),
+        "gt_count": int(gt_count),
+        "pred_count": int(pred_count),
+    }
+
+
 def _find_duplicates(items: list[str]) -> list[str]:
     seen: set[str] = set()
     dupes: list[str] = []
@@ -493,6 +1047,21 @@ def _thresholds_from_args(args: argparse.Namespace) -> dict[str, Any]:
             "score_sum_abs": float(args.metric_score_sum_abs),
             "score_mean_abs": float(args.metric_score_mean_abs),
             "bbox_checksum_abs": float(args.metric_bbox_checksum_abs),
+            "map50_abs": float(args.metric_map50_abs),
+            "map50_95_abs": float(args.metric_map50_95_abs),
+            "worst_k_map50_abs": float(args.metric_worst_k_map50_abs),
+            "median_class_map50_abs": float(args.metric_median_class_map50_abs),
+            "recall_at_k_abs": float(args.metric_recall_at_k_abs),
+            "iou_p10_abs": float(args.metric_iou_p10_abs),
+            "iou_p50_abs": float(args.metric_iou_p50_abs),
+            "missing_count_abs": float(args.metric_missing_count_abs),
+            "extra_count_abs": float(args.metric_extra_count_abs),
+            "class_mismatch_count_abs": float(args.metric_class_mismatch_abs),
+        },
+        "backend_parity": {
+            "mode": str(args.backend_parity_mode),
+            "map50_abs": float(args.backend_parity_map50_abs),
+            "map50_95_abs": float(args.backend_parity_map50_95_abs),
         },
         "speed": {
             "min_fps_ratio": float(args.min_fps_ratio),
@@ -528,6 +1097,8 @@ def _protocol_spec(*, canonical_decimals: int) -> dict[str, Any]:
         "behavior": {
             "soft_invariants": [
                 "metric drift (total_detections, score_sum, score_mean, bbox_checksum)",
+                "robust metric drift (map50/map50_95, worst-k, quantiles, recall@K, count diagnostics)",
+                "backend parity drift against peer backend report",
                 "performance drift (fps ratio and absolute floor)",
             ],
             "gate_adoption": "warn_then_hard",
@@ -628,11 +1199,12 @@ def _collect_run_meta(
     repro_details: dict[str, Any],
     canonicalization: dict[str, Any],
     runtime_lock: dict[str, Any],
+    provenance: dict[str, Any],
 ) -> dict[str, Any]:
     model_dtype: str | None = None
     model_state_hash: str | None = None
     model_hash_source: str | None = None
-    backend = "torch"
+    backend = str(args.backend_id)
 
     try:
         model = adapter.get_model()
@@ -688,15 +1260,20 @@ def _collect_run_meta(
         "runtime_lock_path": runtime_lock.get("path"),
         "runtime_lock_sha256": runtime_lock.get("sha256"),
         "runtime_lock_versions": dict(runtime_lock.get("versions") or {}),
+        "profile": str(args.profile),
+        "baseline_layout": str(args.baseline_layout),
+        "provenance": provenance,
     }
 
 
 def _build_baseline_payload(
     *,
     args: argparse.Namespace,
+    baseline_path: Path,
     dataset_root: Path,
     split: str,
     summary: dict[str, Any],
+    robust_metrics: dict[str, Any],
     speed: dict[str, Any],
     contract: dict[str, Any],
     predictions_sha256: str,
@@ -707,8 +1284,11 @@ def _build_baseline_payload(
 ) -> dict[str, Any]:
     return {
         "schema_version": 2,
-        "reference_adapter": "rtdetr_pose",
+        "reference_adapter": str(args.adapter_id),
         "generated_utc": _now_utc(),
+        "profile": str(args.profile),
+        "baseline_layout": str(args.baseline_layout),
+        "baseline_path": _repo_relative_display(baseline_path),
         "dataset": {
             "path": _repo_relative_display(dataset_root),
             "split": str(split),
@@ -736,6 +1316,7 @@ def _build_baseline_payload(
         "baseline_meta": run_meta,
         "baseline": {
             "summary": summary,
+            "robust_metrics": robust_metrics,
             "speed": speed,
             "contract": contract,
             "predictions_sha256": predictions_sha256,
@@ -771,6 +1352,8 @@ def _failure_code(gate_key: str, message: str) -> str:
             return "E_CANON_DUPLICATE_IMAGE"
         return "E_CANON_CONSISTENCY"
     if gate_key == GATE_METRIC:
+        if "parity" in text:
+            return "E_SCORE_PARITY"
         return "E_SCORE_DRIFT"
     if gate_key == GATE_SPEED:
         return "E_PERF_DRIFT"
@@ -785,8 +1368,9 @@ def _append_gate_failure(
     hard_failures: list[str],
     soft_failures: list[str],
     failure_records: list[dict[str, Any]],
+    mode_override: str | None = None,
 ) -> None:
-    mode = str(gate_policy.get(gate_key, "hard"))
+    mode = str(mode_override or gate_policy.get(gate_key, "hard"))
     code = _failure_code(gate_key, message)
     line = f"[{gate_key}][{code}] {message}"
     if mode == "hard":
@@ -807,6 +1391,7 @@ def _compare_against_baseline(
     *,
     baseline_payload: dict[str, Any],
     summary: dict[str, Any],
+    robust_metrics: dict[str, Any],
     speed: dict[str, Any],
     contract: dict[str, Any],
     run_meta: dict[str, Any],
@@ -818,6 +1403,8 @@ def _compare_against_baseline(
     predictions: list[dict[str, Any]],
     enforce_runtime_lock: bool,
     enforce_weights_hash: bool,
+    peer_robust_metrics: dict[str, Any] | None,
+    backend_parity: dict[str, Any],
     failure_records: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[str], list[str]]:
     hard_failures: list[str] = []
@@ -833,6 +1420,7 @@ def _compare_against_baseline(
     baseline = baseline_payload.get("baseline") or {}
     thresholds = baseline_payload.get("thresholds") or {}
     baseline_summary = baseline.get("summary") or {}
+    baseline_robust = baseline.get("robust_metrics") or {}
     baseline_speed = baseline.get("speed") or {}
     baseline_contract = baseline.get("contract") or {}
     baseline_meta = baseline_payload.get("baseline_meta") or {}
@@ -1033,6 +1621,87 @@ def _compare_against_baseline(
                     soft_failures=soft_failures,
                     failure_records=failure_records,
                 )
+        robust_checks = {
+            "map50": float(metric_thr.get("map50_abs", 0.0)),
+            "map50_95": float(metric_thr.get("map50_95_abs", 0.0)),
+            "worst_k_map50": float(metric_thr.get("worst_k_map50_abs", 0.0)),
+            "median_class_map50": float(metric_thr.get("median_class_map50_abs", 0.0)),
+            "recall_at_k": float(metric_thr.get("recall_at_k_abs", 0.0)),
+            "iou_p10": float(metric_thr.get("iou_p10_abs", 0.0)),
+            "iou_p50": float(metric_thr.get("iou_p50_abs", 0.0)),
+            "missing_count": float(metric_thr.get("missing_count_abs", 0.0)),
+            "extra_count": float(metric_thr.get("extra_count_abs", 0.0)),
+            "class_mismatch_count": float(metric_thr.get("class_mismatch_count_abs", 0.0)),
+        }
+        robust_deltas: dict[str, Any] = {}
+        missing_baseline_keys: list[str] = []
+        for key, tol in robust_checks.items():
+            if key not in baseline_robust:
+                missing_baseline_keys.append(key)
+                continue
+            cur = float(robust_metrics.get(key, 0.0))
+            ref = float(baseline_robust.get(key, 0.0))
+            delta = abs(cur - ref)
+            ok = bool(delta <= tol)
+            robust_deltas[key] = {
+                "baseline": ref,
+                "current": cur,
+                "abs_delta": delta,
+                "allowed_abs": tol,
+                "ok": ok,
+            }
+            if not ok:
+                metric_gate["ok"] = False
+                _append_gate_failure(
+                    gate_key=GATE_METRIC,
+                    message=f"{key} abs_delta={delta:.6f} exceeds tolerance={tol:.6f}",
+                    gate_policy=gate_policy,
+                    hard_failures=hard_failures,
+                    soft_failures=soft_failures,
+                    failure_records=failure_records,
+                )
+
+        parity_details: dict[str, Any] = {"mode": str(backend_parity.get("mode", "off"))}
+        parity_mode = str(backend_parity.get("mode", "off"))
+        if parity_mode == "off" or not peer_robust_metrics:
+            parity_details["skipped"] = True
+        else:
+            checks = {
+                "map50": float(backend_parity.get("map50_abs", 0.0)),
+                "map50_95": float(backend_parity.get("map50_95_abs", 0.0)),
+            }
+            rows: dict[str, Any] = {}
+            parity_ok = True
+            for key, tol in checks.items():
+                if key not in peer_robust_metrics:
+                    rows[key] = {"missing_peer_metric": True, "allowed_abs": tol}
+                    continue
+                cur = float(robust_metrics.get(key, 0.0))
+                peer = float(peer_robust_metrics.get(key, 0.0))
+                delta = abs(cur - peer)
+                ok = bool(delta <= tol)
+                rows[key] = {
+                    "current": cur,
+                    "peer": peer,
+                    "abs_delta": delta,
+                    "allowed_abs": tol,
+                    "ok": ok,
+                }
+                if not ok:
+                    parity_ok = False
+                    metric_gate["ok"] = False
+                    _append_gate_failure(
+                        gate_key=GATE_METRIC,
+                        message=f"parity {key} abs_delta={delta:.6f} exceeds tolerance={tol:.6f}",
+                        gate_policy=gate_policy,
+                        hard_failures=hard_failures,
+                        soft_failures=soft_failures,
+                        failure_records=failure_records,
+                        mode_override=parity_mode,
+                    )
+            parity_details["metrics"] = rows
+            parity_details["ok"] = parity_ok
+
         class_hist_cur = summary.get("class_hist") or {}
         class_hist_ref = baseline_summary.get("class_hist") or {}
         class_delta_rows: list[dict[str, Any]] = []
@@ -1053,10 +1722,19 @@ def _compare_against_baseline(
         class_delta_rows.sort(key=lambda row: int(row["abs_delta"]), reverse=True)
 
         failing_metrics = [name for name, row in metric_deltas.items() if not bool(row.get("ok"))]
+        failing_robust_metrics = [name for name, row in robust_deltas.items() if not bool(row.get("ok"))]
         metric_gate["details"] = {
             "metrics": metric_deltas,
+            "robust_metrics": {
+                "current": robust_metrics,
+                "baseline": baseline_robust,
+                "deltas": robust_deltas,
+                "missing_baseline_metric_keys": missing_baseline_keys,
+                "failed_metric_names": failing_robust_metrics,
+            },
             "failed_metric_names": failing_metrics,
             "class_hist_topk": class_delta_rows[:5],
+            "backend_parity": parity_details,
         }
 
     speed_gate = gates[GATE_SPEED]
@@ -1122,6 +1800,8 @@ def main(argv: list[str] | None = None) -> int:
             args.canonical_decimals,
             flag_name="--canonical-decimals",
         )
+        metric_worst_k = require_positive_int(args.metric_worst_k, flag_name="--metric-worst-k")
+        metric_recall_k = require_positive_int(args.metric_recall_k, flag_name="--metric-recall-k")
         require_float_in_range(
             args.min_fps_ratio,
             flag_name="--min-fps-ratio",
@@ -1134,6 +1814,25 @@ def main(argv: list[str] | None = None) -> int:
             minimum=0.0,
             maximum=100000.0,
         )
+        for flag, value in (
+            ("--metric-total-detections-abs", args.metric_total_detections_abs),
+            ("--metric-score-sum-abs", args.metric_score_sum_abs),
+            ("--metric-score-mean-abs", args.metric_score_mean_abs),
+            ("--metric-bbox-checksum-abs", args.metric_bbox_checksum_abs),
+            ("--metric-map50-abs", args.metric_map50_abs),
+            ("--metric-map50-95-abs", args.metric_map50_95_abs),
+            ("--metric-worst-k-map50-abs", args.metric_worst_k_map50_abs),
+            ("--metric-median-class-map50-abs", args.metric_median_class_map50_abs),
+            ("--metric-recall-at-k-abs", args.metric_recall_at_k_abs),
+            ("--metric-iou-p10-abs", args.metric_iou_p10_abs),
+            ("--metric-iou-p50-abs", args.metric_iou_p50_abs),
+            ("--metric-missing-count-abs", args.metric_missing_count_abs),
+            ("--metric-extra-count-abs", args.metric_extra_count_abs),
+            ("--metric-class-mismatch-abs", args.metric_class_mismatch_abs),
+            ("--backend-parity-map50-abs", args.backend_parity_map50_abs),
+            ("--backend-parity-map50-95-abs", args.backend_parity_map50_95_abs),
+        ):
+            require_float_in_range(value, flag_name=flag, minimum=0.0, maximum=100000.0)
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
@@ -1145,13 +1844,20 @@ def main(argv: list[str] | None = None) -> int:
         if args.checkpoint
         else None
     )
-    baseline_path = resolve_output_path(args.baseline, cwd=cwd)
+    baseline_path = _resolve_baseline_path(args=args, cwd=cwd)
     output_path = resolve_output_path(args.output, cwd=cwd)
     runtime_lock_path = resolve_input_path(args.runtime_lock, cwd=cwd, repo_root=repo_root)
+    peer_report_path = (
+        resolve_input_path(args.peer_report, cwd=cwd, repo_root=repo_root)
+        if args.peer_report
+        else None
+    )
     _ensure_repo_write_target(baseline_path, flag_name="--baseline")
     _ensure_repo_write_target(output_path, flag_name="--output")
     if args.enforce_runtime_lock and not runtime_lock_path.exists():
         raise SystemExit(f"--runtime-lock not found: {runtime_lock_path}")
+    if peer_report_path is not None and not peer_report_path.exists():
+        raise SystemExit(f"--peer-report not found: {peer_report_path}")
 
     runtime_lock_meta = {
         "path": _repo_relative_display(runtime_lock_path),
@@ -1204,6 +1910,13 @@ def main(argv: list[str] | None = None) -> int:
         schema_errors.append(str(exc))
 
     summary = _build_summary(predictions)
+    robust_metrics = _build_robust_metrics(
+        records=records,
+        predictions=predictions,
+        dataset_root=dataset_root,
+        worst_k=int(metric_worst_k),
+        recall_k=int(metric_recall_k),
+    )
     contract, contract_errors = _build_contract(
         records,
         predictions,
@@ -1225,6 +1938,10 @@ def main(argv: list[str] | None = None) -> int:
         split=str(manifest.get("split")),
         max_images=int(len(records)),
     )
+    provenance = _collect_provenance(
+        capture_mode=str(args.capture_provenance),
+        runtime_lock=runtime_lock_meta,
+    )
 
     run_meta = _collect_run_meta(
         adapter=adapter,
@@ -1235,6 +1952,7 @@ def main(argv: list[str] | None = None) -> int:
         repro_details=repro_details,
         canonicalization=canonicalization,
         runtime_lock=runtime_lock_meta,
+        provenance=provenance,
     )
     if bool(args.enforce_runtime_lock):
         pinned_versions = dict(runtime_lock_meta.get("versions") or {})
@@ -1249,16 +1967,41 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             if str(actual) != str(expected):
                 consistency_errors.append(f"runtime lock mismatch for {key}: expected={expected} actual={actual}")
+    if args.expected_dataset_hash:
+        expected_dataset_hash = str(args.expected_dataset_hash).strip()
+        current_dataset_hash = str(run_meta.get("dataset_hash") or "")
+        if expected_dataset_hash != current_dataset_hash:
+            consistency_errors.append(
+                f"dataset_hash mismatch: expected={expected_dataset_hash} current={current_dataset_hash}"
+            )
+    if args.expected_weights_hash:
+        expected_weights_hash = str(args.expected_weights_hash).strip()
+        current_weights_hash = str(run_meta.get("weights_hash") or "")
+        if expected_weights_hash != current_weights_hash:
+            consistency_errors.append(
+                f"weights_hash mismatch: expected={expected_weights_hash} current={current_weights_hash}"
+            )
+    if args.expected_checkpoint_hash:
+        expected_checkpoint_hash = str(args.expected_checkpoint_hash).strip()
+        current_checkpoint_hash = str(run_meta.get("checkpoint_hash") or "")
+        if expected_checkpoint_hash != current_checkpoint_hash:
+            consistency_errors.append(
+                f"checkpoint_hash mismatch: expected={expected_checkpoint_hash} current={current_checkpoint_hash}"
+            )
 
     run_context = {
         "started_utc": started_utc,
         "finished_utc": finished_utc,
         "dataset": _repo_relative_display(dataset_root),
         "split": str(manifest.get("split")),
-        "adapter": "rtdetr_pose",
+        "adapter": str(args.adapter_id),
         "config": str(config_path),
         "checkpoint": str(checkpoint_path) if checkpoint_path is not None else None,
         "device": str(args.device),
+        "profile": str(args.profile),
+        "baseline_layout": str(args.baseline_layout),
+        "baseline_path": str(baseline_path),
+        "peer_report": (str(peer_report_path) if peer_report_path is not None else None),
         "image_size": [int(image_size[0]), int(image_size[1])],
         "score_threshold": float(score_threshold),
         "max_detections": int(max_detections),
@@ -1275,13 +2018,23 @@ def main(argv: list[str] | None = None) -> int:
     failure_records: list[dict[str, Any]] = []
     gates: dict[str, Any]
     baseline_payload: dict[str, Any]
+    peer_robust_metrics: dict[str, Any] | None = None
+    if peer_report_path is not None:
+        peer_payload = json.loads(peer_report_path.read_text(encoding="utf-8"))
+        peer_robust_metrics = (
+            peer_payload.get("robust_metrics")
+            or ((peer_payload.get("baseline") or {}).get("robust_metrics"))
+            or ((peer_payload.get("summary") or {}).get("robust_metrics"))
+        )
 
     if args.write_baseline:
         baseline_payload = _build_baseline_payload(
             args=args,
+            baseline_path=baseline_path,
             dataset_root=dataset_root,
             split=str(manifest.get("split")),
             summary=summary,
+            robust_metrics=robust_metrics,
             speed=speed,
             contract=contract,
             predictions_sha256=predictions_sha256,
@@ -1363,6 +2116,7 @@ def main(argv: list[str] | None = None) -> int:
         gates, hard_failures, soft_failures = _compare_against_baseline(
             baseline_payload=baseline_payload,
             summary=summary,
+            robust_metrics=robust_metrics,
             speed=speed,
             contract=contract,
             run_meta=run_meta,
@@ -1374,6 +2128,8 @@ def main(argv: list[str] | None = None) -> int:
             predictions=predictions,
             enforce_runtime_lock=bool(args.enforce_runtime_lock),
             enforce_weights_hash=bool(args.enforce_weights_hash),
+            peer_robust_metrics=peer_robust_metrics,
+            backend_parity=(_thresholds_from_args(args).get("backend_parity") or {}),
             failure_records=failure_records,
         )
 
@@ -1386,6 +2142,8 @@ def main(argv: list[str] | None = None) -> int:
         "protocol": protocol,
         "gate_policy": gate_policy,
         "summary": summary,
+        "robust_metrics": robust_metrics,
+        "thresholds": _thresholds_from_args(args),
         "speed": speed,
         "contract": contract,
         "canonicalization": canonicalization,
@@ -1397,6 +2155,7 @@ def main(argv: list[str] | None = None) -> int:
         "failure_records": failure_records,
         "warnings": soft_failures,
         "baseline_path": str(baseline_path),
+        "peer_report_path": (str(peer_report_path) if peer_report_path is not None else None),
     }
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

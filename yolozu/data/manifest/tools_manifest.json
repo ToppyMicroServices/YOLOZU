@@ -9207,6 +9207,12 @@
             "kind": "file",
             "path": "baselines/reference_adapter/rtdetr_pose_smoke_val.json",
             "scope": "path"
+          },
+          {
+            "description": "Matrix baseline root used when --baseline-layout matrix and --write-baseline are enabled.",
+            "kind": "dir",
+            "path": "baselines/reference_adapter",
+            "scope": "path"
           }
         ],
         "writes": [
@@ -9227,19 +9233,23 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
-          "description": "Run full reference-adapter regression (interface contract hard + behavior warn)."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json",
+          "description": "Run micro profile regression (interface contract hard + behavior warn)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
           "description": "Run interface-contract-only hard gate (schema + consistency)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
-          "description": "Run behavior-only warn gate (metric + speed)."
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
+          "description": "Run behavior-only warn gate (aggregate + robust metrics + speed)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile full --baseline-layout matrix --baseline-root baselines/reference_adapter --adapter-id rtdetr_pose --backend-id torch --device cpu --baseline-version v1 --repro-policy strict --capture-provenance full --runtime-lock requirements-ci.lock --output reports/reference_adapter_regression_full.json",
+          "description": "Run full profile with matrix baseline layout."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --capture-provenance full --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
           "description": "Refresh the pinned baseline after an intentional interface contract/behavior change."
         }
       ],
@@ -9436,6 +9446,190 @@
           "kind": "number",
           "name": "canonical_decimals",
           "required": false
+        },
+        {
+          "default": "micro",
+          "flag": "--profile",
+          "kind": "string",
+          "name": "profile",
+          "required": false
+        },
+        {
+          "default": "flat",
+          "flag": "--baseline-layout",
+          "kind": "string",
+          "name": "baseline_layout",
+          "required": false
+        },
+        {
+          "default": "baselines/reference_adapter",
+          "flag": "--baseline-root",
+          "kind": "dir",
+          "name": "baseline_root",
+          "required": false
+        },
+        {
+          "default": "rtdetr_pose",
+          "flag": "--adapter-id",
+          "kind": "string",
+          "name": "adapter_id",
+          "required": false
+        },
+        {
+          "default": "torch",
+          "flag": "--backend-id",
+          "kind": "string",
+          "name": "backend_id",
+          "required": false
+        },
+        {
+          "flag": "--matrix-device",
+          "kind": "string",
+          "name": "matrix_device",
+          "required": false
+        },
+        {
+          "default": "v1",
+          "flag": "--baseline-version",
+          "kind": "string",
+          "name": "baseline_version",
+          "required": false
+        },
+        {
+          "flag": "--expected-dataset-hash",
+          "kind": "string",
+          "name": "expected_dataset_hash",
+          "required": false
+        },
+        {
+          "flag": "--expected-weights-hash",
+          "kind": "string",
+          "name": "expected_weights_hash",
+          "required": false
+        },
+        {
+          "flag": "--expected-checkpoint-hash",
+          "kind": "string",
+          "name": "expected_checkpoint_hash",
+          "required": false
+        },
+        {
+          "default": "full",
+          "flag": "--capture-provenance",
+          "kind": "string",
+          "name": "capture_provenance",
+          "required": false
+        },
+        {
+          "default": 0.03,
+          "flag": "--metric-map50-abs",
+          "kind": "number",
+          "name": "metric_map50_abs",
+          "required": false
+        },
+        {
+          "default": 0.03,
+          "flag": "--metric-map50-95-abs",
+          "kind": "number",
+          "name": "metric_map50_95_abs",
+          "required": false
+        },
+        {
+          "default": 0.05,
+          "flag": "--metric-worst-k-map50-abs",
+          "kind": "number",
+          "name": "metric_worst_k_map50_abs",
+          "required": false
+        },
+        {
+          "default": 0.05,
+          "flag": "--metric-median-class-map50-abs",
+          "kind": "number",
+          "name": "metric_median_class_map50_abs",
+          "required": false
+        },
+        {
+          "default": 0.05,
+          "flag": "--metric-recall-at-k-abs",
+          "kind": "number",
+          "name": "metric_recall_at_k_abs",
+          "required": false
+        },
+        {
+          "default": 0.1,
+          "flag": "--metric-iou-p10-abs",
+          "kind": "number",
+          "name": "metric_iou_p10_abs",
+          "required": false
+        },
+        {
+          "default": 0.1,
+          "flag": "--metric-iou-p50-abs",
+          "kind": "number",
+          "name": "metric_iou_p50_abs",
+          "required": false
+        },
+        {
+          "default": 2.0,
+          "flag": "--metric-missing-count-abs",
+          "kind": "number",
+          "name": "metric_missing_count_abs",
+          "required": false
+        },
+        {
+          "default": 2.0,
+          "flag": "--metric-extra-count-abs",
+          "kind": "number",
+          "name": "metric_extra_count_abs",
+          "required": false
+        },
+        {
+          "default": 2.0,
+          "flag": "--metric-class-mismatch-abs",
+          "kind": "number",
+          "name": "metric_class_mismatch_abs",
+          "required": false
+        },
+        {
+          "default": 3,
+          "flag": "--metric-worst-k",
+          "kind": "number",
+          "name": "metric_worst_k",
+          "required": false
+        },
+        {
+          "default": 20,
+          "flag": "--metric-recall-k",
+          "kind": "number",
+          "name": "metric_recall_k",
+          "required": false
+        },
+        {
+          "flag": "--peer-report",
+          "kind": "file",
+          "name": "peer_report",
+          "required": false
+        },
+        {
+          "default": "off",
+          "flag": "--backend-parity-mode",
+          "kind": "string",
+          "name": "backend_parity_mode",
+          "required": false
+        },
+        {
+          "default": 0.03,
+          "flag": "--backend-parity-map50-abs",
+          "kind": "number",
+          "name": "backend_parity_map50_abs",
+          "required": false
+        },
+        {
+          "default": 0.03,
+          "flag": "--backend-parity-map50-95-abs",
+          "kind": "number",
+          "name": "backend_parity_map50_95_abs",
+          "required": false
         }
       ],
       "outputs": [
@@ -9453,7 +9647,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run RT-DETR reference-adapter regression with interface contract gates (schema/consistency) and behavior gates (metric/speed), including reproducibility metadata and warn-to-hard adoption.",
+      "summary": "Run RT-DETR reference-adapter regression with profile-aware micro/full flows, interface contract gates (schema/consistency), behavior gates (aggregate + robust metrics + speed), optional backend parity checks, and provenance/SBOM metadata capture.",
       "tags": [
         "adapter",
         "regression",
