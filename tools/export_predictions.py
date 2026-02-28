@@ -9,7 +9,7 @@ sys.path.insert(0, str(repo_root))
 
 from yolozu.adapter import DummyAdapter, RTDETRPoseAdapter
 from yolozu.dataset import build_manifest
-from yolozu.predictions_transform import apply_tta
+from yolozu.predictions_transform import apply_tta, summarize_task_coverage
 from yolozu.tta.cli_options import (
     add_ttt_arguments,
     build_ttt_config_from_args,
@@ -163,9 +163,26 @@ def _parse_args(argv):
         help="Wrap output as {predictions: [...], meta: {...}} (recommended).",
     )
     parser.add_argument("--tta", action="store_true", help="Enable TTA post-transform on predictions.")
+    parser.add_argument(
+        "--tta-mode",
+        choices=("postprocess", "model"),
+        default="postprocess",
+        help="TTA mode: postprocess (default) or model-space branch merge.",
+    )
     parser.add_argument("--tta-seed", type=int, default=None, help="Seed for TTA randomness.")
     parser.add_argument("--tta-flip-prob", type=float, default=0.5, help="Flip probability for TTA.")
     parser.add_argument("--tta-norm-only", action="store_true", help="Update only normalized bbox values for TTA.")
+    parser.add_argument(
+        "--tta-keypoint-swap-pairs",
+        default=None,
+        help="Optional keypoint swap pairs like '1:2,3:4' for hflip semantics.",
+    )
+    parser.add_argument(
+        "--tta-model-merge-iou",
+        type=float,
+        default=0.55,
+        help="IoU threshold to merge post-flip detections in --tta-mode model (default: 0.55).",
+    )
     parser.add_argument(
         "--tta-flip-keypoints",
         action=argparse.BooleanOptionalAction,
@@ -201,6 +218,167 @@ def _summarize_tta(predictions, *, warnings):
     }
 
 
+def _parse_swap_pairs(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    pairs = []
+    for item in text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if ":" in item:
+            a_text, b_text = item.split(":", 1)
+        elif "-" in item:
+            a_text, b_text = item.split("-", 1)
+        else:
+            raise SystemExit(
+                "--tta-keypoint-swap-pairs must be comma-separated index pairs (example: 1:2,3:4)"
+            )
+        try:
+            a = int(a_text.strip())
+            b = int(b_text.strip())
+        except Exception as exc:
+            raise SystemExit(
+                "--tta-keypoint-swap-pairs must contain integer index pairs (example: 1:2,3:4)"
+            ) from exc
+        if a < 0 or b < 0:
+            raise SystemExit("--tta-keypoint-swap-pairs indices must be >= 0")
+        pairs.append((a, b))
+    return pairs or None
+
+
+def _xyxy_from_bbox_norm(bbox):
+    if not isinstance(bbox, dict):
+        return None
+    try:
+        cx = float(bbox["cx"])
+        cy = float(bbox["cy"])
+        w = float(bbox["w"])
+        h = float(bbox["h"])
+    except Exception:
+        return None
+    x1 = cx - 0.5 * w
+    y1 = cy - 0.5 * h
+    x2 = cx + 0.5 * w
+    y2 = cy + 0.5 * h
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return (x1, y1, x2, y2)
+
+
+def _bbox_iou_norm(a, b):
+    aa = _xyxy_from_bbox_norm(a)
+    bb = _xyxy_from_bbox_norm(b)
+    if aa is None or bb is None:
+        return 0.0
+    ax1, ay1, ax2, ay2 = aa
+    bx1, by1, bx2, by2 = bb
+    ix1 = max(ax1, bx1)
+    iy1 = max(ay1, by1)
+    ix2 = min(ax2, bx2)
+    iy2 = min(ay2, by2)
+    iw = max(0.0, ix2 - ix1)
+    ih = max(0.0, iy2 - iy1)
+    inter = iw * ih
+    if inter <= 0.0:
+        return 0.0
+    area_a = max(0.0, (ax2 - ax1) * (ay2 - ay1))
+    area_b = max(0.0, (bx2 - bx1) * (by2 - by1))
+    union = area_a + area_b - inter
+    if union <= 0.0:
+        return 0.0
+    return float(inter / union)
+
+
+def _merge_det_pair(base_det, aug_det):
+    merged = dict(base_det)
+    try:
+        s0 = float(base_det.get("score", 0.0))
+    except Exception:
+        s0 = 0.0
+    try:
+        s1 = float(aug_det.get("score", 0.0))
+    except Exception:
+        s1 = 0.0
+    merged["score"] = float(max(0.0, min(1.0, 0.5 * (s0 + s1))))
+
+    bbox0 = base_det.get("bbox")
+    bbox1 = aug_det.get("bbox")
+    if isinstance(bbox0, dict) and isinstance(bbox1, dict):
+        merged["bbox"] = {
+            "cx": 0.5 * float(bbox0.get("cx", 0.0)) + 0.5 * float(bbox1.get("cx", 0.0)),
+            "cy": 0.5 * float(bbox0.get("cy", 0.0)) + 0.5 * float(bbox1.get("cy", 0.0)),
+            "w": 0.5 * float(bbox0.get("w", 0.0)) + 0.5 * float(bbox1.get("w", 0.0)),
+            "h": 0.5 * float(bbox0.get("h", 0.0)) + 0.5 * float(bbox1.get("h", 0.0)),
+        }
+    for key in ("keypoints", "offsets", "rot6d", "k_delta", "log_z", "sigma_z", "sigma_rot"):
+        if key not in merged and key in aug_det:
+            merged[key] = aug_det[key]
+    return merged
+
+
+def _merge_model_tta_branches(base_entries, aug_entries, *, iou_threshold, max_detections):
+    warnings = []
+    aug_by_image = {}
+    for entry in aug_entries:
+        if not isinstance(entry, dict):
+            continue
+        image = entry.get("image")
+        if isinstance(image, str):
+            aug_by_image[image] = entry
+
+    merged_entries = []
+    seen_images = set()
+    for entry in base_entries:
+        if not isinstance(entry, dict):
+            continue
+        image = entry.get("image")
+        if not isinstance(image, str):
+            continue
+        seen_images.add(image)
+        base_dets = list(entry.get("detections") or [])
+        aug_entry = aug_by_image.get(image)
+        aug_dets = list((aug_entry or {}).get("detections") or [])
+        out_dets = [dict(det) for det in base_dets if isinstance(det, dict)]
+
+        for aug_det in aug_dets:
+            if not isinstance(aug_det, dict):
+                continue
+            best_idx = -1
+            best_iou = 0.0
+            aug_cls = aug_det.get("class_id")
+            aug_bbox = aug_det.get("bbox")
+            for idx, cand in enumerate(out_dets):
+                if int(cand.get("class_id", -1)) != int(aug_cls if aug_cls is not None else -1):
+                    continue
+                iou = _bbox_iou_norm(cand.get("bbox"), aug_bbox)
+                if iou > best_iou:
+                    best_iou = iou
+                    best_idx = idx
+            if best_idx >= 0 and best_iou >= float(iou_threshold):
+                out_dets[best_idx] = _merge_det_pair(out_dets[best_idx], aug_det)
+            else:
+                out_dets.append(dict(aug_det))
+
+        out_dets.sort(key=lambda d: float(d.get("score", 0.0)), reverse=True)
+        if int(max_detections) > 0:
+            out_dets = out_dets[: int(max_detections)]
+        new_entry = dict(entry)
+        new_entry["detections"] = out_dets
+        merged_entries.append(new_entry)
+
+    for image, aug_entry in aug_by_image.items():
+        if image in seen_images:
+            continue
+        warnings.append(f"tta_model_merge: image present only in augmented branch: {image}")
+        merged_entries.append(dict(aug_entry))
+
+    return merged_entries, warnings
+
+
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
@@ -211,6 +389,8 @@ def main(argv=None):
 
     if args.adapter == "dummy" and int(args.lora_r) > 0:
         raise SystemExit("--lora-* flags are only supported with --adapter rtdetr_pose")
+    if float(args.tta_model_merge_iou) < 0.0 or float(args.tta_model_merge_iou) > 1.0:
+        raise SystemExit("--tta-model-merge-iou must be within [0,1]")
     if args.adapter == "dummy":
         torch_opts_changed = bool(
             bool(args.torch_compile)
@@ -369,18 +549,59 @@ def main(argv=None):
     tta_warnings = []
     tta_summary = None
     if args.tta:
-        tta = apply_tta(
-            predictions,
-            enabled=True,
-            seed=args.tta_seed,
-            flip_prob=args.tta_flip_prob,
-            norm_only=bool(args.tta_norm_only),
-            flip_keypoints=bool(args.tta_flip_keypoints),
-            flip_pose_offsets=bool(args.tta_flip_pose_offsets),
-        )
-        predictions = tta.entries
-        tta_warnings = tta.warnings
-        tta_summary = _summarize_tta(predictions, warnings=tta_warnings)
+        swap_pairs = _parse_swap_pairs(args.tta_keypoint_swap_pairs)
+        tta_mode = str(args.tta_mode)
+        if tta_mode == "model" and args.adapter == "rtdetr_pose":
+            aug_records = []
+            for record in records:
+                if not isinstance(record, dict):
+                    continue
+                record_aug = dict(record)
+                record_aug["_tta_hflip"] = True
+                aug_records.append(record_aug)
+            aug_predictions = adapter.predict(aug_records)
+            tta_aug = apply_tta(
+                aug_predictions,
+                enabled=True,
+                seed=args.tta_seed,
+                flip_prob=1.0,
+                norm_only=bool(args.tta_norm_only),
+                flip_keypoints=bool(args.tta_flip_keypoints),
+                flip_pose_offsets=bool(args.tta_flip_pose_offsets),
+                keypoint_swap_pairs=swap_pairs,
+            )
+            predictions, merge_warnings = _merge_model_tta_branches(
+                predictions,
+                tta_aug.entries,
+                iou_threshold=float(args.tta_model_merge_iou),
+                max_detections=int(args.max_detections),
+            )
+            tta_warnings = [*tta_aug.warnings, *merge_warnings]
+            tta_summary = _summarize_tta(predictions, warnings=tta_warnings)
+            tta_summary["mode"] = "model"
+            tta_summary["branches"] = {
+                "base_images": int(len(records)),
+                "aug_images": int(len(aug_records)),
+            }
+        else:
+            if tta_mode == "model":
+                tta_warnings.append(
+                    "--tta-mode model is only available for --adapter rtdetr_pose; falling back to postprocess"
+                )
+            tta = apply_tta(
+                predictions,
+                enabled=True,
+                seed=args.tta_seed,
+                flip_prob=args.tta_flip_prob,
+                norm_only=bool(args.tta_norm_only),
+                flip_keypoints=bool(args.tta_flip_keypoints),
+                flip_pose_offsets=bool(args.tta_flip_pose_offsets),
+                keypoint_swap_pairs=swap_pairs,
+            )
+            predictions = tta.entries
+            tta_warnings.extend(tta.warnings)
+            tta_summary = _summarize_tta(predictions, warnings=tta_warnings)
+            tta_summary["mode"] = "postprocess"
 
     output_path = repo_root / args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -395,6 +616,7 @@ def main(argv=None):
     if args.wrap:
         ttt_meta = build_ttt_settings_from_args(args)
         ttt_meta["report"] = ttt_report
+        task_coverage = summarize_task_coverage(predictions)
         payload = {
             "predictions": predictions,
             "meta": {
@@ -426,15 +648,22 @@ def main(argv=None):
                 },
                 "tta": {
                     "enabled": bool(args.tta),
+                    "mode": str(args.tta_mode) if bool(args.tta) else "postprocess",
                     "seed": args.tta_seed,
                     "flip_prob": float(args.tta_flip_prob),
                     "norm_only": bool(args.tta_norm_only),
+                    "keypoint_swap_pairs": (
+                        list(_parse_swap_pairs(args.tta_keypoint_swap_pairs) or [])
+                        if bool(args.tta)
+                        else []
+                    ),
                     "flip_keypoints": bool(args.tta_flip_keypoints),
                     "flip_pose_offsets": bool(args.tta_flip_pose_offsets),
                     "warnings": tta_warnings,
                     "summary": tta_summary,
                 },
                 "ttt": ttt_meta,
+                "task_coverage": task_coverage,
             },
         }
         output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))

@@ -285,6 +285,8 @@ class RTDETRPoseAdapter(ModelAdapter):
             arr = np.asarray(img, dtype=np.float32)
             if arr.ndim != 3 or arr.shape[2] != 3:
                 raise RuntimeError("invalid RGB image array")
+            if isinstance(record_or_path, dict) and bool(record_or_path.get("_tta_hflip", False)):
+                arr = arr[:, ::-1, :].copy()
             arr = arr / 255.0
             x = torch.from_numpy(arr).permute(2, 0, 1).contiguous().unsqueeze(0)
 
@@ -294,6 +296,9 @@ class RTDETRPoseAdapter(ModelAdapter):
                 "scale_xy": {"x": float(dst_w) / float(orig_w) if orig_w else None, "y": float(dst_h) / float(orig_h) if orig_h else None},
                 "method": "resize",
                 "normalize": "0_1",
+                "tta_aug": {
+                    "hflip": bool(isinstance(record_or_path, dict) and record_or_path.get("_tta_hflip", False)),
+                },
             }
 
             intr = None

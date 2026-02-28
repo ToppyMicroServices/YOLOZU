@@ -351,11 +351,6 @@ def main(argv: list[str] | None = None) -> int:
     imbalance_strategy = str(getattr(args, "imbalance_strategy", "none") or "none").strip().lower()
     sampler = None
     if imbalance_strategy != "none":
-        if ddp_enabled:
-            raise SystemExit(
-                "--imbalance-strategy currently does not support --ddp. "
-                "Use single-process training or disable imbalance strategy."
-            )
         try:
             sampler, rebalance_report = build_weighted_sampler(
                 records,
@@ -366,6 +361,9 @@ def main(argv: list[str] | None = None) -> int:
                 max_weight=float(getattr(args, "imbalance_max_weight", 4.0) or 4.0),
                 aggregate=str(getattr(args, "imbalance_aggregate", "max") or "max"),
                 seed=int(args.seed),
+                distributed=bool(ddp_enabled),
+                world_size=int(world_size),
+                rank=int(rank),
             )
         except ValueError as exc:
             raise SystemExit(str(exc)) from exc
@@ -377,10 +375,11 @@ def main(argv: list[str] | None = None) -> int:
                 f"records_with_labels={rebalance_report.records_with_labels} "
                 f"weight_min={rebalance_report.min_weight:.5g} "
                 f"weight_mean={rebalance_report.mean_weight:.5g} "
-                f"weight_max={rebalance_report.max_weight:.5g}"
+                f"weight_max={rebalance_report.max_weight:.5g} "
+                f"ddp={bool(ddp_enabled)}"
             )
 
-    if ddp_enabled:
+    if ddp_enabled and sampler is None:
         sampler = torch.utils.data.distributed.DistributedSampler(
             ds,
             num_replicas=int(world_size),

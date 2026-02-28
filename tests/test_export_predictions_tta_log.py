@@ -19,6 +19,35 @@ class TestExportPredictionsTTALog(unittest.TestCase):
         self.assertAlmostEqual(summary["applied_ratio"], 0.5)
         self.assertEqual(summary["warnings"], ["w1"])
 
+    def test_merge_model_tta_branches(self):
+        base = [
+            {
+                "image": "x.jpg",
+                "detections": [
+                    {"class_id": 0, "score": 0.6, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}
+                ],
+            }
+        ]
+        aug = [
+            {
+                "image": "x.jpg",
+                "detections": [
+                    {"class_id": 0, "score": 0.8, "bbox": {"cx": 0.52, "cy": 0.5, "w": 0.2, "h": 0.2}}
+                ],
+            }
+        ]
+        merged, warnings = export_predictions._merge_model_tta_branches(
+            base,
+            aug,
+            iou_threshold=0.5,
+            max_detections=50,
+        )
+        self.assertFalse(warnings)
+        self.assertEqual(len(merged), 1)
+        dets = merged[0]["detections"]
+        self.assertEqual(len(dets), 1)
+        self.assertGreater(float(dets[0]["score"]), 0.6)
+
 
 if __name__ == "__main__":
     unittest.main()

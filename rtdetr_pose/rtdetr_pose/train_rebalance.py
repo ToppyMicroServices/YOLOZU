@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any
 
 try:
     import torch
-    from torch.utils.data import WeightedRandomSampler
+    from torch.utils.data import Sampler, WeightedRandomSampler
 except ImportError:  # pragma: no cover
     torch = None
+    Sampler = object
     WeightedRandomSampler = None
 
 
@@ -23,6 +25,66 @@ class RebalanceReport:
     min_weight: float
     max_weight: float
     mean_weight: float
+
+
+class WeightedDistributedSampler(Sampler):
+    """DDP-friendly weighted sampler.
+
+    Draws weighted samples globally, then shards sampled indices by rank.
+    """
+
+    def __init__(
+        self,
+        weights: "torch.Tensor",
+        *,
+        num_replicas: int,
+        rank: int,
+        replacement: bool = True,
+        seed: int = 0,
+        drop_last: bool = False,
+    ) -> None:
+        if torch is None:  # pragma: no cover
+            raise RuntimeError("torch is required for WeightedDistributedSampler")
+        if int(num_replicas) <= 0:
+            raise ValueError("num_replicas must be >= 1")
+        if int(rank) < 0 or int(rank) >= int(num_replicas):
+            raise ValueError("rank must be in [0, num_replicas)")
+        if int(weights.numel()) <= 0:
+            raise ValueError("weights must not be empty")
+
+        self.weights = weights.to(dtype=torch.double)
+        self.num_replicas = int(num_replicas)
+        self.rank = int(rank)
+        self.replacement = bool(replacement)
+        self.seed = int(seed)
+        self.drop_last = bool(drop_last)
+        self.epoch = 0
+
+        if self.drop_last:
+            self.num_samples = max(1, int(weights.numel()) // self.num_replicas)
+        else:
+            self.num_samples = max(1, int(math.ceil(float(int(weights.numel())) / float(self.num_replicas))))
+        self.total_size = int(self.num_samples) * int(self.num_replicas)
+
+    def __iter__(self):
+        if torch is None:  # pragma: no cover
+            return iter(())
+        gen = torch.Generator()
+        gen.manual_seed(int(self.seed) + int(self.epoch))
+        indices = torch.multinomial(
+            self.weights,
+            num_samples=int(self.total_size),
+            replacement=bool(self.replacement),
+            generator=gen,
+        ).tolist()
+        offset = int(self.rank) * int(self.num_samples)
+        return iter(indices[offset : offset + int(self.num_samples)])
+
+    def __len__(self) -> int:
+        return int(self.num_samples)
+
+    def set_epoch(self, epoch: int) -> None:
+        self.epoch = int(epoch)
 
 
 def _record_label_ids(record: dict[str, Any]) -> list[int]:
@@ -118,7 +180,10 @@ def build_weighted_sampler(
     max_weight: float,
     aggregate: str,
     seed: int,
-) -> tuple["WeightedRandomSampler | None", RebalanceReport | None]:
+    distributed: bool = False,
+    world_size: int = 1,
+    rank: int = 0,
+) -> tuple["WeightedRandomSampler | WeightedDistributedSampler | None", RebalanceReport | None]:
     if torch is None or WeightedRandomSampler is None:  # pragma: no cover
         raise RuntimeError("torch is required for imbalance rebalancing")
 
@@ -161,14 +226,24 @@ def build_weighted_sampler(
     if bool((weights_t <= 0).all().item()):
         raise ValueError("all record weights are <=0; cannot sample")
 
-    gen = torch.Generator()
-    gen.manual_seed(int(seed))
-    sampler = WeightedRandomSampler(
-        weights_t,
-        num_samples=int(len(record_weights)),
-        replacement=True,
-        generator=gen,
-    )
+    if bool(distributed):
+        sampler = WeightedDistributedSampler(
+            weights_t,
+            num_replicas=max(1, int(world_size)),
+            rank=max(0, int(rank)),
+            replacement=True,
+            seed=int(seed),
+            drop_last=False,
+        )
+    else:
+        gen = torch.Generator()
+        gen.manual_seed(int(seed))
+        sampler = WeightedRandomSampler(
+            weights_t,
+            num_samples=int(len(record_weights)),
+            replacement=True,
+            generator=gen,
+        )
 
     records_with_labels = 0
     for record in records:

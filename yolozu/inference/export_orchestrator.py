@@ -14,6 +14,7 @@ from yolozu.core.cli_args import (
     require_positive_int,
 )
 from yolozu.predictions import normalize_predictions_payload
+from yolozu.predictions_transform import apply_ttt_lite, summarize_task_coverage
 from yolozu.tta.cli_options import add_ttt_arguments, build_ttt_cli_args
 from yolozu.tta.presets import apply_ttt_preset_args
 
@@ -72,12 +73,16 @@ def validate_export_numeric_args(args: argparse.Namespace) -> None:
         )
         require_float_in_range(args.score_thr, flag_name="--score-thr", minimum=0.0, maximum=1.0)
         require_float_in_range(args.nms_iou, flag_name="--nms-iou", minimum=0.0, maximum=1.0)
+        require_float_in_range(args.tta_model_merge_iou, flag_name="--tta-model-merge-iou", minimum=0.0, maximum=1.0)
         require_non_negative_float(args.ttt_aux_pose_weight, flag_name="--ttt-aux-pose-weight")
         require_non_negative_float(args.ttt_aux_keypoints_weight, flag_name="--ttt-aux-keypoints-weight")
         require_non_negative_float(args.ttt_aux_depth_weight, flag_name="--ttt-aux-depth-weight")
         require_non_negative_float(args.ttt_aux_seg_weight, flag_name="--ttt-aux-seg-weight")
+        require_non_negative_float(args.ttt_lite_entropy_weight, flag_name="--ttt-lite-entropy-weight")
         if float(args.ttt_aux_temperature) <= 0.0:
             raise ValueError("--ttt-aux-temperature must be > 0")
+        if float(args.ttt_lite_temperature) <= 0.0:
+            raise ValueError("--ttt-lite-temperature must be > 0")
     except ValueError as exc:
         msg = str(exc)
         msg = msg.replace("--topk must be > 0", "--topk must be >= 1")
@@ -166,11 +171,14 @@ def validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None
         or not bool(getattr(args, "torch_inference_mode", True))
     )
     infer_batch_changed = int(args.infer_batch_size) != 1
-    if args.tta or args.ttt or int(args.lora_r) > 0 or accel_opts_changed or infer_batch_changed:
+    ttt_lite_non_torch = bool(getattr(args, "ttt_lite_non_torch", False))
+    disallowed_ttt = bool(args.ttt) and not ttt_lite_non_torch
+    if args.tta or disallowed_ttt or int(args.lora_r) > 0 or accel_opts_changed or infer_batch_changed:
         raise SystemExit(
             f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend}); "
             "--torch-compile* and --infer-batch-size require --backend torch; "
-            "--torch-amp/--torch-channels-last/--[no-]torch-inference-mode also require --backend torch"
+            "--torch-amp/--torch-channels-last/--[no-]torch-inference-mode also require --backend torch; "
+            "for non-torch backends use --ttt-lite-non-torch with --ttt to enable score-only adaptation"
         )
 
 
@@ -366,9 +374,26 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
         help="If LoRA is enabled, optionally train biases too (default: none).",
     )
     p.add_argument("--tta", action="store_true", help="Enable TTA post-transform on predictions.")
+    p.add_argument(
+        "--tta-mode",
+        choices=("postprocess", "model"),
+        default="postprocess",
+        help="TTA mode for torch backend: postprocess (default) or model-space branch merge.",
+    )
     p.add_argument("--tta-seed", type=int, default=None, help="Seed for TTA randomness.")
     p.add_argument("--tta-flip-prob", type=float, default=0.5, help="Flip probability for TTA.")
     p.add_argument("--tta-norm-only", action="store_true", help="Update only normalized bbox values for TTA.")
+    p.add_argument(
+        "--tta-keypoint-swap-pairs",
+        default=None,
+        help="Optional keypoint swap pairs like '1:2,3:4' for horizontal flip semantics.",
+    )
+    p.add_argument(
+        "--tta-model-merge-iou",
+        type=float,
+        default=0.55,
+        help="IoU threshold for --tta-mode model branch merge (default: 0.55).",
+    )
     p.add_argument(
         "--tta-flip-keypoints",
         action=argparse.BooleanOptionalAction,
@@ -383,6 +408,30 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument("--tta-log-out", default=None, help="Optional path to write TTA log JSON.")
     add_ttt_arguments(p, include_enable_flag=True)
+    p.add_argument(
+        "--ttt-lite-non-torch",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Allow score-only TTT-lite for non-torch backends when --ttt is requested.",
+    )
+    p.add_argument(
+        "--ttt-lite-temperature",
+        type=float,
+        default=1.0,
+        help="Temperature for non-torch TTT-lite score scaling (default: 1.0).",
+    )
+    p.add_argument(
+        "--ttt-lite-entropy-weight",
+        type=float,
+        default=0.0,
+        help="Entropy penalty weight for non-torch TTT-lite (default: 0.0).",
+    )
+    p.add_argument(
+        "--ttt-lite-minmax",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable per-image min-max normalization in non-torch TTT-lite (default: true).",
+    )
 
     p.add_argument("--model", default=None, help="Model path (.onnx for onnxrt, .plan for trt, .pte for executorch).")
     p.add_argument("--exp", default=None, help="YOLOX exp file path for --backend yolox.")
@@ -527,9 +576,12 @@ def export_with_backend(
             },
             "tta": {
                 "enabled": tta_enabled,
+                "mode": (str(args.tta_mode) if tta_enabled else "postprocess"),
                 "seed": args.tta_seed if tta_enabled else None,
                 "flip_prob": float(args.tta_flip_prob) if tta_enabled else None,
                 "norm_only": bool(args.tta_norm_only) if tta_enabled else None,
+                "keypoint_swap_pairs": (str(args.tta_keypoint_swap_pairs) if tta_enabled and args.tta_keypoint_swap_pairs else None),
+                "model_merge_iou": (float(args.tta_model_merge_iou) if tta_enabled else None),
                 "flip_keypoints": bool(args.tta_flip_keypoints) if tta_enabled else None,
                 "flip_pose_offsets": bool(args.tta_flip_pose_offsets) if tta_enabled else None,
             },
@@ -677,6 +729,14 @@ def export_with_backend(
     else:
         raise SystemExit(f"unknown backend: {backend}")
 
+    if backend not in ("dummy", "torch"):
+        config_fp["ttt_lite"] = {
+            "enabled": bool(args.ttt and args.ttt_lite_non_torch),
+            "temperature": float(args.ttt_lite_temperature),
+            "entropy_weight": float(args.ttt_lite_entropy_weight),
+            "minmax_norm": bool(args.ttt_lite_minmax),
+        }
+
     config_hash = sha256_json(config_fp)
 
     out_path = resolve_path(args.output)
@@ -723,11 +783,15 @@ def export_with_backend(
 
         if args.tta:
             cmd.append("--tta")
+        cmd.extend(["--tta-mode", str(args.tta_mode)])
         if args.tta_seed is not None:
             cmd.extend(["--tta-seed", str(int(args.tta_seed))])
         cmd.extend(["--tta-flip-prob", str(float(args.tta_flip_prob))])
+        cmd.extend(["--tta-model-merge-iou", str(float(args.tta_model_merge_iou))])
         if args.tta_norm_only:
             cmd.append("--tta-norm-only")
+        if args.tta_keypoint_swap_pairs:
+            cmd.extend(["--tta-keypoint-swap-pairs", str(args.tta_keypoint_swap_pairs)])
         cmd.append("--tta-flip-keypoints" if bool(args.tta_flip_keypoints) else "--no-tta-flip-keypoints")
         cmd.append("--tta-flip-pose-offsets" if bool(args.tta_flip_pose_offsets) else "--no-tta-flip-pose-offsets")
         if args.tta_log_out:
@@ -939,7 +1003,89 @@ def export_with_backend(
         raise SystemExit(f"unknown backend: {backend}")
 
     payload = ensure_wrapper(load_json(out_path))
-    payload["meta"]["run"] = base_run_meta(seed=args.seed, notes=args.notes, config_fingerprint=config_fp)
+    meta = payload.get("meta")
+    if not isinstance(meta, dict):
+        meta = {}
+        payload["meta"] = meta
+
+    if backend not in ("dummy", "torch") and bool(args.ttt) and bool(args.ttt_lite_non_torch):
+        before_scores: list[float] = []
+        for entry in payload.get("predictions") or []:
+            if not isinstance(entry, dict):
+                continue
+            for det in entry.get("detections") or []:
+                if not isinstance(det, dict):
+                    continue
+                try:
+                    before_scores.append(float(det.get("score", 0.0)))
+                except Exception:
+                    before_scores.append(0.0)
+        lite = apply_ttt_lite(
+            payload.get("predictions") or [],
+            enabled=True,
+            temperature=float(args.ttt_lite_temperature),
+            entropy_weight=float(args.ttt_lite_entropy_weight),
+            minmax_norm=bool(args.ttt_lite_minmax),
+            preserve_raw_score_key="score_raw",
+        )
+        payload["predictions"] = lite.entries
+        after_scores: list[float] = []
+        changed = 0
+        for entry in lite.entries:
+            if not isinstance(entry, dict):
+                continue
+            for det in entry.get("detections") or []:
+                if not isinstance(det, dict):
+                    continue
+                try:
+                    score_new = float(det.get("score", 0.0))
+                except Exception:
+                    score_new = 0.0
+                after_scores.append(score_new)
+                try:
+                    score_old = float(det.get("score_raw", score_new))
+                except Exception:
+                    score_old = score_new
+                if abs(score_new - score_old) > 1e-8:
+                    changed += 1
+
+        ttt_meta = meta.get("ttt")
+        if not isinstance(ttt_meta, dict):
+            ttt_meta = {}
+        ttt_meta.update(
+            {
+                "enabled": True,
+                "method": "lite_non_torch",
+                "steps": 0,
+                "batch_size": 0,
+                "lr": 0.0,
+                "update_filter": "score_only",
+                "include": None,
+                "exclude": None,
+                "max_batches": 0,
+                "seed": args.seed,
+                "mim": {"mask_prob": 0.0, "patch_size": 0, "mask_value": 0.0},
+                "report": {
+                    "mode": "lite_non_torch",
+                    "temperature": float(args.ttt_lite_temperature),
+                    "entropy_weight": float(args.ttt_lite_entropy_weight),
+                    "minmax_norm": bool(args.ttt_lite_minmax),
+                    "detections": int(len(after_scores)),
+                    "changed_scores": int(changed),
+                    "warnings": list(lite.warnings),
+                    "mean_score_before": (
+                        float(sum(before_scores) / max(1, len(before_scores))) if before_scores else 0.0
+                    ),
+                    "mean_score_after": (
+                        float(sum(after_scores) / max(1, len(after_scores))) if after_scores else 0.0
+                    ),
+                },
+            }
+        )
+        meta["ttt"] = ttt_meta
+
+    meta["task_coverage"] = summarize_task_coverage(payload.get("predictions") or [])
+    meta["run"] = base_run_meta(seed=args.seed, notes=args.notes, config_fingerprint=config_fp)
     write_json(out_path, payload)
 
     if cache_out is not None and cache_out != out_path:

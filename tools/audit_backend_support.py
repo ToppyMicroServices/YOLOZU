@@ -35,6 +35,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--python", default=sys.executable, help="Python executable for subprocess calls.")
     p.add_argument("--strict", action="store_true", help="Enable strict schema validation in exporter CLIs.")
+    p.add_argument(
+        "--non-dry-backend",
+        action="append",
+        default=[],
+        choices=("yolox", "yolov8_ultralytics", "detectron2", "mmdetection"),
+        help="Backend to run without --dry-run (repeatable).",
+    )
+    p.add_argument(
+        "--require-non-dry",
+        action="store_true",
+        help="Fail if no backend is configured for non-dry execution.",
+    )
     return p
 
 
@@ -78,6 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     strict_flags = ["--strict"] if bool(args.strict) else []
+    non_dry = {str(x) for x in list(args.non_dry_backend or [])}
 
     matrix: list[dict[str, Any]] = [
         {
@@ -91,7 +104,6 @@ def main(argv: list[str] | None = None) -> int:
                 str(args.split),
                 "--max-images",
                 str(int(args.max_images)),
-                "--dry-run",
                 "--output",
                 str(work_dir / "predictions_yolox.json"),
                 *strict_flags,
@@ -110,7 +122,6 @@ def main(argv: list[str] | None = None) -> int:
                 str(args.split),
                 "--max-images",
                 str(int(args.max_images)),
-                "--dry-run",
                 "--output",
                 str(work_dir / "predictions_yolov8.json"),
                 *strict_flags,
@@ -131,7 +142,6 @@ def main(argv: list[str] | None = None) -> int:
                 "weights/detectron2_stub.pth",
                 "--max-images",
                 str(int(args.max_images)),
-                "--dry-run",
                 "--output",
                 str(work_dir / "predictions_detectron2.json"),
                 *strict_flags,
@@ -152,7 +162,6 @@ def main(argv: list[str] | None = None) -> int:
                 "weights/mmdet_stub.pth",
                 "--max-images",
                 str(int(args.max_images)),
-                "--dry-run",
                 "--output",
                 str(work_dir / "predictions_mmdet.json"),
                 *strict_flags,
@@ -164,6 +173,9 @@ def main(argv: list[str] | None = None) -> int:
     for row in matrix:
         backend = str(row["backend"])
         cmd = [str(x) for x in row["command"]]
+        dry_run = backend not in non_dry
+        if dry_run:
+            cmd.append("--dry-run")
         proc = _run(cmd, cwd=repo_root)
 
         out_file = None
@@ -189,10 +201,18 @@ def main(argv: list[str] | None = None) -> int:
                 "stdout_tail": (proc.stdout or "").splitlines()[-10:],
                 "stderr_tail": (proc.stderr or "").splitlines()[-10:],
                 "command": cmd,
+                "dry_run": bool(dry_run),
             }
         )
 
+    non_dry_count = sum(1 for item in results if not bool(item.get("dry_run", True)))
+    warnings: list[str] = []
+    if non_dry_count <= 0:
+        warnings.append("all backends were executed in dry-run mode")
     ok = all(bool(item.get("ok")) for item in results)
+    if bool(args.require_non_dry) and non_dry_count <= 0:
+        ok = False
+        warnings.append("--require-non-dry is set but no --non-dry-backend was configured")
     report = {
         "task": "backend_support_audit",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -200,6 +220,8 @@ def main(argv: list[str] | None = None) -> int:
         "dataset_root": str(dataset_root),
         "split": str(args.split),
         "max_images": int(args.max_images),
+        "warnings": warnings,
+        "non_dry_backends": sorted(non_dry),
         "results": results,
     }
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")

@@ -592,7 +592,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--imbalance-strategy",
         choices=("none", "class_balanced"),
         default="none",
-        help="Optional class-imbalance handling strategy for train sampling (default: none).",
+        help="Optional class-imbalance handling strategy for train sampling (default: none; supports DDP).",
     )
     parser.add_argument(
         "--imbalance-gamma",

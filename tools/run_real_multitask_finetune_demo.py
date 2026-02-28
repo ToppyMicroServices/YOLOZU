@@ -26,7 +26,20 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--download-if-missing",
         action="store_true",
-        help="When --prepare is set, download tiny real-image COCO sample if inputs are missing.",
+        help=(
+            "When --prepare is set, request tiny COCO download if inputs are missing. "
+            "Requires --allow-auto-download and --accept-dataset-license."
+        ),
+    )
+    p.add_argument(
+        "--allow-auto-download",
+        action="store_true",
+        help="Forward --allow-auto-download to dataset preparation tool.",
+    )
+    p.add_argument(
+        "--accept-dataset-license",
+        action="store_true",
+        help="Forward --accept-dataset-license to dataset preparation tool.",
     )
     p.add_argument(
         "--download-num-images",
@@ -50,6 +63,16 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--python", default=sys.executable, help="Python executable for subprocess calls.")
     p.add_argument("--backbone-name", default="cspdarknet_s", help="Backbone override for demo runs.")
     p.add_argument("--backbone-norm", default="bn", help="Backbone norm override for demo runs.")
+    p.add_argument(
+        "--strict-provenance",
+        action="store_true",
+        help="Fail if dataset provenance indicates model-inference-generated labels.",
+    )
+    p.add_argument(
+        "--strict-realism",
+        action="store_true",
+        help="Fail if dataset provenance indicates heuristic/scaffold labels.",
+    )
     p.add_argument(
         "--backbone-args",
         default='{"width_mult": 0.5, "depth_mult": 0.34}',
@@ -83,6 +106,62 @@ def _load_last_val_map(path: Path) -> float | None:
             except Exception:
                 pass
     return last
+
+
+def _collect_artifact_presence(run_dir: Path) -> dict[str, Any]:
+    expected = {
+        "stdout_log": run_dir / "stdout.log",
+        "stderr_log": run_dir / "stderr.log",
+        "val_metrics_jsonl": run_dir / "val_metrics.jsonl",
+        "checkpoint_bundle": run_dir / "checkpoint_bundle.pt",
+    }
+    present = {k: bool(p.exists()) for k, p in expected.items()}
+    missing = [k for k, ok in present.items() if not ok]
+    return {
+        "expected": {k: str(v) for k, v in expected.items()},
+        "present": present,
+        "missing": missing,
+        "complete": bool(not missing),
+    }
+
+
+def _load_prepare_summary(dataset_root: Path) -> dict[str, Any] | None:
+    path = dataset_root / "prepare_summary.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _validate_prepare_summary(*, summary: dict[str, Any] | None, strict_provenance: bool, strict_realism: bool) -> list[str]:
+    warnings: list[str] = []
+    if not isinstance(summary, dict):
+        warnings.append("prepare_summary_missing_or_invalid")
+        return warnings
+    provenance = summary.get("label_provenance")
+    if not isinstance(provenance, dict):
+        warnings.append("prepare_summary.label_provenance_missing")
+        return warnings
+    if bool(strict_provenance) and bool(provenance.get("model_inference_used")):
+        raise SystemExit("strict provenance violation: model_inference_used must be false")
+    heuristic_fields = []
+    for key, value in provenance.items():
+        if isinstance(value, str) and ("heuristic" in value or "derived" in value):
+            heuristic_fields.append(str(key))
+    if heuristic_fields:
+        warnings.append("heuristic_or_scaffold_labels:" + ",".join(sorted(heuristic_fields)))
+    if bool(strict_realism) and heuristic_fields:
+        raise SystemExit(
+            "strict realism violation: heuristic/scaffold labels are present. "
+            "Use manually annotated labels for keypoints/depth/pose."
+        )
+    checks = summary.get("checks")
+    if isinstance(checks, dict) and not bool(checks.get("segmentation_masks_non_empty", True)):
+        warnings.append("segmentation_masks_non_empty_check_failed")
+    return warnings
 
 
 def _train_task(
@@ -153,6 +232,7 @@ def _train_task(
 
     val_map = _load_last_val_map(run_dir / "val_metrics.jsonl")
     checkpoint = run_dir / "checkpoint_bundle.pt"
+    artifacts = _collect_artifact_presence(run_dir)
 
     return {
         "task": task_name,
@@ -162,6 +242,7 @@ def _train_task(
         "run_dir": str(run_dir),
         "checkpoint_bundle": str(checkpoint),
         "ok": bool(proc.returncode == 0),
+        "artifacts": artifacts,
     }
 
 
@@ -179,8 +260,16 @@ def main(argv: list[str] | None = None) -> int:
         cmd = [args.python, "tools/prepare_real_multitask_fewshot.py", "--out", str(dataset_root), "--force"]
         if bool(args.download_if_missing):
             cmd.append("--download-if-missing")
+        if bool(args.allow_auto_download):
+            cmd.append("--allow-auto-download")
+        if bool(args.accept_dataset_license):
+            cmd.append("--accept-dataset-license")
         if args.download_num_images is not None:
             cmd.extend(["--download-num-images", str(int(args.download_num_images))])
+        if bool(args.strict_provenance):
+            cmd.append("--strict-provenance")
+        if bool(args.strict_realism):
+            cmd.append("--strict-realism")
         extra = [x for x in str(args.prepare_args or "").split(" ") if x.strip()]
         cmd.extend(extra)
         proc = _run(cmd)
@@ -200,6 +289,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if not dataset_root.exists():
         raise SystemExit(f"dataset root not found: {dataset_root}")
+    prepare_summary = _load_prepare_summary(dataset_root)
+    provenance_warnings = _validate_prepare_summary(
+        summary=prepare_summary,
+        strict_provenance=bool(args.strict_provenance),
+        strict_realism=bool(args.strict_realism),
+    )
 
     base_bbox_args = []
     if not bool(args.skip_imbalance):
@@ -275,21 +370,32 @@ def main(argv: list[str] | None = None) -> int:
         epoch_budget += int(args.epochs)
 
     ok_all = bool(results) and all(bool(r.get("ok", False)) for r in results)
+    artifact_complete = all(bool((r.get("artifacts") or {}).get("complete", False)) for r in results)
+    ok = bool(ok_all and artifact_complete)
     report = {
-        "ok": ok_all,
+        "ok": ok,
         "dataset_root": str(dataset_root),
         "prepare": prep_result,
+        "prepare_summary": prepare_summary,
         "settings": {
             "device": str(args.device),
             "epochs": int(args.epochs),
             "max_steps": int(args.max_steps),
             "batch_size": int(args.batch_size),
             "image_size": int(args.image_size),
+            "strict_provenance": bool(args.strict_provenance),
+            "strict_realism": bool(args.strict_realism),
             "backbone_name": str(args.backbone_name),
             "backbone_norm": str(args.backbone_norm),
             "backbone_args": str(args.backbone_args),
         },
         "tasks": results,
+        "evidence": {
+            "tasks_total": int(len(results)),
+            "tasks_ok": int(sum(1 for r in results if bool(r.get("ok", False)))),
+            "artifacts_complete": bool(artifact_complete),
+            "warnings": provenance_warnings,
+        },
         "notes": {
             "segmentation": "segmentation stage uses real mask metadata plus bbox objective in current train_minimal scaffold",
             "data_policy": "real source images are used; pseudo keypoints/depth/pose labels are annotation-derived heuristics (no model-inference-generated labels)",
@@ -299,7 +405,7 @@ def main(argv: list[str] | None = None) -> int:
     report_path = out_dir / "multitask_finetune_demo_report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     print(str(report_path))
-    return 0 if ok_all else 1
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

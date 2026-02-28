@@ -273,7 +273,7 @@ run interface contract で固定された成果物（固定パス）:
 
 `train_minimal.py` では次を追加サポート:
 
-- クラス不均衡対策: `--imbalance-strategy class_balanced`
+- クラス不均衡対策: `--imbalance-strategy class_balanced`（DDPでも利用可能）
   （`--imbalance-gamma`, `--imbalance-min-weight`, `--imbalance-max-weight`, `--imbalance-aggregate`）
 - backbone 明示上書き: `--backbone-name`, `--backbone-norm`, `--backbone-args`
 - 実データ厳格検証: `--strict-task-data`（bbox/keypoints/depth/poseの教師情報不足を即時エラー）
@@ -281,20 +281,25 @@ run interface contract で固定された成果物（固定パス）:
 ### 実画像 few-shot の多タスク finetune デモ
 
 ```bash
+# 事前にライセンスを確認した上で実画像をDL
+python3 scripts/download_coco_instances_tiny.py \
+  --out-root data/coco --split val2017 --num-images 8 --seed 0 --force
+
 # 実画像データセットを準備（COCO画像 + annotation由来 sidecar）
 python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --download-if-missing --force
+  --train-images 6 --val-images 2 \
+  --strict-provenance --force
 
 # bbox -> segmentation -> keypoints -> depth -> pose6d を段階実行
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
-  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --strict-provenance --force
 ```
 
 結果レポート:

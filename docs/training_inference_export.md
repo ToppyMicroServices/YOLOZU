@@ -177,21 +177,25 @@ python3 rtdetr_pose/tools/train_minimal.py \
 Use these tools for an end-to-end staged demo on real source images:
 
 ```bash
+# 0) Download tiny COCO subset manually (review license terms)
+python3 scripts/download_coco_instances_tiny.py \
+  --out-root data/coco --split val2017 --num-images 8 --seed 0 --force
+
 # 1) Prepare compact real-image dataset (COCO images + annotation-derived sidecars)
 python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --download-if-missing --force
+  --train-images 6 --val-images 2 --strict-provenance --force
 
 # 2) Run staged finetuning:
 # bbox -> segmentation -> keypoints -> depth -> pose6d
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
-  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --strict-provenance --force
 ```
 
 The report is written to:

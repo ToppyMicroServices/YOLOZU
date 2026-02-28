@@ -13,6 +13,8 @@ For most day-to-day flows, start with:
 - `python3 tools/yolozu.py doctor ...`
 - `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
+  - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
+  - Non-torch score-only adaptation: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs).
 - `python3 tools/yolozu.py predict-images --input-dir /path/to/images ...`
 - `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
@@ -47,12 +49,12 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
 - Tiny COCO instances subset for demos (downloads 2 images + polygons JSON): `python3 scripts/download_coco_instances_tiny.py`
-- `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --download-if-missing --force`
+- `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
 ## Evaluation helpers
 
-- External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection dry-run interface contract check): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json`
+- External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
 - Keypoints parity (backend output diffs): `python3 tools/check_keypoints_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --iou-thresh 0.99 --kp-atol 1e-4`
@@ -72,7 +74,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 ## Real-image multitask finetune demo
 
-- `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force`
+- `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force`
 - Stages: `bbox -> segmentation -> keypoints -> depth -> pose6d`
 
 ## Distillation helpers

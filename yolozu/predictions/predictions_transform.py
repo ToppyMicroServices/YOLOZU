@@ -19,6 +19,8 @@ __all__ = [
     "build_category_id_to_class_id_map",
     "normalize_class_ids",
     "apply_tta",
+    "apply_ttt_lite",
+    "summarize_task_coverage",
     "fuse_detection_scores",
 ]
 
@@ -168,6 +170,7 @@ def _flip_keypoints_inplace(
     *,
     width: float | None,
     norm_only: bool,
+    swap_pairs: list[tuple[int, int]] | None,
     warnings: list[str],
     where: str,
 ) -> None:
@@ -212,6 +215,21 @@ def _flip_keypoints_inplace(
         warnings.append(f"{kp_where}: unsupported keypoint format")
         out.append(kp)
 
+    if swap_pairs:
+        for pair_idx, pair in enumerate(swap_pairs):
+            try:
+                a = int(pair[0])
+                b = int(pair[1])
+            except Exception:
+                warnings.append(f"{where}: invalid keypoint swap pair at index {pair_idx}")
+                continue
+            if a < 0 or b < 0 or a >= len(out) or b >= len(out):
+                warnings.append(
+                    f"{where}: keypoint swap pair ({a},{b}) is out of range for {len(out)} keypoints"
+                )
+                continue
+            out[a], out[b] = out[b], out[a]
+
     det["keypoints"] = out
 
 
@@ -240,6 +258,7 @@ def apply_tta(
     norm_only: bool = False,
     flip_keypoints: bool = True,
     flip_pose_offsets: bool = True,
+    keypoint_swap_pairs: Iterable[tuple[int, int]] | None = None,
 ) -> TransformResult:
     """Apply a simple test-time augmentation transform to predictions.
 
@@ -256,6 +275,11 @@ def apply_tta(
     warnings: list[str] = []
     out_entries: list[dict[str, Any]] = []
     rng = random.Random(seed)
+    swap_pairs = (
+        [(int(a), int(b)) for a, b in list(keypoint_swap_pairs)]
+        if keypoint_swap_pairs is not None
+        else None
+    )
 
     for idx, entry in enumerate(entries):
         if not isinstance(entry, dict):
@@ -307,6 +331,7 @@ def apply_tta(
                         new_det,
                         width=width,
                         norm_only=bool(norm_only),
+                        swap_pairs=swap_pairs,
                         warnings=warnings,
                         where=where,
                     )
@@ -325,6 +350,160 @@ def apply_tta(
         out_entries.append(new_entry)
 
     return TransformResult(entries=out_entries, warnings=warnings)
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _extract_entropy_like(det: dict[str, Any], *, warnings: list[str], where: str) -> float | None:
+    for key in ("entropy", "class_entropy", "normalized_entropy"):
+        if key in det:
+            try:
+                return _clamp01(float(det.get(key)))
+            except Exception:
+                warnings.append(f"{where}: invalid {key}")
+                return None
+
+    probs = det.get("class_probs")
+    if isinstance(probs, (list, tuple)) and probs:
+        vals: list[float] = []
+        for idx, value in enumerate(probs):
+            try:
+                vals.append(float(value))
+            except Exception:
+                warnings.append(f"{where}.class_probs[{idx}]: invalid value")
+                return None
+        total = sum(vals)
+        if total <= 0.0:
+            return None
+        p = [max(0.0, v) / total for v in vals]
+        import math
+
+        entropy = 0.0
+        for v in p:
+            if v > 0.0:
+                entropy -= v * math.log(v)
+        norm = math.log(max(2, len(p)))
+        if norm <= 0.0:
+            return None
+        return _clamp01(entropy / norm)
+    return None
+
+
+def apply_ttt_lite(
+    entries: Iterable[dict[str, Any]],
+    *,
+    enabled: bool = True,
+    temperature: float = 1.0,
+    entropy_weight: float = 0.0,
+    minmax_norm: bool = True,
+    preserve_raw_score_key: str | None = "score_raw",
+) -> TransformResult:
+    """Apply lightweight non-torch TTT-style score adaptation.
+
+    This path adjusts detection scores only (no weight updates) and is meant
+    for backends that cannot run gradient-based TTT.
+    """
+
+    warnings: list[str] = []
+    out_entries: list[dict[str, Any]] = []
+    temp = max(1e-6, float(temperature))
+    ent_w = max(0.0, float(entropy_weight))
+
+    for idx, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        new_entry = dict(entry)
+        dets = new_entry.get("detections") or []
+        if not isinstance(dets, list):
+            dets = []
+
+        score_vals: list[float] = []
+        for j, det in enumerate(dets):
+            if not isinstance(det, dict):
+                continue
+            try:
+                score_vals.append(float(det.get("score", 0.0)))
+            except Exception:
+                warnings.append(f"predictions[{idx}].detections[{j}]: invalid score")
+                score_vals.append(0.0)
+        s_min = min(score_vals) if score_vals else 0.0
+        s_max = max(score_vals) if score_vals else 1.0
+        s_span = s_max - s_min
+
+        new_dets: list[dict[str, Any]] = []
+        for j, det in enumerate(dets):
+            if not isinstance(det, dict):
+                continue
+            where = f"predictions[{idx}].detections[{j}]"
+            try:
+                score_raw = float(det.get("score", 0.0))
+            except Exception:
+                warnings.append(f"{where}: invalid score")
+                score_raw = 0.0
+
+            score = float(score_raw)
+            if bool(enabled):
+                if bool(minmax_norm) and s_span > 1e-12:
+                    score = (score - s_min) / s_span
+                score = _clamp01(score)
+                entropy = _extract_entropy_like(det, warnings=warnings, where=where)
+                if entropy is not None and ent_w > 0.0:
+                    score = score * max(0.0, 1.0 - ent_w * float(entropy))
+                if abs(temp - 1.0) > 1e-8:
+                    score = pow(max(score, 0.0), 1.0 / temp)
+                score = _clamp01(score)
+
+            new_det = dict(det)
+            if preserve_raw_score_key and preserve_raw_score_key not in new_det:
+                new_det[preserve_raw_score_key] = float(score_raw)
+            new_det["score"] = float(score)
+            new_dets.append(new_det)
+
+        new_entry["detections"] = new_dets
+        out_entries.append(new_entry)
+
+    return TransformResult(entries=out_entries, warnings=warnings)
+
+
+def summarize_task_coverage(entries: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    """Infer task coverage from predictions payload content."""
+
+    counts = {
+        "bbox": 0,
+        "segmentation": 0,
+        "keypoints": 0,
+        "depth": 0,
+        "pose6d": 0,
+    }
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        dets = entry.get("detections") or []
+        if not isinstance(dets, list):
+            continue
+        for det in dets:
+            if not isinstance(det, dict):
+                continue
+            if isinstance(det.get("bbox"), dict) and all(k in det["bbox"] for k in ("cx", "cy", "w", "h")):
+                counts["bbox"] += 1
+            if any(k in det for k in ("mask", "mask_path", "segmentation", "rle", "polygon")):
+                counts["segmentation"] += 1
+            if isinstance(det.get("keypoints"), list) and det.get("keypoints"):
+                counts["keypoints"] += 1
+            if any(k in det for k in ("depth", "depth_path", "log_z", "z", "sigma_z", "D_obj")):
+                counts["depth"] += 1
+            if any(k in det for k in ("pose", "rot6d", "R", "R_gt", "t", "t_gt", "offsets", "k_delta")):
+                counts["pose6d"] += 1
+
+    supported = {k: bool(v > 0) for k, v in counts.items()}
+    tasks = [k for k, is_on in supported.items() if is_on]
+    return {
+        "counts": counts,
+        "supported": supported,
+        "tasks": tasks,
+    }
 
 def fuse_detection_scores(
     entries: Iterable[dict[str, Any]],

@@ -174,7 +174,7 @@
             "scope": "path"
           },
           {
-            "description": "Writes per-backend dry-run predictions JSON artifacts.",
+            "description": "Writes per-backend prediction artifacts (dry-run or non-dry depending on flags).",
             "flag": "--work-dir",
             "kind": "dir",
             "scope": "tree"
@@ -184,7 +184,7 @@
       "entrypoint": "tools/audit_backend_support.py",
       "examples": [
         {
-          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json",
+          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox",
           "description": "Dry-run audit for YOLOX/YOLOv8/Detectron2/MMDetection exporter interface contract support."
         }
       ],
@@ -235,6 +235,20 @@
           "kind": "string",
           "name": "strict",
           "required": false
+        },
+        {
+          "flag": "--non-dry-backend",
+          "kind": "string",
+          "name": "non_dry_backend",
+          "required": false,
+          "description": "Backend key to run without --dry-run (repeatable)."
+        },
+        {
+          "flag": "--require-non-dry",
+          "kind": "string",
+          "name": "require_non_dry",
+          "required": false,
+          "description": "Fail when no non-dry backend is configured."
         }
       ],
       "outputs": [
@@ -3715,13 +3729,35 @@
           "kind": "string",
           "name": "no_torch_inference_mode",
           "required": false
+        },
+        {
+          "flag": "--tta-mode",
+          "kind": "string",
+          "name": "tta_mode",
+          "required": false,
+          "description": "TTA mode: postprocess (default) or model."
+        },
+        {
+          "flag": "--tta-keypoint-swap-pairs",
+          "kind": "string",
+          "name": "tta_keypoint_swap_pairs",
+          "required": false,
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4')."
+        },
+        {
+          "flag": "--tta-model-merge-iou",
+          "kind": "number",
+          "name": "tta_model_merge_iou",
+          "required": false,
+          "description": "IoU threshold for model-space TTA branch merge."
         }
       ],
       "outputs": [
         {
           "default": "reports/predictions.json",
           "kind": "file",
-          "name": "predictions_json"
+          "name": "predictions_json",
+          "description": "Predictions JSON (wrapped meta includes task_coverage and extended TTA settings)."
         }
       ],
       "platform": {
@@ -7723,7 +7759,7 @@
       "entrypoint": "tools/prepare_real_multitask_fewshot.py",
       "examples": [
         {
-          "command": "python3 tools/prepare_real_multitask_fewshot.py --instances-json data/coco/annotations/instances_val2017.json --images-dir data/coco/images/val2017 --out data/real_multitask_fewshot --train-images 6 --val-images 2 --num-keypoints 4 --force",
+          "command": "python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0 --force && python3 tools/prepare_real_multitask_fewshot.py --instances-json data/coco/annotations/instances_val2017.json --images-dir data/coco/images/val2017 --out data/real_multitask_fewshot --train-images 6 --val-images 2 --num-keypoints 4 --strict-provenance --force",
           "description": "Build a compact train/val few-shot dataset from COCO val2017."
         }
       ],
@@ -7775,7 +7811,8 @@
           "flag": "--download-if-missing",
           "kind": "string",
           "name": "download_if_missing",
-          "required": false
+          "required": false,
+          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license)."
         },
         {
           "flag": "--download-num-images",
@@ -7800,6 +7837,34 @@
           "kind": "string",
           "name": "force",
           "required": false
+        },
+        {
+          "flag": "--allow-auto-download",
+          "kind": "string",
+          "name": "allow_auto_download",
+          "required": false,
+          "description": "Allow automatic tiny COCO download."
+        },
+        {
+          "flag": "--accept-dataset-license",
+          "kind": "string",
+          "name": "accept_dataset_license",
+          "required": false,
+          "description": "Acknowledge dataset license terms before auto download."
+        },
+        {
+          "flag": "--strict-provenance",
+          "kind": "string",
+          "name": "strict_provenance",
+          "required": false,
+          "description": "Fail if model-inference-generated labels are detected."
+        },
+        {
+          "flag": "--strict-realism",
+          "kind": "string",
+          "name": "strict_realism",
+          "required": false,
+          "description": "Fail if heuristic/scaffold labels are present."
         }
       ],
       "outputs": [
@@ -7811,7 +7876,7 @@
         },
         {
           "default": "data/real_multitask_fewshot/prepare_summary.json",
-          "description": "Preparation summary with image/instance counts.",
+          "description": "Preparation summary with counts, provenance checks, and warnings.",
           "kind": "file",
           "name": "prepare_summary_json"
         }
@@ -8929,7 +8994,7 @@
       "entrypoint": "tools/run_real_multitask_finetune_demo.py",
       "examples": [
         {
-          "command": "python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force",
+          "command": "python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force",
           "description": "Run a CPU smoke of staged bbox->segmentation->keypoints->depth->pose6d finetuning."
         }
       ],
@@ -8952,7 +9017,8 @@
           "flag": "--download-if-missing",
           "kind": "string",
           "name": "download_if_missing",
-          "required": false
+          "required": false,
+          "description": "Request tiny COCO download when inputs are missing (requires --allow-auto-download and --accept-dataset-license)."
         },
         {
           "flag": "--download-num-images",
@@ -9053,12 +9119,40 @@
           "kind": "string",
           "name": "force",
           "required": false
+        },
+        {
+          "flag": "--allow-auto-download",
+          "kind": "string",
+          "name": "allow_auto_download",
+          "required": false,
+          "description": "Forward --allow-auto-download to preparation step."
+        },
+        {
+          "flag": "--accept-dataset-license",
+          "kind": "string",
+          "name": "accept_dataset_license",
+          "required": false,
+          "description": "Forward --accept-dataset-license to preparation step."
+        },
+        {
+          "flag": "--strict-provenance",
+          "kind": "string",
+          "name": "strict_provenance",
+          "required": false,
+          "description": "Fail if model-inference-generated labels are detected."
+        },
+        {
+          "flag": "--strict-realism",
+          "kind": "string",
+          "name": "strict_realism",
+          "required": false,
+          "description": "Fail if heuristic/scaffold labels are present."
         }
       ],
       "outputs": [
         {
           "default": "reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json",
-          "description": "Final multitask finetune demo report with per-task status.",
+          "description": "Final multitask finetune demo report with per-task status and evidence summary.",
           "kind": "file",
           "name": "report_json"
         },
@@ -11880,6 +11974,55 @@
           "kind": "number",
           "name": "ttt_aux_temperature",
           "required": false
+        },
+        {
+          "flag": "--tta-mode",
+          "kind": "string",
+          "name": "tta_mode",
+          "required": false,
+          "description": "TTA mode for export: postprocess or model."
+        },
+        {
+          "flag": "--tta-keypoint-swap-pairs",
+          "kind": "string",
+          "name": "tta_keypoint_swap_pairs",
+          "required": false,
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4')."
+        },
+        {
+          "flag": "--tta-model-merge-iou",
+          "kind": "number",
+          "name": "tta_model_merge_iou",
+          "required": false,
+          "description": "IoU threshold for model-space TTA merge."
+        },
+        {
+          "flag": "--ttt-lite-non-torch",
+          "kind": "string",
+          "name": "ttt_lite_non_torch",
+          "required": false,
+          "description": "Enable score-only TTT-lite for non-torch backends."
+        },
+        {
+          "flag": "--ttt-lite-temperature",
+          "kind": "number",
+          "name": "ttt_lite_temperature",
+          "required": false,
+          "description": "Temperature for non-torch TTT-lite score scaling."
+        },
+        {
+          "flag": "--ttt-lite-entropy-weight",
+          "kind": "number",
+          "name": "ttt_lite_entropy_weight",
+          "required": false,
+          "description": "Entropy penalty weight for non-torch TTT-lite."
+        },
+        {
+          "flag": "--ttt-lite-minmax",
+          "kind": "string",
+          "name": "ttt_lite_minmax",
+          "required": false,
+          "description": "Enable min-max score normalization for non-torch TTT-lite."
         }
       ],
       "outputs": [

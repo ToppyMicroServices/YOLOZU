@@ -128,18 +128,22 @@ python3 rtdetr_pose/tools/train_minimal.py \
 \subsection{Real-image few-shot multitask demo}
 To run a staged smoke pipeline over \cmd{bbox -> segmentation -> keypoints -> depth -> pose6d}:
 \begin{lstlisting}[language=bash]
+# 0) Download tiny COCO subset manually (review dataset license terms)
+python3 scripts/download_coco_instances_tiny.py \
+  --out-root data/coco --split val2017 --num-images 8 --seed 0 --force
+
 python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --download-if-missing --force
+  --train-images 6 --val-images 2 --strict-provenance --force
 
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
-  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --strict-provenance --force
 \end{lstlisting}
 The aggregated report is written to \path{reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json}.
 Dataset provenance for each supervision field is recorded in \path{data/real_multitask_fewshot/prepare_summary.json}.

@@ -21,6 +21,27 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+_DATASET_LICENSE_WARNING = (
+    "WARNING: datasets/weights are separate artifacts with their own licenses. "
+    "YOLOZU repository Apache-2.0 does not automatically apply to dataset terms."
+)
+
+
+def _manual_download_message(*, instances_json: Path, images_dir: Path, total_images: int, seed: int, timeout: float) -> str:
+    coco_root = instances_json.parent.parent
+    split = str(images_dir.name)
+    cmd = (
+        "python3 scripts/download_coco_instances_tiny.py "
+        f"--out-root {coco_root} --split {split} --num-images {int(total_images)} "
+        f"--seed {int(seed)} --timeout {float(timeout):.1f} --force"
+    )
+    return (
+        f"{_DATASET_LICENSE_WARNING}\n"
+        "COCO input files are missing and automatic download is disabled by default.\n"
+        "Please download data manually, review license terms, then rerun this tool.\n"
+        f"Suggested command:\n  {cmd}"
+    )
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Prepare real-image multitask few-shot dataset from COCO instances.")
@@ -50,7 +71,20 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--download-if-missing",
         action="store_true",
-        help="If COCO inputs are missing, download a tiny real-image subset automatically.",
+        help=(
+            "If COCO inputs are missing, request tiny subset download. "
+            "Requires --allow-auto-download and --accept-dataset-license."
+        ),
+    )
+    p.add_argument(
+        "--allow-auto-download",
+        action="store_true",
+        help="Allow this tool to invoke tiny COCO downloader automatically.",
+    )
+    p.add_argument(
+        "--accept-dataset-license",
+        action="store_true",
+        help="Acknowledge that dataset/weights licenses are separate from repo license.",
     )
     p.add_argument(
         "--download-num-images",
@@ -69,6 +103,16 @@ def _build_parser() -> argparse.ArgumentParser:
         type=float,
         default=60.0,
         help="HTTP timeout seconds for tiny COCO downloader (default: 60).",
+    )
+    p.add_argument(
+        "--strict-provenance",
+        action="store_true",
+        help="Fail if model-inference-generated labels are detected in provenance.",
+    )
+    p.add_argument(
+        "--strict-realism",
+        action="store_true",
+        help="Fail if heuristic/scaffold labels are present (bbox-derived keypoints/depth/pose).",
     )
     p.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     return p
@@ -197,32 +241,54 @@ def _prepare_dataset(
     val_images: int,
     num_keypoints: int,
     download_if_missing: bool,
+    allow_auto_download: bool,
+    accept_dataset_license: bool,
     download_num_images: int | None,
     download_seed: int,
     download_timeout: float,
+    strict_provenance: bool,
+    strict_realism: bool,
     force: bool,
 ) -> dict[str, Any]:
-    np, pil = _ensure_deps()
-    _Image, image_draw = pil
-
+    warnings: list[str] = []
     download_info = None
-    if (not instances_json.exists() or not images_dir.exists()) and bool(download_if_missing):
-        total = (
-            int(download_num_images)
-            if download_num_images is not None
-            else (int(train_images) + int(val_images))
-        )
-        download_info = _download_coco_tiny_if_needed(
-            instances_json=instances_json,
-            images_dir=images_dir,
-            total_images=int(total),
-            seed=int(download_seed),
-            timeout=float(download_timeout),
-        )
+    inputs_missing = bool(not instances_json.exists() or not images_dir.exists())
+    total = (
+        int(download_num_images)
+        if download_num_images is not None
+        else (int(train_images) + int(val_images))
+    )
+    if inputs_missing:
+        if bool(download_if_missing) and bool(allow_auto_download):
+            if not bool(accept_dataset_license):
+                raise SystemExit(
+                    "automatic download requires --accept-dataset-license to confirm dataset terms."
+                )
+            warnings.append(_DATASET_LICENSE_WARNING)
+            download_info = _download_coco_tiny_if_needed(
+                instances_json=instances_json,
+                images_dir=images_dir,
+                total_images=int(total),
+                seed=int(download_seed),
+                timeout=float(download_timeout),
+            )
+        else:
+            raise SystemExit(
+                _manual_download_message(
+                    instances_json=instances_json,
+                    images_dir=images_dir,
+                    total_images=int(total),
+                    seed=int(download_seed),
+                    timeout=float(download_timeout),
+                )
+            )
     if not instances_json.exists():
         raise SystemExit(f"instances json not found: {instances_json}")
     if not images_dir.exists():
         raise SystemExit(f"images dir not found: {images_dir}")
+
+    np, pil = _ensure_deps()
+    _Image, image_draw = pil
 
     if out_root.exists():
         if not force:
@@ -276,6 +342,10 @@ def _prepare_dataset(
 
     manifest_counts = {"train": 0, "val": 0}
     instance_counts = {"train": 0, "val": 0}
+    segmentation_checks = {
+        "mask_files": 0,
+        "mask_non_empty": 0,
+    }
     label_provenance = {
         "bbox": "coco_instances_gt",
         "segmentation": "coco_polygon_gt",
@@ -312,7 +382,9 @@ def _prepare_dataset(
         mask_img = _draw_polygons_mask(width, height, anns, image_draw=image_draw)
         mask_rel = Path("masks") / split / f"{dst_image.stem}_inst.png"
         (out_root / mask_rel).parent.mkdir(parents=True, exist_ok=True)
-        mask_img.save(out_root / mask_rel)
+        mask_path = out_root / mask_rel
+        mask_img.save(mask_path)
+        segmentation_checks["mask_files"] += 1
 
         depth_map = np.zeros((height, width), dtype=np.float32)
 
@@ -378,6 +450,11 @@ def _prepare_dataset(
 
         depth_rel = Path("depth") / split / f"{dst_image.stem}_depth.npy"
         np.save(out_root / depth_rel, depth_map)
+        try:
+            if bool((np.asarray(mask_img, dtype=np.int64) > 0).any()):
+                segmentation_checks["mask_non_empty"] += 1
+        except Exception:
+            pass
 
         meta = {
             "mask_path": str(mask_rel),
@@ -422,8 +499,26 @@ def _prepare_dataset(
         },
         "keypoint_names": keypoint_names,
         "skeleton": skeleton,
+        "warnings": list(warnings),
     }
     (out_root / "dataset.json").write_text(json.dumps(dataset_doc, indent=2, sort_keys=True), encoding="utf-8")
+
+    heuristic_fields = [
+        key
+        for key, value in label_provenance.items()
+        if isinstance(value, str) and ("heuristic" in value or "derived" in value)
+    ]
+    if bool(heuristic_fields):
+        warnings.append(
+            "heuristic/scaffold labels detected for: " + ", ".join(sorted(heuristic_fields))
+        )
+    if bool(strict_provenance) and bool(label_provenance.get("model_inference_used")):
+        raise SystemExit("strict provenance violation: model_inference_used must be false")
+    if bool(strict_realism) and bool(heuristic_fields):
+        raise SystemExit(
+            "strict realism violation: heuristic/scaffold labels are present. "
+            "Provide manually annotated keypoints/depth/pose to continue."
+        )
 
     return {
         "dataset_root": str(out_root),
@@ -431,6 +526,19 @@ def _prepare_dataset(
         "images_dir": str(images_dir),
         "download": download_info,
         "label_provenance": label_provenance,
+        "warnings": warnings,
+        "checks": {
+            "segmentation_masks_non_empty": bool(
+                int(segmentation_checks["mask_non_empty"]) == int(segmentation_checks["mask_files"])
+            ),
+            "strict_provenance": bool(strict_provenance),
+            "strict_realism": bool(strict_realism),
+            "heuristic_fields": heuristic_fields,
+        },
+        "segmentation_checks": {
+            "mask_files": int(segmentation_checks["mask_files"]),
+            "mask_non_empty": int(segmentation_checks["mask_non_empty"]),
+        },
         "counts": {
             "train_images": int(manifest_counts["train"]),
             "val_images": int(manifest_counts["val"]),
@@ -443,6 +551,7 @@ def _prepare_dataset(
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    print(_DATASET_LICENSE_WARNING, file=sys.stderr)
 
     summary = _prepare_dataset(
         instances_json=Path(str(args.instances_json)).expanduser(),
@@ -452,9 +561,13 @@ def main(argv: list[str] | None = None) -> int:
         val_images=int(args.val_images),
         num_keypoints=int(args.num_keypoints),
         download_if_missing=bool(args.download_if_missing),
+        allow_auto_download=bool(args.allow_auto_download),
+        accept_dataset_license=bool(args.accept_dataset_license),
         download_num_images=(int(args.download_num_images) if args.download_num_images is not None else None),
         download_seed=int(args.download_seed),
         download_timeout=float(args.download_timeout),
+        strict_provenance=bool(args.strict_provenance),
+        strict_realism=bool(args.strict_realism),
         force=bool(args.force),
     )
 
