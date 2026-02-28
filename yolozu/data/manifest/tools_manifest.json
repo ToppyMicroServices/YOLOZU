@@ -7522,6 +7522,109 @@
       ]
     },
     {
+      "docs": [
+        "docs/training_inference_export.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates dataset tree (images/labels/masks/depth) and summary files under output root.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/prepare_real_multitask_fewshot.py",
+      "examples": [
+        {
+          "command": "python3 tools/prepare_real_multitask_fewshot.py --instances-json data/coco/annotations/instances_val2017.json --images-dir data/coco/images/val2017 --out data/real_multitask_fewshot --train-images 6 --val-images 2 --num-keypoints 4 --force",
+          "description": "Build a compact train/val few-shot dataset from COCO val2017."
+        }
+      ],
+      "id": "prepare_real_multitask_fewshot",
+      "inputs": [
+        {
+          "default": "data/coco/annotations/instances_val2017.json",
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
+          "required": false
+        },
+        {
+          "default": "data/coco/images/val2017",
+          "flag": "--images-dir",
+          "kind": "dir",
+          "name": "images_dir",
+          "required": false
+        },
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": false
+        },
+        {
+          "default": 6,
+          "flag": "--train-images",
+          "kind": "number",
+          "name": "train_images",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--val-images",
+          "kind": "number",
+          "name": "val_images",
+          "required": false
+        },
+        {
+          "default": 4,
+          "flag": "--num-keypoints",
+          "kind": "number",
+          "name": "num_keypoints",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "data/real_multitask_fewshot",
+          "description": "Prepared real-image multitask few-shot dataset root.",
+          "kind": "dir",
+          "name": "dataset_root"
+        },
+        {
+          "default": "data/real_multitask_fewshot/prepare_summary.json",
+          "description": "Preparation summary with image/instance counts.",
+          "kind": "file",
+          "name": "prepare_summary_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances.",
+      "tags": [
+        "dataset",
+        "fewshot",
+        "multitask",
+        "real-data"
+      ]
+    },
+    {
       "effects": {
         "fixed_writes": [],
         "writes": [
@@ -8592,6 +8695,174 @@
         "llm",
         "ai-first",
         "deterministic"
+      ]
+    },
+    {
+      "docs": [
+        "docs/training_inference_export.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes per-task logs, checkpoints, and final multitask report.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "When --prepare is set, creates or overwrites prepared dataset root.",
+            "flag": "--dataset-root",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/run_real_multitask_finetune_demo.py",
+      "examples": [
+        {
+          "command": "python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force",
+          "description": "Run a CPU smoke of staged bbox->segmentation->keypoints->depth->pose6d finetuning."
+        }
+      ],
+      "id": "run_real_multitask_finetune_demo",
+      "inputs": [
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
+          "flag": "--prepare",
+          "kind": "string",
+          "name": "prepare",
+          "required": false
+        },
+        {
+          "flag": "--prepare-args",
+          "kind": "string",
+          "name": "prepare_args",
+          "required": false
+        },
+        {
+          "default": "reports/real_multitask_finetune_demo",
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--epochs",
+          "kind": "number",
+          "name": "epochs",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--max-steps",
+          "kind": "number",
+          "name": "max_steps",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--batch-size",
+          "kind": "number",
+          "name": "batch_size",
+          "required": false
+        },
+        {
+          "default": 128,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": 4,
+          "flag": "--num-keypoints",
+          "kind": "number",
+          "name": "num_keypoints",
+          "required": false
+        },
+        {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "default": "cspdarknet_s",
+          "flag": "--backbone-name",
+          "kind": "string",
+          "name": "backbone_name",
+          "required": false
+        },
+        {
+          "default": "bn",
+          "flag": "--backbone-norm",
+          "kind": "string",
+          "name": "backbone_norm",
+          "required": false
+        },
+        {
+          "default": "{\"width_mult\": 0.5, \"depth_mult\": 0.34}",
+          "flag": "--backbone-args",
+          "kind": "json",
+          "name": "backbone_args",
+          "required": false
+        },
+        {
+          "flag": "--skip-imbalance",
+          "kind": "string",
+          "name": "skip_imbalance",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json",
+          "description": "Final multitask finetune demo report with per-task status.",
+          "kind": "file",
+          "name": "report_json"
+        },
+        {
+          "default": "reports/real_multitask_finetune_demo",
+          "description": "Output root containing per-task run directories.",
+          "kind": "dir",
+          "name": "run_root"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Run staged real-image multitask finetune demo across bbox/segmentation/keypoints/depth/pose6d with strict task-data checks.",
+      "tags": [
+        "demo",
+        "finetune",
+        "multitask",
+        "real-data"
       ]
     },
     {

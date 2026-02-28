@@ -269,6 +269,36 @@ run interface contract で固定された成果物（固定パス）:
 - 絶対深度コスト（`cost_z` / `cost_t`）は `metric` のときのみ有効化
 - `--depth-scale` でサイドカー深度のスケール補正を適用
 
+### 不均衡対策 / backbone override / strict data 検証
+
+`train_minimal.py` では次を追加サポート:
+
+- クラス不均衡対策: `--imbalance-strategy class_balanced`
+  （`--imbalance-gamma`, `--imbalance-min-weight`, `--imbalance-max-weight`, `--imbalance-aggregate`）
+- backbone 明示上書き: `--backbone-name`, `--backbone-norm`, `--backbone-args`
+- 実データ厳格検証: `--strict-task-data`（bbox/keypoints/depth/poseの教師情報不足を即時エラー）
+
+### 実画像 few-shot の多タスク finetune デモ
+
+```bash
+# 実画像データセットを準備（COCO画像 + annotation由来 sidecar）
+python3 tools/prepare_real_multitask_fewshot.py \
+  --instances-json data/coco/annotations/instances_val2017.json \
+  --images-dir data/coco/images/val2017 \
+  --out data/real_multitask_fewshot \
+  --train-images 6 --val-images 2 --force
+
+# bbox -> segmentation -> keypoints -> depth -> pose6d を段階実行
+python3 tools/run_real_multitask_finetune_demo.py \
+  --dataset-root data/real_multitask_fewshot \
+  --out reports/real_multitask_finetune_demo \
+  --device cpu \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+```
+
+結果レポート:
+`reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
+
 Run Contract仕様: [`docs/run_contract.md`](docs/run_contract.md)
 
 ---

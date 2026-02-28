@@ -11,8 +11,6 @@ import json
 import math
 import os
 import random
-import signal
-import shutil
 import socket
 import sys
 import time
@@ -30,75 +28,42 @@ except ImportError:  # pragma: no cover
 
 from rtdetr_pose.dataset import build_manifest
 from rtdetr_pose.dataset import extract_full_gt_targets, depth_at_bbox_center
-from rtdetr_pose.factory import build_losses, build_model
-from rtdetr_pose.losses import Losses
-from rtdetr_pose.training import build_query_aligned_targets
-from rtdetr_pose.model import RTDETRPose
-from rtdetr_pose.optim_factory import build_optimizer
-from rtdetr_pose.sched_factory import EMA, build_scheduler
+
+if torch is not None:
+    from rtdetr_pose.factory import build_losses, build_model
+    from rtdetr_pose.losses import Losses
+    from rtdetr_pose.training import build_query_aligned_targets
+    from rtdetr_pose.model import RTDETRPose
+    from rtdetr_pose.optim_factory import build_optimizer
+    from rtdetr_pose.sched_factory import EMA, build_scheduler
+else:  # pragma: no cover
+    build_losses = None  # type: ignore[assignment]
+    build_model = None  # type: ignore[assignment]
+    Losses = None  # type: ignore[assignment]
+    build_query_aligned_targets = None  # type: ignore[assignment]
+    RTDETRPose = None  # type: ignore[assignment]
+    build_optimizer = None  # type: ignore[assignment]
+    EMA = None  # type: ignore[assignment]
+    build_scheduler = None  # type: ignore[assignment]
 
 from yolozu.metrics_report import append_jsonl, build_report, write_csv_row, write_json
 from yolozu.jitter import default_jitter_profile, sample_intrinsics_jitter, sample_extrinsics_jitter
 from yolozu.long_tail_metrics import build_fracal_stats
 from yolozu.run_record import build_run_record, validate_run_record_contract
 from yolozu.sdft import SdftConfig, compute_sdft_loss
-from yolozu.simple_map import evaluate_map
+from rtdetr_pose.train_finalize import finalize_training
+from rtdetr_pose.train_records import enforce_strict_task_data, load_train_records, log_dataset_stats_and_update_run_record, maybe_write_run_meta_and_fracal_stats, resolve_val_records
+from rtdetr_pose.train_runtime import build_validation_loader, install_termination_handlers, run_validation, setup_continual_regularizers, setup_distillation_and_derpp
 
-# ---------------------------------------------------------------------------
 # Re-exports from submodules (backward compatibility)
-# ---------------------------------------------------------------------------
-from rtdetr_pose.train_cli import (  # noqa: F401
-    load_config_file,
-    build_parser,
-    _default_run_id,
-    apply_run_contract_defaults,
-    apply_run_dir_defaults,
-    parse_args,
-)
-from rtdetr_pose.train_utils import (  # noqa: F401
-    workspace_root,
-    _now_utc,
-    _normalize_keypoint_names,
-    _derive_keypoint_flip_pairs,
-    _extract_manifest_keypoints_meta,
-    unwrap_model,
-    _quantiles,
-    _diff_stats,
-    _softmax,
-    _sigmoid,
-    _derive_score_bbox,
-    run_onnxrt_parity,
-    collect_torch_cuda_meta,
-    collect_rng_state,
-    restore_rng_state,
-    _rotation_matrix_from_rpy,
-    compute_warmup_lr,
-    parse_milestones,
-    apply_denoise_targets,
-    flatten_records_for_map,
-    decode_detections_from_outputs,
-    plan_accumulation_windows,
-    compute_linear_schedule,
-    compute_mim_schedule,
-    compute_stage_weights,
-    compute_stage_costs,
-    generate_block_mask,
-    _rgb_to_hsv,
-    _hsv_to_rgb,
-    apply_hsv_jitter,
-    apply_grayscale,
-    _gaussian_kernel2d,
-    apply_gaussian_blur,
-    create_geom_input_from_bboxes,
-    compute_grad_norm,
-    load_checkpoint_into,
-    save_checkpoint_bundle,
-)
-from rtdetr_pose.train_dataset import (  # noqa: F401
-    ManifestDataset,
-    _pad_field,
-    collate,
-)
+from rtdetr_pose.train_cli import *  # noqa: F401,F403
+from rtdetr_pose.train_utils import *  # noqa: F401,F403
+from rtdetr_pose.train_dataset import *  # noqa: F401,F403
+from rtdetr_pose.train_cli import _default_run_id  # noqa: F401
+from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs, _derive_score_bbox, _diff_stats, _extract_manifest_keypoints_meta, _gaussian_kernel2d, _hsv_to_rgb, _normalize_keypoint_names, _now_utc, _quantiles, _rgb_to_hsv, _rotation_matrix_from_rpy, _sigmoid, _softmax  # noqa: F401
+from rtdetr_pose.train_dataset import _pad_field  # noqa: F401
+from rtdetr_pose.train_rebalance import build_weighted_sampler
+from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -278,54 +243,30 @@ def main(argv: list[str] | None = None) -> int:
             except Exception:
                 model_cfg = None
                 loss_cfg = None
+    try:
+        model_cfg, backbone_override = apply_backbone_overrides(model_cfg, args=args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     if model_cfg is not None:
         args.num_queries = int(model_cfg.num_queries)
         args.num_classes = int(model_cfg.num_classes)
         if getattr(model_cfg, "num_keypoints", None) is not None:
             args.num_keypoints = int(getattr(model_cfg, "num_keypoints"))
-
-    records = None
-    keypoint_names: list[str] = []
-    keypoint_skeleton: list[list[int]] = []
-    if args.records_json:
-        records_path = Path(str(args.records_json))
-        if not records_path.is_absolute():
-            records_path = (workspace_root / records_path).resolve()
-            if not records_path.exists():
-                records_path = (workspace_root.parent / Path(str(args.records_json))).resolve()
-        if not records_path.exists():
-            raise SystemExit(f"records json not found: {records_path}")
-        loaded = json.loads(records_path.read_text(encoding="utf-8"))
-        if isinstance(loaded, dict) and "images" in loaded:
-            loaded = loaded.get("images")
-        if not isinstance(loaded, list):
-            raise SystemExit(f"records json must be a list or {{images:[...]}}: {records_path}")
-        records = [r for r in loaded if isinstance(r, dict)]
-    else:
-        manifest = build_manifest(dataset_root, split=args.split)
-        records = manifest.get("images") or []
-        keypoint_names, keypoint_skeleton = _extract_manifest_keypoints_meta(manifest)
-    if args.extra_records_json:
-        extra_path = Path(str(args.extra_records_json))
-        if not extra_path.is_absolute():
-            extra_path = (workspace_root / extra_path).resolve()
-            if not extra_path.exists():
-                extra_path = (workspace_root.parent / Path(str(args.extra_records_json))).resolve()
-        if not extra_path.exists():
-            raise SystemExit(f"extra records json not found: {extra_path}")
-        loaded = json.loads(extra_path.read_text(encoding="utf-8"))
-        if isinstance(loaded, dict) and "images" in loaded:
-            loaded = loaded.get("images")
-        if not isinstance(loaded, list):
-            raise SystemExit(f"extra records json must be a list or {{images:[...]}}: {extra_path}")
-        extra = [r for r in loaded if isinstance(r, dict)]
-        if extra:
-            records = list(records) + extra
-    if not records:
-        raise SystemExit(
-            f"No records found under {dataset_root}. "
-            "Fetch coco128 first: bash tools/fetch_coco128.sh"
+    if is_main and backbone_override is not None:
+        print(
+            "backbone_override "
+            f"name={backbone_override.get('name')} "
+            f"norm={backbone_override.get('norm')} "
+            f"args={json.dumps(backbone_override.get('args', {}), sort_keys=True)}"
         )
+
+    records, keypoint_names, keypoint_skeleton = load_train_records(
+        args=args,
+        dataset_root=dataset_root,
+        workspace_root=workspace_root,
+        build_manifest_fn=build_manifest,
+        extract_manifest_keypoints_meta_fn=_extract_manifest_keypoints_meta,
+    )
 
     if int(getattr(args, "num_keypoints", 0) or 0) <= 0 and keypoint_names:
         args.num_keypoints = int(len(keypoint_names))
@@ -342,83 +283,17 @@ def main(argv: list[str] | None = None) -> int:
             f"count={int(len(keypoint_names))} skeleton_edges={int(len(keypoint_skeleton))} flip_pairs={int(len(keypoint_flip_pairs))}"
         )
 
-    if is_main:
-        stats = {
-            "mask": 0,
-            "depth": 0,
-            "pose": 0,
-            "intrinsics": 0,
-            "cad_points": 0,
-        }
-        for rec in records:
-            if rec.get("mask_path") is not None:
-                stats["mask"] += 1
-            if rec.get("depth_path") is not None:
-                stats["depth"] += 1
-            if rec.get("R_gt") is not None or rec.get("t_gt") is not None or rec.get("pose") is not None:
-                stats["pose"] += 1
-            if rec.get("K_gt") is not None or rec.get("intrinsics") is not None:
-                stats["intrinsics"] += 1
-            if rec.get("cad_points") is not None:
-                stats["cad_points"] += 1
-        print(
-            "dataset_stats "
-            + " ".join(f"{key}={value}" for key, value in sorted(stats.items()))
-        )
-        depth_mode = str(getattr(args, "depth_mode", "none") or "none").strip().lower()
-        depth_unit = str(getattr(args, "depth_unit", "unspecified") or "unspecified").strip().lower()
-        depth_used = bool(depth_mode != "none" and int(stats.get("depth", 0)) > 0)
-        run_record["depth_used"] = bool(depth_used)
-        run_record["depth_unit"] = depth_unit
-        run_record["depth_scale"] = float(getattr(args, "depth_scale", 1.0) or 1.0)
-        run_record["depth_mode"] = depth_mode
+    enforce_strict_task_data(args=args, records=records, workspace_root=workspace_root)
 
-    if is_main and getattr(args, "run_meta_out", None):
-        out_path = Path(str(args.run_meta_out))
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(run_record, indent=2, sort_keys=True), encoding="utf-8")
+    log_dataset_stats_and_update_run_record(args=args, is_main=is_main, records=records, run_record=run_record)
+    maybe_write_run_meta_and_fracal_stats(args=args, is_main=is_main, run_record=run_record, records=records, dataset_root=dataset_root, build_fracal_stats_fn=build_fracal_stats)
 
-    if is_main and getattr(args, "fracal_stats_out", None):
-        stats_path = Path(str(args.fracal_stats_out))
-        stats_path.parent.mkdir(parents=True, exist_ok=True)
-        fracal_stats = build_fracal_stats(
-            records,
-            task=str(getattr(args, "fracal_stats_task", "bbox") or "bbox"),
-            allow_rgb_masks=bool(getattr(args, "fracal_allow_rgb_masks", False)),
-        )
-        fracal_stats["source"] = {
-            "kind": "train_records",
-            "dataset_root": str(dataset_root),
-            "split": (None if args.records_json else str(getattr(args, "split", "") or "")),
-            "records_json": (str(args.records_json) if getattr(args, "records_json", None) else None),
-        }
-        stats_path.write_text(json.dumps(fracal_stats, indent=2, sort_keys=True), encoding="utf-8")
-        print(
-            "fracal_stats "
-            f"task={str(fracal_stats.get('task', 'bbox'))} classes={int(fracal_stats.get('summary', {}).get('classes', 0))} "
-            f"instances_total={int(fracal_stats.get('summary', {}).get('instances_total', 0))} "
-            f"out={stats_path}"
-        )
-
-    val_split = str(args.val_split) if args.val_split else None
-    if val_split is None:
-        candidate = dataset_root / "images" / "val2017"
-        if candidate.exists():
-            val_split = "val2017"
-
-    val_records: list[dict[str, Any]] = []
-    if val_split:
-        try:
-            val_manifest = build_manifest(dataset_root, split=val_split)
-            val_records = val_manifest.get("images") or []
-            if not isinstance(val_records, list):
-                val_records = []
-        except Exception:
-            val_records = []
-
-    if val_records and int(getattr(args, "val_max_images", 0) or 0) > 0:
-        val_records = list(val_records)[: int(args.val_max_images)]
-    val_records_map = flatten_records_for_map(val_records)
+    val_records, val_records_map = resolve_val_records(
+        args=args,
+        dataset_root=dataset_root,
+        build_manifest_fn=build_manifest,
+        flatten_records_for_map_fn=flatten_records_for_map,
+    )
 
     derpp_keys = ()
     if bool(args.derpp):
@@ -473,7 +348,38 @@ def main(argv: list[str] | None = None) -> int:
         derpp_teacher_key=str(args.derpp_teacher_key),
         derpp_keys=derpp_keys,
     )
+    imbalance_strategy = str(getattr(args, "imbalance_strategy", "none") or "none").strip().lower()
     sampler = None
+    if imbalance_strategy != "none":
+        if ddp_enabled:
+            raise SystemExit(
+                "--imbalance-strategy currently does not support --ddp. "
+                "Use single-process training or disable imbalance strategy."
+            )
+        try:
+            sampler, rebalance_report = build_weighted_sampler(
+                records,
+                num_classes=int(args.num_classes),
+                strategy=imbalance_strategy,
+                gamma=float(getattr(args, "imbalance_gamma", 1.0) or 1.0),
+                min_weight=float(getattr(args, "imbalance_min_weight", 0.25) or 0.25),
+                max_weight=float(getattr(args, "imbalance_max_weight", 4.0) or 4.0),
+                aggregate=str(getattr(args, "imbalance_aggregate", "max") or "max"),
+                seed=int(args.seed),
+            )
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+        if is_main and rebalance_report is not None:
+            print(
+                "imbalance_rebalance "
+                f"strategy={rebalance_report.strategy} classes={rebalance_report.classes_with_labels} "
+                f"instances={rebalance_report.instances_total} records={rebalance_report.records_total} "
+                f"records_with_labels={rebalance_report.records_with_labels} "
+                f"weight_min={rebalance_report.min_weight:.5g} "
+                f"weight_mean={rebalance_report.mean_weight:.5g} "
+                f"weight_max={rebalance_report.max_weight:.5g}"
+            )
+
     if ddp_enabled:
         sampler = torch.utils.data.distributed.DistributedSampler(
             ds,
@@ -742,105 +648,33 @@ def main(argv: list[str] | None = None) -> int:
         if is_main:
             print(f"resumed_from={meta.get('path')} start_epoch={start_epoch} global_step={global_step}")
 
-    sdft_cfg = None
-    teacher_model = None
-    if args.self_distill_from:
-        # Build a frozen teacher with identical architecture/config.
-        if model_cfg is not None:
-            teacher_model = build_model(model_cfg)
-        else:
-            teacher_model = RTDETRPose(
-                num_classes=int(args.num_classes) + 1,
-                num_keypoints=int(getattr(args, "num_keypoints", 0) or 0),
-                hidden_dim=args.hidden_dim,
-                num_queries=model_num_queries,
-                num_decoder_layers=2,
-                nhead=4,
-                use_uncertainty=bool(args.use_uncertainty),
-            )
-        load_checkpoint_into(teacher_model, None, args.self_distill_from)
-        teacher_model.to(device)
-        teacher_model.eval()
-        for param in teacher_model.parameters():
-            param.requires_grad_(False)
+    teacher_model, sdft_cfg, derpp_cfg = setup_distillation_and_derpp(
+        args=args,
+        model_cfg=model_cfg,
+        model_num_queries=model_num_queries,
+        device=device,
+        is_main=is_main,
+        build_model_fn=build_model,
+        rtdetr_pose_cls=RTDETRPose,
+        load_checkpoint_into_fn=load_checkpoint_into,
+    )
 
-        keys = tuple(k.strip() for k in str(args.self_distill_keys).split(",") if k.strip())
-        sdft_cfg = SdftConfig(
-            weight=float(args.self_distill_weight),
-            temperature=float(args.self_distill_temperature),
-            kl=str(args.self_distill_kl),
-            keys=keys,
-            logits_weight=float(args.self_distill_logits_weight),
-            bbox_weight=float(args.self_distill_bbox_weight),
-            other_l1_weight=float(args.self_distill_other_l1_weight),
-        )
-        if is_main:
-            print(
-                "self_distill",
-                f"from={args.self_distill_from}",
-                f"keys={','.join(keys) if keys else '(none)'}",
-                f"kl={sdft_cfg.kl}",
-                f"temp={sdft_cfg.temperature}",
-                f"weight={sdft_cfg.weight}",
-            )
-
-    derpp_cfg = None
-    if bool(args.derpp):
-        derpp_cfg = SdftConfig(
-            weight=float(args.derpp_weight),
-            temperature=float(args.derpp_temperature),
-            kl=str(args.derpp_kl),
-            keys=tuple(k.strip() for k in str(args.derpp_keys).split(",") if k.strip()),
-            logits_weight=float(args.derpp_logits_weight),
-            bbox_weight=float(args.derpp_bbox_weight),
-            other_l1_weight=float(args.derpp_other_l1_weight),
-        )
-        if is_main:
-            print(
-                "derpp",
-                f"enabled=True teacher_key={args.derpp_teacher_key}",
-                f"keys={','.join(derpp_cfg.keys) if derpp_cfg.keys else '(none)'}",
-                f"kl={derpp_cfg.kl}",
-                f"temp={derpp_cfg.temperature}",
-                f"weight={derpp_cfg.weight}",
-            )
-
-    ewc_state = None
-    ewc_accum = None
-    if bool(getattr(args, "ewc", False)) or args.ewc_state_in or args.ewc_state_out:
-        from yolozu.continual_regularizers import EwcAccumulator, ewc_penalty, load_ewc_state, save_ewc_state
-
-        ewc_state = None
-        if args.ewc_state_in:
-            ewc_state = load_ewc_state(str(args.ewc_state_in)).to(device)
-        if args.ewc_state_out:
-            ewc_accum = EwcAccumulator()
-        if is_main and bool(getattr(args, "ewc", False)):
-            print(
-                "ewc",
-                f"enabled=True lambda={float(args.ewc_lambda)}",
-                f"state_in={args.ewc_state_in}",
-                f"state_out={args.ewc_state_out}",
-            )
-
-    si_state = None
-    si_accum = None
-    if bool(getattr(args, "si", False)) or args.si_state_in or args.si_state_out:
-        from yolozu.continual_regularizers import SiAccumulator, load_si_state, save_si_state, si_penalty
-
-        si_state = None
-        si_accum = SiAccumulator(epsilon=float(args.si_epsilon))
-        if args.si_state_in:
-            si_state = load_si_state(str(args.si_state_in)).to(device)
-            si_accum.load_state(load_si_state(str(args.si_state_in)))
-        si_accum.begin_task(unwrap_model(model))
-        if is_main and bool(getattr(args, "si", False)):
-            print(
-                "si",
-                f"enabled=True c={float(args.si_c)} epsilon={float(args.si_epsilon)}",
-                f"state_in={args.si_state_in}",
-                f"state_out={args.si_state_out}",
-            )
+    (
+        ewc_state,
+        ewc_accum,
+        save_ewc_state_fn,
+        ewc_penalty_fn,
+        si_state,
+        si_accum,
+        save_si_state_fn,
+        si_penalty_fn,
+    ) = setup_continual_regularizers(
+        args=args,
+        device=device,
+        model=model,
+        is_main=is_main,
+        unwrap_model_fn=unwrap_model,
+    )
 
     if ddp_enabled:
         model = torch.nn.parallel.DistributedDataParallel(
@@ -850,83 +684,15 @@ def main(argv: list[str] | None = None) -> int:
             find_unused_parameters=True,
         )
 
-    terminate_requested = False
-
-    def _handle_term(signum, _frame):  # type: ignore[no-untyped-def]
-        nonlocal terminate_requested
-        terminate_requested = True
-        if is_main:
-            print(f"signal_received={int(signum)} saving_last_checkpoint_and_exiting")
-
-    try:
-        signal.signal(signal.SIGTERM, _handle_term)
-        signal.signal(signal.SIGINT, _handle_term)
-    except Exception:
-        pass
-
-    val_loader = None
-    if val_records:
-        val_ds = ManifestDataset(
-            val_records,
-            num_queries=args.num_queries,
-            num_classes=args.num_classes,
-            num_keypoints=args.num_keypoints,
-            keypoint_flip_pairs=keypoint_flip_pairs,
-            image_size=args.image_size,
-            seed=args.seed,
-            use_matcher=False,
-            synthetic_pose=False,
-            z_from_dobj=False,
-            load_aux=False,
-            depth_mode=args.depth_mode,
-            depth_unit=args.depth_unit,
-            depth_scale=args.depth_scale,
-            real_images=bool(args.real_images),
-            multiscale=False,
-            scale_min=1.0,
-            scale_max=1.0,
-            hflip_prob=0.0,
-            hsv_h=0.0,
-            hsv_s=0.0,
-            hsv_v=0.0,
-            hsv_prob=0.0,
-            gray_prob=0.0,
-            gaussian_noise_std=0.0,
-            gaussian_noise_prob=0.0,
-            blur_prob=0.0,
-            blur_sigma=0.0,
-            blur_kernel=3,
-            intrinsics_jitter=False,
-            jitter_dfx=0.0,
-            jitter_dfy=0.0,
-            jitter_dcx=0.0,
-            jitter_dcy=0.0,
-            sim_jitter=False,
-            sim_jitter_profile=None,
-            sim_jitter_extrinsics=False,
-            extrinsics_jitter=False,
-            jitter_dx=0.0,
-            jitter_dy=0.0,
-            jitter_dz=0.0,
-            jitter_droll=0.0,
-            jitter_dpitch=0.0,
-            jitter_dyaw=0.0,
-        )
-        val_batch_size = int(args.batch_size)
-        if args.val_batch_size is not None:
-            try:
-                val_batch_size = int(args.val_batch_size)
-            except Exception:
-                val_batch_size = int(args.batch_size)
-        val_loader_kwargs = dict(loader_kwargs)
-        val_loader_kwargs.update(
-            {
-                "batch_size": int(val_batch_size),
-                "shuffle": False,
-                "sampler": None,
-            }
-        )
-        val_loader = DataLoader(val_ds, **val_loader_kwargs)
+    terminate_flag = install_termination_handlers(is_main=is_main)
+    val_loader = build_validation_loader(
+        args=args,
+        val_records=val_records,
+        keypoint_flip_pairs=keypoint_flip_pairs,
+        loader_kwargs=loader_kwargs,
+        manifest_dataset_cls=ManifestDataset,
+        dataloader_cls=DataLoader,
+    )
 
     model.train()
     last_loss_dict = None
@@ -946,116 +712,10 @@ def main(argv: list[str] | None = None) -> int:
     early_stop_min_delta = float(getattr(args, "early_stop_min_delta", 0.0) or 0.0)
     early_stop_bad = 0
 
-    def _run_validation(*, kind: str, epoch: int, optim_step: int, step: int | None = None) -> tuple[float, float] | None:
-        nonlocal best_map50_95
-
-        if getattr(args, "val_metrics_jsonl", None) is None:
-            return None
-
-        if val_loader is None or not val_records_map:
-            report = build_report(
-                losses={},
-                metrics={"skipped": True, "reason": "no_val_split"},
-                meta={"kind": str(kind), "epoch": int(epoch), "optim_step": int(optim_step)},
-            )
-            append_jsonl(args.val_metrics_jsonl, report)
-            return None
-
-        model_was_training = bool(model.training)
-        model.eval()
-        if ema is not None and bool(getattr(args, "ema_eval", False)):
-            ema.apply_shadow()
-
-        preds: list[dict[str, Any]] = []
-        thresholds = [0.5 + 0.05 * i for i in range(10)]
-        with torch.no_grad():
-            for v_images, v_targets in val_loader:
-                v_images = v_images.to(device)
-                v_depth = None
-                v_depth_valid = None
-                if isinstance(v_targets, dict):
-                    vd = v_targets.get("depth")
-                    vv = v_targets.get("depth_valid")
-                    if isinstance(vd, torch.Tensor):
-                        v_depth = vd.to(device)
-                    if isinstance(vv, torch.Tensor):
-                        v_depth_valid = vv.to(device=device, dtype=torch.bool)
-                v_out = model(v_images, depth=v_depth, depth_valid=v_depth_valid)
-                image_paths: list[str] = []
-                if isinstance(v_targets, list):
-                    image_paths = [
-                        str(t.get("image_path", "") or "")
-                        for t in v_targets
-                        if isinstance(t, dict)
-                    ]
-                elif isinstance(v_targets, dict):
-                    per = v_targets.get("per_sample")
-                    if isinstance(per, list):
-                        image_paths = [
-                            str(t.get("image_path", "") or "")
-                            for t in per
-                            if isinstance(t, dict)
-                        ]
-                preds.extend(
-                    decode_detections_from_outputs(
-                        v_out,
-                        image_paths,
-                        score_thresh=float(getattr(args, "val_score_thresh", 0.001) or 0.0),
-                        topk=int(getattr(args, "val_topk", 300) or 300),
-                    )
-                )
-
-        res = evaluate_map(val_records_map, preds, iou_thresholds=thresholds)
-        map50_95 = float(getattr(res, "map50_95", 0.0))
-
-        prev_best = float(best_map50_95)
-        is_best = bool(map50_95 > prev_best)
-        if is_best:
-            best_map50_95 = float(map50_95)
-            if getattr(args, "best_checkpoint_out", None):
-                save_checkpoint_bundle(
-                    args.best_checkpoint_out,
-                    model=unwrap_model(model),
-                    optim=optim,
-                    sched=sched,
-                    scaler=scaler,
-                    ema=ema,
-                    args=args,
-                    epoch=int(epoch),
-                    global_step=int(optim_step),
-                    last_epoch_steps=int(steps),
-                    last_epoch_avg=(running / max(1, steps)) if steps > 0 else None,
-                    last_loss_dict=last_loss_dict,
-                    run_record=run_record,
-                    rng_state=collect_rng_state(),
-                )
-
-        metrics = {
-            "map50": float(getattr(res, "map50", 0.0)),
-            "map50_95": float(map50_95),
-            "images": int(len(val_records_map)),
-            "best": bool(is_best),
-        }
-        if step is not None:
-            metrics["step"] = int(step)
-        report = build_report(
-            losses={},
-            metrics=metrics,
-            meta={"kind": str(kind), "epoch": int(epoch), "optim_step": int(optim_step)},
-        )
-        append_jsonl(args.val_metrics_jsonl, report)
-
-        if ema is not None and bool(getattr(args, "ema_eval", False)):
-            ema.restore()
-        if model_was_training:
-            model.train()
-
-        return float(map50_95), prev_best
-
     for epoch in range(int(start_epoch), int(args.epochs)):
         if stop_training:
             break
-        if sampler is not None:
+        if sampler is not None and hasattr(sampler, "set_epoch"):
             sampler.set_epoch(int(epoch))
         if args.hflip_prob_start is not None and args.hflip_prob_end is not None:
             ds.hflip_prob = compute_linear_schedule(
@@ -1088,7 +748,7 @@ def main(argv: list[str] | None = None) -> int:
                     torch.cuda.reset_peak_memory_stats(device)
                 except Exception:
                     pass
-            if terminate_requested:
+            if bool(terminate_flag.get("terminate", False)):
                 if is_main and args.checkpoint_bundle_out:
                     save_checkpoint_bundle(
                         args.checkpoint_bundle_out,
@@ -1359,14 +1019,14 @@ def main(argv: list[str] | None = None) -> int:
                             loss_dict[f"loss_derpp_{suffix}"] = v
                         loss = loss + float(derpp_cfg.weight) * derpp_total
 
-                    if ewc_state is not None and float(args.ewc_lambda) != 0.0:
-                        ewc_raw = ewc_penalty(unwrap_model(model), ewc_state)
+                    if ewc_state is not None and ewc_penalty_fn is not None and float(args.ewc_lambda) != 0.0:
+                        ewc_raw = ewc_penalty_fn(unwrap_model(model), ewc_state)
                         ewc_term = 0.5 * float(args.ewc_lambda) * ewc_raw
                         loss_dict["loss_ewc"] = ewc_term
                         loss = loss + ewc_term
 
-                    if si_state is not None and float(args.si_c) != 0.0:
-                        si_raw = si_penalty(unwrap_model(model), si_state)
+                    if si_state is not None and si_penalty_fn is not None and float(args.si_c) != 0.0:
+                        si_raw = si_penalty_fn(unwrap_model(model), si_state)
                         si_term = 0.5 * float(args.si_c) * si_raw
                         loss_dict["loss_si"] = si_term
                         loss = loss + si_term
@@ -1646,11 +1306,25 @@ def main(argv: list[str] | None = None) -> int:
                 if ddp_enabled and not is_main:
                     torch.distributed.barrier()
                 if is_main:
-                    res = _run_validation(
+                    res, best_map50_95 = run_validation(
+                        args=args,
                         kind="val_step",
                         epoch=int(epoch),
                         optim_step=int(global_step),
                         step=int(steps),
+                        model=model,
+                        ema=ema,
+                        device=device,
+                        val_loader=val_loader,
+                        val_records_map=val_records_map,
+                        best_map50_95=float(best_map50_95),
+                        running=float(running),
+                        steps=int(steps),
+                        last_loss_dict=last_loss_dict,
+                        optim=optim,
+                        sched=sched,
+                        scaler=scaler,
+                        run_record=run_record,
                     )
                     if res is not None and early_stop_patience > 0:
                         map50_95, prev_best = res
@@ -1737,7 +1411,26 @@ def main(argv: list[str] | None = None) -> int:
             if ddp_enabled and not is_main:
                 torch.distributed.barrier()
             if is_main:
-                res = _run_validation(kind="val_epoch", epoch=int(epoch), optim_step=int(global_step))
+                res, best_map50_95 = run_validation(
+                    args=args,
+                    kind="val_epoch",
+                    epoch=int(epoch),
+                    optim_step=int(global_step),
+                    step=None,
+                    model=model,
+                    ema=ema,
+                    device=device,
+                    val_loader=val_loader,
+                    val_records_map=val_records_map,
+                    best_map50_95=float(best_map50_95),
+                    running=float(running),
+                    steps=int(steps),
+                    last_loss_dict=last_loss_dict,
+                    optim=optim,
+                    sched=sched,
+                    scaler=scaler,
+                    run_record=run_record,
+                )
                 if res is not None and early_stop_patience > 0:
                     map50_95, prev_best = res
                     improved = bool(float(map50_95) > float(prev_best) + float(early_stop_min_delta))
@@ -1767,166 +1460,33 @@ def main(argv: list[str] | None = None) -> int:
                 torch.distributed.broadcast(flag, src=0)
                 stop_training = bool(int(flag.item()))
 
-    if is_main and (args.metrics_json or args.metrics_csv):
-        losses_out = {}
-        if last_loss_dict is not None:
-            losses_out = {k: float(v.detach().cpu()) for k, v in last_loss_dict.items() if hasattr(v, "detach")}
-        metrics_out = {"epochs": int(args.epochs), "max_steps": int(args.max_steps)}
-        if last_epoch_avg is not None:
-            metrics_out["loss_avg_last_epoch"] = float(last_epoch_avg)
-        summary = build_report(
-            losses=losses_out,
-            metrics=metrics_out,
-            meta={"kind": "train_run", "run_record": run_record},
-        )
-        if args.metrics_json:
-            write_json(args.metrics_json, summary)
-        if args.metrics_csv:
-            write_csv_row(args.metrics_csv, summary)
-
-    if is_main and args.checkpoint_out:
-        ckpt_path = Path(args.checkpoint_out)
-        ckpt_path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(unwrap_model(model).state_dict(), ckpt_path)
-
-    if is_main and args.checkpoint_bundle_out:
-        save_checkpoint_bundle(
-            args.checkpoint_bundle_out,
-            model=unwrap_model(model),
-            optim=optim,
-            sched=sched,
-            scaler=scaler,
-            ema=ema,
-            args=args,
-            epoch=int(args.epochs) - 1,
-            global_step=int(global_step),
-            last_epoch_steps=int(last_epoch_steps),
-            last_epoch_avg=last_epoch_avg,
-            last_loss_dict=last_loss_dict,
-            run_record=run_record,
-            rng_state=collect_rng_state(),
-        )
-
-    if is_main and getattr(args, "best_checkpoint_out", None) and args.checkpoint_bundle_out:
-        best_path = Path(str(args.best_checkpoint_out))
-        if not best_path.exists():
-            best_path.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                shutil.copyfile(str(args.checkpoint_bundle_out), str(best_path))
-            except Exception:
-                save_checkpoint_bundle(
-                    str(best_path),
-                    model=unwrap_model(model),
-                    optim=optim,
-                    sched=sched,
-                    scaler=scaler,
-                    ema=ema,
-                    args=args,
-                    epoch=int(args.epochs) - 1,
-                    global_step=int(global_step),
-                    last_epoch_steps=int(last_epoch_steps),
-                    last_epoch_avg=last_epoch_avg,
-                    last_loss_dict=last_loss_dict,
-                    run_record=run_record,
-                    rng_state=collect_rng_state(),
-                )
-
-    if is_main and ewc_accum is not None and args.ewc_state_out:
-        save_ewc_state(str(args.ewc_state_out), ewc_accum.finalize(unwrap_model(model)))
-
-    if is_main and si_accum is not None and args.si_state_out:
-        save_si_state(str(args.si_state_out), si_accum.finalize(unwrap_model(model)))
-
-    onnx_path = None
-    if is_main and args.onnx_out:
-        try:
-            from rtdetr_pose.export import export_onnx
-        except Exception as exc:  # pragma: no cover
-            print(
-                f"WARNING: ONNX export skipped — could not import rtdetr_pose.export ({exc}). "
-                "Install 'onnx' to enable post-training ONNX export.",
-                file=sys.stderr,
-            )
-            export_onnx = None  # type: ignore[assignment]
-
-        onnx_path = Path(str(args.onnx_out)) if export_onnx is not None else None
-        if onnx_path is not None:
-            onnx_path.parent.mkdir(parents=True, exist_ok=True)
-            if run_contract is not None and getattr(args, "best_checkpoint_out", None):
-                best_path = Path(str(args.best_checkpoint_out))
-                if best_path.exists():
-                    load_checkpoint_into(unwrap_model(model), None, str(best_path), restore_rng=False)
-            dummy = torch.zeros((1, 3, int(args.image_size), int(args.image_size)), dtype=torch.float32, device=device)
-            try:
-                export_onnx(
-                    unwrap_model(model).eval(),
-                    dummy,
-                    str(onnx_path),
-                    opset_version=int(args.onnx_opset),
-                    dynamic_hw=bool(args.onnx_dynamic_hw),
-                )
-            except RuntimeError as exc:
-                print(
-                    f"WARNING: ONNX export failed — {exc}. Training results are saved; "
-                    "install 'onnx' to enable post-training ONNX export.",
-                    file=sys.stderr,
-                )
-                onnx_path = None
-            if onnx_path is not None:
-                meta_path = Path(str(args.onnx_meta_out)) if args.onnx_meta_out else onnx_path.with_suffix(onnx_path.suffix + ".meta.json")
-                meta_path.parent.mkdir(parents=True, exist_ok=True)
-                meta = {
-                    "timestamp_utc": _now_utc(),
-                    "onnx": str(onnx_path),
-                    "opset": int(args.onnx_opset),
-                    "dynamic_hw": bool(args.onnx_dynamic_hw),
-                    "dummy_input": {"shape": [1, 3, int(args.image_size), int(args.image_size)], "dtype": "float32"},
-                    "run_record": run_record,
-                }
-                meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
-
-    parity_out = getattr(args, "parity_json_out", None)
-    if is_main and parity_out:
-        out_path = Path(str(parity_out))
-        policy = str(args.parity_policy or ("fail" if run_contract is not None else "warn"))
-        if onnx_path is None:
-            report = {
-                "timestamp_utc": _now_utc(),
-                "onnx": None,
-                "thresholds": {"score_atol": float(args.parity_score_atol), "bbox_atol": float(args.parity_bbox_atol)},
-                "policy": policy,
-                "passed": False,
-                "available": False,
-                "reason": "onnx_export_disabled",
-                "run_record": run_record,
-            }
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
-            if policy == "fail":
-                raise SystemExit(f"ONNX parity requested but ONNX export disabled. See: {out_path}")
-            print(f"WARNING: ONNX parity requested but ONNX export disabled. See: {out_path}", file=sys.stderr)
-        else:
-            run_onnxrt_parity(
-                model=unwrap_model(model),
-                onnx_path=onnx_path,
-                image_size=int(args.image_size),
-                seed=int(getattr(args, "seed", 0) or 0),
-                score_atol=float(args.parity_score_atol),
-                bbox_atol=float(args.parity_bbox_atol),
-                out_path=out_path,
-                policy=policy,
-                run_record=run_record,
-            )
-
-    if is_main and run_dir is not None:
-        (run_dir / "run_record.json").write_text(
-            json.dumps(run_record, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
-
-    if ddp_enabled:
-        torch.distributed.barrier()
-        torch.distributed.destroy_process_group()
+    finalize_training(
+        args=args,
+        is_main=is_main,
+        ddp_enabled=ddp_enabled,
+        model=model,
+        optim=optim,
+        sched=sched,
+        scaler=scaler,
+        ema=ema,
+        device=device,
+        run_contract=run_contract,
+        run_dir=run_dir,
+        run_record=run_record,
+        global_step=int(global_step),
+        last_loss_dict=last_loss_dict,
+        last_epoch_avg=last_epoch_avg,
+        last_epoch_steps=int(last_epoch_steps),
+        last_grad_norm=last_grad_norm,
+        last_data_time_s=last_data_time_s,
+        last_step_time_s=last_step_time_s,
+        last_throughput=last_throughput,
+        last_max_vram_mb=last_max_vram_mb,
+        ewc_accum=ewc_accum,
+        si_accum=si_accum,
+        save_ewc_state_fn=save_ewc_state_fn,
+        save_si_state_fn=save_si_state_fn,
+    )
 
     return 0
 

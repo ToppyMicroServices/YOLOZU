@@ -106,6 +106,42 @@ python3 rtdetr_pose/tools/train_minimal.py \
   --depth-scale 1.0
 \end{lstlisting}
 
+\subsection{Imbalance handling, backbone override, strict data checks}
+The trainer also supports data-imbalance mitigation and explicit runtime backbone overrides:
+\begin{itemize}
+  \item \cmd{--imbalance-strategy class_balanced} (+ \cmd{--imbalance-gamma}, \cmd{--imbalance-min-weight}, \cmd{--imbalance-max-weight}, \cmd{--imbalance-aggregate})
+  \item \cmd{--backbone-name}, \cmd{--backbone-norm}, \cmd{--backbone-args '{"...": ...}'}
+  \item \cmd{--strict-task-data} for fail-fast validation of required real-data supervision
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+python3 rtdetr_pose/tools/train_minimal.py \
+  --dataset-root data/real_multitask_fewshot \
+  --split train --val-split val \
+  --real-images --strict-task-data \
+  --use-matcher --model-config rtdetr_pose/configs/base.json \
+  --imbalance-strategy class_balanced --imbalance-gamma 1.0 \
+  --backbone-name cspdarknet_s --backbone-norm bn \
+  --backbone-args '{"width_mult": 0.5, "depth_mult": 0.34}'
+\end{lstlisting}
+
+\subsection{Real-image few-shot multitask demo}
+To run a staged smoke pipeline over \cmd{bbox -> segmentation -> keypoints -> depth -> pose6d}:
+\begin{lstlisting}[language=bash]
+python3 tools/prepare_real_multitask_fewshot.py \
+  --instances-json data/coco/annotations/instances_val2017.json \
+  --images-dir data/coco/images/val2017 \
+  --out data/real_multitask_fewshot \
+  --train-images 6 --val-images 2 --force
+
+python3 tools/run_real_multitask_finetune_demo.py \
+  --dataset-root data/real_multitask_fewshot \
+  --out reports/real_multitask_finetune_demo \
+  --device cpu \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+\end{lstlisting}
+The aggregated report is written to \path{reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json}.
+
 Practical entry points (``real model'' path):
 \begin{itemize}
   \item Training scaffold: \cmd{python3 -m rtdetr_pose.train_minimal ...} (writes metrics and optional run artifacts).

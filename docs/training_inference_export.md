@@ -150,6 +150,52 @@ python3 rtdetr_pose/tools/train_minimal.py \
   --depth-scale 1.0
 ```
 
+### Imbalance handling + explicit backbone override + strict task-data checks
+
+`rtdetr_pose/tools/train_minimal.py` now supports:
+
+- `--imbalance-strategy class_balanced` (+ `--imbalance-gamma`, `--imbalance-min-weight`, `--imbalance-max-weight`, `--imbalance-aggregate`)
+- `--backbone-name`, `--backbone-norm`, `--backbone-args '{"...": ...}'` (explicit runtime override without editing model JSON)
+- `--strict-task-data` (fails fast when required real-data supervision is missing for bbox/keypoints/depth/pose)
+
+Example:
+
+```bash
+python3 rtdetr_pose/tools/train_minimal.py \
+  --dataset-root data/real_multitask_fewshot \
+  --split train --val-split val \
+  --real-images --strict-task-data \
+  --use-matcher --model-config rtdetr_pose/configs/base.json \
+  --imbalance-strategy class_balanced --imbalance-gamma 1.0 \
+  --backbone-name cspdarknet_s --backbone-norm bn \
+  --backbone-args '{"width_mult": 0.5, "depth_mult": 0.34}' \
+  --epochs 1 --max-steps 10
+```
+
+### Real-image few-shot multitask finetune demo (bbox/seg/keypoints/depth/pose6d)
+
+Use these tools for an end-to-end staged demo on real source images:
+
+```bash
+# 1) Prepare compact real-image dataset (COCO images + annotation-derived sidecars)
+python3 tools/prepare_real_multitask_fewshot.py \
+  --instances-json data/coco/annotations/instances_val2017.json \
+  --images-dir data/coco/images/val2017 \
+  --out data/real_multitask_fewshot \
+  --train-images 6 --val-images 2 --force
+
+# 2) Run staged finetuning:
+# bbox -> segmentation -> keypoints -> depth -> pose6d
+python3 tools/run_real_multitask_finetune_demo.py \
+  --dataset-root data/real_multitask_fewshot \
+  --out reports/real_multitask_finetune_demo \
+  --device cpu \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+```
+
+The report is written to:
+`reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
+
 ### Config source-of-truth and key mapping
 
 `rtdetr_pose/tools/train_minimal.py` reads YAML/JSON via `--config`, then applies explicit CLI flags on top.

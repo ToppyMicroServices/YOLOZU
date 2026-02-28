@@ -46,6 +46,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
 - Tiny COCO instances subset for demos (downloads 2 images + polygons JSON): `python3 scripts/download_coco_instances_tiny.py`
+- `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
 ## Evaluation helpers
@@ -66,6 +67,11 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Evaluate forgetting / per-task summaries:
   - `python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --max-images 50`
   - Docs: `docs/continual_learning.md`
+
+## Real-image multitask finetune demo
+
+- `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force`
+- Stages: `bbox -> segmentation -> keypoints -> depth -> pose6d`
 
 ## Distillation helpers
 

@@ -490,6 +490,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Load real images via record['image_path'] (requires Pillow). Default uses synthetic images.",
     )
+    parser.add_argument(
+        "--strict-task-data",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enable strict dataset checks for requested modalities (real images, keypoints/depth/pose fields).",
+    )
     parser.add_argument("--num-workers", type=int, default=0, help="DataLoader num_workers (default: 0).")
     parser.add_argument(
         "--pin-memory",
@@ -583,9 +589,57 @@ def build_parser() -> argparse.ArgumentParser:
         help="Shuffle dataset each epoch (default: true).",
     )
     parser.add_argument(
+        "--imbalance-strategy",
+        choices=("none", "class_balanced"),
+        default="none",
+        help="Optional class-imbalance handling strategy for train sampling (default: none).",
+    )
+    parser.add_argument(
+        "--imbalance-gamma",
+        type=float,
+        default=1.0,
+        help="Inverse-frequency exponent for class-balanced sampling (default: 1.0).",
+    )
+    parser.add_argument(
+        "--imbalance-min-weight",
+        type=float,
+        default=0.25,
+        help="Lower clip for per-record sample weights when imbalance strategy is enabled (default: 0.25).",
+    )
+    parser.add_argument(
+        "--imbalance-max-weight",
+        type=float,
+        default=4.0,
+        help="Upper clip for per-record sample weights when imbalance strategy is enabled (default: 4.0).",
+    )
+    parser.add_argument(
+        "--imbalance-aggregate",
+        choices=("max", "mean"),
+        default="max",
+        help="How to reduce per-instance class weights to a per-record weight (default: max).",
+    )
+    parser.add_argument(
         "--deterministic",
         action="store_true",
         help="Enable deterministic data order via DataLoader generator (seeded).",
+    )
+    parser.add_argument(
+        "--backbone-name",
+        type=str,
+        default=None,
+        help="Optional backbone override (applied on top of --model-config).",
+    )
+    parser.add_argument(
+        "--backbone-norm",
+        type=str,
+        default=None,
+        help="Optional backbone norm override (e.g. bn|syncbn|frozenbn|gn).",
+    )
+    parser.add_argument(
+        "--backbone-args",
+        type=str,
+        default=None,
+        help='Optional JSON object string merged into model.backbone.args (example: \'{"width_mult":0.5}\').',
     )
     parser.add_argument("--use-matcher", action="store_true", help="Use Hungarian matching")
     parser.add_argument("--cost-cls", type=float, default=1.0)
