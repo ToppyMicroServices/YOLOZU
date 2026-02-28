@@ -30,6 +30,56 @@ python3 tools/eval_coco.py \
   --dry-run
 ```
 
+## Canonical COCO data placement
+
+All data lives under `data/` (gitignored). The following table standardizes
+the four accepted dataset paths and how to obtain each:
+
+| Path | Format | How to obtain | Use case |
+|---|---|---|---|
+| `data/smoke/` | YOLO (committed) | Already in repo | Offline CI, unit tests |
+| `data/coco128/` | YOLO (128 images) | `bash tools/fetch_coco128.sh` | Quick smoke training / eval |
+| `data/coco/` | Standard COCO (`images/val2017/` + `annotations/instances_val2017.json`) | Manual download or `python3 scripts/download_coco_instances_tiny.py` | Native COCO evaluation, instance-seg |
+| `data/coco-yolo/` | YOLO-converted from full COCO | `python3 tools/prepare_coco_yolo.py --coco-root data/coco --split val2017 --out data/coco-yolo` | Full YOLO-format training / eval |
+
+### Copy-paste setup commands
+
+```bash
+# 1. Smoke dataset (already committed — nothing to do)
+ls data/smoke/images/val/
+
+# 2. COCO-128 (quick download, ~6 MB)
+bash tools/fetch_coco128.sh
+
+# 3. Full COCO val2017 (standard format)
+#    Download from https://cocodataset.org/#download and arrange as:
+#      data/coco/annotations/instances_val2017.json
+#      data/coco/images/val2017/*.jpg
+
+# 4. Convert COCO → YOLO format
+python3 tools/prepare_coco_yolo.py \
+  --coco-root data/coco \
+  --split val2017 \
+  --out data/coco-yolo
+# Writes data/coco-yolo/dataset.json with absolute paths.
+# Add --copy-images to copy images into data/coco-yolo/images/<split>/.
+```
+
+### Path resolution in code
+
+CLI tools accept `--dataset` / `--dataset-root` as relative paths (resolved
+from `$PWD`). No environment variables are required — paths are resolved via:
+
+```python
+dataset_root = Path(str(args.dataset)).expanduser()
+if not dataset_root.is_absolute():
+    dataset_root = Path.cwd() / dataset_root
+```
+
+The adapter registry (`yolozu.datasets.registry.probe_format`) auto-detects
+whether a directory is COCO-native or YOLO-format, so both `data/coco/` and
+`data/coco-yolo/` work transparently.
+
 ## Training (RT-DETR pose scaffold)
 
 1) Install dependencies (CPU PyTorch for local dev):
@@ -37,23 +87,6 @@ python3 tools/eval_coco.py \
 
 2) Fetch the sample dataset (coco128):
 - bash tools/fetch_coco128.sh
-
-Optional: prepare full COCO (val2017/train2017) in YOLO-format (recommended path under `data/`, which is gitignored):
-
-```bash
-# Example COCO layout:
-#   /data/coco/
-#     annotations/instances_val2017.json
-#     val2017/*.jpg
-python3 tools/prepare_coco_yolo.py \
-  --coco-root /data/coco \
-  --split val2017 \
-  --out data/coco-yolo
-```
-
-Notes:
-- `tools/prepare_coco_yolo.py` writes `data/coco-yolo/dataset.json` with absolute paths so evaluators can find images without copying.
-- To copy images into `data/coco-yolo/images/<split>/`, add `--copy-images` (slower, larger).
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher

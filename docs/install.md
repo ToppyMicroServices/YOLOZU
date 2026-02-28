@@ -55,6 +55,8 @@ More practical continual example (vision backbone):
 yolozu demo continual --problem mnist_rotate --method ewc
 ```
 
+> **Data placement:** See [training_inference_export.md § Canonical COCO data placement](training_inference_export.md#canonical-coco-data-placement) for the full directory standard and copy-paste setup commands.
+
 # COCO instances (polygon) mask demo
 
 If you don't have COCO instances data yet, you can download a tiny subset (2 images) locally:
