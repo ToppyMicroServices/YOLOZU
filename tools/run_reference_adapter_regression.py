@@ -786,6 +786,7 @@ def _compare_against_baseline(
 
     consistency_gate = gates[GATE_CONSISTENCY]
     consistency_mismatches: list[str] = []
+    consistency_warnings: list[str] = []
     if str(consistency_gate["mode"]) != "off":
         for key in (
             "record_images_sha256",
@@ -800,7 +801,6 @@ def _compare_against_baseline(
 
         for key in (
             "dataset_hash",
-            "weights_hash",
             "config_hash",
             "checkpoint_hash",
             "repro_policy",
@@ -812,6 +812,23 @@ def _compare_against_baseline(
                 continue
             if ref != cur:
                 consistency_mismatches.append(f"{key} mismatch: baseline={ref} current={cur}")
+
+        ref_weights_hash = baseline_meta.get("weights_hash")
+        cur_weights_hash = run_meta.get("weights_hash")
+        ref_checkpoint_hash = baseline_meta.get("checkpoint_hash")
+        cur_checkpoint_hash = run_meta.get("checkpoint_hash")
+        if ref_weights_hash is not None:
+            # Only enforce weights hash as a hard contract when both sides are checkpoint-backed.
+            # Checkpoint-free runs may vary across torch/python versions even with fixed seed.
+            if ref_checkpoint_hash is not None and cur_checkpoint_hash is not None:
+                if ref_weights_hash != cur_weights_hash:
+                    consistency_mismatches.append(
+                        f"weights_hash mismatch: baseline={ref_weights_hash} current={cur_weights_hash}"
+                    )
+            elif ref_weights_hash != cur_weights_hash:
+                consistency_warnings.append(
+                    "weights_hash differs in checkpoint-free comparison; skipped hard consistency check"
+                )
 
         consistency_mismatches.extend(contract_errors)
         consistency_mismatches.extend(consistency_errors)
@@ -829,6 +846,7 @@ def _compare_against_baseline(
     else:
         consistency_gate["details"]["skipped"] = True
     consistency_gate["details"]["mismatches"] = consistency_mismatches
+    consistency_gate["details"]["warnings"] = consistency_warnings
 
     metric_gate = gates[GATE_METRIC]
     if str(metric_gate["mode"]) == "off":

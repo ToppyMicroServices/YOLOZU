@@ -14,6 +14,7 @@ This page defines the test philosophy for `tools/run_reference_adapter_regressio
 - Duplicate image entries are rejected.
 - Detections are stable-sorted by `(-score, class_id, bbox)`.
 - `class_id` is required in strict mode.
+- `weights_hash` is a hard invariant only when both baseline/current runs use a checkpoint (`checkpoint_hash` present).
 
 ### Soft invariants (behavior)
 

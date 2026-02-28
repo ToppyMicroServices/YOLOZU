@@ -193,6 +193,90 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
             self.assertFalse(bool(hard_payload.get("ok")))
             self.assertTrue(any("[metric_drift]" in x for x in (hard_payload.get("hard_failures") or [])))
 
+    def test_contract_gate_skips_weights_hash_without_checkpoint(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+        self.assertTrue(script.is_file())
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            baseline_path = root / "baseline.json"
+            write_report = root / "write_report.json"
+            check_report = root / "check_report.json"
+
+            common = [
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--max-images",
+                "1",
+                "--device",
+                "cpu",
+                "--image-size",
+                "96",
+                "--score-threshold",
+                "0.05",
+                "--max-detections",
+                "10",
+                "--init-seed",
+                "2026",
+                "--score-gate-mode",
+                "off",
+                "--perf-gate-mode",
+                "off",
+                "--baseline",
+                str(baseline_path.relative_to(repo_root)),
+            ]
+
+            write_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--output",
+                str(write_report.relative_to(repo_root)),
+                "--write-baseline",
+            ]
+            write_proc = self._run(write_cmd, cwd=repo_root)
+            if write_proc.returncode != 0:
+                self.fail(
+                    "baseline write failed:\n"
+                    f"STDOUT:\n{write_proc.stdout}\nSTDERR:\n{write_proc.stderr}"
+                )
+
+            baseline_payload = json.loads(baseline_path.read_text(encoding="utf-8"))
+            baseline_meta = baseline_payload.get("baseline_meta") or {}
+            baseline_meta["checkpoint_hash"] = None
+            baseline_meta["weights_hash"] = "deadbeef"
+            baseline_payload["baseline_meta"] = baseline_meta
+            baseline_path.write_text(json.dumps(baseline_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            check_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--output",
+                str(check_report.relative_to(repo_root)),
+            ]
+            check_proc = self._run(check_cmd, cwd=repo_root)
+            if check_proc.returncode != 0:
+                self.fail(
+                    "checkpoint-free weights_hash mismatch should not fail hard gate:\n"
+                    f"STDOUT:\n{check_proc.stdout}\nSTDERR:\n{check_proc.stderr}"
+                )
+
+            payload = json.loads(check_report.read_text(encoding="utf-8"))
+            consistency = (payload.get("gates") or {}).get("consistency_drift") or {}
+            self.assertTrue(bool(consistency.get("ok")))
+            warnings = (consistency.get("details") or {}).get("warnings") or []
+            self.assertTrue(
+                any("weights_hash differs in checkpoint-free comparison" in str(item) for item in warnings),
+                msg=f"expected checkpoint-free weights warning, got: {warnings}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
