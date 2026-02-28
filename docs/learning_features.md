@@ -113,3 +113,33 @@ Artifacts:
 - `reports/hessian_log.json` (optional)
 
 Details: [`docs/hessian_solver.md`](hessian_solver.md).
+
+## 7) PyTorch utility wrappers (`yolozu.training.torch_utils`)
+
+Value: Thin, composable helpers wrapping core PyTorch APIs (`torch.amp`, `torch.compile`, `torch.profiler`, `torch.nn`) for common training/inference tasks.
+
+| Helper | PyTorch API | Purpose |
+|--------|------------|---------|
+| `amp_inference_context()` | `torch.amp.autocast` | Mixed-precision inference context manager |
+| `compile_model()` | `torch.compile` | JIT-compile a model with configurable backend/mode |
+| `profile_callable()` | `torch.profiler` | Profile any callable and return structured summary |
+| `model_info()` | `torch.nn.Module` | Parameter count, dtype breakdown, device, buffer stats |
+| `auto_device()` | `torch.cuda` / `torch.backends.mps` | Auto-detect best device (CUDA → MPS → CPU) |
+| `seed_everything()` | `torch.manual_seed` | Set all random seeds for reproducibility |
+
+Example usage:
+
+```python
+from yolozu.training.torch_utils import (
+    amp_inference_context, compile_model, model_info, auto_device, seed_everything,
+)
+
+seed_everything(42)
+device = auto_device()
+model = model.to(device)
+compiled = compile_model(model, mode="reduce-overhead")
+print(model_info(compiled))
+
+with amp_inference_context(device.type):
+    output = compiled(images)
+```

@@ -317,3 +317,31 @@ cp rtdetr_pose/configs/base.json rtdetr_pose/configs/my_backbone.json
 
 yolozu train configs/examples/train_setting.yaml   --model-config rtdetr_pose/configs/my_backbone.json   --use-param-groups   --backbone-lr-mult 0.1
 \end{lstlisting}
+
+\section{PyTorch utility wrappers}
+The \texttt{yolozu.training.torch\_utils} module provides thin wrappers around core PyTorch APIs for common training and inference tasks:
+
+\begin{itemize}
+  \item \texttt{amp\_inference\_context()} --- wraps \texttt{torch.amp.autocast} for mixed-precision inference.
+  \item \texttt{compile\_model()} --- wraps \texttt{torch.compile} with configurable backend/mode.
+  \item \texttt{profile\_callable()} --- wraps \texttt{torch.profiler} and returns structured event summaries.
+  \item \texttt{model\_info()} --- reports parameter counts, dtype breakdown, device, and buffer stats.
+  \item \texttt{auto\_device()} --- auto-detects the best available device (CUDA $\to$ MPS $\to$ CPU).
+  \item \texttt{seed\_everything()} --- sets all random seeds (Python, NumPy, PyTorch) for reproducibility.
+\end{itemize}
+
+\begin{lstlisting}[language=Python]
+from yolozu.training.torch_utils import (
+    amp_inference_context, compile_model, model_info,
+    auto_device, seed_everything,
+)
+
+seed_everything(42)
+device = auto_device()
+model = model.to(device)
+compiled = compile_model(model, mode="reduce-overhead")
+print(model_info(compiled))
+
+with amp_inference_context(device.type):
+    output = compiled(images)
+\end{lstlisting}
