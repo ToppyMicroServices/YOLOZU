@@ -40,6 +40,7 @@ jobs:
               - 'tests/**'
               - 'configs/**'
               - 'data/**'
+              - 'baselines/**'
               - 'requirements*.txt'
               - 'requirements*.lock'
               - 'pyproject.toml'
