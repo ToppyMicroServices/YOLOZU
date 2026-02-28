@@ -204,6 +204,37 @@ class TestProfileCallable(unittest.TestCase):
 
 
 @unittest.skipIf(torch is None, "PyTorch not installed")
+class TestConfigureMatmulPrecision(unittest.TestCase):
+    """Tests for configure_matmul_precision()."""
+
+    def test_returns_summary(self):
+        from yolozu.training.torch_utils import configure_matmul_precision
+
+        result = configure_matmul_precision("high")
+        self.assertIn("matmul_precision", result)
+        self.assertIn("set_precision_supported", result)
+        self.assertIn("tf32_cuda_matmul", result)
+        self.assertIn("tf32_cudnn", result)
+        self.assertEqual(result["matmul_precision"], "high")
+
+    def test_invalid_precision_raises(self):
+        from yolozu.training.torch_utils import configure_matmul_precision
+
+        with self.assertRaises(ValueError):
+            configure_matmul_precision("low")
+
+    def test_allow_tf32_argument(self):
+        from yolozu.training.torch_utils import configure_matmul_precision
+
+        result_true = configure_matmul_precision("high", allow_tf32=True)
+        self.assertIn("tf32_cuda_matmul", result_true)
+        self.assertIn("tf32_cudnn", result_true)
+
+        result_false = configure_matmul_precision("medium", allow_tf32=False)
+        self.assertEqual(result_false["matmul_precision"], "medium")
+
+
+@unittest.skipIf(torch is None, "PyTorch not installed")
 class TestBackwardCompatShim(unittest.TestCase):
     """Ensure the backward-compat shim at yolozu.torch_utils works."""
 

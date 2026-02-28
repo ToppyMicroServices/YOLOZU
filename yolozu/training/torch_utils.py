@@ -19,6 +19,7 @@ __all__ = [
     "model_info",
     "auto_device",
     "seed_everything",
+    "configure_matmul_precision",
 ]
 
 
@@ -369,3 +370,80 @@ def seed_everything(seed: int = 42) -> int:
             pass
 
     return seed
+
+
+# ---------------------------------------------------------------------------
+# float32 matmul precision / TF32 controls
+# ---------------------------------------------------------------------------
+
+def configure_matmul_precision(
+    precision: str = "high",
+    *,
+    allow_tf32: bool | None = None,
+) -> dict[str, Any]:
+    """Configure float32 matmul precision and optional TF32 backend flags.
+
+    Wraps stable PyTorch APIs:
+
+    - ``torch.set_float32_matmul_precision(precision)``
+    - ``torch.backends.cuda.matmul.allow_tf32``
+    - ``torch.backends.cudnn.allow_tf32``
+
+    Parameters
+    ----------
+    precision:
+        One of ``"highest"``, ``"high"``, ``"medium"``.
+    allow_tf32:
+        If provided, set TF32 flags for CUDA matmul/cuDNN when available.
+
+    Returns
+    -------
+    dict with keys:
+
+    - ``"matmul_precision"``
+    - ``"set_precision_supported"``
+    - ``"tf32_cuda_matmul"``
+    - ``"tf32_cudnn"``
+    """
+    torch = _require_torch()
+
+    allowed = {"highest", "high", "medium"}
+    if precision not in allowed:
+        raise ValueError(f"precision must be one of {sorted(allowed)}, got: {precision!r}")
+
+    set_precision_supported = hasattr(torch, "set_float32_matmul_precision")
+    if set_precision_supported:
+        torch.set_float32_matmul_precision(precision)
+    else:
+        warnings.warn(
+            "torch.set_float32_matmul_precision is unavailable in this PyTorch version.",
+            stacklevel=2,
+        )
+
+    tf32_cuda_matmul = None
+    tf32_cudnn = None
+
+    backends = getattr(torch, "backends", None)
+    cuda_backend = getattr(backends, "cuda", None) if backends is not None else None
+    cudnn_backend = getattr(backends, "cudnn", None) if backends is not None else None
+
+    if allow_tf32 is not None and cuda_backend is not None:
+        matmul_backend = getattr(cuda_backend, "matmul", None)
+        if matmul_backend is not None and hasattr(matmul_backend, "allow_tf32"):
+            matmul_backend.allow_tf32 = bool(allow_tf32)
+        if cudnn_backend is not None and hasattr(cudnn_backend, "allow_tf32"):
+            cudnn_backend.allow_tf32 = bool(allow_tf32)
+
+    if cuda_backend is not None:
+        matmul_backend = getattr(cuda_backend, "matmul", None)
+        if matmul_backend is not None and hasattr(matmul_backend, "allow_tf32"):
+            tf32_cuda_matmul = bool(matmul_backend.allow_tf32)
+    if cudnn_backend is not None and hasattr(cudnn_backend, "allow_tf32"):
+        tf32_cudnn = bool(cudnn_backend.allow_tf32)
+
+    return {
+        "matmul_precision": precision,
+        "set_precision_supported": bool(set_precision_supported),
+        "tf32_cuda_matmul": tf32_cuda_matmul,
+        "tf32_cudnn": tf32_cudnn,
+    }
