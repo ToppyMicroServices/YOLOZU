@@ -139,6 +139,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         lora_target: str = "head",
         lora_freeze_base: bool = False,
         lora_train_bias: str = "none",
+        compile_model: bool = False,
+        compile_backend: str = "inductor",
+        compile_mode: str = "reduce-overhead",
     ):
         self.config_path = str(config_path)
         self.checkpoint_path = checkpoint_path
@@ -149,6 +152,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         self.infer_batch_size = int(infer_batch_size) if infer_batch_size is not None else 1
         self._backend = None
         self._lora_report: dict | None = None
+        self.compile_model = bool(compile_model)
+        self.compile_backend = str(compile_backend)
+        self.compile_mode = str(compile_mode)
 
         self.lora_r = int(lora_r)
         self.lora_alpha = float(lora_alpha) if lora_alpha is not None else None
@@ -248,6 +254,16 @@ class RTDETRPoseAdapter(ModelAdapter):
                 model.load_state_dict(state, strict=False)
 
         model.to(self.device)
+
+        # Optional torch.compile for inference speedup (PyTorch 2.x).
+        if self.compile_model:
+            from yolozu.inference.torch_export import compile_for_inference
+
+            model = compile_for_inference(
+                model,
+                backend=self.compile_backend,
+                mode=self.compile_mode,
+            )
 
         from yolozu.geometry.intrinsics import parse_intrinsics as _parse_intrinsics
 
