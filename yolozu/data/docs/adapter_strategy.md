@@ -36,16 +36,27 @@ python3 tools/run_reference_adapter_regression.py \
   --dataset data/smoke \
   --split val \
   --max-images 2 \
+  --profile micro \
   --repro-policy relaxed \
+  --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
+  --diff-summary-out reports/reference_adapter_regression.diff_summary.json \
+  --topk-examples-dir reports/reference_adapter_regression_topk \
+  --topk-examples 3 \
   --output reports/reference_adapter_regression.json
 ```
 
 Gates are explicit:
 - schema drift (zero tolerance)
 - consistency drift (record/image mapping, baseline identity, duplicate/finite checks)
-- metric drift (score/bbox checksums with declared tolerances)
+- metric drift (aggregate + robust metrics: map50/map50_95, worst-k, recall@K, IoU quantiles)
 - speed drift (minimum FPS floor + baseline ratio)
+- optional backend parity drift (peer backend report)
+- auto diff artifacts on hard failures (`diff_summary.json`, top-k overlays)
+
+Reference adapter entry metadata is also checked as hard interface contract:
+- `image_w/h`, `orig_w/h`, `model_input_w/h`
+- `preprocess|preproc` parameters (`resize`, `pad`, `letterbox`, `dtype`, `color_order`)
 
 Adoption policy:
 - contract gates (`schema_drift`, `consistency_drift`) are hard

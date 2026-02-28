@@ -16,6 +16,7 @@ __all__ = [
     "migrate_ultralytics_dataset_wrapper",
     "migrate_coco_dataset_wrapper",
     "migrate_coco_results_predictions",
+    "migrate_predictions_entries_schema",
     "write_seg_dataset_descriptor",
     "migrate_seg_dataset_descriptor",
 ]
@@ -386,6 +387,101 @@ def migrate_coco_results_predictions(
         entries.append({"image": image, "detections": dets})
 
     out_path.write_text(json.dumps(entries, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    return out_path
+
+
+def _schema_tag_to_int(value: str) -> int:
+    text = str(value).strip().lower()
+    if text.startswith("v"):
+        text = text[1:]
+    return int(text)
+
+
+def migrate_predictions_entries_schema(
+    *,
+    input_path: str | Path,
+    output: str | Path,
+    from_version: str = "v1",
+    to_version: str = "v2",
+    strict_source: bool = False,
+    force: bool = False,
+) -> Path:
+    """Migrate predictions entry schema versions (currently v1 -> v2)."""
+
+    source_v = _schema_tag_to_int(from_version)
+    target_v = _schema_tag_to_int(to_version)
+    if source_v != 1 or target_v != 2:
+        raise ValueError("only --from v1 --to v2 is currently supported")
+
+    in_path = Path(input_path)
+    out_path = Path(output)
+    if not in_path.exists():
+        raise FileNotFoundError(f"--input not found: {in_path}")
+    if out_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {out_path} (use --force to overwrite)")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    payload = _load_json(in_path)
+    is_wrapper = isinstance(payload, dict) and isinstance(payload.get("predictions"), list)
+
+    from yolozu.predictions import canonicalize_predictions, normalize_predictions_payload
+
+    entries, wrapped_meta = normalize_predictions_payload(payload)
+
+    incompatible_indices: list[int] = []
+    migrated_candidates = 0
+    for idx, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        raw = entry.get("schema_version")
+        if raw is None:
+            migrated_candidates += 1
+            continue
+        if isinstance(raw, int) and not isinstance(raw, bool):
+            if raw == 1:
+                migrated_candidates += 1
+            elif raw != 2:
+                incompatible_indices.append(idx)
+            elif bool(strict_source):
+                incompatible_indices.append(idx)
+        else:
+            incompatible_indices.append(idx)
+
+    if incompatible_indices:
+        raise ValueError(
+            "input contains entries that do not satisfy --from version policy: "
+            f"indices={incompatible_indices[:10]}"
+        )
+
+    canonical = canonicalize_predictions(
+        entries,
+        strict=False,
+        policy="clamp",
+        unknown_keys=("error" if strict_source else "warn"),
+    )
+
+    migration_meta = {
+        "tool": "yolozu predictions migrate",
+        "from_entry_schema_version": int(source_v),
+        "to_entry_schema_version": int(target_v),
+        "entry_count": int(len(canonical.entries)),
+        "migrated_candidates": int(migrated_candidates),
+        "warnings": list(canonical.warnings),
+    }
+
+    if is_wrapper:
+        out_payload = dict(payload)
+        out_payload["predictions"] = canonical.entries
+        if wrapped_meta is None:
+            meta: dict[str, Any] = {}
+        else:
+            meta = dict(wrapped_meta)
+        meta["entry_schema_migration"] = migration_meta
+        out_payload["meta"] = meta
+    else:
+        out_payload = canonical.entries
+
+    out_path.write_text(json.dumps(out_payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     return out_path
 
 

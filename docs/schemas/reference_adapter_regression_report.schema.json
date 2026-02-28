@@ -102,6 +102,18 @@
     },
     "baseline_path": {
       "type": "string"
+    },
+    "diff_summary_path": {
+      "type": "string"
+    },
+    "topk_examples_dir": {
+      "type": "string"
+    },
+    "topk_examples": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": true

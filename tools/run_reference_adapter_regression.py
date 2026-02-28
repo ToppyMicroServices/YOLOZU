@@ -43,6 +43,9 @@ GATE_CONSISTENCY = "consistency_drift"
 GATE_METRIC = "metric_drift"
 GATE_SPEED = "speed_drift"
 RUNTIME_LOCK_KEYS = ("torch", "onnxruntime")
+ERR_IO = "E_IO"
+ERR_DECODE = "E_DECODE"
+ERR_PREPROC = "E_PREPROC"
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -97,6 +100,22 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--output",
         default="reports/reference_adapter_regression.json",
         help="Regression report output JSON path.",
+    )
+    p.add_argument(
+        "--diff-summary-out",
+        default=None,
+        help="Optional diff_summary.json output path (default: <output stem>.diff_summary.json).",
+    )
+    p.add_argument(
+        "--topk-examples-dir",
+        default=None,
+        help="Optional top-k overlay directory (default: <output stem>_topk_examples).",
+    )
+    p.add_argument(
+        "--topk-examples",
+        type=int,
+        default=3,
+        help="Number of counterexample overlays to emit when regression fails (default: 3, 0 disables).",
     )
     p.add_argument(
         "--write-baseline",
@@ -664,6 +683,193 @@ def _dataset_fingerprint(
     }
 
 
+def _resolve_record_image_path(image_key: str) -> Path:
+    p = Path(str(image_key))
+    if not p.is_absolute():
+        p = (repo_root / p).resolve()
+    return p
+
+
+def _preflight_records(
+    records: list[dict[str, Any]],
+    *,
+    dataset_root: Path,
+    image_size: tuple[int, int],
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    try:
+        from PIL import Image, ImageOps, UnidentifiedImageError
+    except Exception as exc:
+        return {}, [f"{ERR_PREPROC}: Pillow unavailable for record preflight: {exc}"]
+
+    out: dict[str, dict[str, Any]] = {}
+    errors: list[str] = []
+
+    for idx, record in enumerate(records):
+        where = f"records[{idx}].image"
+        try:
+            image_key = require_image_key(record.get("image"), where=where)
+        except ValueError as exc:
+            errors.append(f"{ERR_IO}: {exc}")
+            continue
+
+        image_path = _resolve_record_image_path(image_key)
+        canonical_image = _canonical_image_key(str(image_path), dataset_root=dataset_root)
+
+        if not image_path.exists() or not image_path.is_file():
+            errors.append(f"{ERR_IO}: {where} not found: {image_path}")
+            continue
+
+        try:
+            with Image.open(image_path) as src:
+                normalized = ImageOps.exif_transpose(src)
+                width, height = normalized.size
+                mode = str(getattr(normalized, "mode", ""))
+                normalized.load()
+        except FileNotFoundError:
+            errors.append(f"{ERR_IO}: {where} not found during decode: {image_path}")
+            continue
+        except UnidentifiedImageError as exc:
+            errors.append(f"{ERR_DECODE}: {where} unsupported/corrupt image: {image_path} ({exc})")
+            continue
+        except Exception as exc:
+            errors.append(f"{ERR_DECODE}: {where} decode failed: {image_path} ({exc})")
+            continue
+
+        if int(width) <= 0 or int(height) <= 0:
+            errors.append(f"{ERR_DECODE}: {where} invalid image size: {width}x{height} ({image_path})")
+            continue
+
+        if canonical_image in out:
+            errors.append(f"{ERR_IO}: duplicate canonical image key in records: {canonical_image}")
+            continue
+
+        out[canonical_image] = {
+            "record_index": int(idx),
+            "image_path": str(image_path),
+            "orig_w": int(width),
+            "orig_h": int(height),
+            "image_w": int(image_size[0]),
+            "image_h": int(image_size[1]),
+            "model_input_w": int(image_size[0]),
+            "model_input_h": int(image_size[1]),
+            "decode": {
+                "library": "Pillow",
+                "mode": mode,
+                "exif_orientation": "normalized",
+                "color_order": "RGB",
+            },
+            "preproc_requirements": {
+                "method": "resize",
+                "resize_algorithm": "bilinear",
+                "pad": {"left": 0, "top": 0, "right": 0, "bottom": 0},
+                "letterbox": False,
+                "dtype": "float32",
+                "normalize": "0_1",
+            },
+        }
+    return out, errors
+
+
+def _entry_preproc(entry: dict[str, Any]) -> dict[str, Any] | None:
+    pp = entry.get("preproc")
+    if isinstance(pp, dict):
+        return pp
+    pp = entry.get("preprocess")
+    if isinstance(pp, dict):
+        return pp
+    return None
+
+
+def _validate_reference_entry_metadata(
+    predictions: list[dict[str, Any]],
+    *,
+    record_preflight: dict[str, dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    required_int_keys = (
+        "image_w",
+        "image_h",
+        "orig_w",
+        "orig_h",
+        "model_input_w",
+        "model_input_h",
+    )
+
+    for idx, entry in enumerate(predictions):
+        where = f"predictions[{idx}]"
+        image = str(entry.get("image") or "")
+        ref = record_preflight.get(image)
+        if ref is None:
+            errors.append(f"{ERR_IO}: {where}.image missing from preflight map: {image}")
+            continue
+
+        for key in required_int_keys:
+            value = entry.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or int(value) <= 0:
+                errors.append(f"{ERR_PREPROC}: {where}.{key} must be positive int")
+
+        if int(entry.get("orig_w", -1)) != int(ref.get("orig_w", -2)):
+            errors.append(
+                f"{ERR_PREPROC}: {where}.orig_w mismatch (entry={entry.get('orig_w')} preflight={ref.get('orig_w')})"
+            )
+        if int(entry.get("orig_h", -1)) != int(ref.get("orig_h", -2)):
+            errors.append(
+                f"{ERR_PREPROC}: {where}.orig_h mismatch (entry={entry.get('orig_h')} preflight={ref.get('orig_h')})"
+            )
+        if int(entry.get("model_input_w", -1)) != int(ref.get("model_input_w", -2)):
+            errors.append(
+                f"{ERR_PREPROC}: {where}.model_input_w mismatch (entry={entry.get('model_input_w')} preflight={ref.get('model_input_w')})"
+            )
+        if int(entry.get("model_input_h", -1)) != int(ref.get("model_input_h", -2)):
+            errors.append(
+                f"{ERR_PREPROC}: {where}.model_input_h mismatch (entry={entry.get('model_input_h')} preflight={ref.get('model_input_h')})"
+            )
+
+        pp = _entry_preproc(entry)
+        if pp is None:
+            errors.append(f"{ERR_PREPROC}: {where} missing preprocess/preproc metadata object")
+            continue
+
+        method = str(pp.get("method") or "").strip().lower()
+        if method != "resize":
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.method must be 'resize' (got '{method or '<missing>'}')")
+
+        resize = pp.get("resize")
+        if not isinstance(resize, dict):
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.resize must be an object")
+        else:
+            algo = str(resize.get("algorithm") or "").strip().lower()
+            if algo != "bilinear":
+                errors.append(
+                    f"{ERR_PREPROC}: {where}.preproc.resize.algorithm must be 'bilinear' (got '{algo or '<missing>'}')"
+                )
+
+        pad = pp.get("pad")
+        if not isinstance(pad, dict):
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.pad must be an object")
+        else:
+            for pad_key in ("left", "top", "right", "bottom"):
+                try:
+                    pad_value = int(pad.get(pad_key, -1))
+                except Exception:
+                    errors.append(f"{ERR_PREPROC}: {where}.preproc.pad.{pad_key} must be integer")
+                    continue
+                if pad_value != 0:
+                    errors.append(f"{ERR_PREPROC}: {where}.preproc.pad.{pad_key} must be 0 for resize mode")
+
+        if bool(pp.get("letterbox", False)):
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.letterbox must be false for resize mode")
+
+        if str(pp.get("color_order") or "").upper() != "RGB":
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.color_order must be RGB")
+        if str(pp.get("dtype") or "").lower() != "float32":
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.dtype must be float32")
+        if str(pp.get("normalize") or "") != "0_1":
+            errors.append(f"{ERR_PREPROC}: {where}.preproc.normalize must be 0_1")
+
+    return errors
+
+
 def _canonicalize_predictions(
     predictions: list[dict[str, Any]],
     *,
@@ -1041,27 +1247,36 @@ def _build_contract(
 
 
 def _thresholds_from_args(args: argparse.Namespace) -> dict[str, Any]:
+    metric_common = {
+        "total_detections_abs": float(args.metric_total_detections_abs),
+        "score_sum_abs": float(args.metric_score_sum_abs),
+        "score_mean_abs": float(args.metric_score_mean_abs),
+        "bbox_checksum_abs": float(args.metric_bbox_checksum_abs),
+        "map50_abs": float(args.metric_map50_abs),
+        "map50_95_abs": float(args.metric_map50_95_abs),
+        "worst_k_map50_abs": float(args.metric_worst_k_map50_abs),
+        "median_class_map50_abs": float(args.metric_median_class_map50_abs),
+        "recall_at_k_abs": float(args.metric_recall_at_k_abs),
+        "iou_p10_abs": float(args.metric_iou_p10_abs),
+        "iou_p50_abs": float(args.metric_iou_p50_abs),
+        "missing_count_abs": float(args.metric_missing_count_abs),
+        "extra_count_abs": float(args.metric_extra_count_abs),
+        "class_mismatch_count_abs": float(args.metric_class_mismatch_abs),
+    }
+    backend_id = str(args.backend_id)
+    parity_common = {
+        "mode": str(args.backend_parity_mode),
+        "map50_abs": float(args.backend_parity_map50_abs),
+        "map50_95_abs": float(args.backend_parity_map50_95_abs),
+    }
     return {
-        "metric": {
-            "total_detections_abs": float(args.metric_total_detections_abs),
-            "score_sum_abs": float(args.metric_score_sum_abs),
-            "score_mean_abs": float(args.metric_score_mean_abs),
-            "bbox_checksum_abs": float(args.metric_bbox_checksum_abs),
-            "map50_abs": float(args.metric_map50_abs),
-            "map50_95_abs": float(args.metric_map50_95_abs),
-            "worst_k_map50_abs": float(args.metric_worst_k_map50_abs),
-            "median_class_map50_abs": float(args.metric_median_class_map50_abs),
-            "recall_at_k_abs": float(args.metric_recall_at_k_abs),
-            "iou_p10_abs": float(args.metric_iou_p10_abs),
-            "iou_p50_abs": float(args.metric_iou_p50_abs),
-            "missing_count_abs": float(args.metric_missing_count_abs),
-            "extra_count_abs": float(args.metric_extra_count_abs),
-            "class_mismatch_count_abs": float(args.metric_class_mismatch_abs),
+        "metric": metric_common,
+        "metric_by_backend": {
+            backend_id: metric_common,
         },
-        "backend_parity": {
-            "mode": str(args.backend_parity_mode),
-            "map50_abs": float(args.backend_parity_map50_abs),
-            "map50_95_abs": float(args.backend_parity_map50_95_abs),
+        "backend_parity": parity_common,
+        "backend_parity_by_backend": {
+            backend_id: parity_common,
         },
         "speed": {
             "min_fps_ratio": float(args.min_fps_ratio),
@@ -1084,6 +1299,7 @@ def _protocol_spec(*, canonical_decimals: int) -> dict[str, Any]:
         "name": "reference_adapter_regression",
         "interface_contract": {
             "hard_invariants": [
+                "records preflight requires readable image files with successful decode and positive dimensions",
                 "entries schema validation with strict mode",
                 "record/prediction image mapping and ordering",
                 "image identifier canonicalization to dataset-relative keys",
@@ -1091,6 +1307,7 @@ def _protocol_spec(*, canonical_decimals: int) -> dict[str, Any]:
                 "duplicate image IDs and duplicate detections are rejected",
                 "empty detections are normalized to []",
                 "stable detection sort key is fixed",
+                "reference-adapter entries must include image_w/h, orig_w/h, model_input_w/h, and preproc metadata",
             ],
             "forbidden_values": ["NaN", "+inf", "-inf"],
         },
@@ -1113,11 +1330,215 @@ def _protocol_spec(*, canonical_decimals: int) -> dict[str, Any]:
     }
 
 
+def _default_diff_summary_path(output_path: Path) -> Path:
+    return output_path.parent / f"{output_path.stem}.diff_summary.json"
+
+
+def _default_topk_examples_dir(output_path: Path) -> Path:
+    return output_path.parent / f"{output_path.stem}_topk_examples"
+
+
+def _safe_slug(value: str, *, max_len: int = 64) -> str:
+    clean = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value))
+    clean = clean.strip("._")
+    if not clean:
+        clean = "image"
+    return clean[: max(1, int(max_len))]
+
+
+def _bbox_xyxy_from_norm(bbox: dict[str, Any], *, width: int, height: int) -> tuple[int, int, int, int] | None:
+    try:
+        cx = float(bbox.get("cx"))
+        cy = float(bbox.get("cy"))
+        bw = float(bbox.get("w"))
+        bh = float(bbox.get("h"))
+    except Exception:
+        return None
+    x0 = int(round((cx - bw / 2.0) * float(width)))
+    y0 = int(round((cy - bh / 2.0) * float(height)))
+    x1 = int(round((cx + bw / 2.0) * float(width)))
+    y1 = int(round((cy + bh / 2.0) * float(height)))
+    x0 = max(0, min(width - 1, x0))
+    y0 = max(0, min(height - 1, y0))
+    x1 = max(0, min(width - 1, x1))
+    y1 = max(0, min(height - 1, y1))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return x0, y0, x1, y1
+
+
+def _build_record_lookup(
+    records: list[dict[str, Any]],
+    *,
+    dataset_root: Path,
+) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
+    for idx, record in enumerate(records):
+        try:
+            image_key = require_image_key(record.get("image"), where=f"records[{idx}].image")
+        except ValueError:
+            continue
+        image_path = _resolve_record_image_path(image_key)
+        canonical = _canonical_image_key(str(image_path), dataset_root=dataset_root)
+        out[canonical] = {
+            "record_index": int(idx),
+            "image_path": str(image_path),
+            "labels": list(record.get("labels") or []),
+        }
+    return out
+
+
+def _collect_counterexample_images(
+    *,
+    report: dict[str, Any],
+    predictions: list[dict[str, Any]],
+    limit: int,
+) -> list[str]:
+    images: list[str] = []
+    gates = report.get("gates") or {}
+    for gate_key in (GATE_CONSISTENCY, GATE_METRIC, GATE_SCHEMA, GATE_SPEED):
+        gate = gates.get(gate_key) or {}
+        details = gate.get("details") or {}
+        first = details.get("first_counterexample") if isinstance(details, dict) else None
+        if isinstance(first, dict):
+            image = str(first.get("image") or "").strip()
+            if image:
+                images.append(image)
+    for entry in predictions:
+        image = str(entry.get("image") or "").strip()
+        if image:
+            images.append(image)
+        if len(images) >= int(limit) * 3:
+            break
+    unique: list[str] = []
+    seen: set[str] = set()
+    for image in images:
+        if image in seen:
+            continue
+        seen.add(image)
+        unique.append(image)
+        if len(unique) >= int(limit):
+            break
+    return unique
+
+
+def _write_topk_examples(
+    *,
+    out_dir: Path,
+    report: dict[str, Any],
+    predictions: list[dict[str, Any]],
+    records: list[dict[str, Any]],
+    dataset_root: Path,
+    topk: int,
+) -> list[str]:
+    if int(topk) <= 0:
+        return []
+    try:
+        from PIL import Image, ImageDraw
+    except Exception:
+        return []
+
+    record_lookup = _build_record_lookup(records, dataset_root=dataset_root)
+    pred_lookup: dict[str, dict[str, Any]] = {str(e.get("image")): e for e in predictions if isinstance(e, dict)}
+    targets = _collect_counterexample_images(report=report, predictions=predictions, limit=int(topk))
+    if not targets:
+        return []
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written: list[str] = []
+    for rank, image_key in enumerate(targets, start=1):
+        rec = record_lookup.get(image_key)
+        if rec is None:
+            continue
+        image_path = Path(str(rec.get("image_path")))
+        if not image_path.exists():
+            continue
+        pred_entry = pred_lookup.get(image_key) or {}
+        labels = list(rec.get("labels") or [])
+        detections = list(pred_entry.get("detections") or [])
+
+        try:
+            with Image.open(image_path) as src:
+                canvas = src.convert("RGB")
+        except Exception:
+            continue
+
+        draw = ImageDraw.Draw(canvas)
+        width, height = canvas.size
+        for label in labels:
+            bbox = _label_bbox(label) or {}
+            xyxy = _bbox_xyxy_from_norm(bbox, width=width, height=height)
+            if xyxy is None:
+                continue
+            class_id = label.get("class_id")
+            draw.rectangle(xyxy, outline=(0, 200, 0), width=2)
+            draw.text((xyxy[0] + 2, max(0, xyxy[1] - 12)), f"gt:{class_id}", fill=(0, 200, 0))
+        for det in detections[:20]:
+            bbox = det.get("bbox") or {}
+            xyxy = _bbox_xyxy_from_norm(bbox, width=width, height=height)
+            if xyxy is None:
+                continue
+            class_id = det.get("class_id")
+            try:
+                score = float(det.get("score", 0.0))
+            except Exception:
+                score = 0.0
+            draw.rectangle(xyxy, outline=(220, 30, 30), width=2)
+            draw.text((xyxy[0] + 2, xyxy[1] + 2), f"pred:{class_id}@{score:.2f}", fill=(220, 30, 30))
+
+        out_path = out_dir / f"{int(rank):02d}_{_safe_slug(image_key)}.png"
+        canvas.save(out_path)
+        written.append(_repo_relative_display(out_path))
+    return written
+
+
+def _build_diff_summary_payload(report: dict[str, Any]) -> dict[str, Any]:
+    gates = report.get("gates") or {}
+    gate_status = {
+        str(k): {
+            "ok": bool((v or {}).get("ok", True)),
+            "mode": str((v or {}).get("mode", "")),
+            "category": str((v or {}).get("category", "")),
+        }
+        for k, v in gates.items()
+    }
+    counterexamples: dict[str, Any] = {}
+    for gate_key, gate in gates.items():
+        details = (gate or {}).get("details") or {}
+        first = details.get("first_counterexample") if isinstance(details, dict) else None
+        if isinstance(first, dict):
+            counterexamples[str(gate_key)] = first
+
+    return {
+        "schema_version": 1,
+        "generated_utc": _now_utc(),
+        "ok": bool(report.get("ok")),
+        "run": report.get("run"),
+        "baseline_path": report.get("baseline_path"),
+        "gate_status": gate_status,
+        "hard_failure_count": int(len(report.get("hard_failures") or [])),
+        "soft_failure_count": int(len(report.get("soft_failures") or [])),
+        "first_hard_failure": ((report.get("hard_failures") or [None])[0]),
+        "first_soft_failure": ((report.get("soft_failures") or [None])[0]),
+        "counterexamples": counterexamples,
+        "failure_records_topk": list((report.get("failure_records") or [])[:10]),
+    }
+
+
 def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
     details: dict[str, Any] = {
         "policy": str(policy),
         "seed": (int(seed) if seed is not None else None),
         "actions": [],
+        "determinism_knobs": {
+            "image_decode_library": "Pillow",
+            "exif_orientation": "normalized",
+            "color_order": "RGB",
+            "preprocess_dtype": "float32",
+            "resize_algorithm": "bilinear",
+            "input_resolution_policy": "fixed_resize",
+            "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+        },
     }
 
     try:
@@ -1129,6 +1550,9 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
     if policy in ("strict", "relaxed") and seed is not None:
         torch.manual_seed(int(seed))
         details["actions"].append("torch.manual_seed")
+        if policy == "strict":
+            os.environ.setdefault("PYTHONHASHSEED", str(int(seed)))
+            details["actions"].append("env:PYTHONHASHSEED")
         if bool(getattr(torch.cuda, "is_available", lambda: False)()):
             try:
                 torch.cuda.manual_seed_all(int(seed))
@@ -1160,6 +1584,8 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
         details["deterministic_algorithms_enabled"] = bool(torch.are_deterministic_algorithms_enabled())
     except Exception:
         details["deterministic_algorithms_enabled"] = None
+    details["determinism_knobs"]["pythonhashseed"] = os.environ.get("PYTHONHASHSEED")
+    details["determinism_knobs"]["cublas_workspace_config"] = os.environ.get("CUBLAS_WORKSPACE_CONFIG")
 
     return details
 
@@ -1248,6 +1674,7 @@ def _collect_run_meta(
         "seed": (None if str(args.repro_policy) == "off" else int(args.init_seed)),
         "repro_actions": list(repro_details.get("actions") or []),
         "deterministic_algorithms_enabled": repro_details.get("deterministic_algorithms_enabled"),
+        "determinism_knobs": dict(repro_details.get("determinism_knobs") or {}),
         "weights_hash": weights_hash,
         "weights_source": weights_source,
         "checkpoint_hash": checkpoint_hash,
@@ -1342,6 +1769,12 @@ def _failure_code(gate_key: str, message: str) -> str:
             return "E_SCHEMA_MISSING_FIELD"
         return "E_SCHEMA_VALIDATION"
     if gate_key == GATE_CONSISTENCY:
+        if f"{ERR_IO.lower()}:" in text or text.startswith(ERR_IO.lower()):
+            return ERR_IO
+        if f"{ERR_DECODE.lower()}:" in text or text.startswith(ERR_DECODE.lower()):
+            return ERR_DECODE
+        if f"{ERR_PREPROC.lower()}:" in text or text.startswith(ERR_PREPROC.lower()):
+            return ERR_PREPROC
         if "runtime lock" in text:
             return "E_CANON_RUNTIME_LOCK"
         if "weights_hash mismatch" in text:
@@ -1424,8 +1857,11 @@ def _compare_against_baseline(
     baseline_speed = baseline.get("speed") or {}
     baseline_contract = baseline.get("contract") or {}
     baseline_meta = baseline_payload.get("baseline_meta") or {}
-
-    metric_thr = thresholds.get("metric") or {}
+    current_backend = str(run_meta.get("backend") or baseline_meta.get("backend") or "unknown")
+    metric_by_backend = thresholds.get("metric_by_backend") or {}
+    metric_thr = metric_by_backend.get(current_backend) or thresholds.get("metric") or {}
+    parity_by_backend = thresholds.get("backend_parity_by_backend") or {}
+    backend_parity_cfg = parity_by_backend.get(current_backend) or thresholds.get("backend_parity") or backend_parity or {}
     speed_thr = thresholds.get("speed") or {}
 
     schema_gate = gates[GATE_SCHEMA]
@@ -1478,6 +1914,7 @@ def _compare_against_baseline(
             "checkpoint_hash",
             "repro_policy",
             "canonical_decimals",
+            "backend",
         ):
             ref = baseline_meta.get(key)
             cur = run_meta.get(key)
@@ -1661,14 +2098,14 @@ def _compare_against_baseline(
                     failure_records=failure_records,
                 )
 
-        parity_details: dict[str, Any] = {"mode": str(backend_parity.get("mode", "off"))}
-        parity_mode = str(backend_parity.get("mode", "off"))
+        parity_details: dict[str, Any] = {"mode": str(backend_parity_cfg.get("mode", "off")), "backend": current_backend}
+        parity_mode = str(backend_parity_cfg.get("mode", "off"))
         if parity_mode == "off" or not peer_robust_metrics:
             parity_details["skipped"] = True
         else:
             checks = {
-                "map50": float(backend_parity.get("map50_abs", 0.0)),
-                "map50_95": float(backend_parity.get("map50_95_abs", 0.0)),
+                "map50": float(backend_parity_cfg.get("map50_abs", 0.0)),
+                "map50_95": float(backend_parity_cfg.get("map50_95_abs", 0.0)),
             }
             rows: dict[str, Any] = {}
             parity_ok = True
@@ -1802,6 +2239,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         metric_worst_k = require_positive_int(args.metric_worst_k, flag_name="--metric-worst-k")
         metric_recall_k = require_positive_int(args.metric_recall_k, flag_name="--metric-recall-k")
+        topk_examples = require_non_negative_int(args.topk_examples, flag_name="--topk-examples")
         require_float_in_range(
             args.min_fps_ratio,
             flag_name="--min-fps-ratio",
@@ -1846,6 +2284,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     baseline_path = _resolve_baseline_path(args=args, cwd=cwd)
     output_path = resolve_output_path(args.output, cwd=cwd)
+    diff_summary_path = (
+        resolve_output_path(args.diff_summary_out, cwd=cwd)
+        if args.diff_summary_out
+        else _default_diff_summary_path(output_path)
+    )
+    topk_examples_dir = (
+        resolve_output_path(args.topk_examples_dir, cwd=cwd)
+        if args.topk_examples_dir
+        else _default_topk_examples_dir(output_path)
+    )
     runtime_lock_path = resolve_input_path(args.runtime_lock, cwd=cwd, repo_root=repo_root)
     peer_report_path = (
         resolve_input_path(args.peer_report, cwd=cwd, repo_root=repo_root)
@@ -1854,6 +2302,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     _ensure_repo_write_target(baseline_path, flag_name="--baseline")
     _ensure_repo_write_target(output_path, flag_name="--output")
+    _ensure_repo_write_target(diff_summary_path, flag_name="--diff-summary-out")
+    _ensure_repo_write_target(topk_examples_dir, flag_name="--topk-examples-dir")
     if args.enforce_runtime_lock and not runtime_lock_path.exists():
         raise SystemExit(f"--runtime-lock not found: {runtime_lock_path}")
     if peer_report_path is not None and not peer_report_path.exists():
@@ -1873,6 +2323,14 @@ def main(argv: list[str] | None = None) -> int:
     if not records:
         raise SystemExit("no records to evaluate; check --dataset/--split/--max-images")
 
+    record_preflight, preflight_errors = _preflight_records(
+        records,
+        dataset_root=dataset_root,
+        image_size=image_size,
+    )
+    if preflight_errors:
+        raise SystemExit("record preflight failed:\n- " + "\n- ".join(preflight_errors))
+
     repro_details = _configure_repro_policy(
         policy=str(args.repro_policy),
         seed=(None if str(args.repro_policy) == "off" else int(init_seed)),
@@ -1891,7 +2349,10 @@ def main(argv: list[str] | None = None) -> int:
 
     started_utc = _now_utc()
     start = time.perf_counter()
-    predictions_raw = adapter.predict(records)
+    try:
+        predictions_raw = adapter.predict(records)
+    except Exception as exc:
+        raise SystemExit(f"{ERR_PREPROC}: adapter.predict failed: {exc}") from exc
     elapsed = time.perf_counter() - start
     finished_utc = _now_utc()
 
@@ -1924,6 +2385,12 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     consistency_errors = list(canonicalization.get("consistency_errors") or [])
+    consistency_errors.extend(
+        _validate_reference_entry_metadata(
+            predictions,
+            record_preflight=record_preflight,
+        )
+    )
 
     speed = {
         "images": int(len(records)),
@@ -1954,6 +2421,19 @@ def main(argv: list[str] | None = None) -> int:
         runtime_lock=runtime_lock_meta,
         provenance=provenance,
     )
+    run_meta["record_io_boundary"] = {
+        "checked_records": int(len(records)),
+        "record_preflight_count": int(len(record_preflight)),
+        "error_codes": [ERR_IO, ERR_DECODE, ERR_PREPROC],
+        "input_requirements": {
+            "image_exists": True,
+            "decode_success": True,
+            "exif_orientation_normalized": True,
+            "color_order": "RGB",
+            "dtype": "float32",
+            "model_input_size": [int(image_size[0]), int(image_size[1])],
+        },
+    }
     if bool(args.enforce_runtime_lock):
         pinned_versions = dict(runtime_lock_meta.get("versions") or {})
         for key in RUNTIME_LOCK_KEYS:
@@ -2002,6 +2482,9 @@ def main(argv: list[str] | None = None) -> int:
         "baseline_layout": str(args.baseline_layout),
         "baseline_path": str(baseline_path),
         "peer_report": (str(peer_report_path) if peer_report_path is not None else None),
+        "diff_summary_path": str(diff_summary_path),
+        "topk_examples_dir": str(topk_examples_dir),
+        "topk_examples": int(topk_examples),
         "image_size": [int(image_size[0]), int(image_size[1])],
         "score_threshold": float(score_threshold),
         "max_detections": int(max_detections),
@@ -2157,6 +2640,28 @@ def main(argv: list[str] | None = None) -> int:
         "baseline_path": str(baseline_path),
         "peer_report_path": (str(peer_report_path) if peer_report_path is not None else None),
     }
+
+    if (not args.write_baseline) and hard_failures:
+        diff_summary_payload = _build_diff_summary_payload(report)
+        topk_written: list[str] = []
+        try:
+            topk_written = _write_topk_examples(
+                out_dir=topk_examples_dir,
+                report=report,
+                predictions=predictions,
+                records=records,
+                dataset_root=dataset_root,
+                topk=int(topk_examples),
+            )
+        except Exception as exc:
+            diff_summary_payload["topk_examples_error"] = str(exc)
+        if topk_written:
+            diff_summary_payload["topk_examples"] = topk_written
+            report["topk_examples_dir"] = _repo_relative_display(topk_examples_dir)
+            report["topk_examples"] = topk_written
+        diff_summary_path.parent.mkdir(parents=True, exist_ok=True)
+        diff_summary_path.write_text(json.dumps(diff_summary_payload, indent=2, sort_keys=True), encoding="utf-8")
+        report["diff_summary_path"] = _repo_relative_display(diff_summary_path)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")

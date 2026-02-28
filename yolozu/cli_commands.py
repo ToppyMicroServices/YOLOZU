@@ -1262,6 +1262,24 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
     raise SystemExit("unknown migrate command")
 
 
+def _cmd_predictions(args: argparse.Namespace) -> int:
+    from yolozu.migrate import migrate_predictions_entries_schema
+
+    if args.predictions_command == "migrate":
+        out = migrate_predictions_entries_schema(
+            input_path=str(args.input),
+            output=str(args.output),
+            from_version=str(args.from_version),
+            to_version=str(args.to_version),
+            strict_source=bool(args.strict_source),
+            force=bool(args.force),
+        )
+        print(str(out))
+        return 0
+
+    raise SystemExit("unknown predictions command")
+
+
 def _cmd_import(args: argparse.Namespace) -> int:
     from yolozu.imports import (
         import_coco_instances_dataset,

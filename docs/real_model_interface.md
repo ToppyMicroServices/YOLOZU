@@ -22,7 +22,7 @@ Baseline report (real outputs + fps):
 - `python3 tools/run_baseline.py --adapter rtdetr_pose --dataset data/coco128 --max-images 50 --output reports/baseline.json`
 
 Reference adapter regression (real-image pinned baseline + CI gates):
-- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json`
+- `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json`
 - Baseline refresh after intentional behavior changes:
   - `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
 - Interface-contract-only gate (hard):
@@ -74,6 +74,7 @@ Input records (from `yolozu.datasets.dataset.build_manifest`):
 Output per image (from `RTDETRPoseAdapter`):
 - `image`: original path
 - `detections`: list of dicts with `class_id`, `score`, `bbox` (cxcywh_norm), and optional pose fields
+- required entry metadata for reference regression: `image_w/h`, `orig_w/h`, `model_input_w/h`, `preprocess|preproc`
 - For mAP/eval flows, `class_id` is required as part of the `predictions` interface contract (strict validation).
 
 ### Units & intrinsics (common pitfall)

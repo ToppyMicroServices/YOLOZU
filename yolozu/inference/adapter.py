@@ -200,7 +200,7 @@ class RTDETRPoseAdapter(ModelAdapter):
                 "RTDETRPoseAdapter requires 'torch'. Install PyTorch (and optionally torchvision) to enable real inference."
             ) from exc
 
-        from PIL import Image
+        from PIL import Image, ImageOps
         import numpy as np
 
         try:
@@ -317,7 +317,8 @@ class RTDETRPoseAdapter(ModelAdapter):
                 path = require_image_key(record_or_path.get("image"), where="record.image")
             else:
                 path = record_or_path
-            img = Image.open(path).convert("RGB")
+            with Image.open(path) as src_img:
+                img = ImageOps.exif_transpose(src_img).convert("RGB")
             orig_w, orig_h = img.size
             dst_w, dst_h = int(self.image_size[0]), int(self.image_size[1])
             img = img.resize((dst_w, dst_h), resample=Image.BILINEAR)
@@ -333,9 +334,17 @@ class RTDETRPoseAdapter(ModelAdapter):
             meta = {
                 "orig_size": {"width": int(orig_w), "height": int(orig_h)},
                 "input_size": {"width": int(dst_w), "height": int(dst_h)},
+                "model_input_size": {"width": int(dst_w), "height": int(dst_h)},
                 "scale_xy": {"x": float(dst_w) / float(orig_w) if orig_w else None, "y": float(dst_h) / float(orig_h) if orig_h else None},
                 "method": "resize",
+                "resize": {"algorithm": "bilinear", "mode": "stretch"},
+                "pad": {"left": 0, "top": 0, "right": 0, "bottom": 0},
+                "letterbox": False,
                 "normalize": "0_1",
+                "dtype": "float32",
+                "color_order": "RGB",
+                "exif_orientation": "normalized",
+                "decoder": "Pillow",
                 "tta_aug": {
                     "hflip": bool(isinstance(record_or_path, dict) and record_or_path.get("_tta_hflip", False)),
                 },
@@ -521,7 +530,14 @@ class RTDETRPoseAdapter(ModelAdapter):
                 "image": image_path,
                 "detections": detections,
                 "image_size": pp_meta.get("input_size"),
+                "image_w": int((pp_meta.get("input_size") or {}).get("width", 0)),
+                "image_h": int((pp_meta.get("input_size") or {}).get("height", 0)),
+                "orig_w": int((pp_meta.get("orig_size") or {}).get("width", 0)),
+                "orig_h": int((pp_meta.get("orig_size") or {}).get("height", 0)),
+                "model_input_w": int((pp_meta.get("model_input_size") or {}).get("width", 0)),
+                "model_input_h": int((pp_meta.get("model_input_size") or {}).get("height", 0)),
                 "preprocess": pp_meta,
+                "preproc": pp_meta,
             }
             if intrinsics is not None:
                 entry["intrinsics"] = intrinsics

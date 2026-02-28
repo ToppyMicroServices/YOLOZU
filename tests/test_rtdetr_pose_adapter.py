@@ -57,6 +57,13 @@ class TestRTDETRPoseAdapter(unittest.TestCase):
             self.assertEqual(meta1.get("method"), "resize")
             self.assertEqual(meta1.get("normalize"), "0_1")
             self.assertEqual(meta1.get("input_size"), {"width": 32, "height": 32})
+            self.assertEqual(meta1.get("model_input_size"), {"width": 32, "height": 32})
+            self.assertEqual(meta1.get("resize", {}).get("algorithm"), "bilinear")
+            self.assertEqual(meta1.get("pad"), {"left": 0, "top": 0, "right": 0, "bottom": 0})
+            self.assertFalse(bool(meta1.get("letterbox")))
+            self.assertEqual(meta1.get("color_order"), "RGB")
+            self.assertEqual(meta1.get("dtype"), "float32")
+            self.assertEqual(meta1.get("exif_orientation"), "normalized")
             self.assertEqual(meta1, meta2)
 
     def test_preprocess_scales_intrinsics(self):
@@ -127,6 +134,14 @@ class TestRTDETRPoseAdapter(unittest.TestCase):
             out_a = adapter_a.predict(records)
             out_b = adapter_b.predict(records)
             self.assertEqual(out_a, out_b)
+            entry = out_a[0]
+            self.assertIn("image_w", entry)
+            self.assertIn("image_h", entry)
+            self.assertIn("orig_w", entry)
+            self.assertIn("orig_h", entry)
+            self.assertIn("model_input_w", entry)
+            self.assertIn("model_input_h", entry)
+            self.assertIn("preproc", entry)
 
 
 if __name__ == "__main__":

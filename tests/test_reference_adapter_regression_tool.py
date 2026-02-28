@@ -129,6 +129,16 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
         self.assertTrue(any("map50" in item for item in hard_failures))
         self.assertEqual(soft_failures, [])
 
+    def test_record_preflight_classifies_missing_image_as_e_io(self):
+        mod = self._load_tool_module()
+        records = [{"image": "data/does_not_exist_for_preflight.jpg", "labels": []}]
+        _meta, errors = mod._preflight_records(
+            records,
+            dataset_root=Path(__file__).resolve().parents[1],
+            image_size=(160, 160),
+        )
+        self.assertTrue(any(str(item).startswith("E_IO:") for item in errors), msg=f"errors={errors}")
+
     def test_write_and_check_baseline(self):
         if importlib.util.find_spec("torch") is None:
             self.skipTest("torch is not installed")

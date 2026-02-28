@@ -30,4 +30,6 @@ This page defines the stable/soft boundaries for predictions interface contract 
 - One-generation migration is supported:
   - entry `v1` (or missing `schema_version`) -> entry `v2`
 - Migration is applied during canonicalization/load paths.
+- Explicit CLI migration is available:
+  - `yolozu predictions migrate --input <predictions.json> --output <predictions_v2.json> --from v1 --to v2`
 - Breaking changes beyond one generation require explicit migration extension and docs update.

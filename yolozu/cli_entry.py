@@ -17,6 +17,7 @@ from .cli_commands import (
     _cmd_eval_long_tail,
     _cmd_long_tail_recipe,
     _cmd_parity,
+    _cmd_predictions,
     _cmd_validate,
     _cmd_eval_instance_seg,
     _cmd_onnxrt_export,
@@ -237,6 +238,32 @@ def main(argv: list[str] | None = None) -> int:
     parity.add_argument("--bbox-atol", type=float, default=1e-4, help="Absolute tolerance for bbox differences.")
     parity.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images.")
     parity.add_argument("--image-size", default=None, help="Optional fixed image size (N or W,H) to skip image reads.")
+
+    predictions = sub.add_parser("predictions", help="Predictions artifact utilities.")
+    predictions_sub = predictions.add_subparsers(dest="predictions_command", required=True)
+    pred_migrate = predictions_sub.add_parser("migrate", help="Migrate predictions entry schema versions (v1 -> v2).")
+    pred_migrate.add_argument("--input", required=True, help="Input predictions JSON path.")
+    pred_migrate.add_argument("--output", required=True, help="Output predictions JSON path.")
+    pred_migrate.add_argument(
+        "--from",
+        dest="from_version",
+        choices=("v1",),
+        required=True,
+        help="Source predictions entry schema version.",
+    )
+    pred_migrate.add_argument(
+        "--to",
+        dest="to_version",
+        choices=("v2",),
+        required=True,
+        help="Target predictions entry schema version.",
+    )
+    pred_migrate.add_argument(
+        "--strict-source",
+        action="store_true",
+        help="Fail when input entries do not match --from version constraints.",
+    )
+    pred_migrate.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
 
     validate = sub.add_parser("validate", help="Validate artifacts (predictions JSON, instance-seg predictions).")
     validate_sub = validate.add_subparsers(dest="validate_command", required=True)
@@ -793,6 +820,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_long_tail_recipe(args)
     if args.command == "parity":
         return _cmd_parity(args)
+    if args.command == "predictions":
+        return _cmd_predictions(args)
     if args.command == "validate":
         return _cmd_validate(args)
     if args.command == "eval-instance-seg":

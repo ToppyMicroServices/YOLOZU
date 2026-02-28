@@ -149,6 +149,32 @@ Then:
 yolozu validate predictions reports/predictions.json --strict
 ```
 
+### Entry schema migration (`v1` -> `v2`)
+
+Use this when old predictions entries are missing entry-level `schema_version`
+or explicitly use `schema_version: 1`.
+
+```bash
+yolozu predictions migrate \
+  --input reports/predictions_legacy.json \
+  --output reports/predictions_v2.json \
+  --from v1 \
+  --to v2 \
+  --force
+```
+
+Strict source check (reject mixed/newer inputs):
+
+```bash
+yolozu predictions migrate \
+  --input reports/predictions_mixed.json \
+  --output reports/predictions_v2.json \
+  --from v1 \
+  --to v2 \
+  --strict-source \
+  --force
+```
+
 ## Troubleshooting (common migration failures)
 
 - `yolozu migrate dataset` fails to resolve layouts:

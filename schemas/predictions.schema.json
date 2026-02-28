@@ -69,6 +69,14 @@
           "description": "Entry-level schema version. Missing value is treated as legacy v1 and migrated to v2 by canonicalization."
         },
         "image": { "type": "string" },
+        "image_w": { "type": "integer", "minimum": 1 },
+        "image_h": { "type": "integer", "minimum": 1 },
+        "orig_w": { "type": "integer", "minimum": 1 },
+        "orig_h": { "type": "integer", "minimum": 1 },
+        "model_input_w": { "type": "integer", "minimum": 1 },
+        "model_input_h": { "type": "integer", "minimum": 1 },
+        "preprocess": { "type": "object", "additionalProperties": true },
+        "preproc": { "type": "object", "additionalProperties": true },
         "detections": {
           "type": "array",
           "items": { "$ref": "#/$defs/detection" }

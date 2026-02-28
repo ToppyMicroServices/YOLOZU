@@ -322,6 +322,9 @@ python3 tools/run_reference_adapter_regression.py \
   --repro-policy relaxed \
   --runtime-lock requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
+  --diff-summary-out reports/reference_adapter_regression.diff_summary.json \
+  --topk-examples-dir reports/reference_adapter_regression_topk \
+  --topk-examples 3 \
   --output reports/reference_adapter_regression.json
 ```
 

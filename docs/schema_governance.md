@@ -75,7 +75,7 @@ See also: [RFC workflow + golden compatibility assets](rfc_workflow.md).
 Use this template in release notes when introducing schema `N+1`:
 
 1. Identify old artifacts (`schema_version == N` or missing).
-2. Run migration tool to emit `schema_version == N+1` payloads.
+2. Run migration tool to emit `schema_version == N+1` payloads (predictions entry v1->v2: `yolozu predictions migrate --from v1 --to v2 ...`).
 3. Validate migrated artifacts with `yolozu validate ...` in CI.
 4. Re-run evaluation protocol on migrated artifacts and compare metrics.
 5. Remove compatibility mode only after deprecation window ends.

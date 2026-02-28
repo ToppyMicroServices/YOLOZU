@@ -9223,6 +9223,18 @@
             "scope": "path"
           },
           {
+            "description": "Writes gate-wise diff summary JSON when baseline comparison fails.",
+            "flag": "--diff-summary-out",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes top-k counterexample overlays when baseline comparison fails.",
+            "flag": "--topk-examples-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
             "description": "Writes/updates baseline JSON when --write-baseline is used.",
             "flag": "--baseline",
             "kind": "file",
@@ -9234,7 +9246,7 @@
       "examples": [
         {
           "description": "Run micro profile regression (interface contract hard + behavior warn).",
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression.json"
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json"
         },
         {
           "description": "Run interface-contract-only hard gate (schema + consistency).",
@@ -9289,6 +9301,25 @@
           "kind": "file",
           "name": "output",
           "required": false
+        },
+        {
+          "flag": "--diff-summary-out",
+          "kind": "file",
+          "name": "diff_summary_out",
+          "required": false
+        },
+        {
+          "flag": "--topk-examples-dir",
+          "kind": "dir",
+          "name": "topk_examples_dir",
+          "required": false
+        },
+        {
+          "flag": "--topk-examples",
+          "kind": "number",
+          "name": "topk_examples",
+          "required": false,
+          "default": 3
         },
         {
           "flag": "--write-baseline",
@@ -9647,7 +9678,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run RT-DETR reference-adapter regression with profile-aware micro/full flows, interface contract gates (schema/consistency), behavior gates (aggregate + robust metrics + speed), optional backend parity checks, and provenance/SBOM metadata capture.",
+      "summary": "Run RT-DETR reference-adapter regression with hardened record I/O+preprocess interface contract checks, profile-aware micro/full flows, backend-aware behavior gates, optional parity checks, provenance/SBOM capture, and automatic diff-summary/top-k failure artifacts.",
       "tags": [
         "adapter",
         "regression",
