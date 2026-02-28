@@ -108,6 +108,12 @@ python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewsho
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
+Reference adapter regression (RT-DETR, real-image baseline):
+
+```bash
+python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json
+```
+
 ## Source checkout (repo users)
 
 ```bash

@@ -147,6 +147,7 @@ class RTDETRPoseAdapter(ModelAdapter):
         amp: str = "off",
         channels_last: bool = False,
         use_inference_mode: bool = True,
+        init_seed: int | None = None,
     ):
         self.config_path = str(config_path)
         self.checkpoint_path = checkpoint_path
@@ -163,6 +164,7 @@ class RTDETRPoseAdapter(ModelAdapter):
         self.amp = str(amp).strip().lower()
         self.channels_last = bool(channels_last)
         self.use_inference_mode = bool(use_inference_mode)
+        self.init_seed = (int(init_seed) if init_seed is not None else None)
 
         self.lora_r = int(lora_r)
         self.lora_alpha = float(lora_alpha) if lora_alpha is not None else None
@@ -212,7 +214,14 @@ class RTDETRPoseAdapter(ModelAdapter):
 
         cfg = load_config(self.config_path)
         num_classes_fg = int(getattr(cfg.model, "num_classes", 80))
-        model = build_model(cfg.model).eval()
+
+        # Keep reference-adapter baselines reproducible without forcing global RNG.
+        if self.init_seed is None:
+            model = build_model(cfg.model).eval()
+        else:
+            with torch.random.fork_rng(devices=[]):
+                torch.manual_seed(int(self.init_seed))
+                model = build_model(cfg.model).eval()
 
         # Optional LoRA injection (useful for PEFT checkpoints and TTT adapter-only updates).
         lora_report: dict | None = None
@@ -276,7 +285,12 @@ class RTDETRPoseAdapter(ModelAdapter):
         from yolozu.geometry.intrinsics import parse_intrinsics as _parse_intrinsics
 
         def preprocess(record_or_path):
-            path = record_or_path["image"] if isinstance(record_or_path, dict) else record_or_path
+            if isinstance(record_or_path, dict):
+                from yolozu.core.image_keys import require_image_key
+
+                path = require_image_key(record_or_path.get("image"), where="record.image")
+            else:
+                path = record_or_path
             img = Image.open(path).convert("RGB")
             orig_w, orig_h = img.size
             dst_w, dst_h = int(self.image_size[0]), int(self.image_size[1])
@@ -355,6 +369,10 @@ class RTDETRPoseAdapter(ModelAdapter):
         torch = self._backend["torch"]
         model = self._backend["model"]
         preprocess = self._backend["preprocess"]
+        from yolozu.core.image_keys import require_image_key
+
+        if not isinstance(records, list):
+            raise ValueError("records must be a list of dicts with key 'image'")
 
         batch_size = int(getattr(self, "infer_batch_size", 1) or 1)
         if batch_size <= 0:
@@ -475,10 +493,10 @@ class RTDETRPoseAdapter(ModelAdapter):
         batch_x: list = []
         batch_meta: list[tuple[str, dict, dict | None]] = []
 
-        for record in records:
+        for idx, record in enumerate(records):
             if not isinstance(record, dict):
-                raise ValueError("records must be a list of dicts with key 'image'")
-            image_path = record["image"]
+                raise ValueError(f"records[{idx}] must be an object")
+            image_path = require_image_key(record.get("image"), where=f"records[{idx}].image")
             x, pp_meta, intrinsics = preprocess(record)
             x = x.to(self.device)
             if self.channels_last and int(getattr(x, "ndim", 0)) == 4:

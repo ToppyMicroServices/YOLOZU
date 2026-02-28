@@ -89,6 +89,45 @@ class TestRTDETRPoseAdapter(unittest.TestCase):
             self.assertEqual(meta.get("orig_size"), {"width": 20, "height": 10})
             self.assertEqual(meta.get("input_size"), {"width": 40, "height": 20})
 
+    def test_predict_requires_image_key(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        adapter = RTDETRPoseAdapter(image_size=(32, 32), init_seed=2026)
+        with self.assertRaises(ValueError) as ctx:
+            adapter.predict([{"labels": []}])
+        self.assertIn("records[0].image", str(ctx.exception))
+
+    def test_predict_is_deterministic_with_init_seed(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        from PIL import Image
+        import numpy as np
+
+        with tempfile.TemporaryDirectory() as td:
+            img_path = Path(td) / "toy.jpg"
+            arr = (np.arange(9 * 9 * 3, dtype=np.uint8).reshape(9, 9, 3) % 255)
+            Image.fromarray(arr, mode="RGB").save(img_path)
+            records = [{"image": str(img_path)}]
+
+            adapter_a = RTDETRPoseAdapter(
+                image_size=(32, 32),
+                score_threshold=0.0,
+                max_detections=5,
+                init_seed=2026,
+            )
+            adapter_b = RTDETRPoseAdapter(
+                image_size=(32, 32),
+                score_threshold=0.0,
+                max_detections=5,
+                init_seed=2026,
+            )
+
+            out_a = adapter_a.predict(records)
+            out_b = adapter_b.predict(records)
+            self.assertEqual(out_a, out_b)
+
 
 if __name__ == "__main__":
     unittest.main()

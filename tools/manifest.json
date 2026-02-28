@@ -30,6 +30,11 @@
       "summary": "YOLOZU predictions JSON (list of {image,detections} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_predictions.py <path> [--strict]"
     },
+    "reference_adapter_regression_report_json": {
+      "producer": "python3 tools/run_reference_adapter_regression.py",
+      "schema": "docs/schemas/reference_adapter_regression_report.schema.json",
+      "summary": "Reference adapter regression report with schema/consistency/metric/speed gate results."
+    },
     "run_meta_json": {
       "schema": "docs/schemas/run_meta.schema.json",
       "summary": "Run provenance metadata contract emitted at runs/<run_id>/reports/run_meta.json.",
@@ -9176,6 +9181,212 @@
         "finetune",
         "multitask",
         "real-data"
+      ]
+    },
+    {
+      "contract_outputs": {
+        "reference_adapter_regression_report_json": "reference_adapter_regression_json"
+      },
+      "contracts": {
+        "produces": [
+          "reference_adapter_regression_report_json"
+        ]
+      },
+      "docs": [
+        "docs/adapter_contract.md",
+        "docs/adapter_strategy.md",
+        "docs/real_model_interface.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "Default baseline path used by the reference adapter regression flow.",
+            "kind": "file",
+            "path": "baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json",
+            "scope": "path"
+          }
+        ],
+        "writes": [
+          {
+            "description": "Writes regression report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes/updates baseline JSON when --write-baseline is used.",
+            "flag": "--baseline",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/run_reference_adapter_regression.py",
+      "examples": [
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json",
+          "description": "Run schema/consistency/metric/speed regression gates for the RT-DETR reference adapter."
+        },
+        {
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "description": "Refresh the pinned baseline after an intentional adapter/output contract change."
+        }
+      ],
+      "id": "run_reference_adapter_regression",
+      "inputs": [
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": "baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json",
+          "flag": "--baseline",
+          "kind": "file",
+          "name": "baseline",
+          "required": false
+        },
+        {
+          "default": "reports/reference_adapter_regression.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--write-baseline",
+          "kind": "string",
+          "name": "write_baseline",
+          "required": false
+        },
+        {
+          "default": "rtdetr_pose/configs/base.json",
+          "flag": "--config",
+          "kind": "file",
+          "name": "config",
+          "required": false
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "default": "160",
+          "flag": "--image-size",
+          "kind": "string",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": 0.05,
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "default": 20,
+          "flag": "--max-detections",
+          "kind": "number",
+          "name": "max_detections",
+          "required": false
+        },
+        {
+          "default": 2026,
+          "flag": "--init-seed",
+          "kind": "number",
+          "name": "init_seed",
+          "required": false
+        },
+        {
+          "default": 0.0,
+          "flag": "--metric-total-detections-abs",
+          "kind": "number",
+          "name": "metric_total_detections_abs",
+          "required": false
+        },
+        {
+          "default": 0.01,
+          "flag": "--metric-score-sum-abs",
+          "kind": "number",
+          "name": "metric_score_sum_abs",
+          "required": false
+        },
+        {
+          "default": 0.001,
+          "flag": "--metric-score-mean-abs",
+          "kind": "number",
+          "name": "metric_score_mean_abs",
+          "required": false
+        },
+        {
+          "default": 0.1,
+          "flag": "--metric-bbox-checksum-abs",
+          "kind": "number",
+          "name": "metric_bbox_checksum_abs",
+          "required": false
+        },
+        {
+          "default": 0.25,
+          "flag": "--min-fps-ratio",
+          "kind": "number",
+          "name": "min_fps_ratio",
+          "required": false
+        },
+        {
+          "default": 0.2,
+          "flag": "--absolute-floor-fps",
+          "kind": "number",
+          "name": "absolute_floor_fps",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/reference_adapter_regression.json",
+          "description": "Reference adapter regression report JSON.",
+          "kind": "file",
+          "name": "reference_adapter_regression_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Run RT-DETR reference-adapter regression gates (schema/consistency/metric/speed) on a fixed real-image sample and compare against baseline.",
+      "tags": [
+        "adapter",
+        "regression",
+        "baseline",
+        "rtdetr_pose"
       ]
     },
     {

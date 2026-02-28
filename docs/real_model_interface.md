@@ -21,6 +21,11 @@ Scenario runner (metrics pipeline):
 Baseline report (real outputs + fps):
 - `python3 tools/run_baseline.py --adapter rtdetr_pose --dataset data/coco128 --max-images 50 --output reports/baseline.json`
 
+Reference adapter regression (real-image pinned baseline + CI gates):
+- `python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --output reports/reference_adapter_regression.json`
+- Baseline refresh after intentional behavior changes:
+  - `python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 2 --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json`
+
 Export (ONNX):
 - Prefer `train_minimal.py --run-dir ...` (writes `model.onnx` + `model.onnx.meta.json`).
 - Or call `python3 -c "from rtdetr_pose.export import export_onnx; ..."` (see `rtdetr_pose/rtdetr_pose/export.py`).
@@ -76,6 +81,7 @@ Output per image (from `RTDETRPoseAdapter`):
 ## Deterministic predictions (for tests)
 
 - Use fixed seeds (`--seed`) and `--deterministic` in `train_minimal.py`
+- For `RTDETRPoseAdapter` inference without a checkpoint, use `--init-seed` in `tools/run_reference_adapter_regression.py`
 - Limit to `data/coco128` and set `--max-images` for quick runs
 - Keep `--image-size`, `--score-threshold`, and `--max-detections` fixed
 - Record the config + checkpoint hash in run notes

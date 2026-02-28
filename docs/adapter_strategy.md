@@ -23,6 +23,29 @@ This page describes the **recommended adapter path** and priorities.
 4. **OpenCV DNN (ONNX)**
    - Deployment-friendly baseline for CPU / edge scenarios.
 
+## Official reference adapter (for CI regression)
+
+The official in-repo reference adapter is **`RTDETRPoseAdapter`**.
+It is used to pin the adapter interface contract path
+(`predict(records) -> entries`) to a reproducible real-image baseline.
+
+Reference regression command:
+
+```bash
+python3 tools/run_reference_adapter_regression.py \
+  --dataset data/real_multitask_fewshot \
+  --split val \
+  --max-images 2 \
+  --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+  --output reports/reference_adapter_regression.json
+```
+
+Gates are explicit:
+- schema drift (zero tolerance)
+- consistency drift (record/image mapping and per-image counts)
+- metric drift (score/bbox checksums with declared thresholds)
+- speed drift (minimum FPS floor + baseline ratio)
+
 ## Contract: what adapters must produce
 
 Adapters should emit the canonical schema:

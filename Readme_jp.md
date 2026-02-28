@@ -306,6 +306,32 @@ python3 tools/run_real_multitask_finetune_demo.py \
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
 （`prepare_summary.json` に annotation由来ラベルの provenance も記録）
 
+### Reference adapter回帰ゲート（実画像baseline）
+
+`RTDETRPoseAdapter` を reference adapter として固定し、
+`predict(records) -> entries` の interface contract を CI で回帰監視できます。
+
+```bash
+python3 tools/run_reference_adapter_regression.py \
+  --dataset data/real_multitask_fewshot \
+  --split val \
+  --max-images 2 \
+  --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+  --output reports/reference_adapter_regression.json
+```
+
+baseline更新（意図的変更時のみ）:
+
+```bash
+python3 tools/run_reference_adapter_regression.py \
+  --dataset data/real_multitask_fewshot \
+  --split val \
+  --max-images 2 \
+  --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+  --write-baseline \
+  --output reports/reference_adapter_regression_baseline_write.json
+```
+
 Run Contract仕様: [`docs/run_contract.md`](docs/run_contract.md)
 
 ---

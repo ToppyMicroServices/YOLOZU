@@ -23,10 +23,33 @@ This page describes the **recommended adapter path** and priorities.
 4. **OpenCV DNN (ONNX)**
    - Deployment-friendly baseline for CPU / edge scenarios.
 
+## Official reference adapter (for CI regression)
+
+The official in-repo reference adapter is **`RTDETRPoseAdapter`**.
+It is used to pin the adapter interface contract path
+(`predict(records) -> entries`) to a reproducible real-image baseline.
+
+Reference regression command:
+
+```bash
+python3 tools/run_reference_adapter_regression.py \
+  --dataset data/real_multitask_fewshot \
+  --split val \
+  --max-images 2 \
+  --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+  --output reports/reference_adapter_regression.json
+```
+
+Gates are explicit:
+- schema drift (zero tolerance)
+- consistency drift (record/image mapping and per-image counts)
+- metric drift (score/bbox checksums with declared thresholds)
+- speed drift (minimum FPS floor + baseline ratio)
+
 ## Contract: what adapters must produce
 
 Adapters should emit the canonical schema:
-- `predictions.json` compliant with: `docs/predictions_schema.md`
+- `predictions.json` compliant with: [predictions_schema.md](predictions_schema.md)
 
 The point is not “perfectly mirroring a framework’s internal objects”, but producing:
 - Stable IDs / image keys
@@ -36,14 +59,21 @@ The point is not “perfectly mirroring a framework’s internal objects”, but
 
 ## Recommended workflow
 
+- Start with: [External inference backends](external_inference.md)
 - Validate first:
 
 ```bash
 yolozu validate predictions --predictions predictions.json
 ```
 
-- Then evaluate:
+- Then evaluate (repo example dataset):
 
 ```bash
-yolozu eval-coco --dataset /path/to/coco --predictions predictions.json
+yolozu eval-coco --dataset data/coco128 --predictions predictions.json
 ```
+
+## Related docs
+
+- Import adapters (schema-centric): [import_adapters.md](import_adapters.md)
+- Real model interface: [real_model_interface.md](real_model_interface.md)
+- Evaluation protocol: [yolo26_eval_protocol.md](yolo26_eval_protocol.md)

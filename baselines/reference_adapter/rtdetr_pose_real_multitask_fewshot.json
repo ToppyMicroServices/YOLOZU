@@ -1,0 +1,74 @@
+{
+  "adapter": {
+    "checkpoint": null,
+    "config": "rtdetr_pose/configs/base.json",
+    "device": "cpu",
+    "image_size": [
+      160,
+      160
+    ],
+    "init_seed": 2026,
+    "max_detections": 20,
+    "score_threshold": 0.05
+  },
+  "baseline": {
+    "contract": {
+      "prediction_images": [
+        "images/val/000000468577.jpg",
+        "images/val/000000512194.jpg"
+      ],
+      "prediction_images_sha256": "108be85ec52b562043f6a27252f59cce64c4194f58e2d390cf721eade1d2ef1c",
+      "record_images": [
+        "images/val/000000468577.jpg",
+        "images/val/000000512194.jpg"
+      ],
+      "record_images_sha256": "108be85ec52b562043f6a27252f59cce64c4194f58e2d390cf721eade1d2ef1c"
+    },
+    "predictions_sha256": "dab9c9a221375c89f8b081880ce53bfa3205b2b8a3a49924b152411ab10a889f",
+    "speed": {
+      "fps": 1.606205,
+      "images": 2,
+      "seconds": 1.245171
+    },
+    "summary": {
+      "bbox_checksum": 94.824465,
+      "class_hist": {
+        "18": 2,
+        "2": 2,
+        "20": 8,
+        "52": 6,
+        "62": 20,
+        "69": 2
+      },
+      "detections_per_image": [
+        20,
+        20
+      ],
+      "images": 2,
+      "images_with_detections": 2,
+      "score_mean": 0.061821,
+      "score_sum": 2.472845,
+      "total_detections": 40
+    }
+  },
+  "dataset": {
+    "max_images": 2,
+    "path": "data/real_multitask_fewshot",
+    "split": "val"
+  },
+  "generated_utc": "2026-02-28T14:25:28Z",
+  "reference_adapter": "rtdetr_pose",
+  "schema_version": 1,
+  "thresholds": {
+    "metric": {
+      "bbox_checksum_abs": 0.1,
+      "score_mean_abs": 0.001,
+      "score_sum_abs": 0.01,
+      "total_detections_abs": 0.0
+    },
+    "speed": {
+      "absolute_floor_fps": 0.2,
+      "min_fps_ratio": 0.25
+    }
+  }
+}

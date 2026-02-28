@@ -293,6 +293,20 @@ jobs:
         run: |
           python tools/audit_yolozu_manifest_flags.py
 
+      - name: Reference adapter regression gate (real-image baseline)
+        run: |
+          python tools/run_reference_adapter_regression.py \
+            --dataset data/real_multitask_fewshot \
+            --split val \
+            --max-images 2 \
+            --device cpu \
+            --image-size 160 \
+            --score-threshold 0.05 \
+            --max-detections 20 \
+            --init-seed 2026 \
+            --baseline baselines/reference_adapter/rtdetr_pose_real_multitask_fewshot.json \
+            --output reports/reference_adapter_regression_ci.json
+
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -t tests
