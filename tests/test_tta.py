@@ -72,6 +72,63 @@ class TestTTA(unittest.TestCase):
         self.assertAlmostEqual(det_full["bbox"]["cx"], 0.8)
         self.assertAlmostEqual(det_full["bbox_abs"]["cx"], 80.0)
 
+    def test_tta_flips_keypoints_norm_and_abs(self):
+        entries = [
+            {
+                "image": "x.jpg",
+                "image_size": {"width": 100, "height": 50},
+                "detections": [
+                    {
+                        "class_id": 1,
+                        "score": 0.9,
+                        "bbox": {"cx": 0.2, "cy": 0.3, "w": 0.1, "h": 0.1},
+                        "keypoints": [
+                            {"x": 0.25, "y": 0.2, "v": 2},
+                            [80.0, 20.0, 2],
+                        ],
+                    }
+                ],
+            }
+        ]
+
+        out = apply_tta(
+            entries,
+            enabled=True,
+            seed=7,
+            flip_prob=1.0,
+            norm_only=False,
+            flip_keypoints=True,
+        )
+        det = out.entries[0]["detections"][0]
+        self.assertAlmostEqual(float(det["keypoints"][0]["x"]), 0.75)
+        self.assertAlmostEqual(float(det["keypoints"][1][0]), 20.0)
+
+    def test_tta_flips_pose_offsets(self):
+        entries = [
+            {
+                "image": "x.jpg",
+                "detections": [
+                    {
+                        "class_id": 1,
+                        "score": 0.9,
+                        "bbox": {"cx": 0.2, "cy": 0.3, "w": 0.1, "h": 0.1},
+                        "offsets": [0.15, -0.2],
+                    }
+                ],
+            }
+        ]
+
+        out = apply_tta(
+            entries,
+            enabled=True,
+            seed=7,
+            flip_prob=1.0,
+            flip_pose_offsets=True,
+        )
+        det = out.entries[0]["detections"][0]
+        self.assertAlmostEqual(float(det["offsets"][0]), -0.15)
+        self.assertAlmostEqual(float(det["offsets"][1]), -0.2)
+
 
 if __name__ == "__main__":
     unittest.main()

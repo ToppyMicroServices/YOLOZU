@@ -24,6 +24,17 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--dataset-root", default="data/real_multitask_fewshot", help="Prepared dataset root.")
     p.add_argument("--prepare", action="store_true", help="Run dataset preparation before training.")
     p.add_argument(
+        "--download-if-missing",
+        action="store_true",
+        help="When --prepare is set, download tiny real-image COCO sample if inputs are missing.",
+    )
+    p.add_argument(
+        "--download-num-images",
+        type=int,
+        default=None,
+        help="When --prepare is set, override tiny COCO download count.",
+    )
+    p.add_argument(
         "--prepare-args",
         type=str,
         default="",
@@ -166,6 +177,10 @@ def main(argv: list[str] | None = None) -> int:
     prep_result = None
     if bool(args.prepare):
         cmd = [args.python, "tools/prepare_real_multitask_fewshot.py", "--out", str(dataset_root), "--force"]
+        if bool(args.download_if_missing):
+            cmd.append("--download-if-missing")
+        if args.download_num_images is not None:
+            cmd.extend(["--download-num-images", str(int(args.download_num_images))])
         extra = [x for x in str(args.prepare_args or "").split(" ") if x.strip()]
         cmd.extend(extra)
         proc = _run(cmd)

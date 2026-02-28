@@ -129,6 +129,108 @@ def _entry_image_size(entry: dict[str, Any]) -> tuple[float | None, float | None
     return (None, None)
 
 
+def _flip_norm_x(value: Any) -> float:
+    return 1.0 - float(value)
+
+
+def _flip_abs_x(value: Any, *, width: float) -> float:
+    return float(width) - float(value)
+
+
+def _flip_keypoint_x(
+    value: Any,
+    *,
+    width: float | None,
+    norm_only: bool,
+    warnings: list[str],
+    where: str,
+) -> float | None:
+    try:
+        x = float(value)
+    except Exception:
+        warnings.append(f"{where}: invalid keypoint.x")
+        return None
+
+    is_norm = 0.0 <= x <= 1.0
+    if is_norm:
+        return _flip_norm_x(x)
+    if norm_only:
+        warnings.append(f"{where}: keypoint.x appears absolute but --tta-norm-only is enabled")
+        return None
+    if width is None:
+        warnings.append(f"{where}: missing image_size for absolute keypoint.x")
+        return None
+    return _flip_abs_x(x, width=width)
+
+
+def _flip_keypoints_inplace(
+    det: dict[str, Any],
+    *,
+    width: float | None,
+    norm_only: bool,
+    warnings: list[str],
+    where: str,
+) -> None:
+    keypoints = det.get("keypoints")
+    if keypoints is None:
+        return
+    if not isinstance(keypoints, list):
+        warnings.append(f"{where}: keypoints must be a list when present")
+        return
+
+    out: list[Any] = []
+    for kp_idx, kp in enumerate(keypoints):
+        kp_where = f"{where}.keypoints[{kp_idx}]"
+        if isinstance(kp, dict):
+            new_kp = dict(kp)
+            flipped = _flip_keypoint_x(
+                new_kp.get("x"),
+                width=width,
+                norm_only=norm_only,
+                warnings=warnings,
+                where=kp_where,
+            )
+            if flipped is not None:
+                new_kp["x"] = float(flipped)
+            out.append(new_kp)
+            continue
+
+        if isinstance(kp, (list, tuple)) and len(kp) >= 2:
+            new_kp = list(kp)
+            flipped = _flip_keypoint_x(
+                new_kp[0],
+                width=width,
+                norm_only=norm_only,
+                warnings=warnings,
+                where=kp_where,
+            )
+            if flipped is not None:
+                new_kp[0] = float(flipped)
+            out.append(new_kp)
+            continue
+
+        warnings.append(f"{kp_where}: unsupported keypoint format")
+        out.append(kp)
+
+    det["keypoints"] = out
+
+
+def _flip_pose_offsets_inplace(det: dict[str, Any], *, warnings: list[str], where: str) -> None:
+    offsets = det.get("offsets")
+    if offsets is None:
+        return
+    if not isinstance(offsets, (list, tuple)) or len(offsets) < 1:
+        warnings.append(f"{where}: offsets must be a list[>=1] when present")
+        return
+    out = list(offsets)
+    try:
+        out[0] = -float(out[0])
+    except Exception:
+        warnings.append(f"{where}: invalid offsets[0]")
+        return
+    det["offsets"] = out
+
+
 def apply_tta(
     entries: Iterable[dict[str, Any]],
     *,
@@ -136,13 +238,19 @@ def apply_tta(
     seed: int | None = None,
     flip_prob: float = 0.5,
     norm_only: bool = False,
+    flip_keypoints: bool = True,
+    flip_pose_offsets: bool = True,
 ) -> TransformResult:
     """Apply a simple test-time augmentation transform to predictions.
 
     When enabled, a per-detection mask is sampled (seeded) to decide whether
     to apply a horizontal flip in normalized space (cx -> 1 - cx). If
-    norm_only is False and bbox_abs is present, a best-effort absolute flip is
-    applied using entry.image_size.
+    norm_only is False and bbox_abs/keypoints absolute coordinates are present,
+    a best-effort absolute flip is applied using entry.image_size.
+
+    Optional multi-task fields:
+    - keypoints: flips x for list-of-dict or list-of-list forms.
+    - offsets: flips x offset sign (pose-style center offsets).
     """
 
     warnings: list[str] = []
@@ -159,6 +267,7 @@ def apply_tta(
 
         new_dets = []
         mask: list[bool] = []
+        width, _ = _entry_image_size(entry)
 
         for j, det in enumerate(dets):
             if not isinstance(det, dict):
@@ -182,7 +291,6 @@ def apply_tta(
                 if not norm_only:
                     bbox_abs = new_det.get("bbox_abs")
                     if isinstance(bbox_abs, dict) and "cx" in bbox_abs:
-                        width, _ = _entry_image_size(entry)
                         if width is None:
                             warnings.append(f"predictions[{idx}].detections[{j}]: missing image_size for bbox_abs")
                         else:
@@ -192,6 +300,22 @@ def apply_tta(
                             except Exception:
                                 warnings.append(f"predictions[{idx}].detections[{j}]: invalid bbox_abs.cx")
                             new_det["bbox_abs"] = new_bbox_abs
+
+                where = f"predictions[{idx}].detections[{j}]"
+                if bool(flip_keypoints):
+                    _flip_keypoints_inplace(
+                        new_det,
+                        width=width,
+                        norm_only=bool(norm_only),
+                        warnings=warnings,
+                        where=where,
+                    )
+                if bool(flip_pose_offsets):
+                    _flip_pose_offsets_inplace(
+                        new_det,
+                        warnings=warnings,
+                        where=where,
+                    )
 
             new_dets.append(new_det)
 
@@ -300,6 +424,8 @@ def fuse_detection_scores(
             new_dets.sort(key=lambda d: float(d.get(out_score_key, 0.0)), reverse=True)
             new_dets = new_dets[: int(topk_per_image)]
 
-        out_entries.append({"image": image, "detections": new_dets})
+        new_entry = dict(entry)
+        new_entry["detections"] = new_dets
+        out_entries.append(new_entry)
 
     return TransformResult(entries=out_entries, warnings=warnings)

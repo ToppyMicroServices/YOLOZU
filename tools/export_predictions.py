@@ -124,6 +124,24 @@ def _parse_args(argv):
         help="torch.compile mode (default: reduce-overhead).",
     )
     parser.add_argument(
+        "--torch-amp",
+        choices=("off", "fp16", "bf16"),
+        default="off",
+        help="Torch autocast dtype for inference (default: off).",
+    )
+    parser.add_argument(
+        "--torch-channels-last",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Use channels_last memory format for torch inference tensors (default: false).",
+    )
+    parser.add_argument(
+        "--torch-inference-mode",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use torch.inference_mode instead of torch.no_grad (default: true).",
+    )
+    parser.add_argument(
         "--max-images",
         type=int,
         default=None,
@@ -148,6 +166,18 @@ def _parse_args(argv):
     parser.add_argument("--tta-seed", type=int, default=None, help="Seed for TTA randomness.")
     parser.add_argument("--tta-flip-prob", type=float, default=0.5, help="Flip probability for TTA.")
     parser.add_argument("--tta-norm-only", action="store_true", help="Update only normalized bbox values for TTA.")
+    parser.add_argument(
+        "--tta-flip-keypoints",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="When TTA is enabled, horizontally flip keypoints x coordinates (default: true).",
+    )
+    parser.add_argument(
+        "--tta-flip-pose-offsets",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="When TTA is enabled, horizontally flip pose offsets x component (default: true).",
+    )
     parser.add_argument("--tta-log-out", default=None, help="Optional path to write TTA log JSON.")
 
     add_ttt_arguments(parser, include_enable_flag=True)
@@ -182,14 +212,18 @@ def main(argv=None):
     if args.adapter == "dummy" and int(args.lora_r) > 0:
         raise SystemExit("--lora-* flags are only supported with --adapter rtdetr_pose")
     if args.adapter == "dummy":
-        compile_opts_changed = bool(
+        torch_opts_changed = bool(
             bool(args.torch_compile)
             or str(args.torch_compile_backend) != "inductor"
             or str(args.torch_compile_mode) != "reduce-overhead"
+            or str(args.torch_amp) != "off"
+            or bool(args.torch_channels_last)
+            or not bool(args.torch_inference_mode)
         )
-        if compile_opts_changed or int(args.infer_batch_size) != 1:
+        if torch_opts_changed or int(args.infer_batch_size) != 1:
             raise SystemExit(
-                "--torch-compile* and --infer-batch-size are only supported with --adapter rtdetr_pose"
+                "--torch-compile*/--torch-amp/--torch-channels-last/--[no-]torch-inference-mode "
+                "and --infer-batch-size are only supported with --adapter rtdetr_pose"
             )
 
     dataset_root = Path(args.dataset) if args.dataset else (repo_root / "data" / "coco128")
@@ -226,6 +260,9 @@ def main(argv=None):
             compile_model=bool(args.torch_compile),
             compile_backend=str(args.torch_compile_backend),
             compile_mode=str(args.torch_compile_mode),
+            amp=str(args.torch_amp),
+            channels_last=bool(args.torch_channels_last),
+            use_inference_mode=bool(args.torch_inference_mode),
         )
 
     def _ttt_or_die(_records):
@@ -338,6 +375,8 @@ def main(argv=None):
             seed=args.tta_seed,
             flip_prob=args.tta_flip_prob,
             norm_only=bool(args.tta_norm_only),
+            flip_keypoints=bool(args.tta_flip_keypoints),
+            flip_pose_offsets=bool(args.tta_flip_pose_offsets),
         )
         predictions = tta.entries
         tta_warnings = tta.warnings
@@ -381,12 +420,17 @@ def main(argv=None):
                         "backend": (str(args.torch_compile_backend) if bool(args.torch_compile) else None),
                         "mode": (str(args.torch_compile_mode) if bool(args.torch_compile) else None),
                     },
+                    "torch_amp": str(args.torch_amp),
+                    "torch_channels_last": bool(args.torch_channels_last),
+                    "torch_inference_mode": bool(args.torch_inference_mode),
                 },
                 "tta": {
                     "enabled": bool(args.tta),
                     "seed": args.tta_seed,
                     "flip_prob": float(args.tta_flip_prob),
                     "norm_only": bool(args.tta_norm_only),
+                    "flip_keypoints": bool(args.tta_flip_keypoints),
+                    "flip_pose_offsets": bool(args.tta_flip_pose_offsets),
                     "warnings": tta_warnings,
                     "summary": tta_summary,
                 },
@@ -412,6 +456,8 @@ def main(argv=None):
                 "seed": args.tta_seed,
                 "flip_prob": float(args.tta_flip_prob),
                 "norm_only": bool(args.tta_norm_only),
+                "flip_keypoints": bool(args.tta_flip_keypoints),
+                "flip_pose_offsets": bool(args.tta_flip_pose_offsets),
                 "summary": tta_summary,
             },
         }

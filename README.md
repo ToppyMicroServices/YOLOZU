@@ -102,8 +102,8 @@ Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 Real-image multitask finetune smoke (bbox/segmentation/keypoints/depth/pose6d):
 
 ```bash
-python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --force
-python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
+python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --download-if-missing --force
+python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
 ```
 
 ## Source checkout (repo users)

@@ -14,7 +14,9 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
 import shutil
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -44,6 +46,29 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         default=4,
         help="Number of synthetic bbox-derived keypoints per instance (default: 4).",
+    )
+    p.add_argument(
+        "--download-if-missing",
+        action="store_true",
+        help="If COCO inputs are missing, download a tiny real-image subset automatically.",
+    )
+    p.add_argument(
+        "--download-num-images",
+        type=int,
+        default=None,
+        help="Override tiny COCO download image count (default: train-images + val-images).",
+    )
+    p.add_argument(
+        "--download-seed",
+        type=int,
+        default=0,
+        help="Seed used by tiny COCO downloader (default: 0).",
+    )
+    p.add_argument(
+        "--download-timeout",
+        type=float,
+        default=60.0,
+        help="HTTP timeout seconds for tiny COCO downloader (default: 60).",
     )
     p.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     return p
@@ -105,6 +130,64 @@ def _draw_polygons_mask(image_w: int, image_h: int, anns: list[dict[str, Any]], 
     return mask_img
 
 
+def _download_coco_tiny_if_needed(
+    *,
+    instances_json: Path,
+    images_dir: Path,
+    total_images: int,
+    seed: int,
+    timeout: float,
+) -> dict[str, Any]:
+    repo_root = Path(__file__).resolve().parents[1]
+    downloader = repo_root / "scripts" / "download_coco_instances_tiny.py"
+    if not downloader.exists():
+        raise SystemExit(f"downloader not found: {downloader}")
+
+    split = str(images_dir.name)
+    if split != "val2017":
+        raise SystemExit(
+            "automatic download currently supports val2017 only. "
+            "Provide existing --instances-json/--images-dir or switch to val2017 layout."
+        )
+    if instances_json.parent.name != "annotations":
+        raise SystemExit(
+            "automatic download expects instances path under <coco_root>/annotations/. "
+            f"got: {instances_json}"
+        )
+    coco_root = instances_json.parent.parent
+    want = max(1, int(total_images))
+
+    cmd = [
+        sys.executable,
+        str(downloader),
+        "--out-root",
+        str(coco_root),
+        "--split",
+        split,
+        "--num-images",
+        str(want),
+        "--seed",
+        str(int(seed)),
+        "--timeout",
+        str(float(timeout)),
+        "--force",
+    ]
+    proc = subprocess.run(cmd, text=True, capture_output=True, check=False)
+    if proc.returncode != 0:
+        raise SystemExit(
+            "tiny COCO download failed.\n"
+            f"cmd: {' '.join(cmd)}\n"
+            f"stdout:\n{proc.stdout}\n"
+            f"stderr:\n{proc.stderr}"
+        )
+    return {
+        "enabled": True,
+        "command": cmd,
+        "returncode": int(proc.returncode),
+        "stdout_tail": (proc.stdout or "").splitlines()[-5:],
+    }
+
+
 def _prepare_dataset(
     *,
     instances_json: Path,
@@ -113,11 +196,29 @@ def _prepare_dataset(
     train_images: int,
     val_images: int,
     num_keypoints: int,
+    download_if_missing: bool,
+    download_num_images: int | None,
+    download_seed: int,
+    download_timeout: float,
     force: bool,
 ) -> dict[str, Any]:
     np, pil = _ensure_deps()
     _Image, image_draw = pil
 
+    download_info = None
+    if (not instances_json.exists() or not images_dir.exists()) and bool(download_if_missing):
+        total = (
+            int(download_num_images)
+            if download_num_images is not None
+            else (int(train_images) + int(val_images))
+        )
+        download_info = _download_coco_tiny_if_needed(
+            instances_json=instances_json,
+            images_dir=images_dir,
+            total_images=int(total),
+            seed=int(download_seed),
+            timeout=float(download_timeout),
+        )
     if not instances_json.exists():
         raise SystemExit(f"instances json not found: {instances_json}")
     if not images_dir.exists():
@@ -175,6 +276,14 @@ def _prepare_dataset(
 
     manifest_counts = {"train": 0, "val": 0}
     instance_counts = {"train": 0, "val": 0}
+    label_provenance = {
+        "bbox": "coco_instances_gt",
+        "segmentation": "coco_polygon_gt",
+        "keypoints": "bbox_derived_anchors",
+        "depth": "bbox_scale_heuristic",
+        "pose6d": "bbox_depth_intrinsics_heuristic",
+        "model_inference_used": False,
+    }
 
     for image in selected:
         try:
@@ -280,6 +389,7 @@ def _prepare_dataset(
             "R_gt": r_list,
             "t_gt": t_list,
             "offsets_gt": [[0.0, 0.0] for _ in t_list],
+            "label_provenance": label_provenance,
         }
         meta_path = out_root / "labels" / split / f"{dst_image.stem}.json"
         meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
@@ -305,6 +415,7 @@ def _prepare_dataset(
         "task": "multi",
         "name": "real_multitask_fewshot",
         "root": str(out_root),
+        "label_provenance": label_provenance,
         "splits": {
             "train": {"images": "images/train", "labels": "labels/train"},
             "val": {"images": "images/val", "labels": "labels/val"},
@@ -318,6 +429,8 @@ def _prepare_dataset(
         "dataset_root": str(out_root),
         "instances_json": str(instances_json),
         "images_dir": str(images_dir),
+        "download": download_info,
+        "label_provenance": label_provenance,
         "counts": {
             "train_images": int(manifest_counts["train"]),
             "val_images": int(manifest_counts["val"]),
@@ -338,6 +451,10 @@ def main(argv: list[str] | None = None) -> int:
         train_images=int(args.train_images),
         val_images=int(args.val_images),
         num_keypoints=int(args.num_keypoints),
+        download_if_missing=bool(args.download_if_missing),
+        download_num_images=(int(args.download_num_images) if args.download_num_images is not None else None),
+        download_seed=int(args.download_seed),
+        download_timeout=float(args.download_timeout),
         force=bool(args.force),
     )
 

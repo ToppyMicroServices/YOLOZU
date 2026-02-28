@@ -132,20 +132,23 @@ python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --force
+  --train-images 6 --val-images 2 --download-if-missing --force
 
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
+  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
   --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
 \end{lstlisting}
 The aggregated report is written to \path{reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json}.
+Dataset provenance for each supervision field is recorded in \path{data/real_multitask_fewshot/prepare_summary.json}.
 
 Practical entry points (``real model'' path):
 \begin{itemize}
   \item Training scaffold: \cmd{python3 -m rtdetr_pose.train_minimal ...} (writes metrics and optional run artifacts).
   \item Export predictions: \cmd{python3 tools/export_predictions.py --adapter rtdetr_pose ... --wrap}
+  \item Torch acceleration knobs on export: \cmd{--infer-batch-size}, \cmd{--torch-compile*}, \cmd{--torch-amp}, \cmd{--torch-channels-last}, \cmd{--torch-inference-mode}
   \item No-torch path: use the \cmd{precomputed} adapter with a schema-valid \path{predictions.json}.
 \end{itemize}
 

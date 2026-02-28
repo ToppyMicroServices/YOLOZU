@@ -14,6 +14,8 @@ RTDETRPoseAdapter    -- runs the RT-DETR pose scaffold (optional ``torch``).
 
 from __future__ import annotations
 
+from contextlib import nullcontext
+
 __all__ = [
     "ModelAdapter",
     "DummyAdapter",
@@ -142,6 +144,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         compile_model: bool = False,
         compile_backend: str = "inductor",
         compile_mode: str = "reduce-overhead",
+        amp: str = "off",
+        channels_last: bool = False,
+        use_inference_mode: bool = True,
     ):
         self.config_path = str(config_path)
         self.checkpoint_path = checkpoint_path
@@ -155,6 +160,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         self.compile_model = bool(compile_model)
         self.compile_backend = str(compile_backend)
         self.compile_mode = str(compile_mode)
+        self.amp = str(amp).strip().lower()
+        self.channels_last = bool(channels_last)
+        self.use_inference_mode = bool(use_inference_mode)
 
         self.lora_r = int(lora_r)
         self.lora_alpha = float(lora_alpha) if lora_alpha is not None else None
@@ -328,6 +336,8 @@ class RTDETRPoseAdapter(ModelAdapter):
         for record in records:
             x, _, _ = preprocess(record)
             x = x.to(self.device)
+            if self.channels_last and int(getattr(x, "ndim", 0)) == 4:
+                x = x.contiguous(memory_format=torch.channels_last)
             batch.append(x)
             if len(batch) >= int(batch_size):
                 yield torch.cat(batch, dim=0)
@@ -344,6 +354,31 @@ class RTDETRPoseAdapter(ModelAdapter):
         batch_size = int(getattr(self, "infer_batch_size", 1) or 1)
         if batch_size <= 0:
             raise ValueError("infer_batch_size must be > 0")
+
+        def _autocast_context(x_tensor):
+            mode = str(getattr(self, "amp", "off") or "off").strip().lower()
+            if mode in ("", "off", "none", "false", "0"):
+                return nullcontext()
+            if mode in ("fp16", "float16", "half"):
+                dtype = torch.float16
+            elif mode in ("bf16", "bfloat16"):
+                dtype = torch.bfloat16
+            else:
+                return nullcontext()
+
+            device_type = str(getattr(x_tensor, "device", "cpu")).split(":")[0]
+            if device_type not in ("cpu", "cuda", "mps"):
+                return nullcontext()
+            try:
+                return torch.autocast(device_type=device_type, dtype=dtype, enabled=True)
+            except Exception:
+                return nullcontext()
+
+        def _run_model(x_tensor):
+            grad_ctx = torch.inference_mode if bool(self.use_inference_mode) else torch.no_grad
+            with grad_ctx():
+                with _autocast_context(x_tensor):
+                    return model(x_tensor)
 
         def _decode_single(
             *,
@@ -441,13 +476,16 @@ class RTDETRPoseAdapter(ModelAdapter):
             image_path = record["image"]
             x, pp_meta, intrinsics = preprocess(record)
             x = x.to(self.device)
+            if self.channels_last and int(getattr(x, "ndim", 0)) == 4:
+                x = x.contiguous(memory_format=torch.channels_last)
             batch_x.append(x)
             batch_meta.append((image_path, pp_meta, intrinsics))
 
             if len(batch_x) >= batch_size:
                 x_cat = torch.cat(batch_x, dim=0)
-                with torch.no_grad():
-                    out = model(x_cat)
+                if self.channels_last and int(getattr(x_cat, "ndim", 0)) == 4:
+                    x_cat = x_cat.contiguous(memory_format=torch.channels_last)
+                out = _run_model(x_cat)
                 for i, (p, meta, intr) in enumerate(batch_meta):
                     outputs.append(_decode_single(idx=i, out=out, image_path=p, pp_meta=meta, intrinsics=intr))
                 batch_x = []
@@ -455,8 +493,9 @@ class RTDETRPoseAdapter(ModelAdapter):
 
         if batch_x:
             x_cat = torch.cat(batch_x, dim=0)
-            with torch.no_grad():
-                out = model(x_cat)
+            if self.channels_last and int(getattr(x_cat, "ndim", 0)) == 4:
+                x_cat = x_cat.contiguous(memory_format=torch.channels_last)
+            out = _run_model(x_cat)
             for i, (p, meta, intr) in enumerate(batch_meta):
                 outputs.append(_decode_single(idx=i, out=out, image_path=p, pp_meta=meta, intrinsics=intr))
 

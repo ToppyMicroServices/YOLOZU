@@ -12,7 +12,7 @@ Training (CPU scaffold, metrics output):
 
 Inference / predictions export:
 - `python3 tools/export_predictions.py --adapter rtdetr_pose --dataset data/coco128 --checkpoint /path/to/checkpoint.pt --max-images 50 --wrap`
-- Torch acceleration knobs: add `--infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead`
+- Torch acceleration knobs: add `--infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-amp bf16 --torch-channels-last --torch-inference-mode`
 
 Scenario runner (metrics pipeline):
 - `yolozu test configs/examples/test_setting.yaml --adapter rtdetr_pose --dataset data/coco128 --checkpoint /path/to/checkpoint.pt --max-images 50`

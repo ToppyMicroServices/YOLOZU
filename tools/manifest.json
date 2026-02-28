@@ -160,6 +160,107 @@
       ]
     },
     {
+      "docs": [
+        "docs/tools_index.md",
+        "docs/interop_detectron2_mmdet.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes backend support audit report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes per-backend dry-run predictions JSON artifacts.",
+            "flag": "--work-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/audit_backend_support.py",
+      "examples": [
+        {
+          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json",
+          "description": "Dry-run audit for YOLOX/YOLOv8/Detectron2/MMDetection exporter interface contract support."
+        }
+      ],
+      "id": "audit_backend_support",
+      "inputs": [
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": "reports/backend_support_audit.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--work-dir",
+          "kind": "dir",
+          "name": "work_dir",
+          "required": false
+        },
+        {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "flag": "--strict",
+          "kind": "string",
+          "name": "strict",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/backend_support_audit.json",
+          "description": "Audit report with backend status, command, and artifact checks.",
+          "kind": "file",
+          "name": "backend_support_audit_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Dry-run interface contract audit for YOLOX/YOLOv8/Detectron2/MMDetection export backends.",
+      "tags": [
+        "audit",
+        "backend",
+        "interop",
+        "predictions"
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
@@ -3238,6 +3339,30 @@
           "required": false
         },
         {
+          "flag": "--tta-flip-keypoints",
+          "kind": "string",
+          "name": "tta_flip_keypoints",
+          "required": false
+        },
+        {
+          "flag": "--no-tta-flip-keypoints",
+          "kind": "string",
+          "name": "no_tta_flip_keypoints",
+          "required": false
+        },
+        {
+          "flag": "--tta-flip-pose-offsets",
+          "kind": "string",
+          "name": "tta_flip_pose_offsets",
+          "required": false
+        },
+        {
+          "flag": "--no-tta-flip-pose-offsets",
+          "kind": "string",
+          "name": "no_tta_flip_pose_offsets",
+          "required": false
+        },
+        {
           "flag": "--tta-log-out",
           "kind": "file",
           "name": "tta_log_out",
@@ -3559,6 +3684,37 @@
           "kind": "string",
           "name": "torch_compile_mode",
           "required": false
+        },
+        {
+          "default": "off",
+          "flag": "--torch-amp",
+          "kind": "string",
+          "name": "torch_amp",
+          "required": false
+        },
+        {
+          "flag": "--torch-channels-last",
+          "kind": "string",
+          "name": "torch_channels_last",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-channels-last",
+          "kind": "string",
+          "name": "no_torch_channels_last",
+          "required": false
+        },
+        {
+          "flag": "--torch-inference-mode",
+          "kind": "string",
+          "name": "torch_inference_mode",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-inference-mode",
+          "kind": "string",
+          "name": "no_torch_inference_mode",
+          "required": false
         }
       ],
       "outputs": [
@@ -3575,7 +3731,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch.compile and batched inference.",
+      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips.",
       "tags": [
         "predictions",
         "adapter"
@@ -7616,6 +7772,30 @@
           "required": false
         },
         {
+          "flag": "--download-if-missing",
+          "kind": "string",
+          "name": "download_if_missing",
+          "required": false
+        },
+        {
+          "flag": "--download-num-images",
+          "kind": "number",
+          "name": "download_num_images",
+          "required": false
+        },
+        {
+          "flag": "--download-seed",
+          "kind": "number",
+          "name": "download_seed",
+          "required": false
+        },
+        {
+          "flag": "--download-timeout",
+          "kind": "number",
+          "name": "download_timeout",
+          "required": false
+        },
+        {
           "flag": "--force",
           "kind": "string",
           "name": "force",
@@ -7643,7 +7823,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances.",
+      "summary": "Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata.",
       "tags": [
         "dataset",
         "fewshot",
@@ -8766,6 +8946,18 @@
           "flag": "--prepare",
           "kind": "string",
           "name": "prepare",
+          "required": false
+        },
+        {
+          "flag": "--download-if-missing",
+          "kind": "string",
+          "name": "download_if_missing",
+          "required": false
+        },
+        {
+          "flag": "--download-num-images",
+          "kind": "number",
+          "name": "download_num_images",
           "required": false
         },
         {

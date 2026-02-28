@@ -58,6 +58,11 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             "--torch-compile",
             "--torch-compile-backend",
             "--torch-compile-mode",
+            "--torch-amp",
+            "--torch-channels-last",
+            "--torch-inference-mode",
+            "--tta-flip-keypoints",
+            "--tta-flip-pose-offsets",
         ):
             self.assertIn(flag, out)
 
@@ -105,7 +110,7 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
         )
         self.assertNotEqual(proc.returncode, 0)
         msg = proc.stdout + proc.stderr
-        self.assertIn("--torch-compile* and --infer-batch-size are only supported", msg)
+        self.assertIn("--torch-compile*/--torch-amp/--torch-channels-last", msg)
 
     def test_rtdetr_pose_export_smoke_with_lora(self):
         if torch is None:
@@ -157,6 +162,10 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
                     "inductor",
                     "--torch-compile-mode",
                     "reduce-overhead",
+                    "--torch-amp",
+                    "bf16",
+                    "--no-torch-channels-last",
+                    "--torch-inference-mode",
                     "--max-images",
                     "1",
                     "--wrap",
@@ -181,6 +190,9 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             self.assertTrue(meta.get("lora", {}).get("freeze_base"))
             self.assertEqual(int((meta.get("inference") or {}).get("infer_batch_size", 0)), 1)
             self.assertTrue(((meta.get("inference") or {}).get("torch_compile") or {}).get("enabled"))
+            self.assertEqual(str((meta.get("inference") or {}).get("torch_amp")), "bf16")
+            self.assertFalse(bool((meta.get("inference") or {}).get("torch_channels_last")))
+            self.assertTrue(bool((meta.get("inference") or {}).get("torch_inference_mode")))
 
             report = meta.get("lora", {}).get("report")
             self.assertIsInstance(report, dict)

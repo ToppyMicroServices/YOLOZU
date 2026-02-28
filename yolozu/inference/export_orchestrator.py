@@ -159,11 +159,18 @@ def validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None
         or str(args.torch_compile_backend) != "inductor"
         or str(args.torch_compile_mode) != "reduce-overhead"
     )
+    accel_opts_changed = bool(
+        compile_opts_changed
+        or str(getattr(args, "torch_amp", "off")) != "off"
+        or bool(getattr(args, "torch_channels_last", False))
+        or not bool(getattr(args, "torch_inference_mode", True))
+    )
     infer_batch_changed = int(args.infer_batch_size) != 1
-    if args.tta or args.ttt or int(args.lora_r) > 0 or compile_opts_changed or infer_batch_changed:
+    if args.tta or args.ttt or int(args.lora_r) > 0 or accel_opts_changed or infer_batch_changed:
         raise SystemExit(
             f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend}); "
-            "--torch-compile* and --infer-batch-size require --backend torch"
+            "--torch-compile* and --infer-batch-size require --backend torch; "
+            "--torch-amp/--torch-channels-last/--[no-]torch-inference-mode also require --backend torch"
         )
 
 
@@ -319,6 +326,24 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
         default="reduce-overhead",
         help="torch.compile mode (default: reduce-overhead).",
     )
+    p.add_argument(
+        "--torch-amp",
+        choices=("off", "fp16", "bf16"),
+        default="off",
+        help="Torch autocast dtype for inference (default: off).",
+    )
+    p.add_argument(
+        "--torch-channels-last",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Use channels_last memory format for torch inference tensors (default: false).",
+    )
+    p.add_argument(
+        "--torch-inference-mode",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use torch.inference_mode instead of torch.no_grad (default: true).",
+    )
     p.add_argument("--lora-r", type=int, default=0, help="Enable LoRA by setting rank r>0 (default: 0 disables).")
     p.add_argument("--lora-alpha", type=float, default=None, help="LoRA alpha scaling (default: r).")
     p.add_argument("--lora-dropout", type=float, default=0.0, help="LoRA dropout on inputs (default: 0.0).")
@@ -344,6 +369,18 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--tta-seed", type=int, default=None, help="Seed for TTA randomness.")
     p.add_argument("--tta-flip-prob", type=float, default=0.5, help="Flip probability for TTA.")
     p.add_argument("--tta-norm-only", action="store_true", help="Update only normalized bbox values for TTA.")
+    p.add_argument(
+        "--tta-flip-keypoints",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="When TTA is enabled, horizontally flip keypoints x coordinates (default: true).",
+    )
+    p.add_argument(
+        "--tta-flip-pose-offsets",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="When TTA is enabled, horizontally flip pose offsets x component (default: true).",
+    )
     p.add_argument("--tta-log-out", default=None, help="Optional path to write TTA log JSON.")
     add_ttt_arguments(p, include_enable_flag=True)
 
@@ -440,10 +477,14 @@ def export_with_backend(
                 bool(args.torch_compile)
                 or str(args.torch_compile_backend) != "inductor"
                 or str(args.torch_compile_mode) != "reduce-overhead"
+                or str(args.torch_amp) != "off"
+                or bool(args.torch_channels_last)
+                or not bool(args.torch_inference_mode)
             )
             if compile_opts_changed or int(args.infer_batch_size) != 1:
                 raise SystemExit(
-                    "--torch-compile* and --infer-batch-size are only supported for --backend torch"
+                    "--torch-compile*/--torch-amp/--torch-channels-last/--[no-]torch-inference-mode "
+                    "and --infer-batch-size are only supported for --backend torch"
                 )
         adapter = "dummy" if backend == "dummy" else "rtdetr_pose"
         lora_enabled = bool(backend == "torch" and int(args.lora_r) > 0)
@@ -472,6 +513,9 @@ def export_with_backend(
                 "backend": (str(args.torch_compile_backend) if backend == "torch" else None),
                 "mode": (str(args.torch_compile_mode) if backend == "torch" else None),
             },
+            "torch_amp": (str(args.torch_amp) if backend == "torch" else None),
+            "torch_channels_last": (bool(args.torch_channels_last) if backend == "torch" else None),
+            "torch_inference_mode": (bool(args.torch_inference_mode) if backend == "torch" else None),
             "lora": {
                 "enabled": lora_enabled,
                 "r": int(args.lora_r) if lora_enabled else 0,
@@ -486,6 +530,8 @@ def export_with_backend(
                 "seed": args.tta_seed if tta_enabled else None,
                 "flip_prob": float(args.tta_flip_prob) if tta_enabled else None,
                 "norm_only": bool(args.tta_norm_only) if tta_enabled else None,
+                "flip_keypoints": bool(args.tta_flip_keypoints) if tta_enabled else None,
+                "flip_pose_offsets": bool(args.tta_flip_pose_offsets) if tta_enabled else None,
             },
             "ttt": {
                 "enabled": ttt_enabled,
@@ -682,6 +728,8 @@ def export_with_backend(
         cmd.extend(["--tta-flip-prob", str(float(args.tta_flip_prob))])
         if args.tta_norm_only:
             cmd.append("--tta-norm-only")
+        cmd.append("--tta-flip-keypoints" if bool(args.tta_flip_keypoints) else "--no-tta-flip-keypoints")
+        cmd.append("--tta-flip-pose-offsets" if bool(args.tta_flip_pose_offsets) else "--no-tta-flip-pose-offsets")
         if args.tta_log_out:
             cmd.extend(["--tta-log-out", str(args.tta_log_out)])
 
@@ -705,6 +753,8 @@ def export_with_backend(
                     str(args.torch_compile_backend),
                     "--torch-compile-mode",
                     str(args.torch_compile_mode),
+                    "--torch-amp",
+                    str(args.torch_amp),
                     "--lora-r",
                     str(int(args.lora_r)),
                     "--lora-dropout",
@@ -723,6 +773,8 @@ def export_with_backend(
                 cmd.extend(["--lora-alpha", str(float(args.lora_alpha))])
             if bool(args.torch_compile):
                 cmd.append("--torch-compile")
+            cmd.append("--torch-channels-last" if bool(args.torch_channels_last) else "--no-torch-channels-last")
+            cmd.append("--torch-inference-mode" if bool(args.torch_inference_mode) else "--no-torch-inference-mode")
             cmd.append("--lora-freeze-base" if bool(args.lora_freeze_base) else "--no-lora-freeze-base")
 
         subprocess_or_die(cmd)

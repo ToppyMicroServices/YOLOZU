@@ -47,6 +47,9 @@ class TestPrepareRealMultitaskFewshotTool(unittest.TestCase):
             counts = payload.get("counts") or {}
             self.assertEqual(int(counts.get("train_images", -1)), 1)
             self.assertEqual(int(counts.get("val_images", -1)), 1)
+            provenance = payload.get("label_provenance") or {}
+            self.assertEqual(str(provenance.get("bbox")), "coco_instances_gt")
+            self.assertFalse(bool(provenance.get("model_inference_used", True)))
             self.assertTrue((out / "labels" / "train" / "classes.json").exists())
             self.assertTrue((out / "labels" / "val" / "classes.json").exists())
 

@@ -28,6 +28,8 @@ class TTAConfig:
     seed: int | None = None
     flip_prob: float = 0.5
     norm_only: bool = False
+    flip_keypoints: bool = True
+    flip_pose_offsets: bool = True
 
 
 def apply_tta_transform(
@@ -39,4 +41,6 @@ def apply_tta_transform(
         seed=config.seed,
         flip_prob=float(config.flip_prob),
         norm_only=bool(config.norm_only),
+        flip_keypoints=bool(config.flip_keypoints),
+        flip_pose_offsets=bool(config.flip_pose_offsets),
     )

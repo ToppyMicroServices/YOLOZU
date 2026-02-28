@@ -50,7 +50,23 @@ class TestPredictionsTransformGates(unittest.TestCase):
         self.assertEqual(len(dets), 1)
         self.assertEqual(int(dets[0]["class_id"]), 0)
 
+    def test_fuse_preserves_entry_metadata(self):
+        entries = [
+            {
+                "image": "img.jpg",
+                "image_size": {"width": 320, "height": 240},
+                "preprocess": {"method": "resize"},
+                "detections": [
+                    {"class_id": 0, "score": 0.9, "score_tmp_sym": 0.0},
+                ],
+            }
+        ]
+        out = fuse_detection_scores(entries, weights={"det": 1.0, "tmp": 0.0, "unc": 0.0})
+        entry = out.entries[0]
+        self.assertIn("image_size", entry)
+        self.assertIn("preprocess", entry)
+        self.assertEqual(entry["image_size"]["width"], 320)
+
 
 if __name__ == "__main__":
     unittest.main()
-

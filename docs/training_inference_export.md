@@ -182,12 +182,13 @@ python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --force
+  --train-images 6 --val-images 2 --download-if-missing --force
 
 # 2) Run staged finetuning:
 # bbox -> segmentation -> keypoints -> depth -> pose6d
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
+  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
   --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
@@ -195,6 +196,7 @@ python3 tools/run_real_multitask_finetune_demo.py \
 
 The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
+`prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
 
 ### Config source-of-truth and key mapping
 
@@ -444,13 +446,16 @@ Torch推論の軽量拡張（PyTorch 2.x）:
 - `--infer-batch-size N`: 推論バッチサイズ（既定 `1`）
 - `--torch-compile`: `torch.compile` 有効化
 - `--torch-compile-backend` / `--torch-compile-mode`: compile backend/mode 指定
+- `--torch-amp {off,fp16,bf16}`: autocast dtype
+- `--torch-channels-last`: channels-last memory format
+- `--torch-inference-mode` / `--no-torch-inference-mode`: forward context 切替
 
-- python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --max-images 50 --wrap --output reports/predictions_torch_compiled.json
+- python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-amp bf16 --torch-channels-last --torch-inference-mode --max-images 50 --wrap --output reports/predictions_torch_compiled.json
 
 Optional TTA:
-- python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-seed 0 --tta-flip-prob 0.5 --wrap --output reports/predictions_tta.json
+- python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-seed 0 --tta-flip-prob 0.5 --tta-flip-keypoints --tta-flip-pose-offsets --wrap --output reports/predictions_tta.json
 
-Note: TTA here is a lightweight **prediction-space transform** (a post-transform on the exported bboxes). It does not rerun the model on augmented inputs.
+Note: TTA here is a lightweight **prediction-space transform** (post-transform on exported outputs). It does not rerun the model on augmented inputs.
 
 Optional TTT (test-time training, pre-prediction):
 - Tent (recommended safe preset + guard rails):

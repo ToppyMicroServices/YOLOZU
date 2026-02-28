@@ -251,7 +251,7 @@ run interface contract で固定された成果物（固定パス）:
   （`--hsv-*`, `--gray-prob`, `--gaussian-noise-*`, `--blur-*`）  
   ※実画像を使う場合は `--real-images` を併用
   （スキャフォールドはデフォルトで合成画像）。
-- `torch.compile`（実験的）: `--torch-compile`（失敗時はデフォルトでfallback）
+- 推論加速オプション: `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode`
 
 ### Depthモード（RT-DETR pose 学習スキャフォールド）
 
@@ -286,11 +286,12 @@ python3 tools/prepare_real_multitask_fewshot.py \
   --instances-json data/coco/annotations/instances_val2017.json \
   --images-dir data/coco/images/val2017 \
   --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 --force
+  --train-images 6 --val-images 2 --download-if-missing --force
 
 # bbox -> segmentation -> keypoints -> depth -> pose6d を段階実行
 python3 tools/run_real_multitask_finetune_demo.py \
   --dataset-root data/real_multitask_fewshot \
+  --prepare --download-if-missing \
   --out reports/real_multitask_finetune_demo \
   --device cpu \
   --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --force
@@ -298,6 +299,7 @@ python3 tools/run_real_multitask_finetune_demo.py \
 
 結果レポート:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
+（`prepare_summary.json` に annotation由来ラベルの provenance も記録）
 
 Run Contract仕様: [`docs/run_contract.md`](docs/run_contract.md)
 

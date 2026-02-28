@@ -10,6 +10,16 @@ from yolozu.adapter import RTDETRPoseAdapter
 
 
 class TestRTDETRPoseAdapter(unittest.TestCase):
+    def test_torch_accel_options_are_stored(self):
+        adapter = RTDETRPoseAdapter(
+            amp="bf16",
+            channels_last=True,
+            use_inference_mode=False,
+        )
+        self.assertEqual(adapter.amp, "bf16")
+        self.assertTrue(adapter.channels_last)
+        self.assertFalse(adapter.use_inference_mode)
+
     def test_requires_torch_when_used(self):
         if importlib.util.find_spec("torch") is not None:
             self.skipTest("torch is installed; this test covers the no-torch path")
