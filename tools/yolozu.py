@@ -596,10 +596,145 @@ def _copy_file(src: Path, dst: Path) -> None:
     dst.write_bytes(src.read_bytes())
 
 
+_ACCEL_EXPORT_SCRIPTS = {
+    "onnxrt": "tools/export_predictions_onnxrt.py",
+    "trt": "tools/export_predictions_trt.py",
+    "executorch": "tools/export_predictions_executorch.py",
+}
+
+
+def _ensure_exporter_script_exists(*, backend: str) -> str:
+    relpath = _ACCEL_EXPORT_SCRIPTS.get(str(backend))
+    if not isinstance(relpath, str) or not relpath:
+        raise SystemExit(f"internal error: unknown accelerator backend: {backend}")
+    script_path = repo_root / relpath
+    if not script_path.is_file():
+        raise SystemExit(
+            f"export backend '{backend}' is declared but missing exporter script: {relpath}. "
+            "Install/update repository sources or switch backend."
+        )
+    return relpath
+
+
+def _validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None:
+    if args.tta or args.ttt or int(args.lora_r) > 0:
+        raise SystemExit(f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend})")
+
+
+def _require_backend_model(*, args: argparse.Namespace, backend: str) -> str:
+    model = args.model
+    if not model:
+        raise SystemExit(f"--model is required for --backend {backend}")
+    return str(model)
+
+
+def _build_accel_backend_config(*, args: argparse.Namespace, backend: str, dataset_fp: str) -> dict[str, Any]:
+    _validate_torch_only_flags(args=args, backend=backend)
+    model = _require_backend_model(args=args, backend=backend)
+    if backend == "onnxrt":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "model": model,
+            "model_sha256": _sha256_file(model),
+            "input_name": str(args.input_name),
+            "combined_output": str(args.combined_output),
+            "boxes_scale": str(args.boxes_scale),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    if backend == "trt":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "engine": model,
+            "engine_sha256": _sha256_file(model),
+            "input_name": str(args.input_name),
+            "combined_output": str(args.combined_output),
+            "boxes_scale": str(args.boxes_scale),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    if backend == "executorch":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "model": model,
+            "model_sha256": _sha256_file(model),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
+
+
+def _build_accel_backend_command(*, args: argparse.Namespace, backend: str, dataset: str, out_path: Path) -> list[str]:
+    model = _require_backend_model(args=args, backend=backend)
+    script = _ensure_exporter_script_exists(backend=backend)
+    cmd = [
+        sys.executable,
+        script,
+        "--dataset",
+        str(dataset),
+        "--output",
+        str(out_path),
+        "--wrap",
+    ]
+    if backend == "onnxrt":
+        cmd.extend(
+            [
+                "--onnx",
+                model,
+                "--input-name",
+                str(args.input_name),
+                "--combined-output",
+                str(args.combined_output),
+                "--boxes-scale",
+                str(args.boxes_scale),
+            ]
+        )
+    elif backend == "trt":
+        cmd.extend(
+            [
+                "--engine",
+                model,
+                "--input-name",
+                str(args.input_name),
+                "--combined-output",
+                str(args.combined_output),
+                "--boxes-scale",
+                str(args.boxes_scale),
+            ]
+        )
+    elif backend == "executorch":
+        cmd.extend(["--model", model])
+    else:
+        raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
+
+    cmd.extend(["--min-score", str(float(args.min_score)), "--topk", str(int(args.topk))])
+    if args.split:
+        cmd.extend(["--split", str(args.split)])
+    if args.max_images is not None:
+        cmd.extend(["--max-images", str(int(args.max_images))])
+    if args.dry_run:
+        cmd.append("--dry-run")
+    if backend == "executorch" and args.strict:
+        cmd.append("--strict")
+    return cmd
+
+
 def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--backend",
-        choices=("dummy", "torch", "onnxrt", "trt", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
+        choices=("dummy", "torch", "onnxrt", "trt", "executorch", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
         default="dummy",
         help="Inference backend (default: dummy).",
     )
@@ -766,8 +901,8 @@ def _parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--ttt-sar-first-step-scale", type=float, default=1.0, help="SAR first-step scaling factor (default: 1.0).")
     p.add_argument("--ttt-log-out", default=None, help="Optional path to write TTT log JSON.")
 
-    # ONNXRuntime/TensorRT backend (YOLO26 exporters).
-    p.add_argument("--model", default=None, help="Model path (.onnx for onnxrt, .plan for trt).")
+    # ONNXRuntime/TensorRT/ExecuTorch backend (YOLO26 exporters).
+    p.add_argument("--model", default=None, help="Model path (.onnx for onnxrt, .plan for trt, .pte for executorch).")
     p.add_argument("--exp", default=None, help="YOLOX exp file path for --backend yolox.")
     p.add_argument("--weights", default=None, help="YOLOX checkpoint path for --backend yolox.")
     p.add_argument("--input-name", default="images", help="Input tensor/binding name (default: images).")
@@ -944,46 +1079,8 @@ def _export_with_backend(
                 },
             },
         }
-    elif backend == "onnxrt":
-        if args.tta or args.ttt or int(args.lora_r) > 0:
-            raise SystemExit("--tta/--ttt/--lora-* are only supported for --backend dummy/torch")
-        model = args.model
-        if not model:
-            raise SystemExit("--model is required for --backend onnxrt")
-        config_fp = {
-            "backend": backend,
-            "dataset": str(dataset_fp),
-            "split": args.split,
-            "max_images": args.max_images,
-            "model": str(model),
-            "model_sha256": _sha256_file(model),
-            "input_name": str(args.input_name),
-            "combined_output": str(args.combined_output),
-            "boxes_scale": str(args.boxes_scale),
-            "min_score": float(args.min_score),
-            "topk": int(args.topk),
-            "dry_run": bool(args.dry_run),
-        }
-    elif backend == "trt":
-        if args.tta or args.ttt or int(args.lora_r) > 0:
-            raise SystemExit("--tta/--ttt/--lora-* are only supported for --backend dummy/torch")
-        model = args.model
-        if not model:
-            raise SystemExit("--model is required for --backend trt")
-        config_fp = {
-            "backend": backend,
-            "dataset": str(dataset_fp),
-            "split": args.split,
-            "max_images": args.max_images,
-            "engine": str(model),
-            "engine_sha256": _sha256_file(model),
-            "input_name": str(args.input_name),
-            "combined_output": str(args.combined_output),
-            "boxes_scale": str(args.boxes_scale),
-            "min_score": float(args.min_score),
-            "topk": int(args.topk),
-            "dry_run": bool(args.dry_run),
-        }
+    elif backend in ("onnxrt", "trt", "executorch"):
+        config_fp = _build_accel_backend_config(args=args, backend=backend, dataset_fp=str(dataset_fp))
     elif backend == "yolox":
         config_fp = {
             "backend": backend,
@@ -1204,63 +1301,9 @@ def _export_with_backend(
             cmd.append("--lora-freeze-base" if bool(args.lora_freeze_base) else "--no-lora-freeze-base")
 
         _subprocess_or_die(cmd)
-    elif backend == "onnxrt":
-        cmd = [
-            sys.executable,
-            "tools/export_predictions_onnxrt.py",
-            "--dataset",
-            str(dataset),
-            "--onnx",
-            str(args.model),
-            "--input-name",
-            str(args.input_name),
-            "--combined-output",
-            str(args.combined_output),
-            "--boxes-scale",
-            str(args.boxes_scale),
-            "--min-score",
-            str(float(args.min_score)),
-            "--topk",
-            str(int(args.topk)),
-            "--output",
-            str(out_path),
-            "--wrap",
-        ]
-        if args.split:
-            cmd.extend(["--split", str(args.split)])
-        if args.max_images is not None:
-            cmd.extend(["--max-images", str(int(args.max_images))])
-        if args.dry_run:
-            cmd.append("--dry-run")
-        _subprocess_or_die(cmd)
-    elif backend == "trt":
-        cmd = [
-            sys.executable,
-            "tools/export_predictions_trt.py",
-            "--dataset",
-            str(dataset),
-            "--engine",
-            str(args.model),
-            "--input-name",
-            str(args.input_name),
-            "--combined-output",
-            str(args.combined_output),
-            "--boxes-scale",
-            str(args.boxes_scale),
-            "--min-score",
-            str(float(args.min_score)),
-            "--topk",
-            str(int(args.topk)),
-            "--output",
-            str(out_path),
-            "--wrap",
-        ]
-        if args.split:
-            cmd.extend(["--split", str(args.split)])
-        if args.max_images is not None:
-            cmd.extend(["--max-images", str(int(args.max_images))])
-        if args.dry_run:
-            cmd.append("--dry-run")
+    elif backend in ("onnxrt", "trt", "executorch"):
+        _validate_torch_only_flags(args=args, backend=backend)
+        cmd = _build_accel_backend_command(args=args, backend=backend, dataset=str(dataset), out_path=out_path)
         _subprocess_or_die(cmd)
     elif backend == "yolox":
         cmd = [

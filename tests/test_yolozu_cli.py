@@ -127,6 +127,45 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertIn("git", run)
             self.assertIn("env", run)
 
+    def test_export_executorch_missing_exporter_is_actionable(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = repo_root / "data" / "smoke"
+            model_path = root / "dummy.pte"
+            out_path = root / "preds.json"
+            model_path.write_bytes(b"dummy")
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "export",
+                    "--backend",
+                    "executorch",
+                    "--dataset",
+                    str(dataset_root),
+                    "--split",
+                    "val",
+                    "--model",
+                    str(model_path),
+                    "--dry-run",
+                    "--output",
+                    str(out_path),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("missing exporter script", proc.stderr)
+            self.assertIn("export_predictions_executorch.py", proc.stderr)
+
     def test_export_cache_reuses_by_fingerprint(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
