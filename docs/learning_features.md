@@ -70,6 +70,8 @@ Artifacts:
 - `reports/ttt_log_safe.json` (TTT step log)
 - Optional: fixed subset artifacts via `tools/make_subset_dataset.py` (`subset.json`, `subset_images.txt`)
 
+Task-aware knobs: `--ttt-sdft-task {pose,keypoints,depth,seg,full}` and `--ttt-aux-*` consistency weights for multi-task heads.
+
 Details: [`docs/ttt_protocol.md`](ttt_protocol.md).
 
 ## 4) (Research helper) Prediction distillation (offline)

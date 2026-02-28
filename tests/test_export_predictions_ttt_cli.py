@@ -37,6 +37,14 @@ class TestExportPredictionsTTTCLI(unittest.TestCase):
         self.assertIn("--ttt-sar-rho", out)
         self.assertIn("--ttt-sar-adaptive", out)
         self.assertIn("--ttt-sar-first-step-scale", out)
+        self.assertIn("--ttt-sdft-task", out)
+        self.assertIn("--ttt-aux-pose-weight", out)
+        self.assertIn("--ttt-aux-keypoints-weight", out)
+        self.assertIn("--ttt-aux-depth-weight", out)
+        self.assertIn("--ttt-aux-seg-weight", out)
+        self.assertIn("--ttt-aux-temperature", out)
+        self.assertIn("pose_safe", out)
+        self.assertIn("keypoints_safe", out)
 
     def test_dummy_adapter_smoke_and_ttt_unsupported(self):
         repo_root = Path(__file__).resolve().parents[1]

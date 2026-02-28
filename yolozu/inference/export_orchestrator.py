@@ -1,0 +1,857 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+from yolozu.core.cli_args import (
+    require_float_in_range,
+    require_non_negative_float,
+    require_non_negative_int,
+    require_positive_int,
+)
+from yolozu.predictions import normalize_predictions_payload
+from yolozu.tta.cli_options import add_ttt_arguments, build_ttt_cli_args
+from yolozu.tta.presets import apply_ttt_preset_args
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_PREDICTIONS_PATH = "reports/predictions.json"
+
+
+def sha256_bytes(data: bytes) -> str:
+    h = hashlib.sha256()
+    h.update(data)
+    return h.hexdigest()
+
+
+def sha256_file(path: str | Path) -> str | None:
+    try:
+        p = Path(path)
+        return sha256_bytes(p.read_bytes())
+    except Exception:
+        return None
+
+
+def sha256_json(obj: Any) -> str:
+    data = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return sha256_bytes(data)
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_json(path: Path, obj: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, indent=2, sort_keys=True, ensure_ascii=False))
+
+
+def ensure_wrapper(payload: Any) -> dict[str, Any]:
+    entries, meta = normalize_predictions_payload(payload)
+    return {
+        "predictions": entries,
+        "meta": dict(meta or {}),
+    }
+
+
+def validate_export_numeric_args(args: argparse.Namespace) -> None:
+    try:
+        require_non_negative_int(args.max_images, flag_name="--max-images")
+        require_positive_int(args.topk, flag_name="--topk")
+        require_positive_int(args.max_detections, flag_name="--max-detections")
+        require_float_in_range(args.min_score, flag_name="--min-score", minimum=0.0, maximum=1.0)
+        require_float_in_range(
+            args.score_threshold,
+            flag_name="--score-threshold",
+            minimum=0.0,
+            maximum=1.0,
+        )
+        require_float_in_range(args.score_thr, flag_name="--score-thr", minimum=0.0, maximum=1.0)
+        require_float_in_range(args.nms_iou, flag_name="--nms-iou", minimum=0.0, maximum=1.0)
+        require_non_negative_float(args.ttt_aux_pose_weight, flag_name="--ttt-aux-pose-weight")
+        require_non_negative_float(args.ttt_aux_keypoints_weight, flag_name="--ttt-aux-keypoints-weight")
+        require_non_negative_float(args.ttt_aux_depth_weight, flag_name="--ttt-aux-depth-weight")
+        require_non_negative_float(args.ttt_aux_seg_weight, flag_name="--ttt-aux-seg-weight")
+        if float(args.ttt_aux_temperature) <= 0.0:
+            raise ValueError("--ttt-aux-temperature must be > 0")
+    except ValueError as exc:
+        msg = str(exc)
+        msg = msg.replace("--topk must be > 0", "--topk must be >= 1")
+        msg = msg.replace("--max-detections must be > 0", "--max-detections must be >= 1")
+        raise SystemExit(msg) from exc
+
+
+def resolve_path(path: str | Path) -> Path:
+    p = Path(path)
+    if p.is_absolute():
+        return p
+    return REPO_ROOT / p
+
+
+def output_config_hash(path: Path) -> str | None:
+    try:
+        payload = ensure_wrapper(load_json(path))
+    except Exception:
+        return None
+    meta = payload.get("meta")
+    if not isinstance(meta, dict):
+        return None
+    run = meta.get("run")
+    if not isinstance(run, dict):
+        return None
+    got = run.get("config_hash")
+    return got if isinstance(got, str) and got else None
+
+
+def ensure_output_matches(path: Path, *, expected_config_hash: str) -> None:
+    got = output_config_hash(path)
+    if got is None:
+        raise SystemExit(f"output exists but missing meta.run.config_hash: {path} (use --force to overwrite)")
+    if got != expected_config_hash:
+        raise SystemExit(
+            "output exists but does not match current config_hash:\n"
+            f"  path: {path}\n"
+            f"  expected: {expected_config_hash}\n"
+            f"  got: {got}\n"
+            "Use --force to overwrite, or choose a different --output/--run-dir/--cache-dir."
+        )
+
+
+def copy_file(src: Path, dst: Path) -> None:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(src.read_bytes())
+
+
+_ACCEL_EXPORT_SCRIPTS = {
+    "onnxrt": "tools/export_predictions_onnxrt.py",
+    "trt": "tools/export_predictions_trt.py",
+    "executorch": "tools/export_predictions_executorch.py",
+}
+
+_NON_ACCEL_EXPORT_SCRIPTS = {
+    "yolox": "tools/export_predictions_yolox.py",
+    "opencv-dnn": "tools/export_predictions_opencv_dnn_unified.py",
+    "opencv-dnn-rtdetr": "tools/export_predictions_opencv_dnn_rtdetr.py",
+    "opencv-dnn-yolo": "tools/export_predictions_opencv_dnn.py",
+}
+
+
+def ensure_exporter_script_exists(*, backend: str) -> str:
+    relpath = _ACCEL_EXPORT_SCRIPTS.get(str(backend)) or _NON_ACCEL_EXPORT_SCRIPTS.get(str(backend))
+    if not isinstance(relpath, str) or not relpath:
+        raise SystemExit(f"internal error: unknown accelerator backend: {backend}")
+    script_path = REPO_ROOT / relpath
+    if not script_path.is_file():
+        raise SystemExit(
+            f"export backend '{backend}' is declared but missing exporter script: {relpath}. "
+            "Install/update repository sources or switch backend."
+        )
+    return relpath
+
+
+def validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None:
+    if args.tta or args.ttt or int(args.lora_r) > 0:
+        raise SystemExit(f"--tta/--ttt/--lora-* are only supported for --backend dummy/torch (got: {backend})")
+
+
+def require_backend_model(*, args: argparse.Namespace, backend: str) -> str:
+    model = args.model
+    if not model:
+        raise SystemExit(f"--model is required for --backend {backend}")
+    return str(model)
+
+
+def build_accel_backend_config(*, args: argparse.Namespace, backend: str, dataset_fp: str) -> dict[str, Any]:
+    validate_torch_only_flags(args=args, backend=backend)
+    model = require_backend_model(args=args, backend=backend)
+    if backend == "onnxrt":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "model": model,
+            "model_sha256": sha256_file(model),
+            "input_name": str(args.input_name),
+            "combined_output": str(args.combined_output),
+            "boxes_scale": str(args.boxes_scale),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    if backend == "trt":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "engine": model,
+            "engine_sha256": sha256_file(model),
+            "input_name": str(args.input_name),
+            "combined_output": str(args.combined_output),
+            "boxes_scale": str(args.boxes_scale),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    if backend == "executorch":
+        return {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "model": model,
+            "model_sha256": sha256_file(model),
+            "min_score": float(args.min_score),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
+
+
+def build_accel_backend_command(*, args: argparse.Namespace, backend: str, dataset: str, out_path: Path) -> list[str]:
+    model = require_backend_model(args=args, backend=backend)
+    script = ensure_exporter_script_exists(backend=backend)
+    cmd = [
+        sys.executable,
+        script,
+        "--dataset",
+        str(dataset),
+        "--output",
+        str(out_path),
+        "--wrap",
+    ]
+    if backend == "onnxrt":
+        cmd.extend(
+            [
+                "--onnx",
+                model,
+                "--input-name",
+                str(args.input_name),
+                "--combined-output",
+                str(args.combined_output),
+                "--boxes-scale",
+                str(args.boxes_scale),
+            ]
+        )
+    elif backend == "trt":
+        cmd.extend(
+            [
+                "--engine",
+                model,
+                "--input-name",
+                str(args.input_name),
+                "--combined-output",
+                str(args.combined_output),
+                "--boxes-scale",
+                str(args.boxes_scale),
+            ]
+        )
+    elif backend == "executorch":
+        cmd.extend(["--model", model])
+    else:
+        raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
+
+    cmd.extend(["--min-score", str(float(args.min_score)), "--topk", str(int(args.topk))])
+    if args.split:
+        cmd.extend(["--split", str(args.split)])
+    if args.max_images is not None:
+        cmd.extend(["--max-images", str(int(args.max_images))])
+    if args.dry_run:
+        cmd.append("--dry-run")
+    if backend == "executorch" and args.strict:
+        cmd.append("--strict")
+    return cmd
+
+
+def parse_common_export_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--backend",
+        choices=("dummy", "torch", "onnxrt", "trt", "executorch", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
+        default="dummy",
+        help="Inference backend (default: dummy).",
+    )
+    p.add_argument("--dataset", default=None, help="YOLO-format dataset root (defaults to data/coco128).")
+    p.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
+    p.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images.")
+    p.add_argument("--output", default=DEFAULT_PREDICTIONS_PATH, help="Predictions JSON output path.")
+    p.add_argument(
+        "--run-dir",
+        default=None,
+        help="Optional run directory. When set and --output is default, writes <run-dir>/predictions.json.",
+    )
+    p.add_argument(
+        "--cache",
+        action="store_true",
+        help="Enable fingerprinted run cache. When set and --output is default, writes into --cache-dir/<config_hash>/predictions.json.",
+    )
+    p.add_argument("--cache-dir", default="runs/yolozu_runs", help="Cache root directory (default: runs/yolozu_runs).")
+    p.add_argument("--notes", default=None, help="Notes to store in meta.run.")
+    p.add_argument("--seed", type=int, default=None, help="Optional seed to store in meta.run.")
+    p.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
+    p.add_argument("--dry-run", action="store_true", help="Backend dry-run when supported (onnxrt/trt).")
+    p.add_argument("--strict", action="store_true", help="Enable strict predictions validation when backend supports it.")
+
+    p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="Torch config path (rtdetr_pose).")
+    p.add_argument("--checkpoint", default=None, help="Torch checkpoint path (optional).")
+    p.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
+    p.add_argument("--image-size", type=int, nargs="+", default=None, help="Torch image size (one or two ints).")
+    p.add_argument("--score-threshold", type=float, default=0.3, help="Torch score threshold (default: 0.3).")
+    p.add_argument("--max-detections", type=int, default=50, help="Torch max detections (default: 50).")
+    p.add_argument("--lora-r", type=int, default=0, help="Enable LoRA by setting rank r>0 (default: 0 disables).")
+    p.add_argument("--lora-alpha", type=float, default=None, help="LoRA alpha scaling (default: r).")
+    p.add_argument("--lora-dropout", type=float, default=0.0, help="LoRA dropout on inputs (default: 0.0).")
+    p.add_argument(
+        "--lora-target",
+        default="head",
+        choices=("head", "all_linear", "all_conv1x1", "all_linear_conv1x1"),
+        help="Where to apply LoRA (default: head).",
+    )
+    p.add_argument(
+        "--lora-freeze-base",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Freeze base weights and train LoRA params only (default: false).",
+    )
+    p.add_argument(
+        "--lora-train-bias",
+        choices=("none", "all"),
+        default="none",
+        help="If LoRA is enabled, optionally train biases too (default: none).",
+    )
+    p.add_argument("--tta", action="store_true", help="Enable TTA post-transform on predictions.")
+    p.add_argument("--tta-seed", type=int, default=None, help="Seed for TTA randomness.")
+    p.add_argument("--tta-flip-prob", type=float, default=0.5, help="Flip probability for TTA.")
+    p.add_argument("--tta-norm-only", action="store_true", help="Update only normalized bbox values for TTA.")
+    p.add_argument("--tta-log-out", default=None, help="Optional path to write TTA log JSON.")
+    add_ttt_arguments(p, include_enable_flag=True)
+
+    p.add_argument("--model", default=None, help="Model path (.onnx for onnxrt, .plan for trt, .pte for executorch).")
+    p.add_argument("--exp", default=None, help="YOLOX exp file path for --backend yolox.")
+    p.add_argument("--weights", default=None, help="YOLOX checkpoint path for --backend yolox.")
+    p.add_argument("--input-name", default="images", help="Input tensor/binding name (default: images).")
+    p.add_argument("--combined-output", default="output0", help="Combined output name (default: output0).")
+    p.add_argument(
+        "--boxes-scale",
+        choices=("abs", "norm"),
+        default="abs",
+        help="Combined boxes scale (default: abs).",
+    )
+    p.add_argument("--min-score", type=float, default=0.0, help="Score threshold (default: 0.0).")
+    p.add_argument("--topk", type=int, default=300, help="Top-K per image (default: 300).")
+
+    p.add_argument("--onnx", default=None, help="ONNX model path for --backend opencv-dnn-rtdetr (alias: --model).")
+    p.add_argument("--imgsz", type=int, default=640, help="Input size for opencv-dnn-rtdetr backend (default: 640).")
+    p.add_argument(
+        "--score-thr",
+        type=float,
+        default=0.01,
+        help="Score threshold for opencv-dnn-rtdetr backend (default: 0.01).",
+    )
+    p.add_argument(
+        "--keep-aspect",
+        action="store_true",
+        help="Keep aspect ratio via letterbox in opencv-dnn-rtdetr backend (default: False).",
+    )
+    p.add_argument(
+        "--dnn-backend",
+        default="opencv",
+        help="OpenCV DNN backend for opencv-dnn-rtdetr (e.g. opencv, cuda) (default: opencv).",
+    )
+    p.add_argument(
+        "--dnn-target",
+        default="cpu",
+        help="OpenCV DNN target for opencv-dnn-rtdetr (e.g. cpu, cuda, cuda_fp16) (default: cpu).",
+    )
+    p.add_argument(
+        "--nms-iou",
+        type=float,
+        default=0.45,
+        help="NMS IoU threshold for opencv-dnn-yolo backend (default: 0.45).",
+    )
+    p.add_argument("--agnostic-nms", action="store_true", help="Class-agnostic NMS for opencv-dnn-yolo backend.")
+    p.add_argument(
+        "--raw-format",
+        choices=("yolo_84", "yolo_85_obj"),
+        default="yolo_84",
+        help="Raw head layout for opencv-dnn-yolo backend (default: yolo_84).",
+    )
+    p.add_argument(
+        "--decode",
+        choices=("auto", "yolo_84", "yolo_85_obj", "rtdetr"),
+        default="auto",
+        help="Unified OpenCV decode selection for --backend opencv-dnn (default: auto).",
+    )
+    p.add_argument(
+        "--preprocess",
+        choices=("yolo_letterbox_640", "rtdetr_resize_640", "rtdetr_letterbox_640"),
+        default=None,
+        help="Unified OpenCV preprocess preset for --backend opencv-dnn.",
+    )
+    p.add_argument(
+        "--dump-io",
+        default=None,
+        help="Optional IO probe dump path for OpenCV backends (input/output tensor names/shapes/dtypes).",
+    )
+
+
+def export_with_backend(
+    args: argparse.Namespace,
+    *,
+    subprocess_or_die: Callable[[list[str]], str],
+    base_run_meta: Callable[..., dict[str, Any]],
+    dataset_override: str | None = None,
+    dataset_meta: str | None = None,
+) -> Path:
+    validate_export_numeric_args(args)
+
+    dataset = dataset_override or (args.dataset if args.dataset else str(REPO_ROOT / "data" / "coco128"))
+    dataset_fp = dataset_meta or dataset
+
+    backend = str(args.backend)
+
+    adapter = None
+    config_fp: dict[str, Any]
+
+    if backend in ("dummy", "torch"):
+        adapter = "dummy" if backend == "dummy" else "rtdetr_pose"
+        lora_enabled = bool(backend == "torch" and int(args.lora_r) > 0)
+        tta_enabled = bool(args.tta)
+        ttt_enabled = bool(args.ttt)
+        if ttt_enabled:
+            apply_ttt_preset_args(args)
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "adapter": adapter,
+            "config": str(args.config) if backend == "torch" else None,
+            "config_sha256": sha256_file(REPO_ROOT / str(args.config)) if backend == "torch" else None,
+            "checkpoint": str(args.checkpoint) if backend == "torch" else None,
+            "checkpoint_sha256": sha256_file(args.checkpoint) if backend == "torch" and args.checkpoint else None,
+            "device": str(args.device) if backend == "torch" else None,
+            "image_size": list(args.image_size) if backend == "torch" and args.image_size else None,
+            "score_threshold": float(args.score_threshold) if backend == "torch" else None,
+            "max_detections": int(args.max_detections) if backend == "torch" else None,
+            "lora": {
+                "enabled": lora_enabled,
+                "r": int(args.lora_r) if lora_enabled else 0,
+                "alpha": float(args.lora_alpha) if lora_enabled and args.lora_alpha is not None else None,
+                "dropout": float(args.lora_dropout) if lora_enabled else None,
+                "target": str(args.lora_target) if lora_enabled else None,
+                "freeze_base": bool(args.lora_freeze_base) if lora_enabled else None,
+                "train_bias": str(args.lora_train_bias) if lora_enabled else None,
+            },
+            "tta": {
+                "enabled": tta_enabled,
+                "seed": args.tta_seed if tta_enabled else None,
+                "flip_prob": float(args.tta_flip_prob) if tta_enabled else None,
+                "norm_only": bool(args.tta_norm_only) if tta_enabled else None,
+            },
+            "ttt": {
+                "enabled": ttt_enabled,
+                "preset": args.ttt_preset if ttt_enabled else None,
+                "method": str(args.ttt_method) if ttt_enabled else None,
+                "reset": str(args.ttt_reset) if ttt_enabled else None,
+                "steps": int(args.ttt_steps) if ttt_enabled else None,
+                "batch_size": int(args.ttt_batch_size) if ttt_enabled else None,
+                "lr": float(args.ttt_lr) if ttt_enabled else None,
+                "stop_on_non_finite": bool(args.ttt_stop_on_non_finite) if ttt_enabled else None,
+                "rollback_on_stop": bool(args.ttt_rollback_on_stop) if ttt_enabled else None,
+                "max_grad_norm": float(args.ttt_max_grad_norm) if ttt_enabled and args.ttt_max_grad_norm is not None else None,
+                "max_update_norm": float(args.ttt_max_update_norm) if ttt_enabled and args.ttt_max_update_norm is not None else None,
+                "max_total_update_norm": (
+                    float(args.ttt_max_total_update_norm)
+                    if ttt_enabled and args.ttt_max_total_update_norm is not None
+                    else None
+                ),
+                "max_loss_ratio": float(args.ttt_max_loss_ratio) if ttt_enabled and args.ttt_max_loss_ratio is not None else None,
+                "max_loss_increase": (
+                    float(args.ttt_max_loss_increase)
+                    if ttt_enabled and args.ttt_max_loss_increase is not None
+                    else None
+                ),
+                "update_filter": str(args.ttt_update_filter) if ttt_enabled else None,
+                "include": list(args.ttt_include) if ttt_enabled and args.ttt_include else None,
+                "exclude": list(args.ttt_exclude) if ttt_enabled and args.ttt_exclude else None,
+                "max_batches": int(args.ttt_max_batches) if ttt_enabled else None,
+                "seed": args.ttt_seed if ttt_enabled else None,
+                "sdft_task": (str(args.ttt_sdft_task) if ttt_enabled and args.ttt_sdft_task else None),
+                "mim": {
+                    "mask_prob": float(args.ttt_mask_prob) if ttt_enabled else None,
+                    "patch_size": int(args.ttt_patch_size) if ttt_enabled else None,
+                    "mask_value": float(args.ttt_mask_value) if ttt_enabled else None,
+                },
+                "cotta": {
+                    "ema_momentum": float(args.ttt_cotta_ema_momentum) if ttt_enabled else None,
+                    "augmentations": list(args.ttt_cotta_augmentations) if ttt_enabled and args.ttt_cotta_augmentations else None,
+                    "aggregation": str(args.ttt_cotta_aggregation) if ttt_enabled else None,
+                    "restore_prob": float(args.ttt_cotta_restore_prob) if ttt_enabled else None,
+                    "restore_interval": int(args.ttt_cotta_restore_interval) if ttt_enabled else None,
+                },
+                "eata": {
+                    "conf_min": float(args.ttt_eata_conf_min) if ttt_enabled else None,
+                    "entropy_min": float(args.ttt_eata_entropy_min) if ttt_enabled else None,
+                    "entropy_max": float(args.ttt_eata_entropy_max) if ttt_enabled else None,
+                    "min_valid_dets": int(args.ttt_eata_min_valid_dets) if ttt_enabled else None,
+                    "anchor_lambda": float(args.ttt_eata_anchor_lambda) if ttt_enabled else None,
+                    "selected_ratio_min": float(args.ttt_eata_selected_ratio_min) if ttt_enabled else None,
+                    "max_skip_streak": int(args.ttt_eata_max_skip_streak) if ttt_enabled else None,
+                },
+                "sar": {
+                    "rho": float(args.ttt_sar_rho) if ttt_enabled else None,
+                    "adaptive": bool(args.ttt_sar_adaptive) if ttt_enabled else None,
+                    "first_step_scale": float(args.ttt_sar_first_step_scale) if ttt_enabled else None,
+                },
+                "aux": {
+                    "pose_weight": float(args.ttt_aux_pose_weight) if ttt_enabled else None,
+                    "keypoints_weight": float(args.ttt_aux_keypoints_weight) if ttt_enabled else None,
+                    "depth_weight": float(args.ttt_aux_depth_weight) if ttt_enabled else None,
+                    "seg_weight": float(args.ttt_aux_seg_weight) if ttt_enabled else None,
+                    "temperature": float(args.ttt_aux_temperature) if ttt_enabled else None,
+                },
+            },
+        }
+    elif backend in ("onnxrt", "trt", "executorch"):
+        config_fp = build_accel_backend_config(args=args, backend=backend, dataset_fp=str(dataset_fp))
+    elif backend == "yolox":
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "exp": str(args.exp) if args.exp else None,
+            "weights": str(args.weights) if args.weights else None,
+            "weights_sha256": sha256_file(args.weights) if args.weights else None,
+            "device": str(args.device),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "nms_thr": float(args.nms_iou),
+            "topk": int(args.topk),
+            "dry_run": bool(args.dry_run),
+        }
+    elif backend == "opencv-dnn":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn")
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "onnx": str(onnx_model),
+            "onnx_sha256": sha256_file(onnx_model),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "nms_iou": float(args.nms_iou),
+            "topk": int(args.topk),
+            "decode": str(args.decode),
+            "preprocess": str(args.preprocess) if args.preprocess else None,
+            "dnn_backend": str(args.dnn_backend),
+            "dnn_target": str(args.dnn_target),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
+            "dry_run": bool(args.dry_run),
+        }
+    elif backend == "opencv-dnn-rtdetr":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-rtdetr")
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "onnx": str(onnx_model),
+            "onnx_sha256": sha256_file(onnx_model),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "keep_aspect": bool(args.keep_aspect),
+            "dnn_backend": str(args.dnn_backend),
+            "dnn_target": str(args.dnn_target),
+            "topk": int(args.topk),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
+        }
+    elif backend == "opencv-dnn-yolo":
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-yolo")
+        config_fp = {
+            "backend": backend,
+            "dataset": str(dataset_fp),
+            "split": args.split,
+            "max_images": args.max_images,
+            "onnx": str(onnx_model),
+            "onnx_sha256": sha256_file(onnx_model),
+            "imgsz": int(args.imgsz),
+            "score_thr": float(args.score_thr),
+            "nms_iou": float(args.nms_iou),
+            "agnostic_nms": bool(args.agnostic_nms),
+            "raw_format": str(args.raw_format),
+            "dump_io": str(args.dump_io) if args.dump_io else None,
+        }
+    else:
+        raise SystemExit(f"unknown backend: {backend}")
+
+    config_hash = sha256_json(config_fp)
+
+    out_path = resolve_path(args.output)
+
+    run_dir = None
+    if args.run_dir and args.output == DEFAULT_PREDICTIONS_PATH:
+        run_dir = resolve_path(args.run_dir)
+        out_path = run_dir / "predictions.json"
+
+    cache_out = None
+    if args.cache:
+        cache_out = resolve_path(args.cache_dir) / config_hash / "predictions.json"
+        if args.output == DEFAULT_PREDICTIONS_PATH and not args.run_dir:
+            out_path = cache_out
+
+    if out_path.exists() and not args.force:
+        ensure_output_matches(out_path, expected_config_hash=config_hash)
+        return out_path
+
+    if cache_out is not None and cache_out.exists() and not args.force:
+        ensure_output_matches(cache_out, expected_config_hash=config_hash)
+        if cache_out != out_path:
+            copy_file(cache_out, out_path)
+        return out_path
+
+    if backend in ("dummy", "torch"):
+        if adapter is None:
+            raise SystemExit("internal error: missing adapter")
+        cmd = [
+            sys.executable,
+            "tools/export_predictions.py",
+            "--adapter",
+            adapter,
+            "--dataset",
+            str(dataset),
+            "--output",
+            str(out_path),
+            "--wrap",
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+
+        if args.tta:
+            cmd.append("--tta")
+        if args.tta_seed is not None:
+            cmd.extend(["--tta-seed", str(int(args.tta_seed))])
+        cmd.extend(["--tta-flip-prob", str(float(args.tta_flip_prob))])
+        if args.tta_norm_only:
+            cmd.append("--tta-norm-only")
+        if args.tta_log_out:
+            cmd.extend(["--tta-log-out", str(args.tta_log_out)])
+
+        if args.ttt:
+            cmd.extend(build_ttt_cli_args(args, include_enable_flag=True))
+
+        if backend == "torch":
+            cmd.extend(
+                [
+                    "--config",
+                    str(args.config),
+                    "--device",
+                    str(args.device),
+                    "--score-threshold",
+                    str(float(args.score_threshold)),
+                    "--max-detections",
+                    str(int(args.max_detections)),
+                    "--lora-r",
+                    str(int(args.lora_r)),
+                    "--lora-dropout",
+                    str(float(args.lora_dropout)),
+                    "--lora-target",
+                    str(args.lora_target),
+                    "--lora-train-bias",
+                    str(args.lora_train_bias),
+                ]
+            )
+            if args.checkpoint:
+                cmd.extend(["--checkpoint", str(args.checkpoint)])
+            if args.image_size:
+                cmd.extend(["--image-size", *[str(int(x)) for x in args.image_size]])
+            if args.lora_alpha is not None:
+                cmd.extend(["--lora-alpha", str(float(args.lora_alpha))])
+            cmd.append("--lora-freeze-base" if bool(args.lora_freeze_base) else "--no-lora-freeze-base")
+
+        subprocess_or_die(cmd)
+    elif backend in ("onnxrt", "trt", "executorch"):
+        validate_torch_only_flags(args=args, backend=backend)
+        cmd = build_accel_backend_command(args=args, backend=backend, dataset=str(dataset), out_path=out_path)
+        subprocess_or_die(cmd)
+    elif backend == "yolox":
+        validate_torch_only_flags(args=args, backend=backend)
+        script = ensure_exporter_script_exists(backend=backend)
+        cmd = [
+            sys.executable,
+            script,
+            "--dataset",
+            str(dataset),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--nms-thr",
+            str(float(args.nms_iou)),
+            "--topk",
+            str(int(args.topk)),
+            "--device",
+            str(args.device),
+            "--output",
+            str(out_path),
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.exp:
+            cmd.extend(["--exp", str(args.exp)])
+        if args.weights:
+            cmd.extend(["--weights", str(args.weights)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
+        subprocess_or_die(cmd)
+    elif backend == "opencv-dnn":
+        validate_torch_only_flags(args=args, backend=backend)
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn")
+        script = ensure_exporter_script_exists(backend=backend)
+        cmd = [
+            sys.executable,
+            script,
+            "--dataset",
+            str(dataset),
+            "--onnx",
+            str(onnx_model),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--nms-iou",
+            str(float(args.nms_iou)),
+            "--topk",
+            str(int(args.topk)),
+            "--decode",
+            str(args.decode),
+            "--dnn-backend",
+            str(args.dnn_backend),
+            "--dnn-target",
+            str(args.dnn_target),
+            "--output",
+            str(out_path),
+        ]
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.preprocess:
+            cmd.extend(["--preprocess", str(args.preprocess)])
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.strict:
+            cmd.append("--strict")
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        subprocess_or_die(cmd)
+    elif backend == "opencv-dnn-rtdetr":
+        validate_torch_only_flags(args=args, backend=backend)
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-rtdetr")
+        script = ensure_exporter_script_exists(backend=backend)
+        cmd = [
+            sys.executable,
+            script,
+            "--dataset",
+            str(dataset),
+            "--onnx",
+            str(onnx_model),
+            "--imgsz",
+            str(int(args.imgsz)),
+            "--score-thr",
+            str(float(args.score_thr)),
+            "--output",
+            str(out_path),
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.keep_aspect:
+            cmd.append("--keep-aspect")
+        if args.dnn_backend:
+            cmd.extend(["--dnn-backend", str(args.dnn_backend)])
+        if args.dnn_target:
+            cmd.extend(["--dnn-target", str(args.dnn_target)])
+        if args.topk is not None:
+            cmd.extend(["--topk", str(int(args.topk))])
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
+        subprocess_or_die(cmd)
+    elif backend == "opencv-dnn-yolo":
+        validate_torch_only_flags(args=args, backend=backend)
+        onnx_model = args.onnx or args.model
+        if not onnx_model:
+            raise SystemExit("--onnx (or --model) is required for --backend opencv-dnn-yolo")
+        script = ensure_exporter_script_exists(backend=backend)
+        cmd = [
+            sys.executable,
+            script,
+            "--dataset",
+            str(dataset),
+            "--onnx",
+            str(onnx_model),
+            "--input-size",
+            str(int(args.imgsz)),
+            "--min-score",
+            str(float(args.score_thr)),
+            "--output",
+            str(out_path),
+        ]
+        if args.split:
+            cmd.extend(["--split", str(args.split)])
+        if args.max_images is not None:
+            cmd.extend(["--max-images", str(int(args.max_images))])
+        if args.nms_iou is not None:
+            cmd.extend(["--nms-iou", str(float(args.nms_iou))])
+        if args.agnostic_nms:
+            cmd.append("--agnostic-nms")
+        if args.raw_format:
+            cmd.extend(["--raw-format", str(args.raw_format)])
+        if args.dump_io:
+            cmd.extend(["--dump-io", str(args.dump_io)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.strict:
+            cmd.append("--strict")
+        subprocess_or_die(cmd)
+    else:  # pragma: no cover
+        raise SystemExit(f"unknown backend: {backend}")
+
+    payload = ensure_wrapper(load_json(out_path))
+    payload["meta"]["run"] = base_run_meta(seed=args.seed, notes=args.notes, config_fingerprint=config_fp)
+    write_json(out_path, payload)
+
+    if cache_out is not None and cache_out != out_path:
+        copy_file(out_path, cache_out)
+
+    meta_dir = cache_out.parent if cache_out is not None else run_dir
+    if meta_dir is not None:
+        write_json(meta_dir / "run_config.json", {"config_hash": config_hash, "config_fingerprint": config_fp})
+
+    return out_path

@@ -24,6 +24,14 @@ Both CLIs expose `--ttt-preset`:
 - `safe`: Tent + BN-affine only (`update_filter=norm_only`)
 - `adapter_only`: Tent + adapter/head only
 - `mim_safe`: MIM + adapter/head only
+- `cotta_safe`: CoTTA with conservative update/restore guard rails
+- `eata_safe`: EATA selective adaptation with anti-forgetting defaults
+- `sar_safe`: SAR LoRA-first sharpness-aware adaptation defaults
+- `pose_safe`: Tent defaults tuned for pose-heavy adaptation
+- `keypoints_safe`: Tent defaults tuned for keypoint-heavy adaptation
+- `depth_safe`: Tent defaults tuned for depth-heavy adaptation
+- `seg_safe`: Tent defaults tuned for segmentation-heavy adaptation
+- `pose_mim`: MIM defaults tuned for pose-heavy adaptation
 
 Presets:
 - override core knobs (`method/steps/lr/update_filter/max_batches`)
@@ -36,6 +44,15 @@ Guard defaults (when unset):
 If you pass `--ttt` without `--ttt-preset` and leave the core knobs at defaults, the CLI auto-applies a conservative preset:
 - Tent → `safe`
 - MIM (`--ttt-method mim`) → `mim_safe`
+- CoTTA/EATA/SAR methods auto-map to `cotta_safe`/`eata_safe`/`sar_safe`
+- `--ttt-sdft-task pose|keypoints|depth|seg|full` steers default selection to task-specific presets where available
+
+Task-aware auxiliary knobs:
+- `--ttt-aux-pose-weight`
+- `--ttt-aux-keypoints-weight`
+- `--ttt-aux-depth-weight`
+- `--ttt-aux-seg-weight`
+- `--ttt-aux-temperature`
 
 ## Reset policy (stream vs sample)
 

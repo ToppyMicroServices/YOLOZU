@@ -3251,6 +3251,7 @@
           "required": false
         },
         {
+          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim).",
           "flag": "--ttt-preset",
           "kind": "string",
           "name": "ttt_preset",
@@ -3491,7 +3492,7 @@
           "required": false
         },
         {
-          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg).",
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
           "flag": "--ttt-sdft-task",
           "kind": "string",
           "name": "ttt_sdft_task",
@@ -11288,6 +11289,7 @@
           "required": false
         },
         {
+          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim).",
           "flag": "--ttt-preset",
           "kind": "string",
           "name": "ttt_preset",
@@ -11348,7 +11350,7 @@
           "required": false
         },
         {
-          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg).",
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
           "flag": "--ttt-sdft-task",
           "kind": "string",
           "name": "ttt_sdft_task",

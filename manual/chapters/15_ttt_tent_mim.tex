@@ -75,9 +75,12 @@ Both CLIs expose \cmd{--ttt-preset}:
   \item \cmd{cotta_safe}: CoTTA with conservative update/restore guard rails
   \item \cmd{eata_safe}: EATA selective adaptation with anti-forgetting defaults
   \item \cmd{sar_safe}: SAR LoRA-first sharpness-aware adaptation defaults
+  \item \cmd{pose_safe}/\cmd{keypoints_safe}/\cmd{depth_safe}/\cmd{seg_safe}: task-aware Tent defaults
+  \item \cmd{pose_mim}: pose-aware MIM defaults
 \end{itemize}
 
 Presets override core knobs (method, steps, lr, update filter, max batches) and set conservative guard rails unless you override them.
+Use \cmd{--ttt-sdft-task \{pose,keypoints,depth,seg,full\}} and \cmd{--ttt-aux-*} weights to steer multi-task adaptation losses.
 
 \section{YOLOZU introduction priority (high \texorpdfstring{$\to$}{->} low)}
 For \yolozu{} (detection/pose), the recommended operational rollout order is:

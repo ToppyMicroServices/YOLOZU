@@ -402,6 +402,8 @@ Note: TTA here is a lightweight **prediction-space transform** (a post-transform
 Optional TTT (test-time training, pre-prediction):
 - Tent (recommended safe preset + guard rails):
 	- python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-preset safe --ttt-reset sample --wrap --output reports/predictions_ttt_safe.json
+- Pose-targeted Tent (task-aware defaults + auxiliary consistency):
+	- python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 --ttt-aux-temperature 1.0 --ttt-reset sample --wrap --output reports/predictions_ttt_pose.json
 - MIM (recommended safe preset + guard rails):
 	- python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-preset mim_safe --ttt-reset sample --wrap --output reports/predictions_ttt_mim_safe.json
 - Bounded adaptation-cost run (stream + batch/chunk knobs):
