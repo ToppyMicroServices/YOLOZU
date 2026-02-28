@@ -201,6 +201,43 @@ When operating via GitHub Actions machine runners instead of RunPod sessions, us
 stage \cmd{zisn1}, \cmd{zisn2}, \cmd{zisn3}, or \cmd{all}. The workflow publishes deterministic
 DoD summaries to \path{ci-logs/gpu-zisn}.
 
+\section{Inference profiler integration}
+The \texttt{yolozu.inference.profiler} module wraps \texttt{torch.profiler} to produce kernel-level latency traces that complement wall-clock benchmarks.
+
+\begin{itemize}
+  \item \texttt{profiler\_available()} --- checks for \texttt{torch.profiler.profile}.
+  \item \texttt{profile\_inference(adapter, records, warmup, active, output\_dir)} --- profiles \texttt{adapter.predict()} calls and writes TensorBoard/Chrome-trace output.
+  \item \texttt{profile\_callable(fn, *args, iterations, warmup)} --- profiles any callable and returns a text summary table.
+\end{itemize}
+
+\begin{lstlisting}[language=Python]
+from yolozu.inference.profiler import profile_inference, profiler_available
+
+if profiler_available():
+    summary = profile_inference(adapter, records, output_dir="runs/profile")
+    print(summary)
+\end{lstlisting}
+
+\section{torch.compile and ONNX export helpers}
+The \texttt{yolozu.inference.torch\_export} module provides two orthogonal utilities:
+
+\begin{itemize}
+  \item \texttt{compile\_for\_inference(model, backend, mode)} --- wraps \texttt{torch.compile} with configurable backend (\texttt{inductor}, \texttt{aot\_eager}, etc.) and mode (\texttt{reduce-overhead}, \texttt{max-autotune}). Falls back gracefully when compilation is unavailable.
+  \item \texttt{export\_model\_onnx(model, sample\_input, output\_path, opset\_version, ...)} --- exports a \texttt{torch.nn.Module} to ONNX format with configurable opset, dynamic axes, and named I/O.
+  \item \texttt{torch\_compile\_available()}, \texttt{torch\_export\_available()} --- feature-detection guards.
+\end{itemize}
+
+The \texttt{RTDETRPoseAdapter} integrates \texttt{compile\_for\_inference} via its \texttt{compile\_model}, \texttt{compile\_backend}, and \texttt{compile\_mode} constructor kwargs; when enabled, the model is automatically compiled at first \texttt{predict()} call.
+
+\begin{lstlisting}[language=Python]
+from yolozu.inference.torch_export import (
+    compile_for_inference, export_model_onnx,
+)
+
+fast = compile_for_inference(model, mode="reduce-overhead")
+export_model_onnx(model, sample_input, "model.onnx", opset_version=17)
+\end{lstlisting}
+
 \section{What to report in papers/notes}
 For real-time or deployment-relevant results, always report:
 \begin{itemize}

@@ -345,3 +345,46 @@ print(model_info(compiled))
 with amp_inference_context(device.type):
     output = compiled(images)
 \end{lstlisting}
+
+\section{AMP utilities for training loops}
+The \texttt{yolozu.training.amp\_utils} module provides a thin wrapper around \texttt{torch.amp} that standardizes Automatic Mixed Precision setup across SDFT distillation, TTA/TTT loops, and custom training scripts.
+
+\begin{itemize}
+  \item \texttt{amp\_available()} --- returns \texttt{True} when \texttt{torch.amp.autocast} is present (PyTorch 2.x).
+  \item \texttt{make\_amp\_context(device\_type, dtype, enabled)} --- creates a paired \texttt{(autocast\_factory, GradScaler|None)} tuple. A \texttt{GradScaler} is only returned for \texttt{float16} on CUDA; for \texttt{bfloat16}, MPS, or CPU the scaler is \texttt{None}.
+\end{itemize}
+
+\begin{lstlisting}[language=Python]
+from yolozu.training.amp_utils import make_amp_context
+
+autocast_ctx, scaler = make_amp_context(device_type="cuda", dtype="float16")
+with autocast_ctx():
+    loss = model(inputs)
+if scaler is not None:
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+else:
+    loss.backward()
+    optimizer.step()
+\end{lstlisting}
+
+\section{Torchvision v2 transforms bridge}
+The \texttt{yolozu.training.transforms\_bridge} module provides composable augmentation pipelines using \texttt{torchvision.transforms.v2} (stable since torchvision 0.17). These pipelines jointly transform images, bounding boxes, and keypoints in a single call.
+
+\begin{itemize}
+  \item \texttt{transforms\_v2\_available()} --- checks whether \texttt{torchvision.transforms.v2} is importable.
+  \item \texttt{build\_detection\_transforms(size, hflip\_prob, color\_jitter, scale\_range, ...)} --- constructs a training pipeline (random resize, horizontal flip, colour jitter, normalize).
+  \item \texttt{build\_eval\_transforms(size, ...)} --- constructs an evaluation pipeline (resize + normalize only).
+\end{itemize}
+
+Both builders insert \texttt{v2.ToImage()} before \texttt{v2.Normalize()} so that raw PIL inputs are converted to tensors first, avoiding the common ``Normalize requires tensor'' error.
+
+\begin{lstlisting}[language=Python]
+from yolozu.training.transforms_bridge import (
+    build_detection_transforms, build_eval_transforms,
+)
+
+train_tfm = build_detection_transforms(size=(640, 640), hflip_prob=0.5)
+eval_tfm  = build_eval_transforms(size=(640, 640))
+\end{lstlisting}
