@@ -1,71 +1,96 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://example.com/yolozu/predictions.schema.json",
-  "title": "YOLOZU Predictions JSON Schema",
-  "type": ["array", "object"],
-  "description": "Predictions JSON for evaluation",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YOLOZU Predictions JSON",
+  "description": "Predictions artifact consumed/produced by tools/*.py. Canonical form is {predictions:[...], meta:{...}}, but other legacy shapes are supported.",
   "oneOf": [
-    {
-      "type": "array",
-      "items": {"$ref": "#/definitions/entry"}
-    },
-    {
-      "type": "object",
-      "properties": {
-        "schema_version": {"type": "integer", "minimum": 1},
-        "predictions": {
-          "type": "array",
-          "items": {"$ref": "#/definitions/entry"}
-        },
-        "meta": {"type": "object"}
-      },
-      "required": ["predictions"],
-      "additionalProperties": true
-    },
-    {
-      "type": "object",
-      "patternProperties": {
-        ".+": {
-          "type": "array",
-          "items": {"$ref": "#/definitions/detection"}
-        }
-      },
-      "additionalProperties": false
-    }
+    { "$ref": "#/$defs/predictions_wrapper" },
+    { "$ref": "#/$defs/predictions_list" },
+    { "$ref": "#/$defs/predictions_mapping" }
   ],
-  "definitions": {
-    "entry": {
+  "$defs": {
+    "bbox_cxcywh_norm": {
       "type": "object",
+      "required": ["cx", "cy", "w", "h"],
       "properties": {
-        "image": {"type": "string"},
-        "detections": {
-          "type": "array",
-          "items": {"$ref": "#/definitions/detection"}
-        }
+        "cx": { "type": "number" },
+        "cy": { "type": "number" },
+        "w": { "type": "number" },
+        "h": { "type": "number" }
       },
-      "required": ["image", "detections"],
       "additionalProperties": true
     },
     "detection": {
       "type": "object",
+      "required": ["score", "bbox"],
       "properties": {
-        "class_id": {"type": "integer"},
-        "score": {"type": "number"},
-        "bbox": {"$ref": "#/definitions/bbox"}
+        "class_id": { "type": "integer" },
+        "category_id": { "type": "integer" },
+        "score": { "type": "number" },
+        "bbox": { "$ref": "#/$defs/bbox_cxcywh_norm" },
+
+        "log_z": { "type": "number" },
+        "rot6d": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "offsets": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "k_delta": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4
+        },
+
+        "log_sigma_z": { "type": "number" },
+        "log_sigma_rot": { "type": "number" },
+        "sigma_z": { "type": "number" },
+        "sigma_rot": { "type": "number" },
+
+        "score_det": { "type": "number" },
+        "score_tmp_sym": { "type": "number" }
       },
-      "required": ["class_id", "score", "bbox"],
       "additionalProperties": true
     },
-    "bbox": {
+    "prediction_entry": {
       "type": "object",
+      "required": ["image"],
       "properties": {
-        "cx": {"type": "number"},
-        "cy": {"type": "number"},
-        "w": {"type": "number"},
-        "h": {"type": "number"}
+        "image": { "type": "string" },
+        "detections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/detection" }
+        }
       },
-      "required": ["cx", "cy", "w", "h"],
       "additionalProperties": true
+    },
+    "predictions_list": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prediction_entry" }
+    },
+    "predictions_wrapper": {
+      "type": "object",
+      "required": ["predictions"],
+      "properties": {
+        "predictions": { "$ref": "#/$defs/predictions_list" },
+        "meta": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "predictions_mapping": {
+      "type": "object",
+      "description": "Legacy mapping format: { \"image.jpg\": [detections...], ... }",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/detection" }
+      }
     }
   }
 }
+
