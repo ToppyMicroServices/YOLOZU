@@ -276,3 +276,4 @@ CI incident memo has moved to a dedicated page:
 - [Release reliability checklist](release_reliability_checklist.md)
 - [1.0 stability boundary](release_1_0_stability.md)
 - [Manual PDF DOI release](manual_doi_release.md)
+- [Ultralytics/DETR support (3-layer)](ultralytics_detr_support.md)

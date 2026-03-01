@@ -11441,6 +11441,199 @@
       ]
     },
     {
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/tools_index.md",
+        "docs/ultralytics_detr_support.md",
+        "manual/chapters/04_cli_reference.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes primary artifact/report depending on subcommand.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes subcommand report JSON.",
+            "flag": "--report",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes intermediate conversion/export assets.",
+            "flag": "--work-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Optional TensorRT engine output path when export-onnx uses TRT handoff.",
+            "flag": "--trt-engine",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/support_ultralytics_detr.py",
+      "examples": [
+        {
+          "command": "python3 tools/support_ultralytics_detr.py layers --json",
+          "description": "Show fixed 3-layer support matrix for trainer/repo/export surfaces."
+        },
+        {
+          "command": "python3 tools/support_ultralytics_detr.py train-ultralytics --model yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_ultralytics.json",
+          "description": "Ultralytics fine-tune wrapper with dataset conversion and training template report."
+        },
+        {
+          "command": "python3 tools/support_ultralytics_detr.py train-hf-detr --model-id facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_hf_detr.json",
+          "description": "HF DETR/RT-DETR entry wrapper report (Transformers/Datasets bridge)."
+        },
+        {
+          "command": "python3 tools/support_ultralytics_detr.py export-onnx --provider ultralytics --model yolo11n.pt --output models/yolo11n.onnx --dry-run --report reports/support_ultralytics_detr.export_onnx.json",
+          "description": "ONNX export wrapper with optional TensorRT handoff."
+        },
+        {
+          "command": "python3 tools/support_ultralytics_detr.py predict-normalize --input reports/raw_predictions.json --output reports/predictions.normalized.json --report reports/support_ultralytics_detr.predict_normalize.json",
+          "description": "Canonicalize predictions into YOLOZU predictions interface contract."
+        }
+      ],
+      "id": "support_ultralytics_detr",
+      "inputs": [
+        {
+          "flag": "--from",
+          "kind": "string",
+          "name": "from_format",
+          "required": false
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
+          "required": false
+        },
+        {
+          "flag": "--images-dir",
+          "kind": "dir",
+          "name": "images_dir",
+          "required": false
+        },
+        {
+          "flag": "--model",
+          "kind": "string",
+          "name": "model",
+          "required": false
+        },
+        {
+          "flag": "--model-id",
+          "kind": "string",
+          "name": "model_id",
+          "required": false
+        },
+        {
+          "flag": "--provider",
+          "kind": "string",
+          "name": "provider",
+          "required": false
+        },
+        {
+          "flag": "--input",
+          "kind": "file",
+          "name": "input",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--report",
+          "kind": "file",
+          "name": "report",
+          "required": false
+        },
+        {
+          "flag": "--train-script",
+          "kind": "file",
+          "name": "train_script",
+          "required": false
+        },
+        {
+          "flag": "--trt-engine",
+          "kind": "file",
+          "name": "trt_engine",
+          "required": false
+        },
+        {
+          "flag": "--work-dir",
+          "kind": "dir",
+          "name": "work_dir",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--strict",
+          "kind": "string",
+          "name": "strict",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/support_ultralytics_detr.*.json",
+          "description": "Execution report for dataset/train/export/normalize support commands.",
+          "kind": "file",
+          "name": "support_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "ultralytics",
+          "transformers",
+          "datasets",
+          "torch",
+          "onnx"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Ultralytics/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), shared dataset conversion, ONNX export template, and prediction normalization.",
+      "tags": [
+        "ultralytics",
+        "detr",
+        "onnx",
+        "training",
+        "adapter",
+        "normalization"
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
@@ -12167,6 +12360,10 @@
         {
           "command": "python3 tools/yolozu.py release",
           "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
+        },
+        {
+          "command": "python3 tools/yolozu.py support-ultralytics-detr layers --json",
+          "description": "Use wrapper CLI to access Ultralytics/DETR layered support helpers."
         }
       ],
       "id": "yolozu",

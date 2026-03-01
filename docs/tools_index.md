@@ -123,6 +123,14 @@ The manifest is intended for:
 - Release checklist: `docs/release_reliability_checklist.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 
+## Ultralytics/DETR helpers
+
+- 3-layer support matrix: `python3 tools/support_ultralytics_detr.py layers --json`
+- Ultralytics fine-tune wrapper (dry-run): `python3 tools/support_ultralytics_detr.py train-ultralytics --model yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_ultralytics.json`
+- HF DETR entry wrapper (dry-run): `python3 tools/support_ultralytics_detr.py train-hf-detr --model-id facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_hf_detr.json`
+- ONNX export wrapper (dry-run): `python3 tools/support_ultralytics_detr.py export-onnx --provider ultralytics --model yolo11n.pt --output models/yolo11n.onnx --dry-run --report reports/support_ultralytics_detr.export_onnx.json`
+- Details: `docs/ultralytics_detr_support.md`
+
 ### AI-required manifest fields
 
 For AI-safe automation, treat these fields as required per tool:

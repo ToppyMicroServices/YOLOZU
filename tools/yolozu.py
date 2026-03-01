@@ -1054,6 +1054,17 @@ def _release(_: argparse.Namespace) -> int:
     return 0
 
 
+def _support_ultralytics_detr(args: argparse.Namespace) -> int:
+    cmd = [sys.executable, "tools/support_ultralytics_detr.py"]
+    forwarded = getattr(args, "forward_args", None)
+    if isinstance(forwarded, list):
+        cmd.extend(str(x) for x in forwarded)
+    out = _subprocess_or_die(cmd)
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 0
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="yolozu",
@@ -1231,6 +1242,17 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
     p_release = sub.add_parser("release", help="Run single-command release automation (tag + GitHub/PyPI/Zenodo flow).")
     p_release.set_defaults(_fn=_release)
+
+    p_support_ud = sub.add_parser(
+        "support-ultralytics-detr",
+        help="Ultralytics/DETR support wrapper (trainer/repo/export layers + dataset/onnx/predict-normalize).",
+    )
+    p_support_ud.add_argument(
+        "forward_args",
+        nargs=argparse.REMAINDER,
+        help="Arguments forwarded to tools/support_ultralytics_detr.py.",
+    )
+    p_support_ud.set_defaults(_fn=_support_ultralytics_detr)
 
     p_fetch = sub.add_parser("fetch", help="Delegate to yolozu package CLI fetch command.")
     p_fetch.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu fetch`.")

@@ -400,6 +400,17 @@ python3 tools/check_mcp_settings.py \
   --output reports/mcp_settings_check.json
 ```
 
+Ultralytics/DETR サポート（trainer/repo/export の3レイヤ）:
+
+```bash
+python3 tools/support_ultralytics_detr.py layers --json
+python3 tools/support_ultralytics_detr.py train-ultralytics --model yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_ultralytics.json
+python3 tools/support_ultralytics_detr.py train-hf-detr --model-id facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_hf_detr.json
+python3 tools/support_ultralytics_detr.py export-onnx --provider ultralytics --model yolo11n.pt --output models/yolo11n.onnx --dry-run --report reports/support_ultralytics_detr.export_onnx.json
+```
+
+詳細: [`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)
+
 release 自動化（オプション不要）:
 
 ```bash
