@@ -8857,6 +8857,175 @@
     },
     {
       "docs": [
+        "docs/external_finetune_smoke.md",
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes external finetune smoke report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes generated helper files and per-framework working directories.",
+            "flag": "--work-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/run_external_finetune_smoke.py",
+      "examples": [
+        {
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json",
+          "description": "Dry-run matrix for YOLOv/MMDetection/Detectron2/RT-DETR finetune entrypoints."
+        },
+        {
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
+          "description": "Execute real training for selected frameworks and fail when no training execution occurred."
+        }
+      ],
+      "id": "run_external_finetune_smoke",
+      "inputs": [
+        {
+          "default": "data/smoke",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
+          "default": "train",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": "reports/external_finetune_smoke.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--work-dir",
+          "kind": "dir",
+          "name": "work_dir",
+          "required": false
+        },
+        {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--epochs",
+          "kind": "number",
+          "name": "epochs",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--max-steps",
+          "kind": "number",
+          "name": "max_steps",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--batch-size",
+          "kind": "number",
+          "name": "batch_size",
+          "required": false
+        },
+        {
+          "default": 96,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "description": "Framework id to include in matrix (repeatable).",
+          "flag": "--framework",
+          "kind": "string",
+          "name": "framework",
+          "required": false
+        },
+        {
+          "description": "Framework id to execute in non-dry mode (repeatable).",
+          "flag": "--non-dry-framework",
+          "kind": "string",
+          "name": "non_dry_framework",
+          "required": false
+        },
+        {
+          "description": "Fail when no framework is configured for non-dry execution.",
+          "flag": "--require-non-dry",
+          "kind": "string",
+          "name": "require_non_dry",
+          "required": false
+        },
+        {
+          "description": "Fail when no framework executed a training command.",
+          "flag": "--require-training-execution",
+          "kind": "string",
+          "name": "require_training_execution",
+          "required": false
+        },
+        {
+          "flag": "--mmdet-train-script",
+          "kind": "file",
+          "name": "mmdet_train_script",
+          "required": false
+        },
+        {
+          "flag": "--detectron2-train-script",
+          "kind": "file",
+          "name": "detectron2_train_script",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/external_finetune_smoke.json",
+          "description": "Per-framework external finetune smoke report.",
+          "kind": "file",
+          "name": "external_finetune_smoke_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report.",
+      "tags": [
+        "finetune",
+        "interop",
+        "smoke",
+        "training"
+      ]
+    },
+    {
+      "docs": [
         "docs/llm_integrations.md",
         "docs/mcp_extension_architecture.md",
         "docs/copilot_mcp_integration.md",

@@ -202,6 +202,41 @@ The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
 `prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
 
+### External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR)
+
+Use a single command to audit external finetune entrypoints and emit a stable interface contract report:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --output reports/external_finetune_smoke.json
+```
+
+Run real training for selected frameworks:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework yolov \
+  --non-dry-framework rtdetr \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --device cpu \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.exec.json
+```
+
+Prepared per-framework templates:
+
+- `configs/examples/finetune_external/ultralytics_yolov8n_finetune_smoke.yaml`
+- `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
+- `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
+- `configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml`
+
+For MMDetection/Detectron2 external launchers, see:
+`docs/external_finetune_smoke.md`.
+
 ### Config source-of-truth and key mapping
 
 `rtdetr_pose/tools/train_minimal.py` reads YAML/JSON via `--config`, then applies explicit CLI flags on top.

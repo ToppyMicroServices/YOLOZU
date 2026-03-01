@@ -308,6 +308,34 @@ python3 tools/run_real_multitask_finetune_demo.py \
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
 （`prepare_summary.json` に annotation由来ラベルの provenance も記録）
 
+### 外部framework finetune スモーク（YOLOv / MMDetection / Detectron2 / RT-DETR）
+
+まずは dry-run（設定ファイル/コマンド行/レポートの interface contract 確認）:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --output reports/external_finetune_smoke.json
+```
+
+実行可能なframeworkを実際に学習実行する場合:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework yolov \
+  --non-dry-framework rtdetr \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --device cpu \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.exec.json
+```
+
+MMDetection / Detectron2 の外部ランチャ指定を含む詳細:
+`docs/external_finetune_smoke.md`
+
 ### Reference adapter回帰ゲート（実画像baseline）
 
 `RTDETRPoseAdapter` を reference adapter として固定し、

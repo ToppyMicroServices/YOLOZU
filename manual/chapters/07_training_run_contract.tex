@@ -149,6 +149,47 @@ yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictio
 
 \noindent For \cmd{yolozu test}, YAML keys are dynamically translated into \cmd{--key value} arguments (with booleans converted to flags), allowing subsequent CLI arguments to override them as necessary.
 
+\section{External framework finetune smoke matrix}
+For user convenience, YOLOZU includes template configs and a unified smoke runner for external finetune entrypoints:
+\begin{itemize}
+  \item Ultralytics YOLOv
+  \item MMDetection
+  \item Detectron2
+  \item RT-DETR (\path{rtdetr_pose})
+\end{itemize}
+
+Template paths:
+\begin{itemize}
+  \item \path{configs/examples/finetune_external/ultralytics_yolov8n_finetune_smoke.yaml}
+  \item \path{configs/examples/finetune_external/mmdetection_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/detectron2_finetune_smoke.yaml}
+  \item \path{configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml}
+\end{itemize}
+
+Unified smoke command (interface contract report):
+\begin{lstlisting}[language=bash]
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --output reports/external_finetune_smoke.json
+\end{lstlisting}
+
+Execute real training for selected frameworks:
+\begin{lstlisting}[language=bash]
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework yolov \
+  --non-dry-framework rtdetr \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --device cpu \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.exec.json
+\end{lstlisting}
+
+MMDetection/Detectron2 can be wired to external launchers via
+\cmd{--mmdet-train-script} and \cmd{--detectron2-train-script}.
+
 \section{Solver (optimizer) parameters and defaults}
 The supported optimizers are \texttt{adamw} (the default) and \texttt{sgd}.
 

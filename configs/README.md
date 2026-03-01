@@ -12,6 +12,10 @@ This directory keeps operational config assets out of the repository root.
   - Current files:
     - `train_setting.yaml`
     - `test_setting.yaml`
+    - `finetune_external/ultralytics_yolov8n_finetune_smoke.yaml`
+    - `finetune_external/mmdetection_finetune_smoke.py`
+    - `finetune_external/detectron2_finetune_smoke.yaml`
+    - `finetune_external/rtdetr_pose_finetune_smoke.yaml`
     - `synthgen/synthgen_animal_kpt.yaml`
     - `synthgen/synthgen_mechanical_kpt.yaml`
 - `configs/tasks/`

@@ -68,3 +68,16 @@ Use the same pattern for MMDetection predictions.
 - Preprocessing drift: record resize/pad/normalize/BGR-RGB assumptions in exporter flags so comparisons are reproducible.
 - NMS policy mismatch: Detectron2/MMDet exports are usually post-NMS. Use `--protocol nms_applied` unless you explicitly export NMS-free outputs.
 - BBox representation: exporters normalize Detectron2/MMDet raw `xyxy_abs` boxes to YOLOZU schema (`cxcywh_norm`) and preserve raw format in `export_settings.raw_output_bbox_format`.
+
+## Finetune smoke matrix
+
+To audit finetune entrypoints and emit a unified interface contract report:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --output reports/external_finetune_smoke.json
+```
+
+For external launcher wiring (`--mmdet-train-script`, `--detectron2-train-script`), see `docs/external_finetune_smoke.md`.

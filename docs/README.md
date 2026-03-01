@@ -198,6 +198,10 @@ python3 tools/eval_coco.py --dataset data/coco_yolo_like --split val2017 --predi
 
 Reference: [Detectron2/MMDetection interop](interop_detectron2_mmdet.md)
 
+External finetune smoke matrix:
+- `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
+- Guide: [External finetune smoke](external_finetune_smoke.md)
+
 ## H) OpenCV-DNN migration (CPU/CUDA/OpenVINO)
 
 Use this path when OpenCV DNN is your runtime of record (C++/embedded/field inference) and you want YOLOZU validation/eval/parity.

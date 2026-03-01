@@ -1,0 +1,18 @@
+# RT-DETR pose finetune smoke template for YOLOZU.
+#
+# Usage:
+#   python3 rtdetr_pose/tools/train_minimal.py \
+#     --config configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml \
+#     --dataset-root data/smoke --split train --val-split val
+
+model_config: rtdetr_pose/configs/base.json
+dataset_root: data/smoke
+split: train
+val_split: val
+epochs: 1
+max_steps: 1
+batch_size: 2
+image_size: 96
+device: cpu
+export_onnx: false
+run_dir: runs/external_finetune/rtdetr_pose_smoke

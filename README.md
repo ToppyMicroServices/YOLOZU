@@ -108,6 +108,20 @@ python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewsho
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
+External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR, interface contract report):
+
+```bash
+python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
+```
+
+Execute real training for selected frameworks:
+
+```bash
+python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json
+```
+
+Details and external launcher wiring: [`docs/external_finetune_smoke.md`](docs/external_finetune_smoke.md).
+
 Reference adapter regression (RT-DETR, real-image baseline):
 
 ```bash
