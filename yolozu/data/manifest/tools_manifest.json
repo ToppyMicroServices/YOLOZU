@@ -11480,28 +11480,34 @@
       "entrypoint": "tools/support_ultralytics_detr.py",
       "examples": [
         {
-          "command": "python3 tools/support_ultralytics_detr.py layers --json",
+          "command": "python3 tools/support_ultralytics_detr.py ls -j",
           "description": "Show fixed 3-layer support matrix for trainer/repo/export surfaces."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py train-ultralytics --model yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_ultralytics.json",
+          "command": "python3 tools/support_ultralytics_detr.py tu -P smoke -n -o reports/support_ultralytics_detr.train_ultralytics.json",
           "description": "Ultralytics fine-tune wrapper with dataset conversion and training template report."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py train-hf-detr --model-id facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_hf_detr.json",
+          "command": "python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultralytics_detr.train_hf_detr.json",
           "description": "HF DETR/RT-DETR entry wrapper report (Transformers/Datasets bridge)."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py export-onnx --provider ultralytics --model yolo11n.pt --output models/yolo11n.onnx --dry-run --report reports/support_ultralytics_detr.export_onnx.json",
+          "command": "python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json",
           "description": "ONNX export wrapper with optional TensorRT handoff."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py predict-normalize --input reports/raw_predictions.json --output reports/predictions.normalized.json --report reports/support_ultralytics_detr.predict_normalize.json",
+          "command": "python3 tools/support_ultralytics_detr.py pn -i reports/raw_predictions.json -o reports/predictions.normalized.json -r reports/support_ultralytics_detr.predict_normalize.json",
           "description": "Canonicalize predictions into YOLOZU predictions interface contract."
         }
       ],
       "id": "support_ultralytics_detr",
       "inputs": [
+        {
+          "flag": "--preset",
+          "kind": "string",
+          "name": "preset",
+          "required": false
+        },
         {
           "flag": "--from",
           "kind": "string",
@@ -11623,7 +11629,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Ultralytics/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), shared dataset conversion, ONNX export template, and prediction normalization.",
+      "summary": "Ultralytics/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization.",
       "tags": [
         "ultralytics",
         "detr",
@@ -12290,11 +12296,11 @@
       "entrypoint": "tools/yolozu.py",
       "examples": [
         {
-          "command": "python3 tools/yolozu.py doctor --output reports/doctor.json",
+          "command": "python3 tools/yolozu.py dr -o reports/doctor.json",
           "description": "Doctor report."
         },
         {
-          "command": "python3 tools/yolozu.py completion --shell bash",
+          "command": "python3 tools/yolozu.py comp -s bash",
           "description": "Print bash completion script for yolozu CLI (eval output to enable tab completion)."
         },
         {
@@ -12346,7 +12352,7 @@
           "description": "Evaluate instance-seg demo predictions (mask mAP) with HTML overlays."
         },
         {
-          "command": "python3 tools/yolozu.py sweep --config docs/hpo_sweep_example.json --dry-run",
+          "command": "python3 tools/yolozu.py sw -c docs/hpo_sweep_example.json -n",
           "description": "Run a sweep config (dry-run)."
         },
         {
@@ -12362,7 +12368,7 @@
           "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
         },
         {
-          "command": "python3 tools/yolozu.py support-ultralytics-detr layers --json",
+          "command": "python3 tools/yolozu.py sud ls -j",
           "description": "Use wrapper CLI to access Ultralytics/DETR layered support helpers."
         }
       ],

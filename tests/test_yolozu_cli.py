@@ -43,6 +43,9 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("--shell", proc.stdout)
         self.assertIn("--command", proc.stdout)
         self.assertIn("--output", proc.stdout)
+        self.assertIn("-s", proc.stdout)
+        self.assertIn("-c", proc.stdout)
+        self.assertIn("-o", proc.stdout)
 
     def test_completion_bash_stdout_contains_complete_directive(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -87,7 +90,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             root = Path(td)
             out_path = root / "doctor.json"
             proc = subprocess.run(
-                [sys.executable, str(script), "doctor", "--output", str(out_path.relative_to(repo_root))],
+                [sys.executable, str(script), "dr", "-o", str(out_path.relative_to(repo_root))],
                 cwd=str(repo_root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -110,6 +113,24 @@ class TestYOLOZUCLI(unittest.TestCase):
             if proc.returncode == 1:
                 errors = payload.get("errors") or []
                 self.assertTrue(errors, "doctor exit code 1 should include errors")
+
+    def test_support_ultralytics_detr_alias_forwards(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "sud", "ls", "-j"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"yolozu sud ls -j failed:\n{proc.stdout}\n{proc.stderr}")
+        payload = json.loads(proc.stdout)
+        layers = payload.get("layers") or {}
+        self.assertIn("trainer_runner", layers)
 
     def test_long_tail_recipe_help_lists_pytorch_options(self):
         repo_root = Path(__file__).resolve().parents[1]

@@ -211,10 +211,10 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 Ultralytics/DETR support (trainer/repo/export 3-layer helpers):
 
 ```bash
-python3 tools/support_ultralytics_detr.py layers --json
-python3 tools/support_ultralytics_detr.py train-ultralytics --model yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_ultralytics.json
-python3 tools/support_ultralytics_detr.py train-hf-detr --model-id facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/support_ultralytics_detr.train_hf_detr.json
-python3 tools/support_ultralytics_detr.py export-onnx --provider ultralytics --model yolo11n.pt --output models/yolo11n.onnx --dry-run --report reports/support_ultralytics_detr.export_onnx.json
+python3 tools/support_ultralytics_detr.py ls -j
+python3 tools/support_ultralytics_detr.py tu -P smoke -n -o reports/support_ultralytics_detr.train_ultralytics.json
+python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultralytics_detr.train_hf_detr.json
+python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json
 ```
 
 See: [`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)

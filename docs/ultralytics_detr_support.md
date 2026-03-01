@@ -15,72 +15,71 @@ YOLOZU now exposes a fixed 3-layer support surface for Ultralytics/DETR workflow
 
 ```bash
 python3 tools/support_ultralytics_detr.py --help
+python3 tools/yolozu.py sud --help
 ```
 
 Layer matrix:
 
 ```bash
-python3 tools/support_ultralytics_detr.py layers --json
+python3 tools/support_ultralytics_detr.py ls -j
 ```
+
+Preset shortcuts:
+- default preset is `smoke` (or `YOLOZU_CLI_PRESET`)
+- supported presets: `smoke`, `coco128`, `none`
+- common env fallbacks: `YOLOZU_DATASET`, `YOLOZU_MODEL`, `YOLOZU_HF_MODEL_ID`, `YOLOZU_SPLIT`
 
 ## Top 3 support paths
 
 1. Ultralytics YOLO fine-tune (COCO/YOLO input via dataset conversion)
 
 ```bash
-python3 tools/support_ultralytics_detr.py train-ultralytics \
-  --model yolo11n.pt \
-  --from internal \
-  --dataset data/smoke \
-  --split val \
-  --dry-run \
-  --output reports/support_ultralytics_detr.train_ultralytics.json
+python3 tools/support_ultralytics_detr.py tu \
+  -P smoke \
+  -n \
+  -o reports/support_ultralytics_detr.train_ultralytics.json
 ```
 
 2. Hugging Face DETR/RT-DETR entry (Transformers/Datasets bridge)
 
 ```bash
-python3 tools/support_ultralytics_detr.py train-hf-detr \
-  --model-id facebook/detr-resnet-50 \
-  --from internal \
-  --dataset data/smoke \
-  --split val \
-  --dry-run \
-  --output reports/support_ultralytics_detr.train_hf_detr.json
+python3 tools/support_ultralytics_detr.py th \
+  -P smoke \
+  -n \
+  -o reports/support_ultralytics_detr.train_hf_detr.json
 ```
 
 For non-dry execution, provide your external train script:
 
 ```bash
-python3 tools/support_ultralytics_detr.py train-hf-detr \
-  --model-id facebook/detr-resnet-50 \
-  --dataset data/smoke \
-  --split val \
-  --train-script /abs/path/to/hf_detr_train.py \
-  --output reports/support_ultralytics_detr.train_hf_detr.exec.json
+python3 tools/support_ultralytics_detr.py th \
+  -m facebook/detr-resnet-50 \
+  -d data/smoke \
+  -s val \
+  -t /abs/path/to/hf_detr_train.py \
+  -o reports/support_ultralytics_detr.train_hf_detr.exec.json
 ```
 
 3. ONNX export (optional TensorRT)
 
 ```bash
-python3 tools/support_ultralytics_detr.py export-onnx \
-  --provider ultralytics \
-  --model yolo11n.pt \
-  --output models/yolo11n.onnx \
-  --dry-run \
-  --report reports/support_ultralytics_detr.export_onnx.json
+python3 tools/support_ultralytics_detr.py eo \
+  -P smoke \
+  -o models/yolo11n.onnx \
+  -n \
+  -r reports/support_ultralytics_detr.export_onnx.json
 ```
 
 Optional TensorRT build handoff:
 
 ```bash
-python3 tools/support_ultralytics_detr.py export-onnx \
-  --provider ultralytics \
-  --model yolo11n.pt \
-  --output models/yolo11n.onnx \
-  --trt-engine engines/yolo11n_fp16.plan \
-  --trt-precision fp16 \
-  --report reports/support_ultralytics_detr.export_onnx.trt.json
+python3 tools/support_ultralytics_detr.py eo \
+  -p ultralytics \
+  -m yolo11n.pt \
+  -o models/yolo11n.onnx \
+  -t engines/yolo11n_fp16.plan \
+  -q fp16 \
+  -r reports/support_ultralytics_detr.export_onnx.trt.json
 ```
 
 ## Shared minimal adapters
@@ -88,12 +87,12 @@ python3 tools/support_ultralytics_detr.py export-onnx \
 - Dataset conversion (COCO/YOLO/Ultralytics -> internal wrapper):
 
 ```bash
-python3 tools/support_ultralytics_detr.py dataset \
-  --from auto \
-  --dataset data/smoke \
-  --split val \
-  --output runs/support_ultralytics_detr/dataset \
-  --report reports/support_ultralytics_detr.dataset.json
+python3 tools/support_ultralytics_detr.py ds \
+  -f auto \
+  -d data/smoke \
+  -s val \
+  -o runs/support_ultralytics_detr/dataset \
+  -r reports/support_ultralytics_detr.dataset.json
 ```
 
 - Train template (CLI wrapper):
@@ -105,20 +104,20 @@ python3 tools/support_ultralytics_detr.py dataset \
 - `predict -> YOLOZU interface contract` normalization:
 
 ```bash
-python3 tools/support_ultralytics_detr.py predict-normalize \
-  --input reports/raw_predictions.json \
-  --output reports/predictions.normalized.json \
-  --report reports/support_ultralytics_detr.predict_normalize.json
+python3 tools/support_ultralytics_detr.py pn \
+  -i reports/raw_predictions.json \
+  -o reports/predictions.normalized.json \
+  -r reports/support_ultralytics_detr.predict_normalize.json
 ```
 
 Ultralytics direct path:
 
 ```bash
-python3 tools/support_ultralytics_detr.py predict-normalize \
-  --ultralytics-model yolo11n.pt \
-  --dataset data/smoke \
-  --split val \
-  --ultralytics-dry-run \
-  --output reports/predictions.ultra.normalized.json \
-  --report reports/support_ultralytics_detr.predict_normalize.ultra.json
+python3 tools/support_ultralytics_detr.py pn \
+  -m yolo11n.pt \
+  -d data/smoke \
+  -S val \
+  -n \
+  -o reports/predictions.ultra.normalized.json \
+  -r reports/support_ultralytics_detr.predict_normalize.ultra.json
 ```

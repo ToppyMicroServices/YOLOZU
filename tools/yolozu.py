@@ -1079,28 +1079,28 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    p_doctor = sub.add_parser("doctor", help="Print environment diagnostics as JSON.")
-    p_doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path.")
+    p_doctor = sub.add_parser("doctor", aliases=["dr"], help="Print environment diagnostics as JSON.")
+    p_doctor.add_argument("-o", "--output", default="reports/doctor.json", help="Output JSON path.")
     p_doctor.set_defaults(_fn=_doctor)
 
-    p_sweep = sub.add_parser("sweep", help="Run a parameter sweep (wrapper around tools/hpo_sweep.py).")
-    p_sweep.add_argument("--config", required=True, help="Path to sweep config JSON.")
-    p_sweep.add_argument("--resume", action="store_true", help="Skip runs already present in results jsonl.")
-    p_sweep.add_argument("--dry-run", action="store_true", help="Print commands without executing.")
-    p_sweep.add_argument("--max-runs", type=int, default=None, help="Optional cap for number of runs.")
+    p_sweep = sub.add_parser("sweep", aliases=["sw"], help="Run a parameter sweep (wrapper around tools/hpo_sweep.py).")
+    p_sweep.add_argument("-c", "--config", required=True, help="Path to sweep config JSON.")
+    p_sweep.add_argument("-r", "--resume", action="store_true", help="Skip runs already present in results jsonl.")
+    p_sweep.add_argument("-n", "--dry-run", action="store_true", help="Print commands without executing.")
+    p_sweep.add_argument("-m", "--max-runs", type=int, default=None, help="Optional cap for number of runs.")
     p_sweep.set_defaults(_fn=_sweep)
 
-    p_ct = sub.add_parser("continual-train", help="Run continual fine-tuning for rtdetr_pose.")
-    p_ct.add_argument("--config", required=True, help="YAML/JSON continual learning config.")
-    p_ct.add_argument("--run-dir", default=None, help="Optional run directory (default: runs/continual/<stamp>_rtdetr_pose).")
+    p_ct = sub.add_parser("continual-train", aliases=["ct"], help="Run continual fine-tuning for rtdetr_pose.")
+    p_ct.add_argument("-c", "--config", required=True, help="YAML/JSON continual learning config.")
+    p_ct.add_argument("-r", "--run-dir", default=None, help="Optional run directory (default: runs/continual/<stamp>_rtdetr_pose).")
     p_ct.add_argument("--replay-size", type=int, default=None, help="Override continual.replay_size (0 disables replay).")
     p_ct.add_argument("--replay-fraction", type=float, default=None, help="Override continual.replay_fraction.")
     p_ct.add_argument("--replay-per-task-cap", type=int, default=None, help="Override continual.replay_per_task_cap.")
     p_ct.set_defaults(_fn=_continual_train)
 
-    p_ce = sub.add_parser("continual-eval", help="Evaluate a continual run (simple mAP proxy or pose metrics).")
-    p_ce.add_argument("--run-json", required=True, help="Path to runs/.../continual_run.json produced by train_continual.py.")
-    p_ce.add_argument("--device", default="cpu", help="Torch device for export (default: cpu).")
+    p_ce = sub.add_parser("continual-eval", aliases=["ce"], help="Evaluate a continual run (simple mAP proxy or pose metrics).")
+    p_ce.add_argument("-r", "--run-json", required=True, help="Path to runs/.../continual_run.json produced by train_continual.py.")
+    p_ce.add_argument("-d", "--device", default="cpu", help="Torch device for export (default: cpu).")
     p_ce.add_argument("--image-size", type=int, default=320, help="Adapter image size (square, default: 320).")
     p_ce.add_argument("--max-images", type=int, default=None, help="Optional cap for export/eval.")
     p_ce.add_argument("--metric", choices=("simple_map", "pose"), default="simple_map", help="Metric backend (default: simple_map).")
@@ -1119,21 +1119,22 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     _parse_common_export_args(p_export)
     p_export.set_defaults(_fn=lambda a: (print(_export_with_backend(a)), 0)[1])
 
-    p_pi = sub.add_parser("predict-images", help="Run inference on a folder of images and write overlays/HTML.")
+    p_pi = sub.add_parser("predict-images", aliases=["pi"], help="Run inference on a folder of images and write overlays/HTML.")
     _parse_common_export_args(p_pi)
-    p_pi.add_argument("--input-dir", required=True, help="Folder containing images.")
+    p_pi.add_argument("-i", "--input-dir", required=True, help="Folder containing images.")
     p_pi.add_argument("--glob", action="append", default=None, help="Glob pattern under --input-dir (repeatable).")
-    p_pi.add_argument("--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
-    p_pi.add_argument("--html", default="reports/predict_images.html", help="Optional HTML report output path.")
+    p_pi.add_argument("-v", "--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
+    p_pi.add_argument("-H", "--html", default="reports/predict_images.html", help="Optional HTML report output path.")
     p_pi.add_argument("--title", default="YOLOZU predict-images report", help="HTML title.")
     p_pi.set_defaults(_fn=_predict_images)
 
     p_pkd = sub.add_parser(
         "prepare-keypoints-dataset",
+        aliases=["pkd"],
         help="Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints).",
     )
-    p_pkd.add_argument("--source", required=True, help="Source path (YOLO Pose root or COCO root).")
-    p_pkd.add_argument("--out", required=True, help="Output dataset root.")
+    p_pkd.add_argument("-s", "--source", required=True, help="Source path (YOLO Pose root or COCO root).")
+    p_pkd.add_argument("-o", "--out", required=True, help="Output dataset root.")
     p_pkd.add_argument(
         "--format",
         default="auto",
@@ -1159,11 +1160,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_pkd.add_argument("--cvat-images-dir", default=None, help="CVAT XML mode images root override.")
     p_pkd.set_defaults(_fn=_prepare_keypoints_dataset)
 
-    p_kp = sub.add_parser("eval-keypoints", help="Evaluate keypoint predictions (PCK + optional OKS mAP) and write a report.")
-    p_kp.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
+    p_kp = sub.add_parser("eval-keypoints", aliases=["ek"], help="Evaluate keypoint predictions (PCK + optional OKS mAP) and write a report.")
+    p_kp.add_argument("-d", "--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
     p_kp.add_argument("--split", default=None, help="Split under images/ and labels/ (default: auto).")
-    p_kp.add_argument("--predictions", required=True, help="Predictions JSON (detections may include keypoints).")
-    p_kp.add_argument("--output", default="reports/keypoints_eval.json", help="Output JSON report path.")
+    p_kp.add_argument("-p", "--predictions", required=True, help="Predictions JSON (detections may include keypoints).")
+    p_kp.add_argument("-o", "--output", default="reports/keypoints_eval.json", help="Output JSON report path.")
     p_kp.add_argument("--iou-threshold", type=float, default=0.5, help="IoU threshold for matching (default: 0.5).")
     p_kp.add_argument("--pck-threshold", type=float, default=0.1, help="PCK threshold (default: 0.1).")
     p_kp.add_argument("--min-score", type=float, default=0.0, help="Minimum score threshold (default: 0.0).")
@@ -1188,10 +1189,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_kp.add_argument("--oks-max-dets", type=int, default=20, help="COCOeval maxDets for keypoints (default: 20).")
     p_kp.set_defaults(_fn=_eval_keypoints)
 
-    p_is = sub.add_parser("eval-instance-seg", help="Evaluate instance segmentation predictions (PNG masks) and write a report.")
-    p_is.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
+    p_is = sub.add_parser("eval-instance-seg", aliases=["eis"], help="Evaluate instance segmentation predictions (PNG masks) and write a report.")
+    p_is.add_argument("-d", "--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
     p_is.add_argument("--split", default=None, help="Split under images/ and labels/ (default: auto).")
-    p_is.add_argument("--predictions", required=True, help="Instance segmentation predictions JSON.")
+    p_is.add_argument("-p", "--predictions", required=True, help="Instance segmentation predictions JSON.")
     p_is.add_argument("--pred-root", default=None, help="Optional root to resolve relative prediction mask paths.")
     p_is.add_argument("--classes", default=None, help="Optional classes.txt/classes.json for class_id→name.")
     p_is.add_argument("--output", default="reports/instance_seg_eval.json", help="Output JSON report path.")
@@ -1234,10 +1235,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_demo.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu demo`.")
     p_demo.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="demo")
 
-    p_completion = sub.add_parser("completion", help="Print shell completion script (bash/zsh).")
-    p_completion.add_argument("--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
-    p_completion.add_argument("--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
-    p_completion.add_argument("--output", default="-", help="Output path (default: stdout).")
+    p_completion = sub.add_parser("completion", aliases=["comp"], help="Print shell completion script (bash/zsh).")
+    p_completion.add_argument("-s", "--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
+    p_completion.add_argument("-c", "--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
+    p_completion.add_argument("-o", "--output", default="-", help="Output path (default: stdout).")
     p_completion.set_defaults(_fn=_completion)
 
     p_release = sub.add_parser("release", help="Run single-command release automation (tag + GitHub/PyPI/Zenodo flow).")
@@ -1245,6 +1246,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
     p_support_ud = sub.add_parser(
         "support-ultralytics-detr",
+        aliases=["sud", "ud"],
         help="Ultralytics/DETR support wrapper (trainer/repo/export layers + dataset/onnx/predict-normalize).",
     )
     p_support_ud.add_argument(
@@ -1262,7 +1264,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     list_sub = p_list.add_subparsers(dest="list_cmd", required=True)
     p_list_models = list_sub.add_parser("models", help="Delegate to `yolozu list models`.")
     p_list_models.add_argument("--registry", default=None, help="Optional registry JSON path override.")
-    p_list_models.add_argument("--json", action="store_true", help="Emit JSON output.")
+    p_list_models.add_argument("-j", "--json", action="store_true", help="Emit JSON output.")
     p_list_models.set_defaults(_fn=_passthrough_list_models)
 
     p_reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from tools/manifest.json.")
@@ -1272,19 +1274,19 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_reg_validate.set_defaults(_fn=_registry_validate)
 
     p_reg_list = reg.add_parser("list", help="List tools in the manifest (text or JSON).")
-    p_reg_list.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_reg_list.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
     p_reg_list.add_argument("--tag", action="append", default=None, help="Filter by tag (repeatable, AND).")
     p_reg_list.add_argument("--contract", action="append", default=None, help="Filter by contract id (repeatable, AND).")
     p_reg_list.set_defaults(_fn=_registry_list)
 
     p_reg_show = reg.add_parser("show", help="Show a single tool spec (text or JSON).")
     p_reg_show.add_argument("id", help="Tool id from the manifest.")
-    p_reg_show.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_reg_show.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
     p_reg_show.set_defaults(_fn=_registry_show)
 
     p_reg_run = reg.add_parser("run", help="Safely run a tool by id with allowlisted side effects.")
     p_reg_run.add_argument("id", help="Tool id from the manifest.")
-    p_reg_run.add_argument("--dry-run", action="store_true", help="Print the resolved command without executing.")
+    p_reg_run.add_argument("-n", "--dry-run", action="store_true", help="Print the resolved command without executing.")
     p_reg_run.add_argument("--allow-network", action="store_true", help="Allow tools that require network access.")
     p_reg_run.add_argument("--allow-gpu", action="store_true", help="Allow tools that require GPU.")
     p_reg_run.add_argument(
