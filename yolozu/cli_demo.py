@@ -4,8 +4,104 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 from typing import Any
+
+
+def _optional_module_status(module: str) -> dict[str, Any]:
+    try:
+        __import__(module)
+        return {"module": module, "available": True, "error": None}
+    except Exception as exc:
+        return {"module": module, "available": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def _write_demo_overview_report(*, output: str | None) -> Path:
+    ts = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
+    out_path = Path(output) if output else (Path("demo_output") / "overview" / ts / "demo_overview_report.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    dependency_checks = [
+        _optional_module_status("torch"),
+        _optional_module_status("torchvision"),
+        _optional_module_status("cv2"),
+        _optional_module_status("numpy"),
+        _optional_module_status("transformers"),
+    ]
+    dep_map = {str(d["module"]): bool(d["available"]) for d in dependency_checks}
+
+    coverage = [
+        {
+            "capability": "bbox",
+            "status": "supported",
+            "entrypoints": ["yolozu demo instance-seg", "python3 tools/run_real_multitask_finetune_demo.py"],
+            "notes": "Detection outputs are covered in instance-seg and multitask finetune smoke flows.",
+        },
+        {
+            "capability": "segmentation",
+            "status": "supported",
+            "entrypoints": ["yolozu demo instance-seg", "python3 tools/eval_instance_segmentation.py"],
+            "notes": "Polygon and mask-centric flows are available in demo and eval tooling.",
+        },
+        {
+            "capability": "keypoints",
+            "status": "supported" if dep_map.get("torch", False) and dep_map.get("torchvision", False) else "deps_missing",
+            "entrypoints": ["yolozu demo keypoints", "python3 tools/eval_keypoints.py"],
+            "notes": "Torch/Torchvision are required for keypoint inference demo.",
+        },
+        {
+            "capability": "depth",
+            "status": "supported" if dep_map.get("torch", False) else "deps_missing",
+            "entrypoints": ["yolozu demo depth", "python3 tools/export_predictions.py --adapter rtdetr_pose --ttt ..."],
+            "notes": "Depth demo relies on torch; compare mode adds MiDaS/DPT model checks.",
+        },
+        {
+            "capability": "pose6d",
+            "status": "supported" if dep_map.get("cv2", False) else "deps_missing",
+            "entrypoints": ["yolozu demo pose", "python3 tools/run_real_multitask_finetune_demo.py"],
+            "notes": "6D pose demo supports chessboard/ArUco and optional DenseFusion backend.",
+        },
+        {
+            "capability": "external_finetune_audit",
+            "status": "supported",
+            "entrypoints": ["python3 tools/run_external_finetune_smoke.py", "python3 tools/audit_backend_support.py"],
+            "notes": "Audits YOLOv/MMDetection/Detectron2/RT-DETR entrypoints with reportable interface contract outputs.",
+        },
+    ]
+
+    recommended_commands = [
+        "yolozu demo overview",
+        "yolozu demo",
+        "yolozu demo instance-seg",
+        "yolozu demo keypoints",
+        "yolozu demo depth",
+        "yolozu demo pose",
+        "python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force",
+        "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json",
+    ]
+
+    warnings: list[str] = []
+    for dep in dependency_checks:
+        if not bool(dep.get("available")):
+            warnings.append(f"optional dependency missing: {dep.get('module')} ({dep.get('error')})")
+
+    payload = {
+        "kind": "demo_overview",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "coverage": coverage,
+        "dependency_checks": dependency_checks,
+        "recommended_commands": recommended_commands,
+        "docs": [
+            "README.md",
+            "docs/tools_index.md",
+            "docs/external_finetune_smoke.md",
+            "docs/training_inference_export.md",
+        ],
+        "warnings": warnings,
+    }
+    out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    return out_path
 
 
 def handle_demo_command(args: argparse.Namespace) -> int:
@@ -42,13 +138,14 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         print(str(out_path))
 
     if args.demo_command is None:
-        import time
-
         from yolozu.demos.instance_seg import run_instance_seg_demo
 
         suite_id = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
         suite_root = Path("demo_output") / "instance_seg" / f"suite_{suite_id}"
         ok = 0
+        overview_path = _write_demo_overview_report(output=None)
+        print("== overview ==")
+        print(str(overview_path))
 
         suite_instances = getattr(args, "coco_instances_json", None)
         suite_images = getattr(args, "coco_images_dir", None)
@@ -623,6 +720,12 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         except Exception:
             pass
         _print_instance_seg_report(out_path=Path(out))
+        return 0
+
+    if args.demo_command == "overview":
+        out = _write_demo_overview_report(output=getattr(args, "output", None))
+        print("demo overview:")
+        print(str(out))
         return 0
 
     if args.demo_command == "continual":

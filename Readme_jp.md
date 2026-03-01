@@ -80,6 +80,12 @@ python3 -m pip install 'yolozu[train]'   # 学習スキャフォールド（torc
 python3 -m pip install 'yolozu[full]'
 ```
 
+デモ全体像のサマリ（機能カバレッジ + 依存チェック + 推奨コマンド）:
+
+```bash
+yolozu demo overview
+```
+
 ドキュメント入口: [`docs/README.md`](docs/README.md)
 
 学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
@@ -369,6 +375,11 @@ python3 tools/run_external_finetune_smoke.py \
   --require-training-execution \
   --output reports/external_finetune_smoke.exec.json
 ```
+
+RT-DETR の non-dry 実行で torch が不足している場合は
+`failure_code=E_DEP_TORCH_MISSING` を明示して失敗を返します。
+MMDetection/Detectron2 は `--mmdet-train-script` / `--detectron2-train-script` 指定時、
+projection依存が不足していても train-path 監査を継続し、`projection_error` をレポートします。
 
 MMDetection / Detectron2 の外部ランチャ指定を含む詳細:
 `docs/external_finetune_smoke.md`

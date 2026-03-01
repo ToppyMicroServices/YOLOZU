@@ -28,6 +28,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \textbf{Command} & \textbf{Purpose} \\
 \midrule
 \cmd{yolozu doctor} & Executes environment diagnostics (verifying dependencies, GPU status, and backend availability). \\
+\cmd{yolozu demo overview} & Writes a demo overview report (\path{demo\_output/overview/...}) covering bbox/segmentation/keypoints/depth/pose6d flows, dependency checks, and recommended commands. \\
 \cmd{yolozu demo} & Runs a small CPU-friendly demo suite and writes artifacts under \path{demo\_output/}. \\
 \cmd{yolozu demo instance-seg} & Instance-seg demo (short path; uses COCO instances if present, else synthetic fallback). \\
 \cmd{yolozu demo keypoints} & Keypoint R-CNN inference demo (torchvision; writes overlay under \path{demo\_output/keypoints/}). \\

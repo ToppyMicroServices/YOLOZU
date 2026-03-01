@@ -229,6 +229,25 @@ def _tail(text: str, n: int = 10) -> list[str]:
     return str(text or "").splitlines()[-n:]
 
 
+def _probe_python_module(*, python: str, module: str, cwd: Path) -> tuple[bool, str | None]:
+    probe_cmd = [str(python), "-c", f"import {module}"]
+    try:
+        probe = _run(probe_cmd, cwd=cwd)
+    except FileNotFoundError as exc:
+        return False, f"python executable not found: {python} ({exc})"
+    if int(probe.returncode) == 0:
+        return True, None
+    combined = "\n".join([str(probe.stderr or ""), str(probe.stdout or "")]).strip()
+    lines = [line.strip() for line in _tail(combined, n=3) if str(line).strip()]
+    detail = " | ".join(lines) if lines else f"import probe failed for module '{module}' (exit={probe.returncode})"
+    return False, detail
+
+
+def _missing_module(detail: str, module: str) -> bool:
+    text = str(detail or "").lower()
+    return f"no module named '{module.lower()}'" in text
+
+
 def _execute_ultralytics(
     *,
     config_path: Path,
@@ -343,13 +362,19 @@ def main(argv: list[str] | None = None) -> int:
         ok = True
         returncode = 0
         runtime_error: str | None = None
+        failure_code: str | None = None
         training_executed = False
+        projection_executed = False
+        projection_error: str | None = None
+        train_path_audited = False
+        train_script_configured: bool | None = None
         capability_checks: list[str] = []
 
         if not cfg_path.exists():
             ok = False
             returncode = 2
             runtime_error = f"missing config template: {cfg_path}"
+            failure_code = "E_CONFIG_TEMPLATE_MISSING"
         elif dry_run:
             if framework == "yolov":
                 command = [
@@ -378,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
                     device=str(args.device),
                 )
             elif framework == "mmdetection":
+                train_script_configured = mmdet_train_script is not None
                 command = [
                     str(args.python),
                     "-m",
@@ -395,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
                 if mmdet_train_script is None:
                     row_warnings.append("MMDetection train script is not configured (set --mmdet-train-script for non-dry training).")
             elif framework == "detectron2":
+                train_script_configured = detectron2_train_script is not None
                 command = [
                     str(args.python),
                     "-m",
@@ -429,6 +456,12 @@ def main(argv: list[str] | None = None) -> int:
                 stderr_tail = [str(x) for x in list(extra_details.get("stderr_tail") or [])]
                 training_executed = bool(extra_details.get("training_executed", False))
                 returncode = 0 if ok else 1
+                if not ok:
+                    err_text = str(runtime_error or "")
+                    if "ultralytics unavailable" in err_text:
+                        failure_code = "E_DEP_ULTRALYTICS_MISSING"
+                    else:
+                        failure_code = "E_ULTRALYTICS_TRAIN_FAILED"
             elif framework == "rtdetr":
                 command = _build_rtdetr_command(
                     python=str(args.python),
@@ -442,15 +475,37 @@ def main(argv: list[str] | None = None) -> int:
                     image_size=int(args.image_size),
                     device=str(args.device),
                 )
-                proc = _run(command, cwd=repo_root)
-                returncode = int(proc.returncode)
-                stdout_tail = _tail(proc.stdout)
-                stderr_tail = _tail(proc.stderr)
-                ok = proc.returncode == 0
-                training_executed = ok
-                if not ok:
-                    runtime_error = "rtdetr_pose train command failed"
+                capability_checks.append("torch_dependency_probe")
+                has_torch, torch_probe_error = _probe_python_module(python=str(args.python), module="torch", cwd=repo_root)
+                if not has_torch:
+                    ok = False
+                    returncode = 3
+                    failure_code = "E_DEP_TORCH_MISSING"
+                    runtime_error = (
+                        "rtdetr non-dry execution requires torch in the selected runtime. "
+                        f"Probe detail: {torch_probe_error}"
+                    )
+                    row_warnings.append(
+                        "Install torch for the selected runtime before non-dry rtdetr runs "
+                        "(e.g. python3 -m pip install torch --index-url https://download.pytorch.org/whl/cpu)."
+                    )
+                else:
+                    proc = _run(command, cwd=repo_root)
+                    returncode = int(proc.returncode)
+                    stdout_tail = _tail(proc.stdout)
+                    stderr_tail = _tail(proc.stderr)
+                    ok = proc.returncode == 0
+                    training_executed = ok
+                    if not ok:
+                        combined = "\n".join([str(proc.stderr or ""), str(proc.stdout or "")])
+                        if _missing_module(combined, "torch"):
+                            failure_code = "E_DEP_TORCH_MISSING"
+                            runtime_error = "rtdetr_pose train command failed: torch is not available in runtime"
+                        else:
+                            failure_code = "E_RTDETR_TRAIN_FAILED"
+                            runtime_error = "rtdetr_pose train command failed"
             elif framework == "mmdetection":
+                train_script_configured = mmdet_train_script is not None
                 command = [
                     str(args.python),
                     "-m",
@@ -469,35 +524,59 @@ def main(argv: list[str] | None = None) -> int:
                 returncode = int(proc.returncode)
                 stdout_tail = _tail(proc.stdout)
                 stderr_tail = _tail(proc.stderr)
-                ok = proc.returncode == 0
+                projection_ok = proc.returncode == 0
                 capability_checks.append("train_config_projection")
-                if not ok:
-                    runtime_error = "mmdet config projection failed"
-                elif mmdet_train_script is None:
-                    row_warnings.append("MMDetection non-dry run executed projection only (set --mmdet-train-script for actual training).")
+                projection_executed = projection_ok
+                if not projection_ok:
+                    projection_error = "mmdet config projection failed"
+                if mmdet_train_script is None:
+                    ok = projection_ok
+                    if projection_ok:
+                        row_warnings.append(
+                            "MMDetection non-dry run executed projection only (set --mmdet-train-script for actual training)."
+                        )
+                    if not projection_ok:
+                        runtime_error = "mmdet config projection failed"
+                        failure_code = "E_MMDET_PROJECTION_FAILED"
                 else:
-                    train_cmd = _build_mmdet_command(
-                        python=str(args.python),
-                        train_script=mmdet_train_script,
-                        config=cfg_path,
-                        work_dir=row_dir / "run",
-                    )
-                    env = dict(os.environ)
-                    env["YOLOZU_DATASET_ROOT"] = str(dataset_root)
-                    env["YOLOZU_SPLIT"] = split
-                    env["YOLOZU_MAX_EPOCHS"] = str(int(args.epochs))
-                    env["YOLOZU_BATCH_SIZE"] = str(int(args.batch_size))
-                    env["YOLOZU_DEVICE"] = str(args.device)
-                    proc2 = _run(train_cmd, cwd=repo_root, env=env)
-                    aux_commands.append(train_cmd)
-                    returncode = int(proc2.returncode)
-                    stdout_tail = _tail(proc2.stdout)
-                    stderr_tail = _tail(proc2.stderr)
-                    ok = proc2.returncode == 0
-                    training_executed = ok
-                    if not ok:
-                        runtime_error = "mmdetection train command failed"
+                    if not projection_ok:
+                        row_warnings.append(
+                            "MMDetection config projection failed (missing optional deps?) but train-path audit continues via --mmdet-train-script."
+                        )
+                    train_path_audited = True
+                    if not mmdet_train_script.exists():
+                        ok = False
+                        returncode = 2
+                        runtime_error = f"mmdetection train script not found: {mmdet_train_script}"
+                        failure_code = "E_EXTERNAL_SCRIPT_NOT_FOUND"
+                        row_warnings.append("MMDetection train path audit failed: script path is missing.")
+                    else:
+                        train_cmd = _build_mmdet_command(
+                            python=str(args.python),
+                            train_script=mmdet_train_script,
+                            config=cfg_path,
+                            work_dir=row_dir / "run",
+                        )
+                        env = dict(os.environ)
+                        env["YOLOZU_DATASET_ROOT"] = str(dataset_root)
+                        env["YOLOZU_SPLIT"] = split
+                        env["YOLOZU_MAX_EPOCHS"] = str(int(args.epochs))
+                        env["YOLOZU_BATCH_SIZE"] = str(int(args.batch_size))
+                        env["YOLOZU_DEVICE"] = str(args.device)
+                        proc2 = _run(train_cmd, cwd=repo_root, env=env)
+                        aux_commands.append(train_cmd)
+                        returncode = int(proc2.returncode)
+                        stdout_tail = _tail(proc2.stdout)
+                        stderr_tail = _tail(proc2.stderr)
+                        ok = proc2.returncode == 0
+                        runtime_error = None if ok else runtime_error
+                        failure_code = None if ok else failure_code
+                        training_executed = ok
+                        if not ok:
+                            runtime_error = "mmdetection train command failed"
+                            failure_code = "E_MMDET_TRAIN_FAILED"
             elif framework == "detectron2":
+                train_script_configured = detectron2_train_script is not None
                 command = [
                     str(args.python),
                     "-m",
@@ -516,33 +595,54 @@ def main(argv: list[str] | None = None) -> int:
                 returncode = int(proc.returncode)
                 stdout_tail = _tail(proc.stdout)
                 stderr_tail = _tail(proc.stderr)
-                ok = proc.returncode == 0
+                projection_ok = proc.returncode == 0
                 capability_checks.append("train_config_projection")
-                if not ok:
-                    runtime_error = "detectron2 config projection failed"
-                elif detectron2_train_script is None:
-                    row_warnings.append(
-                        "Detectron2 non-dry run executed projection only (set --detectron2-train-script for actual training)."
-                    )
+                projection_executed = projection_ok
+                if not projection_ok:
+                    projection_error = "detectron2 config projection failed"
+                if detectron2_train_script is None:
+                    ok = projection_ok
+                    if projection_ok:
+                        row_warnings.append(
+                            "Detectron2 non-dry run executed projection only (set --detectron2-train-script for actual training)."
+                        )
+                    if not projection_ok:
+                        runtime_error = "detectron2 config projection failed"
+                        failure_code = "E_DETECTRON2_PROJECTION_FAILED"
                 else:
-                    train_cmd = _build_detectron2_command(
-                        python=str(args.python),
-                        train_script=detectron2_train_script,
-                        config=cfg_path,
-                        work_dir=row_dir / "run",
-                    )
-                    env = dict(os.environ)
-                    env["YOLOZU_DATASET_ROOT"] = str(dataset_root)
-                    env["YOLOZU_SPLIT"] = split
-                    proc2 = _run(train_cmd, cwd=repo_root, env=env)
-                    aux_commands.append(train_cmd)
-                    returncode = int(proc2.returncode)
-                    stdout_tail = _tail(proc2.stdout)
-                    stderr_tail = _tail(proc2.stderr)
-                    ok = proc2.returncode == 0
-                    training_executed = ok
-                    if not ok:
-                        runtime_error = "detectron2 train command failed"
+                    if not projection_ok:
+                        row_warnings.append(
+                            "Detectron2 config projection failed (missing optional deps?) but train-path audit continues via --detectron2-train-script."
+                        )
+                    train_path_audited = True
+                    if not detectron2_train_script.exists():
+                        ok = False
+                        returncode = 2
+                        runtime_error = f"detectron2 train script not found: {detectron2_train_script}"
+                        failure_code = "E_EXTERNAL_SCRIPT_NOT_FOUND"
+                        row_warnings.append("Detectron2 train path audit failed: script path is missing.")
+                    else:
+                        train_cmd = _build_detectron2_command(
+                            python=str(args.python),
+                            train_script=detectron2_train_script,
+                            config=cfg_path,
+                            work_dir=row_dir / "run",
+                        )
+                        env = dict(os.environ)
+                        env["YOLOZU_DATASET_ROOT"] = str(dataset_root)
+                        env["YOLOZU_SPLIT"] = split
+                        proc2 = _run(train_cmd, cwd=repo_root, env=env)
+                        aux_commands.append(train_cmd)
+                        returncode = int(proc2.returncode)
+                        stdout_tail = _tail(proc2.stdout)
+                        stderr_tail = _tail(proc2.stderr)
+                        ok = proc2.returncode == 0
+                        runtime_error = None if ok else runtime_error
+                        failure_code = None if ok else failure_code
+                        training_executed = ok
+                        if not ok:
+                            runtime_error = "detectron2 train command failed"
+                            failure_code = "E_DETECTRON2_TRAIN_FAILED"
 
         results.append(
             {
@@ -550,7 +650,12 @@ def main(argv: list[str] | None = None) -> int:
                 "ok": bool(ok),
                 "dry_run": bool(dry_run),
                 "training_executed": bool(training_executed),
+                "projection_executed": bool(projection_executed),
+                "projection_error": projection_error,
+                "train_path_audited": bool(train_path_audited),
+                "train_script_configured": train_script_configured,
                 "returncode": int(returncode),
+                "failure_code": failure_code,
                 "runtime_error": runtime_error,
                 "config_template": str(cfg_path),
                 "command": command,
@@ -565,6 +670,8 @@ def main(argv: list[str] | None = None) -> int:
 
     non_dry_count = sum(1 for row in results if not bool(row.get("dry_run", True)))
     training_executed_count = sum(1 for row in results if bool(row.get("training_executed", False)))
+    projection_executed_count = sum(1 for row in results if bool(row.get("projection_executed", False)))
+    train_path_audited_count = sum(1 for row in results if bool(row.get("train_path_audited", False)))
 
     if args.require_non_dry and non_dry_count <= 0:
         warnings.append("--require-non-dry is set but no framework was configured for non-dry execution")
@@ -590,6 +697,8 @@ def main(argv: list[str] | None = None) -> int:
             "frameworks": int(len(results)),
             "non_dry": int(non_dry_count),
             "training_executed": int(training_executed_count),
+            "projection_executed": int(projection_executed_count),
+            "train_path_audited": int(train_path_audited_count),
         },
         "ultralytics_data_yaml": str(ultra_data_yaml),
         "ultralytics_data": ultra_data_payload,

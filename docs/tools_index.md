@@ -11,6 +11,7 @@ Source of truth:
 For most day-to-day flows, start with:
 
 - `python3 tools/yolozu.py doctor ...`
+- `python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + recommended commands)
 - `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
   - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
@@ -64,6 +65,9 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
   - report includes `multitask_coverage` (training/inference/prediction/eval coverage for `bbox/segmentation/keypoints/depth/pose6d`) and enumerated `gaps`.
 - External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR): `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
+  - RT-DETR non-dry torch-missing path is explicit (`failure_code=E_DEP_TORCH_MISSING`).
+  - MMDetection/Detectron2 with external train launchers can continue train-path audit even if projection deps are missing (`projection_error` + `train_path_audited=true`).
+  - machine.dev/GPU example: `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework rtdetr --device cuda --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --require-training-execution --output reports/external_finetune_smoke.machine_dev.json`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
 - Keypoints parity (backend output diffs): `python3 tools/check_keypoints_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --iou-thresh 0.99 --kp-atol 1e-4`

@@ -86,6 +86,7 @@ Optional (CPU) demos:
 
 ```bash
 python3 -m pip install -U 'yolozu[demo]'
+yolozu demo overview  # writes demo_output/overview/<utc>/demo_overview_report.json
 yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
@@ -125,6 +126,9 @@ Execute real training for selected frameworks:
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json
 ```
+
+RT-DETR non-dry path now emits explicit dependency failure metadata when torch is unavailable (`failure_code=E_DEP_TORCH_MISSING`).
+MMDetection/Detectron2 non-dry runs with `--mmdet-train-script` / `--detectron2-train-script` continue train-path audit even when projection deps are missing, and record `projection_error` in the report.
 
 Details and external launcher wiring: [`docs/external_finetune_smoke.md`](docs/external_finetune_smoke.md).
 

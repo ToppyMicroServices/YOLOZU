@@ -16,6 +16,19 @@ def _write_report(path: Path, payload: dict) -> str:
 
 
 class TestDemoCLIDispatch(unittest.TestCase):
+    def test_demo_overview_writes_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "demo_overview_report.json"
+            rc = yolozu_cli.main(["demo", "overview", "--output", str(out)])
+            self.assertEqual(rc, 0)
+            self.assertTrue(out.is_file())
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("kind"), "demo_overview")
+            coverage = payload.get("coverage") or []
+            capabilities = {str(x.get("capability")) for x in coverage if isinstance(x, dict)}
+            self.assertTrue({"bbox", "segmentation", "keypoints", "depth", "pose6d"}.issubset(capabilities))
+
     def test_demo_keypoints_dispatch(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

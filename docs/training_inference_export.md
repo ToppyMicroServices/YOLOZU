@@ -237,6 +237,24 @@ Prepared per-framework templates:
 For MMDetection/Detectron2 external launchers, see:
 `docs/external_finetune_smoke.md`.
 
+Report behavior notes:
+
+- RT-DETR non-dry torch-missing failures are explicit (`failure_code=E_DEP_TORCH_MISSING`).
+- With `--mmdet-train-script` / `--detectron2-train-script`, train-path audit can continue even when projection deps are unavailable; `projection_error` is recorded while `training_executed` reflects external launcher execution.
+
+machine.dev / GPU example:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework rtdetr \
+  --device cuda \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.machine_dev.json
+```
+
 ### Config source-of-truth and key mapping
 
 `rtdetr_pose/tools/train_minimal.py` reads YAML/JSON via `--config`, then applies explicit CLI flags on top.

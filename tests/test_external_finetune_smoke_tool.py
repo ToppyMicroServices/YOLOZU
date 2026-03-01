@@ -25,6 +25,11 @@ class TestExternalFinetuneSmokeTool(unittest.TestCase):
         (labels_train / "classes.json").write_text(json.dumps(["object"], ensure_ascii=False), encoding="utf-8")
         return dataset
 
+    def _write_exec(self, path: Path, body: str) -> Path:
+        path.write_text(body, encoding="utf-8")
+        path.chmod(0o755)
+        return path
+
     def test_external_finetune_smoke_dry_run(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "run_external_finetune_smoke.py"
@@ -105,6 +110,131 @@ class TestExternalFinetuneSmokeTool(unittest.TestCase):
         ]
         for path in templates:
             self.assertTrue(path.is_file(), f"missing template: {path}")
+
+    def test_external_finetune_smoke_rtdetr_non_dry_reports_missing_torch(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_external_finetune_smoke.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            out = root / "external_finetune_smoke.json"
+            fake_python = self._write_exec(
+                root / "fake_python_no_torch.py",
+                """#!/usr/bin/env python3
+import subprocess
+import sys
+
+if len(sys.argv) >= 3 and sys.argv[1] == "-c" and "import torch" in sys.argv[2]:
+    sys.stderr.write("ModuleNotFoundError: No module named 'torch'\\n")
+    raise SystemExit(1)
+
+raise SystemExit(subprocess.call([sys.executable] + sys.argv[1:]))
+""",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "train",
+                    "--framework",
+                    "rtdetr",
+                    "--non-dry-framework",
+                    "rtdetr",
+                    "--python",
+                    str(fake_python),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            results = payload.get("results") or []
+            self.assertEqual(len(results), 1)
+            row = dict(results[0])
+            self.assertEqual(str(row.get("framework")), "rtdetr")
+            self.assertEqual(str(row.get("failure_code")), "E_DEP_TORCH_MISSING")
+            self.assertIn("requires torch", str(row.get("runtime_error")))
+            self.assertFalse(bool(row.get("training_executed")))
+
+    def test_external_finetune_smoke_external_train_scripts_are_audited(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_external_finetune_smoke.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            out = root / "external_finetune_smoke.json"
+            mmdet_script = self._write_exec(
+                root / "mmdet_train_stub.py",
+                """#!/usr/bin/env python3
+import sys
+raise SystemExit(0)
+""",
+            )
+            detectron2_script = self._write_exec(
+                root / "detectron2_train_stub.py",
+                """#!/usr/bin/env python3
+import sys
+raise SystemExit(0)
+""",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "train",
+                    "--framework",
+                    "mmdetection",
+                    "--framework",
+                    "detectron2",
+                    "--non-dry-framework",
+                    "mmdetection",
+                    "--non-dry-framework",
+                    "detectron2",
+                    "--mmdet-train-script",
+                    str(mmdet_script),
+                    "--detectron2-train-script",
+                    str(detectron2_script),
+                    "--require-training-execution",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"run_external_finetune_smoke.py failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertTrue(bool(payload.get("ok")))
+            self.assertEqual((payload.get("counts") or {}).get("training_executed"), 2)
+            results = payload.get("results") or []
+            self.assertEqual(len(results), 2)
+            by_name = {str(row.get("framework")): row for row in results}
+            self.assertEqual(set(by_name.keys()), {"mmdetection", "detectron2"})
+            for row in by_name.values():
+                self.assertTrue(bool(row.get("train_path_audited")))
+                self.assertTrue(bool(row.get("train_script_configured")))
+                self.assertTrue(bool(row.get("training_executed")))
+                self.assertTrue(len(list(row.get("aux_commands") or [])) >= 1)
+                self.assertIn("projection_executed", row)
+                if not bool(row.get("projection_executed")):
+                    self.assertTrue(str(row.get("projection_error")))
 
 
 if __name__ == "__main__":

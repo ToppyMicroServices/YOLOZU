@@ -9025,6 +9025,10 @@
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
           "description": "Execute real training for selected frameworks and fail when no training execution occurred."
+        },
+        {
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json",
+          "description": "Audit MMDetection/Detectron2 external launcher execution paths; projection failures are reported separately via projection_error."
         }
       ],
       "id": "run_external_finetune_smoke",
@@ -9141,7 +9145,7 @@
       "outputs": [
         {
           "default": "reports/external_finetune_smoke.json",
-          "description": "Per-framework external finetune smoke report.",
+          "description": "Per-framework external finetune smoke report including failure_code, projection_error, and train_path_audited fields.",
           "kind": "file",
           "name": "external_finetune_smoke_json"
         }
@@ -9153,7 +9157,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report.",
+      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures and train-path audit fields.",
       "tags": [
         "finetune",
         "interop",
@@ -11772,6 +11776,10 @@
         {
           "command": "python3 tools/yolozu.py doctor --output reports/doctor.json",
           "description": "Doctor report."
+        },
+        {
+          "command": "python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json",
+          "description": "Demo overview report (capability coverage + dependency checks + recommended commands)."
         },
         {
           "command": "python3 tools/yolozu.py demo keypoints",

@@ -573,6 +573,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     demo_sub = demo.add_subparsers(dest="demo_command", required=False)
 
+    demo_ov = demo_sub.add_parser("overview", help="Write a demo coverage overview report (tasks/dependencies/commands).")
+    demo_ov.add_argument(
+        "--output",
+        default=None,
+        help="Output JSON path (default: demo_output/overview/<utc>/demo_overview_report.json).",
+    )
+
     demo_is = demo_sub.add_parser("instance-seg", help="Instance-seg eval demo (numpy + Pillow).")
     demo_is.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/instance_seg/<utc>).")
     demo_is.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")

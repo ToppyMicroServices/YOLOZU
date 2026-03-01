@@ -52,6 +52,13 @@ python3 tools/run_external_finetune_smoke.py \
   --output reports/external_finetune_smoke.exec.json
 ```
 
+If torch is missing for RT-DETR non-dry execution, the report returns:
+
+- `failure_code: E_DEP_TORCH_MISSING`
+- `runtime_error`: explicit message with dependency probe detail
+
+This makes the failure explicit instead of a generic train-command failure.
+
 ## 3) Add MMDetection / Detectron2 training launchers
 
 For MMDetection and Detectron2, pass your local train script paths to execute real finetune commands in addition to projection checks.
@@ -70,8 +77,34 @@ python3 tools/run_external_finetune_smoke.py \
   --output reports/external_finetune_smoke.external.json
 ```
 
+When projection dependencies (`mmengine`, `detectron2`) are missing, the tool still audits the actual train path if script paths are provided:
+
+- `train_path_audited: true` when external launcher path was checked and executed
+- `projection_executed: false` with `projection_error` populated
+- `training_executed` reflects the actual external training command result
+
+This keeps train-path auditing usable on minimal environments.
+
+## 4) machine.dev / GPU validation
+
+For GPU environments (for example `machine.dev`), run non-dry checks with a CUDA device:
+
+```bash
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework rtdetr \
+  --device cuda \
+  --epochs 1 \
+  --max-steps 1 \
+  --batch-size 2 \
+  --image-size 96 \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.machine_dev.json
+```
+
 ## Notes
 
 - `--require-non-dry` fails when every framework is dry-run.
 - `--require-training-execution` fails when no framework executed training.
-- The report includes command lines, warnings, and per-framework status to support CI gating.
+- The report includes command lines, warnings, `failure_code`, and per-framework status fields (`projection_executed`, `projection_error`, `train_path_audited`) to support CI gating.

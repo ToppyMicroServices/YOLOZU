@@ -3239,11 +3239,11 @@
           "required": false
         },
         {
-          "description": "Optional domain shift recipe JSON; copied into wrapped meta.export_settings.domain_shift_target.",
           "flag": "--domain-shift-recipe",
           "kind": "file",
           "name": "domain_shift_recipe",
-          "required": false
+          "required": false,
+          "description": "Optional domain shift recipe JSON; copied into wrapped meta.export_settings.domain_shift_target."
         },
         {
           "flag": "--wrap",
@@ -7918,16 +7918,16 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes corrupted target dataset root (images/labels split).",
             "flag": "--out",
             "kind": "dir",
-            "scope": "tree"
+            "scope": "tree",
+            "description": "Writes corrupted target dataset root (images/labels split)."
           },
           {
-            "description": "Writes domain shift recipe JSON containing export_settings linkage.",
             "flag": "--recipe-out",
             "kind": "file",
-            "scope": "path"
+            "scope": "path",
+            "description": "Writes domain shift recipe JSON containing export_settings linkage."
           }
         ]
       },
@@ -8013,14 +8013,14 @@
       ],
       "outputs": [
         {
-          "description": "Corrupted target dataset root for deterministic shift runs.",
           "kind": "dir",
-          "name": "target_dataset_root"
+          "name": "target_dataset_root",
+          "description": "Corrupted target dataset root for deterministic shift runs."
         },
         {
-          "description": "Recipe JSON including export_settings.domain_shift_target.",
           "kind": "file",
-          "name": "domain_shift_recipe_json"
+          "name": "domain_shift_recipe_json",
+          "description": "Recipe JSON including export_settings.domain_shift_target."
         }
       ],
       "platform": {
@@ -9025,6 +9025,10 @@
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
           "description": "Execute real training for selected frameworks and fail when no training execution occurred."
+        },
+        {
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json",
+          "description": "Audit MMDetection/Detectron2 external launcher execution paths; projection failures are reported separately via projection_error."
         }
       ],
       "id": "run_external_finetune_smoke",
@@ -9141,7 +9145,7 @@
       "outputs": [
         {
           "default": "reports/external_finetune_smoke.json",
-          "description": "Per-framework external finetune smoke report.",
+          "description": "Per-framework external finetune smoke report including failure_code, projection_error, and train_path_audited fields.",
           "kind": "file",
           "name": "external_finetune_smoke_json"
         }
@@ -9153,7 +9157,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report.",
+      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures and train-path audit fields.",
       "tags": [
         "finetune",
         "interop",
@@ -9515,10 +9519,10 @@
             "scope": "path"
           },
           {
-            "description": "Matrix baseline root used when --baseline-layout matrix and --write-baseline are enabled.",
             "kind": "dir",
+            "scope": "path",
             "path": "baselines/reference_adapter",
-            "scope": "path"
+            "description": "Matrix baseline root used when --baseline-layout matrix and --write-baseline are enabled."
           }
         ],
         "writes": [
@@ -9551,24 +9555,24 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json",
-          "description": "Run micro profile regression (interface contract hard + behavior warn)."
+          "description": "Run micro profile regression (interface contract hard + behavior warn).",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json"
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
-          "description": "Run interface-contract-only hard gate (schema + consistency)."
+          "description": "Run interface-contract-only hard gate (schema + consistency).",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json"
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
-          "description": "Run behavior-only warn gate (aggregate + robust metrics + speed)."
+          "description": "Run behavior-only warn gate (aggregate + robust metrics + speed).",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json"
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile full --baseline-layout matrix --baseline-root baselines/reference_adapter --adapter-id rtdetr_pose --backend-id torch --device cpu --baseline-version v1 --repro-policy strict --capture-provenance full --runtime-lock requirements-ci.lock --output reports/reference_adapter_regression_full.json",
-          "description": "Run full profile with matrix baseline layout."
+          "description": "Run full profile with matrix baseline layout.",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile full --baseline-layout matrix --baseline-root baselines/reference_adapter --adapter-id rtdetr_pose --backend-id torch --device cpu --baseline-version v1 --repro-policy strict --capture-provenance full --runtime-lock requirements-ci.lock --output reports/reference_adapter_regression_full.json"
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --capture-provenance full --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
-          "description": "Refresh the pinned baseline after an intentional interface contract/behavior change."
+          "description": "Refresh the pinned baseline after an intentional interface contract/behavior change.",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --capture-provenance full --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json"
         }
       ],
       "id": "run_reference_adapter_regression",
@@ -9621,11 +9625,11 @@
           "required": false
         },
         {
-          "default": 3,
           "flag": "--topk-examples",
           "kind": "number",
           "name": "topk_examples",
-          "required": false
+          "required": false,
+          "default": 3
         },
         {
           "flag": "--write-baseline",
@@ -9785,188 +9789,188 @@
           "required": false
         },
         {
-          "default": "micro",
           "flag": "--profile",
-          "kind": "string",
           "name": "profile",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "micro"
         },
         {
-          "default": "flat",
           "flag": "--baseline-layout",
-          "kind": "string",
           "name": "baseline_layout",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "flat"
         },
         {
-          "default": "baselines/reference_adapter",
           "flag": "--baseline-root",
-          "kind": "dir",
           "name": "baseline_root",
-          "required": false
+          "kind": "dir",
+          "required": false,
+          "default": "baselines/reference_adapter"
         },
         {
-          "default": "rtdetr_pose",
           "flag": "--adapter-id",
-          "kind": "string",
           "name": "adapter_id",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "rtdetr_pose"
         },
         {
-          "default": "torch",
           "flag": "--backend-id",
-          "kind": "string",
           "name": "backend_id",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "torch"
         },
         {
           "flag": "--matrix-device",
-          "kind": "string",
           "name": "matrix_device",
+          "kind": "string",
           "required": false
         },
         {
-          "default": "v1",
           "flag": "--baseline-version",
-          "kind": "string",
           "name": "baseline_version",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "v1"
         },
         {
           "flag": "--expected-dataset-hash",
-          "kind": "string",
           "name": "expected_dataset_hash",
+          "kind": "string",
           "required": false
         },
         {
           "flag": "--expected-weights-hash",
-          "kind": "string",
           "name": "expected_weights_hash",
+          "kind": "string",
           "required": false
         },
         {
           "flag": "--expected-checkpoint-hash",
-          "kind": "string",
           "name": "expected_checkpoint_hash",
-          "required": false
-        },
-        {
-          "default": "full",
-          "flag": "--capture-provenance",
           "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--capture-provenance",
           "name": "capture_provenance",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "full"
         },
         {
-          "default": 0.03,
           "flag": "--metric-map50-abs",
-          "kind": "number",
           "name": "metric_map50_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.03
         },
         {
-          "default": 0.03,
           "flag": "--metric-map50-95-abs",
-          "kind": "number",
           "name": "metric_map50_95_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.03
         },
         {
-          "default": 0.05,
           "flag": "--metric-worst-k-map50-abs",
-          "kind": "number",
           "name": "metric_worst_k_map50_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.05
         },
         {
-          "default": 0.05,
           "flag": "--metric-median-class-map50-abs",
-          "kind": "number",
           "name": "metric_median_class_map50_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.05
         },
         {
-          "default": 0.05,
           "flag": "--metric-recall-at-k-abs",
-          "kind": "number",
           "name": "metric_recall_at_k_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.05
         },
         {
-          "default": 0.1,
           "flag": "--metric-iou-p10-abs",
-          "kind": "number",
           "name": "metric_iou_p10_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.1
         },
         {
-          "default": 0.1,
           "flag": "--metric-iou-p50-abs",
-          "kind": "number",
           "name": "metric_iou_p50_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.1
         },
         {
-          "default": 2.0,
           "flag": "--metric-missing-count-abs",
-          "kind": "number",
           "name": "metric_missing_count_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 2.0
         },
         {
-          "default": 2.0,
           "flag": "--metric-extra-count-abs",
-          "kind": "number",
           "name": "metric_extra_count_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 2.0
         },
         {
-          "default": 2.0,
           "flag": "--metric-class-mismatch-abs",
-          "kind": "number",
           "name": "metric_class_mismatch_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 2.0
         },
         {
-          "default": 3,
           "flag": "--metric-worst-k",
-          "kind": "number",
           "name": "metric_worst_k",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 3
         },
         {
-          "default": 20,
           "flag": "--metric-recall-k",
-          "kind": "number",
           "name": "metric_recall_k",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 20
         },
         {
           "flag": "--peer-report",
-          "kind": "file",
           "name": "peer_report",
+          "kind": "file",
           "required": false
         },
         {
-          "default": "off",
           "flag": "--backend-parity-mode",
-          "kind": "string",
           "name": "backend_parity_mode",
-          "required": false
+          "kind": "string",
+          "required": false,
+          "default": "off"
         },
         {
-          "default": 0.03,
           "flag": "--backend-parity-map50-abs",
-          "kind": "number",
           "name": "backend_parity_map50_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.03
         },
         {
-          "default": 0.03,
           "flag": "--backend-parity-map50-95-abs",
-          "kind": "number",
           "name": "backend_parity_map50_95_abs",
-          "required": false
+          "kind": "number",
+          "required": false,
+          "default": 0.03
         }
       ],
       "outputs": [
@@ -11772,6 +11776,10 @@
         {
           "command": "python3 tools/yolozu.py doctor --output reports/doctor.json",
           "description": "Doctor report."
+        },
+        {
+          "command": "python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json",
+          "description": "Demo overview report (capability coverage + dependency checks + recommended commands)."
         },
         {
           "command": "python3 tools/yolozu.py demo keypoints",

@@ -189,6 +189,21 @@ python3 tools/run_external_finetune_smoke.py \
 
 MMDetection/Detectron2 can be wired to external launchers via
 \cmd{--mmdet-train-script} and \cmd{--detectron2-train-script}.
+RT-DETR non-dry dependency failures are explicit in the report
+(\texttt{failure\_code=E\_DEP\_TORCH\_MISSING}).
+When MMDetection/Detectron2 projection dependencies are absent, train-path audit can still continue with external launchers; the report records \texttt{projection\_error} and \texttt{train\_path\_audited}.
+
+GPU check (machine.dev style) example:
+\begin{lstlisting}[language=bash]
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --non-dry-framework rtdetr \
+  --device cuda \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --require-training-execution \
+  --output reports/external_finetune_smoke.machine_dev.json
+\end{lstlisting}
 
 \section{Solver (optimizer) parameters and defaults}
 The supported optimizers are \texttt{adamw} (the default) and \texttt{sgd}.
