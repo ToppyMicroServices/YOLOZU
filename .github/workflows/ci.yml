@@ -417,6 +417,18 @@ jobs:
 
       - name: Reference adapter fixed real scenario smoke (write/check)
         run: |
+          # CI does not ship real images in git; prepare a tiny real-image few-shot dataset deterministically.
+          python tools/prepare_real_multitask_fewshot.py \
+            --out data/real_multitask_fewshot \
+            --train-images 1 \
+            --val-images 1 \
+            --download-if-missing \
+            --allow-auto-download \
+            --accept-dataset-license \
+            --download-num-images 2 \
+            --download-seed 0 \
+            --strict-provenance \
+            --force
           baseline_path="reports/reference_adapter_real_multitask_micro_baseline_ci.json"
           python tools/run_reference_adapter_regression.py \
             --dataset data/real_multitask_fewshot \
