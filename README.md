@@ -25,13 +25,35 @@ Japanese: [`Readme_jp.md`](Readme_jp.md)
 
 
 
-## Quickstart (run this first)
+## Quickstart (repo checkout, run this first)
 
 ```bash
+python3 -m pip install -e .
 bash scripts/smoke.sh
 ```
 
-Output artifact: `reports/smoke_coco_eval_dry_run.json`.
+If your system Python is externally managed (PEP 668), use a venv:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e .
+bash scripts/smoke.sh
+```
+
+Output artifacts:
+- `reports/smoke_coco_eval_dry_run.json`
+- `reports/smoke_synthgen_summary.json`
+- `reports/smoke_synthgen_eval.json`
+- `reports/smoke_synthgen_overlay.png`
+- `reports/smoke_demo_instance_seg/overlays/*.png` (visual demo evidence)
+
+If you only want contract checks (skip demo PNG generation), run:
+
+```bash
+bash scripts/smoke.sh --skip-demo
+```
 
 Docs index (start here): [`docs/README.md`](docs/README.md).
 
@@ -96,6 +118,13 @@ yolozu demo pose --backend densefusion  # heavy: CUDA + large downloads
 yolozu demo depth  # default: Depth Anything (Transformers); use --compare to run MiDaS/DPT too
 yolozu demo train  # downloads ResNet18 weights on first run
 yolozu demo continual --compare --markdown
+```
+
+First-time visual confirmation (PNG output check):
+
+```bash
+yolozu demo instance-seg --background synthetic --inference none --num-images 2 --image-size 64 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
+ls reports/demo_firsttime_instance_seg/overlays/*.png
 ```
 
 Optional extras and CPU demos: [`docs/install.md`](docs/install.md).

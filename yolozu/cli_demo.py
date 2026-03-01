@@ -132,6 +132,16 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                         print(f"inference: {mode} (used={used})")
             if isinstance(meta, dict) and meta.get("run_dir"):
                 print(f"output_dir: {meta.get('run_dir')}")
+            artifacts = payload.get("artifacts", {})
+            if isinstance(artifacts, dict):
+                overlays_dir = artifacts.get("overlays_dir")
+                if isinstance(overlays_dir, str) and overlays_dir:
+                    try:
+                        overlays = sorted(Path(overlays_dir).glob("*.png"))
+                    except Exception:
+                        overlays = []
+                    if overlays:
+                        print(str(overlays[0]))
         except Exception:
             if label:
                 print(label)

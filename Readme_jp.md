@@ -48,9 +48,20 @@ TTT(Test time training)による推論時の重み調整による継続的な学
 
 ---
 
-## Quickstart（コピペ1行 / repo checkout）
+## Quickstart（repo checkout / まず実行）
 
 ```bash
+python3 -m pip install -e .
+bash scripts/smoke.sh
+```
+
+システムPythonが PEP 668（externally managed）で拒否する場合は venv を使ってください:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e .
 bash scripts/smoke.sh
 ```
 
@@ -61,7 +72,18 @@ bash scripts/smoke.sh
 - `yolozu eval-coco --dataset data/smoke --split val \
   --predictions data/smoke/predictions/predictions_dummy.json --dry-run`
 
-出力: `reports/smoke_coco_eval_dry_run.json`
+主な出力:
+- `reports/smoke_coco_eval_dry_run.json`
+- `reports/smoke_synthgen_summary.json`
+- `reports/smoke_synthgen_eval.json`
+- `reports/smoke_synthgen_overlay.png`
+- `reports/smoke_demo_instance_seg/overlays/*.png`（可視確認用）
+
+可視確認を省略したい場合:
+
+```bash
+bash scripts/smoke.sh --skip-demo
+```
 
 pip だけで始める場合:
 
@@ -84,6 +106,13 @@ python3 -m pip install 'yolozu[full]'
 
 ```bash
 yolozu demo overview
+```
+
+初回の可視確認（PNGが出ることを確認）:
+
+```bash
+yolozu demo instance-seg --background synthetic --inference none --num-images 2 --image-size 64 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
+ls reports/demo_firsttime_instance_seg/overlays/*.png
 ```
 
 CLI補完（bash/zsh）:

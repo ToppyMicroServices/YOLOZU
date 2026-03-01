@@ -36,7 +36,7 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.
 ```
 
 DoD:
-- `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json` and SynthGen smoke artifacts (`reports/smoke_synthgen_summary.json`, `reports/smoke_synthgen_eval.json`, `reports/smoke_synthgen_overlay.png`).
+- `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`, SynthGen smoke artifacts (`reports/smoke_synthgen_summary.json`, `reports/smoke_synthgen_eval.json`, `reports/smoke_synthgen_overlay.png`), and instance-seg demo overlay PNGs under `reports/smoke_demo_instance_seg/overlays/` (unless `--skip-demo` is used).
 - Manifest validator returns `OK`.
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.

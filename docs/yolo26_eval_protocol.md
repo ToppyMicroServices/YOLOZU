@@ -87,9 +87,9 @@ What it runs (CI-aligned local gates):
 Expected artifact:
 
 - `reports/smoke_coco_eval_dry_run.json` exists after the checklist
+- `reports/smoke_demo_instance_seg/overlays/*.png` exists (unless `bash scripts/smoke.sh --skip-demo` was used)
 
 Pass criteria:
 
 - Command exits with status `0`
 - Final line prints `pre-PR quality checklist passed`
-

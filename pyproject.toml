@@ -119,6 +119,11 @@ install = "python -m pip install ."
 scope = "Packaging + CLI smoke (no optional extras)."
 jobs = ["smoke_gate", "pip_smoke"]
 
+[tool.yolozu.ci_tiers.docs_mcp]
+install = "python -m pip install -e '.[mcp,actions]'"
+scope = "Docs/manual/README and MCP/Actions surface lightweight gate."
+jobs = ["docs_mcp_gate"]
+
 [tool.yolozu.ci_tiers.recommended]
 install = "python -m pip install -r requirements-ci.lock"
 scope = "Pinned dependency lock for regression/schema/manifest gates."

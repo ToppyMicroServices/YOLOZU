@@ -17,6 +17,7 @@ concurrency:
 jobs:
   # Dependency tier policy:
   # - core:       pip install . (packaging + CLI smoke)
+  # - docs_mcp:   pip install -e '.[mcp,actions]' (docs/manual + MCP/Actions surface)
   # - recommended: requirements-ci.lock (regression + schema/manifest gates)
   # - full:       GPU/backends in separate manual/nightly workflows
   # docs: docs/ci_dependency_tiers.md
@@ -25,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       full_ci: ${{ steps.filter.outputs.full_ci }}
+      docs_mcp_ci: ${{ steps.filter.outputs.docs_mcp_ci }}
     steps:
       - uses: actions/checkout@v4
       - name: Detect change scope
@@ -35,10 +37,19 @@ jobs:
             full_ci:
               - '.github/workflows/**'
               - 'yolozu/**'
+              - '!yolozu/integrations/mcp_server.py'
+              - '!yolozu/integrations/actions_api.py'
               - 'tools/**'
+              - '!tools/run_mcp_server.py'
+              - '!tools/run_actions_api.py'
+              - '!tools/check_mcp_settings.py'
               - 'scripts/**'
               - 'rtdetr_pose/**'
               - 'tests/**'
+              - '!tests/test_ai_first_mcp_surface.py'
+              - '!tests/test_integrations_mcp_actions_parity.py'
+              - '!tests/test_check_mcp_settings_tool.py'
+              - '!tests/test_generated_integration_tool_reference.py'
               - 'configs/**'
               - 'data/**'
               - 'baselines/**'
@@ -50,16 +61,70 @@ jobs:
               - 'MANIFEST.in'
               - 'setup.py'
               - 'setup.cfg'
+            docs_mcp_ci:
+              - 'README.md'
+              - 'Readme_jp.md'
+              - 'docs/**'
+              - 'manual/**'
+              - 'tools/run_mcp_server.py'
+              - 'tools/run_actions_api.py'
+              - 'tools/check_mcp_settings.py'
+              - 'yolozu/integrations/mcp_server.py'
+              - 'yolozu/integrations/actions_api.py'
+              - 'tests/test_ai_first_mcp_surface.py'
+              - 'tests/test_integrations_mcp_actions_parity.py'
+              - 'tests/test_check_mcp_settings_tool.py'
+              - 'tests/test_generated_integration_tool_reference.py'
 
   docs_meta:
     name: docs/metadata fast path
     needs:
       - changes
-    if: ${{ needs.changes.outputs.full_ci != 'true' }}
+    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Skip heavy CI for docs-only/metadata-only changes
         run: echo "No code/runtime changes detected. Heavy CI jobs are skipped."
+
+  docs_mcp_gate:
+    name: "ci tier: docs+mcp (lightweight)"
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lightweight deps (runtime + MCP/actions extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[mcp,actions]"
+
+      - name: Manifest + docs references gate
+        run: |
+          python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+          python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
+
+      - name: MCP/actions smoke
+        run: |
+          python3 tools/run_mcp_server.py --help
+          python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config_ci.json
+          python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config_ci.json
+          python3 tools/run_actions_api.py --help
+          python3 tools/check_mcp_settings.py --output reports/mcp_settings_check_ci.json
+
+      - name: MCP-focused tests
+        run: |
+          python -m unittest \
+            tests.test_ai_first_mcp_surface \
+            tests.test_integrations_mcp_actions_parity \
+            tests.test_check_mcp_settings_tool \
+            tests.test_generated_integration_tool_reference -v
 
   smoke_gate:
     name: "ci tier: core (runtime smoke)"

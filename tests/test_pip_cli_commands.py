@@ -222,6 +222,13 @@ class TestPipCLICommands(unittest.TestCase):
             res = payload.get("result") or {}
             self.assertIn("map50", res)
             self.assertIn("map50_95", res)
+            artifacts = payload.get("artifacts") or {}
+            overlays_dir = artifacts.get("overlays_dir")
+            self.assertTrue(isinstance(overlays_dir, str) and overlays_dir, "missing overlays_dir in demo artifacts")
+            overlays = sorted(Path(overlays_dir).glob("*.png"))
+            self.assertTrue(overlays, "demo instance-seg should generate at least one overlay PNG")
+            png_lines = [line for line in lines if line.lower().endswith(".png")]
+            self.assertTrue(png_lines, "demo stdout should include an overlay PNG path")
 
     def test_demo_continual_compare_smoke(self):
         repo_root = Path(__file__).resolve().parents[1]
