@@ -166,6 +166,116 @@
     },
     {
       "docs": [
+        "RELEASE.md",
+        "docs/release_reliability_checklist.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes announcement bundle and post report under out dir.",
+            "flag": "--out-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/announce_release.py",
+      "examples": [
+        {
+          "command": "python3 tools/announce_release.py --out-dir reports/announce",
+          "description": "Generate announcement bundle (no posting)."
+        },
+        {
+          "command": "python3 tools/announce_release.py --out-dir reports/announce --post --strict-post",
+          "description": "Post to configured platforms (requires secrets)."
+        }
+      ],
+      "id": "announce_release",
+      "inputs": [
+        {
+          "flag": "--event-json",
+          "kind": "file",
+          "name": "event_json",
+          "required": false
+        },
+        {
+          "default": "reports/announce",
+          "flag": "--out-dir",
+          "kind": "dir",
+          "name": "out_dir",
+          "required": false
+        },
+        {
+          "flag": "--post",
+          "kind": "string",
+          "name": "post",
+          "required": false
+        },
+        {
+          "flag": "--platform",
+          "kind": "string",
+          "name": "platform",
+          "required": false
+        },
+        {
+          "flag": "--strict-post",
+          "kind": "string",
+          "name": "strict_post",
+          "required": false
+        },
+        {
+          "flag": "--reddit-subreddit",
+          "kind": "string",
+          "name": "reddit_subreddit",
+          "required": false
+        },
+        {
+          "flag": "--reddit-kind",
+          "kind": "string",
+          "name": "reddit_kind",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/announce/announcement.json",
+          "description": "Generated announcement bundle JSON.",
+          "kind": "file",
+          "name": "announcement_json"
+        },
+        {
+          "default": "reports/announce/announcement.md",
+          "description": "Generated announcement markdown.",
+          "kind": "file",
+          "name": "announcement_md"
+        },
+        {
+          "default": "reports/announce/post_report.json",
+          "description": "Post attempt report (skips + errors + HTTP heads).",
+          "kind": "file",
+          "name": "post_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "runner": "python3",
+      "summary": "Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload.",
+      "tags": [
+        "release",
+        "announce",
+        "social"
+      ]
+    },
+    {
+      "docs": [
         "docs/tools_index.md",
         "docs/interop_detectron2_mmdet.md"
       ],

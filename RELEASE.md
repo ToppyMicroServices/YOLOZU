@@ -102,6 +102,26 @@ Workflow artifact:
 
 - `reports/manual_doi_publish.json` (DOI, concept DOI, conceptrecid, deposition id, URL, state)
 
+## Optional SNS announcement automation (LinkedIn / X / Reddit)
+
+YOLOZU can announce GitHub Releases via `.github/workflows/announce_release.yml`.
+
+- Trigger: GitHub Release `published` (tag push alone does not post).
+- Bundle artifacts (always): `reports/announce/announcement.json`, `reports/announce/announcement.md`, `reports/announce/post_report.json`
+- Posting occurs only when platform secrets/vars are configured.
+
+Required secrets/vars:
+- LinkedIn:
+  - `LINKEDIN_ACCESS_TOKEN`
+  - `LINKEDIN_AUTHOR_URN` (e.g. `urn:li:person:...` or `urn:li:organization:...`)
+- X:
+  - `X_API_KEY`, `X_API_KEY_SECRET`
+  - `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`
+- Reddit:
+  - `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_REFRESH_TOKEN`, `REDDIT_USER_AGENT`
+  - Repo variable: `YOLOZU_REDDIT_SUBREDDIT` (e.g. `MachineLearning`)
+  - Optional repo variable: `YOLOZU_REDDIT_KIND` (`link` or `text`)
+
 ## Notes
 
 - You cannot upload the same version twice to PyPI. Always bump `__version__` before publishing.

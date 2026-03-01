@@ -51,6 +51,7 @@ DoD:
 - `.github/workflows/ci.yml` (**required**): must be green on target commit.
 - `.github/workflows/manual_doi.yml` (**required when shipping manual update**): publishes `manual/build/yolozu_manual.pdf` to a separate Zenodo record and links it to software concept DOI.
 - `.github/workflows/container.yml` (**optional publish**): expected to run for container-related changes on `main`; publishes only on tag/manual.
+- `.github/workflows/announce_release.yml` (**optional announce**): posts GitHub Release announcement to LinkedIn/X/Reddit when secrets are configured; always uploads a post bundle artifact.
 - `.github/workflows/ngc_test.yml` (**optional GPU smoke**): must produce deterministic `pass` or `skip` summary in `ci-logs/gpu-ngc`.
 - `.github/workflows/gpu_zisn_pipeline.yml` (**optional GPU validation split**): manual machine-runner path for `YOLOZU-zisn.1/.2/.3` artifacts.
 
