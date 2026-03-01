@@ -44,14 +44,29 @@ docker run --rm ghcr.io/toppymicroservices/yolozu-demo:1.0.0 demo continual --me
 Minimal:
 
 ```bash
-docker build -f deploy/docker/Dockerfile -t yolozu:local .
+docker build --pull -f deploy/docker/Dockerfile -t yolozu:local .
 docker run --rm yolozu:local --help
 ```
 
 Demo:
 
 ```bash
-docker build -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
+docker build --pull -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
 docker run --rm yolozu-demo:local demo instance-seg
 docker run --rm yolozu-demo:local demo continual --method ewc_replay
+```
+
+## Container update
+
+Refresh base layers and rebuild locally:
+
+```bash
+docker build --pull -f deploy/docker/Dockerfile -t yolozu:local .
+docker build --pull -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
+```
+
+Optional Python base override:
+
+```bash
+docker build --pull --build-arg PYTHON_IMAGE=python:3.12-slim-bookworm -f deploy/docker/Dockerfile -t yolozu:local .
 ```

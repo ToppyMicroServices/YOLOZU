@@ -92,13 +92,13 @@ docker pull ghcr.io/<owner>/yolozu-rtdetr-pose:0.1.0
 Build (example):
 
 ```bash
-docker build -f deploy/runpod/Dockerfile -t yolozu:2026-02-08-trt .
+docker build --pull -f deploy/runpod/Dockerfile -t yolozu:2026-02-08-trt .
 ```
 
 For RTDETRPose (installs torch + onnxruntime-gpu), use:
 
 ```bash
-docker build -f deploy/runpod/Dockerfile.rtdetr_pose -t yolozu:2026-02-14-rtdetr-pose .
+docker build --pull -f deploy/runpod/Dockerfile.rtdetr_pose -t yolozu:2026-02-14-rtdetr-pose .
 ```
 
 Run (example):

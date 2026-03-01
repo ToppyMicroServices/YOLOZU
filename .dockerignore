@@ -1,24 +1,29 @@
 .git
 .github
 .beads
+
 .venv
+venv
 __pycache__
+.ruff_cache
+.mypy_cache
 *.pyc
 *.pyo
 *.pyd
-.DS_Store
 
 /data
 /reports
 /runs
-
+/demo_output
+/artifacts
 dist
 build
 *.egg-info
-
 *.onnx
 *.plan
 *.engine
 *.pt
 *.pth
 
+.DS_Store
+tmp
