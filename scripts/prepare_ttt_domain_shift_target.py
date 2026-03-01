@@ -16,7 +16,6 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 from PIL import Image, ImageEnhance, ImageFilter
 
