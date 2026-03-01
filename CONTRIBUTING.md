@@ -31,6 +31,20 @@ Maintainers use **bd (beads)** internally for task tracking. External contributo
 - Lint: `ruff check .`
 - Tests: `python -m unittest`
 
+## Local pre-push gates (recommended)
+
+To catch CI failures before pushing, run:
+
+```bash
+bash scripts/pre_push.sh
+```
+
+To enable automatic pre-push checks, install repo-local git hooks:
+
+```bash
+bash scripts/install_git_hooks.sh
+```
+
 ## Pull requests
 
 PRs should include:
@@ -48,4 +62,3 @@ External-facing hygiene (recommended):
 
 By contributing, you agree that your contributions will be licensed under the
 Apache License 2.0 (see `LICENSE`).
-

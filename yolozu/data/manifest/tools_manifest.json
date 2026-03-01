@@ -7441,6 +7441,72 @@
       ]
     },
     {
+      "docs": [
+        "CONTRIBUTING.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "scripts/pre_push.sh",
+      "examples": [
+        {
+          "command": "bash scripts/pre_push.sh",
+          "description": "Run default pre-push gates."
+        },
+        {
+          "command": "bash scripts/pre_push.sh --skip-real-preflight",
+          "description": "Run pre-push gates without real-image dataset preflight."
+        }
+      ],
+      "id": "pre_push",
+      "inputs": [
+        {
+          "flag": "--skip-ruff",
+          "kind": "string",
+          "name": "skip_ruff",
+          "required": false
+        },
+        {
+          "flag": "--skip-tests",
+          "kind": "string",
+          "name": "skip_tests",
+          "required": false
+        },
+        {
+          "flag": "--skip-real-preflight",
+          "kind": "string",
+          "name": "skip_real_preflight",
+          "required": false
+        },
+        {
+          "flag": "--prepare-real-data",
+          "kind": "string",
+          "name": "prepare_real_data",
+          "required": false
+        }
+      ],
+      "outputs": [],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "bash",
+      "summary": "Run local pre-push gates (ruff + focused unit tests + real-image preflight) to catch CI failures before pushing.",
+      "tags": [
+        "ci",
+        "devx",
+        "prepush",
+        "lint",
+        "tests"
+      ]
+    },
+    {
       "effects": {
         "fixed_writes": [],
         "writes": [
