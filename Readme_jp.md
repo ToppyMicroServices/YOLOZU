@@ -400,15 +400,21 @@ python3 tools/check_mcp_settings.py \
   --output reports/mcp_settings_check.json
 ```
 
-release/tag 運用スクリプト（まず dry-run）:
+release 自動化（オプション不要）:
 
 ```bash
-python3 tools/release_tag.py \
-  --dry-run \
-  --run-checks \
-  --release-state draft \
-  --push-tag \
-  --output reports/release_tag_report.json
+python3 tools/release.py
+```
+
+自動version更新ルール（現在 `X.Y.Z` から）:
+- 小規模: `X.Y.(Z+1)`（`1.1.1+add` 相当）
+- 中規模: `X.(Y+1).0`（`1.1+a.0` 相当）
+- 大規模: `(X+1).0.0`（`1+a.0.0` 相当）
+
+dry-run 例:
+
+```bash
+python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 ### Reference adapter回帰ゲート（実画像baseline）

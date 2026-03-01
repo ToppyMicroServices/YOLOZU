@@ -118,7 +118,8 @@ The manifest is intended for:
 
 ## Release helpers
 
-- release/tag helper (dry-run first): `python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json`
+- single-command release automation: `python3 tools/release.py`
+- dry-run preview: `python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json`
 - Release checklist: `docs/release_reliability_checklist.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 

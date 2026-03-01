@@ -185,10 +185,21 @@ If you want the optional demo dependencies in a source checkout:
 python3 -m pip install -e '.[demo]'
 ```
 
-Release/tag operations helper (dry-run first):
+Single-command release automation (no required options):
 
 ```bash
-python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json
+python3 tools/release.py
+```
+
+Auto bump policy (current `X.Y.Z` -> next version):
+- small change: `X.Y.(Z+1)` (e.g. `1.1.1+add` equivalent)
+- medium change: `X.(Y+1).0` (e.g. `1.1+a.0` equivalent)
+- large change: `(X+1).0.0` (e.g. `1+a.0.0` equivalent)
+
+Dry-run preview:
+
+```bash
+python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 MCP settings check (manifest + generated MCP/Actions references):

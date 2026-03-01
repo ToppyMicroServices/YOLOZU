@@ -5,7 +5,21 @@ Use this checklist before publishing a GitHub Release. The goal is deterministic
 Release trigger note:
 - PyPI publish is triggered by `.github/workflows/publish.yml` on `release: published`.
 - Tag push alone is insufficient for PyPI publish.
-- Recommended operator helper: `python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json`
+- Recommended operator helper: `python3 tools/release.py`
+
+## Auto bump policy
+
+`tools/release.py` classifies release size from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
+
+- small: `X.Y.Z -> X.Y.(Z+1)` (`1.1.1+add` equivalent)
+- medium: `X.Y.Z -> X.(Y+1).0` (`1.1+a.0` equivalent)
+- large: `X.Y.Z -> (X+1).0.0` (`1+a.0.0` equivalent)
+
+Dry-run preview:
+
+```bash
+python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+```
 
 ## 1) Required local checks (must pass)
 

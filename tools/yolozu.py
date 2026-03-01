@@ -1046,6 +1046,14 @@ def _completion(args: argparse.Namespace) -> int:
     return int(pkg_main(argv))
 
 
+def _release(_: argparse.Namespace) -> int:
+    cmd = [sys.executable, "tools/release.py"]
+    out = _subprocess_or_die(cmd)
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 0
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="yolozu",
@@ -1220,6 +1228,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_completion.add_argument("--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
     p_completion.add_argument("--output", default="-", help="Output path (default: stdout).")
     p_completion.set_defaults(_fn=_completion)
+
+    p_release = sub.add_parser("release", help="Run single-command release automation (tag + GitHub/PyPI/Zenodo flow).")
+    p_release.set_defaults(_fn=_release)
 
     p_fetch = sub.add_parser("fetch", help="Delegate to yolozu package CLI fetch command.")
     p_fetch.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu fetch`.")

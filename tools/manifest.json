@@ -8550,6 +8550,116 @@
       ]
     },
     {
+      "id": "release",
+      "summary": "Single-command release automation: auto semantic version bump (small/medium/large), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff.",
+      "runner": "python3",
+      "entrypoint": "tools/release.py",
+      "docs": [
+        "README.md",
+        "docs/release_reliability_checklist.md",
+        "docs/manual_doi_release.md",
+        "docs/tools_index.md",
+        "manual/chapters/12_tool_registry.tex"
+      ],
+      "tags": [
+        "release",
+        "tag",
+        "pypi",
+        "zenodo",
+        "automation"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "path": "yolozu/__init__.py",
+            "kind": "file",
+            "scope": "path",
+            "description": "Updates package version for the release commit."
+          }
+        ],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes release operation report JSON."
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "name": "dry_run",
+          "flag": "--dry-run",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "output",
+          "flag": "--output",
+          "kind": "file",
+          "default": "reports/release_report.json",
+          "required": false
+        },
+        {
+          "name": "allow_dirty",
+          "flag": "--allow-dirty",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "allow_non_main",
+          "flag": "--allow-non-main",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "skip_checks",
+          "flag": "--skip-checks",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "skip_gh",
+          "flag": "--skip-gh",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "skip_zenodo",
+          "flag": "--skip-zenodo",
+          "kind": "string",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "release_report_json",
+          "kind": "file",
+          "default": "reports/release_report.json",
+          "description": "Release decision report with bump policy, actions, and workflow handoff status."
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "examples": [
+        {
+          "command": "python3 tools/release.py",
+          "description": "Run the default no-option release flow (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
+        },
+        {
+          "command": "python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json",
+          "description": "Preview release actions and generated next version without mutating git/GitHub state."
+        }
+      ]
+    },
+    {
       "id": "release_tag",
       "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output.",
       "runner": "python3",
@@ -12053,6 +12163,10 @@
         {
           "command": "python3 -m yolozu train --import auto --cfg /path/to/args_or_config.{yaml,py} --resolved-config-out reports/train_config_resolved_import.json",
           "description": "Train import preview with auto framework detection."
+        },
+        {
+          "command": "python3 tools/yolozu.py release",
+          "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
         }
       ],
       "id": "yolozu",

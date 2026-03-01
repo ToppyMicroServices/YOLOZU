@@ -54,6 +54,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \cmd{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
+\cmd{python3 tools/release.py} & Runs no-option release automation: auto version bump policy, tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. \\
 \bottomrule
 \end{longtable}
 
