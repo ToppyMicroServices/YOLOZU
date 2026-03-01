@@ -667,18 +667,41 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 resolved_images = None
 
         resolved_inference = getattr(args, "inference", None)
-        if resolved_inference is None:
-            resolved_inference = "auto" if str(bg).strip().lower() == "coco-instances" else "none"
+        bg_norm = str(bg).strip().lower()
+        inf_norm = None if resolved_inference is None else str(resolved_inference).strip().lower()
 
-        if str(resolved_inference).strip().lower() != "none":
+        # Instance-seg "inference" is only meaningful for background=coco-instances.
+        # Some entrypoints set a default like "auto"; keep the demo runnable by
+        # forcing inference=none unless coco-instances is explicitly requested.
+        if bg_norm != "coco-instances":
+            if inf_norm not in (None, "none", "auto"):
+                raise SystemExit(
+                    "instance-seg inference is only supported for --background coco-instances "
+                    f"(got --background {bg!r} --inference {resolved_inference!r})"
+                )
+            resolved_inference = "none"
+            inf_norm = "none"
+
+        if inf_norm is None:
+            resolved_inference = "auto"
+            inf_norm = "auto"
+
+        if inf_norm in ("auto", "torchvision"):
             try:
                 import torch  # noqa: F401
                 import torchvision  # noqa: F401
             except Exception as exc:
-                raise SystemExit(
-                    "instance-seg inference requires torch+torchvision. "
-                    "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
-                ) from exc
+                if inf_norm == "torchvision":
+                    raise SystemExit(
+                        "instance-seg inference requires torch+torchvision. "
+                        "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+                    ) from exc
+                print(
+                    "note: torch/torchvision not available; falling back to --inference none "
+                    "(synthetic predictions). To enable inference: python3 -m pip install -U 'yolozu[demo]'"
+                )
+                resolved_inference = "none"
+                inf_norm = "none"
 
         out = run_instance_seg_demo(
             run_dir=getattr(args, "run_dir", None),
