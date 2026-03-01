@@ -421,10 +421,10 @@ PY
   echo "[deep/4] TTT + continual training surface checks"
   "$PY_BIN" tools/yolozu.py export --help > "$EXPORT_HELP_REPORT"
   "$PY_BIN" tools/yolozu.py continual-train --help > "$CONTINUAL_HELP_REPORT"
-  rg -q -- "--ttt" "$EXPORT_HELP_REPORT"
-  rg -q -- "--ttt-preset" "$EXPORT_HELP_REPORT"
-  rg -q -- "--ttt-method" "$EXPORT_HELP_REPORT"
-  rg -q -- "--replay-size" "$CONTINUAL_HELP_REPORT"
+  grep -q -- "--ttt" "$EXPORT_HELP_REPORT"
+  grep -q -- "--ttt-preset" "$EXPORT_HELP_REPORT"
+  grep -q -- "--ttt-method" "$EXPORT_HELP_REPORT"
+  grep -q -- "--replay-size" "$CONTINUAL_HELP_REPORT"
 
   TTT_STATUS="pass"
   TTT_NOTE="TTT execution path available in this environment"
@@ -446,7 +446,7 @@ PY
   set -e
 
   if [[ "$ttt_rc" -ne 0 ]]; then
-    if rg -qi "torch is required for TTT" "$TTT_PROBE_STDERR"; then
+    if grep -qiE "torch is required for TTT|no module named 'torch'|modulenotfounderror: no module named 'torch'" "$TTT_PROBE_STDERR"; then
       TTT_STATUS="deps_missing"
       TTT_NOTE="TTT probe requires torch; install yolozu[train] (or yolozu[demo]) to execute adaptation"
     else
