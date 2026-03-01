@@ -2,6 +2,9 @@ name: ci
 
 on:
   push:
+    branches-ignore:
+      - beads-sync
+      - "ci-logs/**"
   pull_request:
 
 jobs:
@@ -31,4 +34,3 @@ jobs:
       - name: Unit tests
         run: |
           python -m unittest
-
