@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "agnostic_nms": false,
+    "boxes_format": "xyxy",
+    "boxes_output": "boxes",
+    "boxes_scale": "norm",
+    "class_output": null,
+    "combined_format": "xyxy_score_class",
+    "combined_output": "output0",
+    "dataset": "reports/ci_trt_smoke/dataset",
+    "dry_run": false,
+    "engine": "/workspace/reports/ci_trt_smoke/model_fp16.plan",
+    "engine_sha256": "f3d6fba5d9917626953f6803ead975dea986477bb296cb627e90652b5327fc9f",
+    "env": {
+      "PYTHONHASHSEED": null
+    },
+    "exporter": "tensorrt",
+    "imgsz": 64,
+    "input_name": "images",
+    "max_images": null,
+    "min_score": 0.0,
+    "nms_iou": 0.7,
+    "note": null,
+    "platform": {
+      "machine": "x86_64",
+      "processor": "x86_64",
+      "release": "6.8.0-1044-aws",
+      "system": "Linux",
+      "version": "#46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025"
+    },
+    "protocol_id": "yolo26",
+    "raw_format": "yolo_84",
+    "raw_output": null,
+    "raw_postprocess": "native",
+    "scores_output": "scores",
+    "split": "val",
+    "timestamp": "2026-03-01T01:59:00Z",
+    "topk": 10
+  },
+  "predictions": [
+    {
+      "detections": [
+        {
+          "bbox": {
+            "cx": 0.500360794365406,
+            "cy": 0.5004810591538748,
+            "h": 0.800000011920929,
+            "w": 0.6000000089406967
+          },
+          "class_id": 0,
+          "score": 0.9003607630729675
+        },
+        {
+          "bbox": {
+            "cx": 0.20036079362034798,
+            "cy": 0.11690719922383626,
+            "h": 0.23381439844767252,
+            "w": 0.20000001043081284
+          },
+          "class_id": 1,
+          "score": 0.5003607869148254
+        }
+      ],
+      "image": "/workspace/reports/ci_trt_smoke/dataset/images/val/000001.jpg"
+    }
+  ]
+}

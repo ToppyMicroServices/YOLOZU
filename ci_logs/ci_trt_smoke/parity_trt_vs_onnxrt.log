@@ -1,0 +1,50 @@
+{
+  "bbox_atol": 0.0001,
+  "bbox_format": "cxcywh_norm",
+  "candidate": "/workspace/reports/ci_trt_smoke/pred_trt.json",
+  "images": 1,
+  "iou_thresh": 0.99,
+  "ok": true,
+  "reference": "/workspace/reports/ci_trt_smoke/pred_onnxrt.json",
+  "results": [
+    {
+      "counts": {
+        "cand": 2,
+        "extra_cand": 0,
+        "matched": 2,
+        "ref": 2
+      },
+      "extras": [],
+      "failures": [],
+      "image": "/workspace/reports/ci_trt_smoke/dataset/images/val/000001.jpg",
+      "matches": [
+        {
+          "bbox_ok": true,
+          "cand_index": 0,
+          "class_id": 0,
+          "iou": 1.0,
+          "ref_index": 0,
+          "score_cand": 0.9003607630729675,
+          "score_ok": true,
+          "score_ref": 0.9003607630729675
+        },
+        {
+          "bbox_ok": true,
+          "cand_index": 1,
+          "class_id": 1,
+          "iou": 1.0,
+          "ref_index": 1,
+          "score_cand": 0.5003607869148254,
+          "score_ok": true,
+          "score_ref": 0.5003607869148254
+        }
+      ],
+      "ok": true,
+      "size": {
+        "height": 64,
+        "width": 64
+      }
+    }
+  ],
+  "score_atol": 0.0001
+}

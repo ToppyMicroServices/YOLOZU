@@ -1,0 +1,44 @@
+{
+  "losses": {},
+  "meta": {
+    "dry_run": false,
+    "engine": "/workspace/reports/ci_trt_smoke/model_fp16.plan",
+    "engine_sha256": "f3d6fba5d9917626953f6803ead975dea986477bb296cb627e90652b5327fc9f",
+    "env": {
+      "PYTHONHASHSEED": null
+    },
+    "exporter": "tensorrt",
+    "git_head": "ffe9a8939e44fe9f553d2cc93a21c15393bab61a",
+    "input_name": "images",
+    "iterations": 50,
+    "notes": null,
+    "platform": {
+      "machine": "x86_64",
+      "processor": "x86_64",
+      "release": "6.8.0-1044-aws",
+      "system": "Linux",
+      "version": "#46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025"
+    },
+    "python": "3.10.12 (main, Jul 29 2024, 16:56:48) [GCC 11.4.0]",
+    "shape": "1x3x64x64",
+    "timestamp": "2026-03-01T01:58:56Z",
+    "warmup": 10
+  },
+  "metrics": {
+    "fps": 9303.159836851062,
+    "iterations": 50,
+    "latency_ms": {
+      "max": 0.159,
+      "mean": 0.107,
+      "min": 0.099,
+      "p50": 0.103,
+      "p90": 0.119,
+      "p95": 0.123,
+      "p99": 0.147
+    },
+    "total_sec": 0.005374517999996442,
+    "warmup": 10
+  },
+  "schema_version": 1,
+  "timestamp": "2026-03-01T01:58:57Z"
+}

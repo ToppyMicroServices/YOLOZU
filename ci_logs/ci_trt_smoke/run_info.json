@@ -1,0 +1,9 @@
+{
+  "run_id": "22533592535",
+  "run_attempt": "1",
+  "ref": "refs/heads/main",
+  "sha": "ffe9a8939e44fe9f553d2cc93a21c15393bab61a",
+  "workflow": "gpu-smoke-machine",
+  "job": "gpu_smoke",
+  "actor": "thinksyncs"
+}
