@@ -41,6 +41,15 @@ Expected report output:
 
 - `reports/smoke_coco_eval_dry_run.json`
 
+Optional deeper walkthrough (capability claims + deploy-path dry-runs + walkthrough report):
+
+```bash
+bash scripts/smoke.sh --profile deep
+```
+
+Deep walkthrough report:
+- `reports/smoke_walkthrough_report.json`
+
 Install (pip + optional extras): [`docs/install.md`](install.md)
 
 Support/legal: [`docs/support.md`](support.md)

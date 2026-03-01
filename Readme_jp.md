@@ -85,6 +85,18 @@ bash scripts/smoke.sh
 bash scripts/smoke.sh --skip-demo
 ```
 
+初回導入向けに機能主張の walkthrough をまとめて確認する場合（deep profile）:
+
+```bash
+bash scripts/smoke.sh --profile deep
+```
+
+deep profile の追加出力:
+- `reports/smoke_walkthrough_report.json`
+- `reports/smoke_demo_overview.json`
+- `reports/smoke_external_finetune_report.json`
+- `reports/smoke_export_{onnxrt,trt,executorch}.json`
+
 pip だけで始める場合:
 
 ```bash
@@ -443,8 +455,14 @@ python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n 
 release 自動化（オプション不要）:
 
 ```bash
-python3 tools/release.py
+bash release.sh
 ```
+
+`release.sh` は Python を次の順序で自動選択します:
+1. `$YOLOZU_PYTHON`（設定時）
+2. `./.venv/bin/python`
+3. `PATH` 上の `python3`
+4. `PATH` 上の `python`
 
 自動version更新ルール（現在 `X.Y.Z` から）:
 - 小規模: `X.Y.(Z+1)`（`1.1.1+add` 相当）
@@ -454,7 +472,7 @@ python3 tools/release.py
 dry-run 例:
 
 ```bash
-python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 ### Reference adapter回帰ゲート（実画像baseline）

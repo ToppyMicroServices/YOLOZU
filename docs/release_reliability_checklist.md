@@ -5,11 +5,11 @@ Use this checklist before publishing a GitHub Release. The goal is deterministic
 Release trigger note:
 - PyPI publish is triggered by `.github/workflows/publish.yml` on `release: published`.
 - Tag push alone is insufficient for PyPI publish.
-- Recommended operator helper: `python3 tools/release.py`
+- Recommended operator helper: `bash release.sh`
 
 ## Auto bump policy
 
-`tools/release.py` classifies release size from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
+`tools/release.py` (wrapped by `release.sh`) classifies release size from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
 
 - small: `X.Y.Z -> X.Y.(Z+1)` (`1.1.1+add` equivalent)
 - medium: `X.Y.Z -> X.(Y+1).0` (`1.1+a.0` equivalent)
@@ -18,7 +18,7 @@ Release trigger note:
 Dry-run preview:
 
 ```bash
-python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 ## 1) Required local checks (must pass)
@@ -27,6 +27,8 @@ Run from repo root:
 
 ```bash
 bash scripts/smoke.sh
+# optional deeper walkthrough evidence (capability claims + deploy dry-run checks)
+bash scripts/smoke.sh --profile deep
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
@@ -37,6 +39,7 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.
 
 DoD:
 - `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`, SynthGen smoke artifacts (`reports/smoke_synthgen_summary.json`, `reports/smoke_synthgen_eval.json`, `reports/smoke_synthgen_overlay.png`), and instance-seg demo overlay PNGs under `reports/smoke_demo_instance_seg/overlays/` (unless `--skip-demo` is used).
+- `scripts/smoke.sh --profile deep` additionally writes `reports/smoke_walkthrough_report.json` and backend dry-run exports (`reports/smoke_export_{onnxrt,trt,executorch}.json`).
 - Manifest validator returns `OK`.
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.

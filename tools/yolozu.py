@@ -1047,7 +1047,7 @@ def _completion(args: argparse.Namespace) -> int:
 
 
 def _release(_: argparse.Namespace) -> int:
-    cmd = [sys.executable, "tools/release.py"]
+    cmd = ["bash", "release.sh"]
     out = _subprocess_or_die(cmd)
     if out:
         print(out, end="" if out.endswith("\n") else "\n")

@@ -26,6 +26,8 @@ class TestSmokeCliHelp(unittest.TestCase):
         self.assertIn("--synthgen-root", out)
         self.assertIn("--demo-run-dir", out)
         self.assertIn("--skip-demo", out)
+        self.assertIn("--profile", out)
+        self.assertIn("--walkthrough-report", out)
 
 
 if __name__ == "__main__":

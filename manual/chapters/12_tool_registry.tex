@@ -147,12 +147,12 @@ For release operations, YOLOZU intentionally keeps software DOI and manual DOI l
 
 Operational helper script (no required options):
 \begin{lstlisting}[language=bash]
-python3 tools/release.py
+bash release.sh
 \end{lstlisting}
 
 Dry-run preview:
 \begin{lstlisting}[language=bash]
-python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 \end{lstlisting}
 
 The manual DOI workflow builds \path{manual/build/yolozu_manual.pdf} and publishes it to Zenodo either as:

@@ -16,6 +16,25 @@ def _package_version(repo_root: Path) -> str:
 
 
 class TestReleaseTool(unittest.TestCase):
+    def test_shell_wrapper_help(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        wrapper = repo_root / "release.sh"
+        self.assertTrue(wrapper.is_file(), "missing release.sh")
+
+        proc = subprocess.run(
+            ["bash", str(wrapper), "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            self.fail(f"release.sh --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("Usage:", proc.stdout)
+        self.assertIn("Delegated tool help:", proc.stdout)
+        self.assertIn("--dry-run", proc.stdout)
+
     def test_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "release.py"
@@ -73,6 +92,40 @@ class TestReleaseTool(unittest.TestCase):
             self.assertFalse(bool(release_actions.get("github_release_publish")))
             self.assertFalse(bool(release_actions.get("pypi_update_via_publish_workflow")))
             self.assertFalse(bool(release_actions.get("zenodo_manual_doi_dispatch")))
+
+    def test_shell_wrapper_dry_run_writes_report(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        wrapper = repo_root / "release.sh"
+        version = _package_version(repo_root)
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "release_report.from_shell.json"
+            proc = subprocess.run(
+                [
+                    "bash",
+                    str(wrapper),
+                    "--dry-run",
+                    "--allow-dirty",
+                    "--allow-non-main",
+                    "--skip-checks",
+                    "--skip-gh",
+                    "--skip-zenodo",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"release.sh dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertTrue(bool(payload.get("ok")))
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(str(payload.get("current_version")), version)
 
     def test_tools_wrapper_release_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

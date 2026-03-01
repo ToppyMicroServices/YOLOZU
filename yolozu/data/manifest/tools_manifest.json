@@ -8575,14 +8575,14 @@
           }
         ]
       },
-      "entrypoint": "tools/release.py",
+      "entrypoint": "release.sh",
       "examples": [
         {
-          "command": "python3 tools/release.py",
+          "command": "bash release.sh",
           "description": "Run the default no-option release flow (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
         },
         {
-          "command": "python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json",
+          "command": "bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json",
           "description": "Preview release actions and generated next version without mutating git/GitHub state."
         }
       ],
@@ -8649,7 +8649,7 @@
       "requires": {
         "network": true
       },
-      "runner": "python3",
+      "runner": "bash",
       "summary": "Single-command release automation: auto semantic version bump (small/medium/large), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff.",
       "tags": [
         "release",
@@ -11234,6 +11234,12 @@
             "flag": "--output-dir",
             "kind": "dir",
             "scope": "tree"
+          },
+          {
+            "description": "Writes deep-profile walkthrough evidence report JSON.",
+            "flag": "--walkthrough-report",
+            "kind": "file",
+            "scope": "path"
           }
         ]
       },
@@ -11246,6 +11252,10 @@
         {
           "command": "bash scripts/smoke.sh --help",
           "description": "Show smoke CLI options."
+        },
+        {
+          "command": "bash scripts/smoke.sh --profile deep",
+          "description": "Run deep walkthrough smoke profile and emit capability evidence report."
         }
       ],
       "id": "smoke",
@@ -11291,6 +11301,33 @@
           "kind": "dir",
           "name": "output_dir",
           "required": false
+        },
+        {
+          "default": "reports/smoke_demo_instance_seg",
+          "flag": "--demo-run-dir",
+          "kind": "dir",
+          "name": "demo_run_dir",
+          "required": false
+        },
+        {
+          "flag": "--skip-demo",
+          "kind": "string",
+          "name": "skip_demo",
+          "required": false
+        },
+        {
+          "default": "core",
+          "flag": "--profile",
+          "kind": "string",
+          "name": "profile",
+          "required": false
+        },
+        {
+          "default": "reports/smoke_walkthrough_report.json",
+          "flag": "--walkthrough-report",
+          "kind": "file",
+          "name": "walkthrough_report",
+          "required": false
         }
       ],
       "outputs": [
@@ -11317,6 +11354,12 @@
           "description": "SynthGen smoke overlay image.",
           "kind": "file",
           "name": "synthgen_overlay"
+        },
+        {
+          "default": "reports/smoke_walkthrough_report.json",
+          "description": "Deep-profile walkthrough evidence report covering capability claims and deploy-path dry-runs.",
+          "kind": "file",
+          "name": "smoke_walkthrough_report"
         }
       ],
       "platform": {
@@ -11329,7 +11372,7 @@
         "network": false
       },
       "runner": "bash",
-      "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke).",
+      "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks.",
       "tags": [
         "smoke",
         "validation",

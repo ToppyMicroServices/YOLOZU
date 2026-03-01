@@ -55,6 +55,18 @@ If you only want contract checks (skip demo PNG generation), run:
 bash scripts/smoke.sh --skip-demo
 ```
 
+If you want a deeper first-time walkthrough evidence report (capability claims + deploy-path dry-runs), run:
+
+```bash
+bash scripts/smoke.sh --profile deep
+```
+
+Deep profile additionally writes:
+- `reports/smoke_walkthrough_report.json`
+- `reports/smoke_demo_overview.json`
+- `reports/smoke_external_finetune_report.json`
+- `reports/smoke_export_{onnxrt,trt,executorch}.json`
+
 Docs index (start here): [`docs/README.md`](docs/README.md).
 
 AI-friendly tool registry (source of truth): [`tools/manifest.json`](tools/manifest.json).
@@ -217,8 +229,14 @@ python3 -m pip install -e '.[demo]'
 Single-command release automation (no required options):
 
 ```bash
-python3 tools/release.py
+bash release.sh
 ```
+
+`release.sh` auto-selects Python in this order:
+1. `$YOLOZU_PYTHON` (if set)
+2. `./.venv/bin/python`
+3. `python3` in `PATH`
+4. `python` in `PATH`
 
 Auto bump policy (current `X.Y.Z` -> next version):
 - small change: `X.Y.(Z+1)` (e.g. `1.1.1+add` equivalent)
@@ -228,7 +246,7 @@ Auto bump policy (current `X.Y.Z` -> next version):
 Dry-run preview:
 
 ```bash
-python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 MCP settings check (manifest + generated MCP/Actions references):

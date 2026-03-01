@@ -28,7 +28,7 @@ Variables:
 Recommended pre-step for release operations:
 
 ```bash
-python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
 Workflow inputs:

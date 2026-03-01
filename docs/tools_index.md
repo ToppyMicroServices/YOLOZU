@@ -118,8 +118,8 @@ The manifest is intended for:
 
 ## Release helpers
 
-- single-command release automation: `python3 tools/release.py`
-- dry-run preview: `python3 tools/release.py --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json`
+- single-command release automation: `bash release.sh`
+- dry-run preview: `bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json`
 - Release checklist: `docs/release_reliability_checklist.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 
