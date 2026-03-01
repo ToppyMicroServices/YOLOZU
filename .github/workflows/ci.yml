@@ -417,7 +417,7 @@ jobs:
 
       - name: Reference adapter fixed real scenario smoke (write/check)
         run: |
-          baseline_path="${RUNNER_TEMP}/reference_adapter_real_multitask_micro_baseline.json"
+          baseline_path="reports/reference_adapter_real_multitask_micro_baseline_ci.json"
           python tools/run_reference_adapter_regression.py \
             --dataset data/real_multitask_fewshot \
             --split val \
