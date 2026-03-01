@@ -86,6 +86,15 @@ python3 -m pip install 'yolozu[full]'
 yolozu demo overview
 ```
 
+CLI補完（bash/zsh）:
+
+```bash
+# bash
+eval "$(yolozu completion --shell bash)"
+# zsh
+eval "$(yolozu completion --shell zsh)"
+```
+
 ドキュメント入口: [`docs/README.md`](docs/README.md)
 
 学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
@@ -383,6 +392,24 @@ projection依存が不足していても train-path 監査を継続し、`projec
 
 MMDetection / Detectron2 の外部ランチャ指定を含む詳細:
 `docs/external_finetune_smoke.md`
+
+MCP設定チェック（manifest + generated MCP/Actions reference）:
+
+```bash
+python3 tools/check_mcp_settings.py \
+  --output reports/mcp_settings_check.json
+```
+
+release/tag 運用スクリプト（まず dry-run）:
+
+```bash
+python3 tools/release_tag.py \
+  --dry-run \
+  --run-checks \
+  --release-state draft \
+  --push-tag \
+  --output reports/release_tag_report.json
+```
 
 ### Reference adapter回帰ゲート（実画像baseline）
 

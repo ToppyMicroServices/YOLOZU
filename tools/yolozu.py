@@ -1039,6 +1039,13 @@ def _passthrough_list_models(args: argparse.Namespace) -> int:
     return int(pkg_main(argv))
 
 
+def _completion(args: argparse.Namespace) -> int:
+    from yolozu.cli import main as pkg_main
+
+    argv = ["completion", "--shell", str(args.shell), "--command", str(args.command), "--output", str(args.output)]
+    return int(pkg_main(argv))
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="yolozu",
@@ -1207,6 +1214,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_demo = sub.add_parser("demo", help="Delegate to yolozu package CLI demo command.")
     p_demo.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu demo`.")
     p_demo.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="demo")
+
+    p_completion = sub.add_parser("completion", help="Print shell completion script (bash/zsh).")
+    p_completion.add_argument("--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
+    p_completion.add_argument("--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
+    p_completion.add_argument("--output", default="-", help="Output path (default: stdout).")
+    p_completion.set_defaults(_fn=_completion)
 
     p_fetch = sub.add_parser("fetch", help="Delegate to yolozu package CLI fetch command.")
     p_fetch.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu fetch`.")

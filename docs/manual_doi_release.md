@@ -25,6 +25,12 @@ Variables:
 - `release: published`: builds and publishes manual record in production Zenodo.
 - `workflow_dispatch`: supports production/sandbox, overrides, and draft mode.
 
+Recommended pre-step for release/tag operations:
+
+```bash
+python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json
+```
+
 Workflow inputs:
 
 - `zenodo_environment`: `production` or `sandbox`

@@ -12,6 +12,7 @@ For most day-to-day flows, start with:
 
 - `python3 tools/yolozu.py doctor ...`
 - `python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + recommended commands)
+- `python3 tools/yolozu.py completion --shell bash` (or `--shell zsh`) to print shell completion script for `yolozu`.
 - `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
   - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
@@ -25,6 +26,7 @@ For most day-to-day flows, start with:
 
 - MCP server (stdio): `python3 tools/run_mcp_server.py`
 - MCP surface inspection: `python3 tools/run_mcp_server.py --print-tools`
+- MCP settings check (manifest + generated reference parity): `python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json`
 - Actions/OpenAPI server: `python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1`
 
 ### MCP Lite (official) quickstart (copy-paste)
@@ -113,6 +115,12 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 The manifest is intended for:
 - AI agents that need to discover available CLI entrypoints + their I/O interface contracts
 - humans who want a quick map of “what command do I run to do X?”
+
+## Release helpers
+
+- release/tag helper (dry-run first): `python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json`
+- Release checklist: `docs/release_reliability_checklist.md`
+- Manual DOI workflow details: `docs/manual_doi_release.md`
 
 ### AI-required manifest fields
 

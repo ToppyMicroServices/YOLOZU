@@ -1539,6 +1539,95 @@
       ]
     },
     {
+      "id": "check_mcp_settings",
+      "summary": "Audit MCP settings by checking manifest alignment and generated MCP/Actions reference freshness.",
+      "runner": "python3",
+      "entrypoint": "tools/check_mcp_settings.py",
+      "docs": [
+        "docs/llm_integrations.md",
+        "docs/tools_index.md",
+        "manual/chapters/20_llm_mcp_integrations.tex",
+        "docs/generated/mcp_actions_tool_reference.md"
+      ],
+      "tags": [
+        "mcp",
+        "integration",
+        "validation",
+        "docs"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes MCP settings audit report JSON."
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "name": "manifest",
+          "flag": "--manifest",
+          "kind": "file",
+          "default": "tools/manifest.json",
+          "required": false
+        },
+        {
+          "name": "json_ref",
+          "flag": "--json-ref",
+          "kind": "file",
+          "default": "docs/generated/mcp_actions_tool_reference.json",
+          "required": false
+        },
+        {
+          "name": "md_ref",
+          "flag": "--md-ref",
+          "kind": "file",
+          "default": "docs/generated/mcp_actions_tool_reference.md",
+          "required": false
+        },
+        {
+          "name": "output",
+          "flag": "--output",
+          "kind": "file",
+          "default": "reports/mcp_settings_check.json",
+          "required": false
+        },
+        {
+          "name": "strict",
+          "flag": "--strict",
+          "kind": "string",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mcp_settings_check_json",
+          "kind": "file",
+          "default": "reports/mcp_settings_check.json",
+          "description": "MCP settings audit report."
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "examples": [
+        {
+          "command": "python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json",
+          "description": "Run MCP settings checks against manifest and generated integration references."
+        },
+        {
+          "command": "python3 tools/check_mcp_settings.py --strict --output reports/mcp_settings_check.strict.json",
+          "description": "Strict mode: treat warnings as failures."
+        }
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
@@ -8461,6 +8550,130 @@
       ]
     },
     {
+      "id": "release_tag",
+      "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output.",
+      "runner": "python3",
+      "entrypoint": "tools/release_tag.py",
+      "docs": [
+        "docs/release_reliability_checklist.md",
+        "docs/manual_doi_release.md",
+        "docs/tools_index.md",
+        "manual/chapters/12_tool_registry.tex"
+      ],
+      "tags": [
+        "release",
+        "tag",
+        "operations",
+        "automation"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes release/tag operation report JSON."
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "name": "version",
+          "flag": "--version",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "tag_prefix",
+          "flag": "--tag-prefix",
+          "kind": "string",
+          "default": "v",
+          "required": false
+        },
+        {
+          "name": "title",
+          "flag": "--title",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "notes_file",
+          "flag": "--notes-file",
+          "kind": "file",
+          "required": false
+        },
+        {
+          "name": "release_state",
+          "flag": "--release-state",
+          "kind": "string",
+          "default": "none",
+          "required": false
+        },
+        {
+          "name": "push_tag",
+          "flag": "--push-tag",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "run_checks",
+          "flag": "--run-checks",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "allow_dirty",
+          "flag": "--allow-dirty",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "allow_non_main",
+          "flag": "--allow-non-main",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "dry_run",
+          "flag": "--dry-run",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "name": "output",
+          "flag": "--output",
+          "kind": "file",
+          "default": "reports/release_tag_report.json",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "release_tag_report_json",
+          "kind": "file",
+          "default": "reports/release_tag_report.json",
+          "description": "Release/tag operation report with step outcomes and next steps."
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "examples": [
+        {
+          "command": "python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json",
+          "description": "Plan release tagging flow with checks and draft release creation."
+        },
+        {
+          "command": "python3 tools/release_tag.py --run-checks --release-state publish --push-tag --output reports/release_tag_report.publish.json",
+          "description": "Execute release flow and create a published GitHub release (triggers publish workflow)."
+        }
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "synthgen_sample_contract"
@@ -11776,6 +11989,10 @@
         {
           "command": "python3 tools/yolozu.py doctor --output reports/doctor.json",
           "description": "Doctor report."
+        },
+        {
+          "command": "python3 tools/yolozu.py completion --shell bash",
+          "description": "Print bash completion script for yolozu CLI (eval output to enable tab completion)."
         },
         {
           "command": "python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json",

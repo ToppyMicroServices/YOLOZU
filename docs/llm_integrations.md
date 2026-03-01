@@ -44,6 +44,9 @@ python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
 # Deterministic sample I/O (useful for client wiring tests)
 python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
 python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+
+# MCP settings check (manifest + generated reference sync)
+python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 ```
 
 Best-effort only (environment-dependent):

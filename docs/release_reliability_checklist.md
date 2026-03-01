@@ -5,6 +5,7 @@ Use this checklist before publishing a GitHub Release. The goal is deterministic
 Release trigger note:
 - PyPI publish is triggered by `.github/workflows/publish.yml` on `release: published`.
 - Tag push alone is insufficient for PyPI publish.
+- Recommended operator helper: `python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json`
 
 ## 1) Required local checks (must pass)
 
@@ -17,6 +18,7 @@ python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
+python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.json
 ```
 
 DoD:
@@ -25,6 +27,7 @@ DoD:
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.
 - Unit tests pass without unexpected failures.
+- MCP settings check report shows `ok=true`.
 
 ## 2) Required CI workflows
 

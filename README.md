@@ -100,6 +100,15 @@ yolozu demo continual --compare --markdown
 
 Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 
+CLI completion (bash/zsh):
+
+```bash
+# bash
+eval "$(yolozu completion --shell bash)"
+# zsh
+eval "$(yolozu completion --shell zsh)"
+```
+
 Real-image multitask finetune smoke (bbox/segmentation/keypoints/depth/pose6d):
 
 ```bash
@@ -174,6 +183,18 @@ If you want the optional demo dependencies in a source checkout:
 
 ```bash
 python3 -m pip install -e '.[demo]'
+```
+
+Release/tag operations helper (dry-run first):
+
+```bash
+python3 tools/release_tag.py --dry-run --run-checks --release-state draft --push-tag --output reports/release_tag_report.json
+```
+
+MCP settings check (manifest + generated MCP/Actions references):
+
+```bash
+python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 ```
 
 ## Manual (PDF)

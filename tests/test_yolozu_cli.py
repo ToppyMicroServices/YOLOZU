@@ -26,6 +26,58 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("continual-eval", proc.stdout)
         self.assertIn("long-tail-recipe", proc.stdout)
 
+    def test_completion_help_lists_flags(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "completion", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"completion --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--shell", proc.stdout)
+        self.assertIn("--command", proc.stdout)
+        self.assertIn("--output", proc.stdout)
+
+    def test_completion_bash_stdout_contains_complete_directive(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "completion", "--shell", "bash", "--command", "yolozu"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"completion bash failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("complete -F", proc.stdout)
+        self.assertIn(" yolozu", proc.stdout)
+
+    def test_completion_zsh_stdout_contains_compdef(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "completion", "--shell", "zsh", "--command", "yolozu"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"completion zsh failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("#compdef yolozu", proc.stdout)
+        self.assertIn("compdef", proc.stdout)
+
     def test_doctor_writes_json(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

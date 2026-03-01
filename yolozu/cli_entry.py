@@ -27,6 +27,7 @@ from .cli_commands import (
     _cmd_import,
 )
 from .cli_demo import handle_demo_command
+from .cli_completion import write_completion
 from yolozu import __version__
 import argparse
 from pathlib import Path
@@ -786,6 +787,16 @@ def main(argv: list[str] | None = None) -> int:
     demo_tr.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64).")
     demo_tr.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4).")
 
+    completion = sub.add_parser("completion", help="Print shell completion script (bash/zsh).")
+    completion.add_argument("--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
+    completion.add_argument(
+        "--command",
+        dest="completion_command",
+        default="yolozu",
+        help="Command name to bind completion to (default: yolozu).",
+    )
+    completion.add_argument("--output", default="-", help="Output path (default: stdout).")
+
     args = parser.parse_args(argv)
     if args.command == "train":
         if getattr(args, "import_from", None):
@@ -847,6 +858,13 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_import(args)
     if args.command == "demo":
         return handle_demo_command(args)
+    if args.command == "completion":
+        rendered = write_completion(shell=str(args.shell), command=str(args.completion_command), output=str(args.output))
+        if str(args.output).strip() == "-" or not str(args.output).strip():
+            print(rendered, end="" if rendered.endswith("\n") else "\n")
+        else:
+            print(str(rendered))
+        return 0
 
     raise SystemExit("unknown command")
 
