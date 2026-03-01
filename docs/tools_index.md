@@ -48,6 +48,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 ## Dataset helpers
 
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
+- `python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force`
 - Tiny COCO instances subset for demos (downloads 2 images + polygons JSON): `python3 scripts/download_coco_instances_tiny.py`
 - `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`

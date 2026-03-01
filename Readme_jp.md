@@ -203,6 +203,29 @@ python3 tools/yolozu.py export \
   --output reports/predictions_ttt_safe.json
 ```
 
+deterministic なドメインシフトターゲット（corruption）を作る場合:
+
+```bash
+python3 scripts/prepare_ttt_domain_shift_target.py \
+  --dataset-root data/smoke \
+  --split val \
+  --out reports/domain_shift/smoke_gaussian_blur_s2 \
+  --corruption gaussian_blur \
+  --severity 2 \
+  --seed 2026 \
+  --force
+
+python3 tools/export_predictions.py \
+  --adapter dummy \
+  --dataset reports/domain_shift/smoke_gaussian_blur_s2 \
+  --split val \
+  --wrap \
+  --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json \
+  --output reports/pred_shift_target.json
+```
+
+`--wrap` 時は `meta.export_settings.domain_shift_target` に recipe が明示リンクされます。
+
 注意:
 - TTT は torch backend 限定です（ONNXRuntime/TensorRT は TTA か precomputed predictions を推奨）
 

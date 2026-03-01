@@ -66,6 +66,40 @@ Practical baseline:
   \item Target domain: shifted dataset or corrupted copy of COCO images
 \end{itemize}
 
+\subsection{Deterministic shift-target recipe}
+For reproducible TTT evidence, generate a deterministic corrupted target split with:
+\begin{lstlisting}[language=bash]
+python3 scripts/prepare_ttt_domain_shift_target.py \
+  --dataset-root data/smoke \
+  --split val \
+  --out reports/domain_shift/smoke_gaussian_blur_s2 \
+  --corruption gaussian_blur \
+  --severity 2 \
+  --seed 2026 \
+  --force
+\end{lstlisting}
+
+This produces \path{domain_shift_recipe.json} containing
+\path{export_settings.domain_shift_target} with fixed
+(\texttt{corruption}, \texttt{severity}, \texttt{seed}, \texttt{images\_sha256}).
+
+To bind that recipe into prediction artifacts:
+\begin{lstlisting}[language=bash]
+python3 tools/export_predictions.py \
+  --adapter dummy \
+  --dataset reports/domain_shift/smoke_gaussian_blur_s2 \
+  --split val \
+  --wrap \
+  --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json \
+  --output reports/pred_shift_target.json
+\end{lstlisting}
+
+With \cmd{--wrap}, outputs explicitly include:
+\begin{itemize}
+  \item \path{meta.export_settings.domain_shift_target}
+  \item \path{meta.export_settings.domain_shift_recipe} (\texttt{path}, \texttt{sha256})
+\end{itemize}
+
 \section{Presets (start here)}
 Both CLIs expose \cmd{--ttt-preset}:
 \begin{itemize}

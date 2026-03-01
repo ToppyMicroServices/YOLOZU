@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -158,6 +159,11 @@ def _parse_args(argv):
         help="Where to write predictions JSON.",
     )
     parser.add_argument(
+        "--domain-shift-recipe",
+        default=None,
+        help="Optional domain_shift_recipe.json path; copied into meta.export_settings.domain_shift_target.",
+    )
+    parser.add_argument(
         "--wrap",
         action="store_true",
         help="Wrap output as {predictions: [...], meta: {...}} (recommended).",
@@ -199,6 +205,44 @@ def _parse_args(argv):
 
     add_ttt_arguments(parser, include_enable_flag=True)
     return parser.parse_args(argv)
+
+
+def _sha256_file(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(65536)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _load_domain_shift_recipe(path_like):
+    if not path_like:
+        return None
+    path = Path(str(path_like)).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    if not path.exists():
+        raise SystemExit(f"--domain-shift-recipe not found: {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise SystemExit(f"failed to parse --domain-shift-recipe JSON: {path} ({exc})") from exc
+    if not isinstance(payload, dict):
+        raise SystemExit("--domain-shift-recipe must be a JSON object")
+    export_settings = payload.get("export_settings")
+    if not isinstance(export_settings, dict):
+        raise SystemExit("--domain-shift-recipe must contain export_settings object")
+    domain_shift_target = export_settings.get("domain_shift_target")
+    if not isinstance(domain_shift_target, dict):
+        raise SystemExit("--domain-shift-recipe must contain export_settings.domain_shift_target object")
+    return {
+        "path": str(path),
+        "sha256": _sha256_file(path),
+        "domain_shift_target": domain_shift_target,
+    }
 
 
 def _summarize_tta(predictions, *, warnings):
@@ -381,6 +425,7 @@ def _merge_model_tta_branches(base_entries, aug_entries, *, iou_threshold, max_d
 
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
+    domain_shift_recipe = _load_domain_shift_recipe(args.domain_shift_recipe)
 
     apply_ttt_preset_args(args)
 
@@ -666,6 +711,14 @@ def main(argv=None):
                 "task_coverage": task_coverage,
             },
         }
+        if isinstance(domain_shift_recipe, dict):
+            payload["meta"]["export_settings"] = {
+                "domain_shift_target": dict(domain_shift_recipe["domain_shift_target"]),
+                "domain_shift_recipe": {
+                    "path": str(domain_shift_recipe["path"]),
+                    "sha256": str(domain_shift_recipe["sha256"]),
+                },
+            }
         output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
     else:
         output_path.write_text(json.dumps(predictions, indent=2, sort_keys=True))
@@ -705,6 +758,14 @@ def main(argv=None):
             "output": str(output_path),
             "ttt": ttt_log,
         }
+        if isinstance(domain_shift_recipe, dict):
+            log_payload["export_settings"] = {
+                "domain_shift_target": dict(domain_shift_recipe["domain_shift_target"]),
+                "domain_shift_recipe": {
+                    "path": str(domain_shift_recipe["path"]),
+                    "sha256": str(domain_shift_recipe["sha256"]),
+                },
+            }
         log_path.write_text(json.dumps(log_payload, indent=2, sort_keys=True))
         print(log_path)
 

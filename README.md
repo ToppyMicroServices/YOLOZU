@@ -122,6 +122,15 @@ python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split t
 
 Details and external launcher wiring: [`docs/external_finetune_smoke.md`](docs/external_finetune_smoke.md).
 
+Deterministic domain-shift target recipe for TTT:
+
+```bash
+python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force
+python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shift/smoke_gaussian_blur_s2 --split val --wrap --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json --output reports/pred_shift_target.json
+```
+
+Details: [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+
 Reference adapter regression (RT-DETR, real-image baseline):
 
 ```bash

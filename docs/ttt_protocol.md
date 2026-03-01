@@ -18,6 +18,44 @@ Recommended:
 - Baseline: clean COCO `val2017`
 - Target domain: either (a) a shifted dataset (BDD100K/Cityscapes-style domain), or (b) a **corrupted copy** of COCO images
 
+## Deterministic shift-target recipe (recommended)
+
+Use the built-in deterministic recipe generator to create a reproducible corrupted target split:
+
+```bash
+python3 scripts/prepare_ttt_domain_shift_target.py \
+  --dataset-root data/smoke \
+  --split val \
+  --out reports/domain_shift/smoke_gaussian_blur_s2 \
+  --corruption gaussian_blur \
+  --severity 2 \
+  --seed 2026 \
+  --force
+```
+
+Generated artifacts:
+- `reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json`
+- `reports/domain_shift/smoke_gaussian_blur_s2/images/<split>/*`
+- `reports/domain_shift/smoke_gaussian_blur_s2/labels/<split>/*` (copied)
+
+To bind this target into inference outputs, pass the recipe during export:
+
+```bash
+python3 tools/export_predictions.py \
+  --adapter dummy \
+  --dataset reports/domain_shift/smoke_gaussian_blur_s2 \
+  --split val \
+  --wrap \
+  --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json \
+  --output reports/pred_shift_target.json
+```
+
+When `--wrap` is enabled, the output contains:
+- `meta.export_settings.domain_shift_target`
+- `meta.export_settings.domain_shift_recipe` (`path`, `sha256`)
+
+This keeps TTT evidence explicit and deterministic across runs/CI.
+
 ## Presets (recommended starting points)
 
 Both CLIs expose `--ttt-preset`:

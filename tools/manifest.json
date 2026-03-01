@@ -3182,7 +3182,8 @@
         ]
       },
       "docs": [
-        "docs/real_model_interface.md"
+        "docs/real_model_interface.md",
+        "docs/ttt_protocol.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -3236,6 +3237,13 @@
           "kind": "file",
           "name": "output",
           "required": false
+        },
+        {
+          "flag": "--domain-shift-recipe",
+          "kind": "file",
+          "name": "domain_shift_recipe",
+          "required": false,
+          "description": "Optional domain shift recipe JSON; copied into wrapped meta.export_settings.domain_shift_target."
         },
         {
           "flag": "--wrap",
@@ -7899,6 +7907,135 @@
         "fewshot",
         "multitask",
         "real-data"
+      ]
+    },
+    {
+      "docs": [
+        "docs/ttt_protocol.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes corrupted target dataset root (images/labels split)."
+          },
+          {
+            "flag": "--recipe-out",
+            "kind": "file",
+            "scope": "path",
+            "description": "Writes domain shift recipe JSON containing export_settings linkage."
+          }
+        ]
+      },
+      "entrypoint": "scripts/prepare_ttt_domain_shift_target.py",
+      "examples": [
+        {
+          "command": "python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force",
+          "description": "Generate deterministic corrupted target split and recipe JSON for TTT evidence."
+        }
+      ],
+      "id": "prepare_ttt_domain_shift_target",
+      "inputs": [
+        {
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": true
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": true
+        },
+        {
+          "default": "gaussian_blur",
+          "flag": "--corruption",
+          "kind": "string",
+          "name": "corruption",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--severity",
+          "kind": "number",
+          "name": "severity",
+          "required": false
+        },
+        {
+          "default": 0,
+          "flag": "--seed",
+          "kind": "number",
+          "name": "seed",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--copy-labels",
+          "kind": "string",
+          "name": "copy_labels",
+          "required": false
+        },
+        {
+          "flag": "--no-copy-labels",
+          "kind": "string",
+          "name": "no_copy_labels",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        },
+        {
+          "flag": "--recipe-out",
+          "kind": "file",
+          "name": "recipe_out",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "dir",
+          "name": "target_dataset_root",
+          "description": "Corrupted target dataset root for deterministic shift runs."
+        },
+        {
+          "kind": "file",
+          "name": "domain_shift_recipe_json",
+          "description": "Recipe JSON including export_settings.domain_shift_target."
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence.",
+      "tags": [
+        "ttt",
+        "domain-shift",
+        "dataset",
+        "deterministic"
       ]
     },
     {
