@@ -44,6 +44,9 @@ For deterministic CI reproduction, install the same lock file locally:
 python3 -m pip install -r requirements-ci.lock
 ```
 
+Detailed mapping (jobs/workflows + rationale): [`ci_dependency_tiers.md`](ci_dependency_tiers.md).  
+Source metadata is tracked in `pyproject.toml` under `[tool.yolozu.ci_tiers.*]` and `[tool.yolozu.optional_extras_rationale]`.
+
 ## CPU demos (quick sanity checks)
 
 These demos are optional and intended as fast end-to-end smoke checks.

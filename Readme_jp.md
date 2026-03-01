@@ -327,6 +327,20 @@ python3 tools/run_real_multitask_finetune_demo.py \
   --strict-provenance --force
 ```
 
+ワンコマンド（準備 + tiny COCO 自動DL + スモーク）:
+
+```bash
+python3 tools/run_real_multitask_finetune_demo.py \
+  --dataset-root data/real_multitask_fewshot \
+  --prepare \
+  --download-if-missing --allow-auto-download --accept-dataset-license \
+  --download-num-images 8 \
+  --out reports/real_multitask_finetune_demo \
+  --device cpu \
+  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
+  --strict-provenance --force
+```
+
 結果レポート:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
 （`prepare_summary.json` に annotation由来ラベルの provenance も記録）

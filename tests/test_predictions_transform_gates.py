@@ -67,6 +67,29 @@ class TestPredictionsTransformGates(unittest.TestCase):
         self.assertIn("preprocess", entry)
         self.assertEqual(entry["image_size"]["width"], 320)
 
+    def test_topk_tie_break_is_deterministic(self):
+        entries = [
+            {
+                "image": "img.jpg",
+                "detections": [
+                    {"class_id": 2, "score": 0.8, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}},
+                    {"class_id": 1, "score": 0.8, "bbox": {"cx": 0.6, "cy": 0.5, "w": 0.2, "h": 0.2}},
+                    {"class_id": 1, "score": 0.8, "bbox": {"cx": 0.4, "cy": 0.5, "w": 0.2, "h": 0.2}},
+                ],
+            }
+        ]
+        out = fuse_detection_scores(
+            entries,
+            weights={"det": 1.0, "tmp": 0.0, "unc": 0.0},
+            topk_per_image=2,
+        )
+        kept = out.entries[0]["detections"]
+        self.assertEqual(len(kept), 2)
+        self.assertEqual(int(kept[0]["class_id"]), 1)
+        self.assertAlmostEqual(float(kept[0]["bbox"]["cx"]), 0.4, places=6)
+        self.assertEqual(int(kept[1]["class_id"]), 1)
+        self.assertAlmostEqual(float(kept[1]["bbox"]["cx"]), 0.6, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

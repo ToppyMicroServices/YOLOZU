@@ -19,6 +19,7 @@ jobs:
   # - core:       pip install . (packaging + CLI smoke)
   # - recommended: requirements-ci.lock (regression + schema/manifest gates)
   # - full:       GPU/backends in separate manual/nightly workflows
+  # docs: docs/ci_dependency_tiers.md
   changes:
     name: change scope
     runs-on: ubuntu-latest
@@ -348,6 +349,47 @@ jobs:
             --enforce-runtime-lock \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
             --output reports/reference_adapter_regression_behavior_ci.json
+
+      - name: Reference adapter fixed real scenario smoke (write/check)
+        run: |
+          baseline_path="${RUNNER_TEMP}/reference_adapter_real_multitask_micro_baseline.json"
+          python tools/run_reference_adapter_regression.py \
+            --dataset data/real_multitask_fewshot \
+            --split val \
+            --max-images 1 \
+            --profile micro \
+            --device cpu \
+            --image-size 160 \
+            --score-threshold 0.05 \
+            --max-detections 20 \
+            --init-seed 2026 \
+            --repro-policy relaxed \
+            --capture-provenance minimal \
+            --score-gate-mode off \
+            --perf-gate-mode off \
+            --runtime-lock requirements-ci.lock \
+            --enforce-runtime-lock \
+            --baseline "${baseline_path}" \
+            --write-baseline \
+            --output reports/reference_adapter_regression_real_scenario_baseline_write_ci.json
+          python tools/run_reference_adapter_regression.py \
+            --dataset data/real_multitask_fewshot \
+            --split val \
+            --max-images 1 \
+            --profile micro \
+            --device cpu \
+            --image-size 160 \
+            --score-threshold 0.05 \
+            --max-detections 20 \
+            --init-seed 2026 \
+            --repro-policy relaxed \
+            --capture-provenance minimal \
+            --score-gate-mode off \
+            --perf-gate-mode off \
+            --runtime-lock requirements-ci.lock \
+            --enforce-runtime-lock \
+            --baseline "${baseline_path}" \
+            --output reports/reference_adapter_regression_real_scenario_ci.json
 
       - name: Unit tests
         run: |

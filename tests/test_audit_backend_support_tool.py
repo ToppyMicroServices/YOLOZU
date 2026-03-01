@@ -50,6 +50,10 @@ class TestAuditBackendSupportTool(unittest.TestCase):
             self.assertEqual(len(results), 4)
             self.assertTrue(all(bool(item.get("ok")) for item in results))
             self.assertTrue(all(bool(item.get("dry_run", True)) for item in results))
+            coverage = payload.get("multitask_coverage") or {}
+            self.assertTrue(bool(coverage))
+            self.assertGreaterEqual(int(coverage.get("supported_task_count", 0)), 5)
+            self.assertEqual(int(coverage.get("error_count", 0)), 0)
 
     def test_audit_backend_support_require_non_dry_fails_without_selection(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -91,6 +95,8 @@ class TestAuditBackendSupportTool(unittest.TestCase):
             self.assertFalse(bool(payload.get("ok")))
             warnings = payload.get("warnings") or []
             self.assertTrue(any("require-non-dry" in str(w) for w in warnings))
+            coverage = payload.get("multitask_coverage") or {}
+            self.assertIn("gaps", coverage)
 
 
 if __name__ == "__main__":

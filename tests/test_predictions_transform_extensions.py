@@ -57,6 +57,59 @@ class TestPredictionsTransformExtensions(unittest.TestCase):
         self.assertTrue(bool(supported.get("depth")))
         self.assertTrue(bool(supported.get("pose6d")))
 
+    def test_apply_ttt_lite_non_finite_score_is_guarded(self):
+        entries = [
+            {
+                "image": "x.jpg",
+                "detections": [
+                    {"class_id": 0, "score": float("nan")},
+                    {"class_id": 1, "score": float("inf")},
+                ],
+            }
+        ]
+        out = apply_ttt_lite(entries, enabled=True, temperature=1.0, entropy_weight=0.0, minmax_norm=True)
+        scores = [float(d.get("score", -1.0)) for d in out.entries[0]["detections"]]
+        self.assertEqual(scores, [0.0, 0.0])
+        self.assertTrue(any("non-finite" in str(w) for w in out.warnings))
+
+    def test_apply_ttt_lite_torch_backend_matches_python(self):
+        try:
+            import torch  # noqa: F401
+        except Exception:
+            self.skipTest("torch not installed")
+
+        entries = [
+            {
+                "image": "x.jpg",
+                "detections": [
+                    {"class_id": 0, "score": 0.1, "entropy": 0.2},
+                    {"class_id": 1, "score": 0.8, "entropy": 0.5},
+                    {"class_id": 2, "score": 0.4, "entropy": 0.1},
+                ],
+            }
+        ]
+        py = apply_ttt_lite(
+            entries,
+            enabled=True,
+            temperature=0.9,
+            entropy_weight=0.2,
+            minmax_norm=True,
+            prefer_torch=False,
+        )
+        th = apply_ttt_lite(
+            entries,
+            enabled=True,
+            temperature=0.9,
+            entropy_weight=0.2,
+            minmax_norm=True,
+            prefer_torch=True,
+        )
+        py_scores = [float(d.get("score", 0.0)) for d in py.entries[0]["detections"]]
+        th_scores = [float(d.get("score", 0.0)) for d in th.entries[0]["detections"]]
+        self.assertEqual(len(py_scores), len(th_scores))
+        for a, b in zip(py_scores, th_scores):
+            self.assertAlmostEqual(a, b, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,6 +79,15 @@ Thresholds support backend-first configuration (`metric_by_backend`, `backend_pa
 - `micro` (PR/fast): prioritize interface contract break detection (`schema_drift`, `consistency_drift`).
 - `full` (nightly/manual): emphasize score/perf regression (`metric_drift`, `speed_drift`) and backend parity checks.
 
+## Fixed real scenario automation
+
+CI runs one fixed real-image scenario using `data/real_multitask_fewshot` (`split=val`, `max-images=1`) in addition to `data/smoke`.
+
+- Step 1 writes a temporary baseline from the real-image scenario.
+- Step 2 immediately re-checks against that baseline with the same deterministic settings.
+
+This keeps the regression gate decomposition exercised on a real dataset path while preserving stable CI execution time.
+
 ## Failure codes
 
 - `E_SCHEMA_*` for schema/interface contract violations

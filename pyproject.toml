@@ -114,6 +114,41 @@ full = [
   "pydantic>=2.0",
 ]
 
+[tool.yolozu.ci_tiers.core]
+install = "python -m pip install ."
+scope = "Packaging + CLI smoke (no optional extras)."
+jobs = ["smoke_gate", "pip_smoke"]
+
+[tool.yolozu.ci_tiers.recommended]
+install = "python -m pip install -r requirements-ci.lock"
+scope = "Pinned dependency lock for regression/schema/manifest gates."
+lockfile = "requirements-ci.lock"
+jobs = ["quality_gate", "test"]
+
+[tool.yolozu.ci_tiers.full]
+scope = "GPU/backend matrix in separate workflows to avoid optional-extras combination explosion."
+workflows = [
+  ".github/workflows/gpu_smoke_machine.yml",
+  ".github/workflows/gpu_zisn_pipeline.yml",
+  ".github/workflows/reference_adapter_full.yml",
+]
+
+[tool.yolozu.optional_extras_rationale]
+demo = "Torch + vision demos and practical local smoke runs."
+onnxrt = "ONNX export/inference and parity checks."
+train = "RT-DETR pose training scaffold and exporter bridge."
+coco = "COCO metrics via pycocotools."
+mcp = "MCP server integration."
+actions = "FastAPI/OpenAPI action server."
+opencv = "OpenCV integrations (non-demo helper scripts)."
+viz = "Report visualization and plots."
+mmdet = "MMDetection config import adapter surface."
+detectron2 = "Detectron2 config import adapter surface."
+yolox = "YOLOX export adapter surface."
+test = "Local test workflow dependencies."
+dev = "Developer workflow dependencies (test + lint)."
+full = "Convenience superset for docs/demo paths; CI avoids relying on this to limit combination risk."
+
 [project.scripts]
 yolozu = "yolozu.cli:main"
 

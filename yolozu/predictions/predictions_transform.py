@@ -8,6 +8,7 @@ weights.
 from __future__ import annotations
 
 import json
+import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,53 @@ from yolozu.training.gates import final_score, passes_template_gate
 class TransformResult:
     entries: list[dict[str, Any]]
     warnings: list[str]
+
+
+def _finite_float(value: Any, *, default: float, warnings: list[str], where: str) -> float:
+    try:
+        out = float(value)
+    except Exception:
+        warnings.append(f"{where}: invalid numeric value")
+        return float(default)
+    if not math.isfinite(out):
+        warnings.append(f"{where}: non-finite numeric value")
+        return float(default)
+    return float(out)
+
+
+def _optional_torch() -> Any | None:
+    try:
+        import torch  # type: ignore
+    except Exception:
+        return None
+    return torch
+
+
+def _bbox_sort_tuple(det: dict[str, Any]) -> tuple[float, float, float, float]:
+    bbox = det.get("bbox")
+    if not isinstance(bbox, dict):
+        return (1e9, 1e9, 1e9, 1e9)
+
+    def _v(key: str) -> float:
+        value = bbox.get(key)
+        try:
+            out = float(value)
+        except Exception:
+            return 1e9
+        if not math.isfinite(out):
+            return 1e9
+        return out
+
+    return (_v("cx"), _v("cy"), _v("w"), _v("h"))
+
+
+def _class_sort_value(det: dict[str, Any]) -> int:
+    value = det.get("class_id", 0)
+    try:
+        return int(value)
+    except Exception:
+        return 0
+
 
 def load_classes_json(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text())
@@ -359,27 +407,25 @@ def _clamp01(value: float) -> float:
 def _extract_entropy_like(det: dict[str, Any], *, warnings: list[str], where: str) -> float | None:
     for key in ("entropy", "class_entropy", "normalized_entropy"):
         if key in det:
-            try:
-                return _clamp01(float(det.get(key)))
-            except Exception:
-                warnings.append(f"{where}: invalid {key}")
-                return None
+            value = _finite_float(det.get(key), default=0.0, warnings=warnings, where=f"{where}.{key}")
+            return _clamp01(value)
 
     probs = det.get("class_probs")
     if isinstance(probs, (list, tuple)) and probs:
         vals: list[float] = []
         for idx, value in enumerate(probs):
-            try:
-                vals.append(float(value))
-            except Exception:
-                warnings.append(f"{where}.class_probs[{idx}]: invalid value")
-                return None
+            vals.append(
+                _finite_float(
+                    value,
+                    default=0.0,
+                    warnings=warnings,
+                    where=f"{where}.class_probs[{idx}]",
+                )
+            )
         total = sum(vals)
         if total <= 0.0:
             return None
         p = [max(0.0, v) / total for v in vals]
-        import math
-
         entropy = 0.0
         for v in p:
             if v > 0.0:
@@ -399,6 +445,7 @@ def apply_ttt_lite(
     entropy_weight: float = 0.0,
     minmax_norm: bool = True,
     preserve_raw_score_key: str | None = "score_raw",
+    prefer_torch: bool | None = None,
 ) -> TransformResult:
     """Apply lightweight non-torch TTT-style score adaptation.
 
@@ -410,6 +457,9 @@ def apply_ttt_lite(
     out_entries: list[dict[str, Any]] = []
     temp = max(1e-6, float(temperature))
     ent_w = max(0.0, float(entropy_weight))
+
+    torch_module = _optional_torch() if prefer_torch is not False else None
+    use_torch = bool(torch_module is not None and bool(prefer_torch is None or prefer_torch))
 
     for idx, entry in enumerate(entries):
         if not isinstance(entry, dict):
@@ -423,29 +473,45 @@ def apply_ttt_lite(
         for j, det in enumerate(dets):
             if not isinstance(det, dict):
                 continue
-            try:
-                score_vals.append(float(det.get("score", 0.0)))
-            except Exception:
-                warnings.append(f"predictions[{idx}].detections[{j}]: invalid score")
-                score_vals.append(0.0)
+            score_vals.append(
+                _finite_float(
+                    det.get("score", 0.0),
+                    default=0.0,
+                    warnings=warnings,
+                    where=f"predictions[{idx}].detections[{j}].score",
+                )
+            )
         s_min = min(score_vals) if score_vals else 0.0
         s_max = max(score_vals) if score_vals else 1.0
         s_span = s_max - s_min
+        base_scores: list[float]
+        if use_torch and score_vals:
+            assert torch_module is not None
+            with torch_module.no_grad():
+                values = torch_module.tensor(score_vals, dtype=torch_module.float32)
+                if bool(enabled) and bool(minmax_norm) and s_span > 1e-12:
+                    values = (values - torch_module.min(values)) / (torch_module.max(values) - torch_module.min(values))
+                if bool(enabled):
+                    values = values.clamp(0.0, 1.0)
+                base_scores = [float(x) for x in values.tolist()]
+        else:
+            base_scores = list(score_vals)
 
         new_dets: list[dict[str, Any]] = []
         for j, det in enumerate(dets):
             if not isinstance(det, dict):
                 continue
             where = f"predictions[{idx}].detections[{j}]"
-            try:
-                score_raw = float(det.get("score", 0.0))
-            except Exception:
-                warnings.append(f"{where}: invalid score")
-                score_raw = 0.0
+            score_raw = _finite_float(
+                det.get("score", 0.0),
+                default=0.0,
+                warnings=warnings,
+                where=f"{where}.score",
+            )
 
-            score = float(score_raw)
+            score = float(base_scores[j] if j < len(base_scores) else score_raw)
             if bool(enabled):
-                if bool(minmax_norm) and s_span > 1e-12:
+                if not use_torch and bool(minmax_norm) and s_span > 1e-12:
                     score = (score - s_min) / s_span
                 score = _clamp01(score)
                 entropy = _extract_entropy_like(det, warnings=warnings, where=where)
@@ -562,29 +628,30 @@ def fuse_detection_scores(
             if not isinstance(det, dict):
                 continue
 
-            try:
-                score_det = float(det.get(det_score_key, 0.0))
-            except Exception:
-                warnings.append(f"predictions[{idx}].detections[{j}]: invalid {det_score_key}")
-                score_det = 0.0
-
-            try:
-                score_tmp = float(det.get(template_score_key, 0.0))
-            except Exception:
-                warnings.append(f"predictions[{idx}].detections[{j}]: invalid {template_score_key}")
-                score_tmp = 0.0
-
-            try:
-                sigma_z = float(det.get(sigma_z_key, 0.0))
-            except Exception:
-                warnings.append(f"predictions[{idx}].detections[{j}]: invalid {sigma_z_key}")
-                sigma_z = 0.0
-
-            try:
-                sigma_rot = float(det.get(sigma_rot_key, 0.0))
-            except Exception:
-                warnings.append(f"predictions[{idx}].detections[{j}]: invalid {sigma_rot_key}")
-                sigma_rot = 0.0
+            score_det = _finite_float(
+                det.get(det_score_key, 0.0),
+                default=0.0,
+                warnings=warnings,
+                where=f"predictions[{idx}].detections[{j}].{det_score_key}",
+            )
+            score_tmp = _finite_float(
+                det.get(template_score_key, 0.0),
+                default=0.0,
+                warnings=warnings,
+                where=f"predictions[{idx}].detections[{j}].{template_score_key}",
+            )
+            sigma_z = _finite_float(
+                det.get(sigma_z_key, 0.0),
+                default=0.0,
+                warnings=warnings,
+                where=f"predictions[{idx}].detections[{j}].{sigma_z_key}",
+            )
+            sigma_rot = _finite_float(
+                det.get(sigma_rot_key, 0.0),
+                default=0.0,
+                warnings=warnings,
+                where=f"predictions[{idx}].detections[{j}].{sigma_rot_key}",
+            )
 
             if template_gate_enabled and not passes_template_gate(score_tmp, enabled=True, tau=float(template_gate_tau)):
                 continue
@@ -600,8 +667,21 @@ def fuse_detection_scores(
             new_dets.append(new_det)
 
         if topk_per_image is not None and topk_per_image > 0 and len(new_dets) > topk_per_image:
-            new_dets.sort(key=lambda d: float(d.get(out_score_key, 0.0)), reverse=True)
-            new_dets = new_dets[: int(topk_per_image)]
+            indexed = list(enumerate(new_dets))
+            indexed.sort(
+                key=lambda item: (
+                    -_finite_float(
+                        item[1].get(out_score_key, 0.0),
+                        default=0.0,
+                        warnings=[],
+                        where=f"predictions[{idx}].detections[{item[0]}].{out_score_key}",
+                    ),
+                    _class_sort_value(item[1]),
+                    _bbox_sort_tuple(item[1]),
+                    int(item[0]),
+                )
+            )
+            new_dets = [det for _, det in indexed[: int(topk_per_image)]]
 
         new_entry = dict(entry)
         new_entry["detections"] = new_dets

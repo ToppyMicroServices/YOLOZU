@@ -564,6 +564,85 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
             hard_failures = payload.get("hard_failures") or []
             self.assertTrue(any("E_CANON_RUNTIME_LOCK" in str(item) for item in hard_failures))
 
+    def test_fixed_real_scenario_write_and_check(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        dataset_root = repo_root / "data" / "real_multitask_fewshot"
+        if not dataset_root.exists():
+            self.skipTest("real_multitask_fewshot dataset is not available")
+
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+        self.assertTrue(script.is_file())
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            baseline_path = root / "real_scenario_baseline.json"
+            write_report = root / "real_scenario_write_report.json"
+            check_report = root / "real_scenario_check_report.json"
+
+            common = [
+                "--dataset",
+                "data/real_multitask_fewshot",
+                "--split",
+                "val",
+                "--max-images",
+                "1",
+                "--device",
+                "cpu",
+                "--image-size",
+                "96",
+                "--score-threshold",
+                "0.05",
+                "--max-detections",
+                "10",
+                "--init-seed",
+                "2026",
+                "--score-gate-mode",
+                "off",
+                "--perf-gate-mode",
+                "off",
+                "--baseline",
+                str(baseline_path.relative_to(repo_root)),
+            ]
+
+            write_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--write-baseline",
+                "--output",
+                str(write_report.relative_to(repo_root)),
+            ]
+            write_proc = self._run(write_cmd, cwd=repo_root)
+            if write_proc.returncode != 0:
+                self.fail(
+                    "fixed real scenario baseline write failed:\n"
+                    f"STDOUT:\n{write_proc.stdout}\nSTDERR:\n{write_proc.stderr}"
+                )
+
+            check_cmd = [
+                sys.executable,
+                str(script),
+                *common,
+                "--output",
+                str(check_report.relative_to(repo_root)),
+            ]
+            check_proc = self._run(check_cmd, cwd=repo_root)
+            if check_proc.returncode != 0:
+                self.fail(
+                    "fixed real scenario baseline check failed:\n"
+                    f"STDOUT:\n{check_proc.stdout}\nSTDERR:\n{check_proc.stderr}"
+                )
+
+            payload = json.loads(check_report.read_text(encoding="utf-8"))
+            self.assertTrue(payload.get("ok"), msg=f"expected fixed real scenario to pass: {payload}")
+            self.assertEqual(str((payload.get("run") or {}).get("dataset")), "data/real_multitask_fewshot")
+            gates = payload.get("gates") or {}
+            self.assertTrue(gates.get("schema_drift", {}).get("ok"))
+            self.assertTrue(gates.get("consistency_drift", {}).get("ok"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any
+
+REQUIRED_TASKS = ("bbox", "segmentation", "keypoints", "depth", "pose6d")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -67,6 +70,104 @@ def _load_predictions_count(path: Path) -> tuple[int, str | None]:
     if isinstance(payload, list):
         return int(len(payload)), None
     return 0, "unsupported_payload_shape"
+
+
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
+def _build_multitask_coverage(repo_root: Path) -> dict[str, Any]:
+    gaps: list[dict[str, str]] = []
+    components: dict[str, Any] = {}
+
+    demo_script = repo_root / "tools" / "run_real_multitask_finetune_demo.py"
+    demo_text = _read_text(demo_script)
+    def _task_in_matrix(task_name: str) -> bool:
+        pattern = rf'["\']{re.escape(task_name)}["\']\s*,'
+        return bool(re.search(pattern, demo_text))
+
+    training_map = {task: _task_in_matrix(task) for task in REQUIRED_TASKS}
+    components["training"] = {
+        "task_matrix": training_map,
+        "strict_task_data_flag": "--strict-task-data" in _read_text(repo_root / "rtdetr_pose" / "tools" / "train_minimal.py"),
+    }
+    for task, supported in training_map.items():
+        if not supported:
+            gaps.append({"severity": "error", "component": "training", "task": task, "reason": "missing_task_stage"})
+
+    pred_transform = _read_text(repo_root / "yolozu" / "predictions" / "predictions_transform.py")
+    inference_map = {
+        "bbox": '"bbox": 0' in pred_transform,
+        "segmentation": '"segmentation": 0' in pred_transform,
+        "keypoints": '"keypoints": 0' in pred_transform,
+        "depth": '"depth": 0' in pred_transform,
+        "pose6d": '"pose6d": 0' in pred_transform,
+    }
+    components["inference"] = {
+        "task_coverage_summary": inference_map,
+        "ttt_lite_postprocess": "def apply_ttt_lite(" in pred_transform,
+        "score_fusion_postprocess": "def fuse_detection_scores(" in pred_transform,
+    }
+    for task, supported in inference_map.items():
+        if not supported:
+            gaps.append({"severity": "error", "component": "inference", "task": task, "reason": "missing_task_probe"})
+
+    regression_text = _read_text(repo_root / "tools" / "run_reference_adapter_regression.py")
+    components["prediction_guardrails"] = {
+        "canonicalize_predictions": "canonicalize_predictions(" in regression_text,
+        "schema_gate_flag": "--schema-gate-mode" in regression_text,
+        "consistency_gate_flag": "--consistency-gate-mode" in regression_text,
+        "score_gate_flag": "--score-gate-mode" in regression_text,
+        "perf_gate_flag": "--perf-gate-mode" in regression_text,
+    }
+    for key, supported in (components.get("prediction_guardrails") or {}).items():
+        if not bool(supported):
+            gaps.append({"severity": "error", "component": "prediction_guardrails", "task": "all", "reason": f"missing_{key}"})
+
+    eval_files = {
+        "bbox": [repo_root / "tools" / "eval_coco.py", repo_root / "tools" / "eval_suite.py"],
+        "segmentation": [repo_root / "tools" / "eval_segmentation.py", repo_root / "tools" / "eval_instance_segmentation.py"],
+        "keypoints": [repo_root / "tools" / "eval_keypoints.py"],
+        "depth": [repo_root / "tools" / "eval_synthgen.py"],
+        "pose6d": [repo_root / "tools" / "eval_pose.py"],
+    }
+    eval_map: dict[str, dict[str, Any]] = {}
+    for task, files in eval_files.items():
+        existing = [str(p.relative_to(repo_root)) for p in files if p.exists()]
+        status = "supported" if existing else "missing"
+        if task == "depth" and existing:
+            status = "partial"
+        eval_map[task] = {"status": status, "paths": existing}
+        if status == "missing":
+            gaps.append({"severity": "error", "component": "eval", "task": task, "reason": "missing_eval_tool"})
+        if status == "partial":
+            gaps.append(
+                {
+                    "severity": "warning",
+                    "component": "eval",
+                    "task": task,
+                    "reason": "depth_eval_is_synthgen_specialized_only",
+                }
+            )
+    components["eval"] = eval_map
+
+    errors = [g for g in gaps if str(g.get("severity")) == "error"]
+    warnings = [g for g in gaps if str(g.get("severity")) == "warning"]
+    supported_task_count = sum(
+        1 for task in REQUIRED_TASKS if bool(training_map.get(task)) and bool(inference_map.get(task))
+    )
+    return {
+        "required_tasks": list(REQUIRED_TASKS),
+        "supported_task_count": int(supported_task_count),
+        "components": components,
+        "gaps": gaps,
+        "ok": bool(not errors),
+        "error_count": int(len(errors)),
+        "warning_count": int(len(warnings)),
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -206,10 +307,14 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     non_dry_count = sum(1 for item in results if not bool(item.get("dry_run", True)))
+    multitask_coverage = _build_multitask_coverage(repo_root)
     warnings: list[str] = []
     if non_dry_count <= 0:
         warnings.append("all backends were executed in dry-run mode")
     ok = all(bool(item.get("ok")) for item in results)
+    if not bool(multitask_coverage.get("ok", False)):
+        ok = False
+        warnings.append("multitask coverage audit found missing hard requirements")
     if bool(args.require_non_dry) and non_dry_count <= 0:
         ok = False
         warnings.append("--require-non-dry is set but no --non-dry-backend was configured")
@@ -223,6 +328,7 @@ def main(argv: list[str] | None = None) -> int:
         "warnings": warnings,
         "non_dry_backends": sorted(non_dry),
         "results": results,
+        "multitask_coverage": multitask_coverage,
     }
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     print(str(out_path))

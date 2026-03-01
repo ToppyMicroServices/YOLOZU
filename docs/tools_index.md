@@ -55,12 +55,14 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 ## Evaluation helpers
 
-- Reference adapter regression gate (real-image baseline; interface contract hard + behavior warn):
+- Reference adapter regression gate (fixed baseline; interface contract hard + behavior warn):
   - full run: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json`
   - interface-contract-only hard gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json`
   - behavior-only warn gate: `python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json`
+  - fixed real scenario smoke: `python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 1 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --baseline reports/reference_adapter_real_multitask_micro_baseline.json --write-baseline --output reports/reference_adapter_regression_real_scenario_baseline_write.json && python3 tools/run_reference_adapter_regression.py --dataset data/real_multitask_fewshot --split val --max-images 1 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --baseline reports/reference_adapter_real_multitask_micro_baseline.json --output reports/reference_adapter_regression_real_scenario.json`
   - policy docs: `docs/reference_adapter_regression_policy.md`
 - External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
+  - report includes `multitask_coverage` (training/inference/prediction/eval coverage for `bbox/segmentation/keypoints/depth/pose6d`) and enumerated `gaps`.
 - External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR): `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
@@ -82,6 +84,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 ## Real-image multitask finetune demo
 
 - `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force`
+- `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --allow-auto-download --accept-dataset-license --download-num-images 8 --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force`
 - Stages: `bbox -> segmentation -> keypoints -> depth -> pose6d`
 
 ## Distillation helpers
