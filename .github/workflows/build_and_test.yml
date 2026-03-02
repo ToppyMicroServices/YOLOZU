@@ -27,6 +27,8 @@ jobs:
     outputs:
       full_ci: ${{ steps.filter.outputs.full_ci }}
       docs_mcp_ci: ${{ steps.filter.outputs.docs_mcp_ci }}
+      manual_ci: ${{ steps.filter.outputs.manual_ci }}
+      workflows_ci: ${{ steps.filter.outputs.workflows_ci }}
     steps:
       - uses: actions/checkout@v4
       - name: Detect change scope
@@ -35,7 +37,6 @@ jobs:
         with:
           filters: |
             full_ci:
-              - '.github/workflows/**'
               - 'yolozu/**'
               - '!yolozu/integrations/mcp_server.py'
               - '!yolozu/integrations/actions_api.py'
@@ -65,7 +66,6 @@ jobs:
               - 'README.md'
               - 'Readme_jp.md'
               - 'docs/**'
-              - 'manual/**'
               - 'tools/run_mcp_server.py'
               - 'tools/run_actions_api.py'
               - 'tools/check_mcp_settings.py'
@@ -75,16 +75,52 @@ jobs:
               - 'tests/test_integrations_mcp_actions_parity.py'
               - 'tests/test_check_mcp_settings_tool.py'
               - 'tests/test_generated_integration_tool_reference.py'
+            manual_ci:
+              - 'manual/**'
+            workflows_ci:
+              - '.github/workflows/**'
 
   docs_meta:
     name: docs/metadata fast path
     needs:
       - changes
-    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' }}
+    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci != 'true' && needs.changes.outputs.workflows_ci != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Skip heavy CI for docs-only/metadata-only changes
         run: echo "No code/runtime changes detected. Heavy CI jobs are skipped."
+
+  workflows_meta:
+    name: workflows fast path
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci != 'true' && needs.changes.outputs.workflows_ci == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip heavy CI for workflow-only changes
+        run: echo "Only .github/workflows/** changed. Heavy CI jobs are skipped."
+
+  manual_build:
+    name: manual build (main.tex only)
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build manual PDF (main.tex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: manual
+          root_file: main.tex
+          args: -pdf -interaction=nonstopmode -halt-on-error -outdir=build -jobname=yolozu_manual
+          pre_compile: python3 ../tools/generate_manual_import_graphs.py
+
+      - name: Verify manual artifact
+        run: |
+          test -f manual/build/yolozu_manual.pdf
+          ls -lh manual/build/yolozu_manual.pdf
 
   docs_mcp_gate:
     name: "ci tier: docs+mcp (lightweight)"

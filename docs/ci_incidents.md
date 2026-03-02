@@ -29,5 +29,5 @@ This page records concrete CI failures and the guard rails added afterward.
 ## 2026-02-22 — Incident 5 (CI over-triggering and queue inefficiency)
 
 - Cause: heavy CI jobs and container checks were triggered for commits that only changed docs/metadata.
-- Prevention: add change-scope detection in `ci.yml` and skip heavy jobs when no runtime/code paths changed; keep a fast-path job so workflow still reports status.
+- Prevention: add change-scope detection in `build_and_test.yml` and skip heavy jobs when no runtime/code paths changed; keep a fast-path job so workflow still reports status.
 - Rule: heavy CI should be path-scoped, while still leaving a deterministic lightweight status for docs-only commits.

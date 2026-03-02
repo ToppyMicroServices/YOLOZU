@@ -48,7 +48,7 @@ DoD:
 
 ## 2) Required CI workflows
 
-- `.github/workflows/ci.yml` (**required**): must be green on target commit.
+- `.github/workflows/build_and_test.yml` (**required**): must be green on target commit.
 - `.github/workflows/manual_doi.yml` (**required when shipping manual update**): publishes `manual/build/yolozu_manual.pdf` to a separate Zenodo record and links it to software concept DOI.
 - `.github/workflows/container.yml` (**optional publish**): expected to run for container-related changes on `main`; publishes only on tag/manual.
 - `.github/workflows/announce_release.yml` (**optional announce**): posts GitHub Release announcement to LinkedIn/X/Reddit when secrets are configured; always uploads a post bundle artifact.
