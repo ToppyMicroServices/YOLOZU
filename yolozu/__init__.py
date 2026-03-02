@@ -6,7 +6,7 @@ import importlib
 import sys
 import types
 
-__version__ = "1.0.8"
+__version__ = "2.0.0"
 
 __all__ = ["__version__"]
 
