@@ -17,12 +17,14 @@ import argparse
 import json
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INIT_PATH = REPO_ROOT / "yolozu" / "__init__.py"
+PYTHON = sys.executable  # Use the same interpreter as release.sh selected.
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -183,10 +185,10 @@ def _check_tag_exists_remote(tag: str) -> bool:
 
 def _quality_check_cmds() -> list[list[str]]:
     return [
-        ["python3", "tools/validate_tool_manifest.py", "--manifest", "tools/manifest.json", "--require-declarative"],
-        ["python3", "-m", "unittest", "tests.test_packaged_tools_manifest", "tests.test_manifest_docs_references"],
-        ["python3", "tools/check_mcp_settings.py", "--output", "reports/mcp_settings_check.release.json"],
-        ["python3", "tools/generate_integration_tool_reference.py", "--check"],
+        [PYTHON, "tools/validate_tool_manifest.py", "--manifest", "tools/manifest.json", "--require-declarative"],
+        [PYTHON, "-m", "unittest", "tests.test_packaged_tools_manifest", "tests.test_manifest_docs_references"],
+        [PYTHON, "tools/check_mcp_settings.py", "--output", "reports/mcp_settings_check.release.json"],
+        [PYTHON, "tools/generate_integration_tool_reference.py", "--check"],
     ]
 
 
@@ -278,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not errors:
         if bool(args.dry_run):
-            step = _run(["python3", "tools/release.py", "(set-version)", next_version], dry_run=True)
+            step = _run([PYTHON, "tools/release.py", "(set-version)", next_version], dry_run=True)
         else:
             try:
                 _set_version_in_init(next_version)
@@ -288,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
                     "returncode": 0,
                     "stdout": f"updated yolozu/__init__.py to {next_version}\n",
                     "stderr": "",
-                    "cmd": ["python3", "tools/release.py", "(set-version)", next_version],
+                    "cmd": [PYTHON, "tools/release.py", "(set-version)", next_version],
                     "cwd": str(REPO_ROOT),
                 }
             except Exception as exc:
@@ -298,7 +300,7 @@ def main(argv: list[str] | None = None) -> int:
                     "returncode": 1,
                     "stdout": "",
                     "stderr": str(exc),
-                    "cmd": ["python3", "tools/release.py", "(set-version)", next_version],
+                    "cmd": [PYTHON, "tools/release.py", "(set-version)", next_version],
                     "cwd": str(REPO_ROOT),
                 }
         step["type"] = "set_version"
