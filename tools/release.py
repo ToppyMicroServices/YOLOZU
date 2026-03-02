@@ -72,6 +72,31 @@ def _run(cmd: list[str], *, cwd: Path = REPO_ROOT, dry_run: bool = False) -> dic
     return step
 
 
+def _run_git(cmd: list[str], *, dry_run: bool = False, max_attempts: int = 5) -> dict[str, Any]:
+    """Run a git command with a small retry loop.
+
+    We occasionally see transient failures creating `.git/index.lock` (e.g. file system races).
+    Retrying is safe for `git add/commit/tag/push` in this release flow.
+    """
+    last: dict[str, Any] | None = None
+    for attempt in range(1, int(max_attempts) + 1):
+        step = _run(cmd, dry_run=dry_run)
+        step["attempt"] = attempt
+        last = step
+        if bool(step.get("ok")):
+            return step
+
+        stderr = str(step.get("stderr") or "")
+        # Heuristic: retry only for known transient index lock failures.
+        if "index.lock" in stderr and ("Unable to create" in stderr or "File exists" in stderr or "Operation not permitted" in stderr):
+            if not dry_run:
+                time.sleep(min(1.0, 0.1 * (2** (attempt - 1))))
+            continue
+        return step
+
+    return last if last is not None else _run(cmd, dry_run=dry_run)
+
+
 def _git_stdout(*args: str) -> str:
     proc = subprocess.run(
         ["git", *args],
@@ -316,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
             (["git", "push", "origin", "main"], "git_push_main", "failed to push main branch"),
             (["git", "push", "origin", tag], "git_push_tag", "failed to push release tag"),
         ]:
-            step = _run(cmd, dry_run=bool(args.dry_run))
+            step = _run_git(cmd, dry_run=bool(args.dry_run))
             step["type"] = step_type
             steps.append(step)
             if not bool(step.get("ok")):
