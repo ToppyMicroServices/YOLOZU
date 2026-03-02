@@ -29,7 +29,7 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertNotIn("Development Status :: 3 - Alpha", pyproject)
 
     def test_ci_contains_release_integrity_gates(self):
-        ci = (self.repo_root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
         self.assertIn("Sdist contents gate", ci)
         self.assertIn("tools/check_schema_compatibility.py", ci)
         self.assertIn("tools/check_golden_compatibility.py", ci)
