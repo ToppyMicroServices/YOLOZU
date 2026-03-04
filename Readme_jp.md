@@ -38,6 +38,31 @@ TTT(Test time training)による推論時の重み調整による継続的な学
 推論バックエンド（PyTorch / ONNXRuntime / TensorRT / ExecuTorch / C++ / Rust など）は自由に選び、
 **同一の `predictions.json` interface contract** に落として評価・比較できることを最重視します。
 
+---
+
+## 比較表（同一データ + predictions interface contract）
+
+同一データセットを前提に、各フレームワークの出力を **predictions interface contract**（`predictions.json` + `export_settings`）に正規化して、同じ評価ツールで比較できます。
+
+| Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
+| --- | --- | --- | --- | --- |
+| Ultralytics YOLO (YOLOv8/YOLO11) | `tools/run_external_finetune_smoke.py` (framework=`yolov`) | `tools/export_predictions_ultralytics.py` | `tools/eval_coco.py` | 典型は post-NMS; `protocol=nms_applied` を使う。 |
+| RT-DETR (in-repo `rtdetr_pose`) | `tools/run_external_finetune_smoke.py` (framework=`rtdetr`) | `tools/run_reference_adapter_regression.py` | `tools/run_reference_adapter_regression.py` | 参照adapter回帰（real model baseline）。 |
+| Hugging Face DETR / RT-DETR | `tools/support_ultralytics_detr.py th` | `tools/support_ultralytics_detr.py pn` | `tools/eval_coco.py` | フレームワーク差は interface contract で吸収。 |
+| Detectron2 | `tools/run_external_finetune_smoke.py` (framework=`detectron2`) | `tools/export_predictions_detectron2.py` | `tools/eval_coco.py` | non-dry は `--detectron2-train-script` が必要。 |
+| MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | non-dry は `--mmdet-train-script` が必要。 |
+| YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | “external inference → interface contract → eval” 向け。 |
+
+最小の証拠（同一データ、同一レポート形状; 既定は dry-run）:
+
+```bash
+python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
+```
+
+可視確認（instance-seg demo overlay 例）:
+
+![Instance-seg demo overlay comparison](docs/assets/instance_seg_min_score_compare.png)
+
 対象:
 - リアルタイム単眼 RGB **検出**
 - 単眼 **depth + 6DoF pose**（RT-DETRベースの最小学習スキャフォールド）

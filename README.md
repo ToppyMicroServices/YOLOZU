@@ -25,6 +25,30 @@ Japanese: [`Readme_jp.md`](Readme_jp.md)
 
 
 
+## Framework Comparison (Same Dataset + Predictions Interface Contract)
+
+One-screen view of how YOLOZU lets you compare different model stacks using the **same dataset** and a stable **predictions interface contract** (`predictions.json` + `export_settings`).
+
+| Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
+| --- | --- | --- | --- | --- |
+| Ultralytics YOLO (YOLOv8/YOLO11) | `tools/run_external_finetune_smoke.py` (framework=`yolov`) | `tools/export_predictions_ultralytics.py` | `tools/eval_coco.py` | Typical exports are post-NMS; use `protocol=nms_applied`. |
+| RT-DETR (in-repo `rtdetr_pose`) | `tools/run_external_finetune_smoke.py` (framework=`rtdetr`) | `tools/run_reference_adapter_regression.py` (predict→canonicalize) | `tools/run_reference_adapter_regression.py` (gates) | Reference adapter regression is the “real model baseline” path. |
+| Hugging Face DETR / RT-DETR | `tools/support_ultralytics_detr.py th` (dry/non-dry) | `tools/support_ultralytics_detr.py pn` (normalize) | `tools/eval_coco.py` | Keeps framework specifics outside the stable interface contract. |
+| Detectron2 | `tools/run_external_finetune_smoke.py` (framework=`detectron2`) | `tools/export_predictions_detectron2.py` | `tools/eval_coco.py` | Non-dry execution requires `--detectron2-train-script`. |
+| MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | Non-dry execution requires `--mmdet-train-script`. |
+| YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | Intended for “external inference → interface contract → eval” workflows. |
+
+Minimal proof (same dataset, same report shape; safe default is dry-run):
+
+```bash
+python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
+```
+
+Visual evidence (example overlays produced by the instance-seg demo):
+
+![Instance-seg demo overlay comparison](docs/assets/instance_seg_min_score_compare.png)
+
+
 ## Quickstart (repo checkout, run this first)
 
 ```bash
