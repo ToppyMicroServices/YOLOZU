@@ -13,6 +13,19 @@ Japanese: [`Readme_jp.md`](Readme_jp.md)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
 
+## 30-second Quick Win (pip)
+
+**Predictions-first interface contract.** Export `predictions.json` once, then validate + evaluate apples-to-apples across frameworks/backends.
+
+```bash
+python3 -m pip install -U yolozu
+yolozu demo overview
+```
+
+Writes: `demo_output/overview/<utc>/demo_overview_report.json`
+
+If YOLOZU saved you time, please star to help others find it.
+
 ## YOLOZU at a glance
 
 - **Framework-agnostic evaluation toolkit for vision models**: designed for reproducible continual learning and test-time adaptation under domain shift.
@@ -37,6 +50,8 @@ One-screen view of how YOLOZU lets you compare different model stacks using the 
 | Detectron2 | `tools/run_external_finetune_smoke.py` (framework=`detectron2`) | `tools/export_predictions_detectron2.py` | `tools/eval_coco.py` | Non-dry execution requires `--detectron2-train-script`. |
 | MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | Non-dry execution requires `--mmdet-train-script`. |
 | YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | Intended for “external inference → interface contract → eval” workflows. |
+
+Same dataset + same `predictions.json` predictions interface contract means apples-to-apples evaluation across frameworks/backends.
 
 Minimal proof (same dataset, same report shape; safe default is dry-run):
 

@@ -7,6 +7,19 @@ English README: [`README.md`](README.md)
 [![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
 [![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 
+## 30秒で動く（pip）
+
+**Predictions-first interface contract.** `predictions.json` を1回出せば、フレームワークや実行基盤を跨いで同じ評価（apples-to-apples）ができます。
+
+```bash
+python3 -m pip install -U yolozu
+yolozu demo overview
+```
+
+出力: `demo_output/overview/<utc>/demo_overview_report.json`
+
+もしYOLOZUが時間短縮に役立ったら、Starで応援してください（他の人が見つけやすくなります）。
+
 視覚モデル評価のためのフレームワーク非依存ツールキット YOLOZU は、
 ドメインシフト下における継続学習およびテスト時適応（TTT: test-time adaptation/training）を
 再現可能に扱うことを目的として設計している。
