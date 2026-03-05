@@ -61,7 +61,7 @@ python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split t
 
 可視確認（instance-seg demo overlay 例）:
 
-![Instance-seg demo (real COCO image) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
+![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
 対象:
 - リアルタイム単眼 RGB **検出**

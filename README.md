@@ -46,7 +46,7 @@ python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split t
 
 Visual evidence (example overlays produced by the instance-seg demo):
 
-![Instance-seg demo (real COCO image) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
+![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
 
 ## Quickstart (repo checkout, run this first)
