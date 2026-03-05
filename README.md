@@ -24,6 +24,8 @@ yolozu demo overview
 
 Writes: `demo_output/overview/<utc>/demo_overview_report.json`
 
+Latest release: `v2.0.0` (GitHub Releases).
+
 If YOLOZU saved you time, please star to help others find it.
 
 ## YOLOZU at a glance

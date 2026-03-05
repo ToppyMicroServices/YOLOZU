@@ -18,6 +18,8 @@ yolozu demo overview
 
 出力: `demo_output/overview/<utc>/demo_overview_report.json`
 
+Latest release: `v2.0.0`（GitHub Releases）
+
 もしYOLOZUが時間短縮に役立ったら、Starで応援してください（他の人が見つけやすくなります）。
 
 視覚モデル評価のためのフレームワーク非依存ツールキット YOLOZU は、
