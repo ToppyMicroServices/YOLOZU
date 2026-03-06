@@ -31,7 +31,9 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \cmd{yolozu completion} & Prints shell completion scripts (\cmd{--shell bash|zsh}) for interactive command completion. \\
 \cmd{yolozu demo overview} & Writes a demo overview report (\path{demo\_output/overview/...}) covering bbox/segmentation/keypoints/depth/pose6d flows, dependency checks, and recommended commands. \\
 \cmd{yolozu demo} & Runs a small CPU-friendly demo suite and writes artifacts under \path{demo\_output/}. \\
-\cmd{yolozu demo instance-seg} & Instance-seg demo (short path; uses COCO instances if present, else synthetic fallback). \\
+\cmd{yolozu demo instance-seg} & Instance-seg demo (offline by default). \newline
+For real-image overlays: \cmd{--background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none}. \newline
+For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu demo keypoints} & Keypoint R-CNN inference demo (torchvision; writes overlay under \path{demo\_output/keypoints/}). \\
 \cmd{yolozu demo pose} & 6D pose demo (chessboard/ArUco by default; ArUco sample cached under \path{demo\_output/pose/\_samples/}; DenseFusion requires CUDA + large downloads). Writes overlay under \path{demo\_output/pose/}. \\
 \cmd{yolozu demo depth} & Monocular depth inference demo (default: Depth Anything via Transformers; optional MiDaS/DPT; writes images under \path{demo\_output/depth/}). \\
@@ -39,7 +41,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 \cmd{yolozu demo continual} & Continual-learning demo (toy synthetic by default; \cmd{--problem mnist\_rotate} uses a vision backbone). \\
 \cmd{yolozu list models} & Lists curated model IDs available for reproducible downloads. \\
 \cmd{yolozu fetch <model\_id> --accept-license} & Downloads a model artifact with cache reuse, sha256 verification, and license gating; records \path{models/<id>/meta.json}. (Custom registries may require \cmd{--allow-unsafe} / \cmd{--allow-non-apache}.) \\
-\cmd{bash scripts/smoke.sh} & Runs the one-command offline smoke flow (doctor + validate + eval-coco dry-run + SynthGen intake smoke on \path{data/smoke}). \\
+\cmd{bash scripts/smoke.sh} & Runs the one-command offline smoke flow (doctor + validate + eval-coco dry-run + SynthGen intake smoke + instance-seg overlay PNG evidence on \path{data/smoke}). \\
 \cmd{bash scripts/smoke.sh --profile deep} & Runs the deep walkthrough profile and writes \path{reports/smoke\_walkthrough\_report.json} plus backend dry-run export artifacts. \\
 \cmd{bash scripts/smoke.sh --help} & Shows smoke CLI options (\cmd{--dataset}, \cmd{--predictions}, \cmd{--report}, \cmd{--synthgen-root}, \cmd{--synthgen-predictions}, \cmd{--output-dir}, \cmd{--demo-run-dir}, \cmd{--skip-demo}, \cmd{--profile}, \cmd{--walkthrough-report}). \\
 \cmd{yolozu train} & Initiates YAML/JSON config-driven RT-DETR training (fully supporting the run contract and resumption capabilities). \\

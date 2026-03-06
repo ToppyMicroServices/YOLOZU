@@ -19,16 +19,17 @@ yolozu --help
 yolozu doctor --output -
 \end{lstlisting}
 
-\subsection{First successful run (3 commands: install \texorpdfstring{$\rightarrow$}{->} migrate \texorpdfstring{$\rightarrow$}{->} eval)}
-For the quickest reproducible success path with evaluation output:
+\subsection{First successful run (2 commands: install \texorpdfstring{$\rightarrow$}{->} smoke)}
+For the quickest reproducible success path with evaluation output and PNG evidence:
 \begin{lstlisting}[language=bash]
 python3 -m pip install yolozu
 bash scripts/smoke.sh
 \end{lstlisting}
 
 The smoke script uses committed assets under \path{data/smoke} and writes
-\path{reports/smoke_coco_eval_dry_run.json} plus SynthGen smoke artifacts
-under \path{reports/} (\path{smoke_synthgen_summary.json}, \path{smoke_synthgen_eval.json}, \path{smoke_synthgen_overlay.png}).
+\path{reports/smoke_coco_eval_dry_run.json} plus SynthGen smoke artifacts under \path{reports/}
+(\path{smoke_synthgen_summary.json}, \path{smoke_synthgen_eval.json}, \path{smoke_synthgen_overlay.png}),
+and instance-seg overlay PNGs under \path{reports/smoke_demo_instance_seg/overlays/*.png}.
 
 If your predictions come from another backend, validate first:
 \begin{lstlisting}[language=bash]
@@ -54,6 +55,7 @@ The demo commands are intentionally designed to keep the invocation short:
 python3 -m pip install -U 'yolozu[demo]'
 yolozu demo
 yolozu demo instance-seg
+yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none
 yolozu demo keypoints
 yolozu demo pose
 yolozu demo pose --backend aruco  % cached sample in demo_output/pose/_samples
@@ -133,6 +135,6 @@ schema-valid + relocatable\\
 
 \end{tikzpicture}
 }
-\caption{Recommended deployment flow and where key interface-contract artifacts are produced.}
+\caption{Recommended deployment flow and where key interface contract artifacts are produced.}
 \end{figure}
 %
