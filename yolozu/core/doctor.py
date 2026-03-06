@@ -351,6 +351,15 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
     }
 
     warnings: list[str] = []
+    # Editable installs or multiple environments can leave stale dist metadata behind.
+    dist_version = (report.get("packages") or {}).get("installed_versions", {}).get("yolozu")
+    module_version = str(__version__)
+    if isinstance(dist_version, str) and dist_version and dist_version != module_version:
+        warnings.append(
+            "yolozu version mismatch: module __version__="
+            f"{module_version} but installed package metadata={dist_version}. "
+            "You may have multiple installs or stale editable metadata; consider reinstalling."
+        )
     if tools["nvidia_smi"] is False:
         warnings.append("nvidia-smi not found (expected on Linux+NVIDIA; OK on CPU-only/macOS)")
     if tools["trtexec"] is False:
@@ -376,4 +385,3 @@ def write_doctor_report(*, output: str | Path, cwd: Path | None = None) -> int:
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(str(out_path))
     return int(exit_code)
-
