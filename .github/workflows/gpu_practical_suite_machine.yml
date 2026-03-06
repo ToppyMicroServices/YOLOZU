@@ -40,6 +40,7 @@ jobs:
           docker pull "${image}"
 
           docker run --rm --gpus all \
+            -e GITHUB_SHA \
             -v "${{ github.workspace }}:/workspace" -w /workspace \
             "${image}" \
             bash -lc '
@@ -87,4 +88,3 @@ jobs:
           path: |
             reports/gpu_practical_finetune_demo/**
             data/real_multitask_fewshot/prepare_summary.json
-
