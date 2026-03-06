@@ -62,6 +62,54 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \bottomrule
 \end{longtable}
 
+\section{Demo Output Examples (Images)}
+The \cmd{yolozu demo *} commands are designed to produce concrete artifacts (JSON reports and overlay images)
+that help users verify they can run end-to-end workflows.
+
+The figures below are committed snapshots generated from \path{data/smoke} using the following commands:
+\begin{lstlisting}[language=bash]
+yolozu demo instance-seg \
+  --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none \
+  --num-images 1 --image-size 320 --max-instances 3 \
+  --run-dir demo_output/manual/instance_seg
+
+yolozu demo keypoints \
+  --image data/smoke/images/val/000000000036.jpg --device cpu --max-persons 1 \
+  --run-dir demo_output/manual/keypoints
+
+yolozu demo depth \
+  --image data/smoke/images/val/000000000036.jpg --device cpu --model midas_small \
+  --run-dir demo_output/manual/depth
+
+yolozu demo pose \
+  --backend chessboard --sample-source synthetic \
+  --run-dir demo_output/manual/pose
+\end{lstlisting}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/demo_instance_seg_overlay.png}
+  \caption{Instance-seg demo overlay (\cmd{--background yolo-bbox --inference none}). This offline mode uses GT-derived scaffold predictions for visualization and evaluation smoke checks.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/demo_keypoints_overlay.png}
+  \caption{Keypoints demo overlay (torchvision Keypoint R-CNN).}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/demo_depth_overlay.png}
+  \caption{Depth demo overlay (MiDaS small; relative depth visualization).}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/demo_pose_overlay.png}
+  \caption{Pose6D demo overlay (chessboard + OpenCV solvePnP).}
+\end{figure}
+
 \subsection{Long-tail recipe plugin options (PyTorch)}
 \cmd{yolozu long-tail-recipe} supports explicit plugin choices for loss, validation metric, and learning-rate scheduler.
 
