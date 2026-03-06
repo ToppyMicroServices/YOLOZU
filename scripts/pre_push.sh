@@ -14,6 +14,7 @@ Options:
   -h, --help            Show this help and exit.
   --skip-ruff           Skip ruff lint gate.
   --skip-tests          Skip focused unit tests gate.
+  --skip-smoke          Skip offline smoke script gate (scripts/smoke.sh).
   --skip-real-preflight Skip real-image gate preflight (data/real_multitask_fewshot).
   --prepare-real-data   Attempt to prepare tiny real-image fewshot dataset if missing
                         (requires network + license acceptance).
@@ -27,6 +28,7 @@ EOF
 
 SKIP_RUFF=0
 SKIP_TESTS=0
+SKIP_SMOKE=0
 SKIP_REAL=0
 PREPARE_REAL=0
 
@@ -42,6 +44,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-tests)
       SKIP_TESTS=1
+      shift 1
+      ;;
+    --skip-smoke)
+      SKIP_SMOKE=1
       shift 1
       ;;
     --skip-real-preflight)
@@ -60,14 +66,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "[1/3] ruff"
+echo "[1/4] ruff"
 if [[ "$SKIP_RUFF" == "1" ]]; then
   echo "skip ruff"
 else
   ruff check .
 fi
 
-echo "[2/3] unit tests (focused)"
+echo "[2/4] unit tests (focused)"
 if [[ "$SKIP_TESTS" == "1" ]]; then
   echo "skip unit tests"
 else
@@ -77,7 +83,14 @@ else
     tests.test_release_readiness_docs
 fi
 
-echo "[3/3] real-image scenario preflight (data/real_multitask_fewshot)"
+echo "[3/4] smoke (offline, repo assets)"
+if [[ "$SKIP_SMOKE" == "1" ]]; then
+  echo "skip smoke"
+else
+  bash scripts/smoke.sh
+fi
+
+echo "[4/4] real-image scenario preflight (data/real_multitask_fewshot)"
 if [[ "$SKIP_REAL" == "1" ]]; then
   echo "skip real preflight"
   echo "pre-push OK (real preflight skipped)"
@@ -120,4 +133,3 @@ print(f"real-image dataset OK: {len(imgs)} val images")
 PY
 
 echo "pre-push OK"
-

@@ -7457,6 +7457,10 @@
         {
           "command": "bash scripts/pre_push.sh --skip-real-preflight",
           "description": "Run pre-push gates without real-image dataset preflight."
+        },
+        {
+          "command": "bash scripts/pre_push.sh --skip-smoke",
+          "description": "Run pre-push gates without running scripts/smoke.sh."
         }
       ],
       "id": "pre_push",
@@ -7471,6 +7475,12 @@
           "flag": "--skip-tests",
           "kind": "string",
           "name": "skip_tests",
+          "required": false
+        },
+        {
+          "flag": "--skip-smoke",
+          "kind": "string",
+          "name": "skip_smoke",
           "required": false
         },
         {
@@ -7497,7 +7507,7 @@
         "network": false
       },
       "runner": "bash",
-      "summary": "Run local pre-push gates (ruff + focused unit tests + real-image preflight) to catch CI failures before pushing.",
+      "summary": "Run local pre-push gates (ruff + focused unit tests + offline smoke + real-image preflight) to catch CI failures before pushing.",
       "tags": [
         "ci",
         "devx",

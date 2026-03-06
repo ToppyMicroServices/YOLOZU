@@ -20,11 +20,9 @@ def _require_deps() -> tuple[Any, Any]:
     return np, (Image, ImageDraw)
 
 
-def _iter_coco128_pairs(*, coco128_root: Path) -> list[tuple[Path, Path]]:
-    images_base = coco128_root / "images"
-    labels_base = coco128_root / "labels"
+def _iter_yolo_pairs(*, images_base: Path, labels_base: Path) -> list[tuple[Path, Path]]:
     if not images_base.exists() or not labels_base.exists():
-        raise FileNotFoundError(f"coco128 not found under: {coco128_root}")
+        raise FileNotFoundError(f"dataset not found under: images={images_base} labels={labels_base}")
 
     pairs: list[tuple[Path, Path]] = []
     for img in sorted(images_base.rglob("*")):
@@ -37,8 +35,17 @@ def _iter_coco128_pairs(*, coco128_root: Path) -> list[tuple[Path, Path]]:
         if lab.exists():
             pairs.append((img, lab))
     if not pairs:
-        raise FileNotFoundError(f"no image/label pairs found under: {coco128_root}")
+        raise FileNotFoundError(f"no image/label pairs found under: images={images_base} labels={labels_base}")
     return pairs
+
+
+def _iter_coco128_pairs(*, coco128_root: Path) -> list[tuple[Path, Path]]:
+    images_base = coco128_root / "images"
+    labels_base = coco128_root / "labels"
+    if not images_base.exists() or not labels_base.exists():
+        raise FileNotFoundError(f"coco128 not found under: {coco128_root}")
+
+    return _iter_yolo_pairs(images_base=images_base, labels_base=labels_base)
 
 
 def _yolo_bbox_to_xyxy(*, w: int, h: int, xc: float, yc: float, bw: float, bh: float) -> tuple[int, int, int, int]:
@@ -184,6 +191,8 @@ def run_instance_seg_demo(
     background: str = "synthetic",
     coco_instances_json: str | Path | None = None,
     coco_images_dir: str | Path | None = None,
+    yolo_root: str | Path | None = None,
+    yolo_split: str = "val",
     inference: str = "none",
     device: str = "cpu",
     score_threshold: float = 0.5,
@@ -283,8 +292,8 @@ def run_instance_seg_demo(
                 ) from exc
 
     bg_mode = str(background).strip().lower()
-    if bg_mode not in ("synthetic", "coco128", "coco-instances"):
-        raise ValueError(f"unknown background: {background} (expected: synthetic|coco128|coco-instances)")
+    if bg_mode not in ("synthetic", "coco128", "coco-instances", "yolo-bbox"):
+        raise ValueError(f"unknown background: {background} (expected: synthetic|coco128|coco-instances|yolo-bbox)")
 
     coco_pairs: list[tuple[Path, Path]] | None = None
     if bg_mode == "coco128":
@@ -292,6 +301,23 @@ def run_instance_seg_demo(
         if int(num_images) > len(coco_pairs):
             num_images = len(coco_pairs)
         coco_pairs = rng.sample(coco_pairs, k=int(num_images))
+
+    yolo_pairs: list[tuple[Path, Path]] | None = None
+    yolo_meta: dict[str, Any] = {}
+    if bg_mode == "yolo-bbox":
+        if yolo_root is None:
+            raise ValueError(
+                "background=yolo-bbox requires yolo_root (dataset root with images/<split> and labels/<split>)"
+            )
+        yolo_root_path = Path(yolo_root)
+        split = str(yolo_split).strip()
+        images_base = yolo_root_path / "images" / split
+        labels_base = yolo_root_path / "labels" / split
+        yolo_pairs = _iter_yolo_pairs(images_base=images_base, labels_base=labels_base)
+        if int(num_images) > len(yolo_pairs):
+            num_images = len(yolo_pairs)
+        yolo_pairs = rng.sample(yolo_pairs, k=int(num_images))
+        yolo_meta = {"yolo_root": str(yolo_root_path), "yolo_split": split}
 
     coco_images_by_id: dict[int, dict[str, Any]] | None = None
     coco_anns_by_image_id: dict[int, list[dict[str, Any]]] | None = None
@@ -574,6 +600,92 @@ def run_instance_seg_demo(
                 pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
 
             img_rgb.save(image_path)
+        elif bg_mode == "yolo-bbox":
+            assert yolo_pairs is not None
+            src_img, src_lab = yolo_pairs[i]
+            img_rgb = Image.open(src_img).convert("RGB")
+            draw_rgb = ImageDraw.Draw(img_rgb)
+            w, h = img_rgb.size
+
+            lines = [ln.strip() for ln in src_lab.read_text(encoding="utf-8").splitlines() if ln.strip()]
+            lines = lines[: max(1, int(max_instances))]
+
+            for j, ln in enumerate(lines):
+                parts = ln.split()
+                if len(parts) < 5:
+                    continue
+                class_id = int(float(parts[0]))
+
+                fill = (40, 140, 220) if (class_id % 2) == 0 else (220, 120, 40)
+
+                if len(parts) > 5 and (len(parts) - 1) % 2 == 0:
+                    pts: list[tuple[float, float]] = []
+                    for k in range(1, len(parts) - 1, 2):
+                        try:
+                            x = float(parts[k]) * float(w)
+                            y = float(parts[k + 1]) * float(h)
+                        except Exception:
+                            continue
+                        pts.append((x, y))
+                    if len(pts) < 3:
+                        continue
+                    mask_img = Image.new("L", (int(w), int(h)), 0)
+                    mask_draw = ImageDraw.Draw(mask_img)
+                    mask_draw.polygon(pts, fill=255)
+                    gt_mask = np.array(mask_img) != 0
+                    draw_rgb.line(pts + [pts[0]], fill=fill, width=2)
+                    gt_mask_kinds["yolo_seg_polygon"] = int(gt_mask_kinds.get("yolo_seg_polygon", 0)) + 1
+                else:
+                    xc, yc, bw, bh = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
+                    x0, y0, x1, y1 = _yolo_bbox_to_xyxy(w=w, h=h, xc=xc, yc=yc, bw=bw, bh=bh)
+
+                    mask_img = Image.new("L", (int(w), int(h)), 0)
+                    mask_draw = ImageDraw.Draw(mask_img)
+                    mask_draw.ellipse([x0, y0, x1, y1], fill=255)
+                    gt_mask = np.array(mask_img) != 0
+
+                    draw_rgb.ellipse([x0, y0, x1, y1], outline=(0, 0, 0), fill=None)
+                    draw_rgb.ellipse(
+                        [x0 + 1, y0 + 1, max(x0 + 1, x1 - 1), max(y0 + 1, y1 - 1)],
+                        outline=fill,
+                        fill=None,
+                    )
+                    gt_mask_kinds["yolo_bbox_ellipse"] = int(gt_mask_kinds.get("yolo_bbox_ellipse", 0)) + 1
+
+                gt_path = gt_dir / f"gt_{i:04d}_{j:02d}.png"
+                Image.fromarray((gt_mask.astype("uint8") * 255), mode="L").save(gt_path)
+                gt_paths.append(str(gt_path))
+                gt_classes.append(int(class_id))
+                gt_masks_for_overlay.append(gt_mask)
+
+                if rng.random() < 0.9:
+                    pred_mask = gt_mask.copy()
+                    if rng.random() < 0.25:
+                        shift_y = rng.choice([-2, -1, 1, 2])
+                        shift_x = rng.choice([-2, -1, 1, 2])
+                        pred_mask = np.roll(pred_mask, shift=shift_y, axis=0)
+                        pred_mask = np.roll(pred_mask, shift=shift_x, axis=1)
+
+                    pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{j:02d}.png"
+                    Image.fromarray((pred_mask.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
+                    pred_masks_for_overlay.append(pred_mask)
+                    pred_instances.append(
+                        {
+                            "class_id": int(class_id),
+                            "score": float(0.9 - 0.1 * rng.random()),
+                            "mask": str(pred_path_rel),
+                        }
+                    )
+
+            if rng.random() < 0.25:
+                fp_mask = np.zeros((int(h), int(w)), dtype=bool)
+                fp_mask[5:15, 5:15] = True
+                fp_path_rel = Path("pred_masks") / f"fp_{i:04d}.png"
+                Image.fromarray((fp_mask.astype("uint8") * 255), mode="L").save(run_dir / fp_path_rel)
+                pred_masks_for_overlay.append(fp_mask)
+                pred_instances.append({"class_id": 0, "score": 0.2, "mask": str(fp_path_rel)})
+
+            img_rgb.save(image_path)
         else:
             # Simple textured background.
             # (Previously this was very close to white; we now also paint the GT shapes on top
@@ -663,11 +775,11 @@ def run_instance_seg_demo(
     result = evaluate_instance_map(records=records, predictions_entries=predictions, pred_root=run_dir, return_per_image=True)
 
     warnings = list(result.warnings)
-    if bg_mode == "coco128":
-        # If we didn't use any polygon labels, be explicit that these are pseudo masks.
+    if bg_mode in ("coco128", "yolo-bbox"):
         if int(gt_mask_kinds.get("yolo_seg_polygon", 0)) == 0:
+            prefix = "coco128" if bg_mode == "coco128" else "yolo-bbox"
             warnings.append(
-                "coco128 labels are bbox-only; gt_masks are pseudo (ellipse-in-bbox) and will not match object boundaries"
+                f"{prefix} labels are bbox-only; gt_masks are pseudo (ellipse-in-bbox) and will not match object boundaries"
             )
 
     if bg_mode == "coco-instances":
@@ -692,6 +804,7 @@ def run_instance_seg_demo(
             "background": str(bg_mode),
             "gt_mask_kinds": dict(gt_mask_kinds),
             "inference": {k: v for k, v in dict(inference_meta).items() if not str(k).startswith("_")},
+            "dataset": dict(yolo_meta) if bg_mode == "yolo-bbox" else {},
         },
         "result": {
             "map50_95": float(result.map50_95),

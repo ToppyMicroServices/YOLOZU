@@ -1,0 +1,90 @@
+name: gpu-practical-suite-machine
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly (UTC). Keep GPU regressions separate from default CI tiers.
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: gpu-practical-suite-machine-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  practical_suite:
+    runs-on: [machine, gpu=t4]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: GPU visible
+        shell: bash
+        run: |
+          set -euo pipefail
+          nvidia-smi
+
+      - name: Multitask finetune demo (CUDA, real images)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker not found; cannot run CUDA practical suite."
+            exit 1
+          fi
+
+          image="runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"
+          docker pull "${image}"
+
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}:/workspace" -w /workspace \
+            "${image}" \
+            bash -lc '
+              set -euo pipefail
+              nvidia-smi
+              python3 --version
+
+              python3 -m pip install --upgrade pip
+              python3 -m pip install --no-cache-dir -e .
+
+              # Prepare a tiny real-image few-shot dataset deterministically.
+              python3 tools/prepare_real_multitask_fewshot.py \
+                --out data/real_multitask_fewshot \
+                --train-images 2 \
+                --val-images 1 \
+                --download-if-missing \
+                --allow-auto-download \
+                --accept-dataset-license \
+                --download-num-images 3 \
+                --download-seed 0 \
+                --strict-provenance \
+                --force
+
+              # Run micro finetune across tasks on CUDA.
+              python3 tools/run_real_multitask_finetune_demo.py \
+                --dataset-root data/real_multitask_fewshot \
+                --out reports/gpu_practical_finetune_demo \
+                --device cuda \
+                --epochs 1 \
+                --max-steps 5 \
+                --batch-size 2 \
+                --image-size 128 \
+                --strict-provenance \
+                --force
+
+              ls -la reports/gpu_practical_finetune_demo || true
+            '
+
+      - name: Upload GPU practical suite artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-practical-suite
+          if-no-files-found: error
+          path: |
+            reports/gpu_practical_finetune_demo/**
+            data/real_multitask_fewshot/prepare_summary.json
+

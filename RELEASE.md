@@ -26,7 +26,7 @@ This avoids long-lived PyPI API tokens.
 ## Release quality gates (must be green)
 
 - Local checks: `docs/release_reliability_checklist.md`
-- Required CI: `.github/workflows/ci.yml`
+- Required CI: `.github/workflows/build_and_test.yml`
 - Compatibility gates:
   - schema compatibility
   - golden compatibility (`python3 tools/check_golden_compatibility.py`)
@@ -53,6 +53,8 @@ git push origin vX.Y.Z
 Tag push prepares release metadata but does **not** trigger PyPI publish.
 
 5) Create a GitHub Release from that tag and click **Publish release**.
+
+Use `.github/release_notes_template.md` as the minimal release note template.
 
 This action triggers `.github/workflows/publish.yml`, which builds and publishes to PyPI.
 

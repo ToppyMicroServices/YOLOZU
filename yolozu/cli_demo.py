@@ -640,6 +640,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         bg = str(getattr(args, "background", "synthetic"))
         resolved_instances = getattr(args, "coco_instances_json", None)
         resolved_images = getattr(args, "coco_images_dir", None)
+        yolo_root = getattr(args, "yolo_root", None)
+        yolo_split = getattr(args, "yolo_split", "val")
         if str(bg).strip().lower() == "coco-instances":
             instances_was_default = resolved_instances is None
             images_was_default = resolved_images is None
@@ -669,6 +671,9 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         resolved_inference = getattr(args, "inference", None)
         bg_norm = str(bg).strip().lower()
         inf_norm = None if resolved_inference is None else str(resolved_inference).strip().lower()
+
+        if bg_norm == "yolo-bbox" and not yolo_root:
+            raise SystemExit("background=yolo-bbox requires --yolo-root <dataset> (with images/<split> and labels/<split>)")
 
         # Instance-seg "inference" is only meaningful for background=coco-instances.
         # Some entrypoints set a default like "auto"; keep the demo runnable by
@@ -712,6 +717,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             background=bg,
             coco_instances_json=resolved_instances,
             coco_images_dir=resolved_images,
+            yolo_root=yolo_root,
+            yolo_split=str(yolo_split),
             inference=str(resolved_inference),
             device=str(getattr(args, "device", "cpu")),
             score_threshold=float(getattr(args, "score_threshold", 0.5)),
@@ -738,6 +745,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                             if resolved_images
                             else None
                         ),
+                        "yolo_root": str(yolo_root) if yolo_root else None,
+                        "yolo_split": str(yolo_split),
                         "inference": str(resolved_inference),
                         "device": str(getattr(args, "device", "cpu")),
                         "score_threshold": float(getattr(args, "score_threshold", 0.5)),

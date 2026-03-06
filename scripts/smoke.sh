@@ -274,9 +274,10 @@ if [[ "$SKIP_DEMO" != "1" ]]; then
   rm -rf "$DEMO_RUN_DIR"
   "${YOLOZU_BIN[@]}" demo instance-seg \
     --num-images 2 \
-    --image-size 64 \
     --max-instances 2 \
-    --background synthetic \
+    --background yolo-bbox \
+    --yolo-root "$DATASET" \
+    --yolo-split val \
     --inference none \
     --run-dir "$DEMO_RUN_DIR"
 

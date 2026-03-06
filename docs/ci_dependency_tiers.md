@@ -21,7 +21,7 @@ YOLOZU uses a tiered CI dependency model to keep signal high while avoiding opti
 
 4. `full`
 - Purpose: GPU/backend matrix (TensorRT/CUDA/provider parity, full reference regression profile).
-- Workflows: `gpu_smoke_machine.yml`, `gpu_zisn_pipeline.yml`, `reference_adapter_full.yml`.
+- Workflows: `gpu_smoke_machine.yml`, `gpu_practical_suite_machine.yml`, `gpu_zisn_pipeline.yml`, `reference_adapter_full.yml`.
 
 ## Why this split
 

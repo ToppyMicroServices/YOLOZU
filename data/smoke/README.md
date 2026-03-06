@@ -31,6 +31,13 @@ One-command equivalent:
 bash scripts/smoke.sh
 ```
 
+Instance-seg demo (real images + YOLO bbox labels, pseudo masks):
+
+```bash
+yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none --num-images 2 --max-instances 2 --run-dir reports/demo_instance_seg_smoke_yolo_bbox
+ls reports/demo_instance_seg_smoke_yolo_bbox/overlays/*.png
+```
+
 SynthGen intake smoke (interface contract + overlay + eval):
 
 ```bash

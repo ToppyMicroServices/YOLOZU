@@ -116,6 +116,12 @@ To run the fully synthetic variant explicitly:
 yolozu demo instance-seg --background synthetic
 ```
 
+To run a YOLO-style bbox dataset variant (real images, pseudo masks derived from YOLO labels):
+
+```bash
+yolozu demo instance-seg --background yolo-bbox --yolo-root /path/to/yolo_dataset --yolo-split val --inference none
+```
+
 If you have a COCO-style instances annotations JSON (polygons) and the matching images directory, you can run:
 
 ```bash

@@ -3,6 +3,7 @@
 Japanese: [`Readme_jp.md`](Readme_jp.md)
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
+[![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
 [![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
 [![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
 [![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://pypi.org/project/yolozu/)
@@ -23,8 +24,6 @@ yolozu demo overview
 ```
 
 Writes: `demo_output/overview/<utc>/demo_overview_report.json`
-
-Latest release: `v2.0.0` (GitHub Releases).
 
 If YOLOZU saved you time, please star to help others find it.
 
@@ -72,6 +71,8 @@ Visual evidence (example overlays produced by the instance-seg demo):
 python3 -m pip install -e .
 bash scripts/smoke.sh
 ```
+
+Details (what changed): see [GitHub Release notes](https://github.com/ToppyMicroServices/YOLOZU/releases).
 
 If your system Python is externally managed (PEP 668), use a venv:
 
@@ -176,7 +177,7 @@ yolozu demo continual --compare --markdown
 First-time visual confirmation (PNG output check):
 
 ```bash
-yolozu demo instance-seg --background synthetic --inference none --num-images 2 --image-size 64 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
+yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none --num-images 2 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
 ls reports/demo_firsttime_instance_seg/overlays/*.png
 ```
 

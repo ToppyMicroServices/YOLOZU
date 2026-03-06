@@ -13,8 +13,21 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertIn("release:", publish)
         self.assertIn("published", publish)
         self.assertIn("Validate release tag matches package version", publish)
+        self.assertIn("Validate built wheel version matches package version", publish)
         self.assertIn("GitHub Release", release_md)
         self.assertIn("Tag push alone does not publish", release_md)
+        self.assertIn(".github/workflows/build_and_test.yml", release_md)
+        self.assertIn(".github/release_notes_template.md", release_md)
+
+    def test_release_notes_template_exists(self):
+        template = (self.repo_root / ".github" / "release_notes_template.md")
+        self.assertTrue(template.is_file(), "missing .github/release_notes_template.md")
+        text = template.read_text(encoding="utf-8")
+        self.assertIn("Quickstart (3 lines)", text)
+        self.assertIn("## Added", text)
+        self.assertIn("## Changed", text)
+        self.assertIn("## Fixed", text)
+        self.assertIn("## Breaking", text)
 
     def test_changelog_has_one_dot_zero_cut(self):
         changelog = (self.repo_root / "CHANGELOG.md").read_text(encoding="utf-8")

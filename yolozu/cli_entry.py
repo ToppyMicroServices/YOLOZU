@@ -589,9 +589,12 @@ def main(argv: list[str] | None = None) -> int:
     demo_is.add_argument("--max-instances", type=int, default=2, help="Max instances per image (default: 2).")
     demo_is.add_argument(
         "--background",
-        choices=("synthetic", "coco128", "coco-instances"),
+        choices=("synthetic", "coco128", "coco-instances", "yolo-bbox"),
         default="coco-instances",
-        help="Background source: synthetic shapes, COCO128 (bbox-derived), or COCO instances polygons (default: coco-instances).",
+        help=(
+            "Background source: synthetic shapes, COCO128 (bbox-derived), COCO instances polygons, "
+            "or a YOLO-style bbox dataset (default: coco-instances)."
+        ),
     )
     demo_is.add_argument(
         "--coco-instances-json",
@@ -608,6 +611,19 @@ def main(argv: list[str] | None = None) -> int:
             "(background=coco-instances) Root images dir for the COCO split (joined with image.file_name). "
             "If omitted, defaults to data/coco/images/val2017."
         ),
+    )
+    demo_is.add_argument(
+        "--yolo-root",
+        default=None,
+        help=(
+            "(background=yolo-bbox) YOLO-style dataset root containing images/<split> and labels/<split> "
+            "(labels are YOLO bbox or YOLO-seg polygon rows)."
+        ),
+    )
+    demo_is.add_argument(
+        "--yolo-split",
+        default="val",
+        help="(background=yolo-bbox) Split folder name under images/ and labels/ (default: val).",
     )
     demo_is.add_argument(
         "--inference",
