@@ -48,8 +48,15 @@ jobs:
               nvidia-smi
               python3 --version
 
+              if command -v git >/dev/null 2>&1; then
+                git config --global --add safe.directory /workspace || true
+              fi
+
               python3 -m pip install --upgrade pip
               python3 -m pip install --no-cache-dir -e .
+
+              # GPU smoke walkthrough (offline). Exercises CUDA TTT probe via --torch-device.
+              bash scripts/smoke.sh --profile deep --torch-device cuda
 
               # Prepare a tiny real-image few-shot dataset deterministically.
               python3 tools/prepare_real_multitask_fewshot.py \

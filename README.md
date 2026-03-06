@@ -103,6 +103,12 @@ If you want a deeper first-time walkthrough evidence report (capability claims +
 bash scripts/smoke.sh --profile deep
 ```
 
+On a CUDA machine (single GPU), you can also run the deep profile with the TTT probe on GPU:
+
+```bash
+bash scripts/smoke.sh --profile deep --torch-device cuda
+```
+
 Deep profile additionally writes:
 - `reports/smoke_walkthrough_report.json`
 - `reports/smoke_demo_overview.json`

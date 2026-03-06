@@ -29,6 +29,8 @@ Run from repo root:
 bash scripts/smoke.sh
 # optional deeper walkthrough evidence (capability claims + deploy dry-run checks)
 bash scripts/smoke.sh --profile deep
+# CUDA machine: run TTT probe on GPU
+bash scripts/smoke.sh --profile deep --torch-device cuda
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
@@ -39,7 +41,7 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.
 
 DoD:
 - `scripts/smoke.sh` writes `reports/smoke_coco_eval_dry_run.json`, SynthGen smoke artifacts (`reports/smoke_synthgen_summary.json`, `reports/smoke_synthgen_eval.json`, `reports/smoke_synthgen_overlay.png`), and instance-seg demo overlay PNGs under `reports/smoke_demo_instance_seg/overlays/` (unless `--skip-demo` is used).
-- `scripts/smoke.sh --profile deep` additionally writes `reports/smoke_walkthrough_report.json` and backend dry-run exports (`reports/smoke_export_{onnxrt,trt,executorch}.json`).
+- `scripts/smoke.sh --profile deep` additionally writes `reports/smoke_walkthrough_report.json` and backend dry-run exports (`reports/smoke_export_{onnxrt,trt,executorch}.json`). The deep profile uses `--torch-device` for the TTT probe device selection.
 - Manifest validator returns `OK`.
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.

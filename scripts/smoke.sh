@@ -22,6 +22,7 @@ Options:
   --demo-run-dir <path>           Run directory for instance-seg smoke demo.
                                   (default: reports/smoke_demo_instance_seg)
   --skip-demo                     Skip instance-seg demo validation.
+  --torch-device <dev>            Torch device for deep-profile TTT probe (default: cpu).
   --profile <core|deep>           Smoke depth profile (default: core).
                                   deep = core + walkthrough evidence report.
   --walkthrough-report <path>     Deep profile walkthrough report JSON.
@@ -93,6 +94,7 @@ SYNTHGEN_PREDICTIONS=""
 OUTPUT_DIR="reports"
 DEMO_RUN_DIR="reports/smoke_demo_instance_seg"
 SKIP_DEMO=0
+TORCH_DEVICE="cpu"
 PROFILE="core"
 WALKTHROUGH_REPORT="reports/smoke_walkthrough_report.json"
 
@@ -140,6 +142,11 @@ while [[ $# -gt 0 ]]; do
     --skip-demo)
       SKIP_DEMO=1
       shift 1
+      ;;
+    --torch-device)
+      require_value "$1" "${2:-}"
+      TORCH_DEVICE="${2:-}"
+      shift 2
       ;;
     --profile)
       require_value "$1" "${2:-}"
@@ -342,6 +349,7 @@ PY
   "$PY_BIN" tools/run_external_finetune_smoke.py \
     --dataset-root "$DATASET" \
     --split train \
+    --device "$TORCH_DEVICE" \
     --output "$EXTERNAL_FINETUNE_REPORT"
 
   "$PY_BIN" - "$EXTERNAL_FINETUNE_REPORT" <<'PY'
@@ -437,7 +445,7 @@ PY
     --split val \
     --max-images 1 \
     --config rtdetr_pose/configs/base.json \
-    --device cpu \
+    --device "$TORCH_DEVICE" \
     --ttt \
     --ttt-preset safe \
     --output "$TTT_PROBE_OUTPUT" \

@@ -11442,6 +11442,10 @@
         {
           "command": "bash scripts/smoke.sh --profile deep",
           "description": "Run deep walkthrough smoke profile and emit capability evidence report."
+        },
+        {
+          "command": "bash scripts/smoke.sh --profile deep --torch-device cuda",
+          "description": "Run deep walkthrough smoke on a CUDA machine (TTT probe uses GPU)."
         }
       ],
       "id": "smoke",
@@ -11499,6 +11503,13 @@
           "flag": "--skip-demo",
           "kind": "string",
           "name": "skip_demo",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--torch-device",
+          "kind": "string",
+          "name": "torch_device",
           "required": false
         },
         {

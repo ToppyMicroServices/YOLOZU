@@ -130,6 +130,12 @@ bash scripts/smoke.sh --skip-demo
 bash scripts/smoke.sh --profile deep
 ```
 
+CUDA マシン（single GPU）では、deep profile の TTT probe を GPU 上で実行できます:
+
+```bash
+bash scripts/smoke.sh --profile deep --torch-device cuda
+```
+
 deep profile の追加出力:
 - `reports/smoke_walkthrough_report.json`
 - `reports/smoke_demo_overview.json`

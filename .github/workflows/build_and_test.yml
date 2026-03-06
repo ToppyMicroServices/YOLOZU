@@ -222,6 +222,10 @@ jobs:
             tests/test_external_inference_templates_smoke.py \
             tests/test_ai_first_mcp_surface.py
 
+      - name: Smoke walkthrough (deep, offline)
+        run: |
+          bash scripts/smoke.sh --profile deep --torch-device cpu
+
       - name: MCP/AI surface smoke
         run: |
           python3 tools/run_mcp_server.py --help

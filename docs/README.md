@@ -47,6 +47,12 @@ Optional deeper walkthrough (capability claims + deploy-path dry-runs + walkthro
 bash scripts/smoke.sh --profile deep
 ```
 
+On a CUDA machine (single GPU), run the deep profile with the TTT probe on GPU:
+
+```bash
+bash scripts/smoke.sh --profile deep --torch-device cuda
+```
+
 Deep walkthrough report:
 - `reports/smoke_walkthrough_report.json`
 

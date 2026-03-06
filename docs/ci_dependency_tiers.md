@@ -16,7 +16,7 @@ YOLOZU uses a tiered CI dependency model to keep signal high while avoiding opti
 
 3. `recommended`
 - Install: `python -m pip install -r requirements-ci.lock`
-- Purpose: pinned interface contract/behavior gates (`schema`, `manifest`, `reference regression`, focused tests).
+- Purpose: pinned interface contract/behavior gates (`schema`, `manifest`, `reference regression`, deep smoke walkthrough, focused tests).
 - Jobs: `quality_gate`, `test`.
 
 4. `full`
