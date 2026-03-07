@@ -100,6 +100,74 @@ With \cmd{--wrap}, outputs explicitly include:
   \item \path{meta.export_settings.domain_shift_recipe} (\texttt{path}, \texttt{sha256})
 \end{itemize}
 
+\subsection{Visual example: before/after TTT}
+The goal of this example is to show \emph{what changes} when TTT is enabled.
+It is not meant to prove a consistent improvement on a single image.
+For quantitative claims, run a fixed scenario suite over an explicitly defined target split and compare metrics.
+
+Command summary (deterministic target + same checkpoint, with and without TTT):
+\begin{lstlisting}[language=bash]
+# 1) Prepare a deterministic shifted target split (1 image for illustration).
+python3 scripts/prepare_ttt_domain_shift_target.py \
+  --dataset-root data/smoke \
+  --split val \
+  --out reports/domain_shift/smoke_gaussian_blur_s3_1img \
+  --corruption gaussian_blur \
+  --severity 3 \
+  --seed 2026 \
+  --max-images 1 \
+  --force
+
+# 2) Inference overlays without TTT (torch backend + small repo-shipped checkpoint).
+python3 tools/yolozu.py predict-images \
+  --backend torch --device cpu \
+  --config rtdetr_pose/configs/base.json \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --image-size 320 --score-threshold 0.05 --max-detections 20 \
+  --input-dir reports/domain_shift/smoke_gaussian_blur_s3_1img/images/val \
+  --max-images 1 \
+  --overlays-dir reports/ttt_demo/no_ttt_overlays \
+  --output reports/ttt_demo/pred_no_ttt.json \
+  --force
+
+# 3) Same inference but with TTT enabled (Tent safe preset, reset per sample).
+python3 tools/yolozu.py predict-images \
+  --backend torch --device cpu \
+  --config rtdetr_pose/configs/base.json \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --image-size 320 --score-threshold 0.05 --max-detections 20 \
+  --input-dir reports/domain_shift/smoke_gaussian_blur_s3_1img/images/val \
+  --max-images 1 \
+  --overlays-dir reports/ttt_demo/ttt_overlays \
+  --output reports/ttt_demo/pred_ttt.json \
+  --ttt --ttt-preset safe --ttt-reset sample --ttt-seed 2026 \
+  --ttt-log-out reports/ttt_demo/ttt_log.json \
+  --force
+\end{lstlisting}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/demo_ttt_input_blur_s3.jpg}
+  \caption{Deterministic domain-shift target example (gaussian blur, severity 3) generated from \cmd{data/smoke}.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/demo_ttt_no_ttt_overlay.jpg}
+    \vspace{0.25em}
+    {\small \textbf{No TTT}}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/demo_ttt_with_ttt_overlay.jpg}
+    \vspace{0.25em}
+    {\small \textbf{With TTT (Tent, safe preset)}}
+  \end{minipage}
+  \caption{Overlay comparison on the same shifted input with and without TTT. The outputs are predictions in the \yolozu{} predictions interface contract, rendered as bounding boxes (and keypoints when present).}
+\end{figure}
+
 \section{Presets (start here)}
 Both CLIs expose \cmd{--ttt-preset}:
 \begin{itemize}
