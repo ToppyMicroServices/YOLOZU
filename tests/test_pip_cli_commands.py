@@ -191,6 +191,11 @@ class TestPipCLICommands(unittest.TestCase):
             from PIL import Image  # noqa: F401
         except Exception as exc:  # pragma: no cover
             self.skipTest(f"deps not available: {exc}")
+        try:
+            import torch  # noqa: F401
+            import torchvision  # noqa: F401
+        except Exception as exc:  # pragma: no cover
+            self.skipTest(f"torch+torchvision not available: {exc}")
 
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
@@ -229,6 +234,58 @@ class TestPipCLICommands(unittest.TestCase):
             self.assertTrue(overlays, "demo instance-seg should generate at least one overlay PNG")
             png_lines = [line for line in lines if line.lower().endswith(".png")]
             self.assertTrue(png_lines, "demo stdout should include an overlay PNG path")
+
+    def test_demo_ttt_improvement_smoke(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        try:
+            import numpy  # noqa: F401
+            from PIL import Image  # noqa: F401
+            import torch as _  # noqa: F401
+        except Exception as exc:  # pragma: no cover
+            self.skipTest(f"deps not available: {exc}")
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            run_dir = root / "run"
+            proc = self._run(
+                [
+                    "demo",
+                    "ttt",
+                    "--max-images",
+                    "2",
+                    "--train-epochs",
+                    "2",
+                    "--image-size",
+                    "96",
+                    "--severity",
+                    "2",
+                    "--run-dir",
+                    str(run_dir),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"demo ttt failed:\n{proc.stdout}\n{proc.stderr}")
+
+            lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+            self.assertTrue(lines, "demo ttt produced no stdout")
+            out_path = Path(lines[-1])
+            self.assertTrue(out_path.is_file(), f"demo report missing: {out_path}")
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("kind"), "ttt_improvement_demo")
+            self.assertEqual(payload.get("interface_contract"), "predictions interface contract")
+            metrics = payload.get("metrics") or {}
+            self.assertIn("no_ttt", metrics)
+            self.assertIn("with_ttt", metrics)
+            self.assertIn("delta", metrics)
+            artifacts = payload.get("artifacts") or {}
+            for k in ("pred_no_ttt", "pred_ttt", "overlay_no_ttt", "overlay_ttt"):
+                self.assertIn(k, artifacts, f"missing artifact key: {k}")
+            self.assertTrue(Path(str(artifacts["pred_no_ttt"])).is_file(), "pred_no_ttt json missing")
+            self.assertTrue(Path(str(artifacts["pred_ttt"])).is_file(), "pred_ttt json missing")
+            self.assertTrue(Path(str(artifacts["overlay_no_ttt"])).is_file(), "overlay_no_ttt png missing")
+            self.assertTrue(Path(str(artifacts["overlay_ttt"])).is_file(), "overlay_ttt png missing")
 
     def test_demo_continual_compare_smoke(self):
         repo_root = Path(__file__).resolve().parents[1]

@@ -239,6 +239,24 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 
 Details: [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
 
+TTT improvement micro-demo (shows a metric delta + overlays):
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo ttt
+```
+
+Writes:
+- `demo_output/ttt/<utc>/overlay_no_ttt.png`
+- `demo_output/ttt/<utc>/overlay_ttt.png`
+- `demo_output/ttt/<utc>/ttt_improvement_report.json` (includes `metrics.delta`)
+
+Example overlays (same shifted input, predictions in the predictions interface contract):
+
+| No TTT | With TTT (Tent, safe preset) |
+| --- | --- |
+| ![No TTT overlay example](manual/figures/demo_ttt_no_ttt_overlay.jpg) | ![With TTT overlay example](manual/figures/demo_ttt_with_ttt_overlay.jpg) |
+
 Reference adapter regression (RT-DETR, real-image baseline):
 
 ```bash

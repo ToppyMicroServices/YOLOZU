@@ -467,16 +467,38 @@ class RTDETRPoseAdapter(ModelAdapter):
 
             probs = torch.softmax(logits, dim=-1)
 
-            # Prefer foreground classes; treat the last class as background.
-            num_classes_fg = int(self._backend.get("num_classes_fg") or (probs.shape[-1] - 1))
-            probs_fg = probs[..., :num_classes_fg]
-            scores, class_ids = torch.max(probs_fg, dim=-1)
-            k = min(self.max_detections, int(scores.shape[0]))
-            top_scores, top_idx = torch.topk(scores, k=k)
+            # Background-aware scoring (RT-DETR style: last logit is "no-object").
+            #
+            # The model is built with `num_classes = fg + 1` (factory adds +1),
+            # so we must not ignore the background logit when selecting detections.
+            num_classes_fg = int(self._backend.get("num_classes_fg") or max(0, int(probs.shape[-1]) - 1))
+            if int(probs.shape[-1]) > 1:
+                num_classes_fg = max(0, min(int(num_classes_fg), int(probs.shape[-1]) - 1))
+            else:
+                num_classes_fg = int(probs.shape[-1])
+
+            if num_classes_fg <= 0:
+                # Degenerate config: no foreground classes.
+                scores = torch.zeros((int(probs.shape[0]),), device=probs.device, dtype=probs.dtype)
+                class_ids = torch.zeros((int(probs.shape[0]),), device=probs.device, dtype=torch.long)
+                keep = torch.zeros_like(class_ids, dtype=torch.bool)
+            else:
+                probs_fg = probs[..., :num_classes_fg]
+                scores, class_ids = torch.max(probs_fg, dim=-1)
+                bg_scores = probs[..., -1] if int(probs.shape[-1]) > int(num_classes_fg) else None
+                keep = (scores >= bg_scores) if bg_scores is not None else torch.ones_like(scores, dtype=torch.bool)
+
+            # Mask out background-dominated queries so topk doesn't waste slots on them.
+            scores_for_topk = scores.clone()
+            scores_for_topk[~keep] = -1.0
+            k = min(self.max_detections, int(scores_for_topk.shape[0]))
+            top_scores, top_idx = torch.topk(scores_for_topk, k=k)
 
             detections: list[dict] = []
             for score, q_idx in zip(top_scores.tolist(), top_idx.tolist()):
                 if score < self.score_threshold:
+                    continue
+                if not bool(keep[q_idx]):
                     continue
                 cls_id = int(class_ids[q_idx].item())
                 box = torch.sigmoid(bbox[q_idx]).tolist()

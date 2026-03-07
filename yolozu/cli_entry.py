@@ -785,6 +785,38 @@ def main(argv: list[str] | None = None) -> int:
     )
     demo_depth.set_defaults(invert=True)
 
+    demo_ttt = demo_sub.add_parser(
+        "ttt",
+        help="TTT improvement micro-demo (few-shot train + deterministic domain shift + mAP proxy).",
+    )
+    demo_ttt.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/ttt/<utc>).")
+    demo_ttt.add_argument("--dataset-root", default=str(Path("data") / "smoke"), help="Source YOLO dataset root (default: data/smoke).")
+    demo_ttt.add_argument("--split", default="val", help="Split name under images/ and labels/ (default: val).")
+    demo_ttt.add_argument("--max-images", type=int, default=10, help="Max images used for training/eval (default: 10).")
+    demo_ttt.add_argument(
+        "--corruption",
+        choices=("gaussian_blur", "gaussian_noise", "brightness", "contrast", "jpeg"),
+        default="gaussian_noise",
+        help="Domain-shift corruption preset (default: gaussian_noise).",
+    )
+    demo_ttt.add_argument("--severity", type=int, default=3, help="Corruption severity 1..5 (default: 3).")
+    demo_ttt.add_argument("--seed", type=int, default=2026, help="Deterministic seed (default: 2026).")
+    demo_ttt.add_argument("--train-seed", type=int, default=0, help="Training RNG seed (default: 0).")
+    demo_ttt.add_argument("--train-epochs", type=int, default=30, help="Few-shot training epochs (default: 30).")
+    demo_ttt.add_argument("--train-batch-size", type=int, default=2, help="Few-shot training batch size (default: 2).")
+    demo_ttt.add_argument("--train-lr", type=float, default=1e-3, help="Few-shot training learning rate (default: 1e-3).")
+    demo_ttt.add_argument("--image-size", type=int, default=320, help="Train/infer image size (square, default: 320).")
+    demo_ttt.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
+    demo_ttt.add_argument(
+        "--adapter-config",
+        default="configs/yolo26_rtdetr_pose/yolo26n.json",
+        help="RTDETRPose config JSON path used for train/infer (default: configs/yolo26_rtdetr_pose/yolo26n.json).",
+    )
+    demo_ttt.add_argument("--score-threshold", type=float, default=0.01, help="Detection score threshold (default: 0.01).")
+    demo_ttt.add_argument("--max-detections", type=int, default=100, help="Max detections per image (default: 100).")
+    demo_ttt.add_argument("--ttt-preset", choices=("safe",), default="safe", help="TTT preset (default: safe).")
+    demo_ttt.add_argument("--force", action="store_true", help="Overwrite existing run_dir artifacts (train + predictions).")
+
     demo_tr = demo_sub.add_parser("train", help="Training demo (MNIST fine-tune; requires torch+torchvision).")
     demo_tr.add_argument(
         "--output",

@@ -56,6 +56,21 @@ When `--wrap` is enabled, the output contains:
 
 This keeps TTT evidence explicit and deterministic across runs/CI.
 
+## TTT improvement micro-demo (show a delta)
+
+If you want a self-contained micro-demo that shows a small metric delta under a fixed domain shift, run:
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo ttt
+
+# repo checkout equivalent:
+python3 tools/yolozu.py demo ttt
+```
+
+This writes `ttt_improvement_report.json` containing `metrics.no_ttt`, `metrics.with_ttt`, and `metrics.delta`,
+plus two overlay PNGs (`overlay_no_ttt.png`, `overlay_ttt.png`) rendered from predictions in the predictions interface contract.
+
 ## Presets (recommended starting points)
 
 Both CLIs expose `--ttt-preset`:

@@ -168,6 +168,32 @@ python3 tools/yolozu.py predict-images \
   \caption{Overlay comparison on the same shifted input with and without TTT. The outputs are predictions in the \yolozu{} predictions interface contract, rendered as bounding boxes (and keypoints when present).}
 \end{figure}
 
+\subsection{Metric micro-demo: show a delta (recommended)}
+The visual example above shows \emph{what changes}. For onboarding and regression checks, it is also useful to show
+\emph{a small metric delta} on a deterministic shift target.
+
+\yolozu{} provides a self-contained micro-demo that:
+\begin{itemize}
+  \item trains a tiny few-shot checkpoint on clean \path{data/smoke} first (so no external weights download is required),
+  \item applies a deterministic corruption to create a shifted target split,
+  \item evaluates a simple mAP proxy for \textbf{no TTT} vs \textbf{with TTT} (and writes overlay PNGs).
+\end{itemize}
+
+\begin{lstlisting}[language=bash,caption={TTT improvement micro-demo: few-shot train + deterministic shift + metric delta.}]
+# pip users:
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo ttt
+
+# repo checkout equivalent:
+python3 tools/yolozu.py demo ttt
+\end{lstlisting}
+
+Outputs include:
+\begin{itemize}
+  \item \path{demo_output/ttt/<utc>/ttt_improvement_report.json} (with \path{metrics.delta}),
+  \item \path{demo_output/ttt/<utc>/overlay_no_ttt.png} and \path{overlay_ttt.png}.
+\end{itemize}
+
 \section{Presets (start here)}
 Both CLIs expose \cmd{--ttt-preset}:
 \begin{itemize}

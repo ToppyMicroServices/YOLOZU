@@ -327,6 +327,24 @@ python3 tools/export_predictions.py \
 
 `--wrap` 時は `meta.export_settings.domain_shift_target` に recipe が明示リンクされます。
 
+TTT改善のマイクロデモ（数値差分 + overlay）:
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo ttt
+```
+
+生成物:
+- `demo_output/ttt/<utc>/overlay_no_ttt.png`
+- `demo_output/ttt/<utc>/overlay_ttt.png`
+- `demo_output/ttt/<utc>/ttt_improvement_report.json`（`metrics.delta` に差分）
+
+例（同一の shifted input、predictions interface contract の出力を overlay）:
+
+| No TTT | With TTT (Tent, safe preset) |
+| --- | --- |
+| ![No TTT overlay example](manual/figures/demo_ttt_no_ttt_overlay.jpg) | ![With TTT overlay example](manual/figures/demo_ttt_with_ttt_overlay.jpg) |
+
 注意:
 - TTT は torch backend 限定です（ONNXRuntime/TensorRT は TTA か precomputed predictions を推奨）
 

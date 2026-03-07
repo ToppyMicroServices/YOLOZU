@@ -12548,6 +12548,10 @@
           "description": "Demo overview report (capability coverage + dependency checks + recommended commands)."
         },
         {
+          "command": "python3 tools/yolozu.py demo ttt --run-dir reports/demo_ttt_improvement --force",
+          "description": "TTT improvement micro-demo (few-shot train + deterministic domain shift + simple mAP proxy delta; requires torch)."
+        },
+        {
           "command": "python3 tools/yolozu.py demo keypoints",
           "description": "Keypoints inference demo (passthrough to package CLI)."
         },

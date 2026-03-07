@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `aux_seg_weight`, `aux_temperature`, `sdft_task`.
 - **Tests**: 65 new tests in `test_sdft_multitask.py` and `test_tta_multitask.py` covering all
   task-specific losses, dispatch, convenience constructors, aux consistency, and presets.
+- **TTT improvement demo**: `yolozu demo ttt` runs a deterministic domain shift + few-shot training,
+  then reports a simple mAP proxy delta (no TTT vs with TTT) with overlay PNG evidence in the
+  predictions interface contract.
 
 ### Fixed
 - **calibration package shadowing**: Standalone `yolozu/calibration.py` was shadowed by

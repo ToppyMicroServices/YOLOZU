@@ -68,11 +68,18 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
             "entrypoints": ["python3 tools/run_external_finetune_smoke.py", "python3 tools/audit_backend_support.py"],
             "notes": "Audits YOLOv/MMDetection/Detectron2/RT-DETR entrypoints with reportable interface contract outputs.",
         },
+        {
+            "capability": "ttt_improvement",
+            "status": "supported" if dep_map.get("torch", False) else "deps_missing",
+            "entrypoints": ["yolozu demo ttt", "python3 tools/export_predictions.py --adapter rtdetr_pose --ttt ..."],
+            "notes": "Runs a deterministic domain shift + few-shot train, then measures simple mAP proxy delta with TTT on/off.",
+        },
     ]
 
     recommended_commands = [
         "yolozu demo overview",
         "yolozu demo",
+        "yolozu demo ttt",
         "yolozu demo instance-seg",
         "yolozu demo keypoints",
         "yolozu demo depth",
@@ -930,6 +937,58 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         except Exception:
             pass
         print(str(out))
+        return 0
+
+    if args.demo_command == "ttt":
+        try:
+            import torch  # noqa: F401
+        except Exception as exc:
+            raise SystemExit(
+                "demo ttt requires torch. "
+                "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+            ) from exc
+
+        from yolozu.demos.ttt_improvement import run_ttt_improvement_demo
+
+        suite_id = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
+        run_dir = getattr(args, "run_dir", None)
+        if run_dir is None:
+            run_dir = str(Path("demo_output") / "ttt" / suite_id)
+
+        res = run_ttt_improvement_demo(
+            run_dir=run_dir,
+            dataset_root=str(getattr(args, "dataset_root")),
+            split=str(getattr(args, "split", "val")),
+            max_images=int(getattr(args, "max_images", 10)),
+            corruption=str(getattr(args, "corruption", "gaussian_noise")),
+            severity=int(getattr(args, "severity", 3)),
+            seed=int(getattr(args, "seed", 2026)),
+            train_seed=int(getattr(args, "train_seed", 0)),
+            train_epochs=int(getattr(args, "train_epochs", 30)),
+            train_batch_size=int(getattr(args, "train_batch_size", 2)),
+            train_lr=float(getattr(args, "train_lr", 1e-3)),
+            image_size=int(getattr(args, "image_size", 320)),
+            device=str(getattr(args, "device", "cpu")),
+            adapter_config=str(getattr(args, "adapter_config", "configs/yolo26_rtdetr_pose/yolo26n.json")),
+            score_threshold=float(getattr(args, "score_threshold", 0.01)),
+            max_detections=int(getattr(args, "max_detections", 100)),
+            ttt_preset=str(getattr(args, "ttt_preset", "safe")),
+            force=bool(getattr(args, "force", False)),
+        )
+
+        m0 = res.metrics_no_ttt
+        m1 = res.metrics_ttt
+        print(
+            "ttt demo: "
+            f"map50 {m0.get('map50'):.6g}→{m1.get('map50'):.6g} "
+            f"map50_95 {m0.get('map50_95'):.6g}→{m1.get('map50_95'):.6g} "
+            f"(output_dir={res.run_dir})"
+        )
+        if res.overlay_no_ttt_path:
+            print(str(res.overlay_no_ttt_path))
+        if res.overlay_ttt_path:
+            print(str(res.overlay_ttt_path))
+        print(str(res.report_path))
         return 0
 
     if args.demo_command == "keypoints":

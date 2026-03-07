@@ -153,6 +153,10 @@ class Losses(nn.Module):
         self.weights = {
             "cls": 1.0,
             "box": 1.0,
+            # DETR-style background ("no-object") reweighting. Without this, the
+            # background class can dominate training because Q >> objects/image.
+            # Typical DETR defaults use ~0.1 for eos/no-object.
+            "eos_coef": 0.1,
             "kp": 1.0,
             "z": 1.0,
             "rot": 1.0,
@@ -196,7 +200,16 @@ class Losses(nn.Module):
             if not bool(valid_cls.any()):
                 loss_cls = logits_flat.sum() * 0.0
             else:
-                loss_cls = F.cross_entropy(logits_flat[valid_cls], labels_flat[valid_cls])
+                weight = None
+                # Downweight the background/no-object class (last index) to avoid collapse.
+                try:
+                    eos_coef = float(self.weights.get("eos_coef", 0.1))
+                except Exception:
+                    eos_coef = 0.1
+                if logits_flat.shape[-1] > 1 and eos_coef > 0.0 and eos_coef < 1.0:
+                    weight = torch.ones((int(logits_flat.shape[-1]),), device=logits_flat.device, dtype=torch.float32)
+                    weight[-1] = float(eos_coef)
+                loss_cls = F.cross_entropy(logits_flat[valid_cls], labels_flat[valid_cls], weight=weight)
             losses["loss_cls"] = loss_cls
             total = total + self.weights["cls"] * loss_cls
 
