@@ -978,10 +978,14 @@ def handle_demo_command(args: argparse.Namespace) -> int:
 
         m0 = res.metrics_no_ttt
         m1 = res.metrics_ttt
+        d = {
+            "map50": float(m1.get("map50", 0.0)) - float(m0.get("map50", 0.0)),
+            "map50_95": float(m1.get("map50_95", 0.0)) - float(m0.get("map50_95", 0.0)),
+        }
         print(
             "ttt demo: "
-            f"map50 {m0.get('map50'):.6g}→{m1.get('map50'):.6g} "
-            f"map50_95 {m0.get('map50_95'):.6g}→{m1.get('map50_95'):.6g} "
+            f"map50 {m0.get('map50'):.9g}→{m1.get('map50'):.9g} (Δ={d['map50']:.9g}) "
+            f"map50_95 {m0.get('map50_95'):.9g}→{m1.get('map50_95'):.9g} (Δ={d['map50_95']:.9g}) "
             f"(output_dir={res.run_dir})"
         )
         if res.overlay_no_ttt_path:

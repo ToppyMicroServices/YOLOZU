@@ -373,6 +373,7 @@ def run_ttt_improvement_demo(
             init_seed=int(train_seed),
             repro_policy="relaxed",
         )
+
         ttt_report = None
         if enable_ttt:
             if str(ttt_preset) != "safe":
@@ -392,7 +393,42 @@ def run_ttt_improvement_demo(
                 max_total_update_norm=1.0,
                 max_loss_ratio=3.0,
             )
-            ttt_report = run_ttt(adapter, shift_records, config=ttt_cfg).to_dict()
+            raw = run_ttt(adapter, shift_records, config=ttt_cfg).to_dict()
+            upd_norms: list[float] = []
+            tot_norms: list[float] = []
+            for step in raw.get("step_metrics") or []:
+                if not isinstance(step, dict):
+                    continue
+                try:
+                    upd_norms.append(float(step.get("update_norm") or 0.0))
+                    tot_norms.append(float(step.get("total_update_norm") or 0.0))
+                except Exception:
+                    continue
+            ttt_report = {
+                "mode": "stream",
+                "config": {
+                    "method": str(ttt_cfg.method),
+                    "reset": str(ttt_cfg.reset),
+                    "steps": int(ttt_cfg.steps),
+                    "lr": float(ttt_cfg.lr),
+                    "update_filter": str(ttt_cfg.update_filter),
+                    "max_batches": int(ttt_cfg.max_batches),
+                    "seed": int(seed),
+                },
+                "updated_param_count": raw.get("updated_param_count"),
+                "update_norm": {
+                    "count": int(len(upd_norms)),
+                    "mean": float(sum(upd_norms) / len(upd_norms)) if upd_norms else 0.0,
+                    "max": float(max(upd_norms)) if upd_norms else 0.0,
+                },
+                "total_update_norm": {
+                    "count": int(len(tot_norms)),
+                    "mean": float(sum(tot_norms) / len(tot_norms)) if tot_norms else 0.0,
+                    "max": float(max(tot_norms)) if tot_norms else 0.0,
+                },
+                "raw": raw,
+            }
+
         entries = adapter.predict(shift_records)
         canonical = canonicalize_predictions(entries, strict=False, policy="clamp")
         return canonical.entries, ttt_report
@@ -404,6 +440,68 @@ def run_ttt_improvement_demo(
     map_ttt = evaluate_map(shift_records, preds_ttt, iou_thresholds=thresholds)
     metrics_no_ttt = {"map50": float(map_no_ttt.map50), "map50_95": float(map_no_ttt.map50_95)}
     metrics_ttt = {"map50": float(map_ttt.map50), "map50_95": float(map_ttt.map50_95)}
+    diff_summary: dict[str, Any] = {"changed_images": 0, "total_images": 0, "top1_score_abs_diff_mean": 0.0}
+    try:
+        def _top1_sig(dets: Any) -> tuple[int | None, float | None, tuple[float, float, float, float] | None]:
+            if not isinstance(dets, list) or not dets:
+                return None, None, None
+            det0 = dets[0] if isinstance(dets[0], dict) else None
+            if not isinstance(det0, dict):
+                return None, None, None
+            try:
+                cid = det0.get("class_id")
+                cid_i = int(cid) if cid is not None else None
+            except Exception:
+                cid_i = None
+            try:
+                sc = det0.get("score")
+                sc_f = float(sc) if sc is not None else None
+            except Exception:
+                sc_f = None
+            bbox = det0.get("bbox") if isinstance(det0.get("bbox"), dict) else None
+            if isinstance(bbox, dict):
+                try:
+                    b = (
+                        float(bbox.get("cx")),
+                        float(bbox.get("cy")),
+                        float(bbox.get("w")),
+                        float(bbox.get("h")),
+                    )
+                except Exception:
+                    b = None
+            else:
+                b = None
+            return cid_i, sc_f, b
+
+        by_image_no = {str(e.get("image")): list(e.get("detections") or []) for e in preds_no_ttt if isinstance(e, dict)}
+        by_image_ttt = {str(e.get("image")): list(e.get("detections") or []) for e in preds_ttt if isinstance(e, dict)}
+        keys = sorted(set(by_image_no.keys()) | set(by_image_ttt.keys()))
+        changed = 0
+        diffs: list[float] = []
+        for k in keys:
+            cid0, sc0, bb0 = _top1_sig(by_image_no.get(k))
+            cid1, sc1, bb1 = _top1_sig(by_image_ttt.get(k))
+            sig0 = (
+                cid0,
+                (round(float(sc0), 6) if sc0 is not None else None),
+                tuple(round(float(x), 4) for x in bb0) if bb0 is not None else None,
+            )
+            sig1 = (
+                cid1,
+                (round(float(sc1), 6) if sc1 is not None else None),
+                tuple(round(float(x), 4) for x in bb1) if bb1 is not None else None,
+            )
+            if sig0 != sig1:
+                changed += 1
+            if sc0 is not None and sc1 is not None:
+                diffs.append(abs(float(sc1) - float(sc0)))
+        diff_summary = {
+            "changed_images": int(changed),
+            "total_images": int(len(keys)),
+            "top1_score_abs_diff_mean": float(sum(diffs) / len(diffs)) if diffs else 0.0,
+        }
+    except Exception:
+        diff_summary = {"changed_images": None, "total_images": None, "top1_score_abs_diff_mean": None}
 
     pred_no_ttt_path = run_dir_p / "pred_no_ttt.json"
     pred_ttt_path = run_dir_p / "pred_ttt.json"
@@ -499,6 +597,7 @@ def run_ttt_improvement_demo(
             "enabled": True,
             "preset": str(ttt_preset),
             "seed": int(seed),
+            "report": ttt_report,
         },
         "metrics": {
             "name": "simple_map_proxy",
@@ -510,6 +609,7 @@ def run_ttt_improvement_demo(
                 "map50_95": float(metrics_ttt["map50_95"] - metrics_no_ttt["map50_95"]),
             },
         },
+        "diff_summary": diff_summary,
         "artifacts": {
             "run_dir": str(run_dir_p),
             "shift_dataset_root": str(shift_root),
