@@ -71,6 +71,10 @@ python3 tools/yolozu.py demo ttt
 This writes `ttt_improvement_report.json` containing `metrics.no_ttt`, `metrics.with_ttt`, and `metrics.delta`,
 plus two overlay PNGs (`overlay_no_ttt.png`, `overlay_ttt.png`) rendered from predictions in the predictions interface contract.
 
+Example stdout (CPU, deterministic seeds; values are intentionally tiny, the point is the reproducible delta):
+- `map50 0.00326797 → 0.00392157`
+- `map50_95 0.000326797 → 0.000392157`
+
 ## Presets (recommended starting points)
 
 Both CLIs expose `--ttt-preset`:

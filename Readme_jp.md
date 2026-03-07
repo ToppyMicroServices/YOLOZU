@@ -339,6 +339,10 @@ yolozu demo ttt
 - `demo_output/ttt/<utc>/overlay_ttt.png`
 - `demo_output/ttt/<utc>/ttt_improvement_report.json`（`metrics.delta` に差分）
 
+stdout例（CPU, deterministic seed。絶対値は小さいですが「差分が出る」ことが目的）:
+- `map50 0.00326797 → 0.00392157`
+- `map50_95 0.000326797 → 0.000392157`
+
 例（同一の shifted input、predictions interface contract の出力を overlay）:
 
 | No TTT | With TTT (Tent, safe preset) |

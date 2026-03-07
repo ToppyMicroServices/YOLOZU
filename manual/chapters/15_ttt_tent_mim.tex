@@ -194,6 +194,12 @@ Outputs include:
   \item \path{demo_output/ttt/<utc>/overlay_no_ttt.png} and \path{overlay_ttt.png}.
 \end{itemize}
 
+Example stdout (CPU, deterministic seeds; values are intentionally tiny, the point is the reproducible delta):
+\begin{itemize}
+  \item \texttt{map50 0.00326797 $\to$ 0.00392157}
+  \item \texttt{map50\_95 0.000326797 $\to$ 0.000392157}
+\end{itemize}
+
 \section{Presets (start here)}
 Both CLIs expose \cmd{--ttt-preset}:
 \begin{itemize}

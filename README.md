@@ -251,6 +251,10 @@ Writes:
 - `demo_output/ttt/<utc>/overlay_ttt.png`
 - `demo_output/ttt/<utc>/ttt_improvement_report.json` (includes `metrics.delta`)
 
+Example stdout (CPU, deterministic seeds; absolute values are tiny by design, the point is the reproducible delta):
+- `map50 0.00326797 → 0.00392157`
+- `map50_95 0.000326797 → 0.000392157`
+
 Example overlays (same shifted input, predictions in the predictions interface contract):
 
 | No TTT | With TTT (Tent, safe preset) |
