@@ -261,12 +261,13 @@ Writes:
 Example stdout (CPU, deterministic seeds; absolute values are tiny by design, the point is the reproducible delta):
 - `map50 0.00326797 → 0.00392157`
 - `map50_95 0.000326797 → 0.000392157`
+- `changed_images 10 / 10` (`diff_summary.changed_images`)
 
 Example overlays (same shifted input, predictions in the predictions interface contract):
 
 | No TTT | With TTT (Tent, safe preset) |
 | --- | --- |
-| ![No TTT overlay example](manual/figures/demo_ttt_no_ttt_overlay.jpg) | ![With TTT overlay example](manual/figures/demo_ttt_with_ttt_overlay.jpg) |
+| ![No TTT overlay example](docs/assets/demo_ttt_overlay_no_ttt.png) | ![With TTT overlay example](docs/assets/demo_ttt_overlay_with_ttt.png) |
 
 Reference adapter regression (RT-DETR, real-image baseline):
 

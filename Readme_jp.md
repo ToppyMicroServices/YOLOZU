@@ -349,12 +349,13 @@ yolozu demo ttt
 stdout例（CPU, deterministic seed。絶対値は小さいですが「差分が出る」ことが目的）:
 - `map50 0.00326797 → 0.00392157`
 - `map50_95 0.000326797 → 0.000392157`
+- `changed_images 10 / 10`（`diff_summary.changed_images`）
 
 例（同一の shifted input、predictions interface contract の出力を overlay）:
 
 | No TTT | With TTT (Tent, safe preset) |
 | --- | --- |
-| ![No TTT overlay example](manual/figures/demo_ttt_no_ttt_overlay.jpg) | ![With TTT overlay example](manual/figures/demo_ttt_with_ttt_overlay.jpg) |
+| ![No TTT overlay example](docs/assets/demo_ttt_overlay_no_ttt.png) | ![With TTT overlay example](docs/assets/demo_ttt_overlay_with_ttt.png) |
 
 注意:
 - TTT は torch backend 限定です（ONNXRuntime/TensorRT は TTA か precomputed predictions を推奨）
