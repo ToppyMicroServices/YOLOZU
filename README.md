@@ -64,6 +64,13 @@ Visual evidence (example overlays produced by the instance-seg demo):
 
 ![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
+Reproduce (real-image inference, CPU; requires `torch`+`torchvision`):
+
+```bash
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+```
+
 
 ## Quickstart (repo checkout, run this first)
 

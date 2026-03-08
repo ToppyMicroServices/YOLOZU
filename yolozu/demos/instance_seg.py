@@ -97,6 +97,37 @@ def _load_coco_instances(
     return images_by_id, anns_by_image_id
 
 
+def _norm_category_name(name: str) -> str:
+    # Normalize for cross-source mapping (COCO categories vs torchvision weights meta).
+    # Keep it simple and deterministic; this is demo-only.
+    out = []
+    for ch in str(name).strip().lower():
+        if ch.isalnum():
+            out.append(ch)
+    return "".join(out)
+
+
+def _load_coco_category_name_to_id(*, instances_json: Path) -> dict[str, int]:
+    payload = json.loads(instances_json.read_text(encoding="utf-8"))
+    cats = payload.get("categories") or []
+    if not isinstance(cats, list):
+        return {}
+    out: dict[str, int] = {}
+    for c in cats:
+        if not isinstance(c, dict):
+            continue
+        name = c.get("name")
+        cid = c.get("id")
+        if not isinstance(name, str):
+            continue
+        try:
+            cid_i = int(cid)
+        except Exception:
+            continue
+        out[_norm_category_name(name)] = cid_i
+    return out
+
+
 def _coco_polygons_to_mask(*, w: int, h: int, segmentation: Any) -> Any:
     np, (Image, ImageDraw) = _require_deps()
     if not isinstance(segmentation, list):
@@ -248,15 +279,30 @@ def run_instance_seg_demo(
             import torchvision.transforms.functional as TVF  # type: ignore
 
             weights_name: str | None = None
+            weights_meta_categories: list[str] | None = None
             try:
-                from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights  # type: ignore
+                # Prefer v2 weights when available; fall back to v1 for older torchvision.
+                from torchvision.models.detection import MaskRCNN_ResNet50_FPN_V2_Weights  # type: ignore
 
-                weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT
+                weights = MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT
                 weights_name = getattr(weights, "name", None) or str(weights)
-                tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=weights)
+                meta = getattr(weights, "meta", None)
+                if isinstance(meta, dict) and isinstance(meta.get("categories"), list):
+                    weights_meta_categories = [str(x) for x in meta.get("categories") if isinstance(x, str)]
+                tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn_v2(weights=weights)
             except Exception:
-                tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
-                weights_name = "pretrained=True"
+                try:
+                    from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights  # type: ignore
+
+                    weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT
+                    weights_name = getattr(weights, "name", None) or str(weights)
+                    meta = getattr(weights, "meta", None)
+                    if isinstance(meta, dict) and isinstance(meta.get("categories"), list):
+                        weights_meta_categories = [str(x) for x in meta.get("categories") if isinstance(x, str)]
+                    tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=weights)
+                except Exception:
+                    tv_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+                    weights_name = "pretrained=True"
 
             if str(device).strip().lower() == "auto":
                 if torch.cuda.is_available():
@@ -273,14 +319,17 @@ def run_instance_seg_demo(
 
             inference_meta.update(
                 {
-                    "backend": "torchvision.maskrcnn_resnet50_fpn",
+                    "backend": getattr(tv_model, "__class__", type(tv_model)).__name__,
                     "device": str(tv_device),
                     "weights": weights_name,
+                    "weights_categories": int(len(weights_meta_categories)) if weights_meta_categories else None,
                     "torch": getattr(torch, "__version__", None),
                     "torchvision": getattr(torchvision, "__version__", None),
                     "score_threshold": float(score_threshold),
                 }
             )
+            if weights_meta_categories:
+                inference_meta["_weights_meta_categories"] = weights_meta_categories
 
             # Stash for inner loop without importing again.
             inference_meta["_TVF"] = TVF
@@ -323,6 +372,7 @@ def run_instance_seg_demo(
     coco_anns_by_image_id: dict[int, list[dict[str, Any]]] | None = None
     coco_image_ids: list[int] | None = None
     coco_images_root: Path | None = None
+    coco_name_to_id: dict[str, int] = {}
     if bg_mode == "coco-instances":
         if coco_instances_json is None:
             coco_instances_json = Path("data") / "coco" / "annotations" / "instances_val2017.json"
@@ -337,6 +387,7 @@ def run_instance_seg_demo(
             raise FileNotFoundError(f"images dir not found: {images_root}")
         coco_images_by_id, coco_anns_by_image_id = _load_coco_instances(instances_json=instances_path)
         coco_images_root = images_root
+        coco_name_to_id = _load_coco_category_name_to_id(instances_json=instances_path)
 
         candidate_ids: list[int] = []
         for image_id, anns in coco_anns_by_image_id.items():
@@ -448,8 +499,18 @@ def run_instance_seg_demo(
                     masks_t = masks.detach().cpu()
 
                     inference_meta["used"] = True
+                    if coco_name_to_id:
+                        inference_meta["coco_category_map"] = {
+                            "available": True,
+                            "num_categories": int(len(coco_name_to_id)),
+                        }
 
                     kept_pred = 0
+                    mapped = 0
+                    fallback = 0
+                    tv_categories = inference_meta.get("_weights_meta_categories")
+                    if not isinstance(tv_categories, list):
+                        tv_categories = None
                     for k in range(len(scores_list)):
                         if kept_pred >= max(1, int(max_instances)):
                             break
@@ -467,17 +528,37 @@ def run_instance_seg_demo(
                         else:
                             mask_bool = (m.numpy() > 0.5).astype(bool)
 
+                        class_id = int(labels_list[k])
+                        if coco_name_to_id and tv_categories:
+                            try:
+                                # Torchvision labels are indices into weights.meta["categories"].
+                                if 0 <= int(class_id) < len(tv_categories):
+                                    name = str(tv_categories[int(class_id)])
+                                    cid = coco_name_to_id.get(_norm_category_name(name))
+                                    if cid is not None:
+                                        class_id = int(cid)
+                                        mapped += 1
+                                    else:
+                                        fallback += 1
+                                else:
+                                    fallback += 1
+                            except Exception:
+                                fallback += 1
+
                         pred_path_rel = Path("pred_masks") / f"pred_{i:04d}_{kept_pred:02d}.png"
                         Image.fromarray((mask_bool.astype("uint8") * 255), mode="L").save(run_dir / pred_path_rel)
                         pred_masks_for_overlay.append(mask_bool)
                         pred_instances.append(
                             {
-                                "class_id": int(labels_list[k]),
+                                "class_id": int(class_id),
                                 "score": float(score),
                                 "mask": str(pred_path_rel),
                             }
                         )
                         kept_pred += 1
+                    if coco_name_to_id and tv_categories:
+                        inference_meta["class_id_space"] = "coco_category_id"
+                        inference_meta["class_id_mapping"] = {"mapped": int(mapped), "fallback": int(fallback)}
                 except Exception as exc:
                     # Fall back to synthetic-ish predictions if inference fails mid-run.
                     inference_meta.setdefault("warnings", []).append(f"torchvision inference failed: {exc!r}")
@@ -792,7 +873,7 @@ def run_instance_seg_demo(
                 warnings.append(f"inference init error: {err}")
         else:
             warnings.append(
-                "inference used: torchvision Mask R-CNN; note class_id space is assumed to match COCO category_id"
+                "inference used: torchvision Mask R-CNN; class_id is normalized to COCO category_id when weights meta provides category names"
             )
 
     report = {

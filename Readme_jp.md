@@ -77,6 +77,13 @@ python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split t
 
 ![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
+再現（real-image inference, CPU; `torch`+`torchvision` が必要）:
+
+```bash
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+```
+
 対象:
 - リアルタイム単眼 RGB **検出**
 - 単眼 **depth + 6DoF pose**（RT-DETRベースの最小学習スキャフォールド）
