@@ -41,8 +41,8 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
         {
             "capability": "segmentation",
             "status": "supported",
-            "entrypoints": ["yolozu demo instance-seg", "python3 tools/eval_instance_segmentation.py"],
-            "notes": "Polygon and mask-centric flows are available in demo and eval tooling.",
+            "entrypoints": ["yolozu demo instance-seg", "yolozu demo instance-seg-tta", "python3 tools/eval_instance_segmentation.py"],
+            "notes": "Polygon and mask-centric flows are available in demo/eval tooling, including a visible raw-vs-TTA compare demo on real COCO images.",
         },
         {
             "capability": "keypoints",
@@ -81,6 +81,7 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
         "yolozu demo",
         "yolozu demo ttt",
         "yolozu demo instance-seg",
+        "yolozu demo instance-seg-tta",
         "yolozu demo keypoints",
         "yolozu demo depth",
         "yolozu demo pose",
@@ -769,6 +770,58 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         except Exception:
             pass
         _print_instance_seg_report(out_path=Path(out))
+        return 0
+
+    if args.demo_command == "instance-seg-tta":
+        try:
+            import torch  # noqa: F401
+            import torchvision  # noqa: F401
+        except Exception as exc:
+            raise SystemExit(
+                "demo instance-seg-tta requires torch+torchvision. "
+                "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
+            ) from exc
+
+        from yolozu.demos.instance_seg_tta import run_instance_seg_tta_demo
+
+        out = run_instance_seg_tta_demo(
+            run_dir=getattr(args, "run_dir", None),
+            seed=int(getattr(args, "seed", 0)),
+            coco_instances_json=getattr(args, "coco_instances_json", None),
+            coco_images_dir=getattr(args, "coco_images_dir", None),
+            device=str(getattr(args, "device", "auto")),
+            score_threshold=float(getattr(args, "score_threshold", 0.25)),
+            max_instances=int(getattr(args, "max_instances", 8)),
+            num_images=int(getattr(args, "num_images", 8)),
+            corruption=str(getattr(args, "corruption", "brightness")),
+            severity=int(getattr(args, "severity", 5)),
+            image_id=getattr(args, "image_id", None),
+        )
+        try:
+            payload = json.loads(Path(out).read_text(encoding="utf-8"))
+            selected = payload.get("selected") or {}
+            settings = payload.get("settings") or {}
+            artifacts = payload.get("artifacts") or {}
+            raw = selected.get("raw") or {}
+            tta = selected.get("tta") or {}
+            print(
+                "instance-seg TTA demo: "
+                f"image_id={selected.get('image_id')} "
+                f"tp {raw.get('tp')}→{tta.get('tp')} "
+                f"fp {raw.get('fp')}→{tta.get('fp')} "
+                f"fn {raw.get('fn')}→{tta.get('fn')} "
+                f"mean_iou {float(raw.get('mean_iou', 0.0)):.3f}→{float(tta.get('mean_iou', 0.0)):.3f} "
+                f"(corruption={settings.get('corruption')} severity={settings.get('severity')})"
+            )
+            overlay_raw = artifacts.get("overlay_raw") if isinstance(artifacts, dict) else None
+            overlay_tta = artifacts.get("overlay_tta") if isinstance(artifacts, dict) else None
+            if overlay_raw:
+                print(str(overlay_raw))
+            if overlay_tta:
+                print(str(overlay_tta))
+        except Exception:
+            pass
+        print(str(out))
         return 0
 
     if args.demo_command == "overview":

@@ -84,6 +84,18 @@ python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
 ```
 
+見た目に差が出る segmentation TTA 比較（同一 corrupted real COCO image の raw vs hflip TTA）:
+
+| TTA Off | TTA On |
+| --- | --- |
+| ![Instance-seg raw overlay](docs/assets/instance_seg_tta_raw.png) | ![Instance-seg TTA overlay](docs/assets/instance_seg_tta_tta.png) |
+
+`yolozu demo instance-seg-tta` の実行例では `image_id=468577`, `brightness` severity `5`, `tp 1→2`, `fp 1→0`, `fn 1→0` になりました。
+
+```bash
+yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta
+```
+
 対象:
 - リアルタイム単眼 RGB **検出**
 - 単眼 **depth + 6DoF pose**（RT-DETRベースの最小学習スキャフォールド）

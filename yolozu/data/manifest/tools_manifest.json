@@ -12552,6 +12552,10 @@
           "description": "TTT improvement micro-demo (few-shot train + deterministic domain shift + simple mAP proxy delta; requires torch)."
         },
         {
+          "command": "python3 tools/yolozu.py demo instance-seg-tta --run-dir reports/demo_instance_seg_tta",
+          "description": "Instance-seg TTA compare demo (real COCO image, deterministic corruption, raw Mask R-CNN vs hflip TTA overlays; requires torch+torchvision)."
+        },
+        {
           "command": "python3 tools/yolozu.py demo keypoints",
           "description": "Keypoints inference demo (passthrough to package CLI)."
         },

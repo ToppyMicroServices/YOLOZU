@@ -36,6 +36,31 @@ To execute evaluation and generate visual overlays and HTML reports:
 python3 tools/eval_instance_segmentation.py   --dataset /path/to/dataset   --split val   --predictions /path/to/predictions.json   --pred-root /path/to/pred-root   --classes /path/to/classes.txt   --html reports/instance_seg_eval.html   --overlays-dir reports/instance_seg_overlays   --max-overlays 10
 \end{lstlisting}
 
+\subsection{Real-image TTA compare demo}
+For a visible, reproducible compare on real images, \yolozu{} also provides a dedicated instance-seg TTA demo using \texttt{torchvision} Mask R-CNN. It applies a deterministic corruption to a COCO image, runs raw inference, then reruns with horizontal-flip TTA and selects a case with a clear metric improvement:
+\begin{lstlisting}[language=bash]
+yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta
+\end{lstlisting}
+
+\noindent Example result from the bundled tiny COCO subset: \path{image\_id=468577},
+\path{brightness} severity \path{5}, with \path{tp 1->2}, \path{fp 1->0}, and \path{fn 1->0}.
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/instance_seg_tta_raw.png}
+    \caption{TTA Off}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/instance_seg_tta_tta.png}
+    \caption{TTA On (hflip)}
+  \end{subfigure}
+  \caption{Instance segmentation overlay comparison on the same corrupted real COCO image. Green denotes ground truth, red denotes predicted masks, and increased overlap appears yellow.}
+\end{figure}
+
 \section{Semantic segmentation}
 The semantic segmentation suite provides robust dataset preparation utilities and mean Intersection over Union (mIoU) evaluation capabilities. While semantic segmentation evaluation yields mIoU (alongside per-class IoU), instance segmentation evaluation outputs COCO-style mask mAP. Ensure you utilize \path{tools/eval_segmentation.py} for semantic segmentation tasks and \path{tools/eval_instance_segmentation.py} for instance segmentation.
 

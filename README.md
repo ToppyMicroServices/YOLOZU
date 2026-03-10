@@ -71,6 +71,18 @@ python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
 ```
 
+Visible segmentation TTA compare (same corrupted real COCO image, raw vs hflip TTA):
+
+| TTA Off | TTA On |
+| --- | --- |
+| ![Instance-seg raw overlay](docs/assets/instance_seg_tta_raw.png) | ![Instance-seg TTA overlay](docs/assets/instance_seg_tta_tta.png) |
+
+Example selected by `yolozu demo instance-seg-tta`: `image_id=468577`, `brightness` severity `5`, `tp 1→2`, `fp 1→0`, `fn 1→0`.
+
+```bash
+yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta
+```
+
 
 ## Quickstart (repo checkout, run this first)
 

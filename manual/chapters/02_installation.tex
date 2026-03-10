@@ -55,6 +55,7 @@ The demo commands are intentionally designed to keep the invocation short:
 python3 -m pip install -U 'yolozu[demo]'
 yolozu demo
 yolozu demo instance-seg
+yolozu demo instance-seg-tta
 yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none
 yolozu demo keypoints
 yolozu demo pose
@@ -73,6 +74,15 @@ To enable the COCO instances (polygon) background for the instance-seg demo with
 python3 scripts/download_coco_instances_tiny.py
 yolozu demo instance-seg
 \end{lstlisting}
+
+To run a visible raw-versus-TTA comparison on a corrupted real COCO image:
+\begin{lstlisting}[language=bash]
+yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta
+\end{lstlisting}
+
+\noindent This writes \path{reports/demo_instance_seg_tta/selected/overlay_raw.png},
+\path{reports/demo_instance_seg_tta/selected/overlay_tta.png}, and
+\path{reports/demo_instance_seg_tta/instance_seg_tta_demo_report.json}.
 
 
 \section{Source Checkout (Repository Path)}

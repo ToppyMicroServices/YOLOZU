@@ -646,6 +646,45 @@ def main(argv: list[str] | None = None) -> int:
         help="(inference) Score threshold for predicted instances (default: 0.5).",
     )
 
+    demo_ist = demo_sub.add_parser(
+        "instance-seg-tta",
+        help="Real-image instance-seg TTA compare demo (Mask R-CNN raw vs hflip TTA on corrupted COCO images).",
+    )
+    demo_ist.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/instance_seg_tta/<utc>).")
+    demo_ist.add_argument("--seed", type=int, default=0, help="Random seed for image sampling/corruption (default: 0).")
+    demo_ist.add_argument("--num-images", type=int, default=8, help="Max candidate images to scan before selecting the best case (default: 8).")
+    demo_ist.add_argument(
+        "--coco-instances-json",
+        default=None,
+        help="Path to COCO instances_*.json (default: data/coco/annotations/instances_val2017.json).",
+    )
+    demo_ist.add_argument(
+        "--coco-images-dir",
+        default=None,
+        help="Root COCO images dir (default: data/coco/images/val2017).",
+    )
+    demo_ist.add_argument("--device", default="auto", help="Torch device (cpu|cuda|mps|auto) (default: auto).")
+    demo_ist.add_argument(
+        "--score-threshold",
+        type=float,
+        default=0.25,
+        help="Score threshold for predicted instances (default: 0.25).",
+    )
+    demo_ist.add_argument("--max-instances", type=int, default=8, help="Max predicted instances per pass (default: 8).")
+    demo_ist.add_argument(
+        "--corruption",
+        choices=("gaussian_blur", "gaussian_noise", "brightness", "contrast", "jpeg"),
+        default="brightness",
+        help="Corruption preset applied before inference (default: brightness).",
+    )
+    demo_ist.add_argument("--severity", type=int, default=5, help="Corruption severity 1..5 (default: 5).")
+    demo_ist.add_argument(
+        "--image-id",
+        type=int,
+        default=None,
+        help="Optional fixed COCO image_id. If omitted, the demo scans up to --num-images and selects the clearest improvement.",
+    )
+
     demo_cl = demo_sub.add_parser("continual", help="Toy continual-learning demo (requires torch; CPU OK).")
     demo_cl.add_argument("--output", default=None, help="Output JSON path or dir (default: runs/yolozu_demos/continual/...).")
     demo_cl.add_argument("--seed", type=int, default=0, help="Random seed (default: 0).")
