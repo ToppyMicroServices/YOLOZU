@@ -12553,7 +12553,7 @@
         },
         {
           "command": "python3 tools/yolozu.py demo instance-seg-tta --run-dir reports/demo_instance_seg_tta",
-          "description": "Instance-seg TTA compare demo (real COCO image, deterministic corruption, raw Mask R-CNN vs hflip TTA overlays; requires torch+torchvision)."
+          "description": "Instance-seg TTA compare demo (real COCO image, deterministic corruption, raw Mask R-CNN vs augmentation-based TTA overlays; brightness shift uses brightness-lift+hflip, other shifts use hflip; requires torch+torchvision)."
         },
         {
           "command": "python3 tools/yolozu.py demo keypoints",

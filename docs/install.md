@@ -104,10 +104,11 @@ yolozu demo instance-seg-tta \
 	--run-dir reports/demo_instance_seg_tta
 ```
 
-This scans a small set of COCO polygon-mask images, applies a deterministic corruption, compares raw Mask R-CNN predictions against hflip TTA, and writes:
+This scans a small set of COCO polygon-mask images, applies a deterministic corruption, compares raw Mask R-CNN predictions against augmentation-based TTA (brightness-lift + hflip for brightness corruption; hflip otherwise), and writes:
 
 - `reports/demo_instance_seg_tta/selected/overlay_raw.png`
 - `reports/demo_instance_seg_tta/selected/overlay_tta.png`
+- `reports/demo_instance_seg_tta/selected/overlay_delta.png`
 - `reports/demo_instance_seg_tta/instance_seg_tta_demo_report.json`
 
 If your COCO data is under the default paths, you can omit `--coco-instances-json` and `--coco-images-dir`.

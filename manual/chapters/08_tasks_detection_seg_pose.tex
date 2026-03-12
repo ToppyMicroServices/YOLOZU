@@ -37,28 +37,35 @@ python3 tools/eval_instance_segmentation.py   --dataset /path/to/dataset   --spl
 \end{lstlisting}
 
 \subsection{Real-image TTA compare demo}
-For a visible, reproducible compare on real images, \yolozu{} also provides a dedicated instance-seg TTA demo using \texttt{torchvision} Mask R-CNN. It applies a deterministic corruption to a COCO image, runs raw inference, then reruns with horizontal-flip TTA and selects a case with a clear metric improvement:
+For a visible, reproducible compare on real images, \yolozu{} also provides a dedicated instance-seg TTA demo using \texttt{torchvision} Mask R-CNN. It applies a deterministic corruption to a COCO image, runs raw inference, then reruns with augmentation-based TTA. For brightness corruption the demo uses brightness-lift plus horizontal flip; for the other supported corruptions it uses horizontal flip only.
 \begin{lstlisting}[language=bash]
 yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta
 \end{lstlisting}
 
-\noindent Example result from the bundled tiny COCO subset: \path{image\_id=468577},
-\path{brightness} severity \path{5}, with \path{tp 1->2}, \path{fp 1->0}, and \path{fn 1->0}.
+\noindent Example result from the bundled tiny COCO subset: \path{image\_id=407083},
+\path{brightness} severity \path{5}, with \path{tp 2->3}, \path{fp 4->2}, and \path{fn 1->0}.
+\noindent Read the figure as follows: green in the delta panel indicates area recovered by TTA or false-positive area removed by TTA; red indicates regression introduced by TTA.
 
 \begin{figure}[h]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
+  \begin{subfigure}[t]{0.32\textwidth}
     \centering
     \includegraphics[width=\linewidth]{figures/instance_seg_tta_raw.png}
     \caption{TTA Off}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
+  \begin{subfigure}[t]{0.32\textwidth}
     \centering
     \includegraphics[width=\linewidth]{figures/instance_seg_tta_tta.png}
-    \caption{TTA On (hflip)}
+    \caption{TTA On}
   \end{subfigure}
-  \caption{Instance segmentation overlay comparison on the same corrupted real COCO image. Green denotes ground truth, red denotes predicted masks, and increased overlap appears yellow.}
+  \hfill
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/instance_seg_tta_delta.png}
+    \caption{Delta}
+  \end{subfigure}
+  \caption{Instance segmentation compare on the same corrupted real COCO image. In the Off/On panels, green denotes ground truth and red denotes predicted masks. In the Delta panel, green marks TTA improvements and red marks TTA regressions.}
 \end{figure}
 
 \section{Semantic segmentation}

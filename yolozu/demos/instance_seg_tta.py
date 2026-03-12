@@ -172,8 +172,10 @@ def _predict_instances_hflip_tta(
     coco_name_to_id: dict[str, int],
     score_threshold: float,
     max_instances: int,
+    corruption: str,
+    severity: int,
     merge_iou: float = 0.3,
-    mask_threshold: float = 0.45,
+    mask_threshold: float = 0.5,
 ) -> list[dict[str, Any]]:
     import torch  # type: ignore
     import torchvision.transforms.functional as TVF  # type: ignore
@@ -184,6 +186,13 @@ def _predict_instances_hflip_tta(
         x = TVF.to_tensor(image).to(torch_device)
         out_base = model([x])[0]
         out_flip = model([TVF.hflip(x)])[0]
+        out_brightness = None
+        if str(corruption) == "brightness":
+            from PIL import ImageEnhance
+
+            lift_factor = min(1.75, 1.10 + 0.12 * max(1, min(5, int(severity))))
+            bright_image = ImageEnhance.Brightness(image.convert("RGB")).enhance(float(lift_factor))
+            out_brightness = model([TVF.to_tensor(bright_image).to(torch_device)])[0]
 
     # Reuse the converter logic with the already-produced torchvision outputs.
     def _from_out(out: Any) -> list[dict[str, Any]]:
@@ -225,49 +234,235 @@ def _predict_instances_hflip_tta(
     for det in flip:
         det["mask"] = np.fliplr(det["mask"])
 
-    merged: list[dict[str, Any]] = []
-    used = [False] * len(flip)
-    for det in base:
-        best_idx = -1
-        best_iou = 0.0
-        for idx, alt in enumerate(flip):
-            if used[idx] or int(alt.get("class_id", -1)) != int(det.get("class_id", -2)):
+    def _mask_nms(items: list[dict[str, Any]], *, iou_threshold: float = 0.75) -> list[dict[str, Any]]:
+        kept: list[dict[str, Any]] = []
+        for det in sorted(items, key=lambda item: (-float(item.get("score", 0.0)), int(item.get("class_id", 0)))):
+            suppress = False
+            for prev in kept:
+                if int(prev.get("class_id", -1)) != int(det.get("class_id", -2)):
+                    continue
+                if mask_iou(prev["mask"], det["mask"]) >= float(iou_threshold):
+                    suppress = True
+                    break
+            if not suppress:
+                kept.append(det)
+        return kept
+
+    def _merge_prob(det_a: dict[str, Any], det_b: dict[str, Any]) -> dict[str, Any]:
+        prob = (
+            det_a["mask"].astype("float32") * float(det_a.get("score", 0.0))
+            + det_b["mask"].astype("float32") * float(det_b.get("score", 0.0))
+        ) / max(1e-6, float(det_a.get("score", 0.0)) + float(det_b.get("score", 0.0)))
+        return {
+            "class_id": int(det_a.get("class_id", 0)),
+            "score": float(max(float(det_a.get("score", 0.0)), float(det_b.get("score", 0.0)))),
+            "mask": (prob >= float(mask_threshold)),
+        }
+
+    def _merge_extra(
+        current: list[dict[str, Any]],
+        extra: list[dict[str, Any]],
+        *,
+        solo_threshold: float,
+    ) -> list[dict[str, Any]]:
+        merged_local: list[dict[str, Any]] = []
+        used = [False] * len(extra)
+        for det in current:
+            best_idx = -1
+            best_iou = 0.0
+            for idx, alt in enumerate(extra):
+                if used[idx] or int(alt.get("class_id", -1)) != int(det.get("class_id", -2)):
+                    continue
+                iou = mask_iou(det["mask"], alt["mask"])
+                if iou > best_iou:
+                    best_iou = float(iou)
+                    best_idx = int(idx)
+            if best_idx >= 0 and best_iou >= float(merge_iou):
+                used[best_idx] = True
+                merged_local.append(_merge_prob(det, extra[best_idx]))
+            else:
+                merged_local.append(det)
+
+        for idx, alt in enumerate(extra):
+            if used[idx] or float(alt.get("score", 0.0)) < float(solo_threshold):
                 continue
-            iou = mask_iou(det["mask"], alt["mask"])
-            if iou > best_iou:
-                best_iou = float(iou)
-                best_idx = int(idx)
-        if best_idx >= 0 and best_iou >= float(merge_iou):
-            used[best_idx] = True
-            alt = flip[best_idx]
-            prob = (
-                det["mask"].astype("float32") * float(det.get("score", 0.0))
-                + alt["mask"].astype("float32") * float(alt.get("score", 0.0))
-            ) / max(1e-6, float(det.get("score", 0.0)) + float(alt.get("score", 0.0)))
-            merged.append(
-                {
-                    "class_id": int(det.get("class_id", 0)),
-                    "score": float(max(float(det.get("score", 0.0)), float(alt.get("score", 0.0)))),
-                    "mask": (prob >= float(mask_threshold)),
-                }
-            )
-        else:
-            merged.append(det)
+            duplicate = False
+            for prev in merged_local:
+                if int(prev.get("class_id", -1)) != int(alt.get("class_id", -2)):
+                    continue
+                if mask_iou(prev["mask"], alt["mask"]) >= float(merge_iou):
+                    duplicate = True
+                    break
+            if not duplicate:
+                merged_local.append(alt)
+        return _mask_nms(merged_local)
 
-    for idx, alt in enumerate(flip):
-        if not used[idx]:
-            merged.append(alt)
+    merged = _merge_extra(base, flip, solo_threshold=max(float(score_threshold) + 0.10, 0.50))
+    if out_brightness is not None:
+        brightness_preds = _from_out(out_brightness)
+        merged = _merge_extra(merged, brightness_preds, solo_threshold=max(float(score_threshold) + 0.05, 0.40))
 
+    merged = _mask_nms(merged)
     merged.sort(key=lambda item: (-float(item.get("score", 0.0)), int(item.get("class_id", 0))))
     return merged[: max(1, int(max_instances))]
 
 
-def _score_predictions(preds: list[dict[str, Any]], gt_instances: list[dict[str, Any]]) -> dict[str, Any]:
+def _union_mask(instances: list[dict[str, Any]], *, shape: tuple[int, int] | None = None) -> Any:
+    np, _ = _require_deps()
+    if not instances:
+        if shape is None:
+            return np.zeros((1, 1), dtype=bool)
+        return np.zeros(shape, dtype=bool)
+    union = np.asarray(instances[0]["mask"], dtype=bool).copy()
+    for item in instances[1:]:
+        union |= np.asarray(item["mask"], dtype=bool)
+    return union
+
+
+def _visual_metrics(preds: list[dict[str, Any]], gt_instances: list[dict[str, Any]]) -> dict[str, float]:
+    np, _ = _require_deps()
+    ref_shape: tuple[int, int] | None = None
+    for items in (preds, gt_instances):
+        if items:
+            ref_shape = tuple(np.asarray(items[0]["mask"], dtype=bool).shape)
+            break
+    pred_union = _union_mask(preds, shape=ref_shape)
+    gt_union = _union_mask(gt_instances, shape=ref_shape)
+    if pred_union.shape != gt_union.shape:
+        raise ValueError("pred/gt mask shapes differ in visual metric calculation")
+
+    inter = float(np.logical_and(pred_union, gt_union).sum())
+    union = float(np.logical_or(pred_union, gt_union).sum())
+    pred_area = float(pred_union.sum())
+    gt_area = float(gt_union.sum())
+    fp_area = float(np.logical_and(pred_union, np.logical_not(gt_union)).sum())
+    fn_area = float(np.logical_and(gt_union, np.logical_not(pred_union)).sum())
+    precision = inter / pred_area if pred_area > 0.0 else (1.0 if gt_area <= 0.0 else 0.0)
+    recall = inter / gt_area if gt_area > 0.0 else 1.0
+    denom = precision + recall
+    f1 = (2.0 * precision * recall / denom) if denom > 0.0 else 0.0
+    return {
+        "canvas_iou": (inter / union) if union > 0.0 else 1.0,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "fp_area_ratio": (fp_area / gt_area) if gt_area > 0.0 else fp_area,
+        "fn_area_ratio": (fn_area / gt_area) if gt_area > 0.0 else 0.0,
+        "pred_area_ratio": (pred_area / gt_area) if gt_area > 0.0 else pred_area,
+    }
+
+
+def _focus_bbox(
+    raw_preds: list[dict[str, Any]],
+    tta_preds: list[dict[str, Any]],
+    gt_instances: list[dict[str, Any]],
+    *,
+    min_size: int = 224,
+    pad: int = 24,
+) -> tuple[int, int, int, int] | None:
+    np, _ = _require_deps()
+    ref_shape = None
+    for items in (raw_preds, tta_preds, gt_instances):
+        if items:
+            ref_shape = tuple(np.asarray(items[0]["mask"], dtype=bool).shape)
+            break
+    if ref_shape is None:
+        return None
+    h, w = int(ref_shape[0]), int(ref_shape[1])
+    raw_match = _match_predictions(raw_preds, gt_instances)
+    tta_match = _match_predictions(tta_preds, gt_instances)
+    raw_matched_gt = set(int(x) for x in raw_match["matched_gt_indices"])
+    tta_matched_gt = set(int(x) for x in tta_match["matched_gt_indices"])
+    raw_unmatched_pred = set(int(x) for x in raw_match["unmatched_pred_indices"])
+    tta_unmatched_pred = set(int(x) for x in tta_match["unmatched_pred_indices"])
+    focus_parts: list[dict[str, Any]] = []
+    for idx in sorted(tta_matched_gt - raw_matched_gt):
+        focus_parts.append({"mask": gt_instances[int(idx)]["mask"]})
+    for idx in sorted(raw_unmatched_pred - tta_unmatched_pred):
+        focus_parts.append({"mask": raw_preds[int(idx)]["mask"]})
+
+    raw_union = _union_mask(raw_preds, shape=ref_shape)
+    tta_union = _union_mask(tta_preds, shape=ref_shape)
+    gt_union = _union_mask(gt_instances, shape=ref_shape)
+    focus = _union_mask(focus_parts, shape=ref_shape) if focus_parts else np.zeros(ref_shape, dtype=bool)
+    if not bool(focus.any()):
+        focus = np.logical_or(
+            np.logical_and(np.logical_not(raw_union), np.logical_and(tta_union, gt_union)),
+            np.logical_and(raw_union, np.logical_and(np.logical_not(tta_union), np.logical_not(gt_union))),
+        )
+    if not bool(focus.any()):
+        focus = np.logical_xor(raw_union, tta_union)
+    if not bool(focus.any()):
+        focus = gt_union
+    if not bool(focus.any()):
+        return None
+    ys, xs = np.nonzero(focus)
+    x0 = max(0, int(xs.min()) - int(pad))
+    y0 = max(0, int(ys.min()) - int(pad))
+    x1 = min(w, int(xs.max()) + int(pad) + 1)
+    y1 = min(h, int(ys.max()) + int(pad) + 1)
+    box_w = x1 - x0
+    box_h = y1 - y0
+    if box_w < int(min_size):
+        cx = (x0 + x1) // 2
+        half = int(min_size) // 2
+        x0 = max(0, cx - half)
+        x1 = min(w, x0 + int(min_size))
+        x0 = max(0, x1 - int(min_size))
+    if box_h < int(min_size):
+        cy = (y0 + y1) // 2
+        half = int(min_size) // 2
+        y0 = max(0, cy - half)
+        y1 = min(h, y0 + int(min_size))
+        y0 = max(0, y1 - int(min_size))
+    return int(x0), int(y0), int(x1), int(y1)
+
+
+def _overlay_delta(
+    *,
+    base_rgb_path: Path,
+    output_path: Path,
+    raw_preds: list[dict[str, Any]],
+    tta_preds: list[dict[str, Any]],
+    gt_instances: list[dict[str, Any]],
+    alpha: float = 0.50,
+) -> None:
+    np, (Image, _) = _require_deps()
+    base = Image.open(base_rgb_path).convert("RGBA")
+    w, h = base.size
+    ref_shape = (h, w)
+    raw_union = _union_mask(raw_preds, shape=ref_shape)
+    tta_union = _union_mask(tta_preds, shape=ref_shape)
+    gt_union = _union_mask(gt_instances, shape=ref_shape)
+
+    positive = np.logical_or(
+        np.logical_and(np.logical_not(raw_union), np.logical_and(tta_union, gt_union)),
+        np.logical_and(raw_union, np.logical_and(np.logical_not(tta_union), np.logical_not(gt_union))),
+    )
+    negative = np.logical_or(
+        np.logical_and(raw_union, np.logical_and(np.logical_not(tta_union), gt_union)),
+        np.logical_and(np.logical_not(gt_union), np.logical_and(tta_union, np.logical_not(raw_union))),
+    )
+
+    overlay = np.zeros((h, w, 4), dtype="uint8")
+    overlay[positive, 1] = 255
+    overlay[positive, 3] = int(max(0.0, min(1.0, float(alpha))) * 255)
+    overlay[negative, 0] = 255
+    overlay[negative, 3] = int(max(0.0, min(1.0, float(alpha))) * 255)
+
+    out = Image.alpha_composite(base, Image.fromarray(overlay, mode="RGBA")).convert("RGB")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    out.save(output_path)
+
+
+def _match_predictions(preds: list[dict[str, Any]], gt_instances: list[dict[str, Any]]) -> dict[str, Any]:
     used = [False] * len(gt_instances)
     matched_ious: list[float] = []
     matched_classes: list[int] = []
+    matched_gt_indices: list[int] = []
+    matched_pred_indices: list[int] = []
     tp = 0
-    for pred in preds:
+    for pred_idx, pred in enumerate(preds):
         best_idx = -1
         best_iou = 0.0
         pred_cid = int(pred.get("class_id", -1))
@@ -283,16 +478,36 @@ def _score_predictions(preds: list[dict[str, Any]], gt_instances: list[dict[str,
             tp += 1
             matched_ious.append(float(best_iou))
             matched_classes.append(int(pred_cid))
+            matched_gt_indices.append(int(best_idx))
+            matched_pred_indices.append(int(pred_idx))
     fn = sum(0 if flag else 1 for flag in used)
     fp = max(0, len(preds) - tp)
+    matched_pred_set = set(matched_pred_indices)
     return {
         "tp": int(tp),
         "fp": int(fp),
         "fn": int(fn),
         "mean_iou": float(sum(matched_ious) / len(matched_ious)) if matched_ious else 0.0,
         "matched_classes": matched_classes,
+        "matched_gt_indices": matched_gt_indices,
+        "matched_pred_indices": matched_pred_indices,
+        "unmatched_gt_indices": [idx for idx, flag in enumerate(used) if not flag],
+        "unmatched_pred_indices": [idx for idx in range(len(preds)) if idx not in matched_pred_set],
         "pred_instances": int(len(preds)),
         "gt_instances": int(len(gt_instances)),
+    }
+
+
+def _score_predictions(preds: list[dict[str, Any]], gt_instances: list[dict[str, Any]]) -> dict[str, Any]:
+    summary = _match_predictions(preds, gt_instances)
+    return {
+        "tp": int(summary["tp"]),
+        "fp": int(summary["fp"]),
+        "fn": int(summary["fn"]),
+        "mean_iou": float(summary["mean_iou"]),
+        "matched_classes": list(summary["matched_classes"]),
+        "pred_instances": int(summary["pred_instances"]),
+        "gt_instances": int(summary["gt_instances"]),
     }
 
 
@@ -300,16 +515,29 @@ def _select_best_case(cases: list[dict[str, Any]]) -> dict[str, Any]:
     if not cases:
         raise ValueError("no cases to select from")
 
-    def _rank(case: dict[str, Any]) -> tuple[float, float, float, float]:
+    preferred = [
+        case
+        for case in cases
+        if float((case.get("visual_delta") or {}).get("canvas_iou", 0.0)) > 0.0
+        and float((case.get("visual_delta") or {}).get("fp_area_ratio", 0.0)) <= 0.0
+    ]
+    ranked_cases = preferred or cases
+
+    def _rank(case: dict[str, Any]) -> tuple[float, float, float, float, float, float, float, float]:
         delta = case.get("delta") or {}
+        visual_delta = case.get("visual_delta") or {}
         return (
+            float(visual_delta.get("canvas_iou", 0.0)),
+            float(visual_delta.get("f1", 0.0)),
+            float(-visual_delta.get("fp_area_ratio", 0.0)),
+            float(-visual_delta.get("fn_area_ratio", 0.0)),
             float(delta.get("tp", 0.0)),
             float(-delta.get("fn", 0.0)),
             float(-delta.get("fp", 0.0)),
             float(delta.get("mean_iou", 0.0)),
         )
 
-    return max(cases, key=_rank)
+    return max(ranked_cases, key=_rank)
 
 
 def run_instance_seg_tta_demo(
@@ -421,21 +649,37 @@ def run_instance_seg_tta_demo(
             coco_name_to_id=coco_name_to_id,
             score_threshold=float(score_threshold),
             max_instances=int(max_instances),
+            corruption=str(corruption),
+            severity=int(severity),
         )
         raw_score = _score_predictions(raw, gt_instances)
         tta_score = _score_predictions(tta, gt_instances)
+        raw_visual = _visual_metrics(raw, gt_instances)
+        tta_visual = _visual_metrics(tta, gt_instances)
         delta = {
             "tp": int(tta_score["tp"] - raw_score["tp"]),
             "fp": int(tta_score["fp"] - raw_score["fp"]),
             "fn": int(tta_score["fn"] - raw_score["fn"]),
             "mean_iou": float(tta_score["mean_iou"] - raw_score["mean_iou"]),
         }
+        visual_delta = {
+            "canvas_iou": float(tta_visual["canvas_iou"] - raw_visual["canvas_iou"]),
+            "precision": float(tta_visual["precision"] - raw_visual["precision"]),
+            "recall": float(tta_visual["recall"] - raw_visual["recall"]),
+            "f1": float(tta_visual["f1"] - raw_visual["f1"]),
+            "fp_area_ratio": float(tta_visual["fp_area_ratio"] - raw_visual["fp_area_ratio"]),
+            "fn_area_ratio": float(tta_visual["fn_area_ratio"] - raw_visual["fn_area_ratio"]),
+            "pred_area_ratio": float(tta_visual["pred_area_ratio"] - raw_visual["pred_area_ratio"]),
+        }
         case = {
             "image_id": int(cand_id),
             "file_name": file_name,
             "raw": raw_score,
             "tta": tta_score,
+            "raw_visual": raw_visual,
+            "tta_visual": tta_visual,
             "delta": delta,
+            "visual_delta": visual_delta,
             "_raw_preds": raw,
             "_tta_preds": tta,
             "_gt_instances": gt_instances,
@@ -454,6 +698,9 @@ def run_instance_seg_tta_demo(
     selected_shifted_path = selected_dir / "shifted.png"
     overlay_raw_path = selected_dir / "overlay_raw.png"
     overlay_tta_path = selected_dir / "overlay_tta.png"
+    overlay_delta_path = selected_dir / "overlay_delta.png"
+    overlay_raw_focus_path = selected_dir / "overlay_raw_focus.png"
+    overlay_tta_focus_path = selected_dir / "overlay_tta_focus.png"
 
     selected["_original_image"].save(selected_original_path)
     selected["_shifted_image"].save(selected_shifted_path)
@@ -473,6 +720,22 @@ def run_instance_seg_tta_demo(
         gt_masks=selected_gt_masks,
         pred_masks=selected_tta_masks,
     )
+    _overlay_delta(
+        base_rgb_path=selected_shifted_path,
+        output_path=overlay_delta_path,
+        raw_preds=selected["_raw_preds"],
+        tta_preds=selected["_tta_preds"],
+        gt_instances=selected["_gt_instances"],
+    )
+    focus_box = _focus_bbox(selected["_raw_preds"], selected["_tta_preds"], selected["_gt_instances"])
+    if focus_box is not None:
+        x0, y0, x1, y1 = focus_box
+        from PIL import Image
+
+        with Image.open(overlay_raw_path) as raw_img:
+            raw_img.crop((int(x0), int(y0), int(x1), int(y1))).save(overlay_raw_focus_path)
+        with Image.open(overlay_tta_path) as tta_img:
+            tta_img.crop((int(x0), int(y0), int(x1), int(y1))).save(overlay_tta_focus_path)
 
     sanitized_cases: list[dict[str, Any]] = []
     for case in cases:
@@ -482,7 +745,10 @@ def run_instance_seg_tta_demo(
                 "file_name": str(case["file_name"]),
                 "raw": dict(case["raw"]),
                 "tta": dict(case["tta"]),
+                "raw_visual": dict(case["raw_visual"]),
+                "tta_visual": dict(case["tta_visual"]),
                 "delta": dict(case["delta"]),
+                "visual_delta": dict(case["visual_delta"]),
             }
         )
 
@@ -502,7 +768,7 @@ def run_instance_seg_tta_demo(
             "device": str(torch_device),
             "score_threshold": float(score_threshold),
             "max_instances": int(max_instances),
-            "tta_mode": "hflip_mask_fusion",
+            "tta_mode": ("brightness_lift+hflip_mask_fusion" if str(corruption) == "brightness" else "hflip_mask_fusion"),
         },
         "model": model_meta,
         "selected": {
@@ -510,7 +776,10 @@ def run_instance_seg_tta_demo(
             "file_name": str(selected["file_name"]),
             "raw": dict(selected["raw"]),
             "tta": dict(selected["tta"]),
+            "raw_visual": dict(selected["raw_visual"]),
+            "tta_visual": dict(selected["tta_visual"]),
             "delta": dict(selected["delta"]),
+            "visual_delta": dict(selected["visual_delta"]),
         },
         "scan_summary": sanitized_cases,
         "artifacts": {
@@ -518,6 +787,9 @@ def run_instance_seg_tta_demo(
             "shifted": str(selected_shifted_path),
             "overlay_raw": str(overlay_raw_path),
             "overlay_tta": str(overlay_tta_path),
+            "overlay_delta": str(overlay_delta_path),
+            "overlay_raw_focus": str(overlay_raw_focus_path),
+            "overlay_tta_focus": str(overlay_tta_focus_path),
         },
     }
     out_path = run_dir_p / str(output_name)
