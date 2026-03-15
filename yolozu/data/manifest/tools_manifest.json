@@ -237,11 +237,11 @@
           "required": false
         },
         {
+          "default": 280,
           "flag": "--x-max-len",
           "kind": "number",
           "name": "x_max_len",
-          "required": false,
-          "default": 280
+          "required": false
         }
       ],
       "outputs": [
@@ -1393,11 +1393,11 @@
           "required": false
         },
         {
+          "default": "0.5,1.0,1.5,2.0",
           "flag": "--temperatures",
           "kind": "string",
           "name": "temperatures",
-          "required": false,
-          "default": "0.5,1.0,1.5,2.0"
+          "required": false
         },
         {
           "flag": "--min-score",
@@ -2052,11 +2052,11 @@
           "required": false
         },
         {
+          "default": 0.0,
           "flag": "--teacher-min-score",
           "kind": "number",
           "name": "teacher_min_score",
-          "required": false,
-          "default": 0.0
+          "required": false
         },
         {
           "flag": "--max-added-per-image",
@@ -2065,11 +2065,11 @@
           "required": false
         },
         {
+          "default": 0.9,
           "flag": "--add-duplicate-iou-threshold",
           "kind": "number",
           "name": "add_duplicate_iou_threshold",
-          "required": false,
-          "default": 0.9
+          "required": false
         },
         {
           "default": "reports/predictions_distilled.json",

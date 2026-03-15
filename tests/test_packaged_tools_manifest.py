@@ -21,6 +21,21 @@ class TestPackagedToolsManifest(unittest.TestCase):
             "packaged manifest is out of sync. Update yolozu/data/manifest/tools_manifest.json to match tools/manifest.json.",
         )
 
+    def test_packaged_manifest_matches_sync_tools_manifest_canonical_output(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        repo_manifest = repo_root / "tools" / "manifest.json"
+        packaged_manifest = repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json"
+
+        repo_obj = json.loads(repo_manifest.read_text(encoding="utf-8"))
+        expected = json.dumps(repo_obj, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        actual = packaged_manifest.read_text(encoding="utf-8")
+
+        self.assertEqual(
+            actual,
+            expected,
+            "packaged manifest must match the canonical sync_tools_manifest.py output.",
+        )
+
     def test_tools_are_sorted_by_id_for_deterministic_diff(self):
         repo_root = Path(__file__).resolve().parents[1]
         for path in (
@@ -35,4 +50,3 @@ class TestPackagedToolsManifest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
