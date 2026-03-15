@@ -3,6 +3,9 @@ name: pytest-gpu-machine
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: pytest-gpu-machine-${{ github.ref }}
   cancel-in-progress: true

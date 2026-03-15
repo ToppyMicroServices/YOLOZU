@@ -98,3 +98,4 @@ Notes:
 - `zisn1` attempts 2-GPU DDP; when only one GPU is available, it records `single_gpu_fallback` in `ddp_status.json`.
 - `zisn2` requires `NGC_API_KEY` for `nvcr.io/nvidia/tensorrt:24.08-py3`. If absent, the stage exits with `skip_reason.txt`.
 - `zisn3` records OpenCV CUDA capability in `opencv_cuda_status.json`; CUDA parity artifacts are required only when status is `ok`.
+- `CI_LOGS_PUSH_TOKEN` is optional. If unset, the workflow still uploads artifacts to GitHub Actions but skips updating the `ci-logs/gpu-zisn` branch.

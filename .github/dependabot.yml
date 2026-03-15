@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - github-actions
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - python
+  - package-ecosystem: cargo
+    directory: /examples/infer_rust
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - rust
+  - package-ecosystem: docker
+    directory: /deploy/docker
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - docker
+  - package-ecosystem: docker
+    directory: /deploy/runpod
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - docker
+  - package-ecosystem: docker
+    directory: /examples/infer_cpp/docker
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - docker

@@ -16,6 +16,9 @@ on:
       - "MANIFEST.in"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
 

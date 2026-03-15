@@ -57,6 +57,7 @@ DoD:
 - `.github/workflows/announce_release.yml` (**optional announce**): posts GitHub Release announcement to LinkedIn/X/Reddit when secrets are configured; always uploads a post bundle artifact.
 - `.github/workflows/ngc_test.yml` (**optional GPU smoke**): must produce deterministic `pass` or `skip` summary in `ci-logs/gpu-ngc`.
 - `.github/workflows/gpu_zisn_pipeline.yml` (**optional GPU validation split**): manual machine-runner path for `YOLOZU-zisn.1/.2/.3` artifacts.
+- Optional log-branch publish secret: `CI_LOGS_PUSH_TOKEN` (fine-grained PAT with repository contents write) for `ci-logs/*` branch updates from GPU workflows.
 
 DoD:
 - `ci` completed successfully.
@@ -65,6 +66,7 @@ DoD:
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.
+- When `CI_LOGS_PUSH_TOKEN` is not configured, the workflows still upload artifacts but skip force-pushing the `ci-logs/*` branches.
 
 ## 3) GPU smoke interpretation (`gpu-ngc`)
 

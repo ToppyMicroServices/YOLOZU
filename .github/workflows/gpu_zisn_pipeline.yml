@@ -16,7 +16,7 @@ on:
 
 permissions:
   actions: read
-  contents: write
+  contents: read
 
 concurrency:
   group: gpu-zisn-${{ github.ref }}-${{ github.event.inputs.stage }}
@@ -158,9 +158,8 @@ jobs:
     needs: [zisn1_train_ort, zisn2_trt, zisn3_opencv_ttt]
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
+      CI_LOGS_PUSH_TOKEN: ${{ secrets.CI_LOGS_PUSH_TOKEN }}
       LOG_BRANCH: ci-logs/gpu-zisn
       STAGE: ${{ github.event.inputs.stage }}
       ZISN1_RESULT: ${{ needs.zisn1_train_ort.result }}
@@ -170,6 +169,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Download zisn1 artifacts
         if: ${{ needs.zisn1_train_ort.result == 'success' }}
@@ -364,6 +364,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          if [[ -z "${CI_LOGS_PUSH_TOKEN:-}" ]]; then
+            echo "CI_LOGS_PUSH_TOKEN is not configured; skipping log-branch publish."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -380,4 +385,14 @@ jobs:
           fi
 
           git commit -m "gpu-zisn logs ${GITHUB_RUN_ID} (${GITHUB_SHA})"
-          git push -f origin "${LOG_BRANCH}"
+          remote_url="https://x-access-token:${CI_LOGS_PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push -f "${remote_url}" "${LOG_BRANCH}"
+
+      - name: Upload gpu-zisn summary artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-zisn-summary
+          if-no-files-found: ignore
+          path: |
+            .tmp_gpu_zisn_summary/ci_gpu_zisn/**
