@@ -38,7 +38,7 @@ yolozu demo overview
 
 ## 框架比较（同一数据集 + predictions interface contract）
 
-YOLOZU 的核心价值，是让不同模型栈在 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）之上进行真正的 apples-to-apples 对比。
+YOLOZU 的核心价值，在于让不同模型栈基于 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）进行可复现、可比较的评估。
 
 | Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
 | --- | --- | --- | --- | --- |
@@ -99,7 +99,7 @@ bash scripts/smoke.sh
 bash scripts/smoke.sh --skip-demo
 ```
 
-如果你希望执行更完整的首次 walkthrough（能力声明 + deploy-path dry-run）：
+如果你希望执行更完整的首次验证流程（能力项检查 + deploy-path dry-run）：
 
 ```bash
 bash scripts/smoke.sh --profile deep
@@ -139,7 +139,7 @@ CLI 说明：
 
 - `yolozu ...` 是 pip 安装后的 package CLI
 - `python3 tools/yolozu.py ...` 是 repo wrapper CLI
-- 两者等价时，通常只需要替换可执行入口（`yolozu` ↔ `python3 tools/yolozu.py`）
+- 两者等价时，通常只需替换可执行入口（`yolozu` ↔ `python3 tools/yolozu.py`）
 
 模块路径说明：
 
@@ -148,16 +148,16 @@ CLI 说明：
 
 ## 关键点
 
-- 无论使用仓内推理还是外部推理，只要最终落到稳定的 `predictions.json` interface contract，就可以统一评估
+- 无论使用仓内推理还是外部推理，只要最终落到稳定的 `predictions.json` interface contract，就可以纳入统一评估流程
 - validator 会尽早发现 schema drift
-- protocol-pinned `export_settings` 让结果比较可复现
+- protocol-pinned `export_settings` 使比较结果具备可复现性
 - parity / benchmark 用于量化 backend drift 与性能差异
 - 默认对 CPU 友好，GPU 为可选增强
 - repo 工具链遵循 Apache-2.0-only 的运维策略
 
 ## 为什么选择 YOLOZU
 
-YOLOZU 围绕 predictions-first interface contract 标准化评估流程：你可以在任意框架、任意运行时执行推理，导出 `predictions.json`（以及 `export_settings`），再用固定协议完成验证与评估，从而得到真正可横向比较的实验结果。
+YOLOZU 围绕 predictions-first interface contract 标准化评估流程：你可以在任意框架、任意运行时执行推理，导出 `predictions.json`（以及 `export_settings`），再依据固定协议完成验证与评估，从而获得可横向比较的实验结果。
 
 详情：[`docs/yolozu_spec.md`](docs/yolozu_spec.md)
 
@@ -211,7 +211,7 @@ python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewsho
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
-一条命令执行完整工作流（prepare + 可选 tiny COCO 自动下载 + staged smoke）：
+一条命令执行完整流程（prepare + 可选 tiny COCO 自动下载 + staged smoke）：
 
 ```bash
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --allow-auto-download --accept-dataset-license --download-num-images 8 --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
