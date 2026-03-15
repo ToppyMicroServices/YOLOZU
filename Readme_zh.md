@@ -1,6 +1,6 @@
-# YOLOZU (萬)
+# YOLOZU (萬) — 中文 README
 
-Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.md)
+English README: [`README.md`](README.md) | 日本語README: [`Readme_jp.md`](Readme_jp.md)
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
 [![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
@@ -13,35 +13,32 @@ Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.m
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
+## 30 秒快速上手（pip）
 
-## 30-second Quick Win (pip)
-
-**Predictions-first interface contract.** Export `predictions.json` once, then validate + evaluate apples-to-apples across frameworks/backends.
+**Predictions-first interface contract。** 先导出一次 `predictions.json`，之后就可以跨框架、跨后端做一致的验证与评估。
 
 ```bash
 python3 -m pip install -U yolozu
 yolozu demo overview
 ```
 
-Writes: `demo_output/overview/<utc>/demo_overview_report.json`
+输出位置：`demo_output/overview/<utc>/demo_overview_report.json`
 
-If YOLOZU saved you time, please star to help others find it.
+如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
-## YOLOZU at a glance
+## YOLOZU 是什么
 
-- **Framework-agnostic evaluation toolkit for vision models**: designed for reproducible continual learning and test-time adaptation under domain shift.
-- **Training-capable workflows for mitigating catastrophic forgetting**: supports training and evaluation workflows based on self-distillation, replay, and parameter-efficient updates (PEFT). These approaches reduce forgetting and make it measurable and comparable across runs, though complete elimination is not guaranteed.
-- **Support for inference-time adaptation (TTT)**: allows model parameters to be adjusted during inference, enabling continual adaptation to domain shift in deployment.
-- **Predictions as the stable interface contract**: treats predictions---not models---as the primary contract, making training, continual learning, and inference-time adaptation comparable, restartable, and CI-friendly across frameworks and runtimes.
-- **Multi-task evaluation support**: covers object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation. Training implementations remain configurable and decoupled, rather than fixed to a specific framework.
-- **Production-ready deployment path**: supports ONNX/ExecuTorch export and execution across PyTorch, ONNX Runtime, TensorRT, and ExecuTorch, with reference inference templates in C++ and Rust.
-- **Interface-contract-first, AI-first workflow**: every experiment emits versioned artifacts that can be automatically compared and regression-tested in CI.
+- **面向视觉模型的框架无关评估工具包**：针对 domain shift 下的持续学习与 test-time adaptation，强调可复现与可比较。
+- **支持缓解 catastrophic forgetting 的训练工作流**：提供 self-distillation、replay、PEFT 等训练/评估路径，用于量化并缓解遗忘，但不承诺彻底消除。
+- **支持推理时适配（TTT）**：允许在推理阶段对参数进行受控更新，以应对部署环境中的 domain shift。
+- **把 predictions 作为稳定的 interface contract**：核心不是模型对象本身，而是 `predictions.json` 及其协议化元数据，因此训练、持续学习、TTT、导出与 CI 回归都可以对齐。
+- **多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、6DoF pose。
+- **面向部署**：支持 PyTorch、ONNX Runtime、TensorRT、ExecuTorch，并提供 C++ / Rust 参考推理路径。
+- **AI-first / interface-contract-first 工作流**：每次实验都产出版本化 artifact，方便 CI 自动比较与回归检测。
 
+## 框架比较（同一数据集 + predictions interface contract）
 
-
-## Framework Comparison (Same Dataset + Predictions Interface Contract)
-
-One-screen view of how YOLOZU lets you compare different model stacks using the **same dataset** and a stable **predictions interface contract** (`predictions.json` + `export_settings`).
+YOLOZU 的核心价值，是让不同模型栈在 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）之上做 apples-to-apples 对比。
 
 | Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
 | --- | --- | --- | --- | --- |
@@ -52,36 +49,33 @@ One-screen view of how YOLOZU lets you compare different model stacks using the 
 | MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | Non-dry execution requires `--mmdet-train-script`. |
 | YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | Intended for “external inference → interface contract → eval” workflows. |
 
-Same dataset + same `predictions.json` predictions interface contract means apples-to-apples evaluation across frameworks/backends.
-
-Minimal proof (same dataset, same report shape; safe default is dry-run):
+最小证明（同一数据、同一报告形状，默认 dry-run）：
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-Visual evidence (example overlays produced by the instance-seg demo):
+可视化示例（instance segmentation demo 生成的 overlay）：
 
 ![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
-Reproduce (real-image inference, CPU; requires `torch`+`torchvision`):
+复现命令（真实图像推理，CPU；需要 `torch` + `torchvision`）：
 
 ```bash
 python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
 ```
 
-
-## Quickstart (repo checkout, run this first)
+## Quickstart（源码 checkout 后先跑这个）
 
 ```bash
 python3 -m pip install -e .
 bash scripts/smoke.sh
 ```
 
-Details (what changed): see [GitHub Release notes](https://github.com/ToppyMicroServices/YOLOZU/releases).
+变更摘要可看 [GitHub Release notes](https://github.com/ToppyMicroServices/YOLOZU/releases)。
 
-If your system Python is externally managed (PEP 668), use a venv:
+如果系统 Python 启用了 PEP 668（externally managed），请使用虚拟环境：
 
 ```bash
 python3 -m venv .venv
@@ -91,79 +85,83 @@ python -m pip install -e .
 bash scripts/smoke.sh
 ```
 
-Output artifacts:
+主要输出：
+
 - `reports/smoke_coco_eval_dry_run.json`
 - `reports/smoke_synthgen_summary.json`
 - `reports/smoke_synthgen_eval.json`
 - `reports/smoke_synthgen_overlay.png`
-- `reports/smoke_demo_instance_seg/overlays/*.png` (visual demo evidence)
+- `reports/smoke_demo_instance_seg/overlays/*.png`
 
-If you only want contract checks (skip demo PNG generation), run:
+如果你只想跑 interface contract 检查，不生成 demo PNG：
 
 ```bash
 bash scripts/smoke.sh --skip-demo
 ```
 
-If you want a deeper first-time walkthrough evidence report (capability claims + deploy-path dry-runs), run:
+如果你想跑更完整的首次 walkthrough（能力声明 + deploy-path dry-run）：
 
 ```bash
 bash scripts/smoke.sh --profile deep
 ```
 
-On a CUDA machine (single GPU), you can also run the deep profile with the TTT probe on GPU:
+在 CUDA 单卡机器上，也可以把 deep profile 的 TTT probe 放到 GPU 上：
 
 ```bash
 bash scripts/smoke.sh --profile deep --torch-device cuda
 ```
 
-Deep profile additionally writes:
+deep profile 额外产出：
+
 - `reports/smoke_walkthrough_report.json`
 - `reports/smoke_demo_overview.json`
 - `reports/smoke_external_finetune_report.json`
 - `reports/smoke_export_{onnxrt,trt,executorch}.json`
 
-Docs index (start here): [`docs/README.md`](docs/README.md).
+文档入口：[`docs/README.md`](docs/README.md)
 
-AI-friendly tool registry (source of truth): [`tools/manifest.json`](tools/manifest.json).
+AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools/manifest.json)
 
-Tool list + args examples: [`docs/tools_index.md`](docs/tools_index.md).
+工具列表与参数示例：[`docs/tools_index.md`](docs/tools_index.md)
 
-Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](docs/learning_features.md).
+学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/learning_features.md`](docs/learning_features.md)
 
-## Start here (choose 1 of 4 entry points)
+## 从哪里开始（4 个入口）
 
-- **A: Evaluate from precomputed predictions (no inference deps)** — `predictions.json` → validate → eval.
-- **B: Train → Export → Eval (RT-DETR scaffold + run interface contract / Run Contract)** — run artifacts → ONNX → parity/eval.
-- **C: Interface contracts (predictions / adapter / TTT protocol)** — schemas + adapter interface contract boundary + safe adaptation protocol.
-- **D: Bench/Parity (TensorRT / latency benchmark)** — parity checks + pinned-protocol benchmarks.
+- **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval
+- **B: 训练 → 导出 → 评估**：RT-DETR scaffold + run interface contract / Run Contract
+- **C: interface contract 本身**：predictions / adapter / TTT protocol
+- **D: parity / benchmark**：TensorRT、latency benchmark、backend drift
 
-All four entry points are documented (with copy-paste commands) in [`docs/README.md`](docs/README.md).
+四条路径都在 [`docs/README.md`](docs/README.md) 里有可直接复制的命令。
 
-CLI note:
-- `yolozu ...` is the pip/package CLI.
-- `python3 tools/yolozu.py ...` is the repo wrapper CLI.
-- For equivalent commands, swap only the executable (`yolozu` ↔ `python3 tools/yolozu.py`).
+CLI 说明：
 
-Module path note:
-- Canonical Python modules live under categorized packages (`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`).
-- Legacy imports such as `from yolozu.dataset import build_manifest` remain available via package-level aliasing in `yolozu/__init__.py`.
+- `yolozu ...` 是 pip / package CLI
+- `python3 tools/yolozu.py ...` 是 repo wrapper CLI
+- 两者等价时，通常只需要替换可执行入口（`yolozu` ↔ `python3 tools/yolozu.py`）
 
-## Key points
+模块路径说明：
 
-- Bring-your-own inference → stable `predictions.json` interface contract.
-- Validators catch schema drift early.
-- Protocol-pinned `export_settings` makes comparisons reproducible.
-- Parity/bench quantify backend drift and performance.
-- Tooling stays CPU-friendly by default (GPU optional).
-- Apache-2.0-only ops policy is enforced in repo tooling.
+- canonical Python 模块位于分类后的包路径下（`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`）
+- 旧式 import（例如 `from yolozu.dataset import build_manifest`）通过 `yolozu/__init__.py` 的 alias 继续兼容
 
-## Why YOLOZU?
+## 关键点
 
-YOLOZU standardizes evaluation around a predictions-first interface contract: run inference anywhere, export `predictions.json` (+ `export_settings`), then validate and evaluate with fixed protocols for reproducible comparisons.
+- 自带推理 / 外部推理都可以，只要最终落到稳定的 `predictions.json` interface contract
+- validator 会尽早发现 schema drift
+- protocol-pinned `export_settings` 保证比较可复现
+- parity / benchmark 用于量化 backend drift 与性能差异
+- 默认 CPU 友好，GPU 为可选
+- repo 工具链遵循 Apache-2.0-only 的运维策略
 
-Details: [`docs/yolozu_spec.md`](docs/yolozu_spec.md).
+## 为什么是 YOLOZU
 
-## Install (pip users)
+YOLOZU 围绕 predictions-first interface contract 标准化评估：你可以在任意框架、任意运行时做推理，导出 `predictions.json`（以及 `export_settings`），再用固定协议完成验证与评估，实现真正可比较的实验结果。
+
+详情：[`docs/yolozu_spec.md`](docs/yolozu_spec.md)
+
+## 安装（pip 用户）
 
 ```bash
 python3 -m pip install yolozu
@@ -171,32 +169,32 @@ yolozu --help
 yolozu doctor --output -
 ```
 
-Optional (CPU) demos:
+可选（CPU）demo：
 
 ```bash
 python3 -m pip install -U 'yolozu[demo]'
-yolozu demo overview  # writes demo_output/overview/<utc>/demo_overview_report.json
+yolozu demo overview
 yolozu demo
 yolozu demo instance-seg
 yolozu demo keypoints
-yolozu demo pose  # chessboard default; use --backend aruco for marker-based pose
-yolozu demo pose --backend aruco  # cached sample in demo_output/pose/_samples (delete to regenerate)
-yolozu demo pose --backend densefusion  # heavy: CUDA + large downloads
-yolozu demo depth  # default: Depth Anything (Transformers); use --compare to run MiDaS/DPT too
-yolozu demo train  # downloads ResNet18 weights on first run
+yolozu demo pose
+yolozu demo pose --backend aruco
+yolozu demo pose --backend densefusion
+yolozu demo depth
+yolozu demo train
 yolozu demo continual --compare --markdown
 ```
 
-First-time visual confirmation (PNG output check):
+首次可视确认（检查 PNG 确实生成）：
 
 ```bash
 yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none --num-images 2 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
 ls reports/demo_firsttime_instance_seg/overlays/*.png
 ```
 
-Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
+更多可选依赖与 CPU demo 说明：[`docs/install.md`](docs/install.md)
 
-CLI completion (bash/zsh):
+CLI 补全（bash/zsh）：
 
 ```bash
 # bash
@@ -205,135 +203,109 @@ eval "$(yolozu completion --shell bash)"
 eval "$(yolozu completion --shell zsh)"
 ```
 
-Real-image multitask finetune smoke (bbox/segmentation/keypoints/depth/pose6d):
+真实图像 multitask finetune smoke（bbox / segmentation / keypoints / depth / pose6d）：
 
 ```bash
-# review dataset license/terms before download
 python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0 --force
 python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
-One-command workflow (prepare + optional tiny COCO auto-download + staged smoke):
+一条命令跑完整工作流（prepare + 可选 tiny COCO 自动下载 + staged smoke）：
 
 ```bash
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --allow-auto-download --accept-dataset-license --download-num-images 8 --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
-External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR, interface contract report):
+外部 finetune smoke 矩阵（YOLOv / MMDetection / Detectron2 / RT-DETR）：
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-Execute real training for selected frameworks:
+运行真实训练（指定框架）：
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json
 ```
 
-RT-DETR non-dry path now emits explicit dependency failure metadata when torch is unavailable (`failure_code=E_DEP_TORCH_MISSING`).
-MMDetection/Detectron2 non-dry runs with `--mmdet-train-script` / `--detectron2-train-script` continue train-path audit even when projection deps are missing, and record `projection_error` in the report.
+详情：[`docs/external_finetune_smoke.md`](docs/external_finetune_smoke.md)
 
-Details and external launcher wiring: [`docs/external_finetune_smoke.md`](docs/external_finetune_smoke.md).
-
-Deterministic domain-shift target recipe for TTT:
+用于 TTT 的 deterministic domain-shift target recipe：
 
 ```bash
 python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force
 python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shift/smoke_gaussian_blur_s2 --split val --wrap --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json --output reports/pred_shift_target.json
 ```
 
-Details: [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+详情：[`docs/ttt_protocol.md`](docs/ttt_protocol.md)
 
-TTT improvement micro-demo (shows a metric delta + overlays):
+TTT improvement micro-demo（展示 metric delta + overlay）：
 
 ```bash
 python3 -m pip install -U 'yolozu[demo]'
 yolozu demo ttt
 ```
 
-Writes:
+输出：
+
 - `demo_output/ttt/<utc>/overlay_no_ttt.png`
 - `demo_output/ttt/<utc>/overlay_ttt.png`
-- `demo_output/ttt/<utc>/ttt_improvement_report.json` (includes `metrics.delta`)
+- `demo_output/ttt/<utc>/ttt_improvement_report.json`
 
-Example stdout (CPU, deterministic seeds; absolute values are tiny by design, the point is the reproducible delta):
-- `map50 0.00326797 → 0.00392157`
-- `map50_95 0.000326797 → 0.000392157`
-- `changed_images 10 / 10` (`diff_summary.changed_images`)
-
-Example overlays (same shifted input, predictions in the predictions interface contract):
-
-| No TTT | With TTT (Tent, safe preset) |
-| --- | --- |
-| ![No TTT overlay example](docs/assets/demo_ttt_overlay_no_ttt.png) | ![With TTT overlay example](docs/assets/demo_ttt_overlay_with_ttt.png) |
-
-Reference adapter regression (RT-DETR, real-image baseline):
+Reference adapter regression（RT-DETR，真实模型基线）：
 
 ```bash
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json
 ```
 
-Interface-contract-only hard gate:
+仅跑 interface contract hard gate：
 
 ```bash
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json
 ```
 
-Behavior-only warn gate:
+仅跑 behavior warn gate：
 
 ```bash
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json
 ```
 
-## Source checkout (repo users)
+## 源码 checkout（repo 用户）
 
 ```bash
 python3 -m pip install -r requirements-test.txt
-# optional: mirror CI recommended tier (pinned runtime)
 python3 -m pip install -r requirements-ci.lock
 python3 -m pip install -e .
 python3 tools/yolozu.py --help
 python3 -m unittest -q
 ```
 
-If you want the optional demo dependencies in a source checkout:
+如果你是在源码 checkout 环境里补装 demo 依赖：
 
 ```bash
 python3 -m pip install -e '.[demo]'
 ```
 
-Single-command release automation (no required options):
+单命令 release 自动化：
 
 ```bash
 bash release.sh
 ```
 
-`release.sh` auto-selects Python in this order:
-1. `$YOLOZU_PYTHON` (if set)
-2. `./.venv/bin/python`
-3. `python3` in `PATH`
-4. `python` in `PATH`
-
-Auto bump policy (current `X.Y.Z` -> next version):
-- small change: `X.Y.(Z+1)` (e.g. `1.1.1+add` equivalent)
-- medium change: `X.(Y+1).0` (e.g. `1.1+a.0` equivalent)
-- large change: `(X+1).0.0` (e.g. `1+a.0.0` equivalent)
-
-Dry-run preview:
+预览 dry-run：
 
 ```bash
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 ```
 
-MCP settings check (manifest + generated MCP/Actions references):
+MCP 设置检查（manifest + 生成后的 MCP / Actions 参考）：
 
 ```bash
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 ```
 
-Ultralytics/DETR support (trainer/repo/export 3-layer helpers):
+Ultralytics / DETR 支持层：
 
 ```bash
 python3 tools/support_ultralytics_detr.py ls -j
@@ -342,18 +314,19 @@ python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultr
 python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json
 ```
 
-See: [`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)
+详见：[`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)
 
-## Manual (PDF)
+## Manual（PDF）
 
-Printable manual source: [`manual/`](manual/README.md).
+可打印 manual 源码：[`manual/`](manual/README.md)
 
-## Support / legal
+## 支持 / 法务
 
 - Contact: develop@toppymicros.com
 - © 2026 ToppyMicroServices OÜ
-Full support/legal: [`docs/support.md`](docs/support.md).
+
+完整支持与法务说明：[`docs/support.md`](docs/support.md)
 
 ## License
 
-Code in this repository is licensed under the Apache License, Version 2.0. See `LICENSE`.
+本仓库代码采用 Apache License 2.0。详见 `LICENSE`。

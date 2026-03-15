@@ -1,6 +1,6 @@
 # YOLOZU (萬) — 日本語README
 
-English README: [`README.md`](README.md)
+English README: [`README.md`](README.md) | 中文README: [`Readme_zh.md`](Readme_zh.md)
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
 [![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
