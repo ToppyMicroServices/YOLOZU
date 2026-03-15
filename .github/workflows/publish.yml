@@ -6,6 +6,8 @@ on:
       - published
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   pypi:
     runs-on: ubuntu-latest
