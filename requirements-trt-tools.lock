@@ -1,0 +1,9 @@
+# TRT/ORT/OpenCV tooling lock for GPU smoke containers and runpod tooling image.
+PyYAML==6.0.3
+numpy==2.4.2
+Pillow==12.1.1
+onnx==1.20.1
+onnxruntime==1.24.2
+opencv-python-headless==4.13.0.92
+cuda-python==13.2.0
+pycocotools==2.0.11

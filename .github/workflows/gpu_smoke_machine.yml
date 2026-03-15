@@ -28,7 +28,7 @@ jobs:
     env:
       NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           persist-credentials: false
 
@@ -72,8 +72,7 @@ jobs:
           print("matmul ok, mean:", float(y.mean().cpu()))
           PY
 
-              python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir -e .
+              python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
               python3 -m yolozu.cli doctor --output - || true
             '
 
@@ -107,8 +106,7 @@ jobs:
               if command -v git >/dev/null 2>&1; then
                 git config --global --add safe.directory /workspace || true
               fi
-              python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime opencv-python-headless cuda-python
+              python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"
@@ -184,7 +182,7 @@ jobs:
 
       - name: Upload TRT smoke artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trt-smoke
           if-no-files-found: ignore

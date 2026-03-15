@@ -1,0 +1,3 @@
+# Build/publish tooling lock (top-level exact versions only; transitive hashes are generated at install time).
+build==1.4.0
+twine==6.2.0

@@ -18,7 +18,7 @@ jobs:
     runs-on: [machine, gpu=t4]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: GPU visible
         shell: bash
@@ -52,8 +52,7 @@ jobs:
                 git config --global --add safe.directory /workspace || true
               fi
 
-              python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir -e .
+              python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
 
               # GPU smoke walkthrough (offline). Exercises CUDA TTT probe via --torch-device.
               bash scripts/smoke.sh --profile deep --torch-device cuda
@@ -88,7 +87,7 @@ jobs:
 
       - name: Upload GPU practical suite artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gpu-practical-suite
           if-no-files-found: error

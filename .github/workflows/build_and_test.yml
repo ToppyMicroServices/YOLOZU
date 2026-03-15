@@ -16,9 +16,9 @@ concurrency:
 
 jobs:
   # Dependency tier policy:
-  # - core:       pip install . (packaging + CLI smoke)
-  # - docs_mcp:   pip install -e '.[mcp,actions]' (docs/manual + MCP/Actions surface)
-  # - recommended: requirements-ci.lock (regression + schema/manifest gates)
+  # - core:       hash-locked runtime deps + local wheel install (packaging + CLI smoke)
+  # - docs_mcp:   hash-locked docs/MCP/Actions deps from exact top-level lock
+  # - recommended: hash-locked requirements-ci.lock (regression + schema/manifest gates)
   # - full:       GPU/backends in separate manual/nightly workflows
   # docs: docs/ci_dependency_tiers.md
   changes:
@@ -30,10 +30,10 @@ jobs:
       manual_ci: ${{ steps.filter.outputs.manual_ci }}
       workflows_ci: ${{ steps.filter.outputs.workflows_ci }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Detect change scope
         id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: |
             full_ci:
@@ -107,10 +107,10 @@ jobs:
     if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Build manual PDF (main.tex)
-        uses: xu-cheng/latex-action@v3
+        uses: xu-cheng/latex-action@e2f99d4b3685b0da93f97e1b86ad8fab81105098 # v3
         with:
           working_directory: manual
           root_file: main.tex
@@ -129,17 +129,16 @@ jobs:
     if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
 
-      - name: Install lightweight deps (runtime + MCP/actions extras)
+      - name: Install lightweight deps (hash-locked docs/MCP/actions set)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[mcp,actions]"
+          python3 tools/ci/install_with_hashes.py --requirements requirements-docs-actions.lock
 
       - name: Manifest + docs references gate
         run: |
@@ -169,17 +168,16 @@ jobs:
     if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
 
-      - name: Install (runtime only)
+      - name: Install (hash-locked runtime + local wheel)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .
+          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
 
       - name: README smoke script
         run: |
@@ -193,17 +191,16 @@ jobs:
     if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install deps (hash-locked recommended tier)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements-ci.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock
 
       - name: Ruff (focused paths)
         run: |
@@ -248,17 +245,16 @@ jobs:
           - "3.11"
           - "3.12"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install (runtime only)
+      - name: Install (hash-locked runtime + local wheel)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .
+          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
 
       - name: Repo smoke script (offline dry-run path)
         run: |
@@ -275,28 +271,30 @@ jobs:
     if: ${{ needs.changes.outputs.full_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install deps (hash-locked recommended tier)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements-ci.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock
 
-      - name: Packaging smoke (pip install + yolozu doctor)
+      - name: Packaging smoke (hash-locked local wheel + yolozu doctor)
         run: |
-          python -m pip install .
+          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
           yolozu doctor --output -
           yolozu export --help
           python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"
 
+      - name: Install build tooling (hash-locked)
+        run: |
+          python3 tools/ci/install_with_hashes.py --requirements requirements-build.lock
+
       - name: Wheel contents gate (schemas/protocols/minimal docs)
         run: |
-          python -m pip install build
           python -m build --wheel
           python - <<'PY'
           import glob
@@ -338,7 +336,6 @@ jobs:
 
       - name: Sdist contents gate (schemas/protocols/docs/manifest)
         run: |
-          python -m pip install build
           python -m build --sdist
           python - <<'PY'
           import glob
@@ -642,7 +639,7 @@ jobs:
 
       - name: Upload migration artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ci_migrate_artifacts
           path: reports/ci_migrate
@@ -876,7 +873,7 @@ jobs:
 
       - name: PyInstaller smoke (build + resources list)
         run: |
-          python -m pip install pyinstaller
+          python3 tools/ci/install_with_hashes.py --requirements requirements-pyinstaller.lock
           pyinstaller -y -n yolozu_bin \
             deploy/pyinstaller/yolozu_entrypoint.py \
             --collect-data yolozu.data \
@@ -887,7 +884,7 @@ jobs:
       - name: PyArmor + PyInstaller smoke (optional)
         if: ${{ vars.PYARMOR_SMOKE == '1' }}
         run: |
-          python -m pip install pyarmor
+          python3 tools/ci/install_with_hashes.py --requirements requirements-pyarmor.lock
           rm -rf build/pyarmor_obf dist/yolozu_pyarmor yolozu_pyarmor.spec
           pyarmor gen -O build/pyarmor_obf deploy/pyinstaller/yolozu_entrypoint.py
           pyinstaller -y -n yolozu_pyarmor \

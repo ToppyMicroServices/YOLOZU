@@ -1,0 +1,2 @@
+# Packaging smoke tool lock.
+pyinstaller==6.19.0

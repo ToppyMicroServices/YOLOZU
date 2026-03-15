@@ -92,7 +92,7 @@ jobs:
     env:
       NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Sanity (GPU visible)
         shell: bash
@@ -126,8 +126,7 @@ jobs:
               nvidia-smi
               python3 --version
               git config --global --add safe.directory /workspace || true
-              python3 -m pip install --upgrade pip
-              python3 -m pip install --no-cache-dir -r requirements.txt onnx onnxruntime opencv-python-headless cuda-python
+              python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"
@@ -241,7 +240,7 @@ jobs:
 
       - name: Upload GPU smoke artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gpu-ngc-smoke
           if-no-files-found: ignore
@@ -256,7 +255,7 @@ jobs:
       CI_LOGS_PUSH_TOKEN: ${{ secrets.CI_LOGS_PUSH_TOKEN }}
       LOG_BRANCH: ci-logs/gpu-ngc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -264,7 +263,7 @@ jobs:
       - name: Download smoke artifacts (if present)
         if: ${{ needs.trt_and_opencv_cuda.result == 'success' }}
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: gpu-ngc-smoke
           path: .tmp_gpu_ngc
@@ -303,7 +302,7 @@ jobs:
 
       - name: Upload gpu-ngc summary artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gpu-ngc-summary
           if-no-files-found: ignore

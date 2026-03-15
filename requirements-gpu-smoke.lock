@@ -1,0 +1,7 @@
+# GPU container smoke lock for repo runtime + unittest entrypoints (torch comes from the base image).
+PyYAML==6.0.3
+numpy==2.4.2
+Pillow==12.1.1
+pytest==9.0.2
+setuptools==82.0.1
+wheel==0.46.3

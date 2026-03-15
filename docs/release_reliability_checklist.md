@@ -63,6 +63,8 @@ DoD:
 - `ci` completed successfully.
 - `container` failures are triaged only if release depends on image artifacts.
 - `ci` includes schema compatibility, golden compatibility, and sdist/wheel package-content gates.
+- GitHub Actions references are SHA-pinned and Python workflow installs use `tools/ci/install_with_hashes.py` so release automation is supply-chain hardened.
+- `main` branch protection requires PR review (1 approval), dismisses stale reviews, requires conversation resolution, and blocks force-pushes.
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.

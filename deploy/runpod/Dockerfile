@@ -19,11 +19,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . .
 
 # YOLOZU intentionally keeps torch out of requirements; this image is for tooling + TRT/ORT exporters.
-RUN python3 -m pip install --upgrade pip setuptools wheel && \
-    python3 -m pip install --no-cache-dir -r requirements.txt && \
-    python3 -m pip install --no-cache-dir \
-      onnxruntime \
-      opencv-python-headless \
-      pycocotools \
-      cuda-python && \
-    python3 -m pip install --no-cache-dir -e .
+RUN python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock

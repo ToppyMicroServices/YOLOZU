@@ -9,7 +9,7 @@ jobs:
   trt_and_opencv_cuda:
     runs-on: [self-hosted, linux, x64, gpu]   # あなたのrunnerラベルに合わせて
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Login to NGC
         env:

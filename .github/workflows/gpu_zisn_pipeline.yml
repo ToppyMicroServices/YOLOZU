@@ -28,7 +28,7 @@ jobs:
     runs-on: [machine, gpu=t4]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: GPU visible
         shell: bash
@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload zisn1 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: zisn1-artifacts
           if-no-files-found: ignore
@@ -70,11 +70,11 @@ jobs:
     env:
       NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Download zisn1 artifacts (optional)
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: zisn1-artifacts
           path: .tmp_zisn1
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload zisn2 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: zisn2-artifacts
           if-no-files-found: ignore
@@ -117,11 +117,11 @@ jobs:
     runs-on: [machine, gpu=t4]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Download zisn1 artifacts (optional)
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: zisn1-artifacts
           path: .tmp_zisn1
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload zisn3 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: zisn3-artifacts
           if-no-files-found: ignore
@@ -166,7 +166,7 @@ jobs:
       ZISN2_RESULT: ${{ needs.zisn2_trt.result }}
       ZISN3_RESULT: ${{ needs.zisn3_opencv_ttt.result }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -174,7 +174,7 @@ jobs:
       - name: Download zisn1 artifacts
         if: ${{ needs.zisn1_train_ort.result == 'success' }}
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: zisn1-artifacts
           path: .tmp_zisn1
@@ -182,7 +182,7 @@ jobs:
       - name: Download zisn2 artifacts
         if: ${{ needs.zisn2_trt.result == 'success' }}
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: zisn2-artifacts
           path: .tmp_zisn2
@@ -190,7 +190,7 @@ jobs:
       - name: Download zisn3 artifacts
         if: ${{ needs.zisn3_opencv_ttt.result == 'success' }}
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: zisn3-artifacts
           path: .tmp_zisn3
@@ -390,7 +390,7 @@ jobs:
 
       - name: Upload gpu-zisn summary artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gpu-zisn-summary
           if-no-files-found: ignore
