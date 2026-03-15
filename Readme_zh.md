@@ -15,7 +15,7 @@ English README: [`README.md`](README.md) | 日本語README: [`Readme_jp.md`](Rea
 
 ## 30 秒快速上手（pip）
 
-**Predictions-first interface contract。** 先导出一次 `predictions.json`，之后就可以跨框架、跨后端做一致的验证与评估。
+**Predictions-first interface contract。** 先生成一次 `predictions.json`，之后就可以跨框架、跨后端执行一致的验证与评估。
 
 ```bash
 python3 -m pip install -U yolozu
@@ -26,19 +26,19 @@ yolozu demo overview
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
-## YOLOZU 是什么
+## YOLOZU 概览
 
-- **面向视觉模型的框架无关评估工具包**：针对 domain shift 下的持续学习与 test-time adaptation，强调可复现与可比较。
-- **支持缓解 catastrophic forgetting 的训练工作流**：提供 self-distillation、replay、PEFT 等训练/评估路径，用于量化并缓解遗忘，但不承诺彻底消除。
-- **支持推理时适配（TTT）**：允许在推理阶段对参数进行受控更新，以应对部署环境中的 domain shift。
-- **把 predictions 作为稳定的 interface contract**：核心不是模型对象本身，而是 `predictions.json` 及其协议化元数据，因此训练、持续学习、TTT、导出与 CI 回归都可以对齐。
-- **多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、6DoF pose。
-- **面向部署**：支持 PyTorch、ONNX Runtime、TensorRT、ExecuTorch，并提供 C++ / Rust 参考推理路径。
-- **AI-first / interface-contract-first 工作流**：每次实验都产出版本化 artifact，方便 CI 自动比较与回归检测。
+- **框架无关的视觉模型评估工具包**：面向域偏移（domain shift）场景下的持续学习与 test-time adaptation，强调可复现、可审计、可比较。
+- **支持缓解灾难性遗忘的训练工作流**：提供 self-distillation、replay、PEFT 等训练/评估路径，用于量化并缓解遗忘，但不承诺彻底消除。
+- **支持推理时适配（TTT）**：允许在推理阶段执行受控参数更新，以应对部署环境中的域偏移。
+- **以 predictions 作为稳定的 interface contract**：核心不是具体模型对象，而是 `predictions.json` 及其协议化元数据，因此训练、持续学习、TTT、导出和 CI 回归都能对齐。
+- **支持多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、6DoF pose。
+- **具备面向部署的导出路径**：支持 PyTorch、ONNX Runtime、TensorRT、ExecuTorch，并提供 C++ / Rust 参考推理模板。
+- **AI-first / interface-contract-first 工作流**：每次实验都产出带版本的 artifact，便于 CI 自动比较与回归检测。
 
 ## 框架比较（同一数据集 + predictions interface contract）
 
-YOLOZU 的核心价值，是让不同模型栈在 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）之上做 apples-to-apples 对比。
+YOLOZU 的核心价值，是让不同模型栈在 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）之上进行真正的 apples-to-apples 对比。
 
 | Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
 | --- | --- | --- | --- | --- |
@@ -49,13 +49,13 @@ YOLOZU 的核心价值，是让不同模型栈在 **同一数据集** 和稳定�
 | MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | Non-dry execution requires `--mmdet-train-script`. |
 | YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | Intended for “external inference → interface contract → eval” workflows. |
 
-最小证明（同一数据、同一报告形状，默认 dry-run）：
+最小验证（同一数据、同一报告形状，默认 dry-run）：
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-可视化示例（instance segmentation demo 生成的 overlay）：
+可视化示例（由 instance segmentation demo 生成的 overlay）：
 
 ![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
 
@@ -66,14 +66,14 @@ python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
 ```
 
-## Quickstart（源码 checkout 后先跑这个）
+## Quickstart（源码 checkout 后先运行）
 
 ```bash
 python3 -m pip install -e .
 bash scripts/smoke.sh
 ```
 
-变更摘要可看 [GitHub Release notes](https://github.com/ToppyMicroServices/YOLOZU/releases)。
+版本变更说明可参考 [GitHub Release notes](https://github.com/ToppyMicroServices/YOLOZU/releases)。
 
 如果系统 Python 启用了 PEP 668（externally managed），请使用虚拟环境：
 
@@ -93,25 +93,25 @@ bash scripts/smoke.sh
 - `reports/smoke_synthgen_overlay.png`
 - `reports/smoke_demo_instance_seg/overlays/*.png`
 
-如果你只想跑 interface contract 检查，不生成 demo PNG：
+如果你只想执行 interface contract 检查，而不生成 demo PNG：
 
 ```bash
 bash scripts/smoke.sh --skip-demo
 ```
 
-如果你想跑更完整的首次 walkthrough（能力声明 + deploy-path dry-run）：
+如果你希望执行更完整的首次 walkthrough（能力声明 + deploy-path dry-run）：
 
 ```bash
 bash scripts/smoke.sh --profile deep
 ```
 
-在 CUDA 单卡机器上，也可以把 deep profile 的 TTT probe 放到 GPU 上：
+在 CUDA 单卡机器上，也可以把 deep profile 中的 TTT probe 放到 GPU 上：
 
 ```bash
 bash scripts/smoke.sh --profile deep --torch-device cuda
 ```
 
-deep profile 额外产出：
+deep profile 的额外产出：
 
 - `reports/smoke_walkthrough_report.json`
 - `reports/smoke_demo_overview.json`
@@ -126,38 +126,38 @@ AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools
 
 学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/learning_features.md`](docs/learning_features.md)
 
-## 从哪里开始（4 个入口）
+## 从这里开始（4 个入口）
 
 - **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval
 - **B: 训练 → 导出 → 评估**：RT-DETR scaffold + run interface contract / Run Contract
 - **C: interface contract 本身**：predictions / adapter / TTT protocol
 - **D: parity / benchmark**：TensorRT、latency benchmark、backend drift
 
-四条路径都在 [`docs/README.md`](docs/README.md) 里有可直接复制的命令。
+以上四条路径都在 [`docs/README.md`](docs/README.md) 中提供了可直接复制的命令。
 
 CLI 说明：
 
-- `yolozu ...` 是 pip / package CLI
+- `yolozu ...` 是 pip 安装后的 package CLI
 - `python3 tools/yolozu.py ...` 是 repo wrapper CLI
 - 两者等价时，通常只需要替换可执行入口（`yolozu` ↔ `python3 tools/yolozu.py`）
 
 模块路径说明：
 
 - canonical Python 模块位于分类后的包路径下（`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`）
-- 旧式 import（例如 `from yolozu.dataset import build_manifest`）通过 `yolozu/__init__.py` 的 alias 继续兼容
+- 历史 import（例如 `from yolozu.dataset import build_manifest`）通过 `yolozu/__init__.py` 中的 alias 保持兼容
 
 ## 关键点
 
-- 自带推理 / 外部推理都可以，只要最终落到稳定的 `predictions.json` interface contract
+- 无论使用仓内推理还是外部推理，只要最终落到稳定的 `predictions.json` interface contract，就可以统一评估
 - validator 会尽早发现 schema drift
-- protocol-pinned `export_settings` 保证比较可复现
+- protocol-pinned `export_settings` 让结果比较可复现
 - parity / benchmark 用于量化 backend drift 与性能差异
-- 默认 CPU 友好，GPU 为可选
+- 默认对 CPU 友好，GPU 为可选增强
 - repo 工具链遵循 Apache-2.0-only 的运维策略
 
-## 为什么是 YOLOZU
+## 为什么选择 YOLOZU
 
-YOLOZU 围绕 predictions-first interface contract 标准化评估：你可以在任意框架、任意运行时做推理，导出 `predictions.json`（以及 `export_settings`），再用固定协议完成验证与评估，实现真正可比较的实验结果。
+YOLOZU 围绕 predictions-first interface contract 标准化评估流程：你可以在任意框架、任意运行时执行推理，导出 `predictions.json`（以及 `export_settings`），再用固定协议完成验证与评估，从而得到真正可横向比较的实验结果。
 
 详情：[`docs/yolozu_spec.md`](docs/yolozu_spec.md)
 
@@ -185,7 +185,7 @@ yolozu demo train
 yolozu demo continual --compare --markdown
 ```
 
-首次可视确认（检查 PNG 确实生成）：
+首次可视确认（确认 PNG 确实生成）：
 
 ```bash
 yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none --num-images 2 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
@@ -211,7 +211,7 @@ python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewsho
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
 ```
 
-一条命令跑完整工作流（prepare + 可选 tiny COCO 自动下载 + staged smoke）：
+一条命令执行完整工作流（prepare + 可选 tiny COCO 自动下载 + staged smoke）：
 
 ```bash
 python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --allow-auto-download --accept-dataset-license --download-num-images 8 --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force
@@ -240,7 +240,7 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 
 详情：[`docs/ttt_protocol.md`](docs/ttt_protocol.md)
 
-TTT improvement micro-demo（展示 metric delta + overlay）：
+TTT improvement micro-demo（展示 metric delta 与 overlay）：
 
 ```bash
 python3 -m pip install -U 'yolozu[demo]'
@@ -259,13 +259,13 @@ Reference adapter regression（RT-DETR，真实模型基线）：
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json
 ```
 
-仅跑 interface contract hard gate：
+仅执行 interface contract hard gate：
 
 ```bash
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json
 ```
 
-仅跑 behavior warn gate：
+仅执行 behavior warn gate：
 
 ```bash
 python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json
@@ -281,7 +281,7 @@ python3 tools/yolozu.py --help
 python3 -m unittest -q
 ```
 
-如果你是在源码 checkout 环境里补装 demo 依赖：
+如果你是在源码 checkout 环境中补装 demo 依赖：
 
 ```bash
 python3 -m pip install -e '.[demo]'
@@ -293,7 +293,7 @@ python3 -m pip install -e '.[demo]'
 bash release.sh
 ```
 
-预览 dry-run：
+dry-run 预览：
 
 ```bash
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
@@ -318,7 +318,7 @@ python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n 
 
 ## Manual（PDF）
 
-可打印 manual 源码：[`manual/`](manual/README.md)
+可打印的 manual 源码：[`manual/`](manual/README.md)
 
 ## 支持 / 法务
 
