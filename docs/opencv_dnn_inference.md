@@ -15,6 +15,7 @@ python3 tools/yolozu.py export \
   --onnx /abs/path/model.onnx \
   --dataset /path/to/coco-yolo \
   --split val2017 \
+  --max-images 8 \
   --imgsz 640 \
   --preprocess rtdetr_resize_640 \
   --decode rtdetr \
@@ -26,6 +27,8 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 ```
 
 The `*.meta.json` sidecar stores reproducibility metadata (`export_settings`, backend/target/version, decode and preprocessing knobs), and `--dump-io` stores model IO tensor signatures for debugging.
+
+Use `--max-images` for quick parity or smoke passes when you want the unified exporter to process only a bounded subset.
 
 ## Tool
 

@@ -108,7 +108,7 @@ python3 tools/yolozu.py export --backend onnxrt --dataset /path/to/yolo-dataset 
 python3 tools/yolozu.py export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --out reports/pred_executorch.json --dry-run
 
 # OpenCV DNN unified backend (auto decode + preset preprocess + IO dump)
-python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --out reports/pred_opencv_dnn_unified.json --force
+python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --split val --max-images 8 --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --out reports/pred_opencv_dnn_unified.json --force
 
 # OpenCV DNN RT-DETR backend (no NMS)
 python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx /path/to/rtdetr.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.01 --out reports/pred_rtdetr_opencv_backend.json --force

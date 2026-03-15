@@ -33,7 +33,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - ExecuTorch (exported `.pte`): `python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --model /abs/path/model.pte --output reports/pred_executorch.json --wrap`
 - OpenCV DNN (single-backend UX): `python3 tools/yolozu.py export --backend opencv-dnn --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json --force`
-- OpenCV DNN (single-backend script): `python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json`
+- OpenCV DNN (single-backend script): `python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --split val2017 --max-images 8 --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json`
 - OpenCV DNN (YOLO-style heads): `python3 tools/export_predictions_opencv_dnn.py ...`
 - OpenCV DNN (YOLO-style heads via unified CLI): `python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.25 --output reports/pred_opencv_dnn_yolo.json --force`
 - OpenCV DNN (RT-DETR decode, no NMS):

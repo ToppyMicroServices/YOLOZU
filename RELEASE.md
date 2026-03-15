@@ -111,6 +111,7 @@ YOLOZU can announce GitHub Releases via `.github/workflows/announce_release.yml`
 - Trigger: GitHub Release `published` (tag push alone does not post).
 - Bundle artifacts (always): `reports/announce/announcement.json`, `reports/announce/announcement.md`, `reports/announce/post_report.json`
 - Posting occurs only when platform secrets/vars are configured.
+- `python3 tools/announce_release.py --x-max-len 280` can be used to override X text truncation for dry-runs or ops recovery.
 
 Required secrets/vars:
 - LinkedIn:

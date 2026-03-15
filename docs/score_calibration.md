@@ -135,11 +135,14 @@ This repo also keeps a lightweight temperature-scaling helper script for quick e
 ```bash
 python3 tools/calibrate_scores.py \
   --dataset data/coco128 \
+  --split val2017 \
   --predictions reports/predictions_dummy.json \
   --output reports/predictions_calibrated.json \
   --output-report reports/calibration_report.json \
   --output-artifact reports/calibration_artifact.json \
-  --temperatures 0.5,1.0,1.5,2.0
+  --temperatures 0.5,1.0,1.5,2.0 \
+  --min-score 0.0 \
+  --max-score 1.0
 ```
 
 ## Outputs
@@ -151,3 +154,9 @@ python3 tools/calibrate_scores.py \
 ## Notes
 
 This uses a lightweight mAP proxy (`yolozu.simple_map`) to avoid external dependencies. The metrics are suitable for relative comparisons on a fixed subset.
+
+Optional legacy-helper knobs:
+
+- `--split`: override dataset split auto-detection.
+- `--temperatures`: comma-separated grid for the temperature sweep.
+- `--min-score` / `--max-score`: clamp calibrated scores before writing the artifact.

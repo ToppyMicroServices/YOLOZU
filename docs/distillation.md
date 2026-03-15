@@ -19,6 +19,9 @@ python3 tools/distill_predictions.py \
   --student reports/predictions_student.json \
   --teacher reports/predictions_teacher.json \
   --dataset data/coco128 \
+  --split val2017 \
+  --alpha 0.5 \
+  --iou-threshold 0.7 \
   --output reports/predictions_distilled.json \
   --output-report reports/distill_report.json \
   --add-missing \
@@ -52,5 +55,6 @@ Recommended safety defaults for practical use:
 - `teacher_min_score >= 0.2` to suppress low-confidence teacher noise
 - finite `max_added_per_image` to cap unmatched-teacher injection
 - high `add_duplicate_iou_threshold` (e.g., `0.85`-`0.95`) to prevent duplicate growth
+- use `--split` when the dataset root contains multiple YOLO splits and auto-detection would be ambiguous
 
 For continual-learning evaluation (including forgetting summaries), see `tools/eval_continual.py` and `docs/continual_learning.md`.

@@ -19,6 +19,7 @@ Dry-run preview:
 
 ```bash
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
+python3 tools/announce_release.py --event-json "$GITHUB_EVENT_PATH" --out-dir reports/announce_preview --x-max-len 280
 ```
 
 ## 1) Required local checks (must pass)

@@ -235,6 +235,13 @@
           "kind": "string",
           "name": "reddit_kind",
           "required": false
+        },
+        {
+          "flag": "--x-max-len",
+          "kind": "number",
+          "name": "x_max_len",
+          "required": false,
+          "default": 280
         }
       ],
       "outputs": [
@@ -1378,6 +1385,31 @@
           "kind": "file",
           "name": "output_artifact",
           "required": false
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--temperatures",
+          "kind": "string",
+          "name": "temperatures",
+          "required": false,
+          "default": "0.5,1.0,1.5,2.0"
+        },
+        {
+          "flag": "--min-score",
+          "kind": "number",
+          "name": "min_score",
+          "required": false
+        },
+        {
+          "flag": "--max-score",
+          "kind": "number",
+          "name": "max_score",
+          "required": false
         }
       ],
       "outputs": [
@@ -2018,6 +2050,26 @@
           "kind": "number",
           "name": "add_score_scale",
           "required": false
+        },
+        {
+          "flag": "--teacher-min-score",
+          "kind": "number",
+          "name": "teacher_min_score",
+          "required": false,
+          "default": 0.0
+        },
+        {
+          "flag": "--max-added-per-image",
+          "kind": "number",
+          "name": "max_added_per_image",
+          "required": false
+        },
+        {
+          "flag": "--add-duplicate-iou-threshold",
+          "kind": "number",
+          "name": "add_duplicate_iou_threshold",
+          "required": false,
+          "default": 0.9
         },
         {
           "default": "reports/predictions_distilled.json",
@@ -5237,6 +5289,12 @@
           "flag": "--split",
           "kind": "string",
           "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
           "required": false
         },
         {
