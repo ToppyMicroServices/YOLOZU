@@ -69,6 +69,7 @@ DoD:
 - Container base images are pinned by digest, including the TensorRT/NGC images used by RunPod and TRT example builds.
 - `main` branch protection requires PR review (1 approval), includes administrators, dismisses stale reviews, requires conversation resolution, and blocks force-pushes.
 - ClusterFuzzLite project files under `.clusterfuzzlite/` and fuzz harnesses under `fuzz/` stay in sync with predictions normalization code.
+- Residual governance-style Scorecard findings that cannot be solved by code alone are tracked in `docs/security_scorecard_governance.md`.
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.
