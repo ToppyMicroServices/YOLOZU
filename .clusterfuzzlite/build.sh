@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /src/YOLOZU
+cd /src
 python3 -m pip install .
 
 for fuzzer in $(find fuzz -name '*_fuzzer.py' | sort); do
