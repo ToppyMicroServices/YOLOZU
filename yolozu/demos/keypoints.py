@@ -88,7 +88,7 @@ def run_keypoints_demo(
 ) -> Path:
     """Keypoints demo using a pretrained Keypoint R-CNN (torchvision)."""
 
-    np, (Image, ImageDraw), (torch, torchvision) = _require_deps()
+    _np, (Image, ImageDraw), (torch, torchvision) = _require_deps()
 
     if image is None:
         picked = _pick_default_image()

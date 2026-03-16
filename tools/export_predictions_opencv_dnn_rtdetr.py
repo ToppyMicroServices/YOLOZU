@@ -413,11 +413,6 @@ def main(argv: list[str] | None = None) -> int:
         ],
     }
 
-    def _pick_by_name(name: str | None) -> Any | None:
-        if not name:
-            return None
-        return probe_outs.get(str(name))
-
     def _auto_pick_boxes() -> str:
         for name, out in probe_outs.items():
             try:

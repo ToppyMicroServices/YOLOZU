@@ -215,7 +215,6 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if tmp_dir_obj and args.keep_tmp:
             print(f"Kept temp dir: {tmp_dir}", file=sys.stderr)
-            tmp_dir_obj = None
 
     # Minimal sanity checks (align with tests).
     if not images_out.is_dir() or not labels_out.is_dir():

@@ -536,7 +536,6 @@ def _refine_offsets(
             history.append(entry)
 
         if loss_prev - best_loss < float(tol_loss):
-            loss_prev = best_loss
             stop_reason = "loss_tol"
             break
         loss_prev = best_loss

@@ -251,19 +251,23 @@ class TestTransformsBridge(unittest.TestCase):
 
     def test_eval_transforms_apply_to_tensor(self):
         """Eval transforms should process a PIL Image → tensor."""
+        torch_mod = None
+        pil_image = None
         try:
-            import torch
+            import torch as torch_mod
             from torchvision.transforms import v2  # noqa: F401
-            from PIL import Image
+            from PIL import Image as pil_image
         except ImportError:
             self.skipTest("torch/torchvision/PIL not available")
 
         from yolozu.training.transforms_bridge import build_eval_transforms
 
         tfm = build_eval_transforms(size=(224, 224))
-        img = Image.new("RGB", (100, 80), color=(128, 64, 32))
+        self.assertIsNotNone(pil_image)
+        self.assertIsNotNone(torch_mod)
+        img = pil_image.new("RGB", (100, 80), color=(128, 64, 32))
         out = tfm(img)
-        self.assertIsInstance(out, torch.Tensor)
+        self.assertIsInstance(out, torch_mod.Tensor)
         self.assertEqual(out.shape[1:], (224, 224))
         self.assertEqual(out.shape[0], 3)
 
