@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import platform
 import shlex
@@ -24,6 +25,8 @@ from yolozu.inference.export_orchestrator import (  # noqa: E402
     sha256_json as _sha256_json,
     write_json as _write_json,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _manifest_path() -> Path:
@@ -703,11 +706,11 @@ def _render_overlays(
                             try:
                                 if float(v) <= 0.0:
                                     continue
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("keypoint visibility coercion skipped: %s", exc, exc_info=True)
                         draw.ellipse([px - r, py - r, px + r, py + r], outline=(0, 0, 255), width=2)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("keypoint overlay rendering skipped: %s", exc, exc_info=True)
 
         out_name = f"{written:06d}_{Path(image_path).name}"
         out_path = overlays_dir / out_name

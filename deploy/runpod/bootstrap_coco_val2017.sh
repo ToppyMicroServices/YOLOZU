@@ -11,6 +11,16 @@ set -euo pipefail
 # - COCO raw:      /tmp/coco/{val2017,annotations}
 # - YOLO dataset:  /tmp/coco-yolo (dataset.json + labels/val2017 + images/val2017)
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  cat <<'EOF'
+Usage: bash deploy/runpod/bootstrap_coco_val2017.sh
+
+Downloads COCO val2017 + annotations into /tmp and converts them into a YOLO-format
+dataset rooted at /tmp/coco-yolo using hash-locked Python dependencies.
+EOF
+  exit 0
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 cd "${REPO_ROOT}"
@@ -26,9 +36,10 @@ echo "[bootstrap] Installing OS deps (unzip)"
 apt-get update -qq
 apt-get install -y -qq unzip >/dev/null
 
-echo "[bootstrap] Installing Python deps (pycocotools)"
-"${PY}" -m pip install -q -U pip
-"${PY}" -m pip install -q pycocotools
+echo "[bootstrap] Installing Python deps (hash-locked runtime + pycocotools)"
+"${PY}" tools/ci/install_with_hashes.py \
+  --requirements requirements-runtime.lock \
+  --requirements requirements-runpod-bootstrap.lock
 
 COCO_ROOT="/tmp/coco"
 YOLO_ROOT="/tmp/coco-yolo"
@@ -62,4 +73,3 @@ echo "[bootstrap] Converting COCO -> YOLO labels at ${YOLO_ROOT}"
 
 echo "[bootstrap] Done"
 echo "${YOLO_ROOT}"
-

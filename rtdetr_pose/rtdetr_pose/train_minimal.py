@@ -8,6 +8,7 @@ The heavy lifting is split across submodules:
 # ruff: noqa: F403,F405
 
 import json
+import logging
 import os
 import random
 import socket
@@ -62,6 +63,12 @@ from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs, _derive_score_b
 from rtdetr_pose.train_dataset import _pad_field  # noqa: F401
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
+
+logger = logging.getLogger(__name__)
+
+
+def _debug_swallow(context: str, exc: Exception) -> None:
+    logger.debug("%s: %s", context, exc, exc_info=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -195,14 +202,14 @@ def main(argv: list[str] | None = None) -> int:
         import numpy as np  # type: ignore
 
         np.random.seed(seed)
-    except Exception:
-        pass
+    except Exception as exc:
+        _debug_swallow("numpy seed setup skipped", exc)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         try:
             torch.cuda.manual_seed_all(seed)
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_swallow("cuda seed setup skipped", exc)
     if bool(getattr(args, "deterministic", False)) and hasattr(torch.backends, "cudnn"):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -410,23 +417,23 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(model_cfg, "enable_mim", None) is not None:
             try:
                 model_cfg.enable_mim = bool(args.enable_mim)
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("enable_mim override skipped", exc)
         if getattr(model_cfg, "mim_geom_channels", None) is not None:
             try:
                 model_cfg.mim_geom_channels = int(getattr(model_cfg, "mim_geom_channels", 2) or 2)
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("mim_geom_channels override skipped", exc)
         if getattr(model_cfg, "depth_mode", None) is not None:
             try:
                 model_cfg.depth_mode = str(args.depth_mode)
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("depth_mode override skipped", exc)
         if getattr(model_cfg, "depth_dropout", None) is not None:
             try:
                 model_cfg.depth_dropout = float(args.depth_dropout)
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("depth_dropout override skipped", exc)
         model = build_model(model_cfg)
     else:
         model = RTDETRPose(
@@ -447,8 +454,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.task_aligner and args.task_aligner != "none":
             try:
                 loss_cfg.task_aligner = str(args.task_aligner)
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("task_aligner override skipped", exc)
         losses_fn = build_losses(loss_cfg)
     else:
         losses_fn = Losses(task_aligner=args.task_aligner)
@@ -743,8 +750,8 @@ def main(argv: list[str] | None = None) -> int:
             if device.type == "cuda":
                 try:
                     torch.cuda.reset_peak_memory_stats(device)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    _debug_swallow("peak memory reset skipped", exc)
             if bool(terminate_flag.get("terminate", False)):
                 if is_main and args.checkpoint_bundle_out:
                     save_checkpoint_bundle(
@@ -1047,8 +1054,8 @@ def main(argv: list[str] | None = None) -> int:
                             for group in optim.param_groups:
                                 try:
                                     group["lr"] = float(group.get("lr", 0.0)) * decay
-                                except Exception:
-                                    pass
+                                except Exception as exc:
+                                    _debug_swallow("non-finite loss lr decay skipped", exc)
                         if is_main and args.metrics_jsonl:
                             lr_now = None
                             try:
@@ -1130,8 +1137,8 @@ def main(argv: list[str] | None = None) -> int:
                         for group in optim.param_groups:
                             try:
                                 group["lr"] = float(group.get("lr", 0.0)) * decay
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                _debug_swallow("non-finite grad lr decay skipped", exc)
                     if is_main and args.metrics_jsonl:
                         lr_now = None
                         try:
@@ -1171,14 +1178,14 @@ def main(argv: list[str] | None = None) -> int:
                     if sched is not None:
                         try:
                             sched.step()
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            _debug_swallow("scheduler step skipped", exc)
 
                     if ema is not None:
                         try:
                             ema.update()
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            _debug_swallow("ema update skipped", exc)
 
                     if si_accum is not None:
                         si_accum.update_after_step(unwrap_model(model))

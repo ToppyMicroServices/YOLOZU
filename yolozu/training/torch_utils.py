@@ -9,6 +9,7 @@ and raise clear errors when it is missing.
 from __future__ import annotations
 
 import contextlib
+import logging
 import warnings
 from typing import Any, Callable, Sequence
 
@@ -21,6 +22,8 @@ __all__ = [
     "seed_everything",
     "configure_matmul_precision",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -317,7 +320,7 @@ def auto_device(*, prefer: str | None = None) -> Any:
             if dev.type == "cpu":
                 return dev
         except Exception:
-            pass  # fall through to auto-detect
+            logger.debug("preferred device parse failed; falling back to auto-detect", exc_info=True)
 
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -366,8 +369,12 @@ def seed_everything(seed: int = 42) -> int:
         # older PyTorch without warn_only
         try:
             torch.use_deterministic_algorithms(True)
-        except Exception:
-            pass
+        except Exception as exc:
+            warnings.warn(
+                f"torch.use_deterministic_algorithms(True) failed; continuing without strict deterministic kernels: {exc}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
     return seed
 

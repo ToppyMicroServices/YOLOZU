@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=nvcr.io/nvidia/tensorrt:24.05-py3
-FROM ${BASE_IMAGE}
+FROM nvcr.io/nvidia/tensorrt:24.05-py3@sha256:2cbb055816eb56a1dc688ef659932fccad11cd3bb339eaf59f324f0e255f18a9
 
 WORKDIR /workspace/YOLOZU
 

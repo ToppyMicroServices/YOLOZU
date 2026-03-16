@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import math
 import random
 import sys
@@ -17,6 +18,12 @@ except ImportError:  # pragma: no cover
     torch = None
 
 from yolozu.run_record import build_run_record
+
+logger = logging.getLogger(__name__)
+
+
+def _debug_swallow(context: str, exc: Exception) -> None:
+    logger.debug("%s: %s", context, exc, exc_info=True)
 
 
 def _now_utc() -> str:
@@ -114,14 +121,14 @@ def unwrap_model(model: "torch.nn.Module") -> "torch.nn.Module":
             try:
                 model = model.module
                 continue
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("model.module unwrap skipped", exc)
         if hasattr(model, "_orig_mod"):
             try:
                 model = model._orig_mod  # type: ignore[attr-defined]
                 continue
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_swallow("model._orig_mod unwrap skipped", exc)
         return model
 
 
@@ -272,8 +279,8 @@ def run_onnxrt_parity(
     gen = torch.Generator(device="cpu")
     try:
         gen.manual_seed(int(seed))
-    except Exception:
-        pass
+    except Exception as exc:
+        _debug_swallow("generator seed setup skipped", exc)
     x = torch.rand((1, 3, int(image_size), int(image_size)), generator=gen, dtype=torch.float32, device="cpu")
     report["input"] = {"shape": [1, 3, int(image_size), int(image_size)], "dtype": "float32", "seed": int(seed)}
 
@@ -389,30 +396,30 @@ def restore_rng_state(state: dict[str, Any] | None) -> None:
     if py_state is not None:
         try:
             random.setstate(py_state)
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_swallow("python RNG restore skipped", exc)
     np_state = state.get("numpy")
     if np_state is not None:
         try:
             import numpy as np  # type: ignore
 
             np.random.set_state(np_state)
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_swallow("numpy RNG restore skipped", exc)
     if torch is None:
         return
     torch_state = state.get("torch")
     if torch_state is not None:
         try:
             torch.set_rng_state(torch_state)
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_swallow("torch RNG restore skipped", exc)
     cuda_state = state.get("torch_cuda")
     if cuda_state is not None and torch.cuda.is_available():
         try:
             torch.cuda.set_rng_state_all(cuda_state)
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_swallow("cuda RNG restore skipped", exc)
 
 
 def _rotation_matrix_from_rpy(roll_rad: float, pitch_rad: float, yaw_rad: float) -> "torch.Tensor":
