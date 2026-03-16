@@ -5,17 +5,17 @@
 # This keeps PyPI as the primary index while allowing torch to resolve.
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-torch>=2.1
+torch>=2.8.0
 
 # ONNX export + ONNXRuntime parity tests (CPU).
-onnx>=1.14
+onnx>=1.16.2
 onnxruntime>=1.17
 
 # Optional (used by tools/rtdetr_pose train_minimal when --real-images enabled)
-Pillow>=10.0
+Pillow>=12.1.1
 
 # Optional: lets you run `pytest` even though tests use `unittest`.
 pytest>=7.0
 
-# Required by PyTorch 2.1+ for ONNX export
+# Required by PyTorch 2.8+ for ONNX export
 onnxscript>=0.1
