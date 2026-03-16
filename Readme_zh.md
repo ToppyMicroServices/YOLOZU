@@ -26,6 +26,22 @@ yolozu demo overview
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
+## Real-Image Showcase
+
+下图来自仓库内置 demo 的真实图像输出，目的是先直观看到多任务结果，再回到同一套 predictions interface contract。
+
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
+
+复现命令（真实图像推理；keypoints / instance segmentation 需要 `torch` + `torchvision`，pose 需要 `opencv-python` 或 `opencv-contrib-python`）：
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
+```
+
 ## YOLOZU 概览
 
 - **框架无关的视觉模型评估工具包**：面向域偏移（domain shift）场景下的持续学习与 test-time adaptation，强调可复现、可审计、可比较。
@@ -53,20 +69,6 @@ YOLOZU 的核心价值，在于让不同模型栈基于 **同一数据集** 和�
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
-```
-
-可视化示例（YOLOZU 的真实图像 multi-task demo 输出）：
-
-![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
-
-复现命令（真实图像推理；keypoints / instance segmentation 需要 `torch` + `torchvision`，pose 需要 `opencv-python` 或 `opencv-contrib-python`）：
-
-```bash
-python3 -m pip install -U 'yolozu[demo]'
-yolozu demo keypoints
-python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
-yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
-yolozu demo pose --backend aruco
 ```
 
 ## Quickstart（源码 checkout 后先运行）

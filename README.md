@@ -27,6 +27,22 @@ Writes: `demo_output/overview/<utc>/demo_overview_report.json`
 
 If YOLOZU saved you time, please star to help others find it.
 
+## Real-Image Showcase
+
+Examples below come from the in-repo demos and keep the same predictions interface contract across tasks.
+
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
+
+Reproduce the showcase panels (real-image inference; `torch`+`torchvision` for keypoints / instance-seg, `opencv-python` or `opencv-contrib-python` for pose):
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
+```
+
 ## YOLOZU at a glance
 
 - **Framework-agnostic evaluation toolkit for vision models**: designed for reproducible continual learning and test-time adaptation under domain shift.
@@ -58,20 +74,6 @@ Minimal proof (same dataset, same report shape; safe default is dry-run):
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
-```
-
-Visual evidence (real-image demo overlays produced by YOLOZU):
-
-![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
-
-Reproduce the showcase panels (real-image inference; `torch`+`torchvision` for keypoints / instance-seg, `opencv-python` or `opencv-contrib-python` for pose):
-
-```bash
-python3 -m pip install -U 'yolozu[demo]'
-yolozu demo keypoints
-python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
-yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
-yolozu demo pose --backend aruco
 ```
 
 
