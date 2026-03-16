@@ -69,6 +69,23 @@ yolozu demo continual --compare --markdown
 
 \noindent Note: \cmd{yolozu demo depth} defaults to Depth Anything (via Transformers) and can also run MiDaS/DPT. Both paths download weights on the first run.
 
+\subsection{Real-image showcase}
+For a compact visual proof that the demo suite produces useful artifacts on real images, the repository includes a shared showcase montage spanning keypoints, instance segmentation, and 6DoF pose:
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/readme_multitask_showcase.png}
+  \caption{Real-image outputs from \cmd{yolozu demo keypoints}, \cmd{yolozu demo instance-seg}, and \cmd{yolozu demo pose --backend aruco}. The three tasks differ, but all remain aligned with the same predictions interface contract mindset.}
+\end{figure}
+
+The corresponding commands are:
+\begin{lstlisting}[language=bash]
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
+\end{lstlisting}
+
 To enable the COCO instances (polygon) background for the instance-seg demo without long flags:
 \begin{lstlisting}[language=bash]
 python3 scripts/download_coco_instances_tiny.py

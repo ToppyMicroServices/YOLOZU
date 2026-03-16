@@ -21,6 +21,22 @@ yolozu demo overview
 
 もしYOLOZUが時間短縮に役立ったら、Starで応援してください（他の人が見つけやすくなります）。
 
+## Real-Image Showcase
+
+下の図は in-repo demo の実画像出力で、タスクが変わっても同じ predictions interface contract に揃うことを示します。
+
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
+
+再現（real-image inference。keypoints / instance-seg は `torch`+`torchvision`、pose は `opencv-python` または `opencv-contrib-python` が必要）:
+
+```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
+python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
+yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
+```
+
 視覚モデル評価のためのフレームワーク非依存ツールキット YOLOZU は、
 ドメインシフト下における継続学習およびテスト時適応（TTT: test-time adaptation/training）を
 再現可能に扱うことを目的として設計している。
@@ -71,20 +87,6 @@ TTT(Test time training)による推論時の重み調整による継続的な学
 
 ```bash
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
-```
-
-可視確認（YOLOZU の real-image multi-task demo 出力例）:
-
-![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
-
-再現（real-image inference。keypoints / instance-seg は `torch`+`torchvision`、pose は `opencv-python` または `opencv-contrib-python` が必要）:
-
-```bash
-python3 -m pip install -U 'yolozu[demo]'
-yolozu demo keypoints
-python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
-yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
-yolozu demo pose --backend aruco
 ```
 
 対象:
