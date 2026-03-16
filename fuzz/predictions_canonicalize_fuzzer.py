@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import Any
 
 try:
@@ -31,7 +32,8 @@ def consume_input(data: bytes) -> None:
 def main() -> None:
     if atheris is None:  # pragma: no cover
         raise SystemExit("atheris is required to run fuzz targets")
-    atheris.Setup([], consume_input)
+    argv = sys.argv if sys.argv else ["predictions_canonicalize_fuzzer"]
+    atheris.Setup(argv, consume_input)
     atheris.Fuzz()
 
 
