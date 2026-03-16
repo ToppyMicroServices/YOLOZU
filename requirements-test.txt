@@ -8,7 +8,7 @@
 torch>=2.8.0
 
 # ONNX export + ONNXRuntime parity tests (CPU).
-onnx>=1.16.2
+onnx>=1.17.0
 onnxruntime>=1.17
 
 # Optional (used by tools/rtdetr_pose train_minimal when --real-images enabled)
