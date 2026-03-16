@@ -60,15 +60,18 @@ Minimal proof (same dataset, same report shape; safe default is dry-run):
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-Visual evidence (example overlays produced by the instance-seg demo):
+Visual evidence (real-image demo overlays produced by YOLOZU):
 
-![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
 
-Reproduce (real-image inference, CPU; requires `torch`+`torchvision`):
+Reproduce the showcase panels (real-image inference; `torch`+`torchvision` for keypoints / instance-seg, `opencv-python` or `opencv-contrib-python` for pose):
 
 ```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
 python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
 ```
 
 
@@ -263,11 +266,7 @@ Example stdout (CPU, deterministic seeds; absolute values are tiny by design, th
 - `map50_95 0.000326797 → 0.000392157`
 - `changed_images 10 / 10` (`diff_summary.changed_images`)
 
-Example overlays (same shifted input, predictions in the predictions interface contract):
-
-| No TTT | With TTT (Tent, safe preset) |
-| --- | --- |
-| ![No TTT overlay example](docs/assets/demo_ttt_overlay_no_ttt.png) | ![With TTT overlay example](docs/assets/demo_ttt_overlay_with_ttt.png) |
+Visual before/after examples and delta overlays are documented in [`docs/install.md`](docs/install.md) and the manual figures, rather than in the README.
 
 Reference adapter regression (RT-DETR, real-image baseline):
 

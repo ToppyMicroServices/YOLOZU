@@ -55,15 +55,18 @@ YOLOZU 的核心价值，在于让不同模型栈基于 **同一数据集** 和�
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-可视化示例（由 instance segmentation demo 生成的 overlay）：
+可视化示例（YOLOZU 的真实图像 multi-task demo 输出）：
 
-![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
 
-复现命令（真实图像推理，CPU；需要 `torch` + `torchvision`）：
+复现命令（真实图像推理；keypoints / instance segmentation 需要 `torch` + `torchvision`，pose 需要 `opencv-python` 或 `opencv-contrib-python`）：
 
 ```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
 python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
 ```
 
 ## Quickstart（源码 checkout 后先运行）

@@ -73,15 +73,18 @@ TTT(Test time training)による推論時の重み調整による継続的な学
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
 ```
 
-可視確認（instance-seg demo overlay 例）:
+可視確認（YOLOZU の real-image multi-task demo 出力例）:
 
-![Instance-seg demo (real COCO image + torchvision Mask R-CNN inference) overlay evidence](docs/assets/instance_seg_coco_instances_demo.png)
+![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
 
-再現（real-image inference, CPU; `torch`+`torchvision` が必要）:
+再現（real-image inference。keypoints / instance-seg は `torch`+`torchvision`、pose は `opencv-python` または `opencv-contrib-python` が必要）:
 
 ```bash
+python3 -m pip install -U 'yolozu[demo]'
+yolozu demo keypoints
 python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
 yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
+yolozu demo pose --backend aruco
 ```
 
 対象:
@@ -351,11 +354,7 @@ stdout例（CPU, deterministic seed。絶対値は小さいですが「差分が
 - `map50_95 0.000326797 → 0.000392157`
 - `changed_images 10 / 10`（`diff_summary.changed_images`）
 
-例（同一の shifted input、predictions interface contract の出力を overlay）:
-
-| No TTT | With TTT (Tent, safe preset) |
-| --- | --- |
-| ![No TTT overlay example](docs/assets/demo_ttt_overlay_no_ttt.png) | ![With TTT overlay example](docs/assets/demo_ttt_overlay_with_ttt.png) |
+overlay の before/after や delta 画像は、README ではなく [`docs/install.md`](docs/install.md) と manual の図版にまとめています。
 
 注意:
 - TTT は torch backend 限定です（ONNXRuntime/TensorRT は TTA か precomputed predictions を推奨）
