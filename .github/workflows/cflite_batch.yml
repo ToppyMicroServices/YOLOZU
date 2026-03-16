@@ -1,0 +1,48 @@
+name: ClusterFuzzLite batch fuzzing
+
+on:
+  schedule:
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  batch-fuzzing:
+    name: Batch fuzzing (${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Build fuzzers
+        uses: google/clusterfuzzlite/actions/build_fuzzers@52ecc61cb587ee99c26825a112a21abf19c7448c
+        with:
+          language: python
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sanitizer: ${{ matrix.sanitizer }}
+
+      - name: Run fuzzers
+        uses: google/clusterfuzzlite/actions/run_fuzzers@52ecc61cb587ee99c26825a112a21abf19c7448c
+        with:
+          language: python
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fuzz-seconds: 900
+          mode: batch
+          sanitizer: ${{ matrix.sanitizer }}
+          output-sarif: true
+
+      - name: Upload fuzzing SARIF
+        if: ${{ always() && hashFiles('fuzzing-sarif/results.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@603b797f8b14b413fe025cd935a91c16c4782713 # v3
+        with:
+          sarif_file: fuzzing-sarif/results.sarif

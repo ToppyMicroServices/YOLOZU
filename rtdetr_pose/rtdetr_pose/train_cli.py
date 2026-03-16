@@ -33,7 +33,7 @@ def load_config_file(path: str | Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError:
         try:
             import yaml
         except Exception as exc:  # pragma: no cover
@@ -1070,7 +1070,7 @@ def apply_run_contract_defaults(args: argparse.Namespace) -> tuple[argparse.Name
     try:
         if float(getattr(args, "clip_grad_norm", 0.0) or 0.0) <= 0.0:
             args.clip_grad_norm = 1.0
-    except Exception:
+    except (TypeError, ValueError):
         pass
 
     return args, {
@@ -1183,6 +1183,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     # Back-compat alias used throughout this script.
     try:
         args.grad_accum = int(getattr(args, "gradient_accumulation_steps", 1) or 1)
-    except Exception:
+    except (TypeError, ValueError):
         args.grad_accum = 1
     return args

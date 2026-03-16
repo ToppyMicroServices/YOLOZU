@@ -1,0 +1,2 @@
+# Hash-locked bootstrap deps for RunPod COCO val2017 preparation.
+pycocotools==2.0.11

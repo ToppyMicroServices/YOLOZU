@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+def _debug_demo_summary(context: str, exc: Exception) -> None:
+    logger.debug("%s: %s", context, exc, exc_info=True)
 
 
 def _optional_module_status(module: str) -> dict[str, Any]:
@@ -146,11 +153,13 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 if isinstance(overlays_dir, str) and overlays_dir:
                     try:
                         overlays = sorted(Path(overlays_dir).glob("*.png"))
-                    except Exception:
+                    except Exception as exc:
+                        _debug_demo_summary("instance-seg overlays directory scan skipped", exc)
                         overlays = []
                     if overlays:
                         print(str(overlays[0]))
-        except Exception:
+        except Exception as exc:
+            _debug_demo_summary("instance-seg report summary skipped", exc)
             if label:
                 print(label)
         print(str(out_path))
@@ -605,8 +614,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 encoding="utf-8",
             )
             print(f"suite_config: {suite_cfg_path}")
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("instance-seg suite config write skipped", exc)
 
         # 3) Continual demo (skip if torch missing)
         try:
@@ -663,7 +672,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             try:
                 instances_ok = Path(str(resolved_instances)).exists() if resolved_instances else False
                 images_ok = Path(str(resolved_images)).exists() if resolved_images else False
-            except Exception:
+            except Exception as exc:
+                _debug_demo_summary("COCO path availability probe failed", exc)
                 instances_ok = False
                 images_ok = False
 
@@ -767,8 +777,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 encoding="utf-8",
             )
             print(f"config: {cfg_path}")
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("instance-seg config echo skipped", exc)
         _print_instance_seg_report(out_path=Path(out))
         return 0
 
@@ -819,8 +829,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 print(str(overlay_raw))
             if overlay_tta:
                 print(str(overlay_tta))
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("instance-seg TTA artifact summary skipped", exc)
         print(str(out))
         return 0
 
@@ -920,8 +930,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                     md_path = Path(out).with_suffix(".md")
                     md_path.write_text(md, encoding="utf-8")
                     print(str(md_path))
-            except Exception:
-                pass
+            except Exception as exc:
+                _debug_demo_summary("continual demo markdown write skipped", exc)
             print(str(out))
             return 0
 
@@ -987,8 +997,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 md_path = Path(out).with_suffix(".md")
                 md_path.write_text(md, encoding="utf-8")
                 print(str(md_path))
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("continual suite markdown write skipped", exc)
         print(str(out))
         return 0
 
@@ -1079,8 +1089,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
             if overlay:
                 print(str(overlay))
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("pose demo summary skipped", exc)
         print(str(out))
         return 0
 
@@ -1130,8 +1140,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
             if overlay:
                 print(str(overlay))
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("keypoints demo summary skipped", exc)
         print(str(out))
         return 0
 
@@ -1179,8 +1189,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 print(
                     f"depth demo: model={settings.get('model')} depth_range=[{d.get('min'):.3g}, {d.get('max'):.3g}] (output_dir={run_dir})"
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("depth demo summary skipped", exc)
         print(str(out))
         return 0
 
@@ -1217,8 +1227,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 f"steps={train.get('steps')} loss_mean={train.get('loss_mean'):.3f} "
                 f"val_acc={val.get('acc'):.3f} (output_dir={settings.get('run_dir')})"
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            _debug_demo_summary("train demo summary skipped", exc)
         print(str(out))
         return 0
     raise SystemExit("unknown demo command")

@@ -53,6 +53,7 @@ DoD:
 
 - `.github/workflows/build_and_test.yml` (**required**): must be green on target commit.
 - `.github/workflows/codeql.yml` (**required for security posture**): must be green on target commit or explicitly skipped for unsupported languages.
+- `.github/workflows/cflite_pr.yml` / `.github/workflows/cflite_batch.yml` (**required for fuzzing posture**): keep the ClusterFuzzLite harness for predictions interface contract normalization/build green so Scorecard can observe an active fuzzing path.
 - `.github/workflows/manual_doi.yml` (**required when shipping manual update**): publishes `manual/build/yolozu_manual.pdf` to a separate Zenodo record and links it to software concept DOI.
 - `.github/workflows/container.yml` (**optional publish**): expected to run for container-related changes on `main`; publishes only on tag/manual.
 - `.github/workflows/announce_release.yml` (**optional announce**): posts GitHub Release announcement to LinkedIn/X/Reddit when secrets are configured; always uploads a post bundle artifact.
@@ -65,7 +66,9 @@ DoD:
 - `container` failures are triaged only if release depends on image artifacts.
 - `ci` includes schema compatibility, golden compatibility, and sdist/wheel package-content gates.
 - GitHub Actions references are SHA-pinned and Python workflow installs use `tools/ci/install_with_hashes.py` so release automation is supply-chain hardened.
+- Container base images are pinned by digest, including the TensorRT/NGC images used by RunPod and TRT example builds.
 - `main` branch protection requires PR review (1 approval), includes administrators, dismisses stale reviews, requires conversation resolution, and blocks force-pushes.
+- ClusterFuzzLite project files under `.clusterfuzzlite/` and fuzz harnesses under `fuzz/` stay in sync with predictions normalization code.
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.
