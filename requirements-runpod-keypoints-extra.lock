@@ -1,0 +1,2 @@
+# Extra packages for runpod COCO keypoints oracle evaluation.
+pycocotools==2.0.11

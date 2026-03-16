@@ -1,0 +1,5 @@
+# Extra packages for RT-DETR pose evaluation workflows.
+onnx==1.20.1
+onnxruntime==1.24.3
+onnxscript==0.6.2
+pycocotools==2.0.11

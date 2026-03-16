@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+ARG BASE_IMAGE=ubuntu:22.04@sha256:3ba65aa20f86a0fad9df2b2c259c613df006b2e6d0bfcc8a146afb8c525a9751
+FROM ${BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ORT_VERSION=1.24.1
@@ -31,4 +32,3 @@ RUN cmake -S examples/infer_cpp -B /build \
 WORKDIR /build
 
 CMD ["./yolozu_infer_stub", "--help"]
-

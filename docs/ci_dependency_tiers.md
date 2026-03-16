@@ -28,7 +28,7 @@ YOLOZU uses a tiered CI dependency model to keep signal high while avoiding opti
 - `core` catches packaging/runtime breakages cheaply.
 - `docs_mcp` validates docs/MCP changes quickly without spending runtime-heavy CI budget.
 - `recommended` gives stable regression signals with an exact-version lock that is installed via a generated `--require-hashes` wheelhouse.
-- `full` is intentionally separated because GPU/provider stacks are expensive and noisy for every PR.
+- `full` is intentionally separated because GPU/provider stacks are expensive and noisy for every PR. The GPU shell helpers and container images now also layer exact-version extras on top of `requirements-runtime.lock` via `tools/ci/install_with_hashes.py`.
 
 ## Optional extras policy
 

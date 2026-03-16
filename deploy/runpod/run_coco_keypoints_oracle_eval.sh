@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  cat <<'EOF'
+Usage: bash deploy/runpod/run_coco_keypoints_oracle_eval.sh
+
+Builds a COCO keypoints validation dataset and runs the oracle OKS evaluation with
+hash-locked Python dependencies.
+EOF
+  exit 0
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${REPO_ROOT}"
 
@@ -8,7 +18,9 @@ COCO_ROOT="${COCO_ROOT:-/workspace/coco2017}"
 DATASET_OUT="${DATASET_OUT:-/workspace/coco2017_kp_yolozu}"
 MAX_IMAGES="${MAX_IMAGES:-500}"
 
-python3 -m pip install -q -r requirements.txt pycocotools
+python3 tools/ci/install_with_hashes.py \
+  --requirements requirements-runtime.lock \
+  --requirements requirements-runpod-keypoints-extra.lock
 
 bash deploy/runpod/bootstrap_coco_keypoints_val2017.sh
 
@@ -39,4 +51,3 @@ python3 tools/eval_keypoints.py \
   --output "${RUN_DIR}/keypoints_eval_oks.json"
 
 echo "${RUN_DIR}"
-

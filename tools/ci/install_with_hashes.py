@@ -44,9 +44,20 @@ def _write_hash_locked_requirements(wheels: Iterable[Path], output: Path) -> lis
     return lines
 
 
-def _download_exact_requirements(python_exe: str, requirement_files: list[Path], wheelhouse: Path) -> list[Path]:
+def _download_exact_requirements(
+    python_exe: str,
+    requirement_files: list[Path],
+    wheelhouse: Path,
+    *,
+    index_url: str = "",
+    extra_index_urls: list[str] | None = None,
+) -> list[Path]:
     before = {p.name for p in wheelhouse.glob("*.whl")}
     cmd = [python_exe, "-m", "pip", "download", "--dest", str(wheelhouse), "--only-binary=:all:"]
+    if index_url:
+        cmd.extend(["--index-url", index_url])
+    for extra_index_url in extra_index_urls or []:
+        cmd.extend(["--extra-index-url", extra_index_url])
     for req in requirement_files:
         cmd.extend(["-r", str(req)])
     _run(cmd)
@@ -56,8 +67,21 @@ def _download_exact_requirements(python_exe: str, requirement_files: list[Path],
     return after
 
 
-def _install_hash_locked_requirements(python_exe: str, requirement_files: list[Path], wheelhouse: Path) -> None:
-    wheels = _download_exact_requirements(python_exe, requirement_files, wheelhouse)
+def _install_hash_locked_requirements(
+    python_exe: str,
+    requirement_files: list[Path],
+    wheelhouse: Path,
+    *,
+    index_url: str = "",
+    extra_index_urls: list[str] | None = None,
+) -> None:
+    wheels = _download_exact_requirements(
+        python_exe,
+        requirement_files,
+        wheelhouse,
+        index_url=index_url,
+        extra_index_urls=extra_index_urls,
+    )
     lock_path = wheelhouse / "resolved.requirements.lock"
     lines = _write_hash_locked_requirements(wheels, lock_path)
     if not lines:
@@ -158,6 +182,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Python executable used for pip invocations. Defaults to the current interpreter.",
     )
     p.add_argument(
+        "--index-url",
+        default="",
+        help="Primary package index URL passed through to pip download.",
+    )
+    p.add_argument(
+        "--extra-index-url",
+        action="append",
+        default=[],
+        help="Extra package index URL passed through to pip download. Repeatable.",
+    )
+    p.add_argument(
         "--keep-wheelhouse",
         action="store_true",
         help="Keep the wheelhouse directory after a successful run.",
@@ -181,7 +216,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         req_files = [Path(p).resolve() for p in args.requirements]
         if req_files:
-            _install_hash_locked_requirements(args.python, req_files, wheelhouse)
+            _install_hash_locked_requirements(
+                args.python,
+                req_files,
+                wheelhouse,
+                index_url=args.index_url,
+                extra_index_urls=args.extra_index_url,
+            )
         if args.install_local_wheel:
             _install_local_wheel(args.python, Path(args.local_wheel_source).resolve(), wheelhouse)
         print(f"wheelhouse={wheelhouse}")

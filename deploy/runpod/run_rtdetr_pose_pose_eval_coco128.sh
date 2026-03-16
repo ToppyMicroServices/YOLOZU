@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  cat <<'EOF'
+Usage: bash deploy/runpod/run_rtdetr_pose_pose_eval_coco128.sh
+
+Runs the RT-DETR pose evaluation sweep on coco128 with hash-locked Python dependencies.
+EOF
+  exit 0
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${REPO_ROOT}"
 
@@ -22,7 +31,9 @@ MAX_DETS="${MAX_DETS:-100}"
 CONFIG="${CONFIG:-configs/yolo26_rtdetr_pose/yolo26n.json}"
 
 echo "[pose-eval] Installing deps (idempotent)..."
-python3 -m pip install -q -r requirements.txt onnx onnxruntime onnxscript pycocotools
+python3 tools/ci/install_with_hashes.py \
+  --requirements requirements-runtime.lock \
+  --requirements requirements-rtdetr-pose-extra.lock
 
 echo "[pose-eval] Ensuring coco128..."
 YOLOZU_INSECURE_SSL=1 bash tools/fetch_coco128.sh >/dev/null

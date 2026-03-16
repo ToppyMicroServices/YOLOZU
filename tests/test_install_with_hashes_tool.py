@@ -30,6 +30,29 @@ class InstallWithHashesToolTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             install_with_hashes.main([])
 
+    def test_parser_supports_index_urls(self):
+        parser = install_with_hashes.build_parser()
+        args = parser.parse_args(
+            [
+                "--requirements",
+                "requirements-runtime.lock",
+                "--index-url",
+                "https://example.com/simple",
+                "--extra-index-url",
+                "https://download.example.com/simple",
+                "--extra-index-url",
+                "https://mirror.example.com/simple",
+            ]
+        )
+        self.assertEqual(args.index_url, "https://example.com/simple")
+        self.assertEqual(
+            args.extra_index_url,
+            [
+                "https://download.example.com/simple",
+                "https://mirror.example.com/simple",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

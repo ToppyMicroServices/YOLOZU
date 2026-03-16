@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.11-slim-bookworm
+ARG PYTHON_IMAGE=python:3.11-slim-bookworm@sha256:97b0eafb29f5ebfba254be840115b2f3bc24ff6ff3de9b905e04b74ee7227ba6
 FROM ${PYTHON_IMAGE}
 
 WORKDIR /opt/yolozu

@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
   "PyYAML>=6.0",
   "numpy>=1.24",
-  "Pillow>=10.0",
+  "Pillow>=10.3.0",
   "typing_extensions>=4.8; python_version < '3.11'",
 ]
 
@@ -46,19 +46,19 @@ Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md
 
 [project.optional-dependencies]
 demo = [
-  "torch>=2.1",
-  "torchvision>=0.16",
+  "torch>=2.8.0",
+  "torchvision>=0.23.0",
   "timm>=0.9",
   "opencv-contrib-python>=4.8",
   "transformers>=4.38",
   "huggingface-hub>=0.20",
   "safetensors>=0.4",
 ]
-onnxrt = ["onnx>=1.14", "onnxruntime>=1.17"]
+onnxrt = ["onnx>=1.16.2", "onnxruntime>=1.17"]
 train = [
-  "torch>=2.1",
-  "torchvision>=0.16",
-  "onnx>=1.14",
+  "torch>=2.8.0",
+  "torchvision>=0.23.0",
+  "onnx>=1.16.2",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "safetensors>=0.4",
@@ -79,17 +79,17 @@ yolox = ["yolox"]
 # Local development / testing (optional)
 test = [
   "pytest>=7.0",
-  "torch>=2.1",
-  "torchvision>=0.16",
-  "onnx>=1.14",
+  "torch>=2.8.0",
+  "torchvision>=0.23.0",
+  "onnx>=1.16.2",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
 ]
 dev = [
   "pytest>=7.0",
-  "torch>=2.1",
-  "torchvision>=0.16",
-  "onnx>=1.14",
+  "torch>=2.8.0",
+  "torchvision>=0.23.0",
+  "onnx>=1.16.2",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "ruff>=0.5",
@@ -97,13 +97,13 @@ dev = [
 
 # Everything in the docs install list (demo/onnxrt/train/coco/mcp/actions)
 full = [
-  "torch>=2.1",
-  "torchvision>=0.16",
+  "torch>=2.8.0",
+  "torchvision>=0.23.0",
   "timm>=0.9",
   "opencv-contrib-python>=4.8",
   "transformers>=4.38",
   "huggingface-hub>=0.20",
-  "onnx>=1.14",
+  "onnx>=1.16.2",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "safetensors>=0.4",
