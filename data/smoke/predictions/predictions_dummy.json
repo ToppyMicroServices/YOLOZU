@@ -1,8 +1,6 @@
 {
-  "schema_version": 1,
   "predictions": [
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -88,7 +86,6 @@
       "image": "000000000009.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -114,7 +111,6 @@
       "image": "000000000025.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -140,7 +136,6 @@
       "image": "000000000030.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -156,7 +151,6 @@
       "image": "000000000034.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -182,7 +176,6 @@
       "image": "000000000036.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -198,7 +191,6 @@
       "image": "000000000042.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -294,7 +286,6 @@
       "image": "000000000049.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -350,7 +341,6 @@
       "image": "000000000061.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -396,7 +386,6 @@
       "image": "000000000064.jpg"
     },
     {
-      "schema_version": 2,
       "detections": [
         {
           "bbox": {
@@ -561,5 +550,6 @@
       ],
       "image": "000000000071.jpg"
     }
-  ]
+  ],
+  "schema_version": 1
 }

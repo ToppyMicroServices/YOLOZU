@@ -485,8 +485,9 @@ class TestYOLOZUCLI(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
 
+        pil_image = None
         try:
-            from PIL import Image
+            from PIL import Image as pil_image
         except ImportError as exc:  # pragma: no cover
             self.skipTest(f"PIL not available: {exc}")
 
@@ -495,7 +496,8 @@ class TestYOLOZUCLI(unittest.TestCase):
             input_dir = root / "images"
             input_dir.mkdir(parents=True, exist_ok=True)
             img_path = input_dir / "a.png"
-            Image.new("RGB", (16, 16), color=(0, 0, 0)).save(img_path)
+            self.assertIsNotNone(pil_image)
+            pil_image.new("RGB", (16, 16), color=(0, 0, 0)).save(img_path)
 
             out_path = root / "preds.json"
             overlays_dir = root / "overlays"

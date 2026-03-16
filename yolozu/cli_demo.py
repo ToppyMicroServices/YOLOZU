@@ -714,7 +714,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 import torch  # noqa: F401
                 import torchvision  # noqa: F401
             except Exception as exc:
-                if inf_norm == "torchvision":
+                if resolved_inference == "torchvision":
                     raise SystemExit(
                         "instance-seg inference requires torch+torchvision. "
                         "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
