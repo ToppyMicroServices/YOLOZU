@@ -66,6 +66,7 @@ DoD:
 - `container` failures are triaged only if release depends on image artifacts.
 - `ci` includes schema compatibility, golden compatibility, and sdist/wheel package-content gates.
 - GitHub Actions references are SHA-pinned and Python workflow installs use `tools/ci/install_with_hashes.py` so release automation is supply-chain hardened.
+- Keep GitHub Actions pins on Node 24-capable releases (for example `actions/checkout@v6`, `actions/setup-python@v6`, and `dorny/paths-filter@v4`) to avoid runner deprecation drift.
 - Container base images are pinned by digest, including the TensorRT/NGC images used by RunPod and TRT example builds.
 - `main` branch protection requires PR review (1 approval), includes administrators, dismisses stale reviews, requires conversation resolution, and blocks force-pushes.
 - ClusterFuzzLite project files under `.clusterfuzzlite/` and fuzz harnesses under `fuzz/` stay in sync with predictions normalization code.
