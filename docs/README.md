@@ -141,16 +141,36 @@ Shortest 3 commands:
 python3 -m yolozu.cli parity \
 	--reference data/smoke/predictions/predictions_dummy.json \
 	--candidate data/smoke/predictions/predictions_dummy.json
-python3 -m yolozu.cli eval-coco \
-	--dataset data/smoke \
-	--split val \
-	--predictions data/smoke/predictions/predictions_dummy.json \
+python3 tools/benchmark_model.py \
+	--model runs/example/model.pt \
+	--data data/coco8.yaml \
+	--format all \
 	--dry-run \
-	--output reports/smoke_parity_eval_dry_run.json
-python3 -m yolozu benchmark --help
-python3 tools/benchmark_model.py --help
+	--output reports/benchmark_report.json
 python3 tools/benchmark_latency.py --help
 ```
+
+When backend artifacts are available, the benchmark entry can orchestrate real
+`torch` / `onnx` / `engine` runs:
+
+```bash
+python3 tools/benchmark_model.py \
+	--model runs/example/model.pt \
+	--onnx-model exports/example.onnx \
+	--engine-model exports/example.plan \
+	--data data/coco8.yaml \
+	--format torch,onnx,engine \
+	--protocol nms_applied \
+	--latency-source auto \
+	--output reports/benchmark_report.json
+```
+
+Typical outputs:
+- `reports/benchmark_report.json`
+- `reports/export_settings_<format>.json`
+- `reports/predictions_<format>.json`
+- `reports/eval_<format>.json`
+- `reports/parity_<format>.json`
 
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)

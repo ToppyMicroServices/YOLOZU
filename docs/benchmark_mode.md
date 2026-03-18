@@ -64,6 +64,21 @@ yolozu benchmark \
   --output reports/benchmark_report.json
 ```
 
+Protocol-pinned backend run with history tracking:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --onnx-model exports/foo.onnx \
+  --engine-model exports/foo.plan \
+  --data data/coco8.yaml \
+  --format torch,onnx,engine \
+  --protocol nms_applied \
+  --latency-source auto \
+  --history reports/benchmark_report.jsonl \
+  --output reports/benchmark_report.json
+```
+
 Synthetic latency probe:
 
 ```bash
@@ -126,6 +141,32 @@ placeholder until parity-gate integration lands. When a backend is unavailable
 or the command is invoked with `--dry-run`, the command writes placeholders
 instead of pretending that inference ran.
 
+Typical artifact layout:
+
+```text
+reports/
+  benchmark_report.json
+  benchmark_report.jsonl                # only when --history is set
+  export_settings_torch.json
+  predictions_torch.json
+  eval_torch.json
+  parity_torch.json
+  export_settings_onnx.json
+  predictions_onnx.json
+  eval_onnx.json
+  parity_onnx.json
+```
+
+The top-level benchmark report records, per format:
+
+- `status`
+- `skip_reason` when skipped
+- `latency_source`
+- `artifacts.predictions`
+- `artifacts.eval`
+- `artifacts.parity`
+- `artifacts.export_settings`
+
 ## Status model
 
 Per-format result statuses are:
@@ -142,6 +183,8 @@ Typical skip reasons:
 - `missing_runtime_dependency`
 - `gpu_required`
 - `platform_not_supported`
+- `model_artifact_required`
+- `model_artifact_mismatch`
 
 If `--strict` is set and any requested format is skipped, the command exits
 with code `2`.
@@ -156,3 +199,13 @@ The CLI now defaults to:
 and `engine`, and falls back to `synthetic_step` for the remaining formats.
 The report records the per-format `latency_source` so CI and readers do not
 confuse placeholder timing with a real backend pass.
+
+## Current format coverage
+
+| Format | Current state | Notes |
+| --- | --- | --- |
+| `torch` | real orchestration when runtime + model are available | Delegates to the Ultralytics exporter path and suite eval. |
+| `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
+| `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
+| `executorch` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
+| `opencv_dnn` | synthetic / skipped | Artifact-first placeholder behavior only for now. |

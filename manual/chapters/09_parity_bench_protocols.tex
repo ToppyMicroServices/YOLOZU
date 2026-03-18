@@ -80,6 +80,32 @@ and additionally wires real backend orchestration for \cmd{torch},
 records a real dataset-pass wall-clock measurement. When they cannot, it still
 records skipped formats honestly rather than fabricating success.
 
+A representative repository-wrapper invocation is:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_model.py \
+  --model runs/example/model.pt \
+  --onnx-model exports/example.onnx \
+  --engine-model exports/example.plan \
+  --data data/coco8.yaml \
+  --format torch,onnx,engine \
+  --protocol nms_applied \
+  --latency-source auto \
+  --output reports/benchmark_report.json
+\end{lstlisting}
+
+The primary artifact set is:
+\begin{itemize}
+  \item \path{reports/benchmark_report.json}
+  \item \path{reports/export_settings_<format>.json}
+  \item \path{reports/predictions_<format>.json}
+  \item \path{reports/eval_<format>.json}
+  \item \path{reports/parity_<format>.json}
+\end{itemize}
+
+At present, parity artifacts remain placeholders until the dedicated parity
+gate is connected to \cmd{yolozu benchmark}. This is intentional: the command
+must not overstate what was measured.
+
 For repository-side orchestration, the equivalent wrapper is
 \path{tools/benchmark_model.py}.
 

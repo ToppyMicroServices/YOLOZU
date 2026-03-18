@@ -950,7 +950,7 @@
     },
     {
       "id": "benchmark_model",
-      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, plus stable artifacts and explicit skipped-format reporting.",
+      "summary": "Ultralytics-parity benchmark entrypoint with protocol-pinned torch/onnx/engine orchestration when available, plus stable artifacts and explicit skipped-format reporting.",
       "entrypoint": "tools/benchmark_model.py",
       "runner": "python3",
       "platform": {
@@ -974,6 +974,10 @@
           "metrics_report_json",
           "predictions_json"
         ]
+      },
+      "contract_outputs": {
+        "metrics_report_json": "benchmark_report_json",
+        "predictions_json": "predictions_json"
       },
       "inputs": [
         {
@@ -1326,6 +1330,10 @@
         {
           "description": "Run real torch/onnx/engine backend orchestration when backend artifacts are available.",
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --engine-model exports/example.plan --data data/coco8.yaml --format torch,onnx,engine --latency-source auto --output reports/benchmark_report.json"
+        },
+        {
+          "description": "Run protocol-pinned backend orchestration and append JSONL history.",
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --engine-model exports/example.plan --data data/coco8.yaml --format torch,onnx,engine --protocol nms_applied --latency-source auto --history reports/benchmark_report.jsonl --output reports/benchmark_report.json"
         }
       ]
     },
