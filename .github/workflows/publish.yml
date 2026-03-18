@@ -80,7 +80,7 @@ jobs:
                 break
           if not meta:
             raise SystemExit(f"wheel METADATA not found: {whl}")
-          m = re.search(r"^Version:\\s*(.+)$", meta, re.MULTILINE)
+          m = re.search(r"^Version:\s*(.+)$", meta, re.MULTILINE)
           if not m:
             raise SystemExit(f"wheel Version field not found in METADATA: {whl}")
           wheel_version = m.group(1).strip()
@@ -90,15 +90,15 @@ jobs:
               f"wheel/package version mismatch: wheel={wheel_version} package={package_version} whl={whl}"
             )
 
-          tag = (os.environ.get(\"RELEASE_TAG\") or \"\").strip()
+          tag = (os.environ.get("RELEASE_TAG") or "").strip()
           if tag:
-            expected = tag[1:] if tag.startswith(\"v\") else tag
+            expected = tag[1:] if tag.startswith("v") else tag
             if wheel_version != expected:
               raise SystemExit(
-                f\"wheel/tag version mismatch: tag={tag} expected={expected} wheel={wheel_version} whl={whl}\"
+                f"wheel/tag version mismatch: tag={tag} expected={expected} wheel={wheel_version} whl={whl}"
               )
 
-          print(f\"wheel version OK: {wheel_version} ({whl})\")
+          print(f"wheel version OK: {wheel_version} ({whl})")
           PY
 
       - name: Publish to PyPI (Trusted Publishing)
