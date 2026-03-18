@@ -73,6 +73,15 @@ A critical semantic rule derived from the protocol documentation:
 \section{Benchmarks}
 Latency and FPS benchmarks constitute a vital component of the regression testing surface.
 
+The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. In
+Phase~1 this command intentionally uses an explicit synthetic latency probe and
+records skipped formats honestly, so that users receive a stable artifact
+surface without mistaking planned/export-capable formats for fully wired,
+end-to-end backend benchmarks.
+
+For repository-side orchestration, the equivalent wrapper is
+\path{tools/benchmark_model.py}.
+
 The benchmark harness, located at \path{tools/benchmark_latency.py}, generates:
 \begin{itemize}
   \item A stable JSON report (detailing a single run).

@@ -147,11 +147,14 @@ python3 -m yolozu.cli eval-coco \
 	--predictions data/smoke/predictions/predictions_dummy.json \
 	--dry-run \
 	--output reports/smoke_parity_eval_dry_run.json
+python3 -m yolozu benchmark --help
+python3 tools/benchmark_model.py --help
 python3 tools/benchmark_latency.py --help
 ```
 
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
+- [Benchmark mode](benchmark_mode.md)
 - [Benchmark latency](benchmark_latency.md)
 - [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
 - [RunPod GPU split preflight](runpod_gpu_validation_split.md)

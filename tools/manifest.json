@@ -949,6 +949,363 @@
       ]
     },
     {
+      "id": "benchmark_model",
+      "summary": "Phase-1 Ultralytics-parity benchmark entrypoint with stable artifacts and explicit skipped-format reporting.",
+      "entrypoint": "tools/benchmark_model.py",
+      "runner": "python3",
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "tags": [
+        "benchmark",
+        "parity",
+        "export"
+      ],
+      "docs": [
+        "docs/benchmark_mode.md",
+        "docs/benchmark_mode_spec_ultralytics_parity.md",
+        "docs/benchmark_latency.md"
+      ],
+      "contracts": {
+        "produces": [
+          "metrics_report_json",
+          "predictions_json"
+        ]
+      },
+      "inputs": [
+        {
+          "flag": "--model",
+          "name": "model",
+          "kind": "file",
+          "required": true
+        },
+        {
+          "flag": "--data",
+          "name": "data",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "flag": "--imgsz",
+          "name": "imgsz",
+          "kind": "number",
+          "required": false,
+          "default": 640
+        },
+        {
+          "flag": "--half",
+          "name": "half",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--no-half",
+          "name": "half",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--int8",
+          "name": "int8",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--no-int8",
+          "name": "int8",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--device",
+          "name": "device",
+          "kind": "string",
+          "required": false,
+          "default": "cpu"
+        },
+        {
+          "flag": "--verbose",
+          "name": "verbose",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--format",
+          "name": "format",
+          "kind": "string",
+          "required": false,
+          "default": "all"
+        },
+        {
+          "flag": "--task",
+          "name": "task",
+          "kind": "string",
+          "required": false,
+          "default": "detect"
+        },
+        {
+          "flag": "--split",
+          "name": "split",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "name": "max_images",
+          "kind": "number",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "name": "dry_run",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--strict",
+          "name": "strict",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--repro-policy",
+          "name": "repro_policy",
+          "kind": "string",
+          "required": false,
+          "default": "relaxed"
+        },
+        {
+          "flag": "--runtime-lock",
+          "name": "runtime_lock",
+          "kind": "string",
+          "required": false,
+          "default": "none"
+        },
+        {
+          "flag": "--run-id",
+          "name": "run_id",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "name": "output",
+          "kind": "file",
+          "required": false,
+          "default": "reports/benchmark_report.json"
+        },
+        {
+          "flag": "--history",
+          "name": "history",
+          "kind": "file",
+          "required": false
+        },
+        {
+          "flag": "--predictions-output",
+          "name": "predictions_output",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--eval-output",
+          "name": "eval_output",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--parity-output",
+          "name": "parity_output",
+          "kind": "string",
+          "required": false
+        },
+        {
+          "flag": "--batch",
+          "name": "batch",
+          "kind": "number",
+          "required": false,
+          "default": 1
+        },
+        {
+          "flag": "--dynamic",
+          "name": "dynamic",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--no-dynamic",
+          "name": "dynamic",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--nms",
+          "name": "nms",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--no-nms",
+          "name": "nms",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--simplify",
+          "name": "simplify",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--no-simplify",
+          "name": "simplify",
+          "kind": "string",
+          "required": false,
+          "default": false
+        },
+        {
+          "flag": "--opset",
+          "name": "opset",
+          "kind": "number",
+          "required": false,
+          "default": 17
+        },
+        {
+          "flag": "--workspace",
+          "name": "workspace",
+          "kind": "number",
+          "required": false,
+          "default": 4.0
+        },
+        {
+          "flag": "--fraction",
+          "name": "fraction",
+          "kind": "number",
+          "required": false,
+          "default": 1.0
+        },
+        {
+          "flag": "--latency-source",
+          "name": "latency_source",
+          "kind": "string",
+          "required": false,
+          "default": "synthetic_step"
+        },
+        {
+          "flag": "--iterations",
+          "name": "iterations",
+          "kind": "number",
+          "required": false,
+          "default": 50
+        },
+        {
+          "flag": "--warmup",
+          "name": "warmup",
+          "kind": "number",
+          "required": false,
+          "default": 5
+        },
+        {
+          "flag": "--sleep-s",
+          "name": "sleep_s",
+          "kind": "number",
+          "required": false,
+          "default": 0.0
+        }
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Write the benchmark report JSON."
+          },
+          {
+            "flag": "--history",
+            "kind": "file",
+            "scope": "path",
+            "description": "Append JSONL benchmark history when requested."
+          },
+          {
+            "flag": "--predictions-output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Optional predictions artifact file/dir/template."
+          },
+          {
+            "flag": "--eval-output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Optional eval artifact file/dir/template."
+          },
+          {
+            "flag": "--parity-output",
+            "kind": "file",
+            "scope": "path",
+            "description": "Optional parity artifact file/dir/template."
+          }
+        ]
+      },
+      "outputs": [
+        {
+          "name": "benchmark_report_json",
+          "kind": "file",
+          "default": "reports/benchmark_report.json"
+        },
+        {
+          "name": "history_jsonl",
+          "kind": "file",
+          "description": "Optional JSONL history when --history is set."
+        },
+        {
+          "name": "predictions_json",
+          "kind": "file",
+          "description": "Per-format predictions placeholder or future predictions artifact."
+        },
+        {
+          "name": "eval_report_json",
+          "kind": "file",
+          "description": "Per-format eval placeholder or future eval artifact."
+        },
+        {
+          "name": "parity_report_json",
+          "kind": "file",
+          "description": "Per-format parity placeholder or future parity artifact."
+        },
+        {
+          "name": "export_settings_json",
+          "kind": "file",
+          "description": "Per-format export settings artifact."
+        }
+      ],
+      "examples": [
+        {
+          "description": "Dry-run the Phase-1 benchmark wiring and artifact layout for all supported formats.",
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --format all --dry-run --output reports/benchmark_report.json"
+        },
+        {
+          "description": "Run the synthetic Phase-1 latency probe and append the report to history.",
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --format onnx,torch --device cpu --iterations 100 --warmup 10 --history reports/benchmark_history.jsonl"
+        }
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
