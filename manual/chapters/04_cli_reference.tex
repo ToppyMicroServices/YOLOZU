@@ -49,6 +49,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu test} & Executes the YAML/JSON scenario runner (compatible with dummy, precomputed, and rtdetr\_pose adapters). \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
+\cmd{yolozu benchmark} & Ultralytics-parity benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine} when artifacts and runtimes exist, otherwise records explicit skipped/placeholder results. \\
 \cmd{yolozu parity} & Compares two distinct predictions artifacts to detect backend drift or discrepancies. \\
 \cmd{yolozu predictions migrate} & Migrates predictions entry schema versions (currently \cmd{--from v1 --to v2}) with optional strict source checking. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
@@ -56,6 +57,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{python3 tools/eval_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
 \cmd{python3 tools/run\_reference\_adapter\_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
 \cmd{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
+\cmd{python3 tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
 \cmd{bash release.sh} & Runs no-option release automation: auto version bump policy, tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. \\

@@ -267,6 +267,23 @@ def _cmd_fetch_model(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_benchmark(args: argparse.Namespace) -> int:
+    from yolozu.eval.benchmark_mode import run_benchmark_mode
+
+    try:
+        report, code = run_benchmark_mode(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    except Exception as exc:
+        raise SystemExit(str(exc)) from exc
+
+    if bool(getattr(args, "verbose", False)):
+        for item in report.get("results", []):
+            print(f"{item.get('format')}: {item.get('status')} ({item.get('skip_reason') or item.get('latency_source')})")
+    print(str(getattr(args, "output")))
+    return int(code)
+
+
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 

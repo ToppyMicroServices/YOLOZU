@@ -16,6 +16,7 @@ from .cli_commands import (
     _cmd_calibrate,
     _cmd_eval_long_tail,
     _cmd_long_tail_recipe,
+    _cmd_benchmark,
     _cmd_parity,
     _cmd_predictions,
     _cmd_validate,
@@ -230,6 +231,48 @@ def main(argv: list[str] | None = None) -> int:
     lt_recipe.add_argument("--focal-gamma", type=float, default=2.0, help="Focal loss gamma (recipe parameter).")
     lt_recipe.add_argument("--ldam-margin", type=float, default=0.5, help="LDAM margin (recipe parameter).")
     lt_recipe.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
+
+    bench = sub.add_parser(
+        "benchmark",
+        help="Ultralytics-parity benchmark entrypoint (Phase 1: honest synthetic probe + explicit skipped formats).",
+    )
+    bench.add_argument("-m", "--model", required=True, help="Model/weights path recorded in the benchmark report.")
+    bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
+    bench.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
+    bench.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
+    bench.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
+    bench.add_argument("--device", default="cpu", help="Target device string (default: cpu).")
+    bench.add_argument("--verbose", action="store_true", help="Print per-format status lines.")
+    bench.add_argument("-f", "--format", default="all", help="Comma-separated Phase-1 formats or all.")
+    bench.add_argument("--task", default="detect", help="Task label recorded in the report (default: detect).")
+    bench.add_argument("--split", default=None, help="Dataset split label.")
+    bench.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
+    bench.add_argument("--dry-run", action="store_true", help="Validate wiring and planned artifacts without timing runs.")
+    bench.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped.")
+    bench.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
+    bench.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
+    bench.add_argument("--run-id", default=None, help="Optional run id (default: UTC timestamp).")
+    bench.add_argument("-o", "--output", default="reports/benchmark_report.json", help="Benchmark report JSON path.")
+    bench.add_argument("--history", default=None, help="Optional JSONL history file path.")
+    bench.add_argument("--predictions-output", default=None, help="Optional file/dir/template for predictions artifacts.")
+    bench.add_argument("--eval-output", default=None, help="Optional file/dir/template for eval artifacts.")
+    bench.add_argument("--parity-output", default=None, help="Optional file/dir/template for parity artifacts.")
+    bench.add_argument("--batch", type=int, default=1, help="Common batch knob (default: 1).")
+    bench.add_argument("--dynamic", action=argparse.BooleanOptionalAction, default=False, help="Record dynamic-shape intent.")
+    bench.add_argument("--nms", action=argparse.BooleanOptionalAction, default=False, help="Record export-time NMS intent.")
+    bench.add_argument("--simplify", action=argparse.BooleanOptionalAction, default=False, help="Record ONNX simplify intent.")
+    bench.add_argument("--opset", type=int, default=17, help="Record ONNX opset (default: 17).")
+    bench.add_argument("--workspace", type=float, default=4.0, help="Record TensorRT workspace in GiB (default: 4).")
+    bench.add_argument("--fraction", type=float, default=1.0, help="Record dataset fraction knob (default: 1.0).")
+    bench.add_argument(
+        "--latency-source",
+        choices=("synthetic_step",),
+        default="synthetic_step",
+        help="Phase-1 latency source (default: synthetic_step).",
+    )
+    bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
+    bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
+    bench.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
 
     parity = sub.add_parser("parity", help="Compare two predictions JSON artifacts for backend parity.")
     parity.add_argument("--reference", required=True, help="Reference predictions JSON (e.g. PyTorch).")
@@ -923,6 +966,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_eval_long_tail(args)
     if args.command == "long-tail-recipe":
         return _cmd_long_tail_recipe(args)
+    if args.command == "benchmark":
+        return _cmd_benchmark(args)
     if args.command == "parity":
         return _cmd_parity(args)
     if args.command == "predictions":
