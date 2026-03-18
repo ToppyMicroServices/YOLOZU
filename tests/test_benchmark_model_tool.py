@@ -4,6 +4,10 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
+
+from yolozu.eval import benchmark_mode
 
 
 class TestBenchmarkModelTool(unittest.TestCase):
@@ -25,6 +29,10 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertIn("--runtime-lock", proc.stdout)
         self.assertIn("--latency-source", proc.stdout)
         self.assertIn("--predictions-output", proc.stdout)
+        self.assertIn("--torch-model", proc.stdout)
+        self.assertIn("--onnx-model", proc.stdout)
+        self.assertIn("--engine-model", proc.stdout)
+        self.assertIn("--protocol", proc.stdout)
 
     def test_module_cli_dry_run_writes_stable_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -78,13 +86,115 @@ class TestBenchmarkModelTool(unittest.TestCase):
             if result.get("status") == "skipped":
                 self.assertTrue(result.get("skip_reason"))
 
-            for rel in (
-                artifact_dir / "predictions_engine.json",
-                artifact_dir / "eval_engine.json",
-                artifact_dir / "parity_engine.json",
-                root / "export_settings_engine.json",
-            ):
-                self.assertTrue(rel.is_file(), f"missing benchmark artifact: {rel}")
+            artifacts = result.get("artifacts") or {}
+            for key in ("predictions", "eval", "parity", "export_settings"):
+                artifact_path = Path(str(artifacts.get(key)))
+                self.assertTrue(artifact_path.is_file(), f"missing benchmark artifact: {artifact_path}")
+
+    def _args(self, **overrides):
+        root = Path(__file__).resolve().parents[1]
+        base = dict(
+            model="runs/foo/model.pt",
+            torch_model=None,
+            onnx_model=None,
+            engine_model=None,
+            data=str(root / "data" / "smoke"),
+            imgsz=640,
+            half=False,
+            int8=False,
+            device="cpu",
+            verbose=False,
+            format="torch",
+            task="detect",
+            split="val",
+            protocol=None,
+            max_images=2,
+            dry_run=False,
+            strict=False,
+            repro_policy="relaxed",
+            runtime_lock="none",
+            run_id="unit-test-run",
+            output=str(root / "tmp_benchmark_report.json"),
+            history=None,
+            predictions_output=None,
+            eval_output=None,
+            parity_output=None,
+            batch=1,
+            dynamic=False,
+            nms=False,
+            simplify=False,
+            opset=17,
+            workspace=4.0,
+            fraction=1.0,
+            latency_source="auto",
+            iterations=50,
+            warmup=5,
+            sleep_s=0.0,
+        )
+        base.update(overrides)
+        return SimpleNamespace(**base)
+
+    def test_real_torch_backend_orchestration_runs_export_and_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
+
+            def fake_run(cmd, cwd, capture_output, text, check):
+                cmd = [str(x) for x in cmd]
+                if cmd[1].endswith("export_predictions_ultralytics.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {"image": "images/val/000001.jpg", "detections": []},
+                            {"image": "images/val/000002.jpg", "detections": []},
+                        ],
+                        "meta": {"adapter": "ultralytics"},
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("eval_suite.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {"metrics": {"bbox_mAP50": 0.42}}
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                self.fail(f"unexpected subprocess command: {cmd}")
+
+            def fake_module_available(name):
+                return name == "ultralytics"
+
+            args = self._args(output=str(report_path), data=str(repo_root / "data" / "smoke"), format="torch")
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=fake_module_available):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(benchmark_mode.subprocess, "run", side_effect=fake_run):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "ok")
+            result = report["results"][0]
+            self.assertEqual(result["format"], "torch")
+            self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["latency_source"], "dataset_pass_wall_time")
+            self.assertEqual(result["throughput"]["images"], 2)
+            self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.42)
+            self.assertTrue(Path(result["artifacts"]["predictions"]).is_file())
+            self.assertTrue(Path(result["artifacts"]["eval"]).is_file())
+            self.assertTrue(Path(result["artifacts"]["parity"]).is_file())
+
+    def test_real_onnx_backend_skips_without_backend_artifact(self):
+        args = self._args(format="onnx", model="runs/foo/model.pt", latency_source="dataset_pass_wall_time")
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "onnxruntime"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["status"], "skipped")
+        result = report["results"][0]
+        self.assertEqual(result["format"], "onnx")
+        self.assertEqual(result["status"], "skipped")
+        self.assertEqual(result["skip_reason"], "model_artifact_required")
 
 
 if __name__ == "__main__":

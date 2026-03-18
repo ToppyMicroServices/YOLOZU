@@ -1,6 +1,6 @@
 # Benchmark Mode (`yolozu benchmark`)
 
-`yolozu benchmark` is the Phase-1 benchmark entrypoint aligned with the
+`yolozu benchmark` is the benchmark entrypoint aligned with the
 Ultralytics benchmark-mode argument surface while keeping YOLOZU's
 predictions interface contract mindset.
 
@@ -10,20 +10,20 @@ Related docs:
 - [Latency benchmark harness](benchmark_latency.md)
 - [Docs index](README.md)
 
-## What Phase 1 does
+## What the current implementation does
 
-Phase 1 is intentionally conservative.
-
-It provides:
+Today the command provides:
 
 - an Ultralytics-like CLI surface,
 - explicit format planning for `torch`, `onnx`, `engine`, `executorch`, and `opencv_dnn`,
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
-- a clearly labeled synthetic latency probe.
+- a clearly labeled synthetic latency probe,
+- real backend orchestration for `torch`, `onnx`, and `engine` when artifacts and runtimes are available.
 
-It does **not** yet claim end-to-end backend inference benchmarking for every
-format. If a runtime is missing, the report says so explicitly.
+It still does **not** claim end-to-end backend inference benchmarking for every
+format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
+for now, and missing runtime/model artifacts are reported honestly.
 
 ## Quick start
 
@@ -48,6 +48,19 @@ python3 tools/benchmark_model.py \
   --imgsz 640 \
   --format torch,onnx,engine \
   --dry-run \
+  --output reports/benchmark_report.json
+```
+
+Real backend run with explicit backend artifacts:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --onnx-model exports/foo.onnx \
+  --engine-model exports/foo.plan \
+  --data data/coco8.yaml \
+  --format torch,onnx,engine \
+  --latency-source auto \
   --output reports/benchmark_report.json
 ```
 
@@ -79,8 +92,12 @@ Ultralytics-aligned core:
 
 YOLOZU additions for reproducibility and CI:
 
+- `--torch-model`
+- `--onnx-model`
+- `--engine-model`
 - `--task`
 - `--split`
+- `--protocol`
 - `--max-images`
 - `--dry-run`
 - `--strict`
@@ -103,16 +120,19 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
-In Phase 1, the predictions/eval/parity files are placeholder artifacts when
-the backend is unavailable or when the command is invoked with `--dry-run`.
-This is deliberate: the command records the planned artifact layout without
-pretending that inference already ran.
+When `torch`, `onnx`, or `engine` can run for real, the benchmark writes actual
+predictions and eval artifacts, and keeps `parity_<format>.json` as a
+placeholder until parity-gate integration lands. When a backend is unavailable
+or the command is invoked with `--dry-run`, the command writes placeholders
+instead of pretending that inference ran.
 
 ## Status model
 
 Per-format result statuses are:
 
 - `ok`
+- `partial`
+- `failed`
 - `dry_run`
 - `skipped`
 
@@ -128,11 +148,11 @@ with code `2`.
 
 ## Why the latency source is explicit
 
-Phase 1 defaults to:
+The CLI now defaults to:
 
-- `--latency-source synthetic_step`
+- `--latency-source auto`
 
-This means the timing result is an honest synthetic probe, not a claim that the
-full backend inference path already ran. The report records that source under
-`latency_source` so CI and readers do not confuse control-plane timing with a
-real deployment benchmark.
+`auto` prefers a real dataset-pass wall-clock measurement for `torch`, `onnx`,
+and `engine`, and falls back to `synthetic_step` for the remaining formats.
+The report records the per-format `latency_source` so CI and readers do not
+confuse placeholder timing with a real backend pass.

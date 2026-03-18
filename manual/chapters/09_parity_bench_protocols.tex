@@ -73,11 +73,12 @@ A critical semantic rule derived from the protocol documentation:
 \section{Benchmarks}
 Latency and FPS benchmarks constitute a vital component of the regression testing surface.
 
-The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. In
-Phase~1 this command intentionally uses an explicit synthetic latency probe and
-records skipped formats honestly, so that users receive a stable artifact
-surface without mistaking planned/export-capable formats for fully wired,
-end-to-end backend benchmarks.
+The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
+current implementation keeps the honest artifact-first behavior from Phase~1,
+and additionally wires real backend orchestration for \cmd{torch},
+\cmd{onnx}, and \cmd{engine}. When those backends can execute, the command
+records a real dataset-pass wall-clock measurement. When they cannot, it still
+records skipped formats honestly rather than fabricating success.
 
 For repository-side orchestration, the equivalent wrapper is
 \path{tools/benchmark_model.py}.
