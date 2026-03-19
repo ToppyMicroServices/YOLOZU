@@ -111,6 +111,28 @@ backend-diff artifact rather than a placeholder. The chosen reference backend
 is recorded explicitly (preferring \cmd{torch} when available). Placeholder
 parity artifacts remain only for dry-run, skipped, or synthetic-only formats.
 
+\subsection{Benchmark task semantics}
+The benchmark surface now records explicit task semantics instead of treating
+\cmd{--task} as a loose label. The top-level report and each per-format result
+carry the canonical task, the originally requested task, accepted aliases,
+metric family, expected metric keys, support level, and whether the task is an
+Ultralytics-surface target or a YOLOZU-native extension.
+
+The current task matrix is:
+\begin{center}
+\begin{tabular}{p{1.9cm} p{2.9cm} p{2.3cm} p{2.8cm} p{4.2cm}}
+\textbf{Task} & \textbf{Accepted labels} & \textbf{Metric family} & \textbf{State} & \textbf{Notes} \\
+\hline
+\cmd{detect} & \cmd{detect}, \cmd{detection} & \cmd{bbox\_map} & real for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Default benchmark path. \\
+\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & documented partial & Mask metric expectations are explicit; backend/eval breadth remains partial. \\
+\cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & documented planned & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
+\cmd{obb} & \cmd{obb} & \cmd{obb\_map} & documented planned & Visible in the benchmark surface; backend/eval implementation remains follow-up work. \\
+\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & documented partial & \cmd{pose} is normalized to canonical \cmd{keypoints} in the report. \\
+\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & documented partial & YOLOZU-native extension, not an Ultralytics parity claim. \\
+\cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & documented partial & YOLOZU-native extension with explicit metric expectations. \\
+\end{tabular}
+\end{center}
+
 \subsection{Gap against the Ultralytics docs surface}
 Relative to the public Ultralytics benchmark/export documentation, YOLOZU has
 already matched the core benchmark entrypoint shape, but it still trails in
@@ -120,8 +142,8 @@ The most important remaining gaps are:
 \begin{itemize}
   \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
   \cmd{saved\_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
-  \item clearer task-specific benchmark expectations for
-  \cmd{segmentation}, \cmd{classification}, and \cmd{obb}
+  \item broader real backend/eval coverage for
+  \cmd{segmentation}, \cmd{classification}, \cmd{obb}, \cmd{depth}, and \cmd{pose6d}
   \item stronger validation of format-specific knobs so unsupported
   combinations fail early rather than acting like inert flags
 \end{itemize}

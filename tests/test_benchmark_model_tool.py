@@ -33,9 +33,38 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertIn("--onnx-model", proc.stdout)
         self.assertIn("--engine-model", proc.stdout)
         self.assertIn("--protocol", proc.stdout)
+        self.assertIn("--task", proc.stdout)
+        self.assertIn("pose6d", proc.stdout)
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
+
+    def test_task_alias_pose_canonicalizes_to_keypoints(self):
+        args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="pose", dry_run=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["task"], "keypoints")
+        self.assertEqual(report["task_requested"], "pose")
+        self.assertEqual(report["task_semantics"]["metric_family"], "oks_map")
+        self.assertIn("pose", report["task_semantics"]["accepted_aliases"])
+        result = report["results"][0]
+        self.assertEqual(result["task"], "keypoints")
+        self.assertEqual(result["task_requested"], "pose")
+
+    def test_classification_task_records_topk_semantics(self):
+        args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="classification", dry_run=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["task"], "classification")
+        self.assertEqual(report["task_semantics"]["metric_family"], "topk_accuracy")
+        self.assertEqual(report["task_semantics"]["support_level"], "documented_planned")
+        self.assertEqual(report["task_semantics"]["expected_metric_keys"], ["top1", "top5", "accuracy"])
 
     def test_module_cli_dry_run_writes_stable_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]

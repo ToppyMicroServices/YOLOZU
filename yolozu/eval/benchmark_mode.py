@@ -17,6 +17,10 @@ Phase 2.1 adds ``torchscript`` as a first-class benchmark format while keeping
 its current behavior honest: it is accepted by the CLI and report schema,
 depends only on a local PyTorch runtime, and currently uses synthetic/skip
 semantics until a dedicated real-orchestration path lands.
+
+Phase 2.2 adds explicit task semantics for ``detect``, ``segmentation``,
+``classification``, ``obb``, ``keypoints``/``pose``, ``depth``, and
+``pose6d`` so the benchmark report no longer tells a detection-only story.
 """
 
 from __future__ import annotations
@@ -39,6 +43,89 @@ repo_root = Path(__file__).resolve().parents[2]
 
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine")
+TASK_ALIASES = {
+    "detect": "detect",
+    "detection": "detect",
+    "seg": "segmentation",
+    "segmentation": "segmentation",
+    "classify": "classification",
+    "classification": "classification",
+    "cls": "classification",
+    "obb": "obb",
+    "keypoints": "keypoints",
+    "pose": "keypoints",
+    "depth": "depth",
+    "pose6d": "pose6d",
+    "6dof": "pose6d",
+    "pose_6d": "pose6d",
+    "pose-6d": "pose6d",
+}
+TASK_CHOICES = tuple(sorted(TASK_ALIASES))
+TASK_SEMANTICS = {
+    "detect": {
+        "display_name": "Detection",
+        "metric_family": "bbox_map",
+        "expected_metric_keys": ["mAP50-95", "mAP50", "AR@100"],
+        "support_level": "real_for_torch_onnx_engine",
+        "ultralytics_surface": True,
+        "yolozu_native_extension": False,
+        "notes": "Default benchmark semantics. Real backend orchestration is available for torch/onnx/engine when artifacts and runtimes are present.",
+    },
+    "segmentation": {
+        "display_name": "Segmentation",
+        "metric_family": "mask_map",
+        "expected_metric_keys": ["mask_mAP50-95", "mask_mAP50", "mask_AR"],
+        "support_level": "documented_partial",
+        "ultralytics_surface": True,
+        "yolozu_native_extension": False,
+        "notes": "The benchmark report records mask-oriented expectations now, while end-to-end backend coverage remains partial and backend-specific.",
+    },
+    "classification": {
+        "display_name": "Classification",
+        "metric_family": "topk_accuracy",
+        "expected_metric_keys": ["top1", "top5", "accuracy"],
+        "support_level": "documented_planned",
+        "ultralytics_surface": True,
+        "yolozu_native_extension": False,
+        "notes": "Classification is now explicit in the benchmark task matrix, but real benchmark orchestration still needs a dedicated evaluation path.",
+    },
+    "obb": {
+        "display_name": "Oriented Bounding Boxes",
+        "metric_family": "obb_map",
+        "expected_metric_keys": ["obb_mAP50-95", "obb_mAP50", "obb_AR"],
+        "support_level": "documented_planned",
+        "ultralytics_surface": True,
+        "yolozu_native_extension": False,
+        "notes": "OBB is visible in the benchmark surface and report schema, but backend/eval wiring remains a follow-up implementation item.",
+    },
+    "keypoints": {
+        "display_name": "Keypoints / Pose",
+        "metric_family": "oks_map",
+        "expected_metric_keys": ["OKS_mAP", "PCK", "keypoint_AR"],
+        "support_level": "documented_partial",
+        "ultralytics_surface": True,
+        "yolozu_native_extension": False,
+        "notes": "The CLI accepts both --task keypoints and --task pose and records a canonical keypoints task with pose alias metadata.",
+    },
+    "depth": {
+        "display_name": "Monocular Depth",
+        "metric_family": "depth_error",
+        "expected_metric_keys": ["abs_rel", "rmse", "delta1"],
+        "support_level": "documented_partial",
+        "ultralytics_surface": False,
+        "yolozu_native_extension": True,
+        "notes": "Depth remains a YOLOZU-native benchmark extension rather than a claimed Ultralytics parity task.",
+    },
+    "pose6d": {
+        "display_name": "6DoF Pose",
+        "metric_family": "pose6d_error",
+        "expected_metric_keys": ["ADD", "ADDS", "reprojection_error"],
+        "support_level": "documented_partial",
+        "ultralytics_surface": False,
+        "yolozu_native_extension": True,
+        "notes": "6DoF pose remains a YOLOZU-native benchmark extension with explicit metric expectations in the report schema.",
+    },
+}
 
 
 def _git_head() -> str | None:
@@ -166,6 +253,33 @@ def _expand_requested_formats(value: str | None, *, device: str) -> list[str]:
         if fmt not in out:
             out.append(fmt)
     return out
+
+
+def _normalize_task_label(value: str | None) -> tuple[str, str]:
+    requested = str(value or "detect").strip()
+    key = requested.lower()
+    canonical = TASK_ALIASES.get(key)
+    if canonical is None:
+        expected = ", ".join(TASK_CHOICES)
+        raise ValueError(f"unsupported --task value: {requested} (expected one of: {expected})")
+    return canonical, requested
+
+
+def _task_semantics(value: str | None) -> dict[str, Any]:
+    canonical, requested = _normalize_task_label(value)
+    base = TASK_SEMANTICS[canonical]
+    return {
+        "canonical_task": canonical,
+        "requested_task": requested,
+        "display_name": base["display_name"],
+        "metric_family": base["metric_family"],
+        "expected_metric_keys": list(base["expected_metric_keys"]),
+        "support_level": base["support_level"],
+        "ultralytics_surface": bool(base["ultralytics_surface"]),
+        "yolozu_native_extension": bool(base["yolozu_native_extension"]),
+        "accepted_aliases": sorted(alias for alias, target in TASK_ALIASES.items() if target == canonical),
+        "notes": base["notes"],
+    }
 
 
 def _artifact_path(base: str | None, *, fmt: str, default_name: str) -> Path:
@@ -517,6 +631,9 @@ def _export_settings_payload(
     supported: bool,
     skip_reason: str | None,
     benchmark_source: str,
+    task_label: str,
+    task_requested: str,
+    task_semantics: dict[str, Any],
     model_artifact: str | None = None,
 ) -> dict[str, Any]:
     return {
@@ -525,7 +642,9 @@ def _export_settings_payload(
         "format": fmt,
         "status": "supported" if supported else "skipped",
         "skip_reason": skip_reason,
-        "task": getattr(args, "task", "detect"),
+        "task": task_label,
+        "task_requested": task_requested,
+        "task_semantics": task_semantics,
         "model": getattr(args, "model", None),
         "model_artifact": model_artifact,
         "data": getattr(args, "data", None),
@@ -660,6 +779,8 @@ def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
 
 def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     requested_formats = _expand_requested_formats(getattr(args, "format", None), device=str(getattr(args, "device", "cpu")))
+    task_label, task_requested = _normalize_task_label(getattr(args, "task", "detect"))
+    task_semantics = _task_semantics(task_requested)
 
     report_path = _resolve_path(str(getattr(args, "output", "reports/benchmark_report.json")))
     if report_path is None:
@@ -910,6 +1031,9 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             supported=supported,
             skip_reason=skip_reason,
             benchmark_source=benchmark_source,
+            task_label=task_label,
+            task_requested=task_requested,
+            task_semantics=task_semantics,
             model_artifact=model_artifact,
         )
         write_json(export_settings_path, export_settings)
@@ -917,7 +1041,9 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         result = {
             "schema_version": 1,
             "kind": "yolozu_benchmark_format_result",
-            "task": str(getattr(args, "task", "detect")),
+            "task": task_label,
+            "task_requested": task_requested,
+            "task_semantics": task_semantics,
             "model": model_text,
             "data": data_text,
             "split": getattr(args, "split", None),
@@ -967,7 +1093,9 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         "schema_version": 1,
         "kind": "yolozu_benchmark_report",
         "timestamp": now_utc_iso(),
-        "task": str(getattr(args, "task", "detect")),
+        "task": task_label,
+        "task_requested": task_requested,
+        "task_semantics": task_semantics,
         "model": model_text,
         "data": data_text,
         "split": getattr(args, "split", None),
@@ -1014,7 +1142,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--device", default="cpu", help="Target device string (default: cpu).")
     parser.add_argument("--verbose", action="store_true", help="Print per-format status lines.")
     parser.add_argument("-f", "--format", default="all", help="Comma-separated Phase-1 formats or all.")
-    parser.add_argument("--task", default="detect", help="Task label recorded in the report (default: detect).")
+    parser.add_argument(
+        "--task",
+        default="detect",
+        choices=TASK_CHOICES,
+        help="Benchmark task label. Canonical tasks: detect, segmentation, classification, obb, keypoints, depth, pose6d. Aliases: detection, seg, classify, cls, pose, 6dof.",
+    )
     parser.add_argument("--split", default=None, help="Dataset split label.")
     parser.add_argument(
         "--protocol",
@@ -1060,4 +1193,11 @@ def main(argv: list[str] | None = None) -> int:
     return int(code)
 
 
-__all__ = ["PHASE1_FORMATS", "REAL_BACKEND_FORMATS", "run_benchmark_mode", "main"]
+__all__ = [
+    "PHASE1_FORMATS",
+    "REAL_BACKEND_FORMATS",
+    "TASK_CHOICES",
+    "TASK_SEMANTICS",
+    "run_benchmark_mode",
+    "main",
+]

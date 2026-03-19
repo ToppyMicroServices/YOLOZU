@@ -226,7 +226,7 @@ eval "$(yolozu completion --shell zsh)"
 - `yolozu doctor`（環境診断）
 - `yolozu validate dataset|predictions|instance-seg`（成果物検証）
 - `yolozu eval-coco` / `yolozu eval-instance-seg`（評価）
-- `yolozu benchmark`（Ultralytics parity を意識した benchmark 入口。利用可能なら `torch` / `onnx` / `engine` を実行し、その backend 比較では real parity artifact を出力する。`torchscript` は現段階では honest な synthetic/skip semantics で受け付け、未対応 format は skipped を明示）
+- `yolozu benchmark`（Ultralytics parity を意識した benchmark 入口。利用可能なら `torch` / `onnx` / `engine` を実行し、その backend 比較では real parity artifact を出力する。`detect` / `segmentation` / `classification` / `obb` / `keypoints` / `depth` / `pose6d` の task semantics を report に明示し、`torchscript` は現段階では honest な synthetic/skip semantics で受け付け、未対応 format は skipped を明示）
 - `yolozu onnxrt export`（ONNXRuntime推論→predictions出力、要 `yolozu[onnxrt]`）
 - `yolozu onnxrt quantize`（ONNXRuntime dynamic quantize、要 `yolozu[onnxrt]`）
 - `yolozu train`（RT-DETR pose 学習、要 `yolozu[train]`）

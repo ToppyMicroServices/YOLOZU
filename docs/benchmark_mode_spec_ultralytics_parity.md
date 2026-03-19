@@ -79,6 +79,22 @@ These are not Ultralytics-compatibility features; they are required to keep
 benchmark runs auditable and comparable under the predictions interface
 contract.
 
+`--task` should not remain a free-form label. The benchmark surface should
+accept explicit canonical tasks and aliases:
+
+- `detect`, `detection`
+- `segmentation`, `seg`
+- `classification`, `classify`, `cls`
+- `obb`
+- `keypoints`, `pose`
+- `depth`
+- `pose6d`, `6dof`, `pose_6d`, `pose-6d`
+
+The report should record both the canonical task and the originally requested
+label, alongside task semantics such as metric family, expected metric keys,
+support level, and whether the task is an Ultralytics-surface target or a
+YOLOZU-native extension.
+
 ## 4. Format Policy
 
 ### 4.1 Phase 1: first-class formats
@@ -184,6 +200,8 @@ The top-level benchmark report should contain:
 - `schema_version`
 - `kind`
 - `task`
+- `task_requested`
+- `task_semantics`
 - `model`
 - `data`
 - `split`
@@ -226,10 +244,13 @@ Minimum benchmark metrics:
 - throughput:
   - `fps`
 - task metric:
-  - detection/instance segmentation/pose: `mAP50-95`
-  - keypoints: configured keypoint metric
-  - depth: configured depth metric
-  - 6DoF pose: configured pose metric
+  - detection: `bbox_map` family such as `mAP50-95`, `mAP50`, `AR@100`
+  - segmentation: `mask_map` family such as `mask_mAP50-95`, `mask_mAP50`
+  - classification: `topk_accuracy` family such as `top1`, `top5`
+  - OBB: `obb_map` family
+  - keypoints / pose: `oks_map` family such as `OKS_mAP`, `PCK`
+  - depth: `depth_error` family such as `abs_rel`, `rmse`, `delta1`
+  - 6DoF pose: `pose6d_error` family such as `ADD`, `ADDS`, `reprojection_error`
 
 ## 8. Parity Rules
 
