@@ -133,7 +133,9 @@ Reference docs:
 
 ## D) Bench/Parity (parity check + benchmark entry)
 
-Use this path for quick parity sanity checks and to discover benchmark CLI options.
+Use this path for quick parity sanity checks and to discover benchmark CLI options,
+including explicit task semantics for `detect`, `segmentation`, `classification`,
+`obb`, `keypoints` / `pose`, `depth`, and `pose6d`.
 
 Shortest 3 commands:
 
@@ -175,6 +177,12 @@ Typical outputs:
 `torchscript` is also accepted as a benchmark format now; in the current phase
 it is reported with honest synthetic/skip semantics until a dedicated
 real-orchestration path lands.
+
+The benchmark report now records:
+- canonical task label
+- requested task label
+- metric family and expected metric keys
+- whether the task is an Ultralytics-surface target or a YOLOZU-native extension
 
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)

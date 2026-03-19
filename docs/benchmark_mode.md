@@ -17,6 +17,7 @@ Today the command provides:
 
 - an Ultralytics-like CLI surface,
 - explicit format planning for `torch`, `onnx`, `engine`, `torchscript`, `executorch`, and `opencv_dnn`,
+- explicit task semantics for `detect`, `segmentation`, `classification`, `obb`, `keypoints` / `pose`, `depth`, and `pose6d`,
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
@@ -33,9 +34,8 @@ matrix than YOLOZU does. Today the most important remaining gaps are:
 
 - missing benchmark/export formats such as `openvino`, `coreml`,
   `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
-- incomplete task-specific benchmark guidance for `segmentation`,
-  `classification`, and `obb`
-- placeholder parity artifacts instead of real per-backend parity output
+- partial backend/eval execution coverage for tasks such as `segmentation`,
+  `classification`, `obb`, `keypoints`, `depth`, and `pose6d`
 - incomplete flag validation for format-specific knobs
 
 The detailed audit and recommended implementation order live in:
@@ -106,6 +106,30 @@ yolozu benchmark \
   --latency-source synthetic_step \
   --iterations 50 \
   --warmup 5 \
+  --output reports/benchmark_report.json
+```
+
+Task-oriented dry-run for segmentation semantics:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --data data/coco8.yaml \
+  --task segmentation \
+  --format torchscript \
+  --dry-run \
+  --output reports/benchmark_report.json
+```
+
+YOLOZU-native depth semantics:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --data data/coco8.yaml \
+  --task depth \
+  --format torchscript \
+  --dry-run \
   --output reports/benchmark_report.json
 ```
 
@@ -188,6 +212,9 @@ reports/
 
 The top-level benchmark report records, per format:
 
+- `task`
+- `task_requested`
+- `task_semantics.metric_family` / `task_semantics.expected_metric_keys`
 - `status`
 - `skip_reason` when skipped
 - `latency_source`
@@ -229,6 +256,31 @@ The CLI now defaults to:
 and `engine`, and falls back to `synthetic_step` for the remaining formats.
 The report records the per-format `latency_source` so CI and readers do not
 confuse placeholder timing with a real backend pass.
+
+## Task semantics
+
+The benchmark surface is no longer detection-only. The CLI accepts the
+following canonical tasks and aliases:
+
+| Canonical task | Accepted labels | Metric family | Current benchmark state | Notes |
+| --- | --- | --- | --- | --- |
+| `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` | Default benchmark path. |
+| `segmentation` | `segmentation`, `seg` | `mask_map` | documented partial | Mask metric expectations are explicit in the report; backend/eval breadth is still partial. |
+| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | documented planned | Visible in the benchmark interface contract and report schema, but dedicated real eval wiring is still pending. |
+| `obb` | `obb` | `obb_map` | documented planned | Explicitly benchmarkable at the interface level; backend/eval implementation remains a follow-up. |
+| `keypoints` | `keypoints`, `pose` | `oks_map` | documented partial | `pose` is accepted as an alias and normalized to `keypoints` in the report. |
+| `depth` | `depth` | `depth_error` | documented partial | YOLOZU-native extension, not an Ultralytics parity claim. |
+| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | documented partial | YOLOZU-native extension with explicit metric expectations in the report schema. |
+
+The top-level `task_semantics` block and each per-format result include:
+
+- canonical task label
+- originally requested task label
+- accepted aliases
+- metric family
+- expected metric keys
+- support level
+- whether the task is an Ultralytics-surface parity target or a YOLOZU-native extension
 
 ## Current format coverage
 

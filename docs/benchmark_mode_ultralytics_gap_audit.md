@@ -87,8 +87,8 @@ YOLOZU already has extra task value beyond that baseline:
 - monocular depth
 - 6DoF pose
 
-But the benchmark entrypoint currently defaults to a generic `--task detect`
-story and does not yet expose task-specific benchmark semantics clearly for:
+The benchmark entrypoint now records explicit task semantics in the benchmark
+report, but real backend/eval coverage still lags for:
 
 - segmentation
 - keypoints / pose
@@ -99,9 +99,9 @@ story and does not yet expose task-specific benchmark semantics clearly for:
 
 Improvement priority:
 
-1. Extend `yolozu benchmark --task` docs to enumerate task-specific expectations
-2. Add task-specific eval metric keys to the benchmark report examples
-3. Add explicit `classification` and `obb` support status lines to docs/manual
+1. Turn the task matrix into task-specific real backend/eval execution paths
+2. Keep task-specific eval metric keys visible in the report examples
+3. Keep explicit `classification` and `obb` support-status lines in docs/manual
 4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake Ultralytics parity
 
 ### 3. Argument-surface gaps
@@ -145,10 +145,10 @@ Current behavior:
 
 Improvement priority:
 
-1. Connect real parity output into `yolozu benchmark`
-2. Mark per-format artifact status as `real`, `placeholder`, or `skipped`
-3. Add backend matrix examples with actual artifact expectations
-4. Distinguish latency benchmarking from export success more clearly
+1. Mark per-format artifact status as `real`, `placeholder`, or `skipped`
+2. Add backend matrix examples with actual artifact expectations
+3. Distinguish latency benchmarking from export success more clearly
+4. Expand real parity beyond the current `torch`-anchored backend comparisons
 
 ### 5. Docs/readability gap
 
@@ -172,7 +172,7 @@ Improvement priority:
 The highest-value next steps are:
 
 1. Promote `torchscript` from accepted format support to a real backend path
-2. Add benchmark task matrix coverage for `segmentation`, `classification`, and `obb`
+2. Turn the new task matrix into real benchmark/eval coverage for `segmentation`, `classification`, and `obb`
 3. Promote `openvino` to conditional support if the runtime path is available
 4. Add per-format flag validation so unsupported knobs fail early
 5. Add a single support matrix that distinguishes real parity, placeholder parity, and skipped backends at a glance
