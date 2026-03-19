@@ -45,12 +45,12 @@ documents or partially wires only:
 - `torch`
 - `onnx`
 - `engine`
+- `torchscript`
 - `executorch`
 - `opencv_dnn`
 
 Missing or only planned relative to the Ultralytics docs surface:
 
-- `torchscript`
 - `openvino`
 - `coreml`
 - `saved_model`
@@ -67,7 +67,7 @@ Missing or only planned relative to the Ultralytics docs surface:
 
 Improvement priority:
 
-1. Add `torchscript` as a first-class format in `yolozu benchmark`
+1. Promote `torchscript` from accepted synthetic/skip semantics to dedicated real orchestration
 2. Promote `openvino` from planned to conditional implementation
 3. Promote `ncnn` and `rknn` from planned to explicit adapter targets
 4. Separate `implemented`, `conditional`, and `planned` formats in README/docs
@@ -139,6 +139,7 @@ docs should make the distinction sharper than they do today.
 Current behavior:
 
 - `torch` / `onnx` / `engine` can orchestrate real runs
+- `torchscript` is accepted and recorded honestly, but still uses synthetic / skipped semantics
 - `executorch` / `opencv_dnn` remain synthetic or skipped
 - parity artifacts are still placeholders
 
@@ -170,8 +171,8 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Add `torchscript` format support and manifest/docs coverage
-2. Add real parity artifact generation for `torch` vs `onnx` vs `engine`
+1. Add real parity artifact generation for `torch` vs `onnx` vs `engine`
+2. Promote `torchscript` from accepted format support to a real backend path
 3. Add benchmark task matrix coverage for `segmentation`, `classification`, and `obb`
 4. Promote `openvino` to conditional support if the runtime path is available
 5. Add per-format flag validation so unsupported knobs fail early

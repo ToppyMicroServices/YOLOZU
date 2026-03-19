@@ -12,6 +12,11 @@ Phase 1 established:
 Phase 2 adds real backend orchestration for ``torch``, ``onnx``, and
 ``engine`` by delegating to existing exporter/eval tools when the requested
 artifacts and runtime dependencies are present.
+
+Phase 2.1 adds ``torchscript`` as a first-class benchmark format while keeping
+its current behavior honest: it is accepted by the CLI and report schema,
+depends only on a local PyTorch runtime, and currently uses synthetic/skip
+semantics until a dedicated real-orchestration path lands.
 """
 
 from __future__ import annotations
@@ -31,7 +36,7 @@ from yolozu.eval.metrics_report import append_jsonl, now_utc_iso, write_json
 
 repo_root = Path(__file__).resolve().parents[2]
 
-PHASE1_FORMATS = ("torch", "onnx", "engine", "executorch", "opencv_dnn")
+PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine")
 
 
@@ -113,6 +118,8 @@ def _support_status_for_format(fmt: str, *, device: str) -> tuple[bool, str | No
 
     if fmt == "torch":
         return (_module_available("ultralytics"), None if _module_available("ultralytics") else "missing_runtime_dependency")
+    if fmt == "torchscript":
+        return (_module_available("torch"), None if _module_available("torch") else "missing_runtime_dependency")
     if fmt == "onnx":
         return (
             _module_available("onnxruntime"),

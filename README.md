@@ -159,7 +159,7 @@ Module path note:
 - Validators catch schema drift early.
 - Protocol-pinned `export_settings` makes comparisons reproducible.
 - Parity/bench quantify backend drift and performance.
-- `yolozu benchmark` adds an Ultralytics-style benchmark entrypoint with real `torch` / `onnx` / `engine` orchestration when available, plus explicit skipped-format reporting and stable artifacts.
+- `yolozu benchmark` adds an Ultralytics-style benchmark entrypoint with real `torch` / `onnx` / `engine` orchestration when available, `torchscript` acceptance with honest synthetic/skip semantics for the current phase, plus explicit skipped-format reporting and stable artifacts.
 - Tooling stays CPU-friendly by default (GPU optional).
 - Apache-2.0-only ops policy is enforced in repo tooling.
 
