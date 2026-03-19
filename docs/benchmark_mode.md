@@ -164,10 +164,11 @@ Each run writes:
 - `parity_<format>.json`
 
 When `torch`, `onnx`, or `engine` can run for real, the benchmark writes actual
-predictions and eval artifacts, and keeps `parity_<format>.json` as a
-placeholder until parity-gate integration lands. When a backend is unavailable
-or the command is invoked with `--dry-run`, the command writes placeholders
-instead of pretending that inference ran.
+predictions and eval artifacts and attaches real parity artifacts for candidate
+backends against the chosen reference backend (preferring `torch` when
+available). When a backend is unavailable or the command is invoked with
+`--dry-run`, the command writes placeholders instead of pretending that
+inference ran.
 
 Typical artifact layout:
 
@@ -190,6 +191,7 @@ The top-level benchmark report records, per format:
 - `status`
 - `skip_reason` when skipped
 - `latency_source`
+- `parity.reference_backend` / `parity.candidate_backends` or parity summary stats
 - `artifacts.predictions`
 - `artifacts.eval`
 - `artifacts.parity`

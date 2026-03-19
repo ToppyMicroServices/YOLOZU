@@ -257,6 +257,88 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertEqual(result["latency_source"], "synthetic_step")
         self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
 
+    def test_real_torch_and_onnx_backends_write_real_parity_artifacts(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        image_1 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000009.jpg").resolve())
+        image_2 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000025.jpg").resolve())
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
+
+            def fake_run(cmd, cwd, capture_output, text, check):
+                cmd = [str(x) for x in cmd]
+                if cmd[1].endswith("export_predictions_ultralytics.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {
+                                "image": image_1,
+                                "detections": [{"class_id": 0, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                            },
+                            {
+                                "image": image_2,
+                                "detections": [{"class_id": 1, "score": 0.8, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+                            },
+                        ],
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("export_predictions_onnxrt.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {
+                                "image": image_1,
+                                "detections": [{"class_id": 0, "score": 0.90001, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                            },
+                            {
+                                "image": image_2,
+                                "detections": [{"class_id": 1, "score": 0.80001, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+                            },
+                        ],
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("eval_suite.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {"metrics": {"bbox_mAP50": 0.42}}
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                self.fail(f"unexpected subprocess command: {cmd}")
+
+            def fake_module_available(name):
+                return name in {"ultralytics", "onnxruntime"}
+
+            args = self._args(
+                output=str(report_path),
+                data=str(repo_root / "data" / "smoke"),
+                format="torch,onnx",
+                onnx_model="exports/example.onnx",
+            )
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=fake_module_available):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(benchmark_mode.subprocess, "run", side_effect=fake_run):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "ok")
+            results = {item["format"]: item for item in report["results"]}
+            self.assertEqual(results["torch"]["parity"]["reference_backend"], "torch")
+            self.assertEqual(results["torch"]["parity"]["candidate_backends"], ["onnx"])
+            self.assertTrue(Path(results["torch"]["artifacts"]["parity"]).is_file())
+            torch_parity_payload = json.loads(Path(results["torch"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
+            self.assertEqual(torch_parity_payload["kind"], "benchmark_parity_reference")
+
+            self.assertTrue(Path(results["onnx"]["artifacts"]["parity"]).is_file())
+            onnx_parity_payload = json.loads(Path(results["onnx"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
+            self.assertEqual(onnx_parity_payload["kind"], "benchmark_parity_report")
+            self.assertEqual(onnx_parity_payload["reference_backend"], "torch")
+            self.assertEqual(onnx_parity_payload["candidate_backend"], "onnx")
+            self.assertTrue(onnx_parity_payload["summary"]["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()

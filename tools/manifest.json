@@ -950,7 +950,7 @@
     },
     {
       "id": "benchmark_model",
-      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
+      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
       "entrypoint": "tools/benchmark_model.py",
       "runner": "python3",
       "platform": {
@@ -1305,17 +1305,17 @@
         {
           "name": "predictions_json",
           "kind": "file",
-          "description": "Per-format predictions placeholder or future predictions artifact."
+          "description": "Per-format predictions artifact (real output when the backend runs, placeholder otherwise)."
         },
         {
           "name": "eval_report_json",
           "kind": "file",
-          "description": "Per-format eval placeholder or future eval artifact."
+          "description": "Per-format eval artifact (real output when eval runs, placeholder otherwise)."
         },
         {
           "name": "parity_report_json",
           "kind": "file",
-          "description": "Per-format parity placeholder or future parity artifact."
+          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, placeholder otherwise)."
         },
         {
           "name": "export_settings_json",
@@ -1343,6 +1343,10 @@
         {
           "description": "Plan a TorchScript benchmark run with the current honest dry-run semantics.",
           "command": "python3 tools/benchmark_model.py --model exports/example.torchscript --data data/coco8.yaml --format torchscript --dry-run --output reports/benchmark_report.json"
+        },
+        {
+          "description": "Run real torch+onnx backend orchestration and emit backend parity artifacts.",
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --data data/coco8.yaml --format torch,onnx --latency-source auto --output reports/benchmark_report.json"
         }
       ]
     },
