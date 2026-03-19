@@ -7,6 +7,7 @@ English README: [`README.md`](README.md) | 中文README: [`Readme_zh.md`](Readme
 [![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
 [![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
 [![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)
 
 ## 30秒で動く（pip）
 
