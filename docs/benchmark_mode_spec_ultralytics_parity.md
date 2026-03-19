@@ -90,6 +90,9 @@ Phase 1 should support formats already close to the current repository:
 - `engine`
 - `executorch`
 - `opencv_dnn`
+- `torchscript` should be the next candidate after these because it is part of
+  the public Ultralytics export surface and does not require vendor-specific
+  deployment hardware.
 
 ### 4.2 Phase 2: conditional formats
 
@@ -102,13 +105,17 @@ These are valid targets but may remain conditional on external runtimes:
 
 These formats should be explicitly tracked as planned, not implied:
 
+- `torchscript`
 - `tflite`
+- `edgetpu`
 - `saved_model`
 - `pb`
 - `tfjs`
 - `ncnn`
 - `mnn`
 - `rknn`
+- `imx`
+- `axelera`
 - `paddle`
 
 ### 4.4 Unsupported behavior

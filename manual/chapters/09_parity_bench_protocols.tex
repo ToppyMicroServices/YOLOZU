@@ -106,6 +106,29 @@ At present, parity artifacts remain placeholders until the dedicated parity
 gate is connected to \cmd{yolozu benchmark}. This is intentional: the command
 must not overstate what was measured.
 
+\subsection{Gap against the Ultralytics docs surface}
+Relative to the public Ultralytics benchmark/export documentation, YOLOZU has
+already matched the core benchmark entrypoint shape, but it still trails in
+surface breadth.
+
+The most important remaining gaps are:
+\begin{itemize}
+  \item broader format coverage such as \cmd{torchscript}, \cmd{openvino},
+  \cmd{coreml}, \cmd{saved\_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and
+  \cmd{paddle}
+  \item clearer task-specific benchmark expectations for
+  \cmd{segmentation}, \cmd{classification}, and \cmd{obb}
+  \item real parity artifact generation instead of the current placeholder
+  \path{parity_<format>.json}
+  \item stronger validation of format-specific knobs so unsupported
+  combinations fail early rather than acting like inert flags
+\end{itemize}
+
+This comparison is intentionally about interface behavior and user-facing
+surface only. YOLOZU keeps its Apache-2.0-only repository operations policy and
+must not pull GPL-licensed implementation code into the repository while
+closing these gaps.
+
 For repository-side orchestration, the equivalent wrapper is
 \path{tools/benchmark_model.py}.
 

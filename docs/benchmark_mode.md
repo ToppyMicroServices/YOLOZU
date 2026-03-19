@@ -7,6 +7,7 @@ predictions interface contract mindset.
 Related docs:
 
 - [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
+- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
 - [Latency benchmark harness](benchmark_latency.md)
 - [Docs index](README.md)
 
@@ -24,6 +25,22 @@ Today the command provides:
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
 for now, and missing runtime/model artifacts are reported honestly.
+
+## Where YOLOZU still trails the Ultralytics docs surface
+
+The official Ultralytics docs currently expose a broader public benchmark/export
+matrix than YOLOZU does. Today the most important remaining gaps are:
+
+- missing benchmark/export formats such as `torchscript`, `openvino`,
+  `coreml`, `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
+- incomplete task-specific benchmark guidance for `segmentation`,
+  `classification`, and `obb`
+- placeholder parity artifacts instead of real per-backend parity output
+- incomplete flag validation for format-specific knobs
+
+The detailed audit and recommended implementation order live in:
+
+- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
 
 ## Quick start
 

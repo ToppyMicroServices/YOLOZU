@@ -177,6 +177,7 @@ Reference docs:
 - [Benchmark mode](benchmark_mode.md)
 - [Benchmark latency](benchmark_latency.md)
 - [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
+- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
 - [RunPod GPU split preflight](runpod_gpu_validation_split.md)
 
 ## E) LLM / MCP integrations
