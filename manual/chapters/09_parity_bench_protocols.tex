@@ -76,9 +76,12 @@ Latency and FPS benchmarks constitute a vital component of the regression testin
 The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
 current implementation keeps the honest artifact-first behavior from Phase~1,
 and additionally wires real backend orchestration for \cmd{torch},
-\cmd{onnx}, and \cmd{engine}. When those backends can execute, the command
-records a real dataset-pass wall-clock measurement. When they cannot, it still
-records skipped formats honestly rather than fabricating success.
+\cmd{onnx}, and \cmd{engine}. It also accepts \cmd{torchscript} as a
+first-class benchmark format, while still recording honest synthetic/skipped
+semantics until a dedicated real-orchestration path lands. When the real
+backends can execute, the command records a real dataset-pass wall-clock
+measurement. When they cannot, it still records skipped formats honestly rather
+than fabricating success.
 
 A representative repository-wrapper invocation is:
 \begin{lstlisting}[language=bash]
@@ -113,9 +116,8 @@ surface breadth.
 
 The most important remaining gaps are:
 \begin{itemize}
-  \item broader format coverage such as \cmd{torchscript}, \cmd{openvino},
-  \cmd{coreml}, \cmd{saved\_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and
-  \cmd{paddle}
+  \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
+  \cmd{saved\_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
   \item clearer task-specific benchmark expectations for
   \cmd{segmentation}, \cmd{classification}, and \cmd{obb}
   \item real parity artifact generation instead of the current placeholder

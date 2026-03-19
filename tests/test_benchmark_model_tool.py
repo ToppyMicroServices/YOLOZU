@@ -34,6 +34,9 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertIn("--engine-model", proc.stdout)
         self.assertIn("--protocol", proc.stdout)
 
+    def test_torchscript_is_accepted_as_benchmark_format(self):
+        self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
+
     def test_module_cli_dry_run_writes_stable_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
@@ -90,6 +93,50 @@ class TestBenchmarkModelTool(unittest.TestCase):
             for key in ("predictions", "eval", "parity", "export_settings"):
                 artifact_path = Path(str(artifacts.get(key)))
                 self.assertTrue(artifact_path.is_file(), f"missing benchmark artifact: {artifact_path}")
+
+    def test_module_cli_dry_run_supports_torchscript(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report = root / "benchmark_report.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--model",
+                    "runs/foo/model.torchscript",
+                    "--data",
+                    "data/smoke",
+                    "--format",
+                    "torchscript",
+                    "--dry-run",
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark --format torchscript --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), ["torchscript"])
+            results = payload.get("results") or []
+            self.assertEqual(len(results), 1)
+            result = results[0]
+            self.assertEqual(result.get("format"), "torchscript")
+            self.assertIn(result.get("status"), ("dry_run", "skipped"))
+            if result.get("status") == "skipped":
+                self.assertEqual(result.get("skip_reason"), "missing_runtime_dependency")
+            artifacts = result.get("artifacts") or {}
+            self.assertTrue(str(artifacts.get("predictions", "")).endswith("predictions_torchscript.json"))
+            self.assertTrue(str(artifacts.get("eval", "")).endswith("eval_torchscript.json"))
+            self.assertTrue(str(artifacts.get("parity", "")).endswith("parity_torchscript.json"))
 
     def _args(self, **overrides):
         root = Path(__file__).resolve().parents[1]
@@ -195,6 +242,20 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertEqual(result["format"], "onnx")
         self.assertEqual(result["status"], "skipped")
         self.assertEqual(result["skip_reason"], "model_artifact_required")
+
+    def test_torchscript_supported_runtime_uses_synthetic_semantics_for_now(self):
+        args = self._args(format="torchscript", model="runs/foo/model.torchscript", latency_source="auto")
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["status"], "ok")
+        result = report["results"][0]
+        self.assertEqual(result["format"], "torchscript")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["latency_source"], "synthetic_step")
+        self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
 
 
 if __name__ == "__main__":

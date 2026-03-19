@@ -157,7 +157,7 @@ CLI 说明：
 - validator 会尽早发现 schema drift
 - protocol-pinned `export_settings` 使比较结果具备可复现性
 - parity / benchmark 用于量化 backend drift 与性能差异
-- `yolozu benchmark` 提供了更接近 Ultralytics 的 benchmark 入口；在条件满足时可实际编排 `torch` / `onnx` / `engine`，并显式报告被跳过的 format
+- `yolozu benchmark` 提供了更接近 Ultralytics 的 benchmark 入口；在条件满足时可实际编排 `torch` / `onnx` / `engine`，`torchscript` 目前以诚实的 synthetic/skip 语义纳入统一报告，并显式报告被跳过的 format
 - 默认对 CPU 友好，GPU 为可选增强
 - repo 工具链遵循 Apache-2.0-only 的运维策略
 

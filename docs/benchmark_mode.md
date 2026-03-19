@@ -16,7 +16,7 @@ Related docs:
 Today the command provides:
 
 - an Ultralytics-like CLI surface,
-- explicit format planning for `torch`, `onnx`, `engine`, `executorch`, and `opencv_dnn`,
+- explicit format planning for `torch`, `onnx`, `engine`, `torchscript`, `executorch`, and `opencv_dnn`,
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
@@ -31,8 +31,8 @@ for now, and missing runtime/model artifacts are reported honestly.
 The official Ultralytics docs currently expose a broader public benchmark/export
 matrix than YOLOZU does. Today the most important remaining gaps are:
 
-- missing benchmark/export formats such as `torchscript`, `openvino`,
-  `coreml`, `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
+- missing benchmark/export formats such as `openvino`, `coreml`,
+  `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
 - incomplete task-specific benchmark guidance for `segmentation`,
   `classification`, and `obb`
 - placeholder parity artifacts instead of real per-backend parity output
@@ -106,6 +106,17 @@ yolozu benchmark \
   --latency-source synthetic_step \
   --iterations 50 \
   --warmup 5 \
+  --output reports/benchmark_report.json
+```
+
+TorchScript acceptance with the current honest support semantics:
+
+```bash
+yolozu benchmark \
+  --model exports/foo.torchscript \
+  --data data/coco8.yaml \
+  --format torchscript \
+  --dry-run \
   --output reports/benchmark_report.json
 ```
 
@@ -224,5 +235,6 @@ confuse placeholder timing with a real backend pass.
 | `torch` | real orchestration when runtime + model are available | Delegates to the Ultralytics exporter path and suite eval. |
 | `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
 | `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
+| `torchscript` | accepted now; synthetic / skipped semantics for the current phase | Depends on a local PyTorch runtime only; the benchmark writes honest placeholder artifacts until a dedicated real-orchestration path lands. |
 | `executorch` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
 | `opencv_dnn` | synthetic / skipped | Artifact-first placeholder behavior only for now. |

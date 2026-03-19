@@ -172,6 +172,10 @@ Typical outputs:
 - `reports/eval_<format>.json`
 - `reports/parity_<format>.json`
 
+`torchscript` is also accepted as a benchmark format now; in the current phase
+it is reported with honest synthetic/skip semantics until a dedicated
+real-orchestration path lands.
+
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
 - [Benchmark mode](benchmark_mode.md)
