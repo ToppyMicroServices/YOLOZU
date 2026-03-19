@@ -169,6 +169,15 @@ These should be supported where applicable:
 - `--workspace`
 - `--fraction`
 
+Until a backend really honors them, benchmark mode should fail early on
+non-default inert flags instead of silently recording them. In the current
+implementation that means:
+
+- `--half`, `--batch`, and `--nms` are meaningful only for the current `torch`
+  benchmark path
+- `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, and
+  `--fraction` should be rejected when a selected format cannot honor them
+
 ### 5.3 Deferred knobs
 
 The following may be accepted later once their backend path exists:
@@ -202,6 +211,7 @@ The top-level benchmark report should contain:
 - `task`
 - `task_requested`
 - `task_semantics`
+- `execution_semantics`
 - `model`
 - `data`
 - `split`
@@ -291,6 +301,13 @@ Recommended behavior:
 - if `--dry-run` is set, validate argument wiring and planned artifacts without
   pretending to have real benchmark numbers.
 
+Task-specific behavior should also be explicit:
+
+- real backend execution is currently detect-first
+- non-detect tasks should remain planning/synthetic-only until dedicated
+  backend/eval paths exist
+- `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions
+
 ## 10. Mapping to Existing YOLOZU Tools
 
 Current repo pieces that should be reused rather than rewritten:
@@ -327,6 +344,7 @@ behind one benchmark-oriented CLI instead of duplicating backend logic.
 
 - extend toward external/export formats beyond current in-repo backends
 - add platform-specific backends such as OpenVINO/CoreML when available
+- keep a backend runtime/license matrix so `supported` never implies `bundled`
 
 ## 12. Non-goals
 
@@ -335,4 +353,5 @@ The benchmark mode should not:
 - silently fabricate backend success when a runtime is missing,
 - treat raw latency as sufficient evidence without eval/parity context,
 - bypass the predictions interface contract,
-- overload the CLI with backend-specific flags before the format exists.
+- overload the CLI with backend-specific flags before the format exists,
+- imply that vendor runtimes or SDKs are bundled with YOLOZU.

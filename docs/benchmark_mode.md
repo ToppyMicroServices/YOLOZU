@@ -8,6 +8,7 @@ Related docs:
 
 - [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
 - [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
+- [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 - [Latency benchmark harness](benchmark_latency.md)
 - [Docs index](README.md)
 
@@ -177,6 +178,30 @@ YOLOZU additions for reproducibility and CI:
 - `--eval-output`
 - `--parity-output`
 
+## Early validation rules
+
+`yolozu benchmark` now fails early when a non-default flag would be inert for a
+selected format. The goal is to avoid quietly accepting options that the
+current benchmark implementation cannot honor.
+
+Current rules:
+
+| Format | Supported non-default flags today | Early-rejected examples |
+| --- | --- | --- |
+| `torch` | `--half`, `--batch`, `--nms` | `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
+| `onnx` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
+| `engine` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
+| `torchscript` | none | all export-oriented non-default flags |
+| `executorch` | none | all export-oriented non-default flags |
+| `opencv_dnn` | none | all export-oriented non-default flags |
+
+In addition, real backend execution is currently detect-first:
+
+- `--task detect` can use real `torch` / `onnx` / `engine` orchestration
+- non-detect tasks with those real backend paths fail early and tell you to use
+  `--dry-run` or `--latency-source synthetic_step` until dedicated task
+  backends land
+
 ## Output artifacts
 
 Each run writes:
@@ -218,6 +243,9 @@ The top-level benchmark report records, per format:
 - `status`
 - `skip_reason` when skipped
 - `latency_source`
+- `execution_semantics.execution_mode`
+- `execution_semantics.artifact_expectation`
+- `execution_semantics.eval_expectation`
 - `parity.reference_backend` / `parity.candidate_backends` or parity summary stats
 - `artifacts.predictions`
 - `artifacts.eval`
@@ -282,6 +310,16 @@ The top-level `task_semantics` block and each per-format result include:
 - support level
 - whether the task is an Ultralytics-surface parity target or a YOLOZU-native extension
 
+The per-format `execution_semantics` block now complements that task matrix:
+
+- `execution_mode`: `real_backend_eval`, `synthetic_planning_only`, or `dry_run_planning`
+- `artifact_expectation`: whether predictions/eval/parity are expected to be real or placeholders
+- `eval_expectation`: metric family + expected metric keys for that task/backend combination
+
+For `depth` and `pose6d`, this is especially important: the benchmark report now
+records them as YOLOZU-native tasks with explicit metric expectations and
+planning-only execution semantics instead of leaving them as vague future work.
+
 ## Current format coverage
 
 | Format | Current state | Notes |
@@ -292,3 +330,11 @@ The top-level `task_semantics` block and each per-format result include:
 | `torchscript` | accepted now; synthetic / skipped semantics for the current phase | Depends on a local PyTorch runtime only; the benchmark writes honest placeholder artifacts until a dedicated real-orchestration path lands. |
 | `executorch` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
 | `opencv_dnn` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
+
+## Runtime / license boundary
+
+Benchmark support does not imply that a runtime is bundled or that redistribution
+is covered by YOLOZU's Apache-2.0 license. Use the backend matrix below as the
+runtime boundary reference:
+
+- [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)

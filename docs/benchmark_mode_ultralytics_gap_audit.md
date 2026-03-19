@@ -32,6 +32,7 @@ It is already stronger than a plain benchmark wrapper in a few areas:
 - explicit `skipped`/`partial` status instead of silent fallback
 - `run_meta`, `repro_policy`, `runtime_lock`, and history artifacts
 - protocol-pinned eval output intended for CI regression
+- explicit runtime/license boundary documentation for benchmark backends
 
 The remaining gap is mainly breadth, not the core interface shape.
 
@@ -70,7 +71,7 @@ Improvement priority:
 1. Promote `torchscript` from accepted synthetic/skip semantics to dedicated real orchestration
 2. Promote `openvino` from planned to conditional implementation
 3. Promote `ncnn` and `rknn` from planned to explicit adapter targets
-4. Separate `implemented`, `conditional`, and `planned` formats in README/docs
+4. Keep `implemented`, `conditional`, and `planned` formats aligned with the runtime/license matrix
 
 ### 2. Task exposure parity
 
@@ -149,6 +150,19 @@ Improvement priority:
 2. Add backend matrix examples with actual artifact expectations
 3. Distinguish latency benchmarking from export success more clearly
 4. Expand real parity beyond the current `torch`-anchored backend comparisons
+
+### 4.1 Runtime / license boundary
+
+YOLOZU now needs a stable backend matrix that distinguishes:
+
+- Apache-2.0 repository code
+- external runtimes/SDKs
+- supported via adapter/wrapper
+- bundled vs not bundled
+
+The benchmark source of truth for that is:
+
+- [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 
 ### 5. Docs/readability gap
 
