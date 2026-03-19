@@ -141,7 +141,7 @@ Current behavior:
 - `torch` / `onnx` / `engine` can orchestrate real runs
 - `torchscript` is accepted and recorded honestly, but still uses synthetic / skipped semantics
 - `executorch` / `opencv_dnn` remain synthetic or skipped
-- parity artifacts are still placeholders
+- parity artifacts are real for successful `torch`-anchored backend comparisons, and remain placeholders for dry-run / skipped / synthetic-only formats
 
 Improvement priority:
 
@@ -171,11 +171,11 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Add real parity artifact generation for `torch` vs `onnx` vs `engine`
-2. Promote `torchscript` from accepted format support to a real backend path
-3. Add benchmark task matrix coverage for `segmentation`, `classification`, and `obb`
-4. Promote `openvino` to conditional support if the runtime path is available
-5. Add per-format flag validation so unsupported knobs fail early
+1. Promote `torchscript` from accepted format support to a real backend path
+2. Add benchmark task matrix coverage for `segmentation`, `classification`, and `obb`
+3. Promote `openvino` to conditional support if the runtime path is available
+4. Add per-format flag validation so unsupported knobs fail early
+5. Add a single support matrix that distinguishes real parity, placeholder parity, and skipped backends at a glance
 
 ## Repository policy reminder
 

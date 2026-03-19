@@ -33,6 +33,7 @@ from typing import Any
 
 from yolozu.eval.benchmark import measure_latency
 from yolozu.eval.metrics_report import append_jsonl, now_utc_iso, write_json
+from yolozu.predictions.predictions_parity import compare_predictions
 
 repo_root = Path(__file__).resolve().parents[2]
 
@@ -303,6 +304,82 @@ def _eval_metrics(path: Path) -> dict[str, Any] | None:
     return payload
 
 
+def _parity_summary(report: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(report, dict):
+        return None
+    results = report.get("results") or []
+    failure_images = 0
+    total_failures = 0
+    matched = 0
+    extra_candidate = 0
+    score_abs_max = 0.0
+    bbox_abs_max = 0.0
+
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        if not bool(item.get("ok", False)):
+            failure_images += 1
+        counts = item.get("counts") or {}
+        matched += int(counts.get("matched") or 0)
+        extra_candidate += int(counts.get("extra_cand") or 0)
+        failures = item.get("failures") or []
+        total_failures += len(failures)
+        for failure in failures:
+            if not isinstance(failure, dict) or failure.get("type") != "value_mismatch":
+                continue
+            ref = failure.get("ref") or {}
+            cand = failure.get("cand") or {}
+            try:
+                score_abs_max = max(score_abs_max, abs(float(ref.get("score")) - float(cand.get("score"))))
+            except Exception:
+                pass
+            ref_bbox = ref.get("bbox") or {}
+            cand_bbox = cand.get("bbox") or {}
+            for key in ("cx", "cy", "w", "h"):
+                try:
+                    bbox_abs_max = max(bbox_abs_max, abs(float(ref_bbox.get(key)) - float(cand_bbox.get(key))))
+                except Exception:
+                    continue
+
+    return {
+        "images": int(report.get("images") or 0),
+        "ok": bool(report.get("ok", False)),
+        "failure_images": int(failure_images),
+        "total_failures": int(total_failures),
+        "matched": int(matched),
+        "extra_candidate": int(extra_candidate),
+        "score_abs_max": float(score_abs_max),
+        "bbox_abs_max": float(bbox_abs_max),
+    }
+
+
+def _write_parity_reference(
+    path: Path,
+    *,
+    fmt: str,
+    candidate_backends: list[str],
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_parity_reference",
+        "format": fmt,
+        "status": "reference",
+        "reference_backend": fmt,
+        "candidate_backends": list(candidate_backends),
+        "summary": {
+            "reference_backend": fmt,
+            "candidate_backends": list(candidate_backends),
+            "comparisons": int(len(candidate_backends)),
+        },
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
 def _single_pass_metrics(elapsed_s: float, *, images: int) -> dict[str, Any]:
     total_ms = max(float(elapsed_s), 0.0) * 1000.0
     denom = max(int(images), 1)
@@ -486,6 +563,99 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
     latency = metrics.get("latency_ms")
     throughput = {"fps": float(metrics.get("fps", 0.0))}
     return "ok", latency, throughput, {"mode": "synthetic_step"}
+
+
+def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _parity_eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        if str(item.get("status")) not in {"ok", "partial"}:
+            return False
+        predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
+        return predictions.exists()
+
+    reference: dict[str, Any] | None = None
+    for item in results:
+        if _parity_eligible(item) and str(item.get("format")) == "torch":
+            reference = item
+            break
+    if reference is None:
+        for item in results:
+            if _parity_eligible(item):
+                reference = item
+                break
+    if reference is None:
+        return
+
+    ref_backend = str(reference.get("format"))
+    ref_predictions = Path(str((reference.get("artifacts") or {}).get("predictions")))
+    candidate_backends: list[str] = []
+
+    for item in results:
+        if item is reference or not _parity_eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_predictions = Path(str((item.get("artifacts") or {}).get("predictions")))
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        try:
+            report = compare_predictions(
+                reference=ref_predictions,
+                candidate=candidate_predictions,
+                max_images=getattr(args, "max_images", None),
+            )
+            summary = _parity_summary(report)
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_parity_report",
+                "format": candidate_backend,
+                "status": "ok" if bool(report.get("ok", False)) else "drift",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "summary": summary,
+                "report": report,
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = payload["summary"]
+            candidate_backends.append(candidate_backend)
+            if not bool(report.get("ok", False)) and str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_drift"
+        except Exception as exc:
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_parity_report",
+                "format": candidate_backend,
+                "status": "failed",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "error": str(exc),
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = {
+                "ok": False,
+                "error": str(exc),
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+            }
+            if str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_generation_failed"
+            if item.get("error"):
+                item["error"] = f"{item['error']}\n{exc}"
+            else:
+                item["error"] = str(exc)
+
+    reference_payload = _write_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        fmt=ref_backend,
+        candidate_backends=candidate_backends,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
 
 
 def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
@@ -778,6 +948,8 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "run_meta": format_run_meta,
         }
         results.append(result)
+
+    _attach_real_parity(results, args=args)
 
     statuses = {item["status"] for item in results}
     if statuses == {"ok"}:
