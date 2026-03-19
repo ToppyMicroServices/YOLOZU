@@ -126,6 +126,43 @@ TASK_SEMANTICS = {
         "notes": "6DoF pose remains a YOLOZU-native benchmark extension with explicit metric expectations in the report schema.",
     },
 }
+FLAG_DEFAULTS = {
+    "half": False,
+    "int8": False,
+    "batch": 1,
+    "dynamic": False,
+    "nms": False,
+    "simplify": False,
+    "opset": 17,
+    "workspace": 4.0,
+    "fraction": 1.0,
+}
+FORMAT_FLAG_RULES = {
+    "torch": {
+        "supported_nondefault_flags": {"half", "batch", "nms"},
+        "notes": "Torch benchmark orchestration currently forwards --half, --batch, and --nms.",
+    },
+    "onnx": {
+        "supported_nondefault_flags": set(),
+        "notes": "ONNX benchmark mode currently consumes an existing ONNX artifact and does not honor export-oriented knobs.",
+    },
+    "engine": {
+        "supported_nondefault_flags": set(),
+        "notes": "TensorRT benchmark mode currently consumes an existing engine artifact and does not honor export-oriented knobs.",
+    },
+    "torchscript": {
+        "supported_nondefault_flags": set(),
+        "notes": "TorchScript is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+    },
+    "executorch": {
+        "supported_nondefault_flags": set(),
+        "notes": "ExecuTorch is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+    },
+    "opencv_dnn": {
+        "supported_nondefault_flags": set(),
+        "notes": "OpenCV DNN is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+    },
+}
 
 
 def _git_head() -> str | None:
@@ -280,6 +317,93 @@ def _task_semantics(value: str | None) -> dict[str, Any]:
         "accepted_aliases": sorted(alias for alias, target in TASK_ALIASES.items() if target == canonical),
         "notes": base["notes"],
     }
+
+
+def _task_execution_semantics(
+    task_label: str,
+    *,
+    fmt: str,
+    benchmark_source: str,
+    dry_run: bool,
+) -> dict[str, Any]:
+    task_meta = TASK_SEMANTICS[task_label]
+    if dry_run:
+        execution_mode = "dry_run_planning"
+    elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
+        execution_mode = "real_backend_eval"
+    else:
+        execution_mode = "synthetic_planning_only"
+
+    artifact_expectation: dict[str, str]
+    if execution_mode == "real_backend_eval":
+        artifact_expectation = {
+            "predictions": "real",
+            "eval": "real",
+            "parity": "real_when_comparable",
+        }
+    elif execution_mode == "dry_run_planning":
+        artifact_expectation = {
+            "predictions": "placeholder",
+            "eval": "placeholder",
+            "parity": "placeholder",
+        }
+    else:
+        artifact_expectation = {
+            "predictions": "placeholder",
+            "eval": "placeholder",
+            "parity": "placeholder",
+        }
+
+    note = task_meta["notes"]
+    if task_label != "detect":
+        note = f"{note} Current benchmark execution remains planning/synthetic-only until a dedicated backend/eval path lands."
+
+    return {
+        "execution_mode": execution_mode,
+        "real_backend_supported_now": bool(execution_mode == "real_backend_eval"),
+        "artifact_expectation": artifact_expectation,
+        "eval_expectation": {
+            "metric_family": task_meta["metric_family"],
+            "expected_metric_keys": list(task_meta["expected_metric_keys"]),
+        },
+        "notes": note,
+    }
+
+
+def _nondefault_flag_values(args: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for name, default in FLAG_DEFAULTS.items():
+        value = getattr(args, name, default)
+        if value != default:
+            out[name] = value
+    return out
+
+
+def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_label: str) -> None:
+    nondefault = _nondefault_flag_values(args)
+    if not nondefault:
+        nondefault = {}
+    dry_run = bool(getattr(args, "dry_run", False))
+
+    for fmt in requested_formats:
+        rule = FORMAT_FLAG_RULES.get(fmt, {"supported_nondefault_flags": set(), "notes": None})
+        unsupported = sorted(name for name in nondefault if name not in rule["supported_nondefault_flags"])
+        if unsupported:
+            joined = ", ".join(f"--{name.replace('_', '-')}" for name in unsupported)
+            note = f" {rule['notes']}" if rule.get("notes") else ""
+            raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
+
+        benchmark_source = _selected_benchmark_source(args, fmt=fmt)
+        if (
+            task_label != "detect"
+            and not dry_run
+            and fmt in REAL_BACKEND_FORMATS
+            and benchmark_source == "dataset_pass_wall_time"
+        ):
+            raise ValueError(
+                f"--task {task_label} is not wired to a real {fmt} benchmark/eval path yet; "
+                "use --dry-run or --latency-source synthetic_step until the dedicated task backend lands."
+            )
 
 
 def _artifact_path(base: str | None, *, fmt: str, default_name: str) -> Path:
@@ -634,6 +758,7 @@ def _export_settings_payload(
     task_label: str,
     task_requested: str,
     task_semantics: dict[str, Any],
+    execution_semantics: dict[str, Any],
     model_artifact: str | None = None,
 ) -> dict[str, Any]:
     return {
@@ -645,6 +770,7 @@ def _export_settings_payload(
         "task": task_label,
         "task_requested": task_requested,
         "task_semantics": task_semantics,
+        "execution_semantics": execution_semantics,
         "model": getattr(args, "model", None),
         "model_artifact": model_artifact,
         "data": getattr(args, "data", None),
@@ -781,6 +907,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     requested_formats = _expand_requested_formats(getattr(args, "format", None), device=str(getattr(args, "device", "cpu")))
     task_label, task_requested = _normalize_task_label(getattr(args, "task", "detect"))
     task_semantics = _task_semantics(task_requested)
+    _validate_benchmark_args(args, requested_formats, task_label=task_label)
 
     report_path = _resolve_path(str(getattr(args, "output", "reports/benchmark_report.json")))
     if report_path is None:
@@ -813,6 +940,12 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     for fmt in requested_formats:
         supported, skip_reason = _support_status_for_format(fmt, device=str(getattr(args, "device", "cpu")))
         benchmark_source = _selected_benchmark_source(args, fmt=fmt)
+        execution_semantics = _task_execution_semantics(
+            task_label,
+            fmt=fmt,
+            benchmark_source=benchmark_source,
+            dry_run=bool(getattr(args, "dry_run", False)),
+        )
 
         export_settings_path = (report_path.parent / f"export_settings_{fmt}.json").resolve()
         predictions_path = _artifact_path(getattr(args, "predictions_output", None), fmt=fmt, default_name="predictions_{format}.json")
@@ -1034,6 +1167,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             task_label=task_label,
             task_requested=task_requested,
             task_semantics=task_semantics,
+            execution_semantics=execution_semantics,
             model_artifact=model_artifact,
         )
         write_json(export_settings_path, export_settings)
@@ -1044,6 +1178,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "task": task_label,
             "task_requested": task_requested,
             "task_semantics": task_semantics,
+            "execution_semantics": execution_semantics,
             "model": model_text,
             "data": data_text,
             "split": getattr(args, "split", None),
@@ -1096,6 +1231,17 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         "task": task_label,
         "task_requested": task_requested,
         "task_semantics": task_semantics,
+        "execution_semantics": {
+            "by_format": {
+                fmt: _task_execution_semantics(
+                    task_label,
+                    fmt=fmt,
+                    benchmark_source=_selected_benchmark_source(args, fmt=fmt),
+                    dry_run=bool(getattr(args, "dry_run", False)),
+                )
+                for fmt in requested_formats
+            }
+        },
         "model": model_text,
         "data": data_text,
         "split": getattr(args, "split", None),
@@ -1184,7 +1330,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
     args = parser.parse_args(argv)
 
-    report, code = run_benchmark_mode(args)
+    try:
+        report, code = run_benchmark_mode(args)
+    except ValueError as exc:
+        parser.error(str(exc))
     if bool(args.verbose):
         for item in report.get("results", []):
             detail = item.get("skip_reason") or item.get("latency_source")

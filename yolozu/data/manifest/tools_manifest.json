@@ -963,7 +963,8 @@
         "docs/benchmark_mode.md",
         "docs/benchmark_mode_spec_ultralytics_parity.md",
         "docs/benchmark_latency.md",
-        "docs/benchmark_mode_ultralytics_gap_audit.md"
+        "docs/benchmark_mode_ultralytics_gap_audit.md",
+        "docs/benchmark_backend_runtime_matrix.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -1015,7 +1016,7 @@
           "description": "Run protocol-pinned backend orchestration and append JSONL history."
         },
         {
-          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_mode_ultralytics_gap_audit.md",
+          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_mode_ultralytics_gap_audit.md and docs/benchmark_backend_runtime_matrix.md",
           "description": "Review the current gap against the public Ultralytics docs surface before extending format coverage."
         },
         {
@@ -1033,6 +1034,10 @@
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task depth --format torchscript --dry-run --output reports/benchmark_report.json",
           "description": "Inspect YOLOZU-native depth benchmark semantics without claiming Ultralytics parity."
+        },
+        {
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task pose6d --format torchscript --dry-run --output reports/benchmark_report.json",
+          "description": "Show that non-detect YOLOZU-native tasks are planning-only today and keep runtime boundaries explicit."
         }
       ],
       "id": "benchmark_model",
@@ -1316,7 +1321,7 @@
       "outputs": [
         {
           "default": "reports/benchmark_report.json",
-          "description": "Top-level benchmark report including task_requested/task/task_semantics plus per-format results.",
+          "description": "Top-level benchmark report including task_requested/task/task_semantics, execution_semantics, and per-format results.",
           "kind": "file",
           "name": "benchmark_report_json"
         },
@@ -1353,7 +1358,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
+      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
       "tags": [
         "benchmark",
         "parity",

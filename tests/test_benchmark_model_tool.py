@@ -65,6 +65,52 @@ class TestBenchmarkModelTool(unittest.TestCase):
         self.assertEqual(report["task_semantics"]["metric_family"], "topk_accuracy")
         self.assertEqual(report["task_semantics"]["support_level"], "documented_planned")
         self.assertEqual(report["task_semantics"]["expected_metric_keys"], ["top1", "top5", "accuracy"])
+        self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "dry_run_planning")
+
+    def test_depth_task_records_yolozu_native_execution_semantics(self):
+        args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="depth", dry_run=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["task"], "depth")
+        self.assertTrue(report["task_semantics"]["yolozu_native_extension"])
+        by_format = report["execution_semantics"]["by_format"]["torchscript"]
+        self.assertEqual(by_format["execution_mode"], "dry_run_planning")
+        self.assertEqual(by_format["eval_expectation"]["metric_family"], "depth_error")
+        self.assertEqual(by_format["artifact_expectation"]["eval"], "placeholder")
+
+    def test_pose6d_task_records_yolozu_native_execution_semantics(self):
+        args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="pose6d", dry_run=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["task"], "pose6d")
+        self.assertTrue(report["task_semantics"]["yolozu_native_extension"])
+        result = report["results"][0]
+        self.assertEqual(result["execution_semantics"]["eval_expectation"]["metric_family"], "pose6d_error")
+        self.assertEqual(result["execution_semantics"]["artifact_expectation"]["parity"], "placeholder")
+
+    def test_real_backend_rejects_nondetect_task_until_backend_lands(self):
+        args = self._args(format="torch", task="segmentation", dry_run=False, latency_source="auto")
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "ultralytics"):
+            with self.assertRaisesRegex(ValueError, "not wired to a real torch benchmark/eval path yet"):
+                benchmark_mode.run_benchmark_mode(args)
+
+    def test_onnx_rejects_half_flag_early(self):
+        args = self._args(format="onnx", onnx_model="exports/example.onnx", half=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "onnxruntime"):
+            with self.assertRaisesRegex(ValueError, r"--half not supported for --format onnx"):
+                benchmark_mode.run_benchmark_mode(args)
+
+    def test_engine_rejects_workspace_flag_early(self):
+        args = self._args(format="engine", engine_model="exports/example.plan", workspace=8.0, device="cuda:0")
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name in {"tensorrt", "cuda"}):
+            with self.assertRaisesRegex(ValueError, r"--workspace not supported for --format engine"):
+                benchmark_mode.run_benchmark_mode(args)
 
     def test_module_cli_dry_run_writes_stable_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]

@@ -133,6 +133,33 @@ The current task matrix is:
 \end{tabular}
 \end{center}
 
+For the current implementation, real backend execution remains
+\cmd{detect}-first. If users request \cmd{segmentation}, \cmd{classification},
+\cmd{obb}, \cmd{keypoints}, \cmd{depth}, or \cmd{pose6d} together with the real
+\cmd{torch}/\cmd{onnx}/\cmd{engine} path, the benchmark now fails early and
+asks for \cmd{--dry-run} or \cmd{--latency-source synthetic_step}. This avoids
+accepting a configuration that the present benchmark implementation cannot
+honor honestly.
+
+\subsection{Runtime / license boundary matrix}
+Benchmark support does not imply that a runtime is bundled with YOLOZU. The
+repository remains Apache-2.0, but several backends rely on external runtimes
+or vendor SDKs with separate terms.
+
+\begin{center}
+\begin{tabular}{p{2.0cm} p{2.7cm} p{3.0cm} p{5.0cm}}
+\textbf{Backend} & \textbf{State} & \textbf{Runtime} & \textbf{License / redistribution note} \\
+\hline
+\cmd{torch} & real detect path & local PyTorch + Ultralytics runtime & External runtime; verify your chosen runtime/model stack separately. \\
+\cmd{onnx} & real detect path & local ONNX Runtime & External runtime; supported does not mean bundled. \\
+\cmd{engine} & real detect path & Linux + NVIDIA GPU + TensorRT runtime & External NVIDIA runtime/SDK; verify CUDA/TensorRT/NGC redistribution terms separately. \\
+\cmd{torchscript} & planning only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
+\cmd{executorch} & planning only & external ExecuTorch runtime & External runtime with separate packaging constraints. \\
+\cmd{opencv\_dnn} & planning only & local OpenCV runtime & External runtime; optional contrib/nonfree modules are not bundled. \\
+\cmd{openvino}/\cmd{coreml}/\cmd{ncnn}/\cmd{rknn}/\cmd{tflite}/\cmd{paddle} & planned / conditional & external runtime or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
+\end{tabular}
+\end{center}
+
 \subsection{Gap against the Ultralytics docs surface}
 Relative to the public Ultralytics benchmark/export documentation, YOLOZU has
 already matched the core benchmark entrypoint shape, but it still trails in
