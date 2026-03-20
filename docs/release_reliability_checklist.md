@@ -9,11 +9,21 @@ Release trigger note:
 
 ## Auto bump policy
 
-`tools/release.py` (wrapped by `release.sh`) classifies release size from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
+`tools/release.py` (wrapped by `release.sh`) supports auto versioning:
+
+- current version `X.Y.Z` -> SemVer mode
+- current version `YYYY.MM.DD.MICRO` -> CalVer mode
+
+For SemVer mode, release size is classified from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
 
 - small: `X.Y.Z -> X.Y.(Z+1)` (`1.1.1+add` equivalent)
 - medium: `X.Y.Z -> X.(Y+1).0` (`1.1+a.0` equivalent)
 - large: `X.Y.Z -> (X+1).0.0` (`1+a.0.0` equivalent)
+
+For CalVer mode:
+
+- same UTC day: `YYYY.MM.DD.MICRO -> YYYY.MM.DD.(MICRO+1)`
+- new UTC day: `YYYY.MM.DD.0`
 
 Dry-run preview:
 

@@ -546,6 +546,9 @@ bash release.sh
 - 小規模: `X.Y.(Z+1)`（`1.1.1+add` 相当）
 - 中規模: `X.(Y+1).0`（`1.1+a.0` 相当）
 - 大規模: `(X+1).0.0`（`1+a.0.0` 相当）
+- 現在の version が CalVer `YYYY.MM.DD.MICRO` の場合は自動で CalVer に切り替わり、
+  - 同じ UTC 日: `YYYY.MM.DD.(MICRO+1)`
+  - 日付が変わったら: `YYYY.MM.DD.0`
 
 dry-run 例:
 
