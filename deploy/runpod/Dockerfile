@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:24.05-py3@sha256:2cbb055816eb56a1dc688ef659932fccad11cd3bb339eaf59f324f0e255f18a9
+FROM nvcr.io/nvidia/tensorrt:26.02-py3@sha256:bf56f269a505dfbba09ed146a428cc9f6c952f167bc08df53d5354d217eac0d3
 
 WORKDIR /workspace/YOLOZU
 
