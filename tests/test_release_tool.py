@@ -52,6 +52,7 @@ class TestReleaseTool(unittest.TestCase):
             self.fail(f"release --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--dry-run", proc.stdout)
         self.assertIn("--skip-gh", proc.stdout)
+        self.assertIn("--versioning", proc.stdout)
 
     def test_dry_run_writes_report(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -86,6 +87,7 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("ok")))
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("current_version")), version)
+            self.assertEqual(str(payload.get("versioning_scheme")), "semver")
             self.assertRegex(str(payload.get("next_version")), r"^\d+\.\d+\.\d+$")
             self.assertIn(str(payload.get("bump_scale")), {"small", "medium", "large"})
             release_actions = payload.get("release_actions") or {}
@@ -126,6 +128,14 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("ok")))
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("current_version")), version)
+            self.assertEqual(str(payload.get("versioning_scheme")), "semver")
+
+    def test_calver_helpers(self) -> None:
+        from tools import release as release_tool
+
+        self.assertEqual(str(release_tool._detect_versioning_scheme("2026.03.20.0")), "calver")
+        self.assertEqual(str(release_tool._bump_calver("2026.03.20.0", today=(2026, 3, 20))), "2026.03.20.1")
+        self.assertEqual(str(release_tool._bump_calver("2026.03.19.4", today=(2026, 3, 20))), "2026.03.20.0")
 
     def test_tools_wrapper_release_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

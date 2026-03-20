@@ -60,6 +60,8 @@ Install (pip + optional extras): [`docs/install.md`](install.md)
 
 Support/legal: [`docs/support.md`](support.md)
 
+Security / cryptography scope: [`docs/security_crypto_scope.md`](security_crypto_scope.md)
+
 Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](learning_features.md)
 
 ---

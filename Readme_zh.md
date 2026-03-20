@@ -300,6 +300,12 @@ python3 -m pip install -e '.[demo]'
 bash release.sh
 ```
 
+自动 versioning 规则：
+- 当前 version 为 `X.Y.Z` 时，按 SemVer 自动 bump
+- 当前 version 为 CalVer `YYYY.MM.DD.MICRO` 时，自动切换为 CalVer：
+  - 同一 UTC 日期：`YYYY.MM.DD.(MICRO+1)`
+  - UTC 日期变化：`YYYY.MM.DD.0`
+
 dry-run 预览：
 
 ```bash

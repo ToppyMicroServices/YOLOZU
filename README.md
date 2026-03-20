@@ -323,6 +323,9 @@ Auto bump policy (current `X.Y.Z` -> next version):
 - small change: `X.Y.(Z+1)` (e.g. `1.1.1+add` equivalent)
 - medium change: `X.(Y+1).0` (e.g. `1.1+a.0` equivalent)
 - large change: `(X+1).0.0` (e.g. `1+a.0.0` equivalent)
+- if the current version is CalVer `YYYY.MM.DD.MICRO`, `release.sh` switches automatically and uses:
+  - same UTC day: `YYYY.MM.DD.(MICRO+1)`
+  - new UTC day: `YYYY.MM.DD.0`
 
 Dry-run preview:
 

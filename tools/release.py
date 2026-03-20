@@ -14,6 +14,7 @@ Default behavior (`python3 tools/release.py`):
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import re
 import subprocess
@@ -25,6 +26,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INIT_PATH = REPO_ROOT / "yolozu" / "__init__.py"
 PYTHON = sys.executable  # Use the same interpreter as release.sh selected.
+SEMVER_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
+CALVER_RE = re.compile(r"(\d{4})\.(\d{2})\.(\d{2})\.(\d+)")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -45,6 +48,15 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--skip-checks", action="store_true", help="Skip local quality checks.")
     p.add_argument("--skip-gh", action="store_true", help="Skip GitHub release + workflow steps.")
     p.add_argument("--skip-zenodo", action="store_true", help="Skip manual_doi workflow dispatch.")
+    p.add_argument(
+        "--versioning",
+        choices=("auto", "semver", "calver"),
+        default="auto",
+        help=(
+            "Release versioning scheme. 'auto' detects SemVer (X.Y.Z) or CalVer "
+            "(YYYY.MM.DD.MICRO) from yolozu.__version__."
+        ),
+    )
     return p
 
 
@@ -131,11 +143,25 @@ def _set_version_in_init(next_version: str) -> None:
     INIT_PATH.write_text(nxt, encoding="utf-8")
 
 
-def _latest_semver_tag() -> str | None:
+def _detect_versioning_scheme(version: str) -> str:
+    value = str(version).strip()
+    if SEMVER_RE.fullmatch(value):
+        return "semver"
+    if CALVER_RE.fullmatch(value):
+        return "calver"
+    raise RuntimeError(
+        f"unsupported version format: {version!r} (expected SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO)"
+    )
+
+
+def _latest_version_tag(versioning: str) -> str | None:
     out = _git_stdout("tag", "--list", "v[0-9]*", "--sort=-v:refname")
     for line in out.splitlines():
         tag = str(line).strip()
-        if re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+        body = tag[1:] if tag.startswith("v") else tag
+        if versioning == "semver" and SEMVER_RE.fullmatch(body):
+            return tag
+        if versioning == "calver" and CALVER_RE.fullmatch(body):
             return tag
     return None
 
@@ -165,10 +191,10 @@ def _classify_scale(files_changed: int, line_delta: int) -> str:
     return "small"
 
 
-def _bump_version(current: str, scale: str) -> str:
-    m = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", str(current).strip())
+def _bump_semver(current: str, scale: str) -> str:
+    m = SEMVER_RE.fullmatch(str(current).strip())
     if not m:
-        raise RuntimeError(f"unsupported version format (expected MAJOR.MINOR.PATCH): {current}")
+        raise RuntimeError(f"unsupported SemVer format (expected MAJOR.MINOR.PATCH): {current}")
     major, minor, patch = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
     if scale == "small":
         patch += 1
@@ -182,6 +208,29 @@ def _bump_version(current: str, scale: str) -> str:
     else:
         raise RuntimeError(f"unknown bump scale: {scale}")
     return f"{major}.{minor}.{patch}"
+
+
+def _today_utc_calver_parts() -> tuple[int, int, int]:
+    now = datetime.now(timezone.utc)
+    return int(now.year), int(now.month), int(now.day)
+
+
+def _bump_calver(current: str, *, today: tuple[int, int, int] | None = None) -> str:
+    m = CALVER_RE.fullmatch(str(current).strip())
+    if not m:
+        raise RuntimeError(f"unsupported CalVer format (expected YYYY.MM.DD.MICRO): {current}")
+    cur_year, cur_month, cur_day, cur_micro = (
+        int(m.group(1)),
+        int(m.group(2)),
+        int(m.group(3)),
+        int(m.group(4)),
+    )
+    next_year, next_month, next_day = today or _today_utc_calver_parts()
+    if (cur_year, cur_month, cur_day) == (next_year, next_month, next_day):
+        next_micro = cur_micro + 1
+    else:
+        next_micro = 0
+    return f"{next_year:04d}.{next_month:02d}.{next_day:02d}.{next_micro}"
 
 
 def _check_tag_exists_local(tag: str) -> bool:
@@ -239,7 +288,19 @@ def main(argv: list[str] | None = None) -> int:
         errors.append(str(exc))
 
     try:
-        latest_tag = _latest_semver_tag()
+        detected_versioning = _detect_versioning_scheme(current_version) if current_version else ""
+    except Exception as exc:
+        detected_versioning = ""
+        errors.append(str(exc))
+
+    versioning = str(args.versioning).strip()
+    if versioning == "auto":
+        versioning = detected_versioning
+    if versioning not in {"semver", "calver"}:
+        errors.append(f"could not resolve release versioning scheme from --versioning={args.versioning!r}")
+
+    try:
+        latest_tag = _latest_version_tag(versioning) if versioning else None
     except Exception as exc:
         latest_tag = None
         errors.append(str(exc))
@@ -257,9 +318,17 @@ def main(argv: list[str] | None = None) -> int:
         "medium": "X.Y.Z -> X.(Y+1).0  (1.1+a.0 相当)",
         "large": "X.Y.Z -> (X+1).0.0  (1+a.0.0 相当)",
     }
+    calver_formula = "YYYY.MM.DD.MICRO -> same UTC day: MICRO+1, new UTC day: YYYY.MM.DD.0"
 
     try:
-        next_version = _bump_version(current_version, bump_scale) if current_version else ""
+        if not current_version:
+            next_version = ""
+        elif versioning == "semver":
+            next_version = _bump_semver(current_version, bump_scale)
+        elif versioning == "calver":
+            next_version = _bump_calver(current_version)
+        else:
+            raise RuntimeError(f"unknown versioning scheme: {versioning}")
     except Exception as exc:
         next_version = ""
         errors.append(str(exc))
@@ -426,10 +495,12 @@ def main(argv: list[str] | None = None) -> int:
         "dirty": dirty,
         "latest_tag": latest_tag,
         "current_version": current_version,
+        "detected_versioning": detected_versioning,
+        "versioning_scheme": versioning,
         "next_version": next_version,
         "tag": tag,
         "bump_scale": bump_scale,
-        "bump_formula": bump_formulas.get(bump_scale),
+        "bump_formula": calver_formula if versioning == "calver" else bump_formulas.get(bump_scale),
         "scale_stats": {
             "files_changed": files_changed,
             "insertions": insertions,

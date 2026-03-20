@@ -9244,7 +9244,11 @@
         },
         {
           "command": "bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json",
-          "description": "Preview release actions and generated next version without mutating git/GitHub state."
+          "description": "Preview release actions and the next SemVer/CalVer version without mutating git/GitHub state."
+        },
+        {
+          "command": "bash release.sh --dry-run --versioning calver --allow-dirty --allow-non-main --output reports/release_report.calver.json",
+          "description": "Preview CalVer auto-bump mode explicitly (YYYY.MM.DD.MICRO with same-day micro increment)."
         }
       ],
       "id": "release",
@@ -9253,6 +9257,19 @@
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
+          "required": false
+        },
+        {
+          "choices": [
+            "auto",
+            "semver",
+            "calver"
+          ],
+          "default": "auto",
+          "description": "Release versioning scheme: auto detects SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO from yolozu.__version__.",
+          "flag": "--versioning",
+          "kind": "string",
+          "name": "versioning",
           "required": false
         },
         {
@@ -9311,7 +9328,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto semantic version bump (small/medium/large), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff.",
+      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff.",
       "tags": [
         "release",
         "tag",

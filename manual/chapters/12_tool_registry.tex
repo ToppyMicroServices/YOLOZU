@@ -150,6 +150,12 @@ Operational helper script (no required options):
 bash release.sh
 \end{lstlisting}
 
+Versioning policy is automatic:
+\begin{itemize}
+  \item Current \texttt{X.Y.Z}: SemVer bump based on release size.
+  \item Current \texttt{YYYY.MM.DD.MICRO}: CalVer bump with same-day micro increment and UTC-day rollover reset.
+\end{itemize}
+
 Dry-run preview:
 \begin{lstlisting}[language=bash]
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
