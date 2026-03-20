@@ -26,10 +26,9 @@ class TestContributionPolicyDocs(unittest.TestCase):
             "Manifest/manual were updated when machine-readable tool docs or published operator guidance changed.",
             "If no docs/manual/manifest updates were needed, the PR description explains why.",
         ]
-        for relpath in (
-            ".github/PULL_REQUEST_TEMPLATE.md",
-            ".github/pull_request_template.md",
-        ):
-            text = (ROOT / relpath).read_text(encoding="utf-8")
+        template_paths = sorted((ROOT / ".github").glob("*PULL_REQUEST_TEMPLATE.md"))
+        self.assertTrue(template_paths, "expected at least one PR template")
+        for path in template_paths:
+            text = path.read_text(encoding="utf-8")
             for snippet in expected_snippets:
-                self.assertIn(snippet, text, msg=f"{relpath} missing: {snippet}")
+                self.assertIn(snippet, text, msg=f"{path} missing: {snippet}")
