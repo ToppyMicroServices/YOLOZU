@@ -265,8 +265,8 @@ class TestComputeSdftLossPose(unittest.TestCase):
         self.assertIn("loss_sdft_k_delta", parts)
         self.assertIn("loss_sdft_logits", parts)
         self.assertIn("loss_sdft_bbox", parts)
-        self.assertTrue(float(total) > 0)
-        self.assertTrue(total.requires_grad is False)  # inputs had no grad
+        self.assertGreater(float(total), 0.0)
+        self.assertIs(total.requires_grad, False)  # inputs had no grad
 
     @unittest.skipIf(torch is None, "torch not installed")
     def test_pose_missing_optional_keys(self):

@@ -78,7 +78,7 @@ class DatasetAdapter(Protocol):
 
     def probe(self, root: Path) -> DatasetInfo | None:
         """Return ``DatasetInfo`` if *root* matches this format, else ``None``."""
-        ...
+        raise NotImplementedError
 
     def iter_samples(
         self,
@@ -88,7 +88,7 @@ class DatasetAdapter(Protocol):
         **kwargs: Any,
     ) -> Iterator[DatasetSample]:
         """Yield ``DatasetSample`` records for the requested split."""
-        ...
+        raise NotImplementedError
 
 
 # ---------------------------------------------------------------------------

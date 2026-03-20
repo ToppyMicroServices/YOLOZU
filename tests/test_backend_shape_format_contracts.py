@@ -133,7 +133,7 @@ class TestBackendShapeFormatContracts(unittest.TestCase):
         )
         self.assertEqual(int(class_ids[0]), 1)
         self.assertEqual(int(class_ids[1]), 2)
-        self.assertTrue(float(scores[1]) > 0.0)
+        self.assertGreater(float(scores[1]), 0.0)
 
 
 if __name__ == "__main__":

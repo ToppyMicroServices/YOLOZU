@@ -146,7 +146,7 @@ class TestAmpUtils(unittest.TestCase):
         self.assertIsNone(scaler)
         with ctx_factory():
             x = torch.randn(2, 3)
-            y = x + 1  # noqa: F841
+            _ = x + 1
 
 
 # ---------------------------------------------------------------------------

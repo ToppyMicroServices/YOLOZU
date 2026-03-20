@@ -48,9 +48,8 @@ class TestOpenCVDNNRTDETRDecoding(unittest.TestCase):
         self.assertEqual(int(class_ids[0]), 0)
         # second query should pick class 1 (since background ignored).
         self.assertEqual(int(class_ids[1]), 1)
-        self.assertTrue(float(scores[1]) > float(scores[0]))
+        self.assertGreater(float(scores[1]), float(scores[0]))
 
 
 if __name__ == "__main__":
     unittest.main()
-

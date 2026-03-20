@@ -4,6 +4,7 @@ import unittest
 
 class TestContinualRegularizers(unittest.TestCase):
     def test_ewc_roundtrip_and_penalty(self):
+        torch = None
         try:
             import torch
         except Exception:
@@ -46,6 +47,7 @@ class TestContinualRegularizers(unittest.TestCase):
         self.assertGreater(float(penalty1.detach().cpu()), 0.0)
 
     def test_si_roundtrip_and_penalty(self):
+        torch = None
         try:
             import torch
         except Exception:
@@ -94,4 +96,3 @@ class TestContinualRegularizers(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
