@@ -73,7 +73,7 @@ class TestReleaseTagTool(unittest.TestCase):
             self.assertEqual(str(payload.get("tag")), f"{prefix}{version}")
             self.assertEqual(str(payload.get("release_state")), "none")
             steps = payload.get("steps") or []
-            self.assertTrue(len(steps) >= 1)
+            self.assertGreaterEqual(len(steps), 1)
             self.assertEqual(str((steps[0] or {}).get("status")), "dry_run")
 
 

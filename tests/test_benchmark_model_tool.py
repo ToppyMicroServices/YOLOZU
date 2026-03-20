@@ -2,15 +2,14 @@ import json
 import subprocess
 import sys
 import tempfile
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from yolozu.eval import benchmark_mode
 
 
-class TestBenchmarkModelTool(unittest.TestCase):
+class TestBenchmarkModelTool(TestCase):
     def test_tool_help_lists_phase1_flags(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "benchmark_model.py"
@@ -282,7 +281,7 @@ class TestBenchmarkModelTool(unittest.TestCase):
                     out.parent.mkdir(parents=True, exist_ok=True)
                     out.write_text(json.dumps(payload), encoding="utf-8")
                     return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
-                self.fail(f"unexpected subprocess command: {cmd}")
+                raise AssertionError(f"unexpected subprocess command: {cmd}")
 
             def fake_module_available(name):
                 return name == "ultralytics"
@@ -382,7 +381,7 @@ class TestBenchmarkModelTool(unittest.TestCase):
                     out.parent.mkdir(parents=True, exist_ok=True)
                     out.write_text(json.dumps(payload), encoding="utf-8")
                     return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
-                self.fail(f"unexpected subprocess command: {cmd}")
+                raise AssertionError(f"unexpected subprocess command: {cmd}")
 
             def fake_module_available(name):
                 return name in {"ultralytics", "onnxruntime"}
@@ -416,4 +415,4 @@ class TestBenchmarkModelTool(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()

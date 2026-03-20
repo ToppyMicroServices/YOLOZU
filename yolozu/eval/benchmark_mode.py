@@ -570,8 +570,8 @@ def _parity_summary(report: dict[str, Any] | None) -> dict[str, Any] | None:
             cand = failure.get("cand") or {}
             try:
                 score_abs_max = max(score_abs_max, abs(float(ref.get("score")) - float(cand.get("score"))))
-            except Exception:
-                pass
+            except (TypeError, ValueError):
+                continue
             ref_bbox = ref.get("bbox") or {}
             cand_bbox = cand.get("bbox") or {}
             for key in ("cx", "cy", "w", "h"):
@@ -956,7 +956,6 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         format_run_meta["backend"] = fmt
         format_run_meta["run_id"] = run_id
 
-        status = "skipped"
         latency = None
         throughput = None
         eval_metrics = None
@@ -1330,6 +1329,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
     args = parser.parse_args(argv)
 
+    report: dict[str, Any] = {}
+    code = 2
     try:
         report, code = run_benchmark_mode(args)
     except ValueError as exc:

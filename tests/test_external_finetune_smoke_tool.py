@@ -231,7 +231,7 @@ raise SystemExit(0)
                 self.assertTrue(bool(row.get("train_path_audited")))
                 self.assertTrue(bool(row.get("train_script_configured")))
                 self.assertTrue(bool(row.get("training_executed")))
-                self.assertTrue(len(list(row.get("aux_commands") or [])) >= 1)
+                self.assertGreaterEqual(len(list(row.get("aux_commands") or [])), 1)
                 self.assertIn("projection_executed", row)
                 if not bool(row.get("projection_executed")):
                     self.assertTrue(str(row.get("projection_error")))

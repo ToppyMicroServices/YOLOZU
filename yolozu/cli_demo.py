@@ -724,7 +724,6 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                     "(synthetic predictions). To enable inference: python3 -m pip install -U 'yolozu[demo]'"
                 )
                 resolved_inference = "none"
-                inf_norm = "none"
 
         out = run_instance_seg_demo(
             run_dir=getattr(args, "run_dir", None),

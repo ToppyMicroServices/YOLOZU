@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 
 try:
@@ -414,7 +415,7 @@ def _validate_mask_binary(mask):
                 continue
             if isinstance(value, float):
                 seen_float = True
-                if value != value or value in (float("inf"), float("-inf")):
+                if not math.isfinite(value):
                     seen_nonfinite = True
                     continue
                 if value < 0.0 or value > 1.0:
@@ -454,7 +455,7 @@ def _validate_depth_range(depth):
             if value is None:
                 continue
             if isinstance(value, (int, float)):
-                if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
+                if isinstance(value, float) and not math.isfinite(value):
                     seen_nonfinite = True
                     continue
                 if value < 0:

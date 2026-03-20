@@ -205,7 +205,7 @@ def evaluate_keypoints_pck(
 
                 dx = float(pred_kp["x"]) - float(gt_kp["x"])
                 dy = float(pred_kp["y"]) - float(gt_kp["y"])
-                dist = math.sqrt(dx * dx + dy * dy)
+                dist = math.hypot(dx, dy)
                 norm = float(dist) / float(scale)
                 dist_sum += float(norm)
                 cstats["dist_sum"] += float(norm)

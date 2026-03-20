@@ -263,6 +263,7 @@ def main(argv=None):
         records = records[: int(max_images)]
 
     precomputed_path: Path | None = None
+    image_size = None
     config_path = resolve_input_path(args.config, cwd=cwd, repo_root=repo_root)
     checkpoint_path = (
         resolve_input_path(args.checkpoint, cwd=cwd, repo_root=repo_root) if args.checkpoint else None
@@ -275,7 +276,6 @@ def main(argv=None):
         precomputed_path = resolve_input_path(args.predictions, cwd=cwd, repo_root=repo_root)
         adapter = PrecomputedAdapter(predictions_path=str(precomputed_path))
     else:
-        image_size = None
         if args.image_size:
             if len(args.image_size) == 1:
                 image_size = (args.image_size[0], args.image_size[0])

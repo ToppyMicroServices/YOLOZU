@@ -308,6 +308,7 @@ class Losses(nn.Module):
 
             rot_pred_in = rot_pred
             r_gt_in = r_gt
+            loss_rot = rot_pred.sum() * 0.0
             if mask_for_rot is not None:
                 if not bool(mask_for_rot.any()):
                     loss_rot = rot_pred.sum() * 0.0

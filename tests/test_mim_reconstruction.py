@@ -167,12 +167,12 @@ class TestMIMReconstruction(unittest.TestCase):
         # With mask
         loss_masked = mim_reconstruction_loss(recon_feat, teacher_feat, mask=mask)
         self.assertEqual(loss_masked.shape, torch.Size([]))
-        self.assertTrue(loss_masked.item() >= 0.0)
+        self.assertGreaterEqual(loss_masked.item(), 0.0)
         
         # Without mask
         loss_full = mim_reconstruction_loss(recon_feat, teacher_feat, mask=None)
         self.assertEqual(loss_full.shape, torch.Size([]))
-        self.assertTrue(loss_full.item() >= 0.0)
+        self.assertGreaterEqual(loss_full.item(), 0.0)
     
     def test_mim_reconstruction_loss_no_teacher(self):
         """Test MIM loss with no teacher returns zero."""
@@ -195,7 +195,7 @@ class TestMIMReconstruction(unittest.TestCase):
         loss = entropy_loss(logits)
         
         self.assertEqual(loss.shape, torch.Size([]))
-        self.assertTrue(loss.item() >= 0.0)
+        self.assertGreaterEqual(loss.item(), 0.0)
     
     def test_losses_with_mim(self):
         """Test Losses class with MIM outputs."""
@@ -230,7 +230,7 @@ class TestMIMReconstruction(unittest.TestCase):
         self.assertIn("loss", result)
         self.assertIn("loss_mim", result)
         self.assertIn("loss_entropy", result)
-        self.assertTrue(result["loss"].item() > 0.0)
+        self.assertGreater(result["loss"].item(), 0.0)
 
 
 if __name__ == "__main__":
