@@ -11,10 +11,10 @@ except Exception:  # pragma: no cover
     torch = None  # type: ignore
 
 try:
-    import onnxruntime  # type: ignore  # noqa: F401
+    import onnxruntime as _onnxruntime  # type: ignore  # noqa: F401
+    _HAS_ONNXRT = True
 except Exception:  # pragma: no cover
-    onnxruntime = None  # type: ignore
-
+    _HAS_ONNXRT = False
 
 def _write_tiny_rtdetr_pose_config(path: Path) -> None:
     cfg = {
@@ -89,7 +89,7 @@ class TestRTDETRPoseBackendSuiteTool(unittest.TestCase):
             results = payload.get("benchmark", {}).get("results") or []
             self.assertTrue(any(r.get("name") == "torch" for r in results))
 
-    @unittest.skipIf(onnxruntime is None, "onnx/onnxruntime not installed")
+    @unittest.skipIf(not _HAS_ONNXRT, "onnx/onnxruntime not installed")
     def test_torch_and_onnxrt_parity_passes(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "rtdetr_pose_backend_suite.py"

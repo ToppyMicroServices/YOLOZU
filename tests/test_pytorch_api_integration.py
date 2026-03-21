@@ -116,6 +116,7 @@ class TestAmpUtils(unittest.TestCase):
 
     def test_make_amp_context_enabled_cpu(self):
         """AMP on CPU with bfloat16 should work without a scaler."""
+        torch = None
         try:
             import torch  # noqa: F401
         except ImportError:
