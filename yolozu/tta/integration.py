@@ -117,7 +117,7 @@ def _snapshot_norm_buffers(model: Any) -> list[tuple["torch.Tensor", "torch.Tens
     snap: list[tuple[torch.Tensor, torch.Tensor]] = []
     try:
         named_buffers = model.named_buffers()
-    except Exception:
+    except (AttributeError, TypeError):
         return snap
 
     with torch.no_grad():
@@ -129,7 +129,7 @@ def _snapshot_norm_buffers(model: Any) -> list[tuple["torch.Tensor", "torch.Tens
                 continue
             try:
                 snap.append((buffer, buffer.detach().clone()))
-            except Exception:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
                 continue
     return snap
 
@@ -442,7 +442,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         try:
             generator = torch.Generator(device="cpu")
             generator.manual_seed(int(config.seed))
-        except Exception:  # pragma: no cover
+        except (RuntimeError, TypeError, ValueError):  # pragma: no cover
             warnings.append("failed_to_seed_generator")
             generator = None
 
@@ -1113,7 +1113,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         if not was_training:
             try:
                 model.eval()
-            except Exception:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError):  # pragma: no cover
                 warnings.append("failed_to_restore_eval")
 
     seconds = float(time.time() - start)

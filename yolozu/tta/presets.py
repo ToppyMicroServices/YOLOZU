@@ -197,7 +197,7 @@ def _ttt_core_is_defaultish(args: Any) -> bool:
         lr = float(getattr(args, "ttt_lr", 1e-4))
         update_filter = str(getattr(args, "ttt_update_filter", "all"))
         max_batches = int(getattr(args, "ttt_max_batches", 1))
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return False
 
     return (

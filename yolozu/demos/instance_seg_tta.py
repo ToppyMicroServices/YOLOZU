@@ -76,7 +76,7 @@ def _load_torchvision_model(*, device: str) -> tuple[Any, Any, list[str], dict[s
         meta = getattr(weights, "meta", None)
         categories = [str(x) for x in (meta.get("categories") or [])] if isinstance(meta, dict) else []
         model = torchvision.models.detection.maskrcnn_resnet50_fpn_v2(weights=weights)
-    except Exception:
+    except (AttributeError, ImportError, OSError, RuntimeError):
         from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights  # type: ignore
 
         weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT

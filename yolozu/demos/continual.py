@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+import urllib.error
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ def _utc_run_id() -> str:
 def _require_torch() -> Any:
     try:
         import torch  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except (ImportError, OSError, RuntimeError) as exc:  # pragma: no cover
         raise RuntimeError(
             "demo continual requires torch (try: python3 -m pip install -U 'yolozu[demo]' (pip) or "
             "python3 -m pip install -e '.[demo]' (repo checkout), or pip install torch)"
@@ -175,7 +176,7 @@ def run_continual_demo(
             import torchvision  # type: ignore
             import torchvision.transforms as T  # type: ignore
             import torchvision.transforms.functional as TVF  # type: ignore
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError) as exc:
             raise RuntimeError(
                 "problem=mnist_rotate requires torchvision (try: python3 -m pip install -U 'yolozu[demo]' (pip) or "
                 "python3 -m pip install -e '.[demo]' (repo checkout), or pip install torchvision)"
@@ -205,7 +206,7 @@ def run_continual_demo(
             ds_train_b = torchvision.datasets.MNIST(root=str(data_root), train=True, download=True, transform=tf_b)
             ds_eval_a = torchvision.datasets.MNIST(root=str(data_root), train=False, download=True, transform=tf_a)
             ds_eval_b = torchvision.datasets.MNIST(root=str(data_root), train=False, download=True, transform=tf_b)
-        except Exception as exc:
+        except (OSError, RuntimeError, urllib.error.URLError, ValueError) as exc:
             raise RuntimeError(
                 "MNIST download/load failed. If offline, pre-download MNIST under data/torchvision or set --data-dir."
             ) from exc

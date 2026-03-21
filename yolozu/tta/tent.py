@@ -203,7 +203,7 @@ class TentRunner(TTARunner):
         if self.config.max_grad_norm is not None:
             try:
                 torch.nn.utils.clip_grad_norm_(self.params, float(self.config.max_grad_norm))
-            except Exception:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
                 pass
             grad_norm_clipped = _global_grad_norm(self.params)
         self.optimizer.step()

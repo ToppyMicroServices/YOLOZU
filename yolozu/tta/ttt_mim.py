@@ -283,7 +283,7 @@ def ttt_mim_step(
     if max_grad_norm is not None:
         try:
             torch.nn.utils.clip_grad_norm_(params, float(max_grad_norm))
-        except Exception:  # pragma: no cover
+        except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
             pass
         grad_norm_clipped = _global_grad_norm(params)
     optimizer.step()

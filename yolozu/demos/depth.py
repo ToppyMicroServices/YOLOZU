@@ -16,7 +16,7 @@ def _require_deps() -> tuple[Any, Any, Any]:
         from PIL import Image
 
         import torch
-    except Exception as exc:  # pragma: no cover
+    except (ImportError, OSError, RuntimeError) as exc:  # pragma: no cover
         raise RuntimeError("demo depth requires torch, numpy, and Pillow") from exc
     return np, Image, torch
 
@@ -24,7 +24,7 @@ def _require_deps() -> tuple[Any, Any, Any]:
 def _require_transformers() -> tuple[Any, Any]:
     try:
         from transformers import AutoImageProcessor, AutoModelForDepthEstimation
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "demo depth (depth_anything) requires transformers. "
             "Install (pip): python3 -m pip install -U 'yolozu[demo]'. "
