@@ -20,11 +20,10 @@ from typing import Any
 
 try:
     import torch
-    from torch.utils.data import DataLoader, Dataset
+    from torch.utils.data import DataLoader
 except ImportError:  # pragma: no cover
     torch = None
     DataLoader = None
-    Dataset = object
 
 from rtdetr_pose.dataset import build_manifest
 
@@ -58,9 +57,6 @@ from rtdetr_pose.train_runtime import build_validation_loader, install_terminati
 from rtdetr_pose.train_cli import *  # noqa: F401,F403
 from rtdetr_pose.train_utils import *  # noqa: F401,F403
 from rtdetr_pose.train_dataset import *  # noqa: F401,F403
-from rtdetr_pose.train_cli import _default_run_id  # noqa: F401
-from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs, _derive_score_bbox, _diff_stats, _extract_manifest_keypoints_meta, _gaussian_kernel2d, _hsv_to_rgb, _normalize_keypoint_names, _now_utc, _quantiles, _rgb_to_hsv, _rotation_matrix_from_rpy, _sigmoid, _softmax  # noqa: F401
-from rtdetr_pose.train_dataset import _pad_field  # noqa: F401
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
 
