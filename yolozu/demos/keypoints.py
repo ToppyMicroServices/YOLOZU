@@ -17,7 +17,7 @@ def _require_deps() -> tuple[Any, Any, Any]:
 
         import torch
         import torchvision
-    except Exception as exc:  # pragma: no cover
+    except (ImportError, OSError, RuntimeError) as exc:  # pragma: no cover
         raise RuntimeError("demo keypoints requires torch, torchvision, numpy, and Pillow") from exc
     return np, (Image, ImageDraw), (torch, torchvision)
 
@@ -134,7 +134,7 @@ def run_keypoints_demo(
         weights_name = getattr(weights, "name", None) or str(weights)
         model = torchvision.models.detection.keypointrcnn_resnet50_fpn(weights=weights)
         preprocess = weights.transforms()
-    except Exception:
+    except (AttributeError, ImportError, OSError, RuntimeError):
         # Fallback for older torchvision.
         model = torchvision.models.detection.keypointrcnn_resnet50_fpn(pretrained=True)
         weights_name = "pretrained=True"
@@ -143,7 +143,7 @@ def run_keypoints_demo(
             import torchvision.transforms.functional as TVF  # type: ignore
 
             preprocess = lambda im: TVF.to_tensor(im)  # noqa: E731
-        except Exception:
+        except (AttributeError, ImportError, OSError, RuntimeError):
             preprocess = None
 
     if preprocess is None:
@@ -201,7 +201,7 @@ def run_keypoints_demo(
         def _vis(p: list[float]) -> bool:
             try:
                 return float(p[2]) > 0.0
-            except Exception:
+            except (IndexError, TypeError, ValueError):
                 return False
 
         # lines

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from urllib.error import URLError
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ def _require_deps() -> tuple[Any, Any]:
     try:
         import cv2
         import numpy as np
-    except Exception as exc:  # pragma: no cover
+    except (ImportError, OSError, RuntimeError) as exc:  # pragma: no cover
         raise RuntimeError("demo pose requires opencv-python and numpy") from exc
     return cv2, np
 
@@ -65,7 +66,7 @@ def _download_sample(*, target: Path) -> bool:
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         urllib.request.urlretrieve(SAMPLE_URL, str(target))
-    except Exception:
+    except (OSError, TimeoutError, URLError, ValueError):
         return False
     return target.exists()
 
