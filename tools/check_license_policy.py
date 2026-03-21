@@ -95,7 +95,7 @@ def check_repo_text_no_license_texts() -> None:
             if not rel:
                 continue
             tracked_paths.append(REPO_ROOT / rel)
-    except Exception:
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError):
         tracked_paths = []
 
     # Fallback for non-git environments (best-effort): scan the working tree.

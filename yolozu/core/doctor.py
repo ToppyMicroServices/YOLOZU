@@ -196,7 +196,6 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cuda_enabled_device_count": count,
         }
     except _OPTIONAL_RUNTIME_ERRORS as exc:
-    except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("OpenCV probe failed: %s", exc)
 
     return runtime
