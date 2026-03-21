@@ -28,6 +28,12 @@ Writes: `demo_output/overview/<utc>/demo_overview_report.json`
 
 If YOLOZU saved you time, please star to help others find it.
 
+## Enterprise-friendly position
+
+- **Apache-2.0 repository policy**: shipped repository code stays under Apache-2.0, and this repository does not document a built-in relicensing path for that code.
+- **No built-in telemetry**: YOLOZU does not ship usage analytics or phone-home data collection in its tooling; quality control is handled through explicit checks, tests, manifests, provenance reports, and documented workflows instead.
+- **QC with clear boundaries**: YOLOZU ships best-effort QC/reporting helpers, but datasets, model weights, vendor runtimes, and deployment environments remain separate review boundaries under the repository disclaimer.
+
 ## Real-Image Showcase
 
 Examples below come from the in-repo demos and keep the same predictions interface contract across tasks.

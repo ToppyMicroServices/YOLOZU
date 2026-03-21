@@ -190,6 +190,7 @@ Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
 - [Benchmark mode](benchmark_mode.md)
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
+- [License policy and no-telemetry repository boundary](license_policy.md)
 - [Benchmark latency](benchmark_latency.md)
 - [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
 - [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)

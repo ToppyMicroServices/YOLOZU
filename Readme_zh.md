@@ -27,6 +27,12 @@ yolozu demo overview
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
+## 面向企业使用的定位
+
+- **Apache-2.0 repository policy**：仓库中交付的代码保持 Apache-2.0，本仓库不提供内置的 relicensing path。
+- **No built-in telemetry**：YOLOZU 的工具默认不做 usage analytics 或 phone-home 式数据收集；质量控制依赖显式 checks、tests、manifest、provenance reports 与文档化 workflow。
+- **明确 QC 边界**：YOLOZU 提供 best-effort 的 QC/reporting helper，但 datasets、model weights、vendor runtimes 与 deployment environment 仍属于免责声明范围内需要单独审查的边界。
+
 ## Real-Image Showcase
 
 下图来自仓库内置 demo 的真实图像输出，目的是先直观看到多任务结果，再回到同一套 predictions interface contract。

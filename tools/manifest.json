@@ -63,7 +63,7 @@
   },
   "manifest_version": 1,
   "repo": {
-    "description": "Apache-2.0-only interface-contract-first evaluation + tooling harness (CPU-first) for detection/pose workflows across model families.",
+    "description": "Apache-2.0 interface-contract-first evaluation + tooling harness (CPU-first) for multi-task vision workflows, with no built-in telemetry in shipped tooling and explicit quality-control/reporting boundaries.",
     "name": "YOLOZU"
   },
   "tools": [

@@ -2,6 +2,14 @@
 
 This repository is intended to be **Apache-2.0** code only.
 
+## Repository policy: permissive code, no built-in telemetry
+
+- Shipped repository code is intended to remain under **Apache-2.0**.
+- This repository does **not** document or ship a built-in relicensing path for the repository code.
+- Shipped YOLOZU tooling does **not** include built-in telemetry, usage analytics, or phone-home data collection.
+- Quality control is handled through explicit checks, manifests, CI gates, provenance reports, and documented workflows instead of silent data collection.
+- This remains a **best-effort engineering policy**, not a legal guarantee for third-party artifacts or deployment environments.
+
 ## Rules
 
 - Do **not** vendor or depend on GPL/AGPL code in this repository.
@@ -32,6 +40,7 @@ This repo keeps its **code** Apache-2.0-only, but commercial usage risk can stil
 - **Dependencies** (Python packages, CUDA/TensorRT/system libs, Docker base images)
 - **Datasets** (image licenses vary; some datasets are research-only)
 - **Model weights** (separate licenses; keep out of git)
+- **Deployment/runtime integrations** (telemetry defaults, cloud logging, or vendor-side reporting in third-party systems)
 
 To help audit Python dependencies, generate a license report from the *current environment*:
 
@@ -55,3 +64,4 @@ Notes:
 - Python packages: tracked via lock/report tooling (`tools/report_dependency_licenses.py`).
 - System/runtime dependencies (CUDA, cuDNN, TensorRT, OpenCV builds): deployment-team responsibility; validate in target runtime and keep SBOM/license evidence outside this repository when required by policy.
 - Datasets/weights are separate artifacts with independent license terms; they are never implicitly covered by this repo's Apache-2.0 license.
+- Telemetry/logging controls in third-party platforms, hosted runtimes, or cloud services are outside the YOLOZU repository boundary; review and disable them in the target environment if your policy requires that.

@@ -25,6 +25,15 @@ through reproducible continual learning and test-time adaptation.
   \item AI-first development: stable CLIs, machine-readable manifests, and regression-testable artifacts.
 \end{itemize}
 
+\paragraph{Enterprise-friendly repository posture.}
+\yolozu{} keeps the shipped repository code under an Apache-2.0 policy,
+does not ship built-in telemetry or phone-home style usage collection in its
+tooling, and relies on explicit quality-control mechanisms such as tests,
+manifests, CI gates, and provenance/reporting helpers.
+This improves enterprise deployability, but it does not remove the separate
+review boundary for datasets, model weights, vendor runtimes, or hosted
+deployment environments.
+
 \textbf{\yolozu{} exists to measure, compare, and enable mitigation of catastrophic forgetting
 and inference-time adaptation in a reproducible way.}
 
@@ -63,6 +72,7 @@ High-level objectives include:
   \item Streamlining migration by accepting prevalent dataset ecosystems (e.g., Ultralytics/YOLO formats, COCO JSON) via lightweight wrapper artifacts, thereby preserving the integrity of original datasets.
   \item Enforcing a production-oriented run interface contract (Run Contract) for training operations, which standardizes artifact paths, resumption capabilities, and model exports.
   \item Maintaining a strict Apache-2.0 operational posture, ensuring no non-Apache dependencies are present in shipped code paths.
+  \item Avoiding built-in telemetry in shipped tooling; quality control is performed through explicit, reviewable checks instead.
 \end{itemize}
 
 

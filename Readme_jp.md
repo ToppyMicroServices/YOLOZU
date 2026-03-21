@@ -22,6 +22,12 @@ yolozu demo overview
 
 もしYOLOZUが時間短縮に役立ったら、Starで応援してください（他の人が見つけやすくなります）。
 
+## Enterprise 向けの位置づけ
+
+- **Apache-2.0 repository policy**: 配布する repository code は Apache-2.0 を維持し、この repository には built-in の relicensing path を置きません。
+- **No built-in telemetry**: YOLOZU の tooling には usage analytics や phone-home 型のデータ収集を入れず、品質管理は明示的な checks / tests / manifest / provenance report / documented workflow で行います。
+- **QC の境界を明示**: YOLOZU は best-effort の QC/reporting helper を提供しますが、datasets / model weights / vendor runtimes / deployment environment は disclaimer の範囲で別途 review すべき境界として扱います。
+
 ## Real-Image Showcase
 
 下の図は in-repo demo の実画像出力で、タスクが変わっても同じ predictions interface contract に揃うことを示します。
