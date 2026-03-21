@@ -16,6 +16,7 @@ from yolozu.benchmark import measure_latency
 from yolozu.metrics_report import build_report, write_json
 
 logger = logging.getLogger(__name__)
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -51,7 +52,7 @@ def _git_head() -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip() or None
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         return None
 
 
@@ -86,7 +87,7 @@ def _to_int_handle(value: object) -> int:
             logger.debug("failed to read CUDA handle attr %s from %r: %s", attr, value, exc)
     try:
         return int(value)  # type: ignore[arg-type]
-    except Exception as exc:
+    except _NUMERIC_ERRORS as exc:
         raise RuntimeError(f"failed to convert CUDA handle/pointer to int: {value!r}") from exc
 
 
@@ -96,19 +97,19 @@ def _load_cuda_backend() -> _CudaBackend:
         import pycuda.autoinit  # type: ignore  # noqa: F401
 
         return _CudaBackend("pycuda", cuda)
-    except Exception as exc:
+    except ImportError as exc:
         logger.debug("pycuda backend unavailable: %s", exc)
     try:
         from cuda.bindings import runtime as cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception as exc:
+    except ImportError as exc:
         logger.debug("cuda.bindings runtime unavailable: %s", exc)
     try:
         from cuda import cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
+    except ImportError:
         raise RuntimeError("CUDA bindings not found (install pycuda or cuda-python)")
 
 
@@ -119,7 +120,7 @@ class _TrtRunner:
 
         try:
             import tensorrt as trt  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("tensorrt is required") from exc
 
         self.trt = trt
@@ -172,7 +173,7 @@ class _TrtRunner:
             result = result[0]
         try:
             return int(result)
-        except Exception:
+        except _NUMERIC_ERRORS:
             return 1
 
     def _cuda_check(self, result: object, *, op: str) -> None:
@@ -339,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             import numpy as np  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("numpy is required for TensorRT latency measurement") from exc
 
         runner = _TrtRunner(engine_path=engine_path, input_name=str(args.input_name))
