@@ -123,7 +123,7 @@ def main(argv=None):
     if not args.dry_run:
         try:
             from ultralytics import YOLO
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise SystemExit("ultralytics package is required (pip install ultralytics) unless --dry-run is set") from exc
         model = YOLO(args.model)
         results = model.predict(
@@ -237,13 +237,13 @@ def main(argv=None):
             import torch  # type: ignore
 
             meta["extra"]["torch"] = {"version": getattr(torch, "__version__", None), "cuda": bool(torch.cuda.is_available())}
-        except Exception:
+        except ImportError:
             meta["extra"]["torch"] = None
         try:
             import ultralytics  # type: ignore
 
             meta["extra"]["ultralytics"] = {"version": getattr(ultralytics, "__version__", None)}
-        except Exception:
+        except ImportError:
             meta["extra"]["ultralytics"] = None
 
         payload = {"predictions": outputs, "meta": meta}

@@ -28,12 +28,12 @@ def _as_float_list(value: Any) -> list[float] | None:
     if isinstance(value, (list, tuple)):
         try:
             return [float(v) for v in value]
-        except Exception:
+        except (TypeError, ValueError):
             return None
     if hasattr(value, "tolist"):
         try:
             return _as_float_list(value.tolist())
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return None
     return None
 
@@ -44,18 +44,18 @@ def _as_matrix_3x3(value: Any) -> list[list[float]] | None:
     if hasattr(value, "tolist"):
         try:
             value = value.tolist()
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return None
     if isinstance(value, (list, tuple)):
         if len(value) == 3 and isinstance(value[0], (list, tuple)) and len(value[0]) == 3:
             try:
                 return [[float(x) for x in row] for row in value]  # type: ignore[misc]
-            except Exception:
+            except (TypeError, ValueError):
                 return None
         if len(value) == 9 and not isinstance(value[0], (list, tuple, dict)):
             try:
                 flat = [float(v) for v in value]
-            except Exception:
+            except (TypeError, ValueError):
                 return None
             return [
                 [flat[0], flat[1], flat[2]],
@@ -113,13 +113,13 @@ def _as_point_cloud(value: Any) -> list[list[float]] | None:
             return None
         try:
             loaded = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             return None
         return _as_point_cloud(loaded)
     if hasattr(value, "tolist"):
         try:
             value = value.tolist()
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return None
     if not isinstance(value, (list, tuple)) or len(value) <= 0:
         return None
@@ -134,14 +134,14 @@ def _as_point_cloud(value: Any) -> list[list[float]] | None:
                 x = float(item["x"])
                 y = float(item["y"])
                 z = float(item["z"])
-            except Exception:
+            except (KeyError, TypeError, ValueError):
                 return None
             out.append([x, y, z])
             continue
         if isinstance(item, (list, tuple)) and len(item) >= 3:
             try:
                 out.append([float(item[0]), float(item[1]), float(item[2])])
-            except Exception:
+            except (TypeError, ValueError, IndexError):
                 return None
             continue
         return None
@@ -263,12 +263,12 @@ def _parse_image_wh(value: Any) -> tuple[float | None, float | None]:
     if isinstance(value, dict):
         try:
             return float(value.get("width")), float(value.get("height"))
-        except Exception:
+        except (TypeError, ValueError):
             return (None, None)
     if isinstance(value, (list, tuple)) and len(value) == 2:
         try:
             return float(value[0]), float(value[1])
-        except Exception:
+        except (TypeError, ValueError):
             return (None, None)
     return (None, None)
 
@@ -279,7 +279,7 @@ def _bbox_center_px(bbox: dict[str, Any], *, image_wh: tuple[float | None, float
     try:
         cx = float(bbox["cx"])
         cy = float(bbox["cy"])
-    except Exception:
+    except (KeyError, TypeError, ValueError):
         return None
     w, h = image_wh
     if w is None or h is None or w <= 0 or h <= 0:
@@ -314,7 +314,7 @@ def _match_dets_to_gts(
                 continue
             try:
                 iou = _bbox_iou_cxcywh_norm(bbox, gt_bbox)
-            except Exception:
+            except (KeyError, TypeError, ValueError):
                 continue
             if iou >= float(iou_threshold):
                 pairs.append((float(iou), int(det_idx), int(gt_idx)))
@@ -425,7 +425,7 @@ def evaluate_pose(
                     "w": float(lab["w"]),
                     "h": float(lab["h"]),
                 }
-            except Exception:
+            except (KeyError, TypeError, ValueError):
                 continue
             gts.append({"class_id": cid, "bbox": bbox})
 
@@ -449,7 +449,7 @@ def evaluate_pose(
                 continue
             try:
                 score = float(det.get("score", 0.0))
-            except Exception:
+            except (TypeError, ValueError):
                 score = 0.0
             if score < float(min_score):
                 continue
@@ -489,7 +489,7 @@ def evaluate_pose(
                     rot_deg.append(float(deg))
                     img_rot.append(float(deg))
                     match_rot_deg = float(deg)
-                except Exception:
+                except (TypeError, ValueError, ArithmeticError):
                     warnings.append("rotation_eval_failed")
 
             z_pred = None
@@ -500,12 +500,12 @@ def evaluate_pose(
             if z_pred is None and "log_z" in det:
                 try:
                     z_pred = float(math.exp(float(det.get("log_z"))))
-                except Exception:
+                except (TypeError, ValueError, OverflowError):
                     z_pred = None
             if z_pred is None and "z" in det:
                 try:
                     z_pred = float(det.get("z"))
-                except Exception:
+                except (TypeError, ValueError):
                     z_pred = None
 
             t_pred = None
@@ -526,7 +526,7 @@ def evaluate_pose(
                     try:
                         t_xyz = recover_translation(center, (float(offsets[0]), float(offsets[1])), float(z_pred), k_prime)
                         t_pred = [float(t_xyz[0]), float(t_xyz[1]), float(t_xyz[2])]
-                    except Exception:
+                    except (TypeError, ValueError, ArithmeticError):
                         t_pred = None
 
             if t_gt is not None and z_pred is not None:
@@ -534,7 +534,7 @@ def evaluate_pose(
                     dz = abs(float(z_pred) - float(t_gt[2]))
                     depth_abs.append(float(dz))
                     img_depth.append(float(dz))
-                except Exception:
+                except (TypeError, ValueError, ArithmeticError):
                     warnings.append("depth_eval_failed")
 
             if t_gt is not None and t_pred is not None:
@@ -546,7 +546,7 @@ def evaluate_pose(
                     trans_l2.append(float(d))
                     img_trans.append(float(d))
                     match_trans_l2 = float(d)
-                except Exception:
+                except (TypeError, ValueError, ArithmeticError):
                     warnings.append("translation_eval_failed")
 
             cad_points = cad_points_list[int(gt_idx)] if 0 <= int(gt_idx) < len(cad_points_list) else None
@@ -555,13 +555,13 @@ def evaluate_pose(
                     add_val = _add_distance(cad_points, r_pred, t_pred, r_gt, t_gt)
                     if add_val is not None:
                         add.append(float(add_val))
-                except Exception:
+                except (TypeError, ValueError, ArithmeticError):
                     warnings.append("add_eval_failed")
                 try:
                     adds_val = _adds_distance(cad_points, r_pred, t_pred, r_gt, t_gt)
                     if adds_val is not None:
                         adds.append(float(adds_val))
-                except Exception:
+                except (TypeError, ValueError, ArithmeticError):
                     warnings.append("adds_eval_failed")
 
             if match_rot_deg is not None and match_trans_l2 is not None:

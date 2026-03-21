@@ -10,7 +10,7 @@ from typing import Any
 
 try:
     import numpy as np  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     np = None  # type: ignore
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -136,7 +136,7 @@ def _to_int_handle(value: object) -> int:
             continue
     try:
         return int(value)  # type: ignore[arg-type]
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         raise RuntimeError(f"failed to convert CUDA handle/pointer to int: {value!r}") from exc
 
 
@@ -146,20 +146,20 @@ def _load_cuda_backend() -> _CudaBackend:
         import pycuda.autoinit  # type: ignore  # noqa: F401
 
         return _CudaBackend("pycuda", cuda)
-    except Exception:
+    except ImportError:
         # CUDA bindings are optional here; caller can still fall back to non-CUDA paths.
         pass
     try:
         from cuda.bindings import runtime as cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
+    except ImportError:
         pass
     try:
         from cuda import cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
+    except ImportError:
         raise RuntimeError("CUDA bindings not found (install pycuda or cuda-python)")
 
 
@@ -170,7 +170,7 @@ class _TrtRunner:
 
         try:
             import tensorrt as trt  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("tensorrt is required (pip install nvidia-tensorrt)") from exc
 
         self.trt = trt
@@ -223,7 +223,7 @@ class _TrtRunner:
             result = result[0]
         try:
             return int(result)
-        except Exception:
+        except (TypeError, ValueError):
             return 1
 
     def _cuda_check(self, result: object, *, op: str) -> None:
@@ -357,7 +357,7 @@ def _shape_to_ints(value: object) -> tuple[int, ...] | None:
         return None
     try:
         return tuple(int(v) for v in value)
-    except Exception:
+    except (TypeError, ValueError):
         return None
 
 
@@ -368,13 +368,13 @@ def _infer_engine_input_hw(runner: _TrtRunner) -> tuple[int | None, int | None, 
     if runner.mode == "v3":
         try:
             shape = runner.engine.get_tensor_shape(runner.input_name)
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             shape = None
     else:
         try:
             idx = runner.binding_indices[runner.input_name]
             shape = runner.engine.get_binding_shape(int(idx))
-        except Exception:
+        except (KeyError, AttributeError, RuntimeError, TypeError, ValueError):
             shape = None
 
     dims = _shape_to_ints(shape)
@@ -491,7 +491,7 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
             )
             keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
             return keep
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
             try:
                 import torchvision  # type: ignore
 
@@ -502,10 +502,10 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
                 )
                 keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
                 return keep
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
                 # Torch/TorchVision NMS is optional; fall back to the local NumPy NMS path.
                 return None
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
         # Import/runtime failures should not block the pure-NumPy fallback path.
         return None
 
@@ -579,7 +579,7 @@ def _decode_raw_ultralytics(
     try:
         import torch  # type: ignore
         from ultralytics.utils import nms as u_nms  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
 
     arr = raw
@@ -637,7 +637,7 @@ def main(argv=None):
             raise RuntimeError("numpy is required for TensorRT exporter")
         try:
             import cv2  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("opencv-python is required for image loading (pip install opencv-python)") from exc
 
         engine_path = Path(args.engine)
@@ -771,7 +771,7 @@ def main(argv=None):
                 try:
                     import torch  # type: ignore
                     from ultralytics.utils import ops as u_ops  # type: ignore
-                except Exception as exc:  # pragma: no cover
+                except ImportError as exc:  # pragma: no cover
                     raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
             for i in idx:
                 b = boxes[i].tolist()

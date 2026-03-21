@@ -9,7 +9,7 @@ from pathlib import Path
 
 try:
     import numpy as np  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     np = None  # type: ignore
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -90,7 +90,7 @@ def _resolve_onnx_input_size(input_shape: object, *, default_size: int = 640) ->
     def _dim_to_int(value: object) -> int | None:
         try:
             return int(value)
-        except Exception:
+        except (TypeError, ValueError):
             return None
 
     shape = list(input_shape) if isinstance(input_shape, (list, tuple)) else []
@@ -205,7 +205,7 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
             )
             keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
             return keep
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
             try:
                 import torchvision  # type: ignore
 
@@ -216,10 +216,10 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
                 )
                 keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
                 return keep
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
                 # Fall back to the local NMS implementation when torchvision NMS is unavailable.
                 pass
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
         # Torch/TorchVision are optional for the fast-path NMS helper.
         pass
 
@@ -293,7 +293,7 @@ def _decode_raw_ultralytics(
     try:
         import torch  # type: ignore
         from ultralytics.utils import nms as u_nms  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
 
     arr = raw
@@ -375,12 +375,12 @@ def main(argv=None):
 
     try:
         import onnxruntime as ort  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("onnxruntime is required (pip install onnxruntime)") from exc
 
     try:
         import cv2  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("opencv-python is required for image loading (pip install opencv-python)") from exc
 
     model_path = Path(args.onnx)
@@ -392,7 +392,7 @@ def main(argv=None):
     providers = None
     try:
         providers = ort.get_available_providers()
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError, ValueError):
         providers = None
 
     sess = ort.InferenceSession(str(model_path), providers=providers)
@@ -516,7 +516,7 @@ def main(argv=None):
             try:
                 import torch  # type: ignore
                 from ultralytics.utils import ops as u_ops  # type: ignore
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
         for i in idx:
             b = boxes[i].tolist()

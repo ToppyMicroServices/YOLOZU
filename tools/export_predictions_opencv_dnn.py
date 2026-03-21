@@ -13,7 +13,7 @@ from typing import Any
 
 try:
     import numpy as np  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     np = None  # type: ignore
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -372,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         import cv2  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         raise SystemExit("OpenCV is required (install opencv-python) unless --dry-run is set") from exc
 
     meta["cv2_version"] = getattr(cv2, "__version__", None)
@@ -428,7 +428,7 @@ def main(argv: list[str] | None = None) -> int:
             {"name": str(name), "shape": list(np.asarray(out).shape), "dtype": str(np.asarray(out).dtype)}
             for name, out in zip(output_names, probe_outs)
         ]
-    except Exception as exc:
+    except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
         io_probe["probe_error"] = str(exc)
 
     predictions: list[dict[str, Any]] = []

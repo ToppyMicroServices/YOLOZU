@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"executorch model not found: {model_path}")
         try:
             import executorch  # type: ignore  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise RuntimeError(
                 "executorch runtime is required for non-dry-run mode (pip install executorch). "
                 "Use --dry-run for contract validation without runtime dependencies."

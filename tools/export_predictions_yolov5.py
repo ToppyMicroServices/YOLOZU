@@ -50,7 +50,7 @@ def _parse_labels_txt(path: Path, conf_default: float) -> list[dict[str, Any]]:
             w = float(cols[3])
             h = float(cols[4])
             score = float(cols[5]) if len(cols) > 5 else float(conf_default)
-        except Exception:
+        except (TypeError, ValueError, IndexError):
             continue
         detections.append(
             {
@@ -168,7 +168,7 @@ def main(argv=None) -> int:
                                     },
                                 }
                             )
-                        except Exception:
+                        except (TypeError, ValueError, KeyError):
                             continue
                         continue
                 xyxy = det.get("xyxy")
@@ -179,7 +179,7 @@ def main(argv=None) -> int:
                     try:
                         class_id = int(det.get("class_id", det.get("cls", -1)))
                         score = float(det.get("score", det.get("conf", 0.0)))
-                    except Exception:
+                    except (TypeError, ValueError):
                         continue
                     dets.append({"class_id": class_id, "score": score, "bbox": norm})
 
