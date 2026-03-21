@@ -45,7 +45,7 @@ def _now_utc() -> str:
 def _repo_relative_display(path: Path) -> str:
     try:
         return str(path.resolve().relative_to(repo_root.resolve()).as_posix())
-    except Exception:
+    except (OSError, ValueError):
         return str(path)
 
 
@@ -90,7 +90,7 @@ def _resolve_baseline_path(*, args: argparse.Namespace, cwd: Path) -> Path:
 def _capture_cmd_lines(cmd: list[str]) -> list[str]:
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
-    except Exception:
+    except (FileNotFoundError, subprocess.CalledProcessError, OSError):
         return []
     return [line.strip() for line in out.splitlines() if line.strip()]
 
@@ -116,7 +116,7 @@ def _cpu_flags() -> list[str]:
 def _safe_torch_build_info(capture_mode: str) -> dict[str, Any]:
     try:
         import torch
-    except Exception:
+    except ImportError:
         return {"available": False}
 
     info: dict[str, Any] = {
@@ -129,11 +129,11 @@ def _safe_torch_build_info(capture_mode: str) -> dict[str, Any]:
     if hasattr(torch.backends, "cudnn"):
         try:
             info["cudnn_version"] = torch.backends.cudnn.version()
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError):
             info["cudnn_version"] = None
     try:
         cfg_text = str(torch.__config__.show())
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         cfg_text = ""
     info["config_sha256"] = _sha256_text(cfg_text)
     if capture_mode == "full" and cfg_text:
@@ -150,7 +150,7 @@ def _git_tag() -> str | None:
             text=True,
         ).strip()
         return out or None
-    except Exception:
+    except (FileNotFoundError, subprocess.CalledProcessError, OSError):
         return None
 
 
@@ -257,7 +257,7 @@ def _safe_package_version(name: str) -> str | None:
         return importlib.metadata.version(name)
     except importlib.metadata.PackageNotFoundError:
         return None
-    except Exception:
+    except OSError:
         return None
 
 
@@ -271,14 +271,14 @@ def _git_sha() -> str | None:
         )
         value = out.strip()
         return value if value else None
-    except Exception:
+    except (FileNotFoundError, subprocess.CalledProcessError, OSError):
         return None
 
 
 def _ensure_repo_write_target(path: Path, *, flag_name: str) -> None:
     try:
         path.resolve().relative_to(repo_root.resolve())
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         raise SystemExit(f"{flag_name} must be under repository root: {path}") from exc
 
 
@@ -288,14 +288,14 @@ def _canonical_image_key(image: str, *, dataset_root: Path) -> str:
         img = Path(text).resolve()
         root = dataset_root.resolve()
         return str(img.relative_to(root).as_posix())
-    except Exception:
+    except (OSError, ValueError):
         return text
 
 
 def _dataset_label_path(image_path: Path, *, dataset_root: Path) -> Path | None:
     try:
         rel = image_path.resolve().relative_to(dataset_root.resolve())
-    except Exception:
+    except (OSError, ValueError):
         return None
 
     parts = rel.parts
@@ -378,7 +378,7 @@ def _preflight_records(
 ) -> tuple[dict[str, dict[str, Any]], list[str]]:
     try:
         from PIL import Image, ImageOps, UnidentifiedImageError
-    except Exception as exc:
+    except ImportError as exc:
         return {}, [f"{ERR_PREPROC}: Pillow unavailable for record preflight: {exc}"]
 
     out: dict[str, dict[str, Any]] = {}
@@ -411,7 +411,7 @@ def _preflight_records(
         except UnidentifiedImageError as exc:
             errors.append(f"{ERR_DECODE}: {where} unsupported/corrupt image: {image_path} ({exc})")
             continue
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             errors.append(f"{ERR_DECODE}: {where} decode failed: {image_path} ({exc})")
             continue
 
@@ -531,7 +531,7 @@ def _validate_reference_entry_metadata(
             for pad_key in ("left", "top", "right", "bottom"):
                 try:
                     pad_value = int(pad.get(pad_key, -1))
-                except Exception:
+                except (TypeError, ValueError):
                     errors.append(f"{ERR_PREPROC}: {where}.preproc.pad.{pad_key} must be integer")
                     continue
                 if pad_value != 0:
@@ -656,7 +656,7 @@ def _label_bbox(label: dict[str, Any]) -> dict[str, float] | None:
                 "w": float(bbox_obj.get("w")),
                 "h": float(bbox_obj.get("h")),
             }
-        except Exception:
+        except (TypeError, ValueError):
             return None
     try:
         return {
@@ -665,7 +665,7 @@ def _label_bbox(label: dict[str, Any]) -> dict[str, float] | None:
             "w": float(label.get("w")),
             "h": float(label.get("h")),
         }
-    except Exception:
+    except (TypeError, ValueError):
         return None
 
 
@@ -690,7 +690,7 @@ def _extract_gt_records(
                 continue
             try:
                 class_id = int(label.get("class_id"))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             labels_out.append(
                 {
@@ -731,7 +731,7 @@ def _preds_by_image(predictions: list[dict[str, Any]]) -> dict[str, list[dict[st
                         },
                     }
                 )
-            except Exception:
+            except (TypeError, ValueError):
                 continue
         rows.sort(key=lambda row: float(row["score"]), reverse=True)
     return out
@@ -1032,7 +1032,7 @@ def _bbox_xyxy_from_norm(bbox: dict[str, Any], *, width: int, height: int) -> tu
         cy = float(bbox.get("cy"))
         bw = float(bbox.get("w"))
         bh = float(bbox.get("h"))
-    except Exception:
+    except (TypeError, ValueError):
         return None
     x0 = int(round((cx - bw / 2.0) * float(width)))
     y0 = int(round((cy - bh / 2.0) * float(height)))
@@ -1115,7 +1115,7 @@ def _write_topk_examples(
         return []
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except ImportError:
         return []
 
     record_lookup = _build_record_lookup(records, dataset_root=dataset_root)
@@ -1140,7 +1140,7 @@ def _write_topk_examples(
         try:
             with Image.open(image_path) as src:
                 canvas = src.convert("RGB")
-        except Exception:
+        except (OSError, ValueError):
             continue
 
         draw = ImageDraw.Draw(canvas)
@@ -1161,7 +1161,7 @@ def _write_topk_examples(
             class_id = det.get("class_id")
             try:
                 score = float(det.get("score", 0.0))
-            except Exception:
+            except (TypeError, ValueError):
                 score = 0.0
             draw.rectangle(xyxy, outline=(220, 30, 30), width=2)
             draw.text((xyxy[0] + 2, xyxy[1] + 2), f"pred:{class_id}@{score:.2f}", fill=(220, 30, 30))
