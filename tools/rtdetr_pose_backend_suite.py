@@ -17,7 +17,7 @@ from typing import Any, Iterable
 
 try:
     import numpy as np  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     np = None  # type: ignore
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -53,12 +53,9 @@ def _resolve(path_str: str | None) -> Path | None:
 def _run_capture(cmd: list[str]) -> str | None:
     try:
         out = subprocess.check_output(cmd, cwd=repo_root, stderr=subprocess.STDOUT)
-    except Exception:
+    except (FileNotFoundError, OSError, subprocess.CalledProcessError):
         return None
-    try:
-        return out.decode("utf-8", errors="replace").strip()
-    except Exception:
-        return None
+    return out.decode("utf-8", errors="replace").strip()
 
 def _parse_cuda_version(nvidia_smi_text: str) -> str | None:
     m = re.search(r"CUDA Version:\s*([0-9]+(?:\.[0-9]+)?)", str(nvidia_smi_text))
@@ -111,7 +108,7 @@ def _trtexec_version(trtexec: str) -> str | None:
 def _tensorrt_py_version() -> str | None:
     try:
         import tensorrt  # type: ignore
-    except Exception:
+    except ImportError:
         return None
     v = getattr(tensorrt, "__version__", None)
     return None if v is None else str(v)
@@ -120,12 +117,12 @@ def _tensorrt_py_version() -> str | None:
 def _onnxruntime_info() -> dict[str, Any] | None:
     try:
         import onnxruntime as ort  # type: ignore
-    except Exception:
+    except ImportError:
         return None
     info: dict[str, Any] = {"version": str(getattr(ort, "__version__", "")) or None}
     try:
         info["available_providers"] = list(ort.get_available_providers())
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         info["available_providers"] = None
     return info
 
@@ -140,7 +137,7 @@ def _json_file_record(path: Path | None, *, embed: bool) -> dict[str, Any] | Non
     if embed:
         try:
             rec["data"] = json.loads(path.read_text(encoding="utf-8"))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError) as exc:
             rec["embed_error"] = str(exc)
     return rec
 
@@ -158,7 +155,7 @@ def _nvidia_smi_memory() -> dict[str, Any] | None:
     try:
         used = int(float(parts[0]))
         total = int(float(parts[1]))
-    except Exception:
+    except (TypeError, ValueError):
         return {"raw": out}
     return {"used_mib": used, "total_mib": total, "raw": out}
 
@@ -272,7 +269,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def _load_model(*, config_path: Path, checkpoint_path: Path | None, device: str):
     try:
         import torch
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("torch is required for RTDETRPose torch backend") from exc
 
     from rtdetr_pose.config import load_config
@@ -320,7 +317,7 @@ class _OnnxRtRunner:
     def create(cls, *, onnx_path: Path, input_name: str):
         try:
             import onnxruntime as ort  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("onnxruntime is required for onnxrt backend") from exc
 
         available_providers = list(ort.get_available_providers())
@@ -365,7 +362,7 @@ def _to_int_handle(value: object) -> int:
             logger.debug("failed to read CUDA handle attr %s from %r: %s", attr, value, exc)
     try:
         return int(value)  # type: ignore[arg-type]
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         raise RuntimeError(f"failed to convert CUDA handle/pointer to int: {value!r}") from exc
 
 
@@ -375,19 +372,19 @@ def _load_cuda_backend() -> _CudaBackend:
         import pycuda.autoinit  # type: ignore  # noqa: F401
 
         return _CudaBackend("pycuda", cuda)
-    except Exception:
+    except ImportError:
         pass
     try:
         from cuda.bindings import runtime as cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
+    except ImportError:
         pass
     try:
         from cuda import cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
+    except ImportError:
         raise RuntimeError("CUDA bindings not found (install pycuda or cuda-python)")
 
 
@@ -418,7 +415,7 @@ class _TrtRunner:
             result = result[0]
         try:
             return int(result)  # enum/int
-        except Exception:
+        except (TypeError, ValueError):
             return 1
 
     def _cuda_check(self, result: object, *, op: str) -> None:
@@ -439,7 +436,7 @@ class _TrtRunner:
 
         try:
             import tensorrt as trt  # type: ignore
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("tensorrt is required for trt backend") from exc
 
         logger = trt.Logger(trt.Logger.WARNING)
@@ -606,7 +603,7 @@ def _maybe_torch_cuda_sync() -> None:
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-    except Exception:
+    except (ImportError, RuntimeError):
         return
 
 
@@ -712,7 +709,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             try:
                 onnxrt = _OnnxRtRunner.create(onnx_path=onnx_path, input_name=str(args.input_name))
-            except Exception as exc:
+            except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
                 report["parity"]["candidates"]["onnxrt"] = {"available": False, "reason": f"init_failed:{exc}"}
 
     trt = None
@@ -724,7 +721,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             try:
                 trt = _TrtRunner.create(engine_path=engine_path, input_name=str(args.input_name))
-            except Exception as exc:
+            except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
                 report["parity"]["candidates"]["trt"] = {"available": False, "reason": f"init_failed:{exc}"}
 
     # Parity (torch reference).
@@ -756,13 +753,13 @@ def main(argv: list[str] | None = None) -> int:
     if onnxrt is not None:
         try:
             report["parity"]["candidates"]["onnxrt"] = compare_candidate("onnxrt", onnxrt.infer)
-        except Exception as exc:
+        except (RuntimeError, TypeError, ValueError) as exc:
             report["parity"]["candidates"]["onnxrt"] = {"available": False, "reason": f"infer_failed:{exc}"}
 
     if trt is not None:
         try:
             report["parity"]["candidates"]["trt"] = compare_candidate("trt", trt.infer)
-        except Exception as exc:
+        except (RuntimeError, TypeError, ValueError) as exc:
             report["parity"]["candidates"]["trt"] = {"available": False, "reason": f"infer_failed:{exc}"}
 
     # Benchmarks.

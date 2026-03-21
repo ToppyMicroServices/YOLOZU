@@ -25,16 +25,18 @@ def _load_config(path: Path) -> dict:
     if path.suffix.lower() in (".yaml", ".yml"):
         try:
             import yaml  # type: ignore
-
+        except ImportError:
+            return simple_yaml_load(text)
+        try:
             data = yaml.safe_load(text)
             return data or {}
-        except Exception:
+        except (AttributeError, TypeError, ValueError, yaml.YAMLError):
             return simple_yaml_load(text)
     if path.suffix.lower() == ".json":
         return json.loads(text)
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError:
         return simple_yaml_load(text)
 
 
@@ -81,7 +83,7 @@ def _detect_config_source_from_path(path_like: str | Path) -> str:
     if suffix in (".yaml", ".yml", ".json"):
         try:
             cfg = _load_config(p)
-        except Exception:
+        except (OSError, ValueError, json.JSONDecodeError):
             cfg = {}
         if isinstance(cfg, dict):
             upper_keys = {str(k) for k in cfg.keys()}
@@ -120,7 +122,7 @@ def _resolve_auto_config_from_args(args: argparse.Namespace) -> str:
 def _cmd_train(config_path: Path, extra_args: list[str] | None = None) -> int:
     try:
         from rtdetr_pose.train_minimal import main as train_main
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise SystemExit(
             "yolozu train requires optional training deps. Install `yolozu[train]` (or `yolozu[full]`) "
             "to enable the RT-DETR pose trainer."
@@ -190,7 +192,7 @@ def _cmd_train_import_preview(args: argparse.Namespace) -> int:
 def _cmd_test(config_path: Path, extra_args: list[str] | None = None) -> int:
     try:
         from yolozu.scenarios_cli import main as scenarios_main
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise SystemExit(
             "yolozu test failed to import scenario runner."
         ) from exc
@@ -260,7 +262,7 @@ def _cmd_fetch_model(args: argparse.Namespace) -> int:
         raise SystemExit(str(exc)) from exc
     except KeyError as exc:
         raise SystemExit(f"unknown model id: {exc.args[0]} (use `yolozu list models`)") from exc
-    except Exception as exc:
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
     print(str(model_path))
     print(str(meta_path))
@@ -274,7 +276,7 @@ def _cmd_benchmark(args: argparse.Namespace) -> int:
         report, code = run_benchmark_mode(args)
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
-    except Exception as exc:
+    except (OSError, RuntimeError, TypeError) as exc:
         raise SystemExit(str(exc)) from exc
 
     if bool(getattr(args, "verbose", False)):
@@ -352,7 +354,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                     if isinstance(cat, dict):
                         try:
                             category_ids.append(int(cat.get("id")))
-                        except Exception:
+                        except (TypeError, ValueError):
                             continue
             has_category_id_zero = 0 in category_ids
             if has_category_id_zero:
@@ -397,7 +399,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                     label_count += 1
                     try:
                         max_class = max(max_class, int(lab.get("class_id", -1)))
-                    except Exception:
+                    except (TypeError, ValueError):
                         continue
             report["dataset"] = {
                 "from": "ultralytics",
@@ -448,7 +450,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 raise SystemExit(f"unsupported --config-from: {src}")
         except SystemExit:
             raise
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError, KeyError) as exc:
             report["errors"].append(str(exc))
 
     output = str(getattr(args, "output", "-") or "-")
@@ -516,7 +518,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
                 split=str(args.split) if args.split else None,
                 label_format=str(getattr(args, "label_format", "")).strip() or None,
             )
-        except Exception as exc:
+        except (FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
             raise SystemExit(str(exc)) from exc
         records = manifest.get("images") or []
         if not isinstance(records, list):
@@ -543,7 +545,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         raise SystemExit(f"file not found: {path}")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         raise SystemExit(f"failed to parse json: {path} ({exc})") from exc
 
     if args.validate_command == "predictions":
@@ -551,7 +553,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
         try:
             res = validate_predictions_payload(payload, strict=bool(args.strict))
-        except Exception as exc:
+        except (TypeError, ValueError) as exc:
             raise SystemExit(str(exc)) from exc
         for w in res.warnings:
             print(w, file=sys.stderr)
@@ -562,7 +564,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
         try:
             res = validate_segmentation_predictions_payload(payload)
-        except Exception as exc:
+        except (TypeError, ValueError) as exc:
             raise SystemExit(str(exc)) from exc
         for w in res.warnings:
             print(w, file=sys.stderr)
@@ -575,7 +577,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
         try:
             res = validate_instance_segmentation_predictions_payload(payload)
-        except Exception as exc:
+        except (TypeError, ValueError) as exc:
             raise SystemExit(str(exc)) from exc
         for w in res.warnings:
             print(w, file=sys.stderr)
@@ -641,7 +643,7 @@ def _cmd_onnxrt_export(args: argparse.Namespace) -> int:
             dry_run=bool(args.dry_run),
             strict=bool(args.strict),
         )
-    except Exception as exc:
+    except (FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
     out_path = write_predictions_json(output=str(args.output), payload=payload, force=bool(args.force))
@@ -668,7 +670,7 @@ def _cmd_onnxrt_quantize(args: argparse.Namespace) -> int:
             op_types_to_quantize=op_types,
             use_external_data_format=bool(args.use_external_data_format),
         )
-    except Exception as exc:
+    except (FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
     print(str(out_path))
@@ -715,7 +717,7 @@ def _cmd_predict_images(args: argparse.Namespace) -> int:
             dry_run=bool(args.dry_run),
             strict=bool(args.strict),
         )
-    except Exception as exc:
+    except (FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
     print(str(out_json))
@@ -886,7 +888,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
         for key, value in raw_counts.items():
             try:
                 loaded_counts[int(key)] = int(value)
-            except Exception:
+            except (TypeError, ValueError):
                 continue
         stats_source = str(stats_path)
 
@@ -985,7 +987,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
                             continue
                         try:
                             temp_grid.append(float(part))
-                        except Exception:
+                        except (TypeError, ValueError):
                             continue
                 calibrated_entries, calibration_report = temperature_calibrate_predictions(
                     records,
@@ -1385,7 +1387,7 @@ def _cmd_import(args: argparse.Namespace) -> int:
         raise SystemExit("unknown import command")
     except SystemExit:
         raise
-    except Exception as exc:
+    except (ImportError, FileNotFoundError, OSError, RuntimeError, TypeError, ValueError, KeyError) as exc:
         raise SystemExit(str(exc)) from exc
 
 
