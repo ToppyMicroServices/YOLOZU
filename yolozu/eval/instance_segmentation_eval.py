@@ -21,11 +21,15 @@ __all__ = [
 
 from yolozu.core.image_keys import image_basename, image_key_aliases, lookup_image_alias
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+_MASK_LOAD_ERRORS = (OSError, ValueError, TypeError, RuntimeError)
+
+
 def _try_import_deps():  # pragma: no cover
     try:
         import numpy as np
         from PIL import Image
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("instance-segmentation evaluation requires numpy and Pillow") from exc
     return np, Image
 
@@ -192,12 +196,12 @@ def extract_gt_instances_from_record(
         for item, cid in zip(mask_value, mask_classes):
             try:
                 class_id = int(cid)
-            except Exception:
+            except _NUMERIC_ERRORS:
                 warnings.append("invalid mask_classes entry; skipping an instance")
                 continue
             try:
                 m = load_mask_bool(item, allow_rgb=allow_rgb_masks)
-            except Exception as exc:
+            except _MASK_LOAD_ERRORS as exc:
                 warnings.append(f"failed to load gt mask: {exc}")
                 continue
             instances.append({"class_id": class_id, "mask": m})
@@ -207,7 +211,7 @@ def extract_gt_instances_from_record(
     if isinstance(mask_format, str) and mask_format.lower() == "instance":
         try:
             arr = load_mask_int(mask_value, allow_rgb=allow_rgb_masks)
-        except Exception as exc:
+        except _MASK_LOAD_ERRORS as exc:
             warnings.append(f"failed to load instance-id gt mask: {exc}")
             return [], warnings
         unique = [int(v) for v in set(int(x) for x in arr.reshape(-1).tolist()) if int(v) != 0]
@@ -218,9 +222,13 @@ def extract_gt_instances_from_record(
             for k, v in mask_class_map.items():
                 try:
                     class_map[int(k)] = int(v)
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
-        fallback_class = int(mask_class_id) if mask_class_id is not None else 0
+        try:
+            fallback_class = int(mask_class_id) if mask_class_id is not None else 0
+        except _NUMERIC_ERRORS:
+            fallback_class = 0
+            warnings.append("invalid mask_class_id fallback; using class_id=0")
 
         for inst_id in unique:
             m = (arr == int(inst_id))
@@ -232,7 +240,7 @@ def extract_gt_instances_from_record(
     if mask_instances:
         try:
             arr = load_mask_int(mask_value, allow_rgb=allow_rgb_masks)
-        except Exception as exc:
+        except _MASK_LOAD_ERRORS as exc:
             warnings.append(f"failed to load gt mask: {exc}")
             return [], warnings
         class_map: dict[int, int] = {}
@@ -240,7 +248,7 @@ def extract_gt_instances_from_record(
             for k, v in mask_class_map.items():
                 try:
                     class_map[int(k)] = int(v)
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
         for class_val in sorted(int(v) for v in set(int(x) for x in arr.reshape(-1).tolist()) if int(v) != 0):
             class_id = int(class_map.get(int(class_val), int(class_val)))
@@ -278,12 +286,12 @@ def _group_instances(
             continue
         try:
             class_id = int(it.get(class_key))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         score = it.get(score_key, 1.0)
         try:
             score_f = float(score)
-        except Exception:
+        except _NUMERIC_ERRORS:
             score_f = 1.0
 
         mask_val = it.get(mask_key)
@@ -372,7 +380,7 @@ def evaluate_instance_map(
                 continue
             try:
                 m = np.asarray(mask, dtype=bool)
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             per_image.setdefault(class_id, []).append(m)
             gt_classes.add(class_id)
@@ -432,7 +440,7 @@ def evaluate_instance_map(
 
             try:
                 pm = _load_pred_mask(pred["mask"])
-            except Exception:
+            except _MASK_LOAD_ERRORS:
                 tp.append(0)
                 fp.append(1)
                 continue
@@ -444,7 +452,7 @@ def evaluate_instance_map(
                     continue
                 try:
                     iou = mask_iou(pm, gm)
-                except Exception:
+                except (TypeError, ValueError):
                     continue
                 if iou > best_iou:
                     best_iou = iou
@@ -514,7 +522,7 @@ def evaluate_instance_map(
                 for it in pred_by_image.get(str(key), []) or []:
                     try:
                         sig = (str(it.get("mask", "")), int(it.get("class_id", 0)), float(it.get("score", 0.0)))
-                    except Exception:
+                    except _NUMERIC_ERRORS:
                         sig = (str(it.get("mask", "")), 0, 0.0)
                     if sig in seen:
                         continue
@@ -541,7 +549,7 @@ def evaluate_instance_map(
                 for pred in cls_preds:
                     try:
                         pm = _load_pred_mask(pred.get("mask"))
-                    except Exception:
+                    except _MASK_LOAD_ERRORS:
                         fp += 1
                         continue
                     best_iou = 0.0
@@ -551,7 +559,7 @@ def evaluate_instance_map(
                             continue
                         try:
                             iou = mask_iou(pm, gm)
-                        except Exception:
+                        except (TypeError, ValueError):
                             continue
                         if iou > best_iou:
                             best_iou = iou

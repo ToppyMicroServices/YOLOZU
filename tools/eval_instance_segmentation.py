@@ -23,6 +23,10 @@ from yolozu.instance_segmentation_eval import evaluate_instance_map  # noqa: E40
 from yolozu.instance_segmentation_predictions import iter_instances, load_instance_segmentation_predictions_entries  # noqa: E402
 from yolozu.metrics_report import build_report, write_json  # noqa: E402
 
+_JSON_LOAD_ERRORS = (OSError, UnicodeDecodeError, json.JSONDecodeError)
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+_MASK_LOAD_ERRORS = (OSError, ValueError, TypeError, RuntimeError)
+
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Evaluate instance segmentation predictions (mask mAP over PNG masks).")
@@ -77,7 +81,7 @@ def _load_class_id_to_name(path: Path) -> dict[int, str]:
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except _JSON_LOAD_ERRORS:
         return {}
 
     if isinstance(data, dict):
@@ -95,7 +99,7 @@ def _load_class_id_to_name(path: Path) -> dict[int, str]:
             for k, v in id_to_name.items():
                 try:
                     out[int(k)] = str(v)
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
             return out
 
@@ -114,7 +118,7 @@ def _overlay_instances(image_rgb, instances: list[dict[str, Any]], *, colors, al
     for inst in instances:
         try:
             class_id = int(inst.get("class_id", 0))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         color = colors[int(class_id) % len(colors)] if colors else (255, 0, 0)
         mask_val = inst.get("mask")
@@ -123,7 +127,7 @@ def _overlay_instances(image_rgb, instances: list[dict[str, Any]], *, colors, al
         try:
             m = load_mask_bool(mask_val, allow_rgb=allow_rgb_masks)
             m = np.asarray(m, dtype=bool)
-        except Exception:
+        except _MASK_LOAD_ERRORS + (TypeError, ValueError):
             continue
         if m.shape[0] != out.shape[0] or m.shape[1] != out.shape[1]:
             continue
@@ -183,7 +187,7 @@ def _write_html(*, html_path: Path, title: str, report: dict[str, Any], overlays
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     lines: list[str] = [
@@ -392,7 +396,7 @@ def main(argv: list[str] | None = None) -> None:
             try:
                 import numpy as np
                 from PIL import Image
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise SystemExit(f"numpy + Pillow required for overlays: {exc}") from exc
 
             overlays_dir = resolve_output_path(args.overlays_dir, cwd=cwd)
@@ -406,7 +410,7 @@ def main(argv: list[str] | None = None) -> None:
                     continue
                 try:
                     score = float(inst.get("score", 1.0))
-                except Exception:
+                except _NUMERIC_ERRORS:
                     score = 1.0
                 if score < float(min_score or 0.0):
                     continue
@@ -466,7 +470,7 @@ def main(argv: list[str] | None = None) -> None:
 
                 try:
                     img = Image.open(image_path).convert("RGB")
-                except Exception:
+                except OSError:
                     continue
 
                 # Downscale image for overlays only.
@@ -503,7 +507,7 @@ def main(argv: list[str] | None = None) -> None:
                         continue
                     try:
                         m = load_mask_bool(mask_path, allow_rgb=bool(args.allow_rgb_masks))
-                    except Exception:
+                    except _MASK_LOAD_ERRORS:
                         continue
                     m_r = _resize_mask_bool(m)
                     if m_r is None:
@@ -536,7 +540,7 @@ def main(argv: list[str] | None = None) -> None:
                 out_path = overlays_dir / f"{idx:06d}_{stem}_{digest}.png"
                 try:
                     combined.save(out_path)
-                except Exception:
+                except OSError:
                     continue
 
                 diag = diag_by_path.get(image_path)
