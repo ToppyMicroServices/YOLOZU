@@ -147,6 +147,7 @@ def _load_cuda_backend() -> _CudaBackend:
 
         return _CudaBackend("pycuda", cuda)
     except Exception:
+        # CUDA bindings are optional here; caller can still fall back to non-CUDA paths.
         pass
     try:
         from cuda.bindings import runtime as cudart  # type: ignore
@@ -502,8 +503,10 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
                 keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
                 return keep
             except Exception:
+                # Torch/TorchVision NMS is optional; fall back to the local NumPy NMS path.
                 return None
     except Exception:
+        # Import/runtime failures should not block the pure-NumPy fallback path.
         return None
 
     order = scores.argsort()[::-1]

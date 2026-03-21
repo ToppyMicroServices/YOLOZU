@@ -83,7 +83,8 @@ def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[st
             try:
                 out["keypoint_category_id"] = int(category_id)
             except (TypeError, ValueError):
-                pass
+                # Preserve keypoint metadata even when the category id is malformed.
+                out.pop("keypoint_category_id", None)
         return out
 
     return {}

@@ -36,6 +36,23 @@ It is already stronger than a plain benchmark wrapper in a few areas:
 
 The remaining gap is mainly breadth, not the core interface shape.
 
+## Highest-leverage gap closers
+
+If the goal is to close the practical gap against the Ultralytics docs surface
+without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
+effective next steps are:
+
+1. Turn `segmentation`, `classification`, `obb`, and `keypoints` into real
+   backend/eval paths for the existing `torch` / `onnx` / `engine` benchmark
+   flow.
+2. Promote `torchscript` from planning-only semantics to a real execution path,
+   then follow with `openvino` as the next conditional runtime target.
+3. Keep one support matrix that shows whether each format has real inference,
+   real eval, real parity artifacts, or only placeholder/skipped semantics.
+4. Expand parity artifacts beyond today's `torch`-anchored backend comparisons.
+5. Keep format-specific flag validation strict so inert combinations fail early
+   instead of looking supported.
+
 ## Current gap by area
 
 ### 1. Export / benchmark format breadth

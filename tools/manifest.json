@@ -1358,7 +1358,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
+      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the highest-leverage parity-closing work (real task coverage, broader format matrix, and clearer support-status tables).",
       "tags": [
         "benchmark",
         "parity",

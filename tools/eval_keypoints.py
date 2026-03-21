@@ -281,8 +281,8 @@ def _render_overlay(
                 try:
                     if float(v) <= 0.0:
                         continue
-                except Exception:
-                    pass
+                except (TypeError, ValueError):
+                    continue
             x = float(x) * float(scale)
             y = float(y) * float(scale)
             draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=2, fill=None)
@@ -315,8 +315,8 @@ def _render_overlay(
                     try:
                         if float(gv) <= 0.0:
                             continue
-                    except Exception:
-                        pass
+                    except (TypeError, ValueError):
+                        continue
                 px, py, _pv = pred_pts[i]
                 draw.line(
                     [float(gx) * scale, float(gy) * scale, float(px) * scale, float(py) * scale],

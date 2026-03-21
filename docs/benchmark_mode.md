@@ -43,6 +43,24 @@ The detailed audit and recommended implementation order live in:
 
 - [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
 
+## Highest-leverage next steps
+
+If we want to close the user-visible gap against Ultralytics efficiently, the
+best next steps are:
+
+- add real `segmentation`, `classification`, `obb`, and `keypoints` execution
+  paths to the existing `torch` / `onnx` / `engine` benchmark flow
+- promote `torchscript` to a real backend path and follow with conditional
+  `openvino`
+- keep one support matrix that distinguishes real inference/eval/parity from
+  placeholder or skipped semantics
+- expand real parity artifacts beyond the current `torch`-anchored comparisons
+- keep format-specific flag validation strict so unsupported combinations fail
+  early
+
+These items are the fastest route to parity without giving up YOLOZU's
+predictions interface contract and Apache-2.0 repository policy.
+
 ## Quick start
 
 Dry-run planning:

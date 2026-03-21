@@ -175,6 +175,26 @@ The most important remaining gaps are:
   combinations fail early rather than acting like inert flags
 \end{itemize}
 
+\subsection{Highest-leverage parity-closing work}
+If the goal is to close the practical gap against the public Ultralytics docs
+surface quickly, the most effective implementation order is:
+\begin{enumerate}
+  \item add real backend/eval paths for \cmd{segmentation},
+  \cmd{classification}, \cmd{obb}, and \cmd{keypoints} on top of the existing
+  \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
+  \item promote \cmd{torchscript} from planning-only semantics to a real path,
+  followed by conditional \cmd{openvino}
+  \item keep one support matrix that distinguishes real inference/eval/parity
+  from placeholder or skipped semantics
+  \item expand real parity artifacts beyond the current
+  \cmd{torch}-anchored backend comparisons
+  \item keep format-specific flag validation strict so inert combinations fail
+  early rather than appearing supported
+\end{enumerate}
+
+This order keeps the interface contract stable, improves user-visible parity
+quickly, and preserves YOLOZU's Apache-2.0 repository operations policy.
+
 This comparison is intentionally about interface behavior and user-facing
 surface only. YOLOZU keeps its Apache-2.0-only repository operations policy and
 must not pull GPL-licensed implementation code into the repository while
