@@ -356,7 +356,7 @@ def seed_everything(seed: int = 42) -> int:
         import numpy as np  # type: ignore
         np.random.seed(seed)
     except ImportError:
-        pass
+        warnings.warn("numpy not installed; skipping numpy RNG seeding", RuntimeWarning)
 
     torch.manual_seed(seed)
     if torch.cuda.is_available():

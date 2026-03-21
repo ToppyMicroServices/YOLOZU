@@ -21,7 +21,6 @@ __all__ = [
     "eval_protocol_hash",
 ]
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_PROTOCOLS = {
     "yolo26": "protocols/yolo26_eval.json",
     "nms_applied": "protocols/nms_applied_eval.json",

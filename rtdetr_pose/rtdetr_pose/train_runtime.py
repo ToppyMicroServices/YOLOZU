@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import signal
 from typing import Any, Callable
 
@@ -15,6 +16,8 @@ from yolozu.sdft import SdftConfig
 from yolozu.simple_map import evaluate_map
 
 from rtdetr_pose.train_utils import decode_detections_from_outputs, save_checkpoint_bundle, unwrap_model
+
+logger = logging.getLogger(__name__)
 
 
 def setup_distillation_and_derpp(
@@ -168,8 +171,8 @@ def install_termination_handlers(*, is_main: bool) -> dict[str, bool]:
     try:
         signal.signal(signal.SIGTERM, _handle_term)
         signal.signal(signal.SIGINT, _handle_term)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("failed to install termination handlers", exc_info=exc)
     return terminate_flag
 
 

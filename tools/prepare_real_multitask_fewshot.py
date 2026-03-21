@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 import subprocess
 import shutil
@@ -20,6 +21,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 _DATASET_LICENSE_WARNING = (
     "WARNING: datasets/weights are separate artifacts with their own licenses. "
@@ -453,8 +456,8 @@ def _prepare_dataset(
         try:
             if bool((np.asarray(mask_img, dtype=np.int64) > 0).any()):
                 segmentation_checks["mask_non_empty"] += 1
-        except Exception:
-            pass
+        except (TypeError, ValueError) as exc:
+            logger.debug("failed to inspect generated mask occupancy: %s", exc)
 
         meta = {
             "mask_path": str(mask_rel),

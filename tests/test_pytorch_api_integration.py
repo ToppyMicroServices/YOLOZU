@@ -37,6 +37,7 @@ class TestCompileForInference(unittest.TestCase):
 
     def test_compile_with_real_torch(self):
         """If torch is installed, compile should succeed on a simple module."""
+        torch = None
         try:
             import torch
         except ImportError:
@@ -71,6 +72,7 @@ class TestExportModelOnnx(unittest.TestCase):
 
     def test_export_simple_model(self):
         """Export a trivial Linear model to ONNX."""
+        torch = None
         try:
             import torch
             import onnxscript  # noqa: F401
@@ -131,6 +133,7 @@ class TestAmpUtils(unittest.TestCase):
 
     def test_make_amp_context_float16_dtype(self):
         """Verify dtype mapping for float16."""
+        torch = None
         try:
             import torch
         except ImportError:

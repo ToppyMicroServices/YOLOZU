@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import math
 import sys
 import time
@@ -8,6 +9,8 @@ from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
+
+logger = logging.getLogger(__name__)
 
 
 _DEFAULTS: dict[str, Any] = {
@@ -590,8 +593,8 @@ def _build_dataset_index(dataset_root: str, *, split: str | None) -> dict[str, d
             index[path] = rec
             try:
                 index[str(Path(path).resolve())] = rec
-            except Exception:
-                pass
+            except OSError as exc:
+                logger.debug("failed to resolve dataset path %s: %s", path, exc)
             index[Path(path).name] = rec
     return index
 
