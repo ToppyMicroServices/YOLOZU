@@ -8,6 +8,7 @@ Adds multi-part download and archive extraction for dataset archives.
 from __future__ import annotations
 
 import hashlib
+import urllib.error
 import ipaddress
 import json
 import shutil
@@ -106,7 +107,7 @@ def _download_with_retry(
                 with out_path.open("wb") as f:
                     shutil.copyfileobj(resp, f)
             return
-        except Exception as exc:
+        except (OSError, TimeoutError, urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
             last_exc = exc
             if attempt >= retries:
                 raise
@@ -375,7 +376,7 @@ def fetch_dataset(
                 archive_paths.append(cached)
                 last_exc = None
                 break
-            except Exception as exc:
+            except (OSError, TimeoutError, urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
                 last_exc = exc
                 continue
         if last_exc is not None:

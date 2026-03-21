@@ -15,6 +15,8 @@ from yolozu.core.config import simple_yaml_load
 from .coco_convert import build_category_map_from_coco
 from yolozu.core.keypoints import normalize_keypoints
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 __all__ = [
     "load_yolo_dataset",
     "load_coco_instances_dataset",
@@ -69,7 +71,7 @@ def _load_sidecar_metadata(meta_path: Path, root: Path) -> dict[str, Any]:
         return {}
     try:
         data = json.loads(meta_path.read_text())
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return {}
 
     out: dict[str, Any] = {}
@@ -153,7 +155,7 @@ def _load_mask_value(value: Any) -> Any:
         try:
             with Image.open(path) as img:
                 return np.asarray(img)
-        except Exception:
+        except (OSError, ValueError):
             return None
     return value
 
@@ -458,7 +460,7 @@ def load_yolo_dataset(
                 if extra:
                     try:
                         extra_f = [float(v) for v in extra]
-                    except Exception as exc:
+                    except _NUMERIC_ERRORS as exc:
                         raise ValueError(f"invalid label keypoints: {line}") from exc
                     label["keypoints"] = normalize_keypoints(extra_f, where="label.keypoints")
 
@@ -496,7 +498,7 @@ def _pick_split(dataset_root: Path, split: str | None) -> str:
         for child in sorted(images_root.iterdir()):
             if child.is_dir():
                 return child.name
-    except Exception:
+    except OSError:
         pass
     return "train2017"
 
@@ -527,13 +529,15 @@ def _resolve_ultralytics_data_yaml(
         import yaml  # type: ignore
 
         data = yaml.safe_load(text)
-    except Exception:
+    except ImportError:
+        data = None
+    except (AttributeError, TypeError, ValueError, yaml.YAMLError):
         data = None
     if data is None:
         # Minimal fallback parser (keeps yolozu migrate usable even if PyYAML is missing).
         try:
             data = simple_yaml_load(text)
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return None
     if not isinstance(data, dict):
         return None
@@ -622,7 +626,7 @@ def _resolve_dataset_json_layout(dataset_root: Path, split: str | None) -> tuple
         return None
     try:
         data = json.loads(descriptor.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(data, dict):
         return None
@@ -689,7 +693,7 @@ def load_coco_instances_dataset(
             continue
         try:
             image_id_to_meta[int(img["id"])] = img
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
 
     ann_by_image: dict[int, list[dict[str, Any]]] = {}
@@ -700,7 +704,7 @@ def load_coco_instances_dataset(
             continue
         try:
             img_id = int(ann["image_id"])
-        except Exception:
+        except (KeyError, TypeError, ValueError, OverflowError):
             continue
         ann_by_image.setdefault(img_id, []).append(ann)
 
@@ -720,7 +724,7 @@ def load_coco_instances_dataset(
         for ann in ann_by_image.get(img_id, []):
             try:
                 cat_id = int(ann["category_id"])
-            except Exception:
+            except (KeyError, TypeError, ValueError, OverflowError):
                 continue
             class_id = cat_map.category_id_to_class_id.get(cat_id)
             if class_id is None:
@@ -758,7 +762,7 @@ def _build_manifest_from_dataset_descriptor(
         return None
     try:
         data = json.loads(descriptor_path.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(data, dict):
         return None

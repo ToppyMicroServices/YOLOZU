@@ -27,6 +27,8 @@ from yolozu.core.canonical import TrainConfig
 from yolozu.core.config import simple_yaml_load
 from .coco_convert import build_category_map_from_coco
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[str, Any]:
     categories = instances_doc.get("categories") or []
@@ -60,7 +62,7 @@ def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[st
                 try:
                     a = int(edge[0])
                     b = int(edge[1])
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
                 if a <= 0 or b <= 0 or a == b:
                     continue
@@ -98,13 +100,15 @@ def _load_config(path: Path) -> dict[str, Any]:
 
             data = yaml.safe_load(text)
             return data or {}
-        except Exception:
+        except ImportError:
+            return simple_yaml_load(text)
+        except (AttributeError, TypeError, ValueError, yaml.YAMLError):
             return simple_yaml_load(text)
     if path.suffix.lower() == ".json":
         return json.loads(text)
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError:
         return simple_yaml_load(text)
 
 
@@ -191,7 +195,7 @@ def _require_module(name: str, *, pip_hint: str) -> Any:
         import importlib
 
         return importlib.import_module(name)
-    except Exception as exc:
+    except ImportError as exc:
         raise RuntimeError(f"{name} is required for this import mode. Install it (e.g. `{pip_hint}`).") from exc
 
 
@@ -261,7 +265,7 @@ def project_detectron2_config(*, config: str | Path) -> TrainConfig:
     def _safe(getter: Callable[[], Any]) -> Any:
         try:
             return getter()
-        except Exception:
+        except (AttributeError, KeyError, IndexError, TypeError, ValueError):
             return None
 
     batch = _safe(lambda: int(cfg.SOLVER.IMS_PER_BATCH))
@@ -306,7 +310,7 @@ def project_yolox_exp(*, config: str | Path) -> TrainConfig:
         import runpy
 
         ns = runpy.run_path(str(config_path))
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError, OSError, RuntimeError, SyntaxError, TypeError, ValueError, NameError) as exc:
         raise RuntimeError(f"failed to execute YOLOX exp file: {config_path} ({exc})") from exc
 
     exp = ns.get("exp")
@@ -315,14 +319,14 @@ def project_yolox_exp(*, config: str | Path) -> TrainConfig:
         if isinstance(exp_cls, type):
             try:
                 exp = exp_cls()
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 exp = None
     if exp is None:
         get_exp = ns.get("get_exp")
         if callable(get_exp):
             try:
                 exp = get_exp()
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 exp = None
     if exp is None:
         raise RuntimeError("could not find YOLOX exp object (expected `exp`, `Exp`, or `get_exp()` in the file)")
