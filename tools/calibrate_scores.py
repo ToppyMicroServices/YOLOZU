@@ -6,6 +6,7 @@ from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
 
 from yolozu.calibration import calibrate_predictions_entries
 from yolozu.dataset import build_manifest
@@ -36,7 +37,7 @@ def _parse_grid(text: str) -> list[float]:
             continue
         try:
             out.append(float(part))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
     return out
 

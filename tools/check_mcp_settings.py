@@ -45,7 +45,7 @@ def _parser() -> argparse.ArgumentParser:
 def _read_text(path: Path) -> str | None:
     try:
         return path.read_text(encoding="utf-8")
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         return None
 
 
