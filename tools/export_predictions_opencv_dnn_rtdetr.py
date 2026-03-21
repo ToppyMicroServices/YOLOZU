@@ -367,8 +367,9 @@ def main(argv: list[str] | None = None) -> int:
             net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         elif b == "openvino" and hasattr(cv2.dnn, "DNN_BACKEND_INFERENCE_ENGINE"):
             net.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
-    except Exception:
-        pass
+    except cv2.error:
+        # Keep the run alive by falling back to the portable OpenCV backend.
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     try:
         t = str(args.dnn_target).lower()
         if t in {"cpu", "default"}:
@@ -381,8 +382,9 @@ def main(argv: list[str] | None = None) -> int:
             net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL)
         elif t == "opencl_fp16" and hasattr(cv2.dnn, "DNN_TARGET_OPENCL_FP16"):
             net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL_FP16)
-    except Exception:
-        pass
+    except cv2.error:
+        # Keep the run alive by falling back to the CPU target.
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
     if args.outputs:
         output_names = [s.strip() for s in str(args.outputs).split(",") if s.strip()]
