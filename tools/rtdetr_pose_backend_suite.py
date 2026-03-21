@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import os
 import platform
 import re
@@ -25,6 +26,8 @@ sys.path.insert(0, str(repo_root / "rtdetr_pose"))
 
 from yolozu.benchmark import measure_latency
 from yolozu.run_record import build_run_record
+
+logger = logging.getLogger(__name__)
 
 
 def _now_utc() -> str:
@@ -358,8 +361,8 @@ def _to_int_handle(value: object) -> int:
             attr_value = getattr(value, attr)
             if attr_value is not None:
                 return int(attr_value)
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as exc:
+            logger.debug("failed to read CUDA handle attr %s from %r: %s", attr, value, exc)
     try:
         return int(value)  # type: ignore[arg-type]
     except Exception as exc:

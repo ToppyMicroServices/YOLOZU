@@ -11,12 +11,14 @@ from yolozu.long_tail_metrics import (
 )
 
 try:
-    import numpy as _np  # noqa: F401
-    from PIL import Image as _PILImage  # noqa: F401
+    import numpy as _np
+    from PIL import Image as _PILImage
 
     _HAS_SEG_DEPS = True
 except Exception:
     _HAS_SEG_DEPS = False
+    _np = None
+    _PILImage = None
 
 
 def _mk_label(class_id: int, cx: float) -> dict:

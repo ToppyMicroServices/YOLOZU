@@ -12,6 +12,7 @@ class TestEvalKeypointsTool(unittest.TestCase):
         script = repo_root / "tools" / "eval_keypoints.py"
         self.assertTrue(script.is_file())
 
+        Image = None
         try:
             from PIL import Image  # type: ignore
         except Exception as exc:  # pragma: no cover

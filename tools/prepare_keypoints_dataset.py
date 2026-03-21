@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 SUPPORTED_FORMATS: tuple[str, ...] = ("auto", "yolo_pose", "coco", "cvat_xml")
@@ -123,8 +126,8 @@ def _pick_split_for_yolo_pose(source: Path, requested: str | None) -> str:
         for child in sorted((source / "images").iterdir()):
             if child.is_dir() and (source / "labels" / child.name).exists():
                 return child.name
-    except Exception:
-        pass
+    except OSError as exc:
+        logger.debug("failed to scan YOLO Pose image splits under %s: %s", source, exc)
     raise SystemExit("could not detect split in YOLO Pose source; pass --split explicitly")
 
 

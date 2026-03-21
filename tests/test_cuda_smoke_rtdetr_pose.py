@@ -46,6 +46,8 @@ def _write_tiny_rtdetr_pose_config(path: Path) -> None:
 @unittest.skipUnless(_has_cuda(), "CUDA not available")
 class TestCudaSmokeRTDETRPose(unittest.TestCase):
     def test_adapter_predict_on_cuda(self):
+        torch = None
+        Image = None
         try:
             import torch
             from PIL import Image
@@ -83,6 +85,7 @@ class TestCudaSmokeRTDETRPose(unittest.TestCase):
             torch.cuda.synchronize()
 
     def test_export_predictions_cli_rtdetr_pose_cuda_smoke(self):
+        Image = None
         try:
             from PIL import Image
         except ImportError as exc:  # pragma: no cover
@@ -144,6 +147,7 @@ class TestCudaSmokeRTDETRPose(unittest.TestCase):
             self.assertIsInstance(res.warnings, list)
 
     def test_export_predictions_cli_rtdetr_pose_cuda_smoke_with_lora(self):
+        Image = None
         try:
             from PIL import Image
         except ImportError as exc:  # pragma: no cover

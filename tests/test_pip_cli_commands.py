@@ -340,6 +340,7 @@ class TestPipCLICommands(unittest.TestCase):
 
     def test_predict_images_dummy_writes_outputs(self):
         repo_root = Path(__file__).resolve().parents[1]
+        Image = None
         try:
             from PIL import Image
         except Exception as exc:  # pragma: no cover

@@ -11,7 +11,6 @@ except Exception:  # pragma: no cover
     torch = None  # type: ignore
 
 try:
-    import onnx  # type: ignore  # noqa: F401
     import onnxruntime  # type: ignore  # noqa: F401
 except Exception:  # pragma: no cover
     onnxruntime = None  # type: ignore
