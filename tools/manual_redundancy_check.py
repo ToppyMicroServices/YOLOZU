@@ -18,6 +18,7 @@ import os
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable
 
 
@@ -77,7 +78,7 @@ class Paragraph:
 
 
 def _iter_paragraphs(path: str) -> Iterable[Paragraph]:
-    raw = open(path, "r", encoding="utf-8").read()
+    raw = Path(path).read_text(encoding="utf-8")
 
     # Split on blank lines, but keep start line numbers.
     # We do a manual scan to keep line positions stable.
@@ -136,7 +137,7 @@ def _report_repeated_headings(files: list[str]) -> None:
     where: defaultdict[str, set[str]] = defaultdict(set)
 
     for path in files:
-        text = open(path, "r", encoding="utf-8").read()
+        text = Path(path).read_text(encoding="utf-8")
         for m in HEADING_RE.finditer(text):
             heading = m.group(2).strip()
             counts[heading] += 1

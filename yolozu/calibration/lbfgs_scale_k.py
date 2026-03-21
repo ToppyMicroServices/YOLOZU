@@ -452,13 +452,13 @@ def calibrate_predictions_lbfgs(
             if "log_z" in new_det:
                 try:
                     new_det["log_z"] = float(new_det["log_z"]) + float(log_s_value)
-                except Exception:
-                    pass
+                except (TypeError, ValueError):
+                    new_det["log_z"] = new_det.get("log_z")
             elif "z" in new_det:
                 try:
                     new_det["z"] = float(new_det["z"]) * float(s_value)
-                except Exception:
-                    pass
+                except (TypeError, ValueError):
+                    new_det["z"] = new_det.get("z")
 
             if shared_k_value is not None:
                 kd = new_det.get("k_delta")

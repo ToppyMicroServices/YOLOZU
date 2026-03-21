@@ -209,7 +209,7 @@ def refine_detection_hessian(
             if len(r_flat) == 9:
                 r_gt_tensor = torch.tensor(r_flat, dtype=dtype, device=device).reshape(3, 3)
         except (TypeError, ValueError):
-            pass
+            r_gt_tensor = None
     
     # Gauss-Newton iterations.
     converged = False
@@ -483,7 +483,7 @@ def refine_predictions_hessian(
                             try:
                                 gt_depth = float(t_gt[2])  # Z component.
                             except (TypeError, ValueError):
-                                pass
+                                gt_depth = None
                         
                         # Extract rotation.
                         r_gt = matched_label.get("R_gt")
@@ -491,7 +491,7 @@ def refine_predictions_hessian(
                             try:
                                 gt_rotation = [[float(x) for x in row] for row in r_gt]
                             except (TypeError, ValueError):
-                                pass
+                                gt_rotation = None
             
             # Refine detection.
             refined_det = refine_detection_hessian(
