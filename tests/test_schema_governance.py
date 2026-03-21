@@ -45,6 +45,33 @@ class TestSchemaGovernance(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_instance_segmentation_predictions_payload(payload)
 
+    def test_instance_seg_invalid_numeric_fields_are_rejected(self):
+        payload = {
+            "predictions": [
+                {
+                    "image": "a.jpg",
+                    "instances": [
+                        {"class_id": {"bad": True}, "score": 0.9, "mask": "a.png"},
+                    ],
+                }
+            ]
+        }
+        with self.assertRaises(ValueError):
+            validate_instance_segmentation_predictions_payload(payload)
+
+        payload2 = {
+            "predictions": [
+                {
+                    "image": "a.jpg",
+                    "instances": [
+                        {"class_id": 0, "score": {"bad": True}, "mask": "a.png"},
+                    ],
+                }
+            ]
+        }
+        with self.assertRaises(ValueError):
+            validate_instance_segmentation_predictions_payload(payload2)
+
 
 if __name__ == "__main__":
     unittest.main()

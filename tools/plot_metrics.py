@@ -27,7 +27,7 @@ def main(argv=None):
     args = _parse_args(argv)
     try:
         import matplotlib.pyplot as plt
-    except Exception as exc:
+    except ImportError as exc:
         raise SystemExit("matplotlib is required for plotting; install requirements-dev.txt") from exc
 
     jsonl_path = Path(args.jsonl)

@@ -11,6 +11,8 @@ from yolozu.segmentation_dataset import load_seg_dataset_descriptor, resolve_dat
 from yolozu.segmentation_eval import compute_confusion_matrix, compute_iou_metrics, load_mask_array  # noqa: E402
 from yolozu.segmentation_predictions import build_id_to_mask, load_segmentation_predictions_entries  # noqa: E402
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Evaluate semantic segmentation predictions (mIoU / per-class IoU).")
@@ -167,7 +169,7 @@ def _write_html(
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     lines: list[str] = [
@@ -304,7 +306,7 @@ def main(argv: list[str] | None = None) -> None:
 
         try:
             pred_mask_rel = id_to_mask.get(s.sample_id)
-        except Exception:
+        except AttributeError:
             pred_mask_rel = None
         if not pred_mask_rel:
             missing_pred += 1
@@ -381,7 +383,7 @@ def main(argv: list[str] | None = None) -> None:
         if args.overlays_dir and int(args.max_overlays) > 0:
             try:
                 from PIL import Image
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise SystemExit(f"Pillow required for overlays: {exc}") from exc
 
             overlays_dir = Path(args.overlays_dir)
@@ -402,13 +404,13 @@ def main(argv: list[str] | None = None) -> None:
                     gt_img = Image.open(gt_path)
                     pred_img = Image.open(pred_path)
                     img_r, gt_r, pred_r = _resize_triplet(img, gt_img, pred_img, max_size=int(args.overlay_max_size))
-                except Exception:
+                except (KeyError, OSError, ValueError):
                     continue
 
                 try:
                     gt_r_arr = _mask_image_to_array(gt_r, allow_rgb=bool(args.allow_rgb_masks))
                     pred_r_arr = _mask_image_to_array(pred_r, allow_rgb=bool(args.allow_rgb_masks))
-                except Exception:
+                except (TypeError, ValueError):
                     continue
 
                 try:
@@ -434,7 +436,7 @@ def main(argv: list[str] | None = None) -> None:
                             "mismatch_rate": float(item.get("mismatch_rate", 0.0)),
                         }
                     )
-                except Exception:
+                except (OSError, TypeError, ValueError, KeyError):
                     continue
 
         html_path = Path(args.html)

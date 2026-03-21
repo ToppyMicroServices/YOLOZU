@@ -16,6 +16,8 @@ from yolozu.core.boxes import iou_cxcywh_norm_dict
 from yolozu.core.image_keys import add_image_aliases, lookup_image_alias
 from yolozu.core.keypoints import normalize_keypoints
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _bbox_iou_cxcywh_norm(a: dict[str, Any], b: dict[str, Any]) -> float:
     return iou_cxcywh_norm_dict(a, b)
@@ -26,7 +28,7 @@ def _as_int_or_none(value: Any) -> int | None:
         return None
     try:
         return int(value)
-    except Exception:
+    except _NUMERIC_ERRORS:
         return None
 
 
@@ -36,7 +38,7 @@ def _kp_labeled(gt_kp: dict[str, Any]) -> bool:
         return True
     try:
         return float(v) > 0.0
-    except Exception:
+    except _NUMERIC_ERRORS:
         return True
 
 
@@ -63,7 +65,7 @@ def match_keypoints_detections(
     for det in preds:
         try:
             score = float(det.get("score", 0.0))
-        except Exception:
+        except _NUMERIC_ERRORS:
             score = 0.0
         if score >= float(min_score):
             filtered.append(det)
@@ -89,7 +91,7 @@ def match_keypoints_detections(
             lab_bbox = {"cx": lab.get("cx"), "cy": lab.get("cy"), "w": lab.get("w"), "h": lab.get("h")}
             try:
                 iou = _bbox_iou_cxcywh_norm(bbox, lab_bbox)
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
             if iou > best_iou:
                 best_iou = float(iou)
