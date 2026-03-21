@@ -43,7 +43,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
 
     try:
         import torch
-    except Exception:
+    except ImportError:
         details["actions"].append("torch_unavailable")
         return details
 
@@ -57,7 +57,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
             try:
                 torch.cuda.manual_seed_all(int(seed))
                 details["actions"].append("torch.cuda.manual_seed_all")
-            except Exception:
+            except (AttributeError, RuntimeError):
                 details["actions"].append("torch.cuda.manual_seed_all_failed")
 
     if policy == "strict":
@@ -66,7 +66,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
         try:
             torch.use_deterministic_algorithms(True)
             details["actions"].append("torch.use_deterministic_algorithms(True)")
-        except Exception:
+        except (AttributeError, RuntimeError):
             details["actions"].append("torch.use_deterministic_algorithms_failed")
         if hasattr(torch.backends, "cudnn"):
             try:
@@ -74,7 +74,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
                 torch.backends.cudnn.benchmark = False
                 details["actions"].append("torch.backends.cudnn.deterministic=True")
                 details["actions"].append("torch.backends.cudnn.benchmark=False")
-            except Exception:
+            except (AttributeError, RuntimeError):
                 details["actions"].append("cudnn_flags_failed")
 
     if policy == "off":
@@ -82,7 +82,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
 
     try:
         details["deterministic_algorithms_enabled"] = bool(torch.are_deterministic_algorithms_enabled())
-    except Exception:
+    except (AttributeError, RuntimeError):
         details["deterministic_algorithms_enabled"] = None
     details["determinism_knobs"]["pythonhashseed"] = os.environ.get("PYTHONHASHSEED")
     details["determinism_knobs"]["cublas_workspace_config"] = os.environ.get("CUBLAS_WORKSPACE_CONFIG")
@@ -93,7 +93,7 @@ def _configure_repro_policy(*, policy: str, seed: int | None) -> dict[str, Any]:
 def _hash_model_state_dict(model: Any, torch_module: Any) -> str | None:
     try:
         state = model.state_dict()
-    except Exception:
+    except (AttributeError, RuntimeError):
         return None
 
     digest = hashlib.sha256()
@@ -107,10 +107,10 @@ def _hash_model_state_dict(model: Any, torch_module: Any) -> str | None:
         digest.update(str(getattr(t, "dtype", "unknown")).encode("utf-8"))
         try:
             digest.update(t.numpy().tobytes(order="C"))
-        except Exception:
+        except (RuntimeError, TypeError, ValueError):
             try:
                 digest.update(bytes(t.view(torch_module.uint8).tolist()))
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 return None
     return digest.hexdigest()
 
@@ -139,12 +139,12 @@ def _collect_run_meta(
             try:
                 param = next(model.parameters())
                 model_dtype = str(getattr(param, "dtype", None))
-            except Exception:
+            except (AttributeError, StopIteration, TypeError):
                 model_dtype = None
         if model is not None and torch_module is not None:
             model_state_hash = _hash_model_state_dict(model, torch_module)
             model_hash_source = "model_state_dict"
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         model_dtype = None
 
     checkpoint_hash = _sha256_file(checkpoint_path) if checkpoint_path is not None and checkpoint_path.exists() else None
@@ -718,4 +718,3 @@ def _compare_against_baseline(
             )
 
     return gates, hard_failures, soft_failures
-
