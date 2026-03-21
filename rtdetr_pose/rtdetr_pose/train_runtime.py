@@ -168,8 +168,8 @@ def install_termination_handlers(*, is_main: bool) -> dict[str, bool]:
     try:
         signal.signal(signal.SIGTERM, _handle_term)
         signal.signal(signal.SIGINT, _handle_term)
-    except Exception:
-        pass
+    except (AttributeError, OSError, ValueError) as exc:
+        logger.debug("failed to install termination handlers", exc_info=exc)
     return terminate_flag
 
 
@@ -235,7 +235,7 @@ def build_validation_loader(
     if args.val_batch_size is not None:
         try:
             val_batch_size = int(args.val_batch_size)
-        except Exception:
+        except (TypeError, ValueError, OverflowError):
             val_batch_size = int(args.batch_size)
     val_loader_kwargs = dict(loader_kwargs)
     val_loader_kwargs.update(

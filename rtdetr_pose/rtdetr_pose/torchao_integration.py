@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+_TORCHAO_CONFIG_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError)
+_TORCHAO_QUANTIZE_ERRORS = (AttributeError, NotImplementedError, RuntimeError, TypeError, ValueError)
+
 
 @dataclass(frozen=True)
 class TorchAOReport:
@@ -36,7 +39,7 @@ def apply_torchao_quantization(
         import importlib
 
         q = importlib.import_module("torchao.quantization")
-    except Exception as exc:
+    except ImportError as exc:
         if required:
             raise RuntimeError("torchao is required but not installed (pip install torchao)") from exc
         return model, TorchAOReport(
@@ -66,7 +69,7 @@ def apply_torchao_quantization(
         try:
             config = obj() if callable(obj) else obj
             break
-        except Exception:
+        except _TORCHAO_CONFIG_ERRORS:
             continue
 
     if config is None:
@@ -101,7 +104,7 @@ def apply_torchao_quantization(
                 applied=True,
                 api="torchao.quantization.quantize",
             )
-    except Exception as exc:
+    except _TORCHAO_QUANTIZE_ERRORS as exc:
         if required:
             raise RuntimeError(f"torchao quantization failed (recipe={recipe}): {exc}") from exc
         return model, TorchAOReport(
@@ -122,4 +125,3 @@ def apply_torchao_quantization(
         applied=False,
         reason="api_not_found",
     )
-

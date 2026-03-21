@@ -15,7 +15,7 @@ class ResNet50Backbone(BaseBackbone):
         super().__init__()
         try:
             import torchvision.models as tvm
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError) as exc:
             raise RuntimeError("torchvision is required for resnet50 backbone") from exc
 
         net = tvm.resnet50(weights=None)
@@ -53,7 +53,7 @@ class ConvNeXtTinyBackbone(BaseBackbone):
         super().__init__()
         try:
             import torchvision.models as tvm
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError) as exc:
             raise RuntimeError("torchvision is required for convnext_tiny backbone") from exc
 
         net = tvm.convnext_tiny(weights=None)
