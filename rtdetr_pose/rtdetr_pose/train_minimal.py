@@ -59,6 +59,7 @@ from rtdetr_pose.train_utils import *  # noqa: F401,F403
 from rtdetr_pose.train_dataset import *  # noqa: F401,F403
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
+from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs
 
 logger = logging.getLogger(__name__)
 
@@ -127,10 +128,13 @@ def main(argv: list[str] | None = None) -> int:
         payload = vars(args)
         try:
             import yaml  # type: ignore
-
-            print(yaml.safe_dump(payload, sort_keys=True))
-        except Exception:
+        except ImportError:
             print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            try:
+                print(yaml.safe_dump(payload, sort_keys=True))
+            except (AttributeError, TypeError, ValueError):
+                print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
 
     if bool(getattr(args, "dry_run", False)):
@@ -139,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
         args.epochs = 1
         try:
             args.max_steps = max(1, int(getattr(args, "grad_accum", 1) or 1))
-        except Exception:
+        except (TypeError, ValueError):
             args.max_steps = 1
 
     # Optional DDP (torchrun sets WORLD_SIZE/RANK/LOCAL_RANK)
@@ -172,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise SystemExit(f"sim jitter profile not found: {path}")
             try:
                 sim_profile = json.loads(path.read_text(encoding="utf-8"))
-            except Exception as exc:
+            except (OSError, json.JSONDecodeError) as exc:
                 raise SystemExit(f"failed to load sim jitter profile: {path}") from exc
 
     run_record = build_run_record(
@@ -189,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     try:
         validate_run_record_contract(run_record, require_git_sha=True)
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         raise SystemExit(f"invalid run_meta contract: {exc}") from exc
 
     seed = int(getattr(args, "seed", 0) or 0)
@@ -198,13 +202,13 @@ def main(argv: list[str] | None = None) -> int:
         import numpy as np  # type: ignore
 
         np.random.seed(seed)
-    except Exception as exc:
+    except ImportError as exc:
         _debug_swallow("numpy seed setup skipped", exc)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         try:
             torch.cuda.manual_seed_all(seed)
-        except Exception as exc:
+        except RuntimeError as exc:
             _debug_swallow("cuda seed setup skipped", exc)
     if bool(getattr(args, "deterministic", False)) and hasattr(torch.backends, "cudnn"):
         torch.backends.cudnn.deterministic = True
@@ -216,10 +220,13 @@ def main(argv: list[str] | None = None) -> int:
         payload = vars(args)
         try:
             import yaml  # type: ignore
-
-            out_path.write_text(yaml.safe_dump(payload, sort_keys=True), encoding="utf-8")
-        except Exception:
+        except ImportError:
             out_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        else:
+            try:
+                out_path.write_text(yaml.safe_dump(payload, sort_keys=True), encoding="utf-8")
+            except (AttributeError, OSError, TypeError, ValueError):
+                out_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     if args.dataset_root:
         dataset_root = Path(args.dataset_root)
@@ -234,14 +241,14 @@ def main(argv: list[str] | None = None) -> int:
     if model_cfg_path:
         try:
             from rtdetr_pose.config import load_config
-        except Exception:
+        except ImportError:
             load_config = None
         if load_config is not None:
             try:
                 cfg_obj = load_config(model_cfg_path)
                 model_cfg = cfg_obj.model
                 loss_cfg = getattr(cfg_obj, "loss", None)
-            except Exception:
+            except (AttributeError, OSError, TypeError, ValueError):
                 model_cfg = None
                 loss_cfg = None
     try:
@@ -413,22 +420,22 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(model_cfg, "enable_mim", None) is not None:
             try:
                 model_cfg.enable_mim = bool(args.enable_mim)
-            except Exception as exc:
+            except AttributeError as exc:
                 _debug_swallow("enable_mim override skipped", exc)
         if getattr(model_cfg, "mim_geom_channels", None) is not None:
             try:
                 model_cfg.mim_geom_channels = int(getattr(model_cfg, "mim_geom_channels", 2) or 2)
-            except Exception as exc:
+            except (AttributeError, TypeError, ValueError) as exc:
                 _debug_swallow("mim_geom_channels override skipped", exc)
         if getattr(model_cfg, "depth_mode", None) is not None:
             try:
                 model_cfg.depth_mode = str(args.depth_mode)
-            except Exception as exc:
+            except AttributeError as exc:
                 _debug_swallow("depth_mode override skipped", exc)
         if getattr(model_cfg, "depth_dropout", None) is not None:
             try:
                 model_cfg.depth_dropout = float(args.depth_dropout)
-            except Exception as exc:
+            except (AttributeError, TypeError, ValueError) as exc:
                 _debug_swallow("depth_dropout override skipped", exc)
         model = build_model(model_cfg)
     else:
@@ -450,7 +457,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.task_aligner and args.task_aligner != "none":
             try:
                 loss_cfg.task_aligner = str(args.task_aligner)
-            except Exception as exc:
+            except AttributeError as exc:
                 _debug_swallow("task_aligner override skipped", exc)
         losses_fn = build_losses(loss_cfg)
     else:
@@ -550,7 +557,7 @@ def main(argv: list[str] | None = None) -> int:
                     "torch_compile",
                     f"enabled=True backend={backend} mode={mode} fullgraph={bool(fullgraph)} dynamic={dynamic}",
                 )
-        except Exception as exc:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             if strict:
                 raise SystemExit(f"torch.compile failed: {exc}") from exc
             if is_main:
@@ -638,12 +645,12 @@ def main(argv: list[str] | None = None) -> int:
         if meta.get("epoch") is not None:
             try:
                 start_epoch = int(meta["epoch"]) + 1
-            except Exception:
+            except (TypeError, ValueError):
                 start_epoch = 0
         if meta.get("global_step") is not None:
             try:
                 global_step = int(meta["global_step"])
-            except Exception:
+            except (TypeError, ValueError):
                 global_step = 0
         if is_main:
             print(f"resumed_from={meta.get('path')} start_epoch={start_epoch} global_step={global_step}")
@@ -746,7 +753,7 @@ def main(argv: list[str] | None = None) -> int:
             if device.type == "cuda":
                 try:
                     torch.cuda.reset_peak_memory_stats(device)
-                except Exception as exc:
+                except (AttributeError, RuntimeError, TypeError) as exc:
                     _debug_swallow("peak memory reset skipped", exc)
             if bool(terminate_flag.get("terminate", False)):
                 if is_main and args.checkpoint_bundle_out:
@@ -845,7 +852,7 @@ def main(argv: list[str] | None = None) -> int:
                                 if isinstance(z_t, torch.Tensor) and int(z_t.numel()) > 0:
                                     try:
                                         z_list = z_t.squeeze(-1).tolist()
-                                    except Exception:
+                                    except (RuntimeError, TypeError, ValueError):
                                         z_list = None
                             geom_list.append(
                                 create_geom_input_from_bboxes(
@@ -933,7 +940,7 @@ def main(argv: list[str] | None = None) -> int:
                                 student_sub[k] = s_val.index_select(0, idx)
                                 try:
                                     teacher_sub[k] = torch.stack(teacher_by_key[k], dim=0).to(device=images.device)
-                                except Exception:
+                                except (RuntimeError, TypeError, ValueError):
                                     teacher_sub.pop(k, None)
                                     student_sub.pop(k, None)
                             if student_sub and teacher_sub and "bbox" in derpp_cfg.keys:
@@ -1037,7 +1044,7 @@ def main(argv: list[str] | None = None) -> int:
                     if not bool(torch.isfinite(loss).all()):
                         try:
                             loss_scalar = float(loss.detach().cpu())
-                        except Exception:
+                        except (RuntimeError, TypeError, ValueError):
                             loss_scalar = None
 
                         if bool(args.stop_on_non_finite_loss):
@@ -1050,13 +1057,13 @@ def main(argv: list[str] | None = None) -> int:
                             for group in optim.param_groups:
                                 try:
                                     group["lr"] = float(group.get("lr", 0.0)) * decay
-                                except Exception as exc:
+                                except (TypeError, ValueError) as exc:
                                     _debug_swallow("non-finite loss lr decay skipped", exc)
                         if is_main and args.metrics_jsonl:
                             lr_now = None
                             try:
                                 lr_now = float(optim.param_groups[0].get("lr"))
-                            except Exception:
+                            except (AttributeError, IndexError, TypeError, ValueError):
                                 lr_now = None
                             metrics = {"non_finite_skips": int(non_finite_skips)}
                             if lr_now is not None:
@@ -1120,7 +1127,7 @@ def main(argv: list[str] | None = None) -> int:
                 if grad_norm is not None:
                     try:
                         last_grad_norm = float(grad_norm.detach().cpu())
-                    except Exception:
+                    except (RuntimeError, TypeError, ValueError):
                         last_grad_norm = None
 
                 if grad_norm is not None and not bool(torch.isfinite(grad_norm).all()):
@@ -1133,13 +1140,13 @@ def main(argv: list[str] | None = None) -> int:
                         for group in optim.param_groups:
                             try:
                                 group["lr"] = float(group.get("lr", 0.0)) * decay
-                            except Exception as exc:
+                            except (TypeError, ValueError) as exc:
                                 _debug_swallow("non-finite grad lr decay skipped", exc)
                     if is_main and args.metrics_jsonl:
                         lr_now = None
                         try:
                             lr_now = float(optim.param_groups[0].get("lr"))
-                        except Exception:
+                        except (AttributeError, IndexError, TypeError, ValueError):
                             lr_now = None
                         metrics = {"non_finite_skips": int(non_finite_skips)}
                         if lr_now is not None:
@@ -1174,13 +1181,13 @@ def main(argv: list[str] | None = None) -> int:
                     if sched is not None:
                         try:
                             sched.step()
-                        except Exception as exc:
+                        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
                             _debug_swallow("scheduler step skipped", exc)
 
                     if ema is not None:
                         try:
                             ema.update()
-                        except Exception as exc:
+                        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
                             _debug_swallow("ema update skipped", exc)
 
                     if si_accum is not None:
@@ -1199,7 +1206,7 @@ def main(argv: list[str] | None = None) -> int:
             if device.type == "cuda":
                 try:
                     last_max_vram_mb = float(torch.cuda.max_memory_allocated(device) / (1024 * 1024))
-                except Exception:
+                except (AttributeError, RuntimeError, TypeError, ValueError):
                     last_max_vram_mb = None
 
             steps += 1
@@ -1212,7 +1219,7 @@ def main(argv: list[str] | None = None) -> int:
                 lr_now = None
                 try:
                     lr_now = float(optim.param_groups[0].get("lr"))
-                except Exception:
+                except (AttributeError, IndexError, TypeError, ValueError):
                     lr_now = None
                 metrics = {"loss_avg": float(avg), "optim_step": int(global_step)}
                 if last_grad_norm is not None:
@@ -1381,7 +1388,7 @@ def main(argv: list[str] | None = None) -> int:
             lr_now = None
             try:
                 lr_now = float(optim.param_groups[0].get("lr"))
-            except Exception:
+            except (AttributeError, IndexError, TypeError, ValueError):
                 lr_now = None
             metrics = {"loss_avg": float(avg), "steps": int(steps)}
             if last_grad_norm is not None:

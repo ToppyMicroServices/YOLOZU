@@ -93,7 +93,7 @@ class ManifestDataset(Dataset):
             try:
                 a = int(pair[0])
                 b = int(pair[1])
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             if a == b:
                 continue
@@ -186,7 +186,7 @@ class ManifestDataset(Dataset):
                 elif isinstance(v, (list, tuple)):
                     try:
                         out[k] = _maybe_squeeze(torch.tensor(v, dtype=torch.float32))
-                    except Exception:
+                    except (RuntimeError, TypeError, ValueError):
                         continue
             return out or None
 
@@ -203,7 +203,7 @@ class ManifestDataset(Dataset):
 
                 try:
                     loaded = json.loads(path.read_text(encoding="utf-8"))
-                except Exception:
+                except (OSError, json.JSONDecodeError):
                     return None
                 if isinstance(loaded, dict):
                     return self._load_derpp_teacher(loaded)
@@ -211,7 +211,7 @@ class ManifestDataset(Dataset):
             if path.suffix.lower() in (".pt", ".pth"):
                 try:
                     loaded = torch.load(path, map_location="cpu", weights_only=True)
-                except Exception:
+                except (OSError, RuntimeError, ValueError):
                     return None
                 if isinstance(loaded, dict):
                     return self._load_derpp_teacher(loaded)
@@ -224,13 +224,13 @@ class ManifestDataset(Dataset):
                         return None
                     try:
                         return {keys[0]: _maybe_squeeze(torch.tensor(loaded, dtype=torch.float32))}
-                    except Exception:
+                    except (RuntimeError, TypeError, ValueError):
                         return None
                 return None
             if path.suffix.lower() == ".safetensors":
                 try:
                     from safetensors.torch import load_file  # type: ignore
-                except Exception:
+                except ImportError:
                     _warn_once(
                         "DERPP teacher: safetensors is not installed; cannot load "
                         f"{path}. Install it with `python -m pip install safetensors`."
@@ -238,7 +238,7 @@ class ManifestDataset(Dataset):
                     return None
                 try:
                     loaded = load_file(str(path), device="cpu")
-                except Exception:
+                except (OSError, RuntimeError, ValueError):
                     return None
                 if isinstance(loaded, dict):
                     return self._load_derpp_teacher(loaded)
@@ -246,11 +246,11 @@ class ManifestDataset(Dataset):
             if path.suffix.lower() in (".npy", ".npz"):
                 try:
                     import numpy as np
-                except Exception:
+                except ImportError:
                     return None
                 try:
                     loaded = np.load(path, allow_pickle=False)
-                except Exception:
+                except (OSError, ValueError):
                     return None
                 out: dict[str, torch.Tensor] = {}
                 if hasattr(loaded, "files"):
@@ -258,13 +258,13 @@ class ManifestDataset(Dataset):
                         if k in loaded.files:
                             try:
                                 out[k] = _maybe_squeeze(torch.from_numpy(loaded[k]).to(dtype=torch.float32))
-                            except Exception:
+                            except (RuntimeError, TypeError, ValueError):
                                 continue
                 else:
                     if len(keys) == 1:
                         try:
                             out[keys[0]] = _maybe_squeeze(torch.from_numpy(loaded).to(dtype=torch.float32))
-                        except Exception:
+                        except (RuntimeError, TypeError, ValueError):
                             return None
                 return out or None
         return None
@@ -274,20 +274,20 @@ class ManifestDataset(Dataset):
             return None
         try:
             from PIL import Image
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "Pillow is required for --real-images. Install it (e.g. pip install Pillow) or omit --real-images."
             ) from exc
         try:
             import numpy as np
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "NumPy is required for --real-images. Install it (e.g. pip install numpy) or omit --real-images."
             ) from exc
 
         try:
             img = Image.open(image_path).convert("RGB")
-        except Exception:
+        except (OSError, ValueError):
             return None
 
         if target_size > 0:
@@ -312,16 +312,16 @@ class ManifestDataset(Dataset):
 
                 try:
                     return json.loads(path.read_text())
-                except Exception:
+                except (OSError, json.JSONDecodeError):
                     return None
             if path.suffix.lower() in (".npy", ".npz"):
                 try:
                     import numpy as np
-                except Exception:
+                except ImportError:
                     return None
                 try:
                     loaded = np.load(path)
-                except Exception:
+                except (OSError, ValueError):
                     return None
                 if hasattr(loaded, "files"):
                     if not loaded.files:
@@ -340,7 +340,7 @@ class ManifestDataset(Dataset):
         elif isinstance(value, (list, tuple)):
             try:
                 depth = torch.tensor(value, dtype=torch.float32)
-            except Exception:
+            except (RuntimeError, TypeError, ValueError):
                 depth = None
         elif isinstance(value, str) and value:
             path = Path(value)
@@ -358,7 +358,7 @@ class ManifestDataset(Dataset):
                     try:
                         loaded = json.loads(path.read_text(encoding="utf-8"))
                         depth = torch.tensor(loaded, dtype=torch.float32)
-                    except Exception:
+                    except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError):
                         depth = None
                 elif suffix in (".npy", ".npz"):
                     try:
@@ -370,7 +370,7 @@ class ManifestDataset(Dataset):
                                 depth = torch.from_numpy(loaded[loaded.files[0]]).to(dtype=torch.float32)
                         else:
                             depth = torch.from_numpy(loaded).to(dtype=torch.float32)
-                    except Exception:
+                    except (ImportError, OSError, RuntimeError, TypeError, ValueError):
                         depth = None
                 else:
                     try:
@@ -379,7 +379,7 @@ class ManifestDataset(Dataset):
 
                         arr = np.asarray(Image.open(path), dtype=np.float32)
                         depth = torch.from_numpy(arr).to(dtype=torch.float32)
-                    except Exception:
+                    except (ImportError, OSError, RuntimeError, TypeError, ValueError):
                         depth = None
 
         if depth is None:
@@ -522,7 +522,7 @@ class ManifestDataset(Dataset):
                 try:
                     h = len(mask_value)
                     w = len(mask_value[0]) if isinstance(mask_value[0], (list, tuple)) else 0
-                except Exception:
+                except (TypeError, IndexError):
                     h = 0
                     w = 0
 
@@ -534,7 +534,7 @@ class ManifestDataset(Dataset):
                         for v in row:
                             try:
                                 unique_vals.add(int(v))
-                            except Exception:
+                            except (TypeError, ValueError):
                                 continue
                     unique_vals.discard(0)
 
@@ -551,7 +551,7 @@ class ManifestDataset(Dataset):
                                     try:
                                         if int(v) != int(inst_id):
                                             continue
-                                    except Exception:
+                                    except (TypeError, ValueError):
                                         continue
                                     x_min = x if x_min is None else min(x_min, x)
                                     x_max = x if x_max is None else max(x_max, x)
@@ -576,7 +576,7 @@ class ManifestDataset(Dataset):
                                     try:
                                         if int(v) != int(class_val):
                                             continue
-                                    except Exception:
+                                    except (TypeError, ValueError):
                                         continue
                                     x_min = x if x_min is None else min(x_min, x)
                                     x_max = x if x_max is None else max(x_max, x)
@@ -685,12 +685,12 @@ class ManifestDataset(Dataset):
                             try:
                                 x = float(kp.get("x", 0.0))
                                 y = float(kp.get("y", 0.0))
-                            except Exception:
+                            except (TypeError, ValueError):
                                 continue
                             v = kp.get("v", 0.0)
                             try:
                                 v_i = int(float(v))
-                            except Exception:
+                            except (TypeError, ValueError):
                                 v_i = 0
                             if flip:
                                 x = 1.0 - x
@@ -1021,7 +1021,7 @@ def collate(batch):
         for item in batch:
             try:
                 ratios.append(float(item.get("mim_mask_ratio", 0.0)))
-            except Exception:
+            except (TypeError, ValueError):
                 ratios.append(0.0)
         extra["mim_mask_ratio"] = torch.tensor(ratios, dtype=torch.float32)
     if any(("depth" in item) or ("depth_valid" in item) for item in batch):
@@ -1033,7 +1033,7 @@ def collate(batch):
                 depth_rows.append(depth_item.to(dtype=torch.float32))
                 try:
                     depth_valid_rows.append(bool(item.get("depth_valid", True)))
-                except Exception:
+                except (RuntimeError, TypeError, ValueError):
                     depth_valid_rows.append(True)
             else:
                 depth_rows.append(torch.zeros((1, int(images.shape[-2]), int(images.shape[-1])), dtype=torch.float32))
