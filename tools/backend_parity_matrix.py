@@ -122,7 +122,7 @@ def _run_parity(
     if out:
         try:
             payload = json.loads(out)
-        except Exception:
+        except json.JSONDecodeError:
             err = out
     if proc.returncode != 0 and not err:
         err = (proc.stderr or "").strip()
@@ -176,7 +176,7 @@ def _summarize_parity(report: dict[str, Any] | None) -> dict[str, Any]:
             for key in ("cx", "cy", "w", "h"):
                 try:
                     bbox_abs_max = max(bbox_abs_max, abs(float(ref_bbox.get(key)) - float(cand_bbox.get(key))))
-                except Exception:
+                except (TypeError, ValueError):
                     continue
 
     return {

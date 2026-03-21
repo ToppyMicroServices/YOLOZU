@@ -62,7 +62,7 @@ def _load_predictions_count(path: Path) -> tuple[int, str | None]:
         return 0, "output_missing"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except json.JSONDecodeError as exc:
         return 0, f"invalid_json:{exc}"
 
     if isinstance(payload, dict) and isinstance(payload.get("predictions"), list):
@@ -75,7 +75,7 @@ def _load_predictions_count(path: Path) -> tuple[int, str | None]:
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         return ""
 
 
@@ -283,7 +283,7 @@ def main(argv: list[str] | None = None) -> int:
         if "--output" in cmd:
             try:
                 out_file = Path(cmd[cmd.index("--output") + 1]).resolve()
-            except Exception:
+            except (IndexError, ValueError):
                 out_file = None
 
         preds_count = None
