@@ -78,10 +78,13 @@ def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[st
         }
         if skeleton:
             out["skeleton"] = skeleton
-        try:
-            out["keypoint_category_id"] = int(category.get("id"))
-        except Exception:
-            pass
+        category_id = category.get("id")
+        if category_id is not None:
+            try:
+                out["keypoint_category_id"] = int(category_id)
+            except (TypeError, ValueError):
+                # Preserve keypoint metadata even when the category id is malformed.
+                out.pop("keypoint_category_id", None)
         return out
 
     return {}
