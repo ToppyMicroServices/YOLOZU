@@ -14,6 +14,8 @@ from yolozu.image_keys import add_image_aliases
 from yolozu.keypoints import normalize_keypoints
 from yolozu.predictions import load_predictions_entries
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 @dataclass(frozen=True)
 class _Det:
@@ -64,7 +66,7 @@ def _load_index(path: str) -> tuple[list[str], dict[str, list[_Det]]]:
                 continue
             try:
                 kps = normalize_keypoints(d.get("keypoints"), where="det.keypoints")
-            except Exception:
+            except ValueError:
                 continue
             dets.append(_Det(class_id=int(d["class_id"]), score=float(d["score"]), bbox=d["bbox"], keypoints=kps))
         add_image_aliases(out, image, dets)
@@ -95,7 +97,7 @@ def _match_image(
                 continue
             try:
                 iou = _bbox_iou_cxcywh_norm(r.bbox, c.bbox)
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
             if iou > best_iou:
                 best_iou = iou

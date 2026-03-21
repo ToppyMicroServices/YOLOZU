@@ -15,6 +15,8 @@ from yolozu.core.image_size import get_image_size
 from yolozu.core.image_keys import add_image_aliases, lookup_image_alias, require_image_key
 from yolozu.core.keypoints import normalize_keypoints
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 __all__ = [
     "CocoKeypointsIndex",
     "COCO17_KPT_OKS_SIGMAS",
@@ -76,12 +78,12 @@ def build_coco_keypoints_ground_truth(
                 continue
             try:
                 kps = normalize_keypoints(label.get("keypoints"), where="label.keypoints")
-            except Exception:
+            except ValueError:
                 continue
             k_count = max(k_count, int(len(kps)))
             try:
                 max_class_id = max(max_class_id, int(label.get("class_id", -1)))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
 
     if keypoint_names is None:
@@ -110,7 +112,7 @@ def build_coco_keypoints_ground_truth(
             return 2
         try:
             fv = float(v)
-        except Exception:
+        except _NUMERIC_ERRORS:
             return 2
         if fv <= 0.0:
             return 0
@@ -291,7 +293,7 @@ def evaluate_coco_oks_map(
     try:
         from pycocotools.coco import COCO  # type: ignore
         from pycocotools.cocoeval import COCOeval  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "pycocotools is required for OKS mAP evaluation. Install it (e.g. `python3 -m pip install pycocotools`)."
         ) from exc

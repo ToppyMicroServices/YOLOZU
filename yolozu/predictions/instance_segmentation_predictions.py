@@ -23,6 +23,8 @@ __all__ = [
 
 from .schema_governance import validate_payload_schema_version
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 @dataclass(frozen=True)
 class ValidationResult:
@@ -111,12 +113,12 @@ def validate_instance_segmentation_predictions_entries(
                 raise ValueError(f"{where}[{idx}].instances[{j}]: missing 'class_id'")
             try:
                 int(inst.get("class_id"))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 raise ValueError(f"{where}[{idx}].instances[{j}].class_id: must be int-like")
             if "score" in inst:
                 try:
                     float(inst.get("score"))
-                except Exception:
+                except _NUMERIC_ERRORS:
                     raise ValueError(f"{where}[{idx}].instances[{j}].score: must be float-like")
             else:
                 warnings.append(f"{where}[{idx}].instances[{j}]: missing 'score' (defaulting to 1.0 in evaluation)")
@@ -157,4 +159,3 @@ def iter_instances(entries: Iterable[dict[str, Any]]) -> Iterable[dict[str, Any]
                 out = dict(inst)
                 out["image"] = image
                 yield out
-

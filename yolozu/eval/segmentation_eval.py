@@ -16,12 +16,14 @@ __all__ = [
     "compute_iou_metrics",
 ]
 
+_DEP_IMPORT_ERROR = ImportError
+
 
 def _try_import_deps():  # pragma: no cover
     try:
         import numpy as np
         from PIL import Image
-    except Exception as exc:  # pragma: no cover
+    except _DEP_IMPORT_ERROR as exc:  # pragma: no cover
         raise RuntimeError("segmentation evaluation requires numpy and Pillow") from exc
     return np, Image
 
@@ -210,4 +212,3 @@ def compute_iou_metrics(
         "pred_unknown_pixels": pred_unknown_pixels,
         "pixels_total": int(total_valid),
     }
-

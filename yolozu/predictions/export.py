@@ -22,6 +22,7 @@ __all__ = [
 
 
 DEFAULT_PREDICTIONS_PATH = "reports/predictions.json"
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
 
 
 def _now_utc() -> str:
@@ -80,7 +81,7 @@ def _pick_bbox_from_labels(labels: Any) -> dict[str, float]:
                     "w": float(lbl.get("w", 0.2)),
                     "h": float(lbl.get("h", 0.2)),
                 }
-            except Exception:
+            except _NUMERIC_ERRORS:
                 pass
     return {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}
 
@@ -124,7 +125,7 @@ def export_dummy_predictions(
         if isinstance(labels, list) and labels and isinstance(labels[0], dict):
             try:
                 class_id = int(labels[0].get("class_id", 0))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 class_id = 0
 
         preds.append(
@@ -209,7 +210,7 @@ def export_labels_predictions(
                     continue
                 try:
                     class_id = int(lbl.get("class_id", 0))
-                except Exception:
+                except _NUMERIC_ERRORS:
                     class_id = 0
                 bbox = lbl.get("bbox")
                 if not isinstance(bbox, dict):
@@ -226,7 +227,7 @@ def export_labels_predictions(
                         "w": float(bbox.get("w", 0.0)),
                         "h": float(bbox.get("h", 0.0)),
                     }
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
                 detections.append({"class_id": int(class_id), "score": float(score), "bbox": bbox_out})
 

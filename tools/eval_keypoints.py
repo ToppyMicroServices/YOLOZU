@@ -29,6 +29,8 @@ from yolozu.keypoints_eval import evaluate_keypoints_pck, match_keypoints_detect
 from yolozu.metrics_report import build_report, write_json  # noqa: E402
 from yolozu.predictions import load_predictions_entries, load_predictions_index  # noqa: E402
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Evaluate keypoint predictions using PCK (bbox-normalized distance).")
@@ -121,7 +123,7 @@ def _write_html(
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     meta = report.get("meta") if isinstance(report, dict) else None
@@ -219,7 +221,7 @@ def _bbox_xyxy_abs(bbox: dict[str, Any], *, width: int, height: int) -> tuple[fl
         cy = float(bbox.get("cy"))
         bw = float(bbox.get("w"))
         bh = float(bbox.get("h"))
-    except Exception:
+    except _NUMERIC_ERRORS:
         return None
     x1 = (cx - bw / 2.0) * float(width)
     y1 = (cy - bh / 2.0) * float(height)
@@ -242,7 +244,7 @@ def _render_overlay(
 ) -> dict[str, Any] | None:
     try:
         from PIL import Image, ImageDraw  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise SystemExit(f"Pillow is required for overlays: {exc}") from exc
 
     labels = record.get("labels") or []
@@ -261,7 +263,7 @@ def _render_overlay(
 
     try:
         img = Image.open(image_path).convert("RGB")
-    except Exception:
+    except OSError:
         return None
 
     orig_w, orig_h = img.size
