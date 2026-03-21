@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 try:
     import numpy as np  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     np = None  # type: ignore
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -144,7 +144,7 @@ def _parse_rgb_triplet(value: str, *, where: str) -> list[float]:
     for p in parts:
         try:
             out.append(float(p))
-        except Exception as exc:
+        except ValueError as exc:
             raise SystemExit(f"{where} must be numeric (got {value!r})") from exc
     return out
 
@@ -353,7 +353,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         import cv2  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         raise SystemExit("OpenCV is required (install opencv-python) unless --dry-run is set") from exc
 
     meta["cv2_version"] = getattr(cv2, "__version__", None)
@@ -417,7 +417,7 @@ def main(argv: list[str] | None = None) -> int:
         for name, out in probe_outs.items():
             try:
                 b = _normalize_boxes_2d(np.asarray(out))
-            except Exception:
+            except (TypeError, ValueError, IndexError):
                 continue
             if b.shape[1] == 4:
                 return name

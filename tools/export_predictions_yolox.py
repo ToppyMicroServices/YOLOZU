@@ -119,7 +119,7 @@ def main(argv=None) -> int:
         try:
             exp_cfg = project_yolox_exp(config=exp_path)
             exp_params = exp_cfg.to_dict()
-        except Exception as exc:  # pragma: no cover
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError, AttributeError, KeyError) as exc:  # pragma: no cover
             exp_error = str(exc)
 
     outputs: list[dict[str, Any]] = []
@@ -185,7 +185,7 @@ def main(argv=None) -> int:
                             continue
                         detections.append({"class_id": int(cls_id), "score": score, "bbox": bbox})
                 outputs.append({"image": image_rel, "detections": detections})
-        except Exception as exc:  # pragma: no cover
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError, AttributeError, KeyError) as exc:  # pragma: no cover
             runtime_error = str(exc)
             outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
     else:

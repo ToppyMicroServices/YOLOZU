@@ -228,7 +228,7 @@ def _load_domain_shift_recipe(path_like):
         raise SystemExit(f"--domain-shift-recipe not found: {path}")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         raise SystemExit(f"failed to parse --domain-shift-recipe JSON: {path} ({exc})") from exc
     if not isinstance(payload, dict):
         raise SystemExit("--domain-shift-recipe must be a JSON object")
@@ -284,7 +284,7 @@ def _parse_swap_pairs(value):
         try:
             a = int(a_text.strip())
             b = int(b_text.strip())
-        except Exception as exc:
+        except ValueError as exc:
             raise SystemExit(
                 "--tta-keypoint-swap-pairs must contain integer index pairs (example: 1:2,3:4)"
             ) from exc
@@ -302,7 +302,7 @@ def _xyxy_from_bbox_norm(bbox):
         cy = float(bbox["cy"])
         w = float(bbox["w"])
         h = float(bbox["h"])
-    except Exception:
+    except (KeyError, TypeError, ValueError):
         return None
     x1 = cx - 0.5 * w
     y1 = cy - 0.5 * h
@@ -341,11 +341,11 @@ def _merge_det_pair(base_det, aug_det):
     merged = dict(base_det)
     try:
         s0 = float(base_det.get("score", 0.0))
-    except Exception:
+    except (TypeError, ValueError):
         s0 = 0.0
     try:
         s1 = float(aug_det.get("score", 0.0))
-    except Exception:
+    except (TypeError, ValueError):
         s1 = 0.0
     merged["score"] = float(max(0.0, min(1.0, 0.5 * (s0 + s1))))
 
@@ -493,7 +493,7 @@ def main(argv=None):
     def _ttt_or_die(_records):
         try:
             return run_ttt(adapter, _records, config=ttt_config).to_dict()
-        except Exception as exc:
+        except (AttributeError, ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
             extra = ""
             try:
                 from yolozu.tta.ttt_mim import select_parameters
@@ -521,7 +521,7 @@ def main(argv=None):
                         f" (method={ttt_config.method} update_filter={ttt_config.update_filter} "
                         f"selected_param_count={count} steps={ttt_config.steps} lr={ttt_config.lr})"
                     )
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
                 extra = ""
             raise SystemExit(f"TTT failed: {exc}{extra}")
 
@@ -531,11 +531,11 @@ def main(argv=None):
         if str(args.ttt_reset) == "sample":
             try:
                 import torch
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise SystemExit(f"TTT failed: {exc}")
             try:
                 from yolozu.tta.ttt_mim import select_parameters
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise SystemExit(f"TTT failed: {exc}")
 
             model = adapter.get_model()
@@ -655,7 +655,7 @@ def main(argv=None):
     if hasattr(adapter, "get_lora_report"):
         try:
             lora_report = adapter.get_lora_report()
-        except Exception:
+        except (AttributeError, RuntimeError):
             lora_report = None
 
     if args.wrap:
