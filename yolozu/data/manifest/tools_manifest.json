@@ -2278,6 +2278,104 @@
       ]
     },
     {
+      "docs": [
+        "docs/repo_governance_audit.md",
+        "docs/security_scorecard_governance.md",
+        "docs/release_reliability_checklist.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Write the governance audit JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/check_repo_governance.py",
+      "examples": [
+        {
+          "command": "python3 tools/check_repo_governance.py --repo-json reports/github_governance/repo.json --branch-protection-json reports/github_governance/branch_protection_main.json --output reports/repo_governance_check.json",
+          "description": "Run a full governance audit from exported GitHub settings snapshots."
+        },
+        {
+          "command": "python3 tools/check_repo_governance.py --repo-root . --allow-missing-evidence --output reports/repo_governance_check.local.json",
+          "description": "Inspect local workflow/docs evidence only and treat missing snapshots as informational."
+        }
+      ],
+      "id": "check_repo_governance",
+      "inputs": [
+        {
+          "default": ".",
+          "flag": "--repo-root",
+          "kind": "dir",
+          "name": "repo_root",
+          "required": false
+        },
+        {
+          "flag": "--repo-json",
+          "kind": "file",
+          "name": "repo_json",
+          "required": false
+        },
+        {
+          "flag": "--branch-protection-json",
+          "kind": "file",
+          "name": "branch_protection_json",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--require-reviews",
+          "kind": "number",
+          "name": "require_reviews",
+          "required": false
+        },
+        {
+          "default": false,
+          "flag": "--allow-missing-evidence",
+          "kind": "string",
+          "name": "allow_missing_evidence",
+          "required": false
+        },
+        {
+          "default": "reports/repo_governance_check.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "JSON report containing required checks, advisory checks, missing evidence, and manual followups.",
+          "kind": "json",
+          "name": "governance_report_json",
+          "path": "reports/repo_governance_check.json"
+        },
+        {
+          "description": "One-line status summary plus failed check identifiers when the audit does not pass.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
+      "tags": [
+        "security",
+        "governance",
+        "repo-policy"
+      ]
+    },
+    {
       "contracts": {
         "produces": [
           "instance_segmentation_predictions_json"
