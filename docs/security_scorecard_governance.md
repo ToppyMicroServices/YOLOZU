@@ -2,6 +2,8 @@
 
 This page separates repository-local security hardening from Scorecard items that depend on GitHub settings, review history, or external programs.
 
+For a local, snapshot-backed audit flow, see [`docs/repo_governance_audit.md`](repo_governance_audit.md).
+
 ## Already handled in the repository
 
 - Workflow permissions are explicitly minimized in GitHub Actions.
@@ -31,6 +33,15 @@ These items are configured outside the codebase and should be reviewed in GitHub
 - Dependabot enabled
   - version updates
   - security updates
+
+These settings can be checked locally by exporting GitHub snapshots and running:
+
+```bash
+python3 tools/check_repo_governance.py \
+  --repo-json reports/github_governance/repo.json \
+  --branch-protection-json reports/github_governance/branch_protection_main.json \
+  --output reports/repo_governance_check.json
+```
 
 ## Residual Scorecard items that are not solved by one commit
 
@@ -62,6 +73,7 @@ Recommended next step:
 
 - enroll the repository in the OpenSSF Best Practices program
 - map checklist evidence from `docs/release_reliability_checklist.md`
+- keep the repository governance snapshot audit current in `docs/repo_governance_audit.md`
 
 ### `VulnerabilitiesID`
 
