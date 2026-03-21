@@ -7,6 +7,7 @@ class TestDatasetKeypoints(unittest.TestCase):
     def test_parse_yolo_pose_label_xyv(self):
         repo_root = Path(__file__).resolve().parents[1]
 
+        Image = None
         try:
             from PIL import Image  # type: ignore
         except Exception as exc:  # pragma: no cover
@@ -42,6 +43,7 @@ class TestDatasetKeypoints(unittest.TestCase):
     def test_parse_yolo_pose_label_xy(self):
         repo_root = Path(__file__).resolve().parents[1]
 
+        Image = None
         try:
             from PIL import Image  # type: ignore
         except Exception as exc:  # pragma: no cover
@@ -71,4 +73,3 @@ class TestDatasetKeypoints(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

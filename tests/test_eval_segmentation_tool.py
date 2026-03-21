@@ -12,6 +12,8 @@ class TestEvalSegmentationTool(unittest.TestCase):
         script = repo_root / "tools" / "eval_segmentation.py"
         self.assertTrue(script.is_file())
 
+        np = None
+        Image = None
         try:
             import numpy as np
             from PIL import Image

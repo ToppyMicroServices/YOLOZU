@@ -115,6 +115,7 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
     def test_rtdetr_pose_export_smoke_with_lora(self):
         if torch is None:
             self.skipTest("torch not installed")
+        Image = None
         try:
             from PIL import Image
         except ImportError as exc:  # pragma: no cover

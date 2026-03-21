@@ -55,6 +55,7 @@ class TestExportPredictionsTTTCLI(unittest.TestCase):
             (tmp_root / "images" / "train2017").mkdir(parents=True, exist_ok=True)
             (tmp_root / "labels" / "train2017").mkdir(parents=True, exist_ok=True)
 
+            Image = None
             try:
                 from PIL import Image
             except ImportError as exc:  # pragma: no cover

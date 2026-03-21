@@ -13,10 +13,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -97,14 +100,15 @@ def _load_last_val_map(path: Path) -> float | None:
             continue
         try:
             rec = json.loads(line)
-        except Exception:
+        except json.JSONDecodeError as exc:
+            logger.debug("skipping non-JSON metrics line: %s", exc)
             continue
         metrics = rec.get("metrics") if isinstance(rec, dict) else None
         if isinstance(metrics, dict) and "map50_95" in metrics:
             try:
                 last = float(metrics["map50_95"])
-            except Exception:
-                pass
+            except (TypeError, ValueError) as exc:
+                logger.debug("ignoring non-numeric map50_95 value: %s", exc)
     return last
 
 
@@ -131,7 +135,8 @@ def _load_prepare_summary(dataset_root: Path) -> dict[str, Any] | None:
         return None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except json.JSONDecodeError as exc:
+        logger.debug("failed to decode prepare summary JSON: %s", exc)
         return None
     return data if isinstance(data, dict) else None
 

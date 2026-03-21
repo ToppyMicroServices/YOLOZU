@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,8 @@ try:
     import torch
 except ImportError:  # pragma: no cover
     torch = None
+
+logger = logging.getLogger(__name__)
 
 
 def load_config_file(path: str | Path) -> dict[str, Any]:
@@ -1070,8 +1073,8 @@ def apply_run_contract_defaults(args: argparse.Namespace) -> tuple[argparse.Name
     try:
         if float(getattr(args, "clip_grad_norm", 0.0) or 0.0) <= 0.0:
             args.clip_grad_norm = 1.0
-    except (TypeError, ValueError):
-        pass
+    except (TypeError, ValueError) as exc:
+        logger.debug("ignoring invalid clip_grad_norm value: %s", exc)
 
     return args, {
         "run_dir": run_dir,

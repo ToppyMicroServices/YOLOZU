@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -26,6 +27,8 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.core.config import simple_yaml_load
+
+logger = logging.getLogger(__name__)
 
 FRAMEWORKS = ("yolov", "mmdetection", "detectron2", "rtdetr")
 
@@ -121,7 +124,8 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                 for key, value in payload.items():
                     try:
                         idx = int(key)
-                    except Exception:
+                    except (TypeError, ValueError) as exc:
+                        logger.debug("ignoring non-integer class key %r: %s", key, exc)
                         continue
                     pairs.append((idx, str(value)))
                 if pairs:
@@ -134,7 +138,8 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
     for txt in sorted(labels_dir.glob("*.txt")):
         try:
             lines = txt.read_text(encoding="utf-8").splitlines()
-        except Exception:
+        except OSError as exc:
+            logger.debug("failed to read label file %s: %s", txt, exc)
             continue
         for line in lines:
             parts = line.strip().split()
