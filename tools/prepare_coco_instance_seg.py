@@ -10,6 +10,8 @@ sys.path.insert(0, str(repo_root))
 from yolozu.coco_convert import convert_coco_instances_to_yolo_labels  # noqa: E402
 from yolozu.core.diagnostics import format_cli_error  # noqa: E402
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _parse_args(argv):
     parser = argparse.ArgumentParser()
@@ -50,7 +52,7 @@ def _try_import_deps():  # pragma: no cover
         import numpy as np
         from PIL import Image
         from pycocotools.coco import COCO  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         raise SystemExit(
             "prepare_coco_instance_seg requires numpy, Pillow, and pycocotools.\n"
             "Install: pip install numpy Pillow pycocotools"
@@ -65,7 +67,7 @@ def _to_int_key_map(mapping):
     for k, v in mapping.items():
         try:
             out[int(k)] = int(v)
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
     return out
 
@@ -134,7 +136,7 @@ def main(argv=None):
     if classes_path.exists():
         try:
             class_map = json.loads(classes_path.read_text(encoding="utf-8"))
-        except Exception:
+        except json.JSONDecodeError:
             class_map = {}
     cat_to_cls = _to_int_key_map((class_map or {}).get("category_id_to_class_id"))
 
@@ -148,7 +150,7 @@ def main(argv=None):
     for img in images:
         try:
             img_id = int(img.get("id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         file_name = str(img.get("file_name") or "")
         if not file_name:
@@ -168,23 +170,23 @@ def main(argv=None):
                 continue
             try:
                 cat_id = int(ann.get("category_id", 0))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
             class_id = cat_to_cls.get(cat_id)
             if class_id is None:
                 continue
             try:
                 ann_id = int(ann.get("id", 0))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 ann_id = 0
 
             try:
                 m = coco.annToMask(ann)
-            except Exception:
+            except (AttributeError, IndexError, KeyError, TypeError, ValueError):
                 continue
             try:
                 arr = (np.asarray(m).astype("uint8") * 255)
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
                 continue
             if arr.ndim != 2:
                 continue
@@ -228,4 +230,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-

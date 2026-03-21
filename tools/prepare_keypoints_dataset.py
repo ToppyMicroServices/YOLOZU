@@ -222,6 +222,8 @@ def _ordered_unique(items: list[str]) -> list[str]:
         out.append(key)
     return out
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _parse_points_xy(raw: str) -> tuple[float, float] | None:
     text = str(raw or "").strip()
@@ -235,7 +237,7 @@ def _parse_points_xy(raw: str) -> tuple[float, float] | None:
         return None
     try:
         return float(parts[0]), float(parts[1])
-    except Exception:
+    except _NUMERIC_ERRORS:
         return None
 
 
@@ -321,7 +323,7 @@ def _run_cvat_xml_conversion(args: argparse.Namespace, source: Path, out: Path) 
         try:
             width = int(float(str(image.get("width"))))
             height = int(float(str(image.get("height"))))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         if width <= 0 or height <= 0:
             continue
@@ -352,7 +354,7 @@ def _run_cvat_xml_conversion(args: argparse.Namespace, source: Path, out: Path) 
                 ytl = float(str(box.get("ytl")))
                 xbr = float(str(box.get("xbr")))
                 ybr = float(str(box.get("ybr")))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
             if xbr <= xtl or ybr <= ytl:
                 continue

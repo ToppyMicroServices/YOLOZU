@@ -127,7 +127,56 @@ class TestMigrateCoco(unittest.TestCase):
             self.assertAlmostEqual(float(bbox["w"]), 0.1, places=6)
             self.assertAlmostEqual(float(bbox["h"]), 0.1, places=6)
 
+    def test_migrate_coco_results_predictions_skips_invalid_rows(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+
+            instances = {
+                "images": [
+                    {"id": 1, "file_name": "0001.jpg", "width": 100, "height": 200},
+                    {"id": "bad", "file_name": "ignored.jpg", "width": 10, "height": 10},
+                ],
+                "annotations": [],
+                "categories": [{"id": 7, "name": "thing"}],
+            }
+            instances_path = root / "instances.json"
+            instances_path.write_text(json.dumps(instances), encoding="utf-8")
+
+            results = [
+                {"image_id": "bad", "category_id": 7, "bbox": [0, 0, 10, 20], "score": 0.8},
+                {"image_id": 1, "category_id": "bad", "bbox": [0, 0, 10, 20], "score": 0.8},
+                {"image_id": 1, "category_id": 7, "bbox": [0, 0, 10, 20], "score": True},
+                {"image_id": 1, "category_id": 7, "bbox": [0, 0, 10, 20], "score": 0.7},
+            ]
+            results_path = root / "results.json"
+            results_path.write_text(json.dumps(results), encoding="utf-8")
+
+            out_preds = root / "predictions.json"
+            proc = self._run(
+                [
+                    "migrate",
+                    "predictions",
+                    "--from",
+                    "coco-results",
+                    "--results",
+                    str(results_path),
+                    "--instances",
+                    str(instances_path),
+                    "--output",
+                    str(out_preds),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"migrate predictions --from coco-results failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out_preds.read_text(encoding="utf-8"))
+            self.assertEqual(len(payload), 1)
+            self.assertEqual(len(payload[0]["detections"]), 1)
+            self.assertEqual(float(payload[0]["detections"][0]["score"]), 0.7)
+
 
 if __name__ == "__main__":
     unittest.main()
-

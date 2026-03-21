@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
 
 
 def _parse_args(argv):
@@ -24,7 +25,7 @@ def _try_import_deps():  # pragma: no cover
         import numpy as np
         from PIL import Image
         from pycocotools import mask as mask_utils  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         raise SystemExit(
             "convert_coco_instance_seg_predictions requires numpy, Pillow, and pycocotools.\n"
             "Install: pip install numpy Pillow pycocotools"
@@ -40,7 +41,7 @@ def _build_maps(instances: dict[str, Any]):
             continue
         try:
             image_id = int(im.get("id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         file_name = str(im.get("file_name") or "")
         if not file_name:
@@ -48,7 +49,7 @@ def _build_maps(instances: dict[str, Any]):
         try:
             w = int(im.get("width") or 0)
             h = int(im.get("height") or 0)
-        except Exception:
+        except _NUMERIC_ERRORS:
             w, h = 0, 0
         image_id_to_meta[image_id] = {"file_name": file_name, "width": w, "height": h}
 
@@ -59,7 +60,7 @@ def _build_maps(instances: dict[str, Any]):
             continue
         try:
             cid = int(c.get("id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         name = c.get("name")
         cats.append((cid, str(name) if name is not None else str(cid)))
@@ -103,13 +104,13 @@ def main(argv=None):
             continue
         try:
             score = float(pred.get("score", 0.0))
-        except Exception:
+        except _NUMERIC_ERRORS:
             score = 0.0
         if float(score) < float(args.min_score):
             continue
         try:
             image_id = int(pred.get("image_id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         meta = image_id_to_meta.get(int(image_id))
         if meta is None:
@@ -119,7 +120,7 @@ def main(argv=None):
             continue
         try:
             cat_id = int(pred.get("category_id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         class_id = cat_to_cls.get(int(cat_id))
         if class_id is None:
@@ -141,11 +142,11 @@ def main(argv=None):
             else:
                 rle = seg
             m = mask_utils.decode(rle)
-        except Exception:
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError):
             continue
         try:
             arr = np.asarray(m)
-        except Exception:
+        except (TypeError, ValueError):
             continue
         if arr.ndim == 3:
             # Some decoders return (H,W,1).

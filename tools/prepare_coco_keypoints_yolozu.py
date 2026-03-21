@@ -3,6 +3,8 @@ import json
 import os
 from pathlib import Path
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Convert COCO keypoints annotations to YOLOZU YOLO-format labels.")
@@ -50,7 +52,7 @@ def _kps_to_norm_triplets(kps: list[float], *, width: int, height: int) -> list[
     return out
 
 
-def _count_labeled(kps: list[float]) -> int:
+def _count_labeled(kps: list[object]) -> int:
     if len(kps) % 3 != 0:
         return 0
     cnt = 0
@@ -59,7 +61,7 @@ def _count_labeled(kps: list[float]) -> int:
         try:
             if int(v) > 0:
                 cnt += 1
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
     return cnt
 
@@ -86,7 +88,7 @@ def _normalize_skeleton(value: object, *, num_keypoints: int) -> list[list[int]]
         try:
             a = int(edge[0])
             b = int(edge[1])
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         if a <= 0 or b <= 0 or a == b:
             continue
@@ -116,7 +118,7 @@ def _pick_category(categories: list[dict], *, category_id: int | None, category_
             try:
                 if int(cat.get("id")) == int(category_id):
                     return cat
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
         raise SystemExit(f"category_id={category_id} not found among keypoint-enabled categories")
 
@@ -180,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     try:
         target_cat_id = int(target_cat.get("id"))
-    except Exception:
+    except _NUMERIC_ERRORS:
         raise SystemExit("selected category has invalid id")
     target_cat_name = str(target_cat.get("name") or target_cat_id)
     keypoint_names = _normalize_keypoint_names(target_cat.get("keypoints"))
@@ -194,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         try:
             images_by_id[int(im["id"])] = im
-        except Exception:
+        except (KeyError, TypeError, ValueError, OverflowError):
             continue
 
     ann_by_image: dict[int, list[dict]] = {}
@@ -204,11 +206,11 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if int(ann.get("category_id")) != int(target_cat_id):
                 continue
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         try:
             image_id = int(ann.get("image_id"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         ann_by_image.setdefault(image_id, []).append(ann)
 
@@ -222,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             width = int(im.get("width"))
             height = int(im.get("height"))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         src_img = images_dir / file_name
         if not src_img.exists():
@@ -237,11 +239,16 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             if not (isinstance(kps, list) and len(kps) >= 3):
                 continue
-            if _count_labeled([float(v) for v in kps]) < int(args.min_kps):
+            try:
+                kps_float = [float(v) for v in kps]
+                bbox_float = [float(v) for v in bbox]
+            except _NUMERIC_ERRORS:
                 continue
-            cx, cy, bw, bh = _bbox_xywh_to_cxcywh_norm([float(v) for v in bbox], width=width, height=height)
+            if _count_labeled(kps_float) < int(args.min_kps):
+                continue
+            cx, cy, bw, bh = _bbox_xywh_to_cxcywh_norm(bbox_float, width=width, height=height)
             # YOLOZU keypoints: append x y v triplets (normalized).
-            kps_norm = _kps_to_norm_triplets([float(v) for v in kps], width=width, height=height)
+            kps_norm = _kps_to_norm_triplets(kps_float, width=width, height=height)
             if not kps_norm:
                 continue
             parts = [f"{int(args.class_id):d}", f"{cx:.6f}", f"{cy:.6f}", f"{bw:.6f}", f"{bh:.6f}"] + [f"{v:.6f}" for v in kps_norm]
@@ -291,4 +298,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
