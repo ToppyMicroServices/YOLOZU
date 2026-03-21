@@ -100,7 +100,7 @@ def _extract_manifest_keypoints_meta(manifest: dict[str, Any] | None) -> tuple[l
             try:
                 a = int(edge[0])
                 b = int(edge[1])
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             if a <= 0 or b <= 0 or a == b:
                 continue
@@ -121,13 +121,13 @@ def unwrap_model(model: "torch.nn.Module") -> "torch.nn.Module":
             try:
                 model = model.module
                 continue
-            except Exception as exc:
+            except (AttributeError, RuntimeError, TypeError) as exc:
                 _debug_swallow("model.module unwrap skipped", exc)
         if hasattr(model, "_orig_mod"):
             try:
                 model = model._orig_mod  # type: ignore[attr-defined]
                 continue
-            except Exception as exc:
+            except (AttributeError, RuntimeError, TypeError) as exc:
                 _debug_swallow("model._orig_mod unwrap skipped", exc)
         return model
 
@@ -229,7 +229,7 @@ def run_onnxrt_parity(
 
     try:
         import numpy as np  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         report["reason"] = f"missing_numpy:{exc}"
         out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
         if str(policy) == "fail":
@@ -239,7 +239,7 @@ def run_onnxrt_parity(
 
     try:
         import onnxruntime as ort  # type: ignore
-    except Exception as exc:
+    except ImportError as exc:
         report["reason"] = f"missing_onnxruntime:{exc}"
         out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
         if str(policy) == "fail":
@@ -258,7 +258,7 @@ def run_onnxrt_parity(
     report["available"] = True
     try:
         sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    except Exception as exc:
+    except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
         report["available"] = False
         report["reason"] = f"onnxruntime_init_failed:{exc}"
         out_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
@@ -271,7 +271,7 @@ def run_onnxrt_parity(
     try:
         if sess.get_inputs():
             input_name = sess.get_inputs()[0].name
-    except Exception:
+    except (AttributeError, IndexError, RuntimeError, TypeError):
         input_name = None
     if not input_name:
         input_name = "images"
@@ -279,7 +279,7 @@ def run_onnxrt_parity(
     gen = torch.Generator(device="cpu")
     try:
         gen.manual_seed(int(seed))
-    except Exception as exc:
+    except (RuntimeError, TypeError, ValueError) as exc:
         _debug_swallow("generator seed setup skipped", exc)
     x = torch.rand((1, 3, int(image_size), int(image_size)), generator=gen, dtype=torch.float32, device="cpu")
     report["input"] = {"shape": [1, 3, int(image_size), int(image_size)], "dtype": "float32", "seed": int(seed)}
@@ -302,7 +302,7 @@ def run_onnxrt_parity(
     names = []
     try:
         names = [o.name for o in sess.get_outputs()]
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         names = []
     if not names:
         names = ["logits", "bbox"]
@@ -352,7 +352,7 @@ def collect_torch_cuda_meta() -> dict[str, Any]:
         return {"available": False, "reason": "torch.cuda.is_available() is false"}
     try:
         idx = int(torch.cuda.current_device())
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError, ValueError):
         idx = 0
     meta: dict[str, Any] = {
         "available": True,
@@ -372,17 +372,17 @@ def collect_rng_state() -> dict[str, Any]:
         import numpy as np  # type: ignore
 
         state["numpy"] = np.random.get_state()
-    except Exception:
+    except ImportError:
         state["numpy"] = None
     if torch is not None:
         try:
             state["torch"] = torch.get_rng_state()
-        except Exception:
+        except RuntimeError:
             state["torch"] = None
         if torch.cuda.is_available():
             try:
                 state["torch_cuda"] = torch.cuda.get_rng_state_all()
-            except Exception:
+            except RuntimeError:
                 state["torch_cuda"] = None
         else:
             state["torch_cuda"] = None
@@ -396,7 +396,7 @@ def restore_rng_state(state: dict[str, Any] | None) -> None:
     if py_state is not None:
         try:
             random.setstate(py_state)
-        except Exception as exc:
+        except (TypeError, ValueError) as exc:
             _debug_swallow("python RNG restore skipped", exc)
     np_state = state.get("numpy")
     if np_state is not None:
@@ -404,7 +404,7 @@ def restore_rng_state(state: dict[str, Any] | None) -> None:
             import numpy as np  # type: ignore
 
             np.random.set_state(np_state)
-        except Exception as exc:
+        except (ImportError, TypeError, ValueError) as exc:
             _debug_swallow("numpy RNG restore skipped", exc)
     if torch is None:
         return
@@ -412,13 +412,13 @@ def restore_rng_state(state: dict[str, Any] | None) -> None:
     if torch_state is not None:
         try:
             torch.set_rng_state(torch_state)
-        except Exception as exc:
+        except (RuntimeError, TypeError) as exc:
             _debug_swallow("torch RNG restore skipped", exc)
     cuda_state = state.get("torch_cuda")
     if cuda_state is not None and torch.cuda.is_available():
         try:
             torch.cuda.set_rng_state_all(cuda_state)
-        except Exception as exc:
+        except (RuntimeError, TypeError) as exc:
             _debug_swallow("cuda RNG restore skipped", exc)
 
 
@@ -454,7 +454,7 @@ def parse_milestones(value: Any) -> list[int]:
         for item in value:
             try:
                 out.append(int(item))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
         return out
     text = str(value).strip()
@@ -467,7 +467,7 @@ def parse_milestones(value: Any) -> list[int]:
             continue
         try:
             out.append(int(part))
-        except Exception:
+        except (TypeError, ValueError):
             continue
     return out
 
@@ -570,7 +570,7 @@ def flatten_records_for_map(records: list[dict[str, Any]]) -> list[dict[str, Any
                         "h": float(bb.get("h", 0.0)),
                     }
                 )
-            except Exception:
+            except (TypeError, ValueError):
                 continue
         flat.append({"image": image, "labels": labels_out})
     return flat
@@ -954,7 +954,7 @@ def create_geom_input_from_bboxes(
         if z_list is not None and i < len(z_list):
             try:
                 z_val = float(z_list[i])
-            except Exception:
+            except (TypeError, ValueError):
                 z_val = 1.0
             if z_val > 0:
                 depth[y0:y1, x0:x1] = torch.minimum(depth[y0:y1, x0:x1], torch.tensor(z_val, dtype=torch.float32))
@@ -980,11 +980,11 @@ def compute_grad_norm(parameters) -> "torch.Tensor":
         if getattr(g, "is_sparse", False):
             try:
                 g = g.coalesce().values()
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 continue
         try:
             norms.append(g.detach().norm(2))
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             continue
     if not norms:
         return torch.zeros((), dtype=torch.float32)
@@ -1013,31 +1013,31 @@ def load_checkpoint_into(
             try:
                 optim.load_state_dict(obj["optim_state_dict"])
                 meta["optim_loaded"] = True
-            except Exception:
+            except (RuntimeError, TypeError, ValueError):
                 meta["optim_loaded"] = False
         if sched is not None and isinstance(obj.get("sched_state_dict"), dict):
             try:
                 sched.load_state_dict(obj["sched_state_dict"])
                 meta["sched_loaded"] = True
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 meta["sched_loaded"] = False
         if scaler is not None and isinstance(obj.get("scaler_state_dict"), dict):
             try:
                 scaler.load_state_dict(obj["scaler_state_dict"])
                 meta["scaler_loaded"] = True
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 meta["scaler_loaded"] = False
         if ema is not None and isinstance(obj.get("ema_state_dict"), dict):
             try:
                 ema.load_state_dict(obj["ema_state_dict"])
                 meta["ema_loaded"] = True
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 meta["ema_loaded"] = False
         if restore_rng:
             try:
                 restore_rng_state(obj.get("rng_state"))
                 meta["rng_restored"] = True
-            except Exception:
+            except (RuntimeError, TypeError, ValueError):
                 meta["rng_restored"] = False
         meta.update({k: obj.get(k) for k in ("epoch", "global_step") if k in obj})
         meta["schema_version"] = obj.get("schema_version")
@@ -1092,17 +1092,17 @@ def save_checkpoint_bundle(
     if sched is not None and hasattr(sched, "state_dict"):
         try:
             payload["sched_state_dict"] = sched.state_dict()
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             payload["sched_state_dict"] = None
     if scaler is not None and hasattr(scaler, "state_dict"):
         try:
             payload["scaler_state_dict"] = scaler.state_dict()
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             payload["scaler_state_dict"] = None
     if ema is not None and hasattr(ema, "state_dict"):
         try:
             payload["ema_state_dict"] = ema.state_dict()
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             payload["ema_state_dict"] = None
     if rng_state is not None:
         payload["rng_state"] = rng_state
