@@ -82,7 +82,7 @@ def _run_parity(
     if text:
         try:
             payload = json.loads(text)
-        except Exception:
+        except json.JSONDecodeError:
             err = text
     if proc.returncode != 0 and not err:
         err = (proc.stderr or "").strip()
