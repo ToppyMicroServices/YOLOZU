@@ -45,11 +45,11 @@ def _run_capture(cmd: list[str], *, cwd: Path | None = None, timeout_s: float = 
 
 def _pkg_version(name: str) -> str | None:
     try:
-        from importlib.metadata import version  # py3.8+
+        from importlib.metadata import PackageNotFoundError, version  # py3.8+
 
         v = version(name)
         return str(v) if v else None
-    except Exception:
+    except (ImportError, PackageNotFoundError):
         return None
 
 
@@ -60,7 +60,7 @@ def _gather_git_info(*, cwd: Path) -> dict[str, Any]:
         unstaged = subprocess.run(["git", "diff", "--quiet"], cwd=str(cwd), check=False).returncode != 0
         staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(cwd), check=False).returncode != 0
         dirty = bool(unstaged or staged)
-    except Exception:
+    except (OSError, ValueError, subprocess.SubprocessError):
         dirty = None
     return {"head": head, "dirty": dirty}
 
@@ -87,7 +87,8 @@ def _gather_gpu_info() -> dict[str, Any]:
         if torch_info["cuda_available"]:
             torch_info["device_count"] = int(torch.cuda.device_count())
         gpu["torch"] = torch_info
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch GPU probe failed: %s", exc)
         gpu["torch"] = None
 
     try:
@@ -97,7 +98,8 @@ def _gather_gpu_info() -> dict[str, Any]:
             "version": getattr(ort, "__version__", None),
             "providers": list(getattr(ort, "get_available_providers")()),
         }
-    except Exception:
+    except Exception as exc:
+        logger.debug("onnxruntime GPU probe failed: %s", exc)
         gpu["onnxruntime"] = None
 
     return gpu

@@ -11,6 +11,7 @@ import platform
 import socket
 import subprocess
 import sys
+import logging
 
 __all__ = [
     "host_info",
@@ -28,16 +29,20 @@ import shlex
 from pathlib import Path
 from typing import Any
 
+
+logger = logging.getLogger(__name__)
+
 try:
     from importlib import metadata as importlib_metadata
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     importlib_metadata = None
 
 
 def _safe_version(module_name: str) -> str | None:
     try:
         mod = __import__(module_name)
-    except Exception:
+    except Exception as exc:
+        logger.debug("module import for version probe failed: %s: %s", module_name, exc)
         return None
     version = getattr(mod, "__version__", None)
     if version is None:
@@ -52,15 +57,15 @@ def host_info() -> dict[str, Any]:
 
     try:
         hostname = socket.gethostname()
-    except Exception:
+    except OSError:
         hostname = None
     try:
         fqdn = socket.getfqdn()
-    except Exception:
+    except OSError:
         fqdn = None
     try:
         node = platform.node()
-    except Exception:
+    except OSError:
         node = None
 
     return {
@@ -76,26 +81,30 @@ def accelerator_info() -> dict[str, Any]:
 
     try:
         import torch  # type: ignore
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch accelerator probe import failed: %s", exc)
         return {"torch_available": False, "cuda": {"available": False}, "mps": {"available": False}}
 
     cuda_available = False
     try:
         cuda_available = bool(torch.cuda.is_available())
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch.cuda.is_available probe failed: %s", exc)
         cuda_available = False
 
     cuda_version = getattr(getattr(torch, "version", None), "cuda", None)
     cudnn_version = None
     try:
         cudnn_version = int(torch.backends.cudnn.version()) if hasattr(torch.backends, "cudnn") else None
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch cudnn version probe failed: %s", exc)
         cudnn_version = None
 
     device_count = 0
     try:
         device_count = int(torch.cuda.device_count()) if cuda_available else 0
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch device_count probe failed: %s", exc)
         device_count = 0
 
     devices: list[dict[str, Any]] = []
@@ -106,7 +115,8 @@ def accelerator_info() -> dict[str, Any]:
             capability = None
             try:
                 name = str(torch.cuda.get_device_name(idx))
-            except Exception:
+            except Exception as exc:
+                logger.debug("torch device name probe failed for index %s: %s", idx, exc)
                 name = None
             try:
                 props = torch.cuda.get_device_properties(idx)
@@ -115,7 +125,8 @@ def accelerator_info() -> dict[str, Any]:
                 minor = getattr(props, "minor", None)
                 if major is not None and minor is not None:
                     capability = [int(major), int(minor)]
-            except Exception:
+            except Exception as exc:
+                logger.debug("torch device properties probe failed for index %s: %s", idx, exc)
                 total_mem = None
                 capability = None
             devices.append(
@@ -130,7 +141,8 @@ def accelerator_info() -> dict[str, Any]:
     mps_available = False
     try:
         mps_available = bool(getattr(torch.backends, "mps", None) and torch.backends.mps.is_available())
-    except Exception:
+    except Exception as exc:
+        logger.debug("torch MPS probe failed: %s", exc)
         mps_available = False
 
     return {
@@ -168,7 +180,7 @@ def git_info(repo_root: str | Path) -> dict[str, Any]:
         # diff --quiet returns 1 when there are changes
         is_dirty = bool(dirty != 0)
         return {"sha": sha, "dirty": is_dirty}
-    except Exception:
+    except (OSError, subprocess.SubprocessError, ValueError):
         return {}
 
 
@@ -198,7 +210,8 @@ def _collect_installed_packages() -> list[dict[str, str]]:
             if not name:
                 continue
             packages.append({"name": name, "version": version})
-    except Exception:
+    except Exception as exc:
+        logger.debug("installed packages probe failed: %s", exc)
         return []
     packages.sort(key=lambda item: item["name"].lower())
     return packages
@@ -217,7 +230,7 @@ def dependency_lock_info(repo_root: str | Path) -> dict[str, Any]:
             continue
         try:
             requirements_hashes[rel] = hashlib.sha256(p.read_bytes()).hexdigest()
-        except Exception:
+        except OSError:
             continue
 
     return {
@@ -233,18 +246,18 @@ def preprocess_config(args: dict[str, Any] | None) -> dict[str, Any]:
     image_size = args.get("image_size", args.get("imgsz"))
     try:
         image_size = int(image_size) if image_size is not None else None
-    except Exception:
+    except (TypeError, ValueError):
         image_size = None
 
     scale_min = args.get("scale_min")
     scale_max = args.get("scale_max")
     try:
         scale_min = float(scale_min) if scale_min is not None else None
-    except Exception:
+    except (TypeError, ValueError):
         scale_min = None
     try:
         scale_max = float(scale_max) if scale_max is not None else None
-    except Exception:
+    except (TypeError, ValueError):
         scale_max = None
 
     return {
