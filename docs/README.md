@@ -184,7 +184,7 @@ The benchmark report now records:
 - canonical task label
 - requested task label
 - metric family and expected metric keys
-- whether the task is an Ultralytics-surface target or a YOLOZU-native extension
+- whether the task is part of the mainstream benchmark surface or a YOLOZU-native extension
 
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
@@ -192,8 +192,8 @@ Reference docs:
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 - [License policy and no-telemetry repository boundary](license_policy.md)
 - [Benchmark latency](benchmark_latency.md)
-- [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
-- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
+- [Benchmark mode spec (parity target)](benchmark_mode_spec_parity_target.md)
+- [Benchmark gap audit](benchmark_mode_gap_audit.md)
 - [RunPod GPU split preflight](runpod_gpu_validation_split.md)
 
 ## E) LLM / MCP integrations
@@ -215,23 +215,23 @@ Reference docs:
 - [MCP extension architecture](mcp_extension_architecture.md)
 - [AI-first guide (supported MCP scope)](ai_first.md)
 
-## F) YOLO migration (v5/v8/11/26)
+## F) YOLO-style migration (v5/v8/11/26)
 
-Use this path when you keep training/inference in YOLO tooling and only want YOLOZU interface-contract/eval.
+Use this path when you keep training/inference in a YOLO-family runtime and only want YOLOZU interface-contract/eval.
 
 Shortest 3 commands:
 
 ```bash
-python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
-python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
-python3 -m yolozu.cli eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --output reports/coco_eval_ultra.json
+python3 tools/import_yolo_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/yolo_wrapper --force
+python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
+python3 -m yolozu.cli eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --protocol nms_applied --output reports/coco_eval_yolo_runtime.json
 ```
 
 Protocol guidance:
-- `nms_applied`: YOLOv5/YOLOv8/YOLO11 style post-NMS exports.
+- `nms_applied`: YOLOv5/YOLOv8/YOLO11 style post-NMS exports from a YOLO-family runtime.
 - `e2e_nms_free`: YOLO26 / RT-DETR style NMS-free exports.
 
-If predictions contain COCO `category_id`, pass `--classes data/ultra_wrapper/labels/<split>/classes.json` to `eval-coco`.
+If predictions contain COCO `category_id`, pass `--classes data/yolo_wrapper/labels/<split>/classes.json` to `eval-coco`.
 
 ## G) Detectron2/MMDetection migration
 
@@ -332,4 +332,4 @@ CI incident memo has moved to a dedicated page:
 - [Release reliability checklist](release_reliability_checklist.md)
 - [1.0 stability boundary](release_1_0_stability.md)
 - [Manual PDF DOI release](manual_doi_release.md)
-- [Ultralytics/DETR support (3-layer)](ultralytics_detr_support.md)
+- [YOLO/DETR support (3-layer)](yolo_detr_support.md)

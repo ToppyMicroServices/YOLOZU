@@ -49,8 +49,8 @@ def _extract_class_names(cfg: dict[str, Any]) -> list[str]:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Import Ultralytics data.yaml into YOLOZU dataset wrapper + classes mapping.")
-    parser.add_argument("--data-yaml", required=True, help="Path to Ultralytics data.yaml")
+    parser = argparse.ArgumentParser(description="Import YOLO-style data.yaml into a YOLOZU dataset wrapper + classes mapping.")
+    parser.add_argument("--data-yaml", required=True, help="Path to YOLO-style data.yaml")
     parser.add_argument("--split", default=None, help="Split override (default: auto)")
     parser.add_argument("--output", required=True, help="Output dataset root (writes dataset.json and labels/<split>/classes.json)")
     parser.add_argument("--force", action="store_true", help="Overwrite outputs when present")

@@ -1,13 +1,9 @@
-# Benchmark Mode Spec (Ultralytics Parity Target)
+# Benchmark Mode Spec (Parity Target)
 
 This document defines the target specification for a future `yolozu benchmark`
-entrypoint that aims to catch up with the user experience of the Ultralytics
-benchmark mode while preserving YOLOZU's predictions interface contract,
+entrypoint that aims to catch up with a modern benchmark-mode user experience
+while preserving YOLOZU's predictions interface contract,
 artifact traceability, and CI-friendly regression workflow.
-
-Reference baseline:
-- [Ultralytics benchmark arguments](https://docs.ultralytics.com/modes/benchmark/#arguments)
-- [Ultralytics benchmark export formats](https://docs.ultralytics.com/modes/benchmark/#export-formats)
 
 ## 1. Goal
 
@@ -40,7 +36,7 @@ Implementation is intentionally staged.
 
 ## 3. Compatibility Target
 
-### 3.1 Ultralytics-aligned core arguments
+### 3.1 Benchmark-aligned core arguments
 
 The following arguments should be accepted by `yolozu benchmark` in Phase 1:
 
@@ -54,7 +50,7 @@ The following arguments should be accepted by `yolozu benchmark` in Phase 1:
 - `--format`
 
 These are the minimum arguments needed to feel benchmark-mode compatible for
-users coming from Ultralytics.
+users coming from common vision export/eval workflows.
 
 ### 3.2 YOLOZU-required extensions
 
@@ -75,7 +71,7 @@ to feed downstream validation, eval, parity, and CI workflows:
 - `--eval-output`
 - `--parity-output`
 
-These are not Ultralytics-compatibility features; they are required to keep
+These are not mere compatibility features; they are required to keep
 benchmark runs auditable and comparable under the predictions interface
 contract.
 
@@ -92,7 +88,7 @@ accept explicit canonical tasks and aliases:
 
 The report should record both the canonical task and the originally requested
 label, alongside task semantics such as metric family, expected metric keys,
-support level, and whether the task is an Ultralytics-surface target or a
+support level, and whether the task is part of the mainstream benchmark surface or a
 YOLOZU-native extension.
 
 ## 4. Format Policy

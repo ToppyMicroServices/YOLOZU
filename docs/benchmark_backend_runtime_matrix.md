@@ -18,7 +18,7 @@ benchmark users and maintainers.
 
 | Backend / format | Current benchmark state | Runtime requirement | License / redistribution note | Bundled with YOLOZU |
 | --- | --- | --- | --- | --- |
-| `torch` | real orchestration for `detect`; other tasks planning-only | Local PyTorch + Ultralytics runtime | Python packages have their own terms; verify your chosen model/runtime stack separately | No |
+| `torch` | real orchestration for `detect`; other tasks planning-only | Local PyTorch + external YOLO-family runtime | Python packages have their own terms; verify your chosen model/runtime stack separately | No |
 | `onnx` | real orchestration for `detect`; other tasks planning-only | Local ONNX Runtime install | ONNX Runtime is external to this repo; keep binary/runtime terms separate from YOLOZU | No |
 | `engine` / TensorRT | real orchestration for `detect`; other tasks planning-only | Linux + NVIDIA GPU + TensorRT runtime/engine | Requires external NVIDIA runtime/SDK; verify redistribution terms for CUDA/TensorRT/NGC artifacts | No |
 | `torchscript` | accepted; synthetic / planning-only | Local PyTorch runtime | No vendor GPU runtime is implied; still external to this repo | No |

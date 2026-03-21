@@ -229,7 +229,7 @@ python3 tools/run_external_finetune_smoke.py \
 
 Prepared per-framework templates:
 
-- `configs/examples/finetune_external/ultralytics_yolov8n_finetune_smoke.yaml`
+- `configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml`
 - `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
 - `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
 - `configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml`

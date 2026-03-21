@@ -45,7 +45,7 @@ def _parse_args(argv):
     )
     p.add_argument(
         "--raw-postprocess",
-        choices=("native", "ultralytics"),
+        choices=("native", "ultralytics", "yolo_runtime"),
         default="native",
         help="Postprocess for --raw-output (default: native).",
     )

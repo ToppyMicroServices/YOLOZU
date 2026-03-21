@@ -115,8 +115,8 @@ parity artifacts remain only for dry-run, skipped, or synthetic-only formats.
 The benchmark surface now records explicit task semantics instead of treating
 \cmd{--task} as a loose label. The top-level report and each per-format result
 carry the canonical task, the originally requested task, accepted aliases,
-metric family, expected metric keys, support level, and whether the task is an
-Ultralytics-surface target or a YOLOZU-native extension.
+metric family, expected metric keys, support level, and whether the task is
+part of the mainstream benchmark surface or a YOLOZU-native extension.
 
 The current task matrix is:
 \begin{center}
@@ -128,7 +128,7 @@ The current task matrix is:
 \cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & documented planned & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
 \cmd{obb} & \cmd{obb} & \cmd{obb\_map} & documented planned & Visible in the benchmark surface; backend/eval implementation remains follow-up work. \\
 \cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & documented partial & \cmd{pose} is normalized to canonical \cmd{keypoints} in the report. \\
-\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & documented partial & YOLOZU-native extension, not an Ultralytics parity claim. \\
+\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & documented partial & YOLOZU-native extension, not a mainstream benchmark-surface parity claim. \\
 \cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & documented partial & YOLOZU-native extension with explicit metric expectations. \\
 \end{tabular}
 \end{center}
@@ -150,7 +150,7 @@ or vendor SDKs with separate terms.
 \begin{tabular}{p{2.0cm} p{2.7cm} p{3.0cm} p{5.0cm}}
 \textbf{Backend} & \textbf{State} & \textbf{Runtime} & \textbf{License / redistribution note} \\
 \hline
-\cmd{torch} & real detect path & local PyTorch + Ultralytics runtime & External runtime; verify your chosen runtime/model stack separately. \\
+\cmd{torch} & real detect path & local PyTorch runtime stack & External runtime; verify your chosen runtime/model stack separately. \\
 \cmd{onnx} & real detect path & local ONNX Runtime & External runtime; supported does not mean bundled. \\
 \cmd{engine} & real detect path & Linux + NVIDIA GPU + TensorRT runtime & External NVIDIA runtime/SDK; verify CUDA/TensorRT/NGC redistribution terms separately. \\
 \cmd{torchscript} & planning only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
@@ -160,8 +160,8 @@ or vendor SDKs with separate terms.
 \end{tabular}
 \end{center}
 
-\subsection{Gap against the Ultralytics docs surface}
-Relative to the public Ultralytics benchmark/export documentation, YOLOZU has
+\subsection{Gap against the benchmark/export surface}
+Relative to the broader benchmark/export surface users now expect, YOLOZU has
 already matched the core benchmark entrypoint shape, but it still trails in
 surface breadth.
 
@@ -176,7 +176,7 @@ The most important remaining gaps are:
 \end{itemize}
 
 \subsection{Highest-leverage parity-closing work}
-If the goal is to close the practical gap against the public Ultralytics docs
+If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
   \item add real backend/eval paths for \cmd{segmentation},

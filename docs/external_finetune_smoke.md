@@ -2,7 +2,7 @@
 
 This page defines a practical smoke workflow to check whether finetune entrypoints are usable across four framework paths:
 
-- YOLOv (Ultralytics)
+- YOLOv (YOLO-family runtime)
 - MMDetection
 - Detectron2
 - RT-DETR (`rtdetr_pose` in-repo)
@@ -13,7 +13,7 @@ The focus is a stable interface contract for reproducible command inputs/outputs
 
 Prepared templates live in:
 
-- `configs/examples/finetune_external/ultralytics_yolov8n_finetune_smoke.yaml`
+- `configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml`
 - `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
 - `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
 - `configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml`

@@ -1,0 +1,20 @@
+# Ultralytics YOLOv finetune smoke template for YOLOZU.
+#
+# Usage (with YOLOZU matrix tool):
+#   python3 tools/run_external_finetune_smoke.py --non-dry-framework yolov
+#
+# Usage (direct Ultralytics):
+#   yolo detect train model=yolov8n.yaml data=<generated_data_yaml> epochs=1 imgsz=96 batch=2 device=cpu
+
+model: yolov8n.yaml
+imgsz: 96
+epochs: 1
+batch: 2
+device: cpu
+workers: 0
+pretrained: false
+save: false
+val: false
+patience: 0
+project: runs/external_finetune
+name: ultralytics_yolov8n_smoke

@@ -52,7 +52,7 @@ def _parse_args(argv):
         help="Evaluation protocol annotation. Default resolves from --end2end.",
     )
     parser.add_argument("--wrap", action="store_true", help="Wrap as {predictions:[...], meta:{...}}.")
-    parser.add_argument("--dry-run", action="store_true", help="Write schema-valid output without ultralytics runtime.")
+    parser.add_argument("--dry-run", action="store_true", help="Write schema-valid output without the external YOLO runtime.")
     parser.add_argument("--strict", action="store_true", help="Strict prediction schema validation.")
     return parser.parse_args(argv)
 

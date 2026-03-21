@@ -10,7 +10,7 @@ This page describes the **recommended adapter path** and priorities.
 
 ## Priorities (the “one thick road”)
 
-1. **Ultralytics YOLO (v8/v11)**
+1. **YOLO-family runtime (v8/v11 style)**
    - Most common field format.
    - Fast path to high-quality `predictions.json` for detection/seg.
 
