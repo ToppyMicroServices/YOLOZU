@@ -108,7 +108,7 @@ def _within(root: Path, path: Path) -> bool:
     try:
         path.resolve().relative_to(root.resolve())
         return True
-    except Exception:
+    except (OSError, ValueError):
         return False
 
 
@@ -121,7 +121,7 @@ def _parse_contract_validator_cmd(template: str, *, path: str) -> list[str] | No
         return None
     try:
         tokens = shlex.split(cleaned)
-    except Exception:
+    except ValueError:
         tokens = cleaned.split()
     out: list[str] = []
     for tok in tokens:
@@ -392,12 +392,9 @@ def _now_utc() -> str:
 def _run_capture(cmd: list[str], *, cwd: Path | None = None) -> str | None:
     try:
         out = subprocess.check_output(cmd, cwd=str(cwd or repo_root), stderr=subprocess.STDOUT)
-    except Exception:
+    except (FileNotFoundError, OSError, subprocess.CalledProcessError):
         return None
-    try:
-        return out.decode("utf-8", errors="replace").strip()
-    except Exception:
-        return None
+    return out.decode("utf-8", errors="replace").strip()
 
 
 def _git_head() -> str | None:
@@ -409,16 +406,17 @@ def _git_is_dirty() -> bool | None:
         unstaged = subprocess.run(["git", "diff", "--quiet"], cwd=str(repo_root), check=False).returncode != 0
         staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(repo_root), check=False).returncode != 0
         return bool(unstaged or staged)
-    except Exception:
+    except OSError:
         return None
 
 
 def _pkg_version(name: str) -> str | None:
     try:
         from importlib.metadata import version  # py3.8+
+        from importlib.metadata import PackageNotFoundError  # py3.8+
 
         return version(name)
-    except Exception:
+    except (ImportError, PackageNotFoundError):
         return None
 
 
@@ -449,17 +447,17 @@ def _gather_gpu_info() -> dict[str, Any]:
                 name = None
                 try:
                     name = torch.cuda.get_device_name(i)
-                except Exception:
+                except (AttributeError, RuntimeError, TypeError, ValueError):
                     name = None
                 cap = None
                 try:
                     cap = torch.cuda.get_device_capability(i)
-                except Exception:
+                except (AttributeError, RuntimeError, TypeError, ValueError):
                     cap = None
                 devices.append({"index": int(i), "name": name, "capability": cap})
             torch_info["devices"] = devices
         gpu["torch"] = torch_info
-    except Exception:
+    except ImportError:
         gpu["torch"] = None
 
     # onnxruntime providers (optional)
@@ -468,7 +466,7 @@ def _gather_gpu_info() -> dict[str, Any]:
 
         gpu["onnxruntime_providers"] = list(getattr(ort, "get_available_providers")())
         gpu["onnxruntime_version"] = getattr(ort, "__version__", None)
-    except Exception:
+    except ImportError:
         gpu["onnxruntime_providers"] = None
         gpu["onnxruntime_version"] = None
 
@@ -642,7 +640,7 @@ def _render_overlays(
 ) -> dict[str, Any]:
     try:
         from PIL import Image, ImageDraw  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise SystemExit(f"Pillow is required for overlays: {exc}") from exc
 
     overlays_dir.mkdir(parents=True, exist_ok=True)
@@ -669,7 +667,7 @@ def _render_overlays(
 
         try:
             img = Image.open(image_path).convert("RGB")
-        except Exception:
+        except (OSError, ValueError):
             continue
 
         draw = ImageDraw.Draw(img)
@@ -685,7 +683,7 @@ def _render_overlays(
                 cy = float(bbox.get("cy"))
                 bw = float(bbox.get("w"))
                 bh = float(bbox.get("h"))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             x1 = (cx - bw / 2.0) * w
             y1 = (cy - bh / 2.0) * h
@@ -706,10 +704,10 @@ def _render_overlays(
                             try:
                                 if float(v) <= 0.0:
                                     continue
-                            except Exception as exc:
+                            except (TypeError, ValueError) as exc:
                                 logger.debug("keypoint visibility coercion skipped: %s", exc, exc_info=True)
                         draw.ellipse([px - r, py - r, px + r, py + r], outline=(0, 0, 255), width=2)
-                except Exception as exc:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
                     logger.debug("keypoint overlay rendering skipped: %s", exc, exc_info=True)
 
         out_name = f"{written:06d}_{Path(image_path).name}"
@@ -742,7 +740,7 @@ def _write_html_report(
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     lines = [
@@ -828,7 +826,7 @@ def _predict_images(args: argparse.Namespace) -> int:
             dst = images_dir / f"{idx:06d}_{src.name}"
             try:
                 os.symlink(str(src.resolve()), str(dst))
-            except Exception:
+            except OSError:
                 # Fallback to copy if symlinks are not permitted.
                 dst.write_bytes(src.read_bytes())
             mapping[str(dst)] = str(src.resolve())

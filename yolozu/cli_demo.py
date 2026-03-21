@@ -20,7 +20,7 @@ def _optional_module_status(module: str) -> dict[str, Any]:
     try:
         __import__(module)
         return {"module": module, "available": True, "error": None}
-    except Exception as exc:
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
         return {"module": module, "available": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
@@ -153,12 +153,12 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 if isinstance(overlays_dir, str) and overlays_dir:
                     try:
                         overlays = sorted(Path(overlays_dir).glob("*.png"))
-                    except Exception as exc:
+                    except (OSError, RuntimeError) as exc:
                         _debug_demo_summary("instance-seg overlays directory scan skipped", exc)
                         overlays = []
                     if overlays:
                         print(str(overlays[0]))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("instance-seg report summary skipped", exc)
             if label:
                 print(label)
@@ -590,7 +590,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             else:
                 print("== instance-seg (coco-instances) ==")
                 print(f"skipped: not found: instances={instances_path} images_dir={images_path}")
-        except Exception as exc:
+        except (FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
             print("== instance-seg (coco-instances) ==")
             print(f"skipped: {exc}")
 
@@ -614,7 +614,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 encoding="utf-8",
             )
             print(f"suite_config: {suite_cfg_path}")
-        except Exception as exc:
+        except OSError as exc:
             _debug_demo_summary("instance-seg suite config write skipped", exc)
 
         # 3) Continual demo (skip if torch missing)
@@ -645,7 +645,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 print(f"output_dir: {Path(out).parent}")
                 print(str(out))
                 ok += 1
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
             print("== continual ==")
             print(f"skipped: {exc}")
 
@@ -672,7 +672,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             try:
                 instances_ok = Path(str(resolved_instances)).exists() if resolved_instances else False
                 images_ok = Path(str(resolved_images)).exists() if resolved_images else False
-            except Exception as exc:
+            except OSError as exc:
                 _debug_demo_summary("COCO path availability probe failed", exc)
                 instances_ok = False
                 images_ok = False
@@ -713,7 +713,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             try:
                 import torch  # noqa: F401
                 import torchvision  # noqa: F401
-            except Exception as exc:
+            except ImportError as exc:
                 if resolved_inference == "torchvision":
                     raise SystemExit(
                         "instance-seg inference requires torch+torchvision. "
@@ -776,7 +776,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 encoding="utf-8",
             )
             print(f"config: {cfg_path}")
-        except Exception as exc:
+        except OSError as exc:
             _debug_demo_summary("instance-seg config echo skipped", exc)
         _print_instance_seg_report(out_path=Path(out))
         return 0
@@ -785,7 +785,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         try:
             import torch  # noqa: F401
             import torchvision  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo instance-seg-tta requires torch+torchvision. "
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
@@ -828,7 +828,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 print(str(overlay_raw))
             if overlay_tta:
                 print(str(overlay_tta))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("instance-seg TTA artifact summary skipped", exc)
         print(str(out))
         return 0
@@ -929,7 +929,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                     md_path = Path(out).with_suffix(".md")
                     md_path.write_text(md, encoding="utf-8")
                     print(str(md_path))
-            except Exception as exc:
+            except OSError as exc:
                 _debug_demo_summary("continual demo markdown write skipped", exc)
             print(str(out))
             return 0
@@ -996,7 +996,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 md_path = Path(out).with_suffix(".md")
                 md_path.write_text(md, encoding="utf-8")
                 print(str(md_path))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("continual suite markdown write skipped", exc)
         print(str(out))
         return 0
@@ -1004,7 +1004,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
     if args.demo_command == "ttt":
         try:
             import torch  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo ttt requires torch. "
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
@@ -1061,7 +1061,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         try:
             import torch  # noqa: F401
             import torchvision  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo keypoints requires torch+torchvision. "
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
@@ -1088,7 +1088,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
             if overlay:
                 print(str(overlay))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("pose demo summary skipped", exc)
         print(str(out))
         return 0
@@ -1097,7 +1097,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         try:
             import cv2  # noqa: F401
             import numpy as np  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo pose requires opencv-python and numpy (aruco backend needs opencv-contrib-python; "
                 "densefusion backend requires CUDA + DenseFusion assets). "
@@ -1139,7 +1139,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             overlay = artifacts.get("overlay") if isinstance(artifacts, dict) else None
             if overlay:
                 print(str(overlay))
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("keypoints demo summary skipped", exc)
         print(str(out))
         return 0
@@ -1147,7 +1147,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
     if args.demo_command == "depth":
         try:
             import torch  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo depth requires torch. "
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
@@ -1164,7 +1164,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 invert=bool(getattr(args, "invert", True)),
                 compare=bool(getattr(args, "compare", False)),
             )
-        except Exception as exc:
+        except (ConnectionError, FileNotFoundError, OSError, RuntimeError, TypeError, ValueError) as exc:
             msg = str(exc)
             if "intel-isl/MiDaS" in msg or "torch.hub" in msg:
                 raise SystemExit(
@@ -1188,7 +1188,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 print(
                     f"depth demo: model={settings.get('model')} depth_range=[{d.get('min'):.3g}, {d.get('max'):.3g}] (output_dir={run_dir})"
                 )
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("depth demo summary skipped", exc)
         print(str(out))
         return 0
@@ -1197,7 +1197,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         try:
             import torch  # noqa: F401
             import torchvision  # noqa: F401
-        except Exception as exc:
+        except ImportError as exc:
             raise SystemExit(
                 "demo train requires torch+torchvision. "
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
@@ -1226,7 +1226,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 f"steps={train.get('steps')} loss_mean={train.get('loss_mean'):.3f} "
                 f"val_acc={val.get('acc'):.3f} (output_dir={settings.get('run_dir')})"
             )
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             _debug_demo_summary("train demo summary skipped", exc)
         print(str(out))
         return 0
