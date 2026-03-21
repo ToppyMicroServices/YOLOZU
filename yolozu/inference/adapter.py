@@ -14,6 +14,7 @@ RTDETRPoseAdapter    -- runs the RT-DETR pose scaffold (optional ``torch``).
 
 from __future__ import annotations
 
+import logging
 from contextlib import nullcontext
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
 ]
 
 ENTRY_SCHEMA_VERSION = 2
+logger = logging.getLogger(__name__)
 
 
 class ModelAdapter:
@@ -231,15 +233,15 @@ class RTDETRPoseAdapter(ModelAdapter):
         if self.repro_policy == "strict":
             try:
                 torch.use_deterministic_algorithms(True)
-            except Exception:
+            except Exception as exc:
                 # Some runtime combos may not expose strict deterministic toggles.
-                pass
+                logger.debug("Deterministic algorithms toggle unavailable: %s", exc)
             if hasattr(torch.backends, "cudnn"):
                 try:
                     torch.backends.cudnn.deterministic = True
                     torch.backends.cudnn.benchmark = False
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("cuDNN deterministic flags unavailable: %s", exc)
 
         # Keep reference-adapter baselines reproducible without forcing global RNG.
         if self.repro_policy == "off" or self.init_seed is None:
@@ -521,8 +523,8 @@ class RTDETRPoseAdapter(ModelAdapter):
                     try:
                         kp_xy = keypoints[q_idx]
                         det["keypoints"] = [{"x": float(x), "y": float(y), "v": 2} for x, y in kp_xy.tolist()]
-                    except Exception:
-                        pass
+                    except (AttributeError, IndexError, TypeError, ValueError):
+                        det.pop("keypoints", None)
 
                 if log_sigma_z is not None:
                     ls_z = float(log_sigma_z[q_idx].item())
