@@ -98,7 +98,7 @@ def _record_label_ids(record: dict[str, Any]) -> list[int]:
             continue
         try:
             out.append(int(item.get("class_id", -1)))
-        except Exception:
+        except (TypeError, ValueError, OverflowError):
             continue
     return [cid for cid in out if cid >= 0]
 

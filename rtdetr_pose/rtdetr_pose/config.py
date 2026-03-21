@@ -82,7 +82,7 @@ def load_config(path):
                     .joinpath(rel)
                     .read_text(encoding="utf-8")
                 )
-            except Exception as exc:
+            except (FileNotFoundError, ModuleNotFoundError) as exc:
                 raise FileNotFoundError(f"builtin config not found: {rel}") from exc
 
     if text is None:

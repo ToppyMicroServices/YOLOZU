@@ -158,11 +158,11 @@ def _load_array_from_path(path):
     if suffix == ".png":
         try:
             from PIL import Image  # type: ignore
-        except Exception:  # pragma: no cover
+        except ImportError:  # pragma: no cover
             return None
         try:
             img = Image.open(path)
-        except Exception:
+        except (OSError, ValueError):
             return None
         img = img.convert("L")
         if np is not None:
@@ -173,7 +173,7 @@ def _load_array_from_path(path):
     if suffix in (".npy", ".npz") and np is not None:
         try:
             loaded = np.load(path)
-        except Exception:
+        except (EOFError, OSError, ValueError):
             return None
         if hasattr(loaded, "files"):
             if not loaded.files:

@@ -110,7 +110,7 @@ def finalize_training(
             best_path.parent.mkdir(parents=True, exist_ok=True)
             try:
                 shutil.copyfile(str(args.checkpoint_bundle_out), str(best_path))
-            except Exception:
+            except OSError:
                 save_checkpoint_bundle(
                     str(best_path),
                     model=unwrap_model(model),
@@ -148,7 +148,7 @@ def finalize_training(
     if is_main and args.onnx_out:
         try:
             from rtdetr_pose.export import export_onnx
-        except Exception as exc:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             print(
                 f"WARNING: ONNX export skipped — could not import rtdetr_pose.export ({exc}). "
                 "Install 'onnx' to enable post-training ONNX export.",
