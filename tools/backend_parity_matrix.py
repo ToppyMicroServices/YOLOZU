@@ -169,8 +169,8 @@ def _summarize_parity(report: dict[str, Any] | None) -> dict[str, Any]:
             cand = failure.get("cand") or {}
             try:
                 score_abs_max = max(score_abs_max, abs(float(ref.get("score")) - float(cand.get("score"))))
-            except Exception:
-                pass
+            except (TypeError, ValueError):
+                continue
             ref_bbox = ref.get("bbox") or {}
             cand_bbox = cand.get("bbox") or {}
             for key in ("cx", "cy", "w", "h"):

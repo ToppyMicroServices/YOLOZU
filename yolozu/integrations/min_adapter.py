@@ -238,11 +238,12 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                     for key, value in names_map.items():
                         try:
                             pairs.append((int(key), str(value)))
-                        except Exception:
+                        except (TypeError, ValueError):
                             continue
                     if pairs:
                         return [v for _, v in sorted(pairs, key=lambda x: x[0])]
-        except Exception:
+        except (OSError, json.JSONDecodeError):
+            # Fall back to classes.txt or discovered class IDs when metadata is absent.
             pass
 
     classes_txt = labels_dir / "classes.txt"

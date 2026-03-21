@@ -217,8 +217,10 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
                 keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
                 return keep
             except Exception:
+                # Fall back to the local NMS implementation when torchvision NMS is unavailable.
                 pass
     except Exception:
+        # Torch/TorchVision are optional for the fast-path NMS helper.
         pass
 
     order = scores.argsort()[::-1]

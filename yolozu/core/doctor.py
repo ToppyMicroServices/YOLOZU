@@ -8,6 +8,7 @@ common cross-backend parity pitfalls.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import platform
 import subprocess
@@ -17,6 +18,9 @@ from pathlib import Path
 from typing import Any
 
 __all__ = ["build_doctor_report", "write_doctor_report"]
+
+
+logger = logging.getLogger(__name__)
 
 
 def _now_utc() -> str:
@@ -31,11 +35,11 @@ def _run_capture(cmd: list[str], *, cwd: Path | None = None, timeout_s: float = 
             stderr=subprocess.STDOUT,
             timeout=float(timeout_s),
         )
-    except Exception:
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
     try:
         return out.decode("utf-8", errors="replace").strip()
-    except Exception:
+    except UnicodeDecodeError:
         return None
 
 
@@ -145,8 +149,8 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cudnn_version": int(torch.backends.cudnn.version()) if torch.backends.cudnn.is_available() else None,
             "device_count": int(torch.cuda.device_count()) if torch.cuda.is_available() else 0,
         }
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("torch runtime probe failed: %s", exc)
 
     try:
         import onnxruntime as ort  # type: ignore
@@ -159,8 +163,8 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cuda_provider": "CUDAExecutionProvider" in providers,
             "tensorrt_provider": "TensorrtExecutionProvider" in providers,
         }
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("onnxruntime probe failed: %s", exc)
 
     try:
         import tensorrt  # type: ignore
@@ -168,8 +172,8 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
         runtime["tensorrt"]["python_module_available"] = True
         if runtime["tensorrt"].get("python_package_version") is None:
             runtime["tensorrt"]["python_package_version"] = getattr(tensorrt, "__version__", None)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("TensorRT probe failed: %s", exc)
 
     try:
         import cv2  # type: ignore
@@ -177,15 +181,16 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
         count = None
         try:
             count = int(cv2.cuda.getCudaEnabledDeviceCount())
-        except Exception:
+        except Exception as exc:
+            logger.debug("OpenCV CUDA probe failed: %s", exc)
             count = None
         runtime["opencv"] = {
             "python_package_version": runtime["opencv"].get("python_package_version") or getattr(cv2, "__version__", None),
             "module_available": True,
             "cuda_enabled_device_count": count,
         }
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("OpenCV probe failed: %s", exc)
 
     return runtime
 
