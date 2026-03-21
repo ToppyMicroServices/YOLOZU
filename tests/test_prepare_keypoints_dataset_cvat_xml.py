@@ -4,29 +4,31 @@ import json
 import subprocess
 import sys
 import tempfile
+import unittest
 from pathlib import Path
 
 
-def test_prepare_keypoints_dataset_cvat_xml_minimal() -> None:
-    try:
-        from PIL import Image  # type: ignore
-    except Exception as exc:
-        raise AssertionError(f"Pillow is required for this test: {exc}")
+class TestPrepareKeypointsDatasetCVATXML(unittest.TestCase):
+    def test_prepare_keypoints_dataset_cvat_xml_minimal(self) -> None:
+        try:
+            from PIL import Image  # type: ignore
+        except ImportError as exc:
+            self.skipTest(f"Pillow is required for this test: {exc}")
 
-    repo_root = Path(__file__).resolve().parents[1]
-    tool = repo_root / "tools" / "prepare_keypoints_dataset.py"
+        repo_root = Path(__file__).resolve().parents[1]
+        tool = repo_root / "tools" / "prepare_keypoints_dataset.py"
 
-    with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
-        work = Path(td)
-        source = work / "cvat"
-        out = work / "out"
-        images_dir = source / "images"
-        images_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            work = Path(td)
+            source = work / "cvat"
+            out = work / "out"
+            images_dir = source / "images"
+            images_dir.mkdir(parents=True, exist_ok=True)
 
-        Image.new("RGB", (100, 80), color=(120, 120, 120)).save(images_dir / "img1.jpg")
+            Image.new("RGB", (100, 80), color=(120, 120, 120)).save(images_dir / "img1.jpg")
 
-        (source / "annotations.xml").write_text(
-            """<?xml version=\"1.0\" encoding=\"utf-8\"?>
+            (source / "annotations.xml").write_text(
+                """<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <annotations>
   <meta><task><labels>
     <label><name>nose</name></label>
@@ -39,34 +41,38 @@ def test_prepare_keypoints_dataset_cvat_xml_minimal() -> None:
   </image>
 </annotations>
 """,
-            encoding="utf-8",
-        )
+                encoding="utf-8",
+            )
 
-        subprocess.run(
-            [
-                sys.executable,
-                str(tool),
-                "--source",
-                str(source),
-                "--format",
-                "cvat_xml",
-                "--out",
-                str(out),
-                "--class-id",
-                "0",
-            ],
-            cwd=str(repo_root),
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(tool),
+                    "--source",
+                    str(source),
+                    "--format",
+                    "cvat_xml",
+                    "--out",
+                    str(out),
+                    "--class-id",
+                    "0",
+                ],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
-        dataset = json.loads((out / "dataset.json").read_text(encoding="utf-8"))
-        classes = json.loads((out / "labels" / "val2017" / "classes.json").read_text(encoding="utf-8"))
-        label_line = (out / "labels" / "val2017" / "img1.txt").read_text(encoding="utf-8").strip()
+            dataset = json.loads((out / "dataset.json").read_text(encoding="utf-8"))
+            classes = json.loads((out / "labels" / "val2017" / "classes.json").read_text(encoding="utf-8"))
+            label_line = (out / "labels" / "val2017" / "img1.txt").read_text(encoding="utf-8").strip()
 
-        assert dataset["task"] == "keypoints"
-        assert dataset["split"] == "val2017"
-        assert int(dataset["num_keypoints"]) == 2
-        assert int(classes["num_keypoints"]) == 2
-        assert len(label_line.split()) == 11
+            self.assertEqual(dataset["task"], "keypoints")
+            self.assertEqual(dataset["split"], "val2017")
+            self.assertEqual(int(dataset["num_keypoints"]), 2)
+            self.assertEqual(int(classes["num_keypoints"]), 2)
+            self.assertEqual(len(label_line.split()), 11)
+
+
+if __name__ == "__main__":
+    unittest.main()

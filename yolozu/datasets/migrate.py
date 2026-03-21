@@ -23,22 +23,27 @@ __all__ = [
 
 from yolozu.core.config import simple_yaml_load
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+
 
 def _load_config(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     if path.suffix.lower() in (".yaml", ".yml"):
         try:
             import yaml  # type: ignore
-
+        except ImportError:
+            return simple_yaml_load(text)
+        yaml_error = getattr(yaml, "YAMLError", ValueError)
+        try:
             data = yaml.safe_load(text)
             return data or {}
-        except Exception:
+        except (yaml_error, AttributeError, TypeError, ValueError):
             return simple_yaml_load(text)
     if path.suffix.lower() == ".json":
         return json.loads(text)
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError:
         return simple_yaml_load(text)
 
 
@@ -321,7 +326,7 @@ def migrate_coco_results_predictions(
             continue
         try:
             image_id_to_meta[int(img["id"])] = img
-        except Exception:
+        except (KeyError, TypeError, ValueError, OverflowError):
             continue
 
     from .coco_convert import build_category_map_from_coco
@@ -335,7 +340,7 @@ def migrate_coco_results_predictions(
         try:
             image_id = int(det["image_id"])
             category_id = int(det["category_id"])
-        except Exception:
+        except (KeyError, TypeError, ValueError, OverflowError):
             continue
 
         score = det.get("score")
@@ -492,7 +497,7 @@ def _maybe_relative(path: Path | None, *, root: Path, path_type: str) -> str | N
         return str(path)
     try:
         return str(path.resolve().relative_to(root.resolve()))
-    except Exception:
+    except (OSError, RuntimeError, ValueError):
         return str(path)
 
 
