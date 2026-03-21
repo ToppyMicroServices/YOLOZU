@@ -27,6 +27,9 @@ __all__ = [
 
 from yolozu.training.gates import final_score, passes_template_gate
 
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+_INDEXED_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError, IndexError)
+
 
 @dataclass(frozen=True)
 class TransformResult:
@@ -37,7 +40,7 @@ class TransformResult:
 def _finite_float(value: Any, *, default: float, warnings: list[str], where: str) -> float:
     try:
         out = float(value)
-    except Exception:
+    except _NUMERIC_ERRORS:
         warnings.append(f"{where}: invalid numeric value")
         return float(default)
     if not math.isfinite(out):
@@ -49,7 +52,7 @@ def _finite_float(value: Any, *, default: float, warnings: list[str], where: str
 def _optional_torch() -> Any | None:
     try:
         import torch  # type: ignore
-    except Exception:
+    except ImportError:
         return None
     return torch
 
@@ -63,7 +66,7 @@ def _bbox_sort_tuple(det: dict[str, Any]) -> tuple[float, float, float, float]:
         value = bbox.get(key)
         try:
             out = float(value)
-        except Exception:
+        except _NUMERIC_ERRORS:
             return 1e9
         if not math.isfinite(out):
             return 1e9
@@ -76,7 +79,7 @@ def _class_sort_value(det: dict[str, Any]) -> int:
     value = det.get("class_id", 0)
     try:
         return int(value)
-    except Exception:
+    except _NUMERIC_ERRORS:
         return 0
 
 
@@ -89,7 +92,7 @@ def _to_int_key_map(mapping: dict[Any, Any]) -> dict[int, int]:
     for k, v in mapping.items():
         try:
             out[int(k)] = int(v)
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
     return out
 
@@ -141,7 +144,7 @@ def normalize_class_ids(
                         new_det["class_id"] = int(cat_to_cls[cat_id])
                     else:
                         warnings.append(f"predictions[{idx}].detections[{j}]: unknown category_id {cat_id}")
-                except Exception:
+                except _NUMERIC_ERRORS:
                     warnings.append(f"predictions[{idx}].detections[{j}]: invalid class_id")
 
             if "class_id" not in new_det and "category_id" in new_det and cat_to_cls is not None:
@@ -151,7 +154,7 @@ def normalize_class_ids(
                         new_det["class_id"] = int(cat_to_cls[cat_id])
                     else:
                         warnings.append(f"predictions[{idx}].detections[{j}]: unknown category_id {cat_id}")
-                except Exception:
+                except _NUMERIC_ERRORS:
                     warnings.append(f"predictions[{idx}].detections[{j}]: invalid category_id")
 
             new_dets.append(new_det)
@@ -169,12 +172,12 @@ def _entry_image_size(entry: dict[str, Any]) -> tuple[float | None, float | None
         height = value.get("height")
         try:
             return (float(width), float(height))
-        except Exception:
+        except _NUMERIC_ERRORS:
             return (None, None)
     if isinstance(value, (list, tuple)) and len(value) == 2:
         try:
             return (float(value[0]), float(value[1]))
-        except Exception:
+        except _NUMERIC_ERRORS:
             return (None, None)
     return (None, None)
 
@@ -197,7 +200,7 @@ def _flip_keypoint_x(
 ) -> float | None:
     try:
         x = float(value)
-    except Exception:
+    except _NUMERIC_ERRORS:
         warnings.append(f"{where}: invalid keypoint.x")
         return None
 
@@ -268,7 +271,7 @@ def _flip_keypoints_inplace(
             try:
                 a = int(pair[0])
                 b = int(pair[1])
-            except Exception:
+            except _INDEXED_NUMERIC_ERRORS:
                 warnings.append(f"{where}: invalid keypoint swap pair at index {pair_idx}")
                 continue
             if a < 0 or b < 0 or a >= len(out) or b >= len(out):
@@ -291,7 +294,7 @@ def _flip_pose_offsets_inplace(det: dict[str, Any], *, warnings: list[str], wher
     out = list(offsets)
     try:
         out[0] = -float(out[0])
-    except Exception:
+    except _NUMERIC_ERRORS:
         warnings.append(f"{where}: invalid offsets[0]")
         return
     det["offsets"] = out
@@ -354,7 +357,7 @@ def apply_tta(
                     new_bbox = dict(bbox)
                     try:
                         new_bbox["cx"] = 1.0 - float(new_bbox["cx"])
-                    except Exception:
+                    except _NUMERIC_ERRORS:
                         warnings.append(f"predictions[{idx}].detections[{j}]: invalid bbox.cx")
                     new_det["bbox"] = new_bbox
                 else:
@@ -369,7 +372,7 @@ def apply_tta(
                             new_bbox_abs = dict(bbox_abs)
                             try:
                                 new_bbox_abs["cx"] = float(width) - float(new_bbox_abs["cx"])
-                            except Exception:
+                            except _NUMERIC_ERRORS:
                                 warnings.append(f"predictions[{idx}].detections[{j}]: invalid bbox_abs.cx")
                             new_det["bbox_abs"] = new_bbox_abs
 
@@ -606,7 +609,7 @@ def fuse_detection_scores(
         for k, v in weights.items():
             try:
                 w[str(k)] = float(v)
-            except Exception:
+            except _NUMERIC_ERRORS:
                 continue
 
     out_entries: list[dict[str, Any]] = []

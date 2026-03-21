@@ -19,6 +19,10 @@ from yolozu.image_keys import image_basename, image_key_aliases, lookup_image_al
 from yolozu.instance_segmentation_predictions import iter_instances, load_instance_segmentation_predictions_entries
 from yolozu.metrics_report import build_report, write_json
 
+_JSON_LOAD_ERRORS = (OSError, UnicodeDecodeError, json.JSONDecodeError)
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
+_MASK_LOAD_ERRORS = (OSError, ValueError, TypeError, RuntimeError)
+
 
 def _class_colors(num_classes: int) -> list[tuple[int, int, int]]:
     import colorsys
@@ -40,7 +44,7 @@ def _load_class_id_to_name(path: Path) -> dict[int, str]:
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except _JSON_LOAD_ERRORS:
         return {}
 
     if isinstance(data, dict):
@@ -58,7 +62,7 @@ def _load_class_id_to_name(path: Path) -> dict[int, str]:
             for k, v in id_to_name.items():
                 try:
                     out[int(k)] = str(v)
-                except Exception:
+                except _NUMERIC_ERRORS:
                     continue
             return out
 
@@ -84,7 +88,7 @@ def _overlay_instances(
     for inst in instances:
         try:
             class_id = int(inst.get("class_id", 0))
-        except Exception:
+        except _NUMERIC_ERRORS:
             continue
         color = colors[int(class_id) % len(colors)] if colors else (255, 0, 0)
         mask_val = inst.get("mask")
@@ -92,7 +96,7 @@ def _overlay_instances(
             continue
         try:
             m = load_mask_bool(mask_val, allow_rgb=allow_rgb_masks)
-        except Exception:
+        except _MASK_LOAD_ERRORS:
             continue
         mask = np.asarray(m, dtype=bool)
         if mask.shape[0] != base.shape[0] or mask.shape[1] != base.shape[1]:
@@ -154,7 +158,7 @@ def _write_html(*, html_path: Path, title: str, report: dict[str, Any], overlays
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     lines: list[str] = [
@@ -396,7 +400,7 @@ def run_instance_segmentation_eval(
                 continue
             try:
                 score = float(inst.get("score", 1.0))
-            except Exception:
+            except _NUMERIC_ERRORS:
                 score = 1.0
             if score < float(min_score):
                 continue
@@ -456,7 +460,7 @@ def run_instance_segmentation_eval(
 
             try:
                 img = Image.open(image_path).convert("RGB")
-            except Exception:
+            except OSError:
                 continue
 
             # Downscale image for overlays only.
@@ -492,7 +496,7 @@ def run_instance_segmentation_eval(
                     continue
                 try:
                     m = load_mask_bool(mask_path, allow_rgb=bool(allow_rgb_masks))
-                except Exception:
+                except _MASK_LOAD_ERRORS:
                     continue
                 m_r = _resize_mask_bool(m)
                 if m_r is None:
@@ -508,7 +512,7 @@ def run_instance_segmentation_eval(
             out_path = overlays_dir_p / f"{idx:06d}_{stem}_{digest}.png"
             try:
                 combined.save(out_path)
-            except Exception:
+            except OSError:
                 continue
 
             diag = diag_by_path.get(image_path)
