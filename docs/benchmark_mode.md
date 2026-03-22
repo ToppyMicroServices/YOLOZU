@@ -230,6 +230,12 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
+Placement rules:
+
+- `export_settings_<format>.json` is written next to `--output`
+- `predictions_<format>.json`, `eval_<format>.json`, and `parity_<format>.json`
+  default under `reports/` unless their explicit override flags are set
+
 When `torch`, `onnx`, or `engine` can run for real, the benchmark writes actual
 predictions and eval artifacts and attaches real parity artifacts for candidate
 backends against the chosen reference backend (preferring `torch` when
@@ -252,6 +258,12 @@ reports/
   eval_onnx.json
   parity_onnx.json
 ```
+
+If you choose a report outside `reports/`, for example
+`--output tmp_benchmark_report.json`, the benchmark still keeps predictions /
+eval / parity under `reports/` by default, while
+`export_settings_<format>.json` is written next to
+`tmp_benchmark_report.json`.
 
 The top-level benchmark report records, per format:
 

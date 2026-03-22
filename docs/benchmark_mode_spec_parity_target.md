@@ -192,6 +192,14 @@ Minimum outputs:
 - `eval_<format>.json`
 - `export_settings_<format>.json`
 
+Default placement:
+
+- `export_settings_<format>.json` is colocated with the selected benchmark
+  report path
+- `predictions_<format>.json`, `eval_<format>.json`, and
+  `parity_<format>.json` default under `reports/` unless explicit override
+  paths are provided
+
 Optional outputs:
 
 - `benchmark_history.jsonl`

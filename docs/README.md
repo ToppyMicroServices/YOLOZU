@@ -173,7 +173,7 @@ python3 tools/benchmark_model.py \
 
 Typical outputs:
 - `reports/benchmark_report.json`
-- `reports/export_settings_<format>.json`
+- `reports/export_settings_<format>.json` when `--output` stays under `reports/`; otherwise `export_settings_<format>.json` is written next to the selected benchmark report path
 - `reports/predictions_<format>.json`
 - `reports/eval_<format>.json`
 - `reports/parity_<format>.json`

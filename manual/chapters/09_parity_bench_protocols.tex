@@ -99,10 +99,21 @@ python3 tools/benchmark_model.py \
 The primary artifact set is:
 \begin{itemize}
   \item \path{reports/benchmark_report.json}
-  \item \path{reports/export_settings_<format>.json}
+  \item \path{reports/export_settings_<format>.json} when the benchmark report
+  itself is also written under \path{reports/}
   \item \path{reports/predictions_<format>.json}
   \item \path{reports/eval_<format>.json}
   \item \path{reports/parity_<format>.json}
+\end{itemize}
+
+\noindent
+Placement rule:
+\begin{itemize}
+  \item \path{export_settings_<format>.json} is written next to the path given
+  by \cmd{--output}
+  \item \path{predictions_<format>.json}, \path{eval_<format>.json}, and
+  \path{parity_<format>.json} default under \path{reports/} unless their
+  explicit override flags are set
 \end{itemize}
 
 When \cmd{torch} plus at least one additional real backend (\cmd{onnx} or
