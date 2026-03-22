@@ -20,6 +20,7 @@ __all__ = [
 ]
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -244,7 +245,7 @@ def _download_with_retry(*, url: str, out_path: Path, timeout: float, retries: i
                 with out_path.open("wb") as handle:
                     shutil.copyfileobj(response, handle)
             return
-        except Exception as exc:  # pragma: no cover
+        except (OSError, urllib.error.URLError, ValueError) as exc:  # pragma: no cover
             last_exc = exc
             if attempt >= retries:
                 raise
@@ -313,7 +314,7 @@ def fetch_model(
                     source_url_used = candidate_url
                     last_exc = None
                     break
-                except Exception as exc:
+                except (OSError, urllib.error.URLError, RuntimeError, ValueError) as exc:
                     last_exc = exc
                     continue
             if last_exc is not None:

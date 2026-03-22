@@ -2,7 +2,9 @@ import hashlib
 import json
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 from yolozu.inference import model_fetch
 
@@ -108,6 +110,30 @@ class TestModelFetchSecurity(unittest.TestCase):
             self.assertTrue(meta_path.is_file())
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
             self.assertEqual(meta.get("source_url_used"), good_uri)
+
+    def test_download_with_retry_retries_url_error(self):
+        with tempfile.TemporaryDirectory() as td:
+            out_path = Path(td) / "weights.bin"
+            response = mock.MagicMock()
+            response.__enter__.return_value = response
+            response.__exit__.return_value = False
+            response.read = mock.Mock(return_value=b"")
+            with (
+                mock.patch("yolozu.inference.model_fetch.time.sleep") as sleep_mock,
+                mock.patch(
+                    "yolozu.inference.model_fetch.urllib.request.urlopen",
+                    side_effect=[urllib.error.URLError("offline"), response],
+                ),
+                mock.patch("yolozu.inference.model_fetch.shutil.copyfileobj") as copy_mock,
+            ):
+                model_fetch._download_with_retry(
+                    url="https://example.com/model.bin",
+                    out_path=out_path,
+                    timeout=1.0,
+                    retries=2,
+                )
+            sleep_mock.assert_called_once()
+            copy_mock.assert_called_once()
 
 
 if __name__ == "__main__":

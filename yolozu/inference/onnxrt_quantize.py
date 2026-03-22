@@ -31,7 +31,7 @@ def quantize_onnx_dynamic(
 
     try:
         from onnxruntime.quantization import QuantType, quantize_dynamic  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("onnxruntime.quantization is required (install `yolozu[onnxrt]`)") from exc
 
     onnx_in_path = Path(onnx_in).expanduser()
@@ -68,4 +68,3 @@ def quantize_onnx_dynamic(
     )
 
     return onnx_out_path
-
