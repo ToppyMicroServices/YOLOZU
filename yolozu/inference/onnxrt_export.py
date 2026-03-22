@@ -184,7 +184,7 @@ def _decode_raw_ultralytics(
     try:
         import torch  # type: ignore
         from ultralytics.utils import nms as u_nms  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
 
     arr = raw
@@ -222,7 +222,7 @@ def _decode_raw_ultralytics(
 def _preprocess_pil(*, image_path: str, input_size: int, np):
     try:
         from PIL import Image
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Pillow is required for image loading") from exc
 
     img = Image.open(image_path).convert("RGB")
@@ -308,12 +308,12 @@ def export_predictions_onnxrt(
 
     try:
         import numpy as np  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("numpy is required for onnxruntime exporter") from exc
 
     try:
         import onnxruntime as ort  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("onnxruntime is required (install with `pip install 'yolozu[onnxrt]'`)") from exc
 
     model_path = Path(onnx)
@@ -325,7 +325,7 @@ def export_predictions_onnxrt(
     providers = None
     try:
         providers = ort.get_available_providers()
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError):
         providers = None
 
     sess = ort.InferenceSession(str(model_path), providers=providers)
@@ -409,7 +409,7 @@ def export_predictions_onnxrt(
             try:
                 import torch  # type: ignore
                 from ultralytics.utils import ops as u_ops  # type: ignore
-            except Exception as exc:  # pragma: no cover
+            except ImportError as exc:  # pragma: no cover
                 raise RuntimeError("ultralytics + torch are required for raw-postprocess=ultralytics") from exc
 
         for i in idx:

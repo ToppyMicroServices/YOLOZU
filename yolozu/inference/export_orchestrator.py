@@ -32,7 +32,7 @@ def sha256_file(path: str | Path) -> str | None:
     try:
         p = Path(path)
         return sha256_bytes(p.read_bytes())
-    except Exception:
+    except OSError:
         return None
 
 
@@ -100,7 +100,7 @@ def resolve_path(path: str | Path) -> Path:
 def output_config_hash(path: Path) -> str | None:
     try:
         payload = ensure_wrapper(load_json(path))
-    except Exception:
+    except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
         return None
     meta = payload.get("meta")
     if not isinstance(meta, dict):
@@ -1018,7 +1018,7 @@ def export_with_backend(
                     continue
                 try:
                     before_scores.append(float(det.get("score", 0.0)))
-                except Exception:
+                except (TypeError, ValueError):
                     before_scores.append(0.0)
         lite = apply_ttt_lite(
             payload.get("predictions") or [],
@@ -1039,12 +1039,12 @@ def export_with_backend(
                     continue
                 try:
                     score_new = float(det.get("score", 0.0))
-                except Exception:
+                except (TypeError, ValueError):
                     score_new = 0.0
                 after_scores.append(score_new)
                 try:
                     score_old = float(det.get("score_raw", score_new))
-                except Exception:
+                except (TypeError, ValueError):
                     score_old = score_new
                 if abs(score_new - score_old) > 1e-8:
                     changed += 1

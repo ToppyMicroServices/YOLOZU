@@ -208,7 +208,7 @@ class RTDETRPoseAdapter(ModelAdapter):
         try:
             from rtdetr_pose.config import load_config
             from rtdetr_pose.factory import build_model
-        except Exception:
+        except ImportError:
             # Source-checkout fallback (when rtdetr_pose isn't installed as a package).
             import importlib
 
@@ -233,14 +233,14 @@ class RTDETRPoseAdapter(ModelAdapter):
         if self.repro_policy == "strict":
             try:
                 torch.use_deterministic_algorithms(True)
-            except Exception as exc:
+            except (AttributeError, RuntimeError, TypeError) as exc:
                 # Some runtime combos may not expose strict deterministic toggles.
                 logger.debug("Deterministic algorithms toggle unavailable: %s", exc)
             if hasattr(torch.backends, "cudnn"):
                 try:
                     torch.backends.cudnn.deterministic = True
                     torch.backends.cudnn.benchmark = False
-                except Exception as exc:
+                except (AttributeError, RuntimeError, TypeError) as exc:
                     logger.debug("cuDNN deterministic flags unavailable: %s", exc)
 
         # Keep reference-adapter baselines reproducible without forcing global RNG.
@@ -431,7 +431,7 @@ class RTDETRPoseAdapter(ModelAdapter):
                 return nullcontext()
             try:
                 return torch.autocast(device_type=device_type, dtype=dtype, enabled=True)
-            except Exception:
+            except (AttributeError, RuntimeError, TypeError, ValueError):
                 return nullcontext()
 
         def _run_model(x_tensor):

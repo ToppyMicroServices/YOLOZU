@@ -79,7 +79,7 @@ def _resolve_input_name(network: object, requested: str) -> str:
         count = int(getattr(network, "num_inputs"))
         inputs = [getattr(network.get_input(i), "name", None) for i in range(count)]
         inputs = [str(name) for name in inputs if name]
-    except Exception:
+    except (AttributeError, IndexError, TypeError, ValueError):
         return requested
     if requested in inputs:
         return requested
@@ -125,12 +125,12 @@ def _onnx_dynamic_input(onnx_path: Path, requested_input_name: str) -> dict[str,
 
     try:
         import onnx  # type: ignore
-    except Exception:
+    except ImportError:
         return None
 
     try:
         model = onnx.load(str(onnx_path))
-    except Exception:
+    except OSError:
         return None
 
     inputs = getattr(getattr(model, "graph", None), "input", None)
@@ -154,7 +154,7 @@ def _onnx_dynamic_input(onnx_path: Path, requested_input_name: str) -> dict[str,
                 if dim_value <= 0:
                     dynamic = True
             return dims, dynamic
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return None, True
 
     selected = None
@@ -249,18 +249,18 @@ def _git_head() -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip() or None
-    except Exception:
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
         return None
 
 
 def _run_capture(cmd: list[str]) -> str | None:
     try:
         out = subprocess.check_output(cmd, cwd=repo_root, stderr=subprocess.STDOUT)
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return None
     try:
         return out.decode("utf-8", errors="replace").strip()
-    except Exception:
+    except (AttributeError, UnicodeDecodeError):
         return None
 
 
@@ -273,11 +273,11 @@ def _run_capture_allow_fail(cmd: list[str]) -> str | None:
             stderr=subprocess.STDOUT,
             check=False,
         )
-    except Exception:
+    except OSError:
         return None
     try:
         return proc.stdout.decode("utf-8", errors="replace").strip()
-    except Exception:
+    except (AttributeError, UnicodeDecodeError):
         return None
 
 
@@ -377,7 +377,7 @@ def _trtexec_version(trtexec: str) -> str | None:
 def _tensorrt_py_version() -> str | None:
     try:
         import tensorrt  # type: ignore
-    except Exception:
+    except ImportError:
         return None
     v = getattr(tensorrt, "__version__", None)
     return None if v is None else str(v)
@@ -400,7 +400,7 @@ def _build_engine_python(
 ) -> dict[str, Any]:
     try:
         import tensorrt as trt  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError("tensorrt python package is required for --builder python") from exc
 
     if str(precision) == "int8":
@@ -417,7 +417,7 @@ def _build_engine_python(
         for i in range(int(parser.num_errors)):
             try:
                 errors.append(str(parser.get_error(i)))
-            except Exception:
+            except (AttributeError, IndexError, TypeError, ValueError):
                 errors.append("<unknown parser error>")
         raise RuntimeError("failed to parse ONNX with TensorRT OnnxParser:\n" + "\n".join(errors))
 
@@ -606,7 +606,7 @@ def main(argv: list[str] | None = None) -> int:
                 max_shape=_parse_shape(str(args.max_shape)),
                 workspace_mib=int(args.workspace),
             )
-        except Exception as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
             raise SystemExit(f"TensorRT python build failed: {exc}") from exc
         meta["python_builder"] = python_report
 

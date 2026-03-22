@@ -24,12 +24,12 @@ def _image_size(entry: dict[str, Any]) -> tuple[float | None, float | None]:
     if isinstance(value, dict):
         try:
             return float(value.get("width")), float(value.get("height"))
-        except Exception:
+        except (TypeError, ValueError):
             return (None, None)
     if isinstance(value, (list, tuple)) and len(value) == 2:
         try:
             return float(value[0]), float(value[1])
-        except Exception:
+        except (TypeError, ValueError):
             return (None, None)
     return (None, None)
 
@@ -47,7 +47,7 @@ def _intrinsics_from_value(value: Any) -> tuple[float, float, float, float] | No
             cx = float(value[0][2])
             cy = float(value[1][2])
             return (fx, fy, cx, cy)
-        except Exception:
+        except (IndexError, TypeError, ValueError):
             return None
     return None
 
@@ -150,12 +150,12 @@ def infer_constraints(
             if "log_z" in new_det:
                 try:
                     z_pred = float(math.exp(float(new_det["log_z"])))
-                except Exception:
+                except (OverflowError, TypeError, ValueError):
                     z_pred = None
             if z_pred is None and "z" in new_det:
                 try:
                     z_pred = float(new_det["z"])
-                except Exception:
+                except (TypeError, ValueError):
                     z_pred = None
 
             offsets = new_det.get("offsets") or [0.0, 0.0]
