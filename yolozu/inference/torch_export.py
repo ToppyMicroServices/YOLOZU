@@ -100,7 +100,7 @@ def compile_for_inference(
         )
         logger.info("Model compiled with torch.compile (backend=%s, mode=%s)", backend, mode)
         return compiled
-    except Exception as exc:
+    except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
         logger.warning("torch.compile failed (%s) — returning uncompiled model", exc)
         return model
 

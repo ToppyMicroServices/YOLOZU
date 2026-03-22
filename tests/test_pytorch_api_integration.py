@@ -54,6 +54,20 @@ class TestCompileForInference(unittest.TestCase):
             out = compiled(x)
         self.assertEqual(out.shape, (2, 5))
 
+    def test_compile_returns_original_model_on_runtime_error(self):
+        torch = None
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("torch not installed")
+
+        from yolozu.inference.torch_export import compile_for_inference
+
+        model = torch.nn.Linear(4, 2)
+        with patch("torch.compile", side_effect=RuntimeError("compile failed")):
+            compiled = compile_for_inference(model, mode="default")
+        self.assertIs(compiled, model)
+
 
 # ---------------------------------------------------------------------------
 # ONNX export tests
