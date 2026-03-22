@@ -11,10 +11,9 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
-
-__all__ = ["predict_images"]
 from typing import Any, Iterable
 
+__all__ = ["predict_images"]
 from yolozu.export import export_dummy_predictions, write_predictions_json
 
 
@@ -62,7 +61,7 @@ def _rewrite_image_paths(payload: dict[str, Any], mapping: dict[str, str]) -> No
             continue
         try:
             replacement = mapping.get(str(Path(image_value).resolve()))
-        except Exception:
+        except OSError:
             replacement = None
         if replacement is not None:
             entry["image"] = replacement
@@ -73,10 +72,10 @@ def _render_overlays(
     payload: dict[str, Any],
     overlays_dir: Path,
     max_images: int | None,
-) -> dict[str, Any]:
+    ) -> dict[str, Any]:
     try:
         from PIL import Image, ImageDraw  # type: ignore
-    except Exception as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError(f"Pillow is required for overlays: {exc}") from exc
 
     overlays_dir.mkdir(parents=True, exist_ok=True)
@@ -100,7 +99,7 @@ def _render_overlays(
             continue
         try:
             image = Image.open(image_path).convert("RGB")
-        except Exception:
+        except OSError:
             continue
 
         detections = entry.get("detections")
@@ -120,7 +119,7 @@ def _render_overlays(
                 cy = float(bbox.get("cy"))
                 box_w = float(bbox.get("w"))
                 box_h = float(bbox.get("h"))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
 
             x1 = (cx - box_w / 2.0) * float(width)
@@ -146,7 +145,7 @@ def _write_html_report(*, html_path: Path, overlays: dict[str, Any], title: str)
         path_obj = Path(path_value)
         try:
             return str(path_obj.relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(path_obj)
 
     lines = [
@@ -263,7 +262,7 @@ def predict_images(
             dst = temp_images / f"{index:06d}_{src.name}"
             try:
                 os.symlink(str(src.resolve()), str(dst))
-            except Exception:
+            except OSError:
                 shutil.copy2(src, dst)
             mapping[str(dst)] = str(src.resolve())
             mapping[str(dst.resolve())] = str(src.resolve())
