@@ -210,10 +210,10 @@ def _normalize_param(name: str, *, required: bool, default: Any = None) -> dict[
 def _ast_literal(node: ast.AST) -> Any:
     try:
         return ast.literal_eval(node)
-    except Exception:
+    except (ValueError, SyntaxError):
         try:
             return ast.unparse(node)
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return "<expr>"
 
 

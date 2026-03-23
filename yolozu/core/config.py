@@ -89,7 +89,7 @@ def load_constraints(path):
         import yaml  # type: ignore
 
         data = yaml.safe_load(text)
-    except Exception:
+    except (ImportError, ModuleNotFoundError, OSError):
         data = simple_yaml_load(text)
     if data is None:
         data = {}

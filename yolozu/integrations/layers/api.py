@@ -38,7 +38,7 @@ def _allowed_from_manifest() -> set[str]:
         return set()
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return set()
     tools = payload.get("tools") if isinstance(payload, dict) else None
     if not isinstance(tools, list):
@@ -106,7 +106,7 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
     try:
         for token in args:
             _guard_path_token(token)
-    except Exception as exc:
+    except ValueError as exc:
         return fail_response(name, message=str(exc), exc=exc)
 
     cmd = [sys.executable, "-m", "yolozu.cli", *args]
@@ -198,7 +198,7 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
     try:
         for token in args:
             _guard_path_token(token)
-    except Exception:
+    except ValueError:
         return fail_response(name, message="invalid command arguments")
 
     cmd = [sys.executable, "-m", "yolozu.cli", *args]
@@ -220,7 +220,7 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
             "stdio_redacted": True,
         }
         return payload
-    except Exception:
+    except (FileNotFoundError, OSError, PermissionError, subprocess.SubprocessError):
         payload = fail_response(name, message="cli execution failed", exit_code=1)
         payload["command"] = cmd
         payload["artifacts"] = {}

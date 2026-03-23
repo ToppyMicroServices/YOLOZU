@@ -38,7 +38,7 @@ def _git_head() -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip() or None
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         return None
 
 
@@ -50,7 +50,7 @@ def _as_float_list(value: Any) -> list[float] | None:
         for item in value:
             try:
                 out.append(float(item))
-            except Exception:
+            except (TypeError, ValueError, OverflowError):
                 continue
         return out
     if isinstance(value, str):
