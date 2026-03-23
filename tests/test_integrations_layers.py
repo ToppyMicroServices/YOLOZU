@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from yolozu.integrations.layers import api as api_layer
+from yolozu.integrations.layers import artifacts as artifacts_layer
 from yolozu.integrations.layers.api import run_cli_tool
 from yolozu.integrations.layers.core import fail_response, ok_response
 from yolozu.integrations.layers.jobs import JobManager
@@ -80,6 +81,25 @@ class TestIntegrationLayers(unittest.TestCase):
             self.assertIsNotNone(status)
             self.assertEqual(status["status"], "unknown")
 
+    def test_jobs_manager_skips_invalid_job_json(self):
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, "job_bad.json").write_text("{bad-json", encoding="utf-8")
+            manager = JobManager(max_workers=1, storage_dir=td)
+            self.assertEqual(manager.list(), [])
+
+    def test_jobs_manager_marks_value_error_task_failed(self):
+        with tempfile.TemporaryDirectory() as td:
+            manager = JobManager(max_workers=1, storage_dir=td)
+            job_id = manager.submit("bad", lambda: (_ for _ in ()).throw(ValueError("boom")))
+            for _ in range(100):
+                status = manager.status(job_id)
+                if status and status["status"] == "failed":
+                    break
+                time.sleep(0.01)
+            self.assertIsNotNone(status)
+            self.assertEqual(status["status"], "failed")
+            self.assertIn("boom", status["error"])
+
     def test_runs_list_and_describe_shape(self):
         runs = runs_list(limit=2)
         self.assertTrue(runs["ok"])
@@ -124,6 +144,35 @@ class TestIntegrationLayers(unittest.TestCase):
         self.assertEqual(out["exit_code"], 124)
         self.assertIn("timeout", out["error"])
         self.assertIn("limits", out)
+
+    def test_api_layer_redacted_rejects_invalid_command_arguments(self):
+        out = api_layer.run_cli_tool_redacted("doctor", ["doctor", "../bad.json"])
+        self.assertFalse(out["ok"])
+        self.assertIn("invalid command arguments", out.get("error", ""))
+
+    def test_api_layer_redacted_handles_os_error(self):
+        with patch("yolozu.integrations.layers.api.subprocess.run", side_effect=FileNotFoundError("python")):
+            out = api_layer.run_cli_tool_redacted("doctor", ["doctor"])
+        self.assertFalse(out["ok"])
+        self.assertEqual(out["exit_code"], 1)
+        self.assertIn("cli execution failed", out.get("error", ""))
+
+    def test_api_manifest_allowlist_falls_back_on_invalid_json(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            tools_dir = root / "tools"
+            tools_dir.mkdir(parents=True, exist_ok=True)
+            (tools_dir / "manifest.json").write_text("{bad-json", encoding="utf-8")
+            with patch("yolozu.integrations.layers.api.repo_root", return_value=root):
+                allowed = api_layer._allowed_from_manifest()
+        self.assertEqual(allowed, set())
+
+    def test_artifacts_git_sha_handles_git_failures(self):
+        with patch(
+            "yolozu.integrations.layers.artifacts.subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(1, ["git", "rev-parse", "HEAD"]),
+        ):
+            self.assertIsNone(artifacts_layer._git_sha())
 
 
 if __name__ == "__main__":

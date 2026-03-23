@@ -35,6 +35,15 @@ class TestAiFirstMcpSurface(unittest.TestCase):
         codes = {str(item.get("code")) for item in issues if isinstance(item, dict)}
         self.assertIn("unsafe_output_path", codes)
 
+    def test_review_config_rejects_invalid_max_images(self):
+        cfg = generate_config()
+        cfg["arguments"]["max_images"] = "bad"
+        out = review_config(cfg, workspace_root=".")
+        self.assertFalse(bool(out.get("ok")))
+        issues = out.get("issues") or []
+        codes = {str(item.get("code")) for item in issues if isinstance(item, dict)}
+        self.assertIn("invalid_max_images", codes)
+
     def test_run_mcp_server_help_and_samples(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "run_mcp_server.py"

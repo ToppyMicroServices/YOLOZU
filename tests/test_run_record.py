@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 class TestRunRecord(unittest.TestCase):
@@ -41,6 +42,51 @@ class TestRunRecord(unittest.TestCase):
 
         info = git_info("/tmp")
         self.assertIsInstance(info, dict)
+
+    def test_safe_version_handles_os_error(self):
+        from yolozu.run_record import _safe_version
+
+        with patch("builtins.__import__", side_effect=OSError("boom")):
+            self.assertIsNone(_safe_version("torch"))
+
+    def test_accelerator_info_handles_runtime_probe_errors(self):
+        from yolozu.run_record import accelerator_info
+
+        class FakeCuda:
+            @staticmethod
+            def is_available():
+                raise RuntimeError("boom")
+
+        class FakeCudnn:
+            @staticmethod
+            def version():
+                return 1
+
+            @staticmethod
+            def is_available():
+                return False
+
+        class FakeMps:
+            @staticmethod
+            def is_available():
+                return False
+
+        class FakeBackends:
+            cudnn = FakeCudnn()
+            mps = FakeMps()
+
+        class FakeVersion:
+            cuda = None
+
+        class FakeTorch:
+            cuda = FakeCuda()
+            backends = FakeBackends()
+            version = FakeVersion()
+
+        with patch("builtins.__import__", return_value=FakeTorch()):
+            info = accelerator_info()
+        self.assertTrue(info["torch_available"])
+        self.assertFalse(info["cuda"]["available"])
 
 
 if __name__ == "__main__":

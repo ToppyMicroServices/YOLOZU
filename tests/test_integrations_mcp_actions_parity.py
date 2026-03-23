@@ -2,10 +2,13 @@ import unittest
 from unittest.mock import patch
 
 from yolozu.integrations import tool_runner
-from yolozu.integrations.tool_reference import build_tool_surface_reference, collect_surface_parity_errors
+from yolozu.integrations.tool_reference import _ast_literal, build_tool_surface_reference, collect_surface_parity_errors
 
 
 class TestIntegrationsMcpActionsParity(unittest.TestCase):
+    def test_ast_literal_falls_back_to_expr_marker(self):
+        self.assertEqual(_ast_literal(object()), "<expr>")
+
     def test_surface_parity_has_no_drift(self):
         reference = build_tool_surface_reference()
         errors = collect_surface_parity_errors(reference)
