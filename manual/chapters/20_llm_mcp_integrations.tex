@@ -141,6 +141,7 @@ Operational guards in v2 layer implementation:
   \item Path tokens are guarded (\cmd{..} rejected; absolute paths outside workspace rejected).
   \item Job state persistence to \cmd{runs/mcp\_jobs/*.json} for restart-safe status retrieval.
   \item Stale in-flight states (queued/running after restart) are surfaced as \cmd{unknown}.
+  \item Known runtime/input failures are persisted as \cmd{failed} with their captured error text for polling clients.
   \item CLI execution timeout and output-size caps with explicit truncation metadata.
 \end{itemize}
 
@@ -175,6 +176,7 @@ Operational guards in v2 layer implementation:
   \item For long tasks, do not poll stdout; use \cmd{job\_id} with \cmd{jobs.status}.
   \item Assume post-restart in-flight jobs become \cmd{unknown}; requeue deterministically if needed.
   \item Set \cmd{dry\_run}/\cmd{strict}/\cmd{force} explicitly to avoid client-default drift.
+  \item Treat optional runtime probes and calibration metadata as best-effort; malformed numeric fields are skipped rather than aborting the entire request.
 \end{enumerate}
 
 \section{Efficiency backlog for MCP hardening}

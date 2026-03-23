@@ -26,3 +26,11 @@ yolozu doctor --output -
 - `CUDA_VISIBLE_DEVICES` masks devices and forces CPU fallback
 
 Use reported `guidance_links` to jump to remediation docs.
+
+## Best-effort behavior
+
+- Optional runtime probes are best-effort: missing extras such as TensorRT, ONNX Runtime, or
+	OpenCV CUDA bindings now degrade the reported capability block instead of aborting the whole
+	`doctor` run.
+- Version/package metadata collection is also best-effort, so malformed local metadata or missing
+	package distributions are reported as unavailable rather than crashing diagnostics.

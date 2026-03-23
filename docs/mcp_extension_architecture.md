@@ -50,6 +50,8 @@ TTT/CTTA tools (E13-E14) are implemented as async jobs in the same shared backen
 Long tools should return quickly with `job_id`.
 Job states are persisted under `runs/mcp_jobs/*.json` and restored on restart.
 States restored as `queued`/`running` are converted to `unknown` to avoid false in-flight claims.
+Known runtime/input failures during execution are persisted as `failed` with the captured error
+string so polling clients can distinguish deterministic task failures from transport errors.
 
 Current API surface:
 - `jobs.list`
@@ -67,6 +69,13 @@ Current API surface:
 - CLI execution has a timeout guard (default 600s).
 - MCP route: `stdout`/`stderr` are capped and marked with truncation metadata in response payloads.
 - Actions API route: CLI `stdout`/`stderr` are redacted by default (`limits.stdio_redacted=true`) and errors are genericized to avoid leaking exception details.
+
+## Robustness notes
+
+- `doctor` and run metadata collection remain best-effort even when optional runtime packages are
+   partially installed or missing.
+- Calibration helpers skip malformed numeric fields (`image_size`, `bbox`, `z`, `log_z`, `k_delta`)
+   instead of aborting the full dataset-level calibration pass.
 
 ## AI clarity checklist (recommended)
 

@@ -1,13 +1,13 @@
 # Benchmark Mode (`yolozu benchmark`)
 
 `yolozu benchmark` is the benchmark entrypoint aligned with the
-Ultralytics benchmark-mode argument surface while keeping YOLOZU's
+benchmark-mode argument surface that users commonly expect while keeping YOLOZU's
 predictions interface contract mindset.
 
 Related docs:
 
-- [Benchmark mode spec (Ultralytics parity target)](benchmark_mode_spec_ultralytics_parity.md)
-- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
+- [Benchmark mode spec (parity target)](benchmark_mode_spec_parity_target.md)
+- [Benchmark gap audit](benchmark_mode_gap_audit.md)
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 - [Latency benchmark harness](benchmark_latency.md)
 - [Docs index](README.md)
@@ -16,7 +16,7 @@ Related docs:
 
 Today the command provides:
 
-- an Ultralytics-like CLI surface,
+- a benchmark-style CLI surface,
 - explicit format planning for `torch`, `onnx`, `engine`, `torchscript`, `executorch`, and `opencv_dnn`,
 - explicit task semantics for `detect`, `segmentation`, `classification`, `obb`, `keypoints` / `pose`, `depth`, and `pose6d`,
 - a stable benchmark report JSON,
@@ -28,10 +28,10 @@ It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
 for now, and missing runtime/model artifacts are reported honestly.
 
-## Where YOLOZU still trails the Ultralytics docs surface
+## Where YOLOZU still trails the broader benchmark/export surface
 
-The official Ultralytics docs currently expose a broader public benchmark/export
-matrix than YOLOZU does. Today the most important remaining gaps are:
+The broader public benchmark/export surface still exposes more formats and task
+paths than YOLOZU does. Today the most important remaining gaps are:
 
 - missing benchmark/export formats such as `openvino`, `coreml`,
   `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
@@ -41,7 +41,25 @@ matrix than YOLOZU does. Today the most important remaining gaps are:
 
 The detailed audit and recommended implementation order live in:
 
-- [Benchmark gap audit vs Ultralytics docs](benchmark_mode_ultralytics_gap_audit.md)
+- [Benchmark gap audit](benchmark_mode_gap_audit.md)
+
+## Highest-leverage next steps
+
+If we want to close the user-visible gap efficiently, the
+best next steps are:
+
+- add real `segmentation`, `classification`, `obb`, and `keypoints` execution
+  paths to the existing `torch` / `onnx` / `engine` benchmark flow
+- promote `torchscript` to a real backend path and follow with conditional
+  `openvino`
+- keep one support matrix that distinguishes real inference/eval/parity from
+  placeholder or skipped semantics
+- expand real parity artifacts beyond the current `torch`-anchored comparisons
+- keep format-specific flag validation strict so unsupported combinations fail
+  early
+
+These items are the fastest route to parity without giving up YOLOZU's
+predictions interface contract and Apache-2.0 repository policy.
 
 ## Quick start
 
@@ -147,7 +165,7 @@ yolozu benchmark \
 
 ## Core arguments
 
-Ultralytics-aligned core:
+Benchmark-aligned core:
 
 - `--model`
 - `--data`
@@ -212,6 +230,12 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
+Placement rules:
+
+- `export_settings_<format>.json` is written next to `--output`
+- `predictions_<format>.json`, `eval_<format>.json`, and `parity_<format>.json`
+  default under `reports/` unless their explicit override flags are set
+
 When `torch`, `onnx`, or `engine` can run for real, the benchmark writes actual
 predictions and eval artifacts and attaches real parity artifacts for candidate
 backends against the chosen reference backend (preferring `torch` when
@@ -234,6 +258,12 @@ reports/
   eval_onnx.json
   parity_onnx.json
 ```
+
+If you choose a report outside `reports/`, for example
+`--output tmp_benchmark_report.json`, the benchmark still keeps predictions /
+eval / parity under `reports/` by default, while
+`export_settings_<format>.json` is written next to
+`tmp_benchmark_report.json`.
 
 The top-level benchmark report records, per format:
 
@@ -297,7 +327,7 @@ following canonical tasks and aliases:
 | `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | documented planned | Visible in the benchmark interface contract and report schema, but dedicated real eval wiring is still pending. |
 | `obb` | `obb` | `obb_map` | documented planned | Explicitly benchmarkable at the interface level; backend/eval implementation remains a follow-up. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | documented partial | `pose` is accepted as an alias and normalized to `keypoints` in the report. |
-| `depth` | `depth` | `depth_error` | documented partial | YOLOZU-native extension, not an Ultralytics parity claim. |
+| `depth` | `depth` | `depth_error` | documented partial | YOLOZU-native extension, not a mainstream benchmark-surface parity claim. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | documented partial | YOLOZU-native extension with explicit metric expectations in the report schema. |
 
 The top-level `task_semantics` block and each per-format result include:
@@ -308,7 +338,7 @@ The top-level `task_semantics` block and each per-format result include:
 - metric family
 - expected metric keys
 - support level
-- whether the task is an Ultralytics-surface parity target or a YOLOZU-native extension
+- whether the task is part of the mainstream benchmark surface or a YOLOZU-native extension
 
 The per-format `execution_semantics` block now complements that task matrix:
 
@@ -324,7 +354,7 @@ planning-only execution semantics instead of leaving them as vague future work.
 
 | Format | Current state | Notes |
 | --- | --- | --- |
-| `torch` | real orchestration when runtime + model are available | Delegates to the Ultralytics exporter path and suite eval. |
+| `torch` | real orchestration when runtime + model are available | Delegates to the current torch exporter path and suite eval. |
 | `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
 | `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
 | `torchscript` | accepted now; synthetic / skipped semantics for the current phase | Depends on a local PyTorch runtime only; the benchmark writes honest placeholder artifacts until a dedicated real-orchestration path lands. |

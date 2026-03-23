@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **calibration/distillation key preservation**: `calibrate_predictions_entries()` and
   `distill_predictions()` now preserve all original entry keys (e.g. `image_size`, `preprocess`)
   instead of dropping them.
+- **runtime guard narrowing**: Diagnostics, MCP job handling, calibration helpers, and utility
+  scripts now narrow broad fallback handlers to expected parse/runtime/import failures while
+  preserving best-effort behavior for malformed metadata and missing optional dependencies.
 
 ### Changed
 - **Image format support**: All image-loading code paths (dataset, CLI, predict, rtdetr_pose, demos,
