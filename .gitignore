@@ -18,6 +18,9 @@ demo_output/
 build/
 dist/
 *.egg-info/
+export_settings_onnx.json
+export_settings_torchscript.json
+tmp_benchmark_report.json
 
 # LaTeX manual build artifacts
 manual/build/
