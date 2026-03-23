@@ -13,13 +13,17 @@ if TYPE_CHECKING:  # pragma: no cover
     import torch
 
 
+_FLOAT_PARSE_ERRORS = (TypeError, ValueError, OverflowError)
+_OPTIONAL_TORCH_ERRORS = (ImportError, ModuleNotFoundError, OSError, RuntimeError)
+
+
 def _as_float_list(value: Any) -> list[float] | None:
     if value is None:
         return None
     if isinstance(value, (list, tuple)):
         try:
             return [float(v) for v in value]
-        except Exception:
+        except _FLOAT_PARSE_ERRORS:
             return None
     return None
 
@@ -44,19 +48,19 @@ def _get_image_hw(record: dict[str, Any]) -> tuple[float, float] | None:
     if isinstance(value, (list, tuple)) and len(value) == 2:
         try:
             return (float(value[0]), float(value[1]))
-        except Exception:
+        except _FLOAT_PARSE_ERRORS:
             return None
     value = record.get("image_size")
     if isinstance(value, dict):
         try:
             return (float(value.get("height")), float(value.get("width")))
-        except Exception:
+        except _FLOAT_PARSE_ERRORS:
             return None
     if isinstance(value, (list, tuple)) and len(value) == 2:
         try:
             # image_size is (w,h)
             return (float(value[1]), float(value[0]))
-        except Exception:
+        except _FLOAT_PARSE_ERRORS:
             return None
     return None
 
@@ -103,14 +107,14 @@ def _extract_det_bbox(det: dict[str, Any]) -> tuple[float, float, float, float] 
         return None
     try:
         return _bbox_xyxy_from_cxcywh_norm(float(bbox["cx"]), float(bbox["cy"]), float(bbox["w"]), float(bbox["h"]))
-    except Exception:
+    except (KeyError, *_FLOAT_PARSE_ERRORS):
         return None
 
 
 def _extract_gt_bbox(gt: dict[str, Any]) -> tuple[float, float, float, float] | None:
     try:
         return _bbox_xyxy_from_cxcywh_norm(float(gt["cx"]), float(gt["cy"]), float(gt["w"]), float(gt["h"]))
-    except Exception:
+    except (KeyError, *_FLOAT_PARSE_ERRORS):
         return None
 
 
@@ -221,7 +225,7 @@ def calibrate_predictions_lbfgs(
     try:
         import torch
         import torch.nn.functional as F
-    except Exception as exc:  # pragma: no cover
+    except _OPTIONAL_TORCH_ERRORS as exc:  # pragma: no cover
         raise RuntimeError("torch is required for L-BFGS calibration") from exc
 
     pred_index: dict[str, dict[str, Any]] = {}
@@ -287,12 +291,12 @@ def calibrate_predictions_lbfgs(
             if "log_z" in det:
                 try:
                     z_pred = float(math.exp(float(det["log_z"])))
-                except Exception:
+                except _FLOAT_PARSE_ERRORS:
                     z_pred = None
             if z_pred is None and "z" in det:
                 try:
                     z_pred = float(det["z"])
-                except Exception:
+                except _FLOAT_PARSE_ERRORS:
                     z_pred = None
             if z_pred is None:
                 continue
@@ -319,7 +323,7 @@ def calibrate_predictions_lbfgs(
             try:
                 cx_n = float(bbox["cx"])
                 cy_n = float(bbox["cy"])
-            except Exception:
+            except (KeyError, *_FLOAT_PARSE_ERRORS):
                 continue
 
             offsets = det.get("offsets") or [0.0, 0.0]
@@ -347,7 +351,7 @@ def calibrate_predictions_lbfgs(
             if isinstance(kd, (list, tuple)) and len(kd) == 4:
                 try:
                     det_k_delta_list.append([float(v) for v in kd])
-                except Exception:
+                except _FLOAT_PARSE_ERRORS:
                     det_k_delta_list.append(None)
             else:
                 det_k_delta_list.append(None)
@@ -452,13 +456,13 @@ def calibrate_predictions_lbfgs(
             if "log_z" in new_det:
                 try:
                     new_det["log_z"] = float(new_det["log_z"]) + float(log_s_value)
-                except Exception:
-                    pass
+                except (TypeError, ValueError):
+                    new_det["log_z"] = new_det.get("log_z")
             elif "z" in new_det:
                 try:
                     new_det["z"] = float(new_det["z"]) * float(s_value)
-                except Exception:
-                    pass
+                except (TypeError, ValueError):
+                    new_det["z"] = new_det.get("z")
 
             if shared_k_value is not None:
                 kd = new_det.get("k_delta")
@@ -466,7 +470,7 @@ def calibrate_predictions_lbfgs(
                 if isinstance(kd, (list, tuple)) and len(kd) == 4:
                     try:
                         kd_list = [float(v) for v in kd]
-                    except Exception:
+                    except _FLOAT_PARSE_ERRORS:
                         kd_list = None
                 # Compose in python (same formula as _compose_k_delta).
                 dfx = (1.0 + (kd_list[0] if kd_list else 0.0)) * (1.0 + shared_k_value[0]) - 1.0

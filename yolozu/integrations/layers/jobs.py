@@ -10,6 +10,17 @@ from pathlib import Path
 from typing import Any, Callable
 
 
+_JOB_FAILURE_ERRORS = (
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+    KeyError,
+    LookupError,
+    AssertionError,
+)
+
+
 @dataclass
 class _JobState:
     job_id: str
@@ -69,7 +80,7 @@ class JobManager:
                 if state.status in ("queued", "running"):
                     state.status = "unknown"
                 self._jobs[state.job_id] = state
-            except Exception:
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError, TypeError, ValueError):
                 continue
 
     def submit(self, name: str, fn: Callable[[], dict[str, Any]]) -> str:
@@ -90,7 +101,7 @@ class JobManager:
                     state.finished_at = time.time()
                     self._persist(state)
                 return result
-            except Exception as exc:
+            except _JOB_FAILURE_ERRORS as exc:
                 with self._lock:
                     state.status = "failed"
                     state.error = str(exc)

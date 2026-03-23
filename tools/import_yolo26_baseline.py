@@ -72,7 +72,7 @@ def _git_head() -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip() or None
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         return None
 
 

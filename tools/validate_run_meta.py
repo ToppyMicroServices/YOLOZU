@@ -27,12 +27,12 @@ def main(argv=None):
         raise SystemExit(f"file not found: {path}")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
         raise SystemExit(f"failed to parse json: {path} ({exc})") from exc
 
     try:
         validate_run_record_contract(payload, require_git_sha=not bool(args.allow_missing_git_sha))
-    except Exception as exc:
+    except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
     print(f"OK: {path}")
