@@ -8,6 +8,7 @@ common cross-backend parity pitfalls.
 from __future__ import annotations
 
 import json
+import importlib.metadata
 import logging
 import os
 import platform
@@ -49,11 +50,11 @@ def _run_capture(cmd: list[str], *, cwd: Path | None = None, timeout_s: float = 
 
 def _pkg_version(name: str) -> str | None:
     try:
-        from importlib.metadata import PackageNotFoundError, version  # py3.8+
-
-        v = version(name)
+        v = importlib.metadata.version(name)
         return str(v) if v else None
-    except (ImportError, PackageNotFoundError):
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    except OSError:
         return None
 
 
