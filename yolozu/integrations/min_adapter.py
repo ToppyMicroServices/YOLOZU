@@ -260,7 +260,7 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                 continue
             try:
                 cid = int(float(parts[0]))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             max_class = max(max_class, cid)
     if max_class < 0:

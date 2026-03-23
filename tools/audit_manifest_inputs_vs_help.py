@@ -79,7 +79,7 @@ def _run_help(entrypoint: str, *, timeout_s: float) -> tuple[str, str | None]:
         )
     except subprocess.TimeoutExpired:
         return "", f"timeout after {timeout_s:.1f}s"
-    except Exception as exc:
+    except (FileNotFoundError, OSError, PermissionError, subprocess.SubprocessError) as exc:
         return "", f"failed to run --help: {exc}"
 
     out = (proc.stdout or "") + "\n" + (proc.stderr or "")

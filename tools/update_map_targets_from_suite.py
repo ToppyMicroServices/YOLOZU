@@ -32,7 +32,7 @@ def _git_head(repo_root: Path) -> str | None:
             stderr=subprocess.DEVNULL,
             text=True,
         ).strip()
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         return None
     return out if out else None
 

@@ -32,6 +32,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
+_PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
+_SAFE_VERSION_ERRORS = _OPTIONAL_IMPORT_ERRORS + (RuntimeError, ValueError)
+_PACKAGE_PROBE_ERRORS = _OPTIONAL_IMPORT_ERRORS + (RuntimeError,)
+
 try:
     from importlib import metadata as importlib_metadata
 except ImportError:  # pragma: no cover
@@ -41,7 +46,7 @@ except ImportError:  # pragma: no cover
 def _safe_version(module_name: str) -> str | None:
     try:
         mod = __import__(module_name)
-    except Exception as exc:
+    except _SAFE_VERSION_ERRORS as exc:
         logger.debug("module import for version probe failed: %s: %s", module_name, exc)
         return None
     version = getattr(mod, "__version__", None)
@@ -81,14 +86,14 @@ def accelerator_info() -> dict[str, Any]:
 
     try:
         import torch  # type: ignore
-    except Exception as exc:
+    except _OPTIONAL_IMPORT_ERRORS as exc:
         logger.debug("torch accelerator probe import failed: %s", exc)
         return {"torch_available": False, "cuda": {"available": False}, "mps": {"available": False}}
 
     cuda_available = False
     try:
         cuda_available = bool(torch.cuda.is_available())
-    except Exception as exc:
+    except _PROBE_FALLBACK_ERRORS as exc:
         logger.debug("torch.cuda.is_available probe failed: %s", exc)
         cuda_available = False
 
@@ -96,14 +101,14 @@ def accelerator_info() -> dict[str, Any]:
     cudnn_version = None
     try:
         cudnn_version = int(torch.backends.cudnn.version()) if hasattr(torch.backends, "cudnn") else None
-    except Exception as exc:
+    except _PROBE_FALLBACK_ERRORS as exc:
         logger.debug("torch cudnn version probe failed: %s", exc)
         cudnn_version = None
 
     device_count = 0
     try:
         device_count = int(torch.cuda.device_count()) if cuda_available else 0
-    except Exception as exc:
+    except _PROBE_FALLBACK_ERRORS as exc:
         logger.debug("torch device_count probe failed: %s", exc)
         device_count = 0
 
@@ -115,7 +120,7 @@ def accelerator_info() -> dict[str, Any]:
             capability = None
             try:
                 name = str(torch.cuda.get_device_name(idx))
-            except Exception as exc:
+            except _PROBE_FALLBACK_ERRORS as exc:
                 logger.debug("torch device name probe failed for index %s: %s", idx, exc)
                 name = None
             try:
@@ -125,7 +130,7 @@ def accelerator_info() -> dict[str, Any]:
                 minor = getattr(props, "minor", None)
                 if major is not None and minor is not None:
                     capability = [int(major), int(minor)]
-            except Exception as exc:
+            except _PROBE_FALLBACK_ERRORS as exc:
                 logger.debug("torch device properties probe failed for index %s: %s", idx, exc)
                 total_mem = None
                 capability = None
@@ -141,7 +146,7 @@ def accelerator_info() -> dict[str, Any]:
     mps_available = False
     try:
         mps_available = bool(getattr(torch.backends, "mps", None) and torch.backends.mps.is_available())
-    except Exception as exc:
+    except _PROBE_FALLBACK_ERRORS as exc:
         logger.debug("torch MPS probe failed: %s", exc)
         mps_available = False
 
@@ -210,7 +215,7 @@ def _collect_installed_packages() -> list[dict[str, str]]:
             if not name:
                 continue
             packages.append({"name": name, "version": version})
-    except Exception as exc:
+    except _PACKAGE_PROBE_ERRORS as exc:
         logger.debug("installed packages probe failed: %s", exc)
         return []
     packages.sort(key=lambda item: item["name"].lower())

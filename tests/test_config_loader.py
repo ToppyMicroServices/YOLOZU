@@ -3,6 +3,7 @@ import sys
 import tempfile
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -26,6 +27,23 @@ class TestConfigLoader(unittest.TestCase):
             path.write_text(bad_yaml)
             with self.assertRaises(ValueError):
                 load_constraints(path)
+
+    def test_load_constraints_falls_back_when_yaml_import_unavailable(self):
+        yaml_text = "enabled:\n  depth_prior: true\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "constraints.yaml"
+            path.write_text(yaml_text, encoding="utf-8")
+
+            original_import = __import__
+
+            def _fake_import(name, *args, **kwargs):
+                if name == "yaml":
+                    raise ImportError("missing yaml")
+                return original_import(name, *args, **kwargs)
+
+            with patch("builtins.__import__", side_effect=_fake_import):
+                cfg = load_constraints(path)
+        self.assertTrue(cfg["enabled"]["depth_prior"])
 
     def test_symmetry_map_validation(self):
         bad_sym = {"cup": {"type": "Cn", "n": -1}}

@@ -32,7 +32,7 @@ def _extract_class_names(cfg: dict[str, Any]) -> list[str]:
         for key, value in names.items():
             try:
                 parsed.append((int(key), str(value)))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
         parsed.sort(key=lambda x: x[0])
         if parsed:

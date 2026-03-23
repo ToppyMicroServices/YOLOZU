@@ -22,6 +22,10 @@ __all__ = ["build_doctor_report", "write_doctor_report"]
 
 logger = logging.getLogger(__name__)
 
+_OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
+_PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
+_OPTIONAL_RUNTIME_ERRORS = _OPTIONAL_IMPORT_ERRORS + _PROBE_FALLBACK_ERRORS
+
 
 def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -87,7 +91,7 @@ def _gather_gpu_info() -> dict[str, Any]:
         if torch_info["cuda_available"]:
             torch_info["device_count"] = int(torch.cuda.device_count())
         gpu["torch"] = torch_info
-    except Exception as exc:
+    except _OPTIONAL_IMPORT_ERRORS as exc:
         logger.debug("torch GPU probe failed: %s", exc)
         gpu["torch"] = None
 
@@ -98,7 +102,7 @@ def _gather_gpu_info() -> dict[str, Any]:
             "version": getattr(ort, "__version__", None),
             "providers": list(getattr(ort, "get_available_providers")()),
         }
-    except Exception as exc:
+    except _OPTIONAL_IMPORT_ERRORS as exc:
         logger.debug("onnxruntime GPU probe failed: %s", exc)
         gpu["onnxruntime"] = None
 
@@ -151,7 +155,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cudnn_version": int(torch.backends.cudnn.version()) if torch.backends.cudnn.is_available() else None,
             "device_count": int(torch.cuda.device_count()) if torch.cuda.is_available() else 0,
         }
-    except Exception as exc:
+    except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("torch runtime probe failed: %s", exc)
 
     try:
@@ -165,7 +169,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cuda_provider": "CUDAExecutionProvider" in providers,
             "tensorrt_provider": "TensorrtExecutionProvider" in providers,
         }
-    except Exception as exc:
+    except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("onnxruntime probe failed: %s", exc)
 
     try:
@@ -174,7 +178,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
         runtime["tensorrt"]["python_module_available"] = True
         if runtime["tensorrt"].get("python_package_version") is None:
             runtime["tensorrt"]["python_package_version"] = getattr(tensorrt, "__version__", None)
-    except Exception as exc:
+    except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("TensorRT probe failed: %s", exc)
 
     try:
@@ -183,7 +187,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
         count = None
         try:
             count = int(cv2.cuda.getCudaEnabledDeviceCount())
-        except Exception as exc:
+        except _PROBE_FALLBACK_ERRORS as exc:
             logger.debug("OpenCV CUDA probe failed: %s", exc)
             count = None
         runtime["opencv"] = {
@@ -191,7 +195,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "module_available": True,
             "cuda_enabled_device_count": count,
         }
-    except Exception as exc:
+    except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("OpenCV probe failed: %s", exc)
 
     return runtime
@@ -285,7 +289,7 @@ def _gather_required_runtime() -> tuple[dict[str, Any], list[str]]:
         try:
             mod = __import__(mod_name)
             checks[name] = {"available": True, "version": getattr(mod, version_attr, None)}
-        except Exception as exc:
+        except _OPTIONAL_RUNTIME_ERRORS as exc:
             checks[name] = {"available": False, "version": None, "error": repr(exc)}
             errors.append(f"missing runtime dependency: {name} ({exc})")
 

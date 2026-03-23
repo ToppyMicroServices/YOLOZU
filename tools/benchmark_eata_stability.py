@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
+_NUMERIC_ERRORS = (TypeError, ValueError, OverflowError)
 
 
 def _now_utc() -> str:
@@ -36,7 +37,7 @@ def _sha256(path: Path) -> str:
 def _safe_float(value: Any, *, default: float = 0.0) -> float:
     try:
         return float(value)
-    except Exception:
+    except _NUMERIC_ERRORS:
         return float(default)
 
 
