@@ -63,7 +63,6 @@ from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs, _derive_score_b
 from rtdetr_pose.train_dataset import _pad_field  # noqa: F401
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
-from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs
 
 logger = logging.getLogger(__name__)
 
