@@ -130,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
     predict.add_argument("--combined-format", choices=("xyxy_score_class",), default="xyxy_score_class")
     predict.add_argument("--raw-output", default=None, help="Optional output name for raw head output.")
     predict.add_argument("--raw-format", choices=("yolo_84",), default="yolo_84")
-    predict.add_argument("--raw-postprocess", choices=("native", "ultralytics"), default="native")
+    predict.add_argument("--raw-postprocess", choices=("native", "ultralytics", "yolo_runtime"), default="native")
     predict.add_argument("--boxes-format", choices=("xyxy",), default="xyxy")
     predict.add_argument("--boxes-scale", choices=("abs", "norm"), default="norm")
     predict.add_argument("--min-score", type=float, default=0.001, help="Score threshold (default: 0.001).")
@@ -402,7 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     onnxrt_export.add_argument(
         "--raw-postprocess",
-        choices=("native", "ultralytics"),
+        choices=("native", "ultralytics", "yolo_runtime"),
         default="native",
         help="Postprocess for --raw-output (default: native).",
     )

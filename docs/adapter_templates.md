@@ -4,7 +4,7 @@ This page defines the required adapter starter routes for parity-ready onboardin
 
 - `mmdet`
 - `detectron2`
-- `ultralytics`
+- `yolo_runtime`
 - `rtdetr`
 - `opencv_dnn`
 - `custom_cpp`
@@ -28,7 +28,7 @@ python3 tools/adapter_parity_suite.py \
   --adapter-predictions rtdetr=/path/to/reference.json \
   --adapter-predictions mmdet=/path/to/mmdet.json \
   --adapter-predictions detectron2=/path/to/detectron2.json \
-  --adapter-predictions ultralytics=/path/to/ultralytics.json \
+  --adapter-predictions yolo_runtime=/path/to/yolo_runtime.json \
   --adapter-predictions opencv_dnn=/path/to/opencv_dnn.json \
   --adapter-predictions custom_cpp=/path/to/custom_cpp.json \
   --reference-adapter rtdetr \

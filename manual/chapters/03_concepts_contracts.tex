@@ -104,7 +104,7 @@ The overarching objective is to preserve the integrity of source datasets while 
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 
-\node[box] (ultra) {\textbf{Ultralytics}\\
+\node[box] (ultra) {\textbf{YOLO-style data.yaml}\\
 \path{data.yaml}\\
 \path{images/<split>/}};
 \node[box, below=10mm of ultra] (coco) {\textbf{COCO dataset}\\
@@ -135,8 +135,8 @@ same metrics};
 \caption{Migration map: keep native training ecosystems, convert only the interface boundary artifacts.}
 \end{figure}
 
-\subsection{Ultralytics Datasets (YOLOv8/YOLO11)}
-If your dataset is already defined by an Ultralytics-style \path{data.yaml} (referencing \path{images/<split>/} and \path{labels/<split>/}), \yolozu{} can generate a lightweight \path{dataset.json} wrapper, leaving the original dataset entirely unmodified.
+\subsection{YOLO-style data.yaml Datasets (YOLOv8/YOLO11)}
+If your dataset is already defined by a YOLO-style \path{data.yaml} (referencing \path{images/<split>/} and \path{labels/<split>/}), \yolozu{} can generate a lightweight \path{dataset.json} wrapper, leaving the original dataset entirely unmodified.
 
 For precise command syntax and validation procedures, refer to Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
 

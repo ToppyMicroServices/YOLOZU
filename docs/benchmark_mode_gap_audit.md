@@ -1,12 +1,7 @@
-# Benchmark Gap Audit vs Ultralytics Docs
+# Benchmark Gap Audit
 
 This document records the current gap between YOLOZU's `yolozu benchmark`
-surface and the public benchmark/export surface documented by Ultralytics.
-
-Reference baseline:
-- [Ultralytics benchmark mode](https://docs.ultralytics.com/modes/benchmark/)
-- [Ultralytics tasks overview](https://docs.ultralytics.com/tasks/)
-- [Ultralytics export/integrations index](https://docs.ultralytics.com/integrations/)
+surface and the broader public benchmark/export surface that users now expect.
 
 Licensing note:
 - This audit compares public CLI/interface behavior only.
@@ -36,11 +31,30 @@ It is already stronger than a plain benchmark wrapper in a few areas:
 
 The remaining gap is mainly breadth, not the core interface shape.
 
+## Highest-leverage gap closers
+
+If the goal is to close the practical gap against the current benchmark/export
+surface users expect
+without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
+effective next steps are:
+
+1. Turn `segmentation`, `classification`, `obb`, and `keypoints` into real
+   backend/eval paths for the existing `torch` / `onnx` / `engine` benchmark
+   flow.
+2. Promote `torchscript` from planning-only semantics to a real execution path,
+   then follow with `openvino` as the next conditional runtime target.
+3. Keep one support matrix that shows whether each format has real inference,
+   real eval, real parity artifacts, or only placeholder/skipped semantics.
+4. Expand parity artifacts beyond today's `torch`-anchored backend comparisons.
+5. Keep format-specific flag validation strict so inert combinations fail early
+   instead of looking supported.
+
 ## Current gap by area
 
 ### 1. Export / benchmark format breadth
 
-Ultralytics exposes a much wider format matrix in public docs. YOLOZU currently
+The reference benchmark/export ecosystem exposes a much wider format matrix
+publicly. YOLOZU currently
 documents or partially wires only:
 
 - `torch`
@@ -50,7 +64,7 @@ documents or partially wires only:
 - `executorch`
 - `opencv_dnn`
 
-Missing or only planned relative to the Ultralytics docs surface:
+Missing or only planned relative to that public surface:
 
 - `openvino`
 - `coreml`
@@ -75,7 +89,7 @@ Improvement priority:
 
 ### 2. Task exposure parity
 
-Ultralytics prominently documents:
+The common benchmark/export surface prominently documents:
 
 - detection
 - segmentation
@@ -103,11 +117,11 @@ Improvement priority:
 1. Turn the task matrix into task-specific real backend/eval execution paths
 2. Keep task-specific eval metric keys visible in the report examples
 3. Keep explicit `classification` and `obb` support-status lines in docs/manual
-4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake Ultralytics parity
+4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
 
 ### 3. Argument-surface gaps
 
-Ultralytics docs expose more export-oriented knobs around format-specific
+Public benchmark/export docs expose more export-oriented knobs around format-specific
 behavior. YOLOZU already supports a useful subset:
 
 - `--batch`
@@ -178,7 +192,7 @@ Improvement priority:
    - real inference
    - real eval
    - parity artifact
-   - status vs Ultralytics docs
+   - status vs the reference benchmark surface
 3. Keep one short "what is still missing" section near the CLI docs
 
 ## Recommended next implementation set
@@ -193,7 +207,7 @@ The highest-value next steps are:
 
 ## Repository policy reminder
 
-When closing the parity gap against Ultralytics docs:
+When closing the parity gap:
 
 - compare behavior, not code
 - keep Apache-2.0-only operational policy

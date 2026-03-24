@@ -4,9 +4,9 @@ YOLOZU aims to accept common dataset layouts “as-is” and convert them into a
 The `yolozu migrate` subcommands generate small **descriptor artifacts** so downstream commands can treat
 external datasets uniformly.
 
-## 1) Ultralytics / YOLO (detect/pose/segment)
+## 1) YOLO-style data.yaml / YOLO (detect/pose/segment)
 
-Ultralytics datasets are typically described by a `data.yaml`:
+YOLO-style datasets are typically described by a `data.yaml`:
 
 ```yaml
 path: /path/to/dataset_root
@@ -16,22 +16,22 @@ val: images/val
 
 ### `dataset.json` wrapper
 
-`yolozu migrate dataset --from ultralytics` writes a `dataset.json` that points at the resolved
+`yolozu migrate dataset --from auto` writes a `dataset.json` that points at the resolved
 `images_dir` / `labels_dir` and optionally pins how to parse label txt files.
 
 Example (segment / polygon labels):
 
 ```bash
 yolozu migrate dataset \
-  --from ultralytics \
+  --from auto \
   --data /path/to/data.yaml \
-  --args /path/to/ultralytics/runs/.../args.yaml \
+  --args /path/to/yolo_runtime/runs/.../args.yaml \
   --task segment \
-  --output data/ultra_segment_wrapper
+  --output data/yolo_segment_wrapper
 ```
 
 Outputs:
-- `data/ultra_segment_wrapper/dataset.json`
+- `data/yolo_segment_wrapper/dataset.json`
 
 `dataset.json` keys (subset):
 - `images_dir`: absolute/relative path to `.../images/<split>`
@@ -42,7 +42,7 @@ Outputs:
 You can then pass the wrapper directory anywhere YOLOZU expects a dataset root:
 
 ```bash
-yolozu validate dataset data/ultra_segment_wrapper
+yolozu validate dataset data/yolo_segment_wrapper
 ```
 
 ### YOLO polygon labels
@@ -181,7 +181,7 @@ yolozu predictions migrate \
   - Ensure `data.yaml` contains `path:` and `train:`/`val:` point at `images/<split>` directories.
 - Polygon labels (`label_format=segment`) errors:
   - Label line must be `class_id` + even-length coords `[x1 y1 x2 y2 ...]` with at least 3 points (>= 6 numbers).
-  - Coordinates should be normalized to `[0,1]` (Ultralytics default).
+  - Coordinates should be normalized to `[0,1]` (typical YOLO-runtime default).
   - If your labels include `class cx cy w h + poly(...)`, YOLOZU skips the first 4 numbers automatically.
 - `yolozu validate dataset` complains about image size:
   - Ensure images are real `.jpg/.png/.bmp/.tif/.tiff/.webp/.gif` files (not empty placeholders), or use `--no-check-images` for label-only validation.

@@ -31,7 +31,7 @@ Datasets have their own licenses; using them does not change the license of this
 ## Quick Checks
 
 - Run `python3 tools/check_license_policy.py` before pushing.
-- The unit test `python3 -m unittest tests/test_license_policy.py` enforces basic guardrails (e.g., no `ultralytics` fetch URL, presence of `LICENSE`).
+- The unit test `python3 -m unittest tests/test_license_policy.py` enforces basic guardrails (e.g., no branded external-runtime fetch URL, presence of `LICENSE`).
 - CI runs `tools/check_license_policy.py`, `ruff`, and `python -m unittest` on push/PR.
 
 ## Commercial-use due diligence (best-effort, not legal advice)

@@ -55,7 +55,7 @@ def _parse_args(argv):
     )
     p.add_argument(
         "--raw-postprocess",
-        choices=("native", "ultralytics"),
+        choices=("native", "ultralytics", "yolo_runtime"),
         default="native",
         help="Postprocess for --raw-output (default: native).",
     )
@@ -461,7 +461,7 @@ def main(argv=None):
             raw = outputs.get(args.raw_output)
             if raw is None:
                 raise ValueError(f"missing raw output: {args.raw_output}")
-            if args.raw_postprocess == "ultralytics":
+            if args.raw_postprocess in ("ultralytics", "yolo_runtime"):
                 boxes_t, scores_t, class_t = _decode_raw_ultralytics(
                     np.asarray(raw),
                     min_score=float(args.min_score),
@@ -509,7 +509,7 @@ def main(argv=None):
             idx = idx[: max(0, int(args.topk))]
 
         detections = []
-        use_ultra_scale = bool(args.raw_output and args.raw_postprocess == "ultralytics")
+        use_ultra_scale = bool(args.raw_output and args.raw_postprocess in ("ultralytics", "yolo_runtime"))
         if use_ultra_scale:
             try:
                 import torch  # type: ignore

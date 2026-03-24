@@ -74,7 +74,7 @@ python3 tools/run_rtdetr_pose_backend_suite.py \
 
 ## 1) Export ONNX (end2end/no-NMS)
 
-Use your preferred exporter (Ultralytics or custom) and keep NMS disabled so parity is meaningful:
+Use your preferred exporter (YOLO-family runtime or custom) and keep NMS disabled so parity is meaningful:
 
 ```bash
 yolo export model=yolo26n.pt format=onnx opset=17 imgsz=640 nms=False

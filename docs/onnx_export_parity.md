@@ -12,9 +12,9 @@ Important:
 - Do not apply NMS (e2e/no-NMS protocol).
  
 
-## YOLO26 (Ultralytics) concrete flow
+## YOLO26 concrete flow
 
-This is a concrete, end2end/no-NMS parity flow for Ultralytics YOLO26 models.
+This is a concrete, end2end/no-NMS parity flow for YOLO26 models exported from a YOLO-family runtime.
 
 ### 1) Export ONNX (end2end/no-NMS)
 
@@ -24,15 +24,15 @@ Export with NMS disabled and fixed input size 640:
 yolo export model=yolo26n.pt format=onnx opset=17 imgsz=640 nms=False
 ```
 
-If your environment prefers Python, you can also call the Ultralytics export API. Ensure
+If your environment prefers Python, you can also call the runtime export API. Ensure
 `nms=False` (or `end2end=True`) so the export keeps the raw/combined output without NMS.
 
 ### 2) Reference predictions (PyTorch)
 
-Run the PyTorch reference using Ultralytics and export YOLOZU JSON (bbox format is `cxcywh_norm`):
+Run the PyTorch reference using the YOLO runtime and export YOLOZU JSON (bbox format is `cxcywh_norm`):
 
 ```bash
-python3 tools/export_predictions_ultralytics.py \
+python3 tools/export_predictions_yolo_runtime.py \
   --model yolo26n.pt \
   --dataset /path/to/coco-yolo \
   --image-size 640 \
@@ -72,7 +72,7 @@ python3 tools/export_predictions_onnxrt.py \
   --onnx yolo26n.onnx \
   --raw-output output0 \
   --raw-format yolo_84 \
-  --raw-postprocess ultralytics \
+  --raw-postprocess yolo_runtime \
   --boxes-format xyxy \
   --boxes-scale abs \
   --min-score 0.001 \
@@ -139,7 +139,7 @@ python3 tools/export_predictions_onnxrt.py \
   --input-name images \
   --raw-output output0 \
   --raw-format yolo_84 \
-  --raw-postprocess ultralytics \
+  --raw-postprocess yolo_runtime \
   --boxes-format xyxy \
   --boxes-scale abs \
   --min-score 0.001 \
@@ -148,10 +148,10 @@ python3 tools/export_predictions_onnxrt.py \
   --output /path/to/pred_onnxrt.json
 ```
 
-This path applies class-aware NMS (matching Ultralytics) and produces the same
+This path applies class-aware NMS (matching the YOLO-runtime postprocess) and produces the same
 postprocess as the PyTorch reference.
 
-**Note:** even with Ultralytics postprocess, raw-output parity can still diverge
+**Note:** even with the YOLO-runtime postprocess, raw-output parity can still diverge
 because tiny numerical differences in raw logits ($\le 2.5\times 10^{-3}$ observed)
 change NMS decisions. If parity fails with large `missing_match` counts, treat it
 as NMS sensitivity rather than a decode bug and consider using the end2end

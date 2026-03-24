@@ -91,7 +91,7 @@
       "entrypoint": "tools/adapter_parity_suite.py",
       "examples": [
         {
-          "command": "python3 tools/adapter_parity_suite.py --adapter-predictions rtdetr=reports/pred_rtdetr.json --adapter-predictions mmdet=reports/pred_mmdet.json --adapter-predictions detectron2=reports/pred_detectron2.json --adapter-predictions ultralytics=reports/pred_ultralytics.json --adapter-predictions opencv_dnn=reports/pred_opencv_dnn.json --adapter-predictions custom_cpp=reports/pred_custom_cpp.json --reference-adapter rtdetr --output reports/adapter_parity_suite.json",
+          "command": "python3 tools/adapter_parity_suite.py --adapter-predictions rtdetr=reports/pred_rtdetr.json --adapter-predictions mmdet=reports/pred_mmdet.json --adapter-predictions detectron2=reports/pred_detectron2.json --adapter-predictions yolo_runtime=reports/pred_yolo_runtime.json --adapter-predictions opencv_dnn=reports/pred_opencv_dnn.json --adapter-predictions custom_cpp=reports/pred_custom_cpp.json --reference-adapter rtdetr --output reports/adapter_parity_suite.json",
           "description": "Compare framework adapter outputs against RT-DETR reference predictions."
         }
       ],
@@ -961,9 +961,9 @@
       },
       "docs": [
         "docs/benchmark_mode.md",
-        "docs/benchmark_mode_spec_ultralytics_parity.md",
+        "docs/benchmark_mode_spec_parity_target.md",
         "docs/benchmark_latency.md",
-        "docs/benchmark_mode_ultralytics_gap_audit.md",
+        "docs/benchmark_mode_gap_audit.md",
         "docs/benchmark_backend_runtime_matrix.md"
       ],
       "effects": {
@@ -1016,8 +1016,8 @@
           "description": "Run protocol-pinned backend orchestration and append JSONL history."
         },
         {
-          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_mode_ultralytics_gap_audit.md and docs/benchmark_backend_runtime_matrix.md",
-          "description": "Review the current gap against the public Ultralytics docs surface before extending format coverage."
+          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_mode_gap_audit.md and docs/benchmark_backend_runtime_matrix.md",
+          "description": "Review the current benchmark/export-surface gap before extending format coverage."
         },
         {
           "command": "python3 tools/benchmark_model.py --model exports/example.torchscript --data data/coco8.yaml --format torchscript --dry-run --output reports/benchmark_report.json",
@@ -1033,7 +1033,7 @@
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task depth --format torchscript --dry-run --output reports/benchmark_report.json",
-          "description": "Inspect YOLOZU-native depth benchmark semantics without claiming Ultralytics parity."
+          "description": "Inspect YOLOZU-native depth benchmark semantics without claiming mainstream benchmark-surface parity."
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task pose6d --format torchscript --dry-run --output reports/benchmark_report.json",
@@ -1358,7 +1358,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Ultralytics-parity benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, and explicit skipped-format reporting.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, real backend parity artifacts for successful backend comparisons, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the highest-leverage gap-closing work (real task coverage, broader format matrix, and clearer support-status tables).",
       "tags": [
         "benchmark",
         "parity",
@@ -6092,25 +6092,25 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes YOLOZU predictions JSON from Ultralytics inference.",
+            "description": "Writes YOLOZU predictions JSON from external YOLO-runtime inference.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
           }
         ]
       },
-      "entrypoint": "tools/export_predictions_ultralytics.py",
+      "entrypoint": "tools/export_predictions_yolo_runtime.py",
       "examples": [
         {
-          "command": "python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --conf 0.25 --iou 0.45 --protocol nms_applied --wrap --output reports/pred_ultralytics.json",
-          "description": "Ultralytics export with NMS-applied protocol metadata."
+          "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --conf 0.25 --iou 0.45 --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json",
+          "description": "YOLO-runtime export with NMS-applied protocol metadata."
         },
         {
-          "command": "python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/smoke --split val --max-images 1 --protocol nms_applied --dry-run --wrap --strict --output reports/pred_ultralytics_dry_run.json",
-          "description": "CI-friendly contract smoke without ultralytics runtime."
+          "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/smoke --split val --max-images 1 --protocol nms_applied --dry-run --wrap --strict --output reports/pred_yolo_runtime_dry_run.json",
+          "description": "CI-friendly contract smoke without external YOLO runtime."
         }
       ],
-      "id": "export_predictions_ultralytics",
+      "id": "export_predictions_yolo_runtime",
       "inputs": [
         {
           "flag": "--model",
@@ -6246,7 +6246,7 @@
           "required": false
         },
         {
-          "description": "Write schema-valid predictions without ultralytics runtime.",
+          "description": "Write schema-valid predictions without the external YOLO runtime.",
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
@@ -6268,16 +6268,16 @@
       },
       "requires": {
         "python_packages": [
-          "ultralytics",
+          "external_yolo_runtime",
           "torch",
           "numpy"
         ]
       },
       "runner": "python3",
-      "summary": "Run Ultralytics inference and export YOLOZU predictions.json with protocol and export_settings metadata.",
+      "summary": "Run external YOLO-runtime inference and export YOLOZU predictions.json with protocol and export_settings metadata.",
       "tags": [
         "export",
-        "ultralytics",
+        "yolo_runtime",
         "yolov8",
         "yolo11",
         "yolo26",
@@ -7495,14 +7495,14 @@
           }
         ]
       },
-      "entrypoint": "tools/import_ultralytics_data_yaml.py",
+      "entrypoint": "tools/import_yolo_data_yaml.py",
       "examples": [
         {
-          "command": "python3 tools/import_ultralytics_data_yaml.py --data-yaml data/coco-yolo/data.yaml --split val2017 --output data/ultralytics_wrapper --force",
-          "description": "Import Ultralytics data.yaml for YOLOZU eval entrypoint."
+          "command": "python3 tools/import_yolo_data_yaml.py --data-yaml data/coco-yolo/data.yaml --split val2017 --output data/yolo_wrapper --force",
+          "description": "Import YOLO-style data.yaml for the YOLOZU eval entrypoint."
         }
       ],
-      "id": "import_ultralytics_data_yaml",
+      "id": "import_yolo_data_yaml",
       "inputs": [
         {
           "flag": "--data-yaml",
@@ -7548,10 +7548,10 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Import Ultralytics data.yaml into YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt).",
+      "summary": "Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt).",
       "tags": [
         "import",
-        "ultralytics",
+        "yolo_runtime",
         "data.yaml",
         "yolov8",
         "yolo11",
@@ -12177,7 +12177,7 @@
         "README.md",
         "Readme_jp.md",
         "docs/tools_index.md",
-        "docs/ultralytics_detr_support.md",
+        "docs/yolo_detr_support.md",
         "manual/chapters/04_cli_reference.tex"
       ],
       "effects": {
@@ -12209,30 +12209,30 @@
           }
         ]
       },
-      "entrypoint": "tools/support_ultralytics_detr.py",
+      "entrypoint": "tools/support_yolo_detr.py",
       "examples": [
         {
-          "command": "python3 tools/support_ultralytics_detr.py ls -j",
+          "command": "python3 tools/support_yolo_detr.py ls -j",
           "description": "Show fixed 3-layer support matrix for trainer/repo/export surfaces."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py tu -P smoke -n -o reports/support_ultralytics_detr.train_ultralytics.json",
-          "description": "Ultralytics fine-tune wrapper with dataset conversion and training template report."
+          "command": "python3 tools/support_yolo_detr.py tu -P smoke -n -o reports/support_yolo_detr.train_yolo_runtime.json",
+          "description": "YOLO-family runtime fine-tune wrapper with dataset conversion and training template report."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultralytics_detr.train_hf_detr.json",
+          "command": "python3 tools/support_yolo_detr.py th -P smoke -n -o reports/support_yolo_detr.train_hf_detr.json",
           "description": "HF DETR/RT-DETR entry wrapper report (Transformers/Datasets bridge)."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json",
+          "command": "python3 tools/support_yolo_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_yolo_detr.export_onnx.json",
           "description": "ONNX export wrapper with optional TensorRT handoff."
         },
         {
-          "command": "python3 tools/support_ultralytics_detr.py pn -i reports/raw_predictions.json -o reports/predictions.normalized.json -r reports/support_ultralytics_detr.predict_normalize.json",
+          "command": "python3 tools/support_yolo_detr.py pn -i reports/raw_predictions.json -o reports/predictions.normalized.json -r reports/support_yolo_detr.predict_normalize.json",
           "description": "Canonicalize predictions into YOLOZU predictions interface contract."
         }
       ],
-      "id": "support_ultralytics_detr",
+      "id": "support_yolo_detr",
       "inputs": [
         {
           "flag": "--preset",
@@ -12339,7 +12339,7 @@
       ],
       "outputs": [
         {
-          "default": "reports/support_ultralytics_detr.*.json",
+          "default": "reports/support_yolo_detr.*.json",
           "description": "Execution report for dataset/train/export/normalize support commands.",
           "kind": "file",
           "name": "support_report_json"
@@ -12353,7 +12353,7 @@
       },
       "requires": {
         "python_packages": [
-          "ultralytics",
+          "external_yolo_runtime",
           "transformers",
           "datasets",
           "torch",
@@ -12361,9 +12361,9 @@
         ]
       },
       "runner": "python3",
-      "summary": "Ultralytics/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization.",
+      "summary": "YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization.",
       "tags": [
-        "ultralytics",
+        "yolo_runtime",
         "detr",
         "onnx",
         "training",
@@ -13109,7 +13109,7 @@
         },
         {
           "command": "python3 tools/yolozu.py sud ls -j",
-          "description": "Use wrapper CLI to access Ultralytics/DETR layered support helpers."
+          "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
         }
       ],
       "id": "yolozu",
