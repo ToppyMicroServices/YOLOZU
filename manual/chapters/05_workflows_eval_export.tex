@@ -132,11 +132,11 @@ cat models/yolox-s-coco/meta.json
 The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created\_at}.
 
 \subsection{YOLO user migration entrypoint (v5/v8/11/26)}
-For users already operating within Ultralytics/YOLO pipelines, \yolozu{} provides a direct contract-first migration path:
+For users already operating within YOLO-family pipelines, \yolozu{} provides a direct interface-contract-first migration path:
 \begin{lstlisting}[language=bash]
-python3 tools/import_ultralytics_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/ultra_wrapper --force
-python3 tools/export_predictions_ultralytics.py --model yolo11n.pt --dataset data/ultra_wrapper --split val --protocol nms_applied --wrap --output reports/pred_ultra.json
-python3 tools/export_predictions_yolov5.py --dataset data/ultra_wrapper --split val --labels-dir runs/detect/exp/labels --protocol nms_applied --output reports/pred_yolov5.json
+python3 tools/import_yolo_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/yolo_wrapper --force
+python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
+python3 tools/export_predictions_yolov5.py --dataset data/yolo_wrapper --split val --labels-dir runs/detect/exp/labels --protocol nms_applied --output reports/pred_yolov5.json
 \end{lstlisting}
 
 Protocol policy for fair comparisons:
@@ -147,7 +147,7 @@ Protocol policy for fair comparisons:
 
 When outputs contain COCO \texttt{category\_id}, evaluate with class-id normalization:
 \begin{lstlisting}[language=bash]
-yolozu eval-coco --dataset data/ultra_wrapper --split val --predictions reports/pred_ultra.json --protocol nms_applied --classes data/ultra_wrapper/labels/val/classes.json --output reports/coco_eval_ultra.json
+yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --protocol nms_applied --classes data/yolo_wrapper/labels/val/classes.json --output reports/coco_eval_yolo_runtime.json
 \end{lstlisting}
 
 \subsection{YOLOX interoperability path}
@@ -267,15 +267,15 @@ This practice proactively prevents silent evaluation failures caused by malforme
 \section{Workflow D: Migrate datasets and predictions}
 YOLOZU provides migration utilities that generate lightweight wrapper artifacts or converters, enabling seamless integration with prevalent ecosystem datasets. The core philosophy is to preserve the original dataset immutability while generating version-controlled wrappers.
 
-\subsection{Ultralytics / YOLO (YOLOv8/YOLO11)}
+\subsection{YOLO-style data.yaml / YOLO (YOLOv8/YOLO11)}
 To generate a \path{dataset.json} wrapper from an existing \path{data.yaml}:
 \begin{lstlisting}[language=bash]
-yolozu migrate dataset   --from ultralytics   --data /path/to/data.yaml   --output data/ultralytics_wrapper
+yolozu migrate dataset   --from auto   --data /path/to/data.yaml   --output data/yolo_wrapper
 \end{lstlisting}
 
 Validate the resulting wrapper:
 \begin{lstlisting}[language=bash]
-yolozu validate dataset data/ultralytics_wrapper
+yolozu validate dataset data/yolo_wrapper
 \end{lstlisting}
 
 \subsection{COCO JSON datasets (YOLOX / Detectron2 / MMDetection)}

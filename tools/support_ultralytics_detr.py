@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ultralytics/DETR integration support tool.
+"""YOLO/DETR integration support tool.
 
 Provides three-layer support helpers:
 1) trainer/runner,
@@ -828,7 +828,7 @@ def _build_parser() -> argparse.ArgumentParser:
     eonnx = sub.add_parser(
         "export-onnx",
         aliases=["eo", "onnx"],
-        help="Export ONNX for Ultralytics/HF DETR and optionally build TensorRT engine.",
+        help="Export ONNX for the YOLO-family runtime/HF DETR and optionally build TensorRT engine.",
     )
     eonnx.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     eonnx.add_argument("-p", "--provider", choices=("ultralytics", "hf_detr"), default=None, help="Model provider.")

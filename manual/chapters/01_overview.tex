@@ -69,7 +69,7 @@ High-level objectives include:
   \item Generating stable, versioned JSON artifacts (encompassing predictions, evaluation reports, and run metadata).
   \item Ensuring CPU-minimum compatibility for development and testing; GPU acceleration remains optional for training and inference.
   \item Facilitating backend-agnostic workflows (supporting PyTorch, ONNX Runtime, TensorRT, and custom C++/Rust implementations).
-  \item Streamlining migration by accepting prevalent dataset ecosystems (e.g., Ultralytics/YOLO formats, COCO JSON) via lightweight wrapper artifacts, thereby preserving the integrity of original datasets.
+  \item Streamlining migration by accepting prevalent dataset ecosystems (e.g., YOLO-style data.yaml formats, COCO JSON) via lightweight wrapper artifacts, thereby preserving the integrity of original datasets.
   \item Enforcing a production-oriented run interface contract (Run Contract) for training operations, which standardizes artifact paths, resumption capabilities, and model exports.
   \item Maintaining a strict Apache-2.0 operational posture, ensuring no non-Apache dependencies are present in shipped code paths.
   \item Avoiding built-in telemetry in shipped tooling; quality control is performed through explicit, reviewable checks instead.

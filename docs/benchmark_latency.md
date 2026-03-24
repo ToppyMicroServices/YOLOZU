@@ -5,9 +5,9 @@ This repo includes a lightweight latency/FPS benchmark runner that produces a st
 Tool: `tools/benchmark_latency.py`
 
 For the higher-level `yolozu benchmark` interface and the
-Ultralytics-parity target, see
+parity target, see
 [benchmark_mode.md](benchmark_mode.md) and
-[benchmark_mode_spec_ultralytics_parity.md](benchmark_mode_spec_ultralytics_parity.md).
+[benchmark_mode_spec_parity_target.md](benchmark_mode_spec_parity_target.md).
 
 ## Quick start (synthetic step)
 

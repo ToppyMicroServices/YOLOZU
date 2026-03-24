@@ -5,7 +5,7 @@
 
 ## 0) 先に結論（最短ルート）
 
-- 最短: **CVATで Ultralytics YOLO Pose 形式で再エクスポート** → そのままYOLOZUへ。
+- 最短: **CVATで YOLO Pose 形式で再エクスポート** → そのままYOLOZUへ。
 - 次点: CVAT COCO keypoints を使う場合は `tools/prepare_coco_keypoints_yolozu.py` で YOLOZU形式へ変換。
 - CVAT XML も `prepare-keypoints-dataset` で直接取り込み可能（bbox欠損時は可視キーポイントから推定）。
 
@@ -22,7 +22,7 @@ python3 tools/prepare_keypoints_dataset.py --source <INPUT_PATH> --format auto -
 ### 直接対応（そのまま入力可能）
 
 - `auto`（`images/`+`labels/` / `annotations/` / `annotations.xml` から自動判定）
-- `yolo_pose`（Ultralytics YOLO Pose レイアウト）
+- `yolo_pose`（YOLO Pose レイアウト）
 - `coco`（COCO keypoints JSON）
 - `cvat_xml`（CVAT XML。`--source` はXMLファイルまたは `annotations.xml` を含むディレクトリ）
 

@@ -67,11 +67,11 @@ yolozu validate dataset data/coco_as_is_wrapper --split val2017
 
 ## Config import (Mode A / static files)
 
-### Ultralytics args.yaml (YOLOv8 / YOLO11)
+### YOLO-family args.yaml (YOLOv8 / YOLO11)
 
 ```bash
 yolozu import config \
-  --from ultralytics \
+  --from auto \
   --args /path/to/runs/.../args.yaml \
   --output reports/train_config_import.json \
   --force
@@ -135,7 +135,7 @@ yolozu doctor import \
 
 # Config summary
 yolozu doctor import \
-  --config-from ultralytics \
+  --config-from auto \
   --args /path/to/runs/.../args.yaml
 
 Auto-detect mode is also available:
@@ -153,8 +153,8 @@ For quick demos/宣伝, you can use a shorthand that resolves external config in
 and prints doctor-import summary first.
 
 ```bash
-# Ultralytics
-yolozu train --import ultralytics --data /path/to/data.yaml --cfg /path/to/args.yaml
+# YOLO-family runtime
+yolozu train --import auto --data /path/to/data.yaml --cfg /path/to/args.yaml
 
 # Auto-detect (from --cfg)
 yolozu train --import auto --cfg /path/to/args_or_config.{yaml,py}
@@ -192,7 +192,7 @@ python3 tools/adapter_parity_suite.py \
   --adapter-predictions rtdetr=/path/to/reference.json \
   --adapter-predictions mmdet=/path/to/mmdet.json \
   --adapter-predictions detectron2=/path/to/detectron2.json \
-  --adapter-predictions ultralytics=/path/to/ultralytics.json \
+  --adapter-predictions yolo_runtime=/path/to/yolo_runtime.json \
   --adapter-predictions opencv_dnn=/path/to/opencv_dnn.json \
   --adapter-predictions custom_cpp=/path/to/custom_cpp.json \
   --reference-adapter rtdetr \
