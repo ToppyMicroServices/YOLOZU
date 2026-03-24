@@ -11,8 +11,8 @@ from yolozu.long_tail_metrics import (
 )
 
 try:
-    import numpy as _np  # noqa: F401
-    from PIL import Image as _PILImage  # noqa: F401
+    import numpy  # noqa: F401
+    from PIL import Image  # noqa: F401
 
     _HAS_SEG_DEPS = True
 except Exception:

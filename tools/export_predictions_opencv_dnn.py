@@ -387,8 +387,8 @@ def main(argv: list[str] | None = None) -> int:
                 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
             elif b == "openvino" and hasattr(cv2.dnn, "DNN_BACKEND_INFERENCE_ENGINE"):
                 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
-        except Exception:
-            pass
+        except cv2.error:
+            net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     if args.dnn_target:
         t = str(args.dnn_target).lower()
         try:
@@ -402,8 +402,8 @@ def main(argv: list[str] | None = None) -> int:
                 net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL)
             elif t == "opencl_fp16" and hasattr(cv2.dnn, "DNN_TARGET_OPENCL_FP16"):
                 net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL_FP16)
-        except Exception:
-            pass
+        except cv2.error:
+            net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
     output_names: list[str]
     if args.output_names:

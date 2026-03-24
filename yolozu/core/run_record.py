@@ -36,7 +36,6 @@ _OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
 _PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
 _SAFE_VERSION_ERRORS = _OPTIONAL_IMPORT_ERRORS + (RuntimeError, ValueError)
 _PACKAGE_PROBE_ERRORS = _OPTIONAL_IMPORT_ERRORS + (RuntimeError,)
-
 try:
     from importlib import metadata as importlib_metadata
 except ImportError:  # pragma: no cover

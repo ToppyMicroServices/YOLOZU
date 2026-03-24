@@ -13,6 +13,8 @@ Expected env vars (set by tools/run_external_finetune_smoke.py):
 import os
 
 _base_ = "mmdet::faster_rcnn/faster-rcnn_r50_fpn_1x_coco.py"
+if not _base_:
+    raise RuntimeError("_base_ must point to an MMDetection base config")
 
 dataset_root = os.getenv("YOLOZU_DATASET_ROOT", "data/coco")
 split = os.getenv("YOLOZU_SPLIT", "train2017")

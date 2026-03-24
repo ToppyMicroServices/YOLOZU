@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import logging
 import os
 import platform
 import subprocess
@@ -13,6 +14,8 @@ sys.path.insert(0, str(repo_root))
 
 from yolozu.benchmark import measure_latency
 from yolozu.metrics_report import build_report, write_json
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -79,8 +82,8 @@ def _to_int_handle(value: object) -> int:
             attr_value = getattr(value, attr)
             if attr_value is not None:
                 return int(attr_value)
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as exc:
+            logger.debug("failed to read CUDA handle attr %s from %r: %s", attr, value, exc)
     try:
         return int(value)  # type: ignore[arg-type]
     except Exception as exc:
@@ -93,14 +96,14 @@ def _load_cuda_backend() -> _CudaBackend:
         import pycuda.autoinit  # type: ignore  # noqa: F401
 
         return _CudaBackend("pycuda", cuda)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("pycuda backend unavailable: %s", exc)
     try:
         from cuda.bindings import runtime as cudart  # type: ignore
 
         return _CudaBackend("cuda", cudart)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("cuda.bindings runtime unavailable: %s", exc)
     try:
         from cuda import cudart  # type: ignore
 

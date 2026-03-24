@@ -7,8 +7,8 @@ common cross-backend parity pitfalls.
 
 from __future__ import annotations
 
-import json
 import importlib.metadata
+import json
 import logging
 import os
 import platform
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 _OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
 _PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
 _OPTIONAL_RUNTIME_ERRORS = _OPTIONAL_IMPORT_ERRORS + _PROBE_FALLBACK_ERRORS
-
 
 def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())

@@ -45,7 +45,7 @@ def _as_matrix_3x3(value: Any) -> list[list[float]] | None:
         try:
             value = value.tolist()
         except Exception:
-            pass
+            return None
     if isinstance(value, (list, tuple)):
         if len(value) == 3 and isinstance(value[0], (list, tuple)) and len(value[0]) == 3:
             try:

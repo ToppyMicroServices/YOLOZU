@@ -132,8 +132,8 @@ def _to_int_handle(value: object) -> int:
             attr_value = getattr(value, attr)
             if attr_value is not None:
                 return int(attr_value)
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError):
+            continue
     try:
         return int(value)  # type: ignore[arg-type]
     except Exception as exc:
@@ -502,9 +502,9 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
                 keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
                 return keep
             except Exception:
-                pass
+                return None
     except Exception:
-        pass
+        return None
 
     order = scores.argsort()[::-1]
     keep = []

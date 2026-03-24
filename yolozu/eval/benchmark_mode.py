@@ -173,7 +173,7 @@ def _git_head() -> str | None:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip() or None
-    except Exception:
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
         return None
 
 
@@ -207,7 +207,7 @@ def _hash_path_hint(path_text: str | None) -> str | None:
         rel = str(child.relative_to(path)).replace("\\", "/")
         try:
             size = child.stat().st_size
-        except Exception:
+        except OSError:
             size = -1
         h.update(rel.encode("utf-8"))
         h.update(b"\0")
@@ -517,7 +517,7 @@ def _load_json_payload(path: Path) -> dict[str, Any] | list[Any] | None:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return None
 
 
@@ -577,7 +577,7 @@ def _parity_summary(report: dict[str, Any] | None) -> dict[str, Any] | None:
             for key in ("cx", "cy", "w", "h"):
                 try:
                     bbox_abs_max = max(bbox_abs_max, abs(float(ref_bbox.get(key)) - float(cand_bbox.get(key))))
-                except Exception:
+                except (TypeError, ValueError):
                     continue
 
     return {

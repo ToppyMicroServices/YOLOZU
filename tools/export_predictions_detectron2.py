@@ -132,11 +132,11 @@ def main(argv=None) -> int:
             cfg.MODEL.DEVICE = str(args.device)
             try:
                 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = float(args.score_thr)
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
                 pass
             try:
                 cfg.MODEL.RETINANET.SCORE_THRESH_TEST = float(args.score_thr)
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
                 pass
             predictor = DefaultPredictor(cfg)
             cv2 = _cv2
@@ -160,7 +160,7 @@ def main(argv=None) -> int:
             if instances is not None:
                 try:
                     instances = instances.to("cpu")
-                except Exception:
+                except (AttributeError, RuntimeError):
                     pass
                 boxes_tensor = None
                 if hasattr(instances, "pred_boxes") and getattr(instances, "pred_boxes") is not None:

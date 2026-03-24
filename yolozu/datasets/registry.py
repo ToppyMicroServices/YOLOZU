@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterator, Protocol, runtime_checkable
+from typing import Any, Iterator, Protocol, runtime_checkable
 
 __all__ = [
     "DatasetSample",
@@ -65,10 +65,6 @@ class DatasetInfo:
 # ---------------------------------------------------------------------------
 # Adapter protocol
 # ---------------------------------------------------------------------------
-
-ProbeFunc = Callable[[Path], DatasetInfo | None]
-IterFunc = Callable[..., Iterator[DatasetSample]]
-
 
 @runtime_checkable
 class DatasetAdapter(Protocol):

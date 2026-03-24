@@ -15,7 +15,7 @@ def _maybe_to_list(value: Any) -> Any:
     if hasattr(value, "tolist"):
         try:
             return value.tolist()
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return value
     return value
 
@@ -25,7 +25,7 @@ def _parse_k_3x3_from_opencv_matrix_dict(value: dict[str, Any]) -> list[list[flo
     try:
         rows = int(value.get("rows"))
         cols = int(value.get("cols"))
-    except Exception:
+    except (TypeError, ValueError):
         return None
     if rows != 3 or cols != 3:
         return None
@@ -34,7 +34,7 @@ def _parse_k_3x3_from_opencv_matrix_dict(value: dict[str, Any]) -> list[list[flo
         return None
     try:
         flat = [float(data[i]) for i in range(9)]
-    except Exception:
+    except (TypeError, ValueError, IndexError):
         return None
     return [
         [flat[0], flat[1], flat[2]],
@@ -68,7 +68,7 @@ def parse_intrinsics(value: Any) -> dict[str, float] | None:
                     "cx": float(value["cx"]),
                     "cy": float(value["cy"]),
                 }
-            except Exception:
+            except (TypeError, ValueError, KeyError):
                 return None
 
         k_3x3 = _parse_k_3x3_from_opencv_matrix_dict(value)
@@ -87,7 +87,7 @@ def parse_intrinsics(value: Any) -> dict[str, float] | None:
         if len(value) == 4 and not isinstance(value[0], (list, tuple, dict)):
             try:
                 fx, fy, cx, cy = (float(value[0]), float(value[1]), float(value[2]), float(value[3]))
-            except Exception:
+            except (TypeError, ValueError):
                 return None
             return {"fx": fx, "fy": fy, "cx": cx, "cy": cy}
 
@@ -95,7 +95,7 @@ def parse_intrinsics(value: Any) -> dict[str, float] | None:
         if len(value) == 9 and not isinstance(value[0], (list, tuple, dict)):
             try:
                 flat = [float(v) for v in value]
-            except Exception:
+            except (TypeError, ValueError):
                 return None
             return {"fx": flat[0], "fy": flat[4], "cx": flat[2], "cy": flat[5]}
 
@@ -107,8 +107,7 @@ def parse_intrinsics(value: Any) -> dict[str, float] | None:
                 cx = float(value[0][2])
                 cy = float(value[1][2])
                 return {"fx": fx, "fy": fy, "cx": cx, "cy": cy}
-            except Exception:
+            except (TypeError, ValueError, IndexError):
                 return None
 
     return None
-

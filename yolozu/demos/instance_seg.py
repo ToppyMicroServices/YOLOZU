@@ -462,8 +462,8 @@ def run_instance_seg_demo(
                         for k in range(0, len(poly) - 1, 2):
                             try:
                                 pts.append((float(poly[k]), float(poly[k + 1])))
-                            except Exception:
-                                pass
+                            except (TypeError, ValueError):
+                                continue
                         if len(pts) >= 3:
                             draw_rgb.line(pts + [pts[0]], fill=fill, width=2)
 

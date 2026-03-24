@@ -176,7 +176,7 @@ def _run_depth_anything(
         import transformers as _tf
 
         meta["transformers"] = getattr(_tf, "__version__", None)
-    except Exception:
+    except ImportError:
         pass
     return depth, meta
 
