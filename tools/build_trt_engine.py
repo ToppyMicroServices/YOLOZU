@@ -130,7 +130,9 @@ def _onnx_dynamic_input(onnx_path: Path, requested_input_name: str) -> dict[str,
 
     try:
         model = onnx.load(str(onnx_path))
-    except OSError:
+    except (OSError, ValueError, TypeError, RuntimeError):
+        return None
+    except Exception:
         return None
 
     inputs = getattr(getattr(model, "graph", None), "input", None)
