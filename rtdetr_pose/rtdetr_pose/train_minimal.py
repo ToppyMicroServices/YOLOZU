@@ -56,6 +56,7 @@ from rtdetr_pose.train_runtime import build_validation_loader, install_terminati
 # Re-exports from submodules (backward compatibility)
 from rtdetr_pose.train_cli import *  # noqa: F401,F403
 from rtdetr_pose.train_utils import *  # noqa: F401,F403
+from rtdetr_pose.train_utils import _now_utc
 from rtdetr_pose.train_dataset import *  # noqa: F401,F403
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
