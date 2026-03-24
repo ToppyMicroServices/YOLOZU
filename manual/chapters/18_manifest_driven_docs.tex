@@ -28,6 +28,7 @@ Relevant supplementary references include:
 \begin{itemize}
   \item \path{docs/manifest_declarative_spec.md}
   \item \path{docs/tools_index.md}
+  \item \path{docs/repo_governance_audit.md}
   \item \path{tools/validate_tool_manifest.py}
 \end{itemize}
 
@@ -125,6 +126,29 @@ Utilize this heuristic mapping to determine which chapters require updates follo
 \end{itemize}
 
 This mapping is intentionally lightweight. If a tool modification spans multiple domains, update all affected chapters within the same pull request to maintain documentation coherence.
+
+\section{Governance snapshots and external repository settings}
+Some operational guarantees cannot be derived from source code alone. Branch protection, review enforcement, and certain Scorecard/badge signals depend on GitHub settings or repository history.
+
+To keep this boundary explicit, capture settings snapshots and audit them locally:
+\begin{lstlisting}[language=bash]
+mkdir -p reports/github_governance
+gh api repos/ToppyMicroServices/YOLOZU \
+  > reports/github_governance/repo.json
+gh api repos/ToppyMicroServices/YOLOZU/branches/main/protection \
+  > reports/github_governance/branch_protection_main.json
+python3 tools/check_repo_governance.py \
+  --repo-json reports/github_governance/repo.json \
+  --branch-protection-json reports/github_governance/branch_protection_main.json \
+  --output reports/repo_governance_check.json
+\end{lstlisting}
+
+This keeps repository-local facts and maintainer-process facts separate:
+\begin{itemize}
+  \item repository-local evidence: workflows, docs, fuzz harnesses, manifest coverage
+  \item snapshot-backed settings evidence: branch protection and repository security settings
+  \item manual followups: reviewed PR history, cadence-based maintenance, external badge enrollment
+\end{itemize}
 
 \section{Ownership split: GitHub docs vs PDF manual}
 To avoid double maintenance:

@@ -48,6 +48,11 @@ python3 tools/check_golden_compatibility.py
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.json
+# optional but recommended when auditing repository settings / badge evidence
+python3 tools/check_repo_governance.py \
+  --repo-json reports/github_governance/repo.json \
+  --branch-protection-json reports/github_governance/branch_protection_main.json \
+  --output reports/repo_governance_check.json
 ```
 
 DoD:
@@ -58,6 +63,7 @@ DoD:
 - Golden compatibility check returns `ok=true`.
 - Unit tests pass without unexpected failures.
 - MCP settings check report shows `ok=true`.
+- When governance snapshots are provided, `tools/check_repo_governance.py` reports `ok=true`.
 
 ## 2) Required CI workflows
 
@@ -81,6 +87,7 @@ DoD:
 - `main` branch protection requires PR review (1 approval), includes administrators, dismisses stale reviews, requires conversation resolution, and blocks force-pushes.
 - ClusterFuzzLite project files under `.clusterfuzzlite/` and fuzz harnesses under `fuzz/` stay in sync with predictions normalization code.
 - Residual governance-style Scorecard findings that cannot be solved by code alone are tracked in `docs/security_scorecard_governance.md`.
+- Repository-settings evidence can be snapshotted and checked locally with `tools/check_repo_governance.py`; see `docs/repo_governance_audit.md`.
 - Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.

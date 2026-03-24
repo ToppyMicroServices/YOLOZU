@@ -62,6 +62,8 @@ Support/legal: [`docs/support.md`](support.md)
 
 Security / cryptography scope: [`docs/security_crypto_scope.md`](security_crypto_scope.md)
 
+Repository governance / Scorecard posture: [`docs/security_scorecard_governance.md`](security_scorecard_governance.md), [`docs/repo_governance_audit.md`](repo_governance_audit.md)
+
 Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](learning_features.md)
 
 ---
