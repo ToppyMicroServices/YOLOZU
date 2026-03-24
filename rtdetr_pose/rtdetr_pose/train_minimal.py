@@ -66,7 +66,8 @@ logger = logging.getLogger(__name__)
 
 # Explicitly re-export helper functions that tests and source-checkout wrappers
 # import from this module for backward compatibility.
-_rotation_matrix_from_rpy = _train_utils._rotation_matrix_from_rpy
+def _rotation_matrix_from_rpy(roll_rad: float, pitch_rad: float, yaw_rad: float):
+    return _train_utils._rotation_matrix_from_rpy(roll_rad, pitch_rad, yaw_rad)
 
 
 def _debug_swallow(context: str, exc: Exception) -> None:

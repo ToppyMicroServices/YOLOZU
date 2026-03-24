@@ -498,7 +498,7 @@ def _extract_keypoints_meta_from_categories(categories):
             out["skeleton"] = skeleton
         try:
             out["keypoint_category_id"] = int(cat.get("id"))
-        except Exception:
+        except (TypeError, ValueError):
             pass
         return out
     return {}
@@ -516,7 +516,7 @@ def _load_keypoints_meta(root, split):
     if classes_path.exists():
         try:
             classes_doc = json.loads(classes_path.read_text(encoding="utf-8"))
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             classes_doc = {}
         if isinstance(classes_doc, dict):
             keypoint_names = _normalize_keypoint_names(classes_doc.get("keypoint_names") or [])
@@ -528,7 +528,7 @@ def _load_keypoints_meta(root, split):
     if dataset_json_path.exists() and (not keypoint_names):
         try:
             dataset_doc = json.loads(dataset_json_path.read_text(encoding="utf-8"))
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             dataset_doc = {}
         if isinstance(dataset_doc, dict):
             direct_names = _normalize_keypoint_names(dataset_doc.get("keypoint_names") or [])
@@ -545,7 +545,7 @@ def _load_keypoints_meta(root, split):
                     if instances_file.exists():
                         try:
                             coco_doc = json.loads(instances_file.read_text(encoding="utf-8"))
-                        except Exception:
+                        except (OSError, json.JSONDecodeError):
                             coco_doc = {}
                         if isinstance(coco_doc, dict):
                             extracted = _extract_keypoints_meta_from_categories(coco_doc.get("categories") or [])

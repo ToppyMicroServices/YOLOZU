@@ -15,7 +15,7 @@ try:
     from PIL import Image  # noqa: F401
 
     _HAS_SEG_DEPS = True
-except Exception:
+except ImportError:
     _HAS_SEG_DEPS = False
 
 
