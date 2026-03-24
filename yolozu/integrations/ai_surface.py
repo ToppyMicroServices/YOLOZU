@@ -131,7 +131,7 @@ def review_config(
         try:
             if int(max_images) > 1000:
                 warnings.append("max_images is high; cap to <=1000 for CI determinism")
-        except Exception:
+        except (TypeError, ValueError):
             issues.append({"code": "invalid_max_images", "message": "max_images must be an integer"})
 
     workspace = Path(workspace_root).resolve()
@@ -141,7 +141,7 @@ def review_config(
         if out_path.is_absolute():
             try:
                 out_path.relative_to(workspace)
-            except Exception:
+            except ValueError:
                 issues.append({"code": "unsafe_output_path", "message": f"output path escapes workspace: {output}"})
         elif output.startswith("../"):
             issues.append({"code": "unsafe_output_path", "message": f"relative output escapes workspace: {output}"})

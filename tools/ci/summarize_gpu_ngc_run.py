@@ -33,7 +33,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _read_json(path: Path) -> Any | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return None
 
 

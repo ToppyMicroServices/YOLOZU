@@ -250,6 +250,6 @@ def _pil_size(path: Path) -> tuple[int, int]:
             return w, h
     except ImageSizeError:
         raise
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         raise ImageSizeError(f"PIL failed to read {path}: {exc}") from exc
 

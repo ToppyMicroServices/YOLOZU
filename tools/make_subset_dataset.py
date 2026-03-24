@@ -70,7 +70,7 @@ def _link_or_copy(src: Path, dst: Path, *, copy: bool) -> None:
         return
     try:
         os.symlink(str(src), str(dst))
-    except Exception:
+    except (OSError, NotImplementedError):
         shutil.copy2(src, dst)
 
 

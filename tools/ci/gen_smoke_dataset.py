@@ -18,7 +18,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         h_str, w_str = str(args.hw).replace(",", "x").lower().split("x", 1)
         h, w = int(h_str), int(w_str)
-    except Exception as exc:
+    except ValueError as exc:
         raise SystemExit(f"invalid --hw: {args.hw!r} (expected HxW, e.g. 48x64)") from exc
 
     from PIL import Image

@@ -37,7 +37,7 @@ def _git_info() -> dict[str, Any]:
             .strip()
             or None
         )
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         sha = None
     try:
         dirty = subprocess.call(
@@ -46,7 +46,7 @@ def _git_info() -> dict[str, Any]:
             stderr=subprocess.DEVNULL,
         )
         is_dirty = bool(dirty != 0)
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, PermissionError):
         is_dirty = None
     return {"sha": sha, "dirty": is_dirty}
 
