@@ -55,13 +55,18 @@ from rtdetr_pose.train_runtime import build_validation_loader, install_terminati
 
 # Re-exports from submodules (backward compatibility)
 from rtdetr_pose.train_cli import *  # noqa: F401,F403
+from rtdetr_pose import train_utils as _train_utils
 from rtdetr_pose.train_utils import *  # noqa: F401,F403
-from rtdetr_pose.train_utils import _extract_manifest_keypoints_meta, _now_utc
+from rtdetr_pose.train_utils import _derive_keypoint_flip_pairs, _extract_manifest_keypoints_meta, _now_utc
 from rtdetr_pose.train_dataset import *  # noqa: F401,F403
 from rtdetr_pose.train_rebalance import build_weighted_sampler
 from rtdetr_pose.train_backbone_overrides import apply_backbone_overrides
 
 logger = logging.getLogger(__name__)
+
+# Explicitly re-export helper functions that tests and source-checkout wrappers
+# import from this module for backward compatibility.
+_rotation_matrix_from_rpy = _train_utils._rotation_matrix_from_rpy
 
 
 def _debug_swallow(context: str, exc: Exception) -> None:
