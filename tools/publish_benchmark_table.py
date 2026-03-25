@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         rel = str(path)
         try:
             rel = str(path.relative_to(repo_root))
-        except Exception:
+        except ValueError:
             rel = str(path)
         rows.extend(_extract_rows(payload, source_report=rel))
         meta = payload.get("meta") or {}

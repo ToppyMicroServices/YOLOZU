@@ -325,9 +325,24 @@ def main(argv: list[str] | None = None) -> int:
         allow_missing_evidence=bool(args.allow_missing_evidence),
     )
 
+    def _redact_scalar(value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        lowered = value.lower()
+        if any(token in lowered for token in ("token", "secret", "password", "apikey", "api_key")):
+            return "<redacted>"
+        return value
+
+    def _redact_payload(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {str(key): _redact_payload(_redact_scalar(item)) for key, item in value.items()}
+        if isinstance(value, list):
+            return [_redact_payload(_redact_scalar(item)) for item in value]
+        return _redact_scalar(value)
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(_redact_payload(result), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     failed_required = result["failed_required_checks"]
     missing_evidence = result["missing_evidence"]
@@ -339,9 +354,9 @@ def main(argv: list[str] | None = None) -> int:
     print(summary)
     print(output_path)
     if failed_required:
-        print("required failures:", ", ".join(failed_required))
+        print(f"required failures count: {len(failed_required)}")
     if missing_evidence:
-        print("missing evidence:", ", ".join(missing_evidence))
+        print(f"missing evidence count: {len(missing_evidence)}")
     return 0 if result["ok"] else 1
 
 

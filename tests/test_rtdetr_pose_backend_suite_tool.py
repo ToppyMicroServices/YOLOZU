@@ -7,7 +7,7 @@ from pathlib import Path
 
 try:
     import torch  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     torch = None  # type: ignore
 
 try:

@@ -20,6 +20,7 @@ import os
 import subprocess
 import sys
 import time
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
@@ -130,7 +131,7 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                     pairs.append((idx, str(value)))
                 if pairs:
                     return [name for _, name in sorted(pairs, key=lambda x: x[0])]
-        except Exception:
+        except (OSError, JSONDecodeError, TypeError, ValueError):
             pass
 
     max_class = -1

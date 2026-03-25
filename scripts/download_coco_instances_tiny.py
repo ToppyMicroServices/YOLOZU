@@ -210,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.keep_zip:
             try:
                 zip_path.unlink(missing_ok=True)
-            except Exception:
+            except OSError:
                 pass
 
     instances_full = json.loads(full_json_path.read_text(encoding="utf-8"))

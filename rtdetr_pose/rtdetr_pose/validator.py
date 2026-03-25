@@ -11,13 +11,18 @@ except ImportError:  # pragma: no cover - optional dependency
 def _shape(value):
     if hasattr(value, "shape"):
         try:
-            return tuple(int(dim) for dim in value.shape)
+            dims = tuple(int(dim) for dim in value.shape)
         except TypeError:
             return None
+        if len(dims) >= 2:
+            return (dims[0], dims[1])
+        if len(dims) == 1:
+            return (dims[0], 0)
+        return None
     if isinstance(value, (list, tuple)):
         if value and isinstance(value[0], (list, tuple)):
             return (len(value), len(value[0]))
-        return (len(value),)
+        return (len(value), 0)
     return None
 
 
@@ -25,14 +30,14 @@ def _is_matrix(value, size):
     shape = _shape(value)
     if shape is None:
         return False
-    return len(shape) == 2 and shape[0] == size and shape[1] == size
+    return shape[0] == size and shape[1] == size
 
 
 def _is_vector(value, size):
     shape = _shape(value)
     if shape is None:
         return False
-    return len(shape) == 1 and shape[0] == size
+    return shape[0] == size and shape[1] == 0
 
 
 def _validate_optional_path_or_array(value, name):
@@ -44,7 +49,7 @@ def _validate_optional_path_or_array(value, name):
             raise ValueError(f"{name} missing: {path}")
         return ("path", None)
     shape = _shape(value)
-    if shape is None or len(shape) != 2:
+    if shape is None or shape[1] == 0:
         raise ValueError(f"{name} must be a path or 2D array")
     return ("array", shape)
 
@@ -197,7 +202,7 @@ def _load_array(value):
 def _infer_image_shape(mask, depth):
     for value in (mask, depth):
         shape = _shape(value)
-        if shape and len(shape) >= 2:
+        if shape and shape[1] != 0:
             return (shape[0], shape[1])
     return None
 
@@ -396,7 +401,7 @@ def _validate_mask_binary(mask):
 
     # Pure-Python list/tuple path.
     shape = _shape(mask)
-    if shape is None or len(shape) != 2:
+    if shape is None or shape[1] == 0:
         return
 
     seen_nonfinite = False
@@ -447,7 +452,7 @@ def _validate_depth_range(depth):
 
     # Pure-Python list/tuple path.
     shape = _shape(depth)
-    if shape is None or len(shape) != 2:
+    if shape is None or shape[1] == 0:
         return
     seen_nonfinite = False
     for row in depth:

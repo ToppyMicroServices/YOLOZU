@@ -8,6 +8,7 @@ representation.
 from __future__ import annotations
 
 import json
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Callable
 
@@ -97,13 +98,13 @@ def _load_config(path: Path) -> dict[str, Any]:
 
             data = yaml.safe_load(text)
             return data or {}
-        except Exception:
+        except ImportError:
             return simple_yaml_load(text)
     if path.suffix.lower() == ".json":
         return json.loads(text)
     try:
         return json.loads(text)
-    except Exception:
+    except JSONDecodeError:
         return simple_yaml_load(text)
 
 

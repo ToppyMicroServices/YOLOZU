@@ -121,7 +121,7 @@ def _write_html(
     def rel(p: str) -> str:
         try:
             return str(Path(p).relative_to(html_path.parent))
-        except Exception:
+        except ValueError:
             return str(p)
 
     meta = report.get("meta") if isinstance(report, dict) else None
@@ -219,7 +219,7 @@ def _bbox_xyxy_abs(bbox: dict[str, Any], *, width: int, height: int) -> tuple[fl
         cy = float(bbox.get("cy"))
         bw = float(bbox.get("w"))
         bh = float(bbox.get("h"))
-    except Exception:
+    except (TypeError, ValueError):
         return None
     x1 = (cx - bw / 2.0) * float(width)
     y1 = (cy - bh / 2.0) * float(height)
@@ -281,7 +281,7 @@ def _render_overlay(
                 try:
                     if float(v) <= 0.0:
                         continue
-                except Exception:
+                except (TypeError, ValueError):
                     pass
             x = float(x) * float(scale)
             y = float(y) * float(scale)
@@ -315,7 +315,7 @@ def _render_overlay(
                     try:
                         if float(gv) <= 0.0:
                             continue
-                    except Exception:
+                    except (TypeError, ValueError):
                         pass
                 px, py, _pv = pred_pts[i]
                 draw.line(

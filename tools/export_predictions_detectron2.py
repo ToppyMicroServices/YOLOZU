@@ -90,15 +90,15 @@ def _tensor_to_list(value: Any) -> list[Any]:
         return []
     try:
         return value.detach().cpu().numpy().tolist()
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError, ValueError):
         pass
     try:
         return value.cpu().numpy().tolist()
-    except Exception:
+    except (AttributeError, RuntimeError, TypeError, ValueError):
         pass
     try:
         return value.tolist()
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         pass
     return []
 
@@ -140,7 +140,7 @@ def main(argv=None) -> int:
                 pass
             predictor = DefaultPredictor(cfg)
             cv2 = _cv2
-        except Exception as exc:
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
             runtime_error = str(exc)
 
     for record in records:

@@ -9,7 +9,10 @@ except ImportError:  # pragma: no cover
     nn = SimpleNamespace(Module=object)
     F = SimpleNamespace()
 
-from .model import rot6d_to_matrix
+def _rot6d_to_matrix(rot6d_pred):
+    from .model import rot6d_to_matrix
+
+    return rot6d_to_matrix(rot6d_pred)
 
 
 def _first_present(mapping, keys):
@@ -49,7 +52,7 @@ def geodesic_distance(r1, r2):
 def symmetry_rotation_loss(rot6d_pred, r_gt, sym_rots):
     if torch is None:
         raise RuntimeError("torch is required for symmetry_rotation_loss")
-    r_pred = rot6d_to_matrix(rot6d_pred)
+    r_pred = _rot6d_to_matrix(rot6d_pred)
     losses = []
     for s in sym_rots:
         r_eq = torch.matmul(r_gt, s)
@@ -60,7 +63,7 @@ def symmetry_rotation_loss(rot6d_pred, r_gt, sym_rots):
 def rotation_loss(rot6d_pred, r_gt):
     if torch is None:
         raise RuntimeError("torch is required for rotation_loss")
-    r_pred = rot6d_to_matrix(rot6d_pred)
+    r_pred = _rot6d_to_matrix(rot6d_pred)
     return geodesic_distance(r_pred, r_gt).mean()
 
 
@@ -82,7 +85,7 @@ def plane_loss(t_gt, plane):
 def upright_loss(rot6d_pred, roll_range, pitch_range):
     if torch is None:
         raise RuntimeError("torch is required for upright_loss")
-    r_pred = rot6d_to_matrix(rot6d_pred)
+    r_pred = _rot6d_to_matrix(rot6d_pred)
     roll = torch.atan2(r_pred[..., 2, 1], r_pred[..., 2, 2])
     pitch = torch.asin(torch.clamp(-r_pred[..., 2, 0], -1.0, 1.0))
     roll_min, roll_max = roll_range

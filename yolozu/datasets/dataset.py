@@ -69,7 +69,7 @@ def _load_sidecar_metadata(meta_path: Path, root: Path) -> dict[str, Any]:
         return {}
     try:
         data = json.loads(meta_path.read_text())
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return {}
 
     out: dict[str, Any] = {}
@@ -153,7 +153,7 @@ def _load_mask_value(value: Any) -> Any:
         try:
             with Image.open(path) as img:
                 return np.asarray(img)
-        except Exception:
+        except OSError:
             return None
     return value
 
@@ -496,7 +496,7 @@ def _pick_split(dataset_root: Path, split: str | None) -> str:
         for child in sorted(images_root.iterdir()):
             if child.is_dir():
                 return child.name
-    except Exception:
+    except OSError:
         pass
     return "train2017"
 
@@ -527,13 +527,13 @@ def _resolve_ultralytics_data_yaml(
         import yaml  # type: ignore
 
         data = yaml.safe_load(text)
-    except Exception:
+    except ImportError:
         data = None
     if data is None:
         # Minimal fallback parser (keeps yolozu migrate usable even if PyYAML is missing).
         try:
             data = simple_yaml_load(text)
-        except Exception:
+        except (OSError, ValueError):
             return None
     if not isinstance(data, dict):
         return None
@@ -689,7 +689,7 @@ def load_coco_instances_dataset(
             continue
         try:
             image_id_to_meta[int(img["id"])] = img
-        except Exception:
+        except (TypeError, ValueError):
             continue
 
     ann_by_image: dict[int, list[dict[str, Any]]] = {}
@@ -700,7 +700,7 @@ def load_coco_instances_dataset(
             continue
         try:
             img_id = int(ann["image_id"])
-        except Exception:
+        except (KeyError, TypeError, ValueError):
             continue
         ann_by_image.setdefault(img_id, []).append(ann)
 

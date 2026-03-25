@@ -453,7 +453,7 @@ class _TrtRunner:
         if context is None:
             raise RuntimeError("failed to create TensorRT execution context")
 
-        mode = "v2"
+        api_mode = "v2"
         io_names: list[str] = []
         output_names: list[str] = []
 
@@ -465,14 +465,14 @@ class _TrtRunner:
 
         # TensorRT 10+ uses the v3 API (tensor addresses); older versions use bindings/v2.
         if hasattr(context, "execute_async_v3") and hasattr(engine, "num_io_tensors") and hasattr(engine, "get_tensor_name"):
-            mode = "v3"
+            api_mode = "v3"
             io_names = [str(engine.get_tensor_name(i)) for i in range(int(engine.num_io_tensors))]
             input_names = [n for n in io_names if engine.get_tensor_mode(n) == trt.TensorIOMode.INPUT]
             output_names = [n for n in io_names if engine.get_tensor_mode(n) == trt.TensorIOMode.OUTPUT]
             if str(input_name) not in input_names:
                 raise ValueError(f"input tensor not found: {input_name} (available: {input_names})")
         else:
-            mode = "v2"
+            api_mode = "v2"
             bindings = [0] * int(engine.num_bindings)
             io_names = [str(engine.get_binding_name(i)) for i in range(int(engine.num_bindings))]
             output_names = [str(engine.get_binding_name(i)) for i in range(int(engine.num_bindings)) if not engine.binding_is_input(i)]
@@ -486,7 +486,7 @@ class _TrtRunner:
             trt=trt,
             backend=backend,
             input_name=str(input_name),
-            mode=mode,
+            mode=api_mode,
             io_names=io_names,
             output_names=output_names,
             bindings=bindings,
@@ -515,8 +515,8 @@ class _TrtRunner:
         if self.mode == "v3":
             self.context.set_input_shape(self.input_name, input_shape)
             for name in self.io_names:
-                mode = self.engine.get_tensor_mode(name)
-                if mode == self.trt.TensorIOMode.INPUT and name == self.input_name:
+                tensor_mode = self.engine.get_tensor_mode(name)
+                if tensor_mode == self.trt.TensorIOMode.INPUT and name == self.input_name:
                     shape = tuple(input_shape)
                 else:
                     shape = tuple(self.context.get_tensor_shape(name))

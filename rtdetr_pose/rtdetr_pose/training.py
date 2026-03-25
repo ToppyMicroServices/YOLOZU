@@ -82,8 +82,6 @@ def build_query_aligned_targets(
     # Reserve the last class index as the "no-object" / background class.
     background_class_id = int(logits.shape[-1]) - 1
 
-    if log_z_pred is not None:
-        log_z_pred = log_z_pred
     if rot6d_pred is not None:
         r_pred_all = _rot6d_to_matrix(rot6d_pred)
     else:

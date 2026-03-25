@@ -203,7 +203,7 @@ class ManifestDataset(Dataset):
 
                 try:
                     loaded = json.loads(path.read_text(encoding="utf-8"))
-                except Exception:
+                except (OSError, json.JSONDecodeError):
                     return None
                 if isinstance(loaded, dict):
                     return self._load_derpp_teacher(loaded)
@@ -308,20 +308,18 @@ class ManifestDataset(Dataset):
         if isinstance(value, str):
             path = Path(value)
             if path.suffix.lower() == ".json":
-                import json
-
                 try:
                     return json.loads(path.read_text())
-                except Exception:
+                except (OSError, json.JSONDecodeError):
                     return None
             if path.suffix.lower() in (".npy", ".npz"):
                 try:
                     import numpy as np
-                except Exception:
+                except ImportError:
                     return None
                 try:
                     loaded = np.load(path)
-                except Exception:
+                except OSError:
                     return None
                 if hasattr(loaded, "files"):
                     if not loaded.files:
@@ -329,6 +327,10 @@ class ManifestDataset(Dataset):
                     return loaded[loaded.files[0]]
                 return loaded
         return None
+
+    @staticmethod
+    def _raise_missing_synthetic_pose_intrinsics():
+        raise RuntimeError("synthetic_pose requires K_gt")
 
     def _load_depth_sidecar(self, value, target_size: int, flip: bool):
         if self.depth_mode == "none" or value is None:
@@ -732,7 +734,7 @@ class ManifestDataset(Dataset):
                     gt_z.append(z_val)
                     gt_z_mask.append(True)
                     if K_gt is None:
-                        raise RuntimeError("synthetic_pose requires K_gt")
+                        self._raise_missing_synthetic_pose_intrinsics()
                     cx_n = float(bb.get("cx", 0.0))
                     cy_n = float(bb.get("cy", 0.0))
                     u = cx_n * float(image_hw[1])
@@ -992,7 +994,7 @@ def _pad_field(targets, key, max_len, *, pad_value=0.0, dtype=None):
             value = torch.empty((0, *tail), dtype=dtype)
         pad_len = max_len - value.shape[0]
         if pad_len < 0:
-            raise ValueError(f"{key} has more instances than max_len")
+            _raise_padded_field_overflow(key, max_len, value.shape[0])
         if pad_len == 0:
             padded = value
         else:
@@ -1000,6 +1002,10 @@ def _pad_field(targets, key, max_len, *, pad_value=0.0, dtype=None):
             padded = torch.cat([value, pad], dim=0)
         rows.append(padded)
     return torch.stack(rows, dim=0)
+
+
+def _raise_padded_field_overflow(key, max_len, value_len):
+    raise ValueError(f"{key} has more instances than max_len ({value_len} > {max_len})")
 
 
 def collate(batch):

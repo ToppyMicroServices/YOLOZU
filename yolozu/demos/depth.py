@@ -174,10 +174,10 @@ def _run_depth_anything(
     }
     try:
         import transformers as _tf
-
-        meta["transformers"] = getattr(_tf, "__version__", None)
     except ImportError:
         pass
+    else:
+        meta["transformers"] = getattr(_tf, "__version__", None)
     return depth, meta
 
 
