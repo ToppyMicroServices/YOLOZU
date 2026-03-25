@@ -359,24 +359,9 @@ def main(argv: list[str] | None = None) -> int:
         allow_missing_evidence=bool(args.allow_missing_evidence),
     )
 
-    def _redact_scalar(value: Any) -> Any:
-        if not isinstance(value, str):
-            return value
-        lowered = value.lower()
-        if any(token in lowered for token in ("token", "secret", "password", "apikey", "api_key")):
-            return "<redacted>"
-        return value
-
-    def _redact_payload(value: Any) -> Any:
-        if isinstance(value, dict):
-            return {str(key): _redact_payload(_redact_scalar(item)) for key, item in value.items()}
-        if isinstance(value, list):
-            return [_redact_payload(_redact_scalar(item)) for item in value]
-        return _redact_scalar(value)
-
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_payload = _public_report(_redact_payload(result))
+    output_payload = _public_report(result)
     output_path.write_text(json.dumps(output_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     failed_required = result["failed_required_checks"]

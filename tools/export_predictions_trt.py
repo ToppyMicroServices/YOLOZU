@@ -474,6 +474,23 @@ def _iou_xyxy_one_to_many(box, boxes):
     return np.where(union > 0.0, inter / union, 0.0)
 
 
+def _torchvision_nms_keep(boxes, scores, *, iou_thresh: float, max_det: int):
+    try:
+        import torch  # type: ignore
+        import torchvision  # type: ignore
+    except ImportError:
+        return None
+    try:
+        keep = torchvision.ops.nms(
+            torch.as_tensor(boxes, dtype=torch.float32),
+            torch.as_tensor(scores, dtype=torch.float32),
+            float(iou_thresh),
+        )
+        return keep[: int(max_det)].cpu().numpy().astype(np.int64)
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return None
+
+
 def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
     if boxes.size == 0:
         return np.array([], dtype=np.int64)
@@ -491,24 +508,11 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
             keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
             return keep
         except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
-            torchvision = None
-            try:
-                import torchvision  # type: ignore
-            except ImportError:
-                torchvision = None
-            if torchvision is not None:
-                try:
-                    keep = torchvision.ops.nms(
-                        torch.as_tensor(boxes, dtype=torch.float32),
-                        torch.as_tensor(scores, dtype=torch.float32),
-                        float(iou_thresh),
-                    )
-                    keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
-                    return keep
-                except (AttributeError, RuntimeError, TypeError, ValueError):
-                    torchvision = None
+            keep = _torchvision_nms_keep(boxes, scores, iou_thresh=float(iou_thresh), max_det=int(max_det))
+            if keep is not None:
+                return keep
     except ImportError:
-        torch = None  # type: ignore[assignment]
+        pass
 
     order = scores.argsort()[::-1]
     keep = []
