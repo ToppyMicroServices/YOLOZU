@@ -30,6 +30,15 @@ from yolozu.metrics_report import build_report, write_json  # noqa: E402
 from yolozu.predictions import load_predictions_entries, load_predictions_index  # noqa: E402
 
 
+def _has_positive_visibility(value: Any) -> bool:
+    if value is None:
+        return True
+    try:
+        return float(value) > 0.0
+    except (TypeError, ValueError):
+        return True
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Evaluate keypoint predictions using PCK (bbox-normalized distance).")
     p.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
@@ -277,12 +286,8 @@ def _render_overlay(
         pts = keypoints_to_pixels(kps, width=int(orig_w), height=int(orig_h))
         r = max(1, int(kp_radius))
         for x, y, v in pts:
-            if v is not None:
-                try:
-                    if float(v) <= 0.0:
-                        continue
-                except (TypeError, ValueError):
-                    pass
+            if not _has_positive_visibility(v):
+                continue
             x = float(x) * float(scale)
             y = float(y) * float(scale)
             draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=2, fill=None)
@@ -311,12 +316,8 @@ def _render_overlay(
             n = min(len(gt_pts), len(pred_pts))
             for i in range(n):
                 gx, gy, gv = gt_pts[i]
-                if gv is not None:
-                    try:
-                        if float(gv) <= 0.0:
-                            continue
-                    except (TypeError, ValueError):
-                        pass
+                if not _has_positive_visibility(gv):
+                    continue
                 px, py, _pv = pred_pts[i]
                 draw.line(
                     [float(gx) * scale, float(gy) * scale, float(px) * scale, float(py) * scale],

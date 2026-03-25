@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import subprocess
 import sys
 import tempfile
@@ -10,11 +11,7 @@ try:
 except ImportError:  # pragma: no cover
     torch = None  # type: ignore
 
-try:
-    import onnxruntime as _onnxruntime  # type: ignore  # noqa: F401
-    _HAS_ONNXRT = True
-except Exception:  # pragma: no cover
-    _HAS_ONNXRT = False
+_HAS_ONNXRT = importlib.util.find_spec("onnxruntime") is not None
 
 def _write_tiny_rtdetr_pose_config(path: Path) -> None:
     cfg = {

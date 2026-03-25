@@ -497,9 +497,11 @@ def _extract_keypoints_meta_from_categories(categories):
         if skeleton:
             out["skeleton"] = skeleton
         try:
-            out["keypoint_category_id"] = int(cat.get("id"))
+            category_id = int(cat.get("id"))
         except (TypeError, ValueError):
-            pass
+            category_id = None
+        if category_id is not None:
+            out["keypoint_category_id"] = category_id
         return out
     return {}
 
@@ -583,8 +585,8 @@ def _k_to_3x3(k):
     if hasattr(k, "tolist"):
         try:
             k = k.tolist()
-        except Exception:
-            pass
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            return None
     # K may be a 3x3 nested list, or (fx, fy, cx, cy)
     if isinstance(k, (list, tuple)) and len(k) == 4 and not isinstance(k[0], (list, tuple)):
         fx, fy, cx, cy = [float(v) for v in k]

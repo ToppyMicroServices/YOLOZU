@@ -491,20 +491,24 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
             keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
             return keep
         except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
+            torchvision = None
             try:
                 import torchvision  # type: ignore
-
-                keep = torchvision.ops.nms(
-                    torch.as_tensor(boxes, dtype=torch.float32),
-                    torch.as_tensor(scores, dtype=torch.float32),
-                    float(iou_thresh),
-                )
-                keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
-                return keep
-            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
-                pass
+            except ImportError:
+                torchvision = None
+            if torchvision is not None:
+                try:
+                    keep = torchvision.ops.nms(
+                        torch.as_tensor(boxes, dtype=torch.float32),
+                        torch.as_tensor(scores, dtype=torch.float32),
+                        float(iou_thresh),
+                    )
+                    keep = keep[: int(max_det)].cpu().numpy().astype(np.int64)
+                    return keep
+                except (AttributeError, RuntimeError, TypeError, ValueError):
+                    torchvision = None
     except ImportError:
-        pass
+        torch = None  # type: ignore[assignment]
 
     order = scores.argsort()[::-1]
     keep = []

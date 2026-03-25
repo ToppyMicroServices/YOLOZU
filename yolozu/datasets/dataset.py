@@ -493,11 +493,12 @@ def _pick_split(dataset_root: Path, split: str | None) -> str:
 
     # Fallback: first directory under images/.
     try:
-        for child in sorted(images_root.iterdir()):
-            if child.is_dir():
-                return child.name
+        child_entries = sorted(images_root.iterdir())
     except OSError:
-        pass
+        child_entries = []
+    for child in child_entries:
+        if child.is_dir():
+            return child.name
     return "train2017"
 
 

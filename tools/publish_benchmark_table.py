@@ -31,6 +31,13 @@ def _resolve(path_text: str) -> Path:
     return path
 
 
+def _relative_report_path(path: Path, repo_root: Path) -> str:
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -133,11 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     for report_item in args.report:
         path = _resolve(str(report_item))
         payload = _load_json(path)
-        rel = str(path)
-        try:
-            rel = str(path.relative_to(repo_root))
-        except ValueError:
-            rel = str(path)
+        rel = _relative_report_path(path, repo_root)
         rows.extend(_extract_rows(payload, source_report=rel))
         meta = payload.get("meta") or {}
         sources.append(

@@ -20,7 +20,6 @@ import os
 import subprocess
 import sys
 import time
-from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
@@ -106,7 +105,7 @@ def _load_yaml_or_json(path: Path) -> dict[str, Any]:
 
         data = yaml.safe_load(text)
         return data if isinstance(data, dict) else {}
-    except Exception:
+    except ImportError:
         data = simple_yaml_load(text)
         return data if isinstance(data, dict) else {}
 
@@ -131,8 +130,8 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                     pairs.append((idx, str(value)))
                 if pairs:
                     return [name for _, name in sorted(pairs, key=lambda x: x[0])]
-        except (OSError, JSONDecodeError, TypeError, ValueError):
-            pass
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            logger.debug("failed to parse class list %s: %s", classes_json, exc)
 
     max_class = -1
     labels_dir = dataset_root / "labels" / split
@@ -148,7 +147,7 @@ def _collect_class_names(dataset_root: Path, split: str) -> list[str]:
                 continue
             try:
                 cid = int(float(parts[0]))
-            except Exception:
+            except (TypeError, ValueError, OverflowError):
                 continue
             if cid > max_class:
                 max_class = cid
