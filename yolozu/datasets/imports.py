@@ -8,7 +8,7 @@ representation.
 from __future__ import annotations
 
 import json
-from json import JSONDecodeError
+import runpy
 from pathlib import Path
 from typing import Any, Callable
 
@@ -27,6 +27,13 @@ __all__ = [
 from yolozu.core.canonical import TrainConfig
 from yolozu.core.config import simple_yaml_load
 from .coco_convert import build_category_map_from_coco
+
+
+def _optional_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[str, Any]:
@@ -58,10 +65,9 @@ def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[st
             for edge in raw_skeleton:
                 if not isinstance(edge, (list, tuple)) or len(edge) != 2:
                     continue
-                try:
-                    a = int(edge[0])
-                    b = int(edge[1])
-                except Exception:
+                a = _optional_int(edge[0])
+                b = _optional_int(edge[1])
+                if a is None or b is None:
                     continue
                 if a <= 0 or b <= 0 or a == b:
                     continue
@@ -79,12 +85,9 @@ def _extract_keypoint_schema_from_coco(instances_doc: dict[str, Any]) -> dict[st
         }
         if skeleton:
             out["skeleton"] = skeleton
-        category_id = category.get("id")
+        category_id = _optional_int(category.get("id"))
         if category_id is not None:
-            try:
-                out["keypoint_category_id"] = int(category_id)
-            except (TypeError, ValueError):
-                pass
+            out["keypoint_category_id"] = category_id
         return out
 
     return {}
@@ -104,7 +107,7 @@ def _load_config(path: Path) -> dict[str, Any]:
         return json.loads(text)
     try:
         return json.loads(text)
-    except JSONDecodeError:
+    except json.JSONDecodeError:
         return simple_yaml_load(text)
 
 
@@ -191,7 +194,7 @@ def _require_module(name: str, *, pip_hint: str) -> Any:
         import importlib
 
         return importlib.import_module(name)
-    except Exception as exc:
+    except ImportError as exc:
         raise RuntimeError(f"{name} is required for this import mode. Install it (e.g. `{pip_hint}`).") from exc
 
 
@@ -303,10 +306,8 @@ def project_yolox_exp(*, config: str | Path) -> TrainConfig:
 
     # YOLOX exp files are Python and often import yolox.*. Treat as optional.
     try:
-        import runpy
-
         ns = runpy.run_path(str(config_path))
-    except Exception as exc:
+    except (OSError, RuntimeError, TypeError, ValueError) as exc:
         raise RuntimeError(f"failed to execute YOLOX exp file: {config_path} ({exc})") from exc
 
     exp = ns.get("exp")

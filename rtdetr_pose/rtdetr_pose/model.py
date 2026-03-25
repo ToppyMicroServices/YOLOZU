@@ -20,10 +20,12 @@ def _entropy_loss_fallback(logits):
     return -(probs * log_probs).sum(dim=-1).mean()
 
 
-try:
-    from .losses import entropy_loss
-except ImportError:
-    entropy_loss = _entropy_loss_fallback
+def entropy_loss(logits):
+    try:
+        from .losses import entropy_loss as losses_entropy_loss
+    except ImportError:
+        losses_entropy_loss = _entropy_loss_fallback
+    return losses_entropy_loss(logits)
 
 from .backbone_projector import BackboneProjector
 

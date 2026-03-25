@@ -453,7 +453,10 @@ class _TrtRunner:
         if context is None:
             raise RuntimeError("failed to create TensorRT execution context")
 
-        api_mode = "v2"
+        uses_v3_api = bool(
+            hasattr(context, "execute_async_v3") and hasattr(engine, "num_io_tensors") and hasattr(engine, "get_tensor_name")
+        )
+        api_mode = "v3" if uses_v3_api else "v2"
         io_names: list[str] = []
         output_names: list[str] = []
 
@@ -464,8 +467,7 @@ class _TrtRunner:
         last_shapes: dict[str, tuple[int, ...]] = {}
 
         # TensorRT 10+ uses the v3 API (tensor addresses); older versions use bindings/v2.
-        if hasattr(context, "execute_async_v3") and hasattr(engine, "num_io_tensors") and hasattr(engine, "get_tensor_name"):
-            api_mode = "v3"
+        if uses_v3_api:
             io_names = [str(engine.get_tensor_name(i)) for i in range(int(engine.num_io_tensors))]
             input_names = [n for n in io_names if engine.get_tensor_mode(n) == trt.TensorIOMode.INPUT]
             output_names = [n for n in io_names if engine.get_tensor_mode(n) == trt.TensorIOMode.OUTPUT]

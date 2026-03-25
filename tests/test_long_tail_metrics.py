@@ -1,3 +1,4 @@
+import importlib.util
 import unittest
 
 from yolozu.long_tail_metrics import (
@@ -10,13 +11,7 @@ from yolozu.long_tail_metrics import (
     temperature_calibrate_predictions,
 )
 
-try:
-    import numpy  # noqa: F401
-    from PIL import Image  # noqa: F401
-
-    _HAS_SEG_DEPS = True
-except ImportError:
-    _HAS_SEG_DEPS = False
+_HAS_SEG_DEPS = importlib.util.find_spec("numpy") is not None and importlib.util.find_spec("PIL.Image") is not None
 
 
 def _mk_label(class_id: int, cx: float) -> dict:

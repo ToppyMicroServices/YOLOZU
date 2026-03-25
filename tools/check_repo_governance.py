@@ -273,6 +273,40 @@ def run_audit(
     }
 
 
+def _public_report(result: dict[str, Any]) -> dict[str, Any]:
+    checks = result.get("checks") or []
+    advisory_failures = result.get("advisory_failures") or []
+    manual_followups = result.get("manual_followups") or []
+    inputs = result.get("inputs") or {}
+    return {
+        "ok": bool(result.get("ok")),
+        "repo_root": str(result.get("repo_root") or ""),
+        "inputs": {
+            "repo_json_present": bool(inputs.get("repo_json_present")),
+            "branch_protection_json_present": bool(inputs.get("branch_protection_json_present")),
+            "allow_missing_evidence": bool(inputs.get("allow_missing_evidence")),
+        },
+        "missing_evidence": [str(item) for item in (result.get("missing_evidence") or [])],
+        "failed_required_checks": [str(item) for item in (result.get("failed_required_checks") or [])],
+        "advisory_failures": [str(item) for item in advisory_failures],
+        "manual_followups": [
+            {
+                "id": str(item.get("id") or ""),
+                "status": str(item.get("status") or ""),
+                "why": str(item.get("why") or ""),
+                "operator_action": str(item.get("operator_action") or ""),
+            }
+            for item in manual_followups
+            if isinstance(item, dict)
+        ],
+        "check_status": [
+            {"id": str(item.get("id") or ""), "ok": bool(item.get("ok"))}
+            for item in checks
+            if isinstance(item, dict)
+        ],
+    }
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
@@ -342,7 +376,8 @@ def main(argv: list[str] | None = None) -> int:
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(_redact_payload(result), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    output_payload = _public_report(_redact_payload(result))
+    output_path.write_text(json.dumps(output_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     failed_required = result["failed_required_checks"]
     missing_evidence = result["missing_evidence"]

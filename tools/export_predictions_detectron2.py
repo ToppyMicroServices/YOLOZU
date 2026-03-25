@@ -103,6 +103,23 @@ def _tensor_to_list(value: Any) -> list[Any]:
     return []
 
 
+def _set_optional_score_threshold(model_cfg: Any, attr_name: str, score_thr: float) -> None:
+    sub_cfg = getattr(model_cfg, attr_name, None)
+    if sub_cfg is None or not hasattr(sub_cfg, "SCORE_THRESH_TEST"):
+        return
+    sub_cfg.SCORE_THRESH_TEST = float(score_thr)
+
+
+def _maybe_move_instances_to_cpu(instances: Any) -> Any:
+    to_method = getattr(instances, "to", None)
+    if not callable(to_method):
+        return instances
+    try:
+        return to_method("cpu")
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return instances
+
+
 def main(argv=None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
@@ -130,14 +147,8 @@ def main(argv=None) -> int:
             cfg.merge_from_file(str(Path(args.config).expanduser()))
             cfg.MODEL.WEIGHTS = str(Path(args.weights).expanduser())
             cfg.MODEL.DEVICE = str(args.device)
-            try:
-                cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = float(args.score_thr)
-            except (AttributeError, TypeError, ValueError):
-                pass
-            try:
-                cfg.MODEL.RETINANET.SCORE_THRESH_TEST = float(args.score_thr)
-            except (AttributeError, TypeError, ValueError):
-                pass
+            _set_optional_score_threshold(cfg.MODEL, "ROI_HEADS", float(args.score_thr))
+            _set_optional_score_threshold(cfg.MODEL, "RETINANET", float(args.score_thr))
             predictor = DefaultPredictor(cfg)
             cv2 = _cv2
         except (ImportError, OSError, RuntimeError, ValueError) as exc:
@@ -158,10 +169,7 @@ def main(argv=None) -> int:
             result = predictor(image)
             instances = result.get("instances") if isinstance(result, dict) else None
             if instances is not None:
-                try:
-                    instances = instances.to("cpu")
-                except (AttributeError, RuntimeError):
-                    pass
+                instances = _maybe_move_instances_to_cpu(instances)
                 boxes_tensor = None
                 if hasattr(instances, "pred_boxes") and getattr(instances, "pred_boxes") is not None:
                     boxes_tensor = getattr(instances.pred_boxes, "tensor", None)

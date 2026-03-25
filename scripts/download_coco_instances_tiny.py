@@ -29,6 +29,13 @@ from pathlib import Path
 from typing import Any
 
 
+def _unlink_if_present(path: Path) -> None:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        return
+
+
 COCO_ANN_ZIP_HTTPS = "https://images.cocodataset.org/annotations/annotations_trainval2017.zip"
 COCO_ANN_ZIP_HTTP = "http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
 COCO_VAL_IMAGE_HTTP_PREFIX = "http://images.cocodataset.org/val2017/"
@@ -208,10 +215,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote full instances JSON: {full_json_path}")
 
         if not args.keep_zip:
-            try:
-                zip_path.unlink(missing_ok=True)
-            except OSError:
-                pass
+            _unlink_if_present(zip_path)
 
     instances_full = json.loads(full_json_path.read_text(encoding="utf-8"))
     selected = _select_image_ids(instances_full=instances_full, num_images=int(args.num_images), seed=int(args.seed))

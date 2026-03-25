@@ -199,8 +199,6 @@ class ManifestDataset(Dataset):
             if not path.exists():
                 return None
             if path.suffix.lower() == ".json":
-                import json
-
                 try:
                     loaded = json.loads(path.read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
