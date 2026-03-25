@@ -10,7 +10,7 @@ except ImportError:  # pragma: no cover
     F = SimpleNamespace()
 
 def _rot6d_to_matrix(rot6d_pred):
-    from .model import rot6d_to_matrix
+    from .rotation import rot6d_to_matrix
 
     return rot6d_to_matrix(rot6d_pred)
 

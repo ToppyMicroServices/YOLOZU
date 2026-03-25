@@ -54,14 +54,9 @@ def build_activation(name: str, *, inplace: bool = True):
 
 
 def rot6d_to_matrix(x):
-    if torch is None:
-        raise RuntimeError("torch is required for rot6d_to_matrix")
-    a1 = x[..., 0:3]
-    a2 = x[..., 3:6]
-    b1 = nn.functional.normalize(a1, dim=-1)
-    b2 = nn.functional.normalize(a2 - (b1 * a2).sum(-1, keepdim=True) * b1, dim=-1)
-    b3 = torch.cross(b1, b2, dim=-1)
-    return torch.stack((b1, b2, b3), dim=-2)
+    from .rotation import rot6d_to_matrix as convert_rot6d_to_matrix
+
+    return convert_rot6d_to_matrix(x)
 
 
 def _sincos_1d(pos, dim, device, dtype):

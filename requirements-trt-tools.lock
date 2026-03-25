@@ -1,6 +1,7 @@
 # TRT/ORT/OpenCV tooling lock for GPU smoke containers and runpod tooling image.
 PyYAML==6.0.3
-numpy==2.4.2
+numpy==2.2.6; python_version < "3.11"
+numpy==2.4.2; python_version >= "3.11"
 Pillow==12.1.1
 onnx==1.20.1
 onnxruntime==1.24.2
