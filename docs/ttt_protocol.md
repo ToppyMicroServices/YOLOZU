@@ -111,6 +111,193 @@ Task-aware auxiliary knobs:
 - `--ttt-aux-seg-weight`
 - `--ttt-aux-temperature`
 
+## Implemented algorithms and concrete repo examples
+
+The currently implemented parameter-updating methods are:
+- `tent`
+- `mim`
+- `cotta`
+- `eata`
+- `sar`
+
+The practical pattern is always the same:
+1. freeze a deterministic dataset subset,
+2. export wrapped predictions with one method,
+3. export wrapped predictions with another method,
+4. compare the resulting logs and method-specific reports.
+
+### Tent
+
+Use Tent when you want the smallest and safest step away from baseline inference.
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method tent \
+  --ttt-preset safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_tent.json \
+  --output reports/pred_tent.json
+```
+
+### MIM
+
+Use MIM when the geometry-aware masked reconstruction signal is available and you want a stronger adaptation objective than plain entropy minimization.
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method mim \
+  --ttt-preset mim_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_mim.json \
+  --output reports/pred_mim.json
+```
+
+For pose-heavy runs, switch the preset to `pose_mim`.
+
+### CoTTA
+
+Use CoTTA when stream-mode adaptation matters and you want EMA-teacher smoothing with restoration against long-run drift.
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method cotta \
+  --ttt-preset cotta_safe \
+  --ttt-reset stream \
+  --ttt-cotta-augmentations identity \
+  --ttt-cotta-augmentations hflip \
+  --ttt-log-out reports/ttt_cotta.json \
+  --output reports/pred_cotta.json
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/eval_cotta_drift.py \
+  --baseline reports/pred_tent.json \
+  --cotta reports/pred_cotta.json \
+  --output-json reports/cotta_drift.json \
+  --output-md reports/cotta_drift.md
+```
+
+### EATA
+
+Use EATA when you want selective adaptation and anchor regularization so low-quality batches can be skipped safely.
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method eata \
+  --ttt-preset eata_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_eata.json \
+  --output reports/pred_eata.json
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/benchmark_eata_stability.py \
+  --baseline reports/pred_tent.json \
+  --eata reports/pred_eata.json \
+  --output-json reports/eata_benchmark.json \
+  --output-md reports/eata_benchmark.md
+```
+
+### SAR
+
+Use SAR when you want sharpness-aware entropy minimization and can afford the extra adaptation cost.
+
+```bash
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method sar \
+  --ttt-preset sar_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_sar.json \
+  --output reports/pred_sar.json
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/benchmark_sar_robustness.py \
+  --cotta reports/pred_cotta.json \
+  --eata reports/pred_eata.json \
+  --sar reports/pred_sar.json \
+  --output-json reports/sar_robustness.json \
+  --output-md reports/sar_robustness.md
+```
+
+### Task-aware examples
+
+The method is still usually Tent first; what changes is the preset and auxiliary weighting for the task emphasis:
+
+```bash
+# pose-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset pose_safe \
+  --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 \
+  --ttt-log-out reports/ttt_pose_safe.json \
+  --output reports/pred_pose_safe.json
+
+# keypoints-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset keypoints_safe \
+  --ttt-sdft-task keypoints --ttt-aux-keypoints-weight 0.5 \
+  --ttt-log-out reports/ttt_keypoints_safe.json \
+  --output reports/pred_keypoints_safe.json
+
+# depth-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset depth_safe \
+  --ttt-sdft-task depth --ttt-aux-depth-weight 0.5 \
+  --ttt-log-out reports/ttt_depth_safe.json \
+  --output reports/pred_depth_safe.json
+
+# segmentation-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset seg_safe \
+  --ttt-sdft-task seg --ttt-aux-seg-weight 0.5 \
+  --ttt-log-out reports/ttt_seg_safe.json \
+  --output reports/pred_seg_safe.json
+```
+
 ## Reset policy (stream vs sample)
 
 `--ttt-reset stream` (default):

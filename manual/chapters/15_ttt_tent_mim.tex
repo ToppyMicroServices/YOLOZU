@@ -216,6 +216,222 @@ Both CLIs expose \cmd{--ttt-preset}:
 Presets override core knobs (method, steps, lr, update filter, max batches) and set conservative guard rails unless you override them.
 Use \cmd{--ttt-sdft-task \{pose,keypoints,depth,seg,full\}} and \cmd{--ttt-aux-*} weights to steer multi-task adaptation losses.
 
+\section{Algorithm catalog with concrete examples}
+The currently implemented parameter-updating TTT/CTTA methods are:
+\cmd{tent}, \cmd{mim}, \cmd{cotta}, \cmd{eata}, and \cmd{sar}.
+In practice, the fastest way to compare them fairly is:
+\begin{enumerate}
+  \item freeze the image subset,
+  \item run the same adapter/checkpoint on the same shifted images,
+  \item emit wrapped predictions for each method,
+  \item compare method-specific logs and benchmark artifacts.
+\end{enumerate}
+
+\subsection{Tent}
+\textbf{What it does.}
+Tent minimizes prediction entropy online using a restricted parameter subset \cite{wang2021tent}.
+In \yolozu{}, the default safe rollout is norm-affine only.
+
+\textbf{When to use it.}
+Use Tent first when you want the smallest possible operational jump from baseline inference.
+It is the default recommendation for a first TTT ablation.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method tent \
+  --ttt-preset safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_tent.json \
+  --output reports/pred_tent.json
+\end{lstlisting}
+
+Artifacts to inspect:
+\begin{itemize}
+  \item \path{reports/pred_tent.json}
+  \item \path{reports/ttt_tent.json}
+\end{itemize}
+
+\subsection{MIM}
+\textbf{What it does.}
+MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs.
+This is the geometry-aware route when the model branch is enabled.
+
+\textbf{When to use it.}
+Use MIM when you want a stronger adaptation signal than plain entropy minimization,
+especially for pose-heavy settings or geometry-sensitive features.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method mim \
+  --ttt-preset mim_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_mim.json \
+  --output reports/pred_mim.json
+\end{lstlisting}
+
+For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}.
+
+\subsection{CoTTA}
+\textbf{What it does.}
+CoTTA combines augmentation-averaged predictions, EMA teacher updates, and stochastic restoration to keep long-run online drift bounded.
+
+\textbf{When to use it.}
+Use CoTTA when stream-mode adaptation matters and you want teacher smoothing plus recovery behavior,
+not just one-step entropy minimization.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method cotta \
+  --ttt-preset cotta_safe \
+  --ttt-reset stream \
+  --ttt-cotta-augmentations identity \
+  --ttt-cotta-augmentations hflip \
+  --ttt-log-out reports/ttt_cotta.json \
+  --output reports/pred_cotta.json
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_cotta_drift.py \
+  --baseline reports/pred_tent.json \
+  --cotta reports/pred_cotta.json \
+  --output-json reports/cotta_drift.json \
+  --output-md reports/cotta_drift.md
+\end{lstlisting}
+
+\subsection{EATA}
+\textbf{What it does.}
+EATA adds selective sample filtering plus anchor regularization so only trusted samples drive adaptation and important weights are protected.
+
+\textbf{When to use it.}
+Use EATA when false-positive adaptation is a concern and you want the run to skip weak samples instead of forcing every batch to adapt.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method eata \
+  --ttt-preset eata_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_eata.json \
+  --output reports/pred_eata.json
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_eata_stability.py \
+  --baseline reports/pred_tent.json \
+  --eata reports/pred_eata.json \
+  --output-json reports/eata_benchmark.json \
+  --output-md reports/eata_benchmark.md
+\end{lstlisting}
+
+\subsection{SAR}
+\textbf{What it does.}
+SAR performs sharpness-aware entropy minimization using a perturb-and-restore update.
+In \yolozu{}, the safe rollout starts with LoRA-first updates.
+
+\textbf{When to use it.}
+Use SAR when the shift is noisy and you want a more conservative optimizer geometry than plain Tent,
+accepting extra compute per adaptation step.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+python3 tools/yolozu.py export \
+  --backend torch \
+  --dataset reports/smoke_50 \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --device cuda \
+  --ttt \
+  --ttt-method sar \
+  --ttt-preset sar_safe \
+  --ttt-reset sample \
+  --ttt-log-out reports/ttt_sar.json \
+  --output reports/pred_sar.json
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_sar_robustness.py \
+  --cotta reports/pred_cotta.json \
+  --eata reports/pred_eata.json \
+  --sar reports/pred_sar.json \
+  --output-json reports/sar_robustness.json \
+  --output-md reports/sar_robustness.md
+\end{lstlisting}
+
+\subsection{Task-aware examples}
+The methods above are shared, but the safest default preset depends on the task emphasis.
+These examples keep the method explicit and only change the task-aware preset/auxiliary weights.
+
+\begin{lstlisting}[language=bash,caption={Task-aware TTT examples using the same export surface.}]
+# pose-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset pose_safe \
+  --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 \
+  --ttt-log-out reports/ttt_pose_safe.json \
+  --output reports/pred_pose_safe.json
+
+# keypoints-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset keypoints_safe \
+  --ttt-sdft-task keypoints --ttt-aux-keypoints-weight 0.5 \
+  --ttt-log-out reports/ttt_keypoints_safe.json \
+  --output reports/pred_keypoints_safe.json
+
+# depth-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset depth_safe \
+  --ttt-sdft-task depth --ttt-aux-depth-weight 0.5 \
+  --ttt-log-out reports/ttt_depth_safe.json \
+  --output reports/pred_depth_safe.json
+
+# segmentation-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset seg_safe \
+  --ttt-sdft-task seg --ttt-aux-seg-weight 0.5 \
+  --ttt-log-out reports/ttt_seg_safe.json \
+  --output reports/pred_seg_safe.json
+\end{lstlisting}
+
+\textbf{Rule of thumb.}
+Start from the task-aware Tent preset, then escalate to MIM/CoTTA/EATA/SAR only when the shift evidence justifies the extra complexity and latency.
+
 \section{YOLOZU introduction priority (high \texorpdfstring{$\to$}{->} low)}
 For \yolozu{} (detection/pose), the recommended operational rollout order is:
 \begin{enumerate}
