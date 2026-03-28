@@ -315,21 +315,99 @@ SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 & none
 For the completed runs, the compact summaries are:
 \begin{itemize}
   \item \path{reports/ttt_compare/tent_smoke_cpu/tent_before_after_compare.md}
+  \item \path{reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md}
   \item \path{reports/ttt_compare/cotta_smoke_cpu/cotta_before_after_compare.md}
   \item \path{reports/ttt_compare/eata_smoke_cpu/eata_before_after_compare.md}
   \item \path{reports/ttt_compare/sar_smoke_cpu/sar_before_after_compare.md}
 \end{itemize}
 
+\subsection{How to read the smoke compare table}
+The smoke table above is a \textbf{workflow validation table}. It tells you whether the method ran safely and emitted reproducible artifacts. It does \emph{not} claim that one method is globally better than another.
+
+Read the columns in this order:
+\begin{enumerate}
+  \item \textbf{Real compare status}: did the whole compare workflow finish?
+  \item \textbf{Steps}: how many adaptation updates actually ran?
+  \item \textbf{Mean final loss}: what was the final adaptation objective value?
+  \item \textbf{Warning summary}: was adaptation skipped or constrained for a safety reason?
+\end{enumerate}
+
+Two common beginner mistakes:
+\begin{itemize}
+  \item treating \cmd{mean\_final\_loss} as a quality score across methods,
+  \item treating \cmd{steps=0} as a failure.
+\end{itemize}
+For example, EATA can legitimately report \cmd{steps=0} with
+\cmd{eata\_empty\_selected\_set}. That means the method decided \emph{not} to adapt on those smoke images, which is conservative behavior, not a crash.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.97\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt, minimum width=24mm},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (input) {\textbf{Shifted input}\\blur / style shift};
+\node[box, right=10mm of input] (base) {\textbf{Baseline predict}\\no update};
+\node[box, right=10mm of base] (adapt) {\textbf{Adapt}\\run Tent / MIM / CoTTA / EATA / SAR};
+\node[box, right=10mm of adapt] (pred) {\textbf{Adapted predict}\\same subset};
+\node[box, right=10mm of pred] (cmp) {\textbf{Compare}\\before vs after};
+\draw[arrow] (input) -- (base);
+\draw[arrow] (base) -- node[above]{same images} (adapt);
+\draw[arrow] (adapt) -- node[above]{weights updated in memory} (pred);
+\draw[arrow] (pred) -- (cmp);
+\end{tikzpicture}
+}
+\caption{Common TTT workflow in \yolozu{}: run the baseline and the adapted variant on the same deterministic image subset, then compare their artifacts.}
+\end{figure}
+
+\subsection{Operator workflow: what to do first}
+For every method, the safest operator workflow is:
+\begin{enumerate}
+  \item choose a fixed dataset subset or a deterministic domain-shift target,
+  \item run \path{scripts/ttt_compare.sh} with one boilerplate,
+  \item open \path{<method>\_before\_after\_compare.md},
+  \item only then inspect \path{<method>\_ttt\_log.json}.
+\end{enumerate}
+
+This order matters. The compare markdown is the onboarding artifact. It answers the first three questions operators usually have:
+\begin{itemize}
+  \item Did adaptation actually run?
+  \item Did predictions change?
+  \item Which file should I inspect next?
+\end{itemize}
+
 \subsection{Tent}
-\textbf{What it does.}
-Tent minimizes prediction entropy online using a restricted parameter subset \cite{wang2021tent}.
-In \yolozu{}, the default safe rollout is norm-affine only.
+\textbf{Principle.}
+Tent minimizes prediction entropy online using a restricted parameter subset \cite{wang2021tent}. In plain language, it pushes the model toward making sharper, more confident predictions on shifted inputs, but only lets a small subset of parameters move.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (x) {Shifted image};
+\node[box, right=10mm of x] (p) {Prediction distribution};
+\node[box, right=10mm of p] (h) {Entropy loss};
+\node[box, right=10mm of h] (u) {Update norm / affine parameters};
+\draw[arrow] (x) -- (p);
+\draw[arrow] (p) -- (h);
+\draw[arrow] (h) -- (u);
+\end{tikzpicture}
+}
+\caption{Tent: use prediction entropy as the adaptation signal and keep updates constrained to a safe parameter subset.}
+\end{figure}
 
 \textbf{When to use it.}
-Use Tent first when you want the smallest possible operational jump from baseline inference.
-It is the default recommendation for a first TTT ablation.
+Tent is the best first method. Choose it when you want the smallest operational jump away from baseline inference and the easiest debug path.
 
-\textbf{Concrete example.}
+\textbf{Concrete procedure.}
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
   --boilerplate tent \
@@ -340,24 +418,59 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-Artifacts to inspect:
+\textbf{How to read the result.}
 \begin{itemize}
-  \item \path{reports/ttt_compare/tent/baseline_predictions.json}
-  \item \path{reports/ttt_compare/tent/tent_predictions.json}
-  \item \path{reports/ttt_compare/tent/tent_before_after_compare.md}
-  \item \path{reports/ttt_compare/tent/tent_ttt_log.json}
+  \item Open \path{tent\_before\_after\_compare.md} first.
+  \item Check whether \cmd{steps\_run > 0}.
+  \item If \cmd{changed\_images=0}, adaptation completed but exported predictions did not change on this subset.
+  \item Open \path{tent\_ttt\_log.json} only if you need guard or runtime detail.
+\end{itemize}
+
+\textbf{Pros.}
+\begin{itemize}
+  \item easiest method to explain,
+  \item cheapest adaptation cost,
+  \item safest default when using norm-only updates.
+\end{itemize}
+
+\textbf{Cons.}
+\begin{itemize}
+  \item weakest self-supervised signal,
+  \item can sharpen wrong predictions under severe shift,
+  \item often less expressive than reconstruction-based methods.
 \end{itemize}
 
 \subsection{MIM}
-\textbf{What it does.}
-MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs.
-This is the geometry-aware route when the model branch is enabled.
+\textbf{Principle.}
+MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs. Instead of only asking the model to become more confident, it also asks the model to reconstruct hidden structure from partially masked internal features.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.97\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (x) {Shifted image};
+\node[box, right=10mm of x] (f) {Intermediate features};
+\node[box, right=10mm of f] (m) {Mask part of the features};
+\node[box, right=10mm of m] (r) {Reconstruct hidden structure};
+\node[box, right=10mm of r] (u) {Update with MIM loss};
+\draw[arrow] (x) -- (f);
+\draw[arrow] (f) -- (m);
+\draw[arrow] (m) -- (r);
+\draw[arrow] (r) -- (u);
+\end{tikzpicture}
+}
+\caption{MIM: use masked reconstruction to create a stronger adaptation signal than entropy alone.}
+\end{figure}
 
 \textbf{When to use it.}
-Use MIM when you want a stronger adaptation signal than plain entropy minimization,
-especially for pose-heavy settings or geometry-sensitive features.
+Choose MIM when you need a stronger adaptation signal than Tent, especially for pose-heavy or geometry-sensitive runs.
 
-\textbf{Concrete example.}
+\textbf{Concrete procedure.}
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
   --boilerplate mim \
@@ -386,23 +499,58 @@ bash scripts/ttt_compare.sh \
   --force
 \end{lstlisting}
 
-Repo-backed smoke snapshot:
+\textbf{How to read the result.}
 \begin{itemize}
-  \item \path{reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md}
-  \item \cmd{steps\_run=2}
-  \item \cmd{mean\_final\_loss=0.461853}
-  \item \cmd{changed\_images=0 / 2}
+  \item Open \path{mim\_before\_after\_compare.md} first.
+  \item Then inspect \path{mim\_ttt\_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
+  \item In the repo-backed smoke example, \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, and \cmd{changed\_images=0 / 2}. That means the MIM path is really running even though this tiny subset does not change final detections.
+\end{itemize}
+
+\textbf{Pros.}
+\begin{itemize}
+  \item stronger self-supervised signal than Tent,
+  \item useful for geometry- and pose-sensitive adaptation,
+  \item easier to justify when confidence-only adaptation is too weak.
+\end{itemize}
+
+\textbf{Cons.}
+\begin{itemize}
+  \item more model-specific than Tent,
+  \item more complex to interpret,
+  \item loss values are not directly comparable to Tent values.
 \end{itemize}
 
 \subsection{CoTTA}
-\textbf{What it does.}
-CoTTA combines augmentation-averaged predictions, EMA teacher updates, and stochastic restoration to keep long-run online drift bounded.
+\textbf{Principle.}
+CoTTA combines augmentation-averaged predictions, EMA teacher updates, and stochastic restoration. The main idea is to adapt continuously in a stream while preventing the model from drifting too far.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.97\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (x) {Shifted image stream};
+\node[box, right=9mm of x] (aug) {Test augmentations};
+\node[box, right=9mm of aug] (ema) {EMA teacher target};
+\node[box, right=9mm of ema] (upd) {Adapt student};
+\node[box, right=9mm of upd] (restore) {Partial restore};
+\draw[arrow] (x) -- (aug);
+\draw[arrow] (aug) -- (ema);
+\draw[arrow] (ema) -- (upd);
+\draw[arrow] (upd) -- (restore);
+\end{tikzpicture}
+}
+\caption{CoTTA: smooth predictions with a teacher model and periodically restore part of the original model to control drift.}
+\end{figure}
 
 \textbf{When to use it.}
-Use CoTTA when stream-mode adaptation matters and you want teacher smoothing plus recovery behavior,
-not just one-step entropy minimization.
+Use CoTTA when stream-mode adaptation matters and you care about long-run behavior, not just a single-image update.
 
-\textbf{Concrete example.}
+\textbf{Concrete procedure.}
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
   --boilerplate cotta \
@@ -413,7 +561,7 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-Method-specific comparison tool:
+\textbf{Follow-up tool.}
 \begin{lstlisting}[language=bash]
 python3 tools/eval_cotta_drift.py \
   --baseline reports/ttt_compare/tent/tent_predictions.json \
@@ -422,14 +570,56 @@ python3 tools/eval_cotta_drift.py \
   --output-md reports/ttt_compare/cotta/cotta_drift.md
 \end{lstlisting}
 
+\textbf{How to read the result.}
+\begin{itemize}
+  \item Open \path{cotta\_before\_after\_compare.md} first.
+  \item Then inspect \path{cotta\_ttt\_log.json} to confirm stream updates and runtime.
+  \item Use \path{cotta\_drift.md} when you need to reason about long-run stability.
+\end{itemize}
+
+\textbf{Pros.}
+\begin{itemize}
+  \item best suited to continual / streaming adaptation,
+  \item teacher smoothing helps suppress noisy updates,
+  \item restoration reduces irreversible drift.
+\end{itemize}
+
+\textbf{Cons.}
+\begin{itemize}
+  \item more moving parts than Tent or MIM,
+  \item state evolves across images, so debugging is harder,
+  \item higher runtime cost.
+\end{itemize}
+
 \subsection{EATA}
-\textbf{What it does.}
-EATA adds selective sample filtering plus anchor regularization so only trusted samples drive adaptation and important weights are protected.
+\textbf{Principle.}
+EATA adds selective sample filtering plus anchor regularization. It adapts only when the batch looks trustworthy enough, and it regularizes the update so important weights are less likely to drift.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.97\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (x) {Shifted batch};
+\node[box, right=10mm of x] (sel) {Select reliable samples};
+\node[box, right=10mm of sel] (anc) {Anchor regularization};
+\node[box, right=10mm of anc] (upd) {Adapt only if safe};
+\draw[arrow] (x) -- (sel);
+\draw[arrow] (sel) -- (anc);
+\draw[arrow] (anc) -- (upd);
+\end{tikzpicture}
+}
+\caption{EATA: filter out weak adaptation samples first, then regularize the remaining update.}
+\end{figure}
 
 \textbf{When to use it.}
-Use EATA when false-positive adaptation is a concern and you want the run to skip weak samples instead of forcing every batch to adapt.
+Use EATA when false-positive adaptation is a real risk and you prefer the method to skip doubtful samples rather than force every batch to adapt.
 
-\textbf{Concrete example.}
+\textbf{Concrete procedure.}
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
   --boilerplate eata \
@@ -440,7 +630,7 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-Method-specific comparison tool:
+\textbf{Follow-up tool.}
 \begin{lstlisting}[language=bash]
 python3 tools/benchmark_eata_stability.py \
   --baseline reports/ttt_compare/tent/tent_predictions.json \
@@ -449,16 +639,56 @@ python3 tools/benchmark_eata_stability.py \
   --output-md reports/ttt_compare/eata/eata_benchmark.md
 \end{lstlisting}
 
+\textbf{How to read the result.}
+\begin{itemize}
+  \item Open \path{eata\_before\_after\_compare.md} first.
+  \item If \cmd{steps\_run=0}, check the warning field before assuming anything failed.
+  \item On tiny smoke subsets, \cmd{eata\_empty\_selected\_set} is expected conservative behavior.
+\end{itemize}
+
+\textbf{Pros.}
+\begin{itemize}
+  \item safest method when many test samples are low quality,
+  \item explicit skip behavior is easy to justify operationally,
+  \item anti-forgetting regularization is built into the method.
+\end{itemize}
+
+\textbf{Cons.}
+\begin{itemize}
+  \item may appear inactive on small subsets,
+  \item harder to explain than Tent,
+  \item more thresholds and diagnostics to inspect.
+\end{itemize}
+
 \subsection{SAR}
-\textbf{What it does.}
-SAR performs sharpness-aware entropy minimization using a perturb-and-restore update.
-In \yolozu{}, the safe rollout starts with LoRA-first updates.
+\textbf{Principle.}
+SAR performs sharpness-aware entropy minimization using a perturb-and-restore style update. Instead of trusting only the immediate entropy gradient, it prefers updates that stay stable after a small perturbation.
+
+\begin{figure}[h]
+\centering
+\resizebox{0.97\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=8mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (loss1) {Entropy loss};
+\node[box, right=10mm of loss1] (pert) {Perturb weights};
+\node[box, right=10mm of pert] (loss2) {Recompute loss};
+\node[box, right=10mm of loss2] (upd) {Update toward flatter region};
+\draw[arrow] (loss1) -- (pert);
+\draw[arrow] (pert) -- (loss2);
+\draw[arrow] (loss2) -- (upd);
+\end{tikzpicture}
+}
+\caption{SAR: prefer updates that remain stable after a small perturbation, not only updates that reduce the immediate entropy value.}
+\end{figure}
 
 \textbf{When to use it.}
-Use SAR when the shift is noisy and you want a more conservative optimizer geometry than plain Tent,
-accepting extra compute per adaptation step.
+Use SAR when the shift is noisy and you want a more conservative optimizer geometry than Tent, while accepting extra compute per update.
 
-\textbf{Concrete example.}
+\textbf{Concrete procedure.}
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
   --boilerplate sar \
@@ -469,7 +699,7 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-Method-specific comparison tool:
+\textbf{Follow-up tool.}
 \begin{lstlisting}[language=bash]
 python3 tools/benchmark_sar_robustness.py \
   --cotta reports/ttt_compare/cotta/cotta_predictions.json \
@@ -478,6 +708,42 @@ python3 tools/benchmark_sar_robustness.py \
   --output-json reports/ttt_compare/sar/sar_robustness.json \
   --output-md reports/ttt_compare/sar/sar_robustness.md
 \end{lstlisting}
+
+\textbf{How to read the result.}
+\begin{itemize}
+  \item Open \path{sar\_before\_after\_compare.md} first.
+  \item Compare runtime in \path{sar\_ttt\_log.json} against Tent to understand the extra adaptation cost.
+  \item Use \path{sar\_robustness.md} when comparing SAR against CoTTA and EATA.
+\end{itemize}
+
+\textbf{Pros.}
+\begin{itemize}
+  \item more conservative update geometry than Tent,
+  \item useful for noisy shifts,
+  \item a good middle ground between Tent simplicity and CoTTA complexity.
+\end{itemize}
+
+\textbf{Cons.}
+\begin{itemize}
+  \item slower than Tent,
+  \item conceptually harder for beginners,
+  \item can be unnecessary for small or clean shifts.
+\end{itemize}
+
+\subsection{Choosing a method quickly}
+\begin{center}
+\begin{tabular}{p{2.1cm} p{4.1cm} p{4.1cm}}
+\toprule
+\textbf{Method} & \textbf{Best first use} & \textbf{Main trade-off} \\
+\midrule
+Tent & first ablation, safest first comparison & weakest adaptation signal \\
+MIM & geometry- or pose-sensitive shift & more model-specific and harder to interpret \\
+CoTTA & streaming / continual adaptation & stateful and more expensive \\
+EATA & conservative adaptation with explicit skipping & may do nothing on small subsets \\
+SAR & noisy shift with stability concerns & slower than Tent \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \subsection{Task-aware examples}
 The methods above are shared, but the safest default preset depends on the task emphasis.

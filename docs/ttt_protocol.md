@@ -143,9 +143,62 @@ The practical pattern is always the same:
 3. export wrapped predictions with another method,
 4. compare the resulting logs and method-specific reports.
 
+## How to read the compare outputs first
+
+Before diving into the individual methods, it helps to read the generated
+artifacts in a fixed order:
+
+1. `plan.json`
+2. `<method>_before_after_compare.md`
+3. `<method>_ttt_log.json`
+4. optional follow-up method-specific tools such as `eval_cotta_drift.py`
+
+This order is intentional. The compare markdown is the beginner-friendly entry
+point. It answers:
+
+- did adaptation actually run?
+- how many update steps were applied?
+- did exported predictions change?
+- what warning or guard rail fired?
+
+Do not interpret the smoke compare table as a leaderboard. It is a workflow
+validation summary.
+
+- `real compare status=completed` means the pipeline ran end-to-end
+- `steps run` tells you whether adaptation actually updated parameters
+- `mean final loss` is the adaptation objective, not a universal quality score
+- `warning summary` is often the most important column
+
+Example:
+- EATA can report `steps_run=0` with `eata_empty_selected_set`
+- that means EATA intentionally skipped adaptation on that tiny subset
+- it does not mean the implementation is broken
+
+## Shared step-by-step workflow
+
+For every method, use the same operational recipe:
+
+1. fix the dataset subset or deterministic domain-shift target
+2. run `scripts/ttt_compare.sh` with one boilerplate
+3. open `<method>_before_after_compare.md`
+4. inspect `<method>_ttt_log.json` only if you need detailed reasoning
+5. use the method-specific follow-up tool only when the compact compare report is not enough
+
+This matters because many users jump directly into the raw TTT log and get
+lost. In practice, the compare markdown should be treated as the primary
+operator report.
+
 ### Tent
 
-Use Tent when you want the smallest and safest step away from baseline inference.
+Principle:
+- Tent minimizes prediction entropy online
+- in plain language, it pushes the model toward sharper predictions on shifted inputs
+- in YOLOZU, the default safe rollout keeps updates constrained to norm-affine parameters
+
+When to use it:
+- first ablation
+- first production-style smoke compare
+- safest method to explain to someone new to TTT
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -157,14 +210,32 @@ bash scripts/ttt_compare.sh \
   --device cuda
 ```
 
-Primary outputs:
-- `reports/ttt_compare/tent/baseline_predictions.json`
-- `reports/ttt_compare/tent/tent_predictions.json`
-- `reports/ttt_compare/tent/tent_before_after_compare.json`
+Read it like this:
+- open `tent_before_after_compare.md`
+- check whether `steps_run > 0`
+- if `changed_images=0`, adaptation still ran; it just did not change exported predictions on that subset
+- open `tent_ttt_log.json` if you want the loss and runtime detail
+
+Pros:
+- simplest method
+- lowest extra compute
+- easiest to debug
+
+Cons:
+- weakest self-supervised signal
+- can sharpen wrong predictions under severe shift
+- usually less expressive than reconstruction-based methods
 
 ### MIM
 
-Use MIM when the geometry-aware masked reconstruction signal is available and you want a stronger adaptation objective than plain entropy minimization.
+Principle:
+- MIM uses masked reconstruction and optional entropy terms
+- instead of only asking the model to be more confident, it asks the model to reconstruct hidden structure from partially masked features
+- this creates a stronger self-supervised signal than Tent
+
+When to use it:
+- pose-heavy or geometry-sensitive adaptation
+- cases where confidence-only adaptation is too weak
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -201,9 +272,31 @@ Repo-backed smoke snapshot:
 - `mean_final_loss=0.461853`
 - `changed_images=0 / 2`
 
+Read it like this:
+- open `mim_before_after_compare.md`
+- then inspect `mim_ttt_log.json`
+- in MIM, the adaptation loss is usually more meaningful than in Tent because it contains the reconstruction term
+- `changed_images=0 / 2` on the smoke subset means the MIM path executed correctly, even though the final detections did not change
+
+Pros:
+- stronger adaptation signal than Tent
+- useful for geometry-aware adaptation
+- a good next step after Tent
+
+Cons:
+- more model-specific
+- harder to explain and inspect
+- loss values are not directly comparable with Tent
+
 ### CoTTA
 
-Use CoTTA when stream-mode adaptation matters and you want EMA-teacher smoothing with restoration against long-run drift.
+Principle:
+- CoTTA uses augmentation-averaged predictions, an EMA teacher, and partial restoration
+- the goal is to adapt in a stream while reducing long-run drift
+
+When to use it:
+- continual or streaming adaptation
+- when you care about long-run behavior more than one-image adaptation
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -225,9 +318,30 @@ python3 tools/eval_cotta_drift.py \
   --output-md reports/ttt_compare/cotta/cotta_drift.md
 ```
 
+Read it like this:
+- open `cotta_before_after_compare.md`
+- inspect `cotta_ttt_log.json` for stream update behavior
+- open `cotta_drift.md` when you want to reason about long-run drift
+
+Pros:
+- well suited to continual adaptation
+- EMA teacher smooths noisy updates
+- restoration helps prevent collapse
+
+Cons:
+- more moving parts than Tent or MIM
+- more stateful and harder to debug
+- higher runtime cost
+
 ### EATA
 
-Use EATA when you want selective adaptation and anchor regularization so low-quality batches can be skipped safely.
+Principle:
+- EATA filters the batch first, then adapts only on trusted samples
+- it also uses anchor regularization to reduce forgetting
+
+When to use it:
+- when low-quality or misleading test samples are common
+- when you prefer the method to skip adaptation rather than force updates
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -249,9 +363,30 @@ python3 tools/benchmark_eata_stability.py \
   --output-md reports/ttt_compare/eata/eata_benchmark.md
 ```
 
+Read it like this:
+- open `eata_before_after_compare.md`
+- if `steps_run=0`, check the warning field before assuming there was an error
+- on small smoke subsets, `eata_empty_selected_set` is expected conservative behavior
+
+Pros:
+- safest method when adaptation mistakes are expensive
+- explicit skip behavior is operationally easy to explain
+- regularization helps protect important weights
+
+Cons:
+- may appear inactive on tiny subsets
+- more thresholds and diagnostics to understand
+- can be harder for new users to trust at first glance
+
 ### SAR
 
-Use SAR when you want sharpness-aware entropy minimization and can afford the extra adaptation cost.
+Principle:
+- SAR performs sharpness-aware entropy minimization
+- instead of trusting only the immediate entropy gradient, it prefers updates that remain stable after a small perturbation
+
+When to use it:
+- noisy shifts
+- cases where plain Tent is too eager but CoTTA feels too heavy
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -273,6 +408,31 @@ python3 tools/benchmark_sar_robustness.py \
   --output-json reports/ttt_compare/sar/sar_robustness.json \
   --output-md reports/ttt_compare/sar/sar_robustness.md
 ```
+
+Read it like this:
+- open `sar_before_after_compare.md`
+- compare `sar_ttt_log.json` runtime against Tent to understand the cost increase
+- use `sar_robustness.md` when comparing SAR against CoTTA and EATA
+
+Pros:
+- more conservative update geometry than Tent
+- often useful for unstable or noisy shifts
+- good middle ground between Tent and CoTTA
+
+Cons:
+- slower than Tent
+- harder for beginners to understand
+- can be unnecessary on mild shifts
+
+## Choosing a method quickly
+
+| Method | Best first use | Main trade-off |
+| --- | --- | --- |
+| Tent | first ablation, safest first comparison | weakest adaptation signal |
+| MIM | geometry- or pose-sensitive shift | more model-specific and harder to interpret |
+| CoTTA | streaming / continual adaptation | stateful and more expensive |
+| EATA | conservative adaptation with explicit skipping | may do nothing on small subsets |
+| SAR | noisy shift with stability concerns | slower than Tent |
 
 ### Task-aware examples
 

@@ -53,6 +53,32 @@ Notes:
 - The `mim` boilerplate also injects the repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` into both the baseline and adapted export so the MIM branch is enabled without a long operator command.
 - If you have a checkpoint with dedicated adapter/LoRA parameters, copy the JSON boilerplate and switch the update filter there instead of expanding the raw CLI.
 
+## Beginner reading guide
+
+If you are new to TTT, do not start from the raw JSON logs.
+
+Read the generated files in this order:
+1. `plan.json`
+2. `<method>_before_after_compare.md`
+3. `<method>_ttt_log.json`
+4. optional follow-up method-specific reports
+
+Why this order works:
+- `plan.json` tells you what actually ran
+- `before_after_compare.md` tells you whether anything changed
+- `ttt_log.json` tells you why
+
+Common interpretations:
+- `steps_run > 0`: the method really adapted
+- `changed_images = 0`: the workflow ran, but exported predictions did not change on that subset
+- `mean_final_loss`: adaptation objective value, not a universal leaderboard metric
+- `warning_summary`: often the most informative column in the smoke table
+
+Example:
+- EATA can finish successfully with `steps_run=0`
+- that usually means its sample-selection guard decided adaptation was unsafe on that subset
+- that is conservative behavior, not an implementation failure
+
 ## Smoke compare snapshot (repo-shipped checkpoint)
 
 We also ran the boilerplates against the repo-shipped checkpoint
@@ -77,6 +103,16 @@ For the completed runs, the compact before/after summaries live here:
 - `reports/ttt_compare/cotta_smoke_cpu/cotta_before_after_compare.md`
 - `reports/ttt_compare/eata_smoke_cpu/eata_before_after_compare.md`
 - `reports/ttt_compare/sar_smoke_cpu/sar_before_after_compare.md`
+
+## Method selection cheat sheet
+
+| Method | Start here when | Why it helps | Main cost |
+| --- | --- | --- | --- |
+| Tent | you want the safest first compare | simplest entropy-based adaptation | weakest signal |
+| MIM | you need geometry-aware adaptation | stronger self-supervised signal | more model-specific |
+| CoTTA | you care about streaming behavior | EMA teacher + restoration | more state and more compute |
+| EATA | you prefer conservative adaptation | selective updates + regularization | may skip adaptation often |
+| SAR | the shift is noisy or unstable | sharpness-aware updates | slower per step |
 
 ## Method-specific entry examples
 
