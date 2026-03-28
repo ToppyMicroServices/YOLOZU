@@ -216,6 +216,314 @@ Both CLIs expose \cmd{--ttt-preset}:
 Presets override core knobs (method, steps, lr, update filter, max batches) and set conservative guard rails unless you override them.
 Use \cmd{--ttt-sdft-task \{pose,keypoints,depth,seg,full\}} and \cmd{--ttt-aux-*} weights to steer multi-task adaptation losses.
 
+\section{Algorithm catalog with concrete examples}
+The currently implemented parameter-updating TTT/CTTA methods are:
+\cmd{tent}, \cmd{mim}, \cmd{cotta}, \cmd{eata}, and \cmd{sar}.
+In practice, the fastest way to compare them fairly is:
+\begin{enumerate}
+  \item freeze the image subset,
+  \item run the same adapter/checkpoint on the same shifted images,
+  \item emit wrapped predictions for each method,
+  \item compare method-specific logs and benchmark artifacts.
+\end{enumerate}
+
+\subsection{Recommended operator workflow: boilerplate compare}
+Instead of retyping a long raw export command for each method, use the boilerplate compare wrapper:
+
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
+\end{lstlisting}
+
+This workflow writes:
+\begin{itemize}
+  \item \path{plan.json}
+  \item \path{baseline_predictions.json}
+  \item \path{<method>_predictions.json}
+  \item \path{<method>_ttt_log.json}
+  \item \path{<method>_before_after_compare.json}
+  \item \path{<method>_before_after_compare.md}
+\end{itemize}
+
+The compare report provides the actual \textbf{before/after} summary:
+baseline vs adapted prediction counts, TTT loss/runtime summary, and a compact drift summary
+(\texttt{changed\_images}, \texttt{missing\_match\_failures}, \texttt{value\_mismatch\_failures}).
+
+\subsection{Which files to compare for each method}
+\begin{center}
+\begin{tabular}{p{2.0cm} p{2.2cm} p{3.1cm} p{3.1cm} p{3.4cm}}
+\toprule
+\textbf{Method} & \textbf{Boilerplate} & \textbf{Baseline} & \textbf{Adapted} & \textbf{Primary before/after artifact} \\
+\midrule
+Tent & \cmd{tent} & \path{reports/ttt_compare/tent/baseline_predictions.json} & \path{reports/ttt_compare/tent/tent_predictions.json} & \path{reports/ttt_compare/tent/tent_before_after_compare.md} \\
+MIM & \cmd{mim} & \path{reports/ttt_compare/mim/baseline_predictions.json} & \path{reports/ttt_compare/mim/mim_predictions.json} & \path{reports/ttt_compare/mim/mim_before_after_compare.md} \\
+CoTTA & \cmd{cotta} & \path{reports/ttt_compare/cotta/baseline_predictions.json} & \path{reports/ttt_compare/cotta/cotta_predictions.json} & \path{reports/ttt_compare/cotta/cotta_before_after_compare.md} \\
+EATA & \cmd{eata} & \path{reports/ttt_compare/eata/baseline_predictions.json} & \path{reports/ttt_compare/eata/eata_predictions.json} & \path{reports/ttt_compare/eata/eata_before_after_compare.md} \\
+SAR & \cmd{sar} & \path{reports/ttt_compare/sar/baseline_predictions.json} & \path{reports/ttt_compare/sar/sar_predictions.json} & \path{reports/ttt_compare/sar/sar_before_after_compare.md} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Recommended reading order:
+\begin{enumerate}
+  \item \path{plan.json} to confirm the frozen subset and boilerplate,
+  \item \path{<method>\_before\_after\_compare.md} for the compact summary,
+  \item \path{<method>\_ttt\_log.json} for adaptation loss/runtime details,
+  \item method-specific follow-up tools only when deeper diagnostics are needed.
+\end{enumerate}
+
+\textbf{Important note.}
+The shipped \cmd{mim} and \cmd{sar} boilerplates expand the safe defaults
+directly and force
+\cmd{--ttt-update-filter norm_only} so they run against the repo-shipped
+checkpoint without requiring LoRA-specific weights. If a team owns a dedicated
+adapter/LoRA checkpoint, it is better to copy the JSON boilerplate and switch
+the update filter there than to fall back to a long raw CLI invocation.
+The \cmd{mim} boilerplate also injects the repo-backed config
+\path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json} into both the
+baseline and adapted export commands so the MIM branch is enabled without a
+manual config override.
+
+\subsection{Smoke compare snapshot (repo-shipped checkpoint)}
+We also validated the boilerplates against the repo-shipped checkpoint
+\path{reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt} on \path{data/smoke},
+\cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}.
+
+This is a workflow validation snapshot, not a quality claim. The tiny smoke
+subset produced zero detections in both baseline and adapted runs, so the
+useful signal here is method completion and the TTT log behavior.
+
+\begin{center}
+\begin{tabular}{p{1.8cm} p{3.8cm} p{2.6cm} p{1.3cm} p{1.8cm} p{3.1cm}}
+\toprule
+\textbf{Method} & \textbf{Run dir} & \textbf{Real compare status} & \textbf{Steps} & \textbf{Mean final loss} & \textbf{Warning summary} \\
+\midrule
+Tent & \path{reports/ttt_compare/tent_smoke_cpu} & completed & 2 & 4.214431 & none \\
+MIM & \path{reports/ttt_compare/mim_smoke_cpu} & completed & 2 & 0.461853 & repo-backed config \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json} \\
+CoTTA & \path{reports/ttt_compare/cotta_smoke_cpu} & completed & 1 & 4.243579 & none \\
+EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null & \cmd{eata\_empty\_selected\_set} on both smoke images \\
+SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 & none \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For the completed runs, the compact summaries are:
+\begin{itemize}
+  \item \path{reports/ttt_compare/tent_smoke_cpu/tent_before_after_compare.md}
+  \item \path{reports/ttt_compare/cotta_smoke_cpu/cotta_before_after_compare.md}
+  \item \path{reports/ttt_compare/eata_smoke_cpu/eata_before_after_compare.md}
+  \item \path{reports/ttt_compare/sar_smoke_cpu/sar_before_after_compare.md}
+\end{itemize}
+
+\subsection{Tent}
+\textbf{What it does.}
+Tent minimizes prediction entropy online using a restricted parameter subset \cite{wang2021tent}.
+In \yolozu{}, the default safe rollout is norm-affine only.
+
+\textbf{When to use it.}
+Use Tent first when you want the smallest possible operational jump from baseline inference.
+It is the default recommendation for a first TTT ablation.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
+\end{lstlisting}
+
+Artifacts to inspect:
+\begin{itemize}
+  \item \path{reports/ttt_compare/tent/baseline_predictions.json}
+  \item \path{reports/ttt_compare/tent/tent_predictions.json}
+  \item \path{reports/ttt_compare/tent/tent_before_after_compare.md}
+  \item \path{reports/ttt_compare/tent/tent_ttt_log.json}
+\end{itemize}
+
+\subsection{MIM}
+\textbf{What it does.}
+MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs.
+This is the geometry-aware route when the model branch is enabled.
+
+\textbf{When to use it.}
+Use MIM when you want a stronger adaptation signal than plain entropy minimization,
+especially for pose-heavy settings or geometry-sensitive features.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/mim \
+  --device cuda
+\end{lstlisting}
+
+For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}. The shipped
+\cmd{mim} boilerplate already routes both baseline and adapted export commands
+through \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json}, so
+the repo-shipped checkpoint can run a real compare without a long manual CLI.
+
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --run-dir reports/ttt_compare/mim_smoke_cpu \
+  --device cpu \
+  --max-images 2 \
+  --skip-eval \
+  --force
+\end{lstlisting}
+
+Repo-backed smoke snapshot:
+\begin{itemize}
+  \item \path{reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md}
+  \item \cmd{steps\_run=2}
+  \item \cmd{mean\_final\_loss=0.461853}
+  \item \cmd{changed\_images=0 / 2}
+\end{itemize}
+
+\subsection{CoTTA}
+\textbf{What it does.}
+CoTTA combines augmentation-averaged predictions, EMA teacher updates, and stochastic restoration to keep long-run online drift bounded.
+
+\textbf{When to use it.}
+Use CoTTA when stream-mode adaptation matters and you want teacher smoothing plus recovery behavior,
+not just one-step entropy minimization.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate cotta \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/cotta \
+  --device cuda
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_cotta_drift.py \
+  --baseline reports/ttt_compare/tent/tent_predictions.json \
+  --cotta reports/ttt_compare/cotta/cotta_predictions.json \
+  --output-json reports/ttt_compare/cotta/cotta_drift.json \
+  --output-md reports/ttt_compare/cotta/cotta_drift.md
+\end{lstlisting}
+
+\subsection{EATA}
+\textbf{What it does.}
+EATA adds selective sample filtering plus anchor regularization so only trusted samples drive adaptation and important weights are protected.
+
+\textbf{When to use it.}
+Use EATA when false-positive adaptation is a concern and you want the run to skip weak samples instead of forcing every batch to adapt.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate eata \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/eata \
+  --device cuda
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_eata_stability.py \
+  --baseline reports/ttt_compare/tent/tent_predictions.json \
+  --eata reports/ttt_compare/eata/eata_predictions.json \
+  --output-json reports/ttt_compare/eata/eata_benchmark.json \
+  --output-md reports/ttt_compare/eata/eata_benchmark.md
+\end{lstlisting}
+
+\subsection{SAR}
+\textbf{What it does.}
+SAR performs sharpness-aware entropy minimization using a perturb-and-restore update.
+In \yolozu{}, the safe rollout starts with LoRA-first updates.
+
+\textbf{When to use it.}
+Use SAR when the shift is noisy and you want a more conservative optimizer geometry than plain Tent,
+accepting extra compute per adaptation step.
+
+\textbf{Concrete example.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate sar \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/sar \
+  --device cuda
+\end{lstlisting}
+
+Method-specific comparison tool:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_sar_robustness.py \
+  --cotta reports/ttt_compare/cotta/cotta_predictions.json \
+  --eata reports/ttt_compare/eata/eata_predictions.json \
+  --sar reports/ttt_compare/sar/sar_predictions.json \
+  --output-json reports/ttt_compare/sar/sar_robustness.json \
+  --output-md reports/ttt_compare/sar/sar_robustness.md
+\end{lstlisting}
+
+\subsection{Task-aware examples}
+The methods above are shared, but the safest default preset depends on the task emphasis.
+These examples keep the method explicit and only change the task-aware preset/auxiliary weights.
+
+\begin{lstlisting}[language=bash,caption={Task-aware TTT examples using the same export surface.}]
+# pose-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset pose_safe \
+  --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 \
+  --ttt-log-out reports/ttt_pose_safe.json \
+  --output reports/pred_pose_safe.json
+
+# keypoints-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset keypoints_safe \
+  --ttt-sdft-task keypoints --ttt-aux-keypoints-weight 0.5 \
+  --ttt-log-out reports/ttt_keypoints_safe.json \
+  --output reports/pred_keypoints_safe.json
+
+# depth-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset depth_safe \
+  --ttt-sdft-task depth --ttt-aux-depth-weight 0.5 \
+  --ttt-log-out reports/ttt_depth_safe.json \
+  --output reports/pred_depth_safe.json
+
+# segmentation-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset seg_safe \
+  --ttt-sdft-task seg --ttt-aux-seg-weight 0.5 \
+  --ttt-log-out reports/ttt_seg_safe.json \
+  --output reports/pred_seg_safe.json
+\end{lstlisting}
+
+\textbf{Rule of thumb.}
+Start from the task-aware Tent preset, then escalate to MIM/CoTTA/EATA/SAR only when the shift evidence justifies the extra complexity and latency.
+
 \section{YOLOZU introduction priority (high \texorpdfstring{$\to$}{->} low)}
 For \yolozu{} (detection/pose), the recommended operational rollout order is:
 \begin{enumerate}

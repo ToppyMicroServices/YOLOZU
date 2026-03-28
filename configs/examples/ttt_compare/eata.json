@@ -1,0 +1,11 @@
+{
+  "method": "eata",
+  "preset": "eata_safe",
+  "reset": "sample",
+  "compare": {
+    "iou_thresh": 0.99,
+    "score_atol": 0.0001,
+    "bbox_atol": 0.0001
+  },
+  "extra_export_args": []
+}

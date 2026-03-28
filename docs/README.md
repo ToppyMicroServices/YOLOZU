@@ -134,6 +134,7 @@ Reference docs:
 - [Predictions schema](predictions_schema.md)
 - [Adapter contract](adapter_contract.md)
 - [TTT protocol](ttt_protocol.md)
+- [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
 
 ## D) Bench/Parity (parity check + benchmark entry)
 

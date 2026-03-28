@@ -253,6 +253,15 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 
 详情：[`docs/ttt_protocol.md`](docs/ttt_protocol.md)
 
+推荐使用简短的 before/after compare workflow：
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
+```
+
+已提供的 boilerplate：`tent`、`mim`、`cotta`、`eata`、`sar`。
+详见：[`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
+
 TTT improvement micro-demo（展示 metric delta 与 overlay）：
 
 ```bash

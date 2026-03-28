@@ -56,6 +56,13 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
+## TTT compare boilerplates
+
+- Recommended short entrypoint: `bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
+- Python equivalent: `python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
+- Available boilerplates: `tent`, `mim`, `cotta`, `eata`, `sar`
+- Details: `docs/ttt_compare_boilerplates.md`, `docs/ttt_protocol.md`
+
 ## Evaluation helpers
 
 - Reference adapter regression gate (fixed baseline; interface contract hard + behavior warn):

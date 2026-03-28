@@ -111,6 +111,211 @@ Task-aware auxiliary knobs:
 - `--ttt-aux-seg-weight`
 - `--ttt-aux-temperature`
 
+## Implemented algorithms and concrete repo examples
+
+The recommended operator workflow is now the boilerplate compare wrapper:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
+```
+
+This produces a baseline export, an adapted export, and a before-after report without requiring you to hand-write the long `--ttt-*` flag set.
+
+Reference:
+- [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
+
+The currently implemented parameter-updating methods are:
+- `tent`
+- `mim`
+- `cotta`
+- `eata`
+- `sar`
+
+The practical pattern is always the same:
+1. freeze a deterministic dataset subset,
+2. export wrapped predictions with one method,
+3. export wrapped predictions with another method,
+4. compare the resulting logs and method-specific reports.
+
+### Tent
+
+Use Tent when you want the smallest and safest step away from baseline inference.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
+```
+
+Primary outputs:
+- `reports/ttt_compare/tent/baseline_predictions.json`
+- `reports/ttt_compare/tent/tent_predictions.json`
+- `reports/ttt_compare/tent/tent_before_after_compare.json`
+
+### MIM
+
+Use MIM when the geometry-aware masked reconstruction signal is available and you want a stronger adaptation objective than plain entropy minimization.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/mim \
+  --device cuda
+```
+
+For pose-heavy runs, switch the preset to `pose_mim`.
+The shipped `mim` boilerplate already points both baseline and adapted export
+commands at `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json`, so the
+repo-shipped checkpoint can run a real compare without adding raw `--ttt-*`
+flags.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --run-dir reports/ttt_compare/mim_smoke_cpu \
+  --device cpu \
+  --max-images 2 \
+  --skip-eval \
+  --force
+```
+
+Repo-backed smoke snapshot:
+- `reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md`
+- `steps_run=2`
+- `mean_final_loss=0.461853`
+- `changed_images=0 / 2`
+
+### CoTTA
+
+Use CoTTA when stream-mode adaptation matters and you want EMA-teacher smoothing with restoration against long-run drift.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate cotta \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/cotta \
+  --device cuda
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/eval_cotta_drift.py \
+  --baseline reports/ttt_compare/tent/tent_predictions.json \
+  --cotta reports/ttt_compare/cotta/cotta_predictions.json \
+  --output-json reports/ttt_compare/cotta/cotta_drift.json \
+  --output-md reports/ttt_compare/cotta/cotta_drift.md
+```
+
+### EATA
+
+Use EATA when you want selective adaptation and anchor regularization so low-quality batches can be skipped safely.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate eata \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/eata \
+  --device cuda
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/benchmark_eata_stability.py \
+  --baseline reports/ttt_compare/tent/tent_predictions.json \
+  --eata reports/ttt_compare/eata/eata_predictions.json \
+  --output-json reports/ttt_compare/eata/eata_benchmark.json \
+  --output-md reports/ttt_compare/eata/eata_benchmark.md
+```
+
+### SAR
+
+Use SAR when you want sharpness-aware entropy minimization and can afford the extra adaptation cost.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate sar \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/sar \
+  --device cuda
+```
+
+Method-specific evidence:
+
+```bash
+python3 tools/benchmark_sar_robustness.py \
+  --cotta reports/ttt_compare/cotta/cotta_predictions.json \
+  --eata reports/ttt_compare/eata/eata_predictions.json \
+  --sar reports/ttt_compare/sar/sar_predictions.json \
+  --output-json reports/ttt_compare/sar/sar_robustness.json \
+  --output-md reports/ttt_compare/sar/sar_robustness.md
+```
+
+### Task-aware examples
+
+The method is still usually Tent first; what changes is the preset and auxiliary weighting for the task emphasis:
+
+```bash
+# pose-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset pose_safe \
+  --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 \
+  --ttt-log-out reports/ttt_pose_safe.json \
+  --output reports/pred_pose_safe.json
+
+# keypoints-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset keypoints_safe \
+  --ttt-sdft-task keypoints --ttt-aux-keypoints-weight 0.5 \
+  --ttt-log-out reports/ttt_keypoints_safe.json \
+  --output reports/pred_keypoints_safe.json
+
+# depth-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset depth_safe \
+  --ttt-sdft-task depth --ttt-aux-depth-weight 0.5 \
+  --ttt-log-out reports/ttt_depth_safe.json \
+  --output reports/pred_depth_safe.json
+
+# segmentation-heavy Tent
+python3 tools/yolozu.py export \
+  --backend torch --dataset reports/smoke_50 --split val \
+  --checkpoint /path/to.ckpt --device cuda \
+  --ttt --ttt-method tent --ttt-preset seg_safe \
+  --ttt-sdft-task seg --ttt-aux-seg-weight 0.5 \
+  --ttt-log-out reports/ttt_seg_safe.json \
+  --output reports/pred_seg_safe.json
+```
+
 ## Reset policy (stream vs sample)
 
 `--ttt-reset stream` (default):
@@ -173,6 +378,20 @@ Outputs:
 - `reports/coco128_50/subset_images.txt` (frozen image list)
 
 ## Example: baseline vs TTT (coco128 smoke)
+
+Recommended short entrypoint:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset reports/coco128_50 \
+  --split train2017 \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/coco128_tent \
+  --device cuda
+```
+
+If you need the raw export commands for debugging or custom orchestration, the wrapper writes them into `plan.json`.
 
 Baseline (no TTT):
 
