@@ -75,6 +75,22 @@ Example stdout (CPU, deterministic seeds; values are intentionally tiny, the poi
 - `map50 0.00326797 → 0.00392157`
 - `map50_95 0.000326797 → 0.000392157`
 
+For the manual, we convert these fixed artifacts into three beginner-facing PNGs:
+- `docs/assets/ttt_method_results_summary.png`
+- `docs/assets/ttt_compare_pipeline.png`
+- `docs/assets/ttt_probe_example_panel.png`
+
+Use them in this order:
+1. `ttt_method_results_summary.png` for the actual effect
+2. `ttt_compare_pipeline.png` for the processing steps
+3. `ttt_probe_example_panel.png` for the per-image shifted probe view: one actual tile per image, with the highest-score baseline box and highest-score TTT box overlaid on the same input
+
+To regenerate those figures from the fixed result source JSON:
+
+```bash
+python3 tools/render_ttt_manual_figures.py
+```
+
 ## Presets (recommended starting points)
 
 Both CLIs expose `--ttt-preset`:
@@ -167,7 +183,7 @@ validation summary.
 - `real compare status=completed` means the pipeline ran end-to-end
 - `steps run` tells you whether adaptation actually updated parameters
 - `mean final loss` is the adaptation objective, not a universal quality score
-- `warning summary` is often the most important column
+- warning notes should be read from the caption or prose, not from a very wide table column
 
 Example:
 - EATA can report `steps_run=0` with `eata_empty_selected_set`
@@ -216,6 +232,10 @@ Read it like this:
 - if `changed_images=0`, adaptation still ran; it just did not change exported predictions on that subset
 - open `tent_ttt_log.json` if you want the loss and runtime detail
 
+Concrete repo result:
+- on the fixed 10-image shifted probe, Tent improves `map50` from `0.00326797` to `0.00392157`
+- on the same probe, it improves `map50_95` from `0.000326797` to `0.000392157`
+
 Pros:
 - simplest method
 - lowest extra compute
@@ -232,6 +252,7 @@ Principle:
 - MIM uses masked reconstruction and optional entropy terms
 - instead of only asking the model to be more confident, it asks the model to reconstruct hidden structure from partially masked features
 - this creates a stronger self-supervised signal than Tent
+- the practical references to know are MAE (He et al., CVPR 2022) and SimMIM (Xie et al., CVPR 2022)
 
 When to use it:
 - pose-heavy or geometry-sensitive adaptation
@@ -277,6 +298,11 @@ Read it like this:
 - then inspect `mim_ttt_log.json`
 - in MIM, the adaptation loss is usually more meaningful than in Tent because it contains the reconstruction term
 - `changed_images=0 / 2` on the smoke subset means the MIM path executed correctly, even though the final detections did not change
+- in the manual summary figure, MIM is therefore treated as execution evidence, not as the main metric-win bar chart
+
+Concrete repo result:
+- repo-backed smoke compare: `steps_run=2`, `mean_final_loss=0.461853`, `changed_images=0 / 2`
+- this is an execution example, not the primary metric-win figure
 
 Pros:
 - stronger adaptation signal than Tent
@@ -323,6 +349,9 @@ Read it like this:
 - inspect `cotta_ttt_log.json` for stream update behavior
 - open `cotta_drift.md` when you want to reason about long-run drift
 
+Concrete repo result:
+- on the same fixed 10-image shifted probe as Tent, CoTTA reaches `map50=0.00392157` and `map50_95=0.000392157`
+
 Pros:
 - well suited to continual adaptation
 - EMA teacher smooths noisy updates
@@ -367,6 +396,10 @@ Read it like this:
 - open `eata_before_after_compare.md`
 - if `steps_run=0`, check the warning field before assuming there was an error
 - on small smoke subsets, `eata_empty_selected_set` is expected conservative behavior
+
+Concrete repo result:
+- smoke fixture: `steps_run=0` with `eata_empty_selected_set`
+- real shifted probe: same small metric gain as Tent / CoTTA / SAR
 
 Pros:
 - safest method when adaptation mistakes are expensive
@@ -413,6 +446,9 @@ Read it like this:
 - open `sar_before_after_compare.md`
 - compare `sar_ttt_log.json` runtime against Tent to understand the cost increase
 - use `sar_robustness.md` when comparing SAR against CoTTA and EATA
+
+Concrete repo result:
+- on the fixed 10-image shifted probe, SAR reaches `map50=0.00392157` and `map50_95=0.000392157`, matching Tent / CoTTA / EATA on that probe
 
 Pros:
 - more conservative update geometry than Tent

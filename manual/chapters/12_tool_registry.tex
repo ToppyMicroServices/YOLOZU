@@ -138,6 +138,16 @@ The registry now exposes explicit intake utilities for externally generated synt
 
 These tools reference the canonical SynthGen interface contract at \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}.
 
+\subsection*{TTT figure renderer (registry addition)}
+The registry also exposes \cmd{render\_ttt\_manual\_figures}, which regenerates:
+\begin{itemize}
+  \item \path{docs/assets/ttt\_method\_results\_summary.png}
+  \item \path{docs/assets/ttt\_compare\_pipeline.png}
+  \item \path{docs/assets/ttt\_probe\_example\_panel.png}
+\end{itemize}
+
+This keeps the TTT chapter's beginner-facing PNG figures reproducible and synchronized with fixed result artifacts rather than hand-edited screenshots.
+
 \section{Release Automation: Manual PDF DOI as a Separate Record}
 For release operations, YOLOZU intentionally keeps software DOI and manual DOI lifecycles independent:
 \begin{itemize}

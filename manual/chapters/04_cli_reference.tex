@@ -60,6 +60,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
 \cmd{python3 tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\
 \cmd{python3 tools/run\_ttt\_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt\_compare/} and writes `plan.json`, before/after predictions, optional eval reports, and compare summaries. \\
+\cmd{python3 tools/render\_ttt\_manual\_figures.py} & Renders the checked-in TTT summary/workflow/qualitative PNG figures from fixed report artifacts for \path{docs/assets/} and \path{manual/figures/}. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/check\_repo\_governance.py} & Audits local governance evidence plus exported GitHub settings snapshots for branch protection, review policy, and repository-security posture. Writes a JSON summary and keeps history-based items explicit instead of pretending they are source-only facts. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\

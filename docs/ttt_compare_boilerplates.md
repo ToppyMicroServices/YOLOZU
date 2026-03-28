@@ -72,7 +72,7 @@ Common interpretations:
 - `steps_run > 0`: the method really adapted
 - `changed_images = 0`: the workflow ran, but exported predictions did not change on that subset
 - `mean_final_loss`: adaptation objective value, not a universal leaderboard metric
-- `warning_summary`: often the most informative column in the smoke table
+- warning notes belong in prose, not in a wide table column
 
 Example:
 - EATA can finish successfully with `steps_run=0`
@@ -89,13 +89,18 @@ These are workflow-validation results, not performance claims. The tiny smoke
 subset produced zero detections in both baseline and adapted runs, so the useful
 signal here is whether the method completed and what the TTT log reported.
 
-| Method | Run dir | Real compare status | Steps run | Mean final loss | Warning summary |
-| --- | --- | --- | ---: | ---: | --- |
-| Tent | `reports/ttt_compare/tent_smoke_cpu` | completed | `2` | `4.214431` | none |
-| MIM | `reports/ttt_compare/mim_smoke_cpu` | completed | `2` | `0.461853` | repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` |
-| CoTTA | `reports/ttt_compare/cotta_smoke_cpu` | completed | `1` | `4.243579` | none |
-| EATA | `reports/ttt_compare/eata_smoke_cpu` | completed | `0` | `null` | `eata_empty_selected_set` on both smoke images |
-| SAR | `reports/ttt_compare/sar_smoke_cpu` | completed | `2` | `4.211009` | none |
+| Method | Run dir | Real compare status | Steps run | Mean final loss |
+| --- | --- | --- | ---: | ---: |
+| Tent | `reports/ttt_compare/tent_smoke_cpu` | completed | `2` | `4.214431` |
+| MIM | `reports/ttt_compare/mim_smoke_cpu` | completed | `2` | `0.461853` |
+| CoTTA | `reports/ttt_compare/cotta_smoke_cpu` | completed | `1` | `4.243579` |
+| EATA | `reports/ttt_compare/eata_smoke_cpu` | completed | `0` | `null` |
+| SAR | `reports/ttt_compare/sar_smoke_cpu` | completed | `2` | `4.211009` |
+
+Warning notes:
+- MIM uses the repo-backed compare config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json`
+- EATA reports `eata_empty_selected_set` on both smoke images
+- Tent, CoTTA, and SAR complete without warnings on this smoke subset
 
 For the completed runs, the compact before/after summaries live here:
 - `reports/ttt_compare/tent_smoke_cpu/tent_before_after_compare.md`

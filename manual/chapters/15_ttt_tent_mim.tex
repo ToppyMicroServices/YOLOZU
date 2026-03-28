@@ -100,10 +100,12 @@ With \cmd{--wrap}, outputs explicitly include:
   \item \path{meta.export_settings.domain_shift_recipe} (\texttt{path}, \texttt{sha256})
 \end{itemize}
 
-\subsection{Visual example: before/after TTT}
-The goal of this example is to show \emph{what changes} when TTT is enabled.
-It is not meant to prove a consistent improvement on a single image.
-For quantitative claims, run a fixed scenario suite over an explicitly defined target split and compare metrics.
+\subsection{Real result summary: use this first}
+The first thing beginners need is not a noisy overlay, but a controlled \emph{result summary}.
+Figure~\ref{fig:ttt-real-summary} is therefore the primary onboarding figure for this chapter.
+It uses the same few-shot checkpoint, the same ten shifted images, and the same seed for every method.
+That means the bar chart is a controlled comparison, not a one-off anecdote.
+The checked-in PNG figures are regenerated with \path{tools/render_ttt_manual_figures.py}.
 
 Command summary (deterministic target + same checkpoint, with and without TTT):
 \begin{lstlisting}[language=bash]
@@ -147,25 +149,16 @@ python3 tools/yolozu.py predict-images \
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/demo_ttt_input_blur_s3.jpg}
-  \caption{Deterministic domain-shift target example (gaussian blur, severity 3) generated from \cmd{data/smoke}.}
+  \includegraphics[width=\textwidth]{figures/ttt_method_results_summary.png}
+  \caption{Primary TTT result figure. Real fixed-subset result summary from the ten-image shifted probe in \texttt{reports/ttt\_improvement\_probe}. Tent, CoTTA, EATA, and SAR all improve from \texttt{map50=0.00326797} to \texttt{0.00392157} and from \texttt{map50\_95=0.000326797} to \texttt{0.000392157} under the same checkpoint, subset, and seed. MIM is shown separately as execution evidence because the current repo-backed MIM smoke fixture proves the masked-reconstruction path runs (\texttt{steps\_run=2}, \texttt{mean\_final\_loss=0.461853}) but does not change exported detections on its tiny two-image smoke subset.}
+  \label{fig:ttt-real-summary}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \begin{minipage}{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/demo_ttt_no_ttt_overlay.jpg}
-    \vspace{0.25em}
-    {\small \textbf{No TTT}}
-  \end{minipage}\hfill
-  \begin{minipage}{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/demo_ttt_with_ttt_overlay.jpg}
-    \vspace{0.25em}
-    {\small \textbf{With TTT (Tent, safe preset)}}
-  \end{minipage}
-  \caption{Overlay comparison on the same shifted input with and without TTT. The outputs are predictions in the \yolozu{} predictions interface contract, rendered as bounding boxes (and keypoints when present).}
+  \includegraphics[width=\textwidth]{figures/ttt_compare_pipeline.png}
+  \caption{Beginner-oriented processing flow for every TTT/CTTA method. Freeze the subset, export once without TTT, export once with one boilerplate, then open \texttt{<method>\_before\_after\_compare.md} before reading raw logs. This is the recommended reading order because the compare markdown answers whether adaptation actually ran, whether predictions changed, and which artifact to inspect next.}
+  \label{fig:ttt-compare-workflow}
 \end{figure}
 
 \subsection{Metric micro-demo: show a delta (recommended)}
@@ -199,6 +192,19 @@ Example stdout (CPU, deterministic seeds; values are intentionally tiny, the poi
   \item \texttt{map50 0.00326797 $\to$ 0.00392157}
   \item \texttt{map50\_95 0.000326797 $\to$ 0.000392157}
 \end{itemize}
+
+\subsection{Per-image probe grid: concrete, but still secondary to the metric chart}
+Figure~\ref{fig:ttt-qualitative-panel} uses the same fixed ten-image shifted subset as the metric summary.
+It is intentionally secondary. The goal of this figure is not to prove quality with a single image, but to make the result concrete:
+for each shifted image, it shows the top baseline detection, the top TTT detection, and the score movement.
+This makes it much easier to explain what the detector is trying to localize and how the prediction changed, while the actual proof of improvement still comes from Figure~\ref{fig:ttt-real-summary}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/ttt_probe_example_panel.png}
+  \caption{Per-image result grid from the same fixed ten-image shifted probe used in Figure~\ref{fig:ttt-real-summary}. Each tile is one actual shifted image. Red marks the highest-score baseline detection without TTT; blue marks the highest-score detection after Tent. The text under each tile reports the top-score movement plus detection-count and ground-truth counts. This figure answers ``what was the detector trying to localize, and how did the top detection move on each image?'' The quantitative claim still comes from the fixed-subset metric chart in Figure~\ref{fig:ttt-real-summary}.}
+  \label{fig:ttt-qualitative-panel}
+\end{figure}
 
 \section{Presets (start here)}
 Both CLIs expose \cmd{--ttt-preset}:
@@ -298,19 +304,21 @@ This is a workflow validation snapshot, not a quality claim. The tiny smoke
 subset produced zero detections in both baseline and adapted runs, so the
 useful signal here is method completion and the TTT log behavior.
 
-\begin{center}
-\begin{tabular}{p{1.8cm} p{3.8cm} p{2.6cm} p{1.3cm} p{1.8cm} p{3.1cm}}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{p{1.8cm} p{3.8cm} p{2.6cm} p{1.3cm} p{1.8cm}}
 \toprule
-\textbf{Method} & \textbf{Run dir} & \textbf{Real compare status} & \textbf{Steps} & \textbf{Mean final loss} & \textbf{Warning summary} \\
+\textbf{Method} & \textbf{Run dir} & \textbf{Real compare status} & \textbf{Steps} & \textbf{Mean final loss} \\
 \midrule
-Tent & \path{reports/ttt_compare/tent_smoke_cpu} & completed & 2 & 4.214431 & none \\
-MIM & \path{reports/ttt_compare/mim_smoke_cpu} & completed & 2 & 0.461853 & repo-backed config \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json} \\
-CoTTA & \path{reports/ttt_compare/cotta_smoke_cpu} & completed & 1 & 4.243579 & none \\
-EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null & \cmd{eata\_empty\_selected\_set} on both smoke images \\
-SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 & none \\
+Tent & \path{reports/ttt_compare/tent_smoke_cpu} & completed & 2 & 4.214431 \\
+MIM & \path{reports/ttt_compare/mim_smoke_cpu} & completed & 2 & 0.461853 \\
+CoTTA & \path{reports/ttt_compare/cotta_smoke_cpu} & completed & 1 & 4.243579 \\
+EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null \\
+SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 \\
 \bottomrule
 \end{tabular}
-\end{center}
+\caption{Smoke compare snapshot for the repo-shipped checkpoint on \texttt{data/smoke}, \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}. This is a workflow-validation table, not a quality leaderboard. Warning notes are intentionally moved out of the table for readability: MIM uses the repo-backed compare config \texttt{configs/examples/ttt\_compare/rtdetr\_pose\_mim\_compare.json}; EATA reports \cmd{eata\_empty\_selected\_set} on both smoke images; Tent, CoTTA, and SAR complete without warnings on this smoke subset.}
+\end{table}
 
 For the completed runs, the compact summaries are:
 \begin{itemize}
@@ -329,7 +337,6 @@ Read the columns in this order:
   \item \textbf{Real compare status}: did the whole compare workflow finish?
   \item \textbf{Steps}: how many adaptation updates actually ran?
   \item \textbf{Mean final loss}: what was the final adaptation objective value?
-  \item \textbf{Warning summary}: was adaptation skipped or constrained for a safety reason?
 \end{enumerate}
 
 Two common beginner mistakes:
@@ -337,6 +344,7 @@ Two common beginner mistakes:
   \item treating \cmd{mean\_final\_loss} as a quality score across methods,
   \item treating \cmd{steps=0} as a failure.
 \end{itemize}
+Warning notes are now kept in the table caption rather than in a dedicated wide column.
 For example, EATA can legitimately report \cmd{steps=0} with
 \cmd{eata\_empty\_selected\_set}. That means the method decided \emph{not} to adapt on those smoke images, which is conservative behavior, not a crash.
 
@@ -426,6 +434,12 @@ bash scripts/ttt_compare.sh \
   \item Open \path{tent\_ttt\_log.json} only if you need guard or runtime detail.
 \end{itemize}
 
+\textbf{Concrete repo result.}
+On the fixed ten-image shifted probe in Figure~\ref{fig:ttt-real-summary}, Tent improves
+\texttt{map50} from \texttt{0.00326797} to \texttt{0.00392157} and
+\texttt{map50\_95} from \texttt{0.000326797} to \texttt{0.000392157}.
+The effect is small, but it is reproducible under the same checkpoint, subset, and seed.
+
 \textbf{Pros.}
 \begin{itemize}
   \item easiest method to explain,
@@ -442,7 +456,7 @@ bash scripts/ttt_compare.sh \
 
 \subsection{MIM}
 \textbf{Principle.}
-MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs. Instead of only asking the model to become more confident, it also asks the model to reconstruct hidden structure from partially masked internal features.
+MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs. Instead of only asking the model to become more confident, it also asks the model to reconstruct hidden structure from partially masked internal features. In practice, the references to know are Masked Autoencoders (MAE) by He et al.\ \cite{he2022mae} and SimMIM by Xie et al.\ \cite{xie2022simmim}; \yolozu{} uses the same family of masked-image-modeling ideas as an inference-time auxiliary signal rather than as a standalone pretraining recipe.
 
 \begin{figure}[h]
 \centering
@@ -504,7 +518,14 @@ bash scripts/ttt_compare.sh \
   \item Open \path{mim\_before\_after\_compare.md} first.
   \item Then inspect \path{mim\_ttt\_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
   \item In the repo-backed smoke example, \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, and \cmd{changed\_images=0 / 2}. That means the MIM path is really running even though this tiny subset does not change final detections.
+  \item This is why MIM is shown as an execution example inside Figure~\ref{fig:ttt-real-summary}, not as the main metric-win bar chart.
 \end{itemize}
+
+\textbf{Concrete repo result.}
+The current checked-in MIM example is the repo-backed smoke fixture:
+\cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, \cmd{changed\_images=0 / 2}.
+This is useful because it proves that the masked-reconstruction path is wired correctly.
+At the same time, it also shows why operators should not overclaim from a tiny smoke subset.
 
 \textbf{Pros.}
 \begin{itemize}
@@ -577,6 +598,12 @@ python3 tools/eval_cotta_drift.py \
   \item Use \path{cotta\_drift.md} when you need to reason about long-run stability.
 \end{itemize}
 
+\textbf{Concrete repo result.}
+On the same fixed ten-image shifted probe as Tent, CoTTA reaches the same
+\texttt{map50} and \texttt{map50\_95} values shown in Figure~\ref{fig:ttt-real-summary}
+(\texttt{0.00392157} and \texttt{0.000392157} respectively).
+The practical takeaway is that CoTTA can recover the same small metric gain while using a more stateful adaptation recipe.
+
 \textbf{Pros.}
 \begin{itemize}
   \item best suited to continual / streaming adaptation,
@@ -645,6 +672,11 @@ python3 tools/benchmark_eata_stability.py \
   \item If \cmd{steps\_run=0}, check the warning field before assuming anything failed.
   \item On tiny smoke subsets, \cmd{eata\_empty\_selected\_set} is expected conservative behavior.
 \end{itemize}
+
+\textbf{Concrete repo result.}
+EATA has two useful examples in this repo.
+On the tiny smoke fixture, it intentionally skips adaptation (\cmd{steps\_run=0}, \cmd{eata\_empty\_selected\_set}), which is conservative behavior.
+On the larger fixed ten-image shifted probe, it does adapt and reaches the same small metric gain as Tent/CoTTA/SAR, as shown in Figure~\ref{fig:ttt-real-summary}.
 
 \textbf{Pros.}
 \begin{itemize}
@@ -715,6 +747,10 @@ python3 tools/benchmark_sar_robustness.py \
   \item Compare runtime in \path{sar\_ttt\_log.json} against Tent to understand the extra adaptation cost.
   \item Use \path{sar\_robustness.md} when comparing SAR against CoTTA and EATA.
 \end{itemize}
+
+\textbf{Concrete repo result.}
+On the fixed ten-image shifted probe, SAR reaches the same measured metric gain as Tent/CoTTA/EATA in Figure~\ref{fig:ttt-real-summary}.
+For onboarding, the important point is not that SAR wins the chart, but that it lands in the same place while using a sharper, more conservative update geometry.
 
 \textbf{Pros.}
 \begin{itemize}

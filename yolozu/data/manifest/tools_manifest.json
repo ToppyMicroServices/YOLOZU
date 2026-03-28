@@ -9648,6 +9648,106 @@
     },
     {
       "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Write generated docs PNG assets.",
+            "flag": "--docs-assets-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Copy generated PNG assets into manual/figures.",
+            "flag": "--manual-figures-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/render_ttt_manual_figures.py",
+      "examples": [
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py",
+          "description": "Render the checked-in TTT summary/pipeline/qualitative figures for docs and manual."
+        },
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manual-figures-dir tmp/ttt_manual",
+          "description": "Render the same figures into alternate output directories for inspection."
+        }
+      ],
+      "id": "render_ttt_manual_figures",
+      "inputs": [
+        {
+          "default": "docs/assets/ttt_method_results_source.json",
+          "flag": "--source-json",
+          "kind": "file",
+          "name": "source_json",
+          "required": false
+        },
+        {
+          "default": "docs/assets",
+          "flag": "--docs-assets-dir",
+          "kind": "dir",
+          "name": "docs_assets_dir",
+          "required": false
+        },
+        {
+          "default": "manual/figures",
+          "flag": "--manual-figures-dir",
+          "kind": "dir",
+          "name": "manual_figures_dir",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "Real-result TTT summary chart PNG.",
+          "kind": "file",
+          "name": "summary_png",
+          "path": "docs/assets/ttt_method_results_summary.png"
+        },
+        {
+          "description": "TTT compare workflow PNG.",
+          "kind": "file",
+          "name": "pipeline_png",
+          "path": "docs/assets/ttt_compare_pipeline.png"
+        },
+        {
+          "description": "Qualitative shifted-probe example PNG.",
+          "kind": "file",
+          "name": "qualitative_png",
+          "path": "docs/assets/ttt_probe_example_panel.png"
+        },
+        {
+          "description": "Fixed result source JSON used to render the manual figures.",
+          "kind": "file",
+          "name": "summary_source_json",
+          "path": "docs/assets/ttt_method_results_source.json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
+      "tags": [
+        "ttt",
+        "docs",
+        "manual",
+        "figures",
+        "render"
+      ]
+    },
+    {
+      "docs": [
         "docs/license_policy.md"
       ],
       "effects": {
