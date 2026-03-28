@@ -75,6 +75,34 @@ The key idea is simple:
 - only borrow teacher information where the chosen rules allow it
 - record the result as a new artifact, instead of mutating the original files
 
+## A friendlier mental model
+
+If you are new to distillation, the easiest way to picture this helper is:
+
+- the **student artifact** is your first draft
+- the **teacher artifact** is a stricter reviewer
+- the helper does not rewrite the whole answer sheet
+- it only makes limited corrections where the rules say it is safe
+
+In practice, each object falls into one of three buckets:
+
+```mermaid
+flowchart TD
+    A["One object candidate"] --> B{"Do student and teacher point to the same object?"}
+    B -->|Yes| C["Matched case\nBlend scores only"]
+    B -->|No, teacher only| D["Teacher-only case\nMaybe inject if guardrails allow it"]
+    B -->|No, student only| E["Student-only case\nKeep the student detection as-is"]
+    C --> F["Safer path:\nsmall confidence correction"]
+    D --> G["Higher-risk path:\npossible recall gain, possible false positives"]
+    E --> H["No teacher signal here"]
+```
+
+This is why the helper is useful as a **feasibility check**:
+
+- matched blending tells you whether the teacher is mostly a calibration aid
+- teacher-only injection tells you whether the teacher is finding genuinely missing objects
+- the report tells you which of those two effects is dominating
+
 ## The step-by-step workflow
 
 ### Step 1. Prepare two prediction artifacts
@@ -116,6 +144,15 @@ The main knobs are:
   - cap on teacher-only additions per image
 - `--add-duplicate-iou-threshold`
   - suppresses near-duplicate injections
+
+### A safe-first reading strategy
+
+If you are unsure where to start, use this mental checklist:
+
+1. Run a **matched-only** or conservative pass first
+2. Check whether the report mostly shows `matched` changes rather than `added`
+3. Only then try `--add-missing`
+4. If `added` dominates but metrics do not move cleanly, the teacher is probably adding noise rather than useful coverage
 
 ### Step 3. Run the helper
 
@@ -230,6 +267,12 @@ Intuition:
 
 This is the safer part of the workflow because both artifacts already agree that there is probably an object there.
 
+You can think of it as:
+
+- the student says "I am somewhat sure"
+- the teacher says "I am more sure"
+- the helper updates the confidence, but does **not** invent a new box when both already agree on the location
+
 ### B. Teacher-only detections
 
 If `--add-missing` is enabled, the helper may inject detections that appear in the teacher artifact but not in the student artifact.
@@ -247,6 +290,29 @@ Possible downside:
 - make a weak student artifact look better on a tiny subset while hurting general behavior elsewhere
 
 That is why the safety knobs matter so much.
+
+This path is closer to asking:
+
+- "Did the teacher find a real missed object?"
+- or "Is the teacher hallucinating something the student wisely ignored?"
+
+That is also why the recommended workflow is conservative first, exploratory second.
+
+## How to explain one result image to another person
+
+When you inspect one image before and after distillation, try to describe it in this order:
+
+1. What the student already got right
+2. What the teacher corrected
+3. Whether the correction was only a score change or a new object
+4. Whether the added object looks genuinely useful or suspicious
+
+For beginners, this is often easier than starting from mAP:
+
+- **score changed only** means calibration moved
+- **new box appeared** means recall changed
+- **duplicate box appeared** means guardrails may be too loose
+- **metrics improved without obvious junk** means the teacher signal is worth following up
 
 ## How to read `distill_report.json`
 

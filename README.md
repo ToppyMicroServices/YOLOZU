@@ -144,6 +144,10 @@ Learning features (training / continual learning / TTT / distillation / long-tai
 
 Prediction distillation guide (beginner-facing, step-by-step offline teacher/student artifact blending + sample YAML): [`docs/distillation.md`](docs/distillation.md).
 
+Continual-learning guide with plain-language LoRA / QLoRA diagrams: [`docs/continual_learning.md`](docs/continual_learning.md).
+
+Hessian refinement guide with pose-oriented intuition and local-correction diagrams: [`docs/hessian_solver.md`](docs/hessian_solver.md).
+
 ## Start here (choose 1 of 4 entry points)
 
 - **A: Evaluate from precomputed predictions (no inference deps)** — `predictions.json` → validate → eval.

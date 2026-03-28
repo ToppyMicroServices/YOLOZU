@@ -18,6 +18,67 @@ The current standard CLI implementation operates as an engine-external post-proc
 
 At a high level, each iteration computes the residuals and the Jacobian matrix, solves a damped normal equation, updates the parameters, and terminates once predefined convergence criteria are satisfied.
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (pred) at (0,0) {\textbf{Detector output}\\initial offsets / pose-like fields};
+\node[box] (res) at (4.6,0) {\textbf{Local residual}\\how wrong is this nearby solution?};
+\node[box] (step) at (9.2,0) {\textbf{Hessian-style step}\\small damped update};
+\node[box] (out) at (13.8,0) {\textbf{Refined detection}\\same artifact family, smaller local error};
+
+\draw[arrow] (pred) -- (res);
+\draw[arrow] (res) -- (step);
+\draw[arrow] (step) -- (out);
+
+\end{tikzpicture}
+}
+\caption{The practical picture: the model already produced an answer, and the Hessian solver asks whether a small local correction can make that answer geometrically cleaner.}
+\end{figure}
+
+\section{Plain-language intuition}
+If gradient descent feels like following the local slope, Hessian-style refinement feels like also paying attention to the shape of the bowl around the current solution.
+
+That is useful when the model is already close, but not quite aligned:
+\begin{itemize}
+  \item the center offset is slightly wrong,
+  \item depth is plausible but biased,
+  \item rotation is nearly correct but still misaligned.
+\end{itemize}
+
+In other words, this chapter is about \textbf{small local corrections}, not about teaching the model a whole new concept.
+
+\section{Why pose workflows care}
+Pose outputs are often more sensitive than plain detection outputs.
+A box can still count as correct even when it is a little loose.
+By contrast, pose-style outputs can degrade quickly when:
+\begin{itemize}
+  \item the center offset is wrong,
+  \item the depth is slightly biased,
+  \item the rotation is off by a small but important angle.
+\end{itemize}
+
+That is why the solver exists with pose use cases in mind, even though the current public CLI rollout deliberately starts from the safest operational target: \textbf{offset refinement}.
+
+The broader design still reflects pose-oriented quantities:
+\begin{itemize}
+  \item depth-like variables,
+  \item rotation-like variables,
+  \item offsets,
+  \item intrinsics-related corrections.
+\end{itemize}
+
+So the honest operational summary is:
+\begin{itemize}
+  \item \textbf{today's standard path}: offsets-first CLI refinement,
+  \item \textbf{why it matters}: pose and geometry workflows often benefit from structured local correction.
+\end{itemize}
+
 \section{Optimal use cases}
 Recommended applications include:
 \begin{itemize}
@@ -85,6 +146,21 @@ A highly practical operational sequence is:
   \item Optionally execute dataset-wide calibration (addressing global scale and intrinsics).
   \item Apply Hessian refinement exclusively in scenarios where per-detection correction is demonstrably required.
 \end{enumerate}
+
+\section{Pros and Cons}
+\textbf{Pros}
+\begin{itemize}
+  \item engine-external: it does not require changing the main inference graph,
+  \item useful for offline analysis and controlled studies,
+  \item especially intuitive for geometry-heavy predictions such as pose and depth.
+\end{itemize}
+
+\textbf{Cons}
+\begin{itemize}
+  \item it adds latency and is not a default real-time production path,
+  \item it needs a meaningful residual to optimize,
+  \item it can become numerically fragile without damping and step caps.
+\end{itemize}
 
 This chapter highlights the most frequently utilized parameters; for an exhaustive detailing of the parameter surface, please consult the tool's \cmd{--help} output, which is rigorously maintained in sync with the codebase.
 

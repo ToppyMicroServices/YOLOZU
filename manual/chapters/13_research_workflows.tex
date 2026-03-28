@@ -156,6 +156,41 @@ So the separation is:
 \caption{Prediction distillation flow in \yolozu{}: keep the student artifact as the base, borrow teacher signal under explicit rules, then emit a new distilled artifact instead of mutating the originals.}
 \end{figure}
 
+\subsection{A friendlier mental model}
+If you need to explain this workflow to a new teammate, the most useful sentence is:
+\begin{quote}
+The student artifact is the first draft; the teacher artifact is the reviewer; distillation applies only a limited set of corrections and writes a new artifact.
+\end{quote}
+
+In practice, each candidate object lands in one of three buckets:
+\begin{itemize}
+  \item \textbf{Matched}: both student and teacher found the same object. This usually leads to a safer score update.
+  \item \textbf{Teacher-only}: the teacher found an object that the student missed. This can improve recall, but it is also where false positives enter.
+  \item \textbf{Student-only}: the student found an object that the teacher did not. The helper keeps the student artifact as the base.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.28\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (matched) at (0,0) {\textbf{Matched case}\\Student and teacher overlap on the same object.\\Most common effect: confidence blending.\\Typical question: ``Is the teacher just better calibrated?''};
+\node[box] (teacher) at (6.3,0) {\textbf{Teacher-only case}\\Teacher sees an object the student missed.\\Most common effect: recall gain or extra noise.\\Typical question: ``Is this a real missing object?''};
+\node[box] (student) at (12.6,0) {\textbf{Student-only case}\\Student predicts something the teacher does not.\\Most common effect: artifact stays unchanged.\\Typical question: ``Is the teacher blind here or is the student wrong?''};
+
+\draw[arrow] (matched.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Safer path}\\small score correction};
+\draw[arrow] (teacher.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Highest-variance path}\\possible recall gain};
+\draw[arrow] (student.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Base preserved}\\no teacher intervention};
+
+\end{tikzpicture}
+}
+\caption{The three cases to look for when reading a distillation result. For beginners, this is often easier to reason about than starting directly from the final metric table.}
+\end{figure}
+
 \subsection{Step-by-step procedure}
 \paragraph{Step 1: Prepare two valid artifacts}
 You need one student predictions artifact and one teacher predictions artifact.
@@ -177,6 +212,15 @@ The most important knobs are:
   \item \cmd{--max-added-per-image}: cap on teacher-only additions.
   \item \cmd{--add-duplicate-iou-threshold}: prevents near-duplicate teacher injections.
 \end{itemize}
+
+\paragraph{Safe-first reading strategy}
+When in doubt, use this order:
+\begin{enumerate}
+  \item run a conservative pass first,
+  \item inspect whether \path{matched} dominates \path{added},
+  \item only then enable teacher-only injection,
+  \item if \path{added} dominates but the visual result looks noisy, treat the gain as fragile.
+\end{enumerate}
 
 \paragraph{Step 3: Run a conservative first pass}
 Start with a conservative run before enabling teacher-only injection:

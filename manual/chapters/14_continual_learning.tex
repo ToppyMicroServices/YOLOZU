@@ -20,6 +20,92 @@ The default strategy combines:
   \item \textbf{Optional parameter-efficiency}: restrict trainable parameters (e.g., LoRA) to reduce forgetting pressure.
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (tasks) at (0,0) {\textbf{Incoming task stream}\\Task A $\rightarrow$ Task B $\rightarrow$ Task C};
+\node[box] (prev) at (4.8,0.9) {\textbf{Previous checkpoint}\\acts as a teacher / anchor};
+\node[box] (replay) at (4.8,-0.9) {\textbf{Replay buffer}\\small memory of older samples};
+\node[box] (train) at (9.5,0) {\textbf{New training run}\\current task + replay + self-distill};
+\node[box] (eval) at (14.0,0) {\textbf{Evaluation}\\old tasks and new task are measured together};
+
+\draw[arrow] (tasks) -- (train);
+\draw[arrow] (prev) -- (train);
+\draw[arrow] (replay) -- (train);
+\draw[arrow] (train) -- (eval);
+
+\end{tikzpicture}
+}
+\caption{Continual learning in \yolozu{}: the new run does not train on the latest task alone; it is anchored by the previous checkpoint and may also replay a small memory of older examples.}
+\end{figure}
+
+\section{LoRA / QLoRA in plain language}
+LoRA and QLoRA are not separate continual-learning algorithms.
+They are \textbf{ways to make the parameter updates smaller and cheaper}.
+
+\subsection{LoRA}
+The easiest mental model is:
+\begin{quote}
+freeze most of the big model, then train a much smaller correction on top.
+\end{quote}
+
+That is why LoRA is attractive in continual learning:
+\begin{itemize}
+  \item a smaller trainable surface can reduce forgetting pressure,
+  \item it is often easier to fit within a limited GPU budget,
+  \item it gives a more controlled ablation than full-model fine-tuning.
+\end{itemize}
+
+\subsection{QLoRA}
+QLoRA keeps the same adapter idea, but stores the frozen base model in a more memory-efficient quantized form.
+
+In plain language:
+\begin{itemize}
+  \item \textbf{LoRA}: freeze the large model, train small adapters.
+  \item \textbf{QLoRA}: do the same thing, but keep the frozen base cheaper to hold in memory.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.27\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (base) at (0,0) {\textbf{Full fine-tuning}\\All main weights update.\\Highest flexibility, highest memory / forgetting pressure.};
+\node[box] (lora) at (6.3,0) {\textbf{LoRA}\\Base model stays mostly frozen.\\Small low-rank adapters carry the update.};
+\node[box] (qlora) at (12.6,0) {\textbf{QLoRA}\\Same adapter idea as LoRA, but the frozen base is kept in a quantized form for lower memory use.};
+
+\draw[arrow] (base.south) -- ++(0,-0.9) node[below, align=center] {largest update surface};
+\draw[arrow] (lora.south) -- ++(0,-0.9) node[below, align=center] {smaller, easier-to-control update};
+\draw[arrow] (qlora.south) -- ++(0,-0.9) node[below, align=center] {adapter update + cheaper frozen base};
+
+\end{tikzpicture}
+}
+\caption{LoRA and QLoRA are best understood as parameter-efficiency tools. They change \emph{how much} of the model moves during continual learning, not the underlying anti-forgetting objective itself.}
+\end{figure}
+
+\subsection{Pros and Cons}
+\textbf{LoRA}
+\begin{itemize}
+  \item Pros: simpler mental model than QLoRA; often cheaper than full fine-tuning; integrates naturally with replay and self-distillation.
+  \item Cons: still introduces extra knobs; can underfit if the adapter is too small; may hide the fact that the base model is the real bottleneck.
+\end{itemize}
+
+\textbf{QLoRA}
+\begin{itemize}
+  \item Pros: lowers memory pressure further; keeps the adapter-style workflow; attractive when the frozen base dominates footprint.
+  \item Cons: adds quantization complexity; depends on backend support; is more experimental in this repository than plain LoRA.
+\end{itemize}
+
 \section{Main entry points}
 \subsection{Train}
 Run continual fine-tuning using a config (start from the example):
@@ -127,4 +213,6 @@ For background reading:
   \item Knowledge distillation (original): \cite{hinton2015distilling}.
   \item Self-distillation (classic reference): \cite{furlanello2018bornagain}.
   \item Continual learning via self-distillation (SDFT): \cite{shenfeld2026sdft}.
+  \item LoRA as parameter-efficient tuning: \cite{hu2021lora}.
+  \item QLoRA as quantized adapter tuning: \cite{dettmers2023qlora}.
 \end{itemize}

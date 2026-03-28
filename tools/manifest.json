@@ -2628,7 +2628,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and keep this clearly separate from training-time self-distillation or TTT.",
+      "summary": "Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT.",
       "tags": [
         "predictions",
         "distillation",
@@ -9308,7 +9308,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Refine pose-related prediction fields with a safe Newton/finite-diff Hessian stepper (experimental).",
+      "summary": "Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper; the current public CLI rollout is offsets-first, while the docs explain the broader pose/depth intuition (experimental).",
       "tags": [
         "predictions",
         "refine",
@@ -10015,6 +10015,7 @@
       "docs": [
         "docs/continual_learning.md",
         "docs/backbones.md",
+        "docs/quantization.md",
         "docs/training_inference_export.md",
         "rtdetr_pose/README.md"
       ],
@@ -10101,7 +10102,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
+      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
       "tags": [
         "rtdetr_pose",
         "continual",

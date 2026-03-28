@@ -27,6 +27,8 @@ Details: [`docs/run_contract.md`](run_contract.md), [`docs/training_inference_ex
 
 Value: Fine-tune across a task/domain sequence while measuring and mitigating catastrophic forgetting via (a) memoryless self-distillation, (b) optional replay buffer, and (c) optional parameter-efficient updates (LoRA) + regularizers (EWC/SI/DER++).
 
+If you are new to LoRA / QLoRA, start with the plain-language diagrams in [`docs/continual_learning.md`](continual_learning.md) before reading the full config tables.
+
 Representative commands:
 
 ```bash
@@ -78,6 +80,8 @@ Details: [`docs/ttt_protocol.md`](ttt_protocol.md).
 
 Value: Blend teacher/student `predictions.json` artifacts to accelerate ablations **without retraining**. This is useful when you want to test whether a stronger teacher contains helpful signal before investing in training-time distillation.
 
+The distillation guide now explains the workflow in human terms first: what counts as a matched detection, what a teacher-only injection means, and how to read the report without starting from raw metrics.
+
 Representative command:
 
 ```bash
@@ -110,6 +114,8 @@ Details: [`docs/distillation.md`](distillation.md).
 ## 5) Hessian-based refinement (post-inference, per-detection; experimental)
 
 Value: A safe Newton / finite-diff Hessian stepper to refine pose-related prediction fields as an engine-external postprocess over `predictions.json`.
+
+Read [`docs/hessian_solver.md`](hessian_solver.md) if you want the plain-language intuition for why pose and geometry-heavy outputs benefit from this kind of local second-order correction.
 
 Representative command:
 

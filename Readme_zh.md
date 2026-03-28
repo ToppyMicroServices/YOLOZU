@@ -140,6 +140,10 @@ AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools
 
 Prediction distillation 指南（面向初学者的逐步说明 + sample YAML）：[`docs/distillation.md`](docs/distillation.md)
 
+Continual learning 指南（用示意图解释 LoRA / QLoRA）：[`docs/continual_learning.md`](docs/continual_learning.md)
+
+Hessian refinement 指南（用更直观的方式说明它为什么常用于 pose 场景）：[`docs/hessian_solver.md`](docs/hessian_solver.md)
+
 ## 从这里开始（4 个入口）
 
 - **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval

@@ -23,6 +23,37 @@ These predictions can benefit from iterative refinement when:
 2. Geometric constraints can be applied (e.g., plane, upright)
 3. Initial predictions have systematic errors that can be corrected
 
+## Hessian refinement in one picture
+
+```mermaid
+flowchart LR
+    A["Detector output\n(box / score / pose-like fields / offsets)"] --> B["Choose one detection"]
+    B --> C["Measure local residuals\nHow wrong is this nearby solution?"]
+    C --> D["Approximate curvature\n(Jacobian / Hessian-style step)"]
+    D --> E["Take one small guarded update"]
+    E --> F["Refined detection"]
+```
+
+The non-mathy version is:
+
+- the detector gives a first draft
+- the solver looks only in a small neighborhood around that draft
+- it asks which tiny direction most reduces the current error
+- then it takes a bounded step instead of trusting the first guess forever
+
+## Plain-language intuition
+
+If gradient descent feels like walking downhill using only the local slope,
+Hessian-style refinement feels more like also noticing the shape of the bowl.
+
+That matters when the prediction is already "almost right" but not quite:
+
+- a box center is slightly off
+- depth is close but biased
+- rotation is plausible but not well aligned
+
+In those cases, a local second-order step can be a cleaner final adjustment than rerunning a full training loop.
+
 ## Algorithm
 
 The solver uses **Gauss-Newton optimization** with **Levenberg-Marquardt damping**:
@@ -42,6 +73,32 @@ Key features:
 - **Damping**: Levenberg-Marquardt damping prevents divergence and handles ill-conditioned problems
 - **Automatic convergence**: Stops when parameter updates are below threshold
 - **NaN-safe**: Detects numerical instability and stops early
+
+## Why pose workflows care more than plain detection
+
+Pose pipelines are especially sensitive to small geometric errors.
+
+For a plain detection benchmark, a slightly imperfect box can still count as correct.
+For pose-style outputs, small local errors can cascade:
+
+- a center offset error changes reprojection quality
+- a depth error shifts translation magnitude
+- a rotation error changes how the object aligns with the image evidence
+
+That is why Hessian-style local refinement is worth discussing in pose workflows even though the current standard CLI path is conservative.
+
+Today, the standard CLI rollout focuses on **offset refinement first** because it is the safest operational surface.
+But the broader solver design already considers the kinds of quantities pose teams care about:
+
+- depth-like variables
+- rotation-like variables
+- offsets
+- intrinsics-related corrections such as shared `k_delta`
+
+So the short operational truth is:
+
+- **what is safely exposed today**: offsets-first CLI refinement
+- **why the solver exists at all**: pose/depth-style outputs often benefit from structured local correction
 
 ## Usage
 
@@ -185,6 +242,22 @@ Recommended workflow:
 1. **Training**: Train model with standard losses
 2. **Calibration**: Use L-BFGS to calibrate dataset-wide scale/intrinsics
 3. **Refinement**: Use Hessian solver for per-detection fine-tuning (optional)
+
+## Pros / Cons
+
+Pros:
+
+- works as an engine-external post-processing step
+- useful for controlled offline studies
+- helps explain whether the model is "nearly right" but locally misaligned
+- especially intuitive for geometry-heavy outputs such as pose and depth
+
+Cons:
+
+- not a free production improvement; it adds latency
+- depends on having a meaningful residual to optimize
+- can become numerically fragile without damping and step caps
+- the current public CLI rollout is intentionally narrower than the full conceptual solver surface
 
 ## Examples
 

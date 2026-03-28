@@ -68,6 +68,10 @@ Learning features (training / continual learning / TTT / distillation / long-tai
 
 Beginner-friendly prediction distillation guide (offline teacher/student artifact blending + sample YAML): [`docs/distillation.md`](distillation.md)
 
+Plain-language continual-learning guide with LoRA / QLoRA diagrams: [`docs/continual_learning.md`](continual_learning.md)
+
+Beginner-friendly Hessian refinement guide with pose intuition: [`docs/hessian_solver.md`](hessian_solver.md)
+
 ---
 
 ## A) Evaluate from precomputed predictions (no inference deps)

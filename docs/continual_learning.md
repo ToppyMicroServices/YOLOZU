@@ -8,6 +8,120 @@ The baseline strategy is:
 - **Memory**: add a small **replay buffer** (default 50 images, reservoir sampling) and train on *(current task + replay)* while also self-distilling.
 - Optional: **LoRA** to restrict trainable parameters (parameter-efficient continual fine-tuning).
 
+## Continual learning in one picture
+
+```mermaid
+flowchart LR
+    A["Task A data"] --> M["Train current model"]
+    B["Task B data"] --> M
+    C["Task C data"] --> M
+    P["Previous checkpoint"] --> D["Self-distillation target"]
+    R["Replay buffer\nsmall memory of old samples"] --> M
+    D --> M
+    M --> N["New checkpoint"]
+    N --> E["Evaluate old + new tasks"]
+    N --> U["Update replay buffer"]
+```
+
+The plain-language version is:
+
+- new data keeps arriving
+- we still want the model to remember older tasks
+- so we do not let the new training run completely forget the previous checkpoint
+- and we optionally keep a small memory of older examples
+
+## LoRA and QLoRA in plain language
+
+Many readers first meet continual learning and LoRA at the same time, so it helps to separate the ideas.
+
+- **Continual learning** answers: "How do we keep learning new tasks without erasing old ones?"
+- **LoRA / QLoRA** answer: "How do we make those updates smaller, cheaper, and easier to control?"
+
+### LoRA in one picture
+
+```mermaid
+flowchart LR
+    A["Frozen base weights"] --> B["Original layer output"]
+    C["Small low-rank adapter A x B"] --> D["Small correction"]
+    B --> E["Final output"]
+    D --> E
+```
+
+LoRA is easiest to understand as:
+
+- keep the large pretrained model mostly unchanged
+- attach a much smaller trainable correction
+- learn that correction instead of rewriting the whole network
+
+That is useful in continual learning because a smaller trainable surface often makes forgetting easier to control.
+
+### QLoRA in one picture
+
+```mermaid
+flowchart LR
+    A["Quantized frozen base\n(for example int4 weight-only)"] --> B["Base forward pass"]
+    C["LoRA adapters\nstill trainable"] --> D["Low-rank correction"]
+    B --> E["Final output"]
+    D --> E
+```
+
+QLoRA keeps the same basic idea as LoRA, but makes the frozen base cheaper to hold in memory.
+
+In this repo, `--qlora` is a convenience path:
+
+- it requires `--lora-r > 0`
+- it forces base freezing
+- it requests the `torchao` int4 weight-only path when available
+
+So the short intuition is:
+
+- **LoRA**: freeze most of the model, train a small adapter
+- **QLoRA**: do the same thing, but keep the frozen base in a cheaper quantized form
+
+### When each one is attractive
+
+LoRA is a good default when:
+
+- you want a simpler mental model
+- you want easier debugging
+- you do not need to squeeze memory aggressively
+
+QLoRA is attractive when:
+
+- memory pressure is the main problem
+- you already accept an experimental quantized training path
+- you want a smaller hardware footprint while keeping adapter-style updates
+
+### Pros / Cons
+
+**LoRA**
+
+Pros:
+
+- easier to reason about than full fine-tuning
+- usually cheaper than updating all parameters
+- often plays well with replay and self-distillation
+
+Cons:
+
+- still adds another set of knobs (`r`, `alpha`, `dropout`, target modules)
+- can underfit if the adapter is too small
+- can hide the fact that the base model, not the adapter, is the real bottleneck
+
+**QLoRA**
+
+Pros:
+
+- pushes memory use down further
+- keeps the same adapter-style workflow
+- useful when the full frozen base is the memory bottleneck
+
+Cons:
+
+- more moving parts than plain LoRA
+- depends on quantization backend support
+- in practice, this repo treats the quantized path as more experimental than plain LoRA
+
 ## References (self-distillation background)
 
 This repo’s checkpoint-based self-distillation is a pragmatic anti-forgetting regularizer; it is not intended as a faithful reproduction of any single paper.
@@ -169,6 +283,8 @@ Top-level keys:
 | `freeze_base` | bool | `true` |
 | `train_bias` | str | `none` |
 
+`QLoRA` is represented by the same LoRA block plus the trainer-side `qlora` convenience flag described in [`docs/quantization.md`](quantization.md). Operationally, that means "LoRA with a quantized frozen base" rather than a separate continual-learning algorithm.
+
 `continual.derpp` (optional):
 
 | Key | Type | Default |
@@ -218,3 +334,10 @@ Top-level keys:
 
 - The current continual evaluation uses `yolozu.simple_map` (CPU-friendly proxy). For full COCO mAP you can switch your workflow to `tools/eval_coco.py` with `pycocotools` installed.
 - `rtdetr_pose` dataset loading scans `*.jpg`, `*.jpeg`, `*.png`, `*.bmp`, `*.tif`, `*.tiff`, `*.webp`, and `*.gif` under `images/<split>/`.
+
+## References (parameter-efficient tuning background)
+
+- LoRA: Hu et al., “LoRA: Low-Rank Adaptation of Large Language Models” (arXiv:2106.09685)
+  - https://arxiv.org/abs/2106.09685
+- QLoRA: Dettmers et al., “QLoRA: Efficient Finetuning of Quantized LLMs” (arXiv:2305.14314)
+  - https://arxiv.org/abs/2305.14314
