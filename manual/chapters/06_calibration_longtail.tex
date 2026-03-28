@@ -7,6 +7,8 @@ These methods can improve thresholding behavior and long-tail metrics without re
 }{
 It requires a dataset and a predictions artifact. Method-specific parameters apply, and calibrated outputs should be written as separate artifacts.
 }
+\ChapterAudience{Read this chapter when your geometry is fine but your scores or class balance look systematically off.}
+
 
 \section{When calibration is beneficial}
 Calibration is useful when your model is accurate but systematically miscalibrated (for example, consistently overconfident or underconfident), or when long-tail classes have suppressed confidence.

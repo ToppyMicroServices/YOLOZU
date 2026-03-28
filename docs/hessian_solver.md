@@ -100,6 +100,26 @@ So the short operational truth is:
 - **what is safely exposed today**: offsets-first CLI refinement
 - **why the solver exists at all**: pose/depth-style outputs often benefit from structured local correction
 
+## Failure -> local refinement in one example
+
+One useful mental picture is a pose-like detection that is already "close enough to be plausible" but still locally wrong:
+
+```mermaid
+flowchart LR
+    A["Initial detection\nbox is present, but center/depth/rotation are slightly off"] --> B["Residual check\nreprojection or local geometric error is still high"]
+    B --> C["Hessian-style bounded update\nsmall step, not a full retrain"]
+    C --> D["Refined detection\nsame object, cleaner local alignment"]
+```
+
+What this figure is trying to show is not "the model found a totally new object."
+It is showing a subtler and very common case:
+
+- the detector is already looking at the right object
+- but the local pose-like values are not settled yet
+- so the solver tries to improve the answer in a small neighborhood
+
+That is the main reason this fits pose workflows so naturally.
+
 ## Usage
 
 ### Python API

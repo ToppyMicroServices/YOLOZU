@@ -92,6 +92,42 @@ QLoRA is attractive when:
 - you already accept an experimental quantized training path
 - you want a smaller hardware footprint while keeping adapter-style updates
 
+### A practical choice example
+
+Suppose we are doing domain-incremental training over three warehouse camera domains:
+
+- the base checkpoint already works reasonably well
+- we mainly want to avoid forgetting older camera views
+- our GPU memory budget is limited, but not extreme
+
+In that case, a good first decision is:
+
+- start with **LoRA**
+- keep replay + self-distillation enabled
+- get a stable baseline first
+
+Why?
+
+- LoRA is easier to debug
+- if forgetting increases, we can more easily tell whether the issue is the continual-learning setup or the adapter size/config
+- it removes one layer of quantization-related uncertainty
+
+Now imagine the same workload, but:
+
+- the model barely fits in memory
+- batch size is collapsing
+- the frozen base dominates the memory footprint
+
+That is the point where **QLoRA** becomes attractive:
+
+- we keep the same adapter-style update logic
+- but we ask the frozen base to consume less memory
+
+So a practical rule is:
+
+- **LoRA first when clarity matters**
+- **QLoRA when memory is the real blocker**
+
 ### Pros / Cons
 
 **LoRA**

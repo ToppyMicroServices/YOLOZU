@@ -8,11 +8,27 @@ It is designed to expedite workflow selection and eliminate ambiguity regarding 
 }{
 No prerequisites are required beyond reading. Rely on the \cmd{--help} flag for the specific CLI in use, and treat JSON artifacts as the definitive, stable interface.
 }
+\ChapterAudience{Start here if you are new to YOLOZU and need the shortest route to the right workflow and CLI surface.}
+
 
 \section{What \yolozu{} Is}
 \yolozu{} is a framework-agnostic evaluation toolkit for vision models,
 designed to address \textbf{catastrophic forgetting} and \textbf{domain shift}
 through reproducible continual learning and test-time adaptation.
+
+\paragraph{The shortest human summary.}
+If you only remember one sentence from this chapter, let it be this:
+\begin{quote}
+\yolozu{} is the part of the stack that keeps model outputs comparable and reproducible even when the underlying training or inference stack changes.
+\end{quote}
+
+That is why the rest of the manual keeps coming back to the same habits:
+\begin{itemize}
+  \item save artifacts,
+  \item validate them early,
+  \item compare them under pinned settings,
+  \item do not let backend differences silently turn into research drift.
+\end{itemize}
 
 \paragraph{\yolozu{} at a glance.}
 \begin{itemize}
@@ -92,6 +108,24 @@ Canonical Python modules are organized in categorized packages such as
 \path{yolozu/geometry}. New code should import these canonical paths directly.
 Legacy top-level imports are preserved through package-level aliasing for compatibility.
 
+\section{How to use this manual}
+Different readers usually arrive with different first questions. A quick routing guide helps:
+\begin{itemize}
+  \item \textbf{``I want to run something today.''} Start with Chapters~2, 4, and 5.
+  \item \textbf{``I already have predictions and only need evaluation.''} Start with Chapters~3 and 5.
+  \item \textbf{``I care about forgetting, TTT, or research ablations.''} Start with Chapters~13, 14, and 15.
+  \item \textbf{``I care about geometry, depth, or pose refinement.''} Start with Chapters~10 and 16.
+  \item \textbf{``I am modifying tools or documentation.''} Start with Chapters~12 and 18.
+\end{itemize}
+
+\paragraph{A good first reading order for most users.}
+\begin{enumerate}
+  \item Chapter~1: understand what kind of repository this is.
+  \item Chapter~2: get to a working environment.
+  \item Chapter~5: choose the right evaluate/export workflow.
+  \item Only then branch into the more specialized chapters.
+\end{enumerate}
+
 
 \section{Dual CLI Surfaces: Pip vs. Repository}
 \yolozu{} exposes two distinct command surfaces to accommodate different user needs:
@@ -101,3 +135,10 @@ Legacy top-level imports are preserved through package-level aliasing for compat
 \end{itemize}
 
 Both CLIs share underlying concepts and data interface contracts. This manual references whichever CLI is most appropriate for the specific workflow under discussion.
+
+\paragraph{Rule of thumb.}
+If you are unsure which CLI to start with:
+\begin{itemize}
+  \item use \cmd{yolozu ...} when acting as a user,
+  \item use \cmd{python3 tools/yolozu.py ...} when working inside the repository and you want the research surface.
+\end{itemize}

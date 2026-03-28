@@ -7,6 +7,8 @@ This technique can significantly mitigate errors on challenging samples during o
 }{
 It is optimally suited for offline and batch processing workflows where additional computational overhead is permissible. It requires both predictions and dataset context, and relies on configurable convergence and damping parameters.
 }
+\ChapterAudience{Read this chapter when you need post-inference local correction and want to understand when Hessian refinement helps more than it hurts.}
+
 
 \section{Scope and relation to Test-Time Training (TTT)}
 This chapter is strictly focused on per-detection numerical refinement executed after the primary inference phase. TTT, Tent, and MIM adaptation policies are comprehensively covered in Chapter~15 to prevent redundant guidance.
@@ -78,6 +80,31 @@ So the honest operational summary is:
   \item \textbf{today's standard path}: offsets-first CLI refinement,
   \item \textbf{why it matters}: pose and geometry workflows often benefit from structured local correction.
 \end{itemize}
+
+\section{Failure \texorpdfstring{$\rightarrow$}{->} local refinement example}
+The typical use case is not ``the detector missed the object completely.''
+It is the quieter case where the detector has already found the right object, but the local geometric state is still slightly wrong.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.28\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (bad) at (0,0) {\textbf{Before refinement}\\The object is detected, but the local state is still off. Typical symptoms: center offset drift, biased depth, or a slightly wrong rotation.};
+\node[box] (solve) at (6.5,0) {\textbf{Local solver view}\\Compute a residual around the current answer, estimate a damped second-order step, and keep the update bounded.};
+\node[box] (good) at (13,0) {\textbf{After refinement}\\The object identity did not change; the same detection is simply better aligned in its local neighborhood.};
+
+\draw[arrow] (bad) -- (solve);
+\draw[arrow] (solve) -- (good);
+
+\end{tikzpicture}
+}
+\caption{Concrete reading guide for Hessian refinement. This is not a ``new object found'' story; it is a ``same object, cleaner local alignment'' story. That distinction is why the method is especially relevant for pose-style outputs.}
+\end{figure}
 
 \section{Optimal use cases}
 Recommended applications include:
