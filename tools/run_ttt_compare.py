@@ -382,6 +382,9 @@ def main(argv: list[str] | None = None) -> int:
     extra_export_args = boilerplate.get("extra_export_args")
     if not isinstance(extra_export_args, list):
         extra_export_args = []
+    common_export_args = boilerplate.get("common_export_args")
+    if not isinstance(common_export_args, list):
+        common_export_args = []
 
     common_cmd = [
         sys.executable,
@@ -397,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
         str(checkpoint),
         "--device",
         str(args.device),
+        *[str(x) for x in common_export_args],
     ]
     if args.max_images is not None:
         common_cmd.extend(["--max-images", str(int(args.max_images))])

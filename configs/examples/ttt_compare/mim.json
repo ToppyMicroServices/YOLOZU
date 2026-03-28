@@ -2,6 +2,10 @@
   "method": "mim",
   "preset": null,
   "reset": "sample",
+  "common_export_args": [
+    "--config",
+    "configs/examples/ttt_compare/rtdetr_pose_mim_compare.json"
+  ],
   "compare": {
     "iou_thresh": 0.99,
     "score_atol": 0.0001,

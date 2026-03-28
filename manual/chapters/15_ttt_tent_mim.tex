@@ -284,6 +284,10 @@ directly and force
 checkpoint without requiring LoRA-specific weights. If a team owns a dedicated
 adapter/LoRA checkpoint, it is better to copy the JSON boilerplate and switch
 the update filter there than to fall back to a long raw CLI invocation.
+The \cmd{mim} boilerplate also injects the repo-backed config
+\path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json} into both the
+baseline and adapted export commands so the MIM branch is enabled without a
+manual config override.
 
 \subsection{Smoke compare snapshot (repo-shipped checkpoint)}
 We also validated the boilerplates against the repo-shipped checkpoint
@@ -300,7 +304,7 @@ useful signal here is method completion and the TTT log behavior.
 \textbf{Method} & \textbf{Run dir} & \textbf{Real compare status} & \textbf{Steps} & \textbf{Mean final loss} & \textbf{Warning summary} \\
 \midrule
 Tent & \path{reports/ttt_compare/tent_smoke_cpu} & completed & 2 & 4.214431 & none \\
-MIM & \path{reports/ttt_compare/mim_smoke_cpu} & planning only on the shipped checkpoint & n/a & n/a & requires a MIM-enabled checkpoint/config \\
+MIM & \path{reports/ttt_compare/mim_smoke_cpu} & completed & 2 & 0.461853 & repo-backed config \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json} \\
 CoTTA & \path{reports/ttt_compare/cotta_smoke_cpu} & completed & 1 & 4.243579 & none \\
 EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null & \cmd{eata\_empty\_selected\_set} on both smoke images \\
 SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 & none \\
@@ -364,10 +368,31 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}.
-For a real compare, use a checkpoint/config with the MIM branch enabled.
-On the repo-shipped checkpoint, \cmd{mim} remains useful as a boilerplate and
-planning surface, but the smoke snapshot remains planning-only.
+For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}. The shipped
+\cmd{mim} boilerplate already routes both baseline and adapted export commands
+through \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json}, so
+the repo-shipped checkpoint can run a real compare without a long manual CLI.
+
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --run-dir reports/ttt_compare/mim_smoke_cpu \
+  --device cpu \
+  --max-images 2 \
+  --skip-eval \
+  --force
+\end{lstlisting}
+
+Repo-backed smoke snapshot:
+\begin{itemize}
+  \item \path{reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md}
+  \item \cmd{steps\_run=2}
+  \item \cmd{mean\_final\_loss=0.461853}
+  \item \cmd{changed\_images=0 / 2}
+\end{itemize}
 
 \subsection{CoTTA}
 \textbf{What it does.}

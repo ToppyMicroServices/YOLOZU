@@ -50,6 +50,7 @@ Recommended reading order for every method:
 
 Notes:
 - The shipped `mim` and `sar` boilerplates expand the safe defaults directly and force `--ttt-update-filter norm_only` so they work with the repo-shipped checkpoint without requiring LoRA-specific weights.
+- The `mim` boilerplate also injects the repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` into both the baseline and adapted export so the MIM branch is enabled without a long operator command.
 - If you have a checkpoint with dedicated adapter/LoRA parameters, copy the JSON boilerplate and switch the update filter there instead of expanding the raw CLI.
 
 ## Smoke compare snapshot (repo-shipped checkpoint)
@@ -65,13 +66,14 @@ signal here is whether the method completed and what the TTT log reported.
 | Method | Run dir | Real compare status | Steps run | Mean final loss | Warning summary |
 | --- | --- | --- | ---: | ---: | --- |
 | Tent | `reports/ttt_compare/tent_smoke_cpu` | completed | `2` | `4.214431` | none |
-| MIM | `reports/ttt_compare/mim_smoke_cpu` | planning only on the shipped checkpoint | n/a | n/a | requires a MIM-enabled checkpoint/config for a real compare |
+| MIM | `reports/ttt_compare/mim_smoke_cpu` | completed | `2` | `0.461853` | repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` |
 | CoTTA | `reports/ttt_compare/cotta_smoke_cpu` | completed | `1` | `4.243579` | none |
 | EATA | `reports/ttt_compare/eata_smoke_cpu` | completed | `0` | `null` | `eata_empty_selected_set` on both smoke images |
 | SAR | `reports/ttt_compare/sar_smoke_cpu` | completed | `2` | `4.211009` | none |
 
-For the four completed runs, the compact before/after summaries live here:
+For the completed runs, the compact before/after summaries live here:
 - `reports/ttt_compare/tent_smoke_cpu/tent_before_after_compare.md`
+- `reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md`
 - `reports/ttt_compare/cotta_smoke_cpu/cotta_before_after_compare.md`
 - `reports/ttt_compare/eata_smoke_cpu/eata_before_after_compare.md`
 - `reports/ttt_compare/sar_smoke_cpu/sar_before_after_compare.md`
@@ -100,6 +102,21 @@ bash scripts/ttt_compare.sh \
   --checkpoint /path/to.ckpt \
   --run-dir reports/ttt_compare/mim \
   --device cuda
+```
+
+Repo-backed smoke example:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --run-dir reports/ttt_compare/mim_smoke_cpu \
+  --device cpu \
+  --max-images 2 \
+  --skip-eval \
+  --force
 ```
 
 CoTTA:

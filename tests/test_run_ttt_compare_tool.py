@@ -95,6 +95,56 @@ class TestRunTTTCompareTool(unittest.TestCase):
             self.assertEqual(extra[idx + 1], "norm_only")
             self.assertIn("--ttt-steps", extra)
             self.assertIn("--ttt-lr", extra)
+        mim_payload = json.loads((repo_root / "configs" / "examples" / "ttt_compare" / "mim.json").read_text(encoding="utf-8"))
+        common = mim_payload.get("common_export_args")
+        self.assertIsInstance(common, list)
+        self.assertEqual(
+            common,
+            ["--config", "configs/examples/ttt_compare/rtdetr_pose_mim_compare.json"],
+        )
+
+    def test_dry_run_mim_plan_includes_repo_backed_config_in_both_exports(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_ttt_compare.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            checkpoint = root / "dummy.ckpt"
+            checkpoint.write_bytes(b"")
+            run_dir = root / "mim"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--boilerplate",
+                    "mim",
+                    "--dataset",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--checkpoint",
+                    str(checkpoint),
+                    "--run-dir",
+                    str(run_dir),
+                    "--dry-run",
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"mim dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads((run_dir / "plan.json").read_text(encoding="utf-8"))
+            baseline = payload["commands"]["baseline_export"]
+            adapted = payload["commands"]["adapted_export"]
+            expected = "configs/examples/ttt_compare/rtdetr_pose_mim_compare.json"
+            self.assertIn("--config", baseline)
+            self.assertEqual(baseline[baseline.index("--config") + 1], expected)
+            self.assertIn("--config", adapted)
+            self.assertEqual(adapted[adapted.index("--config") + 1], expected)
 
     def test_shell_wrapper_help(self):
         repo_root = Path(__file__).resolve().parents[1]

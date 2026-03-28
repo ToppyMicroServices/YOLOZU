@@ -177,9 +177,29 @@ bash scripts/ttt_compare.sh \
 ```
 
 For pose-heavy runs, switch the preset to `pose_mim`.
-For a real compare, use a checkpoint/config with the MIM branch enabled.
-On the repo-shipped checkpoint, `mim` is still useful as a boilerplate and
-planning surface, but the smoke snapshot remains planning-only.
+The shipped `mim` boilerplate already points both baseline and adapted export
+commands at `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json`, so the
+repo-shipped checkpoint can run a real compare without adding raw `--ttt-*`
+flags.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --run-dir reports/ttt_compare/mim_smoke_cpu \
+  --device cpu \
+  --max-images 2 \
+  --skip-eval \
+  --force
+```
+
+Repo-backed smoke snapshot:
+- `reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md`
+- `steps_run=2`
+- `mean_final_loss=0.461853`
+- `changed_images=0 / 2`
 
 ### CoTTA
 
