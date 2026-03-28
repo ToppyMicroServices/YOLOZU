@@ -188,15 +188,15 @@ def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
         y = _draw_wrapped(draw, (x + 24, y), bullet, font=FONT_22, width=48, line_gap=8) + 10
 
     mim = source["metrics"]["mim"]
-    card = (955, 560, 1735, 850)
+    card = (955, 600, 1735, 890)
     draw.rounded_rectangle(card, radius=18, outline=(147, 157, 168), width=2, fill=(245, 247, 250))
-    _text(draw, (980, 540), "MIM reference run", font=FONT_28)
+    _text(draw, (980, 620), "MIM reference run", font=FONT_28)
     mim_lines = [
         f"Fixture: repo-backed smoke compare ({mim['images']} images)",
         f"steps_run={mim['steps_run']}, mean_final_loss={mim['mean_final_loss']:.6f}",
         f"changed_images={mim['changed_images']} / {mim['images']}",
     ]
-    y = 585
+    y = 665
     for line in mim_lines:
         y = _draw_wrapped(draw, (980, y), line, font=FONT_22, width=48, line_gap=8) + 4
     _draw_wrapped(
