@@ -252,7 +252,12 @@ Principle:
 - MIM uses masked reconstruction and optional entropy terms
 - instead of only asking the model to be more confident, it asks the model to reconstruct hidden structure from partially masked features
 - this creates a stronger self-supervised signal than Tent
-- the practical references to know are MAE (He et al., CVPR 2022) and SimMIM (Xie et al., CVPR 2022)
+- the practical references to know are denoising autoencoders (Vincent et al., ICML 2008), Context Encoders (Pathak et al., CVPR 2016), MAE (He et al., CVPR 2022), SimMIM (Xie et al., CVPR 2022), Test-Time Training with Masked Autoencoders (Gandelsman et al., 2022), and TTT-MIM (Mansour et al., ECCV 2024)
+
+Research lineage and IP note:
+- the broad idea behind MIM-style adaptation predates current test-time wording: corrupt or mask part of the representation, reconstruct hidden structure, and use that self-supervised loss as a robustness signal
+- this section cites representative prior-art waypoints for technical lineage and prior-art positioning
+- this is not legal advice and not a non-infringement opinion; deployment-specific patent review belongs to qualified counsel
 
 When to use it:
 - pose-heavy or geometry-sensitive adaptation
