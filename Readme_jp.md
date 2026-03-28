@@ -314,15 +314,17 @@ python3 -m pytest -q tests/test_prepare_keypoints_dataset_cvat_xml.py
 TTTは repo 側のエクスポータで使うのが基本です（`docs/ttt_protocol.md`）:
 
 ```bash
-python3 tools/yolozu.py export \
-  --backend torch \
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
   --dataset data/smoke \
-  --checkpoint runs/smoke/checkpoints/best.pt \
-  --device cuda \
-  --ttt --ttt-preset safe --ttt-reset sample \
-  --ttt-log-out reports/ttt_log_safe.json \
-  --output reports/predictions_ttt_safe.json
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
 ```
+
+方式ごとの boilerplate は `tent`, `mim`, `cotta`, `eata`, `sar` を用意しています。
+詳細: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
 
 deterministic なドメインシフトターゲット（corruption）を作る場合:
 

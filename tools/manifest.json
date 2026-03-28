@@ -11983,6 +11983,192 @@
       ]
     },
     {
+      "id": "run_ttt_compare",
+      "runner": "python3",
+      "entrypoint": "tools/run_ttt_compare.py",
+      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts under one run directory.",
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Writes plan, baseline/adapted predictions, optional eval outputs, and before-after compare artifacts under one directory."
+          }
+        ]
+      },
+      "examples": [
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
+          "description": "Run a Tent before-after compare using the tent boilerplate."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate mim --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/mim --device cuda",
+          "description": "Run a MIM before-after compare using the mim boilerplate."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate cotta --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/cotta --device cuda --dry-run --force",
+          "description": "Write a CoTTA compare plan without launching export/eval."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate eata --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/eata --device cuda",
+          "description": "Run an EATA before-after compare using the eata boilerplate."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate sar --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/sar --device cuda",
+          "description": "Run a SAR before-after compare using the sar boilerplate."
+        }
+      ],
+      "inputs": [
+        {
+          "flag": "--boilerplate",
+          "kind": "string",
+          "name": "boilerplate",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false,
+          "default": "val"
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false,
+          "default": "reports/ttt_compare/<method>"
+        },
+        {
+          "flag": "--backend",
+          "kind": "string",
+          "name": "backend",
+          "required": false,
+          "default": "torch"
+        },
+        {
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false,
+          "default": "cpu"
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--image-size",
+          "kind": "string",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "flag": "--skip-eval",
+          "kind": "string",
+          "name": "skip_eval",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "dir",
+          "name": "run_dir",
+          "default": "reports/ttt_compare/<method>"
+        },
+        {
+          "kind": "file",
+          "name": "plan_json",
+          "default": "reports/ttt_compare/<method>/plan.json"
+        },
+        {
+          "kind": "file",
+          "name": "baseline_predictions",
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json"
+        },
+        {
+          "kind": "file",
+          "name": "adapted_predictions",
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json"
+        },
+        {
+          "kind": "file",
+          "name": "ttt_log",
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json"
+        },
+        {
+          "kind": "file",
+          "name": "compare_json",
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json"
+        },
+        {
+          "kind": "file",
+          "name": "compare_md",
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md"
+        }
+      ],
+      "tags": [
+        "ttt",
+        "ctta",
+        "compare",
+        "boilerplate",
+        "report"
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
@@ -12467,6 +12653,187 @@
         "training",
         "adapter",
         "normalization"
+      ]
+    },
+    {
+      "id": "ttt_compare",
+      "runner": "bash",
+      "entrypoint": "scripts/ttt_compare.sh",
+      "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates.",
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree",
+            "description": "Delegates to tools/run_ttt_compare.py and writes compare artifacts under one directory."
+          }
+        ]
+      },
+      "examples": [
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
+          "description": "Run a Tent before-after compare with the shortest recommended shell entrypoint."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate mim --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/mim --device cuda",
+          "description": "Run a MIM before-after compare with the shell wrapper."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate cotta --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/cotta --device cuda",
+          "description": "Run a CoTTA before-after compare with the shell wrapper."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate eata --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/eata --device cuda",
+          "description": "Run an EATA before-after compare with the shell wrapper."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate sar --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/sar --device cuda --dry-run --force",
+          "description": "Write a SAR compare plan without launching export/eval."
+        }
+      ],
+      "inputs": [
+        {
+          "flag": "--boilerplate",
+          "kind": "string",
+          "name": "boilerplate",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false,
+          "default": "val"
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false,
+          "default": "reports/ttt_compare/<method>"
+        },
+        {
+          "flag": "--backend",
+          "kind": "string",
+          "name": "backend",
+          "required": false,
+          "default": "torch"
+        },
+        {
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false,
+          "default": "cpu"
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--image-size",
+          "kind": "string",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "flag": "--skip-eval",
+          "kind": "string",
+          "name": "skip_eval",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "dir",
+          "name": "run_dir",
+          "default": "reports/ttt_compare/<method>"
+        },
+        {
+          "kind": "file",
+          "name": "plan_json",
+          "default": "reports/ttt_compare/<method>/plan.json"
+        },
+        {
+          "kind": "file",
+          "name": "baseline_predictions",
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json"
+        },
+        {
+          "kind": "file",
+          "name": "adapted_predictions",
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json"
+        },
+        {
+          "kind": "file",
+          "name": "ttt_log",
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json"
+        },
+        {
+          "kind": "file",
+          "name": "compare_json",
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json"
+        },
+        {
+          "kind": "file",
+          "name": "compare_md",
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md"
+        }
+      ],
+      "tags": [
+        "ttt",
+        "ctta",
+        "compare",
+        "boilerplate",
+        "shell"
       ]
     },
     {
