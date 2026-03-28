@@ -204,7 +204,7 @@ eval "$(yolozu completion --shell zsh)"
 
 学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
 
-Prediction distillation ガイド（初心者向けの手順つき説明）: [`docs/distillation.md`](docs/distillation.md)
+Prediction distillation ガイド（初心者向けの手順つき説明 + sample YAML）: [`docs/distillation.md`](docs/distillation.md)
 
 ---
 

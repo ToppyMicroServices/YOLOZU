@@ -165,6 +165,8 @@ python3 tools/validate_predictions.py reports/predictions_student.json --strict
 python3 tools/validate_predictions.py reports/predictions_teacher.json --strict
 \end{lstlisting}
 
+For operator convenience, \cmd{tools/distill_predictions.py} also accepts wrapped payloads with partial \path{meta} blocks and supplements missing stable keys (for example \texttt{adapter}, \texttt{timestamp}, \texttt{tta}, \texttt{ttt}) before validation. This makes checked-in research artifacts easier to reuse without hand-editing metadata first.
+
 \paragraph{Step 2: Decide how aggressive the blend should be}
 The most important knobs are:
 \begin{itemize}
@@ -207,6 +209,24 @@ python3 tools/distill_predictions.py \
   --output reports/predictions_distilled.json \
   --output-report reports/distill_report.json
 \end{lstlisting}
+
+\paragraph{Step 4b: Prefer a checked-in YAML config when the CLI gets too long}
+The helper also accepts \cmd{--config} in JSON or YAML format.
+For day-to-day use, the shortest recommended boilerplate is the checked-in YAML file:
+\path{configs/examples/distill_predictions.yaml}.
+
+\begin{lstlisting}[language=bash]
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --split val2017 \
+  --config configs/examples/distill_predictions.yaml \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json
+\end{lstlisting}
+
+This is the preferred operator path when the long explicit flag list becomes hard to remember or copy correctly.
 
 \paragraph{Step 5: Read the outputs in the right order}
 The recommended reading order is:

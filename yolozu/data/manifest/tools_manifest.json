@@ -2507,12 +2507,12 @@
       "entrypoint": "tools/distill_predictions.py",
       "examples": [
         {
-          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --alpha 0.5 --iou-threshold 0.7 --output reports/predictions_distilled.json --output-report reports/distill_report.json",
-          "description": "Conservative offline distillation: blend matched teacher/student detections and write a report."
+          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --config configs/examples/distill_predictions.yaml --output reports/predictions_distilled.json --output-report reports/distill_report.json",
+          "description": "Recommended short path: use the checked-in YAML boilerplate for offline prediction distillation."
         },
         {
           "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --alpha 0.5 --iou-threshold 0.7 --add-missing --teacher-min-score 0.25 --max-added-per-image 20 --add-duplicate-iou-threshold 0.9 --output reports/predictions_distilled.json --output-report reports/distill_report.json",
-          "description": "Exploratory offline distillation: allow guarded teacher-only injection for fast ablations."
+          "description": "Explicit exploratory path: allow guarded teacher-only injection for fast ablations."
         }
       ],
       "id": "distill_predictions",
@@ -2530,6 +2530,7 @@
           "required": true
         },
         {
+          "description": "Optional JSON/YAML config for distillation parameters.",
           "flag": "--config",
           "kind": "file",
           "name": "config",

@@ -86,6 +86,7 @@ You need:
 
 Both should already satisfy the predictions interface contract.
 If they came from different runtimes or frameworks, validate them first.
+For convenience, `tools/distill_predictions.py` also accepts wrapped prediction payloads whose `meta` block is only partial; the helper supplements missing stable fields such as `adapter`, `timestamp`, `tta`, and `ttt` before validation so checked-in artifacts remain usable.
 
 ```bash
 python3 tools/validate_predictions.py reports/predictions_student.json --strict
@@ -194,6 +195,25 @@ python3 tools/distill_predictions.py \
   --output reports/predictions_distilled.json \
   --output-report reports/distill_report.json
 ```
+
+For this repo, the recommended boilerplate is the checked-in YAML file:
+
+- `configs/examples/distill_predictions.yaml`
+
+So the short form is:
+
+```bash
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --split val2017 \
+  --config configs/examples/distill_predictions.yaml \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json
+```
+
+`--config` accepts both JSON and YAML. YAML is the easier option when you want to keep the command line short.
 
 ## How the algorithm behaves
 

@@ -86,12 +86,7 @@ python3 tools/distill_predictions.py \
   --teacher reports/predictions_teacher.json \
   --dataset data/coco128 \
   --split val2017 \
-  --alpha 0.5 \
-  --iou-threshold 0.7 \
-  --add-missing \
-  --teacher-min-score 0.25 \
-  --max-added-per-image 20 \
-  --add-duplicate-iou-threshold 0.9 \
+  --config configs/examples/distill_predictions.yaml \
   --output reports/predictions_distilled.json \
   --output-report reports/distill_report.json
 ```
