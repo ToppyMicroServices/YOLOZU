@@ -142,6 +142,8 @@ Tool list + args examples: [`docs/tools_index.md`](docs/tools_index.md).
 
 Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](docs/learning_features.md).
 
+Prediction distillation guide (beginner-facing, step-by-step offline teacher/student artifact blending): [`docs/distillation.md`](docs/distillation.md).
+
 ## Start here (choose 1 of 4 entry points)
 
 - **A: Evaluate from precomputed predictions (no inference deps)** — `predictions.json` → validate → eval.

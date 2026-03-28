@@ -66,6 +66,8 @@ Repository governance / Scorecard posture: [`docs/security_scorecard_governance.
 
 Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](learning_features.md)
 
+Beginner-friendly prediction distillation guide (offline teacher/student artifact blending): [`docs/distillation.md`](distillation.md)
+
 ---
 
 ## A) Evaluate from precomputed predictions (no inference deps)

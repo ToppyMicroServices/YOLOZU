@@ -104,6 +104,8 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 
 - Prediction distillation (offline artifact blending; not continual-learning):
   - `python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --output reports/predictions_distilled.json`
+  - Outputs: `reports/predictions_distilled.json`, `reports/distill_report.json`
+  - Read first: `distill_report.json`
   - Docs: `docs/distillation.md`
 
 ## Machine-readable tool registry

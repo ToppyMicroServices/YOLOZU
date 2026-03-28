@@ -138,6 +138,8 @@ AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools
 
 学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/learning_features.md`](docs/learning_features.md)
 
+Prediction distillation 指南（面向初学者的逐步说明）：[`docs/distillation.md`](docs/distillation.md)
+
 ## 从这里开始（4 个入口）
 
 - **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval

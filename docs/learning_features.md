@@ -76,7 +76,7 @@ Details: [`docs/ttt_protocol.md`](ttt_protocol.md).
 
 ## 4) (Research helper) Prediction distillation (offline)
 
-Value: Blend teacher/student `predictions.json` artifacts to accelerate ablations without retraining.
+Value: Blend teacher/student `predictions.json` artifacts to accelerate ablations **without retraining**. This is useful when you want to test whether a stronger teacher contains helpful signal before investing in training-time distillation.
 
 Representative command:
 
@@ -85,13 +85,30 @@ python3 tools/distill_predictions.py \
   --student reports/predictions_student.json \
   --teacher reports/predictions_teacher.json \
   --dataset data/coco128 \
+  --split val2017 \
+  --alpha 0.5 \
+  --iou-threshold 0.7 \
+  --add-missing \
+  --teacher-min-score 0.25 \
+  --max-added-per-image 20 \
+  --add-duplicate-iou-threshold 0.9 \
   --output reports/predictions_distilled.json \
-  --output-report reports/distill_report.json \
-  --add-missing
+  --output-report reports/distill_report.json
 ```
 
 Artifacts:
-- `reports/predictions_distilled.json` (+ `reports/distill_report.json`)
+- `reports/predictions_distilled.json`
+- `reports/distill_report.json`
+
+Read the outputs in this order:
+- `distill_report.json` first
+- distilled predictions second
+- then the full evaluator if the quick signal looks promising
+
+Important distinction:
+- this helper is **offline prediction distillation**
+- it is **not** training-time self-distillation for continual learning
+- it is **not** TTT / CTTA
 
 Details: [`docs/distillation.md`](distillation.md).
 

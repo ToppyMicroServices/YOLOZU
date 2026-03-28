@@ -2484,19 +2484,20 @@
         ]
       },
       "docs": [
-        "docs/distillation.md"
+        "docs/distillation.md",
+        "docs/learning_features.md"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes distilled predictions JSON.",
+            "description": "Writes the distilled predictions JSON artifact.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Writes distillation report JSON.",
+            "description": "Writes the distillation report JSON (metrics + matched/added counts + parameters).",
             "flag": "--output-report",
             "kind": "file",
             "scope": "path"
@@ -2506,8 +2507,12 @@
       "entrypoint": "tools/distill_predictions.py",
       "examples": [
         {
-          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --output reports/predictions_distilled.json --output-report reports/distill_report.json --add-missing",
-          "description": "Distill scores and evaluate proxy metrics on coco128."
+          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --alpha 0.5 --iou-threshold 0.7 --output reports/predictions_distilled.json --output-report reports/distill_report.json",
+          "description": "Conservative offline distillation: blend matched teacher/student detections and write a report."
+        },
+        {
+          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --alpha 0.5 --iou-threshold 0.7 --add-missing --teacher-min-score 0.25 --max-added-per-image 20 --add-duplicate-iou-threshold 0.9 --output reports/predictions_distilled.json --output-report reports/distill_report.json",
+          "description": "Exploratory offline distillation: allow guarded teacher-only injection for fast ablations."
         }
       ],
       "id": "distill_predictions",
@@ -2605,12 +2610,14 @@
         {
           "default": "reports/predictions_distilled.json",
           "kind": "file",
-          "name": "predictions_distilled"
+          "name": "predictions_distilled",
+          "description": "Distilled predictions artifact."
         },
         {
           "default": "reports/distill_report.json",
           "kind": "file",
-          "name": "report_json"
+          "name": "report_json",
+          "description": "Distillation report artifact."
         }
       ],
       "platform": {
@@ -2620,7 +2627,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Offline prediction distillation: blend teacher predictions into a student predictions JSON and write a report (not a training-time anti-forgetting method).",
+      "summary": "Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and keep this clearly separate from training-time self-distillation or TTT.",
       "tags": [
         "predictions",
         "distillation",

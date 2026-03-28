@@ -204,6 +204,8 @@ eval "$(yolozu completion --shell zsh)"
 
 学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
 
+Prediction distillation ガイド（初心者向けの手順つき説明）: [`docs/distillation.md`](docs/distillation.md)
+
 ---
 
 ## 何が“売り”か（設計の中心）
@@ -217,7 +219,7 @@ eval "$(yolozu completion --shell zsh)"
 - **Safe TTT（test-time training）**  
   Tent / MIM / CoTTA / EATA / SAR のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
 - **Prediction distillation（準・学習: offline）**  
-  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化（`docs/distillation.md`）。
+  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化。原理・実施手順・出力の読み方は [`docs/distillation.md`](docs/distillation.md) に整理。
 - **Hessian-based refinement（準・学習: post-inference）**  
   `predictions.json` に対する per-detection の局所 refinement（engine外の後処理; `docs/hessian_solver.md`）。
 
