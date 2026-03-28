@@ -274,10 +274,12 @@ bash scripts/ttt_compare.sh \
 ```
 
 For pose-heavy runs, switch the preset to `pose_mim`.
-The shipped `mim` boilerplate already points both baseline and adapted export
-commands at `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json`, so the
-repo-shipped checkpoint can run a real compare without adding raw `--ttt-*`
-flags.
+YOLOZU now ships two practical MIM entrypoints:
+
+- `mim`: the repo-backed smoke fixture for verifying that the masked-reconstruction
+  path is wired correctly
+- `mim_probe`: a fixed real probe that demonstrates an actual before/after metric
+  delta on the bundled shifted ten-image probe
 
 ```bash
 bash scripts/ttt_compare.sh \
@@ -298,16 +300,38 @@ Repo-backed smoke snapshot:
 - `mean_final_loss=0.461853`
 - `changed_images=0 / 2`
 
+Fixed real-probe snapshot:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10
+```
+
+- `reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.md`
+- `steps_run=10`
+- `mean_final_loss=0.0791513`
+- `changed_images=10 / 10`
+- `map50: 0.00326797 -> 0.00392157`
+- `map50_95: 0.000326797 -> 0.000392157`
+- metric backend: `simple_map_proxy` when `pycocotools` is unavailable in the current runtime
+
 Read it like this:
 - open `mim_before_after_compare.md`
 - then inspect `mim_ttt_log.json`
 - in MIM, the adaptation loss is usually more meaningful than in Tent because it contains the reconstruction term
-- `changed_images=0 / 2` on the smoke subset means the MIM path executed correctly, even though the final detections did not change
-- in the manual summary figure, MIM is therefore treated as execution evidence, not as the main metric-win bar chart
+- the smoke fixture proves execution; the fixed real probe proves that MIM can also move final detections in a visible, repeatable way
+- when `pycocotools` is missing, YOLOZU falls back to `simple_map_proxy` so the before/after compare still yields a deterministic quality delta instead of silently dropping eval
 
-Concrete repo result:
+Concrete repo results:
 - repo-backed smoke compare: `steps_run=2`, `mean_final_loss=0.461853`, `changed_images=0 / 2`
-- this is an execution example, not the primary metric-win figure
+- fixed real probe compare: `steps_run=10`, `mean_final_loss=0.0791513`, `changed_images=10 / 10`
+- fixed real probe metrics: `map50 0.00326797 -> 0.00392157`, `map50_95 0.000326797 -> 0.000392157`
 
 Pros:
 - stronger adaptation signal than Tent

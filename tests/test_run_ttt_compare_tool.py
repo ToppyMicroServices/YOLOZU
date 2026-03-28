@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import tools.run_ttt_compare as run_ttt_compare
+
 
 class TestRunTTTCompareTool(unittest.TestCase):
     def _make_dataset(self, root: Path) -> Path:
@@ -42,7 +44,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
             dataset = self._make_dataset(root)
             checkpoint = root / "dummy.ckpt"
             checkpoint.write_bytes(b"")
-            for method in ("tent", "mim", "cotta", "eata", "sar"):
+            for method in ("tent", "mim", "mim_probe", "cotta", "eata", "sar"):
                 run_dir = root / method
                 proc = subprocess.run(
                     [
@@ -75,7 +77,8 @@ class TestRunTTTCompareTool(unittest.TestCase):
                 self.assertTrue(plan_path.is_file(), f"missing plan for {method}")
                 payload = json.loads(plan_path.read_text(encoding="utf-8"))
                 self.assertEqual(payload.get("boilerplate_name"), method)
-                self.assertEqual(payload.get("method"), method)
+                expected_method = "mim" if method == "mim_probe" else method
+                self.assertEqual(payload.get("method"), expected_method)
                 commands = payload.get("commands") or {}
                 self.assertIn("baseline_export", commands)
                 self.assertIn("adapted_export", commands)
@@ -84,7 +87,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
 
     def test_mim_and_sar_boilerplates_expand_real_update_args(self):
         repo_root = Path(__file__).resolve().parents[1]
-        for method in ("mim", "sar"):
+        for method in ("mim", "mim_probe", "sar"):
             payload = json.loads((repo_root / "configs" / "examples" / "ttt_compare" / f"{method}.json").read_text(encoding="utf-8"))
             self.assertIsNone(payload.get("preset"))
             extra = payload.get("extra_export_args")
@@ -95,13 +98,15 @@ class TestRunTTTCompareTool(unittest.TestCase):
             self.assertEqual(extra[idx + 1], "norm_only")
             self.assertIn("--ttt-steps", extra)
             self.assertIn("--ttt-lr", extra)
-        mim_payload = json.loads((repo_root / "configs" / "examples" / "ttt_compare" / "mim.json").read_text(encoding="utf-8"))
-        common = mim_payload.get("common_export_args")
-        self.assertIsInstance(common, list)
-        self.assertEqual(
-            common,
-            ["--config", "configs/examples/ttt_compare/rtdetr_pose_mim_compare.json"],
-        )
+        expected_configs = {
+            "mim": "configs/examples/ttt_compare/rtdetr_pose_mim_compare.json",
+            "mim_probe": "configs/examples/ttt_compare/yolo26n_mim_real_probe.json",
+        }
+        for method, expected in expected_configs.items():
+            mim_payload = json.loads((repo_root / "configs" / "examples" / "ttt_compare" / f"{method}.json").read_text(encoding="utf-8"))
+            common = mim_payload.get("common_export_args")
+            self.assertIsInstance(common, list)
+            self.assertEqual(common, ["--config", expected])
 
     def test_dry_run_mim_plan_includes_repo_backed_config_in_both_exports(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -146,6 +151,49 @@ class TestRunTTTCompareTool(unittest.TestCase):
             self.assertIn("--config", adapted)
             self.assertEqual(adapted[adapted.index("--config") + 1], expected)
 
+    def test_dry_run_mim_probe_plan_includes_real_probe_config(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_ttt_compare.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            checkpoint = root / "dummy.ckpt"
+            checkpoint.write_bytes(b"")
+            run_dir = root / "mim_probe"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--boilerplate",
+                    "mim_probe",
+                    "--dataset",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--checkpoint",
+                    str(checkpoint),
+                    "--run-dir",
+                    str(run_dir),
+                    "--dry-run",
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"mim_probe dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads((run_dir / "plan.json").read_text(encoding="utf-8"))
+            baseline = payload["commands"]["baseline_export"]
+            adapted = payload["commands"]["adapted_export"]
+            expected = "configs/examples/ttt_compare/yolo26n_mim_real_probe.json"
+            self.assertIn("--config", baseline)
+            self.assertEqual(baseline[baseline.index("--config") + 1], expected)
+            self.assertIn("--config", adapted)
+            self.assertEqual(adapted[adapted.index("--config") + 1], expected)
+
     def test_shell_wrapper_help(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "scripts" / "ttt_compare.sh"
@@ -162,6 +210,14 @@ class TestRunTTTCompareTool(unittest.TestCase):
         self.assertIn("--boilerplate", proc.stdout)
         self.assertIn("tent", proc.stdout)
         self.assertIn("dry-run", proc.stdout.lower())
+
+    def test_simple_map_proxy_detector_matches_pycocotools_failure(self):
+        result = {
+            "returncode": 1,
+            "stderr": "RuntimeError: pycocotools is required for COCO mAP evaluation.",
+            "stdout": "",
+        }
+        self.assertTrue(run_ttt_compare._should_use_simple_map_proxy(result))
 
 
 if __name__ == "__main__":

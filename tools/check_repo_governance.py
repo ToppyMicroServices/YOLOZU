@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -307,6 +308,14 @@ def _public_report(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _write_private_report(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    serialized = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(serialized)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
@@ -360,9 +369,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_payload = _public_report(result)
-    output_path.write_text(json.dumps(output_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_private_report(output_path, output_payload)
 
     failed_required = result["failed_required_checks"]
     missing_evidence = result["missing_evidence"]

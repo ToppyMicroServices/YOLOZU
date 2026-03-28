@@ -259,8 +259,16 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
 ```
 
-已提供的 boilerplate：`tent`、`mim`、`cotta`、`eata`、`sar`。
+已提供的 boilerplate：`tent`、`mim`、`mim_probe`、`cotta`、`eata`、`sar`。
 详见：[`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
+
+固定 real probe 的 MIM 示例：
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
+```
+
+这个 fixed probe 会让全部 10 张图像的预测发生变化，并把内置比较指标从 `map50=0.00326797` 提升到 `0.00392157`。
 
 TTT improvement micro-demo（展示 metric delta 与 overlay）：
 

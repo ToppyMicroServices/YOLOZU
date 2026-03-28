@@ -24,6 +24,7 @@ The shell wrapper delegates to `python3 tools/run_ttt_compare.py` and loads one 
 Available boilerplates:
 - `tent`
 - `mim`
+- `mim_probe`
 - `cotta`
 - `eata`
 - `sar`
@@ -37,7 +38,8 @@ file for the selected method. The main thing to compare is the
 | Method | Boilerplate | Baseline artifact | Adapted artifact | Primary before/after artifact | Optional follow-up |
 | --- | --- | --- | --- | --- | --- |
 | Tent | `tent` | `reports/ttt_compare/tent/baseline_predictions.json` | `reports/ttt_compare/tent/tent_predictions.json` | `reports/ttt_compare/tent/tent_before_after_compare.md` | Inspect `tent_ttt_log.json` for loss/runtime guards |
-| MIM | `mim` | `reports/ttt_compare/mim/baseline_predictions.json` | `reports/ttt_compare/mim/mim_predictions.json` | `reports/ttt_compare/mim/mim_before_after_compare.md` | Inspect `mim_ttt_log.json`; use `pose_mim` for pose-heavy runs |
+| MIM (generic) | `mim` | `reports/ttt_compare/mim/baseline_predictions.json` | `reports/ttt_compare/mim/mim_predictions.json` | `reports/ttt_compare/mim/mim_before_after_compare.md` | Inspect `mim_ttt_log.json`; use `pose_mim` for pose-heavy runs |
+| MIM (fixed real probe) | `mim_probe` | `reports/ttt_compare/mim_probe_cpu/baseline_predictions.json` | `reports/ttt_compare/mim_probe_cpu/mim_predictions.json` | `reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.md` | Uses the fixed 10-image shifted probe and the built-in `simple_map_proxy` fallback when `pycocotools` is unavailable |
 | CoTTA | `cotta` | `reports/ttt_compare/cotta/baseline_predictions.json` | `reports/ttt_compare/cotta/cotta_predictions.json` | `reports/ttt_compare/cotta/cotta_before_after_compare.md` | `tools/eval_cotta_drift.py` for augmentation/EMA drift review |
 | EATA | `eata` | `reports/ttt_compare/eata/baseline_predictions.json` | `reports/ttt_compare/eata/eata_predictions.json` | `reports/ttt_compare/eata/eata_before_after_compare.md` | `tools/benchmark_eata_stability.py` for selective-update stability |
 | SAR | `sar` | `reports/ttt_compare/sar/baseline_predictions.json` | `reports/ttt_compare/sar/sar_predictions.json` | `reports/ttt_compare/sar/sar_before_after_compare.md` | `tools/benchmark_sar_robustness.py` for CoTTA/EATA/SAR side-by-side review |
@@ -51,6 +53,7 @@ Recommended reading order for every method:
 Notes:
 - The shipped `mim` and `sar` boilerplates expand the safe defaults directly and force `--ttt-update-filter norm_only` so they work with the repo-shipped checkpoint without requiring LoRA-specific weights.
 - The `mim` boilerplate also injects the repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` into both the baseline and adapted export so the MIM branch is enabled without a long operator command.
+- The `mim_probe` boilerplate injects `configs/examples/ttt_compare/yolo26n_mim_real_probe.json` so the fixed yolo26n probe checkpoint can demonstrate a real before/after metric change with MIM enabled.
 - If you have a checkpoint with dedicated adapter/LoRA parameters, copy the JSON boilerplate and switch the update filter there instead of expanding the raw CLI.
 
 ## Beginner reading guide
@@ -79,7 +82,36 @@ Example:
 - that usually means its sample-selection guard decided adaptation was unsafe on that subset
 - that is conservative behavior, not an implementation failure
 
-## Smoke compare snapshot (repo-shipped checkpoint)
+## Fixed compare snapshots
+
+### Real fixed probe for operator-visible effect
+
+The clearest built-in MIM example is the fixed ten-image shifted probe used by
+the TTT improvement demo. This is the compare to use when you want to confirm
+that MIM changes predictions and improves the repo's built-in quality proxy on a
+stable subset.
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10 \
+  --force
+```
+
+Fixed real-probe result:
+- `reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.md`
+- `steps_run=10`
+- `changed_images=10 / 10`
+- `map50 0.00326797 -> 0.00392157`
+- `map50_95 0.000326797 -> 0.000392157`
+- metric backend: `simple_map_proxy` (used automatically here because `pycocotools` is absent in the local runtime)
+
+### Smoke compare snapshot (repo-shipped checkpoint)
 
 We also ran the boilerplates against the repo-shipped checkpoint
 `reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt` on `data/smoke`, `split=val`,
@@ -103,6 +135,7 @@ Warning notes:
 - Tent, CoTTA, and SAR complete without warnings on this smoke subset
 
 For the completed runs, the compact before/after summaries live here:
+- `reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.md`
 - `reports/ttt_compare/tent_smoke_cpu/tent_before_after_compare.md`
 - `reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.md`
 - `reports/ttt_compare/cotta_smoke_cpu/cotta_before_after_compare.md`
@@ -143,6 +176,20 @@ bash scripts/ttt_compare.sh \
   --checkpoint /path/to.ckpt \
   --run-dir reports/ttt_compare/mim \
   --device cuda
+```
+
+Fixed real-probe example:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10 \
+  --force
 ```
 
 Repo-backed smoke example:

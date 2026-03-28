@@ -14,10 +14,12 @@ from typing import Any
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
+from yolozu.dataset import build_manifest
+from yolozu.eval.simple_map import evaluate_map
 from yolozu.predictions.predictions_parity import compare_predictions
 
 BOILERPLATE_DIR = repo_root / "configs" / "examples" / "ttt_compare"
-KNOWN_BOILERPLATES = ("tent", "mim", "cotta", "eata", "sar")
+KNOWN_BOILERPLATES = ("tent", "mim", "mim_probe", "cotta", "eata", "sar")
 
 
 def _now_utc() -> str:
@@ -85,7 +87,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "predictions, optional eval reports, and a before-after summary."
         )
     )
-    p.add_argument("-b", "--boilerplate", required=True, help="Boilerplate name (tent/mim/cotta/eata/sar) or JSON path.")
+    p.add_argument("-b", "--boilerplate", required=True, help="Boilerplate name (tent/mim/mim_probe/cotta/eata/sar) or JSON path.")
     p.add_argument("-d", "--dataset", required=True, help="YOLO-format dataset root.")
     p.add_argument("-s", "--split", default="val", help="Dataset split (default: val).")
     p.add_argument("-c", "--checkpoint", required=True, help="Checkpoint path for the adapted run.")
@@ -260,6 +262,50 @@ def _extract_eval_metrics(path: Path) -> dict[str, Any] | None:
     }
 
 
+def _load_prediction_entries(path: Path) -> list[dict[str, Any]]:
+    payload = _load_json(path)
+    predictions = payload.get("predictions")
+    if not isinstance(predictions, list):
+        raise ValueError(f"predictions payload missing list at: {path}")
+    return [item for item in predictions if isinstance(item, dict)]
+
+
+def _should_use_simple_map_proxy(result: dict[str, Any] | None) -> bool:
+    if not isinstance(result, dict):
+        return False
+    if int(result.get("returncode") or 0) == 0:
+        return False
+    combined = f"{result.get('stdout') or ''}{result.get('stderr') or ''}"
+    return "pycocotools is required" in combined or "No module named 'pycocotools'" in combined
+
+
+def _build_simple_map_proxy_eval(
+    *,
+    dataset: Path,
+    split: str,
+    predictions_path: Path,
+    max_images: int | None,
+) -> dict[str, Any]:
+    manifest = build_manifest(str(dataset), split=str(split))
+    records = list(manifest.get("images") or [])
+    if max_images is not None:
+        records = records[: max(0, int(max_images))]
+    predictions_entries = _load_prediction_entries(predictions_path)
+    thresholds = [0.5 + 0.05 * i for i in range(10)]
+    result = evaluate_map(records, predictions_entries, iou_thresholds=thresholds)
+    return {
+        "map50": float(result.map50),
+        "map50_95": float(result.map50_95),
+        "map75": None,
+        "ar100": None,
+        "dry_run": False,
+        "warnings": [
+            "eval_suite fell back to simple_map_proxy because pycocotools was unavailable in this runtime"
+        ],
+        "metric_backend": "simple_map_proxy",
+    }
+
+
 def _summarize_parity(report: dict[str, Any]) -> dict[str, Any]:
     results = report.get("results")
     if not isinstance(results, list):
@@ -359,7 +405,10 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     _validate_args(args)
 
+    requested_boilerplate = _coerce_method(str(args.boilerplate))
     method, boilerplate_path, boilerplate = _resolve_boilerplate(str(args.boilerplate))
+    if requested_boilerplate not in KNOWN_BOILERPLATES:
+        requested_boilerplate = method
     run_dir = _resolve(args.run_dir or (repo_root / "reports" / "ttt_compare" / method))
     if run_dir.exists() and any(run_dir.iterdir()) and not args.force:
         raise SystemExit(f"run dir already exists and is not empty: {run_dir} (use --force)")
@@ -438,7 +487,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": 1,
         "kind": "ttt_compare_plan",
         "timestamp": _now_utc(),
-        "boilerplate_name": method,
+        "boilerplate_name": requested_boilerplate,
         "boilerplate_path": str(boilerplate_path),
         "method": method,
         "preset": preset,
@@ -514,6 +563,23 @@ def main(argv: list[str] | None = None) -> int:
         for label in ("baseline_eval", "adapted_eval"):
             result = _run(plan["commands"][label], cwd=repo_root)
             eval_results[label] = result
+    baseline_eval_metrics = _extract_eval_metrics(baseline_eval) if baseline_eval.is_file() else None
+    adapted_eval_metrics = _extract_eval_metrics(adapted_eval) if adapted_eval.is_file() else None
+    max_images = int(args.max_images) if args.max_images is not None else None
+    if baseline_eval_metrics is None and _should_use_simple_map_proxy(eval_results.get("baseline_eval")):
+        baseline_eval_metrics = _build_simple_map_proxy_eval(
+            dataset=dataset,
+            split=str(args.split),
+            predictions_path=baseline_predictions,
+            max_images=max_images,
+        )
+    if adapted_eval_metrics is None and _should_use_simple_map_proxy(eval_results.get("adapted_eval")):
+        adapted_eval_metrics = _build_simple_map_proxy_eval(
+            dataset=dataset,
+            split=str(args.split),
+            predictions_path=adapted_predictions,
+            max_images=max_images,
+        )
 
     baseline_payload = _load_json(baseline_predictions)
     adapted_payload = _load_json(adapted_predictions)
@@ -530,7 +596,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": 1,
         "kind": "ttt_before_after_compare",
         "timestamp": _now_utc(),
-        "boilerplate_name": method,
+        "boilerplate_name": requested_boilerplate,
         "boilerplate_path": str(boilerplate_path),
         "method": method,
         "preset": preset,
@@ -575,8 +641,8 @@ def main(argv: list[str] | None = None) -> int:
     }
     if args.protocol:
         report["protocol"] = str(args.protocol)
-    report["baseline_eval"] = _extract_eval_metrics(baseline_eval) if baseline_eval.is_file() else None
-    report["adapted_eval"] = _extract_eval_metrics(adapted_eval) if adapted_eval.is_file() else None
+    report["baseline_eval"] = baseline_eval_metrics
+    report["adapted_eval"] = adapted_eval_metrics
     if eval_results:
         report["eval_commands"] = {
             key: " ".join(shlex.quote(x) for x in value.get("command") or []) for key, value in eval_results.items()

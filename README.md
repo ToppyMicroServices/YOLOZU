@@ -265,8 +265,16 @@ Recommended short before/after compare workflow:
 bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
 ```
 
-Method boilerplates: `tent`, `mim`, `cotta`, `eata`, `sar`.
+Method boilerplates: `tent`, `mim`, `mim_probe`, `cotta`, `eata`, `sar`.
 Details: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md).
+
+Fixed real-probe MIM example:
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
+```
+
+This fixed probe changes all ten images and improves the built-in compare metric from `map50=0.00326797` to `0.00392157`.
 
 TTT improvement micro-demo (shows a metric delta + overlays):
 

@@ -1,0 +1,40 @@
+{
+  "method": "mim",
+  "preset": null,
+  "reset": "sample",
+  "common_export_args": [
+    "--config",
+    "configs/examples/ttt_compare/yolo26n_mim_real_probe.json"
+  ],
+  "compare": {
+    "iou_thresh": 0.99,
+    "score_atol": 0.0001,
+    "bbox_atol": 0.0001
+  },
+  "extra_export_args": [
+    "--ttt-steps",
+    "1",
+    "--ttt-batch-size",
+    "1",
+    "--ttt-lr",
+    "0.0001",
+    "--ttt-max-batches",
+    "1",
+    "--ttt-max-grad-norm",
+    "5.0",
+    "--ttt-max-update-norm",
+    "5.0",
+    "--ttt-max-total-update-norm",
+    "5.0",
+    "--ttt-max-loss-ratio",
+    "3.0",
+    "--ttt-update-filter",
+    "norm_only",
+    "--ttt-mask-prob",
+    "0.6",
+    "--ttt-patch-size",
+    "16",
+    "--ttt-mask-value",
+    "0.0"
+  ]
+}

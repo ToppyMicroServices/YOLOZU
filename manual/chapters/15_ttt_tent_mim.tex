@@ -498,10 +498,12 @@ bash scripts/ttt_compare.sh \
   --device cuda
 \end{lstlisting}
 
-For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}. The shipped
-\cmd{mim} boilerplate already routes both baseline and adapted export commands
-through \path{configs/examples/ttt_compare/rtdetr_pose_mim_compare.json}, so
-the repo-shipped checkpoint can run a real compare without a long manual CLI.
+For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}. \yolozu{} now ships
+two practical MIM entrypoints:
+\begin{itemize}
+  \item \cmd{mim}: a repo-backed smoke fixture for verifying that the masked-reconstruction path is wired correctly
+  \item \cmd{mim\_probe}: a fixed real probe that demonstrates an actual before/after metric delta on the bundled shifted ten-image probe
+\end{itemize}
 
 \begin{lstlisting}[language=bash]
 bash scripts/ttt_compare.sh \
@@ -516,19 +518,33 @@ bash scripts/ttt_compare.sh \
   --force
 \end{lstlisting}
 
+\textbf{Fixed real-probe compare.}
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10
+\end{lstlisting}
+
 \textbf{How to read the result.}
 \begin{itemize}
   \item Open \path{mim\_before\_after\_compare.md} first.
   \item Then inspect \path{mim\_ttt\_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
-  \item In the repo-backed smoke example, \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, and \cmd{changed\_images=0 / 2}. That means the MIM path is really running even though this tiny subset does not change final detections.
-  \item This is why MIM is shown as an execution example inside Figure~\ref{fig:ttt-real-summary}, not as the main metric-win bar chart.
+  \item The repo-backed smoke example proves execution: \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, and \cmd{changed\_images=0 / 2}.
+  \item The fixed real probe proves operator-visible impact: \cmd{steps\_run=10}, \cmd{mean\_final\_loss=0.0791513}, \cmd{changed\_images=10 / 10}, \cmd{map50 0.00326797 \rightarrow 0.00392157}, and \cmd{map50\_95 0.000326797 \rightarrow 0.000392157}.
+  \item When \cmd{pycocotools} is not installed in the current runtime, the compare falls back to \cmd{simple\_map\_proxy} instead of silently skipping evaluation.
 \end{itemize}
 
-\textbf{Concrete repo result.}
-The current checked-in MIM example is the repo-backed smoke fixture:
-\cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, \cmd{changed\_images=0 / 2}.
-This is useful because it proves that the masked-reconstruction path is wired correctly.
-At the same time, it also shows why operators should not overclaim from a tiny smoke subset.
+\textbf{Concrete repo results.}
+\begin{itemize}
+  \item repo-backed smoke compare: \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, \cmd{changed\_images=0 / 2}
+  \item fixed real probe compare: \cmd{steps\_run=10}, \cmd{mean\_final\_loss=0.0791513}, \cmd{changed\_images=10 / 10}
+  \item fixed real probe metrics: \cmd{map50 0.00326797 \rightarrow 0.00392157}, \cmd{map50\_95 0.000326797 \rightarrow 0.000392157}
+\end{itemize}
 
 \textbf{Pros.}
 \begin{itemize}

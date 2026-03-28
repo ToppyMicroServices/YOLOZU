@@ -155,14 +155,14 @@ def _draw_bar_chart(
 
 
 def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
-    img = Image.new("RGB", (1800, 1320), (255, 255, 255))
+    img = Image.new("RGB", (1800, 1420), (255, 255, 255))
     draw = ImageDraw.Draw(img)
 
-    _text(draw, (70, 40), "TTT result summary (real shifted probe + repo-backed MIM smoke)", font=FONT_40)
+    _text(draw, (70, 40), "TTT result summary (real shifted probe + fixed-probe MIM)", font=FONT_40)
     subtitle = (
         "Real probe: same few-shot checkpoint + same 10 shifted images (gaussian_noise severity 3, seed 2026). "
-        "The chart is the trustworthy comparison. MIM is shown separately because the current repo-backed MIM compare "
-        "uses a 2-image smoke fixture with no exported detection drift."
+        "All five methods below use a fixed before/after protocol. In this runtime, MIM quality numbers come from "
+        "the built-in simple_map_proxy fallback because pycocotools is not installed."
     )
     _draw_wrapped(draw, (70, 95), subtitle, font=FONT_22, width=125, line_gap=6)
 
@@ -171,7 +171,7 @@ def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
     _panel(draw, left, title="Real probe metric delta")
     _panel(draw, right, title="Method execution notes")
 
-    methods = ["baseline", "tent", "cotta", "eata", "sar"]
+    methods = ["baseline", "tent", "mim", "cotta", "eata", "sar"]
     map50 = [source["metrics"][m]["map50"] for m in methods]
     map5095 = [source["metrics"][m]["map50_95"] for m in methods]
     _draw_bar_chart(draw, (95, 270, 860, 480), title="mAP50 on the 10-image shifted probe", methods=methods, values=map50)
@@ -180,21 +180,22 @@ def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
     x = 955
     y = 280
     bullets = [
-        f"Tent / CoTTA / EATA / SAR all improved from {source['metrics']['baseline']['map50']:.6f} to {source['metrics']['tent']['map50']:.6f} (mAP50).",
-        f"The same methods improved from {source['metrics']['baseline']['map50_95']:.6f} to {source['metrics']['tent']['map50_95']:.6f} (mAP50-95).",
+        f"Tent / MIM / CoTTA / EATA / SAR all improved from {source['metrics']['baseline']['map50']:.6f} to {source['metrics']['tent']['map50']:.6f} (mAP50).",
+        f"The same five methods improved from {source['metrics']['baseline']['map50_95']:.6f} to {source['metrics']['tent']['map50_95']:.6f} (mAP50-95).",
     ]
     for bullet in bullets:
         draw.ellipse((x, y + 8, x + 10, y + 18), fill=(88, 132, 226))
         y = _draw_wrapped(draw, (x + 24, y), bullet, font=FONT_22, width=48, line_gap=8) + 10
 
     mim = source["metrics"]["mim"]
-    card = (955, 600, 1735, 890)
+    card = (955, 600, 1735, 970)
     draw.rounded_rectangle(card, radius=18, outline=(147, 157, 168), width=2, fill=(245, 247, 250))
-    _text(draw, (980, 620), "MIM reference run", font=FONT_28)
+    _text(draw, (980, 620), "MIM fixed probe note", font=FONT_28)
     mim_lines = [
-        f"Fixture: repo-backed smoke compare ({mim['images']} images)",
+        f"Fixture: fixed real probe ({mim['images']} images)",
         f"steps_run={mim['steps_run']}, mean_final_loss={mim['mean_final_loss']:.6f}",
         f"changed_images={mim['changed_images']} / {mim['images']}",
+        f"map50={mim['map50']:.6f}, map50_95={mim['map50_95']:.6f}",
     ]
     y = 665
     for line in mim_lines:
@@ -202,7 +203,7 @@ def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
     _draw_wrapped(
         draw,
         (980, y + 8),
-        "Interpretation: this is execution evidence, not a metric-win chart.",
+        "Interpretation: MIM now has a real fixed-probe example. The metric backend is simple_map_proxy in this CPU-only runtime.",
         font=FONT_22,
         width=48,
         line_gap=8,
@@ -210,9 +211,9 @@ def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
 
     footer = (
         "Source artifacts: reports/ttt_improvement_probe/ttt_improvement_report.json and "
-        "reports/ttt_compare/mim_smoke_cpu/mim_before_after_compare.json"
+        "reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.json"
     )
-    _draw_wrapped(draw, (70, 1240), footer, font=FONT_18, fill=(95, 105, 115), width=155, line_gap=4)
+    _draw_wrapped(draw, (70, 1340), footer, font=FONT_18, fill=(95, 105, 115), width=155, line_gap=4)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
 

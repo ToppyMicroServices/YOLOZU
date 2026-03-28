@@ -49,14 +49,17 @@
       "warnings": []
     },
     "mim": {
-      "fixture": "repo_backed_smoke",
+      "fixture": "fixed_real_probe",
       "status": "completed",
-      "steps_run": 2,
-      "mean_final_loss": 0.4618527591228485,
-      "changed_images": 0,
-      "images": 2,
+      "map50": 0.00392156862745098,
+      "map50_95": 0.000392156862745098,
+      "metric_backend": "simple_map_proxy",
+      "steps_run": 10,
+      "mean_final_loss": 0.07915127947926522,
+      "changed_images": 10,
+      "images": 10,
       "warnings": [],
-      "note": "MIM uses the repo-backed compare config and proves the reconstruction branch runs, but this tiny 2-image smoke fixture does not change exported detections."
+      "note": "MIM uses the fixed 10-image shifted probe, the yolo26n demo checkpoint, and a MIM-enabled config. In this runtime the quality numbers come from the built-in simple_map_proxy fallback because pycocotools is not installed."
     }
   },
   "qualitative_example": {

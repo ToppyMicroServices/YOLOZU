@@ -323,8 +323,23 @@ bash scripts/ttt_compare.sh \
   --device cuda
 ```
 
-方式ごとの boilerplate は `tent`, `mim`, `cotta`, `eata`, `sar` を用意しています。
+方式ごとの boilerplate は `tent`, `mim`, `mim_probe`, `cotta`, `eata`, `sar` を用意しています。
 詳細: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
+
+固定 real probe の MIM 実例:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10
+```
+
+この fixed probe では 10/10 画像で予測が変化し、組み込み比較指標は `map50=0.00326797` から `0.00392157` に改善します。
 
 deterministic なドメインシフトターゲット（corruption）を作る場合:
 

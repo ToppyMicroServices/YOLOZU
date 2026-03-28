@@ -45,7 +45,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{bash scripts/smoke.sh} & Runs the one-command offline smoke flow (doctor + validate + eval-coco dry-run + SynthGen intake smoke + instance-seg overlay PNG evidence on \path{data/smoke}). \\
 \cmd{bash scripts/smoke.sh --profile deep} & Runs the deep walkthrough profile and writes \path{reports/smoke\_walkthrough\_report.json} plus backend dry-run export artifacts. \\
 \cmd{bash scripts/smoke.sh --help} & Shows smoke CLI options (\cmd{--dataset}, \cmd{--predictions}, \cmd{--report}, \cmd{--synthgen-root}, \cmd{--synthgen-predictions}, \cmd{--output-dir}, \cmd{--demo-run-dir}, \cmd{--skip-demo}, \cmd{--torch-device}, \cmd{--profile}, \cmd{--walkthrough-report}). \\
-\cmd{bash scripts/ttt\_compare.sh} & Short baseline-vs-adapted TTT compare wrapper. Use \cmd{--boilerplate tent|mim|cotta|eata|sar} plus \cmd{--dataset}, \cmd{--checkpoint}, and \cmd{--run-dir}; it writes baseline/adapted predictions and a before-after Markdown+JSON summary. \\
+\cmd{bash scripts/ttt\_compare.sh} & Short baseline-vs-adapted TTT compare wrapper. Use \cmd{--boilerplate tent|mim|mim\_probe|cotta|eata|sar} plus \cmd{--dataset}, \cmd{--checkpoint}, and \cmd{--run-dir}; it writes baseline/adapted predictions and a before-after Markdown+JSON summary. \\
 \cmd{yolozu train} & Initiates YAML/JSON config-driven RT-DETR training (fully supporting the run contract and resumption capabilities). \\
 \cmd{yolozu test} & Executes the YAML/JSON scenario runner (compatible with dummy, precomputed, and rtdetr\_pose adapters). \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
