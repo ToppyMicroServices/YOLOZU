@@ -114,10 +114,17 @@ Other supported names: `resnet50`, `convnext_tiny`, `cspresnet`, `tiny_cnn`.
 Contract details and extension guide: [backbones.md](backbones.md)
 
 Common options:
-- --device cuda:0
+- --device auto
+- --device mps
 - --batch-size 4
 - --num-queries 10
 - --stage-off-steps 1000 --stage-k-steps 1000
+
+macOS / Apple Silicon beta notes:
+- `--device auto` resolves in `cuda -> mps -> cpu` order.
+- `--device mps` is supported for the scaffold trainer.
+- `--amp fp16|bf16` on MPS is best-effort; unsupported autocast modes warn and fall back to fp32.
+- If an op is still missing on MPS, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
 - --cost-z 1.0 --cost-rot 1.0 --cost-t 1.0
 - --cost-z-start-step 500 --cost-rot-start-step 1000 --cost-t-start-step 1500
 - --checkpoint-out reports/rtdetr_pose_ckpt.pt
@@ -462,11 +469,18 @@ python3 rtdetr_pose/tools/train_minimal.py \
   --batch-size 2 \
   --gradient-accumulation-steps 4
 
-# Automatic Mixed Precision (requires CUDA)
+# Automatic Mixed Precision on CUDA
 python3 rtdetr_pose/tools/train_minimal.py \
   --dataset-root data/coco128 \
   --device cuda:0 \
   --use-amp
+
+# macOS / MPS beta smoke
+PYTORCH_ENABLE_MPS_FALLBACK=1 python3 rtdetr_pose/tools/train_minimal.py \
+  --dataset-root data/coco128 \
+  --device mps \
+  --amp fp16 \
+  --max-steps 2
 
 # Exponential Moving Average (EMA) of model weights
 python3 rtdetr_pose/tools/train_minimal.py \

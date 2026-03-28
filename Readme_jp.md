@@ -178,6 +178,11 @@ python3 -m pip install 'yolozu[train]'   # 学習スキャフォールド（torc
 python3 -m pip install 'yolozu[full]'
 ```
 
+macOS / Apple Silicon メモ:
+- `Torch backend on macOS/MPS` は beta の正式スコープです。ローカル demo、`--backend torch` の推論/export、小さな `train_minimal.py` smoke までを主対象にします。
+- `TensorRT` は引き続き Linux + NVIDIA 専用です。
+- MPS の未対応 op に当たる場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を付けて再実行してください。
+
 デモ全体像のサマリ（機能カバレッジ + 依存チェック + 推奨コマンド）:
 
 ```bash
@@ -433,6 +438,12 @@ run interface contract で固定された成果物（固定パス）:
 - Grad clip（推奨）
 - AMP / EMA / DDP（torchrun）
 - Validation cadence（epoch/step）+ early stop
+
+macOS/MPS beta 運用メモ:
+- `--device auto` は `cuda -> mps -> cpu` の順で解決されます。
+- `--device mps` を明示指定できます。
+- `--amp fp16` / `--amp bf16` は MPS では best-effort です。利用できない autocast mode は警告を出して fp32 に戻ります。
+- 未対応 op がある場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を併用してください。
 
 拡張（任意）:
 - フォトメトリックAug
