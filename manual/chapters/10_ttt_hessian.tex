@@ -25,17 +25,21 @@ At a high level, each iteration computes the residuals and the Jacobian matrix, 
 \resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\small,
-  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  box/.style={draw, rounded corners, align=left, inner sep=8pt, text width=0.28\linewidth},
+  inputbox/.style={box, fill=blue!8},
+  processbox/.style={box, fill=orange!10},
+  outputbox/.style={box, fill=green!10},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 
-\node[box] (pred) at (0,0) {\textbf{Detector output}\\initial offsets / pose-like fields};
-\node[box] (res) at (4.6,0) {\textbf{Local residual}\\how wrong is this nearby solution?};
-\node[box] (step) at (9.2,0) {\textbf{Hessian-style step}\\small damped update};
-\node[box] (out) at (13.8,0) {\textbf{Refined detection}\\same artifact family, smaller local error};
+\node[inputbox] (pred) at (0,0.9) {\textbf{Detector output}\\initial offsets / pose-like fields};
+\node[processbox] (res) at (6.2,0.9) {\textbf{Local residual}\\how wrong is this nearby solution?};
+\node[processbox] (step) at (0,-1.5) {\textbf{Hessian-style step}\\small damped update};
+\node[outputbox] (out) at (6.2,-1.5) {\textbf{Refined detection}\\same artifact family, smaller local error};
 
 \draw[arrow] (pred) -- (res);
-\draw[arrow] (res) -- (step);
+\draw[arrow] (pred) -- (step);
+\draw[arrow] (res) -- (out);
 \draw[arrow] (step) -- (out);
 
 \end{tikzpicture}
