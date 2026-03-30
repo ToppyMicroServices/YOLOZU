@@ -2,7 +2,7 @@ import subprocess
 import sys
 import types
 import unittest
-from unittest import mock
+import unittest.mock
 from pathlib import Path
 
 from yolozu.core import doctor as doctor_mod
@@ -32,7 +32,7 @@ class TestMacOSMpsSmoke(unittest.TestCase):
             get_available_providers=lambda: ["CPUExecutionProvider", "CoreMLExecutionProvider"],
         )
 
-        with mock.patch.dict("sys.modules", {"torch": fake_torch, "onnxruntime": fake_ort}, clear=False):
+        with unittest.mock.patch.dict("sys.modules", {"torch": fake_torch, "onnxruntime": fake_ort}, clear=False):
             runtime = doctor_mod._gather_runtime_capabilities(
                 tools={"trtexec": False, "nvidia_smi": False},
                 gpu={"nvidia_smi_list": []},
@@ -88,10 +88,10 @@ class TestMacOSMpsSmoke(unittest.TestCase):
                 "coreml_provider": False,
             },
         }
-        with mock.patch.object(doctor_mod, "_gather_required_runtime", return_value=({"numpy": {"available": True}}, [])):
-            with mock.patch.object(doctor_mod, "_gather_gpu_info", return_value={"torch": None, "onnxruntime": None, "nvidia_smi_list": None, "cuda_visible_devices": None}):
-                with mock.patch.object(doctor_mod, "_gather_runtime_capabilities", return_value=fake_runtime):
-                    with mock.patch.object(doctor_mod, "_gather_git_info", return_value={"head": "deadbeef", "dirty": False}):
+        with unittest.mock.patch.object(doctor_mod, "_gather_required_runtime", return_value=({"numpy": {"available": True}}, [])):
+            with unittest.mock.patch.object(doctor_mod, "_gather_gpu_info", return_value={"torch": None, "onnxruntime": None, "nvidia_smi_list": None, "cuda_visible_devices": None}):
+                with unittest.mock.patch.object(doctor_mod, "_gather_runtime_capabilities", return_value=fake_runtime):
+                    with unittest.mock.patch.object(doctor_mod, "_gather_git_info", return_value={"head": "deadbeef", "dirty": False}):
                         report, exit_code = doctor_mod.build_doctor_report(cwd=Path.cwd())
 
         self.assertEqual(exit_code, 0)

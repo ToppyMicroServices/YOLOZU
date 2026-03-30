@@ -111,3 +111,14 @@ Latest remote code-scanning triage on `main` shows:
 The first two items are source-level and should be fixed in the repository.
 The remaining items are primarily governed by dependency upgrades, reviewed-PR history,
 or external program status rather than by a single source edit.
+
+## 2026-03-30 follow-up
+
+The repository now carries two explicit mitigations for source-level security alerts:
+
+- `.clusterfuzzlite/Dockerfile` installs from a hash-locked requirements file with `pip --require-hashes`
+- `osv-scanner.toml` documents a scoped ignore for `GHSA-hqmj-h5c6-369m`
+
+The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This
+repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore
+is limited to that advisory and should be revisited as soon as a patched `onnx` version exists.
