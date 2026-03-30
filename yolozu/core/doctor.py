@@ -27,6 +27,7 @@ _OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
 _PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
 _OPTIONAL_RUNTIME_ERRORS = _OPTIONAL_IMPORT_ERRORS + _PROBE_FALLBACK_ERRORS
 
+
 def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -57,6 +58,24 @@ def _pkg_version(name: str) -> str | None:
         return None
 
 
+def _torch_mps_state(torch_module: Any) -> tuple[bool, bool]:
+    mps_backend = getattr(getattr(torch_module, "backends", None), "mps", None)
+    if mps_backend is None:
+        return False, False
+
+    built = False
+    available = False
+    try:
+        built = bool(mps_backend.is_built()) if hasattr(mps_backend, "is_built") else False
+    except _PROBE_FALLBACK_ERRORS as exc:
+        logger.debug("torch MPS is_built probe failed: %s", exc)
+    try:
+        available = bool(mps_backend.is_available()) if hasattr(mps_backend, "is_available") else False
+    except _PROBE_FALLBACK_ERRORS as exc:
+        logger.debug("torch MPS is_available probe failed: %s", exc)
+    return built, available
+
+
 def _gather_git_info(*, cwd: Path) -> dict[str, Any]:
     head = _run_capture(["git", "rev-parse", "HEAD"], cwd=cwd)
     dirty = None
@@ -84,9 +103,12 @@ def _gather_gpu_info() -> dict[str, Any]:
     try:
         import torch  # type: ignore
 
+        mps_built, mps_available = _torch_mps_state(torch)
         torch_info: dict[str, Any] = {
             "version": getattr(torch, "__version__", None),
             "cuda_available": bool(torch.cuda.is_available()),
+            "mps_built": bool(mps_built),
+            "mps_available": bool(mps_available),
         }
         if torch_info["cuda_available"]:
             torch_info["device_count"] = int(torch.cuda.device_count())
@@ -123,6 +145,8 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cuda_version": None,
             "cudnn_version": None,
             "device_count": 0,
+            "mps_built": False,
+            "mps_available": False,
         },
         "onnxruntime": {
             "installed": False,
@@ -130,6 +154,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "providers": [],
             "cuda_provider": False,
             "tensorrt_provider": False,
+            "coreml_provider": False,
         },
         "tensorrt": {
             "python_package_version": _pkg_version("tensorrt"),
@@ -147,6 +172,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
     try:
         import torch  # type: ignore
 
+        mps_built, mps_available = _torch_mps_state(torch)
         runtime["torch"] = {
             "installed": True,
             "version": getattr(torch, "__version__", None),
@@ -154,6 +180,8 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "cuda_version": getattr(getattr(torch, "version", None), "cuda", None),
             "cudnn_version": int(torch.backends.cudnn.version()) if torch.backends.cudnn.is_available() else None,
             "device_count": int(torch.cuda.device_count()) if torch.cuda.is_available() else 0,
+            "mps_built": bool(mps_built),
+            "mps_available": bool(mps_available),
         }
     except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("torch runtime probe failed: %s", exc)
@@ -168,6 +196,7 @@ def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) 
             "providers": providers,
             "cuda_provider": "CUDAExecutionProvider" in providers,
             "tensorrt_provider": "TensorrtExecutionProvider" in providers,
+            "coreml_provider": "CoreMLExecutionProvider" in providers,
         }
     except _OPTIONAL_RUNTIME_ERRORS as exc:
         logger.debug("onnxruntime probe failed: %s", exc)
@@ -333,6 +362,7 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
             "PYTHONHASHSEED": os.environ.get("PYTHONHASHSEED"),
             "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
             "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+            "PYTORCH_ENABLE_MPS_FALLBACK": os.environ.get("PYTORCH_ENABLE_MPS_FALLBACK"),
         },
         "packages": {
             "required": required,
@@ -375,6 +405,13 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
         warnings.append("nvidia-smi not found (expected on Linux+NVIDIA; OK on CPU-only/macOS)")
     if tools["trtexec"] is False:
         warnings.append("trtexec not found (TensorRT engine build requires it)")
+    torch_runtime = (runtime_capabilities.get("torch") or {})
+    if bool(torch_runtime.get("mps_built")) and not bool(torch_runtime.get("mps_available")):
+        warnings.append(
+            "torch was built with MPS support, but MPS is not available at runtime. "
+            "On newer macOS releases this may be an upstream PyTorch binary/runtime issue; "
+            "verify with `sw_vers` and `torch.backends.mps.is_available()`."
+        )
     report["warnings"] = warnings
     report["drift_hints"] = _build_drift_hints(runtime=runtime_capabilities, tools=tools)
 

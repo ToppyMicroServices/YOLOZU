@@ -215,6 +215,11 @@ ls reports/demo_firsttime_instance_seg/overlays/*.png
 
 Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 
+macOS / Apple Silicon note:
+- `Torch backend on macOS/MPS` is a supported beta scope for local demos, `--backend torch` inference/export, and small `train_minimal.py` smoke runs.
+- `TensorRT` remains Linux+NVIDIA only in this repo.
+- If an MPS op is missing, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+
 CLI completion (bash/zsh):
 
 ```bash
