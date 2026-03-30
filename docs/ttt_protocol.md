@@ -206,10 +206,41 @@ operator report.
 
 ### Tent
 
+Meaning of the name:
+- Tent is short for **fully Test-time adaptation by ENTropy minimization**
+- the name already tells you the core idea: adapt at test time, and use entropy as the signal
+
 Principle:
 - Tent minimizes prediction entropy online
 - in plain language, it pushes the model toward sharper predictions on shifted inputs
 - in YOLOZU, the default safe rollout keeps updates constrained to norm-affine parameters
+
+What entropy means here:
+- if the model spreads probability mass across many classes, entropy is high
+- if the model becomes confident and concentrates probability on one class, entropy is low
+- for one prediction vector `p`, the standard entropy term is:
+
+$$
+H(p) = - \sum_c p_c \log p_c
+$$
+
+- Tent reduces the average entropy over selected test-time predictions:
+
+$$
+\min_{\theta_{\text{adapt}}} \; \mathbb{E}_{x \sim \text{test stream}}[H(p_\theta(y \mid x))]
+$$
+
+- in YOLOZU, `theta_adapt` is intentionally small in the safe presets, typically norm-affine or adapter/head subsets
+
+Why this can work:
+- under mild domain shift, the model often still looks at roughly the right object
+- the failure is that the output distribution becomes softer or less decisive
+- entropy minimization nudges the model toward a cleaner local decision boundary without asking for labels
+
+What it is not:
+- it is not supervised fine-tuning
+- it does not tell the model which class is correct
+- it assumes ``become more confident'' is a useful direction on the current shifted sample
 
 When to use it:
 - first ablation
@@ -248,11 +279,42 @@ Cons:
 
 ### MIM
 
+Meaning of the name:
+- MIM stands for **Masked Image Modeling**
+- in plain language, we deliberately hide part of the visual signal and ask the model to reconstruct or predict what is missing
+
 Principle:
 - MIM uses masked reconstruction and optional entropy terms
 - instead of only asking the model to be more confident, it asks the model to reconstruct hidden structure from partially masked features
 - this creates a stronger self-supervised signal than Tent
 - the practical references to know are denoising autoencoders (Vincent et al., ICML 2008), Context Encoders (Pathak et al., CVPR 2016), MAE (He et al., CVPR 2022), SimMIM (Xie et al., CVPR 2022), Test-Time Training with Masked Autoencoders (Gandelsman et al., 2022), and TTT-MIM (Mansour et al., ECCV 2024)
+
+Minimal objective view:
+- a mask `M` hides part of the representation or image-like state
+- the model reconstructs the hidden content from the visible part
+- a simplified reconstruction loss looks like:
+
+$$
+L_{\text{MIM}} = \lVert R_\theta((1-M)\odot x) - M \odot x \rVert
+$$
+
+- some practical variants combine this with entropy minimization:
+
+$$
+L_{\text{adapt}} = \lambda_{\text{mim}} L_{\text{MIM}} + \lambda_{\text{ent}} H(p_\theta(y \mid x))
+$$
+
+- the exact reconstruction target differs across implementations, but the operational idea is the same: force the model to explain the hidden structure instead of only sharpening the class probabilities
+
+Why this can work:
+- entropy-only adaptation can be too weak when the shift is geometric or structural
+- MIM gives the model a denser self-supervised signal
+- that is why it is often more attractive for pose-heavy or geometry-sensitive adaptation than plain Tent
+
+What it is not:
+- it is not only MAE pretraining reused verbatim
+- it is not a guarantee that every test-time run will improve exported detections
+- it usually requires more model-specific wiring than Tent because the masked-reconstruction branch must exist and be stable
 
 Research lineage and IP note:
 - the broad idea behind MIM-style adaptation predates current test-time wording: corrupt or mask part of the representation, reconstruct hidden structure, and use that self-supervised loss as a robustness signal

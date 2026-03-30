@@ -390,8 +390,40 @@ This order matters. The compare markdown is the onboarding artifact. It answers 
 \end{itemize}
 
 \subsection{Tent}
+\textbf{What the name means.}
+Tent is short for \textbf{fully Test-time adaptation by ENTropy minimization}.
+The name is useful because it already tells you the two essential ideas:
+\begin{itemize}
+  \item adaptation happens at \emph{test time},
+  \item entropy is the signal being minimized.
+\end{itemize}
+
 \textbf{Principle.}
 Tent minimizes prediction entropy online using a restricted parameter subset \cite{wang2021tent}. In plain language, it pushes the model toward making sharper, more confident predictions on shifted inputs, but only lets a small subset of parameters move.
+
+\textbf{What entropy means here.}
+If a prediction spreads probability mass across many classes, the entropy is high.
+If the same prediction becomes concentrated on one class, the entropy is low.
+For a single prediction vector $p$, the usual entropy term is:
+\[
+H(p) = - \sum_c p_c \log p_c.
+\]
+Tent adapts a small subset of parameters by reducing the average prediction entropy over the selected test-time samples:
+\[
+\min_{\theta_{\mathrm{adapt}}} \; \mathrm{E}_{x \sim \mathrm{test\ stream}} \left[ H\!\left(p_{\theta}(y \mid x)\right) \right].
+\]
+In \yolozu{}'s safe presets, $\theta_{\mathrm{adapt}}$ is intentionally small, usually norm-affine parameters or a restricted adapter/head subset.
+
+\textbf{Why it can work.}
+Under mild domain shift, the model often still attends to roughly the right object, but its output distribution becomes softer and less decisive.
+Tent exploits that situation: it does not ask the model to discover a brand-new concept, it only asks whether a more confident local decision boundary gives a better answer.
+
+\textbf{What it is not.}
+\begin{itemize}
+  \item It is not supervised fine-tuning.
+  \item It does not tell the model which class is correct.
+  \item It assumes ``become more confident'' is a useful direction on the current shifted sample.
+\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -457,11 +489,45 @@ The effect is small, but it is reproducible under the same checkpoint, subset, a
 \end{itemize}
 
 \subsection{MIM}
+\textbf{What the name means.}
+MIM stands for \textbf{Masked Image Modeling}.
+In plain language, we deliberately hide part of the visual signal and ask the model to reconstruct or predict what is missing.
+That is why MIM feels more structural than Tent: it is not only asking for confidence, it is asking for internal consistency.
+
 \textbf{Principle.}
 MIM uses masked reconstruction and optional entropy terms to adapt from unlabeled shifted inputs. Instead of only asking the model to become more confident, it also asks the model to reconstruct hidden structure from partially masked internal features. The lineage is broader than MAE alone: denoising autoencoders already used corruption-plus-reconstruction as a representation-learning signal in 2008 \cite{vincent2008dae}, image inpainting-style reconstruction was used as a visual self-supervised task in Context Encoders \cite{pathak2016context}, and modern masked-image-modeling references include Masked Autoencoders (MAE) \cite{he2022mae} and SimMIM \cite{xie2022simmim}. For direct test-time usage, representative references are Test-Time Training with Masked Autoencoders \cite{gandelsman2022tttmae} and TTT-MIM \cite{mansour2024tttmim}. \yolozu{} uses this family of masked-image-modeling ideas as an inference-time auxiliary signal rather than as a standalone pretraining recipe.
 
+\textbf{Minimal objective view.}
+Let $M$ denote a mask and $R_{\theta}$ denote the reconstruction path.
+A simplified masked-reconstruction loss can be written as:
+\[
+L_{\mathrm{MIM}} = \left\| R_{\theta}\!\left((1-M)\odot x\right) - M \odot x \right\|.
+\]
+Many practical test-time variants combine this reconstruction term with an entropy term:
+\[
+L_{\mathrm{adapt}} = \lambda_{\mathrm{mim}} L_{\mathrm{MIM}} + \lambda_{\mathrm{ent}} H\!\left(p_{\theta}(y \mid x)\right).
+\]
+The exact target differs across implementations, but the operational story stays the same:
+\begin{itemize}
+  \item hide part of the signal,
+  \item ask the model to infer the hidden structure,
+  \item use that self-supervised error as the adaptation signal.
+\end{itemize}
+
 \textbf{Research lineage and IP note.}
 This manual cites representative prior-art waypoints so that operators can place the method in a broader technical lineage instead of treating MIM-style adaptation as a single new idea. The broad pattern---corrupt or mask part of the input/feature state, reconstruct hidden structure, and use that self-supervised loss to improve robustness---predates the current wording of test-time masked adaptation. This note is meant to support technical due diligence and prior-art positioning only; it is \textbf{not} legal advice and it is \textbf{not} a non-infringement opinion. Any deployment-specific IP or patent review belongs to qualified counsel.
+
+\textbf{Why it can work.}
+Entropy-only adaptation can be too weak when the shift is geometric, structural, or pose-sensitive.
+MIM adds a denser self-supervised objective: the model is rewarded not merely for being decisive, but for reconstructing a plausible hidden structure from incomplete evidence.
+That is why MIM is often easier to justify in pose-heavy workflows than plain confidence sharpening.
+
+\textbf{What it is not.}
+\begin{itemize}
+  \item It is not just ``MAE pretraining at inference time''.
+  \item It is not guaranteed to improve every exported detection.
+  \item It is usually more model-specific than Tent because the masked-reconstruction branch must exist and stay numerically stable.
+\end{itemize}
 
 \begin{figure}[h]
 \centering
