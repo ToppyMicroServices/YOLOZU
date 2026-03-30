@@ -138,6 +138,12 @@ AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools
 
 学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/learning_features.md`](docs/learning_features.md)
 
+Prediction distillation 指南（面向初学者的逐步说明 + sample YAML）：[`docs/distillation.md`](docs/distillation.md)
+
+Continual learning 指南（用示意图解释 LoRA / QLoRA）：[`docs/continual_learning.md`](docs/continual_learning.md)
+
+Hessian refinement 指南（用更直观的方式说明它为什么常用于 pose 场景）：[`docs/hessian_solver.md`](docs/hessian_solver.md)
+
 ## 从这里开始（4 个入口）
 
 - **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval
@@ -252,6 +258,23 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 ```
 
 详情：[`docs/ttt_protocol.md`](docs/ttt_protocol.md)
+
+推荐使用简短的 before/after compare workflow：
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
+```
+
+已提供的 boilerplate：`tent`、`mim`、`mim_probe`、`cotta`、`eata`、`sar`。
+详见：[`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
+
+固定 real probe 的 MIM 示例：
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
+```
+
+这个 fixed probe 会让全部 10 张图像的预测发生变化，并把内置比较指标从 `map50=0.00326797` 提升到 `0.00392157`。
 
 TTT improvement micro-demo（展示 metric delta 与 overlay）：
 

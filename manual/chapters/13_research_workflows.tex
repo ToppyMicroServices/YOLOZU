@@ -7,6 +7,8 @@ It establishes a framework for repeatable experiments grounded in an artifact-fi
 }{
 It assumes the utilization of stable JSON artifacts and, where applicable, protocol presets. Maintaining deterministic subsets is crucial for ensuring fair and valid comparisons.
 }
+\ChapterAudience{Read this chapter when you are planning ablations, sweeps, offline distillation, or artifact-first research loops.}
+
 
 \section{The research loop in \yolozu{}}
 A canonical research iteration proceeds as follows:
@@ -91,33 +93,283 @@ Critical configuration fields (detailed in \path{docs/hpo_sweep.md}):
 The harness is intentionally framework-agnostic; it makes no assumptions regarding the underlying training stack.
 
 \section{Prediction distillation workflow}
-\yolozu{} incorporates a streamlined distillation utility located at \path{tools/distill_predictions.py}.
+\yolozu{} includes a beginner-friendly \emph{offline prediction distillation} helper at
+\path{tools/distill_predictions.py}. This section is intentionally written in the same spirit as the TTT chapter:
+start from the goal, then follow the concrete procedure, then inspect the resulting artifacts.
 
-Canonical usage:
+\subsection{What this workflow is}
+Prediction distillation in this chapter means:
+\begin{itemize}
+  \item take a \textbf{student} \path{predictions.json},
+  \item take a \textbf{teacher} \path{predictions.json},
+  \item compare them image-by-image,
+  \item blend matched detections, optionally inject selected teacher-only detections,
+  \item write a new distilled \path{predictions.json} plus a compact report.
+\end{itemize}
+
+The important point is that this is an \textbf{artifact-level} workflow.
+It does \emph{not} update model weights. It is a fast research helper for answering:
+\begin{quote}
+``If I trust this teacher more than the student on this subset, is there enough signal to justify a heavier training-time distillation setup?''
+\end{quote}
+
+\subsection{What this workflow is not}
+This section's \emph{prediction distillation} is narrower than the self-distillation discussed in the continual-learning chapter and narrower than TTT:
+\begin{itemize}
+  \item it is \textbf{not} checkpoint-based self-distillation during training,
+  \item it is \textbf{not} an anti-forgetting method by itself,
+  \item it is \textbf{not} changing model parameters at inference time,
+  \item it is \textbf{not} a substitute for the full evaluator when reporting final numbers.
+\end{itemize}
+
+So the separation is:
+\begin{itemize}
+  \item \textbf{Prediction distillation}: rewrite one prediction artifact using another prediction artifact.
+  \item \textbf{Self-distillation}: train a checkpoint while regularizing it toward another checkpoint.
+  \item \textbf{TTT / CTTA}: adapt model parameters in memory during inference-time operation.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=8pt},
+  artifactbox/.style={box, fill=blue!8, text width=0.28\linewidth},
+  matchbox/.style={box, fill=orange!10, text width=0.34\linewidth},
+  actionbox/.style={box, fill=green!10, text width=0.28\linewidth},
+  outputbox/.style={box, fill=purple!8, text width=0.28\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[artifactbox] (student) at (0,2.2) {\textbf{Student artifact}\\\path{predictions_student.json}};
+\node[artifactbox] (teacher) at (8.8,2.2) {\textbf{Teacher artifact}\\\path{predictions_teacher.json}};
+\node[matchbox] (match) at (4.4,0.2) {\textbf{Match detections}\\same image, same class, IoU threshold};
+\node[actionbox] (blend) at (0,-2.3) {\textbf{Blend matched scores}\\controlled by \cmd{--alpha}};
+\node[actionbox] (inject) at (8.8,-2.3) {\textbf{Optionally inject teacher-only detections}\\guarded by score / duplicate / count caps};
+\node[outputbox] (output) at (4.4,-4.8) {\textbf{Distilled artifacts}\\\path{predictions_distilled.json}\\\path{distill_report.json}};
+
+\draw[arrow] (student) -- (match);
+\draw[arrow] (teacher) -- (match);
+\draw[arrow] (match) -- (blend);
+\draw[arrow] (match) -- (inject);
+\draw[arrow] (blend) -- (output);
+\draw[arrow] (inject) -- (output);
+
+\end{tikzpicture}
+}
+\caption{Prediction distillation flow in \yolozu{}: keep the student artifact as the base, borrow teacher signal under explicit rules, then emit a new distilled artifact instead of mutating the originals.}
+\end{figure}
+
+\subsection{A friendlier mental model}
+If you need to explain this workflow to a new teammate, the most useful sentence is:
+\begin{quote}
+The student artifact is the first draft; the teacher artifact is the reviewer; distillation applies only a limited set of corrections and writes a new artifact.
+\end{quote}
+
+In practice, each candidate object lands in one of three buckets:
+\begin{itemize}
+  \item \textbf{Matched}: both student and teacher found the same object. This usually leads to a safer score update.
+  \item \textbf{Teacher-only}: the teacher found an object that the student missed. This can improve recall, but it is also where false positives enter.
+  \item \textbf{Student-only}: the student found an object that the teacher did not. The helper keeps the student artifact as the base.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.28\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (matched) at (0,0) {\textbf{Matched case}\\Student and teacher overlap on the same object.\\Most common effect: confidence blending.\\Typical question: ``Is the teacher just better calibrated?''};
+\node[box] (teacher) at (6.3,0) {\textbf{Teacher-only case}\\Teacher sees an object the student missed.\\Most common effect: recall gain or extra noise.\\Typical question: ``Is this a real missing object?''};
+\node[box] (student) at (12.6,0) {\textbf{Student-only case}\\Student predicts something the teacher does not.\\Most common effect: artifact stays unchanged.\\Typical question: ``Is the teacher blind here or is the student wrong?''};
+
+\draw[arrow] (matched.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Safer path}\\small score correction};
+\draw[arrow] (teacher.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Highest-variance path}\\possible recall gain};
+\draw[arrow] (student.south) -- ++(0,-0.9) node[below, align=center] {\textbf{Base preserved}\\no teacher intervention};
+
+\end{tikzpicture}
+}
+\caption{The three cases to look for when reading a distillation result. For beginners, this is often easier to reason about than starting directly from the final metric table.}
+\end{figure}
+
+\subsection{Step-by-step procedure}
+\paragraph{Step 1: Prepare two valid artifacts}
+You need one student predictions artifact and one teacher predictions artifact.
+Before distilling, validate both:
 \begin{lstlisting}[language=bash]
-python3 tools/distill_predictions.py   --student reports/predictions_student.json   --teacher reports/predictions_teacher.json   --dataset data/coco128   --output reports/predictions_distilled.json   --output-report reports/distill_report.json   --add-missing
+python3 tools/validate_predictions.py reports/predictions_student.json --strict
+python3 tools/validate_predictions.py reports/predictions_teacher.json --strict
 \end{lstlisting}
 
-Key distillation configuration parameters include:
+For operator convenience, \cmd{tools/distill_predictions.py} also accepts wrapped payloads with partial \path{meta} blocks and supplements missing stable keys (for example \texttt{adapter}, \texttt{timestamp}, \texttt{tta}, \texttt{ttt}) before validation. This makes checked-in research artifacts easier to reuse without hand-editing metadata first.
+
+\paragraph{Step 2: Decide how aggressive the blend should be}
+The most important knobs are:
 \begin{itemize}
-  \item \cmd{enabled}
-  \item \cmd{iou_threshold}
-  \item \cmd{alpha}
-  \item \cmd{add_missing}
-  \item \cmd{add_score_scale}
-  \item \cmd{teacher_min_score}
-  \item \cmd{max_added_per_image}
-  \item \cmd{add_duplicate_iou_threshold}
+  \item \cmd{--alpha}: how strongly matched detections move toward the teacher score.
+  \item \cmd{--iou-threshold}: how much overlap teacher/student detections need before they count as the same object.
+  \item \cmd{--add-missing}: whether teacher-only detections may be injected.
+  \item \cmd{--teacher-min-score}: minimum confidence required before a teacher-only detection may be injected.
+  \item \cmd{--max-added-per-image}: cap on teacher-only additions.
+  \item \cmd{--add-duplicate-iou-threshold}: prevents near-duplicate teacher injections.
 \end{itemize}
 
-Important notes:
+\paragraph{Safe-first reading strategy}
+When in doubt, use this order:
+\begin{enumerate}
+  \item run a conservative pass first,
+  \item inspect whether \path{matched} dominates \path{added},
+  \item only then enable teacher-only injection,
+  \item if \path{added} dominates but the visual result looks noisy, treat the gain as fragile.
+\end{enumerate}
+
+\paragraph{Step 3: Run a conservative first pass}
+Start with a conservative run before enabling teacher-only injection:
+\begin{lstlisting}[language=bash]
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --split val2017 \
+  --alpha 0.5 \
+  --iou-threshold 0.7 \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json
+\end{lstlisting}
+
+\paragraph{Step 4: Run an exploratory ablation if needed}
+If you want to test whether teacher-only detections help, enable guarded injection:
+\begin{lstlisting}[language=bash]
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --split val2017 \
+  --alpha 0.5 \
+  --iou-threshold 0.7 \
+  --add-missing \
+  --teacher-min-score 0.25 \
+  --max-added-per-image 20 \
+  --add-duplicate-iou-threshold 0.9 \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json
+\end{lstlisting}
+
+\paragraph{Step 4b: Prefer a checked-in YAML config when the CLI gets too long}
+The helper also accepts \cmd{--config} in JSON or YAML format.
+For day-to-day use, the shortest recommended boilerplate is the checked-in YAML file:
+\path{configs/examples/distill_predictions.yaml}.
+
+\begin{lstlisting}[language=bash]
+python3 tools/distill_predictions.py \
+  --student reports/predictions_student.json \
+  --teacher reports/predictions_teacher.json \
+  --dataset data/coco128 \
+  --split val2017 \
+  --config configs/examples/distill_predictions.yaml \
+  --output reports/predictions_distilled.json \
+  --output-report reports/distill_report.json
+\end{lstlisting}
+
+This is the preferred operator path when the long explicit flag list becomes hard to remember or copy correctly.
+
+\paragraph{Step 5: Read the outputs in the right order}
+The recommended reading order is:
+\begin{enumerate}
+  \item \path{distill_report.json}
+  \item \path{predictions_distilled.json}
+  \item a full evaluator report if the result looks promising
+\end{enumerate}
+
+\subsection{How the algorithm behaves}
+\paragraph{Matched detections}
+When teacher and student detections overlap enough under \cmd{--iou-threshold}, the helper treats them as corresponding detections and blends scores using \cmd{--alpha}.
+This is usually the safer path because both artifacts already agree that there is probably an object there.
+
+\paragraph{Teacher-only detections}
+With \cmd{--add-missing}, the helper may inject detections that only the teacher predicted.
+This is where gains and risks both tend to come from.
+
+Typical upside:
 \begin{itemize}
-  \item The utility intelligently blends teacher predictions into the student's output and generates a concise distillation report JSON.
-  \item This is a score-level / label-free helper, intended for fast ablations. For safer practical usage, set a non-zero \cmd{teacher_min_score}, set finite \cmd{max_added_per_image}, and keep \cmd{add_duplicate_iou_threshold} high to avoid duplicate amplification.
-  \item For rapid, preliminary comparisons, you may utilize the lightweight \cmd{yolozu.simple_map} proxy on a fixed subset (providing fast CPU-bound feedback). However, you must invariably follow up with the full evaluator when formally reporting results.
+  \item recover missed objects,
+  \item reveal useful teacher signal quickly.
 \end{itemize}
 
-Within research loops, this tool is highly effective for conducting rapid teacher-student ablations utilizing fixed subsets and a consistent downstream evaluation protocol.
+Typical downside:
+\begin{itemize}
+  \item propagate teacher false positives,
+  \item grow duplicate boxes when guardrails are too loose,
+  \item overstate benefit on a tiny subset.
+\end{itemize}
+
+\subsection{How to read the report}
+The compact report is enough for first-pass interpretation.
+Inspect:
+\begin{itemize}
+  \item \path{losses.distill_score_gap}
+  \item \path{metrics.student.map50}
+  \item \path{metrics.student.map50_95}
+  \item \path{metrics.distilled.map50}
+  \item \path{metrics.distilled.map50_95}
+  \item \path{meta.matched}
+  \item \path{meta.added}
+  \item \path{meta.distill.*}
+\end{itemize}
+
+Interpretation hints:
+\begin{itemize}
+  \item \textbf{high matched, low added}: mostly confidence refinement on objects both models found.
+  \item \textbf{high added}: the result depends heavily on teacher-only injection.
+  \item \textbf{metrics up with low added}: usually a healthier sign.
+  \item \textbf{metrics up with very high added}: inspect duplicates and false positives carefully.
+\end{itemize}
+
+\subsection{Pros and Cons}
+\begin{longtable}{@{}p{0.22\textwidth}p{0.33\textwidth}p{0.33\textwidth}@{}}
+\toprule
+\textbf{Workflow} & \textbf{Pros} & \textbf{Cons} \\
+\midrule
+Prediction distillation & Fast CPU-friendly ablation; no retraining required; preserves the predictions interface contract workflow; easy side-by-side artifact comparison & Post-hoc artifact rewrite only; gains can be fragile when injection dominates; does not solve forgetting by itself \\
+\bottomrule
+\end{longtable}
+
+\subsection{Practical guardrails}
+Recommended defaults for safer use:
+\begin{itemize}
+  \item keep \cmd{--teacher-min-score >= 0.2},
+  \item keep \cmd{--max-added-per-image} finite,
+  \item keep \cmd{--add-duplicate-iou-threshold} high (for example, \texttt{0.85}--\texttt{0.95}),
+  \item specify \cmd{--split} when the dataset root has multiple candidate splits,
+  \item treat the lightweight \cmd{simple_map} result as a \emph{quick signal}, not the final claim.
+\end{itemize}
+
+\subsection{When to use prediction distillation vs TTT vs self-distillation}
+\begin{longtable}{@{}p{0.30\textwidth}p{0.56\textwidth}@{}}
+\toprule
+\textbf{Goal} & \textbf{Recommended workflow} \\
+\midrule
+Quick offline teacher/student ablation & Prediction distillation \\
+Adapt at inference time under domain shift & TTT / CTTA \\
+Mitigate forgetting while training across tasks/domains & Continual learning with self-distillation / replay / PEFT \\
+Learn a new checkpoint that actually absorbs teacher behavior & Training-time distillation \\
+\bottomrule
+\end{longtable}
+
+\subsection{Background references}
+This helper is an artifact-level utility, not a claim of faithful reproduction of any single paper.
+The conceptual lineage still comes from the broader distillation literature:
+\begin{itemize}
+  \item knowledge distillation: \cite{hinton2015distilling},
+  \item self-distillation / Born-Again Networks: \cite{furlanello2018bornagain}.
+\end{itemize}
+
+Within research loops, prediction distillation is most useful as a \textbf{fast feasibility check}:
+keep the dataset subset fixed, keep the downstream evaluator fixed, and use the distilled artifact to answer whether there is teacher signal worth pursuing further.
 
 \section{Latency/FPS benchmarks with historical tracking (JSONL)}
 Benchmark reports must be treated as formal artifacts. The latency harness generates a stable JSON report and can append results to a JSONL history file:

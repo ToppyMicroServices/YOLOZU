@@ -2484,19 +2484,20 @@
         ]
       },
       "docs": [
-        "docs/distillation.md"
+        "docs/distillation.md",
+        "docs/learning_features.md"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes distilled predictions JSON.",
+            "description": "Writes the distilled predictions JSON artifact.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Writes distillation report JSON.",
+            "description": "Writes the distillation report JSON (metrics + matched/added counts + parameters).",
             "flag": "--output-report",
             "kind": "file",
             "scope": "path"
@@ -2506,8 +2507,12 @@
       "entrypoint": "tools/distill_predictions.py",
       "examples": [
         {
-          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --output reports/predictions_distilled.json --output-report reports/distill_report.json --add-missing",
-          "description": "Distill scores and evaluate proxy metrics on coco128."
+          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --config configs/examples/distill_predictions.yaml --output reports/predictions_distilled.json --output-report reports/distill_report.json",
+          "description": "Recommended short path: use the checked-in YAML boilerplate for offline prediction distillation."
+        },
+        {
+          "command": "python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --dataset data/coco128 --split val2017 --alpha 0.5 --iou-threshold 0.7 --add-missing --teacher-min-score 0.25 --max-added-per-image 20 --add-duplicate-iou-threshold 0.9 --output reports/predictions_distilled.json --output-report reports/distill_report.json",
+          "description": "Explicit exploratory path: allow guarded teacher-only injection for fast ablations."
         }
       ],
       "id": "distill_predictions",
@@ -2525,6 +2530,7 @@
           "required": true
         },
         {
+          "description": "Optional JSON/YAML config for distillation parameters.",
           "flag": "--config",
           "kind": "file",
           "name": "config",
@@ -2604,11 +2610,13 @@
       "outputs": [
         {
           "default": "reports/predictions_distilled.json",
+          "description": "Distilled predictions artifact.",
           "kind": "file",
           "name": "predictions_distilled"
         },
         {
           "default": "reports/distill_report.json",
+          "description": "Distillation report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -2620,7 +2628,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Offline prediction distillation: blend teacher predictions into a student predictions JSON and write a report (not a training-time anti-forgetting method).",
+      "summary": "Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT.",
       "tags": [
         "predictions",
         "distillation",
@@ -9300,7 +9308,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Refine pose-related prediction fields with a safe Newton/finite-diff Hessian stepper (experimental).",
+      "summary": "Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper; the current public CLI rollout is offsets-first, while the docs explain the broader pose/depth intuition (experimental).",
       "tags": [
         "predictions",
         "refine",
@@ -9648,6 +9656,106 @@
     },
     {
       "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Write generated docs PNG assets.",
+            "flag": "--docs-assets-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Copy generated PNG assets into manual/figures.",
+            "flag": "--manual-figures-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/render_ttt_manual_figures.py",
+      "examples": [
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py",
+          "description": "Render the checked-in TTT summary/pipeline/qualitative figures for docs and manual."
+        },
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manual-figures-dir tmp/ttt_manual",
+          "description": "Render the same figures into alternate output directories for inspection."
+        }
+      ],
+      "id": "render_ttt_manual_figures",
+      "inputs": [
+        {
+          "default": "docs/assets/ttt_method_results_source.json",
+          "flag": "--source-json",
+          "kind": "file",
+          "name": "source_json",
+          "required": false
+        },
+        {
+          "default": "docs/assets",
+          "flag": "--docs-assets-dir",
+          "kind": "dir",
+          "name": "docs_assets_dir",
+          "required": false
+        },
+        {
+          "default": "manual/figures",
+          "flag": "--manual-figures-dir",
+          "kind": "dir",
+          "name": "manual_figures_dir",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "Real-result TTT summary chart PNG.",
+          "kind": "file",
+          "name": "summary_png",
+          "path": "docs/assets/ttt_method_results_summary.png"
+        },
+        {
+          "description": "TTT compare workflow PNG.",
+          "kind": "file",
+          "name": "pipeline_png",
+          "path": "docs/assets/ttt_compare_pipeline.png"
+        },
+        {
+          "description": "Qualitative shifted-probe example PNG.",
+          "kind": "file",
+          "name": "qualitative_png",
+          "path": "docs/assets/ttt_probe_example_panel.png"
+        },
+        {
+          "description": "Fixed result source JSON used to render the manual figures.",
+          "kind": "file",
+          "name": "summary_source_json",
+          "path": "docs/assets/ttt_method_results_source.json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
+      "tags": [
+        "ttt",
+        "docs",
+        "manual",
+        "figures",
+        "render"
+      ]
+    },
+    {
+      "docs": [
         "docs/license_policy.md"
       ],
       "effects": {
@@ -9907,6 +10015,7 @@
       "docs": [
         "docs/continual_learning.md",
         "docs/backbones.md",
+        "docs/quantization.md",
         "docs/training_inference_export.md",
         "rtdetr_pose/README.md"
       ],
@@ -9993,7 +10102,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
+      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
       "tags": [
         "rtdetr_pose",
         "continual",
@@ -11984,6 +12093,196 @@
     },
     {
       "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes plan, baseline/adapted predictions, optional eval outputs, and before-after compare artifacts under one directory.",
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/run_ttt_compare.py",
+      "examples": [
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
+          "description": "Run a Tent before-after compare using the tent boilerplate."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate mim --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/mim --device cuda",
+          "description": "Run the repo-backed MIM smoke fixture to verify the masked-reconstruction path without raw --ttt-* flags."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10",
+          "description": "Run the fixed real-probe MIM compare and emit a deterministic before/after metric delta (simple_map_proxy fallback if pycocotools is unavailable)."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate cotta --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/cotta --device cuda --dry-run --force",
+          "description": "Write a CoTTA compare plan without launching export/eval."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate eata --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/eata --device cuda",
+          "description": "Run an EATA before-after compare using the eata boilerplate."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --boilerplate sar --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/sar --device cuda",
+          "description": "Run a SAR before-after compare using the sar boilerplate."
+        }
+      ],
+      "id": "run_ttt_compare",
+      "inputs": [
+        {
+          "flag": "--boilerplate",
+          "kind": "string",
+          "name": "boilerplate",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "default": "reports/ttt_compare/<method>",
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false
+        },
+        {
+          "default": "torch",
+          "flag": "--backend",
+          "kind": "string",
+          "name": "backend",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--image-size",
+          "kind": "string",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "flag": "--skip-eval",
+          "kind": "string",
+          "name": "skip_eval",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/ttt_compare/<method>",
+          "kind": "dir",
+          "name": "run_dir"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/plan.json",
+          "kind": "file",
+          "name": "plan_json"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json",
+          "kind": "file",
+          "name": "baseline_predictions"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json",
+          "kind": "file",
+          "name": "adapted_predictions"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
+          "kind": "file",
+          "name": "ttt_log"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
+          "kind": "file",
+          "name": "compare_json"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
+          "kind": "file",
+          "name": "compare_md"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts under one run directory, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
+      "tags": [
+        "ttt",
+        "ctta",
+        "compare",
+        "boilerplate",
+        "report"
+      ]
+    },
+    {
+      "contracts": {
         "consumes": [
           "predictions_json"
         ],
@@ -12467,6 +12766,191 @@
         "training",
         "adapter",
         "normalization"
+      ]
+    },
+    {
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Delegates to tools/run_ttt_compare.py and writes compare artifacts under one directory.",
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "scripts/ttt_compare.sh",
+      "examples": [
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
+          "description": "Run a Tent before-after compare with the shortest recommended shell entrypoint."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate mim --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/mim --device cuda",
+          "description": "Run the repo-backed MIM smoke fixture with the shell wrapper and the built-in MIM-enabled config."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10",
+          "description": "Run the fixed real-probe MIM compare with the shell wrapper and capture a deterministic before/after metric delta."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate cotta --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/cotta --device cuda",
+          "description": "Run a CoTTA before-after compare with the shell wrapper."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate eata --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/eata --device cuda",
+          "description": "Run an EATA before-after compare with the shell wrapper."
+        },
+        {
+          "command": "bash scripts/ttt_compare.sh --boilerplate sar --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/sar --device cuda --dry-run --force",
+          "description": "Write a SAR compare plan without launching export/eval."
+        }
+      ],
+      "id": "ttt_compare",
+      "inputs": [
+        {
+          "flag": "--boilerplate",
+          "kind": "string",
+          "name": "boilerplate",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "default": "reports/ttt_compare/<method>",
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false
+        },
+        {
+          "default": "torch",
+          "flag": "--backend",
+          "kind": "string",
+          "name": "backend",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--image-size",
+          "kind": "string",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "flag": "--skip-eval",
+          "kind": "string",
+          "name": "skip_eval",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "default": "reports/ttt_compare/<method>",
+          "kind": "dir",
+          "name": "run_dir"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/plan.json",
+          "kind": "file",
+          "name": "plan_json"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json",
+          "kind": "file",
+          "name": "baseline_predictions"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json",
+          "kind": "file",
+          "name": "adapted_predictions"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
+          "kind": "file",
+          "name": "ttt_log"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
+          "kind": "file",
+          "name": "compare_json"
+        },
+        {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
+          "kind": "file",
+          "name": "compare_md"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "bash",
+      "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
+      "tags": [
+        "ttt",
+        "ctta",
+        "compare",
+        "boilerplate",
+        "shell"
       ]
     },
     {

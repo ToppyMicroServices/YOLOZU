@@ -233,6 +233,31 @@ def _default_recon_fn(output):
     return output
 
 
+def _default_geom_input(x: "torch.Tensor") -> "torch.Tensor":
+    _ensure_torch()
+    if x.ndim != 4:
+        raise ValueError("structured MIM expects a 4D BCHW tensor")
+    # Build a deterministic two-channel geometry surrogate from the input:
+    # a full-support mask plus log-normalized luminance. This keeps the
+    # compare workflow self-contained for repo-backed smoke fixtures.
+    luminance = x.to(dtype=torch.float32).mean(dim=1, keepdim=True)
+    support = torch.ones_like(luminance)
+    eps = 1e-6
+    flat = luminance.flatten(start_dim=2)
+    ref = flat.median(dim=-1).values.view(int(x.shape[0]), 1, 1, 1)
+    depth_like = torch.log(luminance.clamp_min(eps)) - torch.log(ref.clamp_min(eps))
+    return torch.cat([support, depth_like], dim=1)
+
+
+def supports_structured_mim(model: "nn.Module") -> bool:
+    _ensure_torch()
+    return bool(
+        getattr(model, "enable_mim", False)
+        and hasattr(model, "forward")
+        and hasattr(model, "named_parameters")
+    )
+
+
 def _global_grad_norm(params: Iterable["torch.Tensor"]) -> float:
     _ensure_torch()
     total = None
@@ -294,6 +319,79 @@ def ttt_mim_step(
         mask_ratio,
         {"grad_norm": float(grad_norm), "grad_norm_clipped": float(grad_norm_clipped)},
     )
+
+
+def ttt_structured_mim_step(
+    model: "nn.Module",
+    optimizer: "torch.optim.Optimizer",
+    x: "torch.Tensor",
+    *,
+    mask_prob: float = 0.6,
+    patch_size: int = 16,
+    mask_value: float = 0.0,
+    generator: "torch.Generator | None" = None,
+    max_grad_norm: float | None = None,
+    entropy_weight: float = 0.1,
+    geom_input_fn: Callable[["torch.Tensor"], "torch.Tensor"] | None = None,
+) -> tuple["torch.Tensor", float, dict[str, float]]:
+    _ensure_torch()
+    geom_input_fn = geom_input_fn or _default_geom_input
+    mask = generate_block_mask(
+        int(x.shape[-2]),
+        int(x.shape[-1]),
+        patch_size=patch_size,
+        mask_prob=mask_prob,
+        generator=generator,
+        device=x.device,
+    )
+    geom_input = geom_input_fn(x)
+    output = model(x, geom_input=geom_input, feature_mask=mask, return_mim=True)
+    if not isinstance(output, dict):
+        raise RuntimeError("structured MIM expects model output dict")
+    mim = output.get("mim")
+    if not isinstance(mim, dict):
+        raise RuntimeError("structured MIM expected output['mim']")
+    recon_feat = mim.get("recon_feat")
+    teacher_feat = mim.get("teacher_feat")
+    if recon_feat is None or teacher_feat is None:
+        raise RuntimeError("structured MIM expected recon_feat and teacher_feat")
+    mask_out = mim.get("mask")
+    try:
+        from rtdetr_pose.losses import mim_reconstruction_loss as structured_loss_fn
+    except ImportError:
+        structured_loss_fn = reconstruction_loss
+    loss_mim = structured_loss_fn(recon_feat, teacher_feat, mask=mask_out)
+    entropy = mim.get("entropy")
+    loss_entropy = None
+    loss = loss_mim
+    if entropy is not None:
+        loss_entropy = entropy.to(dtype=loss_mim.dtype)
+        loss = loss + (float(entropy_weight) * loss_entropy)
+
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    params = [p for group in optimizer.param_groups for p in group.get("params", [])]
+    grad_norm = _global_grad_norm(params)
+    grad_norm_clipped = grad_norm
+    if max_grad_norm is not None:
+        try:
+            torch.nn.utils.clip_grad_norm_(params, float(max_grad_norm))
+        except (RuntimeError, TypeError, ValueError):  # pragma: no cover
+            pass
+        grad_norm_clipped = _global_grad_norm(params)
+    optimizer.step()
+
+    metrics = {
+        "grad_norm": float(grad_norm),
+        "grad_norm_clipped": float(grad_norm_clipped),
+        "loss_mim": float(loss_mim.detach().cpu().item()),
+    }
+    if loss_entropy is not None:
+        metrics["loss_entropy"] = float(loss_entropy.detach().cpu().item())
+
+    mask_tensor = mask_out if mask_out is not None else mask
+    mask_ratio = float(mask_tensor.to(dtype=torch.float32).mean().detach().cpu().item())
+    return loss.detach(), mask_ratio, metrics
 
 
 def run_ttt_mim(

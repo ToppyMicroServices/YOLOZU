@@ -178,6 +178,11 @@ python3 -m pip install 'yolozu[train]'   # 学習スキャフォールド（torc
 python3 -m pip install 'yolozu[full]'
 ```
 
+macOS / Apple Silicon メモ:
+- `Torch backend on macOS/MPS` は beta の正式スコープです。ローカル demo、`--backend torch` の推論/export、小さな `train_minimal.py` smoke までを主対象にします。
+- `TensorRT` は引き続き Linux + NVIDIA 専用です。
+- MPS の未対応 op に当たる場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を付けて再実行してください。
+
 デモ全体像のサマリ（機能カバレッジ + 依存チェック + 推奨コマンド）:
 
 ```bash
@@ -204,6 +209,12 @@ eval "$(yolozu completion --shell zsh)"
 
 学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
 
+Prediction distillation ガイド（初心者向けの手順つき説明 + sample YAML）: [`docs/distillation.md`](docs/distillation.md)
+
+Continual learning ガイド（LoRA / QLoRA を図つきで平易に説明）: [`docs/continual_learning.md`](docs/continual_learning.md)
+
+Hessian refinement ガイド（pose でなぜ効くのかを図つきで説明）: [`docs/hessian_solver.md`](docs/hessian_solver.md)
+
 ---
 
 ## 何が“売り”か（設計の中心）
@@ -213,13 +224,13 @@ eval "$(yolozu completion --shell zsh)"
 - **再現性/運用性（Run interface contract / Run Contract）**  
   `yolozu train` の run interface contract で、成果物の置き場・run_meta・resume・export/parity を固定（`docs/run_contract.md`）。
 - **Continual learning（反忘却: self-distillation + replay + LoRA）**  
-  タスク/ドメイン列の継続微調整と、忘却の評価/抑制のための runner と成果物を提供（`docs/continual_learning.md`）。
+  タスク/ドメイン列の継続微調整と、忘却の評価/抑制のための runner と成果物を提供。LoRA / QLoRA の意味も図つきで説明（`docs/continual_learning.md`）。
 - **Safe TTT（test-time training）**  
   Tent / MIM / CoTTA / EATA / SAR のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
 - **Prediction distillation（準・学習: offline）**  
-  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化（`docs/distillation.md`）。
+  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化。原理・実施手順・見方の図は [`docs/distillation.md`](docs/distillation.md) に整理。
 - **Hessian-based refinement（準・学習: post-inference）**  
-  `predictions.json` に対する per-detection の局所 refinement（engine外の後処理; `docs/hessian_solver.md`）。
+  `predictions.json` に対する per-detection の局所 refinement（engine外の後処理）。pose でなぜ効くかも [`docs/hessian_solver.md`](docs/hessian_solver.md) で説明。
 
 ---
 
@@ -314,15 +325,32 @@ python3 -m pytest -q tests/test_prepare_keypoints_dataset_cvat_xml.py
 TTTは repo 側のエクスポータで使うのが基本です（`docs/ttt_protocol.md`）:
 
 ```bash
-python3 tools/yolozu.py export \
-  --backend torch \
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
   --dataset data/smoke \
-  --checkpoint runs/smoke/checkpoints/best.pt \
-  --device cuda \
-  --ttt --ttt-preset safe --ttt-reset sample \
-  --ttt-log-out reports/ttt_log_safe.json \
-  --output reports/predictions_ttt_safe.json
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cuda
 ```
+
+方式ごとの boilerplate は `tent`, `mim`, `mim_probe`, `cotta`, `eata`, `sar` を用意しています。
+詳細: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
+
+固定 real probe の MIM 実例:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --boilerplate mim_probe \
+  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
+  --split val \
+  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
+  --run-dir reports/ttt_compare/mim_probe_cpu \
+  --device cpu \
+  --max-images 10
+```
+
+この fixed probe では 10/10 画像で予測が変化し、組み込み比較指標は `map50=0.00326797` から `0.00392157` に改善します。
 
 deterministic なドメインシフトターゲット（corruption）を作る場合:
 
@@ -410,6 +438,12 @@ run interface contract で固定された成果物（固定パス）:
 - Grad clip（推奨）
 - AMP / EMA / DDP（torchrun）
 - Validation cadence（epoch/step）+ early stop
+
+macOS/MPS beta 運用メモ:
+- `--device auto` は `cuda -> mps -> cpu` の順で解決されます。
+- `--device mps` を明示指定できます。
+- `--amp fp16` / `--amp bf16` は MPS では best-effort です。利用できない autocast mode は警告を出して fp32 に戻ります。
+- 未対応 op がある場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を併用してください。
 
 拡張（任意）:
 - フォトメトリックAug

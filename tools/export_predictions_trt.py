@@ -512,7 +512,10 @@ def _nms(boxes, scores, *, iou_thresh: float, max_det: int):
             if keep is not None:
                 return keep
     except ImportError:
-        pass
+        # Ultralytics is optional; fall back to torchvision NMS or the local NumPy implementation.
+        keep = _torchvision_nms_keep(boxes, scores, iou_thresh=float(iou_thresh), max_det=int(max_det))
+        if keep is not None:
+            return keep
 
     order = scores.argsort()[::-1]
     keep = []

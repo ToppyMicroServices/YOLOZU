@@ -30,6 +30,26 @@ python3 -m pip install -e '.[demo]'
 
 Note: PyTorch wheels are platform-dependent. If `pip install 'yolozu[demo]'` fails, follow the official PyTorch install selector for your platform, then re-install `yolozu[demo]`.
 
+## macOS / Apple Silicon beta scope
+
+`Torch backend on macOS/MPS` is an official beta scope in this repo:
+
+- good fit: `yolozu demo`, `yolozu export --backend torch`, small `rtdetr_pose/tools/train_minimal.py` smoke runs
+- not in scope: TensorRT engine build/run paths (`trtexec`, CUDA-only workflows)
+
+Recommended environment hint when an op is not yet implemented on MPS:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 yolozu doctor --output -
+PYTORCH_ENABLE_MPS_FALLBACK=1 python3 rtdetr_pose/tools/train_minimal.py --device mps --help
+```
+
+Training-device notes:
+
+- `--device auto` now resolves in `cuda -> mps -> cpu` order
+- `--device mps` is allowed for the training scaffold
+- `--amp fp16|bf16` on MPS is best-effort beta; if autocast is unavailable, the trainer warns and falls back to fp32
+
 ## CI dependency tiers
 
 YOLOZU CI uses three install tiers to reduce optional-extras combinatorial noise:

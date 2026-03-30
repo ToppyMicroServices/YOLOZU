@@ -24,4 +24,4 @@ in the RT-DETR pose trainer:
 Notes:
 - torchao is an optional dependency; install it separately (example: `pip install torchao`).
 - The integration is defensive because torchao APIs can evolve; treat this as experimental.
-
+- For the beginner-facing intuition of how QLoRA differs from plain LoRA in this repo, read [`docs/continual_learning.md`](continual_learning.md) first and come back here for the concrete knobs.

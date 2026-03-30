@@ -142,6 +142,12 @@ Tool list + args examples: [`docs/tools_index.md`](docs/tools_index.md).
 
 Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](docs/learning_features.md).
 
+Prediction distillation guide (beginner-facing, step-by-step offline teacher/student artifact blending + sample YAML): [`docs/distillation.md`](docs/distillation.md).
+
+Continual-learning guide with plain-language LoRA / QLoRA diagrams: [`docs/continual_learning.md`](docs/continual_learning.md).
+
+Hessian refinement guide with pose-oriented intuition and local-correction diagrams: [`docs/hessian_solver.md`](docs/hessian_solver.md).
+
 ## Start here (choose 1 of 4 entry points)
 
 - **A: Evaluate from precomputed predictions (no inference deps)** — `predictions.json` → validate → eval.
@@ -209,6 +215,11 @@ ls reports/demo_firsttime_instance_seg/overlays/*.png
 
 Optional extras and CPU demos: [`docs/install.md`](docs/install.md).
 
+macOS / Apple Silicon note:
+- `Torch backend on macOS/MPS` is a supported beta scope for local demos, `--backend torch` inference/export, and small `train_minimal.py` smoke runs.
+- `TensorRT` remains Linux+NVIDIA only in this repo.
+- If an MPS op is missing, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+
 CLI completion (bash/zsh):
 
 ```bash
@@ -258,6 +269,23 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 ```
 
 Details: [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+
+Recommended short before/after compare workflow:
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
+```
+
+Method boilerplates: `tent`, `mim`, `mim_probe`, `cotta`, `eata`, `sar`.
+Details: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md).
+
+Fixed real-probe MIM example:
+
+```bash
+bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
+```
+
+This fixed probe changes all ten images and improves the built-in compare metric from `map50=0.00326797` to `0.00392157`.
 
 TTT improvement micro-demo (shows a metric delta + overlays):
 
