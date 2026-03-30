@@ -67,6 +67,37 @@ class TestMacOSMpsSmoke(unittest.TestCase):
         self.assertIn("--device", proc.stdout)
         self.assertIn("--amp", proc.stdout)
 
+    def test_doctor_warns_when_mps_is_built_but_unavailable(self):
+        fake_runtime = {
+            "torch": {
+                "installed": True,
+                "version": "2.test",
+                "cuda_available": False,
+                "cuda_version": None,
+                "cudnn_version": None,
+                "device_count": 0,
+                "mps_built": True,
+                "mps_available": False,
+            },
+            "onnxruntime": {
+                "installed": False,
+                "version": None,
+                "providers": [],
+                "cuda_provider": False,
+                "tensorrt_provider": False,
+                "coreml_provider": False,
+            },
+        }
+        with mock.patch.object(doctor_mod, "_gather_required_runtime", return_value=({"numpy": {"available": True}}, [])):
+            with mock.patch.object(doctor_mod, "_gather_gpu_info", return_value={"torch": None, "onnxruntime": None, "nvidia_smi_list": None, "cuda_visible_devices": None}):
+                with mock.patch.object(doctor_mod, "_gather_runtime_capabilities", return_value=fake_runtime):
+                    with mock.patch.object(doctor_mod, "_gather_git_info", return_value={"head": "deadbeef", "dirty": False}):
+                        report, exit_code = doctor_mod.build_doctor_report(cwd=Path.cwd())
+
+        self.assertEqual(exit_code, 0)
+        warnings = report.get("warnings") or []
+        self.assertTrue(any("MPS support" in warning and "not available at runtime" in warning for warning in warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

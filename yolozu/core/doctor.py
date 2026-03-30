@@ -405,6 +405,13 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
         warnings.append("nvidia-smi not found (expected on Linux+NVIDIA; OK on CPU-only/macOS)")
     if tools["trtexec"] is False:
         warnings.append("trtexec not found (TensorRT engine build requires it)")
+    torch_runtime = (runtime_capabilities.get("torch") or {})
+    if bool(torch_runtime.get("mps_built")) and not bool(torch_runtime.get("mps_available")):
+        warnings.append(
+            "torch was built with MPS support, but MPS is not available at runtime. "
+            "On newer macOS releases this may be an upstream PyTorch binary/runtime issue; "
+            "verify with `sw_vers` and `torch.backends.mps.is_available()`."
+        )
     report["warnings"] = warnings
     report["drift_hints"] = _build_drift_hints(runtime=runtime_capabilities, tools=tools)
 
