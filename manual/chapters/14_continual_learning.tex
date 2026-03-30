@@ -68,6 +68,20 @@ That is why LoRA is attractive in continual learning:
   \item it gives a more controlled ablation than full-model fine-tuning.
 \end{itemize}
 
+\textbf{What actually gets updated.}
+This is the part that is easiest to miss if you only hear the slogan.
+LoRA usually keeps the original pretrained weight $W$ frozen and learns a small low-rank correction:
+\[
+W' = W + \Delta W, \qquad \Delta W = BA.
+\]
+Here, $A$ and $B$ are the trainable adapter matrices.
+Operationally, that means:
+\begin{itemize}
+  \item the backbone knowledge remains mostly anchored in the frozen weight,
+  \item the new task/domain signal is expressed through a smaller correction,
+  \item replay and self-distillation still do the anti-forgetting work; LoRA only narrows the update surface.
+\end{itemize}
+
 \subsection{QLoRA}
 QLoRA keeps the same adapter idea, but stores the frozen base model in a more memory-efficient quantized form.
 
@@ -75,6 +89,13 @@ In plain language:
 \begin{itemize}
   \item \textbf{LoRA}: freeze the large model, train small adapters.
   \item \textbf{QLoRA}: do the same thing, but keep the frozen base cheaper to hold in memory.
+\end{itemize}
+
+So the update logic is still LoRA-style:
+\begin{itemize}
+  \item the adapters move,
+  \item the frozen base remains the reference,
+  \item quantization changes storage/runtime cost, not the continual-learning objective.
 \end{itemize}
 
 \begin{figure}[h]

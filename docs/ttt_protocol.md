@@ -407,9 +407,37 @@ Cons:
 
 ### CoTTA
 
+Meaning of the name:
+- CoTTA is short for **Continual Test-Time Adaptation**
+- the name signals that this method is designed for a stream, not only for one isolated image
+
 Principle:
 - CoTTA uses augmentation-averaged predictions, an EMA teacher, and partial restoration
 - the goal is to adapt in a stream while reducing long-run drift
+
+Minimal objective view:
+- a student model is updated online
+- an EMA teacher provides a smoother target
+- multiple augmentations reduce the chance that one noisy view dominates the update
+- a simplified consistency view is:
+
+$$
+L_{\text{CoTTA}} = \sum_{a \in \mathcal{A}} d\!\left(p_{\theta}(y \mid a(x)),\; p_{\theta^{\text{EMA}}}(y \mid x)\right)
+$$
+
+- partial restoration then pulls part of the student back toward older weights so the stream does not drift too far
+
+Why this can work:
+- in a long stream, a pure online update can slowly walk away from a good solution
+- CoTTA tries to smooth that process with three safeguards:
+  - augmentation averaging
+  - EMA teacher targets
+  - stochastic restoration
+
+What it is not:
+- it is not the simplest first TTT baseline
+- it is not stateless; the order of images matters more than in per-sample adaptation
+- it usually makes the most sense when stream behavior itself is part of the problem
 
 When to use it:
 - continual or streaming adaptation
@@ -455,9 +483,34 @@ Cons:
 
 ### EATA
 
+Meaning of the name:
+- EATA is commonly read as **Efficient Test-Time Adaptation**
+- the practical emphasis is not just speed, but selective adaptation: only adapt when the evidence looks trustworthy
+
 Principle:
 - EATA filters the batch first, then adapts only on trusted samples
 - it also uses anchor regularization to reduce forgetting
+
+Minimal objective view:
+- first, select samples whose entropy or reliability statistics pass a gate
+- then minimize entropy only on that selected set
+- add a regularizer that keeps the updated model close to an anchor state
+
+$$
+L_{\text{EATA}} = \sum_{x \in S_{\text{selected}}} H(p_{\theta}(y \mid x)) + \lambda_{\text{anchor}} R(\theta, \theta_0)
+$$
+
+- the exact selection rule varies, but the operational idea is stable: no trusted set, no update
+
+Why this can work:
+- one bad batch can make online adaptation worse instead of better
+- EATA reduces that risk by refusing to adapt when the current batch does not look informative enough
+- that is why it often appears conservative on tiny or noisy subsets
+
+What it is not:
+- it is not broken when it skips updates
+- it is not trying to adapt on every sample
+- it usually trades aggressiveness for safety
 
 When to use it:
 - when low-quality or misleading test samples are common
@@ -504,9 +557,34 @@ Cons:
 
 ### SAR
 
+Meaning of the name:
+- SAR refers to a **Sharpness-Aware** adaptation rule
+- the key idea is to prefer updates that remain good even after a small perturbation
+
 Principle:
 - SAR performs sharpness-aware entropy minimization
 - instead of trusting only the immediate entropy gradient, it prefers updates that remain stable after a small perturbation
+
+Minimal objective view:
+- ordinary entropy minimization asks for a parameter update that lowers the entropy now
+- SAR asks for an update that still looks good in a small neighborhood around the new point
+
+$$
+\min_{\theta} \max_{\lVert \epsilon \rVert \le \rho} L_{\text{entropy}}(\theta + \epsilon)
+$$
+
+- the inner perturbation approximates ``what if this update lands in a sharp, fragile region?''
+- the outer step then prefers flatter, more stable regions
+
+Why this can work:
+- some domain shifts are noisy enough that the first entropy gradient is too eager
+- SAR slows the optimizer down and asks whether the local improvement is robust, not just immediate
+- that often makes it easier to justify in unstable mixed-shift scenarios
+
+What it is not:
+- it is not the cheapest method
+- it is not necessary when Tent already behaves well
+- it is mainly about update geometry, not a stronger self-supervised signal like MIM
 
 When to use it:
 - noisy shifts

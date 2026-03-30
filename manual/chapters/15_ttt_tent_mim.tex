@@ -629,8 +629,40 @@ bash scripts/ttt_compare.sh \
 \end{itemize}
 
 \subsection{CoTTA}
+\textbf{What the name means.}
+CoTTA is short for \textbf{Continual Test-Time Adaptation}.
+The name matters because it signals that this method is designed for a stream, not just for a single isolated image.
+
 \textbf{Principle.}
 CoTTA combines augmentation-averaged predictions, EMA teacher updates, and stochastic restoration. The main idea is to adapt continuously in a stream while preventing the model from drifting too far.
+
+\textbf{Minimal objective view.}
+CoTTA can be read as a consistency objective between an online student and an EMA teacher across augmented views:
+\[
+L_{\mathrm{CoTTA}} = \sum_{a \in \mathcal{A}} d\!\left(p_{\theta}(y \mid a(x)),\; p_{\theta^{\mathrm{EMA}}}(y \mid x)\right).
+\]
+The exact distance term $d(\cdot,\cdot)$ and restoration schedule vary by implementation, but the operational story is stable:
+\begin{itemize}
+  \item smooth the target with an EMA teacher,
+  \item average over augmented views,
+  \item periodically restore part of the student so drift does not grow unchecked.
+\end{itemize}
+
+\textbf{Why it can work.}
+Pure online adaptation can slowly walk away from a good solution in long streams.
+CoTTA adds three safeguards against that:
+\begin{itemize}
+  \item augmentation averaging,
+  \item EMA teacher smoothing,
+  \item partial restoration of older weights.
+\end{itemize}
+
+\textbf{What it is not.}
+\begin{itemize}
+  \item It is not the simplest first TTT baseline.
+  \item It is not stateless; stream order matters more than in per-sample adaptation.
+  \item It makes the most sense when stream behavior itself is part of the problem.
+\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -706,8 +738,36 @@ The practical takeaway is that CoTTA can recover the same small metric gain whil
 \end{itemize}
 
 \subsection{EATA}
+\textbf{What the name means.}
+EATA is commonly read as \textbf{Efficient Test-Time Adaptation}.
+In practice, the key idea is not only efficiency but \emph{selective} efficiency:
+adapt only when the current samples look trustworthy enough.
+
 \textbf{Principle.}
 EATA adds selective sample filtering plus anchor regularization. It adapts only when the batch looks trustworthy enough, and it regularizes the update so important weights are less likely to drift.
+
+\textbf{Minimal objective view.}
+EATA first selects a subset of samples that pass entropy/reliability gates, then adapts only on that selected subset:
+\[
+L_{\mathrm{EATA}} = \sum_{x \in S_{\mathrm{selected}}} H\!\left(p_{\theta}(y \mid x)\right) + \lambda_{\mathrm{anchor}} R(\theta, \theta_0).
+\]
+The exact selection test varies, but the operational rule is simple:
+\begin{itemize}
+  \item no trustworthy subset,
+  \item no update.
+\end{itemize}
+
+\textbf{Why it can work.}
+One bad batch can make online adaptation worse instead of better.
+EATA reduces that risk by refusing to adapt when the current evidence does not look informative enough.
+That is why its ``skip'' behavior is a feature, not a failure.
+
+\textbf{What it is not.}
+\begin{itemize}
+  \item It is not broken when it skips updates.
+  \item It is not trying to adapt on every sample.
+  \item It deliberately trades aggressiveness for safety.
+\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -780,8 +840,31 @@ On the larger fixed ten-image shifted probe, it does adapt and reaches the same 
 \end{itemize}
 
 \subsection{SAR}
+\textbf{What the name means.}
+SAR refers to a \textbf{Sharpness-Aware} adaptation rule.
+The key idea is to prefer updates that remain good even after a small perturbation, rather than trusting only the immediate entropy gradient.
+
 \textbf{Principle.}
 SAR performs sharpness-aware entropy minimization using a perturb-and-restore style update. Instead of trusting only the immediate entropy gradient, it prefers updates that stay stable after a small perturbation.
+
+\textbf{Minimal objective view.}
+The sharpness-aware view can be written as:
+\[
+\min_{\theta} \max_{\left\| \epsilon \right\| \leq \rho} L_{\mathrm{entropy}}(\theta + \epsilon).
+\]
+The inner perturbation asks whether the current update is fragile in a small neighborhood.
+The outer step then prefers a flatter, more stable region rather than a sharp local win.
+
+\textbf{Why it can work.}
+Some shifts are noisy enough that plain entropy minimization is too eager.
+SAR slows the optimizer down and asks whether the local improvement is robust, not just immediate.
+
+\textbf{What it is not.}
+\begin{itemize}
+  \item It is not the cheapest method.
+  \item It is not needed when Tent already behaves well.
+  \item It is more about update geometry than about a stronger self-supervised signal.
+\end{itemize}
 
 \begin{figure}[h]
 \centering

@@ -55,6 +55,33 @@ LoRA is easiest to understand as:
 
 That is useful in continual learning because a smaller trainable surface often makes forgetting easier to control.
 
+### What actually gets updated in LoRA
+
+This is the part many readers want spelled out clearly:
+
+- the large base weights are usually frozen
+- the trainable update lives in small low-rank matrices attached to selected layers
+- the effective weight can be read as:
+
+$$
+W' = W + \Delta W,\qquad \Delta W = B A
+$$
+
+- `W` is the frozen pretrained weight
+- `A` and `B` are the small trainable adapter matrices
+
+So the practical interpretation is:
+
+- the model still uses the old backbone knowledge
+- but each adapted layer gets a small learnable correction
+- in continual learning, this means the update surface is narrower than full fine-tuning
+
+That is why people often say LoRA is easier to control:
+
+- fewer parameters move
+- the old checkpoint remains a stronger anchor
+- replay and self-distillation are not replaced; LoRA just changes how the new update is expressed
+
 ### QLoRA in one picture
 
 ```mermaid
@@ -77,6 +104,12 @@ So the short intuition is:
 
 - **LoRA**: freeze most of the model, train a small adapter
 - **QLoRA**: do the same thing, but keep the frozen base in a cheaper quantized form
+
+Operationally, the update logic is still LoRA-style:
+
+- adapters move
+- the frozen base remains the reference
+- quantization changes storage/runtime cost, not the anti-forgetting objective
 
 ### When each one is attractive
 
