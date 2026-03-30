@@ -7,11 +7,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
-    import torch
-except ImportError:  # pragma: no cover
-    torch = None
-
 logger = logging.getLogger(__name__)
 
 

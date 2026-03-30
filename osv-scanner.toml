@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "GHSA-hqmj-h5c6-369m"
+reason = "The repo depends on onnx for model serialization and validation, but it does not invoke onnx.hub.load(), which is the vulnerable API surface. No patched upstream release exists yet, so this is a temporary documented exception."
