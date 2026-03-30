@@ -238,14 +238,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--device",
         type=str,
-        default="cuda" if torch is not None and torch.cuda.is_available() else "cpu",
-        help="Torch device for training (e.g., cpu, cuda, cuda:0).",
+        default="auto",
+        help="Torch device for training (auto|cpu|cuda|cuda:0|mps; default: auto).",
     )
     parser.add_argument(
         "--amp",
         choices=("none", "fp16", "bf16"),
         default="none",
-        help="Automatic mixed precision (cuda only): none|fp16|bf16 (default: none).",
+        help=(
+            "Automatic mixed precision: none|fp16|bf16 (default: none). "
+            "CUDA is fully supported; macOS/MPS autocast is best-effort beta and "
+            "falls back to fp32 if the requested mode is unavailable."
+        ),
     )
     parser.add_argument(
         "--torch-compile",

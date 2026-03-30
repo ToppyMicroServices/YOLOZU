@@ -7,6 +7,8 @@ These tools ensure that comparisons remain stable and actionable by proactively 
 }{
 Execution requires a minimum of two comparable prediction artifacts for parity analysis; protocol-driven runs necessitate pinned settings files alongside consistent preprocessing and output formats.
 }
+\ChapterAudience{Read this chapter when you are comparing backends, benchmarking runs, or trying to make metrics fair across repeated experiments.}
+
 
 \section{Backend parity}
 When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtime, TensorRT), it is critical to detect any silent numerical drift. Parity tooling systematically compares two prediction artifacts and generates a comprehensive report of any discrepancies.

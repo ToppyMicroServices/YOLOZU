@@ -56,6 +56,13 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
 
+## TTT compare boilerplates
+
+- Recommended short entrypoint: `bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
+- Python equivalent: `python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
+- Available boilerplates: `tent`, `mim`, `cotta`, `eata`, `sar`
+- Details: `docs/ttt_compare_boilerplates.md`, `docs/ttt_protocol.md`
+
 ## Evaluation helpers
 
 - Reference adapter regression gate (fixed baseline; interface contract hard + behavior warn):
@@ -96,7 +103,9 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 ## Distillation helpers
 
 - Prediction distillation (offline artifact blending; not continual-learning):
-  - `python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --output reports/predictions_distilled.json`
+  - `python3 tools/distill_predictions.py --student reports/predictions_student.json --teacher reports/predictions_teacher.json --config configs/examples/distill_predictions.yaml --output reports/predictions_distilled.json --output-report reports/distill_report.json`
+  - Outputs: `reports/predictions_distilled.json`, `reports/distill_report.json`
+  - Read first: `distill_report.json`
   - Docs: `docs/distillation.md`
 
 ## Machine-readable tool registry

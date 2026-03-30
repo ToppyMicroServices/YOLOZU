@@ -166,6 +166,66 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertIsInstance(report.updated_param_count, int)
         self.assertGreater(report.updated_param_count or 0, 0)
 
+    def test_run_ttt_mim_structured_branch(self):
+        class StructuredMIMModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.enable_mim = True
+                self.norm = nn.BatchNorm2d(3)
+                self.conv = nn.Conv2d(3, 3, kernel_size=1, bias=False)
+
+            def forward(self, x, geom_input=None, feature_mask=None, return_mim=False):
+                feat = self.norm(self.conv(x))
+                logits = feat.mean(dim=(2, 3)).unsqueeze(1).repeat(1, 2, 1)
+                out = {"logits": logits}
+                if return_mim:
+                    teacher = feat.detach()
+                    out["mim"] = {
+                        "recon_feat": feat,
+                        "teacher_feat": teacher,
+                        "mask": feature_mask,
+                        "entropy": logits.abs().mean(),
+                    }
+                return out
+
+        class Adapter(ModelAdapter):
+            def __init__(self):
+                self._model = StructuredMIMModel()
+
+            def predict(self, records):
+                return [{"image": r["image"], "detections": []} for r in records]
+
+            def supports_ttt(self) -> bool:
+                return True
+
+            def get_model(self):
+                return self._model
+
+            def build_loader(self, records, *, batch_size: int = 1):
+                yield torch.rand(1, 3, 8, 8)
+
+        adapter = Adapter()
+        report = run_ttt(
+            adapter,
+            [{"image": "a.jpg"}],
+            config=TTTConfig(
+                enabled=True,
+                method="mim",
+                steps=2,
+                lr=1e-3,
+                update_filter="norm_only",
+                mim_mask_prob=0.5,
+                mim_patch_size=2,
+            ),
+        )
+        self.assertTrue(report.enabled)
+        self.assertEqual(report.method, "mim")
+        self.assertEqual(report.steps_run, 2)
+        self.assertEqual(len(report.losses), 2)
+        self.assertTrue(report.step_metrics)
+        self.assertIn("mim_loss", report.step_metrics[0])
+        self.assertIn("entropy_loss", report.step_metrics[0])
+
     def test_run_ttt_cotta(self):
         class CoTTAModel(nn.Module):
             def __init__(self):

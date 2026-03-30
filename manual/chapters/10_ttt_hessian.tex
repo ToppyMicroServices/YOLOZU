@@ -7,6 +7,8 @@ This technique can significantly mitigate errors on challenging samples during o
 }{
 It is optimally suited for offline and batch processing workflows where additional computational overhead is permissible. It requires both predictions and dataset context, and relies on configurable convergence and damping parameters.
 }
+\ChapterAudience{Read this chapter when you need post-inference local correction and want to understand when Hessian refinement helps more than it hurts.}
+
 
 \section{Scope and relation to Test-Time Training (TTT)}
 This chapter is strictly focused on per-detection numerical refinement executed after the primary inference phase. TTT, Tent, and MIM adaptation policies are comprehensively covered in Chapter~15 to prevent redundant guidance.
@@ -17,6 +19,96 @@ The Hessian solver refines prediction values on a per-detection basis, employing
 The current standard CLI implementation operates as an engine-external post-processing step applied directly to predictions JSON artifacts, with bounding box offset refinement serving as the initial target.
 
 At a high level, each iteration computes the residuals and the Jacobian matrix, solves a damped normal equation, updates the parameters, and terminates once predefined convergence criteria are satisfied.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=8pt, text width=0.28\linewidth},
+  inputbox/.style={box, fill=blue!8},
+  processbox/.style={box, fill=orange!10},
+  outputbox/.style={box, fill=green!10},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[inputbox] (pred) at (0,0.9) {\textbf{Detector output}\\initial offsets / pose-like fields};
+\node[processbox] (res) at (6.2,0.9) {\textbf{Local residual}\\how wrong is this nearby solution?};
+\node[processbox] (step) at (0,-1.5) {\textbf{Hessian-style step}\\small damped update};
+\node[outputbox] (out) at (6.2,-1.5) {\textbf{Refined detection}\\same artifact family, smaller local error};
+
+\draw[arrow] (pred) -- (res);
+\draw[arrow] (pred) -- (step);
+\draw[arrow] (res) -- (out);
+\draw[arrow] (step) -- (out);
+
+\end{tikzpicture}
+}
+\caption{The practical picture: the model already produced an answer, and the Hessian solver asks whether a small local correction can make that answer geometrically cleaner.}
+\end{figure}
+
+\section{Plain-language intuition}
+If gradient descent feels like following the local slope, Hessian-style refinement feels like also paying attention to the shape of the bowl around the current solution.
+
+That is useful when the model is already close, but not quite aligned:
+\begin{itemize}
+  \item the center offset is slightly wrong,
+  \item depth is plausible but biased,
+  \item rotation is nearly correct but still misaligned.
+\end{itemize}
+
+In other words, this chapter is about \textbf{small local corrections}, not about teaching the model a whole new concept.
+
+\section{Why pose workflows care}
+Pose outputs are often more sensitive than plain detection outputs.
+A box can still count as correct even when it is a little loose.
+By contrast, pose-style outputs can degrade quickly when:
+\begin{itemize}
+  \item the center offset is wrong,
+  \item the depth is slightly biased,
+  \item the rotation is off by a small but important angle.
+\end{itemize}
+
+That is why the solver exists with pose use cases in mind, even though the current public CLI rollout deliberately starts from the safest operational target: \textbf{offset refinement}.
+
+The broader design still reflects pose-oriented quantities:
+\begin{itemize}
+  \item depth-like variables,
+  \item rotation-like variables,
+  \item offsets,
+  \item intrinsics-related corrections.
+\end{itemize}
+
+So the honest operational summary is:
+\begin{itemize}
+  \item \textbf{today's standard path}: offsets-first CLI refinement,
+  \item \textbf{why it matters}: pose and geometry workflows often benefit from structured local correction.
+\end{itemize}
+
+\section{Failure \texorpdfstring{$\rightarrow$}{->} local refinement example}
+The typical use case is not ``the detector missed the object completely.''
+It is the quieter case where the detector has already found the right object, but the local geometric state is still slightly wrong.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.28\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (bad) at (0,0) {\textbf{Before refinement}\\The object is detected, but the local state is still off. Typical symptoms: center offset drift, biased depth, or a slightly wrong rotation.};
+\node[box] (solve) at (6.5,0) {\textbf{Local solver view}\\Compute a residual around the current answer, estimate a damped second-order step, and keep the update bounded.};
+\node[box] (good) at (13,0) {\textbf{After refinement}\\The object identity did not change; the same detection is simply better aligned in its local neighborhood.};
+
+\draw[arrow] (bad) -- (solve);
+\draw[arrow] (solve) -- (good);
+
+\end{tikzpicture}
+}
+\caption{Concrete reading guide for Hessian refinement. This is not a ``new object found'' story; it is a ``same object, cleaner local alignment'' story. That distinction is why the method is especially relevant for pose-style outputs.}
+\end{figure}
 
 \section{Optimal use cases}
 Recommended applications include:
@@ -85,6 +177,21 @@ A highly practical operational sequence is:
   \item Optionally execute dataset-wide calibration (addressing global scale and intrinsics).
   \item Apply Hessian refinement exclusively in scenarios where per-detection correction is demonstrably required.
 \end{enumerate}
+
+\section{Pros and Cons}
+\textbf{Pros}
+\begin{itemize}
+  \item engine-external: it does not require changing the main inference graph,
+  \item useful for offline analysis and controlled studies,
+  \item especially intuitive for geometry-heavy predictions such as pose and depth.
+\end{itemize}
+
+\textbf{Cons}
+\begin{itemize}
+  \item it adds latency and is not a default real-time production path,
+  \item it needs a meaningful residual to optimize,
+  \item it can become numerically fragile without damping and step caps.
+\end{itemize}
 
 This chapter highlights the most frequently utilized parameters; for an exhaustive detailing of the parameter surface, please consult the tool's \cmd{--help} output, which is rigorously maintained in sync with the codebase.
 

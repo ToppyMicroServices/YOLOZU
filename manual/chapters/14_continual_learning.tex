@@ -7,6 +7,8 @@ It helps mitigate catastrophic forgetting and makes per-task metrics comparable 
 }{
 It requires continual configs and run artifacts (for example \cmd{continual_run.json}); optional replay and LoRA settings change compute and forgetting behavior.
 }
+\ChapterAudience{Read this chapter when you are training across tasks or domains and need to reason about forgetting, replay, self-distillation, LoRA, or QLoRA.}
+
 
 \section{What YOLOZU means by ``continual''}
 Continual learning (CL) here means fine-tuning across a sequence of tasks/domains while mitigating catastrophic forgetting.
@@ -18,6 +20,143 @@ The default strategy combines:
   \item \textbf{Memoryless self-distillation}: keep the new model close to the previous checkpoint while learning the new task.
   \item \textbf{Optional replay buffer}: add a small buffer of past samples (e.g., reservoir sampling) and train on \emph{(current task + replay)}.
   \item \textbf{Optional parameter-efficiency}: restrict trainable parameters (e.g., LoRA) to reduce forgetting pressure.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=8pt},
+  streambox/.style={box, fill=blue!8, text width=0.28\linewidth},
+  memorybox/.style={box, fill=orange!10, text width=0.24\linewidth},
+  trainbox/.style={box, fill=green!10, text width=0.29\linewidth},
+  evalbox/.style={box, fill=purple!8, text width=0.25\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[streambox] (tasks) at (0,0) {\textbf{Incoming task stream}\\Task A $\rightarrow$ Task B $\rightarrow$ Task C};
+\node[memorybox] (prev) at (5.6,1.45) {\textbf{Previous checkpoint}\\acts as a teacher / anchor};
+\node[memorybox] (replay) at (5.6,-1.45) {\textbf{Replay buffer}\\small memory of older samples};
+\node[trainbox] (train) at (11.8,0) {\textbf{New training run}\\current task + replay + self-distill};
+\node[evalbox] (eval) at (17.8,0) {\textbf{Evaluation}\\old tasks and new task are measured together};
+
+\draw[arrow] (tasks) -- (train);
+\draw[arrow] (prev) -- (train);
+\draw[arrow] (replay) -- (train);
+\draw[arrow] (train) -- (eval);
+
+\end{tikzpicture}
+}
+\caption{Continual learning in \yolozu{}: the new run does not train on the latest task alone; it is anchored by the previous checkpoint and may also replay a small memory of older examples.}
+\end{figure}
+
+\section{LoRA / QLoRA in plain language}
+LoRA and QLoRA are not separate continual-learning algorithms.
+They are \textbf{ways to make the parameter updates smaller and cheaper}.
+
+\subsection{LoRA}
+The easiest mental model is:
+\begin{quote}
+freeze most of the big model, then train a much smaller correction on top.
+\end{quote}
+
+That is why LoRA is attractive in continual learning:
+\begin{itemize}
+  \item a smaller trainable surface can reduce forgetting pressure,
+  \item it is often easier to fit within a limited GPU budget,
+  \item it gives a more controlled ablation than full-model fine-tuning.
+\end{itemize}
+
+\textbf{What actually gets updated.}
+This is the part that is easiest to miss if you only hear the slogan.
+LoRA usually keeps the original pretrained weight $W$ frozen and learns a small low-rank correction:
+\[
+W' = W + \Delta W, \qquad \Delta W = BA.
+\]
+Here, $A$ and $B$ are the trainable adapter matrices.
+Operationally, that means:
+\begin{itemize}
+  \item the backbone knowledge remains mostly anchored in the frozen weight,
+  \item the new task/domain signal is expressed through a smaller correction,
+  \item replay and self-distillation still do the anti-forgetting work; LoRA only narrows the update surface.
+\end{itemize}
+
+\subsection{QLoRA}
+QLoRA keeps the same adapter idea, but stores the frozen base model in a more memory-efficient quantized form.
+
+In plain language:
+\begin{itemize}
+  \item \textbf{LoRA}: freeze the large model, train small adapters.
+  \item \textbf{QLoRA}: do the same thing, but keep the frozen base cheaper to hold in memory.
+\end{itemize}
+
+So the update logic is still LoRA-style:
+\begin{itemize}
+  \item the adapters move,
+  \item the frozen base remains the reference,
+  \item quantization changes storage/runtime cost, not the continual-learning objective.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=0.27\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[box] (base) at (0,0) {\textbf{Full fine-tuning}\\All main weights update.\\Highest flexibility, highest memory / forgetting pressure.};
+\node[box] (lora) at (6.3,0) {\textbf{LoRA}\\Base model stays mostly frozen.\\Small low-rank adapters carry the update.};
+\node[box] (qlora) at (12.6,0) {\textbf{QLoRA}\\Same adapter idea as LoRA, but the frozen base is kept in a quantized form for lower memory use.};
+
+\draw[arrow] (base.south) -- ++(0,-0.9) node[below, align=center] {largest update surface};
+\draw[arrow] (lora.south) -- ++(0,-0.9) node[below, align=center] {smaller, easier-to-control update};
+\draw[arrow] (qlora.south) -- ++(0,-0.9) node[below, align=center] {adapter update + cheaper frozen base};
+
+\end{tikzpicture}
+}
+\caption{LoRA and QLoRA are best understood as parameter-efficiency tools. They change \emph{how much} of the model moves during continual learning, not the underlying anti-forgetting objective itself.}
+\end{figure}
+
+\subsection{Pros and Cons}
+\textbf{LoRA}
+\begin{itemize}
+  \item Pros: simpler mental model than QLoRA; often cheaper than full fine-tuning; integrates naturally with replay and self-distillation.
+  \item Cons: still introduces extra knobs; can underfit if the adapter is too small; may hide the fact that the base model is the real bottleneck.
+\end{itemize}
+
+\textbf{QLoRA}
+\begin{itemize}
+  \item Pros: lowers memory pressure further; keeps the adapter-style workflow; attractive when the frozen base dominates footprint.
+  \item Cons: adds quantization complexity; depends on backend support; is more experimental in this repository than plain LoRA.
+\end{itemize}
+
+\subsection{A practical choice example}
+Imagine a domain-incremental warehouse-camera project:
+\begin{itemize}
+  \item the previous checkpoint is already usable,
+  \item the main concern is forgetting older camera views,
+  \item GPU memory is limited, but not critically constrained.
+\end{itemize}
+
+In that situation, \textbf{LoRA is usually the better first experiment}.
+It keeps the story simpler: replay + self-distillation still do the anti-forgetting work, while the adapter merely reduces how much of the model moves.
+
+Now change one assumption:
+\begin{itemize}
+  \item the frozen base is the real memory bottleneck,
+  \item batch size collapses unless the base becomes cheaper to hold.
+\end{itemize}
+
+That is when \textbf{QLoRA becomes the practical option}.
+You keep the same adapter-style update logic, but trade some simplicity for a smaller memory footprint.
+
+So the operational rule is:
+\begin{itemize}
+  \item \textbf{LoRA first when clarity and debugging speed matter},
+  \item \textbf{QLoRA when memory is the real blocker}.
 \end{itemize}
 
 \section{Main entry points}
@@ -127,4 +266,6 @@ For background reading:
   \item Knowledge distillation (original): \cite{hinton2015distilling}.
   \item Self-distillation (classic reference): \cite{furlanello2018bornagain}.
   \item Continual learning via self-distillation (SDFT): \cite{shenfeld2026sdft}.
+  \item LoRA as parameter-efficient tuning: \cite{hu2021lora}.
+  \item QLoRA as quantized adapter tuning: \cite{dettmers2023qlora}.
 \end{itemize}

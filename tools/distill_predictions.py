@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +12,7 @@ from yolozu.dataset import build_manifest
 from yolozu.core.cli_args import (require_float_in_range, require_non_negative_float, require_non_negative_int)
 from yolozu.distillation import distill_predictions
 from yolozu.metrics_report import build_report, write_json
-from yolozu.predictions import load_predictions_entries
+from yolozu.predictions import canonicalize_predictions, normalize_predictions_payload
 from yolozu.predictions import validate_predictions_payload
 from yolozu.simple_map import evaluate_map
 
@@ -24,7 +25,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--output-report", default="reports/distill_report.json", help="Output report JSON.")
     p.add_argument("--dataset", default=None, help="Optional dataset root for mAP evaluation.")
     p.add_argument("--split", default=None, help="Dataset split override.")
-    p.add_argument("--config", default=None, help="Optional JSON config (enabled + params).")
+    p.add_argument("--config", default=None, help="Optional JSON/YAML config (enabled + params).")
     p.add_argument("--iou-threshold", type=float, default=0.7, help="IoU threshold for matching.")
     p.add_argument("--alpha", type=float, default=0.5, help="Blend factor for student/teacher scores.")
     p.add_argument("--add-missing", action="store_true", help="Add unmatched teacher detections.")
@@ -48,6 +49,125 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="IoU threshold for duplicate-suppression when injecting missing detections.",
     )
     return p.parse_args(argv)
+
+
+def _now_utc() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _parse_simple_yaml_value(raw: str) -> Any:
+    value = raw.strip()
+    if value in {"true", "True"}:
+        return True
+    if value in {"false", "False"}:
+        return False
+    if value in {"null", "None", "~"}:
+        return None
+    if value.startswith(("'", '"')) and value.endswith(("'", '"')) and len(value) >= 2:
+        return value[1:-1]
+    try:
+        if "." in value or "e" in value.lower():
+            return float(value)
+        return int(value)
+    except ValueError:
+        return value
+
+
+def _load_simple_yaml_object(text: str, *, source: Path) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if line[:1].isspace():
+            raise SystemExit(f"Unsupported nested YAML in {source}:{lineno}; use a flat top-level mapping")
+        if ":" not in line:
+            raise SystemExit(f"Invalid YAML line in {source}:{lineno}: {line}")
+        key, raw = line.split(":", 1)
+        key = key.strip()
+        if not key:
+            raise SystemExit(f"Invalid YAML key in {source}:{lineno}")
+        data[key] = _parse_simple_yaml_value(raw)
+    return data
+
+
+def _supplement_wrapped_meta(payload: Any, *, source: str) -> Any:
+    if not isinstance(payload, dict) or "predictions" not in payload:
+        return payload
+    meta = payload.get("meta")
+    if meta is None:
+        meta = {}
+    elif not isinstance(meta, dict):
+        return payload
+
+    supplemented = dict(meta)
+    preds = payload.get("predictions", [])
+    supplemented.setdefault("timestamp", _now_utc())
+    supplemented.setdefault("adapter", "unknown")
+    supplemented.setdefault("config", "")
+    supplemented.setdefault("images", len(preds) if isinstance(preds, list) else 0)
+    supplemented.setdefault(
+        "tta",
+        {
+            "enabled": False,
+            "seed": None,
+            "flip_prob": 0.0,
+            "norm_only": False,
+            "warnings": [f"meta supplemented for distillation input: {source}"],
+            "summary": None,
+        },
+    )
+    supplemented.setdefault(
+        "ttt",
+        {
+            "enabled": False,
+            "method": "none",
+            "steps": 0,
+            "batch_size": 0,
+            "lr": 0.0,
+            "update_filter": "none",
+            "include": None,
+            "exclude": None,
+            "max_batches": 0,
+            "seed": None,
+            "mim": {"mask_prob": 0.0, "patch_size": 1, "mask_value": 0.0},
+            "report": None,
+        },
+    )
+
+    wrapped = dict(payload)
+    wrapped["meta"] = supplemented
+    return wrapped
+
+
+def _load_config(path_str: str | None) -> dict[str, Any]:
+    if not path_str:
+        return {}
+    config_path = Path(path_str)
+    if not config_path.is_absolute():
+        config_path = repo_root / config_path
+    text = config_path.read_text(encoding="utf-8")
+    if config_path.suffix.lower() in {".yaml", ".yml"}:
+        data = _load_simple_yaml_object(text, source=config_path)
+    else:
+        data = json.loads(text)
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise SystemExit(f"--config must point to a JSON/YAML object: {config_path}")
+    return data
+
+
+def _load_prediction_entries(path_str: str) -> list[dict[str, Any]]:
+    path = Path(path_str)
+    if not path.is_absolute():
+        path = repo_root / path
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    supplemented = _supplement_wrapped_meta(raw, source=str(path))
+    validate_predictions_payload(supplemented, strict=False)
+    entries, _ = normalize_predictions_payload(supplemented)
+    canonical = canonicalize_predictions(entries, strict=False, policy="clamp")
+    return canonical.entries
 
 
 def _safe_metrics(records: list[dict[str, Any]], entries: list[dict[str, Any]]) -> dict[str, float]:
@@ -80,21 +200,12 @@ def _validate_distill_params(params: dict[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
-    config = {}
-    if args.config:
-        config_path = Path(args.config)
-        if not config_path.is_absolute():
-            config_path = repo_root / config_path
-        config = json.loads(config_path.read_text())
+    config = _load_config(args.config)
 
     enabled = bool(config.get("enabled", True))
 
-    student_raw = json.loads(Path(args.student).read_text(encoding="utf-8"))
-    teacher_raw = json.loads(Path(args.teacher).read_text(encoding="utf-8"))
-    validate_predictions_payload(student_raw, strict=False)
-    validate_predictions_payload(teacher_raw, strict=False)
-    student_entries = load_predictions_entries(args.student)
-    teacher_entries = load_predictions_entries(args.teacher)
+    student_entries = _load_prediction_entries(args.student)
+    teacher_entries = _load_prediction_entries(args.teacher)
 
     distill_params = {
         "iou_threshold": float(config.get("iou_threshold", args.iou_threshold)),

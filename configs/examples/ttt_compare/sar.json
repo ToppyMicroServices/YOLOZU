@@ -1,0 +1,35 @@
+{
+  "method": "sar",
+  "preset": null,
+  "reset": "sample",
+  "compare": {
+    "iou_thresh": 0.99,
+    "score_atol": 0.0001,
+    "bbox_atol": 0.0001
+  },
+  "extra_export_args": [
+    "--ttt-steps",
+    "1",
+    "--ttt-batch-size",
+    "1",
+    "--ttt-lr",
+    "0.0001",
+    "--ttt-max-batches",
+    "1",
+    "--ttt-max-grad-norm",
+    "1.0",
+    "--ttt-max-update-norm",
+    "1.0",
+    "--ttt-max-total-update-norm",
+    "1.0",
+    "--ttt-max-loss-ratio",
+    "3.0",
+    "--ttt-update-filter",
+    "norm_only",
+    "--ttt-sar-rho",
+    "0.05",
+    "--no-ttt-sar-adaptive",
+    "--ttt-sar-first-step-scale",
+    "1.0"
+  ]
+}

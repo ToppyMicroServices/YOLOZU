@@ -74,10 +74,83 @@ def _debug_swallow(context: str, exc: Exception) -> None:
     logger.debug("%s: %s", context, exc, exc_info=True)
 
 
+def _torch_mps_available(torch_module: Any) -> bool:
+    try:
+        return bool(getattr(torch_module.backends, "mps", None) and torch_module.backends.mps.is_available())
+    except Exception:
+        return False
+
+
+def _resolve_device_string(device_value: Any, *, torch_module: Any) -> tuple[str, list[str]]:
+    requested = str(device_value).strip() if device_value is not None else "auto"
+    if not requested:
+        requested = "auto"
+
+    warnings: list[str] = []
+    if requested == "auto":
+        if torch_module.cuda.is_available():
+            return "cuda", warnings
+        if _torch_mps_available(torch_module):
+            return "mps", warnings
+        return "cpu", warnings
+
+    if requested.startswith("cuda") and not torch_module.cuda.is_available():
+        warnings.append("warning: cuda requested but not available; falling back to cpu")
+        return "cpu", warnings
+
+    if requested.startswith("mps") and not _torch_mps_available(torch_module):
+        warnings.append("warning: mps requested but not available; falling back to cpu")
+        return "cpu", warnings
+
+    return requested, warnings
+
+
+def _build_amp_context(*, torch_module: Any, device: Any, amp_mode: str) -> tuple[str, Any, Any]:
+    mode = str(amp_mode or "none").lower()
+    if mode == "none":
+        return mode, nullcontext(), None
+
+    if device.type == "cuda":
+        if mode == "fp16":
+            if hasattr(torch_module, "amp") and hasattr(torch_module.amp, "GradScaler"):
+                try:
+                    scaler = torch_module.amp.GradScaler("cuda")
+                except TypeError:
+                    scaler = torch_module.amp.GradScaler(device="cuda")
+            else:  # pragma: no cover
+                scaler = torch_module.cuda.amp.GradScaler()
+            if hasattr(torch_module, "amp") and hasattr(torch_module.amp, "autocast"):
+                autocast = torch_module.amp.autocast(device_type="cuda", dtype=torch_module.float16)
+            else:  # pragma: no cover
+                autocast = torch_module.cuda.amp.autocast(dtype=torch_module.float16)
+            return mode, autocast, scaler
+        if mode == "bf16":
+            if hasattr(torch_module, "amp") and hasattr(torch_module.amp, "autocast"):
+                return mode, torch_module.amp.autocast(device_type="cuda", dtype=torch_module.bfloat16), None
+            return mode, torch_module.cuda.amp.autocast(dtype=torch_module.bfloat16), None  # pragma: no cover
+        raise SystemExit(f"unknown --amp mode: {amp_mode}")
+
+    if device.type == "mps":
+        dtype = torch_module.float16 if mode == "fp16" else torch_module.bfloat16
+        if mode not in ("fp16", "bf16"):
+            raise SystemExit(f"unknown --amp mode: {amp_mode}")
+        if hasattr(torch_module, "amp") and hasattr(torch_module.amp, "autocast"):
+            try:
+                return mode, torch_module.amp.autocast(device_type="mps", dtype=dtype), None
+            except Exception as exc:
+                print(f"warning: mps autocast unavailable for --amp {mode}; disabling AMP ({exc})")
+                return "none", nullcontext(), None
+        print("warning: torch.amp.autocast unavailable on mps; disabling AMP")
+        return "none", nullcontext(), None
+
+    print("warning: --amp requested on non-cuda/non-mps device; disabling AMP")
+    return "none", nullcontext(), None
+
+
 def main(argv: list[str] | None = None) -> int:
+    args = parse_args(sys.argv[1:] if argv is None else argv)
     if torch is None:  # pragma: no cover
         raise SystemExit("torch is required; install requirements-test.txt")
-    args = parse_args(sys.argv[1:] if argv is None else argv)
     if bool(getattr(args, "use_amp", False)) and str(getattr(args, "amp", "none") or "none").lower() == "none":
         args.amp = "fp16"
 
@@ -480,11 +553,10 @@ def main(argv: list[str] | None = None) -> int:
         if "t" in base_loss_weights:
             base_loss_weights["t"] = 0.0
 
-    device_str = str(args.device).strip() if args.device is not None else "cpu"
-    if device_str.startswith("cuda") and not torch.cuda.is_available():
-        if is_main:
-            print("warning: cuda requested but not available; falling back to cpu")
-        device_str = "cpu"
+    device_str, device_warnings = _resolve_device_string(getattr(args, "device", "auto"), torch_module=torch)
+    if is_main:
+        for warning in device_warnings:
+            print(warning)
     if ddp_enabled and device_str.startswith("cuda"):
         if torch.cuda.is_available():
             torch.cuda.set_device(int(local_rank))
@@ -601,34 +673,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # AMP setup (needed early so resume can restore scaler state).
     amp_mode = str(args.amp or "none").lower()
-    scaler = None
-    if amp_mode != "none" and device.type != "cuda":
-        if is_main:
-            print("warning: --amp requested on non-cuda device; disabling AMP")
-        amp_mode = "none"
-        args.amp = "none"
-    if amp_mode != "none":
-        if amp_mode == "fp16":
-            if hasattr(torch, "amp") and hasattr(torch.amp, "GradScaler"):
-                try:
-                    scaler = torch.amp.GradScaler("cuda")
-                except TypeError:
-                    scaler = torch.amp.GradScaler(device="cuda")
-            else:  # pragma: no cover
-                scaler = torch.cuda.amp.GradScaler()
-            if hasattr(torch, "amp") and hasattr(torch.amp, "autocast"):
-                autocast = torch.amp.autocast(device_type="cuda", dtype=torch.float16)
-            else:  # pragma: no cover
-                autocast = torch.cuda.amp.autocast(dtype=torch.float16)
-        elif amp_mode == "bf16":
-            if hasattr(torch, "amp") and hasattr(torch.amp, "autocast"):
-                autocast = torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16)
-            else:  # pragma: no cover
-                autocast = torch.cuda.amp.autocast(dtype=torch.bfloat16)
-        else:
-            raise SystemExit(f"unknown --amp mode: {args.amp}")
-    else:
-        autocast = nullcontext()
+    amp_mode, autocast, scaler = _build_amp_context(torch_module=torch, device=device, amp_mode=amp_mode)
+    args.amp = amp_mode
 
     start_epoch = 0
     global_step = 0
