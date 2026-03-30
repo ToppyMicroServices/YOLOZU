@@ -546,7 +546,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                 losses.append(float(loss_value))
                 step_metrics.append(step_entry)
         elif method == "mim":
-            from .ttt_mim import select_parameters, ttt_mim_step
+            from .ttt_mim import select_parameters, supports_structured_mim, ttt_mim_step, ttt_structured_mim_step
 
             params = select_parameters(
                 model,
@@ -563,16 +563,28 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                 x = batches[step_idx % len(batches)]
                 pre_snapshot = _snapshot_params(params)
                 pre_buffer_snapshot = _snapshot_norm_buffers(model) if bool(config.rollback_on_stop) else []
-                loss, _mask_ratio, extra = ttt_mim_step(
-                    model,
-                    optimizer,
-                    x,
-                    mask_prob=float(config.mim_mask_prob),
-                    patch_size=int(config.mim_patch_size),
-                    mask_value=float(config.mim_mask_value),
-                    generator=generator,
-                    max_grad_norm=config.max_grad_norm,
-                )
+                if supports_structured_mim(model):
+                    loss, _mask_ratio, extra = ttt_structured_mim_step(
+                        model,
+                        optimizer,
+                        x,
+                        mask_prob=float(config.mim_mask_prob),
+                        patch_size=int(config.mim_patch_size),
+                        mask_value=float(config.mim_mask_value),
+                        generator=generator,
+                        max_grad_norm=config.max_grad_norm,
+                    )
+                else:
+                    loss, _mask_ratio, extra = ttt_mim_step(
+                        model,
+                        optimizer,
+                        x,
+                        mask_prob=float(config.mim_mask_prob),
+                        patch_size=int(config.mim_patch_size),
+                        mask_value=float(config.mim_mask_value),
+                        generator=generator,
+                        max_grad_norm=config.max_grad_norm,
+                    )
                 loss_value = float(loss.detach().cpu().item())
                 if initial_loss is None:
                     initial_loss = loss_value
@@ -587,6 +599,16 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     "mask_ratio": float(_mask_ratio),
                     "grad_norm": (float(step_grad_norm) if step_grad_norm is not None else None),
                     "grad_norm_clipped": (float(step_grad_norm_clipped) if step_grad_norm_clipped is not None else None),
+                    "mim_loss": (
+                        float(extra.get("loss_mim"))
+                        if isinstance(extra, dict) and extra.get("loss_mim") is not None
+                        else None
+                    ),
+                    "entropy_loss": (
+                        float(extra.get("loss_entropy"))
+                        if isinstance(extra, dict) and extra.get("loss_entropy") is not None
+                        else None
+                    ),
                     "update_norm": float(update_norm),
                     "total_update_norm": float(total_update_norm),
                     "rolled_back": False,

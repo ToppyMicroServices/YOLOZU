@@ -7,6 +7,8 @@ Adhering to the run contract ensures rigorous reproducibility, facilitates parit
 }{
 It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or \cmd{--run-contract}) and mandates strict adherence to configuration keys; standard training dependencies apply.
 }
+\ChapterAudience{Read this chapter when you are running training jobs and want reproducible artifact layout, resume behavior, and tuning surfaces.}
+
 
 \section{Model-family policy and reference training stack}
 YOLOZU contracts (predictions schema, evaluation reports, scenario outputs) are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical aspect is the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs, independent of the producing model family.
@@ -248,6 +250,7 @@ Supported learning rate scheduler configurations include \texttt{none} (default)
 
 \section{LoRA / QLoRA parameters and defaults}
 Low-Rank Adaptation (LoRA) is activated when \texttt{lora\_r > 0}.
+For the plain-language intuition and the difference between LoRA and QLoRA, see Chapter~14 before tuning these knobs.
 
 \begin{longtable}{@{}p{0.40\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.30\textwidth}@{}}
 \toprule

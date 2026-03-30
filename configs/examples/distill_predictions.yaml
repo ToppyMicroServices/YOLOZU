@@ -1,0 +1,8 @@
+enabled: true
+iou_threshold: 0.7
+alpha: 0.5
+add_missing: true
+add_score_scale: 0.5
+teacher_min_score: 0.25
+max_added_per_image: 20
+add_duplicate_iou_threshold: 0.9

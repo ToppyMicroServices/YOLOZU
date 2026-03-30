@@ -93,3 +93,21 @@ Use Scorecard as a posture dashboard:
 - governance/history findings should be documented, monitored, and handled through repository settings and maintainer process
 
 This avoids spending time chasing findings that cannot be cleared by editing source files alone.
+
+## 2026-03-28 remote audit snapshot
+
+Latest remote code-scanning triage on `main` shows:
+
+- actionable CodeQL items:
+  - `py/clear-text-storage-sensitive-data` in `tools/check_repo_governance.py`
+  - `py/empty-except` in `tools/export_predictions_trt.py`
+- repository-history / external-program items that still require operational follow-through:
+  - `PinnedDependenciesID` for `.clusterfuzzlite/Dockerfile`
+  - `VulnerabilitiesID` (`GHSA-hqmj-h5c6-369m`)
+  - `CodeReviewID`
+  - `MaintainedID`
+  - `SASTID`
+
+The first two items are source-level and should be fixed in the repository.
+The remaining items are primarily governed by dependency upgrades, reviewed-PR history,
+or external program status rather than by a single source edit.

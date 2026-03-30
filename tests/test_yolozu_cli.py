@@ -107,6 +107,12 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertIn("runtime_capabilities", payload)
             self.assertIn("drift_hints", payload)
             self.assertIsInstance(payload.get("drift_hints"), list)
+            runtime = payload.get("runtime_capabilities") or {}
+            torch_runtime = runtime.get("torch") or {}
+            ort_runtime = runtime.get("onnxruntime") or {}
+            self.assertIn("mps_available", torch_runtime)
+            self.assertIn("mps_built", torch_runtime)
+            self.assertIn("coreml_provider", ort_runtime)
             links = payload.get("guidance_links") or {}
             self.assertIn("backend_parity", links)
             self.assertIn("onnx_parity", links)

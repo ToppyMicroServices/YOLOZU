@@ -7,6 +7,27 @@ It standardizes the generation of \path{predictions.json} and evaluation reports
 }{
 You will require a dataset root and one or more prediction artifacts; backend-specific operations may necessitate additional dependencies.
 }
+\ChapterAudience{Read this chapter when you already have data or model outputs and need to decide the fastest safe path to evaluation, export, or migration.}
+
+\paragraph{The shortest human summary.}
+Most people arrive here with one of four questions:
+\begin{itemize}
+  \item ``I already have predictions. How do I evaluate them?''
+  \item ``I have a model and a dataset. How do I export predictions safely?''
+  \item ``I just want quick image-folder inference and overlays.''
+  \item ``My data lives in another ecosystem. How do I migrate without rewriting everything?''
+\end{itemize}
+
+This chapter is organized exactly around those four questions.
+
+\paragraph{Fast chooser.}
+If you are unsure where to start:
+\begin{itemize}
+  \item choose \textbf{Workflow A} when inference already happened elsewhere,
+  \item choose \textbf{Workflow B} when you need \yolozu{} to run inference and emit the standardized artifact,
+  \item choose \textbf{Workflow C} when you want the quickest folder-level visual result,
+  \item choose \textbf{Workflow D} when the problem is data or prediction migration rather than model execution.
+\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -57,7 +78,11 @@ You will require a dataset root and one or more prediction artifacts; backend-sp
 \caption{Workflow overview (A--D): keep inference flexible, fix the interface boundary at \cmd{predictions.json}.}
 \end{figure}
 
+
 \section{Workflow A: Evaluate existing predictions.json}
+This is the safest and simplest path when a different system already produced model outputs.
+You do not need to rerun inference; you only need a valid predictions artifact and a dataset root.
+
 If you have already generated a \path{predictions.json} artifact from any inference backend, you can evaluate it directly:
 \begin{lstlisting}[language=bash]
 yolozu validate predictions /path/to/predictions.json --strict
@@ -67,6 +92,8 @@ python3 tools/eval_suite.py --dataset /path/to/yolo-dataset --predictions-glob '
 This represents the most common integration pathway for external inference systems.
 
 \section{Workflow B: Run inference and export predictions}
+Choose this path when you want \yolozu{} to be the boundary that turns backend-specific execution into a stable predictions artifact.
+
 Depending on your deployment environment, several backends are available:
 \begin{itemize}
   \item \textbf{Torch backend (research):} Exports predictions directly from a training checkpoint.
@@ -194,6 +221,8 @@ python3 tools/smoke_synthgen.py \
 \end{lstlisting}
 
 \section{Workflow C: Folder inference (pip CLI)}
+Choose this when you care more about ``show me the result'' than about setting up a larger benchmark or protocol-pinned evaluation loop.
+
 A highly convenient, user-facing approach for batch inference is:
 \begin{lstlisting}[language=bash]
 yolozu predict-images   --backend dummy   --input-dir /path/to/images   --output reports/predict_images.json   --overlays-dir reports/predict_images_overlays   --html reports/predict_images.html
@@ -265,6 +294,8 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 This practice proactively prevents silent evaluation failures caused by malformed outputs.
 
 \section{Workflow D: Migrate datasets and predictions}
+Choose this path when the difficult part is not inference itself, but bridging from an existing dataset or prediction ecosystem into the \yolozu{} interface contract.
+
 YOLOZU provides migration utilities that generate lightweight wrapper artifacts or converters, enabling seamless integration with prevalent ecosystem datasets. The core philosophy is to preserve the original dataset immutability while generating version-controlled wrappers.
 
 \subsection{YOLO-style data.yaml / YOLO (YOLOv8/YOLO11)}
