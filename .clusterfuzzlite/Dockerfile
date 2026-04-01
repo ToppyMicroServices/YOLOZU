@@ -4,4 +4,4 @@ WORKDIR /src
 COPY . /src
 COPY .clusterfuzzlite/requirements.lock /tmp/clusterfuzzlite-requirements.lock
 
-RUN python3 -m pip install -r /tmp/clusterfuzzlite-requirements.lock
+RUN python3 -m pip install --require-hashes -r /tmp/clusterfuzzlite-requirements.lock
