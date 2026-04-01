@@ -9,6 +9,20 @@ English README: [`README.md`](README.md) | 中文README: [`Readme_zh.md`](Readme
 [![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)
 
+YOLOZU は、AGPL lock-in を避けつつ YOLO-style workflow を使いたいチーム向けの Apache-2.0 vision evaluation toolkit です。
+
+学習や推論の stack はそのまま使えます。
+予測を一度 export します。
+その後は、一つの fixed で reproducible な interface contract で評価します。
+
+YOLOZU は、license clarity が重要な commercial / internal use case を想定して作られています。
+安定した interface contract として扱うのは model internals ではなく predictions です。
+そのため、同じ evaluation path のまま PyTorch、ONNX Runtime、TensorRT、C++、Rust の pipeline を比較しやすくなります。
+
+Bring your own inference.
+Keep one evaluation contract.
+Stay Apache-2.0.
+
 ## 30秒で動く（pip）
 
 **Predictions-first interface contract.** `predictions.json` を1回出せば、フレームワークや実行基盤を跨いで同じ評価（apples-to-apples）ができます。
