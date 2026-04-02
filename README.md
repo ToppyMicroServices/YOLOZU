@@ -232,6 +232,7 @@ macOS / Apple Silicon note:
 - `Torch backend on macOS/MPS` is a supported beta scope for local demos, `--backend torch` inference/export, and small `train_minimal.py` smoke runs.
 - `TensorRT` remains Linux+NVIDIA only in this repo.
 - If an MPS op is missing, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+- On some macOS 26 / Apple Silicon hosts, `pip` PyTorch wheels may still report `mps_available=false`. If that happens, use the Miniforge/conda path in [`docs/install.md`](docs/install.md#macos--apple-silicon-miniforgemps-workflow), then confirm with `yolozu doctor --output -`.
 
 CLI completion (bash/zsh):
 

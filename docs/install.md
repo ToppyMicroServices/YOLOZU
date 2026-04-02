@@ -50,6 +50,66 @@ Training-device notes:
 - `--device mps` is allowed for the training scaffold
 - `--amp fp16|bf16` on MPS is best-effort beta; if autocast is unavailable, the trainer warns and falls back to fp32
 
+## macOS / Apple Silicon Miniforge/MPS workflow
+
+If `pip`-installed PyTorch reports `mps_available=false` on a compatible Apple Silicon Mac, try a Miniforge/conda PyTorch build before giving up on MPS.
+
+The repo was verified on `macOS 26.3.1 arm64` with:
+
+- `pip` PyTorch wheels: `mps_built=true`, `mps_available=false`
+- Miniforge/conda PyTorch: `mps_built=true`, `mps_available=true`
+- `rtdetr_pose/tools/train_minimal.py --device mps --dry-run`: completed on MPS
+
+Suggested setup:
+
+```bash
+curl -L -o /tmp/Miniforge3-MacOSX-arm64.sh \
+  https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+bash /tmp/Miniforge3-MacOSX-arm64.sh -b -p "$HOME/miniforge3"
+source "$HOME/miniforge3/bin/activate"
+conda create -y -n yolozu-mps python=3.11 pytorch -c pytorch
+conda activate yolozu-mps
+python -m pip install -e '.[train]'
+```
+
+Verify MPS before longer runs:
+
+```bash
+python - <<'PY'
+import torch
+print("torch", torch.__version__)
+print("mps_built", torch.backends.mps.is_built())
+print("mps_available", torch.backends.mps.is_available())
+print(torch.ones(2, device="mps"))
+PY
+yolozu doctor --output -
+```
+
+Small training smoke:
+
+```bash
+PYTHONPATH="$PWD:$PWD/rtdetr_pose" \
+python rtdetr_pose/tools/train_minimal.py \
+  --device mps \
+  --amp none \
+  --dry-run \
+  --dataset-root data/coco128 \
+  --config rtdetr_pose/configs/base.json \
+  --run-dir runs/mps_train_smoke
+```
+
+Expected signals:
+
+- `yolozu doctor --output -` shows `runtime_capabilities.torch.mps_available: true`
+- `runs/mps_train_smoke/run_record.json` records `"device": "mps"` and `hardware.accelerator.mps.available: true`
+- if ONNX export warns about missing `onnx`, training still succeeded; install `onnx` only if you need post-train export in the same env
+
+If MPS still stays unavailable:
+
+- keep `PYTORCH_ENABLE_MPS_FALLBACK=1` for partial CPU fallback when an op is unsupported
+- prefer `--device auto` for day-to-day safety
+- compare `pip` and `conda` outputs with `yolozu doctor --output -` to isolate whether the blocker is the Torch build or the repo config
+
 ## CI dependency tiers
 
 YOLOZU CI uses three install tiers to reduce optional-extras combinatorial noise:
