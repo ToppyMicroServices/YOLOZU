@@ -18,7 +18,7 @@ python3 tools/run_reference_adapter_regression.py \
   --max-images 2 \
   --profile micro \
   --repro-policy relaxed \
-  --runtime-lock requirements-ci.lock \
+  --runtime-lock requirements-locks/requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression.json
 ```
@@ -56,7 +56,7 @@ python3 tools/run_reference_adapter_regression.py \
   --baseline-version v1 \
   --repro-policy strict \
   --capture-provenance full \
-  --runtime-lock requirements-ci.lock \
+  --runtime-lock requirements-locks/requirements-ci.lock \
   --output reports/reference_adapter_regression_full.json
 ```
 
@@ -71,7 +71,7 @@ python3 tools/run_reference_adapter_regression.py \
   --max-images 2 \
   --profile micro \
   --repro-policy relaxed \
-  --runtime-lock requirements-ci.lock \
+  --runtime-lock requirements-locks/requirements-ci.lock \
   --write-baseline \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --output reports/reference_adapter_regression_baseline_write.json

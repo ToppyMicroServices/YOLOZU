@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml README.md LICENSE NOTICE COPYRIGHT ./
-COPY requirements-locks/requirements-runtime.lock requirements-locks/requirements-demo-extra.lock ./
+COPY requirements-locks ./requirements-locks
 COPY tools/ci/install_with_hashes.py tools/ci/install_with_hashes.py
 COPY yolozu ./yolozu
 

@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md LICENSE NOTICE COPYRIGHT requirements-locks/requirements-runtime.lock ./
+COPY pyproject.toml README.md LICENSE NOTICE COPYRIGHT ./
+COPY requirements-locks ./requirements-locks
 COPY tools/ci/install_with_hashes.py tools/ci/install_with_hashes.py
 COPY yolozu ./yolozu
 
