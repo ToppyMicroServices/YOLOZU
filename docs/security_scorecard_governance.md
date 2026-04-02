@@ -104,7 +104,7 @@ Latest remote code-scanning triage on `main` shows:
     - `GHSA-538c-55jv-c5g9`
     - `GHSA-cmw6-hcpp-c6jp`
     - `GHSA-p433-9wv8-28xj`
-  - the Scorecard workflow had still been pinned to `ossf/scorecard-action` `v2.4.1`
+  - at the time of that run, the Scorecard workflow was still pinned to `ossf/scorecard-action` `v2.4.1` (since updated to `v2.4.3`; see follow-up below)
 - repository-history / external-program items that still require operational follow-through:
   - `CodeReviewID`
   - `MaintainedID`
