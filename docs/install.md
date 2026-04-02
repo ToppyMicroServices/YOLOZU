@@ -63,13 +63,15 @@ The repo was verified on `macOS 26.3.1 arm64` with:
 Suggested setup:
 
 ```bash
+git clone https://github.com/ToppyMicroServices/YOLOZU.git
+cd YOLOZU
 curl -L -o /tmp/Miniforge3-MacOSX-arm64.sh \
   https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
 bash /tmp/Miniforge3-MacOSX-arm64.sh -b -p "$HOME/miniforge3"
 source "$HOME/miniforge3/bin/activate"
-conda create -y -n yolozu-mps python=3.11 pytorch -c pytorch
+conda create -y -n yolozu-mps python=3.11 pytorch torchvision -c pytorch
 conda activate yolozu-mps
-python -m pip install -e '.[train]'
+python -m pip install -e '.[train]' --no-deps
 ```
 
 Verify MPS before longer runs:
@@ -101,7 +103,7 @@ python rtdetr_pose/tools/train_minimal.py \
 Expected signals:
 
 - `yolozu doctor --output -` shows `runtime_capabilities.torch.mps_available: true`
-- `runs/mps_train_smoke/run_record.json` records `"device": "mps"` and `hardware.accelerator.mps.available: true`
+- `runs/mps_train_smoke/run_record.json` records `args.device: "mps"` and `hardware.accelerator.mps.available: true`
 - if ONNX export warns about missing `onnx`, training still succeeded; install `onnx` only if you need post-train export in the same env
 
 If MPS still stays unavailable:

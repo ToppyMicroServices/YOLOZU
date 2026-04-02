@@ -196,7 +196,7 @@ macOS / Apple Silicon メモ:
 - `Torch backend on macOS/MPS` は beta の正式スコープです。ローカル demo、`--backend torch` の推論/export、小さな `train_minimal.py` smoke までを主対象にします。
 - `TensorRT` は引き続き Linux + NVIDIA 専用です。
 - MPS の未対応 op に当たる場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を付けて再実行してください。
-- macOS 26 / Apple Silicon の一部環境では、`pip` の PyTorch wheel が `mps_available=false` を返すことがあります。その場合は [`docs/install.md`](docs/install.md) の Miniforge/conda 手順を使い、最後に `yolozu doctor --output -` で確認してください。
+- macOS 26 / Apple Silicon の一部環境では、`pip` の PyTorch wheel が `mps_available=false` を返すことがあります。その場合は [`docs/install.md`](docs/install.md#macos--apple-silicon-miniforgemps-workflow) の Miniforge/conda 手順を使い、最後に `yolozu doctor --output -` で確認してください。
 
 デモ全体像のサマリ（機能カバレッジ + 依存チェック + 推奨コマンド）:
 
