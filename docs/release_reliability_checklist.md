@@ -14,11 +14,12 @@ Release trigger note:
 - current version `X.Y.Z` -> SemVer mode
 - current version `YYYY.MM.DD.MICRO` -> CalVer mode
 
-For SemVer mode, release size is classified from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag.
+For SemVer mode, release size is classified from git diff stats (`files changed`, `insertions+deletions`) since the latest semver tag, but `major` is reserved for explicit breaking-change signals.
 
-- small: `X.Y.Z -> X.Y.(Z+1)` (`1.1.1+add` equivalent)
-- medium: `X.Y.Z -> X.(Y+1).0` (`1.1+a.0` equivalent)
-- large: `X.Y.Z -> (X+1).0.0` (`1+a.0.0` equivalent)
+- small non-breaking change: `X.Y.Z -> X.Y.(Z+1)`
+- medium non-breaking change: `X.Y.Z -> X.(Y+1).0`
+- large non-breaking change: `X.Y.Z -> X.(Y+1).0`
+- explicit breaking change signal (`BREAKING CHANGE`, `BREAKING-CHANGE`, or Conventional Commit `type!:`): `X.Y.Z -> (X+1).0.0`
 
 For CalVer mode:
 
