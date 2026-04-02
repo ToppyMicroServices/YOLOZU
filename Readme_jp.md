@@ -2,30 +2,20 @@
 
 English README: [`README.md`](README.md) | 中文README: [`Readme_zh.md`](Readme_zh.md)
 
-[![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
-[![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
-[![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
-[![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
-[![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)
-
-YOLOZU は、AGPL lock-in を避けつつ YOLO-style workflow を使いたいチーム向けの Apache-2.0 vision evaluation toolkit です。
-
-学習や推論の stack はそのまま使えます。
-予測を一度 export します。
-その後は、一つの fixed で reproducible な interface contract で評価します。
-
-YOLOZU は、license clarity が重要な commercial / internal use case を想定して作られています。
-安定した interface contract として扱うのは model internals ではなく predictions です。
-そのため、同じ evaluation path のまま PyTorch、ONNX Runtime、TensorRT、C++、Rust の pipeline を比較しやすくなります。
+YOLOZU は、workflow を単一の training framework に lock-in したくないチーム向けの Apache-2.0 vision evaluation toolkit です。
 
 Bring your own inference.
-Keep one evaluation contract.
-Stay Apache-2.0.
+Export once.
+Evaluate fairly.
 
-## 30秒で動く（pip）
+YOLOZU が比較の基準にするのは、安定した predictions interface contract です。
+中身は wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
 
-**Predictions-first interface contract.** `predictions.json` を1回出せば、フレームワークや実行基盤を跨いで同じ評価（apples-to-apples）ができます。
+つまり、今の training / inference stack をそのまま使いながら、予測を一度 export すれば、同じ reproducible な評価 path で比較できます。
+
+用途は明快です。framework をまたいで公平に比べたい、backend が違っても評価を揃えたい、AGPL lock-in を避けたい、という場面に向いています。
+
+30秒で試すなら:
 
 ```bash
 python3 -m pip install -U yolozu
@@ -34,7 +24,68 @@ yolozu demo overview
 
 出力: `demo_output/overview/<utc>/demo_overview_report.json`
 
-もしYOLOZUが時間短縮に役立ったら、Starで応援してください（他の人が見つけやすくなります）。
+既に predictions を出せる pipeline があるなら、残りを作り直さずに評価だけ YOLOZU へ寄せられます。
+
+```mermaid
+flowchart LR
+    A["Ultralytics"] --> D["predictions.json + export_settings"]
+    B["RT-DETR"] --> D
+    C["Detectron2 / MMDetection / custom"] --> D
+    D --> E["validate"]
+    E --> F["evaluate"]
+    F --> G["comparable report"]
+```
+
+[![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
+[![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
+[![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
+[![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
+[![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)
+
+## 誰向けか
+
+YOLOZU が合いやすいのは、次のようなケースです。
+
+- 既に model predictions があり、公平な評価だけ揃えたい
+- 複数 framework / backend を比較したい
+- commercial / internal use で Apache-2.0-friendly な tooling が必要
+
+逆に、次の用途なら別の道具の方が合う可能性があります。
+
+- one-click default 付きの end-to-end training framework が欲しい
+- framework-native の training と metrics だけで足りる
+- cross-framework comparison が不要
+
+## よくある疑問
+
+**GPU は必要ですか？**  
+いいえ。最初の demo path は CPU-friendly です。
+
+**YOLOZU の中で学習しないと使えませんか？**  
+いいえ。precomputed predictions を validate / evaluate できます。
+
+**主な artifact は何ですか？**  
+wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
+
+**framework-native evaluation ではだめですか？**  
+framework ごとの metric path は、stack をまたぐと公平比較が難しくなるからです。
+
+## 最初の 3 分
+
+1. `yolozu demo overview` を実行する
+2. `demo_output/overview/<utc>/demo_overview_report.json` が出ることを確認する
+3. 次の 3 つから一つ選ぶ
+
+- A. 手元の predictions を `yolozu validate predictions ...` と `yolozu eval-coco ...` で評価する
+- B. いま使っている framework から predictions interface contract へ export する
+- C. 基本評価が通ってから parity / benchmark を試す
+
+## なぜ Apache-2.0 が重要か / Why Apache-2.0 Matters
+
+- commercial / internal review で license clarity を最初から示しやすい
+- 出力比較のために AGPL-style workflow lock-in を前提にしない
+- 安定境界を training 実装ではなく predictions interface contract に置ける
 
 ## Enterprise 向けの位置づけ
 
@@ -58,32 +109,17 @@ yolozu demo instance-seg --background coco-instances --inference auto --num-imag
 yolozu demo pose --backend aruco
 ```
 
-視覚モデル評価のためのフレームワーク非依存ツールキット YOLOZU は、
-ドメインシフト下における継続学習およびテスト時適応（TTT: test-time adaptation/training）を
-再現可能に扱うことを目的として設計している。
+## 発展機能 (Advanced Capabilities)
 
-特徴:
+最初の評価 layer が刺さるなら、YOLOZU には次のような発展機能もあります。
 
-1. 破滅的忘却の緩和手法の採用
-自己蒸留、リプレイ、パラメータ効率更新（PEFT）といった学習による破壊的忘却の緩和を可能にする．(忘却の完全な解消を保証するものではない)
-TTT(Test time training)による推論時の重み調整による継続的な学習を通じたドメインシフト対策を備えている．
-
-2. 予測をインタフェース契約として扱う
-  推論結果を共通フォーマット predictions.json（＋export_settings）として保存し、
-  モデル実装や推論基盤に依存しない評価を行う。
-  これにより、継続学習やテスト時学習の結果を、フレームワークや実行環境を跨いで比較・再実行・CI検証できる。
-
-3. タスク横断の評価に対応
-  物体検出、セグメンテーション、キーポイント推定、単眼深度推定、6DoF姿勢推定の評価ワークフローをサポートする。
-  学習実装は必須ではなく、評価系と分離して運用できる。
-
-4. 実運用を想定した成果物管理
-  各実験はバージョン付きアーティファクトを出力し、
-  CI 上での差分比較や回帰検知を前提とした運用を可能にする。
-
-5. 高度な最適化・評価手法を組み込み可能
-  Hessian を用いた損失最適化や、不均衡データに対する FRACtal 系手法など、
-  精度安定性や評価の信頼性を高めるための多様な手法を取り込める設計としている。
+- **Framework-agnostic evaluation for vision models**: domain shift 下の continual learning や TTT を reproducible に扱えるよう設計しています。
+- **Catastrophic forgetting mitigation workflows**: self-distillation、replay、PEFT で forgetting を measurable / comparable にします。
+- **Inference-time adaptation (TTT)**: deploy-time の domain shift 実験向けに inference 中の重み更新を扱えます。
+- **Predictions as the stable interface contract**: model internals ではなく predictions を boundary として保ちます。
+- **Multi-task evaluation support**: detection、segmentation、keypoints、monocular depth、6DoF pose をカバーします。
+- **Production-oriented deployment paths**: PyTorch、ONNX Runtime、TensorRT、ExecuTorch、C++、Rust をまたぐ path を用意しています。
+- **CI-friendly artifact workflows**: versioned artifact の diff と regression check をしやすくしています。
 
 
 推論バックエンド（PyTorch / ONNXRuntime / TensorRT / ExecuTorch / C++ / Rust など）は自由に選び、

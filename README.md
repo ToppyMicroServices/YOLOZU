@@ -2,6 +2,40 @@
 
 Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.md)
 
+YOLOZU is an Apache-2.0 vision evaluation toolkit for teams that do not want to lock their workflow into a single training framework.
+
+Bring your own inference.
+Export once.
+Evaluate fairly.
+
+YOLOZU compares model outputs through one stable predictions interface contract:
+wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
+
+That means you can keep your current training or inference stack, export predictions once, then validate and evaluate them with the same reproducible path.
+
+It is useful when you want to compare frameworks fairly, keep evaluation reproducible across backends, or avoid framework-specific evaluation drift.
+
+Get a result in 30 seconds:
+
+```bash
+python3 -m pip install -U yolozu
+yolozu demo overview
+```
+
+Writes: `demo_output/overview/<utc>/demo_overview_report.json`
+
+If your workflow already produces predictions, YOLOZU helps you evaluate them without rewriting the rest of your pipeline.
+
+```mermaid
+flowchart LR
+    A["Ultralytics"] --> D["predictions.json + export_settings"]
+    B["RT-DETR"] --> D
+    C["Detectron2 / MMDetection / custom"] --> D
+    D --> E["validate"]
+    E --> F["evaluate"]
+    F --> G["comparable report"]
+```
+
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
 [![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
 [![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
@@ -14,34 +48,51 @@ Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.m
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-YOLOZU is an Apache-2.0 vision evaluation toolkit for teams that need YOLO-style workflows without AGPL lock-in.
+## Who This Is For
 
-Use your own training and inference stack.
-Export predictions once.
-Evaluate them under one fixed, reproducible interface contract.
+YOLOZU is for you if:
 
-YOLOZU is built for commercial and internal use cases where license clarity matters.
-It keeps predictions, not model internals, as the stable interface contract.
-That makes it easier to compare PyTorch, ONNX Runtime, TensorRT, C++, or Rust pipelines with the same evaluation path.
+- you already have model predictions and want fair evaluation,
+- you compare multiple frameworks or backends,
+- you need Apache-2.0-friendly tooling for commercial or internal use.
 
-Bring your own inference.
-Keep one evaluation contract.
-Stay Apache-2.0.
+YOLOZU is probably not for you if:
 
-## 30-second Quick Win (pip)
+- you want a single end-to-end training framework with one-click defaults,
+- you only need framework-native training plus built-in metrics,
+- you do not need cross-framework comparison.
 
-**Predictions-first interface contract.** Export `predictions.json` once, then validate + evaluate apples-to-apples across frameworks/backends.
+## Common Questions
 
-```bash
-python3 -m pip install -U yolozu
-yolozu demo overview
-```
+**Do I need a GPU?**  
+No. The default demo path is CPU-friendly.
 
-Writes: `demo_output/overview/<utc>/demo_overview_report.json`
+**Do I need to train inside YOLOZU?**  
+No. YOLOZU can validate and evaluate precomputed predictions.
 
-If YOLOZU saved you time, please star to help others find it.
+**What is the main artifact?**  
+Wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 
-## Enterprise-friendly position
+**Why not just use framework-native evaluation?**  
+Because framework-native metrics are hard to compare fairly across stacks.
+
+## Your First 3 Minutes
+
+1. Install the package and run `yolozu demo overview`.
+2. Confirm that `demo_output/overview/<utc>/demo_overview_report.json` was written.
+3. Choose one next step:
+
+- A. Evaluate your own predictions with `yolozu validate predictions ...` then `yolozu eval-coco ...`
+- B. Export predictions from your current framework into the predictions interface contract
+- C. Explore backend parity or benchmark workflows after the basic evaluation path works
+
+## Why Apache-2.0 Matters
+
+- License clarity is visible up front for commercial and internal review.
+- YOLOZU does not require AGPL-style workflow lock-in to compare outputs.
+- The stable boundary is the predictions interface contract, not one training implementation.
+
+## Enterprise-Friendly Position
 
 - **Apache-2.0 repository policy**: shipped repository code stays under Apache-2.0, and this repository does not document a built-in relicensing path for that code.
 - **No built-in telemetry**: YOLOZU does not ship usage analytics or phone-home data collection in its tooling; quality control is handled through explicit checks, tests, manifests, provenance reports, and documented workflows instead.
@@ -63,15 +114,17 @@ yolozu demo instance-seg --background coco-instances --inference auto --num-imag
 yolozu demo pose --backend aruco
 ```
 
-## YOLOZU at a glance
+## Advanced Capabilities
 
-- **Framework-agnostic evaluation toolkit for vision models**: designed for reproducible continual learning and test-time adaptation under domain shift.
-- **Training-capable workflows for mitigating catastrophic forgetting**: supports training and evaluation workflows based on self-distillation, replay, and parameter-efficient updates (PEFT). These approaches reduce forgetting and make it measurable and comparable across runs, though complete elimination is not guaranteed.
-- **Support for inference-time adaptation (TTT)**: allows model parameters to be adjusted during inference, enabling continual adaptation to domain shift in deployment.
-- **Predictions as the stable interface contract**: treats predictions---not models---as the primary contract, making training, continual learning, and inference-time adaptation comparable, restartable, and CI-friendly across frameworks and runtimes.
-- **Multi-task evaluation support**: covers object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation. Training implementations remain configurable and decoupled, rather than fixed to a specific framework.
-- **Production-ready deployment path**: supports ONNX/ExecuTorch export and execution across PyTorch, ONNX Runtime, TensorRT, and ExecuTorch, with reference inference templates in C++ and Rust.
-- **Interface-contract-first, AI-first workflow**: every experiment emits versioned artifacts that can be automatically compared and regression-tested in CI.
+If the basic evaluation layer solves your first problem, YOLOZU also includes:
+
+- **Framework-agnostic evaluation for vision models**: built for reproducible continual learning and test-time adaptation under domain shift.
+- **Training-capable workflows for catastrophic forgetting mitigation**: self-distillation, replay, and parameter-efficient updates (PEFT) make forgetting measurable and comparable across runs.
+- **Inference-time adaptation (TTT)**: lets you adjust model parameters during inference for deployment-time domain shift experiments.
+- **Predictions as the stable interface contract**: predictions, not model internals, remain the boundary across frameworks and runtimes.
+- **Multi-task evaluation support**: object detection, segmentation, keypoint estimation, monocular depth estimation, and 6DoF pose estimation.
+- **Production-oriented deployment paths**: ONNX/ExecuTorch export and execution across PyTorch, ONNX Runtime, TensorRT, and reference inference templates in C++ and Rust.
+- **CI-friendly artifact workflows**: versioned artifacts can be compared automatically for regression detection.
 
 
 
