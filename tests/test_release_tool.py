@@ -152,6 +152,35 @@ class TestReleaseTool(unittest.TestCase):
         self.assertEqual(str(release_tool._recommended_semver_bump("large", breaking=True)), "major")
         self.assertEqual(str(release_tool._bump_semver("1.2.3", "major")), "2.0.0")
 
+    def test_breaking_change_signal_helper(self) -> None:
+        from tools import release as release_tool
+
+        self.assertTrue(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "feat: add API\n\nBREAKING CHANGE: drops old behavior",
+                    "feat: add API",
+                )
+            )
+        )
+        self.assertTrue(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "chore: cleanup\n\nBREAKING-CHANGE: incompatible config",
+                    "chore: cleanup",
+                )
+            )
+        )
+        self.assertTrue(bool(release_tool._contains_breaking_change_signal("details", "feat!: overhaul public API")))
+        self.assertFalse(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "feat: add option\n\nWarning!: documentation note only",
+                    "feat: add option",
+                )
+            )
+        )
+
     def test_tools_wrapper_release_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         wrapper = repo_root / "tools" / "yolozu.py"

@@ -3,7 +3,7 @@
 
 Default behavior (`python3 tools/release.py`):
 1) Read current package version from `yolozu/__init__.py`.
-2) Classify change scale (small/medium/large) from git diff stats since latest semver tag.
+2) Classify change scale (small/medium/large) from git diff stats since the latest tag that matches the active versioning scheme.
 3) Bump semantic version automatically, using explicit breaking-change signals for major releases.
 4) Run release quality checks.
 5) Update package version, commit, create/push git tag.
@@ -191,15 +191,20 @@ def _classify_scale(files_changed: int, line_delta: int) -> str:
     return "small"
 
 
+def _contains_breaking_change_signal(body_text: str, subject_text: str) -> bool:
+    if "BREAKING CHANGE" in body_text or "BREAKING-CHANGE" in body_text:
+        return True
+    return bool(re.search(r"^[^\n:]+!:", subject_text, flags=re.MULTILINE))
+
+
 def _has_breaking_change_signal(ref: str | None) -> bool:
     if ref:
-        out = _git_stdout("log", "--format=%B", f"{ref}..HEAD")
+        body_out = _git_stdout("log", "--format=%B", f"{ref}..HEAD")
+        subject_out = _git_stdout("log", "--format=%s", f"{ref}..HEAD")
     else:
-        out = _git_stdout("log", "--format=%B", "--root", "HEAD")
-    text = str(out or "")
-    if "BREAKING CHANGE" in text or "BREAKING-CHANGE" in text:
-        return True
-    return bool(re.search(r"^[^\n:]+!:", text, flags=re.MULTILINE))
+        body_out = _git_stdout("log", "--format=%B", "--root", "HEAD")
+        subject_out = _git_stdout("log", "--format=%s", "--root", "HEAD")
+    return _contains_breaking_change_signal(str(body_out or ""), str(subject_out or ""))
 
 
 def _recommended_semver_bump(scale: str, *, breaking: bool) -> str:
