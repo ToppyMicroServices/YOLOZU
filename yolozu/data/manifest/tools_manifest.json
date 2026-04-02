@@ -10763,23 +10763,23 @@
       "entrypoint": "tools/run_reference_adapter_regression.py",
       "examples": [
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --device cpu --image-size 160 --score-threshold 0.05 --max-detections 20 --init-seed 2026 --repro-policy relaxed --capture-provenance minimal --runtime-lock requirements-locks/requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --diff-summary-out reports/reference_adapter_regression.diff_summary.json --topk-examples-dir reports/reference_adapter_regression_topk --topk-examples 3 --output reports/reference_adapter_regression.json",
           "description": "Run micro profile regression (interface contract hard + behavior warn)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --score-gate-mode off --perf-gate-mode off --runtime-lock requirements-locks/requirements-ci.lock --enforce-runtime-lock --enforce-weights-hash --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_contract.json",
           "description": "Run interface-contract-only hard gate (schema + consistency)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --schema-gate-mode off --consistency-gate-mode off --score-gate-mode warn --perf-gate-mode warn --runtime-lock requirements-locks/requirements-ci.lock --enforce-runtime-lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --output reports/reference_adapter_regression_behavior.json",
           "description": "Run behavior-only warn gate (aggregate + robust metrics + speed)."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile full --baseline-layout matrix --baseline-root baselines/reference_adapter --adapter-id rtdetr_pose --backend-id torch --device cpu --baseline-version v1 --repro-policy strict --capture-provenance full --runtime-lock requirements-ci.lock --output reports/reference_adapter_regression_full.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile full --baseline-layout matrix --baseline-root baselines/reference_adapter --adapter-id rtdetr_pose --backend-id torch --device cpu --baseline-version v1 --repro-policy strict --capture-provenance full --runtime-lock requirements-locks/requirements-ci.lock --output reports/reference_adapter_regression_full.json",
           "description": "Run full profile with matrix baseline layout."
         },
         {
-          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --capture-provenance full --runtime-lock requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
+          "command": "python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split val --max-images 2 --profile micro --repro-policy relaxed --capture-provenance full --runtime-lock requirements-locks/requirements-ci.lock --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json --write-baseline --output reports/reference_adapter_regression_baseline_write.json",
           "description": "Refresh the pinned baseline after an intentional interface contract/behavior change."
         }
       ],
@@ -10846,7 +10846,7 @@
           "required": false
         },
         {
-          "default": "requirements-ci.lock",
+          "default": "requirements-locks/requirements-ci.lock",
           "flag": "--runtime-lock",
           "kind": "file",
           "name": "runtime_lock",

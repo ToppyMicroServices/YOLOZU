@@ -115,19 +115,19 @@ full = [
 ]
 
 [tool.yolozu.ci_tiers.core]
-install = "python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel"
+install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel"
 scope = "Packaging + CLI smoke (no optional extras)."
 jobs = ["smoke_gate", "pip_smoke"]
 
 [tool.yolozu.ci_tiers.docs_mcp]
-install = "python3 tools/ci/install_with_hashes.py --requirements requirements-docs-actions.lock"
+install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock"
 scope = "Docs/manual/README and MCP/Actions surface lightweight gate."
 jobs = ["docs_mcp_gate"]
 
 [tool.yolozu.ci_tiers.recommended]
-install = "python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock"
+install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock"
 scope = "Pinned dependency lock for regression/schema/manifest gates."
-lockfile = "requirements-ci.lock"
+lockfile = "requirements-locks/requirements-ci.lock"
 jobs = ["quality_gate", "test"]
 
 [tool.yolozu.ci_tiers.full]

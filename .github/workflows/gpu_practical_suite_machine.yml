@@ -52,7 +52,7 @@ jobs:
                 git config --global --add safe.directory /workspace || true
               fi
 
-              python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
+              python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
 
               # GPU smoke walkthrough (offline). Exercises CUDA TTT probe via --torch-device.
               bash scripts/smoke.sh --profile deep --torch-device cuda

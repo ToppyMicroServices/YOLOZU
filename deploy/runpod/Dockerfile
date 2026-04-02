@@ -18,4 +18,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . .
 
 # YOLOZU intentionally keeps torch out of requirements; this image is for tooling + TRT/ORT exporters.
-RUN python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock
+RUN python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-trt-tools.lock

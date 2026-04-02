@@ -16,8 +16,8 @@ python3 --version
 git config --global --add safe.directory /workspace || true
 
 python3 tools/ci/install_with_hashes.py \
-  --requirements requirements-runtime.lock \
-  --requirements requirements-zisn1-extra.lock
+  --requirements requirements-locks/requirements-runtime.lock \
+  --requirements requirements-locks/requirements-zisn1-extra.lock
 
 cudnn_lib="$(python3 - <<'PY'
 from pathlib import Path

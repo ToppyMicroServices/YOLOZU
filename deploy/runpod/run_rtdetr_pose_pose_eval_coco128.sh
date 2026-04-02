@@ -32,8 +32,8 @@ CONFIG="${CONFIG:-configs/yolo26_rtdetr_pose/yolo26n.json}"
 
 echo "[pose-eval] Installing deps (idempotent)..."
 python3 tools/ci/install_with_hashes.py \
-  --requirements requirements-runtime.lock \
-  --requirements requirements-rtdetr-pose-extra.lock
+  --requirements requirements-locks/requirements-runtime.lock \
+  --requirements requirements-locks/requirements-rtdetr-pose-extra.lock
 
 echo "[pose-eval] Ensuring coco128..."
 YOLOZU_INSECURE_SSL=1 bash tools/fetch_coco128.sh >/dev/null

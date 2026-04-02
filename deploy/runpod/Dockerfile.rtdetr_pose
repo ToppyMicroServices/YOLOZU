@@ -21,8 +21,8 @@ COPY . .
 
 # YOLOZU intentionally keeps torch out of requirements; this image is for GPU backend validation.
 RUN python3 tools/ci/install_with_hashes.py \
-      --requirements requirements-runtime.lock \
-      --requirements requirements-rtdetr-pose-image-extra.lock \
+      --requirements requirements-locks/requirements-runtime.lock \
+      --requirements requirements-locks/requirements-rtdetr-pose-image-extra.lock \
       --extra-index-url "${TORCH_EXTRA_INDEX_URL}" \
       --install-local-wheel \
       --local-wheel-source .

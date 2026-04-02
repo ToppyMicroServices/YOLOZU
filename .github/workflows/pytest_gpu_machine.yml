@@ -42,6 +42,6 @@ jobs:
             bash -lc '
               set -euo pipefail
               nvidia-smi
-              python3 tools/ci/install_with_hashes.py --requirements requirements-gpu-smoke.lock --install-local-wheel
+              python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-gpu-smoke.lock --install-local-wheel
               python3 -m pytest -q tests/test_cuda_smoke_rtdetr_pose.py --tb=short --no-header
             '

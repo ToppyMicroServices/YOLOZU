@@ -38,7 +38,7 @@ python3 tools/run_reference_adapter_regression.py \
   --max-images 2 \
   --profile micro \
   --repro-policy relaxed \
-  --runtime-lock requirements-ci.lock \
+  --runtime-lock requirements-locks/requirements-ci.lock \
   --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
   --diff-summary-out reports/reference_adapter_regression.diff_summary.json \
   --topk-examples-dir reports/reference_adapter_regression_topk \

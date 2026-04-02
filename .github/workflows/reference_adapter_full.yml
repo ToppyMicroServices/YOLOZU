@@ -41,7 +41,7 @@ jobs:
 
       - name: Install deps (hash-locked)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock
 
       - name: Run reference adapter full profile
         run: |
@@ -66,7 +66,7 @@ jobs:
             --capture-provenance full \
             --score-gate-mode hard \
             --perf-gate-mode warn \
-            --runtime-lock requirements-ci.lock \
+            --runtime-lock requirements-locks/requirements-ci.lock \
             --enforce-runtime-lock \
             --baseline "$BASELINE" \
             --output reports/reference_adapter_regression_full_ci.json \

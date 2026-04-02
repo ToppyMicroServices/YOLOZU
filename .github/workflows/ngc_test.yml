@@ -126,7 +126,7 @@ jobs:
               nvidia-smi
               python3 --version
               git config --global --add safe.directory /workspace || true
-              python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock
+              python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-trt-tools.lock
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"
