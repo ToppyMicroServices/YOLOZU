@@ -14,6 +14,19 @@ Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.m
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
+YOLOZU is an Apache-2.0 vision evaluation toolkit for teams that need YOLO-style workflows without AGPL lock-in.
+
+Use your own training and inference stack.
+Export predictions once.
+Evaluate them under one fixed, reproducible interface contract.
+
+YOLOZU is built for commercial and internal use cases where license clarity matters.
+It keeps predictions, not model internals, as the stable interface contract.
+That makes it easier to compare PyTorch, ONNX Runtime, TensorRT, C++, or Rust pipelines with the same evaluation path.
+
+Bring your own inference.
+Keep one evaluation contract.
+Stay Apache-2.0.
 
 ## 30-second Quick Win (pip)
 
@@ -354,9 +367,10 @@ bash release.sh
 4. `python` in `PATH`
 
 Auto bump policy (current `X.Y.Z` -> next version):
-- small change: `X.Y.(Z+1)` (e.g. `1.1.1+add` equivalent)
-- medium change: `X.(Y+1).0` (e.g. `1.1+a.0` equivalent)
-- large change: `(X+1).0.0` (e.g. `1+a.0.0` equivalent)
+- small non-breaking change: `X.Y.(Z+1)`
+- medium non-breaking change: `X.(Y+1).0`
+- large non-breaking change: `X.(Y+1).0`
+- explicit breaking change signal (`BREAKING CHANGE`, `BREAKING-CHANGE`, or `type!:`): `(X+1).0.0`
 - if the current version is CalVer `YYYY.MM.DD.MICRO`, `release.sh` switches automatically and uses:
   - same UTC day: `YYYY.MM.DD.(MICRO+1)`
   - new UTC day: `YYYY.MM.DD.0`

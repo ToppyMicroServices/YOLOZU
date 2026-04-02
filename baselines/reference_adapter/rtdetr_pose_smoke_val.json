@@ -73,7 +73,7 @@
     ],
     "repro_policy": "relaxed",
     "runtime_lock_path": "requirements-ci.lock",
-    "runtime_lock_sha256": "c02530f140c779b5d2716e24ee991e660ab0bb40288e0559a38c5f87d975b0a7",
+        "runtime_lock_sha256": "477e154c8662eb4fd660c8c209c9caadcf9028747bead11f63d8ad7a6a22dc05",
     "runtime_lock_versions": {
       "onnxruntime": "1.24.2",
       "torch": "2.10.0+cpu"

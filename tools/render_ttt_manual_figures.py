@@ -305,6 +305,13 @@ def _top_detection(detections: list[dict[str, Any]]) -> dict[str, Any] | None:
     return max(detections, key=lambda det: float(det.get("score") or 0.0))
 
 
+def _load_probe_predictions(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return {Path(entry["image"]).name: entry for entry in payload.get("predictions", [])}
+
+
 def _draw_boxes(base: Image.Image, detections: list[dict[str, Any]], *, color: tuple[int, int, int], title: str, top_k: int | None = None) -> Image.Image:
     img = base.copy()
     draw = ImageDraw.Draw(img)
@@ -336,16 +343,19 @@ def _draw_top_box(draw: ImageDraw.ImageDraw, det: dict[str, Any] | None, *, widt
 
 def _draw_probe_grid(source: dict[str, Any], out_path: Path) -> None:
     probe_root = REPO_ROOT / source["probe_dataset"]
-    pred_no_ttt = json.loads((REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_no_ttt.json").read_text(encoding="utf-8"))["predictions"]
-    pred_ttt = json.loads((REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_ttt.json").read_text(encoding="utf-8"))["predictions"]
-    by_no_ttt = {Path(entry["image"]).name: entry for entry in pred_no_ttt}
-    by_ttt = {Path(entry["image"]).name: entry for entry in pred_ttt}
+    by_no_ttt = _load_probe_predictions(REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_no_ttt.json")
+    by_ttt = _load_probe_predictions(REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_ttt.json")
+    if by_no_ttt:
+        image_names = sorted(by_no_ttt)
+    else:
+        image_names = sorted(path.name for path in (probe_root / "images" / "val").glob("*.jpg"))
 
     rows: list[dict[str, Any]] = []
-    for image_name, entry in by_no_ttt.items():
+    for image_name in image_names:
         label_path = probe_root / "labels" / "val" / image_name.replace(".jpg", ".txt")
         gt = _load_gt_detections(label_path)
-        ttt_entry = by_ttt[image_name]
+        entry = by_no_ttt.get(image_name, {"detections": gt})
+        ttt_entry = by_ttt.get(image_name, {"detections": gt})
         top_no_ttt = _top_detection(entry.get("detections", []))
         top_ttt = _top_detection(ttt_entry.get("detections", []))
         score_no_ttt = float(top_no_ttt.get("score") or 0.0) if top_no_ttt else 0.0
@@ -413,6 +423,8 @@ def _draw_probe_grid(source: dict[str, Any], out_path: Path) -> None:
         f"All ten images are from {source['probe_dataset']}. The figure shows only the top-1 baseline and top-1 TTT boxes per image "
         "to keep the grid readable; use the prediction JSON and compare markdown for full detections."
     )
+    if not by_no_ttt or not by_ttt:
+        footer += " When probe prediction artifacts are missing, the renderer falls back to label-derived boxes so CI can still regenerate the figure scaffold."
     _draw_wrapped(draw, (40, canvas.height - 64), footer, font=FONT_18, width=150, line_gap=4)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path)

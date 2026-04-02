@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload manual PDF artifact
         if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: manual_pdf
           path: manual/build/yolozu_manual.pdf
@@ -339,7 +339,7 @@ jobs:
 
       - name: Upload Zenodo publish report
         if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: manual_doi_publish
           path: reports/manual_doi_publish.json
