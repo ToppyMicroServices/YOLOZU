@@ -99,17 +99,22 @@ This avoids spending time chasing findings that cannot be cleared by editing sou
 Latest remote code-scanning triage on `main` shows:
 
 - source-level / workflow-level items that can be improved in-repo:
-  - `VulnerabilitiesID` reported `GHSA-3r9x-f23j-gc73` on the Scorecard workflow toolchain
+  - `VulnerabilitiesID` reported four `onnx` advisories on the default-branch dependency graph:
+    - `GHSA-3r9x-f23j-gc73`
+    - `GHSA-538c-55jv-c5g9`
+    - `GHSA-cmw6-hcpp-c6jp`
+    - `GHSA-p433-9wv8-28xj`
   - the Scorecard workflow had still been pinned to `ossf/scorecard-action` `v2.4.1`
 - repository-history / external-program items that still require operational follow-through:
   - `CodeReviewID`
   - `MaintainedID`
   - `SASTID`
 
-The Scorecard action pin is updated in-repo so the next default-branch run can clear the
-workflow-side vulnerability signal. The remaining three findings are still primarily governed
-by reviewed-PR history, repository age/activity, and GitHub-side scan coverage timing rather
-than by a single source edit.
+The Scorecard action pin is updated in-repo, and the repository-side `onnx` minimum/lock
+versions are raised to `1.21.0` so the next default-branch run can clear the patched
+dependency-side vulnerability signal. The remaining three findings are still primarily
+governed by reviewed-PR history, repository age/activity, and GitHub-side scan coverage
+timing rather than by a single source edit.
 
 ## 2026-04-02 follow-up
 
@@ -119,6 +124,11 @@ security findings:
 - `.clusterfuzzlite/Dockerfile` installs from a hash-locked requirements file with `pip --require-hashes`
 - `osv-scanner.toml` documents a scoped ignore for `GHSA-hqmj-h5c6-369m`
 - `.github/workflows/scorecard.yml` is pinned to `ossf/scorecard-action` `v2.4.3`
+- `pyproject.toml`, `requirements-test.txt`, and repository lockfiles pin `onnx>=1.21.0` / `onnx==1.21.0` to pick up fixes for:
+  - `GHSA-3r9x-f23j-gc73`
+  - `GHSA-538c-55jv-c5g9`
+  - `GHSA-cmw6-hcpp-c6jp`
+  - `GHSA-p433-9wv8-28xj`
 
 The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This
 repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore
