@@ -9,7 +9,7 @@ Export once.
 Evaluate fairly.
 
 YOLOZU compares model outputs through one stable predictions interface contract:
-`predictions.json` plus protocol-pinned `export_settings`.
+wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 
 That means you can keep your current training or inference stack, export predictions once, then validate and evaluate them with the same reproducible path.
 
@@ -71,7 +71,7 @@ No. The default demo path is CPU-friendly.
 No. YOLOZU can validate and evaluate precomputed predictions.
 
 **What is the main artifact?**  
-`predictions.json` plus protocol-pinned `export_settings`.
+Wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 
 **Why not just use framework-native evaluation?**  
 Because framework-native metrics are hard to compare fairly across stacks.

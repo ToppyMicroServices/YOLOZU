@@ -9,7 +9,7 @@ Export once.
 Evaluate fairly.
 
 YOLOZU が比較の基準にするのは、安定した predictions interface contract です。
-中身は `predictions.json` と protocol-pinned な `export_settings` です。
+中身は wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
 
 つまり、今の training / inference stack をそのまま使いながら、予測を一度 export すれば、同じ reproducible な評価 path で比較できます。
 
@@ -66,7 +66,7 @@ YOLOZU が合いやすいのは、次のようなケースです。
 いいえ。precomputed predictions を validate / evaluate できます。
 
 **主な artifact は何ですか？**  
-`predictions.json` と protocol-pinned な `export_settings` です。
+wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
 
 **framework-native evaluation ではだめですか？**  
 framework ごとの metric path は、stack をまたぐと公平比較が難しくなるからです。
@@ -81,7 +81,7 @@ framework ごとの metric path は、stack をまたぐと公平比較が難し
 - B. いま使っている framework から predictions interface contract へ export する
 - C. 基本評価が通ってから parity / benchmark を試す
 
-## Why Apache-2.0 Matters
+## なぜ Apache-2.0 が重要か / Why Apache-2.0 Matters
 
 - commercial / internal review で license clarity を最初から示しやすい
 - 出力比較のために AGPL-style workflow lock-in を前提にしない
@@ -109,7 +109,7 @@ yolozu demo instance-seg --background coco-instances --inference auto --num-imag
 yolozu demo pose --backend aruco
 ```
 
-## Advanced Capabilities
+## 発展機能 (Advanced Capabilities)
 
 最初の評価 layer が刺さるなら、YOLOZU には次のような発展機能もあります。
 
