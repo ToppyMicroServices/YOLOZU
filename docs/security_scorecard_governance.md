@@ -133,3 +133,34 @@ security findings:
 The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This
 repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore
 is limited to that advisory and should be revisited as soon as a patched `onnx` version exists.
+
+## 2026-04-02 residual alert disposition
+
+After the repository-local fixes above landed on `main`, the remaining open
+code-scanning alerts were:
+
+- `CodeReviewID`
+- `MaintainedID`
+
+These are not source vulnerabilities in this repository. They are residual
+Scorecard governance signals driven by review history and repository age:
+
+- `CodeReviewID` remains sensitive to recent reviewed history, not just the
+  current branch-protection settings. This repository now requires pull-request
+  review on `main`, but historical admin merges and bot-only change windows can
+  still surface a `0/24 approved changesets` score until more reviewed PRs
+  accumulate.
+- `MaintainedID` remains sensitive to repository age. Scorecard explicitly keeps
+  this signal red during the first 90 days, which cannot be changed by a source
+  patch before that age window expires.
+
+Operational handling:
+
+- keep `required_approving_review_count >= 1`
+- keep `require_last_push_approval=true`
+- prefer reviewed PR merges over direct/admin merges whenever possible
+- revisit `MaintainedID` automatically after the repository is older than 90 days
+
+Because these alerts are operationally acknowledged and already documented here,
+they can be dismissed in GitHub code scanning with a `won't fix` rationale that
+points back to this governance note.
