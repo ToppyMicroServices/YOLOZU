@@ -81,6 +81,40 @@ The generator-side pipeline is:
 
 The important handoff idea is that \cmd{scene\_spec} is fully materialized before rendering, and the renderer-produced passes remain authoritative throughout the rest of the pipeline.
 
+\begin{figure}[h]
+\centering
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=9mm,
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.2cm},
+  narrow/.style={draw, rounded corners, align=left, inner sep=6pt, text width=3.5cm},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box] (assets) {\textbf{Asset sources}\\CAD / mesh files\\or primitive boxes\\asset metadata + keypoints};
+\node[box, right=10mm of assets] (recipe) {\textbf{Scene recipe}\\asset\_pool\\camera\_policy\\lighting\_policy\\prompt\_template};
+\node[box, right=10mm of recipe] (spec) {\textbf{Scene spec}\\explicit objects\\mesh\_file / primitive\_box\\camera + envmap + intensity};
+\node[box, below=11mm of spec] (render) {\textbf{Renderer}\\Open3D / placeholder\\writes image\_render\\depth / inst / sem passes};
+\node[narrow, left=10mm of render] (gt) {\textbf{Ground truth}\\depth\_ndc\\inst\_id\\sem\_id\\kpts2d};
+\node[box, right=10mm of render] (appearance) {\textbf{Appearance stage}\\render\_only\\bg\_only\_inpaint\\appearance\_only\_conditioned};
+\node[narrow, below=11mm of appearance] (background) {\textbf{Background policy}\\base background from envmap\\optional background-only edit where inst\_id == 0};
+\node[box, right=10mm of appearance] (output) {\textbf{Published sample}\\image\\image\_render\\meta / appearance / qa\\shard row for YOLOZU};
+
+\draw[arrow] (assets) -- (recipe);
+\draw[arrow] (recipe) -- (spec);
+\draw[arrow] (spec) -- (render);
+\draw[arrow] (render) -- (appearance);
+\draw[arrow] (appearance) -- (output);
+\draw[arrow] (render) -- (gt);
+\draw[arrow] (gt.east) -| (output.south);
+\draw[arrow] (spec.south) -- (render.north);
+\draw[arrow] (render.east) -- (background.west);
+\draw[arrow] (background.east) |- (appearance.south);
+\end{tikzpicture}
+}
+\caption{SynthGen generation path: CAD/mesh or primitive assets are compiled into a renderer-ready scene, the renderer owns the labels, and background editing is limited to label-safe appearance stages.}
+\end{figure}
+
 \section{How images and labels are handled}
 
 \subsection{Canonical sample fields}
@@ -140,6 +174,57 @@ At shard-export time, each sample directory typically stores:
 \end{itemize}
 
 When exported for \yolozu{} intake, these assets are summarized into shard rows plus referenced sidecar files. \yolozu{} then validates and loads them through the SynthGen sample interface contract instead of re-deriving labels itself.
+
+\section{How backgrounds are generated and selected}
+
+\subsection{Base background at render time}
+
+The base background is not chosen by a free-form text-to-image model. It is first determined by the renderer-side scene settings:
+\begin{itemize}
+  \item \cmd{scene\_recipe.lighting\_policy.envmap\_ids} provides the candidate environment maps
+  \item the compiler samples one \cmd{envmap\_id} from that list
+  \item \cmd{scene\_recipe.lighting\_policy.env\_intensity\_range} controls the sampled background / ambient intensity
+\end{itemize}
+
+So the first background decision is a \textbf{lighting/environment selection problem}, not a relabeling problem. This keeps the object labels stable because the background is chosen before the authoritative render passes are produced.
+
+\subsection{Background choice policy}
+
+Background selection is currently policy-driven through the recipe:
+\begin{itemize}
+  \item choose the allowed \cmd{envmap\_ids} set for the target domain
+  \item control brightness variation with \cmd{env\_intensity\_range}
+  \item keep camera and object placement within recipe bounds so the chosen background remains compatible with the target task
+\end{itemize}
+
+If the goal is domain coverage, the practical lever is to diversify the recipe's environment-map pool and its difficulty/coverage tags, rather than letting an unconstrained model hallucinate arbitrary backgrounds.
+
+\subsection{Optional background editing}
+
+After rendering, \path{YOLOZU-synthgen} may optionally modify the image appearance using \cmd{appearance\_spec}. For background-safe generation the important mode is:
+\begin{itemize}
+  \item \cmd{bg\_only\_inpaint}: edit only the background, leaving labeled object regions untouched
+\end{itemize}
+
+The current contract for \cmd{appearance\_spec} makes this explicit:
+\begin{itemize}
+  \item \cmd{mode = bg\_only\_inpaint}
+  \item \cmd{mask\_scope = background\_only}
+  \item controls can include renderer-derived guides such as \cmd{depth\_ndc}, \cmd{inst\_boundary}, and \cmd{foreground\_union\_mask}
+\end{itemize}
+
+Operationally, the background edit should be guided by renderer-owned masks. In the current stub implementation, background-only editing is approximated by changing pixels where \cmd{inst\_id == 0}. In a fuller provider-backed pipeline, the same rule would be enforced with masks and QA checks rather than with direct pixel loops.
+
+\subsection{What is not allowed}
+
+The background stage must not:
+\begin{itemize}
+  \item add or remove labeled objects
+  \item cross object boundaries and change silhouettes
+  \item become the source of new \cmd{inst\_id}, \cmd{sem\_id}, or \cmd{kpts2d}
+\end{itemize}
+
+That is the key safety rule behind the whole integration: backgrounds may vary, but labels do not drift with them.
 
 \section{Recommended dataset root}
 
