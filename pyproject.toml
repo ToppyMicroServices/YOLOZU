@@ -54,11 +54,11 @@ demo = [
   "huggingface-hub>=0.20",
   "safetensors>=0.4",
 ]
-onnxrt = ["onnx>=1.17.0", "onnxruntime>=1.17"]
+onnxrt = ["onnx>=1.21.0", "onnxruntime>=1.17"]
 train = [
   "torch>=2.8.0",
   "torchvision>=0.23.0",
-  "onnx>=1.17.0",
+  "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "safetensors>=0.4",
@@ -81,7 +81,7 @@ test = [
   "pytest>=7.0",
   "torch>=2.8.0",
   "torchvision>=0.23.0",
-  "onnx>=1.17.0",
+  "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
 ]
@@ -89,7 +89,7 @@ dev = [
   "pytest>=7.0",
   "torch>=2.8.0",
   "torchvision>=0.23.0",
-  "onnx>=1.17.0",
+  "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "ruff>=0.5",
@@ -103,7 +103,7 @@ full = [
   "opencv-contrib-python>=4.8",
   "transformers>=4.38",
   "huggingface-hub>=0.20",
-  "onnx>=1.17.0",
+  "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
   "safetensors>=0.4",
