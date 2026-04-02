@@ -1,6 +1,6 @@
 # YOLOZU (萬) — 日本語README
 
-English README: [`README.md`](README.md) | 中文README: [`Readme_zh.md`](Readme_zh.md)
+English: [`README.md`](README.md) | 中文: [`Readme_zh.md`](Readme_zh.md)
 
 YOLOZU は、workflow を単一の training framework に lock-in したくないチーム向けの Apache-2.0 vision evaluation toolkit です。
 
@@ -8,14 +8,8 @@ Bring your own inference.
 Export once.
 Evaluate fairly.
 
-YOLOZU が比較の基準にするのは、安定した predictions interface contract です。
+YOLOZU が基準にするのは、安定した predictions interface contract です。
 中身は wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
-
-つまり、今の training / inference stack をそのまま使いながら、予測を一度 export すれば、同じ reproducible な評価 path で比較できます。
-
-用途は明快です。framework をまたいで公平に比べたい、backend が違っても評価を揃えたい、AGPL lock-in を避けたい、という場面に向いています。
-
-30秒で試すなら:
 
 ```bash
 python3 -m pip install -U yolozu
@@ -24,11 +18,9 @@ yolozu demo overview
 
 出力: `demo_output/overview/<utc>/demo_overview_report.json`
 
-既に predictions を出せる pipeline があるなら、残りを作り直さずに評価だけ YOLOZU へ寄せられます。
-
 ```mermaid
 flowchart LR
-    A["Ultralytics"] --> D["predictions.json + export_settings"]
+    A["Ultralytics"] --> D["wrapped predictions.json"]
     B["RT-DETR"] --> D
     C["Detectron2 / MMDetection / custom"] --> D
     D --> E["validate"]
@@ -37,717 +29,54 @@ flowchart LR
 ```
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
-[![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
-[![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
-[![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
-[![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)
+[![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://pypi.org/project/yolozu/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 
-## 誰向けか
+## まずここから
 
-YOLOZU が合いやすいのは、次のようなケースです。
+- 既存 predictions を評価する: [`docs/README.md`](docs/README.md), [`docs/predictions_schema.md`](docs/predictions_schema.md), [`docs/external_inference.md`](docs/external_inference.md)
+- train → export → eval を試す: [`docs/training_inference_export.md`](docs/training_inference_export.md), [`docs/run_contract.md`](docs/run_contract.md)
+- backend 比較や benchmark を見る: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md), [`docs/tensorrt_pipeline.md`](docs/tensorrt_pipeline.md)
+- install と環境確認: [`docs/install.md`](docs/install.md), [`docs/doctor_diagnostics.md`](docs/doctor_diagnostics.md)
+- tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-- 既に model predictions があり、公平な評価だけ揃えたい
-- 複数 framework / backend を比較したい
-- commercial / internal use で Apache-2.0-friendly な tooling が必要
+## すぐ分かること
 
-逆に、次の用途なら別の道具の方が合う可能性があります。
+- 既に predictions があり、framework をまたいで公平比較したいなら向いています。
+- commercial / internal use で Apache-2.0-friendly な tooling が欲しい場合に向いています。
+- one-click default の end-to-end training framework が欲しいなら別の道具の方が合う可能性があります。
+- GPU は必須ではありません。最初の demo path は CPU-friendly です。
+- YOLOZU の中で学習しなくても使えます。
+- 主な artifact は wrapped `predictions.json` と `meta.export_settings` です。
 
-- one-click default 付きの end-to-end training framework が欲しい
-- framework-native の training と metrics だけで足りる
-- cross-framework comparison が不要
+## Demo と発展資料
 
-## よくある疑問
+- 30秒 demo: `yolozu demo overview`
+- 実画像 showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
+- 学習系の全体像: [`docs/learning_features.md`](docs/learning_features.md)
+- Distillation: [`docs/distillation.md`](docs/distillation.md)
+- Continual learning: [`docs/continual_learning.md`](docs/continual_learning.md)
+- Hessian refinement: [`docs/hessian_solver.md`](docs/hessian_solver.md)
 
-**GPU は必要ですか？**  
-いいえ。最初の demo path は CPU-friendly です。
-
-**YOLOZU の中で学習しないと使えませんか？**  
-いいえ。precomputed predictions を validate / evaluate できます。
-
-**主な artifact は何ですか？**  
-wrapped `predictions.json` と、その中の protocol-pinned な `meta.export_settings` です。
-
-**framework-native evaluation ではだめですか？**  
-framework ごとの metric path は、stack をまたぐと公平比較が難しくなるからです。
-
-## 最初の 3 分
-
-1. `yolozu demo overview` を実行する
-2. `demo_output/overview/<utc>/demo_overview_report.json` が出ることを確認する
-3. 次の 3 つから一つ選ぶ
-
-- A. 手元の predictions を `yolozu validate predictions ...` と `yolozu eval-coco ...` で評価する
-- B. いま使っている framework から predictions interface contract へ export する
-- C. 基本評価が通ってから parity / benchmark を試す
-
-## なぜ Apache-2.0 が重要か / Why Apache-2.0 Matters
-
-- commercial / internal review で license clarity を最初から示しやすい
-- 出力比較のために AGPL-style workflow lock-in を前提にしない
-- 安定境界を training 実装ではなく predictions interface contract に置ける
-
-## Enterprise 向けの位置づけ
-
-- **Apache-2.0 repository policy**: 配布する repository code は Apache-2.0 を維持し、この repository には built-in の relicensing path を置きません。
-- **No built-in telemetry**: YOLOZU の tooling には usage analytics や phone-home 型のデータ収集を入れず、品質管理は明示的な checks / tests / manifest / provenance report / documented workflow で行います。
-- **QC の境界を明示**: YOLOZU は best-effort の QC/reporting helper を提供しますが、datasets / model weights / vendor runtimes / deployment environment は disclaimer の範囲で別途 review すべき境界として扱います。
-
-## Real-Image Showcase
-
-下の図は in-repo demo の実画像出力で、タスクが変わっても同じ predictions interface contract に揃うことを示します。
-
-![YOLOZU real-image multi-task demo showcase](docs/assets/readme_multitask_showcase.png)
-
-再現（real-image inference。keypoints / instance-seg は `torch`+`torchvision`、pose は `opencv-python` または `opencv-contrib-python` が必要）:
-
-```bash
-python3 -m pip install -U 'yolozu[demo]'
-yolozu demo keypoints
-python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0
-yolozu demo instance-seg --background coco-instances --inference auto --num-images 1 --max-instances 8 --score-threshold 0.25
-yolozu demo pose --backend aruco
-```
-
-## 発展機能 (Advanced Capabilities)
-
-最初の評価 layer が刺さるなら、YOLOZU には次のような発展機能もあります。
-
-- **Framework-agnostic evaluation for vision models**: domain shift 下の continual learning や TTT を reproducible に扱えるよう設計しています。
-- **Catastrophic forgetting mitigation workflows**: self-distillation、replay、PEFT で forgetting を measurable / comparable にします。
-- **Inference-time adaptation (TTT)**: deploy-time の domain shift 実験向けに inference 中の重み更新を扱えます。
-- **Predictions as the stable interface contract**: model internals ではなく predictions を boundary として保ちます。
-- **Multi-task evaluation support**: detection、segmentation、keypoints、monocular depth、6DoF pose をカバーします。
-- **Production-oriented deployment paths**: PyTorch、ONNX Runtime、TensorRT、ExecuTorch、C++、Rust をまたぐ path を用意しています。
-- **CI-friendly artifact workflows**: versioned artifact の diff と regression check をしやすくしています。
-
-
-推論バックエンド（PyTorch / ONNXRuntime / TensorRT / ExecuTorch / C++ / Rust など）は自由に選び、
-**同一の `predictions.json` interface contract** に落として評価・比較できることを最重視します。
-
----
-
-## 比較表（同一データ + predictions interface contract）
-
-同一データセットを前提に、各フレームワークの出力を **predictions interface contract**（`predictions.json` + `export_settings`）に正規化して、同じ評価ツールで比較できます。
-
-| Model / stack | Fine-tune entrypoint (smoke) | `predictions.json` export path | Eval path | Notes |
-| --- | --- | --- | --- | --- |
-| Ultralytics YOLO (YOLOv8/YOLO11) | `tools/run_external_finetune_smoke.py` (framework=`yolov`) | `tools/export_predictions_ultralytics.py` | `tools/eval_coco.py` | 典型は post-NMS; `protocol=nms_applied` を使う。 |
-| RT-DETR (in-repo `rtdetr_pose`) | `tools/run_external_finetune_smoke.py` (framework=`rtdetr`) | `tools/run_reference_adapter_regression.py` | `tools/run_reference_adapter_regression.py` | 参照adapter回帰（real model baseline）。 |
-| Hugging Face DETR / RT-DETR | `tools/support_ultralytics_detr.py th` | `tools/support_ultralytics_detr.py pn` | `tools/eval_coco.py` | フレームワーク差は interface contract で吸収。 |
-| Detectron2 | `tools/run_external_finetune_smoke.py` (framework=`detectron2`) | `tools/export_predictions_detectron2.py` | `tools/eval_coco.py` | non-dry は `--detectron2-train-script` が必要。 |
-| MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | non-dry は `--mmdet-train-script` が必要。 |
-| YOLOX | (interop smoke) | `tools/yolozu.py export --backend yolox` | `tools/eval_coco.py` | “external inference → interface contract → eval” 向け。 |
-
-最小の証拠（同一データ、同一レポート形状; 既定は dry-run）:
-
-```bash
-python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json
-```
-
-対象:
-- リアルタイム単眼 RGB **検出**
-- 単眼 **depth + 6DoF pose**（RT-DETRベースの最小学習スキャフォールド）
-- **セマンティックセグ**（データ準備 + mIoU評価）
-- **インスタンスセグ**（PNG mask interface contract + mask mAP評価）
-
-推奨デプロイ（標準パス）: **PyTorch → ONNX → TensorRT**
-
----
-
-## Quickstart（repo checkout / まず実行）
+## repo checkout で使う場合
 
 ```bash
 python3 -m pip install -e .
 bash scripts/smoke.sh
 ```
 
-システムPythonが PEP 668（externally managed）で拒否する場合は venv を使ってください:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install -e .
-bash scripts/smoke.sh
-```
-
-この 1 行で以下を順に実行します（ネットワーク不要）:
-- `yolozu doctor --output -`
-- `yolozu validate dataset data/smoke`
-- `yolozu validate predictions data/smoke/predictions/predictions_dummy.json --strict`
-- `yolozu eval-coco --dataset data/smoke --split val \
-  --predictions data/smoke/predictions/predictions_dummy.json --dry-run`
-
-主な出力:
-- `reports/smoke_coco_eval_dry_run.json`
-- `reports/smoke_synthgen_summary.json`
-- `reports/smoke_synthgen_eval.json`
-- `reports/smoke_synthgen_overlay.png`
-- `reports/smoke_demo_instance_seg/overlays/*.png`（可視確認用）
-
-可視確認を省略したい場合:
-
-```bash
-bash scripts/smoke.sh --skip-demo
-```
-
-初回導入向けに機能主張の walkthrough をまとめて確認する場合（deep profile）:
-
-```bash
-bash scripts/smoke.sh --profile deep
-```
-
-CUDA マシン（single GPU）では、deep profile の TTT probe を GPU 上で実行できます:
-
-```bash
-bash scripts/smoke.sh --profile deep --torch-device cuda
-```
-
-deep profile の追加出力:
-- `reports/smoke_walkthrough_report.json`
-- `reports/smoke_demo_overview.json`
-- `reports/smoke_external_finetune_report.json`
-- `reports/smoke_export_{onnxrt,trt,executorch}.json`
-
-pip だけで始める場合:
-
-```bash
-python3 -m pip install yolozu
-yolozu doctor --output -
-```
-
-追加機能（必要なものだけ）:
-
-```bash
-python3 -m pip install 'yolozu[demo]'    # torch demos（CPU可）
-python3 -m pip install 'yolozu[onnxrt]'  # ONNXRuntime CPU exporter
-python3 -m pip install 'yolozu[coco]'    # pycocotools COCOeval
-python3 -m pip install 'yolozu[train]'   # 学習スキャフォールド（torch+onnxrt等）
-python3 -m pip install 'yolozu[full]'
-```
-
-macOS / Apple Silicon メモ:
-- `Torch backend on macOS/MPS` は beta の正式スコープです。ローカル demo、`--backend torch` の推論/export、小さな `train_minimal.py` smoke までを主対象にします。
-- `TensorRT` は引き続き Linux + NVIDIA 専用です。
-- MPS の未対応 op に当たる場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を付けて再実行してください。
-- macOS 26 / Apple Silicon の一部環境では、`pip` の PyTorch wheel が `mps_available=false` を返すことがあります。その場合は [`docs/install.md`](docs/install.md#macos--apple-silicon-miniforgemps-workflow) の Miniforge/conda 手順を使い、最後に `yolozu doctor --output -` で確認してください。
-
-デモ全体像のサマリ（機能カバレッジ + 依存チェック + 推奨コマンド）:
-
-```bash
-yolozu demo overview
-```
-
-初回の可視確認（PNGが出ることを確認）:
-
-```bash
-yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none --num-images 2 --max-instances 2 --run-dir reports/demo_firsttime_instance_seg
-ls reports/demo_firsttime_instance_seg/overlays/*.png
-```
-
-CLI補完（bash/zsh）:
-
-```bash
-# bash
-eval "$(yolozu completion --shell bash)"
-# zsh
-eval "$(yolozu completion --shell zsh)"
-```
-
-ドキュメント入口: [`docs/README.md`](docs/README.md)
-
-学習系ドキュメント（継続学習 / TTT / distillation / long-tail recipe の PyTorch plugin 選択肢）: [`docs/learning_features.md`](docs/learning_features.md)
-
-Prediction distillation ガイド（初心者向けの手順つき説明 + sample YAML）: [`docs/distillation.md`](docs/distillation.md)
-
-Continual learning ガイド（LoRA / QLoRA を図つきで平易に説明）: [`docs/continual_learning.md`](docs/continual_learning.md)
-
-Hessian refinement ガイド（pose でなぜ効くのかを図つきで説明）: [`docs/hessian_solver.md`](docs/hessian_solver.md)
-
----
-
-## 何が“売り”か（設計の中心）
-
-- **Bring-your-own inference + interface-contract-first evaluation**  
-  推論はどこで回してもよく、評価は `predictions.json` に統一して **公平に比較**できます。
-- **再現性/運用性（Run interface contract / Run Contract）**  
-  `yolozu train` の run interface contract で、成果物の置き場・run_meta・resume・export/parity を固定（`docs/run_contract.md`）。
-- **Continual learning（反忘却: self-distillation + replay + LoRA）**  
-  タスク/ドメイン列の継続微調整と、忘却の評価/抑制のための runner と成果物を提供。LoRA / QLoRA の意味も図つきで説明（`docs/continual_learning.md`）。
-- **Safe TTT（test-time training）**  
-  Tent / MIM / CoTTA / EATA / SAR のプリセット・ガード・リセットポリシーを用意（`docs/ttt_protocol.md`）。
-- **Prediction distillation（準・学習: offline）**  
-  teacher/student の `predictions.json` をブレンドしてアブレーションを高速化。原理・実施手順・見方の図は [`docs/distillation.md`](docs/distillation.md) に整理。
-- **Hessian-based refinement（準・学習: post-inference）**  
-  `predictions.json` に対する per-detection の局所 refinement（engine外の後処理）。pose でなぜ効くかも [`docs/hessian_solver.md`](docs/hessian_solver.md) で説明。
-
----
-
-## CLIの使い分け（pip vs ソースチェックアウト）
-
-### モジュールパスについて（重要）
-- canonical な Python モジュールはカテゴリ別パッケージ配下（`yolozu/core`, `yolozu/datasets`, `yolozu/eval`, `yolozu/inference`, `yolozu/predictions`, `yolozu/training`, `yolozu/geometry`）に配置されています。
-- 旧 import（例: `from yolozu.dataset import build_manifest`）は `yolozu/__init__.py` の package-level alias により互換維持されます。
-
-### pip: `yolozu`（インストール安全・CPU中心）
-- `yolozu doctor`（環境診断）
-- `yolozu validate dataset|predictions|instance-seg`（成果物検証）
-- `yolozu eval-coco` / `yolozu eval-instance-seg`（評価）
-- `yolozu benchmark`（Ultralytics parity を意識した benchmark 入口。利用可能なら `torch` / `onnx` / `engine` を実行し、その backend 比較では real parity artifact を出力する。`detect` / `segmentation` / `classification` / `obb` / `keypoints` / `depth` / `pose6d` の task semantics を report に明示し、inert な format/flag 組み合わせは早期エラーにし、`torchscript` は現段階では honest な synthetic/skip semantics で受け付け、external runtime の境界も明示）
-- `yolozu onnxrt export`（ONNXRuntime推論→predictions出力、要 `yolozu[onnxrt]`）
-- `yolozu onnxrt quantize`（ONNXRuntime dynamic quantize、要 `yolozu[onnxrt]`）
-- `yolozu train`（RT-DETR pose 学習、要 `yolozu[train]`）
-- `yolozu test`（シナリオスイート実行）
-
-### repo: `python3 tools/yolozu.py`（研究/評価の“全部盛り”）
-- `export --backend {torch,onnxrt,trt}`（統一引数 + キャッシュ + runメタ）
-- TTA/TTT など、重いワークフローをまとめて扱うためのツール群が `tools/` にあります。
-
----
-
-## 予測JSON（predictions interface contract）
-
-評価の中心は `predictions.json` です
-（スキーマ: [`schemas/predictions.schema.json`](schemas/predictions.schema.json)
-/ 解説: [`docs/predictions_schema.md`](docs/predictions_schema.md)）。
-
-推論は PyTorch / ONNXRuntime / TensorRT / C++ など好きな環境で実行し、結果だけを共通形式 `predictions.json` に保存します。
-YOLOZU はその JSON を同じ評価器で採点するので、バックエンド差を「同一条件」で比較でき、再現も容易です。
-
-- どのバックエンドでも **同じスキーマ**で出力
-- 変換・評価・差分（parity）を統一
-
----
-
-## Dataset 形式（YOLO + 任意メタデータ）
-
-基本:
-- 画像: `images/<split>/*.(jpg|png|...)`
-- ラベル: `labels/<split>/*.txt`（`class cx cy w h` 正規化）
-
-任意メタデータ（JSON）: `labels/<split>/<image>.json`
-- Mask/Seg: `mask_path` / `mask` / `M`
-- Depth: `depth_path` / `depth` / `D_obj`
-- Pose: `R_gt` / `t_gt`（または `pose`）
-- Intrinsics: `K_gt` / `intrinsics`
-
-検証:
-```bash
-yolozu validate dataset data/smoke --strict
-```
-
-### 互換（YOLOv8 / YOLO11 / YOLOX）
-
-- Ultralytics YOLOv8 / YOLO11:
-  - `images/train` + `labels/train`（および `images/val` + `labels/val`）ならそのままOK
-  - Ultralytics の `data.yaml` も `--dataset` に渡せます
-    （`path:` + `train:`/`val:` が `images/<split>` を指す想定）
-- YOLOX:
-  - COCO JSON（`instances_*.json`）が多いので、
-    `tools/prepare_coco_yolo.py` で YOLO形式へ一度変換するのが最短です
-
-### Keypoints 形式サポート（明示）
-
-- 直接対応: `auto`, `yolo_pose`, `coco`, `cvat_xml`
-- 直接未対応（変換してから利用）: `detectron2_dataset_dict`, `labelme_keypoints`
-- 形式一覧（CLI）:
-
-```bash
-python3 tools/yolozu.py prepare-keypoints-dataset --list-formats --source . --out .
-```
-
-- 最小CVAT XMLスモークテスト:
-
-```bash
-python3 -m pytest -q tests/test_prepare_keypoints_dataset_cvat_xml.py
-```
-
-詳細な復旧手順: [`docs/cvat_keypoints_recovery.md`](docs/cvat_keypoints_recovery.md)
-
----
-
-## TTA / TTT（Test-Time Adaptation / Training）
-
-- TTA: 予測の後処理で軽量に揺らす（`--tta`）
-- TTT: **推論前**にモデルパラメータを少し更新（Tent / MIM、torch backendのみ）
-
-TTTは repo 側のエクスポータで使うのが基本です（`docs/ttt_protocol.md`）:
-
-```bash
-bash scripts/ttt_compare.sh \
-  --boilerplate tent \
-  --dataset data/smoke \
-  --split val \
-  --checkpoint /path/to.ckpt \
-  --run-dir reports/ttt_compare/tent \
-  --device cuda
-```
-
-方式ごとの boilerplate は `tent`, `mim`, `mim_probe`, `cotta`, `eata`, `sar` を用意しています。
-詳細: [`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
-
-固定 real probe の MIM 実例:
-
-```bash
-bash scripts/ttt_compare.sh \
-  --boilerplate mim_probe \
-  --dataset reports/ttt_improvement_probe/domain_shift_dataset \
-  --split val \
-  --checkpoint reports/ttt_improvement_probe/checkpoint.pt \
-  --run-dir reports/ttt_compare/mim_probe_cpu \
-  --device cpu \
-  --max-images 10
-```
-
-この fixed probe では 10/10 画像で予測が変化し、組み込み比較指標は `map50=0.00326797` から `0.00392157` に改善します。
-
-deterministic なドメインシフトターゲット（corruption）を作る場合:
-
-```bash
-python3 scripts/prepare_ttt_domain_shift_target.py \
-  --dataset-root data/smoke \
-  --split val \
-  --out reports/domain_shift/smoke_gaussian_blur_s2 \
-  --corruption gaussian_blur \
-  --severity 2 \
-  --seed 2026 \
-  --force
-
-python3 tools/export_predictions.py \
-  --adapter dummy \
-  --dataset reports/domain_shift/smoke_gaussian_blur_s2 \
-  --split val \
-  --wrap \
-  --domain-shift-recipe reports/domain_shift/smoke_gaussian_blur_s2/domain_shift_recipe.json \
-  --output reports/pred_shift_target.json
-```
-
-`--wrap` 時は `meta.export_settings.domain_shift_target` に recipe が明示リンクされます。
-
-TTT改善のマイクロデモ（数値差分 + overlay）:
-
-```bash
-python3 -m pip install -U 'yolozu[demo]'
-yolozu demo ttt
-```
-
-生成物:
-- `demo_output/ttt/<utc>/overlay_no_ttt.png`
-- `demo_output/ttt/<utc>/overlay_ttt.png`
-- `demo_output/ttt/<utc>/ttt_improvement_report.json`（`metrics.delta` に差分）
-
-stdout例（CPU, deterministic seed。絶対値は小さいですが「差分が出る」ことが目的）:
-- `map50 0.00326797 → 0.00392157`
-- `map50_95 0.000326797 → 0.000392157`
-- `changed_images 10 / 10`（`diff_summary.changed_images`）
-
-overlay の before/after や delta 画像は、README ではなく [`docs/install.md`](docs/install.md) と manual の図版にまとめています。
-
-注意:
-- TTT は torch backend 限定です（ONNXRuntime/TensorRT は TTA か precomputed predictions を推奨）
-
----
-
-## Training scaffold（RT-DETR pose）+ Run interface contract（本番級の再現性）
-
-実装: `rtdetr_pose/rtdetr_pose/train_minimal.py`（ラッパ: `rtdetr_pose/tools/train_minimal.py`）
-
-### 最短（ソースチェックアウト）
-```bash
-python3 -m pip install -r requirements-test.txt
-# 任意: CI推奨tier（固定依存）をローカル再現
-python3 -m pip install -r requirements-locks/requirements-ci.lock
-python3 rtdetr_pose/tools/train_minimal.py \
-  --dataset-root data/smoke \
-  --config rtdetr_pose/configs/base.json \
-  --max-steps 50 \
-  --run-dir runs/smoke
-```
-
-### 反復運用（Run Contract 推奨）
-
-```bash
-yolozu train configs/examples/train_contract.yaml --run-id exp01
-
-# 完全resume（model/optim/sched/AMP scaler/EMA/progress + RNG）
-yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
-
-# 配線スモーク（最初のoptimizer stepで止め、保存/export/parityまで通す）
-yolozu train configs/examples/train_contract.yaml --run-id exp01 --dry-run
-```
-
-run interface contract で固定された成果物（固定パス）:
-- `runs/<run_id>/checkpoints/{last,best}.pt`
-- `runs/<run_id>/reports/{train_metrics.jsonl,val_metrics.jsonl,config_resolved.yaml,run_meta.json,onnx_parity.json}`
-- `runs/<run_id>/exports/model.onnx`（+ meta）
-
-実装済みの“壊れない”学習ループ要件:
-- Resume（完全復帰）
-- NaN/Inf guard（skip + LR decay + stop）
-- Grad clip（推奨）
-- AMP / EMA / DDP（torchrun）
-- Validation cadence（epoch/step）+ early stop
-
-macOS/MPS beta 運用メモ:
-- `--device auto` は `cuda -> mps -> cpu` の順で解決されます。
-- `--device mps` を明示指定できます。
-- `--amp fp16` / `--amp bf16` は MPS では best-effort です。利用できない autocast mode は警告を出して fp32 に戻ります。
-- 未対応 op がある場合は `PYTORCH_ENABLE_MPS_FALLBACK=1` を併用してください。
-
-拡張（任意）:
-- フォトメトリックAug
-  （`--hsv-*`, `--gray-prob`, `--gaussian-noise-*`, `--blur-*`）  
-  ※実画像を使う場合は `--real-images` を併用
-  （スキャフォールドはデフォルトで合成画像）。
-- 推論加速オプション: `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode`
-
-### Depthモード（RT-DETR pose 学習スキャフォールド）
-
-`rtdetr_pose/tools/train_minimal.py` では、backbone交換境界（`[P3,P4,P5]`）を
-維持したまま深度を段階的に有効化できます。
-
-- `--depth-mode none`（既定）: 深度を使わない互換パス
-- `--depth-mode sidecar`: `depth_path` / `depth` のサイドカー深度を読み込み、`depth_valid` を付与
-- `--depth-mode fuse_mid`: サイドカー深度を projector 後に軽量融合
-  （backbone外）、`--depth-dropout` で modality dropout 可能
-
-安全動作:
-
-- `--depth-unit` は `unspecified|relative|metric`（既定: `unspecified`）
-- 絶対深度コスト（`cost_z` / `cost_t`）は `metric` のときのみ有効化
-- `--depth-scale` でサイドカー深度のスケール補正を適用
-
-### 不均衡対策 / backbone override / strict data 検証
-
-`train_minimal.py` では次を追加サポート:
-
-- クラス不均衡対策: `--imbalance-strategy class_balanced`（DDPでも利用可能）
-  （`--imbalance-gamma`, `--imbalance-min-weight`, `--imbalance-max-weight`, `--imbalance-aggregate`）
-- backbone 明示上書き: `--backbone-name`, `--backbone-norm`, `--backbone-args`
-- 実データ厳格検証: `--strict-task-data`（bbox/keypoints/depth/poseの教師情報不足を即時エラー）
-
-### 実画像 few-shot の多タスク finetune デモ
-
-```bash
-# 事前にライセンスを確認した上で実画像をDL
-python3 scripts/download_coco_instances_tiny.py \
-  --out-root data/coco --split val2017 --num-images 8 --seed 0 --force
-
-# 実画像データセットを準備（COCO画像 + annotation由来 sidecar）
-python3 tools/prepare_real_multitask_fewshot.py \
-  --instances-json data/coco/annotations/instances_val2017.json \
-  --images-dir data/coco/images/val2017 \
-  --out data/real_multitask_fewshot \
-  --train-images 6 --val-images 2 \
-  --strict-provenance --force
-
-# bbox -> segmentation -> keypoints -> depth -> pose6d を段階実行
-python3 tools/run_real_multitask_finetune_demo.py \
-  --dataset-root data/real_multitask_fewshot \
-  --out reports/real_multitask_finetune_demo \
-  --device cpu \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
-  --strict-provenance --force
-```
-
-ワンコマンド（準備 + tiny COCO 自動DL + スモーク）:
-
-```bash
-python3 tools/run_real_multitask_finetune_demo.py \
-  --dataset-root data/real_multitask_fewshot \
-  --prepare \
-  --download-if-missing --allow-auto-download --accept-dataset-license \
-  --download-num-images 8 \
-  --out reports/real_multitask_finetune_demo \
-  --device cpu \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
-  --strict-provenance --force
-```
-
-結果レポート:
-`reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`
-（`prepare_summary.json` に annotation由来ラベルの provenance も記録）
-
-### 外部framework finetune スモーク（YOLOv / MMDetection / Detectron2 / RT-DETR）
-
-まずは dry-run（設定ファイル/コマンド行/レポートの interface contract 確認）:
-
-```bash
-python3 tools/run_external_finetune_smoke.py \
-  --dataset-root data/smoke \
-  --split train \
-  --output reports/external_finetune_smoke.json
-```
-
-実行可能なframeworkを実際に学習実行する場合:
-
-```bash
-python3 tools/run_external_finetune_smoke.py \
-  --dataset-root data/smoke \
-  --split train \
-  --non-dry-framework yolov \
-  --non-dry-framework rtdetr \
-  --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
-  --device cpu \
-  --require-training-execution \
-  --output reports/external_finetune_smoke.exec.json
-```
-
-RT-DETR の non-dry 実行で torch が不足している場合は
-`failure_code=E_DEP_TORCH_MISSING` を明示して失敗を返します。
-MMDetection/Detectron2 は `--mmdet-train-script` / `--detectron2-train-script` 指定時、
-projection依存が不足していても train-path 監査を継続し、`projection_error` をレポートします。
-
-MMDetection / Detectron2 の外部ランチャ指定を含む詳細:
-`docs/external_finetune_smoke.md`
-
-MCP設定チェック（manifest + generated MCP/Actions reference）:
-
-```bash
-python3 tools/check_mcp_settings.py \
-  --output reports/mcp_settings_check.json
-```
-
-Ultralytics/DETR サポート（trainer/repo/export の3レイヤ）:
-
-```bash
-python3 tools/support_ultralytics_detr.py ls -j
-python3 tools/support_ultralytics_detr.py tu -P smoke -n -o reports/support_ultralytics_detr.train_ultralytics.json
-python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultralytics_detr.train_hf_detr.json
-python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json
-```
-
-詳細: [`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)
-
-release 自動化（オプション不要）:
-
-```bash
-bash release.sh
-```
-
-`release.sh` は Python を次の順序で自動選択します:
-1. `$YOLOZU_PYTHON`（設定時）
-2. `./.venv/bin/python`
-3. `PATH` 上の `python3`
-4. `PATH` 上の `python`
-
-自動version更新ルール（現在 `X.Y.Z` から）:
-- 小規模: `X.Y.(Z+1)`（`1.1.1+add` 相当）
-- 中規模: `X.(Y+1).0`（`1.1+a.0` 相当）
-- 大規模: `(X+1).0.0`（`1+a.0.0` 相当）
-- 現在の version が CalVer `YYYY.MM.DD.MICRO` の場合は自動で CalVer に切り替わり、
-  - 同じ UTC 日: `YYYY.MM.DD.(MICRO+1)`
-  - 日付が変わったら: `YYYY.MM.DD.0`
-
-dry-run 例:
-
-```bash
-bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
-```
-
-### Reference adapter回帰ゲート（実画像baseline）
-
-`RTDETRPoseAdapter` を reference adapter として固定し、
-`predict(records) -> entries` の interface contract を CI で回帰監視できます。
-
-```bash
-python3 tools/run_reference_adapter_regression.py \
-  --dataset data/smoke \
-  --split val \
-  --max-images 2 \
-  --profile micro \
-  --repro-policy relaxed \
-  --runtime-lock requirements-locks/requirements-ci.lock \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --diff-summary-out reports/reference_adapter_regression.diff_summary.json \
-  --topk-examples-dir reports/reference_adapter_regression_topk \
-  --topk-examples 3 \
-  --output reports/reference_adapter_regression.json
-```
-
-interface contractのみ（hard gate）:
-
-```bash
-python3 tools/run_reference_adapter_regression.py \
-  --dataset data/smoke \
-  --split val \
-  --max-images 2 \
-  --profile micro \
-  --score-gate-mode off \
-  --perf-gate-mode off \
-  --runtime-lock requirements-locks/requirements-ci.lock \
-  --enforce-runtime-lock \
-  --enforce-weights-hash \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --output reports/reference_adapter_regression_contract.json
-```
-
-Behaviorのみ（warn gate）:
-
-```bash
-python3 tools/run_reference_adapter_regression.py \
-  --dataset data/smoke \
-  --split val \
-  --max-images 2 \
-  --profile micro \
-  --schema-gate-mode off \
-  --consistency-gate-mode off \
-  --score-gate-mode warn \
-  --perf-gate-mode warn \
-  --runtime-lock requirements-locks/requirements-ci.lock \
-  --enforce-runtime-lock \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --output reports/reference_adapter_regression_behavior.json
-```
-
-baseline更新（意図的変更時のみ）:
-
-```bash
-python3 tools/run_reference_adapter_regression.py \
-  --dataset data/smoke \
-  --split val \
-  --max-images 2 \
-  --profile micro \
-  --capture-provenance full \
-  --runtime-lock requirements-locks/requirements-ci.lock \
-  --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
-  --write-baseline \
-  --output reports/reference_adapter_regression_baseline_write.json
-```
-
-Run Contract仕様: [`docs/run_contract.md`](docs/run_contract.md)
-
----
-
-## ONNX 量子化（低コスト）
-
-ONNXRuntime の dynamic quantize で int8-ish の ONNX を生成できます（CPU向け、校正データ不要）:
-
-```bash
-yolozu onnxrt quantize --onnx model.onnx --output model_int8.onnx --weight-type qint8
-```
-
----
-
-## 対称性（Symmetry）チェック
-
-- 設定: `configs/runtime/symmetry.json`（ローダ: `yolozu.config.load_symmetry_map`）
-- 実装: `yolozu/symmetry.py`（`none`, `Cn`/`C2`/`C4`, `Cinf`）
-- テンプレ検証: `yolozu/template_verification.py`
-
----
-
-## 実行ファイル化（PyInstaller / PyArmor）
-
-手順: [`deploy/pyinstaller/README.md`](deploy/pyinstaller/README.md)
-
----
-
-## 開発者向け（ローカル検証）
-
-```bash
-.venv/bin/ruff check .
-.venv/bin/python -m unittest
-```
+詳しくは次を見てください。
+
+- docs index: [`docs/README.md`](docs/README.md)
+- install 詳細: [`docs/install.md`](docs/install.md)
+- manual source: [`manual/README.md`](manual/README.md)
+
+## Support と License
+
+- Support: [`docs/support.md`](docs/support.md)
+- License policy: [`docs/license_policy.md`](docs/license_policy.md)
+- Apache-2.0 license: [`LICENSE`](LICENSE)
+- Latest release: [GitHub Releases](https://github.com/ToppyMicroServices/YOLOZU/releases)
+- Zenodo software DOI: [10.5281/zenodo.18744756](https://doi.org/10.5281/zenodo.18744756)
+- Zenodo manual DOI: [10.5281/zenodo.18744926](https://doi.org/10.5281/zenodo.18744926)
