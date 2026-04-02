@@ -16,8 +16,8 @@ python3 --version
 git config --global --add safe.directory /workspace || true
 
 python3 tools/ci/install_with_hashes.py \
-  --requirements requirements-runtime.lock \
-  --requirements requirements-zisn2-extra.lock
+  --requirements requirements-locks/requirements-runtime.lock \
+  --requirements requirements-locks/requirements-zisn2-extra.lock
 
 out_dir="reports/ci_zisn2"
 dataset_dir="${out_dir}/dataset"

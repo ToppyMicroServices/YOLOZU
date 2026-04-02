@@ -19,8 +19,8 @@ DATASET_OUT="${DATASET_OUT:-/workspace/coco2017_kp_yolozu}"
 MAX_IMAGES="${MAX_IMAGES:-500}"
 
 python3 tools/ci/install_with_hashes.py \
-  --requirements requirements-runtime.lock \
-  --requirements requirements-runpod-keypoints-extra.lock
+  --requirements requirements-locks/requirements-runtime.lock \
+  --requirements requirements-locks/requirements-runpod-keypoints-extra.lock
 
 bash deploy/runpod/bootstrap_coco_keypoints_val2017.sh
 

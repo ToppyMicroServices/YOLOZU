@@ -18,7 +18,7 @@ jobs:
   # Dependency tier policy:
   # - core:       hash-locked runtime deps + local wheel install (packaging + CLI smoke)
   # - docs_mcp:   hash-locked docs/MCP/Actions deps from exact top-level lock
-  # - recommended: hash-locked requirements-ci.lock (regression + schema/manifest gates)
+  # - recommended: hash-locked requirements-locks/requirements-ci.lock (regression + schema/manifest gates)
   # - full:       GPU/backends in separate manual/nightly workflows
   # docs: docs/ci_dependency_tiers.md
   changes:
@@ -138,7 +138,7 @@ jobs:
 
       - name: Install lightweight deps (hash-locked docs/MCP/actions set)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-docs-actions.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock
 
       - name: Manifest + docs references gate
         run: |
@@ -177,7 +177,7 @@ jobs:
 
       - name: Install (hash-locked runtime + local wheel)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
 
       - name: README smoke script
         run: |
@@ -200,7 +200,7 @@ jobs:
 
       - name: Install deps (hash-locked recommended tier)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock
 
       - name: Ruff (focused paths)
         run: |
@@ -254,7 +254,7 @@ jobs:
 
       - name: Install (hash-locked runtime + local wheel)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
 
       - name: Repo smoke script (offline dry-run path)
         run: |
@@ -280,18 +280,18 @@ jobs:
 
       - name: Install deps (hash-locked recommended tier)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-ci.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock
 
       - name: Packaging smoke (hash-locked local wheel + yolozu doctor)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
           yolozu doctor --output -
           yolozu export --help
           python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"
 
       - name: Install build tooling (hash-locked)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-build.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-build.lock
 
       - name: Wheel contents gate (schemas/protocols/minimal docs)
         run: |
@@ -423,7 +423,7 @@ jobs:
             --capture-provenance minimal \
             --score-gate-mode off \
             --perf-gate-mode off \
-            --runtime-lock requirements-ci.lock \
+            --runtime-lock requirements-locks/requirements-ci.lock \
             --enforce-runtime-lock \
             --enforce-weights-hash \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
@@ -447,7 +447,7 @@ jobs:
             --consistency-gate-mode off \
             --score-gate-mode warn \
             --perf-gate-mode warn \
-            --runtime-lock requirements-ci.lock \
+            --runtime-lock requirements-locks/requirements-ci.lock \
             --enforce-runtime-lock \
             --baseline baselines/reference_adapter/rtdetr_pose_smoke_val.json \
             --output reports/reference_adapter_regression_behavior_ci.json
@@ -481,7 +481,7 @@ jobs:
             --capture-provenance minimal \
             --score-gate-mode off \
             --perf-gate-mode off \
-            --runtime-lock requirements-ci.lock \
+            --runtime-lock requirements-locks/requirements-ci.lock \
             --enforce-runtime-lock \
             --baseline "${baseline_path}" \
             --write-baseline \
@@ -500,7 +500,7 @@ jobs:
             --capture-provenance minimal \
             --score-gate-mode off \
             --perf-gate-mode off \
-            --runtime-lock requirements-ci.lock \
+            --runtime-lock requirements-locks/requirements-ci.lock \
             --enforce-runtime-lock \
             --baseline "${baseline_path}" \
             --output reports/reference_adapter_regression_real_scenario_ci.json
@@ -873,7 +873,7 @@ jobs:
 
       - name: PyInstaller smoke (build + resources list)
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-pyinstaller.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-pyinstaller.lock
           pyinstaller -y -n yolozu_bin \
             deploy/pyinstaller/yolozu_entrypoint.py \
             --collect-data yolozu.data \
@@ -884,7 +884,7 @@ jobs:
       - name: PyArmor + PyInstaller smoke (optional)
         if: ${{ vars.PYARMOR_SMOKE == '1' }}
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-pyarmor.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-pyarmor.lock
           rm -rf build/pyarmor_obf dist/yolozu_pyarmor yolozu_pyarmor.spec
           pyarmor gen -O build/pyarmor_obf deploy/pyinstaller/yolozu_entrypoint.py
           pyinstaller -y -n yolozu_pyarmor \

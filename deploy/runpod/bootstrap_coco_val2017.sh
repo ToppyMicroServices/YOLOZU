@@ -38,8 +38,8 @@ apt-get install -y -qq unzip >/dev/null
 
 echo "[bootstrap] Installing Python deps (hash-locked runtime + pycocotools)"
 "${PY}" tools/ci/install_with_hashes.py \
-  --requirements requirements-runtime.lock \
-  --requirements requirements-runpod-bootstrap.lock
+  --requirements requirements-locks/requirements-runtime.lock \
+  --requirements requirements-locks/requirements-runpod-bootstrap.lock
 
 COCO_ROOT="/tmp/coco"
 YOLO_ROOT="/tmp/coco-yolo"

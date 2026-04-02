@@ -12,13 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml README.md LICENSE NOTICE COPYRIGHT ./
-COPY requirements-runtime.lock requirements-demo-extra.lock ./
+COPY requirements-locks ./requirements-locks
 COPY tools/ci/install_with_hashes.py tools/ci/install_with_hashes.py
 COPY yolozu ./yolozu
 
 RUN python tools/ci/install_with_hashes.py \
-    --requirements requirements-runtime.lock \
-    --requirements requirements-demo-extra.lock \
+    --requirements requirements-locks/requirements-runtime.lock \
+    --requirements requirements-locks/requirements-demo-extra.lock \
     --install-local-wheel
 
 RUN useradd --create-home --uid 10001 yolozu && \

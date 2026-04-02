@@ -35,7 +35,7 @@ class InstallWithHashesToolTests(unittest.TestCase):
         args = parser.parse_args(
             [
                 "--requirements",
-                "requirements-runtime.lock",
+                "requirements-locks/requirements-runtime.lock",
                 "--index-url",
                 "https://example.com/simple",
                 "--extra-index-url",

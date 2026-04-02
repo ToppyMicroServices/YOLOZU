@@ -72,7 +72,7 @@
       "torch.manual_seed"
     ],
     "repro_policy": "relaxed",
-    "runtime_lock_path": "requirements-ci.lock",
+    "runtime_lock_path": "requirements-locks/requirements-ci.lock",
         "runtime_lock_sha256": "477e154c8662eb4fd660c8c209c9caadcf9028747bead11f63d8ad7a6a22dc05",
     "runtime_lock_versions": {
       "onnxruntime": "1.24.2",

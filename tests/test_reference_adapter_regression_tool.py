@@ -57,7 +57,7 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
         mod = self._load_tool_module()
         provenance = mod._collect_provenance(
             capture_mode="minimal",
-            runtime_lock={"sha256": "abc123", "path": "requirements-ci.lock"},
+            runtime_lock={"sha256": "abc123", "path": "requirements-locks/requirements-ci.lock"},
         )
         self.assertEqual(provenance.get("capture_mode"), "minimal")
         snapshot = provenance.get("snapshot") or {}
@@ -516,7 +516,7 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
                 "--perf-gate-mode",
                 "off",
                 "--runtime-lock",
-                "requirements-ci.lock",
+                "requirements-locks/requirements-ci.lock",
                 "--baseline",
                 str(baseline_path.relative_to(repo_root)),
             ]

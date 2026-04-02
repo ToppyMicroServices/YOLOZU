@@ -72,7 +72,7 @@ jobs:
           print("matmul ok, mean:", float(y.mean().cpu()))
           PY
 
-              python3 tools/ci/install_with_hashes.py --requirements requirements-runtime.lock --install-local-wheel
+              python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
               python3 -m yolozu.cli doctor --output - || true
             '
 
@@ -106,7 +106,7 @@ jobs:
               if command -v git >/dev/null 2>&1; then
                 git config --global --add safe.directory /workspace || true
               fi
-              python3 tools/ci/install_with_hashes.py --requirements requirements-trt-tools.lock
+              python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-trt-tools.lock
 
               out_dir="reports/ci_trt_smoke"
               mkdir -p "${out_dir}"

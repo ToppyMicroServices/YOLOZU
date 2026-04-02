@@ -117,13 +117,13 @@ If MPS still stays unavailable:
 YOLOZU CI uses three install tiers to reduce optional-extras combinatorial noise:
 
 - `core`: `pip install .` only (packaging + CLI smoke)
-- `recommended`: pinned lock install via `requirements-ci.lock` (interface contract/behavior regression gates)
+- `recommended`: pinned lock install via `requirements-locks/requirements-ci.lock` (interface contract/behavior regression gates)
 - `full`: GPU/backends (`tensorrt`, CUDA providers) in optional/nightly/manual workflows
 
 For deterministic CI reproduction, install the same lock file locally:
 
 ```bash
-python3 -m pip install -r requirements-ci.lock
+python3 -m pip install -r requirements-locks/requirements-ci.lock
 ```
 
 Detailed mapping (jobs/workflows + rationale): [`ci_dependency_tiers.md`](ci_dependency_tiers.md).  

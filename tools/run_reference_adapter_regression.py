@@ -114,7 +114,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument(
         "--runtime-lock",
-        default="requirements-ci.lock",
+        default="requirements-locks/requirements-ci.lock",
         help="Pinned runtime lock file used for CI/runtime reproducibility checks.",
     )
     p.add_argument(

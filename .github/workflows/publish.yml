@@ -46,7 +46,7 @@ jobs:
 
       - name: Build
         run: |
-          python3 tools/ci/install_with_hashes.py --requirements requirements-build.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-build.lock
           python -m build
           python -m twine check dist/*
 
