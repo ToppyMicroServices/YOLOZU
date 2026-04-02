@@ -38,6 +38,7 @@ flowchart LR
 - 既存 predictions を評価する: [`docs/README.md`](docs/README.md), [`docs/predictions_schema.md`](docs/predictions_schema.md), [`docs/external_inference.md`](docs/external_inference.md)
 - train → export → eval を試す: [`docs/training_inference_export.md`](docs/training_inference_export.md), [`docs/run_contract.md`](docs/run_contract.md)
 - backend 比較や benchmark を見る: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md), [`docs/tensorrt_pipeline.md`](docs/tensorrt_pipeline.md)
+- YOLOZU-synthgen 連携を準備する: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md), [`docs/synthgen_intake.md`](docs/synthgen_intake.md), [`docs/synthgen_contract.md`](docs/synthgen_contract.md)
 - install と環境確認: [`docs/install.md`](docs/install.md), [`docs/doctor_diagnostics.md`](docs/doctor_diagnostics.md)
 - tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 

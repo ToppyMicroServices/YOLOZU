@@ -332,6 +332,7 @@ python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --o
 References:
 - [SynthGen intake guide](synthgen_intake.md)
 - [SynthGen interface contract](synthgen_contract.md)
+- [YOLOZU-synthgen integration checklist](synthgen_repo_integration.md)
 
 ## CI incidents
 
