@@ -18,6 +18,39 @@ Primary references:
 - [`docs/synthgen_intake.md`](synthgen_intake.md)
 - [`schemas/synthgen_sample.schema.json`](../schemas/synthgen_sample.schema.json)
 
+## How YOLOZU-synthgen generates samples
+
+`YOLOZU-synthgen` is split-responsibility by design.
+
+- renderer owns geometry, object count, pose, camera, base lighting, and all authoritative ground truth
+- gen AI owns recipe drafting assistance, appearance recipe drafting, appearance editing, and QA assistance
+- gen AI must not add/remove labeled objects or become the source of instance/semantic/keypoint ground truth
+
+In practice, the generator-side pipeline is:
+
+1. create `scene_recipe`
+2. materialize `scene_spec`
+3. render `image_render` plus GT passes
+4. create `appearance_recipe`
+5. materialize `appearance_spec`
+6. apply appearance editing if the selected mode allows it
+7. run QA gate
+8. emit accepted sample directories and shard rows
+
+Current geometry sources are renderer-side `primitive_box` placeholders and `mesh_file` assets. That means CAD-derived assets fit naturally once they are exported as meshes and referenced in the generator asset catalogs.
+
+Supported generation modes:
+
+- `render_only`
+- `bg_only_inpaint`
+- `appearance_only_conditioned`
+
+Intentionally unsupported as the main labeled-data path:
+
+- full-image regeneration (`full_regen`)
+- gen-AI-predicted masks or keypoints as ground truth
+- text-to-3D as the main geometry source
+
 ## What YOLOZU-synthgen must emit
 
 Each record in `shards/*.jsonl` must satisfy `schema_version = "1"` of the SynthGen sample interface contract.
@@ -44,6 +77,34 @@ Required semantics:
 - `sem_id` is `uint16[H,W]`
 - `kpts2d` is `float32[N_inst,K,3]` with `(u,v,vis)`
 - `kpts2d[...,2]` uses `0/1/2` visibility semantics
+
+## How images and labels are handled
+
+The generator keeps two image concepts:
+
+- `image_render`: direct renderer output before optional appearance editing
+- `image`: final sample image after the selected mode is applied
+
+For `render_only`, `image == image_render`. For appearance-edited modes, `image` may differ visually, but labels remain tied to the renderer-owned scene geometry.
+
+Ground-truth handling is renderer-derived throughout:
+
+- `depth_ndc` comes from the renderer depth pass
+- `inst_id` comes from the instance-id pass
+- `sem_id` comes from the semantic-id pass
+- `kpts2d` is projected from object-space keypoints through the scene camera and then refined against depth / instance-id where available
+
+Typical per-sample files in the generator repo are:
+
+- `image.png`
+- `depth_ndc.npy`
+- `inst_id.npy`
+- `sem_id.npy`
+- `kpts2d.npy`
+- `meta.json`
+- `appearance.json`
+- `qa.json`
+- `image_render.png` when the final image is not `render_only`
 
 ## Recommended handoff layout
 

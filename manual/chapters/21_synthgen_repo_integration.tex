@@ -25,6 +25,122 @@ Ownership split:
 
 Each record in \path{shards/*.jsonl} must satisfy \cmd{schema\_version="1"} and provide the required tensors and metadata fields used by the intake adapters.
 
+\section{How samples are generated in YOLOZU-synthgen}
+
+The generator is intentionally \textbf{split-responsibility}, not ``gen AI does everything'':
+\begin{itemize}
+  \item Renderer-owned: geometry, object count, pose, camera, base lighting, depth, instance ids, semantic ids, keypoints, and the authoritative \path{scene\_spec}
+  \item Gen-AI-owned: recipe drafting assistance, appearance recipe drafting, appearance editing, visual QA assistance, and captions/metadata assistance
+\end{itemize}
+
+In other words, \textbf{ground truth is renderer-derived}; gen AI may improve realism or diversity, but it is not the source of labels.
+
+\subsection{Where CAD / mesh assets fit}
+
+Current generator rules allow object geometry to come from:
+\begin{itemize}
+  \item \cmd{primitive\_box} placeholders for MVP scaffolding
+  \item \cmd{mesh\_file} assets for real object geometry
+\end{itemize}
+
+This means CAD-derived assets fit naturally once they are exported into mesh files and referenced from the generator-side asset catalogs. The renderer still owns object pose, camera projection, depth, and id passes, so labels remain consistent even when the visual source is a CAD or mesh asset.
+
+\subsection{Where Generative AI fits}
+
+\path{YOLOZU-synthgen} is designed around \textbf{gen-AI-assisted appearance}, not text-to-image-as-ground-truth.
+
+Supported modes are:
+\begin{itemize}
+  \item \cmd{render\_only}: the renderer output is the final image
+  \item \cmd{bg\_only\_inpaint}: only the background outside the foreground union mask is edited
+  \item \cmd{appearance\_only\_conditioned}: conditioned appearance editing may change object interiors while preserving object count and silhouette
+\end{itemize}
+
+Intentionally unsupported as the main labeled-data path:
+\begin{itemize}
+  \item full image regeneration (\cmd{full\_regen})
+  \item gen-AI-predicted masks or keypoints as ground truth
+  \item text-to-3D as the main geometry source
+\end{itemize}
+
+This policy is what makes the downstream handoff to \yolozu{} reliable: the final image may look more realistic, but labels still come from the renderer and remain tied to the same scene geometry.
+
+\section{System pipeline}
+
+The generator-side pipeline is:
+\begin{enumerate}
+  \item Create \cmd{scene\_recipe}
+  \item Materialize \cmd{scene\_spec}
+  \item Render \cmd{image\_render} plus ground-truth passes
+  \item Create \cmd{appearance\_recipe}
+  \item Materialize \cmd{appearance\_spec}
+  \item Apply appearance editing, if enabled by mode
+  \item Run QA gate
+  \item Emit accepted dataset sample or shard entry
+\end{enumerate}
+
+The important handoff idea is that \cmd{scene\_spec} is fully materialized before rendering, and the renderer-produced passes remain authoritative throughout the rest of the pipeline.
+
+\section{How images and labels are handled}
+
+\subsection{Canonical sample fields}
+
+The generator runtime emits a canonical sample record with fields such as:
+\begin{itemize}
+  \item \cmd{image}
+  \item \cmd{image\_source}
+  \item \cmd{render\_backend}
+  \item \cmd{depth\_ndc}
+  \item \cmd{inst\_id}
+  \item \cmd{sem\_id}
+  \item \cmd{kpts2d}
+  \item \cmd{prompt}
+  \item \cmd{scene\_spec}
+  \item \cmd{appearance\_spec}
+  \item \cmd{qa\_report}
+  \item \cmd{schema\_id}, \cmd{schema\_version}
+  \item \cmd{asset\_ids}, \cmd{inst\_map}
+\end{itemize}
+
+\subsection{Image handling}
+
+There are two distinct image concepts:
+\begin{itemize}
+  \item \cmd{image\_render}: the direct renderer output before any optional appearance editing
+  \item \cmd{image}: the final training/evaluation image after the selected mode has been applied
+\end{itemize}
+
+For \cmd{render\_only}, \cmd{image == image\_render}. For appearance-edited modes, \cmd{image} may differ visually, but the labels remain anchored to the renderer-owned geometry and passes.
+
+\subsection{Label handling}
+
+Labels are not hand-annotated after rendering and are not guessed from the final image. Instead:
+\begin{itemize}
+  \item \cmd{depth\_ndc} comes from the renderer depth pass
+  \item \cmd{inst\_id} comes from the renderer instance-id pass
+  \item \cmd{sem\_id} comes from the renderer semantic-id pass
+  \item \cmd{kpts2d} is projected from object-space keypoints through the scene camera and then refined against depth and instance-id where available
+\end{itemize}
+
+This is why \path{YOLOZU-synthgen} can support synthetic depth/segmentation/keypoint workflows without a manual labeling stage: labels are generated from the same scene state that produced the render.
+
+\subsection{Per-sample files on disk}
+
+At shard-export time, each sample directory typically stores:
+\begin{itemize}
+  \item \path{image.png}
+  \item \path{depth\_ndc.npy}
+  \item \path{inst\_id.npy}
+  \item \path{sem\_id.npy}
+  \item \path{kpts2d.npy}
+  \item \path{meta.json}
+  \item \path{appearance.json}
+  \item \path{qa.json}
+  \item \path{image\_render.png} when the final image is not \cmd{render\_only}
+\end{itemize}
+
+When exported for \yolozu{} intake, these assets are summarized into shard rows plus referenced sidecar files. \yolozu{} then validates and loads them through the SynthGen sample interface contract instead of re-deriving labels itself.
+
 \section{Recommended dataset root}
 
 \begin{lstlisting}
