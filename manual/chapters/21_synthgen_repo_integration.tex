@@ -1,0 +1,103 @@
+\chapter{SynthGen Repo Integration}
+\ChapterMeta{
+This chapter defines the repo-to-repo handoff between an external generator such as \path{YOLOZU-synthgen} and \yolozu{}.
+}{
+It keeps the integration boundary small: the generator owns rendering and shard creation, while \yolozu{} owns validation, overlay inspection, and evaluation.
+}{
+The practical goal is to make a synthetic dataset handoff reproducible, CI-friendly, and easy to verify before training work begins.
+}
+\ChapterAudience{Read this chapter when you are connecting \path{YOLOZU-synthgen} or another external synthetic-data generator to the YOLOZU intake and evaluation path.}
+
+\section{Boundary and ownership}
+
+The shared boundary is the SynthGen sample interface contract:
+\begin{itemize}
+  \item Spec: \path{docs/synthgen_contract.md}
+  \item JSON Schema: \path{schemas/synthgen_sample.schema.json}
+  \item Runtime validator: \path{yolozu/contracts/synthgen.py}
+\end{itemize}
+
+Ownership split:
+\begin{itemize}
+  \item External generator repo: prompts, asset selection, rendering, shard creation, generator metadata
+  \item \yolozu{}: interface-contract validation, shard loading, overlay rendering, evaluation, smoke checks
+\end{itemize}
+
+Each record in \path{shards/*.jsonl} must satisfy \cmd{schema\_version="1"} and provide the required tensors and metadata fields used by the intake adapters.
+
+\section{Recommended dataset root}
+
+\begin{lstlisting}
+<dataset-root>/
+  shards/
+    train_000.jsonl
+    predictions_synthgen.json
+  <sample>_image.png
+  <sample>_depth.npy
+  <sample>_inst.npy
+  <sample>_sem.npy
+  <sample>_kpts.npy
+\end{lstlisting}
+
+Practical note: if the predictions artifact reuses shard-relative asset paths such as \path{../samples/...}, keep that predictions JSON under \path{shards/} so the relative base remains the same as the shard rows. If you prefer to store predictions elsewhere, rewrite those asset paths first.
+
+\section{Verified cross-repo probe}
+
+This handoff was exercised end to end on April 2, 2026 using a local \path{YOLOZU-synthgen} checkout and the CPU path. GPU or MPS support is not required for these intake checks.
+
+\subsection{Generator-side commands}
+
+\begin{lstlisting}[language=bash]
+PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen generate-demo-dataset \
+  --output-dir /tmp/yolozu_synthgen_demo \
+  --num-train 2 \
+  --num-val 1
+
+PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen export-yolozu-synthgen \
+  --shards-root /tmp/yolozu_synthgen_demo/shards \
+  --output-dir /tmp/yolozu_synthgen_export
+\end{lstlisting}
+
+\subsection{YOLOZU-side acceptance checks}
+
+\begin{lstlisting}[language=bash]
+python3 tools/validate_synthgen_contract.py \
+  --input /tmp/yolozu_synthgen_export/shards/train_000.jsonl \
+  --max-samples 20
+
+python3 tools/render_synthgen_overlay.py \
+  --dataset-root /tmp/yolozu_synthgen_export \
+  --schema-id animal_v1 \
+  --sample-index 0 \
+  --output /tmp/yolozu_synthgen_overlay.png
+
+python3 tools/eval_synthgen.py \
+  --dataset-root /tmp/yolozu_synthgen_export \
+  --predictions /tmp/yolozu_synthgen_export/shards/predictions_synthgen.json \
+  --schema-id animal_v1 \
+  --output /tmp/yolozu_synthgen_eval.json
+
+python3 tools/smoke_synthgen.py \
+  --dataset-root /tmp/yolozu_synthgen_export \
+  --predictions /tmp/yolozu_synthgen_export/shards/predictions_synthgen.json \
+  --output-dir /tmp/yolozu_synthgen_smoke
+\end{lstlisting}
+
+\section{Acceptance criteria}
+
+The handoff is ready when all of the following are true:
+\begin{itemize}
+  \item \cmd{validate\_synthgen\_contract.py} returns \texttt{OK}
+  \item \cmd{render\_synthgen\_overlay.py} writes a non-empty overlay image
+  \item \cmd{eval\_synthgen.py} writes a report JSON without schema or shape errors
+  \item \cmd{smoke\_synthgen.py} writes overlay, eval, and summary artifacts under the chosen output directory
+\end{itemize}
+
+\section{Versioning rule}
+
+\begin{itemize}
+  \item Add optional fields freely.
+  \item Add new \cmd{schema\_id} values freely.
+  \item Do not change required dtype, shape, or range semantics inside \cmd{schema\_version="1"}.
+  \item If the generator needs a breaking change, version the interface contract in \yolozu{} first, then enable it in adapters and docs.
+\end{itemize}

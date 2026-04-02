@@ -81,7 +81,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
 - Keypoints parity (backend output diffs): `python3 tools/check_keypoints_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --iou-thresh 0.99 --kp-atol 1e-4`
 - Keypoints eval benchmark: `python3 tools/benchmark_keypoints_eval.py --dataset /path/to/yolo --predictions reports/predictions.json --max-images 50 --warmup 1 --iterations 5 --output reports/benchmark_keypoints_eval.json`
-- SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval.json`
+- SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval.json`
 - SynthGen overlay renderer: `python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png`
 - SynthGen smoke (interface contract + overlay + eval): `python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports`
 

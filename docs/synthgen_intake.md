@@ -6,6 +6,7 @@ YOLOZU does **not** generate synthetic data.
 ## Contract boundary
 
 - Interface contract spec: `docs/synthgen_contract.md` (compat alias: `docs/contracts/synthgen.md`)
+- Integration checklist: `docs/synthgen_repo_integration.md`
 - JSON schema: `schemas/synthgen_sample.schema.json`
 - Runtime validator/coercion: `yolozu/contracts/synthgen.py`
 - Required fields:
@@ -57,13 +58,20 @@ Evaluate predictions:
 ```bash
 python3 tools/eval_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions reports/synthgen_predictions.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --schema-id animal_v1 \
   --output reports/synthgen_eval.json
 ```
+
+Path note:
+
+- if prediction rows reference shard-relative assets such as `../samples/...`, place the predictions artifact under `shards/`
+- alternatively, rewrite those paths to dataset-root-relative or absolute paths before evaluation
+- the intake / overlay / evaluation path is CPU-friendly; GPU or MPS is optional
 
 ## External source-of-truth policy
 
 - Asset manifests, prompt generation, and rendering logic are owned by external SynthGen repos.
 - YOLOZU only guarantees ingestion for records that satisfy `schema_version="1"` of `synthgen_sample`.
 - If generator-side schema evolves, add a new versioned interface contract here before enabling it in YOLOZU adapters.
+- For repo-to-repo handoff, use `docs/synthgen_repo_integration.md` as the acceptance checklist.

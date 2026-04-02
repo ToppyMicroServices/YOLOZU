@@ -196,6 +196,43 @@ class TestSynthGenContract(unittest.TestCase):
         self.assertGreaterEqual(len(ds_animal), 1)
         self.assertGreaterEqual(len(ds_mech), 1)
 
+    def test_smoke_synthgen_tool_runs_end_to_end(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        smoke_root = repo_root / "data" / "smoke" / "synthgen_minishard"
+        script = repo_root / "tools" / "smoke_synthgen.py"
+        self.assertTrue(script.exists())
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            output_dir = Path(td) / "reports"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(smoke_root),
+                    "--predictions",
+                    str(smoke_root / "predictions_synthgen_smoke.json"),
+                    "--output-dir",
+                    str(output_dir),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"smoke_synthgen.py failed:\n{proc.stdout}\n{proc.stderr}")
+
+            overlay = output_dir / "smoke_synthgen_overlay.png"
+            report = output_dir / "smoke_synthgen_eval.json"
+            summary = output_dir / "smoke_synthgen_summary.json"
+            self.assertTrue(overlay.exists(), "missing synthgen overlay artifact")
+            self.assertTrue(report.exists(), "missing synthgen eval report")
+            self.assertTrue(summary.exists(), "missing synthgen summary")
+            payload = json.loads(summary.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("status"), "ok")
+
     def test_synthgen_json_schema_file_exists_and_required_fields(self):
         repo_root = Path(__file__).resolve().parents[1]
         schema_path = repo_root / "schemas" / "synthgen_sample.schema.json"
