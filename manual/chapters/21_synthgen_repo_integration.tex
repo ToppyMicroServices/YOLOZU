@@ -83,35 +83,33 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 
 \begin{figure}[h]
 \centering
-\resizebox{0.98\linewidth}{!}{%
 \begin{tikzpicture}[
-  node distance=9mm,
   font=\small,
-  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.2cm},
-  narrow/.style={draw, rounded corners, align=left, inner sep=6pt, text width=3.5cm},
+  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.0cm},
+  wide/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.6cm},
+  smallbox/.style={draw, rounded corners, align=left, inner sep=6pt, text width=3.4cm},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
-\node[box] (assets) {\textbf{Asset sources}\\CAD / mesh files\\or primitive boxes\\asset metadata + keypoints};
-\node[box, right=10mm of assets] (recipe) {\textbf{Scene recipe}\\asset\_pool\\camera\_policy\\lighting\_policy\\prompt\_template};
-\node[box, right=10mm of recipe] (spec) {\textbf{Scene spec}\\explicit objects\\mesh\_file / primitive\_box\\camera + envmap + intensity};
-\node[box, below=11mm of spec] (render) {\textbf{Renderer}\\Open3D / placeholder\\writes image\_render\\depth / inst / sem passes};
-\node[narrow, left=10mm of render] (gt) {\textbf{Ground truth}\\depth\_ndc\\inst\_id\\sem\_id\\kpts2d};
-\node[box, right=10mm of render] (appearance) {\textbf{Appearance stage}\\render\_only\\bg\_only\_inpaint\\appearance\_only\_conditioned};
-\node[narrow, below=11mm of appearance] (background) {\textbf{Background policy}\\base background from envmap\\optional background-only edit where inst\_id == 0};
-\node[box, right=10mm of appearance] (output) {\textbf{Published sample}\\image\\image\_render\\meta / appearance / qa\\shard row for YOLOZU};
+\node[box] (assets) at (0, 0) {\textbf{Asset sources}\\CAD / mesh files\\or primitive boxes\\asset metadata\\+ keypoints};
+\node[box] (recipe) at (5.2, 0) {\textbf{Scene recipe}\\asset\_pool\\camera\_policy\\lighting\_policy\\prompt\_template};
+\node[box] (spec) at (10.4, 0) {\textbf{Scene spec}\\explicit objects\\mesh\_file / primitive\_box\\camera + envmap\\+ intensity};
 
-\draw[arrow] (assets) -- (recipe);
-\draw[arrow] (recipe) -- (spec);
-\draw[arrow] (spec) -- (render);
-\draw[arrow] (render) -- (appearance);
-\draw[arrow] (appearance) -- (output);
-\draw[arrow] (render) -- (gt);
-\draw[arrow] (gt.east) -| (output.south);
+\node[smallbox] (gt) at (2.4, -4.0) {\textbf{Ground truth}\\depth\_ndc\\inst\_id\\sem\_id\\kpts2d};
+\node[box] (render) at (7.4, -4.0) {\textbf{Renderer}\\Open3D / placeholder\\writes image\_render\\depth / inst / sem passes};
+\node[wide] (appearance) at (13.3, -4.0) {\textbf{Appearance stage}\\render\_only\\bg\_only\_inpaint\\appearance\_only\_conditioned};
+
+\node[smallbox] (background) at (9.7, -8.1) {\textbf{Background policy}\\base background from envmap\\optional background-only edit\\where inst\_id == 0};
+\node[box] (output) at (15.5, -8.1) {\textbf{Published sample}\\image + image\_render\\meta / appearance / qa\\shard row for YOLOZU};
+
+\draw[arrow] (assets.east) -- (recipe.west);
+\draw[arrow] (recipe.east) -- (spec.west);
 \draw[arrow] (spec.south) -- (render.north);
-\draw[arrow] (render.east) -- (background.west);
-\draw[arrow] (background.east) |- (appearance.south);
+\draw[arrow] (render.west) -- (gt.east);
+\draw[arrow] (render.east) -- (appearance.west);
+\draw[arrow] (appearance.south west) |- (background.east);
+\draw[arrow] (appearance.south east) |- (output.north);
+\draw[arrow] (gt.south east) |- (output.west);
 \end{tikzpicture}
-}
 \caption{SynthGen generation path: CAD/mesh or primitive assets are compiled into a renderer-ready scene, the renderer owns the labels, and background editing is limited to label-safe appearance stages.}
 \end{figure}
 
