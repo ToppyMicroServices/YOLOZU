@@ -2,6 +2,8 @@
 
 Use this page when an external generator repo such as `YOLOZU-synthgen` is preparing to hand off synthetic shards to YOLOZU.
 
+This handoff was verified end to end with a local `YOLOZU-synthgen` checkout on April 2, 2026 using the CPU path. No GPU or MPS runtime is required for the intake, overlay, or evaluation steps below.
+
 ## Goal
 
 Keep the integration boundary small and stable:
@@ -49,19 +51,43 @@ Required semantics:
 <dataset-root>/
   shards/
     train_000.jsonl
+    predictions_synthgen.json
   <sample>_image.png
   <sample>_depth.npy
   <sample>_inst.npy
   <sample>_sem.npy
   <sample>_kpts.npy
-  predictions_synthgen.json
 ```
 
 Notes:
 
 - relative asset paths in shard rows should resolve from the dataset root
 - `predictions_synthgen.json` should follow the YOLOZU predictions interface contract
+- if prediction records reuse shard-relative asset paths such as `../samples/...`, write the predictions artifact under `shards/` so those paths keep resolving from the same base
 - generator-side metadata can grow, but breaking contract changes require a new schema version
+
+## Verified repo-to-repo probe
+
+The following probe was run successfully across `YOLOZU-synthgen` and YOLOZU:
+
+1. Generate demo shards in `YOLOZU-synthgen`:
+
+```bash
+PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen generate-demo-dataset \
+  --output-dir /tmp/yolozu_synthgen_demo \
+  --num-train 2 \
+  --num-val 1
+```
+
+2. Export a YOLOZU-compatible dataset root:
+
+```bash
+PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen export-yolozu-synthgen \
+  --shards-root /tmp/yolozu_synthgen_demo/shards \
+  --output-dir /tmp/yolozu_synthgen_export
+```
+
+3. Run the YOLOZU handoff checks against `/tmp/yolozu_synthgen_export`.
 
 ## Handoff checks to run in YOLOZU
 
@@ -88,7 +114,7 @@ python3 tools/render_synthgen_overlay.py \
 ```bash
 python3 tools/eval_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions /path/to/synthgen_dataset/predictions_synthgen.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --schema-id animal_v1 \
   --output reports/synthgen_eval.json
 ```
@@ -98,7 +124,7 @@ python3 tools/eval_synthgen.py \
 ```bash
 python3 tools/smoke_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions /path/to/synthgen_dataset/predictions_synthgen.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --output-dir reports
 ```
 
@@ -113,6 +139,7 @@ Integration is ready when all of the following are true:
   - `reports/smoke_synthgen_overlay.png`
   - `reports/smoke_synthgen_eval.json`
   - `reports/smoke_synthgen_summary.json`
+- path resolution is explicit: either keep predictions under `shards/` or rewrite any shard-relative asset paths before evaluation
 
 ## Versioning rule
 

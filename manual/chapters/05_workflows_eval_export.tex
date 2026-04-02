@@ -202,7 +202,7 @@ python3 tools/render_synthgen_overlay.py \
 
 python3 tools/eval_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions reports/synthgen_predictions.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --schema-id animal_v1 \
   --output reports/synthgen_eval_animal.json
 \end{lstlisting}
@@ -219,6 +219,8 @@ python3 tools/smoke_synthgen.py \
   --dataset-root data/smoke/synthgen_minishard \
   --output-dir reports
 \end{lstlisting}
+
+Path-resolution note: if an external generator emits prediction rows with shard-relative asset paths (for example \path{../samples/...}), keep the predictions artifact under \path{shards/} or rewrite those paths before evaluation.
 
 \section{Workflow C: Folder inference (pip CLI)}
 Choose this when you care more about ``show me the result'' than about setting up a larger benchmark or protocol-pinned evaluation loop.

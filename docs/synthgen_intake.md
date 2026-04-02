@@ -58,10 +58,16 @@ Evaluate predictions:
 ```bash
 python3 tools/eval_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions reports/synthgen_predictions.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --schema-id animal_v1 \
   --output reports/synthgen_eval.json
 ```
+
+Path note:
+
+- if prediction rows reference shard-relative assets such as `../samples/...`, place the predictions artifact under `shards/`
+- alternatively, rewrite those paths to dataset-root-relative or absolute paths before evaluation
+- the intake / overlay / evaluation path is CPU-friendly; GPU or MPS is optional
 
 ## External source-of-truth policy
 

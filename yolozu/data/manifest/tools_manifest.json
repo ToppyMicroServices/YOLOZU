@@ -3789,6 +3789,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
+        "docs/synthgen_repo_integration.md",
         "recipes/synthgen/README.md",
         "docs/synthgen_contract.md"
       ],
@@ -3806,8 +3807,8 @@
       "entrypoint": "tools/eval_synthgen.py",
       "examples": [
         {
-          "command": "python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions reports/synthgen_predictions.json --schema-id animal_v1 --output reports/synthgen_eval_animal.json",
-          "description": "Evaluate animal_v1 predictions exported from external inference."
+          "command": "python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval_animal.json",
+          "description": "Evaluate animal_v1 predictions exported from external inference, keeping shard-relative asset paths under shards/."
         }
       ],
       "id": "eval_synthgen",
@@ -9575,6 +9576,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
+        "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md"
       ],
       "effects": {
@@ -12473,6 +12475,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
+        "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md",
         "data/smoke/synthgen_minishard/README.md"
       ],
@@ -13407,6 +13410,7 @@
       },
       "docs": [
         "docs/synthgen_intake.md",
+        "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md"
       ],
       "effects": {

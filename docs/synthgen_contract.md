@@ -98,7 +98,9 @@ python3 tools/render_synthgen_overlay.py \
 ```bash
 python3 tools/eval_synthgen.py \
   --dataset-root /path/to/synthgen_dataset \
-  --predictions reports/synthgen_predictions.json \
+  --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --schema-id animal_v1 \
   --output reports/synthgen_eval.json
 ```
+
+If the predictions artifact reuses shard-relative paths such as `../samples/...`, keep it under `shards/` so the relative base matches the exported shard rows.
