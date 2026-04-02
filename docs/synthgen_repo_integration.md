@@ -51,6 +51,28 @@ Intentionally unsupported as the main labeled-data path:
 - gen-AI-predicted masks or keypoints as ground truth
 - text-to-3D as the main geometry source
 
+## How backgrounds are generated and selected
+
+The first background choice is renderer-side, not free-form image generation:
+
+- `scene_recipe.lighting_policy.envmap_ids` defines the allowed environment-map pool
+- the compiler samples one `envmap_id` from that pool
+- `lighting_policy.env_intensity_range` controls the sampled ambient/background intensity
+
+That produces the base render and keeps labels stable because depth, instance ids, semantic ids, and keypoints are all computed from the same rendered scene state.
+
+Optional post-render background generation happens only through label-safe appearance modes:
+
+- `render_only`: no appearance editing
+- `bg_only_inpaint`: edit only background pixels/masks outside labeled objects
+- `appearance_only_conditioned`: object-interior appearance edits while preserving object count and silhouette
+
+For `bg_only_inpaint`, the contract is explicit:
+
+- `mask_scope = background_only`
+- controls may include renderer-derived guides such as `depth_ndc`, `inst_boundary`, and `foreground_union_mask`
+- object boundaries and labels must not change
+
 ## What YOLOZU-synthgen must emit
 
 Each record in `shards/*.jsonl` must satisfy `schema_version = "1"` of the SynthGen sample interface contract.
