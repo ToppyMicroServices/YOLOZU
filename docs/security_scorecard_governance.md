@@ -94,30 +94,41 @@ Use Scorecard as a posture dashboard:
 
 This avoids spending time chasing findings that cannot be cleared by editing source files alone.
 
-## 2026-03-28 remote audit snapshot
+## 2026-04-02 remote audit snapshot
 
 Latest remote code-scanning triage on `main` shows:
 
-- actionable CodeQL items:
-  - `py/clear-text-storage-sensitive-data` in `tools/check_repo_governance.py`
-  - `py/empty-except` in `tools/export_predictions_trt.py`
+- source-level / workflow-level items that can be improved in-repo:
+  - `VulnerabilitiesID` reported four `onnx` advisories on the default-branch dependency graph:
+    - `GHSA-3r9x-f23j-gc73`
+    - `GHSA-538c-55jv-c5g9`
+    - `GHSA-cmw6-hcpp-c6jp`
+    - `GHSA-p433-9wv8-28xj`
+  - at the time of that run, the Scorecard workflow was still pinned to `ossf/scorecard-action` `v2.4.1` (since updated to `v2.4.3`; see follow-up below)
 - repository-history / external-program items that still require operational follow-through:
-  - `PinnedDependenciesID` for `.clusterfuzzlite/Dockerfile`
-  - `VulnerabilitiesID` (`GHSA-hqmj-h5c6-369m`)
   - `CodeReviewID`
   - `MaintainedID`
   - `SASTID`
 
-The first two items are source-level and should be fixed in the repository.
-The remaining items are primarily governed by dependency upgrades, reviewed-PR history,
-or external program status rather than by a single source edit.
+The Scorecard action pin is updated in-repo, and the repository-side `onnx` minimum/lock
+versions are raised to `1.21.0` so the next default-branch run can clear the patched
+dependency-side vulnerability signal. The remaining three findings are still primarily
+governed by reviewed-PR history, repository age/activity, and GitHub-side scan coverage
+timing rather than by a single source edit.
 
-## 2026-03-30 follow-up
+## 2026-04-02 follow-up
 
-The repository now carries two explicit mitigations for source-level security alerts:
+The repository now carries these explicit source-level mitigations for Scorecard-related
+security findings:
 
 - `.clusterfuzzlite/Dockerfile` installs from a hash-locked requirements file with `pip --require-hashes`
 - `osv-scanner.toml` documents a scoped ignore for `GHSA-hqmj-h5c6-369m`
+- `.github/workflows/scorecard.yml` is pinned to `ossf/scorecard-action` `v2.4.3`
+- `pyproject.toml`, `requirements-test.txt`, and repository lockfiles pin `onnx>=1.21.0` / `onnx==1.21.0` to pick up fixes for:
+  - `GHSA-3r9x-f23j-gc73`
+  - `GHSA-538c-55jv-c5g9`
+  - `GHSA-cmw6-hcpp-c6jp`
+  - `GHSA-p433-9wv8-28xj`
 
 The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This
 repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore

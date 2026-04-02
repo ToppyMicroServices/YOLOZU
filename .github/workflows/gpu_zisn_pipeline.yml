@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload zisn1 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: zisn1-artifacts
           if-no-files-found: ignore
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload zisn2 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: zisn2-artifacts
           if-no-files-found: ignore
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload zisn3 artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: zisn3-artifacts
           if-no-files-found: ignore
@@ -390,7 +390,7 @@ jobs:
 
       - name: Upload gpu-zisn summary artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gpu-zisn-summary
           if-no-files-found: ignore

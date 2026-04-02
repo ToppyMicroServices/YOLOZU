@@ -3,8 +3,8 @@
 
 Default behavior (`python3 tools/release.py`):
 1) Read current package version from `yolozu/__init__.py`.
-2) Classify change scale (small/medium/large) from git diff stats since latest semver tag.
-3) Bump semantic version automatically.
+2) Classify change scale (small/medium/large) from git diff stats since the latest tag that matches the active versioning scheme.
+3) Bump semantic version automatically, using explicit breaking-change signals for major releases.
 4) Run release quality checks.
 5) Update package version, commit, create/push git tag.
 6) Create published GitHub release (which triggers PyPI workflow).
@@ -191,22 +191,48 @@ def _classify_scale(files_changed: int, line_delta: int) -> str:
     return "small"
 
 
-def _bump_semver(current: str, scale: str) -> str:
+def _contains_breaking_change_signal(body_text: str, subject_text: str) -> bool:
+    if "BREAKING CHANGE" in body_text or "BREAKING-CHANGE" in body_text:
+        return True
+    return bool(re.search(r"^[^\n:]+!:", subject_text, flags=re.MULTILINE))
+
+
+def _has_breaking_change_signal(ref: str | None) -> bool:
+    if ref:
+        body_out = _git_stdout("log", "--format=%B", f"{ref}..HEAD")
+        subject_out = _git_stdout("log", "--format=%s", f"{ref}..HEAD")
+    else:
+        body_out = _git_stdout("log", "--format=%B", "--root", "HEAD")
+        subject_out = _git_stdout("log", "--format=%s", "--root", "HEAD")
+    return _contains_breaking_change_signal(str(body_out or ""), str(subject_out or ""))
+
+
+def _recommended_semver_bump(scale: str, *, breaking: bool) -> str:
+    if breaking:
+        return "major"
+    if scale in {"medium", "large"}:
+        return "minor"
+    if scale == "small":
+        return "patch"
+    raise RuntimeError(f"unknown release scale: {scale}")
+
+
+def _bump_semver(current: str, bump: str) -> str:
     m = SEMVER_RE.fullmatch(str(current).strip())
     if not m:
         raise RuntimeError(f"unsupported SemVer format (expected MAJOR.MINOR.PATCH): {current}")
     major, minor, patch = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    if scale == "small":
+    if bump == "patch":
         patch += 1
-    elif scale == "medium":
+    elif bump == "minor":
         minor += 1
         patch = 0
-    elif scale == "large":
+    elif bump == "major":
         major += 1
         minor = 0
         patch = 0
     else:
-        raise RuntimeError(f"unknown bump scale: {scale}")
+        raise RuntimeError(f"unknown semver bump kind: {bump}")
     return f"{major}.{minor}.{patch}"
 
 
@@ -313,10 +339,20 @@ def main(argv: list[str] | None = None) -> int:
 
     line_delta = int(insertions + deletions)
     bump_scale = _classify_scale(files_changed, line_delta)
+    try:
+        breaking_change_detected = _has_breaking_change_signal(latest_tag) if versioning == "semver" else False
+    except Exception as exc:
+        breaking_change_detected = False
+        errors.append(str(exc))
+    try:
+        semver_bump = _recommended_semver_bump(bump_scale, breaking=breaking_change_detected) if versioning == "semver" else ""
+    except Exception as exc:
+        semver_bump = ""
+        errors.append(str(exc))
     bump_formulas = {
-        "small": "X.Y.Z -> X.Y.(Z+1)  (1.1.1+add 相当)",
-        "medium": "X.Y.Z -> X.(Y+1).0  (1.1+a.0 相当)",
-        "large": "X.Y.Z -> (X+1).0.0  (1+a.0.0 相当)",
+        "patch": "X.Y.Z -> X.Y.(Z+1)  (non-breaking small fix/add 相当)",
+        "minor": "X.Y.Z -> X.(Y+1).0  (non-breaking feature/add 相当)",
+        "major": "X.Y.Z -> (X+1).0.0  (explicit breaking change 相当)",
     }
     calver_formula = "YYYY.MM.DD.MICRO -> same UTC day: MICRO+1, new UTC day: YYYY.MM.DD.0"
 
@@ -324,7 +360,7 @@ def main(argv: list[str] | None = None) -> int:
         if not current_version:
             next_version = ""
         elif versioning == "semver":
-            next_version = _bump_semver(current_version, bump_scale)
+            next_version = _bump_semver(current_version, semver_bump)
         elif versioning == "calver":
             next_version = _bump_calver(current_version)
         else:
@@ -500,7 +536,9 @@ def main(argv: list[str] | None = None) -> int:
         "next_version": next_version,
         "tag": tag,
         "bump_scale": bump_scale,
-        "bump_formula": calver_formula if versioning == "calver" else bump_formulas.get(bump_scale),
+        "breaking_change_detected": breaking_change_detected,
+        "semver_bump": semver_bump if versioning == "semver" else "",
+        "bump_formula": calver_formula if versioning == "calver" else bump_formulas.get(semver_bump),
         "scale_stats": {
             "files_changed": files_changed,
             "insertions": insertions,

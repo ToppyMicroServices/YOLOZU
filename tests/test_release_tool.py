@@ -137,6 +137,50 @@ class TestReleaseTool(unittest.TestCase):
         self.assertEqual(str(release_tool._bump_calver("2026.03.20.0", today=(2026, 3, 20))), "2026.03.20.1")
         self.assertEqual(str(release_tool._bump_calver("2026.03.19.4", today=(2026, 3, 20))), "2026.03.20.0")
 
+    def test_semver_bump_prefers_minor_for_large_non_breaking_change(self) -> None:
+        from tools import release as release_tool
+
+        self.assertEqual(str(release_tool._recommended_semver_bump("small", breaking=False)), "patch")
+        self.assertEqual(str(release_tool._recommended_semver_bump("medium", breaking=False)), "minor")
+        self.assertEqual(str(release_tool._recommended_semver_bump("large", breaking=False)), "minor")
+        self.assertEqual(str(release_tool._bump_semver("1.2.3", "minor")), "1.3.0")
+
+    def test_semver_bump_uses_major_only_for_breaking_signal(self) -> None:
+        from tools import release as release_tool
+
+        self.assertEqual(str(release_tool._recommended_semver_bump("small", breaking=True)), "major")
+        self.assertEqual(str(release_tool._recommended_semver_bump("large", breaking=True)), "major")
+        self.assertEqual(str(release_tool._bump_semver("1.2.3", "major")), "2.0.0")
+
+    def test_breaking_change_signal_helper(self) -> None:
+        from tools import release as release_tool
+
+        self.assertTrue(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "feat: add API\n\nBREAKING CHANGE: drops old behavior",
+                    "feat: add API",
+                )
+            )
+        )
+        self.assertTrue(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "chore: cleanup\n\nBREAKING-CHANGE: incompatible config",
+                    "chore: cleanup",
+                )
+            )
+        )
+        self.assertTrue(bool(release_tool._contains_breaking_change_signal("details", "feat!: overhaul public API")))
+        self.assertFalse(
+            bool(
+                release_tool._contains_breaking_change_signal(
+                    "feat: add option\n\nWarning!: documentation note only",
+                    "feat: add option",
+                )
+            )
+        )
+
     def test_tools_wrapper_release_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         wrapper = repo_root / "tools" / "yolozu.py"
