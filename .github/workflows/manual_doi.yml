@@ -72,7 +72,7 @@ jobs:
 
       - name: Build manual PDF
         if: ${{ env.SKIP_MANUAL_DOI != 'true' }}
-        uses: xu-cheng/latex-action@25080975331dc4fc8e6f1af55788e00f84f51fff # v4
+        uses: xu-cheng/latex-action@6549dc21effb2730855a1281407ecfcececc6c1b # v4
         with:
           working_directory: manual
           root_file: main.tex
