@@ -173,6 +173,230 @@ To run \textbf{memoryless} (no replay), set replay size to 0 in the config.
 This chapter's \emph{distillation} refers to \textbf{checkpoint-based self-distillation during training} (e.g., \cmd{--self-distill-from}) as an anti-forgetting mechanism.
 The separate tool \path{tools/distill_predictions.py} performs \textbf{offline prediction blending} (rewriting a predictions JSON) and does not by itself mitigate catastrophic forgetting.
 
+\section{How to add SDFT to an RT-DETR / YOLO-style image model}
+
+For detector-style image models, SDFT does \textbf{not} mean inventing a new architecture.
+It means adding two pieces to an existing training loop:
+\begin{itemize}
+  \item a \textbf{frozen teacher checkpoint} from the previous stage,
+  \item a \textbf{distillation loss} that keeps the current student close to that teacher while learning the new task.
+\end{itemize}
+
+\subsection{The roles of student and teacher}
+
+The simplest mental model is:
+\begin{itemize}
+  \item \textbf{student}: the model we are updating on the new task/domain,
+  \item \textbf{teacher}: the previous checkpoint, loaded once and kept frozen.
+\end{itemize}
+
+So one training step becomes:
+\begin{enumerate}
+  \item run the current image batch through the student,
+  \item run the same batch through the frozen teacher,
+  \item compute the usual task loss against labels,
+  \item compute a distillation loss between student outputs and teacher outputs,
+  \item add them together and update the student only.
+\end{enumerate}
+
+In compact form:
+\[
+\mathcal{L}_{total} = \mathcal{L}_{task} + \lambda \mathcal{L}_{distill}.
+\]
+
+Here, $\lambda$ controls how strongly the new run is pulled toward the previous checkpoint.
+
+\subsection{What to distill in detector-style models}
+
+For RT-DETR / YOLO-like models, the most practical distillation targets are:
+\begin{itemize}
+  \item \textbf{classification logits}: keep class confidence behavior close to the previous checkpoint,
+  \item \textbf{bounding boxes}: keep localization from drifting too far,
+  \item optional task heads such as \textbf{segmentation}, \textbf{depth}, \textbf{keypoints}, or \textbf{pose}, when those outputs exist in both teacher and student.
+\end{itemize}
+
+The repository's default continual path describes the common baseline as:
+\begin{quote}
+logits + bbox distillation, with reverse-KL on logits by default.
+\end{quote}
+
+That is a good first configuration because it directly targets the two outputs most likely to regress during detector fine-tuning: classification behavior and localization behavior.
+
+\subsection{What changes in the training loop}
+
+Conceptually, the existing training loop stays the same.
+The only difference is that the batch now has two forward passes:
+
+\begin{lstlisting}[language=Python]
+student_outputs = student(images)
+
+with torch.no_grad():
+    teacher_outputs = teacher(images)
+
+task_loss = compute_task_loss(student_outputs, targets)
+distill_loss = compute_distill_loss(student_outputs, teacher_outputs)
+total_loss = task_loss + lambda_distill * distill_loss
+
+optimizer.zero_grad()
+total_loss.backward()
+optimizer.step()
+\end{lstlisting}
+
+Three practical rules matter:
+\begin{itemize}
+  \item the teacher checkpoint is loaded once and kept in \cmd{eval()} mode,
+  \item the teacher is never optimized,
+  \item teacher and student must expose compatible output keys for the chosen distillation targets.
+\end{itemize}
+
+\subsection{How this maps to YOLOZU}
+
+In this repository, the operator-facing hook is the frozen-teacher flag:
+\begin{lstlisting}[language=bash]
+--self-distill-from /path/to/previous_stage.ckpt
+\end{lstlisting}
+
+That means the practical recipe is:
+\begin{enumerate}
+  \item train Task A or Domain A normally and save a checkpoint,
+  \item start Task B / Domain B fine-tuning from the current initialization,
+  \item also pass the previous checkpoint as the frozen teacher,
+  \item keep the usual detection loss, and add distillation on logits / bbox (plus optional extra heads).
+\end{enumerate}
+
+At the CLI level, the continual runner does this through the sequential training path:
+\begin{lstlisting}[language=bash]
+python3 rtdetr_pose/tools/train_continual.py \
+  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
+\end{lstlisting}
+
+And the manual low-level mental model is:
+\begin{itemize}
+  \item \cmd{train\_minimal.py}: the per-stage trainer,
+  \item \cmd{--self-distill-from}: the frozen teacher checkpoint input,
+  \item continual config: controls replay, distillation keys, and distillation weight.
+\end{itemize}
+
+\subsection{Why this helps}
+
+Without SDFT, fine-tuning on the new task can move detector outputs too aggressively toward the new data distribution.
+In practice, that often shows up as:
+\begin{itemize}
+  \item older classes becoming miscalibrated,
+  \item box quality drifting on previous domains,
+  \item task-specific heads regressing even when the backbone still looks reasonable.
+\end{itemize}
+
+SDFT does not stop the model from learning the new task.
+Instead, it adds a second pressure:
+\begin{quote}
+learn the new data, but do not move so far that the previous detector behavior collapses.
+\end{quote}
+
+\subsection{A minimal operator recipe}
+
+If you already have an existing RT-DETR / YOLO-style checkpoint, the operational sequence is:
+\begin{enumerate}
+  \item keep the previous checkpoint,
+  \item fine-tune on the new dataset/domain,
+  \item pass the previous checkpoint as \cmd{--self-distill-from},
+  \item start with logits + bbox distillation,
+  \item only later add replay, LoRA, or extra task-head distillation if needed.
+\end{enumerate}
+
+This is usually the cleanest first experiment because it answers the central question quickly:
+\begin{quote}
+Can the model adapt to the new data without forgetting too much of the previous detector behavior?
+\end{quote}
+
+\subsection{Measured smoke run: naive sequential fine-tune vs memoryless SDFT}
+
+To make the workflow concrete, we ran a tiny two-task continual-learning smoke experiment in this repository.
+This was not intended as a benchmark.
+Its purpose was to verify that the SDFT path really executes, records the teacher checkpoint, and emits the expected continual-learning artifacts.
+
+\paragraph{Setup.}
+We created two tiny task roots from \path{data/coco128}:
+\begin{itemize}
+  \item Task A: 8 train images + 4 val images,
+  \item Task B: 8 train images + 4 val images.
+\end{itemize}
+
+Both runs used the same detector config and the same tiny budget:
+\begin{itemize}
+  \item device: CPU,
+  \item image size: $160$,
+  \item batch size: $1$,
+  \item max steps per task: $2$,
+  \item replay: disabled (\cmd{replay\_size: 0}).
+\end{itemize}
+
+We then executed two runs:
+\begin{itemize}
+  \item \textbf{naive sequential fine-tune}: Task B resumes from Task A, but uses no teacher checkpoint,
+  \item \textbf{memoryless SDFT}: Task B resumes from Task A and also receives \cmd{--self-distill-from} pointing to the Task A checkpoint.
+\end{itemize}
+
+\paragraph{Commands.}
+The measured runs were produced with:
+\begin{lstlisting}[language=bash]
+python3 rtdetr_pose/tools/train_continual.py \
+  --config /tmp/yolozu_sdft_manual_naive.yaml \
+  --run-dir runs/continual/manual_sdft_smoke_naive
+
+python3 rtdetr_pose/tools/train_continual.py \
+  --config /tmp/yolozu_sdft_manual_sdft.yaml \
+  --run-dir runs/continual/manual_sdft_smoke_sdft
+\end{lstlisting}
+
+And evaluated with:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_continual.py \
+  --run-json runs/continual/manual_sdft_smoke_naive/continual_run.json \
+  --device cpu \
+  --image-size 160 \
+  --max-images 4 \
+  --metric simple_map \
+  --force
+
+python3 tools/eval_continual.py \
+  --run-json runs/continual/manual_sdft_smoke_sdft/continual_run.json \
+  --device cpu \
+  --image-size 160 \
+  --max-images 4 \
+  --metric simple_map \
+  --force
+\end{lstlisting}
+
+\paragraph{Observed results.}
+The important thing to notice is not a claimed accuracy gain, but that the SDFT path became visible in the recorded outputs:
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Run & Task B teacher & Task B final loss & Extra recorded loss terms \\
+\midrule
+Naive & none & 2.673 & none \\
+SDFT & Task A checkpoint & 1.975 & \cmd{loss\_sdft}=0.187,\ \cmd{loss\_sdft\_bbox}=0.057,\ \cmd{loss\_sdft\_logits}=0.130 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+More specifically:
+\begin{itemize}
+  \item \path{runs/continual/manual\_sdft\_smoke\_sdft/task01\_task\_b/run\_record.json} recorded \cmd{self\_distill\_from} pointing to the Task A checkpoint.
+  \item \path{runs/continual/manual\_sdft\_smoke\_sdft/task01\_task\_b/metrics.json} contained \cmd{loss\_sdft}, \cmd{loss\_sdft\_bbox}, and \cmd{loss\_sdft\_logits}, which do not appear in the naive run.
+  \item Both runs wrote the expected continual-learning outputs: \path{continual\_run.json}, per-task checkpoints, per-task metrics, and \path{continual\_eval.json}.
+\end{itemize}
+
+\paragraph{What this smoke run does \emph{not} prove.}
+Because this validation run used only two optimization steps per task and only four validation images per task, the proxy mAP matrix stayed at zero for both runs.
+That means this example should be read as a \emph{wiring and artifact validation}, not as evidence that SDFT improved accuracy in this tiny setting.
+
+The right interpretation is:
+\begin{quote}
+the teacher path executed correctly, the distillation loss was active on Task B, and the continual-learning artifacts were emitted in a form that can be inspected and compared.
+\end{quote}
+
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:
 \begin{lstlisting}[language=bash]

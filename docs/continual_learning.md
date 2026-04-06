@@ -282,6 +282,41 @@ This writes:
 - `runs/continual/<run>/continual_eval.json`
 - `runs/continual/<run>/continual_eval.html`
 
+## Measured smoke run (what we actually validated)
+
+We ran a tiny two-task continual-learning smoke experiment in this repo to verify that the memoryless SDFT path is really exercised.
+
+Setup:
+- source data: a small deterministic slice of `data/coco128`
+- Task A: 8 train images + 4 val images
+- Task B: 8 train images + 4 val images
+- device: `cpu`
+- `image_size=160`
+- `batch_size=1`
+- `max_steps=2`
+- replay: disabled (`replay_size: 0`)
+
+We compared:
+- naive sequential fine-tune: Task B resumes from Task A without a teacher checkpoint
+- memoryless SDFT: Task B resumes from Task A and also receives `--self-distill-from <task_a_checkpoint>`
+
+Observed facts from the measured run:
+- the SDFT run recorded `self_distill_from` in `task01_task_b/run_record.json`
+- the SDFT run wrote `loss_sdft`, `loss_sdft_bbox`, and `loss_sdft_logits` into `task01_task_b/metrics.json`
+- the naive run did not emit those SDFT-specific loss terms
+
+Observed task-B losses in that smoke run:
+
+| Run | Teacher on Task B | Final Task-B loss | Distillation-only terms |
+|---|---|---:|---|
+| naive | none | `2.673` | none |
+| SDFT | Task A checkpoint | `1.975` | `loss_sdft=0.187`, `loss_sdft_bbox=0.057`, `loss_sdft_logits=0.130` |
+
+Important limitation:
+- this smoke run used only 2 optimization steps per task and only 4 validation images per task
+- the proxy mAP matrix therefore stayed at `0.0` for both runs
+- so this example validates the SDFT wiring and emitted artifacts, not a meaningful accuracy gain
+
 ## Outputs (train)
 
 `train_continual.py` creates a run folder under `runs/continual/` and writes:
