@@ -237,6 +237,8 @@ python3 tools/eval_continual.py \
   --max-images 50
 ```
 
+On macOS, you can switch `--device` to `mps` when `python3 tools/yolozu.py doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. If MPS is not available on that machine, use `cpu`.
+
 Pose/depth metrics (requires pose sidecar metadata in `labels/<split>/*.json`):
 
 ```bash
@@ -295,6 +297,8 @@ python3 tools/continual_decide.py \
   --min-highconf-pseudo-labels 50 \
   --min-total-curated-examples 60
 ```
+
+`continual_decide.py` is device-agnostic. It reads JSON artifacts only, so it works the same on CPU-only hosts and on macOS machines that happen to have MPS enabled.
 
 This writes:
 - `runs/continual/<run>/continual_promotion_decision.json` by default

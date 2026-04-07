@@ -2513,7 +2513,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Apply hard/soft gates to continual-learning eval results and emit a promote/review/hold decision report.",
+      "summary": "Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report.",
       "tags": [
         "continual",
         "promotion",
@@ -3042,6 +3042,10 @@
           "description": "Evaluate and summarize forgetting."
         },
         {
+          "command": "python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device mps --max-images 50",
+          "description": "Evaluate on macOS with MPS when torch reports mps_available=true."
+        },
+        {
           "command": "python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --max-images 50 --metric pose --metric-key pose_success",
           "description": "Pose-mode evaluation (requires pose sidecar metadata in labels)."
         }
@@ -3158,7 +3162,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML.",
+      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps.",
       "tags": [
         "continual",
         "eval",
