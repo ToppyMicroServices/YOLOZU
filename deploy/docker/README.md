@@ -10,12 +10,15 @@ On a release tag `vX.Y.Z`, the workflow `.github/workflows/container.yml` publis
 
 - Minimal (no torch): `ghcr.io/toppymicroservices/yolozu:X.Y.Z`
 - Demo (includes torch extra): `ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z`
+- Both images also receive the `latest` tag on release-tag builds.
 
 Example pulls:
 
 ```bash
-docker pull ghcr.io/toppymicroservices/yolozu:1.0.0
-docker pull ghcr.io/toppymicroservices/yolozu-demo:1.0.0
+docker pull ghcr.io/toppymicroservices/yolozu:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu:latest
+docker pull ghcr.io/toppymicroservices/yolozu-demo:latest
 ```
 
 Notes:
@@ -28,15 +31,15 @@ Notes:
 Minimal image:
 
 ```bash
-docker run --rm ghcr.io/toppymicroservices/yolozu:1.0.0 doctor --output -
-docker run --rm ghcr.io/toppymicroservices/yolozu:1.0.0 demo instance-seg
+docker run --rm ghcr.io/toppymicroservices/yolozu:X.Y.Z doctor --output -
+docker run --rm ghcr.io/toppymicroservices/yolozu:X.Y.Z demo instance-seg
 ```
 
 Demo image:
 
 ```bash
-docker run --rm ghcr.io/toppymicroservices/yolozu-demo:1.0.0 demo instance-seg
-docker run --rm ghcr.io/toppymicroservices/yolozu-demo:1.0.0 demo continual --method ewc_replay
+docker run --rm ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z demo instance-seg
+docker run --rm ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z demo continual --method ewc_replay
 ```
 
 ## Local build
@@ -63,10 +66,4 @@ Refresh base layers and rebuild locally:
 ```bash
 docker build --pull -f deploy/docker/Dockerfile -t yolozu:local .
 docker build --pull -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
-```
-
-Optional Python base override:
-
-```bash
-docker build --pull --build-arg PYTHON_IMAGE=python:3.12-slim-bookworm -f deploy/docker/Dockerfile -t yolozu:local .
 ```

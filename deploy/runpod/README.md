@@ -73,32 +73,37 @@ TensorRT is not installed via pip; use an NVIDIA/TensorRT base image and add Pyt
 
 ## Prebuilt images (GHCR)
 
-If enabled in CI, tag pushes (`vX.Y.Z`) publish images to GHCR.
+If enabled in CI, release-tag pushes (`vX.Y.Z`) publish images to GHCR.
+All published images also receive the `latest` tag on release-tag builds.
 
 CPU images:
 
 ```bash
-docker pull ghcr.io/<owner>/yolozu:0.1.0
-docker pull ghcr.io/<owner>/yolozu-demo:0.1.0
+docker pull ghcr.io/toppymicroservices/yolozu:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu:latest
+docker pull ghcr.io/toppymicroservices/yolozu-demo:latest
 ```
 
 Optional RunPod GPU images (require an NVIDIA NGC API key configured as a GitHub secret named `NGC_API_KEY`):
 
 ```bash
-docker pull ghcr.io/<owner>/yolozu-trt:0.1.0
-docker pull ghcr.io/<owner>/yolozu-rtdetr-pose:0.1.0
+docker pull ghcr.io/toppymicroservices/yolozu-trt:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:X.Y.Z
+docker pull ghcr.io/toppymicroservices/yolozu-trt:latest
+docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:latest
 ```
 
 Build (example):
 
 ```bash
-docker build --pull -f deploy/runpod/Dockerfile -t yolozu:2026-02-08-trt .
+docker build --pull -f deploy/runpod/Dockerfile -t yolozu-trt:local .
 ```
 
 For RTDETRPose (installs torch + onnxruntime-gpu), use:
 
 ```bash
-docker build --pull -f deploy/runpod/Dockerfile.rtdetr_pose -t yolozu:2026-02-14-rtdetr-pose .
+docker build --pull -f deploy/runpod/Dockerfile.rtdetr_pose -t yolozu-rtdetr-pose:local .
 ```
 
 Run (example):
@@ -107,7 +112,7 @@ Run (example):
 docker run --gpus all -it --rm \
   -v "$PWD:/workspace/YOLOZU" \
   -v "/data:/data" \
-  yolozu:2026-02-08-trt
+  yolozu-trt:local
 ```
 
 Then run the pipeline command above inside the container.
