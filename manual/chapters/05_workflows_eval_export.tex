@@ -112,9 +112,9 @@ For production-oriented external inference, see \path{docs/external_inference.md
 \path{examples/infer_cpp/} (CMake) and \path{examples/infer_rust/} (Rust).
 
 \subsection{Rust template: optional ONNXRuntime mode}
-The Rust template defaults to a no-dependency stub (contract wiring), and can optionally enable ONNXRuntime via Cargo feature flags:
+The Rust template defaults to a minimal no-dependency interface-contract example, and can optionally enable ONNXRuntime via Cargo feature flags:
 \begin{lstlisting}[language=bash]
-# Stub (always available)
+# Minimal contract example (always available)
 cargo build --release --manifest-path examples/infer_rust/Cargo.toml
 examples/infer_rust/target/release/yolozu_infer_rust --out reports/pred_rust_stub.json
 

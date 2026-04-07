@@ -55,7 +55,7 @@ In other words, \textbf{ground truth is renderer-derived}; gen AI may improve re
 
 Current generator rules allow object geometry to come from:
 \begin{itemize}
-  \item \cmd{primitive\_box} placeholders for MVP scaffolding
+  \item \cmd{primitive\_box} entries for early geometry bootstrapping
   \item \cmd{mesh\_file} assets for real object geometry
 \end{itemize}
 
@@ -111,7 +111,7 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 \node[box] (spec) at (10.4, 0) {\textbf{Scene spec}\\explicit objects\\mesh\_file / primitive\_box\\camera + envmap\\+ intensity};
 
 \node[smallbox] (gt) at (2.4, -4.0) {\textbf{Ground truth}\\depth\_ndc\\inst\_id\\sem\_id\\kpts2d};
-\node[box] (render) at (7.4, -4.0) {\textbf{Renderer}\\Open3D / placeholder\\writes image\_render\\depth / inst / sem passes};
+\node[box] (render) at (7.4, -4.0) {\textbf{Renderer}\\Open3D / current backend\\writes image\_render\\depth / inst / sem passes};
 \node[wide] (appearance) at (13.3, -4.0) {\textbf{Appearance stage}\\render\_only\\bg\_only\_inpaint\\appearance\_only\_conditioned};
 
 \node[smallbox] (background) at (9.7, -8.1) {\textbf{Background policy}\\base background from envmap\\optional background-only edit\\where inst\_id == 0};
@@ -227,7 +227,7 @@ The current contract for \cmd{appearance\_spec} makes this explicit:
   \item controls can include renderer-derived guides such as \cmd{depth\_ndc}, \cmd{inst\_boundary}, and \cmd{foreground\_union\_mask}
 \end{itemize}
 
-Operationally, the background edit should be guided by renderer-owned masks. In the current stub implementation, background-only editing is approximated by changing pixels where \cmd{inst\_id == 0}. In a fuller provider-backed pipeline, the same rule would be enforced with masks and QA checks rather than with direct pixel loops.
+Operationally, the background edit should be guided by renderer-owned masks. In the current background-only implementation, this is approximated by changing pixels where \cmd{inst\_id == 0}. In a fuller provider-backed pipeline, the same rule would be enforced with masks and QA checks rather than with direct pixel loops.
 
 \subsection{What is not allowed}
 

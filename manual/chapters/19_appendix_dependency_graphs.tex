@@ -33,7 +33,7 @@ This diagram focuses on how users (and agents) typically enter the system, how e
 % Middle: core layers
 \node[box, right=18mm of cli] (manifest) {\textbf{Tool registry}\\\path{tools/manifest.json}\\validator: \path{tools/validate_tool_manifest.py}};
 
-\node[box, below=10mm of manifest] (adapter) {\textbf{Adapter / model scaffold}\\
+\node[box, below=10mm of manifest] (adapter) {\textbf{Adapter / model layer}\\
 \path{rtdetr_pose/*}\\
 (backbone, projector, encoder, export)};
 

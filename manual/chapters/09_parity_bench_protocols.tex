@@ -81,14 +81,14 @@ A critical semantic rule derived from the protocol documentation:
 Latency and FPS benchmarks constitute a vital component of the regression testing surface.
 
 The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
-current implementation keeps the honest artifact-first behavior from Phase~1,
-and additionally wires real backend orchestration for \cmd{torch},
-\cmd{onnx}, and \cmd{engine}. It also accepts \cmd{torchscript} as a
-first-class benchmark format, while still recording honest synthetic/skipped
-semantics until a dedicated real-orchestration path lands. When the real
-backends can execute, the command records a real dataset-pass wall-clock
-measurement. When they cannot, it still records skipped formats honestly rather
-than fabricating success.
+current implementation remains artifact-first and additionally wires real
+backend orchestration for \cmd{torch}, \cmd{onnx}, and \cmd{engine}. It also
+accepts \cmd{torchscript} in the benchmark surface; until a dedicated
+torchscript execution path exists, those entries are recorded explicitly as
+dry-run or synthetic-latency results instead of being misreported as fully
+executed runs. When the real backends can execute, the command records a real
+dataset-pass wall-clock measurement. When they cannot, it still records
+skipped formats honestly rather than fabricating success.
 
 A representative repository-wrapper invocation is:
 \begin{lstlisting}[language=bash]
@@ -114,9 +114,10 @@ The primary artifact set is:
 
 When \cmd{torch} plus at least one additional real backend (\cmd{onnx} or
 \cmd{engine}) complete successfully, \path{parity_<format>.json} is now a real
-backend-diff artifact rather than a placeholder. The chosen reference backend
-is recorded explicitly (preferring \cmd{torch} when available). Placeholder
-parity artifacts remain only for dry-run, skipped, or synthetic-only formats.
+backend-diff artifact rather than a synthetic placeholder record. The chosen reference
+backend is recorded explicitly (preferring \cmd{torch} when available).
+Synthetic/skipped parity artifacts remain only for dry-run, skipped, or
+synthetic-only formats.
 
 \subsection{Benchmark task semantics}
 The benchmark surface now records explicit task semantics instead of treating
@@ -131,12 +132,12 @@ The current task matrix is:
 \textbf{Task} & \textbf{Accepted labels} & \textbf{Metric family} & \textbf{State} & \textbf{Notes} \\
 \hline
 \cmd{detect} & \cmd{detect}, \cmd{detection} & \cmd{bbox\_map} & real for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Default benchmark path. \\
-\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & documented partial & Mask metric expectations are explicit; backend/eval breadth remains partial. \\
-\cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & documented planned & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
-\cmd{obb} & \cmd{obb} & \cmd{obb\_map} & documented planned & Visible in the benchmark surface; backend/eval implementation remains follow-up work. \\
-\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & documented partial & \cmd{pose} is normalized to canonical \cmd{keypoints} in the report. \\
-\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & documented partial & YOLOZU-native extension, not a mainstream benchmark-surface parity claim. \\
-\cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & documented partial & YOLOZU-native extension with explicit metric expectations. \\
+\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & partial implementation & Mask metric expectations are explicit; backend/eval breadth remains partial. \\
+\cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & interface-defined only & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
+\cmd{obb} & \cmd{obb} & \cmd{obb\_map} & interface-defined only & Visible in the benchmark surface, but not yet wired for real backend execution. \\
+\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & partial implementation & \cmd{pose} is normalized to canonical \cmd{keypoints} in the report. \\
+\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & partial implementation & YOLOZU-native extension, not a mainstream benchmark-surface parity claim. \\
+\cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & partial implementation & YOLOZU-native extension with explicit metric expectations. \\
 \end{tabular}
 \end{center}
 
@@ -160,10 +161,10 @@ or vendor SDKs with separate terms.
 \cmd{torch} & real detect path & local PyTorch runtime stack & External runtime; verify your chosen runtime/model stack separately. \\
 \cmd{onnx} & real detect path & local ONNX Runtime & External runtime; supported does not mean bundled. \\
 \cmd{engine} & real detect path & Linux + NVIDIA GPU + TensorRT runtime & External NVIDIA runtime/SDK; verify CUDA/TensorRT/NGC redistribution terms separately. \\
-\cmd{torchscript} & planning only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
-\cmd{executorch} & planning only & external ExecuTorch runtime & External runtime with separate packaging constraints. \\
-\cmd{opencv\_dnn} & planning only & local OpenCV runtime & External runtime; optional contrib/nonfree modules are not bundled. \\
-\cmd{openvino}/\cmd{coreml}/\cmd{ncnn}/\cmd{rknn}/\cmd{tflite}/\cmd{paddle} & planned / conditional & external runtime or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
+\cmd{torchscript} & dry-run / synthetic latency only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
+\cmd{executorch} & adapter target only & external ExecuTorch runtime & External runtime with separate packaging constraints. \\
+\cmd{opencv\_dnn} & adapter target only & local OpenCV runtime & External runtime; optional contrib/nonfree modules are not bundled. \\
+\cmd{openvino}/\cmd{coreml}/\cmd{ncnn}/\cmd{rknn}/\cmd{tflite}/\cmd{paddle} & adapter target only / conditional & external runtime or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
 \end{tabular}
 \end{center}
 
@@ -189,10 +190,10 @@ surface quickly, the most effective implementation order is:
   \item add real backend/eval paths for \cmd{segmentation},
   \cmd{classification}, \cmd{obb}, and \cmd{keypoints} on top of the existing
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
-  \item promote \cmd{torchscript} from planning-only semantics to a real path,
+  \item promote \cmd{torchscript} from dry-run/synthetic-latency semantics to a real path,
   followed by conditional \cmd{openvino}
   \item keep one support matrix that distinguishes real inference/eval/parity
-  from placeholder or skipped semantics
+  from dry-run, synthetic, or skipped paths
   \item expand real parity artifacts beyond the current
   \cmd{torch}-anchored backend comparisons
   \item keep format-specific flag validation strict so inert combinations fail

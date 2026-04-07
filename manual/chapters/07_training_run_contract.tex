@@ -133,8 +133,8 @@ A unified project structure supports YAML-driven execution for both training and
 \toprule
 \textbf{Workflow} & \textbf{Primary config} & \textbf{Reference command} \\
 \midrule
-Train (scaffold) & \path{configs/examples/train_setting.yaml} & \cmd{yolozu train <train_setting.yaml>} \\
-Train (contract) & \path{configs/examples/train_contract.yaml} & \cmd{yolozu train <train_contract.yaml> --run-id <id>} \\
+Train (starter config) & \path{configs/examples/train_setting.yaml} & \cmd{yolozu train <train_setting.yaml>} \\
+Train (run contract) & \path{configs/examples/train_contract.yaml} & \cmd{yolozu train <train_contract.yaml> --run-id <id>} \\
 Resume (full state) & Same as contract & \cmd{yolozu train <train_contract.yaml> --run-id <id> --resume} \\
 Test (scenario runner) & \path{configs/examples/test_setting.yaml} & \cmd{yolozu test <test_setting.yaml> [test_args...]} \\
 \bottomrule
@@ -299,10 +299,26 @@ Frequently modified default parameters include:
 \end{longtable}
 
 \section{Smoke training}
-A standard smoke test entry point is provided as a script within the \path{tools/} directory. As the exact command may evolve, please search for \path{smoke} scripts within \path{tools/} for the most current usage.
+For a repository-wide offline smoke, use:
+\begin{lstlisting}[language=bash]
+bash scripts/smoke.sh
+\end{lstlisting}
 
-\section{Depth mode in training (scaffold)}
-The trainer incorporates optional depth integration, configured with a conservative default:
+For training-entrypoint coverage across external frameworks, use the dedicated
+interface-contract smoke runner:
+\begin{lstlisting}[language=bash]
+python3 tools/run_external_finetune_smoke.py \
+  --dataset-root data/smoke \
+  --split train \
+  --output reports/external_finetune_smoke.json
+\end{lstlisting}
+
+The first command exercises the main offline smoke lane. The second focuses on
+finetune-entrypoint audit for YOLOv/MMDetection/Detectron2/RT-DETR style
+training surfaces and writes a machine-readable report.
+
+\section{Depth mode in training (current implementation)}
+The in-repo RT-DETR Pose trainer incorporates optional depth integration, configured with a conservative default:
 \begin{itemize}
   \item \cmd{--depth-mode none} (default): Executes the baseline pathway with depth processing disabled.
   \item \cmd{--depth-mode sidecar}: Ingests per-image depth sidecars (\cmd{depth_path}/\cmd{depth}) and propagates the \cmd{depth_valid} flag.

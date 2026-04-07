@@ -48,7 +48,7 @@ Key conventions used across docs in this repo:
 \caption{Coordinate frames: intrinsics and depth connect image pixels to 3D camera coordinates, which are then related to object frame via pose.}
 \end{figure}
 
-Depth integration modes in the scaffold trainer:
+Depth integration modes in the reference trainer:
 \begin{itemize}
   \item \cmd{none}: depth disabled (compatibility default).
   \item \cmd{sidecar}: depth is read from sidecar metadata (\cmd{depth_path}/\cmd{depth}) and tracked via \cmd{depth_valid}.
@@ -152,7 +152,7 @@ Dataset provenance for each supervision field is recorded in \path{data/real_mul
 
 Practical entry points (``real model'' path):
 \begin{itemize}
-  \item Training scaffold: \cmd{python3 -m rtdetr_pose.train_minimal ...} (writes metrics and optional run artifacts).
+  \item Reference trainer: \cmd{python3 rtdetr_pose/tools/train_minimal.py ...} (writes metrics and optional run artifacts).
   \item Export predictions: \cmd{python3 tools/export_predictions.py --adapter rtdetr_pose ... --wrap}
   \item Torch acceleration knobs on export: \cmd{--infer-batch-size}, \cmd{--torch-compile*}, \cmd{--torch-amp}, \cmd{--torch-channels-last}, \cmd{--torch-inference-mode}
   \item No-torch path: use the \cmd{precomputed} adapter with a schema-valid \path{predictions.json}.
@@ -199,7 +199,7 @@ Implementation / configuration:
   \item Runtime config: \path{configs/runtime/constraints.yaml}
 \end{itemize}
 
-Key pieces (matching the Stage 4 roadmap vocabulary):
+Key pieces (using the Stage 4 naming kept elsewhere in this manual):
 \begin{itemize}
   \item Depth prior: \\
     \cmd{depth_prior(bbox_wh, size_wh, (fx,fy))} \\
@@ -245,7 +245,7 @@ Jitter utilities provide:
 \end{itemize}
 
 Note: the jitter profile includes a \cmd{rolling_shutter} field (\cmd{enabled}, \cmd{line_delay}), but the current
-repository code treats it as a configuration stub; there is no physics-accurate rolling shutter model wired into
+repository code treats it as a reserved configuration field; there is no physics-accurate rolling shutter model wired into
 the core geometry utilities.
 
 Tests (integration-level expectations for jitter on/off profiles):
@@ -255,7 +255,7 @@ Tests (integration-level expectations for jitter on/off profiles):
   \item \path{rtdetr_pose/tests/test_train_minimal_extrinsics_jitter.py}
 \end{itemize}
 
-\section{Scenario suite (Stage 6, scaffolded validation harness)}
+\section{Scenario suite (Stage 6, deterministic validation harness)}
 The validation harness includes a lightweight \textbf{scenario suite} that emits a stable JSON report for CI and
 tooling integration.
 
@@ -268,10 +268,10 @@ Implementation / schema:
 
 Run it manually:
 \begin{lstlisting}[language=bash]
-python tools/run_scenario_suite.py --output reports/scenario_suite.json
+python3 tools/run_scenario_suite.py --output reports/scenario_suite.json
 \end{lstlisting}
 
-Important: the current scenario suite produces \textbf{scaffolded/deterministic metrics} (it is a harness and
+Important: the current scenario suite produces \textbf{deterministic harness metrics} (it is a harness and
 contract surface), not a substitute for real model evaluation.
 
 \section{Per-detection refinement: Hessian solver}
