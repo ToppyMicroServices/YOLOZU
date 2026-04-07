@@ -45,6 +45,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--allow-dirty", action="store_true", help="Allow dirty git working tree.")
     p.add_argument("--allow-non-main", action="store_true", help="Allow running outside main branch.")
+    p.add_argument(
+        "--allow-major",
+        action="store_true",
+        help="Allow a major SemVer bump when an explicit breaking-change signal is detected.",
+    )
     p.add_argument("--skip-checks", action="store_true", help="Skip local quality checks.")
     p.add_argument("--skip-gh", action="store_true", help="Skip GitHub release + workflow steps.")
     p.add_argument("--skip-zenodo", action="store_true", help="Skip manual_doi workflow dispatch.")
@@ -236,6 +241,10 @@ def _bump_semver(current: str, bump: str) -> str:
     return f"{major}.{minor}.{patch}"
 
 
+def _major_bump_requires_confirmation(*, versioning: str, semver_bump: str, allow_major: bool) -> bool:
+    return versioning == "semver" and semver_bump == "major" and not bool(allow_major)
+
+
 def _today_utc_calver_parts() -> tuple[int, int, int]:
     now = datetime.now(timezone.utc)
     return int(now.year), int(now.month), int(now.day)
@@ -355,6 +364,16 @@ def main(argv: list[str] | None = None) -> int:
         "major": "X.Y.Z -> (X+1).0.0  (explicit breaking change 相当)",
     }
     calver_formula = "YYYY.MM.DD.MICRO -> same UTC day: MICRO+1, new UTC day: YYYY.MM.DD.0"
+
+    if _major_bump_requires_confirmation(
+        versioning=versioning,
+        semver_bump=semver_bump,
+        allow_major=bool(args.allow_major),
+    ):
+        errors.append(
+            "major release detected from breaking-change signal, but --allow-major was not provided; "
+            "re-run with --allow-major only after confirming the breaking surface is intentional"
+        )
 
     try:
         if not current_version:
