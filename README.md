@@ -41,11 +41,24 @@ flowchart LR
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
 
+## Primary Focus
+
+- Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
+- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
 - Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
 - Research: continual learning, self-distillation, TTT, Hessian refinement
+
+## Production Readiness
+
+- Production-ready today: prediction validation/evaluation and the predictions interface contract
+- Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
+- Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
+- Full details: [`docs/production_readiness.md`](docs/production_readiness.md)
 
 ## Where To Go Next
 

@@ -41,11 +41,24 @@ flowchart LR
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): predictions interface contract
 - [`docs/install.md`](docs/install.md): install、`doctor`、環境確認
 
+## Primary Focus
+
+- 主戦場: 既存 predictions を framework / runtime をまたいで公平に評価すること
+- 次のレイヤ: 同じ predictions interface contract へつなぐ export / train scaffold
+- 発展レイヤ: continual learning、TTT、SynthGen、backend parity の research path
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo path、install/doctor
 - Experimental: backend parity、benchmark orchestration、SynthGen intake/handoff、macOS/MPS evaluation path
 - Research: continual learning、self-distillation、TTT、Hessian refinement
+
+## Production Readiness
+
+- いま production-ready と言いやすいもの: prediction validation/evaluation と predictions interface contract
+- 環境ごとの検証が必要なもの: backend parity、benchmark orchestration、SynthGen handoff、macOS/MPS path
+- research-oriented なもの: continual learning、self-distillation、TTT、Hessian refinement
+- 詳細: [`docs/production_readiness.md`](docs/production_readiness.md)
 
 ## 次に見る場所
 
