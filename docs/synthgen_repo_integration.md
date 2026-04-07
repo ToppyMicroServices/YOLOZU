@@ -3,6 +3,18 @@
 Use this page when an external generator repo such as `YOLOZU-synthgen` is preparing to hand off synthetic shards to YOLOZU.
 
 This handoff was verified end to end with a local `YOLOZU-synthgen` checkout on April 2, 2026 using the CPU path. No GPU or MPS runtime is required for the intake, overlay, or evaluation steps below.
+Treat this as an experimental handoff path: the intake and evaluation steps are reproducible, but the external generator environment still needs its own qualification.
+See [`production_readiness.md`](production_readiness.md).
+
+## One-page handoff order
+
+1. Export a YOLOZU-compatible dataset root from the generator repo.
+2. Keep shard rows and asset paths explicit.
+3. Place `predictions_synthgen.json` where its relative paths still resolve.
+4. Run `validate_synthgen_contract.py`.
+5. Run `render_synthgen_overlay.py`.
+6. Run `eval_synthgen.py`.
+7. Run `smoke_synthgen.py` if you want one bundled acceptance check.
 
 ## Goal
 
@@ -147,7 +159,13 @@ Notes:
 - relative asset paths in shard rows should resolve from the dataset root
 - `predictions_synthgen.json` should follow the YOLOZU predictions interface contract
 - if prediction records reuse shard-relative asset paths such as `../samples/...`, write the predictions artifact under `shards/` so those paths keep resolving from the same base
+- if you rewrite asset paths to dataset-root-relative paths during export, the predictions artifact may live outside `shards/`
 - generator-side metadata can grow, but breaking contract changes require a new schema version
+
+Practical placement rule:
+
+- keep `predictions_synthgen.json` under `shards/` when you want the safest default with shard-relative paths
+- move it elsewhere only after rewriting paths and verifying one overlay + one eval run
 
 ## Verified repo-to-repo probe
 
@@ -210,6 +228,13 @@ python3 tools/smoke_synthgen.py \
   --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json \
   --output-dir reports
 ```
+
+Recommended reading order for operators:
+
+1. `validate_synthgen_contract.py`: fail fast on schema/path issues
+2. `render_synthgen_overlay.py`: visually confirm one sample before batch eval
+3. `eval_synthgen.py`: generate the metrics report
+4. `smoke_synthgen.py`: bundle the three steps into one reproducible probe
 
 ## CI-ready acceptance criteria
 

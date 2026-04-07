@@ -9,6 +9,11 @@ It requires continual configs and run artifacts (for example \cmd{continual_run.
 }
 \ChapterAudience{Read this chapter when you are training across tasks or domains and need to reason about forgetting, replay, self-distillation, LoRA, or QLoRA.}
 
+\paragraph{Readiness classification.}
+Continual learning in \yolozu{} is a \textbf{research-oriented} lane with explicit promotion gates.
+It is supported for reproducible experiments and governed checkpoint promotion, but it is not the first production lane for most adopters.
+See \path{docs/production_readiness.md}.
+
 
 \section{What YOLOZU means by ``continual''}
 Continual learning (CL) here means fine-tuning across a sequence of tasks/domains while mitigating catastrophic forgetting.
@@ -194,6 +199,25 @@ python3 tools/continual_decide.py \
   --min-total-curated-examples 60
 \end{lstlisting}
 
+For CI or batch ops, the same pattern is:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_continual.py \
+  --run-json runs/continual/<run>/continual_run.json \
+  --device cpu \
+  --max-images 50
+
+python3 tools/continual_decide.py \
+  --eval-json runs/continual/<run>/continual_eval.json \
+  --run-json runs/continual/<run>/continual_run.json \
+  --curation-json reports/continual_curation.json \
+  --max-forgetting 0.05 \
+  --min-new-task-score 0.40 \
+  --min-old-task-final 0.40 \
+  --min-reviewed-labels 20 \
+  --min-highconf-pseudo-labels 50 \
+  --min-total-curated-examples 60
+\end{lstlisting}
+
 This writes a decision report (by default \path{runs/continual/<run>/continual\_promotion\_decision.json}) with one of three outcomes:
 \begin{itemize}
   \item \cmd{hold}: hard gate failed,
@@ -203,6 +227,37 @@ This writes a decision report (by default \path{runs/continual/<run>/continual\_
 
 The soft-gate idea is deliberate.
 For example, reviewed labels and trusted pseudo-label counts can support a promotion decision, but they should not replace actual old-task/new-task evaluation.
+
+Minimal curation summary:
+\begin{lstlisting}[language=json]
+{
+  "counts": {
+    "samples_total": 1200,
+    "candidate_images": 90,
+    "reviewed_labels": 48,
+    "pseudo_labels_high_confidence": 120
+  }
+}
+\end{lstlisting}
+
+Recommended batch/CI curation summary:
+\begin{lstlisting}[language=json]
+{
+  "counts": {
+    "samples_total": 1200,
+    "candidate_images": 90,
+    "reviewed_labels": 48,
+    "pseudo_labels_high_confidence": 120
+  },
+  "sources": {
+    "review_queue": "reports/review_queue.json",
+    "pseudo_label_run": "reports/pseudo_labels.json"
+  },
+  "serving": {
+    "ttt_active": false
+  }
+}
+\end{lstlisting}
 
 If TTT was active on the serving path, the safe default is still to require review:
 \begin{quote}

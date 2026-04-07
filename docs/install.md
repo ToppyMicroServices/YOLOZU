@@ -1,6 +1,6 @@
 # Install
 
-## Pip (recommended)
+## Pip (default stable path)
 
 ```bash
 python3 -m pip install yolozu
@@ -32,7 +32,8 @@ Note: PyTorch wheels are platform-dependent. If `pip install 'yolozu[demo]'` fai
 
 ## macOS / Apple Silicon beta scope
 
-`Torch backend on macOS/MPS` is an official beta scope in this repo:
+`Torch backend on macOS/MPS` is a qualification path in this repo, not a blanket production-ready claim.
+MPS is supported when `torch.backends.mps.is_available()` is `true`.
 
 - good fit: `yolozu demo`, `yolozu export --backend torch`, small `rtdetr_pose/tools/train_minimal.py` smoke runs
 - not in scope: TensorRT engine build/run paths (`trtexec`, CUDA-only workflows)
@@ -86,6 +87,12 @@ print(torch.ones(2, device="mps"))
 PY
 yolozu doctor --output -
 ```
+
+Treat this as the qualification gate:
+
+- `torch.backends.mps.is_available() == true` means the MPS path is actually usable on this machine
+- `macos_ok: true` in the manifest only means the CLI can run on macOS; it does not guarantee MPS availability
+- if `mps_available=false`, stay on `cpu` or `--device auto`
 
 Small training smoke:
 

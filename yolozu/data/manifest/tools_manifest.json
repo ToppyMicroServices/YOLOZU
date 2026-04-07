@@ -80,7 +80,8 @@
       },
       "docs": [
         "docs/adapter_templates.md",
-        "docs/adapter_contract.md"
+        "docs/adapter_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -147,6 +148,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/adapter_parity_suite.json",
@@ -969,7 +971,8 @@
         "docs/benchmark_mode_spec_parity_target.md",
         "docs/benchmark_latency.md",
         "docs/benchmark_mode_gap_audit.md",
-        "docs/benchmark_backend_runtime_matrix.md"
+        "docs/benchmark_backend_runtime_matrix.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -1323,6 +1326,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_report.json",
@@ -2392,7 +2396,8 @@
       "docs": [
         "docs/continual_learning.md",
         "docs/tools_index.md",
-        "manual/chapters/14_continual_learning.tex"
+        "manual/chapters/14_continual_learning.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -2499,6 +2504,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Promotion decision JSON report.",
@@ -2903,6 +2909,11 @@
           "coco_eval_report_json"
         ]
       },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/predictions_schema.md",
+        "docs/production_readiness.md"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": [
@@ -2985,6 +2996,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/coco_eval.json",
@@ -3009,7 +3021,8 @@
     },
     {
       "docs": [
-        "docs/continual_learning.md"
+        "docs/continual_learning.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [
@@ -3137,6 +3150,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "<run_dir>/continual_eval.json by default.",
@@ -3162,7 +3176,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps.",
+      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.",
       "tags": [
         "continual",
         "eval",
@@ -3941,7 +3955,8 @@
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
         "recipes/synthgen/README.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -4003,6 +4018,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/synthgen_eval.json",
@@ -9267,7 +9283,8 @@
       "docs": [
         "docs/README.md",
         "docs/ttt_protocol.md",
-        "docs/hessian_solver.md"
+        "docs/hessian_solver.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9440,6 +9457,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Refined predictions JSON written to --output.",
@@ -9727,7 +9745,8 @@
       "docs": [
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9782,6 +9801,7 @@
           "required": true
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Rendered overlay PNG.",
@@ -9810,7 +9830,8 @@
       "docs": [
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
+        "manual/chapters/15_ttt_tent_mim.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9864,6 +9885,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Real-result TTT summary chart PNG.",
@@ -12252,7 +12274,8 @@
       "docs": [
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
+        "manual/chapters/15_ttt_tent_mim.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -12377,6 +12400,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
@@ -12627,7 +12651,8 @@
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md",
-        "data/smoke/synthgen_minishard/README.md"
+        "data/smoke/synthgen_minishard/README.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -12685,6 +12710,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/smoke_synthgen_summary.json",
@@ -13408,6 +13434,10 @@
           "predictions_json"
         ]
       },
+      "docs": [
+        "docs/predictions_schema.md",
+        "docs/production_readiness.md"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": []
@@ -13434,6 +13464,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -13561,7 +13592,8 @@
       "docs": [
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -13590,6 +13622,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Validation status and error summary.",

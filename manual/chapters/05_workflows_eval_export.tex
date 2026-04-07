@@ -9,6 +9,11 @@ You will require a dataset root and one or more prediction artifacts; backend-sp
 }
 \ChapterAudience{Read this chapter when you already have data or model outputs and need to decide the fastest safe path to evaluation, export, or migration.}
 
+\paragraph{Readiness classification.}
+Workflow A in this chapter is the \textbf{stable main production lane} for \yolozu{}: validate predictions, then evaluate them under one pinned predictions interface contract.
+Export paths and backend-specific execution remain useful, but they should be understood as secondary to that main lane.
+See \path{docs/production_readiness.md}.
+
 \paragraph{The shortest human summary.}
 Most people arrive here with one of four questions:
 \begin{itemize}

@@ -60,6 +60,21 @@ flowchart LR
 - research-oriented なもの: continual learning、self-distillation、TTT、Hessian refinement
 - 詳細: [`docs/production_readiness.md`](docs/production_readiness.md)
 
+## 向いているケース
+
+- 既に predictions があり、framework をまたいで公平比較したい
+- training stack はそのままに、Apache-2.0 の evaluation layer だけ導入したい
+- framework-native evaluation の差を、そのまま比較結果に持ち込みたくない
+
+## あまり向いていないケース
+
+- one-click default の end-to-end training framework が欲しい
+- cross-framework comparison や stable な predictions interface contract が不要
+
+## Why not framework-native evaluation?
+
+1つの framework の中だけなら framework-native evaluation は便利です。ただし stack をまたぐと比較条件がずれやすくなります。YOLOZU は評価境界を 1 つの predictions interface contract に固定し、inference 実装が変わっても比較経路を pinned に保ちます。
+
 ## 次に見る場所
 
 - 既存 predictions を評価する: [`docs/external_inference.md`](docs/external_inference.md)
@@ -68,23 +83,11 @@ flowchart LR
 - YOLOZU-synthgen 連携を準備する: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-## すぐ分かること
+## demo の次
 
-- 既に predictions があり、framework をまたいで公平比較したいなら向いています。
-- commercial / internal use で Apache-2.0-friendly な tooling が欲しい場合に向いています。
-- one-click default の end-to-end training framework が欲しいなら別の道具の方が合う可能性があります。
-- GPU は必須ではありません。最初の demo path は CPU-friendly です。
-- YOLOZU の中で学習しなくても使えます。
-- 主な artifact は wrapped `predictions.json` と `meta.export_settings` です。
-
-## Demo と発展資料
-
-- 30秒 demo: `yolozu demo overview`
+- advanced docs map: [`docs/README.md`](docs/README.md)
 - 実画像 showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
-- 学習系の全体像: [`docs/learning_features.md`](docs/learning_features.md)
-- Distillation: [`docs/distillation.md`](docs/distillation.md)
-- Continual learning: [`docs/continual_learning.md`](docs/continual_learning.md)
-- Hessian refinement: [`docs/hessian_solver.md`](docs/hessian_solver.md)
+- 学習系 / research workflow: [`docs/learning_features.md`](docs/learning_features.md)
 
 ## repo checkout で使う場合
 

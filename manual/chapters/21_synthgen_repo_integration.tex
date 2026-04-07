@@ -8,6 +8,11 @@ The practical goal is to make a synthetic dataset handoff reproducible, CI-frien
 }
 \ChapterAudience{Read this chapter when you are connecting \path{YOLOZU-synthgen} or another external synthetic-data generator to the YOLOZU intake and evaluation path.}
 
+\paragraph{Readiness classification.}
+This chapter belongs to the \textbf{experimental} lane in \yolozu{}.
+The intake and evaluation path is reproducible, but the external generator environment still needs qualification and path discipline before production use.
+See \path{docs/production_readiness.md}.
+
 \section{Boundary and ownership}
 
 The shared boundary is the SynthGen sample interface contract:
@@ -24,6 +29,17 @@ Ownership split:
 \end{itemize}
 
 Each record in \path{shards/*.jsonl} must satisfy \cmd{schema\_version="1"} and provide the required tensors and metadata fields used by the intake adapters.
+
+\section{One-page handoff order}
+\begin{enumerate}
+  \item Export a YOLOZU-compatible dataset root from the generator repo.
+  \item Keep shard rows and asset paths explicit.
+  \item Place \path{predictions\_synthgen.json} where its relative paths still resolve.
+  \item Run \cmd{validate\_synthgen\_contract.py}.
+  \item Run \cmd{render\_synthgen\_overlay.py}.
+  \item Run \cmd{eval\_synthgen.py}.
+  \item Run \cmd{smoke\_synthgen.py} if you want one bundled acceptance probe.
+\end{enumerate}
 
 \section{How samples are generated in YOLOZU-synthgen}
 
@@ -240,6 +256,12 @@ That is the key safety rule behind the whole integration: backgrounds may vary, 
 
 Practical note: if the predictions artifact reuses shard-relative asset paths such as \path{../samples/...}, keep that predictions JSON under \path{shards/} so the relative base remains the same as the shard rows. If you prefer to store predictions elsewhere, rewrite those asset paths first.
 
+This makes the path rule explicit:
+\begin{itemize}
+  \item safest default: keep \path{predictions\_synthgen.json} under \path{shards/}
+  \item move it elsewhere only after rewriting relative asset paths and verifying one overlay plus one eval run
+\end{itemize}
+
 \section{Verified cross-repo probe}
 
 This handoff was exercised end to end on April 2, 2026 using a local \path{YOLOZU-synthgen} checkout and the CPU path. GPU or MPS support is not required for these intake checks.
@@ -281,6 +303,14 @@ python3 tools/smoke_synthgen.py \
   --predictions /tmp/yolozu_synthgen_export/shards/predictions_synthgen.json \
   --output-dir /tmp/yolozu_synthgen_smoke
 \end{lstlisting}
+
+Recommended operator reading order:
+\begin{enumerate}
+  \item \cmd{validate\_synthgen\_contract.py}
+  \item \cmd{render\_synthgen\_overlay.py}
+  \item \cmd{eval\_synthgen.py}
+  \item \cmd{smoke\_synthgen.py}
+\end{enumerate}
 
 \section{Acceptance criteria}
 

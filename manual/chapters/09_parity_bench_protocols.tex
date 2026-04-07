@@ -9,6 +9,11 @@ Execution requires a minimum of two comparable prediction artifacts for parity a
 }
 \ChapterAudience{Read this chapter when you are comparing backends, benchmarking runs, or trying to make metrics fair across repeated experiments.}
 
+\paragraph{Readiness classification.}
+This chapter belongs to the \textbf{experimental} lane in \yolozu{}.
+Parity and benchmark tooling are valuable qualification tools, but they still depend strongly on the local runtime matrix and should not be mistaken for the main production lane by themselves.
+See \path{docs/production_readiness.md}.
+
 
 \section{Backend parity}
 When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtime, TensorRT), it is critical to detect any silent numerical drift. Parity tooling systematically compares two prediction artifacts and generates a comprehensive report of any discrepancies.

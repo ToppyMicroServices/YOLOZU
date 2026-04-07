@@ -60,6 +60,21 @@ flowchart LR
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Full details: [`docs/production_readiness.md`](docs/production_readiness.md)
 
+## Who This Is For
+
+- You already have predictions and want fair cross-framework evaluation.
+- You want an Apache-2.0 evaluation layer without rewriting your training stack.
+- You do not want framework-native evaluation differences to become silent metric drift.
+
+## Not The Best Fit
+
+- You want one end-to-end training framework with one-click defaults.
+- You do not need cross-framework comparison or a stable predictions interface contract.
+
+## Why Not Just Use Framework-Native Evaluation?
+
+Framework-native evaluation is convenient inside one stack, but it is harder to compare fairly across stacks. YOLOZU keeps the evaluation boundary at one predictions interface contract so the comparison path stays pinned even when the inference stack changes.
+
 ## Where To Go Next
 
 - Evaluate precomputed predictions: [`docs/external_inference.md`](docs/external_inference.md)
@@ -68,23 +83,11 @@ flowchart LR
 - Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-## Quick Answers
+## More Than The Demo
 
-- Good fit if you already have predictions and want fair cross-framework evaluation.
-- Good fit if you need Apache-2.0-friendly tooling for commercial or internal use.
-- Probably not a fit if you want a single end-to-end training framework with one-click defaults.
-- GPU is optional. The default demo path is CPU-friendly.
-- You do not need to train inside YOLOZU to use it.
-- The main artifact is wrapped `predictions.json` with `meta.export_settings`.
-
-## Demos And Examples
-
-- 30-second demo: `yolozu demo overview`
+- Advanced docs map: [`docs/README.md`](docs/README.md)
 - Real-image showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
-- Learning and advanced workflows: [`docs/learning_features.md`](docs/learning_features.md)
-- Distillation: [`docs/distillation.md`](docs/distillation.md)
-- Continual learning: [`docs/continual_learning.md`](docs/continual_learning.md)
-- Hessian refinement: [`docs/hessian_solver.md`](docs/hessian_solver.md)
+- Learning and research workflows: [`docs/learning_features.md`](docs/learning_features.md)
 
 ## Repo Users
 

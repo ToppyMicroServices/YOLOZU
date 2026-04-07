@@ -1,7 +1,7 @@
 # YOLOZU Docs
 
 Use this page as the shortest route into the repo.
-Start with the 1-minute demo, then pick one of the first three docs.
+Start with the 1-minute demo, read the first three docs, then pick one next route.
 
 ## 1-Minute Demo
 
@@ -17,6 +17,12 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`install.md`](install.md): install, `doctor`, and environment setup
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
+
+## Next 3 Routes
+
+- Main production lane: evaluate precomputed predictions and keep the predictions interface contract stable
+- Secondary lane: train/export flows that emit the same predictions interface contract
+- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
 
 ## Primary Focus
 
@@ -37,11 +43,13 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Details: [`production_readiness.md`](production_readiness.md)
 
-## Docs index
+## Quick route map
 
-Use this page as the docs index for both humans and agents. All examples below use repository-real paths (`data/smoke`, `reports/...`) to reduce copy-paste mistakes.
+- If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
+- If you need train/export/eval scaffolding: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-scaffold)
+- If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
-## 0) Offline copy-paste smoke (single command)
+## Offline repo smoke
 
 The fastest safety check from repo root is:
 
@@ -68,21 +76,14 @@ bash scripts/smoke.sh --profile deep --torch-device cuda
 Deep walkthrough report:
 - `reports/smoke_walkthrough_report.json`
 
-Install (pip + optional extras): [`docs/install.md`](install.md)
+Supporting docs:
 
-Support/legal: [`docs/support.md`](support.md)
-
-Security / cryptography scope: [`docs/security_crypto_scope.md`](security_crypto_scope.md)
-
-Repository governance / Scorecard posture: [`docs/security_scorecard_governance.md`](security_scorecard_governance.md), [`docs/repo_governance_audit.md`](repo_governance_audit.md)
-
-Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](learning_features.md)
-
-Beginner-friendly prediction distillation guide (offline teacher/student artifact blending + sample YAML): [`docs/distillation.md`](distillation.md)
-
-Plain-language continual-learning guide with LoRA / QLoRA diagrams: [`docs/continual_learning.md`](continual_learning.md)
-
-Beginner-friendly Hessian refinement guide with pose intuition: [`docs/hessian_solver.md`](hessian_solver.md)
+- Install: [`install.md`](install.md)
+- Support/legal: [`support.md`](support.md)
+- Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
+- Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
+- Production readiness: [`production_readiness.md`](production_readiness.md)
+- Learning features overview: [`learning_features.md`](learning_features.md)
 
 ---
 

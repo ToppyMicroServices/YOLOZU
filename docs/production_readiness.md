@@ -1,8 +1,12 @@
 # Production Readiness
 
-This page separates the main production lane from the experimental and research lanes.
+This page is the source of truth for how YOLOZU classifies its main lanes:
 
-## What YOLOZU is primarily for
+- `Stable`: the default production lane
+- `Experimental`: useful, but qualification is environment- or workflow-dependent
+- `Research`: reproducible and supported, but not the first production lane
+
+## Primary production lane
 
 YOLOZU's primary role is an evaluation layer built around one stable predictions interface contract:
 
@@ -11,6 +15,18 @@ YOLOZU's primary role is an evaluation layer built around one stable predictions
 - compare outputs across frameworks and runtimes
 
 If your team already has inference outputs and wants fair evaluation without rewriting the whole pipeline, this is the main production path.
+
+## Capability map
+
+| Area | Maturity | Production posture | Primary references |
+|---|---|---|---|
+| Predictions validation/evaluation | Stable | Default production lane | [`predictions_schema.md`](predictions_schema.md), [`external_inference.md`](external_inference.md), [`../README.md`](../README.md) |
+| Backend parity / benchmark orchestration | Experimental | Useful after environment-specific qualification | [`backend_parity_matrix.md`](backend_parity_matrix.md), [`benchmark_mode.md`](benchmark_mode.md), `manual/chapters/09_parity_bench_protocols.tex` |
+| YOLOZU-synthgen handoff | Experimental | Intake/eval path is reproducible, but external generator handoff still needs qualification | [`synthgen_repo_integration.md`](synthgen_repo_integration.md), [`synthgen_contract.md`](synthgen_contract.md), `manual/chapters/21_synthgen_repo_integration.tex` |
+| macOS / MPS paths | Experimental | Supported only when `torch.backends.mps.is_available()` is true; treat as qualification, not blanket readiness | [`install.md`](install.md), [`doctor_diagnostics.md`](doctor_diagnostics.md), [`continual_learning.md`](continual_learning.md) |
+| Continual learning / self-distillation | Research | Use for governed experiments and promotion-gated workflows, not as the first production lane | [`continual_learning.md`](continual_learning.md), `manual/chapters/14_continual_learning.tex` |
+| TTT | Research | Short-horizon inference adaptation; do not treat as an automatic checkpoint-promotion path | [`ttt_protocol.md`](ttt_protocol.md), `manual/chapters/15_ttt_tent_mim.tex` |
+| Hessian refinement | Research | Offline/local post-inference correction path | [`hessian_solver.md`](hessian_solver.md), `manual/chapters/10_ttt_hessian.tex` |
 
 ## Stable today
 
@@ -29,7 +45,7 @@ These are the areas to rely on first for production adoption.
 
 These can be useful in production-oriented work, but they still need environment-specific qualification and should be treated as capability-dependent.
 
-## Research-oriented
+## Research
 
 - continual learning
 - self-distillation
@@ -44,11 +60,16 @@ These areas are supported for reproducible experimentation, but they are not the
 2. Adopt the predictions interface contract in your export path.
 3. Add repo smoke / `doctor` checks to CI.
 4. Qualify experimental paths only where they are needed.
-5. Treat continual learning and TTT as separate research tracks until they have their own promotion criteria.
+5. Keep continual learning, TTT, and Hessian refinement behind explicit evaluation or operator review gates.
+
+## How this maps to the manifest
+
+Relevant entries in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carry a `maturity` field so agents and operators can tell whether a tool belongs to the stable, experimental, or research lanes.
 
 ## Related docs
 
-- [`README.md`](../README.md)
+- [`../README.md`](../README.md)
+- [`README.md`](README.md)
 - [`predictions_schema.md`](predictions_schema.md)
 - [`external_inference.md`](external_inference.md)
 - [`install.md`](install.md)

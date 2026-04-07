@@ -6,6 +6,13 @@ Source of truth:
 - Tool manifest: `tools/manifest.json`
 - Manifest validator: `python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative`
 
+## Workflow maturity at a glance
+
+- Stable: prediction validation/evaluation and the predictions interface contract
+- Experimental: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS qualification paths
+- Research: continual learning, TTT, Hessian refinement
+- Read first: `docs/production_readiness.md`
+
 ## Unified CLI (recommended entrypoint)
 
 For most day-to-day flows, start with:
@@ -98,6 +105,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
   - `python3 tools/continual_decide.py --eval-json runs/continual/<run>/continual_eval.json --run-json runs/continual/<run>/continual_run.json --max-forgetting 0.05 --min-new-task-score 0.40 --min-old-task-final 0.40 --min-reviewed-labels 20 --min-highconf-pseudo-labels 50 --min-total-curated-examples 60`
   - Device-agnostic: this step reads JSON artifacts only and does not require GPU or MPS.
   - `--curation-json` can inject reviewed-label and high-confidence pseudo-label counts as soft gates.
+  - CI/batch pattern: `eval_continual.py -> continual_decide.py -> inspect continual_promotion_decision.json`
 
 ## Real-image multitask finetune demo
 
@@ -120,6 +128,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Validator: `python3 tools/validate_tool_manifest.py`
 - Declarative requirements: `docs/manifest_declarative_spec.md`
 - Authoring workflow: `docs/manifest_authoring_workflow.md`
+- Relevant tools may carry `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
 
 ## Policy helpers
 

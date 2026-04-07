@@ -80,7 +80,8 @@
       },
       "docs": [
         "docs/adapter_templates.md",
-        "docs/adapter_contract.md"
+        "docs/adapter_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -155,6 +156,7 @@
           "name": "adapter_parity_suite_json"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -969,7 +971,8 @@
         "docs/benchmark_mode_spec_parity_target.md",
         "docs/benchmark_latency.md",
         "docs/benchmark_mode_gap_audit.md",
-        "docs/benchmark_backend_runtime_matrix.md"
+        "docs/benchmark_backend_runtime_matrix.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -1356,6 +1359,7 @@
           "name": "export_settings_json"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -2392,7 +2396,8 @@
       "docs": [
         "docs/continual_learning.md",
         "docs/tools_index.md",
-        "manual/chapters/14_continual_learning.tex"
+        "manual/chapters/14_continual_learning.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -2506,6 +2511,7 @@
           "name": "continual_promotion_decision_json"
         }
       ],
+      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -2914,6 +2920,11 @@
           }
         ]
       },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/predictions_schema.md",
+        "docs/production_readiness.md"
+      ],
       "entrypoint": "tools/eval_coco.py",
       "examples": [
         {
@@ -2992,6 +3003,7 @@
           "name": "coco_eval_json"
         }
       ],
+      "maturity": "stable",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -3009,7 +3021,8 @@
     },
     {
       "docs": [
-        "docs/continual_learning.md"
+        "docs/continual_learning.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [
@@ -3149,6 +3162,7 @@
           "name": "eval_html"
         }
       ],
+      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -3162,7 +3176,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps.",
+      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.",
       "tags": [
         "continual",
         "eval",
@@ -3941,7 +3955,8 @@
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
         "recipes/synthgen/README.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -4011,6 +4026,7 @@
           "name": "report_json"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9267,7 +9283,8 @@
       "docs": [
         "docs/README.md",
         "docs/ttt_protocol.md",
-        "docs/hessian_solver.md"
+        "docs/hessian_solver.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9447,6 +9464,7 @@
           "name": "predictions_json"
         }
       ],
+      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9727,7 +9745,8 @@
       "docs": [
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9789,6 +9808,7 @@
           "name": "overlay_png"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9810,7 +9830,8 @@
       "docs": [
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
+        "manual/chapters/15_ttt_tent_mim.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9890,6 +9911,7 @@
           "path": "docs/assets/ttt_method_results_source.json"
         }
       ],
+      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -12252,7 +12274,8 @@
       "docs": [
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
+        "manual/chapters/15_ttt_tent_mim.tex",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -12414,6 +12437,7 @@
           "name": "compare_md"
         }
       ],
+      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -12627,7 +12651,8 @@
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md",
-        "data/smoke/synthgen_minishard/README.md"
+        "data/smoke/synthgen_minishard/README.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -12705,6 +12730,7 @@
           "name": "eval_report_json"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -13408,6 +13434,10 @@
           "predictions_json"
         ]
       },
+      "docs": [
+        "docs/predictions_schema.md",
+        "docs/production_readiness.md"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": []
@@ -13441,6 +13471,7 @@
           "name": "stdout"
         }
       ],
+      "maturity": "stable",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -13561,7 +13592,8 @@
       "docs": [
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
-        "docs/synthgen_contract.md"
+        "docs/synthgen_contract.md",
+        "docs/production_readiness.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -13597,6 +13629,7 @@
           "name": "status"
         }
       ],
+      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,

@@ -1,6 +1,8 @@
 # Continual learning (anti-forgetting) for `rtdetr_pose`
 
 This repo supports **continual fine-tuning** on multiple datasets/tasks while mitigating catastrophic forgetting.
+This is a research-oriented lane in YOLOZU: use it with explicit evaluation and promotion gates, not as the default production lane.
+See [`production_readiness.md`](production_readiness.md).
 
 The baseline strategy is:
 
@@ -237,7 +239,7 @@ python3 tools/eval_continual.py \
   --max-images 50
 ```
 
-On macOS, you can switch `--device` to `mps` when `python3 tools/yolozu.py doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. If MPS is not available on that machine, use `cpu`.
+On macOS, you can switch `--device` to `mps` when `python3 tools/yolozu.py doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. In other words, MPS is supported when `torch.backends.mps.is_available()` is `true`. If MPS is not available on that machine, use `cpu`.
 
 Pose/depth metrics (requires pose sidecar metadata in `labels/<split>/*.json`):
 
@@ -321,10 +323,62 @@ Minimal optional `curation_json` shape:
 }
 ```
 
+Recommended `curation_json` shape for CI / ops:
+
+```json
+{
+  "counts": {
+    "samples_total": 1200,
+    "candidate_images": 90,
+    "reviewed_labels": 48,
+    "pseudo_labels_high_confidence": 120
+  },
+  "sources": {
+    "review_queue": "reports/review_queue.json",
+    "pseudo_label_run": "reports/pseudo_labels.json"
+  },
+  "serving": {
+    "ttt_active": false
+  }
+}
+```
+
+Only `counts.*` is required by `continual_decide.py` today; the extra keys are recommended provenance for batch ops and CI logs.
+
 Operational recommendation:
 - use `continual_decide.py` as the automation layer for checkpoint promotion
 - keep TTT separate from automatic promotion unless you explicitly opt in with `--allow-ttt-active-promotion`
 - treat reviewed labels and trusted pseudo-label counts as soft gates, not as proof of model quality by themselves
+
+Batch / CI example:
+
+```bash
+python3 tools/eval_continual.py \
+  --run-json runs/continual/<run>/continual_run.json \
+  --device cpu \
+  --max-images 50
+
+python3 tools/continual_decide.py \
+  --eval-json runs/continual/<run>/continual_eval.json \
+  --run-json runs/continual/<run>/continual_run.json \
+  --curation-json reports/continual_curation.json \
+  --max-forgetting 0.05 \
+  --min-new-task-score 0.40 \
+  --min-old-task-final 0.40 \
+  --min-reviewed-labels 20 \
+  --min-highconf-pseudo-labels 50 \
+  --min-total-curated-examples 60
+```
+
+GitHub Actions step shape:
+
+```yaml
+- name: Evaluate continual run
+  run: python3 tools/eval_continual.py --run-json runs/continual/${RUN_ID}/continual_run.json --device cpu --max-images 50
+
+- name: Decide checkpoint promotion
+  run: python3 tools/continual_decide.py --eval-json runs/continual/${RUN_ID}/continual_eval.json --run-json runs/continual/${RUN_ID}/continual_run.json --curation-json reports/continual_curation.json --max-forgetting 0.05 --min-new-task-score 0.40 --min-old-task-final 0.40 --min-reviewed-labels 20 --min-highconf-pseudo-labels 50 --min-total-curated-examples 60
+```
 
 ## Measured smoke run (what we actually validated)
 
