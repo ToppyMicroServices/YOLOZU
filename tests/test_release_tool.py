@@ -53,6 +53,7 @@ class TestReleaseTool(unittest.TestCase):
         self.assertIn("--dry-run", proc.stdout)
         self.assertIn("--skip-gh", proc.stdout)
         self.assertIn("--versioning", proc.stdout)
+        self.assertIn("--allow-major", proc.stdout)
 
     def test_dry_run_writes_report(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -151,6 +152,37 @@ class TestReleaseTool(unittest.TestCase):
         self.assertEqual(str(release_tool._recommended_semver_bump("small", breaking=True)), "major")
         self.assertEqual(str(release_tool._recommended_semver_bump("large", breaking=True)), "major")
         self.assertEqual(str(release_tool._bump_semver("1.2.3", "major")), "2.0.0")
+
+    def test_major_bump_requires_explicit_allow_major(self) -> None:
+        from tools import release as release_tool
+
+        self.assertTrue(
+            bool(
+                release_tool._major_bump_requires_confirmation(
+                    versioning="semver",
+                    semver_bump="major",
+                    allow_major=False,
+                )
+            )
+        )
+        self.assertFalse(
+            bool(
+                release_tool._major_bump_requires_confirmation(
+                    versioning="semver",
+                    semver_bump="major",
+                    allow_major=True,
+                )
+            )
+        )
+        self.assertFalse(
+            bool(
+                release_tool._major_bump_requires_confirmation(
+                    versioning="semver",
+                    semver_bump="minor",
+                    allow_major=False,
+                )
+            )
+        )
 
     def test_breaking_change_signal_helper(self) -> None:
         from tools import release as release_tool

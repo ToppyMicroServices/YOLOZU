@@ -14,12 +14,17 @@ Release trigger note:
 - current version `X.Y.Z` -> SemVer mode
 - current version `YYYY.MM.DD.MICRO` -> CalVer mode
 
-For SemVer mode, release size is classified from git diff stats (`files changed`, `insertions+deletions`) since the latest SemVer tag, while CalVer mode uses the latest CalVer tag. In SemVer mode, `major` is reserved for explicit breaking-change signals.
+For SemVer mode, release size is classified from git diff stats (`files changed`, `insertions+deletions`) since the latest SemVer tag, while CalVer mode uses the latest CalVer tag. In SemVer mode, `major` is reserved for explicit breaking-change signals and also requires an explicit operator opt-in via `--allow-major`.
 
 - small non-breaking change: `X.Y.Z -> X.Y.(Z+1)`
 - medium non-breaking change: `X.Y.Z -> X.(Y+1).0`
 - large non-breaking change: `X.Y.Z -> X.(Y+1).0`
-- explicit breaking change signal (`BREAKING CHANGE`, `BREAKING-CHANGE`, or Conventional Commit `type!:`): `X.Y.Z -> (X+1).0.0`
+- explicit breaking change signal (`BREAKING CHANGE`, `BREAKING-CHANGE`, or Conventional Commit `type!:`): candidate `X.Y.Z -> (X+1).0.0`, but the release tool stops unless `--allow-major` is provided
+
+Operational summary:
+- the default release path is **not** "always minor"
+- default SemVer behavior is `small -> patch`, `medium/large -> minor`
+- `major` is intentionally gated so it cannot be published accidentally during routine tagging
 
 For CalVer mode:
 
