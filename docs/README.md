@@ -1,29 +1,28 @@
-# YOLOZU
+# YOLOZU Docs
 
-YOLOZU is a framework-agnostic evaluation toolkit for vision models,
-designed to support reproducible continual learning and test-time adaptation (TTT) under **domain shift**.
+Use this page as the shortest route into the repo.
+Start with the 1-minute demo, then pick one of the first three docs.
 
-YOLOZU helps mitigate catastrophic forgetting by enabling reproducible workflows
-(e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting
-measurable and comparable across runs. It does not guarantee elimination of forgetting.
+## 1-Minute Demo
 
-**YOLOZU exists to measure, compare, and control catastrophic forgetting
-and inference-time adaptation in a reproducible way.**
+```bash
+python3 -m pip install -U yolozu
+yolozu demo overview
+```
 
-YOLOZU treats **predictions—not models—as the stable interface contract**,
-making continual learning and test-time training comparable,
-restartable, and CI-friendly across frameworks and runtimes.
+Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 
-YOLOZU supports evaluation workflows for object detection, segmentation,
-keypoint estimation, **monocular depth estimation**, and **6DoF pose estimation**,
-while keeping training implementations optional and decoupled.
+## Read These 3 First
 
-YOLOZU supports ONNX export and deployment across PyTorch, ONNX Runtime,
-and TensorRT, with C++ and Rust inference templates.
+- [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
+- [`install.md`](install.md): install, `doctor`, and environment setup
+- [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 
-YOLOZU is built for interface-contract-first, AI-first development:
-every experiment produces versioned artifacts that can be
-compared and regression-tested automatically in CI.
+## Capability Maturity
+
+- Stable: prediction validation/evaluation, wrapped `predictions.json`, install/doctor flow, repo smoke/demo path
+- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
+- Research: continual learning, self-distillation, TTT, Hessian refinement
 
 ## Docs index
 
