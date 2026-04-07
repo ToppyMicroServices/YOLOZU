@@ -51,6 +51,125 @@ The default strategy combines:
 \caption{Continual learning in \yolozu{}: the new run does not train on the latest task alone; it is anchored by the previous checkpoint and may also replay a small memory of older examples.}
 \end{figure}
 
+\section{Online learning, continual learning, and TTT are not the same thing}
+
+These three ideas are often grouped together because all of them react to distribution shift.
+Operationally, however, they solve different problems and carry different risk.
+
+\begin{center}
+\begin{tabular}{p{0.20\linewidth}p{0.23\linewidth}p{0.23\linewidth}p{0.24\linewidth}}
+\toprule
+Approach & What changes & Main goal & Main operational risk \\
+\midrule
+Online learning & model weights are updated close to inference time & adapt immediately to fresh data & bad labels or drift can corrupt production behavior quickly \\
+Continual learning & model weights are updated in staged retraining runs & learn new tasks/domains while limiting forgetting & forgetting old behavior or promoting a weak checkpoint \\
+TTT (test-time training / adaptation) & temporary inference-time adaptation or state adjustment & stabilize predictions on the current batch / scene & mixing short-lived adaptation with long-lived training decisions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The short version is:
+\begin{itemize}
+  \item \textbf{online learning} is the fastest to react, but also the easiest to destabilize,
+  \item \textbf{continual learning} is slower, but much easier to audit and govern,
+  \item \textbf{TTT} is best thought of as \emph{inference-time correction}, not as the main mechanism for long-term knowledge accumulation.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=left, inner sep=7pt},
+  online/.style={box, fill=red!8, text width=0.25\linewidth},
+  cl/.style={box, fill=green!10, text width=0.25\linewidth},
+  ttt/.style={box, fill=blue!8, text width=0.25\linewidth},
+  gate/.style={box, fill=yellow!12, text width=0.22\linewidth},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+
+\node[online] (ol1) at (0,2.3) {\textbf{Online learning}\\inference stream\\$\downarrow$ immediate update};
+\node[online] (ol2) at (5.6,2.3) {\textbf{Risk}\\bad pseudo-labels or drift can affect the live model quickly};
+
+\node[cl] (cl1) at (0,0) {\textbf{Continual learning}\\collect new data / labels\\$\downarrow$ staged retraining};
+\node[gate] (cl2) at (5.6,0) {\textbf{Evaluation gate}\\old tasks + new task are checked before promotion};
+\node[cl] (cl3) at (11.2,0) {\textbf{Promote or reject}\\only validated checkpoints become production candidates};
+
+\node[ttt] (ttt1) at (0,-2.3) {\textbf{TTT}\\adapt at inference time for the current scene / batch};
+\node[ttt] (ttt2) at (5.6,-2.3) {\textbf{Reset or expire}\\do not treat transient adaptation as an approved long-term update};
+
+\draw[arrow] (ol1) -- (ol2);
+\draw[arrow] (cl1) -- (cl2);
+\draw[arrow] (cl2) -- (cl3);
+\draw[arrow] (ttt1) -- (ttt2);
+\end{tikzpicture}
+}
+\caption{The practical difference: online learning changes production weights quickly, continual learning inserts an explicit evaluation gate before promotion, and TTT is a short-horizon inference-time adaptation path rather than a long-horizon training loop.}
+\end{figure}
+
+\section{Safe design pattern in \yolozu{}}
+
+For this repository, the safest default is \textbf{not} ``train the production model while it is serving''.
+Instead, use \yolozu{} as a governed loop with explicit boundaries:
+\begin{enumerate}
+  \item keep production inference separate from retraining,
+  \item collect inputs, predictions, and review signals as artifacts,
+  \item select candidate retraining data from those artifacts,
+  \item run continual-learning jobs off the serving path,
+  \item evaluate old-task retention and new-task adaptation before promotion.
+\end{enumerate}
+
+This is where the repository fits naturally:
+\begin{itemize}
+  \item \textbf{prediction capture}: keep outputs and settings under a predictions interface contract,
+  \item \textbf{candidate selection}: choose low-confidence, failed, or newly labeled examples for retraining,
+  \item \textbf{continual training}: use replay and/or self-distillation to reduce catastrophic forgetting,
+  \item \textbf{evaluation}: compare old tasks and new tasks before a checkpoint is promoted.
+\end{itemize}
+
+\subsection{Recommended control-plane split}
+
+The practical split is:
+\begin{itemize}
+  \item \textbf{serving plane}: inference only,
+  \item \textbf{data plane}: collect predictions, labels, and failure cases,
+  \item \textbf{training plane}: run continual-learning jobs,
+  \item \textbf{promotion plane}: gate model release on retention + adaptation metrics.
+\end{itemize}
+
+This separation matters because it prevents a weak pseudo-labeling step or a bad domain shift from mutating the live model immediately.
+
+\subsection{What to do with TTT}
+
+TTT is still useful in \yolozu{}, but for a different reason:
+\begin{itemize}
+  \item use it to stabilize predictions under a temporary shift,
+  \item log what happened,
+  \item do \emph{not} automatically treat that short-lived adaptation as an approved training update.
+\end{itemize}
+
+In other words:
+\begin{quote}
+TTT can help the current prediction, but continual learning should decide the next checkpoint.
+\end{quote}
+
+\subsection{A safe operator checklist}
+
+If you want to introduce adaptation without destabilizing production, the safest order is:
+\begin{enumerate}
+  \item start by logging predictions and failures,
+  \item build a reviewed retraining set or a tightly filtered pseudo-label set,
+  \item run a separate continual-learning job,
+  \item compare retention on older tasks and adaptation on the new task,
+  \item promote only if the checkpoint passes the gate,
+  \item keep TTT separate from automatic checkpoint promotion.
+\end{enumerate}
+
+For most teams, this means:
+\begin{quote}
+prefer continual learning as the default production-update loop, and use online learning or TTT only where the risk is well understood and explicitly bounded.
+\end{quote}
+
 \section{LoRA / QLoRA in plain language}
 LoRA and QLoRA are not separate continual-learning algorithms.
 They are \textbf{ways to make the parameter updates smaller and cheaper}.
