@@ -5,6 +5,11 @@
       "schema": "docs/schemas/coco_eval_report.schema.json",
       "summary": "Report payload emitted by tools/eval_coco.py (COCOeval or dry-run conversion)."
     },
+    "continual_promotion_decision_json": {
+      "producer": "python3 tools/continual_decide.py",
+      "schema": "docs/schemas/continual_promotion_decision.schema.json",
+      "summary": "Promotion decision report derived from continual_eval.json plus optional curation soft gates."
+    },
     "eval_suite_report_json": {
       "producer": "python3 tools/eval_suite.py",
       "schema": "docs/schemas/eval_suite_report.schema.json",
@@ -2373,6 +2378,147 @@
         "security",
         "governance",
         "repo-policy"
+      ]
+    },
+    {
+      "contract_outputs": {
+        "continual_promotion_decision_json": "continual_promotion_decision_json"
+      },
+      "contracts": {
+        "produces": [
+          "continual_promotion_decision_json"
+        ]
+      },
+      "docs": [
+        "docs/continual_learning.md",
+        "docs/tools_index.md",
+        "manual/chapters/14_continual_learning.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes promotion decision JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/continual_decide.py",
+      "examples": [
+        {
+          "command": "python3 tools/continual_decide.py --eval-json runs/continual/<run>/continual_eval.json --run-json runs/continual/<run>/continual_run.json --max-forgetting 0.05 --min-new-task-score 0.40 --min-old-task-final 0.40 --min-reviewed-labels 20 --min-highconf-pseudo-labels 50 --min-total-curated-examples 60",
+          "description": "Decide whether a continual-learning checkpoint should be promoted, reviewed, or held."
+        }
+      ],
+      "id": "continual_decide",
+      "inputs": [
+        {
+          "flag": "--eval-json",
+          "kind": "file",
+          "name": "eval_json",
+          "required": true
+        },
+        {
+          "flag": "--curation-json",
+          "kind": "file",
+          "name": "curation_json",
+          "required": false
+        },
+        {
+          "flag": "--run-json",
+          "kind": "file",
+          "name": "run_json",
+          "required": false
+        },
+        {
+          "flag": "--max-forgetting",
+          "kind": "number",
+          "name": "max_forgetting",
+          "required": false
+        },
+        {
+          "flag": "--min-avg-acc",
+          "kind": "number",
+          "name": "min_avg_acc",
+          "required": false
+        },
+        {
+          "flag": "--min-new-task-score",
+          "kind": "number",
+          "name": "min_new_task_score",
+          "required": false
+        },
+        {
+          "flag": "--min-old-task-final",
+          "kind": "number",
+          "name": "min_old_task_final",
+          "required": false
+        },
+        {
+          "flag": "--min-reviewed-labels",
+          "kind": "number",
+          "name": "min_reviewed_labels",
+          "required": false
+        },
+        {
+          "flag": "--min-highconf-pseudo-labels",
+          "kind": "number",
+          "name": "min_highconf_pseudo_labels",
+          "required": false
+        },
+        {
+          "flag": "--min-total-curated-examples",
+          "kind": "number",
+          "name": "min_total_curated_examples",
+          "required": false
+        },
+        {
+          "flag": "--max-candidate-share",
+          "kind": "number",
+          "name": "max_candidate_share",
+          "required": false
+        },
+        {
+          "flag": "--ttt-active",
+          "kind": "string",
+          "name": "ttt_active",
+          "required": false
+        },
+        {
+          "flag": "--allow-ttt-active-promotion",
+          "kind": "string",
+          "name": "allow_ttt_active_promotion",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "Promotion decision JSON report.",
+          "kind": "file",
+          "name": "continual_promotion_decision_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Apply hard/soft gates to continual-learning eval results and emit a promote/review/hold decision report.",
+      "tags": [
+        "continual",
+        "promotion",
+        "gate",
+        "automation"
       ]
     },
     {

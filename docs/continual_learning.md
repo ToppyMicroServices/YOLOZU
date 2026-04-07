@@ -282,6 +282,46 @@ This writes:
 - `runs/continual/<run>/continual_eval.json`
 - `runs/continual/<run>/continual_eval.html`
 
+4) Decide whether the candidate checkpoint should be promoted:
+
+```bash
+python3 tools/continual_decide.py \
+  --eval-json runs/continual/<run>/continual_eval.json \
+  --run-json runs/continual/<run>/continual_run.json \
+  --max-forgetting 0.05 \
+  --min-new-task-score 0.40 \
+  --min-old-task-final 0.40 \
+  --min-reviewed-labels 20 \
+  --min-highconf-pseudo-labels 50 \
+  --min-total-curated-examples 60
+```
+
+This writes:
+- `runs/continual/<run>/continual_promotion_decision.json` by default
+
+Decision model:
+- `hold`: hard gate failed (for example forgetting too high)
+- `review`: hard gates passed, but operator review is still required (for example insufficient curation evidence or `--ttt-active`)
+- `promote`: hard gates passed and no soft review gate blocked promotion
+
+Minimal optional `curation_json` shape:
+
+```json
+{
+  "counts": {
+    "samples_total": 1200,
+    "candidate_images": 90,
+    "reviewed_labels": 48,
+    "pseudo_labels_high_confidence": 120
+  }
+}
+```
+
+Operational recommendation:
+- use `continual_decide.py` as the automation layer for checkpoint promotion
+- keep TTT separate from automatic promotion unless you explicitly opt in with `--allow-ttt-active-promotion`
+- treat reviewed labels and trusted pseudo-label counts as soft gates, not as proof of model quality by themselves
+
 ## Measured smoke run (what we actually validated)
 
 We ran a tiny two-task continual-learning smoke experiment in this repo to verify that the memoryless SDFT path is really exercised.

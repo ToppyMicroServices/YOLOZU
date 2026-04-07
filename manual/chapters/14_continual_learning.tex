@@ -170,6 +170,45 @@ For most teams, this means:
 prefer continual learning as the default production-update loop, and use online learning or TTT only where the risk is well understood and explicitly bounded.
 \end{quote}
 
+\subsection{Automating the promotion decision in \yolozu{}}
+
+The repository can automate the \emph{decision layer} even when the data curation and retraining steps remain separate.
+The intended pattern is:
+\begin{enumerate}
+  \item run continual training,
+  \item run \cmd{eval\_continual.py},
+  \item feed the resulting eval report into \cmd{continual\_decide.py},
+  \item promote only if the decision report says \cmd{promote}.
+\end{enumerate}
+
+Example:
+\begin{lstlisting}[language=bash]
+python3 tools/continual_decide.py \
+  --eval-json runs/continual/<run>/continual_eval.json \
+  --run-json runs/continual/<run>/continual_run.json \
+  --max-forgetting 0.05 \
+  --min-new-task-score 0.40 \
+  --min-old-task-final 0.40 \
+  --min-reviewed-labels 20 \
+  --min-highconf-pseudo-labels 50 \
+  --min-total-curated-examples 60
+\end{lstlisting}
+
+This writes a decision report (by default \path{runs/continual/<run>/continual\_promotion\_decision.json}) with one of three outcomes:
+\begin{itemize}
+  \item \cmd{hold}: hard gate failed,
+  \item \cmd{review}: hard gates passed, but a soft review gate still requires operator confirmation,
+  \item \cmd{promote}: the checkpoint is eligible for promotion under the configured policy.
+\end{itemize}
+
+The soft-gate idea is deliberate.
+For example, reviewed labels and trusted pseudo-label counts can support a promotion decision, but they should not replace actual old-task/new-task evaluation.
+
+If TTT was active on the serving path, the safe default is still to require review:
+\begin{quote}
+use TTT to help the current prediction, but let continual-learning evaluation decide the next checkpoint.
+\end{quote}
+
 \section{LoRA / QLoRA in plain language}
 LoRA and QLoRA are not separate continual-learning algorithms.
 They are \textbf{ways to make the parameter updates smaller and cheaper}.

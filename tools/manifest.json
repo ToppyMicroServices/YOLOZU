@@ -5,6 +5,11 @@
       "schema": "docs/schemas/coco_eval_report.schema.json",
       "summary": "Report payload emitted by tools/eval_coco.py (COCOeval or dry-run conversion)."
     },
+    "continual_promotion_decision_json": {
+      "producer": "python3 tools/continual_decide.py",
+      "schema": "docs/schemas/continual_promotion_decision.schema.json",
+      "summary": "Promotion decision report derived from continual_eval.json plus optional curation soft gates."
+    },
     "eval_suite_report_json": {
       "producer": "python3 tools/eval_suite.py",
       "schema": "docs/schemas/eval_suite_report.schema.json",
@@ -2278,101 +2283,242 @@
       ]
     },
     {
-      "id": "check_repo_governance",
-      "summary": "Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
-      "runner": "python3",
+      "docs": [
+        "docs/repo_governance_audit.md",
+        "docs/security_scorecard_governance.md",
+        "docs/release_reliability_checklist.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Write the governance audit JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
       "entrypoint": "tools/check_repo_governance.py",
+      "examples": [
+        {
+          "command": "python3 tools/check_repo_governance.py --repo-json reports/github_governance/repo.json --branch-protection-json reports/github_governance/branch_protection_main.json --output reports/repo_governance_check.json",
+          "description": "Run a full governance audit from exported GitHub settings snapshots."
+        },
+        {
+          "command": "python3 tools/check_repo_governance.py --repo-root . --allow-missing-evidence --output reports/repo_governance_check.local.json",
+          "description": "Inspect local workflow/docs evidence only and treat missing snapshots as informational."
+        }
+      ],
+      "id": "check_repo_governance",
+      "inputs": [
+        {
+          "default": ".",
+          "flag": "--repo-root",
+          "kind": "dir",
+          "name": "repo_root",
+          "required": false
+        },
+        {
+          "flag": "--repo-json",
+          "kind": "file",
+          "name": "repo_json",
+          "required": false
+        },
+        {
+          "flag": "--branch-protection-json",
+          "kind": "file",
+          "name": "branch_protection_json",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--require-reviews",
+          "kind": "number",
+          "name": "require_reviews",
+          "required": false
+        },
+        {
+          "default": false,
+          "flag": "--allow-missing-evidence",
+          "kind": "string",
+          "name": "allow_missing_evidence",
+          "required": false
+        },
+        {
+          "default": "reports/repo_governance_check.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "JSON report containing required checks, advisory checks, missing evidence, and manual followups.",
+          "kind": "json",
+          "name": "governance_report_json",
+          "path": "reports/repo_governance_check.json"
+        },
+        {
+          "description": "One-line status summary plus failed check identifiers when the audit does not pass.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
         "linux_ok": true,
         "macos_ok": true
       },
+      "runner": "python3",
+      "summary": "Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
       "tags": [
         "security",
         "governance",
         "repo-policy"
-      ],
+      ]
+    },
+    {
+      "contract_outputs": {
+        "continual_promotion_decision_json": "continual_promotion_decision_json"
+      },
+      "contracts": {
+        "produces": [
+          "continual_promotion_decision_json"
+        ]
+      },
       "docs": [
-        "docs/repo_governance_audit.md",
-        "docs/security_scorecard_governance.md",
-        "docs/release_reliability_checklist.md"
+        "docs/continual_learning.md",
+        "docs/tools_index.md",
+        "manual/chapters/14_continual_learning.tex"
       ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes promotion decision JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/continual_decide.py",
+      "examples": [
+        {
+          "command": "python3 tools/continual_decide.py --eval-json runs/continual/<run>/continual_eval.json --run-json runs/continual/<run>/continual_run.json --max-forgetting 0.05 --min-new-task-score 0.40 --min-old-task-final 0.40 --min-reviewed-labels 20 --min-highconf-pseudo-labels 50 --min-total-curated-examples 60",
+          "description": "Decide whether a continual-learning checkpoint should be promoted, reviewed, or held."
+        }
+      ],
+      "id": "continual_decide",
       "inputs": [
         {
-          "name": "repo_root",
-          "flag": "--repo-root",
-          "kind": "dir",
-          "required": false,
-          "default": "."
+          "flag": "--eval-json",
+          "kind": "file",
+          "name": "eval_json",
+          "required": true
         },
         {
-          "name": "repo_json",
-          "flag": "--repo-json",
+          "flag": "--curation-json",
           "kind": "file",
+          "name": "curation_json",
           "required": false
         },
         {
-          "name": "branch_protection_json",
-          "flag": "--branch-protection-json",
+          "flag": "--run-json",
           "kind": "file",
+          "name": "run_json",
           "required": false
         },
         {
-          "name": "require_reviews",
-          "flag": "--require-reviews",
+          "flag": "--max-forgetting",
           "kind": "number",
-          "required": false,
-          "default": 1
+          "name": "max_forgetting",
+          "required": false
         },
         {
-          "name": "allow_missing_evidence",
-          "flag": "--allow-missing-evidence",
+          "flag": "--min-avg-acc",
+          "kind": "number",
+          "name": "min_avg_acc",
+          "required": false
+        },
+        {
+          "flag": "--min-new-task-score",
+          "kind": "number",
+          "name": "min_new_task_score",
+          "required": false
+        },
+        {
+          "flag": "--min-old-task-final",
+          "kind": "number",
+          "name": "min_old_task_final",
+          "required": false
+        },
+        {
+          "flag": "--min-reviewed-labels",
+          "kind": "number",
+          "name": "min_reviewed_labels",
+          "required": false
+        },
+        {
+          "flag": "--min-highconf-pseudo-labels",
+          "kind": "number",
+          "name": "min_highconf_pseudo_labels",
+          "required": false
+        },
+        {
+          "flag": "--min-total-curated-examples",
+          "kind": "number",
+          "name": "min_total_curated_examples",
+          "required": false
+        },
+        {
+          "flag": "--max-candidate-share",
+          "kind": "number",
+          "name": "max_candidate_share",
+          "required": false
+        },
+        {
+          "flag": "--ttt-active",
           "kind": "string",
-          "required": false,
-          "default": false
+          "name": "ttt_active",
+          "required": false
         },
         {
-          "name": "output",
+          "flag": "--allow-ttt-active-promotion",
+          "kind": "string",
+          "name": "allow_ttt_active_promotion",
+          "required": false
+        },
+        {
           "flag": "--output",
           "kind": "file",
-          "required": false,
-          "default": "reports/repo_governance_check.json"
+          "name": "output",
+          "required": false
         }
       ],
       "outputs": [
         {
-          "name": "governance_report_json",
-          "kind": "json",
-          "path": "reports/repo_governance_check.json",
-          "description": "JSON report containing required checks, advisory checks, missing evidence, and manual followups."
-        },
-        {
-          "name": "stdout",
-          "kind": "stdout",
-          "description": "One-line status summary plus failed check identifiers when the audit does not pass."
+          "description": "Promotion decision JSON report.",
+          "kind": "file",
+          "name": "continual_promotion_decision_json"
         }
       ],
-      "effects": {
-        "writes": [
-          {
-            "flag": "--output",
-            "kind": "file",
-            "scope": "path",
-            "description": "Write the governance audit JSON report."
-          }
-        ],
-        "fixed_writes": []
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
       },
-      "examples": [
-        {
-          "description": "Run a full governance audit from exported GitHub settings snapshots.",
-          "command": "python3 tools/check_repo_governance.py --repo-json reports/github_governance/repo.json --branch-protection-json reports/github_governance/branch_protection_main.json --output reports/repo_governance_check.json"
-        },
-        {
-          "description": "Inspect local workflow/docs evidence only and treat missing snapshots as informational.",
-          "command": "python3 tools/check_repo_governance.py --repo-root . --allow-missing-evidence --output reports/repo_governance_check.local.json"
-        }
+      "runner": "python3",
+      "summary": "Apply hard/soft gates to continual-learning eval results and emit a promote/review/hold decision report.",
+      "tags": [
+        "continual",
+        "promotion",
+        "gate",
+        "automation"
       ]
     },
     {
@@ -2530,11 +2676,11 @@
           "required": true
         },
         {
+          "description": "Optional JSON/YAML config for distillation parameters.",
           "flag": "--config",
           "kind": "file",
           "name": "config",
-          "required": false,
-          "description": "Optional JSON/YAML config for distillation parameters."
+          "required": false
         },
         {
           "flag": "--dataset",
@@ -2610,15 +2756,15 @@
       "outputs": [
         {
           "default": "reports/predictions_distilled.json",
+          "description": "Distilled predictions artifact.",
           "kind": "file",
-          "name": "predictions_distilled",
-          "description": "Distilled predictions artifact."
+          "name": "predictions_distilled"
         },
         {
           "default": "reports/distill_report.json",
+          "description": "Distillation report artifact.",
           "kind": "file",
-          "name": "report_json",
-          "description": "Distillation report artifact."
+          "name": "report_json"
         }
       ],
       "platform": {
@@ -9657,103 +9803,103 @@
       ]
     },
     {
-      "id": "render_ttt_manual_figures",
-      "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
-      "runner": "python3",
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Write generated docs PNG assets.",
+            "flag": "--docs-assets-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Copy generated PNG assets into manual/figures.",
+            "flag": "--manual-figures-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
       "entrypoint": "tools/render_ttt_manual_figures.py",
+      "examples": [
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py",
+          "description": "Render the checked-in TTT summary/pipeline/qualitative figures for docs and manual."
+        },
+        {
+          "command": "python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manual-figures-dir tmp/ttt_manual",
+          "description": "Render the same figures into alternate output directories for inspection."
+        }
+      ],
+      "id": "render_ttt_manual_figures",
+      "inputs": [
+        {
+          "default": "docs/assets/ttt_method_results_source.json",
+          "flag": "--source-json",
+          "kind": "file",
+          "name": "source_json",
+          "required": false
+        },
+        {
+          "default": "docs/assets",
+          "flag": "--docs-assets-dir",
+          "kind": "dir",
+          "name": "docs_assets_dir",
+          "required": false
+        },
+        {
+          "default": "manual/figures",
+          "flag": "--manual-figures-dir",
+          "kind": "dir",
+          "name": "manual_figures_dir",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "Real-result TTT summary chart PNG.",
+          "kind": "file",
+          "name": "summary_png",
+          "path": "docs/assets/ttt_method_results_summary.png"
+        },
+        {
+          "description": "TTT compare workflow PNG.",
+          "kind": "file",
+          "name": "pipeline_png",
+          "path": "docs/assets/ttt_compare_pipeline.png"
+        },
+        {
+          "description": "Qualitative shifted-probe example PNG.",
+          "kind": "file",
+          "name": "qualitative_png",
+          "path": "docs/assets/ttt_probe_example_panel.png"
+        },
+        {
+          "description": "Fixed result source JSON used to render the manual figures.",
+          "kind": "file",
+          "name": "summary_source_json",
+          "path": "docs/assets/ttt_method_results_source.json"
+        }
+      ],
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
         "linux_ok": true,
         "macos_ok": true
       },
+      "runner": "python3",
+      "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
       "tags": [
         "ttt",
         "docs",
         "manual",
         "figures",
         "render"
-      ],
-      "docs": [
-        "docs/ttt_protocol.md",
-        "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
-      ],
-      "inputs": [
-        {
-          "name": "source_json",
-          "flag": "--source-json",
-          "kind": "file",
-          "required": false,
-          "default": "docs/assets/ttt_method_results_source.json"
-        },
-        {
-          "name": "docs_assets_dir",
-          "flag": "--docs-assets-dir",
-          "kind": "dir",
-          "required": false,
-          "default": "docs/assets"
-        },
-        {
-          "name": "manual_figures_dir",
-          "flag": "--manual-figures-dir",
-          "kind": "dir",
-          "required": false,
-          "default": "manual/figures"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "summary_png",
-          "kind": "file",
-          "path": "docs/assets/ttt_method_results_summary.png",
-          "description": "Real-result TTT summary chart PNG."
-        },
-        {
-          "name": "pipeline_png",
-          "kind": "file",
-          "path": "docs/assets/ttt_compare_pipeline.png",
-          "description": "TTT compare workflow PNG."
-        },
-        {
-          "name": "qualitative_png",
-          "kind": "file",
-          "path": "docs/assets/ttt_probe_example_panel.png",
-          "description": "Qualitative shifted-probe example PNG."
-        },
-        {
-          "name": "summary_source_json",
-          "kind": "file",
-          "path": "docs/assets/ttt_method_results_source.json",
-          "description": "Fixed result source JSON used to render the manual figures."
-        }
-      ],
-      "effects": {
-        "writes": [
-          {
-            "flag": "--docs-assets-dir",
-            "kind": "dir",
-            "scope": "tree",
-            "description": "Write generated docs PNG assets."
-          },
-          {
-            "flag": "--manual-figures-dir",
-            "kind": "dir",
-            "scope": "tree",
-            "description": "Copy generated PNG assets into manual/figures."
-          }
-        ],
-        "fixed_writes": []
-      },
-      "examples": [
-        {
-          "description": "Render the checked-in TTT summary/pipeline/qualitative figures for docs and manual.",
-          "command": "python3 tools/render_ttt_manual_figures.py"
-        },
-        {
-          "description": "Render the same figures into alternate output directories for inspection.",
-          "command": "python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manual-figures-dir tmp/ttt_manual"
-        }
       ]
     },
     {
@@ -12094,40 +12240,28 @@
       ]
     },
     {
-      "id": "run_ttt_compare",
-      "runner": "python3",
-      "entrypoint": "tools/run_ttt_compare.py",
-      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts under one run directory, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
-      "docs": [
-        "docs/ttt_protocol.md",
-        "docs/ttt_compare_boilerplates.md",
-        "manual/chapters/15_ttt_tent_mim.tex"
-      ],
       "contracts": {
         "produces": [
           "predictions_json"
         ]
       },
-      "platform": {
-        "cpu_ok": true,
-        "gpu_required": false,
-        "linux_ok": true,
-        "macos_ok": true
-      },
-      "requires": {
-        "network": false
-      },
+      "docs": [
+        "docs/ttt_protocol.md",
+        "docs/ttt_compare_boilerplates.md",
+        "manual/chapters/15_ttt_tent_mim.tex"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
+            "description": "Writes plan, baseline/adapted predictions, optional eval outputs, and before-after compare artifacts under one directory.",
             "flag": "--run-dir",
             "kind": "dir",
-            "scope": "tree",
-            "description": "Writes plan, baseline/adapted predictions, optional eval outputs, and before-after compare artifacts under one directory."
+            "scope": "tree"
           }
         ]
       },
+      "entrypoint": "tools/run_ttt_compare.py",
       "examples": [
         {
           "command": "python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
@@ -12154,6 +12288,7 @@
           "description": "Run a SAR before-after compare using the sar boilerplate."
         }
       ],
+      "id": "run_ttt_compare",
       "inputs": [
         {
           "flag": "--boilerplate",
@@ -12168,11 +12303,11 @@
           "required": true
         },
         {
+          "default": "val",
           "flag": "--split",
           "kind": "string",
           "name": "split",
-          "required": false,
-          "default": "val"
+          "required": false
         },
         {
           "flag": "--checkpoint",
@@ -12181,25 +12316,25 @@
           "required": true
         },
         {
+          "default": "reports/ttt_compare/<method>",
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
-          "required": false,
-          "default": "reports/ttt_compare/<method>"
+          "required": false
         },
         {
+          "default": "torch",
           "flag": "--backend",
           "kind": "string",
           "name": "backend",
-          "required": false,
-          "default": "torch"
+          "required": false
         },
         {
+          "default": "cpu",
           "flag": "--device",
           "kind": "string",
           "name": "device",
-          "required": false,
-          "default": "cpu"
+          "required": false
         },
         {
           "flag": "--max-images",
@@ -12240,41 +12375,52 @@
       ],
       "outputs": [
         {
+          "default": "reports/ttt_compare/<method>",
           "kind": "dir",
-          "name": "run_dir",
-          "default": "reports/ttt_compare/<method>"
+          "name": "run_dir"
         },
         {
+          "default": "reports/ttt_compare/<method>/plan.json",
           "kind": "file",
-          "name": "plan_json",
-          "default": "reports/ttt_compare/<method>/plan.json"
+          "name": "plan_json"
         },
         {
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json",
           "kind": "file",
-          "name": "baseline_predictions",
-          "default": "reports/ttt_compare/<method>/baseline_predictions.json"
+          "name": "baseline_predictions"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json",
           "kind": "file",
-          "name": "adapted_predictions",
-          "default": "reports/ttt_compare/<method>/<method>_predictions.json"
+          "name": "adapted_predictions"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
           "kind": "file",
-          "name": "ttt_log",
-          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json"
+          "name": "ttt_log"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
           "kind": "file",
-          "name": "compare_json",
-          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json"
+          "name": "compare_json"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
           "kind": "file",
-          "name": "compare_md",
-          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md"
+          "name": "compare_md"
         }
       ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts under one run directory, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
       "tags": [
         "ttt",
         "ctta",
@@ -12772,35 +12918,23 @@
       ]
     },
     {
-      "id": "ttt_compare",
-      "runner": "bash",
-      "entrypoint": "scripts/ttt_compare.sh",
-      "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
       "docs": [
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
         "manual/chapters/15_ttt_tent_mim.tex"
       ],
-      "platform": {
-        "cpu_ok": true,
-        "gpu_required": false,
-        "linux_ok": true,
-        "macos_ok": true
-      },
-      "requires": {
-        "network": false
-      },
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
+            "description": "Delegates to tools/run_ttt_compare.py and writes compare artifacts under one directory.",
             "flag": "--run-dir",
             "kind": "dir",
-            "scope": "tree",
-            "description": "Delegates to tools/run_ttt_compare.py and writes compare artifacts under one directory."
+            "scope": "tree"
           }
         ]
       },
+      "entrypoint": "scripts/ttt_compare.sh",
       "examples": [
         {
           "command": "bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda",
@@ -12827,6 +12961,7 @@
           "description": "Write a SAR compare plan without launching export/eval."
         }
       ],
+      "id": "ttt_compare",
       "inputs": [
         {
           "flag": "--boilerplate",
@@ -12841,11 +12976,11 @@
           "required": true
         },
         {
+          "default": "val",
           "flag": "--split",
           "kind": "string",
           "name": "split",
-          "required": false,
-          "default": "val"
+          "required": false
         },
         {
           "flag": "--checkpoint",
@@ -12854,25 +12989,25 @@
           "required": true
         },
         {
+          "default": "reports/ttt_compare/<method>",
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
-          "required": false,
-          "default": "reports/ttt_compare/<method>"
+          "required": false
         },
         {
+          "default": "torch",
           "flag": "--backend",
           "kind": "string",
           "name": "backend",
-          "required": false,
-          "default": "torch"
+          "required": false
         },
         {
+          "default": "cpu",
           "flag": "--device",
           "kind": "string",
           "name": "device",
-          "required": false,
-          "default": "cpu"
+          "required": false
         },
         {
           "flag": "--max-images",
@@ -12913,41 +13048,52 @@
       ],
       "outputs": [
         {
+          "default": "reports/ttt_compare/<method>",
           "kind": "dir",
-          "name": "run_dir",
-          "default": "reports/ttt_compare/<method>"
+          "name": "run_dir"
         },
         {
+          "default": "reports/ttt_compare/<method>/plan.json",
           "kind": "file",
-          "name": "plan_json",
-          "default": "reports/ttt_compare/<method>/plan.json"
+          "name": "plan_json"
         },
         {
+          "default": "reports/ttt_compare/<method>/baseline_predictions.json",
           "kind": "file",
-          "name": "baseline_predictions",
-          "default": "reports/ttt_compare/<method>/baseline_predictions.json"
+          "name": "baseline_predictions"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_predictions.json",
           "kind": "file",
-          "name": "adapted_predictions",
-          "default": "reports/ttt_compare/<method>/<method>_predictions.json"
+          "name": "adapted_predictions"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
           "kind": "file",
-          "name": "ttt_log",
-          "default": "reports/ttt_compare/<method>/<method>_ttt_log.json"
+          "name": "ttt_log"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
           "kind": "file",
-          "name": "compare_json",
-          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json"
+          "name": "compare_json"
         },
         {
+          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
           "kind": "file",
-          "name": "compare_md",
-          "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md"
+          "name": "compare_md"
         }
       ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "bash",
+      "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
       "tags": [
         "ttt",
         "ctta",

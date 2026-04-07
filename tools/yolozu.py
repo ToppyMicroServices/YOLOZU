@@ -618,6 +618,40 @@ def _continual_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def _continual_decide(args: argparse.Namespace) -> int:
+    cmd = [sys.executable, "tools/continual_decide.py", "--eval-json", str(args.eval_json)]
+    if args.curation_json:
+        cmd.extend(["--curation-json", str(args.curation_json)])
+    if args.run_json:
+        cmd.extend(["--run-json", str(args.run_json)])
+    if args.max_forgetting is not None:
+        cmd.extend(["--max-forgetting", str(float(args.max_forgetting))])
+    if args.min_avg_acc is not None:
+        cmd.extend(["--min-avg-acc", str(float(args.min_avg_acc))])
+    if args.min_new_task_score is not None:
+        cmd.extend(["--min-new-task-score", str(float(args.min_new_task_score))])
+    if args.min_old_task_final is not None:
+        cmd.extend(["--min-old-task-final", str(float(args.min_old_task_final))])
+    if args.min_reviewed_labels is not None:
+        cmd.extend(["--min-reviewed-labels", str(int(args.min_reviewed_labels))])
+    if args.min_highconf_pseudo_labels is not None:
+        cmd.extend(["--min-highconf-pseudo-labels", str(int(args.min_highconf_pseudo_labels))])
+    if args.min_total_curated_examples is not None:
+        cmd.extend(["--min-total-curated-examples", str(int(args.min_total_curated_examples))])
+    if args.max_candidate_share is not None:
+        cmd.extend(["--max-candidate-share", str(float(args.max_candidate_share))])
+    if args.ttt_active:
+        cmd.append("--ttt-active")
+    if args.allow_ttt_active_promotion:
+        cmd.append("--allow-ttt-active-promotion")
+    if args.output:
+        cmd.extend(["--output", str(args.output)])
+    out = _subprocess_or_die(cmd)
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 0
+
+
 def _iter_images(input_dir: Path, *, patterns: Iterable[str]) -> list[Path]:
     images: list[Path] = []
     for pat in patterns:
@@ -1117,6 +1151,23 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_ce.add_argument("--html", default=None, help="Optional HTML report path (default: <run_dir>/continual_eval.html).")
     p_ce.add_argument("--force", action="store_true", help="Overwrite existing prediction/eval outputs.")
     p_ce.set_defaults(_fn=_continual_eval)
+
+    p_cd = sub.add_parser("continual-decide", aliases=["cd"], help="Decide whether a continual-learning candidate should be promoted, reviewed, or held.")
+    p_cd.add_argument("--eval-json", required=True, help="Path to continual_eval.json produced by tools/eval_continual.py.")
+    p_cd.add_argument("--curation-json", default=None, help="Optional curation summary JSON with reviewed/pseudo-label counts.")
+    p_cd.add_argument("--run-json", default=None, help="Optional continual_run.json path for provenance.")
+    p_cd.add_argument("--max-forgetting", type=float, default=0.05, help="Hard gate: forgetting must be <= this value.")
+    p_cd.add_argument("--min-avg-acc", type=float, default=None, help="Optional hard gate: avg_acc must be >= this value.")
+    p_cd.add_argument("--min-new-task-score", type=float, default=None, help="Optional hard gate: newest task score must be >= this value.")
+    p_cd.add_argument("--min-old-task-final", type=float, default=None, help="Optional hard gate: minimum retained score on previous tasks must be >= this value.")
+    p_cd.add_argument("--min-reviewed-labels", type=int, default=0, help="Soft gate: reviewed label count should be >= this value.")
+    p_cd.add_argument("--min-highconf-pseudo-labels", type=int, default=0, help="Soft gate: trusted pseudo-label count should be >= this value.")
+    p_cd.add_argument("--min-total-curated-examples", type=int, default=0, help="Soft gate: reviewed + trusted pseudo-label count should be >= this value.")
+    p_cd.add_argument("--max-candidate-share", type=float, default=None, help="Soft gate: candidate_images / samples_total should be <= this value.")
+    p_cd.add_argument("--ttt-active", action="store_true", help="Mark that TTT was active; by default this forces review.")
+    p_cd.add_argument("--allow-ttt-active-promotion", action="store_true", help="Allow automatic promotion even when --ttt-active is set.")
+    p_cd.add_argument("--output", default=None, help="Output JSON path (default: sibling of --eval-json named continual_promotion_decision.json).")
+    p_cd.set_defaults(_fn=_continual_decide)
 
     p_export = sub.add_parser("export", help="Export predictions JSON via a selected backend.")
     _parse_common_export_args(p_export)
