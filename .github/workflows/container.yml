@@ -11,9 +11,15 @@ on:
       - ".github/workflows/container.yml"
       - "deploy/docker/**"
       - "deploy/runpod/**"
-      - "requirements*.txt"
+      - "requirements-locks/**"
+      - "tools/ci/install_with_hashes.py"
       - "pyproject.toml"
       - "MANIFEST.in"
+      - "README.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "COPYRIGHT"
+      - "yolozu/**"
   workflow_dispatch:
 
 permissions:
