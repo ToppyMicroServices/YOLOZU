@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU Continual Promotion Decision",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp_utc",
+    "inputs",
+    "observed",
+    "thresholds",
+    "hard_gates",
+    "soft_gates",
+    "decision",
+    "recommended_next"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "const": "continual_promotion_decision"
+    },
+    "timestamp_utc": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "object"
+    },
+    "observed": {
+      "type": "object"
+    },
+    "thresholds": {
+      "type": "object"
+    },
+    "hard_gates": {
+      "type": "array"
+    },
+    "soft_gates": {
+      "type": "array"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "promote",
+        "review",
+        "hold"
+      ]
+    },
+    "recommended_next": {
+      "type": "string"
+    },
+    "run_record": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

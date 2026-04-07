@@ -1,6 +1,7 @@
 # Doctor diagnostics for environment drift
 
 `yolozu doctor` now reports runtime capability differences that often explain parity drift across backends.
+It is a capability report, not a blanket production-readiness verdict.
 
 ## What is reported
 
@@ -35,6 +36,12 @@ For macOS hosts, `yolozu doctor` now shows:
 - `runtime_capabilities.onnxruntime.coreml_provider`
 
 That makes it easier to distinguish a plain CPU install from a real MPS/CoreML-capable local setup.
+
+Interpretation rule:
+
+- MPS is supported when `torch.backends.mps.is_available()` is `true`
+- a tool marked `macos_ok: true` in the manifest only means the CLI can run on macOS
+- `macos_ok: true` does not imply that MPS is available on that machine
 
 Practical macOS triage:
 

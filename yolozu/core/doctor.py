@@ -409,6 +409,7 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
     if bool(torch_runtime.get("mps_built")) and not bool(torch_runtime.get("mps_available")):
         warnings.append(
             "torch was built with MPS support, but MPS is not available at runtime. "
+            "Treat macOS/MPS as a qualified path only when `torch.backends.mps.is_available()` is true. "
             "On newer macOS releases this may be an upstream PyTorch binary/runtime issue; "
             "verify with `sw_vers` and `torch.backends.mps.is_available()`."
         )

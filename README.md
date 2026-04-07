@@ -11,6 +11,8 @@ Evaluate fairly.
 YOLOZU uses one stable predictions interface contract:
 wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 
+## 1-Minute Demo
+
 ```bash
 python3 -m pip install -U yolozu
 yolozu demo overview
@@ -33,32 +35,59 @@ flowchart LR
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 
-## Start Here
+## Read These First
 
-- Evaluate precomputed predictions: [`docs/README.md`](docs/README.md), [`docs/predictions_schema.md`](docs/predictions_schema.md), [`docs/external_inference.md`](docs/external_inference.md)
-- Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md), [`docs/run_contract.md`](docs/run_contract.md)
-- Compare backends and benchmark paths: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md), [`docs/tensorrt_pipeline.md`](docs/tensorrt_pipeline.md)
-- Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md), [`docs/synthgen_intake.md`](docs/synthgen_intake.md), [`docs/synthgen_contract.md`](docs/synthgen_contract.md)
-- Install and environment setup: [`docs/install.md`](docs/install.md), [`docs/doctor_diagnostics.md`](docs/doctor_diagnostics.md)
+- [`docs/README.md`](docs/README.md): top-level docs map and shortest working paths
+- [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
+- [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
+
+## Primary Focus
+
+- Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
+- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
+
+## Capability Maturity
+
+- Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
+- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
+- Research: continual learning, self-distillation, TTT, Hessian refinement
+
+## Production Readiness
+
+- Production-ready today: prediction validation/evaluation and the predictions interface contract
+- Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
+- Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
+- Full details: [`docs/production_readiness.md`](docs/production_readiness.md)
+
+## Who This Is For
+
+- You already have predictions and want fair cross-framework evaluation.
+- You want an Apache-2.0 evaluation layer without rewriting your training stack.
+- You do not want framework-native evaluation differences to become silent metric drift.
+
+## Not The Best Fit
+
+- You want one end-to-end training framework with one-click defaults.
+- You do not need cross-framework comparison or a stable predictions interface contract.
+
+## Why Not Just Use Framework-Native Evaluation?
+
+Framework-native evaluation is convenient inside one stack, but it is harder to compare fairly across stacks. YOLOZU keeps the evaluation boundary at one predictions interface contract so the comparison path stays pinned even when the inference stack changes.
+
+## Where To Go Next
+
+- Evaluate precomputed predictions: [`docs/external_inference.md`](docs/external_inference.md)
+- Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md)
+- Compare backends and benchmark paths: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
+- Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-## Quick Answers
+## More Than The Demo
 
-- Good fit if you already have predictions and want fair cross-framework evaluation.
-- Good fit if you need Apache-2.0-friendly tooling for commercial or internal use.
-- Probably not a fit if you want a single end-to-end training framework with one-click defaults.
-- GPU is optional. The default demo path is CPU-friendly.
-- You do not need to train inside YOLOZU to use it.
-- The main artifact is wrapped `predictions.json` with `meta.export_settings`.
-
-## Demos And Examples
-
-- 30-second demo: `yolozu demo overview`
+- Advanced docs map: [`docs/README.md`](docs/README.md)
 - Real-image showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
-- Learning and advanced workflows: [`docs/learning_features.md`](docs/learning_features.md)
-- Distillation: [`docs/distillation.md`](docs/distillation.md)
-- Continual learning: [`docs/continual_learning.md`](docs/continual_learning.md)
-- Hessian refinement: [`docs/hessian_solver.md`](docs/hessian_solver.md)
+- Learning and research workflows: [`docs/learning_features.md`](docs/learning_features.md)
 
 ## Repo Users
 

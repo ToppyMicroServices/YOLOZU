@@ -1,35 +1,55 @@
-# YOLOZU
+# YOLOZU Docs
 
-YOLOZU is a framework-agnostic evaluation toolkit for vision models,
-designed to support reproducible continual learning and test-time adaptation (TTT) under **domain shift**.
+Use this page as the shortest route into the repo.
+Start with the 1-minute demo, read the first three docs, then pick one next route.
 
-YOLOZU helps mitigate catastrophic forgetting by enabling reproducible workflows
-(e.g., self-distillation, replay, parameter-efficient updates) and by making forgetting
-measurable and comparable across runs. It does not guarantee elimination of forgetting.
+## 1-Minute Demo
 
-**YOLOZU exists to measure, compare, and control catastrophic forgetting
-and inference-time adaptation in a reproducible way.**
+```bash
+python3 -m pip install -U yolozu
+yolozu demo overview
+```
 
-YOLOZU treats **predictions—not models—as the stable interface contract**,
-making continual learning and test-time training comparable,
-restartable, and CI-friendly across frameworks and runtimes.
+Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 
-YOLOZU supports evaluation workflows for object detection, segmentation,
-keypoint estimation, **monocular depth estimation**, and **6DoF pose estimation**,
-while keeping training implementations optional and decoupled.
+## Read These 3 First
 
-YOLOZU supports ONNX export and deployment across PyTorch, ONNX Runtime,
-and TensorRT, with C++ and Rust inference templates.
+- [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
+- [`install.md`](install.md): install, `doctor`, and environment setup
+- [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 
-YOLOZU is built for interface-contract-first, AI-first development:
-every experiment produces versioned artifacts that can be
-compared and regression-tested automatically in CI.
+## Next 3 Routes
 
-## Docs index
+- Main production lane: evaluate precomputed predictions and keep the predictions interface contract stable
+- Secondary lane: train/export flows that emit the same predictions interface contract
+- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
 
-Use this page as the docs index for both humans and agents. All examples below use repository-real paths (`data/smoke`, `reports/...`) to reduce copy-paste mistakes.
+## Primary Focus
 
-## 0) Offline copy-paste smoke (single command)
+- Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
+- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
+
+## Capability Maturity
+
+- Stable: prediction validation/evaluation, wrapped `predictions.json`, install/doctor flow, repo smoke/demo path
+- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
+- Research: continual learning, self-distillation, TTT, Hessian refinement
+
+## Production Readiness
+
+- Production-ready today: prediction validation/evaluation and the predictions interface contract
+- Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
+- Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
+- Details: [`production_readiness.md`](production_readiness.md)
+
+## Quick route map
+
+- If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
+- If you need train/export/eval scaffolding: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-scaffold)
+- If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
+
+## Offline repo smoke
 
 The fastest safety check from repo root is:
 
@@ -56,21 +76,14 @@ bash scripts/smoke.sh --profile deep --torch-device cuda
 Deep walkthrough report:
 - `reports/smoke_walkthrough_report.json`
 
-Install (pip + optional extras): [`docs/install.md`](install.md)
+Supporting docs:
 
-Support/legal: [`docs/support.md`](support.md)
-
-Security / cryptography scope: [`docs/security_crypto_scope.md`](security_crypto_scope.md)
-
-Repository governance / Scorecard posture: [`docs/security_scorecard_governance.md`](security_scorecard_governance.md), [`docs/repo_governance_audit.md`](repo_governance_audit.md)
-
-Learning features (training / continual learning / TTT / distillation / long-tail recipe PyTorch plugin choices): [`docs/learning_features.md`](learning_features.md)
-
-Beginner-friendly prediction distillation guide (offline teacher/student artifact blending + sample YAML): [`docs/distillation.md`](distillation.md)
-
-Plain-language continual-learning guide with LoRA / QLoRA diagrams: [`docs/continual_learning.md`](continual_learning.md)
-
-Beginner-friendly Hessian refinement guide with pose intuition: [`docs/hessian_solver.md`](hessian_solver.md)
+- Install: [`install.md`](install.md)
+- Support/legal: [`support.md`](support.md)
+- Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
+- Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
+- Production readiness: [`production_readiness.md`](production_readiness.md)
+- Learning features overview: [`learning_features.md`](learning_features.md)
 
 ---
 

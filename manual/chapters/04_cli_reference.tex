@@ -52,7 +52,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu test} & Executes the YAML/JSON scenario runner (compatible with dummy, precomputed, and rtdetr\_pose adapters). \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
-\cmd{yolozu benchmark} & Parity-target benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine} when artifacts and runtimes exist, otherwise records explicit skipped/placeholder results. Key knobs include \cmd{--protocol}, backend-specific model overrides (\cmd{--torch-model}, \cmd{--onnx-model}, \cmd{--engine-model}), and \cmd{--latency-source auto}. \\
+\cmd{yolozu benchmark} & Parity-target benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine} when artifacts and runtimes exist, otherwise records explicit skipped/synthetic results. Key knobs include \cmd{--protocol}, backend-specific model overrides (\cmd{--torch-model}, \cmd{--onnx-model}, \cmd{--engine-model}), and \cmd{--latency-source auto}. \\
 \cmd{yolozu parity} & Compares two distinct predictions artifacts to detect backend drift or discrepancies. \\
 \cmd{yolozu predictions migrate} & Migrates predictions entry schema versions (currently \cmd{--from v1 --to v2}) with optional strict source checking. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
@@ -98,7 +98,7 @@ yolozu demo pose \
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.95\textwidth]{figures/demo_instance_seg_overlay.png}
-  \caption{Instance-seg demo overlay (\cmd{--background yolo-bbox --inference none}). This offline mode uses GT-derived scaffold predictions for visualization and evaluation smoke checks.}
+  \caption{Instance-seg demo overlay (\cmd{--background yolo-bbox --inference none}). This offline mode uses GT-derived smoke predictions for visualization and evaluation smoke checks.}
 \end{figure}
 
 \begin{figure}[htbp]
