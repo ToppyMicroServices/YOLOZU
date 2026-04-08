@@ -299,7 +299,10 @@ Recommended behavior:
 
 Task-specific behavior should also be explicit:
 
-- real backend execution is currently detect-first
+- real backend execution is detect-first for inference-backed runs
+- `keypoints` is allowed as an artifact-backed real eval/parity path for `torch` / `onnx` / `engine`
+- `depth` is allowed as an artifact-backed real eval/parity path for `torch` / `onnx` / `engine`
+- `pose6d` is allowed as an artifact-backed real eval/parity path for `torch` / `onnx` / `engine`
 - non-detect tasks should remain planning/synthetic-only until dedicated
   backend/eval paths exist
 - `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions

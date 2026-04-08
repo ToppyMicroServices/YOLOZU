@@ -38,7 +38,7 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Turn `segmentation`, `classification`, `obb`, and `keypoints` into real
+1. Turn `classification` and `obb` into real
    backend/eval paths for the existing `torch` / `onnx` / `engine` benchmark
    flow.
 2. Promote `torchscript` from planning-only semantics to a real execution path,
@@ -103,14 +103,11 @@ YOLOZU already has extra task value beyond that baseline:
 - 6DoF pose
 
 The benchmark entrypoint now records explicit task semantics in the benchmark
-report, but real backend/eval coverage still lags for:
+report, and artifact-backed real eval/parity coverage now exists for
+`segmentation`, `keypoints`, `depth`, and `pose6d`. The remaining lagging tasks are:
 
-- segmentation
-- keypoints / pose
 - classification
 - OBB
-- depth
-- 6DoF pose
 
 Improvement priority:
 
@@ -118,6 +115,7 @@ Improvement priority:
 2. Keep task-specific eval metric keys visible in the report examples
 3. Keep explicit `classification` and `obb` support-status lines in docs/manual
 4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
+5. Keep the depth and pose6d lanes clearly documented as artifact-backed real eval/parity rather than inference-backed parity
 
 ### 3. Argument-surface gaps
 
@@ -154,6 +152,10 @@ docs should make the distinction sharper than they do today.
 Current behavior:
 
 - `torch` / `onnx` / `engine` can orchestrate real runs
+- `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
+- `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
+- `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
+- `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `torchscript` is accepted and recorded honestly, but still uses synthetic / skipped semantics
 - `executorch` / `opencv_dnn` remain synthetic or skipped
 - parity artifacts are real for successful `torch`-anchored backend comparisons, and remain placeholders for dry-run / skipped / synthetic-only formats
@@ -200,7 +202,7 @@ Improvement priority:
 The highest-value next steps are:
 
 1. Promote `torchscript` from accepted format support to a real backend path
-2. Turn the new task matrix into real benchmark/eval coverage for `segmentation`, `classification`, and `obb`
+2. Turn the new task matrix into real benchmark/eval coverage for `classification` and `obb`
 3. Promote `openvino` to conditional support if the runtime path is available
 4. Add per-format flag validation so unsupported knobs fail early
 5. Add a single support matrix that distinguishes real parity, placeholder parity, and skipped backends at a glance

@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 import tempfile
+from base64 import b64decode
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, main, mock
@@ -10,8 +11,22 @@ from yolozu.eval import benchmark_mode
 
 
 class TestBenchmarkModelTool(TestCase):
+    def setUp(self) -> None:
+        self.repo_root = Path(__file__).resolve().parents[1]
+        self._root_artifacts = [
+            self.repo_root / "tmp_benchmark_report.json",
+            self.repo_root / "export_settings_onnx.json",
+            self.repo_root / "export_settings_torchscript.json",
+        ]
+        for path in self._root_artifacts:
+            path.unlink(missing_ok=True)
+
+    def tearDown(self) -> None:
+        for path in self._root_artifacts:
+            path.unlink(missing_ok=True)
+
     def test_tool_help_lists_phase1_flags(self):
-        repo_root = Path(__file__).resolve().parents[1]
+        repo_root = self.repo_root
         script = repo_root / "tools" / "benchmark_model.py"
 
         proc = subprocess.run(
@@ -34,6 +49,15 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--protocol", proc.stdout)
         self.assertIn("--task", proc.stdout)
         self.assertIn("pose6d", proc.stdout)
+        self.assertIn("--depth-mask", proc.stdout)
+        self.assertIn("--depth-align", proc.stdout)
+        self.assertIn("--segmentation-parity-mismatch-atol", proc.stdout)
+        self.assertIn("--parity-reference-backend", proc.stdout)
+        self.assertIn("artifact_eval", proc.stdout)
+        self.assertIn("--keypoints-parity-iou-thresh", proc.stdout)
+        self.assertIn("--keypoints-parity-kp-atol", proc.stdout)
+        self.assertIn("--pose-parity-rot-deg-atol", proc.stdout)
+        self.assertIn("--pose-parity-trans-atol", proc.stdout)
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
@@ -93,11 +117,376 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["execution_semantics"]["eval_expectation"]["metric_family"], "pose6d_error")
         self.assertEqual(result["execution_semantics"]["artifact_expectation"]["parity"], "placeholder")
 
-    def test_real_backend_rejects_nondetect_task_until_backend_lands(self):
-        args = self._args(format="torch", task="segmentation", dry_run=False, latency_source="auto")
-        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "ultralytics"):
-            with self.assertRaisesRegex(ValueError, "not wired to a real torch benchmark/eval path yet"):
-                benchmark_mode.run_benchmark_mode(args)
+    def test_auto_prefers_artifact_eval_for_segmentation_keypoints_depth_and_pose6d(self):
+        args = self._args(latency_source="auto")
+        for task_label in ("segmentation", "keypoints", "depth", "pose6d"):
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label=task_label),
+                "artifact_eval",
+            )
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="onnx", task_label=task_label),
+                "artifact_eval",
+            )
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="engine", task_label=task_label),
+                "artifact_eval",
+            )
+
+    def test_segmentation_task_supports_real_artifact_eval(self):
+        try:
+            import numpy as np
+            from PIL import Image
+        except Exception as exc:  # pragma: no cover
+            self.skipTest(f"segmentation benchmark deps unavailable: {exc}")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = root / "seg_dataset"
+            (dataset_root / "images" / "val").mkdir(parents=True)
+            (dataset_root / "masks" / "val").mkdir(parents=True)
+
+            image_path = dataset_root / "images" / "val" / "sample.png"
+            mask_path = dataset_root / "masks" / "val" / "sample.png"
+            image_path.write_bytes(
+                b64decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGNkYPjPgA0wYRUdtBIAy0MBD1Y0SxIAAAAASUVORK5CYII="
+                )
+            )
+            Image.fromarray(np.array([[0, 1], [1, 1]], dtype=np.uint8)).save(mask_path)
+            (dataset_root / "dataset.json").write_text(
+                json.dumps(
+                    {
+                        "task": "semantic_segmentation",
+                        "path_type": "absolute",
+                        "ignore_index": 255,
+                        "classes": ["background", "fg"],
+                        "samples": [{"id": "sample0", "image": str(image_path), "mask": str(mask_path)}],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            ref_mask = root / "pred_torch.png"
+            cand_mask = root / "pred_onnx.png"
+            Image.fromarray(np.array([[0, 1], [1, 1]], dtype=np.uint8)).save(ref_mask)
+            Image.fromarray(np.array([[0, 1], [0, 1]], dtype=np.uint8)).save(cand_mask)
+            ref_pred = root / "seg_torch.json"
+            cand_pred = root / "seg_onnx.json"
+            ref_pred.write_text(json.dumps({"sample0": ref_mask.name}, indent=2), encoding="utf-8")
+            cand_pred.write_text(json.dumps({"sample0": cand_mask.name}, indent=2), encoding="utf-8")
+
+            report = root / "benchmark_segmentation_report.json"
+            artifact_dir = root / "artifacts"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "segmentation",
+                    "--model",
+                    str(ref_pred),
+                    "--onnx-model",
+                    str(cand_pred),
+                    "--data",
+                    str(dataset_root),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark segmentation artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "segmentation")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "partial")
+            self.assertEqual(results["torch"]["eval_metrics"]["miou"], 1.0)
+            self.assertIn("max_mismatch_rate", results["onnx"]["parity"])
+
+    def test_auto_keeps_detect_on_dataset_pass_and_torchscript_on_synthetic(self):
+        args = self._args(latency_source="auto")
+        self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label="detect"),
+            "dataset_pass_wall_time",
+        )
+        self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="torchscript", task_label="keypoints"),
+            "synthetic_step",
+        )
+
+    def test_depth_task_supports_real_artifact_eval(self):
+        try:
+            import numpy as np
+        except Exception as exc:  # pragma: no cover
+            self.skipTest(f"numpy unavailable for depth benchmark test: {exc}")
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            gt = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+            pred_torch = gt.copy()
+            pred_onnx = gt * 1.01
+            gt_path = root / "gt.npy"
+            torch_path = root / "torch_depth.npy"
+            onnx_path = root / "onnx_depth.npy"
+            report = root / "benchmark_report.json"
+            artifact_dir = root / "artifacts"
+            np.save(gt_path, gt)
+            np.save(torch_path, pred_torch)
+            np.save(onnx_path, pred_onnx)
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "depth",
+                    "--model",
+                    str(torch_path),
+                    "--onnx-model",
+                    str(onnx_path),
+                    "--data",
+                    str(gt_path),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark depth artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "depth")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["torch"]["eval_metrics"]["abs_rel"], 0.0)
+            self.assertIn("mae", results["onnx"]["parity"]["metrics"])
+
+    def test_keypoints_task_supports_real_artifact_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = root / "keypoints_dataset"
+            (dataset_root / "images" / "val").mkdir(parents=True)
+            (dataset_root / "labels" / "val").mkdir(parents=True)
+            image_path = dataset_root / "images" / "val" / "sample.png"
+            image_path.write_bytes(
+                b64decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGNkYPjPgA0wYRUdtBIAy0MBD1Y0SxIAAAAASUVORK5CYII="
+                )
+            )
+            (dataset_root / "labels" / "val" / "sample.txt").write_text(
+                "0 0.5 0.5 0.5 0.5 0.25 0.25 2 0.75 0.25 2\n",
+                encoding="utf-8",
+            )
+
+            ref_pred = root / "kp_torch.json"
+            cand_pred = root / "kp_onnx.json"
+            base_entry = {
+                "image": str(image_path),
+                "image_size": [4, 4],
+                "detections": [
+                    {
+                        "class_id": 0,
+                        "score": 1.0,
+                        "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.5, "h": 0.5},
+                        "keypoints": [
+                            {"x": 0.25, "y": 0.25, "v": 2},
+                            {"x": 0.75, "y": 0.25, "v": 2},
+                        ],
+                    }
+                ],
+            }
+            ref_pred.write_text(json.dumps({"predictions": [base_entry]}, indent=2), encoding="utf-8")
+            cand_entry = json.loads(json.dumps(base_entry))
+            cand_entry["detections"][0]["keypoints"][0]["x"] = 0.25005
+            cand_pred.write_text(json.dumps({"predictions": [cand_entry]}, indent=2), encoding="utf-8")
+            report = root / "benchmark_keypoints_report.json"
+            artifact_dir = root / "artifacts"
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "keypoints",
+                    "--model",
+                    str(ref_pred),
+                    "--onnx-model",
+                    str(cand_pred),
+                    "--data",
+                    str(dataset_root),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark keypoints artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "keypoints")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["torch"]["eval_metrics"]["pck"], 1.0)
+            self.assertIn("kp_abs_max", results["onnx"]["parity"])
+
+    def test_pose6d_task_supports_real_artifact_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = root / "pose_dataset"
+            (dataset_root / "images" / "val").mkdir(parents=True)
+            (dataset_root / "labels" / "val").mkdir(parents=True)
+            image_path = dataset_root / "images" / "val" / "sample.png"
+            image_path.write_bytes(
+                b64decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGNkYPjPgA0wYRUdtBIAy0MBD1Y0SxIAAAAASUVORK5CYII="
+                )
+            )
+            (dataset_root / "labels" / "val" / "sample.txt").write_text("0 0.5 0.5 0.5 0.5\n", encoding="utf-8")
+            (dataset_root / "labels" / "val" / "sample.json").write_text(
+                json.dumps(
+                    {
+                        "R_gt": [[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]],
+                        "t_gt": [[0.0, 0.0, 1.0]],
+                        "cad_points": [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0], [0.0, 0.1, 0.0]],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ref_pred = root / "pose_torch.json"
+            cand_pred = root / "pose_onnx.json"
+            base_entry = {
+                "image": str(image_path),
+                "image_size": [4, 4],
+                "detections": [
+                    {
+                        "class_id": 0,
+                        "score": 1.0,
+                        "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.5, "h": 0.5},
+                        "R": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+                        "t_xyz": [0.0, 0.0, 1.0],
+                    }
+                ],
+            }
+            ref_pred.write_text(json.dumps({"predictions": [base_entry]}, indent=2), encoding="utf-8")
+            cand_entry = json.loads(json.dumps(base_entry))
+            cand_entry["detections"][0]["t_xyz"] = [0.0, 0.0, 1.00005]
+            cand_pred.write_text(json.dumps({"predictions": [cand_entry]}, indent=2), encoding="utf-8")
+            report = root / "benchmark_pose_report.json"
+            artifact_dir = root / "artifacts"
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "pose6d",
+                    "--model",
+                    str(ref_pred),
+                    "--onnx-model",
+                    str(cand_pred),
+                    "--data",
+                    str(dataset_root),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark pose6d artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "pose6d")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["torch"]["eval_metrics"]["pose_success"], 1.0)
+            self.assertIn("trans_l2_max", results["onnx"]["parity"])
 
     def test_onnx_rejects_half_flag_early(self):
         args = self._args(format="onnx", onnx_model="exports/example.onnx", half=True)
@@ -251,6 +640,7 @@ class TestBenchmarkModelTool(TestCase):
             iterations=50,
             warmup=5,
             sleep_s=0.0,
+            parity_reference_backend="auto",
         )
         base.update(overrides)
         return SimpleNamespace(**base)
@@ -412,6 +802,85 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(onnx_parity_payload["reference_backend"], "torch")
             self.assertEqual(onnx_parity_payload["candidate_backend"], "onnx")
             self.assertTrue(onnx_parity_payload["summary"]["ok"])
+
+    def test_detect_parity_can_use_explicit_onnx_reference_backend(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        image_1 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000009.jpg").resolve())
+        image_2 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000025.jpg").resolve())
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
+
+            def fake_run(cmd, cwd, capture_output, text, check):
+                cmd = [str(x) for x in cmd]
+                if cmd[1].endswith("export_predictions_ultralytics.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {
+                                "image": image_1,
+                                "detections": [{"class_id": 0, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                            },
+                            {
+                                "image": image_2,
+                                "detections": [{"class_id": 1, "score": 0.8, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+                            },
+                        ],
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("export_predictions_onnxrt.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {
+                                "image": image_1,
+                                "detections": [{"class_id": 0, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                            },
+                            {
+                                "image": image_2,
+                                "detections": [{"class_id": 1, "score": 0.8, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+                            },
+                        ],
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("eval_suite.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {"metrics": {"bbox_mAP50": 0.42}}
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                raise AssertionError(f"unexpected subprocess command: {cmd}")
+
+            def fake_module_available(name):
+                return name in {"ultralytics", "onnxruntime"}
+
+            args = self._args(
+                output=str(report_path),
+                data=str(repo_root / "data" / "smoke"),
+                format="torch,onnx",
+                onnx_model="exports/example.onnx",
+                parity_reference_backend="onnx",
+            )
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=fake_module_available):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(benchmark_mode.subprocess, "run", side_effect=fake_run):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "ok")
+            results = {item["format"]: item for item in report["results"]}
+            self.assertEqual(results["onnx"]["parity"]["reference_backend"], "onnx")
+            self.assertEqual(results["onnx"]["parity"]["candidate_backends"], ["torch"])
+            onnx_parity_payload = json.loads(Path(results["onnx"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
+            self.assertEqual(onnx_parity_payload["kind"], "benchmark_parity_reference")
+            torch_parity_payload = json.loads(Path(results["torch"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
+            self.assertEqual(torch_parity_payload["reference_backend"], "onnx")
+            self.assertEqual(torch_parity_payload["candidate_backend"], "torch")
+            self.assertTrue(torch_parity_payload["summary"]["ok"])
 
 
 if __name__ == "__main__":

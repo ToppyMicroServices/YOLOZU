@@ -30,6 +30,30 @@ That is why the rest of the manual keeps coming back to the same habits:
   \item do not let backend differences silently turn into research drift.
 \end{itemize}
 
+\paragraph{If you are learning this space for the first time.}
+It helps to separate three questions that are often mixed together:
+\begin{itemize}
+  \item \textbf{How is a model trained?} This belongs to the training stack.
+  \item \textbf{How is a model executed?} This belongs to the inference/runtime stack.
+  \item \textbf{How are results compared fairly?} This is where \yolozu{} is strongest.
+\end{itemize}
+
+Many repositories try to answer all three questions at once. \yolozu{} is more
+useful when you read it the other way around: first understand the evaluation
+surface, then understand how exports and runtime backends plug into that
+surface, and only after that move into continual learning, TTT, or refinement.
+
+\paragraph{What problem this manual is trying to solve.}
+The practical problem is not merely ``run inference'' but ``make results
+comparable enough that you can trust a decision.'' In vision work, small
+changes in preprocessing, runtime, export format, or evaluation protocol can
+create large differences in reported performance. The manual therefore tries to
+teach two habits:
+\begin{itemize}
+  \item separate \emph{producing predictions} from \emph{judging predictions},
+  \item keep the judging side pinned and reproducible even when the model side changes.
+\end{itemize}
+
 \paragraph{\yolozu{} at a glance.}
 \begin{itemize}
   \item Framework-agnostic evaluation toolkit for vision models.
@@ -136,6 +160,47 @@ Different readers usually arrive with different first questions. A quick routing
   \item Chapter~2: get to a working environment.
   \item Chapter~5: choose the right evaluate/export workflow.
   \item Only then branch into the more specialized chapters.
+\end{enumerate}
+
+\section{What to learn before the advanced chapters}
+If Chapters~9--16 look heavy at first glance, that is normal. They assume that
+you already understand the distinction between:
+\begin{itemize}
+  \item a \textbf{model artifact} (weights, runtime bundle, engine),
+  \item a \textbf{predictions artifact} (what the model emitted),
+  \item an \textbf{evaluation artifact} (what the scoring pass concluded), and
+  \item a \textbf{parity artifact} (what changed between two backends or runs).
+\end{itemize}
+
+Once those four artifact types feel intuitive, the rest of the manual becomes
+much easier to read:
+\begin{itemize}
+  \item backend parity becomes a question of \emph{comparing outputs fairly},
+  \item continual learning becomes a question of \emph{comparing stages fairly},
+  \item TTT becomes a question of \emph{comparing before/after behavior fairly},
+  \item depth and 6DoF chapters become a question of \emph{making geometric assumptions explicit}.
+\end{itemize}
+
+\section{Foundations and further reading}
+The end-of-manual References section is not only a formality; it is also a
+reading map for the ideas behind this repository. A few anchors are especially
+useful:
+\begin{itemize}
+  \item \textbf{Evaluation datasets and reporting:} COCO remains a practical reference point for detection and keypoint evaluation vocabulary \cite{lin2014coco}.
+  \item \textbf{Runtime backends:} the everyday backend trio in this manual is PyTorch, ONNX Runtime, and TensorRT \cite{pytorch,onnxruntime,tensorrt}.
+  \item \textbf{Continual learning / distillation:} the manual's self-distillation framing is easier to place if you have seen classic distillation work and newer continual-learning variants \cite{hinton2015distilling,furlanello2018bornagain,shenfeld2026sdft}.
+  \item \textbf{Test-time training / adaptation:} the TTT chapters build on the general test-time training idea and its entropy-minimization branch \cite{sun2020ttt,wang2021tent,grandvalet2005entropy}.
+  \item \textbf{Masked-image modeling for adaptation:} the MIM sections borrow intuition from denoising autoencoders, inpainting-style self-supervision, and later masked-image modeling systems \cite{vincent2008dae,pathak2016context,he2022mae,xie2022simmim,gandelsman2022tttmae,mansour2024tttmim}.
+  \item \textbf{Depth and 6DoF pose:} for geometric background, the repository's depth and pose chapters connect to monocular depth estimation and common pose-evaluation practice \cite{eigen2014depth,ranftl2021dpt,zhou2019rot6d,hodan2016poseeval,hodan2020bop,labbe2020cosypose}.
+\end{itemize}
+
+If you are reading this manual as an educational document rather than as an
+operator handbook, this is a good strategy:
+\begin{enumerate}
+  \item read the chapter you need for the workflow,
+  \item note the unfamiliar terms,
+  \item jump to the References section at the end,
+  \item then come back to the implementation details.
 \end{enumerate}
 
 

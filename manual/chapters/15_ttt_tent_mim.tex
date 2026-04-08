@@ -29,6 +29,39 @@ Authoritative references:
 TTT updates weights \emph{in memory} using unlabeled test data before (or during) inference \cite{sun2020ttt,wang2021tent}.
 This makes comparisons sensitive to domain shift, random seeds, and reset policy.
 
+\subsection{Plain-language glossary for this chapter}
+Many readers first get stuck not on the code, but on the names. The short
+meanings below are enough to read the rest of this chapter:
+\begin{itemize}
+  \item \textbf{TTA} (\textbf{Test-Time Augmentation}): run inference several times on simple transformed versions of the same image, then merge the predictions. This does \emph{not} update model weights.
+  \item \textbf{TTT} (\textbf{Test-Time Training}): update some model parameters in memory at inference time using unlabeled test data.
+  \item \textbf{CTTA} (\textbf{Continual Test-Time Adaptation}): a streaming form of TTT where adaptation continues over many incoming batches instead of resetting after every image.
+  \item \textbf{LoRA}: a small trainable adapter added to selected layers, used when you want limited, safer parameter updates instead of moving the full model.
+  \item \textbf{Norm-only update}: adapt only normalization-layer affine parameters (for example BatchNorm or LayerNorm scale/bias). This is one of the safest update scopes.
+  \item \textbf{EMA} (\textbf{Exponential Moving Average}): a smoothed teacher copy of model weights. It changes more slowly than the student and is often used to stabilize adaptation.
+  \item \textbf{Reset policy}: when and how the adapted weights are restored. \cmd{sample} means ``reset after each image/subset''; \cmd{stream} means ``carry updates forward across the stream.''
+  \item \textbf{Guard rail}: a safety rule that limits adaptation, for example restricting which parameters may update or stopping updates when sample selection looks unreliable.
+\end{itemize}
+
+\paragraph{What the method names mean at a glance.}
+\begin{itemize}
+  \item \textbf{Tent}: minimize prediction entropy so the model becomes more confident on shifted inputs.
+  \item \textbf{MIM}: use a masked-reconstruction objective so the model must infer hidden structure, not only sharpen confidence.
+  \item \textbf{CoTTA}: a continual TTT method that combines student updates, an EMA-style teacher, augmentation agreement, and partial restoration so the model does not drift too far.
+  \item \textbf{EATA}: an efficiency/reliability-oriented TTT method that adapts only on selected samples instead of updating on everything.
+  \item \textbf{SAR}: a sharpness-aware robustness method; in practical terms, it tries to adapt in directions that are locally more stable instead of overreacting to noisy gradients.
+\end{itemize}
+
+\paragraph{How to read the rest of the chapter.}
+If you only want the shortest reading path, use this order:
+\begin{enumerate}
+  \item understand whether you need \textbf{TTA} or \textbf{TTT},
+  \item understand the \textbf{update scope} (norm-only, LoRA, or full-model),
+  \item then compare the methods (Tent, MIM, CoTTA, EATA, SAR).
+\end{enumerate}
+This order matters because many failures blamed on the method are actually
+caused by an overly broad update scope or an unsafe reset policy.
+
 \subsection{Operator quick guide (read first)}
 \begin{itemize}
   \item \textbf{Default OFF}: TTT is opt-in and only activates when \cmd{--ttt} is set.
@@ -88,7 +121,7 @@ python3 scripts/prepare_ttt_domain_shift_target.py \
 
 This produces \path{domain_shift_recipe.json} containing
 \path{export_settings.domain_shift_target} with fixed
-(\texttt{corruption}, \texttt{severity}, \texttt{seed}, \texttt{images\_sha256}).
+(\path{corruption}, \path{severity}, \path{seed}, \path{images_sha256}).
 
 To bind that recipe into prediction artifacts:
 \begin{lstlisting}[language=bash]
@@ -104,7 +137,7 @@ python3 tools/export_predictions.py \
 With \cmd{--wrap}, outputs explicitly include:
 \begin{itemize}
   \item \path{meta.export_settings.domain_shift_target}
-  \item \path{meta.export_settings.domain_shift_recipe} (\texttt{path}, \texttt{sha256})
+  \item \path{meta.export_settings.domain_shift_recipe} (\path{path}, \path{sha256})
 \end{itemize}
 
 \subsection{Real result summary: use this first}
@@ -196,8 +229,8 @@ Outputs include:
 
 Example stdout (CPU, deterministic seeds; values are intentionally tiny, the point is the reproducible delta):
 \begin{itemize}
-  \item \texttt{map50 0.00326797 $\to$ 0.00392157}
-  \item \texttt{map50\_95 0.000326797 $\to$ 0.000392157}
+  \item \path{map50 0.00326797 -> 0.00392157}
+  \item \path{map50_95 0.000326797 -> 0.000392157}
 \end{itemize}
 
 \subsection{Per-image probe grid: concrete, but still secondary to the metric chart}
@@ -285,8 +318,8 @@ SAR & \cmd{sar} & \path{reports/ttt_compare/sar/baseline_predictions.json} & \pa
 Recommended reading order:
 \begin{enumerate}
   \item \path{plan.json} to confirm the frozen subset and boilerplate,
-  \item \path{<method>\_before\_after\_compare.md} for the compact summary,
-  \item \path{<method>\_ttt\_log.json} for adaptation loss/runtime details,
+  \item \path{<method>_before_after_compare.md} for the compact summary,
+  \item \path{<method>_ttt_log.json} for adaptation loss/runtime details,
   \item method-specific follow-up tools only when deeper diagnostics are needed.
 \end{enumerate}
 
@@ -324,7 +357,7 @@ EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null \\
 SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 \\
 \bottomrule
 \end{tabular}
-\caption{Smoke compare snapshot for the repo-shipped checkpoint on \texttt{data/smoke}, \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}. This is a workflow-validation table, not a quality leaderboard. Warning notes are intentionally moved out of the table for readability: MIM uses the repo-backed compare config \texttt{configs/examples/ttt\_compare/rtdetr\_pose\_mim\_compare.json}; EATA reports \cmd{eata\_empty\_selected\_set} on both smoke images; Tent, CoTTA, and SAR complete without warnings on this smoke subset.}
+\caption{Smoke compare snapshot for the repo-shipped checkpoint on \texttt{data/smoke}, \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}. This is a workflow-validation table, not a quality leaderboard. Warning notes are intentionally moved out of the table for readability: MIM uses the repo-backed compare config \texttt{configs/examples/ttt\_compare/rtdetr\_pose\_mim\_compare.json}; EATA reports \cmd{eata_empty_selected_set} on both smoke images; Tent, CoTTA, and SAR complete without warnings on this smoke subset.}
 \end{table}
 
 For the completed runs, the compact summaries are:
@@ -348,12 +381,12 @@ Read the columns in this order:
 
 Two common beginner mistakes:
 \begin{itemize}
-  \item treating \cmd{mean\_final\_loss} as a quality score across methods,
+  \item treating \cmd{mean_final_loss} as a quality score across methods,
   \item treating \cmd{steps=0} as a failure.
 \end{itemize}
 Warning notes are now kept in the table caption rather than in a dedicated wide column.
 For example, EATA can legitimately report \cmd{steps=0} with
-\cmd{eata\_empty\_selected\_set}. That means the method decided \emph{not} to adapt on those smoke images, which is conservative behavior, not a crash.
+\cmd{eata_empty_selected_set}. That means the method decided \emph{not} to adapt on those smoke images, which is conservative behavior, not a crash.
 
 \begin{figure}[h]
 \centering
@@ -361,7 +394,8 @@ For example, EATA can legitimately report \cmd{steps=0} with
 \begin{tikzpicture}[
   node distance=8mm,
   font=\small,
-  box/.style={draw, rounded corners, align=center, inner sep=6pt, minimum width=24mm},
+  box/.style={draw, rounded corners, align=center, inner sep=6pt, minimum width=24mm, fill=white},
+  note/.style={align=center, font=\scriptsize, fill=white, inner sep=2pt},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 \node[box] (input) {\textbf{Shifted input}\\blur / style shift};
@@ -369,10 +403,14 @@ For example, EATA can legitimately report \cmd{steps=0} with
 \node[box, right=10mm of base] (adapt) {\textbf{Adapt}\\run Tent / MIM / CoTTA / EATA / SAR};
 \node[box, right=10mm of adapt] (pred) {\textbf{Adapted predict}\\same subset};
 \node[box, right=10mm of pred] (cmp) {\textbf{Compare}\\before vs after};
+\node[note] (sameimg) at ($(base.north east)!0.5!(adapt.north west)+(0,7mm)$) {same images};
+\node[note] (weights) at ($(adapt.north east)!0.5!(pred.north west)+(0,7mm)$) {weights updated in memory};
+\begin{pgfonlayer}{bg}
 \draw[arrow] (input) -- (base);
-\draw[arrow] (base) -- node[above]{same images} (adapt);
-\draw[arrow] (adapt) -- node[above]{weights updated in memory} (pred);
+\draw[arrow] (base) -- (adapt);
+\draw[arrow] (adapt) -- (pred);
 \draw[arrow] (pred) -- (cmp);
+\end{pgfonlayer}
 \end{tikzpicture}
 }
 \caption{Common TTT workflow in \yolozu{}: run the baseline and the adapted variant on the same deterministic image subset, then compare their artifacts.}
@@ -383,8 +421,8 @@ For every method, the safest operator workflow is:
 \begin{enumerate}
   \item choose a fixed dataset subset or a deterministic domain-shift target,
   \item run \path{scripts/ttt_compare.sh} with one boilerplate,
-  \item open \path{<method>\_before\_after\_compare.md},
-  \item only then inspect \path{<method>\_ttt\_log.json}.
+  \item open \path{<method>_before_after_compare.md},
+  \item only then inspect \path{<method>_ttt_log.json}.
 \end{enumerate}
 
 This order matters. The compare markdown is the onboarding artifact. It answers the first three questions operators usually have:
@@ -467,16 +505,16 @@ bash scripts/ttt_compare.sh \
 
 \textbf{How to read the result.}
 \begin{itemize}
-  \item Open \path{tent\_before\_after\_compare.md} first.
-  \item Check whether \cmd{steps\_run > 0}.
-  \item If \cmd{changed\_images=0}, adaptation completed but exported predictions did not change on this subset.
-  \item Open \path{tent\_ttt\_log.json} only if you need guard or runtime detail.
+  \item Open \path{tent_before_after_compare.md} first.
+  \item Check whether \cmd{steps_run > 0}.
+  \item If \cmd{changed_images=0}, adaptation completed but exported predictions did not change on this subset.
+  \item Open \path{tent_ttt_log.json} only if you need guard or runtime detail.
 \end{itemize}
 
 \textbf{Concrete repo result.}
 On the fixed ten-image shifted probe in Figure~\ref{fig:ttt-real-summary}, Tent improves
-\texttt{map50} from \texttt{0.00326797} to \texttt{0.00392157} and
-\texttt{map50\_95} from \texttt{0.000326797} to \texttt{0.000392157}.
+\path{map50} from \path{0.00326797} to \path{0.00392157} and
+\path{map50_95} from \path{0.000326797} to \path{0.000392157}.
 The effect is small, but it is reproducible under the same checkpoint, subset, and seed.
 
 \textbf{Pros.}
@@ -575,7 +613,7 @@ For pose-heavy runs, switch to \cmd{--ttt-preset pose_mim}. \yolozu{} now ships
 two practical MIM entrypoints:
 \begin{itemize}
   \item \cmd{mim}: a repo-backed smoke fixture for verifying that the masked-reconstruction path is wired correctly
-  \item \cmd{mim\_probe}: a fixed real probe that demonstrates an actual before/after metric delta on the bundled shifted ten-image probe
+  \item \cmd{mim_probe}: a fixed real probe that demonstrates an actual before/after metric delta on the bundled shifted ten-image probe
 \end{itemize}
 
 \begin{lstlisting}[language=bash]
@@ -605,18 +643,18 @@ bash scripts/ttt_compare.sh \
 
 \textbf{How to read the result.}
 \begin{itemize}
-  \item Open \path{mim\_before\_after\_compare.md} first.
-  \item Then inspect \path{mim\_ttt\_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
-  \item The repo-backed smoke example proves execution: \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, and \cmd{changed\_images=0 / 2}.
-  \item The fixed real probe proves operator-visible impact: \cmd{steps\_run=10}, \cmd{mean\_final\_loss=0.0791513}, \cmd{changed\_images=10 / 10}, \cmd{map50 0.00326797 \rightarrow 0.00392157}, and \cmd{map50\_95 0.000326797 \rightarrow 0.000392157}.
-  \item When \cmd{pycocotools} is not installed in the current runtime, the compare falls back to \cmd{simple\_map\_proxy} instead of silently skipping evaluation.
+  \item Open \path{mim_before_after_compare.md} first.
+  \item Then inspect \path{mim_ttt_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
+  \item The repo-backed smoke example proves execution: \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, and \cmd{changed_images=0 / 2}.
+  \item The fixed real probe proves operator-visible impact: \cmd{steps_run=10}, \cmd{mean_final_loss=0.0791513}, \cmd{changed_images=10 / 10}, \cmd{map50 0.00326797 \rightarrow 0.00392157}, and \cmd{map50_95 0.000326797 \rightarrow 0.000392157}.
+  \item When \cmd{pycocotools} is not installed in the current runtime, the compare falls back to \cmd{simple_map_proxy} instead of silently skipping evaluation.
 \end{itemize}
 
 \textbf{Concrete repo results.}
 \begin{itemize}
-  \item repo-backed smoke compare: \cmd{steps\_run=2}, \cmd{mean\_final\_loss=0.461853}, \cmd{changed\_images=0 / 2}
-  \item fixed real probe compare: \cmd{steps\_run=10}, \cmd{mean\_final\_loss=0.0791513}, \cmd{changed\_images=10 / 10}
-  \item fixed real probe metrics: \cmd{map50 0.00326797 \rightarrow 0.00392157}, \cmd{map50\_95 0.000326797 \rightarrow 0.000392157}
+  \item repo-backed smoke compare: \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, \cmd{changed_images=0 / 2}
+  \item fixed real probe compare: \cmd{steps_run=10}, \cmd{mean_final_loss=0.0791513}, \cmd{changed_images=10 / 10}
+  \item fixed real probe metrics: \cmd{map50 0.00326797 \rightarrow 0.00392157}, \cmd{map50_95 0.000326797 \rightarrow 0.000392157}
 \end{itemize}
 
 \textbf{Pros.}
@@ -717,9 +755,9 @@ python3 tools/eval_cotta_drift.py \
 
 \textbf{How to read the result.}
 \begin{itemize}
-  \item Open \path{cotta\_before\_after\_compare.md} first.
-  \item Then inspect \path{cotta\_ttt\_log.json} to confirm stream updates and runtime.
-  \item Use \path{cotta\_drift.md} when you need to reason about long-run stability.
+  \item Open \path{cotta_before_after_compare.md} first.
+  \item Then inspect \path{cotta_ttt_log.json} to confirm stream updates and runtime.
+  \item Use \path{cotta_drift.md} when you need to reason about long-run stability.
 \end{itemize}
 
 \textbf{Concrete repo result.}
@@ -820,14 +858,14 @@ python3 tools/benchmark_eata_stability.py \
 
 \textbf{How to read the result.}
 \begin{itemize}
-  \item Open \path{eata\_before\_after\_compare.md} first.
-  \item If \cmd{steps\_run=0}, check the warning field before assuming anything failed.
-  \item On tiny smoke subsets, \cmd{eata\_empty\_selected\_set} is expected conservative behavior.
+  \item Open \path{eata_before_after_compare.md} first.
+  \item If \cmd{steps_run=0}, check the warning field before assuming anything failed.
+  \item On tiny smoke subsets, \cmd{eata_empty_selected_set} is expected conservative behavior.
 \end{itemize}
 
 \textbf{Concrete repo result.}
 EATA has two useful examples in this repo.
-On the tiny smoke fixture, it intentionally skips adaptation (\cmd{steps\_run=0}, \cmd{eata\_empty\_selected\_set}), which is conservative behavior.
+On the tiny smoke fixture, it intentionally skips adaptation (\cmd{steps_run=0}, \cmd{eata_empty_selected_set}), which is conservative behavior.
 On the larger fixed ten-image shifted probe, it does adapt and reaches the same small metric gain as Tent/CoTTA/SAR, as shown in Figure~\ref{fig:ttt-real-summary}.
 
 \textbf{Pros.}
@@ -918,9 +956,9 @@ python3 tools/benchmark_sar_robustness.py \
 
 \textbf{How to read the result.}
 \begin{itemize}
-  \item Open \path{sar\_before\_after\_compare.md} first.
-  \item Compare runtime in \path{sar\_ttt\_log.json} against Tent to understand the extra adaptation cost.
-  \item Use \path{sar\_robustness.md} when comparing SAR against CoTTA and EATA.
+  \item Open \path{sar_before_after_compare.md} first.
+  \item Compare runtime in \path{sar_ttt_log.json} against Tent to understand the extra adaptation cost.
+  \item Use \path{sar_robustness.md} when comparing SAR against CoTTA and EATA.
 \end{itemize}
 
 \textbf{Concrete repo result.}

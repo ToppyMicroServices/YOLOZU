@@ -24,9 +24,12 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+\pgfdeclarelayer{bg}
+\pgfsetlayers{bg,main}
 
 % Lists / tables
+\usepackage{array}
 \usepackage{enumitem}
 \setlist{nosep}
 \usepackage{booktabs}
@@ -44,6 +47,7 @@
   frame=single,
   rulecolor=\color{codeframe},
   breaklines=true,
+  breakatwhitespace=false,
   columns=fullflexible,
   keepspaces=true,
   showstringspaces=false
@@ -160,8 +164,9 @@ compared and regression-tested automatically in CI.
 
 \IfFileExists{references.bib}{%
   \clearpage
-  \chapter*{References}
-  %\addcontentsline{toc}{chapter}{References}
+  \renewcommand{\bibname}{References}
+  \phantomsection
+  \addcontentsline{toc}{chapter}{References}
   \nocite{*}
   \bibliographystyle{plain}
   \bibliography{references}
