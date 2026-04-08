@@ -125,7 +125,7 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 \draw[arrow] (render.east) -- (appearance.west);
 \draw[arrow] (appearance.south west) |- (background.east);
 \draw[arrow] (appearance.south east) |- (output.north);
-\draw[arrow] (gt.south east) |- (output.west);
+\draw[arrow] (gt.south) -- (2.4, -10.0) -- (15.5, -10.0) -- (output.south);
 \end{tikzpicture}
 }
 \caption{SynthGen generation path: CAD/mesh or primitive assets are compiled into a renderer-ready scene, the renderer owns the labels, and background editing is limited to label-safe appearance stages.}

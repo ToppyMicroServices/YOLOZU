@@ -44,10 +44,10 @@ When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtim
 \draw[dashedarrow] (inputs) -- (b);
 \draw[arrow] (a) -- (pa);
 \draw[arrow] (b) -- (pb);
-\draw[arrow] (pa) -- (par);
-\draw[arrow] (pb) -- (par);
-\draw[arrow] (pa) -- (eval);
-\draw[arrow] (pb) -- (eval);
+\draw[arrow] (pa.south) -- ++(0,-5mm) -| ([xshift=-8mm]par.north);
+\draw[arrow] (pb.south) -- (par.north);
+\draw[arrow] (pa.east) -- ++(10mm,0) |- ([yshift=4mm]eval.west);
+\draw[arrow] (pb.east) -- ++(10mm,0) |- ([yshift=-4mm]eval.west);
 
 \end{tikzpicture}
 }
