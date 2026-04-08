@@ -26,7 +26,7 @@ For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}
 
 \section{Common Commands}
 \small
-\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.43\textwidth}>{\raggedright\arraybackslash}p{0.52\textwidth}@{}}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.46\textwidth}>{\raggedright\arraybackslash}p{0.49\textwidth}@{}}
 \toprule
 \textbf{Command} & \textbf{Purpose} \\
 \midrule
@@ -61,11 +61,11 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu long-tail-recipe} & Generates a long-tail training recipe JSON with selectable sampler/loss/metric/lr scheduler plugins. \\
 \cmd{python3 tools/eval\_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
 \cmd{python3}\\\path{tools/eval_depth.py} & Evaluates one predicted depth map against one ground-truth depth map and writes a report with \cmd{abs\_rel}, \cmd{rmse}, \cmd{delta1}, and related depth-error metrics. \\
-\cmd{python3}\\\path{tools/run_reference_}\\\path{adapter_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
-\cmd{python3}\\\cmd{tools/hpo\_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
-\cmd{python3}\\\cmd{tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior, including the artifact-backed keypoints/depth/pose6d benchmark/parity lanes, must also be tracked in \path{tools/manifest.json}. \\
-\cmd{python3}\\\cmd{tools/run\_ttt\_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt\_compare/} and writes \path{plan.json}, before/after predictions, optional eval reports, and compare summaries. \\
-\cmd{python3}\\\cmd{tools/render\_ttt\_manual\_figures.py} & Renders the checked-in TTT summary/workflow/qualitative PNG figures from fixed report artifacts for \path{docs/assets/} and \path{manual/figures/}. \\
+\path{python3 tools/run_reference_adapter_}\\\path{regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
+\path{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
+\path{python3 tools/benchmark_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior, including the artifact-backed keypoints/depth/pose6d benchmark/parity lanes, must also be tracked in \path{tools/manifest.json}. \\
+\path{python3 tools/run_ttt_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt_compare/} and writes \path{plan.json}, before/after predictions, optional eval reports, and compare summaries. \\
+\path{python3 tools/render_ttt_manual_figures.py} & Renders the checked-in TTT summary/workflow/qualitative PNG figures from fixed report artifacts for \path{docs/assets/} and \path{manual/figures/}. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/check\_repo\_governance.py} & Audits local governance evidence plus exported GitHub settings snapshots for branch protection, review policy, and repository-security posture. Writes a JSON summary and keeps history-based items explicit instead of pretending they are source-only facts. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
@@ -137,13 +137,13 @@ yolozu long-tail-recipe \
 
 Primary plugin flags:
 \begin{itemize}
-  \item \cmd{--loss-plugin}: \cmd{none}, \cmd{focal}, \cmd{ldam},\\
-  \cmd{torch\_cross\_entropy}, \cmd{torch\_nll\_loss}, \cmd{torch\_bce\_with\_logits}
-  \item \cmd{--metric-plugin}: \cmd{none}, \cmd{torch\_top1\_accuracy},\\
-  \cmd{torch\_top5\_accuracy}, \cmd{torch\_cross\_entropy}
-  \item \cmd{--lr-scheduler}: \cmd{none}, \cmd{torch\_step\_lr},\\
-  \cmd{torch\_cosine\_annealing\_lr}, \cmd{torch\_reduce\_on\_plateau},\\
-  \cmd{torch\_one\_cycle\_lr}
+  \item \cmd{--loss-plugin}: \path{none}, \path{focal}, \path{ldam},\\
+  \path{torch_cross_entropy}, \path{torch_nll_loss}, \path{torch_bce_with_logits}
+  \item \cmd{--metric-plugin}: \path{none}, \path{torch_top1_accuracy},\\
+  \path{torch_top5_accuracy}, \path{torch_cross_entropy}
+  \item \cmd{--lr-scheduler}: \path{none}, \path{torch_step_lr},\\
+  \path{torch_cosine_annealing_lr}, \path{torch_reduce_on_plateau},\\
+  \path{torch_one_cycle_lr}
 \end{itemize}
 
 \section{YAML Config-Driven Usage (Train/Test/Resume)}

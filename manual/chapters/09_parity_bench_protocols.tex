@@ -34,8 +34,8 @@ When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtim
 \node[box, right=18mm of inputs, yshift=10mm] (a) {\textbf{Backend A}\\torch / onnxrt};
 \node[box, right=18mm of inputs, yshift=-10mm] (b) {\textbf{Backend B}\\trt / opencv-dnn};
 
-\node[box, right=20mm of a] (pa) {\path{predictions\_a.json}};
-\node[box, right=20mm of b] (pb) {\path{predictions\_b.json}};
+\node[box, right=20mm of a] (pa) {\path{predictions_a.json}};
+\node[box, right=20mm of b] (pb) {\path{predictions_b.json}};
 
 \node[box, below=12mm of pb] (par) {\textbf{Parity report}\\diff stats\\(\path{parity.json})};
 \node[box, right=20mm of par] (eval) {\textbf{Eval reports}\\metrics JSON\\protocol-pinned};
@@ -45,10 +45,10 @@ When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtim
 \draw[dashedarrow] (inputs) -- (b);
 \draw[arrow] (a) -- (pa);
 \draw[arrow] (b) -- (pb);
-\draw[arrow] (pa.south) -- ++(0,-5mm) -| ([xshift=-8mm]par.north);
-\draw[arrow] (pb.south) -- (par.north);
-\draw[arrow] (pa.east) -- ++(10mm,0) |- ([yshift=4mm]eval.west);
-\draw[arrow] (pb.east) -- ++(10mm,0) |- ([yshift=-4mm]eval.west);
+\draw[arrow] (pa.east) -- ++(7mm,0) |- ([xshift=8mm]par.north);
+\draw[arrow] (pb.south) -- ++(0,-5mm) -| ([xshift=-8mm]par.north);
+\draw[arrow] (pa.east) -- ++(12mm,0) |- ([yshift=4mm]eval.west);
+\draw[arrow] (pb.east) -- ++(12mm,0) |- ([yshift=-4mm]eval.west);
 \end{pgfonlayer}
 
 \end{tikzpicture}
@@ -174,7 +174,7 @@ or vendor SDKs with separate terms.
 \cmd{torchscript} & dry-run / synthetic latency only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
 \cmd{executorch} & adapter target only & external ExecuTorch runtime & External runtime with separate packaging constraints. \\
 \cmd{opencv\_dnn} & adapter target only & local OpenCV runtime & External runtime; optional contrib/nonfree modules are not bundled. \\
-\cmd{openvino}/\cmd{coreml}/\\\cmd{ncnn}/\cmd{rknn}/\cmd{tflite}/\cmd{paddle} & adapter target only\\/ conditional & external runtime\\or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
+\cmd{openvino}, \cmd{coreml},\\\cmd{ncnn}, \cmd{rknn},\\\cmd{tflite}, \cmd{paddle} & adapter target only\\/ conditional & external runtime\\or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
 \end{tabular}
 \renewcommand{\arraystretch}{1.0}
 \normalsize

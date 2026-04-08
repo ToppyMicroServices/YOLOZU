@@ -124,9 +124,10 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 \draw[arrow] (spec.south) -- (render.north);
 \draw[arrow] (render.west) -- (gt.east);
 \draw[arrow] (render.east) -- (appearance.west);
-\draw[arrow] (appearance.south west) |- (background.east);
-\draw[arrow] (appearance.south east) |- (output.north);
-\draw[arrow] (gt.south) -- (2.4, -10.6) -- (15.5, -10.6) -- (output.south);
+\draw[arrow] (appearance.south) -- ++(0,-5mm) -| ([yshift=2mm]background.north);
+\draw[arrow] (appearance.south east) |- ([yshift=2mm]output.north);
+\draw[arrow] (background.east) -- ++(7mm,0) |- ([xshift=-4mm]output.west);
+\draw[arrow] (gt.south) -- (2.4, -10.9) -- (15.5, -10.9) -- (output.south);
 \end{pgfonlayer}
 \end{tikzpicture}
 }

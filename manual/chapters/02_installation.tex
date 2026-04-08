@@ -123,7 +123,11 @@ The canonical deployment pipeline follows this progression:
 PyTorch \(\to\) ONNX \(\to\) TensorRT
 \end{quote}
 
-On macOS, you can typically run CPU-bound tooling (validation, evaluation, and ONNX Runtime CPU export). Treat MPS as available only when the local Torch runtime reports \cmd{torch.backends.mps.is_available()} and that check returns true; otherwise treat the machine as CPU-only for \yolozu{} purposes. TensorRT execution is generally Linux/NVIDIA-centric.
+On macOS, you can typically run CPU-bound tooling (validation, evaluation, and ONNX Runtime CPU export).
+Treat MPS as available only when the local Torch runtime reports success for
+\cmd{torch.backends.mps.is_available()}.
+If that check is false, treat the machine as CPU-only for \yolozu{} purposes.
+TensorRT execution is generally Linux/NVIDIA-centric.
 TensorRT workflows are covered in the Real-Time vs. Batch Inference chapter. The canonical pipeline strictly follows PyTorch $\rightarrow$ ONNX $\rightarrow$ TensorRT and includes parity checks at each stage.
 
 \begin{figure}[h]
