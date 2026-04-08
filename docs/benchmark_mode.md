@@ -385,8 +385,9 @@ The CLI now defaults to:
 - `--latency-source auto`
 
 `auto` prefers a real dataset-pass wall-clock measurement for `torch`, `onnx`,
-and `engine`, prefers `artifact_eval` for `--task depth`, and falls back to
-`synthetic_step` for the remaining formats.
+and `engine`, prefers `artifact_eval` for `--task keypoints`, `--task depth`,
+and `--task pose6d`, and falls back to `synthetic_step` for the remaining
+formats.
 The report records the per-format `latency_source` so CI and readers do not
 confuse placeholder timing with a real backend pass.
 

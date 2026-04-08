@@ -11,8 +11,22 @@ from yolozu.eval import benchmark_mode
 
 
 class TestBenchmarkModelTool(TestCase):
+    def setUp(self) -> None:
+        self.repo_root = Path(__file__).resolve().parents[1]
+        self._root_artifacts = [
+            self.repo_root / "tmp_benchmark_report.json",
+            self.repo_root / "export_settings_onnx.json",
+            self.repo_root / "export_settings_torchscript.json",
+        ]
+        for path in self._root_artifacts:
+            path.unlink(missing_ok=True)
+
+    def tearDown(self) -> None:
+        for path in self._root_artifacts:
+            path.unlink(missing_ok=True)
+
     def test_tool_help_lists_phase1_flags(self):
-        repo_root = Path(__file__).resolve().parents[1]
+        repo_root = self.repo_root
         script = repo_root / "tools" / "benchmark_model.py"
 
         proc = subprocess.run(
@@ -106,6 +120,33 @@ class TestBenchmarkModelTool(TestCase):
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "ultralytics"):
             with self.assertRaisesRegex(ValueError, "not wired to a real torch benchmark/eval path yet"):
                 benchmark_mode.run_benchmark_mode(args)
+
+    def test_auto_prefers_artifact_eval_for_keypoints_depth_and_pose6d(self):
+        args = self._args(latency_source="auto")
+        for task_label in ("keypoints", "depth", "pose6d"):
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label=task_label),
+                "artifact_eval",
+            )
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="onnx", task_label=task_label),
+                "artifact_eval",
+            )
+            self.assertEqual(
+                benchmark_mode._selected_benchmark_source(args, fmt="engine", task_label=task_label),
+                "artifact_eval",
+            )
+
+    def test_auto_keeps_detect_on_dataset_pass_and_torchscript_on_synthetic(self):
+        args = self._args(latency_source="auto")
+        self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label="detect"),
+            "dataset_pass_wall_time",
+        )
+        self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="torchscript", task_label="keypoints"),
+            "synthetic_step",
+        )
 
     def test_depth_task_supports_real_artifact_eval(self):
         try:

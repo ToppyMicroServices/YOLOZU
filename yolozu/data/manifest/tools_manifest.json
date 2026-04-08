@@ -1432,17 +1432,17 @@
           "name": "history_jsonl"
         },
         {
-          "description": "Per-format predictions artifact (real output when the backend runs, backend-depth artifact metadata for task=depth artifact_eval, placeholder otherwise).",
+          "description": "Per-format predictions artifact (real output when the backend runs, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, placeholder otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
-          "description": "Per-format eval artifact (real output when eval runs, including task=depth artifact_eval reports from tools/eval_depth.py, placeholder otherwise).",
+          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=keypoints/depth/pose6d, placeholder otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
         {
-          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed depth-array parity for task=depth, placeholder otherwise).",
+          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=keypoints/depth/pose6d, placeholder otherwise).",
           "kind": "file",
           "name": "parity_report_json"
         },
