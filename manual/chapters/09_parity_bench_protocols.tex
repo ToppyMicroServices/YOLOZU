@@ -121,6 +121,19 @@ backend is recorded explicitly (preferring \cmd{torch} when available).
 Synthetic/skipped parity artifacts remain only for dry-run, skipped, or
 synthetic-only formats.
 
+If a detect benchmark should anchor parity on a non-\cmd{torch} backend, set it
+explicitly:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_model.py \
+  --model runs/example/model.pt \
+  --onnx-model exports/example.onnx \
+  --data data/coco8.yaml \
+  --format torch,onnx \
+  --latency-source auto \
+  --parity-reference-backend onnx \
+  --output reports/benchmark_report.json
+\end{lstlisting}
+
 \subsection{Benchmark task semantics}
 The benchmark surface now records explicit task semantics instead of treating
 \cmd{--task} as a loose label. The top-level report and each per-format result

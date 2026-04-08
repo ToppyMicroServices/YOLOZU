@@ -108,6 +108,19 @@ yolozu benchmark \
   --output reports/benchmark_report.json
 ```
 
+Detect run with an explicit parity reference backend:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --onnx-model exports/foo.onnx \
+  --data data/coco8.yaml \
+  --format torch,onnx \
+  --latency-source auto \
+  --parity-reference-backend onnx \
+  --output reports/benchmark_report.json
+```
+
 Protocol-pinned backend run with history tracking:
 
 ```bash
@@ -365,6 +378,11 @@ The top-level benchmark report records, per format:
 - `artifacts.eval`
 - `artifacts.parity`
 - `artifacts.export_settings`
+
+By default the benchmark chooses `torch` as the parity reference backend when
+`torch` succeeded. If `torch` is unavailable, it falls back to the first
+eligible real backend. Use `--parity-reference-backend torch|onnx|engine` when
+you want a specific backend to act as the reference for detect/parity reports.
 
 ## Status model
 

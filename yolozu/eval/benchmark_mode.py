@@ -670,6 +670,26 @@ def _write_parity_reference(
     return payload
 
 
+def _select_parity_reference(
+    results: list[dict[str, Any]],
+    *,
+    args: Any,
+    eligible: callable,
+) -> dict[str, Any] | None:
+    preferred = str(getattr(args, "parity_reference_backend", "auto") or "auto").strip().lower()
+    if preferred and preferred != "auto":
+        for item in results:
+            if eligible(item) and str(item.get("format", "")).lower() == preferred:
+                return item
+    for item in results:
+        if eligible(item) and str(item.get("format")) == "torch":
+            return item
+    for item in results:
+        if eligible(item):
+            return item
+    return None
+
+
 def _single_pass_metrics(elapsed_s: float, *, images: int) -> dict[str, Any]:
     total_ms = max(float(elapsed_s), 0.0) * 1000.0
     denom = max(int(images), 1)
@@ -1040,16 +1060,7 @@ def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
         predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
         return predictions.exists()
 
-    reference: dict[str, Any] | None = None
-    for item in results:
-        if _parity_eligible(item) and str(item.get("format")) == "torch":
-            reference = item
-            break
-    if reference is None:
-        for item in results:
-            if _parity_eligible(item):
-                reference = item
-                break
+    reference = _select_parity_reference(results, args=args, eligible=_parity_eligible)
     if reference is None:
         return
 
@@ -1130,16 +1141,7 @@ def _attach_depth_parity(results: list[dict[str, Any]], *, args: Any) -> None:
             return False
         return str(item.get("status")) in {"ok", "partial"}
 
-    reference: dict[str, Any] | None = None
-    for item in results:
-        if _eligible(item) and str(item.get("format")) == "torch":
-            reference = item
-            break
-    if reference is None:
-        for item in results:
-            if _eligible(item):
-                reference = item
-                break
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
     if reference is None:
         return
 
@@ -1236,16 +1238,7 @@ def _attach_segmentation_parity(results: list[dict[str, Any]], *, args: Any) -> 
         predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
         return predictions.exists()
 
-    reference: dict[str, Any] | None = None
-    for item in results:
-        if _eligible(item) and str(item.get("format")) == "torch":
-            reference = item
-            break
-    if reference is None:
-        for item in results:
-            if _eligible(item):
-                reference = item
-                break
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
     if reference is None:
         return
 
@@ -1368,16 +1361,7 @@ def _attach_keypoints_parity(results: list[dict[str, Any]], *, args: Any) -> Non
         predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
         return predictions.exists()
 
-    reference: dict[str, Any] | None = None
-    for item in results:
-        if _eligible(item) and str(item.get("format")) == "torch":
-            reference = item
-            break
-    if reference is None:
-        for item in results:
-            if _eligible(item):
-                reference = item
-                break
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
     if reference is None:
         return
 
@@ -1525,16 +1509,7 @@ def _attach_pose6d_parity(results: list[dict[str, Any]], *, args: Any) -> None:
         predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
         return predictions.exists()
 
-    reference: dict[str, Any] | None = None
-    for item in results:
-        if _eligible(item) and str(item.get("format")) == "torch":
-            reference = item
-            break
-    if reference is None:
-        for item in results:
-            if _eligible(item):
-                reference = item
-                break
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
     if reference is None:
         return
 
@@ -2439,6 +2414,12 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=0.0,
         help="Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).",
+    )
+    parser.add_argument(
+        "--parity-reference-backend",
+        choices=("auto", "torch", "onnx", "engine"),
+        default="auto",
+        help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
     )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")

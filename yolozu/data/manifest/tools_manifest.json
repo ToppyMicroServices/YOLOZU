@@ -1036,6 +1036,10 @@
           "description": "Run real torch+onnx backend orchestration and emit backend parity artifacts."
         },
         {
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --data data/coco8.yaml --format torch,onnx --latency-source auto --parity-reference-backend onnx --output reports/benchmark_report.json",
+          "description": "Run detect benchmark parity with ONNX as the explicit reference backend instead of the default torch-preferred selection."
+        },
+        {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task segmentation --format torchscript --dry-run --output reports/benchmark_report.json",
           "description": "Inspect task-specific segmentation benchmark semantics in a dry-run report."
         },
@@ -1297,6 +1301,14 @@
           "required": false
         },
         {
+          "default": "auto",
+          "description": "Parity reference backend (auto prefers torch, then the first eligible real backend).",
+          "flag": "--parity-reference-backend",
+          "kind": "string",
+          "name": "parity_reference_backend",
+          "required": false
+        },
+        {
           "default": 50,
           "flag": "--iterations",
           "kind": "number",
@@ -1360,6 +1372,14 @@
           "flag": "--depth-parity-rmse-atol",
           "kind": "number",
           "name": "depth_parity_rmse_atol",
+          "required": false
+        },
+        {
+          "default": 0.0,
+          "description": "Segmentation parity mismatch-rate tolerance.",
+          "flag": "--segmentation-parity-mismatch-atol",
+          "kind": "number",
+          "name": "segmentation_parity_mismatch_atol",
           "required": false
         },
         {
