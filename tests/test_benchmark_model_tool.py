@@ -34,6 +34,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--protocol", proc.stdout)
         self.assertIn("--task", proc.stdout)
         self.assertIn("pose6d", proc.stdout)
+        self.assertIn("--depth-mask", proc.stdout)
+        self.assertIn("--depth-align", proc.stdout)
+        self.assertIn("artifact_eval", proc.stdout)
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
@@ -98,6 +101,66 @@ class TestBenchmarkModelTool(TestCase):
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "ultralytics"):
             with self.assertRaisesRegex(ValueError, "not wired to a real torch benchmark/eval path yet"):
                 benchmark_mode.run_benchmark_mode(args)
+
+    def test_depth_task_supports_real_artifact_eval(self):
+        try:
+            import numpy as np
+        except Exception as exc:  # pragma: no cover
+            self.skipTest(f"numpy unavailable for depth benchmark test: {exc}")
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            gt = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+            pred_torch = gt.copy()
+            pred_onnx = gt * 1.01
+            gt_path = root / "gt.npy"
+            torch_path = root / "torch_depth.npy"
+            onnx_path = root / "onnx_depth.npy"
+            report = root / "benchmark_report.json"
+            np.save(gt_path, gt)
+            np.save(torch_path, pred_torch)
+            np.save(onnx_path, pred_onnx)
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "depth",
+                    "--model",
+                    str(torch_path),
+                    "--onnx-model",
+                    str(onnx_path),
+                    "--data",
+                    str(gt_path),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark depth artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "depth")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["torch"]["eval_metrics"]["abs_rel"], 0.0)
+            self.assertIn("mae", results["onnx"]["parity"]["metrics"])
 
     def test_onnx_rejects_half_flag_early(self):
         args = self._args(format="onnx", onnx_model="exports/example.onnx", half=True)

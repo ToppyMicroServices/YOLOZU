@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.eval.benchmark import measure_latency
+from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
 from yolozu.eval.metrics_report import append_jsonl, now_utc_iso, write_json
 from yolozu.predictions.predictions_parity import compare_predictions
 
@@ -111,10 +112,10 @@ TASK_SEMANTICS = {
         "display_name": "Monocular Depth",
         "metric_family": "depth_error",
         "expected_metric_keys": ["abs_rel", "rmse", "delta1"],
-        "support_level": "documented_partial",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "Depth remains a YOLOZU-native benchmark extension rather than a claimed Ultralytics parity task.",
+        "notes": "Depth is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine depth outputs.",
     },
     "pose6d": {
         "display_name": "6DoF Pose",
@@ -236,7 +237,9 @@ def _split_csv(value: str | None) -> list[str]:
     return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
-def _support_status_for_format(fmt: str, *, device: str) -> tuple[bool, str | None]:
+def _support_status_for_format(fmt: str, *, device: str, task_label: str = "detect") -> tuple[bool, str | None]:
+    if task_label == "depth" and fmt in REAL_BACKEND_FORMATS:
+        return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))
     system = platform.system().lower()
@@ -271,12 +274,14 @@ def _support_status_for_format(fmt: str, *, device: str) -> tuple[bool, str | No
     return False, "unsupported_format"
 
 
-def _expand_requested_formats(value: str | None, *, device: str) -> list[str]:
+def _expand_requested_formats(value: str | None, *, device: str, task_label: str = "detect") -> list[str]:
     requested = _split_csv(value)
     if not requested:
         requested = ["all"]
     if requested == ["all"]:
-        expanded = [fmt for fmt in PHASE1_FORMATS if _support_status_for_format(fmt, device=device)[0]]
+        expanded = [
+            fmt for fmt in PHASE1_FORMATS if _support_status_for_format(fmt, device=device, task_label=task_label)[0]
+        ]
         return expanded or list(PHASE1_FORMATS)
     out: list[str] = []
     for fmt in requested:
@@ -331,11 +336,13 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
+    elif task_label == "depth" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+        execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
 
     artifact_expectation: dict[str, str]
-    if execution_mode == "real_backend_eval":
+    if execution_mode in {"real_backend_eval", "real_artifact_eval"}:
         artifact_expectation = {
             "predictions": "real",
             "eval": "real",
@@ -355,12 +362,17 @@ def _task_execution_semantics(
         }
 
     note = task_meta["notes"]
-    if task_label != "detect":
+    if task_label == "depth" and execution_mode == "real_artifact_eval":
+        note = (
+            f"{note} Current depth benchmarking is artifact-backed: backend-specific depth maps are evaluated and "
+            "compared directly, without pretending YOLOZU performed the underlying depth inference itself."
+        )
+    elif task_label != "detect":
         note = f"{note} Current benchmark execution remains planning/synthetic-only until a dedicated backend/eval path lands."
 
     return {
         "execution_mode": execution_mode,
-        "real_backend_supported_now": bool(execution_mode == "real_backend_eval"),
+        "real_backend_supported_now": bool(execution_mode in {"real_backend_eval", "real_artifact_eval"}),
         "artifact_expectation": artifact_expectation,
         "eval_expectation": {
             "metric_family": task_meta["metric_family"],
@@ -393,17 +405,19 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
             note = f" {rule['notes']}" if rule.get("notes") else ""
             raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
 
-        benchmark_source = _selected_benchmark_source(args, fmt=fmt)
+        benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         if (
-            task_label != "detect"
+            task_label not in {"detect", "depth"}
             and not dry_run
             and fmt in REAL_BACKEND_FORMATS
-            and benchmark_source == "dataset_pass_wall_time"
+            and benchmark_source in {"dataset_pass_wall_time", "artifact_eval"}
         ):
             raise ValueError(
                 f"--task {task_label} is not wired to a real {fmt} benchmark/eval path yet; "
                 "use --dry-run or --latency-source synthetic_step until the dedicated task backend lands."
             )
+        if task_label == "depth" and not dry_run and benchmark_source == "dataset_pass_wall_time":
+            raise ValueError("--task depth uses artifact-backed evaluation; use --latency-source auto or artifact_eval")
 
 
 def _artifact_path(base: str | None, *, fmt: str, default_name: str) -> Path:
@@ -447,16 +461,18 @@ def _prediction_protocol(args: Any) -> str | None:
     return None
 
 
-def _selected_benchmark_source(args: Any, *, fmt: str) -> str:
+def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
+    if task_label == "depth" and fmt in REAL_BACKEND_FORMATS:
+        return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
     return "synthetic_step"
 
 
-def _resolve_model_artifact(args: Any, *, fmt: str) -> tuple[str | None, str | None]:
+def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[str | None, str | None]:
     override_map = {
         "torch": getattr(args, "torch_model", None),
         "onnx": getattr(args, "onnx_model", None),
@@ -467,6 +483,9 @@ def _resolve_model_artifact(args: Any, *, fmt: str) -> tuple[str | None, str | N
         return None, "model_artifact_required"
     text = str(candidate)
     suffix = Path(text).suffix.lower()
+
+    if task_label == "depth":
+        return text, None
 
     if fmt == "torch":
         if override_map.get(fmt):
@@ -487,6 +506,14 @@ def _resolve_model_artifact(args: Any, *, fmt: str) -> tuple[str | None, str | N
             return text, None
         return None, "model_artifact_required"
     return None, "unsupported_format"
+
+
+def _depth_mask_path(args: Any) -> Path | None:
+    return _resolve_path(getattr(args, "depth_mask", None))
+
+
+def _depth_align(args: Any) -> str:
+    return str(getattr(args, "depth_align", "median_scale") or "median_scale")
 
 
 def _tool_path(name: str) -> str:
@@ -748,6 +775,51 @@ def _eval_command(args: Any, *, predictions_path: Path, output: Path) -> list[st
     return cmd
 
 
+def _depth_eval_command(args: Any, *, pred_depth_path: Path, gt_depth_path: Path, output: Path) -> list[str]:
+    cmd = [
+        sys.executable,
+        _tool_path("eval_depth.py"),
+        "--pred-depth",
+        str(pred_depth_path),
+        "--gt-depth",
+        str(gt_depth_path),
+        "--align",
+        _depth_align(args),
+        "--output",
+        str(output),
+    ]
+    mask_path = _depth_mask_path(args)
+    if mask_path is not None:
+        cmd.extend(["--mask", str(mask_path)])
+    return cmd
+
+
+def _write_depth_predictions_artifact(
+    path: Path,
+    *,
+    fmt: str,
+    source_path: Path,
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    arr = load_depth_array(source_path)
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_depth_predictions_artifact",
+        "format": fmt,
+        "status": "reference_artifact",
+        "source_path": str(source_path),
+        "shape": list(arr.shape),
+        "dtype": str(arr.dtype),
+        "min": float(arr.min()),
+        "max": float(arr.max()),
+        "sha256": _sha256_file(source_path),
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
 def _export_settings_payload(
     args: Any,
     *,
@@ -811,6 +883,10 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
 
 
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    if results and str(results[0].get("task")) == "depth":
+        _attach_depth_parity(results, args=args)
+        return
+
     def _parity_eligible(item: dict[str, Any]) -> bool:
         if str(item.get("format")) not in REAL_BACKEND_FORMATS:
             return False
@@ -903,9 +979,91 @@ def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
     reference["parity"] = reference_payload["summary"]
 
 
+def _attach_depth_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        return str(item.get("status")) in {"ok", "partial"}
+
+    reference: dict[str, Any] | None = None
+    for item in results:
+        if _eligible(item) and str(item.get("format")) == "torch":
+            reference = item
+            break
+    if reference is None:
+        for item in results:
+            if _eligible(item):
+                reference = item
+                break
+    if reference is None:
+        return
+
+    ref_pred_payload = _load_json_payload(Path(str((reference.get("artifacts") or {}).get("predictions"))))
+    if not isinstance(ref_pred_payload, dict) or not ref_pred_payload.get("source_path"):
+        return
+    ref_arr = load_depth_array(Path(str(ref_pred_payload["source_path"])))
+    mask_path = _depth_mask_path(args)
+    mask_arr = load_mask_array(mask_path) if mask_path is not None else None
+    ref_backend = str(reference.get("format"))
+    candidate_backends: list[str] = []
+    mae_atol = float(getattr(args, "depth_parity_mae_atol", 0.02))
+    rmse_atol = float(getattr(args, "depth_parity_rmse_atol", 0.03))
+
+    for item in results:
+        if item is reference or not _eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_payload = _load_json_payload(Path(str((item.get("artifacts") or {}).get("predictions"))))
+        if not isinstance(candidate_payload, dict) or not candidate_payload.get("source_path"):
+            continue
+        cand_arr = load_depth_array(Path(str(candidate_payload["source_path"])))
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        summary = compare_depth_arrays(
+            reference=ref_arr,
+            candidate=cand_arr,
+            mask=mask_arr,
+            align=_depth_align(args),
+        )
+        metrics = summary.get("metrics") or {}
+        ok = float(metrics.get("mae", 1e9)) <= mae_atol and float(metrics.get("rmse", 1e9)) <= rmse_atol
+        payload = {
+            "schema_version": 1,
+            "kind": "benchmark_depth_parity_report",
+            "format": candidate_backend,
+            "status": "ok" if ok else "drift",
+            "reference_backend": ref_backend,
+            "candidate_backend": candidate_backend,
+            "summary": summary,
+            "thresholds": {
+                "mae_atol": mae_atol,
+                "rmse_atol": rmse_atol,
+            },
+            "timestamp": now_utc_iso(),
+            "run_meta": item.get("run_meta") or {},
+        }
+        write_json(parity_path, payload)
+        item["parity"] = payload["summary"]
+        candidate_backends.append(candidate_backend)
+        if not ok and str(item.get("status")) == "ok":
+            item["status"] = "partial"
+            item["skip_reason"] = "parity_drift"
+
+    reference_payload = _write_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        fmt=ref_backend,
+        candidate_backends=candidate_backends,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
+
+
 def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
-    requested_formats = _expand_requested_formats(getattr(args, "format", None), device=str(getattr(args, "device", "cpu")))
     task_label, task_requested = _normalize_task_label(getattr(args, "task", "detect"))
+    requested_formats = _expand_requested_formats(
+        getattr(args, "format", None),
+        device=str(getattr(args, "device", "cpu")),
+        task_label=task_label,
+    )
     task_semantics = _task_semantics(task_requested)
     _validate_benchmark_args(args, requested_formats, task_label=task_label)
 
@@ -938,8 +1096,12 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     strict_failure = False
 
     for fmt in requested_formats:
-        supported, skip_reason = _support_status_for_format(fmt, device=str(getattr(args, "device", "cpu")))
-        benchmark_source = _selected_benchmark_source(args, fmt=fmt)
+        supported, skip_reason = _support_status_for_format(
+            fmt,
+            device=str(getattr(args, "device", "cpu")),
+            task_label=task_label,
+        )
+        benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         execution_semantics = _task_execution_semantics(
             task_label,
             fmt=fmt,
@@ -1045,7 +1207,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                 run_meta=format_run_meta,
             )
         else:
-            model_artifact, artifact_reason = _resolve_model_artifact(args, fmt=fmt)
+            model_artifact, artifact_reason = _resolve_model_artifact(args, fmt=fmt, task_label=task_label)
             if not model_artifact:
                 status = "skipped"
                 skip_reason = artifact_reason
@@ -1074,20 +1236,12 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                     run_meta=format_run_meta,
                 )
             else:
-                pred_cmd = _prediction_command(args, fmt=fmt, model_artifact=model_artifact, output=predictions_path)
-                pred_proc, pred_elapsed = _run_command(pred_cmd)
-                command_meta = {
-                    "predictions": {
-                        "cmd": pred_cmd,
-                        "returncode": int(pred_proc.returncode),
-                        "elapsed_sec": round(pred_elapsed, 6),
-                    }
-                }
-                if int(pred_proc.returncode) != 0:
-                    status = "failed"
-                    skip_reason = "prediction_command_failed"
-                    error = _result_tail(pred_proc)
-                    if not predictions_path.exists():
+                if task_label == "depth" and benchmark_source == "artifact_eval":
+                    pred_source = _resolve_path(model_artifact)
+                    gt_source = _resolve_path(data_text)
+                    if pred_source is None or not pred_source.exists():
+                        status = "skipped"
+                        skip_reason = "model_artifact_required"
                         _write_placeholder(
                             predictions_path,
                             kind="benchmark_predictions_placeholder",
@@ -1096,63 +1250,180 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                             reason=skip_reason,
                             run_meta=format_run_meta,
                         )
-                    _write_placeholder(
-                        eval_path,
-                        kind="benchmark_eval_placeholder",
-                        fmt=fmt,
-                        status=status,
-                        reason=skip_reason,
-                        run_meta=format_run_meta,
-                    )
-                    _write_placeholder(
-                        parity_path,
-                        kind="benchmark_parity_placeholder",
-                        fmt=fmt,
-                        status=status,
-                        reason=skip_reason,
-                        run_meta=format_run_meta,
-                    )
-                else:
-                    image_count = _prediction_entry_count(predictions_path)
-                    measured = _single_pass_metrics(pred_elapsed, images=image_count)
-                    latency = measured["latency_ms"]
-                    throughput = {
-                        "fps": measured["fps"],
-                        "images": measured["images"],
-                        "dataset_pass_sec": measured["total_sec"],
-                    }
-                    eval_cmd = _eval_command(args, predictions_path=predictions_path, output=eval_path)
-                    eval_proc, eval_elapsed = _run_command(eval_cmd)
-                    command_meta["eval"] = {
-                        "cmd": eval_cmd,
-                        "returncode": int(eval_proc.returncode),
-                        "elapsed_sec": round(eval_elapsed, 6),
-                    }
-                    if int(eval_proc.returncode) != 0:
-                        status = "partial"
-                        skip_reason = "eval_command_failed"
-                        error = _result_tail(eval_proc)
-                        if not eval_path.exists():
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    elif gt_source is None or not gt_source.exists():
+                        status = "skipped"
+                        skip_reason = "dataset_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    else:
+                        _write_depth_predictions_artifact(
+                            predictions_path,
+                            fmt=fmt,
+                            source_path=pred_source,
+                            run_meta=format_run_meta,
+                        )
+                        eval_cmd = _depth_eval_command(args, pred_depth_path=pred_source, gt_depth_path=gt_source, output=eval_path)
+                        eval_proc, eval_elapsed = _run_command(eval_cmd)
+                        command_meta = {
+                            "eval": {
+                                "cmd": eval_cmd,
+                                "returncode": int(eval_proc.returncode),
+                                "elapsed_sec": round(eval_elapsed, 6),
+                            }
+                        }
+                        latency = None
+                        throughput = None
+                        if int(eval_proc.returncode) != 0:
+                            status = "failed"
+                            skip_reason = "eval_command_failed"
+                            error = _result_tail(eval_proc)
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
                             _write_placeholder(
-                                eval_path,
-                                kind="benchmark_eval_placeholder",
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
                                 fmt=fmt,
                                 status=status,
                                 reason=skip_reason,
                                 run_meta=format_run_meta,
                             )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="artifact_backed_depth_parity_pending_attach",
+                                run_meta=format_run_meta,
+                            )
+                else:
+                    pred_cmd = _prediction_command(args, fmt=fmt, model_artifact=model_artifact, output=predictions_path)
+                    pred_proc, pred_elapsed = _run_command(pred_cmd)
+                    command_meta = {
+                        "predictions": {
+                            "cmd": pred_cmd,
+                            "returncode": int(pred_proc.returncode),
+                            "elapsed_sec": round(pred_elapsed, 6),
+                        }
+                    }
+                    if int(pred_proc.returncode) != 0:
+                        status = "failed"
+                        skip_reason = "prediction_command_failed"
+                        error = _result_tail(pred_proc)
+                        if not predictions_path.exists():
+                            _write_placeholder(
+                                predictions_path,
+                                kind="benchmark_predictions_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason=skip_reason,
+                                run_meta=format_run_meta,
+                            )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
                     else:
-                        status = "ok"
-                        skip_reason = None
-                        eval_metrics = _eval_metrics(eval_path)
-                    _write_placeholder(
-                        parity_path,
-                        kind="benchmark_parity_placeholder",
-                        fmt=fmt,
-                        status=status,
-                        reason="phase2_placeholder",
-                        run_meta=format_run_meta,
-                    )
+                        image_count = _prediction_entry_count(predictions_path)
+                        measured = _single_pass_metrics(pred_elapsed, images=image_count)
+                        latency = measured["latency_ms"]
+                        throughput = {
+                            "fps": measured["fps"],
+                            "images": measured["images"],
+                            "dataset_pass_sec": measured["total_sec"],
+                        }
+                        eval_cmd = _eval_command(args, predictions_path=predictions_path, output=eval_path)
+                        eval_proc, eval_elapsed = _run_command(eval_cmd)
+                        command_meta["eval"] = {
+                            "cmd": eval_cmd,
+                            "returncode": int(eval_proc.returncode),
+                            "elapsed_sec": round(eval_elapsed, 6),
+                        }
+                        if int(eval_proc.returncode) != 0:
+                            status = "partial"
+                            skip_reason = "eval_command_failed"
+                            error = _result_tail(eval_proc)
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="phase2_placeholder",
+                                run_meta=format_run_meta,
+                            )
 
         if bool(getattr(args, "strict", False)) and status in {"skipped", "failed"}:
             strict_failure = True
@@ -1235,7 +1506,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                 fmt: _task_execution_semantics(
                     task_label,
                     fmt=fmt,
-                    benchmark_source=_selected_benchmark_source(args, fmt=fmt),
+                    benchmark_source=_selected_benchmark_source(args, fmt=fmt, task_label=task_label),
                     dry_run=bool(getattr(args, "dry_run", False)),
                 )
                 for fmt in requested_formats
@@ -1281,6 +1552,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--onnx-model", default=None, help="Optional ONNX backend model override (typically .onnx).")
     parser.add_argument("--engine-model", default=None, help="Optional TensorRT engine override (typically .engine or .plan).")
     parser.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
+    parser.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
+    parser.add_argument(
+        "--depth-align",
+        choices=("none", "median_scale"),
+        default="median_scale",
+        help="Depth artifact alignment mode for task=depth benchmark eval/parity (default: median_scale).",
+    )
+    parser.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
+    parser.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
     parser.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
     parser.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
     parser.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
@@ -1320,9 +1600,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fraction", type=float, default=1.0, help="Record dataset fraction knob (default: 1.0).")
     parser.add_argument(
         "--latency-source",
-        choices=("auto", "synthetic_step", "dataset_pass_wall_time"),
+        choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real torch/onnx/engine orchestration when available.",
+        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=depth.",
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

@@ -119,6 +119,32 @@ Use \cmd{--mask} when only part of the depth map should be scored. The default
 \cmd{--align median\_scale} mode is appropriate for relative monocular depth
 predictions where the global scale is ambiguous.
 
+\subsection{Artifact-backed depth benchmark/parity}
+The benchmark lane now reuses the same depth evaluator to compare backend
+artifacts directly:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_model.py \
+  --task depth \
+  --model reports/depth_torch.npy \
+  --onnx-model reports/depth_onnx.npy \
+  --data data/reference/gt_depth.npy \
+  --format torch,onnx \
+  --latency-source artifact_eval \
+  --depth-align median_scale \
+  --output reports/benchmark_depth_report.json
+\end{lstlisting}
+
+This path is intentionally artifact-backed. YOLOZU does not pretend it ran the
+underlying backend inference; instead it:
+\begin{itemize}
+  \item records the backend-specific depth artifact under \path{predictions\_<format>.json}
+  \item evaluates each artifact with \path{tools/eval\_depth.py}
+  \item compares candidate depth arrays against the reference backend and writes a real parity report
+\end{itemize}
+
+This closes the depth benchmark lane for backend comparison while keeping the
+interface contract honest about where inference actually happened.
+
 Example:
 \begin{lstlisting}[language=bash]
 python3 rtdetr_pose/tools/train_minimal.py \

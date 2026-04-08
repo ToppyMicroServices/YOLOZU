@@ -129,3 +129,65 @@ def evaluate_depth_arrays(
         },
         "metrics": metrics,
     }
+
+
+def compare_depth_arrays(
+    *,
+    reference,
+    candidate,
+    mask=None,
+    align: str = "median_scale",
+) -> dict[str, Any]:
+    np, _ = _require_numpy_and_pillow()
+    ref_arr = np.asarray(reference, dtype=np.float32)
+    cand_arr = np.asarray(candidate, dtype=np.float32)
+    if ref_arr.shape != cand_arr.shape:
+        raise ValueError(f"reference/candidate shape mismatch: {ref_arr.shape} vs {cand_arr.shape}")
+
+    valid = np.isfinite(ref_arr) & np.isfinite(cand_arr)
+    if mask is not None:
+        mask_arr = np.asarray(mask, dtype=bool)
+        if mask_arr.shape != ref_arr.shape:
+            raise ValueError(f"mask shape mismatch: {mask_arr.shape} vs {ref_arr.shape}")
+        valid &= mask_arr
+    valid &= ref_arr > 0.0
+    valid &= cand_arr > 0.0
+    valid_count = int(valid.sum())
+    if valid_count <= 0:
+        raise ValueError("no valid depth pixels for parity comparison")
+
+    cand_eval = cand_arr.copy()
+    scale_factor = 1.0
+    if str(align).strip().lower() == "median_scale":
+        ref_med = float(np.median(ref_arr[valid]))
+        cand_med = float(np.median(cand_eval[valid]))
+        if abs(cand_med) < 1e-12:
+            raise ValueError("median_scale parity alignment failed because candidate median is zero")
+        scale_factor = ref_med / cand_med
+        cand_eval *= scale_factor
+    elif str(align).strip().lower() != "none":
+        raise ValueError("align must be one of: none, median_scale")
+
+    ref_v = ref_arr[valid]
+    cand_v = cand_eval[valid]
+    diff = cand_v - ref_v
+    abs_diff = np.abs(diff)
+    ref_safe = np.maximum(ref_v, 1e-6)
+    cand_safe = np.maximum(cand_v, 1e-6)
+    ratio = np.maximum(cand_safe / ref_safe, ref_safe / cand_safe)
+
+    return {
+        "alignment": str(align).strip().lower(),
+        "scale_factor": float(scale_factor),
+        "counts": {
+            "valid_pixels": valid_count,
+            "total_pixels": int(ref_arr.size),
+        },
+        "metrics": {
+            "mae": float(np.mean(abs_diff)),
+            "rmse": float(np.sqrt(np.mean(np.square(diff)))),
+            "max_abs": float(np.max(abs_diff)),
+            "p95_abs": float(np.quantile(abs_diff, 0.95)),
+            "delta1": float(np.mean(ratio < 1.25)),
+        },
+    }

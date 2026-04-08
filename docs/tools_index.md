@@ -92,6 +92,8 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Generic depth pair eval: `python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --align median_scale --output reports/depth_eval.json`
   - writes `abs_rel`, `sq_rel`, `rmse`, `rmse_log`, `delta1/2/3`, plus valid-pixel counts
   - `--mask` is optional and `--align median_scale` is useful for relative monocular depth comparisons
+- Depth backend benchmark/parity: `python3 tools/benchmark_model.py --task depth --model reports/depth_torch.npy --onnx-model reports/depth_onnx.npy --data data/reference/gt_depth.npy --format torch,onnx --latency-source artifact_eval --depth-align median_scale --output reports/benchmark_depth_report.json`
+  - artifact-backed real eval/parity lane for backend-specific depth outputs; does not pretend YOLOZU executed the backend inference itself
 - SynthGen overlay renderer: `python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png`
 - SynthGen smoke (interface contract + overlay + eval): `python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports`
 

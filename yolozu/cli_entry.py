@@ -237,7 +237,19 @@ def main(argv: list[str] | None = None) -> int:
         help="Ultralytics-parity benchmark entrypoint (Phase 1: honest synthetic probe + explicit skipped formats).",
     )
     bench.add_argument("-m", "--model", required=True, help="Model/weights path recorded in the benchmark report.")
+    bench.add_argument("--torch-model", default=None, help="Optional torch backend model/depth-artifact override.")
+    bench.add_argument("--onnx-model", default=None, help="Optional ONNX backend model/depth-artifact override.")
+    bench.add_argument("--engine-model", default=None, help="Optional TensorRT engine/depth-artifact override.")
     bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
+    bench.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
+    bench.add_argument(
+        "--depth-align",
+        choices=("none", "median_scale"),
+        default="median_scale",
+        help="Depth artifact alignment mode for task=depth benchmark eval/parity (default: median_scale).",
+    )
+    bench.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
+    bench.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
     bench.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
     bench.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
     bench.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
@@ -266,9 +278,9 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--fraction", type=float, default=1.0, help="Record dataset fraction knob (default: 1.0).")
     bench.add_argument(
         "--latency-source",
-        choices=("synthetic_step",),
-        default="synthetic_step",
-        help="Phase-1 latency source (default: synthetic_step).",
+        choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
+        default="auto",
+        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for task=depth.",
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
