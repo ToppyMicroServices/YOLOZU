@@ -59,7 +59,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
 \cmd{yolozu long-tail-recipe} & Generates a long-tail training recipe JSON with selectable sampler/loss/metric/lr scheduler plugins. \\
 \cmd{python3 tools/eval\_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
-\cmd{python3}\\\cmd{tools/run\_reference\_adapter\_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
+\cmd{python3}\\\path{tools/run_reference_}\\\path{adapter_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
 \cmd{python3}\\\cmd{tools/hpo\_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
 \cmd{python3}\\\cmd{tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\
 \cmd{python3}\\\cmd{tools/run\_ttt\_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt\_compare/} and writes \path{plan.json}, before/after predictions, optional eval reports, and compare summaries. \\
@@ -135,9 +135,13 @@ yolozu long-tail-recipe \
 
 Primary plugin flags:
 \begin{itemize}
-  \item \cmd{--loss-plugin}: \cmd{none}, \cmd{focal}, \cmd{ldam}, \cmd{torch\_cross\_entropy}, \cmd{torch\_nll\_loss}, \cmd{torch\_bce\_with\_logits}
-  \item \cmd{--metric-plugin}: \cmd{none}, \cmd{torch\_top1\_accuracy}, \cmd{torch\_top5\_accuracy}, \cmd{torch\_cross\_entropy}
-  \item \cmd{--lr-scheduler}: \cmd{none}, \cmd{torch\_step\_lr}, \cmd{torch\_cosine\_annealing\_lr}, \cmd{torch\_reduce\_on\_plateau}, \cmd{torch\_one\_cycle\_lr}
+  \item \cmd{--loss-plugin}: \cmd{none}, \cmd{focal}, \cmd{ldam},\\
+  \cmd{torch\_cross\_entropy}, \cmd{torch\_nll\_loss}, \cmd{torch\_bce\_with\_logits}
+  \item \cmd{--metric-plugin}: \cmd{none}, \cmd{torch\_top1\_accuracy},\\
+  \cmd{torch\_top5\_accuracy}, \cmd{torch\_cross\_entropy}
+  \item \cmd{--lr-scheduler}: \cmd{none}, \cmd{torch\_step\_lr},\\
+  \cmd{torch\_cosine\_annealing\_lr}, \cmd{torch\_reduce\_on\_plateau},\\
+  \cmd{torch\_one\_cycle\_lr}
 \end{itemize}
 
 \section{YAML Config-Driven Usage (Train/Test/Resume)}
