@@ -24,9 +24,12 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+\pgfdeclarelayer{bg}
+\pgfsetlayers{bg,main}
 
 % Lists / tables
+\usepackage{array}
 \usepackage{enumitem}
 \setlist{nosep}
 \usepackage{booktabs}

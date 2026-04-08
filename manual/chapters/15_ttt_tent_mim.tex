@@ -361,7 +361,8 @@ For example, EATA can legitimately report \cmd{steps=0} with
 \begin{tikzpicture}[
   node distance=8mm,
   font=\small,
-  box/.style={draw, rounded corners, align=center, inner sep=6pt, minimum width=24mm},
+  box/.style={draw, rounded corners, align=center, inner sep=6pt, minimum width=24mm, fill=white},
+  note/.style={align=center, font=\scriptsize, fill=white, inner sep=1pt},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 \node[box] (input) {\textbf{Shifted input}\\blur / style shift};
@@ -369,10 +370,14 @@ For example, EATA can legitimately report \cmd{steps=0} with
 \node[box, right=10mm of base] (adapt) {\textbf{Adapt}\\run Tent / MIM / CoTTA / EATA / SAR};
 \node[box, right=10mm of adapt] (pred) {\textbf{Adapted predict}\\same subset};
 \node[box, right=10mm of pred] (cmp) {\textbf{Compare}\\before vs after};
+\node[note] (sameimg) at ($(base.east)!0.5!(adapt.west)+(0,4mm)$) {same images};
+\node[note] (weights) at ($(adapt.east)!0.5!(pred.west)+(0,4mm)$) {weights updated in memory};
+\begin{pgfonlayer}{bg}
 \draw[arrow] (input) -- (base);
-\draw[arrow] (base) -- node[above]{same images} (adapt);
-\draw[arrow] (adapt) -- node[above]{weights updated in memory} (pred);
+\draw[arrow] (base) -- (adapt);
+\draw[arrow] (adapt) -- (pred);
 \draw[arrow] (pred) -- (cmp);
+\end{pgfonlayer}
 \end{tikzpicture}
 }
 \caption{Common TTT workflow in \yolozu{}: run the baseline and the adapted variant on the same deterministic image subset, then compare their artifacts.}

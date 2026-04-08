@@ -118,6 +118,7 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 \node[smallbox] (background) at (9.7, -8.1) {\textbf{Background policy}\\base background from envmap\\optional background-only edit\\where inst\_id == 0};
 \node[box] (output) at (15.5, -8.1) {\textbf{Published sample}\\image + image\_render\\meta / appearance / qa\\shard row for YOLOZU};
 
+\begin{pgfonlayer}{bg}
 \draw[arrow] (assets.east) -- (recipe.west);
 \draw[arrow] (recipe.east) -- (spec.west);
 \draw[arrow] (spec.south) -- (render.north);
@@ -125,7 +126,8 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 \draw[arrow] (render.east) -- (appearance.west);
 \draw[arrow] (appearance.south west) |- (background.east);
 \draw[arrow] (appearance.south east) |- (output.north);
-\draw[arrow] (gt.south) -- (2.4, -10.0) -- (15.5, -10.0) -- (output.south);
+\draw[arrow] (gt.south) -- (2.4, -10.6) -- (15.5, -10.6) -- (output.south);
+\end{pgfonlayer}
 \end{tikzpicture}
 }
 \caption{SynthGen generation path: CAD/mesh or primitive assets are compiled into a renderer-ready scene, the renderer owns the labels, and background editing is limited to label-safe appearance stages.}

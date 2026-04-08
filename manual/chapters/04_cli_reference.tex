@@ -25,7 +25,8 @@ As a best practice, always initiate discovery with:\\
 For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}.
 
 \section{Common Commands}
-\begin{longtable}{@{}p{0.40\textwidth}p{0.55\textwidth}@{}}
+\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.43\textwidth}>{\raggedright\arraybackslash}p{0.52\textwidth}@{}}
 \toprule
 \textbf{Command} & \textbf{Purpose} \\
 \midrule
@@ -57,12 +58,12 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu predictions migrate} & Migrates predictions entry schema versions (currently \cmd{--from v1 --to v2}) with optional strict source checking. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
 \cmd{yolozu long-tail-recipe} & Generates a long-tail training recipe JSON with selectable sampler/loss/metric/lr scheduler plugins. \\
-\cmd{python3 tools/eval_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
-\cmd{python3 tools/run\_reference\_adapter\_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
-\cmd{python3 tools/hpo_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
-\cmd{python3 tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\
-\cmd{python3 tools/run\_ttt\_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt\_compare/} and writes `plan.json`, before/after predictions, optional eval reports, and compare summaries. \\
-\cmd{python3 tools/render\_ttt\_manual\_figures.py} & Renders the checked-in TTT summary/workflow/qualitative PNG figures from fixed report artifacts for \path{docs/assets/} and \path{manual/figures/}. \\
+\cmd{python3 tools/eval\_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
+\cmd{python3}\\\cmd{tools/run\_reference\_adapter\_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
+\cmd{python3}\\\cmd{tools/hpo\_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
+\cmd{python3}\\\cmd{tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\
+\cmd{python3}\\\cmd{tools/run\_ttt\_compare.py} & Python entrypoint for the same TTT compare workflow; loads method boilerplates from \path{configs/examples/ttt\_compare/} and writes \path{plan.json}, before/after predictions, optional eval reports, and compare summaries. \\
+\cmd{python3}\\\cmd{tools/render\_ttt\_manual\_figures.py} & Renders the checked-in TTT summary/workflow/qualitative PNG figures from fixed report artifacts for \path{docs/assets/} and \path{manual/figures/}. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/check\_repo\_governance.py} & Audits local governance evidence plus exported GitHub settings snapshots for branch protection, review policy, and repository-security posture. Writes a JSON summary and keeps history-based items explicit instead of pretending they are source-only facts. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
@@ -70,6 +71,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{python3 tools/support\_yolo\_detr.py} & YOLO/DETR support utility with fixed 3-layer interface contract (trainer/repo/export), short aliases (\cmd{ls/tu/th/eo/pn}), preset defaults (\cmd{-P smoke}), shared dataset conversion, ONNX export templates, and prediction canonicalization. \\
 \bottomrule
 \end{longtable}
+\normalsize
 
 \section{Demo Output Examples (Images)}
 The \cmd{yolozu demo *} commands are designed to produce concrete artifacts (JSON reports and overlay images)
