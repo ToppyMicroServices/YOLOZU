@@ -109,7 +109,6 @@ report, but real backend/eval coverage still lags for:
 - keypoints / pose
 - classification
 - OBB
-- 6DoF pose
 
 Improvement priority:
 
@@ -117,7 +116,7 @@ Improvement priority:
 2. Keep task-specific eval metric keys visible in the report examples
 3. Keep explicit `classification` and `obb` support-status lines in docs/manual
 4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
-5. Keep the depth lane clearly documented as artifact-backed real eval/parity rather than inference-backed parity
+5. Keep the depth and pose6d lanes clearly documented as artifact-backed real eval/parity rather than inference-backed parity
 
 ### 3. Argument-surface gaps
 
@@ -155,6 +154,7 @@ Current behavior:
 
 - `torch` / `onnx` / `engine` can orchestrate real runs
 - `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
+- `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `torchscript` is accepted and recorded honestly, but still uses synthetic / skipped semantics
 - `executorch` / `opencv_dnn` remain synthetic or skipped
 - parity artifacts are real for successful `torch`-anchored backend comparisons, and remain placeholders for dry-run / skipped / synthetic-only formats

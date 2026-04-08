@@ -29,6 +29,7 @@ import hashlib
 import importlib.util
 import json
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -37,6 +38,7 @@ from typing import Any
 
 from yolozu.eval.benchmark import measure_latency
 from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
+from yolozu.eval.pose_parity import compare_pose_predictions
 from yolozu.eval.metrics_report import append_jsonl, now_utc_iso, write_json
 from yolozu.predictions.predictions_parity import compare_predictions
 
@@ -121,10 +123,10 @@ TASK_SEMANTICS = {
         "display_name": "6DoF Pose",
         "metric_family": "pose6d_error",
         "expected_metric_keys": ["ADD", "ADDS", "reprojection_error"],
-        "support_level": "documented_partial",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "6DoF pose remains a YOLOZU-native benchmark extension with explicit metric expectations in the report schema.",
+        "notes": "6DoF pose is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine prediction artifacts.",
     },
 }
 FLAG_DEFAULTS = {
@@ -238,7 +240,7 @@ def _split_csv(value: str | None) -> list[str]:
 
 
 def _support_status_for_format(fmt: str, *, device: str, task_label: str = "detect") -> tuple[bool, str | None]:
-    if task_label == "depth" and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))
@@ -336,7 +338,7 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
-    elif task_label == "depth" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+    elif task_label in {"depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
         execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
@@ -366,6 +368,12 @@ def _task_execution_semantics(
         note = (
             f"{note} Current depth benchmarking is artifact-backed: backend-specific depth maps are evaluated and "
             "compared directly, without pretending YOLOZU performed the underlying depth inference itself."
+        )
+    elif task_label == "pose6d" and execution_mode == "real_artifact_eval":
+        note = (
+            f"{note} Current 6DoF benchmarking is artifact-backed: backend-specific predictions artifacts are "
+            "evaluated with tools/eval_pose.py and compared directly, without pretending YOLOZU performed the "
+            "underlying backend inference itself."
         )
     elif task_label != "detect":
         note = f"{note} Current benchmark execution remains planning/synthetic-only until a dedicated backend/eval path lands."
@@ -407,7 +415,7 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
 
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         if (
-            task_label not in {"detect", "depth"}
+            task_label not in {"detect", "depth", "pose6d"}
             and not dry_run
             and fmt in REAL_BACKEND_FORMATS
             and benchmark_source in {"dataset_pass_wall_time", "artifact_eval"}
@@ -416,8 +424,10 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
                 f"--task {task_label} is not wired to a real {fmt} benchmark/eval path yet; "
                 "use --dry-run or --latency-source synthetic_step until the dedicated task backend lands."
             )
-        if task_label == "depth" and not dry_run and benchmark_source == "dataset_pass_wall_time":
-            raise ValueError("--task depth uses artifact-backed evaluation; use --latency-source auto or artifact_eval")
+        if task_label in {"depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
+            raise ValueError(
+                f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
+            )
 
 
 def _artifact_path(base: str | None, *, fmt: str, default_name: str) -> Path:
@@ -465,7 +475,7 @@ def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
-    if task_label == "depth" and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
@@ -484,7 +494,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
     text = str(candidate)
     suffix = Path(text).suffix.lower()
 
-    if task_label == "depth":
+    if task_label in {"depth", "pose6d"}:
         return text, None
 
     if fmt == "torch":
@@ -794,6 +804,26 @@ def _depth_eval_command(args: Any, *, pred_depth_path: Path, gt_depth_path: Path
     return cmd
 
 
+def _pose_eval_command(args: Any, *, predictions_path: Path, output: Path) -> list[str]:
+    cmd = [
+        sys.executable,
+        _tool_path("eval_pose.py"),
+        "--dataset",
+        str(getattr(args, "data", "")),
+        "--predictions",
+        str(predictions_path),
+        "--output",
+        str(output),
+    ]
+    split = getattr(args, "split", None)
+    if split:
+        cmd.extend(["--split", str(split)])
+    max_images = getattr(args, "max_images", None)
+    if max_images is not None:
+        cmd.extend(["--max-images", str(int(max_images))])
+    return cmd
+
+
 def _write_depth_predictions_artifact(
     path: Path,
     *,
@@ -818,6 +848,11 @@ def _write_depth_predictions_artifact(
     }
     write_json(path, payload)
     return payload
+
+
+def _copy_predictions_artifact(source_path: Path, target_path: Path) -> None:
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(str(source_path), str(target_path))
 
 
 def _export_settings_payload(
@@ -885,6 +920,9 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
     if results and str(results[0].get("task")) == "depth":
         _attach_depth_parity(results, args=args)
+        return
+    if results and str(results[0].get("task")) == "pose6d":
+        _attach_pose6d_parity(results, args=args)
         return
 
     def _parity_eligible(item: dict[str, Any]) -> bool:
@@ -1047,6 +1085,160 @@ def _attach_depth_parity(results: list[dict[str, Any]], *, args: Any) -> None:
         if not ok and str(item.get("status")) == "ok":
             item["status"] = "partial"
             item["skip_reason"] = "parity_drift"
+
+    reference_payload = _write_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        fmt=ref_backend,
+        candidate_backends=candidate_backends,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
+
+
+def _pose_parity_summary(report: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(report, dict):
+        return None
+    results = report.get("results") or []
+    failure_images = 0
+    total_failures = 0
+    matched = 0
+    extra_candidate = 0
+    rot_deg_max = 0.0
+    trans_l2_max = 0.0
+    depth_abs_max = 0.0
+    rot_measured = 0
+    trans_measured = 0
+    depth_measured = 0
+
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        if not bool(item.get("ok", False)):
+            failure_images += 1
+        counts = item.get("counts") or {}
+        matched += int(counts.get("matched") or 0)
+        extra_candidate += int(counts.get("extra_cand") or 0)
+        failures = item.get("failures") or []
+        total_failures += len(failures)
+        for match in item.get("matches") or []:
+            if not isinstance(match, dict):
+                continue
+            if match.get("rot_deg_diff") is not None:
+                rot_measured += 1
+                rot_deg_max = max(rot_deg_max, float(match["rot_deg_diff"]))
+            if match.get("trans_l2_diff") is not None:
+                trans_measured += 1
+                trans_l2_max = max(trans_l2_max, float(match["trans_l2_diff"]))
+            if match.get("depth_abs_diff") is not None:
+                depth_measured += 1
+                depth_abs_max = max(depth_abs_max, float(match["depth_abs_diff"]))
+
+    return {
+        "images": int(report.get("images") or 0),
+        "ok": bool(report.get("ok", False)),
+        "failure_images": int(failure_images),
+        "total_failures": int(total_failures),
+        "matched": int(matched),
+        "extra_candidate": int(extra_candidate),
+        "rot_measured": int(rot_measured),
+        "trans_measured": int(trans_measured),
+        "depth_measured": int(depth_measured),
+        "rot_deg_max": float(rot_deg_max),
+        "trans_l2_max": float(trans_l2_max),
+        "depth_abs_max": float(depth_abs_max),
+    }
+
+
+def _attach_pose6d_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        if str(item.get("status")) not in {"ok", "partial"}:
+            return False
+        predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
+        return predictions.exists()
+
+    reference: dict[str, Any] | None = None
+    for item in results:
+        if _eligible(item) and str(item.get("format")) == "torch":
+            reference = item
+            break
+    if reference is None:
+        for item in results:
+            if _eligible(item):
+                reference = item
+                break
+    if reference is None:
+        return
+
+    ref_backend = str(reference.get("format"))
+    ref_predictions = Path(str((reference.get("artifacts") or {}).get("predictions")))
+    candidate_backends: list[str] = []
+    rot_deg_atol = float(getattr(args, "pose_parity_rot_deg_atol", 1e-3))
+    trans_atol = float(getattr(args, "pose_parity_trans_atol", 1e-4))
+    depth_atol = float(getattr(args, "pose_parity_depth_atol", 1e-4))
+
+    for item in results:
+        if item is reference or not _eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_predictions = Path(str((item.get("artifacts") or {}).get("predictions")))
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        try:
+            report = compare_pose_predictions(
+                reference=ref_predictions,
+                candidate=candidate_predictions,
+                max_images=getattr(args, "max_images", None),
+                rot_deg_atol=rot_deg_atol,
+                trans_atol=trans_atol,
+                depth_atol=depth_atol,
+            )
+            summary = _pose_parity_summary(report)
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_pose6d_parity_report",
+                "format": candidate_backend,
+                "status": "ok" if bool(report.get("ok", False)) else "drift",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "summary": summary,
+                "report": report,
+                "thresholds": {
+                    "rot_deg_atol": rot_deg_atol,
+                    "trans_atol": trans_atol,
+                    "depth_atol": depth_atol,
+                },
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = payload["summary"]
+            candidate_backends.append(candidate_backend)
+            if not bool(report.get("ok", False)) and str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_drift"
+        except Exception as exc:
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_pose6d_parity_report",
+                "format": candidate_backend,
+                "status": "failed",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "error": str(exc),
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = {
+                "ok": False,
+                "error": str(exc),
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+            }
+            if str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_generation_failed"
 
     reference_payload = _write_parity_reference(
         Path(str((reference.get("artifacts") or {}).get("parity"))),
@@ -1344,6 +1536,109 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                                 reason="artifact_backed_depth_parity_pending_attach",
                                 run_meta=format_run_meta,
                             )
+                elif task_label == "pose6d" and benchmark_source == "artifact_eval":
+                    pred_source = _resolve_path(model_artifact)
+                    dataset_source = _resolve_path(data_text)
+                    if pred_source is None or not pred_source.exists():
+                        status = "skipped"
+                        skip_reason = "model_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    elif dataset_source is None or not dataset_source.exists():
+                        status = "skipped"
+                        skip_reason = "dataset_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    else:
+                        _copy_predictions_artifact(pred_source, predictions_path)
+                        eval_cmd = _pose_eval_command(args, predictions_path=predictions_path, output=eval_path)
+                        eval_proc, eval_elapsed = _run_command(eval_cmd)
+                        command_meta = {
+                            "eval": {
+                                "cmd": eval_cmd,
+                                "returncode": int(eval_proc.returncode),
+                                "elapsed_sec": round(eval_elapsed, 6),
+                            }
+                        }
+                        latency = None
+                        throughput = None
+                        if int(eval_proc.returncode) != 0:
+                            status = "failed"
+                            skip_reason = "eval_command_failed"
+                            error = _result_tail(eval_proc)
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason=skip_reason,
+                                run_meta=format_run_meta,
+                            )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="artifact_backed_pose6d_parity_pending_attach",
+                                run_meta=format_run_meta,
+                            )
                 else:
                     pred_cmd = _prediction_command(args, fmt=fmt, model_artifact=model_artifact, output=predictions_path)
                     pred_proc, pred_elapsed = _run_command(pred_cmd)
@@ -1561,6 +1856,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
     parser.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
+    parser.add_argument("--pose-parity-rot-deg-atol", type=float, default=1e-3, help="6DoF parity rotation threshold in degrees (default: 1e-3).")
+    parser.add_argument("--pose-parity-trans-atol", type=float, default=1e-4, help="6DoF parity translation L2 threshold in meters (default: 1e-4).")
+    parser.add_argument("--pose-parity-depth-atol", type=float, default=1e-4, help="6DoF parity depth threshold in meters (default: 1e-4).")
     parser.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
     parser.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
     parser.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
@@ -1602,7 +1900,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=depth.",
+        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=depth/pose6d.",
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

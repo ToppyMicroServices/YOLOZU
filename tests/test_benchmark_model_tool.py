@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 import tempfile
+from base64 import b64decode
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, main, mock
@@ -37,6 +38,8 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--depth-mask", proc.stdout)
         self.assertIn("--depth-align", proc.stdout)
         self.assertIn("artifact_eval", proc.stdout)
+        self.assertIn("--pose-parity-rot-deg-atol", proc.stdout)
+        self.assertIn("--pose-parity-trans-atol", proc.stdout)
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
@@ -117,6 +120,7 @@ class TestBenchmarkModelTool(TestCase):
             torch_path = root / "torch_depth.npy"
             onnx_path = root / "onnx_depth.npy"
             report = root / "benchmark_report.json"
+            artifact_dir = root / "artifacts"
             np.save(gt_path, gt)
             np.save(torch_path, pred_torch)
             np.save(onnx_path, pred_onnx)
@@ -139,6 +143,12 @@ class TestBenchmarkModelTool(TestCase):
                     "torch,onnx",
                     "--latency-source",
                     "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
                     "--output",
                     str(report),
                 ],
@@ -161,6 +171,100 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["onnx"]["status"], "ok")
             self.assertEqual(results["torch"]["eval_metrics"]["abs_rel"], 0.0)
             self.assertIn("mae", results["onnx"]["parity"]["metrics"])
+
+    def test_pose6d_task_supports_real_artifact_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = root / "pose_dataset"
+            (dataset_root / "images" / "val").mkdir(parents=True)
+            (dataset_root / "labels" / "val").mkdir(parents=True)
+            image_path = dataset_root / "images" / "val" / "sample.png"
+            image_path.write_bytes(
+                b64decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGNkYPjPgA0wYRUdtBIAy0MBD1Y0SxIAAAAASUVORK5CYII="
+                )
+            )
+            (dataset_root / "labels" / "val" / "sample.txt").write_text("0 0.5 0.5 0.5 0.5\n", encoding="utf-8")
+            (dataset_root / "labels" / "val" / "sample.json").write_text(
+                json.dumps(
+                    {
+                        "R_gt": [[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]],
+                        "t_gt": [[0.0, 0.0, 1.0]],
+                        "cad_points": [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0], [0.0, 0.1, 0.0]],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            ref_pred = root / "pose_torch.json"
+            cand_pred = root / "pose_onnx.json"
+            base_entry = {
+                "image": str(image_path),
+                "image_size": [4, 4],
+                "detections": [
+                    {
+                        "class_id": 0,
+                        "score": 1.0,
+                        "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.5, "h": 0.5},
+                        "R": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+                        "t_xyz": [0.0, 0.0, 1.0],
+                    }
+                ],
+            }
+            ref_pred.write_text(json.dumps({"predictions": [base_entry]}, indent=2), encoding="utf-8")
+            cand_entry = json.loads(json.dumps(base_entry))
+            cand_entry["detections"][0]["t_xyz"] = [0.0, 0.0, 1.00005]
+            cand_pred.write_text(json.dumps({"predictions": [cand_entry]}, indent=2), encoding="utf-8")
+            report = root / "benchmark_pose_report.json"
+            artifact_dir = root / "artifacts"
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "pose6d",
+                    "--model",
+                    str(ref_pred),
+                    "--onnx-model",
+                    str(cand_pred),
+                    "--data",
+                    str(dataset_root),
+                    "--format",
+                    "torch,onnx",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark pose6d artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "pose6d")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["torch"]["eval_metrics"]["pose_success"], 1.0)
+            self.assertIn("trans_l2_max", results["onnx"]["parity"])
 
     def test_onnx_rejects_half_flag_early(self):
         args = self._args(format="onnx", onnx_model="exports/example.onnx", half=True)

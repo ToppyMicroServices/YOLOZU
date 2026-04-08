@@ -24,6 +24,7 @@ Today the command provides:
 - a clearly labeled synthetic latency probe,
 - real backend orchestration for `torch`, `onnx`, and `engine` when artifacts and runtimes are available.
 - artifact-backed depth evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific depth-map artifacts are available.
+- artifact-backed pose6d evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific predictions artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
@@ -37,7 +38,7 @@ paths than YOLOZU does. Today the most important remaining gaps are:
 - missing benchmark/export formats such as `openvino`, `coreml`,
   `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
 - partial backend/eval execution coverage for tasks such as `segmentation`,
-  `classification`, `obb`, `keypoints`, and `pose6d`
+  `classification`, `obb`, and `keypoints`
 - incomplete flag validation for format-specific knobs
 
 The detailed audit and recommended implementation order live in:
@@ -52,6 +53,7 @@ best next steps are:
 - add real `segmentation`, `classification`, `obb`, and `keypoints` execution
   paths to the existing `torch` / `onnx` / `engine` benchmark flow
 - keep the depth lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
+- keep the pose6d lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - promote `torchscript` to a real backend path and follow with conditional
   `openvino`
 - keep one support matrix that distinguishes real inference/eval/parity from
@@ -168,6 +170,20 @@ yolozu benchmark \
   --output reports/benchmark_depth_report.json
 ```
 
+Artifact-backed 6DoF benchmark/parity:
+
+```bash
+yolozu benchmark \
+  --task pose6d \
+  --model reports/pose_torch.json \
+  --onnx-model reports/pose_onnx.json \
+  --data data/pose_dataset \
+  --format torch,onnx \
+  --latency-source artifact_eval \
+  --pose-parity-trans-atol 1e-4 \
+  --output reports/benchmark_pose6d_report.json
+```
+
 TorchScript acceptance with the current honest support semantics:
 
 ```bash
@@ -205,6 +221,9 @@ YOLOZU additions for reproducibility and CI:
 - `--depth-align`
 - `--depth-parity-mae-atol`
 - `--depth-parity-rmse-atol`
+- `--pose-parity-rot-deg-atol`
+- `--pose-parity-trans-atol`
+- `--pose-parity-depth-atol`
 - `--dry-run`
 - `--strict`
 - `--repro-policy`
@@ -237,6 +256,7 @@ In addition, real backend execution is currently detect-first:
 
 - `--task detect` can use real `torch` / `onnx` / `engine` orchestration
 - `--task depth` can use `--latency-source artifact_eval` to evaluate backend-specific depth artifacts and attach real parity reports
+- `--task pose6d` can use `--latency-source artifact_eval` to evaluate backend-specific predictions artifacts with `tools/eval_pose.py` and attach real parity reports
 - non-detect tasks with those real backend paths fail early and tell you to use
   `--dry-run` or `--latency-source synthetic_step` until dedicated task
   backends land
@@ -265,6 +285,14 @@ For `--task depth`, the real lane is artifact-backed rather than inference-backe
 - `predictions_<format>.json` records the source depth artifact metadata rather than fabricating a `predictions.json`
 - `eval_<format>.json` is produced by `tools/eval_depth.py`
 - `parity_<format>.json` compares candidate depth arrays against the chosen reference backend
+
+For `--task pose6d`, the real lane is also artifact-backed:
+
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` point to backend-specific `predictions.json` artifacts with pose fields
+- `--data` points to the dataset root used by `tools/eval_pose.py`
+- `predictions_<format>.json` is a copied backend predictions artifact kept under the benchmark artifact layout
+- `eval_<format>.json` is produced by `tools/eval_pose.py`
+- `parity_<format>.json` compares matched detections plus pose fields such as rotation, translation, and depth
 
 Typical artifact layout:
 
@@ -346,7 +374,7 @@ following canonical tasks and aliases:
 | `obb` | `obb` | `obb_map` | documented planned | Explicitly benchmarkable at the interface level; backend/eval implementation remains a follow-up. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | documented partial | `pose` is accepted as an alias and normalized to `keypoints` in the report. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
-| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | documented partial | YOLOZU-native extension with explicit metric expectations in the report schema. |
+| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 
 The top-level `task_semantics` block and each per-format result include:
 
@@ -365,9 +393,9 @@ The per-format `execution_semantics` block now complements that task matrix:
 - `eval_expectation`: metric family + expected metric keys for that task/backend combination
 
 For `depth` and `pose6d`, this is especially important: the benchmark report now
-records them as YOLOZU-native tasks with explicit metric expectations. `depth`
-uses artifact-backed real eval/parity semantics, while `pose6d` remains
-planning-only until a dedicated backend/eval path lands.
+records them as YOLOZU-native tasks with explicit metric expectations and
+artifact-backed real eval/parity semantics instead of leaving them as vague
+future work.
 
 ## Current format coverage
 

@@ -1048,6 +1048,10 @@
           "description": "Run the artifact-backed depth benchmark/parity lane for backend-specific depth outputs."
         },
         {
+          "command": "python3 tools/benchmark_model.py --task pose6d --model reports/pose_torch.json --onnx-model reports/pose_onnx.json --data data/pose_dataset --format torch,onnx --latency-source artifact_eval --pose-parity-trans-atol 1e-4 --output reports/benchmark_pose6d_report.json",
+          "description": "Run the artifact-backed 6DoF benchmark/parity lane for backend-specific predictions artifacts."
+        },
+        {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task pose6d --format torchscript --dry-run --output reports/benchmark_report.json",
           "description": "Show that non-detect YOLOZU-native tasks are planning-only today and keep runtime boundaries explicit."
         }
@@ -1351,6 +1355,27 @@
           "required": false
         },
         {
+          "default": 0.001,
+          "flag": "--pose-parity-rot-deg-atol",
+          "kind": "number",
+          "name": "pose_parity_rot_deg_atol",
+          "required": false
+        },
+        {
+          "default": 0.0001,
+          "flag": "--pose-parity-trans-atol",
+          "kind": "number",
+          "name": "pose_parity_trans_atol",
+          "required": false
+        },
+        {
+          "default": 0.0001,
+          "flag": "--pose-parity-depth-atol",
+          "kind": "number",
+          "name": "pose_parity_depth_atol",
+          "required": false
+        },
+        {
           "flag": "--protocol",
           "kind": "string",
           "name": "protocol",
@@ -1398,7 +1423,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, an artifact-backed real eval/parity lane for task=depth on torch/onnx/engine, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the remaining gap-closing work (broader real task coverage, broader format matrix, and clearer support-status tables).",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, artifact-backed real eval/parity lanes for task=depth and task=pose6d on torch/onnx/engine, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the remaining gap-closing work (broader real task coverage, broader format matrix, and clearer support-status tables).",
       "tags": [
         "benchmark",
         "parity",
@@ -3808,6 +3833,128 @@
         "eval",
         "keypoints",
         "pose"
+      ]
+    },
+    {
+      "docs": [
+        "docs/tools_index.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "docs/continual_learning.md",
+        "docs/production_readiness.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes one pose evaluation report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/eval_pose.py",
+      "examples": [
+        {
+          "command": "python3 tools/eval_pose.py --dataset /path/to/yolo_pose_dataset --predictions reports/predictions_pose.json --output reports/pose_eval.json",
+          "description": "Evaluate one pose-aware predictions artifact against dataset sidecars and write a JSON report."
+        },
+        {
+          "command": "python3 tools/eval_pose.py --dataset /path/to/yolo_pose_dataset --predictions reports/predictions_pose.json --iou-threshold 0.5 --success-rot-deg 15 --success-trans 0.1 --output reports/pose_eval_thresholded.json",
+          "description": "Apply explicit IoU / rotation / translation thresholds when scoring 6DoF pose predictions."
+        }
+      ],
+      "id": "eval_pose",
+      "inputs": [
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--predictions",
+          "kind": "file",
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": "reports/pose_eval.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "default": 0.5,
+          "flag": "--iou-threshold",
+          "kind": "number",
+          "name": "iou_threshold",
+          "required": false
+        },
+        {
+          "default": 0.0,
+          "flag": "--min-score",
+          "kind": "number",
+          "name": "min_score",
+          "required": false
+        },
+        {
+          "default": 15.0,
+          "flag": "--success-rot-deg",
+          "kind": "number",
+          "name": "success_rot_deg",
+          "required": false
+        },
+        {
+          "default": 0.1,
+          "flag": "--success-trans",
+          "kind": "number",
+          "name": "success_trans",
+          "required": false
+        },
+        {
+          "default": 0,
+          "flag": "--keep-per-image",
+          "kind": "number",
+          "name": "keep_per_image",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/pose_eval.json",
+          "description": "Pose evaluation report with pose6d_error metrics, pose_success, and optional ADD/ADDS metrics.",
+          "kind": "file",
+          "name": "report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics.",
+      "tags": [
+        "pose6d",
+        "evaluation",
+        "metrics",
+        "geometry"
       ]
     },
     {

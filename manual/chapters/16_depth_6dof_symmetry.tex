@@ -145,6 +145,50 @@ underlying backend inference; instead it:
 This closes the depth benchmark lane for backend comparison while keeping the
 interface contract honest about where inference actually happened.
 
+\subsection{Artifact-backed 6DoF benchmark/parity}
+The same benchmark entrypoint now supports artifact-backed 6DoF comparison:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_model.py \
+  --task pose6d \
+  --model reports/pose_torch.json \
+  --onnx-model reports/pose_onnx.json \
+  --data data/pose_dataset \
+  --format torch,onnx \
+  --latency-source artifact_eval \
+  --pose-parity-trans-atol 1e-4 \
+  --output reports/benchmark_pose6d_report.json
+\end{lstlisting}
+
+This lane is also intentionally artifact-backed. YOLOZU does not pretend it
+ran the underlying backend inference; instead it:
+\begin{itemize}
+  \item copies each backend \path{predictions.json} artifact into the benchmark artifact layout
+  \item evaluates each artifact with \path{tools/eval\_pose.py}
+  \item compares candidate predictions against the reference backend and records rotation/translation/depth parity
+\end{itemize}
+
+This closes the 6DoF benchmark lane for backend comparison while keeping the
+interface contract honest about where inference actually happened.
+
+\subsection{Generic 6DoF evaluation CLI}
+For single-artifact 6DoF checks outside the benchmark wrapper, use:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_pose.py \
+  --dataset data/pose_dataset \
+  --predictions reports/predictions_pose.json \
+  --output reports/pose_eval.json
+\end{lstlisting}
+
+This CLI matches detections to GT by IoU and reports:
+\begin{itemize}
+  \item pose core metrics such as \cmd{pose\_success}, \cmd{rot\_deg\_mean}, and \cmd{trans\_l2\_mean}
+  \item optional depth error when the predictions expose depth/translation
+  \item optional CAD-point metrics such as \cmd{add\_mean} and \cmd{adds\_mean}
+\end{itemize}
+
+Use \cmd{--success-rot-deg} and \cmd{--success-trans} to make the success gate
+explicit when the operator wants a stricter or looser pose-success definition.
+
 Example:
 \begin{lstlisting}[language=bash]
 python3 rtdetr_pose/tools/train_minimal.py \
