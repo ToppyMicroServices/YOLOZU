@@ -59,6 +59,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu calibrate} & Applies score calibration and long-tail post-hoc adjustments. \\
 \cmd{yolozu long-tail-recipe} & Generates a long-tail training recipe JSON with selectable sampler/loss/metric/lr scheduler plugins. \\
 \cmd{python3 tools/eval\_suite.py} & Executes suite evaluation, providing protocol-pinned reporting and cross-run comparisons. \\
+\cmd{python3}\\\path{tools/eval_depth.py} & Evaluates one predicted depth map against one ground-truth depth map and writes a report with \cmd{abs\_rel}, \cmd{rmse}, \cmd{delta1}, and related depth-error metrics. \\
 \cmd{python3}\\\path{tools/run_reference_}\\\path{adapter_regression.py} & Runs RT-DETR reference-adapter regression with profile-aware micro/full modes, interface contract gates (hard), behavior/parity gates (warn/hard), deterministic-preprocess metadata checks, provenance snapshot capture (\cmd{--capture-provenance}), matrix baseline layout (\cmd{--baseline-layout matrix}), lock/hash enforcement, and failure artifacts (\cmd{--diff-summary-out}, \cmd{--topk-examples-dir}). \\
 \cmd{python3}\\\cmd{tools/hpo\_sweep.py} & Orchestrates hyperparameter sweeps and aggregates metrics into CSV, MD, or JSONL formats. \\
 \cmd{python3}\\\cmd{tools/benchmark\_model.py} & Repository wrapper for \cmd{yolozu benchmark}; useful when backend-specific benchmark behavior must also be tracked in \path{tools/manifest.json}. \\

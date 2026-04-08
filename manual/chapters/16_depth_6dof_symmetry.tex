@@ -97,6 +97,28 @@ Metric safety rule:
   \item For \cmd{unspecified}/\cmd{relative}, absolute depth matcher terms are disabled for safety.
 \end{itemize}
 
+\subsection{Generic depth evaluation CLI}
+For single-pair depth checks outside the SynthGen evaluator, use:
+\begin{lstlisting}[language=bash]
+python3 tools/eval_depth.py \
+  --pred-depth reports/pred_depth.npy \
+  --gt-depth data/reference/gt_depth.npy \
+  --align median_scale \
+  --output reports/depth_eval.json
+\end{lstlisting}
+
+This CLI is intentionally generic and CPU-friendly. It compares one predicted
+depth map against one ground-truth map and writes a JSON report with:
+\begin{itemize}
+  \item \cmd{abs\_rel}, \cmd{sq\_rel}, \cmd{rmse}, and \cmd{rmse\_log}
+  \item threshold metrics \cmd{delta1}, \cmd{delta2}, and \cmd{delta3}
+  \item valid-pixel counts and the applied alignment scale factor
+\end{itemize}
+
+Use \cmd{--mask} when only part of the depth map should be scored. The default
+\cmd{--align median\_scale} mode is appropriate for relative monocular depth
+predictions where the global scale is ambiguous.
+
 Example:
 \begin{lstlisting}[language=bash]
 python3 rtdetr_pose/tools/train_minimal.py \

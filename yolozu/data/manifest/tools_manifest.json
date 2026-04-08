@@ -3292,6 +3292,121 @@
       ]
     },
     {
+      "docs": [
+        "docs/tools_index.md",
+        "docs/benchmark_mode_spec_parity_target.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "docs/production_readiness.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes one depth evaluation report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/eval_depth.py",
+      "examples": [
+        {
+          "command": "python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --align median_scale --output reports/depth_eval.json",
+          "description": "Evaluate one relative-depth prediction against one ground-truth map with median-scale alignment."
+        },
+        {
+          "command": "python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --mask /path/to/valid_mask.npy --align none --output reports/depth_eval_masked.json",
+          "description": "Evaluate only valid pixels when a task-specific mask is available."
+        }
+      ],
+      "id": "eval_depth",
+      "inputs": [
+        {
+          "flag": "--pred-depth",
+          "kind": "file",
+          "name": "pred_depth",
+          "required": true
+        },
+        {
+          "flag": "--gt-depth",
+          "kind": "file",
+          "name": "gt_depth",
+          "required": true
+        },
+        {
+          "flag": "--mask",
+          "kind": "file",
+          "name": "mask",
+          "required": false
+        },
+        {
+          "default": "median_scale",
+          "flag": "--align",
+          "kind": "string",
+          "name": "align",
+          "required": false
+        },
+        {
+          "default": 1.0,
+          "flag": "--pred-scale",
+          "kind": "number",
+          "name": "pred_scale",
+          "required": false
+        },
+        {
+          "default": 1.0,
+          "flag": "--gt-scale",
+          "kind": "number",
+          "name": "gt_scale",
+          "required": false
+        },
+        {
+          "default": 1e-06,
+          "flag": "--min-depth",
+          "kind": "number",
+          "name": "min_depth",
+          "required": false
+        },
+        {
+          "flag": "--max-depth",
+          "kind": "number",
+          "name": "max_depth",
+          "required": false
+        },
+        {
+          "default": "reports/depth_eval.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/depth_eval.json",
+          "description": "Depth evaluation report with depth_error metrics.",
+          "kind": "file",
+          "name": "report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Evaluate one predicted depth map against one ground-truth map and report depth_error metrics.",
+      "tags": [
+        "depth",
+        "evaluation",
+        "metrics",
+        "geometry"
+      ]
+    },
+    {
       "contract_outputs": {
         "instance_seg_eval_report_json": "instance_seg_eval_json"
       },

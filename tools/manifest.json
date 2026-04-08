@@ -148,6 +148,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/adapter_parity_suite.json",
@@ -156,7 +157,6 @@
           "name": "adapter_parity_suite_json"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -1326,6 +1326,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_report.json",
@@ -1359,7 +1360,6 @@
           "name": "export_settings_json"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -2504,6 +2504,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Promotion decision JSON report.",
@@ -2511,7 +2512,6 @@
           "name": "continual_promotion_decision_json"
         }
       ],
-      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -2909,6 +2909,11 @@
           "coco_eval_report_json"
         ]
       },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/predictions_schema.md",
+        "docs/production_readiness.md"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": [
@@ -2920,11 +2925,6 @@
           }
         ]
       },
-      "docs": [
-        "docs/external_inference.md",
-        "docs/predictions_schema.md",
-        "docs/production_readiness.md"
-      ],
       "entrypoint": "tools/eval_coco.py",
       "examples": [
         {
@@ -2996,6 +2996,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/coco_eval.json",
@@ -3003,7 +3004,6 @@
           "name": "coco_eval_json"
         }
       ],
-      "maturity": "stable",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -3150,6 +3150,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "<run_dir>/continual_eval.json by default.",
@@ -3162,7 +3163,6 @@
           "name": "eval_html"
         }
       ],
-      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -3289,6 +3289,121 @@
         "drift",
         "validation",
         "report"
+      ]
+    },
+    {
+      "docs": [
+        "docs/tools_index.md",
+        "docs/benchmark_mode_spec_parity_target.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "docs/production_readiness.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes one depth evaluation report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/eval_depth.py",
+      "examples": [
+        {
+          "command": "python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --align median_scale --output reports/depth_eval.json",
+          "description": "Evaluate one relative-depth prediction against one ground-truth map with median-scale alignment."
+        },
+        {
+          "command": "python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --mask /path/to/valid_mask.npy --align none --output reports/depth_eval_masked.json",
+          "description": "Evaluate only valid pixels when a task-specific mask is available."
+        }
+      ],
+      "id": "eval_depth",
+      "inputs": [
+        {
+          "flag": "--pred-depth",
+          "kind": "file",
+          "name": "pred_depth",
+          "required": true
+        },
+        {
+          "flag": "--gt-depth",
+          "kind": "file",
+          "name": "gt_depth",
+          "required": true
+        },
+        {
+          "flag": "--mask",
+          "kind": "file",
+          "name": "mask",
+          "required": false
+        },
+        {
+          "default": "median_scale",
+          "flag": "--align",
+          "kind": "string",
+          "name": "align",
+          "required": false
+        },
+        {
+          "default": 1.0,
+          "flag": "--pred-scale",
+          "kind": "number",
+          "name": "pred_scale",
+          "required": false
+        },
+        {
+          "default": 1.0,
+          "flag": "--gt-scale",
+          "kind": "number",
+          "name": "gt_scale",
+          "required": false
+        },
+        {
+          "default": 1e-06,
+          "flag": "--min-depth",
+          "kind": "number",
+          "name": "min_depth",
+          "required": false
+        },
+        {
+          "flag": "--max-depth",
+          "kind": "number",
+          "name": "max_depth",
+          "required": false
+        },
+        {
+          "default": "reports/depth_eval.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/depth_eval.json",
+          "description": "Depth evaluation report with depth_error metrics.",
+          "kind": "file",
+          "name": "report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Evaluate one predicted depth map against one ground-truth map and report depth_error metrics.",
+      "tags": [
+        "depth",
+        "evaluation",
+        "metrics",
+        "geometry"
       ]
     },
     {
@@ -4018,6 +4133,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/synthgen_eval.json",
@@ -4026,7 +4142,6 @@
           "name": "report_json"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9457,6 +9572,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Refined predictions JSON written to --output.",
@@ -9464,7 +9580,6 @@
           "name": "predictions_json"
         }
       ],
-      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9801,6 +9916,7 @@
           "required": true
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Rendered overlay PNG.",
@@ -9808,7 +9924,6 @@
           "name": "overlay_png"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -9885,6 +10000,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Real-result TTT summary chart PNG.",
@@ -9911,7 +10027,6 @@
           "path": "docs/assets/ttt_method_results_source.json"
         }
       ],
-      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -12400,6 +12515,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
@@ -12437,7 +12553,6 @@
           "name": "compare_md"
         }
       ],
-      "maturity": "research",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -12710,6 +12825,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/smoke_synthgen_summary.json",
@@ -12730,7 +12846,6 @@
           "name": "eval_report_json"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -13464,6 +13579,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -13471,7 +13587,6 @@
           "name": "stdout"
         }
       ],
-      "maturity": "stable",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
@@ -13622,6 +13737,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Validation status and error summary.",
@@ -13629,7 +13745,6 @@
           "name": "status"
         }
       ],
-      "maturity": "experimental",
       "platform": {
         "cpu_ok": true,
         "gpu_required": false,
