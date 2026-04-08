@@ -252,6 +252,23 @@ Supported learning rate scheduler configurations include \texttt{none} (default)
 Low-Rank Adaptation (LoRA) is activated when \texttt{lora\_r > 0}.
 For the plain-language intuition and the difference between LoRA and QLoRA, see Chapter~14 before tuning these knobs.
 
+\paragraph{What these words mean in plain language.}
+\begin{itemize}
+  \item \textbf{LoRA} stands for \textbf{Low-Rank Adaptation}. Instead of updating every weight in a large model, LoRA adds a small trainable adapter on top of selected layers. In practice, this means ``keep most of the base model fixed, and learn a compact correction.''
+  \item \textbf{Why people use LoRA}: it reduces memory cost, usually trains faster than full-model finetuning, and makes it easier to keep one base checkpoint while testing several small adaptation variants.
+  \item \textbf{\texttt{lora\_r}} is the adapter rank. A larger rank means a more expressive adapter, but also more trainable parameters.
+  \item \textbf{\texttt{lora\_alpha}} is a scaling factor for the adapter contribution. A simple mental model is: rank controls adapter capacity, alpha controls how strongly the adapter is allowed to matter.
+  \item \textbf{QLoRA} means ``LoRA on top of a quantized base model.'' In this repository, \texttt{--qlora} keeps the trainable LoRA adapters, but stores the frozen base model in a lower-precision quantized form to reduce memory further.
+  \item \textbf{Why QLoRA is stricter}: because quantization and adapter training interact. That is why \yolozu{} enforces the safe combination explicitly instead of pretending every LoRA run is also a safe QLoRA run.
+\end{itemize}
+
+\paragraph{A simple comparison.}
+\begin{itemize}
+  \item \textbf{Full finetuning}: move almost every parameter.
+  \item \textbf{LoRA finetuning}: keep the base model mostly fixed and train small adapters.
+  \item \textbf{QLoRA finetuning}: same adapter idea as LoRA, but the frozen base model is additionally quantized to save memory.
+\end{itemize}
+
 \begin{longtable}{@{}p{0.40\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.30\textwidth}@{}}
 \toprule
 \textbf{CLI / config key} & \textbf{Type} & \textbf{Default} & \textbf{Notes} \\

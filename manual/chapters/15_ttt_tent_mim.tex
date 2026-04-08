@@ -29,6 +29,39 @@ Authoritative references:
 TTT updates weights \emph{in memory} using unlabeled test data before (or during) inference \cite{sun2020ttt,wang2021tent}.
 This makes comparisons sensitive to domain shift, random seeds, and reset policy.
 
+\subsection{Plain-language glossary for this chapter}
+Many readers first get stuck not on the code, but on the names. The short
+meanings below are enough to read the rest of this chapter:
+\begin{itemize}
+  \item \textbf{TTA} (\textbf{Test-Time Augmentation}): run inference several times on simple transformed versions of the same image, then merge the predictions. This does \emph{not} update model weights.
+  \item \textbf{TTT} (\textbf{Test-Time Training}): update some model parameters in memory at inference time using unlabeled test data.
+  \item \textbf{CTTA} (\textbf{Continual Test-Time Adaptation}): a streaming form of TTT where adaptation continues over many incoming batches instead of resetting after every image.
+  \item \textbf{LoRA}: a small trainable adapter added to selected layers, used when you want limited, safer parameter updates instead of moving the full model.
+  \item \textbf{Norm-only update}: adapt only normalization-layer affine parameters (for example BatchNorm or LayerNorm scale/bias). This is one of the safest update scopes.
+  \item \textbf{EMA} (\textbf{Exponential Moving Average}): a smoothed teacher copy of model weights. It changes more slowly than the student and is often used to stabilize adaptation.
+  \item \textbf{Reset policy}: when and how the adapted weights are restored. \cmd{sample} means ``reset after each image/subset''; \cmd{stream} means ``carry updates forward across the stream.''
+  \item \textbf{Guard rail}: a safety rule that limits adaptation, for example restricting which parameters may update or stopping updates when sample selection looks unreliable.
+\end{itemize}
+
+\paragraph{What the method names mean at a glance.}
+\begin{itemize}
+  \item \textbf{Tent}: minimize prediction entropy so the model becomes more confident on shifted inputs.
+  \item \textbf{MIM}: use a masked-reconstruction objective so the model must infer hidden structure, not only sharpen confidence.
+  \item \textbf{CoTTA}: a continual TTT method that combines student updates, an EMA-style teacher, augmentation agreement, and partial restoration so the model does not drift too far.
+  \item \textbf{EATA}: an efficiency/reliability-oriented TTT method that adapts only on selected samples instead of updating on everything.
+  \item \textbf{SAR}: a sharpness-aware robustness method; in practical terms, it tries to adapt in directions that are locally more stable instead of overreacting to noisy gradients.
+\end{itemize}
+
+\paragraph{How to read the rest of the chapter.}
+If you only want the shortest reading path, use this order:
+\begin{enumerate}
+  \item understand whether you need \textbf{TTA} or \textbf{TTT},
+  \item understand the \textbf{update scope} (norm-only, LoRA, or full-model),
+  \item then compare the methods (Tent, MIM, CoTTA, EATA, SAR).
+\end{enumerate}
+This order matters because many failures blamed on the method are actually
+caused by an overly broad update scope or an unsafe reset policy.
+
 \subsection{Operator quick guide (read first)}
 \begin{itemize}
   \item \textbf{Default OFF}: TTT is opt-in and only activates when \cmd{--ttt} is set.
