@@ -137,16 +137,18 @@ The current task matrix is:
 \cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & partial implementation & Mask metric expectations are explicit; backend/eval breadth remains partial. \\
 \cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & interface-defined only & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
 \cmd{obb} & \cmd{obb} & \cmd{obb\_map} & interface-defined only & Visible in the benchmark surface, but not yet wired for real backend execution. \\
-\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & partial implementation & \cmd{pose} is normalized to canonical \cmd{keypoints} in the report. \\
+\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & \cmd{pose} is normalized to canonical \cmd{keypoints}; benchmark mode evaluates backend predictions artifacts with \path{tools/eval\_keypoints.py} and compares normalized keypoints directly. \\
 \cmd{depth} & \cmd{depth} & \cmd{depth\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
 \cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
 \end{tabular}
 \end{center}
 
 For the current implementation, inference-backed real backend execution remains
-\cmd{detect}-first. The exceptions are \cmd{depth} and \cmd{pose6d}: both may
-use \cmd{--latency-source artifact\_eval}. For \cmd{depth}, YOLOZU evaluates
-backend-specific depth artifacts (\cmd{.npy}, \cmd{.npz}, or single-channel
+\cmd{detect}-first. The exceptions are \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
+use \cmd{--latency-source artifact\_eval}. For \cmd{keypoints}, YOLOZU evaluates
+backend-specific \path{predictions.json} artifacts with \path{tools/eval\_keypoints.py}
+and then attaches real parity reports over matched detections plus normalized keypoints.
+For \cmd{depth}, YOLOZU evaluates backend-specific depth artifacts (\cmd{.npy}, \cmd{.npz}, or single-channel
 image files) against the ground-truth depth artifact and then attaches real
 parity reports. For \cmd{pose6d}, YOLOZU evaluates backend-specific
 \path{predictions.json} artifacts with \path{tools/eval\_pose.py} and then
@@ -198,7 +200,7 @@ If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
   \item add real backend/eval paths for \cmd{segmentation},
-  \cmd{classification}, \cmd{obb}, and \cmd{keypoints} on top of the existing
+  \cmd{classification}, and \cmd{obb} on top of the existing
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
   \item promote \cmd{torchscript} from dry-run/synthetic-latency semantics to a real path,
   followed by conditional \cmd{openvino}

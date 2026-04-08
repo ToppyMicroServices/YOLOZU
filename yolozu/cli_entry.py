@@ -250,6 +250,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
     bench.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
+    bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
+    bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
+    bench.add_argument("--keypoints-parity-bbox-atol", type=float, default=1e-4, help="Keypoints parity bbox tolerance (default: 1e-4).")
+    bench.add_argument("--keypoints-parity-kp-atol", type=float, default=1e-4, help="Keypoints parity keypoint tolerance in normalized coords (default: 1e-4).")
     bench.add_argument("--pose-parity-rot-deg-atol", type=float, default=1e-3, help="6DoF parity rotation threshold in degrees (default: 1e-3).")
     bench.add_argument("--pose-parity-trans-atol", type=float, default=1e-4, help="6DoF parity translation L2 threshold in meters (default: 1e-4).")
     bench.add_argument("--pose-parity-depth-atol", type=float, default=1e-4, help="6DoF parity depth threshold in meters (default: 1e-4).")
@@ -283,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for task=depth/pose6d.",
+        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for task=keypoints/depth/pose6d.",
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

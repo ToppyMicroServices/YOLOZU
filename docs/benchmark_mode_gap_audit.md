@@ -38,7 +38,7 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Turn `segmentation`, `classification`, `obb`, and `keypoints` into real
+1. Turn `segmentation`, `classification`, and `obb` into real
    backend/eval paths for the existing `torch` / `onnx` / `engine` benchmark
    flow.
 2. Promote `torchscript` from planning-only semantics to a real execution path,
@@ -106,7 +106,6 @@ The benchmark entrypoint now records explicit task semantics in the benchmark
 report, but real backend/eval coverage still lags for:
 
 - segmentation
-- keypoints / pose
 - classification
 - OBB
 
@@ -153,6 +152,7 @@ docs should make the distinction sharper than they do today.
 Current behavior:
 
 - `torch` / `onnx` / `engine` can orchestrate real runs
+- `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `torchscript` is accepted and recorded honestly, but still uses synthetic / skipped semantics

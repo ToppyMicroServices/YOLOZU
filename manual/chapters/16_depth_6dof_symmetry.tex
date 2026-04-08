@@ -145,6 +145,31 @@ underlying backend inference; instead it:
 This closes the depth benchmark lane for backend comparison while keeping the
 interface contract honest about where inference actually happened.
 
+\subsection{Artifact-backed keypoints benchmark/parity}
+The same benchmark entrypoint now supports artifact-backed keypoints comparison:
+\begin{lstlisting}[language=bash]
+python3 tools/benchmark_model.py \
+  --task keypoints \
+  --model reports/keypoints_torch.json \
+  --onnx-model reports/keypoints_onnx.json \
+  --data data/keypoints_dataset \
+  --format torch,onnx \
+  --latency-source artifact_eval \
+  --keypoints-parity-kp-atol 1e-4 \
+  --output reports/benchmark_keypoints_report.json
+\end{lstlisting}
+
+This lane is intentionally artifact-backed. YOLOZU does not pretend it
+ran the underlying backend inference; instead it:
+\begin{itemize}
+  \item copies each backend \path{predictions.json} artifact into the benchmark artifact layout
+  \item evaluates each artifact with \path{tools/eval\_keypoints.py}
+  \item compares candidate predictions against the reference backend and records score/bbox/keypoint parity
+\end{itemize}
+
+This closes the keypoints benchmark lane for backend comparison while keeping the
+interface contract honest about where inference actually happened.
+
 \subsection{Artifact-backed 6DoF benchmark/parity}
 The same benchmark entrypoint now supports artifact-backed 6DoF comparison:
 \begin{lstlisting}[language=bash]
