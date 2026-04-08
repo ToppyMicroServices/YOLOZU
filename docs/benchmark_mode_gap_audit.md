@@ -38,7 +38,7 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Turn `segmentation`, `classification`, and `obb` into real
+1. Turn `classification` and `obb` into real
    backend/eval paths for the existing `torch` / `onnx` / `engine` benchmark
    flow.
 2. Promote `torchscript` from planning-only semantics to a real execution path,
@@ -103,9 +103,9 @@ YOLOZU already has extra task value beyond that baseline:
 - 6DoF pose
 
 The benchmark entrypoint now records explicit task semantics in the benchmark
-report, but real backend/eval coverage still lags for:
+report, and artifact-backed real eval/parity coverage now exists for
+`segmentation`, `keypoints`, `depth`, and `pose6d`. The remaining lagging tasks are:
 
-- segmentation
 - classification
 - OBB
 
@@ -152,6 +152,7 @@ docs should make the distinction sharper than they do today.
 Current behavior:
 
 - `torch` / `onnx` / `engine` can orchestrate real runs
+- `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
 - `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine`
@@ -201,7 +202,7 @@ Improvement priority:
 The highest-value next steps are:
 
 1. Promote `torchscript` from accepted format support to a real backend path
-2. Turn the new task matrix into real benchmark/eval coverage for `segmentation`, `classification`, and `obb`
+2. Turn the new task matrix into real benchmark/eval coverage for `classification` and `obb`
 3. Promote `openvino` to conditional support if the runtime path is available
 4. Add per-format flag validation so unsupported knobs fail early
 5. Add a single support matrix that distinguishes real parity, placeholder parity, and skipped backends at a glance

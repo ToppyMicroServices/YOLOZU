@@ -40,8 +40,10 @@ from yolozu.eval.benchmark import measure_latency
 from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
 from yolozu.eval.keypoints_parity import compare_keypoints_predictions
 from yolozu.eval.pose_parity import compare_pose_predictions
+from yolozu.eval.segmentation_parity import compare_segmentation_predictions
 from yolozu.eval.metrics_report import append_jsonl, now_utc_iso, write_json
 from yolozu.predictions.predictions_parity import compare_predictions
+from yolozu.predictions.segmentation_predictions import load_segmentation_predictions_entries
 
 repo_root = Path(__file__).resolve().parents[2]
 
@@ -79,10 +81,10 @@ TASK_SEMANTICS = {
         "display_name": "Segmentation",
         "metric_family": "mask_map",
         "expected_metric_keys": ["mask_mAP50-95", "mask_mAP50", "mask_AR"],
-        "support_level": "documented_partial",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "The benchmark report records mask-oriented expectations now, while end-to-end backend coverage remains partial and backend-specific.",
+        "notes": "Segmentation uses artifact-backed real evaluation and parity for torch/onnx/engine backend predictions artifacts.",
     },
     "classification": {
         "display_name": "Classification",
@@ -339,7 +341,7 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
-    elif task_label in {"keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+    elif task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
         execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
@@ -365,7 +367,13 @@ def _task_execution_semantics(
         }
 
     note = task_meta["notes"]
-    if task_label == "keypoints" and execution_mode == "real_artifact_eval":
+    if task_label == "segmentation" and execution_mode == "real_artifact_eval":
+        note = (
+            f"{note} Current segmentation benchmarking is artifact-backed: backend-specific mask predictions artifacts are "
+            "evaluated with tools/eval_segmentation.py and compared directly, without pretending YOLOZU performed the "
+            "underlying backend inference itself."
+        )
+    elif task_label == "keypoints" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current keypoints benchmarking is artifact-backed: backend-specific predictions artifacts are "
             "evaluated with tools/eval_keypoints.py and compared directly, without pretending YOLOZU performed the "
@@ -422,7 +430,7 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
 
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         if (
-            task_label not in {"detect", "keypoints", "depth", "pose6d"}
+            task_label not in {"detect", "segmentation", "keypoints", "depth", "pose6d"}
             and not dry_run
             and fmt in REAL_BACKEND_FORMATS
             and benchmark_source in {"dataset_pass_wall_time", "artifact_eval"}
@@ -431,7 +439,7 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
                 f"--task {task_label} is not wired to a real {fmt} benchmark/eval path yet; "
                 "use --dry-run or --latency-source synthetic_step until the dedicated task backend lands."
             )
-        if task_label in {"keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
+        if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
             raise ValueError(
                 f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
             )
@@ -482,7 +490,7 @@ def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
-    if task_label in {"keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
@@ -501,7 +509,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
     text = str(candidate)
     suffix = Path(text).suffix.lower()
 
-    if task_label in {"keypoints", "depth", "pose6d"}:
+    if task_label in {"segmentation", "keypoints", "depth", "pose6d"}:
         return text, None
 
     if fmt == "torch":
@@ -831,6 +839,34 @@ def _pose_eval_command(args: Any, *, predictions_path: Path, output: Path) -> li
     return cmd
 
 
+def _segmentation_dataset_json(args: Any) -> Path | None:
+    data = _resolve_path(getattr(args, "data", None))
+    if data is None:
+        return None
+    if data.is_dir():
+        candidate = data / "dataset.json"
+        return candidate if candidate.exists() else None
+    return data if data.exists() else None
+
+
+def _segmentation_eval_command(args: Any, *, predictions_path: Path, output: Path) -> list[str]:
+    dataset_json = _segmentation_dataset_json(args)
+    cmd = [
+        sys.executable,
+        _tool_path("eval_segmentation.py"),
+        "--dataset-json",
+        str(dataset_json) if dataset_json is not None else str(getattr(args, "data", "")),
+        "--predictions",
+        str(predictions_path),
+        "--output",
+        str(output),
+    ]
+    max_images = getattr(args, "max_images", None)
+    if max_images is not None:
+        cmd.extend(["--max-samples", str(int(max_images))])
+    return cmd
+
+
 def _keypoints_eval_command(args: Any, *, predictions_path: Path, output: Path) -> list[str]:
     cmd = [
         sys.executable,
@@ -882,6 +918,42 @@ def _write_depth_predictions_artifact(
 def _copy_predictions_artifact(source_path: Path, target_path: Path) -> None:
     target_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(str(source_path), str(target_path))
+
+
+def _write_segmentation_predictions_artifact(
+    path: Path,
+    *,
+    fmt: str,
+    source_path: Path,
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    entries, meta = load_segmentation_predictions_entries(source_path)
+    normalized: list[dict[str, Any]] = []
+    for entry in entries:
+        item = dict(entry)
+        mask = item.get("mask")
+        if isinstance(mask, str):
+            resolved = Path(mask)
+            if not resolved.is_absolute():
+                resolved = (source_path.parent / resolved).resolve()
+            item["mask"] = str(resolved)
+        normalized.append(item)
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_segmentation_predictions_artifact",
+        "format": fmt,
+        "status": "reference_artifact",
+        "predictions": normalized,
+        "meta": {
+            "source_path": str(source_path),
+            "source_sha256": _sha256_file(source_path),
+            "predictions_meta": meta,
+        },
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
 
 
 def _export_settings_payload(
@@ -947,6 +1019,9 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
 
 
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    if results and str(results[0].get("task")) == "segmentation":
+        _attach_segmentation_parity(results, args=args)
+        return
     if results and str(results[0].get("task")) == "keypoints":
         _attach_keypoints_parity(results, args=args)
         return
@@ -1117,6 +1192,123 @@ def _attach_depth_parity(results: list[dict[str, Any]], *, args: Any) -> None:
         if not ok and str(item.get("status")) == "ok":
             item["status"] = "partial"
             item["skip_reason"] = "parity_drift"
+
+    reference_payload = _write_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        fmt=ref_backend,
+        candidate_backends=candidate_backends,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
+
+
+def _segmentation_parity_summary(report: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(report, dict):
+        return None
+    results = report.get("results") or []
+    failure_images = 0
+    total_mismatched = 0
+    max_mismatch_rate = 0.0
+    compared = 0
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        compared += 1
+        if not bool(item.get("ok", False)):
+            failure_images += 1
+        total_mismatched += int(item.get("pixels_mismatched") or 0)
+        max_mismatch_rate = max(max_mismatch_rate, float(item.get("mismatch_rate") or 0.0))
+    return {
+        "images": int(report.get("images") or compared),
+        "ok": bool(report.get("ok", False)),
+        "failure_images": int(failure_images),
+        "total_mismatched_pixels": int(total_mismatched),
+        "max_mismatch_rate": float(max_mismatch_rate),
+    }
+
+
+def _attach_segmentation_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        if str(item.get("status")) not in {"ok", "partial"}:
+            return False
+        predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
+        return predictions.exists()
+
+    reference: dict[str, Any] | None = None
+    for item in results:
+        if _eligible(item) and str(item.get("format")) == "torch":
+            reference = item
+            break
+    if reference is None:
+        for item in results:
+            if _eligible(item):
+                reference = item
+                break
+    if reference is None:
+        return
+
+    ref_backend = str(reference.get("format"))
+    ref_predictions = Path(str((reference.get("artifacts") or {}).get("predictions")))
+    candidate_backends: list[str] = []
+    mismatch_atol = float(getattr(args, "segmentation_parity_mismatch_atol", 0.0))
+
+    for item in results:
+        if item is reference or not _eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_predictions = Path(str((item.get("artifacts") or {}).get("predictions")))
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        try:
+            report = compare_segmentation_predictions(
+                reference=ref_predictions,
+                candidate=candidate_predictions,
+                mismatch_atol=mismatch_atol,
+                max_samples=getattr(args, "max_images", None),
+            )
+            summary = _segmentation_parity_summary(report)
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_segmentation_parity_report",
+                "format": candidate_backend,
+                "status": "ok" if bool(report.get("ok", False)) else "drift",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "summary": summary,
+                "report": report,
+                "thresholds": {"mismatch_atol": mismatch_atol},
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = payload["summary"]
+            candidate_backends.append(candidate_backend)
+            if not bool(report.get("ok", False)) and str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_drift"
+        except Exception as exc:
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_segmentation_parity_report",
+                "format": candidate_backend,
+                "status": "failed",
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+                "error": str(exc),
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            write_json(parity_path, payload)
+            item["parity"] = {
+                "ok": False,
+                "error": str(exc),
+                "reference_backend": ref_backend,
+                "candidate_backend": candidate_backend,
+            }
+            if str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_generation_failed"
 
     reference_payload = _write_parity_reference(
         Path(str((reference.get("artifacts") or {}).get("parity"))),
@@ -1603,7 +1795,115 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                     run_meta=format_run_meta,
                 )
             else:
-                if task_label == "depth" and benchmark_source == "artifact_eval":
+                if task_label == "segmentation" and benchmark_source == "artifact_eval":
+                    pred_source = _resolve_path(model_artifact)
+                    dataset_json = _segmentation_dataset_json(args)
+                    if pred_source is None or not pred_source.exists():
+                        status = "skipped"
+                        skip_reason = "model_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    elif dataset_json is None or not dataset_json.exists():
+                        status = "skipped"
+                        skip_reason = "dataset_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    else:
+                        _write_segmentation_predictions_artifact(
+                            predictions_path,
+                            fmt=fmt,
+                            source_path=pred_source,
+                            run_meta=format_run_meta,
+                        )
+                        eval_cmd = _segmentation_eval_command(args, predictions_path=predictions_path, output=eval_path)
+                        eval_proc, eval_elapsed = _run_command(eval_cmd)
+                        command_meta = {
+                            "eval": {
+                                "cmd": eval_cmd,
+                                "returncode": int(eval_proc.returncode),
+                                "elapsed_sec": round(eval_elapsed, 6),
+                            }
+                        }
+                        latency = None
+                        throughput = None
+                        if int(eval_proc.returncode) != 0:
+                            status = "failed"
+                            skip_reason = "eval_command_failed"
+                            error = _result_tail(eval_proc)
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason=skip_reason,
+                                run_meta=format_run_meta,
+                            )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="artifact_backed_segmentation_parity_pending_attach",
+                                run_meta=format_run_meta,
+                            )
+                elif task_label == "depth" and benchmark_source == "artifact_eval":
                     pred_source = _resolve_path(model_artifact)
                     gt_source = _resolve_path(data_text)
                     if pred_source is None or not pred_source.exists():
@@ -2134,6 +2434,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
     parser.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
+    parser.add_argument(
+        "--segmentation-parity-mismatch-atol",
+        type=float,
+        default=0.0,
+        help="Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).",
+    )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
     parser.add_argument("--keypoints-parity-bbox-atol", type=float, default=1e-4, help="Keypoints parity bbox tolerance (default: 1e-4).")
@@ -2182,7 +2488,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=keypoints/depth/pose6d.",
+        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=segmentation/keypoints/depth/pose6d.",
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

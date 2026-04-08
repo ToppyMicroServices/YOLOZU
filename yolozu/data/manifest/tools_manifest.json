@@ -1040,6 +1040,10 @@
           "description": "Inspect task-specific segmentation benchmark semantics in a dry-run report."
         },
         {
+          "command": "python3 tools/benchmark_model.py --task segmentation --model reports/seg_torch.json --onnx-model reports/seg_onnx.json --data data/seg_dataset --format torch,onnx --latency-source artifact_eval --segmentation-parity-mismatch-atol 0.0 --output reports/benchmark_segmentation_report.json",
+          "description": "Run the artifact-backed semantic-segmentation benchmark/parity lane for backend-specific mask predictions artifacts."
+        },
+        {
           "command": "python3 tools/benchmark_model.py --task keypoints --model reports/keypoints_torch.json --onnx-model reports/keypoints_onnx.json --data data/keypoints_dataset --format torch,onnx --latency-source artifact_eval --keypoints-parity-kp-atol 1e-4 --output reports/benchmark_keypoints_report.json",
           "description": "Run the artifact-backed keypoints benchmark/parity lane for backend-specific predictions artifacts."
         },
@@ -1432,17 +1436,17 @@
           "name": "history_jsonl"
         },
         {
-          "description": "Per-format predictions artifact (real output when the backend runs, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, placeholder otherwise).",
+          "description": "Per-format predictions artifact (real output when the backend runs, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, placeholder otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
-          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=keypoints/depth/pose6d, placeholder otherwise).",
+          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, placeholder otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
         {
-          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=keypoints/depth/pose6d, placeholder otherwise).",
+          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d, placeholder otherwise).",
           "kind": "file",
           "name": "parity_report_json"
         },
@@ -1459,7 +1463,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, artifact-backed real eval/parity lanes for task=keypoints, task=depth, and task=pose6d on torch/onnx/engine, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the remaining gap-closing work (broader real task coverage, broader format matrix, and clearer support-status tables).",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the remaining gap-closing work (broader real task coverage, broader format matrix, and clearer support-status tables).",
       "tags": [
         "benchmark",
         "parity",

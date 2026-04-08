@@ -134,7 +134,7 @@ The current task matrix is:
 \textbf{Task} & \textbf{Accepted labels} & \textbf{Metric family} & \textbf{State} & \textbf{Notes} \\
 \hline
 \cmd{detect} & \cmd{detect}, \cmd{detection} & \cmd{bbox\_map} & real for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Default benchmark path. \\
-\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & partial implementation & Mask metric expectations are explicit; backend/eval breadth remains partial. \\
+\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Benchmark mode evaluates backend mask-prediction artifacts with \path{tools/eval\_segmentation.py} and compares matched masks directly. \\
 \cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & interface-defined only & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
 \cmd{obb} & \cmd{obb} & \cmd{obb\_map} & interface-defined only & Visible in the benchmark surface, but not yet wired for real backend execution. \\
 \cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & \cmd{pose} is normalized to canonical \cmd{keypoints}; benchmark mode evaluates backend predictions artifacts with \path{tools/eval\_keypoints.py} and compares normalized keypoints directly. \\
@@ -144,8 +144,11 @@ The current task matrix is:
 \end{center}
 
 For the current implementation, inference-backed real backend execution remains
-\cmd{detect}-first. The exceptions are \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
-use \cmd{--latency-source artifact\_eval}. For \cmd{keypoints}, YOLOZU evaluates
+\cmd{detect}-first. The exceptions are \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
+use \cmd{--latency-source artifact\_eval}. For \cmd{segmentation}, YOLOZU evaluates
+backend-specific mask-prediction artifacts with \path{tools/eval\_segmentation.py}
+and then attaches real parity reports over matched sample ids plus per-mask mismatch summaries.
+For \cmd{keypoints}, YOLOZU evaluates
 backend-specific \path{predictions.json} artifacts with \path{tools/eval\_keypoints.py}
 and then attaches real parity reports over matched detections plus normalized keypoints.
 For \cmd{depth}, YOLOZU evaluates backend-specific depth artifacts (\cmd{.npy}, \cmd{.npz}, or single-channel
@@ -153,7 +156,7 @@ image files) against the ground-truth depth artifact and then attaches real
 parity reports. For \cmd{pose6d}, YOLOZU evaluates backend-specific
 \path{predictions.json} artifacts with \path{tools/eval\_pose.py} and then
 attaches real parity reports over matched detections plus pose fields such as
-rotation, translation, and depth. Other non-detect tasks still fail early and
+rotation, translation, and depth. The remaining non-detect tasks still fail early and
 ask for \cmd{--dry-run} or \cmd{--latency-source synthetic\_step} until their
 dedicated backend/eval paths land.
 
@@ -190,7 +193,7 @@ The most important remaining gaps are:
   \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
   \cmd{saved\_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
   \item broader real backend/eval coverage for
-  \cmd{segmentation}, \cmd{classification}, \cmd{obb}
+  \cmd{classification}, \cmd{obb}
   \item stronger validation of format-specific knobs so unsupported
   combinations fail early rather than acting like inert flags
 \end{itemize}
@@ -199,8 +202,8 @@ The most important remaining gaps are:
 If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
-  \item add real backend/eval paths for \cmd{segmentation},
-  \cmd{classification}, and \cmd{obb} on top of the existing
+  \item add real backend/eval paths for
+  \cmd{classification} and \cmd{obb} on top of the existing
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
   \item promote \cmd{torchscript} from dry-run/synthetic-latency semantics to a real path,
   followed by conditional \cmd{openvino}
