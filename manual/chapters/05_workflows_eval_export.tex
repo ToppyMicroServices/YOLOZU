@@ -219,6 +219,16 @@ python3 tools/support_external_training.py train-yolox \
   --output reports/support_external_training.train_yolox.json
 \end{lstlisting}
 
+\subsection{Current training support}
+\begin{itemize}
+  \item \textbf{Stable reference lane:} the in-repo RT-DETR pose reference trainer.
+  \item \textbf{Supported external lane:} the Apache-2.0-friendly YOLOX path exposed through \cmd{yolozu train --external-backend yolox}.
+  \item \textbf{Optional external bridges:} Ultralytics and HF DETR, kept explicit as external runtime/license boundaries.
+  \item \textbf{Not claimed:} a universal training platform for every model family.
+\end{itemize}
+
+When post-train ONNX export is enabled, the export attempt runs on CPU even if training itself ran on CUDA or MPS. This keeps the export path more portable and avoids backend-specific exporter failures at the end of an otherwise successful run.
+
 This writes a machine-readable report containing:
 \begin{itemize}
   \item the resolved dataset root and split,

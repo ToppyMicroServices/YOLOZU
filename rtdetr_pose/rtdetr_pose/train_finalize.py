@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import shutil
 import sys
@@ -156,6 +157,7 @@ def finalize_training(
     onnx_meta_path: Path | None = None
     onnx_export_status = "disabled"
     onnx_export_error: dict[str, str] | None = None
+    onnx_export_device = "cpu"
     if is_main and args.onnx_out:
         try:
             from rtdetr_pose.export import export_onnx
@@ -185,14 +187,20 @@ def finalize_training(
                         str(best_path),
                         restore_rng=False,
                     )
+            export_device = torch.device("cpu")
+            onnx_export_device = str(export_device)
+            try:
+                export_model = copy.deepcopy(unwrap_model(model)).eval().to(export_device)
+            except Exception:
+                export_model = unwrap_model(model).eval().to(export_device)
             dummy = torch.zeros(
                 (1, 3, int(args.image_size), int(args.image_size)),
                 dtype=torch.float32,
-                device=device,
+                device=export_device,
             )
             try:
                 export_onnx(
-                    unwrap_model(model).eval(),
+                    export_model,
                     dummy,
                     str(onnx_path),
                     opset_version=int(args.onnx_opset),
@@ -220,6 +228,7 @@ def finalize_training(
                     "shape": [1, 3, int(args.image_size), int(args.image_size)],
                     "dtype": "float32",
                 },
+                "export_device": onnx_export_device,
                 "error": onnx_export_error,
                 "run_record": run_record,
             }

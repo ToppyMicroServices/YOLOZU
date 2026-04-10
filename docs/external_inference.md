@@ -28,7 +28,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 
 ## Fast paths already in this repo
 
-- PyTorch adapter (research scaffold): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
+- PyTorch adapter (research reference adapter): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
 - YOLOX backend wrapper: `python3 tools/yolozu.py export --backend yolox --dataset data/coco-yolo --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json --force`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - ExecuTorch (exported `.pte`): `python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --model /abs/path/model.pte --output reports/pred_executorch.json --wrap`

@@ -15508,7 +15508,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability.",
       "tags": [
         "cli",
         "predictions",

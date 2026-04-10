@@ -23,7 +23,7 @@ def _split_csv(value: str) -> list[str]:
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="YOLO26 bucket smoke run using the in-repo RT-DETR scaffold (rtdetr_pose).",
+        description="YOLO26 bucket smoke run using the in-repo RT-DETR reference trainer (rtdetr_pose).",
     )
     p.add_argument("--dataset", default=str(repo_root / "data" / "coco128"), help="YOLO-format dataset root.")
     p.add_argument("--split", default="train2017", help="Dataset split (default: train2017, matches coco128 layout).")

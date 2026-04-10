@@ -11,6 +11,18 @@ For YOLO-style training outside the reference trainer, use the **external traini
 YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
 is documented as a separate runtime/license boundary.
 
+## Current training support
+
+Use this scope boundary when deciding whether YOLOZU should own the training step or just the artifact/evaluation boundary:
+
+| Lane | Status | What it is for | Notes |
+|---|---|---|---|
+| RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. |
+| YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. |
+| Ultralytics bridge | Optional external bridge | User-installed external runtime bridge | Keep the license boundary explicit; see `docs/license_policy.md`. |
+| HF DETR bridge | Optional external bridge | User-installed DETR-family bridge | Useful when a DETR-family training stack already exists outside this repo. |
+| Generic training platform for every model family | Not claimed | Universal training framework | YOLOZU does not claim this scope. It standardizes the run artifacts and the predictions interface contract around the supported lanes above. |
+
 ## TL;DR (copy-paste)
 
 ```bash
@@ -131,6 +143,7 @@ macOS / Apple Silicon beta notes:
 - `--device mps` is supported for the reference trainer.
 - `--amp fp16|bf16` on MPS is best-effort; unsupported autocast modes warn and fall back to fp32.
 - If an op is still missing on MPS, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+- Post-train ONNX export is attempted on CPU even when training ran on CUDA/MPS. This avoids backend-specific exporter failures and keeps the exported artifact path portable.
 - --cost-z 1.0 --cost-rot 1.0 --cost-t 1.0
 - --cost-z-start-step 500 --cost-rot-start-step 1000 --cost-t-start-step 1500
 - --checkpoint-out reports/rtdetr_pose_ckpt.pt

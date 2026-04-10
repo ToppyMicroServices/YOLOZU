@@ -50,6 +50,7 @@ Training-device notes:
 - `--device auto` now resolves in `cuda -> mps -> cpu` order
 - `--device mps` is allowed for the reference trainer
 - `--amp fp16|bf16` on MPS is best-effort beta; if autocast is unavailable, the trainer warns and falls back to fp32
+- post-train ONNX export is attempted on CPU by default, even when training itself ran on MPS/CUDA
 
 ## macOS / Apple Silicon Miniforge/MPS workflow
 

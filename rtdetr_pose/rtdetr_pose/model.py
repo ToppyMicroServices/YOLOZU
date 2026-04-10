@@ -2,7 +2,7 @@ try:
     import torch
     from torch import nn
     from torch.nn import functional as F
-except ImportError:  # pragma: no cover - optional dependency for scaffolding
+except ImportError:  # pragma: no cover - optional dependency for import-light reference code
     from types import SimpleNamespace
 
     torch = None

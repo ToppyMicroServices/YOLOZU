@@ -402,7 +402,7 @@ def main(argv: list[str] | None = None) -> int:
             "warnings": provenance_warnings,
         },
         "notes": {
-            "segmentation": "segmentation stage uses real mask metadata plus bbox objective in current train_minimal scaffold",
+            "segmentation": "segmentation stage uses real mask metadata plus bbox objective in the current train_minimal reference trainer",
             "data_policy": "real source images are used; pseudo keypoints/depth/pose labels are annotation-derived heuristics (no model-inference-generated labels)",
         },
     }
