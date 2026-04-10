@@ -167,6 +167,16 @@ Notes:
 - This writes resolved config to `reports/train_config_resolved_import.json` by default.
 - Add `--resolved-config-out <path>` to change output location.
 - If you omit positional `config`, command runs in preview-only mode (no RT-DETR training is launched).
+
+For the repo-side Apache-2.0-friendly external YOLOX lane, use:
+
+```bash
+yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run
 ```
 
 ## Goals / non-goals

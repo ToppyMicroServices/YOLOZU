@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -130,6 +131,66 @@ def _cmd_train(config_path: Path, extra_args: list[str] | None = None) -> int:
     if extra_args:
         argv.extend(list(extra_args))
     return int(train_main(argv))
+
+
+def _cmd_train_external(args: argparse.Namespace) -> int:
+    backend = str(getattr(args, "external_backend", "") or "").strip().lower()
+    if backend != "yolox":
+        raise SystemExit("unsupported --external-backend value")
+
+    config_value = str(getattr(args, "config", "") or "").strip()
+    if not config_value:
+        raise SystemExit("train config/exp is required when using --external-backend yolox")
+
+    repo_root = Path(__file__).resolve().parents[1]
+    helper = repo_root / "tools" / "support_external_training.py"
+    if not helper.is_file():
+        raise SystemExit(
+            "train --external-backend yolox requires a YOLOZU repo checkout with "
+            "tools/support_external_training.py available"
+        )
+
+    cmd = [sys.executable, str(helper), "train-yolox", "--exp", config_value]
+
+    def _append(flag: str, value: Any) -> None:
+        if value is None:
+            return
+        text = str(value).strip()
+        if not text:
+            return
+        cmd.extend([flag, text])
+
+    _append("--preset", getattr(args, "external_preset", None))
+    _append("--from", getattr(args, "external_from", None))
+    _append("--dataset", getattr(args, "external_dataset", None))
+    _append("--split", getattr(args, "external_split", None))
+    _append("--instances-json", getattr(args, "external_instances_json", None))
+    _append("--images-dir", getattr(args, "external_images_dir", None))
+    _append("--weights", getattr(args, "external_weights", None))
+    _append("--train-script", getattr(args, "external_train_script", None))
+    _append("--python", getattr(args, "external_python", None))
+    _append("--batch", getattr(args, "external_batch", None))
+    _append("--devices", getattr(args, "external_devices", None))
+    _append("--work-dir", getattr(args, "external_work_dir", None))
+    _append("--output", getattr(args, "external_output", None))
+    if bool(getattr(args, "external_dry_run", False)):
+        cmd.append("--dry-run")
+    if bool(getattr(args, "external_force", False)):
+        cmd.append("--force")
+
+    proc = subprocess.run(
+        cmd,
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    return int(proc.returncode)
 
 
 def _cmd_train_import_preview(args: argparse.Namespace) -> int:

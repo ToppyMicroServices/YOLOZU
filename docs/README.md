@@ -48,7 +48,7 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 
 - If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
 - If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
-- If you need an external YOLO-style training bridge: go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-ultralytics-optional)
+- If you need an external YOLO-style training bridge: use `yolozu train --external-backend yolox ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-ultralytics-optional)
 - If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke

@@ -5,6 +5,7 @@ from __future__ import annotations
 from .cli_commands import (
     _cmd_train_import_preview,
     _cmd_train,
+    _cmd_train_external,
     _cmd_test,
     _cmd_doctor_import,
     _cmd_doctor,
@@ -588,8 +589,19 @@ def main(argv: list[str] | None = None) -> int:
     imp_cfg.add_argument("--output", required=True, help="Output path (file or directory).")
     imp_cfg.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
 
-    train_p = sub.add_parser("train", help="Train with the RT-DETR pose reference trainer (requires `yolozu[train]`).")
-    train_p.add_argument("config", nargs="?", type=str, help="Path to train config YAML/JSON (train_setting.yaml).")
+    train_p = sub.add_parser(
+        "train",
+        help=(
+            "Train with the RT-DETR pose reference trainer by default, or use "
+            "--external-backend yolox for the Apache-2.0-friendly external YOLOX lane."
+        ),
+    )
+    train_p.add_argument(
+        "config",
+        nargs="?",
+        type=str,
+        help="Reference train config YAML/JSON, or YOLOX exp file when --external-backend yolox is selected.",
+    )
     train_p.add_argument(
         "--import",
         dest="import_from",
@@ -610,19 +622,107 @@ def main(argv: list[str] | None = None) -> int:
         help="Overwrite --resolved-config-out if it already exists.",
     )
     train_p.add_argument(
-        "train_args",
-        nargs=argparse.REMAINDER,
-        help="Extra args forwarded to the trainer (e.g. --run-contract --run-id exp01 --resume).",
+        "--external-backend",
+        choices=("yolox",),
+        default=None,
+        help="Optional repo-side external training lane. Currently supported: yolox.",
+    )
+    train_p.add_argument(
+        "--external-preset",
+        choices=("coco128", "none", "smoke"),
+        default=None,
+        help="(train --external-backend yolox) preset forwarded to the external bridge.",
+    )
+    train_p.add_argument(
+        "--dataset-from",
+        dest="external_from",
+        choices=("auto", "internal", "ultralytics", "coco", "coco_instances"),
+        default=None,
+        help="(train --external-backend yolox) dataset source for bridge-side resolution.",
+    )
+    train_p.add_argument(
+        "--dataset",
+        dest="external_dataset",
+        default=None,
+        help="(train --external-backend yolox) dataset root or descriptor.",
+    )
+    train_p.add_argument(
+        "--split",
+        dest="external_split",
+        default=None,
+        help="(train --external-backend yolox) dataset split.",
+    )
+    train_p.add_argument(
+        "--instances-json",
+        dest="external_instances_json",
+        default=None,
+        help="(train --external-backend yolox, coco_instances) instances JSON path.",
+    )
+    train_p.add_argument(
+        "--images-dir",
+        dest="external_images_dir",
+        default=None,
+        help="(train --external-backend yolox, coco_instances) images directory.",
+    )
+    train_p.add_argument(
+        "--weights",
+        dest="external_weights",
+        default=None,
+        help="(train --external-backend yolox) optional checkpoint path for fine-tuning/resume.",
+    )
+    train_p.add_argument(
+        "--train-script",
+        dest="external_train_script",
+        default=None,
+        help="(train --external-backend yolox) external YOLOX launcher path for non-dry execution.",
+    )
+    train_p.add_argument(
+        "--python",
+        dest="external_python",
+        default=None,
+        help="(train --external-backend yolox) Python executable for --train-script.",
+    )
+    train_p.add_argument(
+        "--batch",
+        dest="external_batch",
+        type=int,
+        default=None,
+        help="(train --external-backend yolox) global batch size.",
+    )
+    train_p.add_argument(
+        "--devices",
+        dest="external_devices",
+        type=int,
+        default=None,
+        help="(train --external-backend yolox) device count forwarded to the launcher.",
+    )
+    train_p.add_argument(
+        "--work-dir",
+        dest="external_work_dir",
+        default=None,
+        help="(train --external-backend yolox) work/cache directory for bridge artifacts.",
+    )
+    train_p.add_argument(
+        "--output",
+        dest="external_output",
+        default=None,
+        help="(train --external-backend yolox) bridge report JSON output path.",
+    )
+    train_p.add_argument(
+        "--dry-run",
+        dest="external_dry_run",
+        action="store_true",
+        help="(train --external-backend yolox) do not execute runtime training.",
+    )
+    train_p.add_argument(
+        "--force",
+        dest="external_force",
+        action="store_true",
+        help="(train --external-backend yolox) overwrite generated bridge outputs.",
     )
 
     test_p = sub.add_parser("test", help="Run scenario suite (dummy/precomputed adapters are CPU-only).")
     test_p.add_argument("config", type=str, help="Path to test config YAML/JSON (test_setting.yaml).")
-    test_p.add_argument(
-        "test_args",
-        nargs=argparse.REMAINDER,
-        help="Extra args forwarded to the scenario runner (e.g. --adapter rtdetr_pose --max-images 50).",
-    )
-
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
     demo.add_argument(
         "--coco-instances-json",
@@ -946,23 +1046,29 @@ def main(argv: list[str] | None = None) -> int:
     )
     completion.add_argument("--output", default="-", help="Output path (default: stdout).")
 
-    args = parser.parse_args(argv)
+    args, extra_argv = parser.parse_known_args(argv)
+    if args.command not in ("train", "test") and extra_argv:
+        parser.error(f"unrecognized arguments: {' '.join(extra_argv)}")
     if args.command == "train":
+        if getattr(args, "import_from", None) and getattr(args, "external_backend", None):
+            raise SystemExit("train cannot combine --import preview with --external-backend")
         if getattr(args, "import_from", None):
             _cmd_train_import_preview(args)
             if not getattr(args, "config", None):
                 return 0
+        if getattr(args, "external_backend", None):
+            return _cmd_train_external(args)
         if not getattr(args, "config", None):
             raise SystemExit("train config is required unless using --import preview-only mode")
         config_path = Path(args.config)
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
-        return _cmd_train(config_path, extra_args=list(getattr(args, "train_args", []) or []))
+        return _cmd_train(config_path, extra_args=list(extra_argv or []))
     if args.command == "test":
         config_path = Path(args.config)
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
-        return _cmd_test(config_path, extra_args=list(getattr(args, "test_args", []) or []))
+        return _cmd_test(config_path, extra_args=list(extra_argv or []))
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)

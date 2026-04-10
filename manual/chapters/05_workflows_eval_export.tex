@@ -198,6 +198,19 @@ external YOLO-style lane is YOLOX because it fits the repository's Apache-2.0
 operational policy more naturally than optional copyleft-sensitive bridges.
 
 \begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_yolox.json
+\end{lstlisting}
+
+The repo helper remains available when you want the lower-level bridge
+surface directly:
+
+\begin{lstlisting}[language=bash]
 python3 tools/support_external_training.py train-yolox \
   --dataset data/smoke \
   --split val \

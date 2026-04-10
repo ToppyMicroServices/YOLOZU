@@ -50,7 +50,19 @@ python3 tools/eval_coco.py \
 
 ## Training lane (external YOLOX launcher)
 
-The shortest repo-side bridge is:
+The shortest top-level route is:
+
+```bash
+python3 -m yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_yolox.json
+```
+
+The equivalent repo-side bridge is:
 
 ```bash
 python3 tools/support_external_training.py train-yolox \

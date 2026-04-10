@@ -220,7 +220,19 @@ The report is written to:
 Use this path when you want YOLOZU to standardize dataset resolution, reports, and the
 predictions interface contract while the actual YOLO training loop stays in an external repo/runtime.
 
-YOLOX dry-run bridge:
+Top-level `yolozu train` route:
+
+```bash
+python3 -m yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_yolox.json
+```
+
+Equivalent repo helper:
 
 ```bash
 python3 tools/support_external_training.py train-yolox \

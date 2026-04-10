@@ -80,7 +80,7 @@ flowchart LR
 
 - 既存 predictions を評価する: [`docs/external_inference.md`](docs/external_inference.md)
 - train → export → eval を試す: [`docs/training_inference_export.md`](docs/training_inference_export.md)
-- Apache-2.0 寄りの YOLO-style external training lane: [`docs/interop_yolox.md`](docs/interop_yolox.md)
+- Apache-2.0 寄りの YOLO-style external training lane（`yolozu train --external-backend yolox ...`）: [`docs/interop_yolox.md`](docs/interop_yolox.md)
 - backend 比較や benchmark を見る: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
 - YOLOZU-synthgen 連携を準備する: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)

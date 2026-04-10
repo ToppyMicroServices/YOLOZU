@@ -14231,7 +14231,12 @@
         ]
       },
       "docs": [
-        "docs/tools_index.md"
+        "docs/tools_index.md",
+        "docs/import_adapters.md",
+        "docs/interop_yolox.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/05_workflows_eval_export.tex"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14363,61 +14368,16 @@
           "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
         },
         {
+          "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
+          "description": "Top-level train route for the Apache-2.0-friendly external YOLOX bridge (dry-run)."
+        },
+        {
           "command": "python3 tools/yolozu.py sud ls -j",
           "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
         }
       ],
       "id": "yolozu",
       "inputs": [
-        {
-          "default": "reports/predictions.json",
-          "flag": "--output",
-          "kind": "file",
-          "name": "output",
-          "required": false
-        },
-        {
-          "default": "runs/yolozu_runs",
-          "flag": "--cache-dir",
-          "kind": "dir",
-          "name": "cache_dir",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--tta-log-out",
-          "kind": "file",
-          "name": "tta_log_out",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--ttt-log-out",
-          "kind": "file",
-          "name": "ttt_log_out",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--run-dir",
-          "kind": "dir",
-          "name": "run_dir",
-          "required": false
-        },
-        {
-          "default": "reports/overlays",
-          "flag": "--overlays-dir",
-          "kind": "dir",
-          "name": "overlays_dir",
-          "required": false
-        },
-        {
-          "default": "reports/predict_images.html",
-          "flag": "--html",
-          "kind": "file",
-          "name": "html",
-          "required": false
-        },
         {
           "flag": "--allow-gpu",
           "kind": "string",
@@ -14473,6 +14433,12 @@
           "required": false
         },
         {
+          "flag": "--batch",
+          "kind": "number",
+          "name": "batch",
+          "required": false
+        },
+        {
           "flag": "--boxes-scale",
           "kind": "string",
           "name": "boxes_scale",
@@ -14482,6 +14448,13 @@
           "flag": "--cache",
           "kind": "string",
           "name": "cache",
+          "required": false
+        },
+        {
+          "default": "runs/yolozu_runs",
+          "flag": "--cache-dir",
+          "kind": "dir",
+          "name": "cache_dir",
           "required": false
         },
         {
@@ -14539,9 +14512,21 @@
           "required": false
         },
         {
+          "flag": "--dataset-from",
+          "kind": "string",
+          "name": "dataset_from",
+          "required": false
+        },
+        {
           "flag": "--device",
           "kind": "string",
           "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--devices",
+          "kind": "number",
+          "name": "devices",
           "required": false
         },
         {
@@ -14554,6 +14539,18 @@
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--external-backend",
+          "kind": "string",
+          "name": "external_backend",
+          "required": false
+        },
+        {
+          "flag": "--external-preset",
+          "kind": "string",
+          "name": "external_preset",
           "required": false
         },
         {
@@ -14587,6 +14584,12 @@
           "required": false
         },
         {
+          "flag": "--force-import-overwrite",
+          "kind": "string",
+          "name": "force_import_overwrite",
+          "required": false
+        },
+        {
           "flag": "--gamma",
           "kind": "number",
           "name": "gamma",
@@ -14611,9 +14614,22 @@
           "required": false
         },
         {
+          "default": "reports/predict_images.html",
+          "flag": "--html",
+          "kind": "file",
+          "name": "html",
+          "required": false
+        },
+        {
           "flag": "--image-size",
           "kind": "number",
           "name": "image_size",
+          "required": false
+        },
+        {
+          "flag": "--images-dir",
+          "kind": "dir",
+          "name": "images_dir",
           "required": false
         },
         {
@@ -14629,15 +14645,21 @@
           "required": false
         },
         {
-          "flag": "--json",
-          "kind": "string",
-          "name": "json",
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
           "required": false
         },
         {
           "flag": "--iou-threshold",
           "kind": "number",
           "name": "iou_threshold",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
           "required": false
         },
         {
@@ -14719,9 +14741,9 @@
           "required": false
         },
         {
-          "flag": "--metric-plugin",
+          "flag": "--lr-scheduler",
           "kind": "string",
-          "name": "metric_plugin",
+          "name": "lr_scheduler",
           "required": false
         },
         {
@@ -14734,12 +14756,6 @@
           "flag": "--max-images",
           "kind": "number",
           "name": "max_images",
-          "required": false
-        },
-        {
-          "flag": "--lr-scheduler",
-          "kind": "string",
-          "name": "lr_scheduler",
           "required": false
         },
         {
@@ -14782,6 +14798,12 @@
           "flag": "--metric-key",
           "kind": "string",
           "name": "metric_key",
+          "required": false
+        },
+        {
+          "flag": "--metric-plugin",
+          "kind": "string",
+          "name": "metric_plugin",
           "required": false
         },
         {
@@ -14851,6 +14873,13 @@
           "required": false
         },
         {
+          "default": "reports/predictions.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
           "flag": "--output-report",
           "kind": "file",
           "name": "output_report",
@@ -14872,6 +14901,13 @@
           "flag": "--overlay-sort",
           "kind": "string",
           "name": "overlay_sort",
+          "required": false
+        },
+        {
+          "default": "reports/overlays",
+          "flag": "--overlays-dir",
+          "kind": "dir",
+          "name": "overlays_dir",
           "required": false
         },
         {
@@ -14899,6 +14935,12 @@
           "required": false
         },
         {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
           "flag": "--rebalance-sampler",
           "kind": "string",
           "name": "rebalance_sampler",
@@ -14923,9 +14965,22 @@
           "required": false
         },
         {
+          "flag": "--resolved-config-out",
+          "kind": "file",
+          "name": "resolved_config_out",
+          "required": false
+        },
+        {
           "flag": "--resume",
           "kind": "string",
           "name": "resume",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
           "required": false
         },
         {
@@ -14995,6 +15050,12 @@
           "required": false
         },
         {
+          "flag": "--tag",
+          "kind": "string",
+          "name": "tag",
+          "required": false
+        },
+        {
           "flag": "--task",
           "kind": "string",
           "name": "task",
@@ -15019,12 +15080,6 @@
           "required": false
         },
         {
-          "flag": "--tag",
-          "kind": "string",
-          "name": "tag",
-          "required": false
-        },
-        {
           "flag": "--title",
           "kind": "string",
           "name": "title",
@@ -15037,6 +15092,12 @@
           "required": false
         },
         {
+          "flag": "--train-script",
+          "kind": "file",
+          "name": "train_script",
+          "required": false
+        },
+        {
           "flag": "--tta",
           "kind": "string",
           "name": "tta",
@@ -15046,6 +15107,34 @@
           "flag": "--tta-flip-prob",
           "kind": "number",
           "name": "tta_flip_prob",
+          "required": false
+        },
+        {
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
+          "flag": "--tta-keypoint-swap-pairs",
+          "kind": "string",
+          "name": "tta_keypoint_swap_pairs",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--tta-log-out",
+          "kind": "file",
+          "name": "tta_log_out",
+          "required": false
+        },
+        {
+          "description": "TTA mode for export: postprocess or model.",
+          "flag": "--tta-mode",
+          "kind": "string",
+          "name": "tta_mode",
+          "required": false
+        },
+        {
+          "description": "IoU threshold for model-space TTA merge.",
+          "flag": "--tta-model-merge-iou",
+          "kind": "number",
+          "name": "tta_model_merge_iou",
           "required": false
         },
         {
@@ -15065,6 +15154,41 @@
           "flag": "--ttt",
           "kind": "string",
           "name": "ttt",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for depth heads. 0 disables.",
+          "flag": "--ttt-aux-depth-weight",
+          "kind": "number",
+          "name": "ttt_aux_depth_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables.",
+          "flag": "--ttt-aux-keypoints-weight",
+          "kind": "number",
+          "name": "ttt_aux_keypoints_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables.",
+          "flag": "--ttt-aux-pose-weight",
+          "kind": "number",
+          "name": "ttt_aux_pose_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables.",
+          "flag": "--ttt-aux-seg-weight",
+          "kind": "number",
+          "name": "ttt_aux_seg_weight",
+          "required": false
+        },
+        {
+          "description": "Temperature for auxiliary consistency losses. Default 1.0.",
+          "flag": "--ttt-aux-temperature",
+          "kind": "number",
+          "name": "ttt_aux_temperature",
           "required": false
         },
         {
@@ -15155,6 +15279,41 @@
           "flag": "--ttt-include",
           "kind": "string",
           "name": "ttt_include",
+          "required": false
+        },
+        {
+          "description": "Entropy penalty weight for non-torch TTT-lite.",
+          "flag": "--ttt-lite-entropy-weight",
+          "kind": "number",
+          "name": "ttt_lite_entropy_weight",
+          "required": false
+        },
+        {
+          "description": "Enable min-max score normalization for non-torch TTT-lite.",
+          "flag": "--ttt-lite-minmax",
+          "kind": "string",
+          "name": "ttt_lite_minmax",
+          "required": false
+        },
+        {
+          "description": "Enable score-only TTT-lite for non-torch backends.",
+          "flag": "--ttt-lite-non-torch",
+          "kind": "string",
+          "name": "ttt_lite_non_torch",
+          "required": false
+        },
+        {
+          "description": "Temperature for non-torch TTT-lite score scaling.",
+          "flag": "--ttt-lite-temperature",
+          "kind": "number",
+          "name": "ttt_lite_temperature",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--ttt-log-out",
+          "kind": "file",
+          "name": "ttt_log_out",
           "required": false
         },
         {
@@ -15261,6 +15420,13 @@
           "required": false
         },
         {
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
+          "flag": "--ttt-sdft-task",
+          "kind": "string",
+          "name": "ttt_sdft_task",
+          "required": false
+        },
+        {
           "flag": "--ttt-seed",
           "kind": "number",
           "name": "ttt_seed",
@@ -15285,94 +15451,9 @@
           "required": false
         },
         {
-          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
-          "flag": "--ttt-sdft-task",
-          "kind": "string",
-          "name": "ttt_sdft_task",
-          "required": false
-        },
-        {
-          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables.",
-          "flag": "--ttt-aux-pose-weight",
-          "kind": "number",
-          "name": "ttt_aux_pose_weight",
-          "required": false
-        },
-        {
-          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables.",
-          "flag": "--ttt-aux-keypoints-weight",
-          "kind": "number",
-          "name": "ttt_aux_keypoints_weight",
-          "required": false
-        },
-        {
-          "description": "Auxiliary consistency loss weight for depth heads. 0 disables.",
-          "flag": "--ttt-aux-depth-weight",
-          "kind": "number",
-          "name": "ttt_aux_depth_weight",
-          "required": false
-        },
-        {
-          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables.",
-          "flag": "--ttt-aux-seg-weight",
-          "kind": "number",
-          "name": "ttt_aux_seg_weight",
-          "required": false
-        },
-        {
-          "description": "Temperature for auxiliary consistency losses. Default 1.0.",
-          "flag": "--ttt-aux-temperature",
-          "kind": "number",
-          "name": "ttt_aux_temperature",
-          "required": false
-        },
-        {
-          "description": "TTA mode for export: postprocess or model.",
-          "flag": "--tta-mode",
-          "kind": "string",
-          "name": "tta_mode",
-          "required": false
-        },
-        {
-          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
-          "flag": "--tta-keypoint-swap-pairs",
-          "kind": "string",
-          "name": "tta_keypoint_swap_pairs",
-          "required": false
-        },
-        {
-          "description": "IoU threshold for model-space TTA merge.",
-          "flag": "--tta-model-merge-iou",
-          "kind": "number",
-          "name": "tta_model_merge_iou",
-          "required": false
-        },
-        {
-          "description": "Enable score-only TTT-lite for non-torch backends.",
-          "flag": "--ttt-lite-non-torch",
-          "kind": "string",
-          "name": "ttt_lite_non_torch",
-          "required": false
-        },
-        {
-          "description": "Temperature for non-torch TTT-lite score scaling.",
-          "flag": "--ttt-lite-temperature",
-          "kind": "number",
-          "name": "ttt_lite_temperature",
-          "required": false
-        },
-        {
-          "description": "Entropy penalty weight for non-torch TTT-lite.",
-          "flag": "--ttt-lite-entropy-weight",
-          "kind": "number",
-          "name": "ttt_lite_entropy_weight",
-          "required": false
-        },
-        {
-          "description": "Enable min-max score normalization for non-torch TTT-lite.",
-          "flag": "--ttt-lite-minmax",
-          "kind": "string",
-          "name": "ttt_lite_minmax",
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights",
           "required": false
         }
       ],
@@ -15405,7 +15486,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose reference trainer (none/sidecar/fuse_mid with safety gating).",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default and the Apache-2.0-friendly external YOLOX lane via `train --external-backend yolox`.",
       "tags": [
         "cli",
         "predictions",

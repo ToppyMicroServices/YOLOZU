@@ -160,6 +160,7 @@ The manifest is intended for:
 ## External training helpers
 
 - 3-layer support matrix: `python3 tools/support_external_training.py ls -j`
+- Top-level train route: `python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json`
 - Apache-2.0-friendly YOLOX bridge (dry-run): `python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json`
 - Optional Ultralytics bridge (dry-run): `python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json`
 - HF DETR entry wrapper (dry-run): `python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json`

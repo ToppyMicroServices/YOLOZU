@@ -217,7 +217,37 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(payload.get("format"), "yolozu_train_config_v1")
             self.assertEqual(int(payload.get("batch")), 6)
 
+    def test_train_external_yolox_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_yolox_bridge.json"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "yolox",
+                    "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend yolox --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(str(payload.get("task")), "train_yolox")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(str((payload.get("license_boundary") or {}).get("primary_lane")), "YOLOX-style external training bridge")
+
 
 if __name__ == "__main__":
     unittest.main()
-
