@@ -180,8 +180,8 @@ def _cmd_dataset(args: argparse.Namespace) -> int:
         preset=preset,
         preset_key="split",
     )
-    output = _resolve_value(args.output, fallback="runs/support_ultralytics_detr/dataset")
-    report_out = _resolve_value(args.report, fallback="reports/support_ultralytics_detr.dataset.json")
+    output = _resolve_value(args.output, fallback="runs/support_external_training/dataset")
+    report_out = _resolve_value(args.report, fallback="reports/support_external_training.dataset.json")
     resolution = resolve_internal_dataset(
         source_format=source_format,
         dataset=str(dataset) if dataset else None,
@@ -470,7 +470,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             fallback="train",
         )
     )
-    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_ultralytics_detr/ultralytics"))).resolve()
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/ultralytics"))).resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
     resolution = resolve_internal_dataset(
         source_format=source_format,
@@ -540,7 +540,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         "data_yaml": str(data_yaml),
         "template_train_command": template,
         "template_predict_normalize_command": (
-            "python3 tools/support_ultralytics_detr.py predict-normalize "
+            "python3 tools/support_external_training.py predict-normalize "
             f"--ultralytics-model {model_name} --dataset {resolution.dataset_root} "
             f"--split {resolution.split} --output reports/ultralytics_predictions.normalized.json "
             "--report reports/ultralytics_predict_normalize_report.json"
@@ -551,7 +551,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         "layers": {
             "trainer_runner": "ultralytics.YOLO.train",
             "repo_impl": "support_external_training train-ultralytics",
-            "export_deploy": "support_ultralytics_detr export-onnx --provider ultralytics",
+            "export_deploy": "support_external_training export-onnx --provider ultralytics",
         },
         "license_boundary": {
             "repo_code": "Apache-2.0",
@@ -559,7 +559,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             "note": "Ultralytics runtime is optional and must be reviewed under its own license terms.",
         },
     }
-    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_ultralytics_detr.train_ultralytics.json"))).resolve()
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_ultralytics.json"))).resolve()
     _write_json(report_path, report)
     print(str(report_path))
     return 0 if ok else 1
@@ -604,7 +604,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             fallback="train",
         )
     )
-    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_ultralytics_detr/hf_detr"))).resolve()
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/hf_detr"))).resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
     resolution = resolve_internal_dataset(
         source_format=source_format,
@@ -696,10 +696,10 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         "layers": {
             "trainer_runner": "transformers/accelerate entry script",
             "repo_impl": "support_external_training train-hf-detr",
-            "export_deploy": "support_ultralytics_detr export-onnx --provider hf_detr",
+            "export_deploy": "support_external_training export-onnx --provider hf_detr",
         },
     }
-    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_ultralytics_detr.train_hf_detr.json"))).resolve()
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_hf_detr.json"))).resolve()
     _write_json(report_path, report)
     print(str(report_path))
     return 0 if ok else 1
@@ -859,7 +859,7 @@ def _cmd_export_onnx(args: argparse.Namespace) -> int:
             "export_deploy": "ONNX + optional TensorRT bridge",
         },
     }
-    report_path = Path(str(_resolve_value(args.report, fallback="reports/support_ultralytics_detr.export_onnx.json"))).resolve()
+    report_path = Path(str(_resolve_value(args.report, fallback="reports/support_external_training.export_onnx.json"))).resolve()
     _write_json(report_path, report)
     print(str(report_path))
     return 0 if ok else 1
@@ -870,7 +870,7 @@ def _cmd_predict_normalize(args: argparse.Namespace) -> int:
     input_value = _resolve_value(args.input)
     input_path = Path(str(input_value)).resolve() if input_value else None
     output_path = Path(str(_resolve_value(args.output, fallback="reports/predictions.normalized.json"))).resolve()
-    report_out = Path(str(_resolve_value(args.report, fallback="reports/support_ultralytics_detr.predict_normalize.json"))).resolve()
+    report_out = Path(str(_resolve_value(args.report, fallback="reports/support_external_training.predict_normalize.json"))).resolve()
     ultralytics_model = _resolve_value(
         args.ultralytics_model,
         env="YOLOZU_MODEL",
@@ -892,7 +892,7 @@ def _cmd_predict_normalize(args: argparse.Namespace) -> int:
             fallback="val",
         )
     )
-    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_ultralytics_detr/predict"))).resolve()
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/predict"))).resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
     export_report: dict[str, Any] | None = None
 
@@ -995,8 +995,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ds.add_argument("-s", "--split", default=None, help="Split override.")
     ds.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
     ds.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
-    ds.add_argument("-o", "--output", default="runs/support_ultralytics_detr/dataset", help="Output directory for converted wrapper.")
-    ds.add_argument("-r", "--report", default="reports/support_ultralytics_detr.dataset.json", help="Report JSON output path.")
+    ds.add_argument("-o", "--output", default="runs/support_external_training/dataset", help="Output directory for converted wrapper.")
+    ds.add_argument("-r", "--report", default="reports/support_external_training.dataset.json", help="Report JSON output path.")
     ds.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     ds.set_defaults(_fn=_cmd_dataset)
 
@@ -1042,8 +1042,8 @@ def _build_parser() -> argparse.ArgumentParser:
     tul.add_argument("-D", "--device", default="auto", help="Device (default: auto).")
     tul.add_argument("-p", "--project", default="runs/ultralytics_finetune", help="Training project dir.")
     tul.add_argument("-N", "--name", default="exp", help="Run name.")
-    tul.add_argument("-W", "--work-dir", default="runs/support_ultralytics_detr/ultralytics", help="Work/cache dir.")
-    tul.add_argument("-o", "--output", default="reports/support_ultralytics_detr.train_ultralytics.json", help="Report JSON output path.")
+    tul.add_argument("-W", "--work-dir", default="runs/support_external_training/ultralytics", help="Work/cache dir.")
+    tul.add_argument("-o", "--output", default="reports/support_external_training.train_ultralytics.json", help="Report JSON output path.")
     tul.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tul.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tul.set_defaults(_fn=_cmd_train_ultralytics)
@@ -1066,8 +1066,8 @@ def _build_parser() -> argparse.ArgumentParser:
     thf.add_argument("-k", "--max-steps", type=int, default=200, help="Max optimization steps (default: 200).")
     thf.add_argument("-t", "--train-script", default=None, help="Optional external HF train script for non-dry execution.")
     thf.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
-    thf.add_argument("-W", "--work-dir", default="runs/support_ultralytics_detr/hf_detr", help="Work/cache dir.")
-    thf.add_argument("-o", "--output", default="reports/support_ultralytics_detr.train_hf_detr.json", help="Report JSON output path.")
+    thf.add_argument("-W", "--work-dir", default="runs/support_external_training/hf_detr", help="Work/cache dir.")
+    thf.add_argument("-o", "--output", default="reports/support_external_training.train_hf_detr.json", help="Report JSON output path.")
     thf.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     thf.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     thf.set_defaults(_fn=_cmd_train_hf_detr)
@@ -1081,7 +1081,7 @@ def _build_parser() -> argparse.ArgumentParser:
     eonnx.add_argument("-p", "--provider", choices=("ultralytics", "hf_detr"), default=None, help="Model provider.")
     eonnx.add_argument("-m", "--model", default=None, help="Model path/id.")
     eonnx.add_argument("-o", "--output", default=None, help="ONNX output path.")
-    eonnx.add_argument("-r", "--report", default="reports/support_ultralytics_detr.export_onnx.json", help="Report JSON output path.")
+    eonnx.add_argument("-r", "--report", default="reports/support_external_training.export_onnx.json", help="Report JSON output path.")
     eonnx.add_argument("-z", "--imgsz", type=int, default=640, help="Image size for export (default: 640).")
     eonnx.add_argument("-O", "--opset", type=int, default=17, help="ONNX opset (default: 17).")
     eonnx.add_argument("--dynamic", default=True, action=argparse.BooleanOptionalAction, help="Dynamic ONNX axes (default: true).")
@@ -1102,7 +1102,7 @@ def _build_parser() -> argparse.ArgumentParser:
     pnorm.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     pnorm.add_argument("-i", "--input", default=None, help="Input predictions JSON (external/raw).")
     pnorm.add_argument("-o", "--output", default=None, help="Normalized predictions JSON output path.")
-    pnorm.add_argument("-r", "--report", default="reports/support_ultralytics_detr.predict_normalize.json", help="Report JSON output path.")
+    pnorm.add_argument("-r", "--report", default="reports/support_external_training.predict_normalize.json", help="Report JSON output path.")
     pnorm.add_argument("-c", "--classes", default=None, help="Optional labels/<split>/classes.json for class mapping.")
     pnorm.add_argument("-A", "--assume-class-id-is-category-id", action="store_true", help="Treat class_id as category_id before remap.")
     pnorm.add_argument("-s", "--strict", action="store_true", help="Strict canonicalization (error on out-of-range/unknown keys).")
@@ -1111,7 +1111,7 @@ def _build_parser() -> argparse.ArgumentParser:
     pnorm.add_argument("-S", "--split", default=None, help="Dataset split for --ultralytics-model mode.")
     pnorm.add_argument("-n", "--ultralytics-dry-run", action="store_true", help="Pass --dry-run to export_predictions_ultralytics.")
     pnorm.add_argument("-y", "--python", default=sys.executable, help="Python executable for helper subprocesses.")
-    pnorm.add_argument("-w", "--work-dir", default="runs/support_ultralytics_detr/predict", help="Work/cache dir.")
+    pnorm.add_argument("-w", "--work-dir", default="runs/support_external_training/predict", help="Work/cache dir.")
     pnorm.set_defaults(_fn=_cmd_predict_normalize)
 
     return p

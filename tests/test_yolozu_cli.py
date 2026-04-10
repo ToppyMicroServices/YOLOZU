@@ -26,7 +26,7 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("continual-eval", proc.stdout)
         self.assertIn("long-tail-recipe", proc.stdout)
 
-    def test_train_help_lists_external_yolox_lane(self):
+    def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
         proc = subprocess.run(
             [sys.executable, "-m", "yolozu", "train", "--help"],
@@ -40,6 +40,8 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.fail(f"yolozu train --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--external-backend", proc.stdout)
         self.assertIn("yolox", proc.stdout)
+        self.assertIn("ultralytics", proc.stdout)
+        self.assertIn("hf-detr", proc.stdout)
 
     def test_completion_help_lists_flags(self):
         repo_root = Path(__file__).resolve().parents[1]

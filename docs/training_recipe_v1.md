@@ -104,7 +104,7 @@ Use coco128 to validate the pipeline before full COCO:
 - Evaluate via `tools/eval_coco.py` on `data/coco128`.
 - Compare mAP to your previous baseline and record delta.
 
-If you want a **repo-local** sanity check that uses real JPEG pixels (instead of the synthetic-image scaffold), `rtdetr_pose/tools/train_minimal.py` supports an optional flag:
+If you want a **repo-local** sanity check that uses real JPEG pixels (instead of the synthetic-image fallback), `rtdetr_pose/tools/train_minimal.py` supports an optional flag:
 
 ```bash
 python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --split train2017 \

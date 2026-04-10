@@ -1,6 +1,6 @@
-# YOLO26 buckets (RT-DETR scaffold recipes)
+# YOLO26 buckets (RT-DETR reference-trainer recipes)
 
-This repo includes an Apache-2.0-friendly RT-DETR scaffold (`rtdetr_pose/`) that can be used as the YOLO26
+This repo includes an Apache-2.0-friendly RT-DETR reference trainer (`rtdetr_pose/`) that can be used as the YOLO26
 "bucketed" detector family for smoke / export / evaluation plumbing.
 
 The bucket configs live under `configs/yolo26_rtdetr_pose/`:
@@ -47,4 +47,3 @@ For protocol-locked eval on COCO, the default naming convention is:
 `tools/eval_suite.py` uses `protocols/yolo26_eval.json` to pin:
 - bbox format
 - default split selection
-

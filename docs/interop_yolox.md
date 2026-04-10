@@ -48,9 +48,9 @@ python3 tools/eval_coco.py \
 - Preprocess assumptions are stored in `export_settings.preprocessing` (letterbox/normalize/input color).
 - `weights_sha256` is stored for reproducibility.
 
-## Training lane (external YOLOX launcher)
+## Training lane (external launcher family)
 
-The shortest top-level route is:
+The primary Apache-2.0-friendly route is:
 
 ```bash
 python3 -m yolozu train \
@@ -100,3 +100,26 @@ The helper injects these environment variables for the external launcher:
 - `YOLOZU_BATCH_SIZE`
 - `YOLOZU_MAX_EPOCHS`
 - `YOLOZU_IMAGE_SIZE`
+
+Optional bridges stay on the same top-level train surface:
+
+```bash
+python3 -m yolozu train \
+  --external-backend ultralytics \
+  yolo11n.pt \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_ultralytics.json
+
+python3 -m yolozu train \
+  --external-backend hf-detr \
+  facebook/detr-resnet-50 \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_hf_detr.json
+```
+
+These optional bridges keep the runtime/license boundary explicit while reusing the
+same dataset resolution and machine-readable reporting surface.

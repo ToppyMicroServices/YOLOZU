@@ -1,4 +1,4 @@
-"""Training helpers for the RT-DETR pose scaffold."""
+"""Training helpers for the RT-DETR pose reference trainer."""
 
 from __future__ import annotations
 

@@ -121,9 +121,9 @@ Installed CLI:
 These commands are backend-facing and can evaluate predictions produced by external
 YOLO/RT-DETR/other model families as long as outputs follow the predictions schema.
 
-Training scaffold:
+Reference training lane:
 
-- `yolozu train ...` (requires `yolozu[train]`)
+- `yolozu train ...` (requires `yolozu[train]`; defaults to the RT-DETR pose reference trainer)
 
 Optional extra:
 
@@ -140,7 +140,7 @@ Power-user in-repo CLI (source checkout):
 
 ## Non-goals
 
-- Full training framework (this repo focuses on scaffold + artifact layout + run interface contract)
+- Full training framework for every model family (this repo focuses on reference training lanes + artifact layout + run interface contract)
 - Heavy dependencies required for local evaluation
 
 ## Versioning

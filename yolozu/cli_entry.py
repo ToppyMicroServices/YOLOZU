@@ -593,14 +593,18 @@ def main(argv: list[str] | None = None) -> int:
         "train",
         help=(
             "Train with the RT-DETR pose reference trainer by default, or use "
-            "--external-backend yolox for the Apache-2.0-friendly external YOLOX lane."
+            "--external-backend yolox|ultralytics|hf-detr for external training lanes."
         ),
     )
     train_p.add_argument(
         "config",
         nargs="?",
         type=str,
-        help="Reference train config YAML/JSON, or YOLOX exp file when --external-backend yolox is selected.",
+        help=(
+            "Reference train config YAML/JSON. When --external-backend is selected, "
+            "this becomes the backend-specific model/config handle "
+            "(YOLOX exp file, Ultralytics model path/id, or HF model id)."
+        ),
     )
     train_p.add_argument(
         "--import",
@@ -623,102 +627,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     train_p.add_argument(
         "--external-backend",
-        choices=("yolox",),
+        choices=("yolox", "ultralytics", "hf-detr"),
         default=None,
-        help="Optional repo-side external training lane. Currently supported: yolox.",
-    )
-    train_p.add_argument(
-        "--external-preset",
-        choices=("coco128", "none", "smoke"),
-        default=None,
-        help="(train --external-backend yolox) preset forwarded to the external bridge.",
-    )
-    train_p.add_argument(
-        "--dataset-from",
-        dest="external_from",
-        choices=("auto", "internal", "ultralytics", "coco", "coco_instances"),
-        default=None,
-        help="(train --external-backend yolox) dataset source for bridge-side resolution.",
-    )
-    train_p.add_argument(
-        "--dataset",
-        dest="external_dataset",
-        default=None,
-        help="(train --external-backend yolox) dataset root or descriptor.",
-    )
-    train_p.add_argument(
-        "--split",
-        dest="external_split",
-        default=None,
-        help="(train --external-backend yolox) dataset split.",
-    )
-    train_p.add_argument(
-        "--instances-json",
-        dest="external_instances_json",
-        default=None,
-        help="(train --external-backend yolox, coco_instances) instances JSON path.",
-    )
-    train_p.add_argument(
-        "--images-dir",
-        dest="external_images_dir",
-        default=None,
-        help="(train --external-backend yolox, coco_instances) images directory.",
-    )
-    train_p.add_argument(
-        "--weights",
-        dest="external_weights",
-        default=None,
-        help="(train --external-backend yolox) optional checkpoint path for fine-tuning/resume.",
-    )
-    train_p.add_argument(
-        "--train-script",
-        dest="external_train_script",
-        default=None,
-        help="(train --external-backend yolox) external YOLOX launcher path for non-dry execution.",
-    )
-    train_p.add_argument(
-        "--python",
-        dest="external_python",
-        default=None,
-        help="(train --external-backend yolox) Python executable for --train-script.",
-    )
-    train_p.add_argument(
-        "--batch",
-        dest="external_batch",
-        type=int,
-        default=None,
-        help="(train --external-backend yolox) global batch size.",
-    )
-    train_p.add_argument(
-        "--devices",
-        dest="external_devices",
-        type=int,
-        default=None,
-        help="(train --external-backend yolox) device count forwarded to the launcher.",
-    )
-    train_p.add_argument(
-        "--work-dir",
-        dest="external_work_dir",
-        default=None,
-        help="(train --external-backend yolox) work/cache directory for bridge artifacts.",
-    )
-    train_p.add_argument(
-        "--output",
-        dest="external_output",
-        default=None,
-        help="(train --external-backend yolox) bridge report JSON output path.",
-    )
-    train_p.add_argument(
-        "--dry-run",
-        dest="external_dry_run",
-        action="store_true",
-        help="(train --external-backend yolox) do not execute runtime training.",
-    )
-    train_p.add_argument(
-        "--force",
-        dest="external_force",
-        action="store_true",
-        help="(train --external-backend yolox) overwrite generated bridge outputs.",
+        help=(
+            "Optional repo-side external training lane. Use backend-specific flags after "
+            "--external-backend; they are forwarded to tools/support_external_training.py."
+        ),
     )
 
     test_p = sub.add_parser("test", help="Run scenario suite (dummy/precomputed adapters are CPU-only).")
@@ -1057,7 +971,7 @@ def main(argv: list[str] | None = None) -> int:
             if not getattr(args, "config", None):
                 return 0
         if getattr(args, "external_backend", None):
-            return _cmd_train_external(args)
+            return _cmd_train_external(args, extra_args=list(extra_argv or []))
         if not getattr(args, "config", None):
             raise SystemExit("train config is required unless using --import preview-only mode")
         config_path = Path(args.config)

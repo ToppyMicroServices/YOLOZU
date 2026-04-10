@@ -18,6 +18,14 @@ from yolozu.metrics_report import build_report, write_csv_row, write_json
 from rtdetr_pose.train_utils import _now_utc, collect_rng_state, load_checkpoint_into, run_onnxrt_parity, save_checkpoint_bundle, unwrap_model
 
 
+def _write_onnx_export_meta(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
 def finalize_training(
     *,
     args: Any,
@@ -145,6 +153,9 @@ def finalize_training(
         save_si_state_fn(str(args.si_state_out), si_accum.finalize(unwrap_model(model)))
 
     onnx_path: Path | None = None
+    onnx_meta_path: Path | None = None
+    onnx_export_status = "disabled"
+    onnx_export_error: dict[str, str] | None = None
     if is_main and args.onnx_out:
         try:
             from rtdetr_pose.export import export_onnx
@@ -154,9 +165,15 @@ def finalize_training(
                 "Install 'onnx' to enable post-training ONNX export.",
                 file=sys.stderr,
             )
+            onnx_export_status = "import_failed"
+            onnx_export_error = {"type": type(exc).__name__, "message": str(exc)}
             export_onnx = None  # type: ignore[assignment]
 
         onnx_path = Path(str(args.onnx_out)) if export_onnx is not None else None
+        if args.onnx_meta_out:
+            onnx_meta_path = Path(str(args.onnx_meta_out))
+        elif args.onnx_out:
+            onnx_meta_path = Path(str(args.onnx_out)).with_suffix(Path(str(args.onnx_out)).suffix + ".meta.json")
         if onnx_path is not None:
             onnx_path.parent.mkdir(parents=True, exist_ok=True)
             if run_contract is not None and getattr(args, "best_checkpoint_out", None):
@@ -181,34 +198,32 @@ def finalize_training(
                     opset_version=int(args.onnx_opset),
                     dynamic_hw=bool(args.onnx_dynamic_hw),
                 )
-            except RuntimeError as exc:
+                onnx_export_status = "ok"
+            except Exception as exc:
                 print(
                     f"WARNING: ONNX export failed — {exc}. Training results are saved; "
-                    "install 'onnx' to enable post-training ONNX export.",
+                    "the run continues without a post-training ONNX artifact.",
                     file=sys.stderr,
                 )
+                onnx_export_status = "failed"
+                onnx_export_error = {"type": type(exc).__name__, "message": str(exc)}
                 onnx_path = None
-            if onnx_path is not None:
-                if args.onnx_meta_out:
-                    meta_path = Path(str(args.onnx_meta_out))
-                else:
-                    meta_path = onnx_path.with_suffix(onnx_path.suffix + ".meta.json")
-                meta_path.parent.mkdir(parents=True, exist_ok=True)
-                meta = {
-                    "timestamp_utc": _now_utc(),
-                    "onnx": str(onnx_path),
-                    "opset": int(args.onnx_opset),
-                    "dynamic_hw": bool(args.onnx_dynamic_hw),
-                    "dummy_input": {
-                        "shape": [1, 3, int(args.image_size), int(args.image_size)],
-                        "dtype": "float32",
-                    },
-                    "run_record": run_record,
-                }
-                meta_path.write_text(
-                    json.dumps(meta, indent=2, sort_keys=True),
-                    encoding="utf-8",
-                )
+        if onnx_meta_path is not None:
+            meta = {
+                "timestamp_utc": _now_utc(),
+                "status": onnx_export_status,
+                "onnx": str(onnx_path) if onnx_path is not None else None,
+                "requested_output": str(args.onnx_out),
+                "opset": int(args.onnx_opset),
+                "dynamic_hw": bool(args.onnx_dynamic_hw),
+                "dummy_input": {
+                    "shape": [1, 3, int(args.image_size), int(args.image_size)],
+                    "dtype": "float32",
+                },
+                "error": onnx_export_error,
+                "run_record": run_record,
+            }
+            _write_onnx_export_meta(onnx_meta_path, meta)
 
     parity_out = getattr(args, "parity_json_out", None)
     if is_main and parity_out:

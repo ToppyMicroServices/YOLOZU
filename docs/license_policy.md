@@ -25,11 +25,13 @@ When YOLOZU needs a YOLO-style training lane outside the in-repo RT-DETR referen
 - keep the training loop in the external repo/runtime
 - let YOLOZU own dataset resolution, reports, and the predictions interface contract
 - treat the **Ultralytics bridge** as optional and review it under its own license terms before commercial use
+- treat the **HF DETR bridge** as optional and review its runtime/dependency boundary separately
 
 In practice this means:
 
-- `tools/support_external_training.py train-yolox` is the recommended external YOLO-style path
-- `tools/support_external_training.py train-ultralytics` is available only as an optional bridge
+- `python3 -m yolozu train --external-backend yolox ...` is the recommended external YOLO-style path
+- `python3 -m yolozu train --external-backend ultralytics ...` is available only as an optional bridge
+- `python3 -m yolozu train --external-backend hf-detr ...` is available only as an optional bridge
 - the repository must not vendor Ultralytics or other copyleft implementation code
 
 ## Company release policy (naming + provenance)

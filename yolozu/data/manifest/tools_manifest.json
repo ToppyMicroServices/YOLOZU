@@ -14374,6 +14374,14 @@
         {
           "command": "python3 tools/yolozu.py sud ls -j",
           "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json",
+          "description": "Top-level train route for the optional Ultralytics bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/train_external_hf_detr.json",
+          "description": "Top-level train route for the optional HF DETR bridge (dry-run)."
         }
       ],
       "id": "yolozu",
@@ -14433,6 +14441,7 @@
           "required": false
         },
         {
+          "description": "Forwarded batch size for external YOLOX/Ultralytics helper execution.",
           "flag": "--batch",
           "kind": "number",
           "name": "batch",
@@ -14506,6 +14515,7 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper when `train --external-backend` is active.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
@@ -14524,6 +14534,7 @@
           "required": false
         },
         {
+          "description": "Forwarded device count for the external YOLOX launcher.",
           "flag": "--devices",
           "kind": "number",
           "name": "devices",
@@ -14536,21 +14547,17 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper; resolve/report without launching runtime training.",
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
           "required": false
         },
         {
+          "description": "Selects the external training lane (`yolox`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
-          "required": false
-        },
-        {
-          "flag": "--external-preset",
-          "kind": "string",
-          "name": "external_preset",
           "required": false
         },
         {
@@ -14578,6 +14585,7 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper to overwrite generated artifacts.",
           "flag": "--force",
           "kind": "string",
           "name": "force",
@@ -14627,6 +14635,7 @@
           "required": false
         },
         {
+          "description": "Forwarded image directory for COCO instance-style dataset resolution.",
           "flag": "--images-dir",
           "kind": "dir",
           "name": "images_dir",
@@ -14645,6 +14654,7 @@
           "required": false
         },
         {
+          "description": "Forwarded COCO instances JSON for external dataset resolution.",
           "flag": "--instances-json",
           "kind": "file",
           "name": "instances_json",
@@ -14874,6 +14884,7 @@
         },
         {
           "default": "reports/predictions.json",
+          "description": "Forwarded report JSON path for the external training helper.",
           "flag": "--output",
           "kind": "file",
           "name": "output",
@@ -14935,6 +14946,7 @@
           "required": false
         },
         {
+          "description": "Forwarded Python executable for external launcher subprocesses.",
           "flag": "--python",
           "kind": "string",
           "name": "python",
@@ -15002,6 +15014,7 @@
           "required": false
         },
         {
+          "description": "Forwarded split name for the external training helper.",
           "flag": "--split",
           "kind": "string",
           "name": "split",
@@ -15092,6 +15105,7 @@
           "required": false
         },
         {
+          "description": "Forwarded external launcher path for non-dry YOLOX or HF DETR execution.",
           "flag": "--train-script",
           "kind": "file",
           "name": "train_script",
@@ -15451,9 +15465,17 @@
           "required": false
         },
         {
+          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
           "flag": "--weights",
           "kind": "file",
           "name": "weights",
+          "required": false
+        },
+        {
+          "description": "Forwarded preset for the external training helper when `train --external-backend` is active.",
+          "flag": "--preset",
+          "kind": "string",
+          "name": "preset",
           "required": false
         }
       ],
@@ -15486,7 +15508,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default and the Apache-2.0-friendly external YOLOX lane via `train --external-backend yolox`.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`.",
       "tags": [
         "cli",
         "predictions",

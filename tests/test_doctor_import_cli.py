@@ -248,6 +248,68 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str((payload.get("license_boundary") or {}).get("primary_lane")), "YOLOX-style external training bridge")
 
+    def test_train_external_ultralytics_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_ultralytics_bridge.json"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "ultralytics",
+                    "yolo11n.pt",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend ultralytics --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(str(payload.get("task")), "train_ultralytics")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertTrue(bool((payload.get("license_boundary") or {}).get("optional_bridge")))
+
+    def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_hf_detr_bridge.json"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "hf-detr",
+                    "facebook/detr-resnet-50",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend hf-detr --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(str(payload.get("task")), "train_hf_detr")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(str(payload.get("model_id")), "facebook/detr-resnet-50")
+
 
 if __name__ == "__main__":
     unittest.main()

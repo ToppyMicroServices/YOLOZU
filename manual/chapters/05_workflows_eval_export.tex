@@ -250,6 +250,17 @@ python3 tools/support_external_training.py train-ultralytics \
   --dry-run
 \end{lstlisting}
 
+The same top-level route also exposes the optional HF DETR bridge:
+\begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend hf-detr \
+  facebook/detr-resnet-50 \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_hf_detr.json
+\end{lstlisting}
+
 \subsection{SynthGen intake workflow (external generator)}
 When synthetic shards are generated externally (for example in \path{YOLOZU-synthgen}), \yolozu{} provides the contract/eval side:
 \begin{lstlisting}[language=bash]

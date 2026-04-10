@@ -115,6 +115,7 @@ You can relax this behavior with:
 
 Dependencies:
 - ONNX export requires `onnx`
+- `model.onnx.meta.json` records whether post-training export succeeded, was skipped, or failed with a structured error.
 - parity requires `onnxruntime`
   - easiest: `python3 -m pip install 'yolozu[onnxrt]'`
 

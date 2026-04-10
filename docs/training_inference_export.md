@@ -215,7 +215,7 @@ The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
 `prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
 
-### External YOLO-style training lane (YOLOX primary, Ultralytics optional)
+### External YOLO-style training lane (YOLOX primary, optional bridges second)
 
 Use this path when you want YOLOZU to standardize dataset resolution, reports, and the
 predictions interface contract while the actual YOLO training loop stays in an external repo/runtime.
@@ -246,12 +246,32 @@ python3 tools/support_external_training.py train-yolox \
 Optional Ultralytics bridge:
 
 ```bash
+python3 -m yolozu train \
+  --external-backend ultralytics \
+  yolo11n.pt \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_ultralytics.json
+
 python3 tools/support_external_training.py train-ultralytics \
   --dataset data/smoke \
   --split val \
   --preset smoke \
   --dry-run \
   --output reports/support_external_training.train_ultralytics.json
+```
+
+Optional HF DETR bridge:
+
+```bash
+python3 -m yolozu train \
+  --external-backend hf-detr \
+  facebook/detr-resnet-50 \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_hf_detr.json
 ```
 
 ### External finetune smoke matrix (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
@@ -610,7 +630,7 @@ Then validate and evaluate in this repo.
 - When using GPU, install CUDA-enabled PyTorch and use --device cuda:0.
 - Keep the predictions schema consistent with the adapter output: image path + detections list.
 
-## YOLO26n smoke (RT-DETR scaffold)
+## YOLO26n smoke (RT-DETR reference trainer)
 
 This repo includes a tiny “it runs end-to-end” smoke command that:
 - fetches `data/coco128` if missing

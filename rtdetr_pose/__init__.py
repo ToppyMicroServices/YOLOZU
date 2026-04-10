@@ -1,4 +1,4 @@
-"""RT-DETR pose scaffold package shim.
+"""RT-DETR pose reference-trainer package shim.
 
 This repository stores the implementation under `rtdetr_pose/rtdetr_pose/`.
 When installed as a wheel, that nested layout would normally expose modules as

@@ -23,7 +23,7 @@ Notes:
 
 ## Quick start (coco128)
 
-1) Produce predictions JSON (any backend is fine). For the in-repo scaffold:
+1) Produce predictions JSON (any backend is fine). For the in-repo reference trainer:
 
 ```bash
 python3 tools/export_predictions.py \

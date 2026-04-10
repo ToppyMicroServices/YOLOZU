@@ -658,7 +658,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--synthetic-pose",
         action="store_true",
-        help="Generate synthetic z/R GT per instance (scaffold only)",
+        help="Generate synthetic z/R GT per instance (reference-trainer smoke path only)",
     )
     parser.add_argument(
         "--z-from-dobj",

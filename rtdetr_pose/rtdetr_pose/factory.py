@@ -1,4 +1,4 @@
-"""Config-driven factories for the RTDETRPose scaffold.
+"""Config-driven factories for the RTDETRPose reference trainer.
 
 Goal: make it easy to swap backbones/losses without touching the training loop.
 """
