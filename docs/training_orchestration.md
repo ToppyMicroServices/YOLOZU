@@ -71,6 +71,7 @@ The report uses:
 - one row per experiment
 - the exact command that was planned or executed
 - execution status and output tails when `--execute` is used
+- when the experiment writes a training summary JSON, the orchestration row also records `summary_json`, `work_dir`, and `next_steps`
 
 Schema reference:
 
@@ -85,6 +86,9 @@ Think of it this way:
 
 - `training_summary.json` = one backend run
 - `training_orchestration_report.json` = one batch of runs
+
+For external backends, that means you can run one batch, then immediately open the
+captured `next_steps` commands to continue with export, evaluation, and parity.
 
 ## Related docs
 

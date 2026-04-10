@@ -135,6 +135,7 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertTrue(bool(yolox_payload.get("dry_run")))
             self.assertEqual(str(yolox_payload.get("task")), "train_yolox")
             self.assertIn("template_train_command", yolox_payload)
+            self.assertTrue(bool(yolox_payload.get("next_steps")))
 
             train_hf_report = root / "train_hf_report.json"
             proc_hf = subprocess.run(
@@ -159,6 +160,7 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             hf_payload = json.loads(train_hf_report.read_text(encoding="utf-8"))
             self.assertTrue(bool(hf_payload.get("ok")))
             self.assertTrue(bool(hf_payload.get("dry_run")))
+            self.assertTrue(bool(hf_payload.get("next_steps")))
 
             export_report = root / "export_onnx_report.json"
             out_onnx = root / "model.onnx"

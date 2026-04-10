@@ -181,6 +181,10 @@ This is not the same as forcing one backend-native checkpoint layout. It means
 the wrapper-owned interface contract is now fixed even when the actual trainer
 remains external.
 
+The external training summary also records \path{next\_steps}: copy-paste
+follow-up commands for export, evaluation, and parity. In practice, this makes
+the training report itself the hand-off note for the next operator step.
+
 The repo-side orchestration command is:
 \begin{lstlisting}[language=bash]
 yolozu train-orchestrate \

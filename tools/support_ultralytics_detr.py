@@ -130,6 +130,107 @@ def _write_external_run_contract_bundle(
     }
 
 
+def _step(label: str, command: str, description: str) -> dict[str, str]:
+    return {"label": str(label), "command": str(command), "description": str(description)}
+
+
+def _external_next_steps(
+    *,
+    backend_id: str,
+    dataset_root: Path,
+    split: str,
+    work_dir: Path,
+    report_path: Path,
+    exp_path: Path | None = None,
+    config_path: Path | None = None,
+    model_name: str | None = None,
+    model_id: str | None = None,
+    data_yaml: Path | None = None,
+    task_family: str | None = None,
+) -> list[dict[str, str]]:
+    predictions_out = work_dir / "reports" / f"{backend_id}_predictions.json"
+    eval_out = work_dir / "reports" / f"{backend_id}_eval.json"
+    parity_out = work_dir / "reports" / f"{backend_id}_parity.json"
+    steps: list[dict[str, str]] = []
+
+    if backend_id == "yolox" and exp_path is not None:
+        steps.append(
+            _step(
+                "export_predictions",
+                "python3 tools/export_predictions_yolox.py "
+                f"--dataset {dataset_root} --split {split} --exp {exp_path} "
+                f"--weights <path/to/yolox_ckpt.pth> --output {predictions_out}",
+                "Export YOLOX predictions into the predictions interface contract after training.",
+            )
+        )
+    elif backend_id == "detectron2" and config_path is not None:
+        steps.append(
+            _step(
+                "export_predictions",
+                "python3 tools/export_predictions_detectron2.py "
+                f"--dataset {dataset_root} --split {split} --config {config_path} "
+                f"--weights <path/to/model_final.pth> --protocol nms_applied --output {predictions_out}",
+                "Export Detectron2 predictions into the predictions interface contract after training.",
+            )
+        )
+    elif backend_id == "ultralytics" and model_name is not None:
+        steps.append(
+            _step(
+                "predict_normalize",
+                "python3 tools/support_external_training.py predict-normalize "
+                f"--ultralytics-model {model_name} --dataset {dataset_root} --split {split} "
+                f"--output {predictions_out} --report {work_dir / 'reports' / 'predict_normalize.json'}",
+                "Run Ultralytics prediction and normalize it into the predictions interface contract.",
+            )
+        )
+        steps.append(
+            _step(
+                "export_onnx",
+                "python3 tools/support_external_training.py export-onnx "
+                f"--provider ultralytics --model {model_name} --output {work_dir / 'exports' / 'model.onnx'} "
+                f"--report {work_dir / 'reports' / 'export_onnx.json'}",
+                "Export an ONNX artifact for downstream parity or deployment checks.",
+            )
+        )
+    elif backend_id == "hf-detr" and model_id is not None:
+        steps.append(
+            _step(
+                "export_onnx",
+                "python3 tools/support_external_training.py export-onnx "
+                f"--provider hf_detr --model {model_id} --output {work_dir / 'exports' / 'model.onnx'} "
+                f"--report {work_dir / 'reports' / 'export_onnx.json'}",
+                "Export an ONNX artifact for downstream parity or deployment checks.",
+            )
+        )
+
+    if task_family in (None, "", "bbox", "detect"):
+        steps.append(
+            _step(
+                "eval",
+                "python3 -m yolozu eval-coco "
+                f"--dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}",
+                "Evaluate detection predictions with the stable evaluation lane.",
+            )
+        )
+        steps.append(
+            _step(
+                "parity",
+                "python3 -m yolozu parity "
+                f"--reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}",
+                "Compare candidate predictions against a reference backend artifact.",
+            )
+        )
+
+    steps.append(
+        _step(
+            "inspect_summary",
+            f"python3 - <<'PY'\nimport json\nprint(json.dumps(json.load(open(r'{report_path}','r',encoding='utf-8')), indent=2)[:4000])\nPY",
+            "Inspect the machine-readable training summary and wrapper-owned run bundle.",
+        )
+    )
+    return steps
+
+
 def _run(
     cmd: list[str],
     *,
@@ -565,6 +666,15 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             },
         }
     )
+    report["next_steps"] = _external_next_steps(
+        backend_id="yolox",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        exp_path=exp_path,
+        task_family="bbox",
+    )
     bundled_paths = _write_external_run_contract_bundle(
         backend_id="yolox",
         work_dir=work_dir,
@@ -769,6 +879,15 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             },
         }
     )
+    report["next_steps"] = _external_next_steps(
+        backend_id="detectron2",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        config_path=config_path,
+        task_family=task_family,
+    )
     bundled_paths = _write_external_run_contract_bundle(
         backend_id="detectron2",
         work_dir=work_dir,
@@ -946,6 +1065,15 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
                 "export_deploy": "support_external_training export-onnx --provider ultralytics",
             },
         }
+    )
+    report["next_steps"] = _external_next_steps(
+        backend_id="ultralytics",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        model_name=str(model_name),
+        task_family="bbox",
     )
     ultralytics_projection = {
         "format": "yolozu_external_training_projection_v1",
@@ -1148,6 +1276,15 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
                 "export_deploy": "support_external_training export-onnx --provider hf_detr",
             },
         }
+    )
+    report["next_steps"] = _external_next_steps(
+        backend_id="hf-detr",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        model_id=str(model_id),
+        task_family="bbox",
     )
     hf_projection = {
         "format": "yolozu_external_training_projection_v1",

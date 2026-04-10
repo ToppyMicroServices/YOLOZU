@@ -55,6 +55,9 @@ For external backends, YOLOZU now standardizes one wrapper-level run bundle unde
 This keeps external lanes auditable even when the backend-native trainer owns the
 actual checkpoint layout.
 
+External lanes now also write `next_steps` into `training_summary.json`, so the
+report itself tells you which export / evaluation / parity command to run next.
+
 ## TL;DR (copy-paste)
 
 ```bash

@@ -300,6 +300,7 @@ def build_training_run_summary(
         "runtime_error": runtime_error,
         "license_boundary": dict(license_boundary or {}),
         "notes": list(notes or []),
+        "next_steps": [],
     }
     if work_dir is not None:
         payload["work_dir"] = str(work_dir)

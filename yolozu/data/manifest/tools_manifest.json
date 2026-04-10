@@ -73,7 +73,7 @@
     "training_run_summary_json": {
       "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
       "schema": "docs/schemas/training_run_summary.schema.json",
-      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and by external lanes that also publish a fixed wrapper-owned external run bundle."
+      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and by external lanes that also publish a fixed wrapper-owned external run bundle and standardized next_steps commands."
     }
   },
   "manifest_version": 1,
@@ -13353,7 +13353,7 @@
       ],
       "outputs": [
         {
-          "description": "Machine-readable training summary describing the selected external training lane and its fixed external run bundle.",
+          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         }

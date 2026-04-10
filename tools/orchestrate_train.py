@@ -28,6 +28,13 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _extract_output_path(command: list[str]) -> Path | None:
+    for idx, part in enumerate(command):
+        if part in {"--output", "-o"} and idx + 1 < len(command):
+            return Path(str(command[idx + 1])).resolve()
+    return None
+
+
 def _build_command(exp: dict[str, Any], *, force_dry_run: bool) -> list[str]:
     backend = str(exp.get("backend") or "").strip().lower()
     if backend in {"reference", "reference-rtdetr-pose"}:
@@ -114,6 +121,18 @@ def main(argv: list[str] | None = None) -> int:
                 if args.stop_on_failure:
                     results.append(row)
                     break
+            output_path = _extract_output_path(command)
+            if output_path is not None and output_path.exists():
+                try:
+                    payload = _load_json(output_path)
+                except Exception:
+                    payload = None
+                if isinstance(payload, dict):
+                    row["summary_json"] = str(output_path)
+                    if payload.get("work_dir") is not None:
+                        row["work_dir"] = str(payload.get("work_dir"))
+                    if isinstance(payload.get("next_steps"), list):
+                        row["next_steps"] = payload.get("next_steps")
         else:
             row["ok"] = True
         results.append(row)

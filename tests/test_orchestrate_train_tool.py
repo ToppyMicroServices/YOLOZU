@@ -103,6 +103,8 @@ class TestOrchestrateTrainTool(unittest.TestCase):
             self.assertTrue(payload["ok"])
             self.assertEqual(int(payload["counts"]["executed"]), 1)
             self.assertTrue(train_out.is_file())
+            self.assertEqual(str(payload["results"][0]["summary_json"]), str(train_out.resolve()))
+            self.assertTrue(bool(payload["results"][0].get("next_steps")))
 
     def test_execute_runs_detectron2_external_dry_run(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -150,6 +152,7 @@ class TestOrchestrateTrainTool(unittest.TestCase):
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["results"][0]["backend"], "detectron2")
             self.assertTrue(train_out.is_file())
+            self.assertTrue(bool(payload["results"][0].get("next_steps")))
 
 
 if __name__ == "__main__":

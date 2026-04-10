@@ -77,8 +77,12 @@ Every backend-level training lane should be able to emit:
 - `steps.export`
 - `steps.eval`
 - `steps.parity`
+- `next_steps`
 
 This is the common top-level summary interface contract for training.
+
+`next_steps` is the standardized hand-off list of copy-paste commands that move a
+completed run into export, evaluation, or parity.
 
 The reference trainer also emits richer artifacts such as:
 
