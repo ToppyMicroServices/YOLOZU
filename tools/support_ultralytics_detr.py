@@ -241,7 +241,7 @@ def _yolox_train_template(
     devices: int,
 ) -> str:
     cmd = [
-        f"YOLOZU_DATASET_ROOT=<dataset_root>",
+        "YOLOZU_DATASET_ROOT=<dataset_root>",
         "YOLOZU_SPLIT=<split>",
         "YOLOZU_NUM_CLASSES=<num_classes>",
         str(python),
