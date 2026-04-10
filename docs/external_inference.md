@@ -3,9 +3,9 @@
 YOLOZU is an evaluation + tooling harness. You can run inference **inside this repo** (PyTorch adapter, ONNXRuntime, TensorRT),
 or you can run inference **elsewhere** (C++/Rust/mobile/edge) and bring results back as a `predictions.json`.
 
-The key design is: **bring your own inference**, but keep a stable **contract** for outputs.
+The key design is: **bring your own inference**, but keep a stable **interface contract** for outputs.
 
-## Contract-first workflow (recommended)
+## Interface-contract-first workflow (recommended)
 
 1) Produce a YOLOZU predictions JSON artifact:
    - Canonical shape:
@@ -54,7 +54,7 @@ The main benefit of YOLOZU is you can incrementally migrate:
 
 - Research/Eval: Python (pip) + Docker on GPU (Runpod)
 - Production: C++ (TensorRT official path) and/or Rust (ONNXRuntime)
-- Verification: parity + contract validation stays the same
+- Verification: parity + interface contract validation stays the same
 
 ### C++ template (submodule-ready)
 

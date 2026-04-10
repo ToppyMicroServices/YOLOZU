@@ -34,21 +34,10 @@ def export_onnx(
     if not isinstance(sample_out, dict):
         raise RuntimeError("export_onnx expects model(dummy_input) to return a dict of tensors")
 
-    canonical_keys = [
-        "logits",
-        "bbox",
-        "log_z",
-        "rot6d",
-        "offsets",
-        "k_delta",
-        "keypoints",
-        "log_sigma_z",
-        "log_sigma_rot",
-    ]
     output_keys = [
-        key
-        for key in canonical_keys
-        if key in sample_out and isinstance(sample_out[key], torch.Tensor)
+        str(key)
+        for key, value in sample_out.items()
+        if isinstance(key, str) and isinstance(value, torch.Tensor)
     ]
     if not output_keys:
         raise RuntimeError("export_onnx found no tensor outputs to export")

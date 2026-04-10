@@ -81,6 +81,7 @@ class TestTrainFinalize(unittest.TestCase):
             payload = json.loads(meta_out.read_text(encoding="utf-8"))
             self.assertEqual(payload.get("status"), "ok")
             self.assertEqual(payload.get("export_device"), "cpu")
+            self.assertEqual(str(next(model.parameters()).device), "cpu")
 
     @unittest.skipIf(torch is None or finalize_training is None, "torch is not installed")
     def test_onnx_export_failure_writes_structured_meta(self) -> None:

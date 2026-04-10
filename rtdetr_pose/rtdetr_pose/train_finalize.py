@@ -1,8 +1,6 @@
 """Post-training finalization helpers for train_minimal."""
 
 from __future__ import annotations
-
-import copy
 import json
 import shutil
 import sys
@@ -189,10 +187,9 @@ def finalize_training(
                     )
             export_device = torch.device("cpu")
             onnx_export_device = str(export_device)
-            try:
-                export_model = copy.deepcopy(unwrap_model(model)).eval().to(export_device)
-            except Exception:
-                export_model = unwrap_model(model).eval().to(export_device)
+            # Export/parity run after training completes, so switching the live model to CPU
+            # avoids a second full model copy at finalize time.
+            export_model = unwrap_model(model).eval().to(export_device)
             dummy = torch.zeros(
                 (1, 3, int(args.image_size), int(args.image_size)),
                 dtype=torch.float32,
