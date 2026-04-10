@@ -10,6 +10,32 @@ This page is the shortest path for users who keep training/inference in Detectro
 
 YOLOZU does not require replacing your training framework.
 
+## 1.5) External Detectron2 training lane
+
+YOLOZU can also launch a Detectron2 training lane through an external launcher
+while still emitting the shared training summary interface contract.
+
+Use the backend-native config to choose the task family:
+
+- Faster R-CNN style config: `bbox`
+- Mask R-CNN style config: `segmentation`
+- Keypoint R-CNN style config: `keypoints`
+
+```bash
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  configs/examples/finetune_external/detectron2_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_detectron2_bbox.json
+```
+
+To pass dataset registration names or other Detectron2 overrides, repeat
+`--train-opt KEY VALUE`. For a real run, also add
+`--train-script /path/to/detectron2/tools/train_net.py`.
+
 ## 1) Prepare dataset wrapper (COCO JSON to YOLOZU)
 
 ```bash

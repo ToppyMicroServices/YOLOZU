@@ -21,6 +21,7 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
         if proc.returncode != 0:
             self.fail(f"support_external_training --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("train-yolox", proc.stdout)
+        self.assertIn("train-detectron2", proc.stdout)
         self.assertIn("train-ultralytics", proc.stdout)
         self.assertIn("train-hf-detr", proc.stdout)
 

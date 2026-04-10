@@ -40,6 +40,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.fail(f"yolozu train --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--external-backend", proc.stdout)
         self.assertIn("yolox", proc.stdout)
+        self.assertIn("detectron2", proc.stdout)
         self.assertIn("ultralytics", proc.stdout)
         self.assertIn("hf-detr", proc.stdout)
 

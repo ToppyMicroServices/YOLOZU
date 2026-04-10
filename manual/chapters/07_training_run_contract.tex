@@ -184,8 +184,8 @@ Read next:
 For user convenience, YOLOZU includes template configs and a unified smoke runner for external finetune entrypoints:
 \begin{itemize}
   \item YOLO-family runtime
-  \item MMDetection
   \item Detectron2
+  \item MMDetection
   \item RT-DETR (\path{rtdetr_pose})
 \end{itemize}
 
@@ -203,6 +203,38 @@ python3 tools/run_external_finetune_smoke.py \
   --dataset-root data/smoke \
   --split train \
   --output reports/external_finetune_smoke.json
+\end{lstlisting}
+
+Top-level Detectron2 training lane examples:
+\begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  configs/examples/finetune_external/detectron2_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_detectron2_bbox.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/mask_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family segmentation \
+  --train-opt DATASETS.TRAIN "(\"my_seg_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_seg.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/keypoint_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family keypoints \
+  --train-opt DATASETS.TRAIN "(\"my_kpts_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_keypoints.json
 \end{lstlisting}
 
 Execute real training for selected frameworks:

@@ -283,6 +283,44 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "ultralytics")
             self.assertTrue(bool((payload.get("license_boundary") or {}).get("optional_bridge")))
 
+    def test_train_external_detectron2_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_detectron2_bridge.json"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "detectron2",
+                    "configs/examples/finetune_external/detectron2_finetune_smoke.yaml",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--task-family",
+                    "keypoints",
+                    "--train-opt",
+                    "DATASETS.TRAIN",
+                    "(\"dummy_train\",)",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend detectron2 --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_detectron2")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "detectron2")
+            self.assertEqual(str(payload.get("task_family")), "keypoints")
+
     def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

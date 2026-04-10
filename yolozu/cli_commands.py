@@ -137,6 +137,7 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     backend = str(getattr(args, "external_backend", "") or "").strip().lower()
     backend_to_subcommand = {
         "yolox": "train-yolox",
+        "detectron2": "train-detectron2",
         "ultralytics": "train-ultralytics",
         "hf-detr": "train-hf-detr",
     }
@@ -146,6 +147,8 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     config_value = str(getattr(args, "config", "") or "").strip()
     if backend == "yolox" and not config_value:
         raise SystemExit("train config/exp is required when using --external-backend yolox")
+    if backend == "detectron2" and not config_value:
+        raise SystemExit("train config is required when using --external-backend detectron2")
 
     repo_root = Path(__file__).resolve().parents[1]
     helper = repo_root / "tools" / "support_external_training.py"
@@ -158,6 +161,8 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     cmd = [sys.executable, str(helper), backend_to_subcommand[backend]]
     if backend == "yolox":
         cmd.extend(["--exp", config_value])
+    elif backend == "detectron2":
+        cmd.extend(["--config", config_value])
     elif backend == "ultralytics" and config_value:
         cmd.extend(["--model", config_value])
     elif backend == "hf-detr" and config_value:

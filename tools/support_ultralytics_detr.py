@@ -14,6 +14,7 @@ kept explicit so the runtime/license boundary stays visible.
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 import os
 import subprocess
@@ -31,7 +32,7 @@ from yolozu.integrations.min_adapter import (  # noqa: E402
     resolve_internal_dataset,
     write_ultralytics_data_yaml,
 )
-from yolozu.datasets.imports import project_yolox_exp  # noqa: E402
+from yolozu.datasets.imports import project_detectron2_config, project_yolox_exp  # noqa: E402
 from yolozu.core.canonical import TrainConfig  # noqa: E402
 from yolozu.training.platform import build_training_run_summary  # noqa: E402
 
@@ -284,6 +285,39 @@ def _build_yolox_train_command(
     return cmd
 
 
+def _infer_detectron2_task_family(config_path: Path) -> str:
+    text = config_path.read_text(encoding="utf-8", errors="ignore")
+    lowered = text.lower()
+    if "coco-keypoints" in lowered or "keypoint_on: true" in lowered:
+        return "keypoints"
+    if "instance-segmentation" in lowered or "mask_on: true" in lowered:
+        return "segmentation"
+    return "bbox"
+
+
+def _build_detectron2_train_command(
+    *,
+    python: str,
+    train_script: str,
+    config: Path,
+    work_dir: Path,
+    train_opts: list[tuple[str, str]],
+) -> list[str]:
+    cmd = [
+        str(python),
+        str(train_script),
+        "--config-file",
+        str(config),
+        "SOLVER.MAX_ITER",
+        "50",
+        "OUTPUT_DIR",
+        str(work_dir),
+    ]
+    for key, value in train_opts:
+        cmd.extend([str(key), str(value)])
+    return cmd
+
+
 def _cmd_train_yolox(args: argparse.Namespace) -> int:
     preset_name, preset = _resolve_preset(getattr(args, "preset", None))
     exp_path = Path(
@@ -446,6 +480,194 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
                 "trainer_runner": "external YOLOX train launcher",
                 "repo_impl": "support_external_training train-yolox",
                 "export_deploy": "export_predictions_yolox + eval/benchmark lanes",
+            },
+        }
+    )
+    _write_json(report_path, report)
+    print(str(report_path))
+    return 0 if bool(report.get("ok")) else 1
+
+
+def _cmd_train_detectron2(args: argparse.Namespace) -> int:
+    preset_name, preset = _resolve_preset(getattr(args, "preset", None))
+    config_path = Path(
+        _require_nonempty(
+            _resolve_value(args.config),
+            message="Detectron2 config file is required (set --config).",
+        )
+    ).resolve()
+    if not config_path.exists():
+        raise SystemExit(f"--config not found: {config_path}")
+
+    dataset_input = _require_nonempty(
+        _resolve_value(
+            args.dataset,
+            env="YOLOZU_DATASET",
+            preset=preset,
+            preset_key="dataset",
+        ),
+        message="dataset is required (set --dataset/-d, YOLOZU_DATASET, or --preset).",
+    )
+    source_format = str(
+        _resolve_value(
+            args.from_format,
+            env="YOLOZU_FROM_FORMAT",
+            preset=preset,
+            preset_key="from_format",
+            fallback="auto",
+        )
+    )
+    split = str(
+        _resolve_value(
+            args.split,
+            env="YOLOZU_SPLIT",
+            preset=preset,
+            preset_key="split",
+            fallback="train",
+        )
+    )
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/detectron2"))).resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    resolution = resolve_internal_dataset(
+        source_format=source_format,
+        dataset=dataset_input,
+        split=split,
+        output=work_dir / "dataset",
+        instances_json=str(args.instances_json) if args.instances_json else None,
+        images_dir=str(args.images_dir) if args.images_dir else None,
+        force=bool(args.force),
+    )
+
+    task_family = str(getattr(args, "task_family", "auto") or "auto").strip().lower()
+    if task_family == "auto":
+        task_family = _infer_detectron2_task_family(config_path)
+
+    projection_error: str | None = None
+    try:
+        train_cfg = project_detectron2_config(config=config_path)
+    except Exception as exc:
+        projection_error = str(exc)
+        train_cfg = TrainConfig(
+            backend="detectron2",
+            task=task_family,
+            model=str(config_path),
+            dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
+            source={"from": "detectron2", "config": str(config_path)},
+        )
+    else:
+        train_cfg = replace(
+            train_cfg,
+            task=task_family,
+            model=str(config_path),
+            dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
+        )
+
+    projection_path = work_dir / "detectron2_train_config_projection.json"
+    _write_json(
+        projection_path,
+        {
+            "format": "yolozu_external_training_projection_v1",
+            "provider": "detectron2",
+            "projection_error": projection_error,
+            "train_config": train_cfg.to_dict(),
+            "dataset_resolution": {
+                "dataset_root": str(resolution.dataset_root),
+                "split": str(resolution.split),
+                "source_format": str(resolution.source_format),
+            },
+            "environment_hints": {
+                "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+                "YOLOZU_SPLIT": str(resolution.split),
+                "YOLOZU_TASK_FAMILY": str(task_family),
+            },
+        },
+    )
+
+    train_script = str(args.train_script).strip() if args.train_script else ""
+    train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
+    command = _build_detectron2_train_command(
+        python=str(args.python),
+        train_script=(train_script or "<detectron2/tools/train_net.py>"),
+        config=config_path,
+        work_dir=work_dir,
+        train_opts=train_opts,
+    )
+    template = " ".join(command)
+
+    training_executed = False
+    runtime_error: str | None = None
+    proc_info: dict[str, Any] | None = None
+
+    if not bool(args.dry_run):
+        if not train_script:
+            runtime_error = (
+                "Detectron2 non-dry execution requires --train-script pointing to an external "
+                "detectron2/tools/train_net.py style launcher."
+            )
+        elif not Path(train_script).exists():
+            runtime_error = f"Detectron2 train script not found: {train_script}"
+        else:
+            env = dict(os.environ)
+            env["YOLOZU_DATASET_ROOT"] = str(resolution.dataset_root)
+            env["YOLOZU_SPLIT"] = str(resolution.split)
+            env["YOLOZU_TASK_FAMILY"] = str(task_family)
+            proc = _run(command, cwd=repo_root, env=env)
+            proc_info = {
+                "returncode": int(proc.returncode),
+                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+            }
+            training_executed = proc.returncode == 0
+            if proc.returncode != 0:
+                runtime_error = f"external Detectron2 train script failed ({proc.returncode})"
+
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_detectron2.json"))).resolve()
+    report = build_training_run_summary(
+        backend_id="detectron2",
+        report_path=report_path,
+        train_config=train_cfg,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": template,
+                "train_script": train_script or None,
+            },
+            "export": {"status": "planned", "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
+        },
+        process=proc_info,
+        runtime_error=runtime_error,
+        notes=[
+            f"preset={preset_name}",
+            f"projection={projection_path}",
+            "task is selected by the Detectron2 config (bbox / segmentation / keypoints).",
+        ],
+        license_boundary={
+            "repo_code": "Apache-2.0",
+            "optional_bridge": True,
+            "note": "Detectron2 runtime remains external to YOLOZU; review upstream terms and environment setup separately.",
+        },
+    )
+    report.update(
+        {
+            "task": "train_detectron2",
+            "task_family": task_family,
+            "config": str(config_path),
+            "train_script": train_script or None,
+            "template_train_command": template,
+            "train_config_projection": str(projection_path),
+            "projection_error": projection_error,
+            "layers": {
+                "trainer_runner": "external Detectron2 train launcher",
+                "repo_impl": "support_external_training train-detectron2",
+                "export_deploy": "export_predictions_detectron2 + eval/benchmark lanes",
             },
         }
     )
@@ -1102,6 +1324,40 @@ def _build_parser() -> argparse.ArgumentParser:
     tyx.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tyx.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tyx.set_defaults(_fn=_cmd_train_yolox)
+
+    td2 = sub.add_parser(
+        "train-detectron2",
+        aliases=["td2", "detectron2-train"],
+        help="Detectron2 external training bridge for bbox, instance segmentation, and keypoints.",
+    )
+    td2.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    td2.add_argument("-c", "--config", required=True, help="Detectron2 config YAML path.")
+    td2.add_argument("-t", "--train-script", default=None, help="Optional external Detectron2 train launcher for non-dry execution.")
+    td2.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    td2.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    td2.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    td2.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    td2.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    td2.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    td2.add_argument(
+        "--task-family",
+        choices=("auto", "bbox", "segmentation", "keypoints"),
+        default="auto",
+        help="Reported task family; auto infers from the Detectron2 config text.",
+    )
+    td2.add_argument(
+        "--train-opt",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        default=[],
+        help="Extra Detectron2 config override appended to the launcher command. Repeat for DATASETS.TRAIN/TEST etc.",
+    )
+    td2.add_argument("-W", "--work-dir", default="runs/support_external_training/detectron2", help="Work/cache dir.")
+    td2.add_argument("-o", "--output", default="reports/support_external_training.train_detectron2.json", help="Report JSON output path.")
+    td2.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    td2.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    td2.set_defaults(_fn=_cmd_train_detectron2)
 
     tul = sub.add_parser(
         "train-ultralytics",

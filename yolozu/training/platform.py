@@ -73,6 +73,22 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_mps=False,
         notes="Primary external training lane for YOLO-style workflows.",
     ),
+    "detectron2": TrainingBackendSpec(
+        backend_id="detectron2",
+        display_name="Detectron2 external lane",
+        trainer_kind="external_launcher",
+        lane_kind="external",
+        maturity="experimental",
+        config_kind="detectron2_config_yaml",
+        primary_use="External Detectron2 training for bbox, instance segmentation, and keypoints via backend-native configs.",
+        interface_contract_level="training_summary_contract",
+        supports_export=True,
+        supports_eval=True,
+        supports_parity=True,
+        supports_resume=False,
+        supports_mps=False,
+        notes="Task family is selected by the Detectron2 config and optional train-time overrides.",
+    ),
     "ultralytics": TrainingBackendSpec(
         backend_id="ultralytics",
         display_name="Ultralytics bridge",
@@ -275,4 +291,3 @@ def build_training_run_summary(
     if work_dir is not None:
         payload["work_dir"] = str(work_dir)
     return payload
-

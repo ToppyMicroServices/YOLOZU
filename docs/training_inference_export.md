@@ -306,6 +306,48 @@ python3 -m yolozu train \
   --output reports/train_external_hf_detr.json
 ```
 
+Detectron2 external lane (`bbox`, instance `segmentation`, or `keypoints`
+selected by your Detectron2 config):
+
+```bash
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  configs/examples/finetune_external/detectron2_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_detectron2_bbox.json
+```
+
+The same lane can describe Mask R-CNN and Keypoint R-CNN style runs:
+
+```bash
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/mask_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family segmentation \
+  --train-opt DATASETS.TRAIN "(\"my_seg_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_seg.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/keypoint_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family keypoints \
+  --train-opt DATASETS.TRAIN "(\"my_kpts_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_keypoints.json
+```
+
+For non-dry execution, add `--train-script /path/to/detectron2/tools/train_net.py`.
+Use repeated `--train-opt KEY VALUE` pairs to pass Detectron2 config overrides
+such as dataset registration names.
+
 ### External finetune smoke matrix (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
 
 Use a single command to audit external finetune entrypoints and emit a stable interface contract report:

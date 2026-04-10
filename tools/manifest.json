@@ -13231,7 +13231,8 @@
         "docs/training_backend_interface.md",
         "docs/training_capability_matrix.md",
         "docs/training_orchestration.md",
-        "docs/run_contract.md"
+        "docs/run_contract.md",
+        "docs/interop_detectron2_mmdet.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -13257,6 +13258,10 @@
           "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report."
         },
         {
+          "command": "python3 tools/support_external_training.py train-detectron2 --config configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_detectron2.json",
+          "description": "Dry-run the Detectron2 external training lane; the config can target bbox, instance segmentation, or keypoints."
+        },
+        {
           "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
           "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
         },
@@ -13268,7 +13273,7 @@
       "id": "support_external_training",
       "inputs": [
         {
-          "description": "One of: layers, dataset, train-yolox, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
+          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
           "flag": "--subcommand",
           "kind": "string",
           "name": "subcommand",
@@ -13323,6 +13328,27 @@
           "kind": "string",
           "name": "dry_run",
           "required": false
+        },
+        {
+          "description": "Detectron2 config YAML for train-detectron2.",
+          "flag": "--config",
+          "kind": "file",
+          "name": "config",
+          "required": false
+        },
+        {
+          "description": "Reported Detectron2 task family: bbox, segmentation, or keypoints.",
+          "flag": "--task-family",
+          "kind": "string",
+          "name": "task_family",
+          "required": false
+        },
+        {
+          "description": "Repeatable Detectron2 config override pair forwarded to the external launcher.",
+          "flag": "--train-opt",
+          "kind": "string",
+          "name": "train_opt",
+          "required": false
         }
       ],
       "outputs": [
@@ -13339,13 +13365,16 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2 external training for bbox/instance segmentation/keypoints, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries.",
       "tags": [
         "training",
         "interop",
         "yolox",
         "ultralytics",
-        "license-boundary"
+        "license-boundary",
+        "detectron2",
+        "keypoints",
+        "segmentation"
       ]
     },
     {
@@ -14355,7 +14384,8 @@
         "docs/training_capability_matrix.md",
         "docs/training_orchestration.md",
         "docs/run_contract.md",
-        "manual/chapters/07_training_run_contract.tex"
+        "manual/chapters/07_training_run_contract.tex",
+        "docs/interop_detectron2_mmdet.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14489,6 +14519,10 @@
         {
           "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
           "description": "Top-level train route for the Apache-2.0-friendly external YOLOX bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend detectron2 configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_detectron2_bbox.json",
+          "description": "Top-level train route for the Detectron2 external lane (bbox / instance segmentation / keypoints via backend-native configs)."
         },
         {
           "command": "python3 tools/yolozu.py sud ls -j",
@@ -14677,7 +14711,7 @@
           "required": false
         },
         {
-          "description": "Selects the external training lane (`yolox`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
+          "description": "Selects the external training lane (`yolox`, `detectron2`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
@@ -15618,6 +15652,20 @@
           "flag": "--stop-on-failure",
           "kind": "string",
           "name": "stop_on_failure",
+          "required": false
+        },
+        {
+          "description": "Forwarded Detectron2 task family for `train --external-backend detectron2`.",
+          "flag": "--task-family",
+          "kind": "string",
+          "name": "task_family",
+          "required": false
+        },
+        {
+          "description": "Repeatable Detectron2 config override pair forwarded when `train --external-backend detectron2` is active.",
+          "flag": "--train-opt",
+          "kind": "string",
+          "name": "train_opt",
           "required": false
         }
       ],

@@ -15,7 +15,7 @@ Every training backend should expose the same high-level ideas:
 - one clear statement of whether export / eval / parity are supported
 
 YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
-YOLOX, Ultralytics, and HF DETR as external lanes that still publish the same
+YOLOX, Detectron2, Ultralytics, and HF DETR as external lanes that still publish the same
 top-level summary interface contract.
 
 ## Backend ids
@@ -24,6 +24,7 @@ Current backend ids:
 
 - `reference-rtdetr-pose`
 - `yolox`
+- `detectron2`
 - `ultralytics`
 - `hf-detr`
 

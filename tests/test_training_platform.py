@@ -21,6 +21,7 @@ class TestTrainingPlatform(unittest.TestCase):
     def test_capability_matrix_lists_external_lanes(self) -> None:
         ids = {row["backend_id"] for row in training_capability_matrix()}
         self.assertIn("yolox", ids)
+        self.assertIn("detectron2", ids)
         self.assertIn("ultralytics", ids)
         self.assertIn("hf-detr", ids)
 

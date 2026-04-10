@@ -13,6 +13,7 @@ It complements:
 |---|---|---|---|---|---|---|---|---|
 | `reference-rtdetr-pose` | Stable | Reference | Yes | Yes | Yes | Yes | Yes | Qualification path |
 | `yolox` | Stable | External | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
+| `detectron2` | Experimental | External | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
 | `ultralytics` | Experimental | Optional external bridge | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
 | `hf-detr` | Experimental | Optional external bridge | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
 
@@ -26,6 +27,7 @@ It complements:
 
 - Start with `reference-rtdetr-pose` if you want the richest in-repo training path.
 - Prefer `yolox` if you want an Apache-2.0-friendly external YOLO-style lane.
+- Use `detectron2` when bbox, instance segmentation, or keypoints training already lives in a Detectron2 stack.
 - Treat `ultralytics` and `hf-detr` as environment-qualified bridges.
 
 ## Machine-readable source
