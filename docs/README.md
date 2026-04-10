@@ -50,6 +50,7 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 - If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
 - If you need an external YOLO-style training lane: use `yolozu train --external-backend yolox|ultralytics|hf-detr ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-optional-bridges-second)
 - If you need the current training scope boundary first: read [Current training support](training_inference_export.md#current-training-support)
+- If you need the platform view of training: read [Training backend interface](training_backend_interface.md), [Training capability matrix](training_capability_matrix.md), and [Training orchestration](training_orchestration.md)
 - If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke

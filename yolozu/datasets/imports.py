@@ -175,6 +175,7 @@ def project_ultralytics_args(cfg: dict[str, Any], *, source: dict[str, Any]) -> 
             preprocess[key] = cfg.get(key)
 
     return TrainConfig(
+        backend="ultralytics",
         model=(str(model) if isinstance(model, str) and model.strip() else None),
         imgsz=(imgsz if isinstance(imgsz, (int, list)) else None),
         batch=(_as_int(batch)),
@@ -239,6 +240,7 @@ def project_mmdet_config(*, config: str | Path) -> TrainConfig:
                     break
 
     return TrainConfig(
+        backend="mmdet",
         imgsz=imgsz,
         batch=batch,
         epochs=max_epochs,
@@ -286,6 +288,7 @@ def project_detectron2_config(*, config: str | Path) -> TrainConfig:
     }
 
     return TrainConfig(
+        backend="detectron2",
         imgsz=imgsz,
         batch=batch if isinstance(batch, int) else None,
         steps=steps if isinstance(steps, int) else None,
@@ -345,6 +348,7 @@ def project_yolox_exp(*, config: str | Path) -> TrainConfig:
     weight_decay = _as_float(getattr(exp, "weight_decay", None))
 
     return TrainConfig(
+        backend="yolox",
         imgsz=imgsz,
         batch=batch,
         epochs=epochs,

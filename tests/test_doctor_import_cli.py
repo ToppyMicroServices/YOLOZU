@@ -244,8 +244,10 @@ class TestDoctorImportCLI(unittest.TestCase):
 
             self.assertTrue(out_path.is_file())
             payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
             self.assertEqual(str(payload.get("task")), "train_yolox")
             self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "yolox")
             self.assertEqual(str((payload.get("license_boundary") or {}).get("primary_lane")), "YOLOX-style external training bridge")
 
     def test_train_external_ultralytics_dry_run_writes_bridge_report(self):
@@ -275,8 +277,10 @@ class TestDoctorImportCLI(unittest.TestCase):
 
             self.assertTrue(out_path.is_file())
             payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
             self.assertEqual(str(payload.get("task")), "train_ultralytics")
             self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "ultralytics")
             self.assertTrue(bool((payload.get("license_boundary") or {}).get("optional_bridge")))
 
     def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
@@ -306,8 +310,10 @@ class TestDoctorImportCLI(unittest.TestCase):
 
             self.assertTrue(out_path.is_file())
             payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
             self.assertEqual(str(payload.get("task")), "train_hf_detr")
             self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "hf-detr")
             self.assertEqual(str(payload.get("model_id")), "facebook/detr-resnet-50")
 
 

@@ -43,6 +43,21 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("ultralytics", proc.stdout)
         self.assertIn("hf-detr", proc.stdout)
 
+    def test_train_orchestrate_help_lists_core_flags(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "train-orchestrate", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"yolozu train-orchestrate --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--spec", proc.stdout)
+        self.assertIn("--execute", proc.stdout)
+
     def test_completion_help_lists_flags(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

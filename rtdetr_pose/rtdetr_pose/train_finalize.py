@@ -13,6 +13,7 @@ except ImportError:  # pragma: no cover
     torch = None
 
 from yolozu.metrics_report import build_report, write_csv_row, write_json
+from yolozu.training.platform import build_training_run_summary, project_reference_train_config
 
 from rtdetr_pose.train_utils import _now_utc, collect_rng_state, load_checkpoint_into, run_onnxrt_parity, save_checkpoint_bundle, unwrap_model
 
@@ -275,6 +276,52 @@ def finalize_training(
             json.dumps(run_record, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+
+    summary_out = getattr(args, "training_summary_out", None)
+    if is_main and summary_out:
+        summary_path = Path(str(summary_out))
+        parity_status = "not_requested"
+        if parity_out:
+            parity_status = "ok" if onnx_path is not None else "skipped"
+        summary = build_training_run_summary(
+            backend_id="reference-rtdetr-pose",
+            report_path=summary_path,
+            train_config=project_reference_train_config(args=args),
+            dataset_root=str(getattr(args, "dataset_root", None) or "") or None,
+            split=str(getattr(args, "split", None) or "") or None,
+            dry_run=False,
+            work_dir=str(run_dir) if run_dir is not None else None,
+            steps={
+                "train": {
+                    "status": "ok",
+                    "ok": True,
+                    "executed": True,
+                },
+                "export": {
+                    "status": onnx_export_status,
+                    "ok": onnx_export_status in {"ok", "disabled", "import_failed"},
+                    "executed": onnx_export_status == "ok",
+                    "artifact": str(onnx_path) if onnx_path is not None else None,
+                    "meta": str(onnx_meta_path) if onnx_meta_path is not None else None,
+                },
+                "eval": {
+                    "status": "embedded_in_train",
+                    "ok": True,
+                    "executed": True,
+                    "artifact": str(getattr(args, "val_metrics_jsonl", None) or ""),
+                },
+                "parity": {
+                    "status": parity_status,
+                    "ok": parity_status != "failed",
+                    "executed": bool(parity_out and onnx_path is not None),
+                    "artifact": str(parity_out) if parity_out else None,
+                },
+            },
+            notes=["Reference trainer emits the richer run contract under runs/<run_id>/ when enabled."],
+            license_boundary={"repo_code": "Apache-2.0", "optional_bridge": False},
+        )
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
 
     if ddp_enabled:
         torch.distributed.barrier()

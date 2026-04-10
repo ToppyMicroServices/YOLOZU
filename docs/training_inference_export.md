@@ -11,6 +11,12 @@ For YOLO-style training outside the reference trainer, use the **external traini
 YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
 is documented as a separate runtime/license boundary.
 
+The platform-level docs for training are:
+
+- [`training_backend_interface.md`](training_backend_interface.md)
+- [`training_capability_matrix.md`](training_capability_matrix.md)
+- [`training_orchestration.md`](training_orchestration.md)
+
 ## Current training support
 
 Use this scope boundary when deciding whether YOLOZU should own the training step or just the artifact/evaluation boundary:
@@ -22,6 +28,19 @@ Use this scope boundary when deciding whether YOLOZU should own the training ste
 | Ultralytics bridge | Optional external bridge | User-installed external runtime bridge | Keep the license boundary explicit; see `docs/license_policy.md`. |
 | HF DETR bridge | Optional external bridge | User-installed DETR-family bridge | Useful when a DETR-family training stack already exists outside this repo. |
 | Generic training platform for every model family | Not claimed | Universal training framework | YOLOZU does not claim this scope. It standardizes the run artifacts and the predictions interface contract around the supported lanes above. |
+
+## Training platform layer
+
+The training platform layer now has five explicit pieces:
+
+1. one canonical `TrainConfig` projection
+2. one backend interface registry
+3. one shared training run summary interface contract
+4. one training capability matrix
+5. one lightweight orchestration entrypoint
+
+This does not mean every backend is identical. It means the repo can describe
+different training lanes with one shared top-level shape.
 
 ## TL;DR (copy-paste)
 

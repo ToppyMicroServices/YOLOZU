@@ -28,6 +28,7 @@ For most day-to-day flows, start with:
 - `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
 - `python3 tools/yolozu.py sweep --config docs/hpo_sweep_example.json ...`
+- `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json`
 
 ## AI/MCP entrypoints
 
@@ -159,10 +160,15 @@ The manifest is intended for:
 
 ## External training helpers
 
+- Training platform docs:
+  - `docs/training_backend_interface.md`
+  - `docs/training_capability_matrix.md`
+  - `docs/training_orchestration.md`
 - 3-layer support matrix: `python3 tools/support_external_training.py ls -j`
 - Top-level train route (primary lane): `python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json`
 - Optional top-level Ultralytics bridge: `python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json`
 - Optional top-level HF DETR bridge: `python3 -m yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/train_external_hf_detr.json`
+- Lightweight orchestration plan/execute: `python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json`
 - Apache-2.0-friendly YOLOX bridge (dry-run): `python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json`
 - Optional Ultralytics bridge (dry-run): `python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json`
 - HF DETR entry wrapper (dry-run): `python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json`

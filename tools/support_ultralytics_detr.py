@@ -32,6 +32,8 @@ from yolozu.integrations.min_adapter import (  # noqa: E402
     write_ultralytics_data_yaml,
 )
 from yolozu.datasets.imports import project_yolox_exp  # noqa: E402
+from yolozu.core.canonical import TrainConfig  # noqa: E402
+from yolozu.training.platform import build_training_run_summary  # noqa: E402
 
 
 def _now_utc() -> str:
@@ -398,38 +400,58 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             if proc.returncode != 0:
                 runtime_error = f"external YOLOX train script failed ({proc.returncode})"
 
-    ok = bool(args.dry_run) or training_executed
-    report = {
-        "task": "train_yolox",
-        "timestamp": _now_utc(),
-        "ok": ok,
-        "dry_run": bool(args.dry_run),
-        "preset": preset_name,
-        "exp": str(exp_path),
-        "weights": str(weights_path) if weights_path else None,
-        "dataset_root": str(resolution.dataset_root),
-        "split": resolution.split,
-        "train_script": train_script or None,
-        "template_train_command": template,
-        "training_executed": training_executed,
-        "runtime_error": runtime_error,
-        "process": proc_info,
-        "train_config_projection": str(projection_path),
-        "layers": {
-            "trainer_runner": "external YOLOX train launcher",
-            "repo_impl": "support_external_training train-yolox",
-            "export_deploy": "export_predictions_yolox + eval/benchmark lanes",
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_yolox.json"))).resolve()
+    report = build_training_run_summary(
+        backend_id="yolox",
+        report_path=report_path,
+        train_config=train_cfg,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": template,
+                "train_script": train_script or None,
+            },
+            "export": {"status": "planned", "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
         },
-        "license_boundary": {
+        process=proc_info,
+        runtime_error=runtime_error,
+        notes=[
+            f"preset={preset_name}",
+            f"projection={projection_path}",
+        ],
+        license_boundary={
             "repo_code": "Apache-2.0",
             "primary_lane": "YOLOX-style external training bridge",
             "optional_bridge": False,
         },
-    }
-    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_yolox.json"))).resolve()
+    )
+    report.update(
+        {
+            "task": "train_yolox",
+            "preset": preset_name,
+            "exp": str(exp_path),
+            "weights": str(weights_path) if weights_path else None,
+            "train_script": train_script or None,
+            "template_train_command": template,
+            "train_config_projection": str(projection_path),
+            "layers": {
+                "trainer_runner": "external YOLOX train launcher",
+                "repo_impl": "support_external_training train-yolox",
+                "export_deploy": "export_predictions_yolox + eval/benchmark lanes",
+            },
+        }
+    )
     _write_json(report_path, report)
     print(str(report_path))
-    return 0 if ok else 1
+    return 0 if bool(report.get("ok")) else 1
 
 
 def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
@@ -527,42 +549,69 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         except Exception as exc:
             runtime_error = str(exc)
 
-    ok = bool(args.dry_run) or training_executed
-    report = {
-        "task": "train_ultralytics",
-        "timestamp": _now_utc(),
-        "ok": ok,
-        "dry_run": bool(args.dry_run),
-        "model": model_name,
-        "dataset_root": str(resolution.dataset_root),
-        "split": resolution.split,
-        "preset": preset_name,
-        "data_yaml": str(data_yaml),
-        "template_train_command": template,
-        "template_predict_normalize_command": (
-            "python3 tools/support_external_training.py predict-normalize "
-            f"--ultralytics-model {model_name} --dataset {resolution.dataset_root} "
-            f"--split {resolution.split} --output reports/ultralytics_predictions.normalized.json "
-            "--report reports/ultralytics_predict_normalize_report.json"
-        ),
-        "training_executed": training_executed,
-        "run_dir": run_dir,
-        "runtime_error": runtime_error,
-        "layers": {
-            "trainer_runner": "ultralytics.YOLO.train",
-            "repo_impl": "support_external_training train-ultralytics",
-            "export_deploy": "support_external_training export-onnx --provider ultralytics",
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_ultralytics.json"))).resolve()
+    train_cfg = TrainConfig(
+        backend="ultralytics",
+        model=str(model_name),
+        imgsz=int(args.imgsz),
+        batch=int(args.batch),
+        epochs=int(args.epochs),
+        device=str(args.device),
+        workers=int(args.workers),
+        dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
+        source={"from": "ultralytics", "model": str(model_name)},
+    )
+    report = build_training_run_summary(
+        backend_id="ultralytics",
+        report_path=report_path,
+        train_config=train_cfg,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": template,
+            },
+            "export": {"status": "planned", "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
         },
-        "license_boundary": {
+        runtime_error=runtime_error,
+        notes=[f"preset={preset_name}", f"data_yaml={data_yaml}"],
+        license_boundary={
             "repo_code": "Apache-2.0",
             "optional_bridge": True,
             "note": "Ultralytics runtime is optional and must be reviewed under its own license terms.",
         },
-    }
-    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_ultralytics.json"))).resolve()
+    )
+    report.update(
+        {
+            "task": "train_ultralytics",
+            "preset": preset_name,
+            "model": model_name,
+            "data_yaml": str(data_yaml),
+            "template_train_command": template,
+            "template_predict_normalize_command": (
+                "python3 tools/support_external_training.py predict-normalize "
+                f"--ultralytics-model {model_name} --dataset {resolution.dataset_root} "
+                f"--split {resolution.split} --output reports/ultralytics_predictions.normalized.json "
+                "--report reports/ultralytics_predict_normalize_report.json"
+            ),
+            "run_dir": run_dir,
+            "layers": {
+                "trainer_runner": "ultralytics.YOLO.train",
+                "repo_impl": "support_external_training train-ultralytics",
+                "export_deploy": "support_external_training export-onnx --provider ultralytics",
+            },
+        }
+    )
     _write_json(report_path, report)
     print(str(report_path))
-    return 0 if ok else 1
+    return 0 if bool(report.get("ok")) else 1
 
 
 def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
@@ -678,31 +727,62 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
                 "Use --dry-run to get template command or provide a script."
             )
 
-    ok = bool(args.dry_run) or training_executed
-    report = {
-        "task": "train_hf_detr",
-        "timestamp": _now_utc(),
-        "ok": ok,
-        "dry_run": bool(args.dry_run),
-        "model_id": model_id,
-        "dataset_root": str(resolution.dataset_root),
-        "split": resolution.split,
-        "preset": preset_name,
-        "train_script": train_script or None,
-        "template_train_command": " ".join(command),
-        "training_executed": training_executed,
-        "runtime_error": runtime_error,
-        "process": proc_info,
-        "layers": {
-            "trainer_runner": "transformers/accelerate entry script",
-            "repo_impl": "support_external_training train-hf-detr",
-            "export_deploy": "support_external_training export-onnx --provider hf_detr",
-        },
-    }
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_hf_detr.json"))).resolve()
+    train_cfg = TrainConfig(
+        backend="hf-detr",
+        model=str(model_id),
+        batch=int(args.batch_size),
+        epochs=int(args.epochs),
+        steps=int(args.max_steps),
+        lr=float(args.learning_rate),
+        dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
+        source={"from": "hf-detr", "model_id": str(model_id)},
+    )
+    report = build_training_run_summary(
+        backend_id="hf-detr",
+        report_path=report_path,
+        train_config=train_cfg,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": " ".join(command),
+                "train_script": train_script or None,
+            },
+            "export": {"status": "planned", "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
+        },
+        process=proc_info,
+        runtime_error=runtime_error,
+        notes=[f"preset={preset_name}"],
+        license_boundary={
+            "repo_code": "Apache-2.0",
+            "optional_bridge": True,
+        },
+    )
+    report.update(
+        {
+            "task": "train_hf_detr",
+            "preset": preset_name,
+            "model_id": model_id,
+            "train_script": train_script or None,
+            "template_train_command": " ".join(command),
+            "layers": {
+                "trainer_runner": "transformers/accelerate entry script",
+                "repo_impl": "support_external_training train-hf-detr",
+                "export_deploy": "support_external_training export-onnx --provider hf_detr",
+            },
+        }
+    )
     _write_json(report_path, report)
     print(str(report_path))
-    return 0 if ok else 1
+    return 0 if bool(report.get("ok")) else 1
 
 
 def _cmd_export_onnx(args: argparse.Namespace) -> int:

@@ -90,6 +90,8 @@ class SampleRecord:
 class TrainConfig:
     """Canonical training config projection (major keys only)."""
 
+    backend: str | None = None
+    task: str | None = None
     model: str | None = None
     imgsz: int | list[int] | None = None
     batch: int | None = None
@@ -100,16 +102,21 @@ class TrainConfig:
     weight_decay: float | None = None
     seed: int | None = None
     device: str | None = None
+    precision: str | None = None
+    workers: int | None = None
+    grad_clip_norm: float | None = None
 
+    dataset: dict[str, Any] | None = None
     preprocess: dict[str, Any] | None = None
     aug: dict[str, Any] | None = None
     loss: dict[str, Any] | None = None
     eval: dict[str, Any] | None = None
     export: dict[str, Any] | None = None
+    run_contract: dict[str, Any] | None = None
+    backend_options: dict[str, Any] | None = None
     source: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {"format": "yolozu_train_config_v1", **asdict(self)}
         # Remove nulls for readability.
         return {k: v for k, v in payload.items() if v is not None}
-

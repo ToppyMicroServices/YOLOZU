@@ -64,6 +64,16 @@
       "spec": "docs/synthgen_contract.md",
       "summary": "SynthGen intake sample interface contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
       "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]"
+    },
+    "training_orchestration_report_json": {
+      "producer": "python3 tools/orchestrate_train.py --spec <spec.json> --output <path>",
+      "schema": "docs/schemas/training_orchestration_report.schema.json",
+      "summary": "Batch-level training orchestration report describing planned or executed multi-backend experiments."
+    },
+    "training_run_summary_json": {
+      "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
+      "schema": "docs/schemas/training_run_summary.schema.json",
+      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and external training lanes."
     }
   },
   "manifest_version": 1,
@@ -8544,6 +8554,97 @@
       ]
     },
     {
+      "contracts": {
+        "produces": [
+          "training_orchestration_report_json"
+        ]
+      },
+      "docs": [
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/tools_index.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes orchestration report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/orchestrate_train.py",
+      "examples": [
+        {
+          "command": "python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
+          "description": "Plan a multi-backend training batch without executing it."
+        },
+        {
+          "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --execute",
+          "description": "Execute the planned batch through the top-level CLI alias."
+        }
+      ],
+      "id": "orchestrate_train",
+      "inputs": [
+        {
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--execute",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--stop-on-failure",
+          "kind": "string",
+          "name": "stop_on_failure",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Machine-readable orchestration report for the whole experiment batch.",
+          "kind": "file",
+          "name": "training_orchestration_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them and emit one orchestration report JSON.",
+      "tags": [
+        "training",
+        "orchestration",
+        "platform"
+      ]
+    },
+    {
       "docs": [
         "CONTRIBUTING.md"
       ],
@@ -13112,6 +13213,11 @@
       ]
     },
     {
+      "contracts": {
+        "produces": [
+          "training_run_summary_json"
+        ]
+      },
       "docs": [
         "README.md",
         "docs/README.md",
@@ -13121,7 +13227,11 @@
         "docs/training_inference_export.md",
         "manual/chapters/04_cli_reference.tex",
         "manual/chapters/05_workflows_eval_export.tex",
-        "manual/chapters/09_parity_bench_protocols.tex"
+        "manual/chapters/09_parity_bench_protocols.tex",
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/run_contract.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -13149,6 +13259,10 @@
         {
           "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
           "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json",
+          "description": "Dry-run the optional HF DETR bridge and emit the shared training summary interface contract."
         }
       ],
       "id": "support_external_training",
@@ -13213,9 +13327,9 @@
       ],
       "outputs": [
         {
-          "description": "Machine-readable report describing the selected external training or export bridge.",
+          "description": "Machine-readable training summary describing the selected external training lane.",
           "kind": "file",
-          "name": "bridge_report_json"
+          "name": "training_run_summary_json"
         }
       ],
       "platform": {
@@ -14236,7 +14350,12 @@
         "docs/interop_yolox.md",
         "docs/training_inference_export.md",
         "manual/chapters/04_cli_reference.tex",
-        "manual/chapters/05_workflows_eval_export.tex"
+        "manual/chapters/05_workflows_eval_export.tex",
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/run_contract.md",
+        "manual/chapters/07_training_run_contract.tex"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14382,6 +14501,10 @@
         {
           "command": "python3 -m yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/train_external_hf_detr.json",
           "description": "Top-level train route for the optional HF DETR bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
+          "description": "Plan a multi-backend training batch through the top-level CLI."
         }
       ],
       "id": "yolozu",
@@ -14441,11 +14564,11 @@
           "required": false
         },
         {
+          "description": "Forwarded batch size for external YOLOX/Ultralytics helper execution.",
           "flag": "--batch",
           "kind": "number",
           "name": "batch",
-          "required": false,
-          "description": "Forwarded batch size for external YOLOX/Ultralytics helper execution."
+          "required": false
         },
         {
           "flag": "--boxes-scale",
@@ -14515,11 +14638,11 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper when `train --external-backend` is active.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
-          "required": false,
-          "description": "Forwarded to the external training helper when `train --external-backend` is active."
+          "required": false
         },
         {
           "flag": "--dataset-from",
@@ -14534,11 +14657,11 @@
           "required": false
         },
         {
+          "description": "Forwarded device count for the external YOLOX launcher.",
           "flag": "--devices",
           "kind": "number",
           "name": "devices",
-          "required": false,
-          "description": "Forwarded device count for the external YOLOX launcher."
+          "required": false
         },
         {
           "flag": "--diag-iou",
@@ -14547,18 +14670,18 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper; resolve/report without launching runtime training.",
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
-          "required": false,
-          "description": "Forwarded to the external training helper; resolve/report without launching runtime training."
+          "required": false
         },
         {
+          "description": "Selects the external training lane (`yolox`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
-          "required": false,
-          "description": "Selects the external training lane (`yolox`, `ultralytics`, or `hf-detr`) for `yolozu train`."
+          "required": false
         },
         {
           "flag": "--fit-iou",
@@ -14585,11 +14708,11 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper to overwrite generated artifacts.",
           "flag": "--force",
           "kind": "string",
           "name": "force",
-          "required": false,
-          "description": "Forwarded to the external training helper to overwrite generated artifacts."
+          "required": false
         },
         {
           "flag": "--force-import-overwrite",
@@ -14635,11 +14758,11 @@
           "required": false
         },
         {
+          "description": "Forwarded image directory for COCO instance-style dataset resolution.",
           "flag": "--images-dir",
           "kind": "dir",
           "name": "images_dir",
-          "required": false,
-          "description": "Forwarded image directory for COCO instance-style dataset resolution."
+          "required": false
         },
         {
           "flag": "--input-dir",
@@ -14654,11 +14777,11 @@
           "required": false
         },
         {
+          "description": "Forwarded COCO instances JSON for external dataset resolution.",
           "flag": "--instances-json",
           "kind": "file",
           "name": "instances_json",
-          "required": false,
-          "description": "Forwarded COCO instances JSON for external dataset resolution."
+          "required": false
         },
         {
           "flag": "--iou-threshold",
@@ -14884,11 +15007,11 @@
         },
         {
           "default": "reports/predictions.json",
+          "description": "Forwarded report JSON path for the external training helper.",
           "flag": "--output",
           "kind": "file",
           "name": "output",
-          "required": false,
-          "description": "Forwarded report JSON path for the external training helper."
+          "required": false
         },
         {
           "flag": "--output-report",
@@ -14946,11 +15069,11 @@
           "required": false
         },
         {
+          "description": "Forwarded Python executable for external launcher subprocesses.",
           "flag": "--python",
           "kind": "string",
           "name": "python",
-          "required": false,
-          "description": "Forwarded Python executable for external launcher subprocesses."
+          "required": false
         },
         {
           "flag": "--rebalance-sampler",
@@ -15014,11 +15137,11 @@
           "required": false
         },
         {
+          "description": "Forwarded split name for the external training helper.",
           "flag": "--split",
           "kind": "string",
           "name": "split",
-          "required": false,
-          "description": "Forwarded split name for the external training helper."
+          "required": false
         },
         {
           "flag": "--stage1-epochs",
@@ -15105,11 +15228,11 @@
           "required": false
         },
         {
+          "description": "Forwarded external launcher path for non-dry YOLOX or HF DETR execution.",
           "flag": "--train-script",
           "kind": "file",
           "name": "train_script",
-          "required": false,
-          "description": "Forwarded external launcher path for non-dry YOLOX or HF DETR execution."
+          "required": false
         },
         {
           "flag": "--tta",
@@ -15465,17 +15588,36 @@
           "required": false
         },
         {
+          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
           "flag": "--weights",
           "kind": "file",
           "name": "weights",
-          "required": false,
-          "description": "Forwarded checkpoint path for external fine-tune/resume flows."
+          "required": false
         },
         {
-          "flag": "--preset",
           "description": "Forwarded preset for the external training helper when `train --external-backend` is active.",
-          "name": "preset",
+          "flag": "--preset",
           "kind": "string",
+          "name": "preset",
+          "required": false
+        },
+        {
+          "description": "Used by yolozu train-orchestrate to point at a batch spec.",
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
+          "required": false
+        },
+        {
+          "flag": "--execute",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "flag": "--stop-on-failure",
+          "kind": "string",
+          "name": "stop_on_failure",
           "required": false
         }
       ],
@@ -15508,7 +15650,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform now also exposes a shared training summary interface contract plus a lightweight train-orchestrate batch entrypoint.",
       "tags": [
         "cli",
         "predictions",

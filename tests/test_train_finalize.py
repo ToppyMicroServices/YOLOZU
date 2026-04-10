@@ -22,6 +22,7 @@ class TestTrainFinalize(unittest.TestCase):
             root = Path(td)
             onnx_out = root / "model.onnx"
             meta_out = root / "model.onnx.meta.json"
+            summary_out = root / "training_summary.json"
             seen: dict[str, object] = {}
 
             args = SimpleNamespace(
@@ -34,6 +35,7 @@ class TestTrainFinalize(unittest.TestCase):
                 si_state_out=None,
                 onnx_out=str(onnx_out),
                 onnx_meta_out=str(meta_out),
+                training_summary_out=str(summary_out),
                 onnx_opset=17,
                 onnx_dynamic_hw=False,
                 image_size=64,
@@ -82,6 +84,10 @@ class TestTrainFinalize(unittest.TestCase):
             self.assertEqual(payload.get("status"), "ok")
             self.assertEqual(payload.get("export_device"), "cpu")
             self.assertEqual(str(next(model.parameters()).device), "cpu")
+            summary = json.loads(summary_out.read_text(encoding="utf-8"))
+            self.assertEqual(summary.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(((summary.get("backend") or {}).get("backend_id")), "reference-rtdetr-pose")
+            self.assertEqual((((summary.get("steps") or {}).get("export") or {}).get("artifact")), str(onnx_out))
 
     @unittest.skipIf(torch is None or finalize_training is None, "torch is not installed")
     def test_onnx_export_failure_writes_structured_meta(self) -> None:
@@ -90,6 +96,7 @@ class TestTrainFinalize(unittest.TestCase):
             root = Path(td)
             onnx_out = root / "model.onnx"
             meta_out = root / "model.onnx.meta.json"
+            summary_out = root / "training_summary.json"
 
             args = SimpleNamespace(
                 metrics_json=None,
@@ -101,6 +108,7 @@ class TestTrainFinalize(unittest.TestCase):
                 si_state_out=None,
                 onnx_out=str(onnx_out),
                 onnx_meta_out=str(meta_out),
+                training_summary_out=str(summary_out),
                 onnx_opset=17,
                 onnx_dynamic_hw=False,
                 image_size=64,
@@ -146,6 +154,8 @@ class TestTrainFinalize(unittest.TestCase):
             self.assertEqual(((payload.get("error") or {}).get("type")), "IndexError")
             self.assertIn("bad axis", str((payload.get("error") or {}).get("message")))
             self.assertIsNone(payload.get("onnx"))
+            summary = json.loads(summary_out.read_text(encoding="utf-8"))
+            self.assertEqual((((summary.get("steps") or {}).get("export") or {}).get("status")), "failed")
 
 
 if __name__ == "__main__":

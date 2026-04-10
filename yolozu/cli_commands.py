@@ -180,6 +180,33 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     return int(proc.returncode)
 
 
+def _cmd_train_orchestrate(args: argparse.Namespace) -> int:
+    repo_root = Path(__file__).resolve().parents[1]
+    helper = repo_root / "tools" / "orchestrate_train.py"
+    if not helper.is_file():
+        raise SystemExit("missing tools/orchestrate_train.py")
+    cmd = [sys.executable, str(helper), "--spec", str(args.spec), "--output", str(args.output)]
+    if bool(getattr(args, "execute", False)):
+        cmd.append("--execute")
+    if bool(getattr(args, "dry_run", False)):
+        cmd.append("--dry-run")
+    if bool(getattr(args, "stop_on_failure", False)):
+        cmd.append("--stop-on-failure")
+    proc = subprocess.run(
+        cmd,
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    return int(proc.returncode)
+
+
 def _cmd_train_import_preview(args: argparse.Namespace) -> int:
     from yolozu.imports import (
         import_detectron2_config,

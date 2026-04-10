@@ -37,7 +37,7 @@ Core tenets of the run contract (codified within the documentation and enforced 
     \begin{itemize}
       \item \path{checkpoints/last.pt}, \path{checkpoints/best.pt}
       \item \path{reports/train_metrics.jsonl}, \path{reports/val_metrics.jsonl}
-      \item \path{reports/config_resolved.yaml}, \path{reports/run_meta.json}
+      \item \path{reports/config_resolved.yaml}, \path{reports/run_meta.json}, \path{reports/training_summary.json}
     \end{itemize}
   \item Optional export/parity artifacts (when export/parity is enabled):
     \path{exports/model.onnx}, \path{exports/model.onnx.meta.json}, \path{reports/onnx_parity.json}.
@@ -85,6 +85,7 @@ Required & \path{runs/<run_id>/reports/run_meta.json} & Always in contracted run
 Optional & \path{runs/<run_id>/exports/model.onnx} & Present when ONNX export is enabled \\
 Optional & \path{runs/<run_id>/exports/model.onnx.meta.json} & Present when ONNX export metadata is emitted \\
 Optional & \path{runs/<run_id>/reports/onnx_parity.json} & Present when ONNX parity check is executed \\
+Optional & \path{runs/<run_id>/reports/training_summary.json} & Present as the backend-neutral top-level summary interface contract \\
 \bottomrule
 \end{longtable}
 
@@ -150,6 +151,34 @@ yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictio
 
 
 \noindent For \cmd{yolozu test}, YAML keys are dynamically translated into \cmd{--key value} arguments (with booleans converted to flags), allowing subsequent CLI arguments to override them as necessary.
+
+\section{Backend interface and orchestration}
+The training platform now separates five concerns:
+\begin{enumerate}
+  \item a canonical \cmd{TrainConfig} projection,
+  \item a backend registry,
+  \item a shared \path{training_summary.json} style interface contract,
+  \item a capability matrix, and
+  \item a lightweight orchestration entrypoint.
+\end{enumerate}
+
+This means the reference trainer and the external lanes do not need to share
+one internal loop, but they do share one top-level description of what ran and
+what artifacts were promised.
+
+The repo-side orchestration command is:
+\begin{lstlisting}[language=bash]
+yolozu train-orchestrate \
+  --spec reports/train_orchestration_spec.json \
+  --output reports/training_orchestration_report.json
+\end{lstlisting}
+
+Read next:
+\begin{itemize}
+  \item \path{docs/training_backend_interface.md}
+  \item \path{docs/training_capability_matrix.md}
+  \item \path{docs/training_orchestration.md}
+\end{itemize}
 
 \section{External framework finetune smoke matrix}
 For user convenience, YOLOZU includes template configs and a unified smoke runner for external finetune entrypoints:

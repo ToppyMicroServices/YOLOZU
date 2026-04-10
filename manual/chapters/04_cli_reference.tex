@@ -49,7 +49,8 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{bash scripts/smoke.sh --profile deep} & Runs the deep walkthrough profile and writes \path{reports/smoke\_walkthrough\_report.json} plus backend dry-run export artifacts. \\
 \cmd{bash scripts/smoke.sh --help} & Shows smoke CLI options (\cmd{--dataset}, \cmd{--predictions}, \cmd{--report}, \cmd{--synthgen-root}, \cmd{--synthgen-predictions}, \cmd{--output-dir}, \cmd{--demo-run-dir}, \cmd{--skip-demo}, \cmd{--torch-device}, \cmd{--profile}, \cmd{--walkthrough-report}). \\
 \cmd{bash scripts/ttt\_compare.sh} & Short baseline-vs-adapted TTT compare wrapper. Use \cmd{--boilerplate tent|mim|mim\_probe|cotta|eata|sar} plus \cmd{--dataset}, \cmd{--checkpoint}, and \cmd{--run-dir}; it writes baseline/adapted predictions and a before-after Markdown+JSON summary. \\
-\cmd{yolozu train} & Initiates YAML/JSON config-driven RT-DETR training by default. With \cmd{--external-backend yolox|ultralytics|hf-detr}, it switches to the external training lane while keeping the same top-level train surface. Post-train ONNX export is attempted on CPU for portability, even if training ran on CUDA or MPS. \\
+\cmd{yolozu train} & Initiates YAML/JSON config-driven RT-DETR training by default. With \cmd{--external-backend yolox|ultralytics|hf-detr}, it switches to the external training lane while keeping the same top-level train surface. Post-train ONNX export is attempted on CPU for portability, even if training ran on CUDA or MPS. All supported lanes now converge on a shared top-level training summary interface contract. \\
+\cmd{yolozu train-orchestrate} & Plans or executes a small multi-backend training batch from one JSON spec and writes \path{training\_orchestration\_report.json}. This is repository-side experiment orchestration, not a cluster scheduler. \\
 \cmd{yolozu test} & Executes the YAML/JSON scenario runner (compatible with dummy, precomputed, and rtdetr\_pose adapters). \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
@@ -160,6 +161,7 @@ Resume & Same as Train (Contract) & \cmd{yolozu train <train_contract.yaml> --ru
 Train (External YOLOX) & \path{configs/examples/finetune_external/yolox_s_finetune_smoke.py} & \cmd{yolozu train --external-backend yolox <exp.py> --dataset <root> --split <split> --dry-run} \\
 Train (Optional Ultralytics) & \path{yolo11n.pt} & \cmd{yolozu train --external-backend ultralytics <model.pt> --dataset <root> --split <split> --dry-run} \\
 Train (Optional HF DETR) & \path{facebook/detr-resnet-50} & \cmd{yolozu train --external-backend hf-detr <model-id> --dataset <root> --split <split> --dry-run} \\
+Train orchestration & \path{reports/train_orchestration_spec.json} & \cmd{yolozu train-orchestrate --spec <spec.json> --output reports/training\_orchestration\_report.json} \\
 Test (Scenario) & \path{configs/examples/test_setting.yaml} & \cmd{yolozu test <test_setting.yaml> [test_args...]} \\
 \bottomrule
 \end{longtable}
@@ -172,6 +174,7 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run
 yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run
 yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run
+yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json
 yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictions reports/predictions.json
 \end{lstlisting}
 

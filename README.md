@@ -82,6 +82,7 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 - Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md)
 - YOLO-style external training lanes (`yolozu train --external-backend yolox|ultralytics|hf-detr ...`): [`docs/interop_yolox.md`](docs/interop_yolox.md)
 - Current training support matrix and scope boundary: [`docs/training_inference_export.md#current-training-support`](docs/training_inference_export.md#current-training-support)
+- Training backend interface / capability matrix / orchestration: [`docs/training_backend_interface.md`](docs/training_backend_interface.md), [`docs/training_capability_matrix.md`](docs/training_capability_matrix.md), [`docs/training_orchestration.md`](docs/training_orchestration.md)
 - Compare backends and benchmark paths: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
 - Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)

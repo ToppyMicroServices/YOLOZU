@@ -6,6 +6,7 @@ from .cli_commands import (
     _cmd_train_import_preview,
     _cmd_train,
     _cmd_train_external,
+    _cmd_train_orchestrate,
     _cmd_test,
     _cmd_doctor_import,
     _cmd_doctor,
@@ -635,6 +636,20 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
 
+    train_orch = sub.add_parser(
+        "train-orchestrate",
+        help="Plan or execute a small multi-backend training batch from one orchestration spec.",
+    )
+    train_orch.add_argument("--spec", required=True, help="JSON orchestration spec with experiments[].")
+    train_orch.add_argument(
+        "--output",
+        default="reports/training_orchestration_report.json",
+        help="Output report JSON path.",
+    )
+    train_orch.add_argument("--execute", action="store_true", help="Run the planned commands.")
+    train_orch.add_argument("--dry-run", action="store_true", help="Append --dry-run when missing.")
+    train_orch.add_argument("--stop-on-failure", action="store_true", help="Stop after the first failing execution.")
+
     test_p = sub.add_parser("test", help="Run scenario suite (dummy/precomputed adapters are CPU-only).")
     test_p.add_argument("config", type=str, help="Path to test config YAML/JSON (test_setting.yaml).")
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
@@ -983,6 +998,8 @@ def main(argv: list[str] | None = None) -> int:
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
         return _cmd_test(config_path, extra_args=list(extra_argv or []))
+    if args.command == "train-orchestrate":
+        return _cmd_train_orchestrate(args)
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)

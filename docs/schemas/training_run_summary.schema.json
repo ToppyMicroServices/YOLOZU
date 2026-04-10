@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/training_run_summary.schema.json",
+  "title": "YOLOZU training run summary",
+  "type": "object",
+  "required": ["format", "schema_version", "timestamp", "backend", "ok", "canonical_train_config", "run_output_contract", "steps"],
+  "properties": {
+    "format": { "const": "yolozu_training_run_summary_v1" },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "timestamp": { "type": "string" },
+    "backend": { "type": "object" },
+    "ok": { "type": "boolean" },
+    "dry_run": { "type": "boolean" },
+    "training_executed": { "type": "boolean" },
+    "canonical_train_config": { "type": "object" },
+    "dataset": { "type": "object" },
+    "run_output_contract": { "type": "object" },
+    "steps": { "type": "object" },
+    "process": { "type": ["object", "null"] },
+    "runtime_error": { "type": ["string", "null"] },
+    "license_boundary": { "type": "object" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "work_dir": { "type": "string" }
+  },
+  "additionalProperties": true
+}
