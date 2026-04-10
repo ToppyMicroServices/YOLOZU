@@ -1,4 +1,4 @@
-"""Minimal RTDETRPose training scaffold.
+"""RTDETRPose reference trainer.
 
 The heavy lifting is split across submodules:
 - train_cli: CLI argument parsing (build_parser, parse_args, etc.)

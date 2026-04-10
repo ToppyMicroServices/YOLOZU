@@ -2,7 +2,9 @@
 
 This note provides a minimal, end-to-end path for training, inference, and exporting predictions.
 
-Note: the in-repo trainer under `rtdetr_pose/` is scaffold-first, but supports a **production-style run contract**
+Note: the in-repo trainer under `rtdetr_pose/` is the repo's **reference trainer**. In other words,
+training is supported in YOLOZU for this RT-DETR pose lane. What YOLOZU does not claim is a
+general-purpose training framework for every model family. The reference trainer still supports a **production-style run contract**
 (fixed artifact paths, full resume, safety guards, export + parity checks).
 
 ## TL;DR (copy-paste)
@@ -80,7 +82,7 @@ The adapter registry (`yolozu.datasets.registry.probe_format`) auto-detects
 whether a directory is COCO-native or YOLO-format, so both `data/coco/` and
 `data/coco-yolo/` work transparently.
 
-## Training (RT-DETR pose scaffold)
+## Training (RT-DETR pose reference trainer)
 
 1) Install dependencies (CPU PyTorch for local dev):
 - python3 -m pip install -r requirements-test.txt
@@ -122,7 +124,7 @@ Common options:
 
 macOS / Apple Silicon beta notes:
 - `--device auto` resolves in `cuda -> mps -> cpu` order.
-- `--device mps` is supported for the scaffold trainer.
+- `--device mps` is supported for the reference trainer.
 - `--amp fp16|bf16` on MPS is best-effort; unsupported autocast modes warn and fall back to fp32.
 - If an op is still missing on MPS, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
 - --cost-z 1.0 --cost-rot 1.0 --cost-t 1.0

@@ -2,7 +2,7 @@
 
 This is a **reference recipe** for training a detector in an external environment.
 
-This repo ships a minimal training scaffold (`rtdetr_pose/`) to wire data/loss/export/metrics,
+This repo ships an in-repo reference trainer (`rtdetr_pose/`) to wire data/loss/export/metrics,
 but it is **not** a production-grade training stack. The stable integration point is the
 exported `predictions.json`.
 

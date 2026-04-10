@@ -588,7 +588,7 @@ def main(argv: list[str] | None = None) -> int:
     imp_cfg.add_argument("--output", required=True, help="Output path (file or directory).")
     imp_cfg.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
 
-    train_p = sub.add_parser("train", help="Train with RT-DETR pose scaffold (requires `yolozu[train]`).")
+    train_p = sub.add_parser("train", help="Train with the RT-DETR pose reference trainer (requires `yolozu[train]`).")
     train_p.add_argument("config", nargs="?", type=str, help="Path to train config YAML/JSON (train_setting.yaml).")
     train_p.add_argument(
         "--import",

@@ -44,7 +44,7 @@ flowchart LR
 ## Primary Focus
 
 - 主戦場: 既存 predictions を framework / runtime をまたいで公平に評価すること
-- 次のレイヤ: 同じ predictions interface contract へつなぐ export / train scaffold
+- 次のレイヤ: 同じ predictions interface contract へつなぐ export と reference training lane
 - 発展レイヤ: continual learning、TTT、SynthGen、backend parity の research path
 
 ## Capability Maturity

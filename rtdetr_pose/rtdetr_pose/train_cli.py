@@ -41,7 +41,9 @@ def load_config_file(path: str | Path) -> dict[str, Any]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Minimal RTDETRPose training scaffold.")
+    parser = argparse.ArgumentParser(
+        description="RTDETRPose reference trainer (in-repo training lane with run-contract artifacts)."
+    )
     parser.add_argument(
         "--config",
         default=None,

@@ -15274,7 +15274,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose scaffold (none/sidecar/fuse_mid with safety gating).",
+      "summary": "Unified CLI for model-family-agnostic contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose reference trainer (none/sidecar/fuse_mid with safety gating).",
       "tags": [
         "cli",
         "predictions",

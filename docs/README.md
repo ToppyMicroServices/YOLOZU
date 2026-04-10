@@ -27,7 +27,7 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 ## Primary Focus
 
 - Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Secondary lane: export and reference training lanes that feed the same predictions interface contract
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
 ## Capability Maturity
@@ -46,7 +46,7 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 ## Quick route map
 
 - If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
-- If you need train/export/eval scaffolding: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-scaffold)
+- If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
 - If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke
@@ -109,7 +109,7 @@ Reference docs:
 - [External inference backends](external_inference.md)
 - [Predictions schema](predictions_schema.md)
 
-## B) Train → Export → Eval (RT-DETR scaffold)
+## B) Train → Export → Eval (RT-DETR reference trainer)
 
 Use this path when you want a train-like flow with smoke-safe local artifacts.
 

@@ -44,7 +44,7 @@ flowchart LR
 ## Primary Focus
 
 - Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Secondary lane: export and reference training lanes that feed the same predictions interface contract
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
 ## Capability Maturity
