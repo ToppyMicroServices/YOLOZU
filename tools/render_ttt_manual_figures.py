@@ -424,7 +424,7 @@ def _draw_probe_grid(source: dict[str, Any], out_path: Path) -> None:
         "to keep the grid readable; use the prediction JSON and compare markdown for full detections."
     )
     if not by_no_ttt or not by_ttt:
-        footer += " When probe prediction artifacts are missing, the renderer falls back to label-derived boxes so CI can still regenerate the figure scaffold."
+        footer += " When probe prediction artifacts are missing, the renderer falls back to label-derived boxes so CI can still regenerate the figure."
     _draw_wrapped(draw, (40, canvas.height - 64), footer, font=FONT_18, width=150, line_gap=4)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path)

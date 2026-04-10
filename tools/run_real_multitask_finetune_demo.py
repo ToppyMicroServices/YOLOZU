@@ -3,7 +3,7 @@
 
 Tasks covered:
 - bbox
-- segmentation (mask-supervised metadata + bbox objective scaffold)
+- segmentation (mask-supervised metadata + bbox objective path)
 - keypoints
 - depth
 - pose6d
