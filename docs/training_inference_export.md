@@ -7,6 +7,10 @@ training is supported in YOLOZU for this RT-DETR pose lane. What YOLOZU does not
 general-purpose training framework for every model family. The reference trainer still supports a **production-style run contract**
 (fixed artifact paths, full resume, safety guards, export + parity checks).
 
+For YOLO-style training outside the reference trainer, use the **external training lane**.
+YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
+is documented as a separate runtime/license boundary.
+
 ## TL;DR (copy-paste)
 
 ```bash
@@ -211,7 +215,34 @@ The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
 `prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
 
-### External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR)
+### External YOLO-style training lane (YOLOX primary, Ultralytics optional)
+
+Use this path when you want YOLOZU to standardize dataset resolution, reports, and the
+predictions interface contract while the actual YOLO training loop stays in an external repo/runtime.
+
+YOLOX dry-run bridge:
+
+```bash
+python3 tools/support_external_training.py train-yolox \
+  --dataset data/smoke \
+  --split val \
+  --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dry-run \
+  --output reports/support_external_training.train_yolox.json
+```
+
+Optional Ultralytics bridge:
+
+```bash
+python3 tools/support_external_training.py train-ultralytics \
+  --dataset data/smoke \
+  --split val \
+  --preset smoke \
+  --dry-run \
+  --output reports/support_external_training.train_ultralytics.json
+```
+
+### External finetune smoke matrix (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
 
 Use a single command to audit external finetune entrypoints and emit a stable interface contract report:
 
@@ -228,8 +259,10 @@ Run real training for selected frameworks:
 python3 tools/run_external_finetune_smoke.py \
   --dataset-root data/smoke \
   --split train \
+  --non-dry-framework yolox \
   --non-dry-framework yolov \
   --non-dry-framework rtdetr \
+  --yolox-train-script /path/to/YOLOX/tools/train.py \
   --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
   --device cpu \
   --require-training-execution \
@@ -238,6 +271,7 @@ python3 tools/run_external_finetune_smoke.py \
 
 Prepared per-framework templates:
 
+- `configs/examples/finetune_external/yolox_s_finetune_smoke.py`
 - `configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml`
 - `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
 - `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
@@ -248,6 +282,7 @@ For MMDetection/Detectron2 external launchers, see:
 
 Report behavior notes:
 
+- YOLOX is the preferred Apache-2.0-friendly YOLO-style lane for external training.
 - RT-DETR non-dry torch-missing failures are explicit (`failure_code=E_DEP_TORCH_MISSING`).
 - With `--mmdet-train-script` / `--detectron2-train-script`, train-path audit can continue even when projection deps are unavailable; `projection_error` is recorded while `training_executed` reflects external launcher execution.
 

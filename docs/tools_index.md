@@ -157,13 +157,15 @@ The manifest is intended for:
 - Release checklist: `docs/release_reliability_checklist.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 
-## YOLO/DETR helpers
+## External training helpers
 
-- 3-layer support matrix: `python3 tools/support_yolo_detr.py ls -j`
-- YOLO-family runtime fine-tune wrapper (dry-run): `python3 tools/support_yolo_detr.py tu -P smoke -n -o reports/support_yolo_detr.train_yolo_runtime.json`
-- HF DETR entry wrapper (dry-run): `python3 tools/support_yolo_detr.py th -P smoke -n -o reports/support_yolo_detr.train_hf_detr.json`
-- ONNX export wrapper (dry-run): `python3 tools/support_yolo_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_yolo_detr.export_onnx.json`
-- Details: `docs/yolo_detr_support.md`
+- 3-layer support matrix: `python3 tools/support_external_training.py ls -j`
+- Apache-2.0-friendly YOLOX bridge (dry-run): `python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json`
+- Optional Ultralytics bridge (dry-run): `python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json`
+- HF DETR entry wrapper (dry-run): `python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json`
+- ONNX export wrapper (dry-run): `python3 tools/support_external_training.py export-onnx -P smoke -o models/yolo11n.onnx -n -r reports/support_external_training.export_onnx.json`
+- Legacy alias: `python3 tools/support_yolo_detr.py ...`
+- Read first: `docs/interop_yolox.md`, `docs/training_inference_export.md`, `docs/license_policy.md`
 
 ### AI-required manifest fields
 

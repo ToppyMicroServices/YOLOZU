@@ -236,6 +236,10 @@ surface only. YOLOZU keeps its Apache-2.0-only repository operations policy and
 must not pull GPL-licensed implementation code into the repository while
 closing these gaps.
 
+The same boundary logic applies to training-side integrations: prefer the
+Apache-2.0-friendly YOLOX external lane first, and keep optional Ultralytics
+bridges explicitly separated rather than treating them as equivalent defaults.
+
 For repository-side orchestration, the equivalent wrapper is
 \path{tools/benchmark_model.py}.
 

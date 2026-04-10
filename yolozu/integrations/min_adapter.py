@@ -1,4 +1,4 @@
-"""Minimal shared adapters for Ultralytics/DETR integration flows.
+"""Minimal shared adapters for external training/integration flows.
 
 This module provides a small common surface for:
 - dataset conversion (COCO/Ultralytics/internal -> YOLOZU internal wrapper),
@@ -40,19 +40,24 @@ def layered_support_matrix() -> dict[str, Any]:
     return {
         "layers": dict(_LAYER_CONTRACT),
         "providers": {
+            "yolox_apache": {
+                "trainer_runner": "external YOLOX train launcher",
+                "repo_impl": "tools/support_external_training.py train-yolox",
+                "export_deploy": "tools/export_predictions_yolox.py",
+            },
             "ultralytics_yolo": {
                 "trainer_runner": "ultralytics.YOLO.train",
-                "repo_impl": "tools/support_ultralytics_detr.py train-ultralytics",
-                "export_deploy": "tools/support_ultralytics_detr.py export-onnx --provider ultralytics",
+                "repo_impl": "tools/support_external_training.py train-ultralytics",
+                "export_deploy": "tools/support_external_training.py export-onnx --provider ultralytics",
             },
             "hf_detr_rtdetr": {
                 "trainer_runner": "transformers/accelerate entry (template + external script bridge)",
-                "repo_impl": "tools/support_ultralytics_detr.py train-hf-detr",
-                "export_deploy": "tools/support_ultralytics_detr.py export-onnx --provider hf_detr",
+                "repo_impl": "tools/support_external_training.py train-hf-detr",
+                "export_deploy": "tools/support_external_training.py export-onnx --provider hf_detr",
             },
             "onnx_deploy": {
                 "trainer_runner": "N/A (export/deploy layer)",
-                "repo_impl": "tools/support_ultralytics_detr.py export-onnx",
+                "repo_impl": "tools/support_external_training.py export-onnx",
                 "export_deploy": "ONNX + optional TensorRT engine build command template",
             },
         },

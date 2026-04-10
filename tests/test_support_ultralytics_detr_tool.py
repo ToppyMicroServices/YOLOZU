@@ -22,6 +22,7 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
         )
         if proc.returncode != 0:
             self.fail(f"support_ultralytics_detr --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("train-yolox", proc.stdout)
         self.assertIn("train-ultralytics", proc.stdout)
         self.assertIn("train-hf-detr", proc.stdout)
         self.assertIn("export-onnx", proc.stdout)
@@ -106,6 +107,34 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertTrue(bool(ultra_payload.get("ok")))
             self.assertTrue(bool(ultra_payload.get("dry_run")))
             self.assertIn("template_train_command", ultra_payload)
+
+            train_yolox_report = root / "train_yolox_report.json"
+            proc_yolox = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "ty",
+                    "-x",
+                    "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                    "-P",
+                    "smoke",
+                    "-n",
+                    "-o",
+                    str(train_yolox_report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc_yolox.returncode != 0:
+                self.fail(f"train-yolox --dry-run failed:\n{proc_yolox.stdout}\n{proc_yolox.stderr}")
+            yolox_payload = json.loads(train_yolox_report.read_text(encoding="utf-8"))
+            self.assertTrue(bool(yolox_payload.get("ok")))
+            self.assertTrue(bool(yolox_payload.get("dry_run")))
+            self.assertEqual(str(yolox_payload.get("task")), "train_yolox")
+            self.assertIn("template_train_command", yolox_payload)
 
             train_hf_report = root / "train_hf_report.json"
             proc_hf = subprocess.run(

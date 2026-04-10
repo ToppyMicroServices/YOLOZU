@@ -45,6 +45,7 @@ flowchart LR
 
 - Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
 - Secondary lane: export and reference training lanes that feed the same predictions interface contract
+- Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external copyleft-sensitive bridges kept separate
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
 ## Capability Maturity
@@ -79,6 +80,7 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 
 - Evaluate precomputed predictions: [`docs/external_inference.md`](docs/external_inference.md)
 - Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md)
+- Apache-2.0 YOLO-style external training lane: [`docs/interop_yolox.md`](docs/interop_yolox.md)
 - Compare backends and benchmark paths: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
 - Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
@@ -106,6 +108,7 @@ More repo-first guidance:
 
 - Support: [`docs/support.md`](docs/support.md)
 - License policy: [`docs/license_policy.md`](docs/license_policy.md)
+- External training boundary: YOLOX first, optional Ultralytics bridge second
 - Apache-2.0 license: [`LICENSE`](LICENSE)
 - Latest release: [GitHub Releases](https://github.com/ToppyMicroServices/YOLOZU/releases)
 - Zenodo software DOI: [10.5281/zenodo.18744756](https://doi.org/10.5281/zenodo.18744756)

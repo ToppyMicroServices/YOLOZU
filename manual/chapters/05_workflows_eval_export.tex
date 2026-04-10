@@ -192,6 +192,51 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 
 The exporter records \path{weights\_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export\_settings}.
 
+\subsection{YOLO-style external training lane}
+When the goal is training rather than export-only interop, the recommended
+external YOLO-style lane is YOLOX because it fits the repository's Apache-2.0
+operational policy more naturally than optional copyleft-sensitive bridges.
+
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-yolox \
+  --dataset data/smoke \
+  --split val \
+  --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dry-run \
+  --output reports/support_external_training.train_yolox.json
+\end{lstlisting}
+
+This writes a machine-readable report containing:
+\begin{itemize}
+  \item the resolved dataset root and split,
+  \item a projected training configuration,
+  \item the template command for the external launcher,
+  \item the runtime/license boundary for the lane.
+\end{itemize}
+
+For real execution, provide your local YOLOX train launcher:
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-yolox \
+  --dataset /path/to/coco-yolo \
+  --split train \
+  --exp /path/to/yolox_exp.py \
+  --train-script /path/to/YOLOX/tools/train.py \
+  --batch 16 \
+  --weights /path/to/yolox_ckpt.pth \
+  --output reports/support_external_training.train_yolox.exec.json
+\end{lstlisting}
+
+The Ultralytics bridge remains available on the same surface, but it is
+documented as optional and should be reviewed separately under its own license
+terms:
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-ultralytics \
+  --dataset data/smoke \
+  --split val \
+  --preset smoke \
+  --dry-run
+\end{lstlisting}
+
 \subsection{SynthGen intake workflow (external generator)}
 When synthetic shards are generated externally (for example in \path{YOLOZU-synthgen}), \yolozu{} provides the contract/eval side:
 \begin{lstlisting}[language=bash]

@@ -61,12 +61,12 @@ class TestExternalFinetuneSmokeTool(unittest.TestCase):
 
             payload = json.loads(out.read_text(encoding="utf-8"))
             self.assertTrue(bool(payload.get("ok")))
-            self.assertEqual((payload.get("counts") or {}).get("frameworks"), 4)
+            self.assertEqual((payload.get("counts") or {}).get("frameworks"), 5)
             results = payload.get("results") or []
-            self.assertEqual(len(results), 4)
+            self.assertEqual(len(results), 5)
             self.assertTrue(all(bool(row.get("dry_run", False)) for row in results))
             frameworks = {str(row.get("framework")) for row in results}
-            self.assertEqual(frameworks, {"yolov", "mmdetection", "detectron2", "rtdetr"})
+            self.assertEqual(frameworks, {"yolox", "yolov", "mmdetection", "detectron2", "rtdetr"})
 
     def test_external_finetune_smoke_require_non_dry_fails_without_selection(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -103,6 +103,7 @@ class TestExternalFinetuneSmokeTool(unittest.TestCase):
     def test_external_finetune_template_files_exist(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         templates = [
+            repo_root / "configs" / "examples" / "finetune_external" / "yolox_s_finetune_smoke.py",
             repo_root / "configs" / "examples" / "finetune_external" / "ultralytics_yolov8n_finetune_smoke.yaml",
             repo_root / "configs" / "examples" / "finetune_external" / "mmdetection_finetune_smoke.py",
             repo_root / "configs" / "examples" / "finetune_external" / "detectron2_finetune_smoke.yaml",
@@ -235,6 +236,59 @@ raise SystemExit(0)
                 self.assertIn("projection_executed", row)
                 if not bool(row.get("projection_executed")):
                     self.assertTrue(str(row.get("projection_error")))
+
+    def test_external_finetune_smoke_yolox_train_script_is_audited(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_external_finetune_smoke.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            out = root / "external_finetune_smoke.json"
+            yolox_script = self._write_exec(
+                root / "yolox_train_stub.py",
+                """#!/usr/bin/env python3
+import sys
+raise SystemExit(0)
+""",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "train",
+                    "--framework",
+                    "yolox",
+                    "--non-dry-framework",
+                    "yolox",
+                    "--yolox-train-script",
+                    str(yolox_script),
+                    "--require-training-execution",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"run_external_finetune_smoke.py failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertTrue(bool(payload.get("ok")))
+            results = payload.get("results") or []
+            self.assertEqual(len(results), 1)
+            row = dict(results[0])
+            self.assertEqual(str(row.get("framework")), "yolox")
+            self.assertTrue(bool(row.get("projection_executed")))
+            self.assertTrue(bool(row.get("train_path_audited")))
+            self.assertTrue(bool(row.get("train_script_configured")))
+            self.assertTrue(bool(row.get("training_executed")))
 
 
 if __name__ == "__main__":

@@ -1,18 +1,22 @@
-# External finetune smoke (YOLOv/MMDetection/Detectron2/RT-DETR)
+# External finetune smoke (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
 
-This page defines a practical smoke workflow to check whether finetune entrypoints are usable across four framework paths:
+This page defines a practical smoke workflow to check whether finetune entrypoints are usable across five framework paths:
 
+- YOLOX (Apache-2.0 primary external lane)
 - YOLOv (YOLO-family runtime)
 - MMDetection
 - Detectron2
 - RT-DETR (`rtdetr_pose` in-repo)
 
 The focus is a stable interface contract for reproducible command inputs/outputs and a machine-readable report.
+YOLOX is the recommended external YOLO-style lane because it preserves YOLOZU's
+Apache-2.0 repository policy more cleanly than optional copyleft bridges.
 
 ## Config templates
 
 Prepared templates live in:
 
+- `configs/examples/finetune_external/yolox_s_finetune_smoke.py`
 - `configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml`
 - `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
 - `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
@@ -41,8 +45,10 @@ Run real training where runtime dependencies are available.
 python3 tools/run_external_finetune_smoke.py \
   --dataset-root data/smoke \
   --split train \
+  --non-dry-framework yolox \
   --non-dry-framework yolov \
   --non-dry-framework rtdetr \
+  --yolox-train-script /path/to/YOLOX/tools/train.py \
   --epochs 1 \
   --max-steps 1 \
   --batch-size 2 \
@@ -58,6 +64,10 @@ If torch is missing for RT-DETR non-dry execution, the report returns:
 - `runtime_error`: explicit message with dependency probe detail
 
 This makes the failure explicit instead of a generic train-command failure.
+
+For YOLOX, projection can run even without the YOLOX package installed because the
+smoke exp template is clean-room and self-contained. Real training still requires
+your local external YOLOX launcher.
 
 ## 3) Add MMDetection / Detectron2 training launchers
 
@@ -107,4 +117,5 @@ python3 tools/run_external_finetune_smoke.py \
 
 - `--require-non-dry` fails when every framework is dry-run.
 - `--require-training-execution` fails when no framework executed training.
+- `--yolox-train-script` lets the smoke tool audit a real Apache-2.0 YOLOX train path without vendoring YOLOX into this repo.
 - The report includes command lines, warnings, `failure_code`, and per-framework status fields (`projection_executed`, `projection_error`, `train_path_audited`) to support CI gating.

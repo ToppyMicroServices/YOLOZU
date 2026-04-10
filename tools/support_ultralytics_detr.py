@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""YOLO/DETR integration support tool.
+"""External training/integration support tool.
 
 Provides three-layer support helpers:
 1) trainer/runner,
 2) repo integration wrappers,
 3) export/deploy (ONNX + optional TensorRT handoff).
+
+The primary Apache-2.0-friendly training lane is YOLOX-style training via an
+external YOLOX launcher. Optional bridges for Ultralytics YOLO and HF DETR are
+kept explicit so the runtime/license boundary stays visible.
 """
 
 from __future__ import annotations
@@ -27,6 +31,7 @@ from yolozu.integrations.min_adapter import (  # noqa: E402
     resolve_internal_dataset,
     write_ultralytics_data_yaml,
 )
+from yolozu.datasets.imports import project_yolox_exp  # noqa: E402
 
 
 def _now_utc() -> str:
@@ -38,8 +43,21 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def _run(cmd: list[str], *, cwd: Path = repo_root) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+def _run(
+    cmd: list[str],
+    *,
+    cwd: Path = repo_root,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
 
 
 _PRESETS: dict[str, dict[str, str]] = {
@@ -213,6 +231,207 @@ def _ultralytics_train_template(
     )
 
 
+def _yolox_train_template(
+    *,
+    python: str,
+    train_script: str,
+    exp_file: str,
+    batch: int,
+    weights: str | None,
+    devices: int,
+) -> str:
+    cmd = [
+        f"YOLOZU_DATASET_ROOT=<dataset_root>",
+        "YOLOZU_SPLIT=<split>",
+        "YOLOZU_NUM_CLASSES=<num_classes>",
+        str(python),
+        str(train_script),
+        "-f",
+        str(exp_file),
+        "-d",
+        str(int(devices)),
+        "-b",
+        str(int(batch)),
+    ]
+    if weights:
+        cmd.extend(["-c", str(weights)])
+    return " ".join(cmd)
+
+
+def _build_yolox_train_command(
+    *,
+    python: str,
+    train_script: str,
+    exp_file: str,
+    batch: int,
+    devices: int,
+    weights: str | None,
+) -> list[str]:
+    cmd = [
+        str(python),
+        str(train_script),
+        "-f",
+        str(exp_file),
+        "-d",
+        str(int(devices)),
+        "-b",
+        str(int(batch)),
+    ]
+    if weights:
+        cmd.extend(["-c", str(weights)])
+    return cmd
+
+
+def _cmd_train_yolox(args: argparse.Namespace) -> int:
+    preset_name, preset = _resolve_preset(getattr(args, "preset", None))
+    exp_path = Path(
+        _require_nonempty(
+            _resolve_value(args.exp),
+            message="YOLOX exp file is required (set --exp).",
+        )
+    ).resolve()
+    if not exp_path.exists():
+        raise SystemExit(f"--exp not found: {exp_path}")
+
+    dataset_input = _require_nonempty(
+        _resolve_value(
+            args.dataset,
+            env="YOLOZU_DATASET",
+            preset=preset,
+            preset_key="dataset",
+        ),
+        message="dataset is required (set --dataset/-d, YOLOZU_DATASET, or --preset).",
+    )
+    source_format = str(
+        _resolve_value(
+            args.from_format,
+            env="YOLOZU_FROM_FORMAT",
+            preset=preset,
+            preset_key="from_format",
+            fallback="auto",
+        )
+    )
+    split = str(
+        _resolve_value(
+            args.split,
+            env="YOLOZU_SPLIT",
+            preset=preset,
+            preset_key="split",
+            fallback="train",
+        )
+    )
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/yolox"))).resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    resolution = resolve_internal_dataset(
+        source_format=source_format,
+        dataset=dataset_input,
+        split=split,
+        output=work_dir / "dataset",
+        instances_json=str(args.instances_json) if args.instances_json else None,
+        images_dir=str(args.images_dir) if args.images_dir else None,
+        force=bool(args.force),
+    )
+
+    train_cfg = project_yolox_exp(config=exp_path).to_dict()
+    weights_path = Path(str(args.weights)).resolve() if args.weights else None
+    train_script = str(args.train_script).strip() if args.train_script else ""
+    command = _build_yolox_train_command(
+        python=str(args.python),
+        train_script=(train_script or "<YOLOX/tools/train.py>"),
+        exp_file=str(exp_path),
+        batch=int(args.batch),
+        devices=int(args.devices),
+        weights=(str(weights_path) if weights_path else None),
+    )
+    template = _yolox_train_template(
+        python=str(args.python),
+        train_script=(train_script or "<YOLOX/tools/train.py>"),
+        exp_file=str(exp_path),
+        batch=int(args.batch),
+        weights=(str(weights_path) if weights_path else None),
+        devices=int(args.devices),
+    )
+
+    projection_path = work_dir / "yolox_train_config_projection.json"
+    _write_json(
+        projection_path,
+        {
+            "format": "yolozu_external_training_projection_v1",
+            "provider": "yolox",
+            "train_config": train_cfg,
+            "dataset_resolution": {
+                "dataset_root": str(resolution.dataset_root),
+                "split": str(resolution.split),
+                "source_format": str(resolution.source_format),
+            },
+            "environment_hints": {
+                "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+                "YOLOZU_SPLIT": str(resolution.split),
+            },
+        },
+    )
+
+    training_executed = False
+    runtime_error: str | None = None
+    proc_info: dict[str, Any] | None = None
+
+    if not bool(args.dry_run):
+        if not train_script:
+            runtime_error = (
+                "YOLOX non-dry execution requires --train-script pointing to an external "
+                "Apache-2.0 YOLOX launcher (for example YOLOX/tools/train.py)."
+            )
+        elif not Path(train_script).exists():
+            runtime_error = f"YOLOX train script not found: {train_script}"
+        else:
+            env = dict(os.environ)
+            env["YOLOZU_DATASET_ROOT"] = str(resolution.dataset_root)
+            env["YOLOZU_SPLIT"] = str(resolution.split)
+            env["YOLOZU_BATCH_SIZE"] = str(int(args.batch))
+            proc = _run(command, cwd=repo_root, env=env)
+            proc_info = {
+                "returncode": int(proc.returncode),
+                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+            }
+            training_executed = proc.returncode == 0
+            if proc.returncode != 0:
+                runtime_error = f"external YOLOX train script failed ({proc.returncode})"
+
+    ok = bool(args.dry_run) or training_executed
+    report = {
+        "task": "train_yolox",
+        "timestamp": _now_utc(),
+        "ok": ok,
+        "dry_run": bool(args.dry_run),
+        "preset": preset_name,
+        "exp": str(exp_path),
+        "weights": str(weights_path) if weights_path else None,
+        "dataset_root": str(resolution.dataset_root),
+        "split": resolution.split,
+        "train_script": train_script or None,
+        "template_train_command": template,
+        "training_executed": training_executed,
+        "runtime_error": runtime_error,
+        "process": proc_info,
+        "train_config_projection": str(projection_path),
+        "layers": {
+            "trainer_runner": "external YOLOX train launcher",
+            "repo_impl": "support_external_training train-yolox",
+            "export_deploy": "export_predictions_yolox + eval/benchmark lanes",
+        },
+        "license_boundary": {
+            "repo_code": "Apache-2.0",
+            "primary_lane": "YOLOX-style external training bridge",
+            "optional_bridge": False,
+        },
+    }
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_yolox.json"))).resolve()
+    _write_json(report_path, report)
+    print(str(report_path))
+    return 0 if ok else 1
+
+
 def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
     preset_name, preset = _resolve_preset(getattr(args, "preset", None))
     model_name = _require_nonempty(
@@ -331,8 +550,13 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         "runtime_error": runtime_error,
         "layers": {
             "trainer_runner": "ultralytics.YOLO.train",
-            "repo_impl": "support_ultralytics_detr train-ultralytics",
+            "repo_impl": "support_external_training train-ultralytics",
             "export_deploy": "support_ultralytics_detr export-onnx --provider ultralytics",
+        },
+        "license_boundary": {
+            "repo_code": "Apache-2.0",
+            "optional_bridge": True,
+            "note": "Ultralytics runtime is optional and must be reviewed under its own license terms.",
         },
     }
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_ultralytics_detr.train_ultralytics.json"))).resolve()
@@ -471,7 +695,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         "process": proc_info,
         "layers": {
             "trainer_runner": "transformers/accelerate entry script",
-            "repo_impl": "support_ultralytics_detr train-hf-detr",
+            "repo_impl": "support_external_training train-hf-detr",
             "export_deploy": "support_ultralytics_detr export-onnx --provider hf_detr",
         },
     }
@@ -631,7 +855,7 @@ def _cmd_export_onnx(args: argparse.Namespace) -> int:
         "trt": trt_info,
         "layers": {
             "trainer_runner": "N/A",
-            "repo_impl": "support_ultralytics_detr export-onnx",
+            "repo_impl": "support_external_training export-onnx",
             "export_deploy": "ONNX + optional TensorRT bridge",
         },
     }
@@ -750,7 +974,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p = argparse.ArgumentParser(
         description=(
-            "Ultralytics/DETR support helper with fixed 3-layer interface contract: "
+            "External training support helper with fixed 3-layer interface contract: "
             "trainer/runner, repo integration, export/deploy."
         )
     )
@@ -776,10 +1000,33 @@ def _build_parser() -> argparse.ArgumentParser:
     ds.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     ds.set_defaults(_fn=_cmd_dataset)
 
+    tyx = sub.add_parser(
+        "train-yolox",
+        aliases=["ty", "yolox-train"],
+        help="Apache-2.0-friendly YOLOX-style external training bridge.",
+    )
+    tyx.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    tyx.add_argument("-x", "--exp", required=True, help="YOLOX exp file path.")
+    tyx.add_argument("-c", "--weights", default=None, help="Optional checkpoint path to resume/fine-tune from.")
+    tyx.add_argument("-t", "--train-script", default=None, help="Optional external YOLOX train launcher for non-dry execution.")
+    tyx.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    tyx.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    tyx.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    tyx.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    tyx.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    tyx.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    tyx.add_argument("-b", "--batch", type=int, default=16, help="Global batch size (default: 16).")
+    tyx.add_argument("-D", "--devices", type=int, default=1, help="Device count forwarded to the external YOLOX launcher (default: 1).")
+    tyx.add_argument("-W", "--work-dir", default="runs/support_external_training/yolox", help="Work/cache dir.")
+    tyx.add_argument("-o", "--output", default="reports/support_external_training.train_yolox.json", help="Report JSON output path.")
+    tyx.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    tyx.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    tyx.set_defaults(_fn=_cmd_train_yolox)
+
     tul = sub.add_parser(
         "train-ultralytics",
         aliases=["tu", "ultra-train"],
-        help="Ultralytics YOLO fine-tune wrapper + normalized prediction template.",
+        help="Optional Ultralytics YOLO bridge + normalized prediction template.",
     )
     tul.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tul.add_argument("-m", "--model", default=None, help="Ultralytics model path/id (e.g., yolo11n.pt).")

@@ -10733,6 +10733,8 @@
       "docs": [
         "docs/external_finetune_smoke.md",
         "docs/interop_detectron2_mmdet.md",
+        "docs/interop_yolox.md",
+        "docs/license_policy.md",
         "docs/tools_index.md",
         "docs/training_inference_export.md"
       ],
@@ -10757,11 +10759,11 @@
       "examples": [
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json",
-          "description": "Dry-run matrix for YOLOv/MMDetection/Detectron2/RT-DETR finetune entrypoints."
+          "description": "Dry-run matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR finetune entrypoints."
         },
         {
-          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
-          "description": "Execute real training for selected frameworks and fail when no training execution occurred."
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolox --non-dry-framework yolov --non-dry-framework rtdetr --yolox-train-script /path/to/YOLOX/tools/train.py --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
+          "description": "Execute real training for selected frameworks, with YOLOX as the preferred Apache-2.0-friendly external lane."
         },
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json",
@@ -10877,6 +10879,12 @@
           "kind": "file",
           "name": "detectron2_train_script",
           "required": false
+        },
+        {
+          "flag": "--yolox-train-script",
+          "kind": "file",
+          "name": "yolox_train_script",
+          "required": false
         }
       ],
       "outputs": [
@@ -10894,7 +10902,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures and train-path audit fields.",
+      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary.",
       "tags": [
         "finetune",
         "interop",
@@ -13101,6 +13109,129 @@
         "viz",
         "evaluation",
         "ai-safe"
+      ]
+    },
+    {
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/interop_yolox.md",
+        "docs/license_policy.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/05_workflows_eval_export.tex",
+        "manual/chapters/09_parity_bench_protocols.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes machine-readable bridge report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes generated helper files and work directories for dataset resolution or projections.",
+            "flag": "--work-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/support_external_training.py",
+      "examples": [
+        {
+          "command": "python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json",
+          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
+          "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
+        }
+      ],
+      "id": "support_external_training",
+      "inputs": [
+        {
+          "description": "One of: layers, dataset, train-yolox, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
+          "flag": "--subcommand",
+          "kind": "string",
+          "name": "subcommand",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "description": "YOLOX exp file for train-yolox.",
+          "flag": "--exp",
+          "kind": "file",
+          "name": "exp",
+          "required": false
+        },
+        {
+          "description": "Optional external launcher for train-yolox or train-hf-detr non-dry execution.",
+          "flag": "--train-script",
+          "kind": "file",
+          "name": "train_script",
+          "required": false
+        },
+        {
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--work-dir",
+          "kind": "dir",
+          "name": "work_dir",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "description": "Machine-readable report describing the selected external training or export bridge.",
+          "kind": "file",
+          "name": "bridge_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries.",
+      "tags": [
+        "training",
+        "interop",
+        "yolox",
+        "ultralytics",
+        "license-boundary"
       ]
     },
     {
