@@ -42,6 +42,19 @@ The training platform layer now has five explicit pieces:
 This does not mean every backend is identical. It means the repo can describe
 different training lanes with one shared top-level shape.
 
+For external backends, YOLOZU now standardizes one wrapper-level run bundle under
+`work_dir/`:
+
+- `dataset/`
+- `configs/train_config_projection.json`
+- `reports/training_summary.json`
+- `reports/external_run_meta.json`
+- `reports/launcher_plan.json`
+- `reports/execution.json`
+
+This keeps external lanes auditable even when the backend-native trainer owns the
+actual checkpoint layout.
+
 ## TL;DR (copy-paste)
 
 ```bash

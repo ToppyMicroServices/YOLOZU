@@ -222,6 +222,7 @@ class TestDoctorImportCLI(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
             out_path = root / "train_yolox_bridge.json"
+            work_dir = root / "yolox_work"
 
             proc = self._run(
                 [
@@ -234,6 +235,8 @@ class TestDoctorImportCLI(unittest.TestCase):
                     "--split",
                     "val",
                     "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
                     "--output",
                     str(out_path),
                 ],
@@ -249,12 +252,18 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "yolox")
             self.assertEqual(str((payload.get("license_boundary") or {}).get("primary_lane")), "YOLOX-style external training bridge")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "external_run_meta.json").is_file())
+            self.assertTrue((work_dir / "reports" / "launcher_plan.json").is_file())
+            self.assertTrue((work_dir / "reports" / "execution.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
     def test_train_external_ultralytics_dry_run_writes_bridge_report(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
             out_path = root / "train_ultralytics_bridge.json"
+            work_dir = root / "ultralytics_work"
 
             proc = self._run(
                 [
@@ -267,6 +276,8 @@ class TestDoctorImportCLI(unittest.TestCase):
                     "--split",
                     "val",
                     "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
                     "--output",
                     str(out_path),
                 ],
@@ -282,12 +293,15 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "ultralytics")
             self.assertTrue(bool((payload.get("license_boundary") or {}).get("optional_bridge")))
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
     def test_train_external_detectron2_dry_run_writes_bridge_report(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
             out_path = root / "train_detectron2_bridge.json"
+            work_dir = root / "detectron2_work"
 
             proc = self._run(
                 [
@@ -302,6 +316,8 @@ class TestDoctorImportCLI(unittest.TestCase):
                     "--dry-run",
                     "--task-family",
                     "keypoints",
+                    "--work-dir",
+                    str(work_dir),
                     "--train-opt",
                     "DATASETS.TRAIN",
                     "(\"dummy_train\",)",
@@ -320,12 +336,16 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "detectron2")
             self.assertEqual(str(payload.get("task_family")), "keypoints")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "launcher_plan.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
     def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
             out_path = root / "train_hf_detr_bridge.json"
+            work_dir = root / "hf_detr_work"
 
             proc = self._run(
                 [
@@ -338,6 +358,8 @@ class TestDoctorImportCLI(unittest.TestCase):
                     "--split",
                     "val",
                     "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
                     "--output",
                     str(out_path),
                 ],
@@ -353,6 +375,8 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "hf-detr")
             self.assertEqual(str(payload.get("model_id")), "facebook/detr-resnet-50")
+            self.assertTrue((work_dir / "reports" / "execution.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
 
 if __name__ == "__main__":

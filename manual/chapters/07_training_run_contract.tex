@@ -166,6 +166,21 @@ This means the reference trainer and the external lanes do not need to share
 one internal loop, but they do share one top-level description of what ran and
 what artifacts were promised.
 
+For external lanes, YOLOZU now also standardizes one wrapper-level bundle under
+\path{work_dir/}:
+\begin{itemize}
+  \item \path{dataset/}
+  \item \path{configs/train\_config\_projection.json}
+  \item \path{reports/training\_summary.json}
+  \item \path{reports/external\_run\_meta.json}
+  \item \path{reports/launcher\_plan.json}
+  \item \path{reports/execution.json}
+\end{itemize}
+
+This is not the same as forcing one backend-native checkpoint layout. It means
+the wrapper-owned interface contract is now fixed even when the actual trainer
+remains external.
+
 The repo-side orchestration command is:
 \begin{lstlisting}[language=bash]
 yolozu train-orchestrate \

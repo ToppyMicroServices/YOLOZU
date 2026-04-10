@@ -12,15 +12,15 @@ It complements:
 | Backend | Maturity | Lane | Run contract | Export | Eval | Parity | Resume | MPS |
 |---|---|---|---|---|---|---|---|---|
 | `reference-rtdetr-pose` | Stable | Reference | Yes | Yes | Yes | Yes | Yes | Qualification path |
-| `yolox` | Stable | External | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
-| `detectron2` | Experimental | External | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
-| `ultralytics` | Experimental | Optional external bridge | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
-| `hf-detr` | Experimental | Optional external bridge | Summary-level | Planned through wrapper lane | Planned through wrapper lane | Planned through wrapper lane | Backend-specific | No blanket claim |
+| `yolox` | Stable | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `detectron2` | Experimental | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `ultralytics` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `hf-detr` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
 
 ## How to read this
 
 - `Run contract = Yes` means the backend owns the richer fixed artifact layout under `runs/<run_id>/`.
-- `Run contract = Summary-level` means YOLOZU still emits a common training summary interface contract, but the backend-native artifact layout is not standardized by YOLOZU.
+- `Run contract = External run contract` means YOLOZU standardizes `work_dir/dataset/`, `work_dir/configs/train_config_projection.json`, and `work_dir/reports/{training_summary,external_run_meta,launcher_plan,execution}.json` even when the backend-native trainer remains external.
 - `MPS` is only claimed when the local runtime actually reports availability. Do not read this table as a blanket macOS guarantee.
 
 ## Production posture
@@ -28,6 +28,7 @@ It complements:
 - Start with `reference-rtdetr-pose` if you want the richest in-repo training path.
 - Prefer `yolox` if you want an Apache-2.0-friendly external YOLO-style lane.
 - Use `detectron2` when bbox, instance segmentation, or keypoints training already lives in a Detectron2 stack.
+- Use `reference-rtdetr-pose` when the task extends into depth or pose6d training.
 - Treat `ultralytics` and `hf-detr` as environment-qualified bridges.
 
 ## Machine-readable source

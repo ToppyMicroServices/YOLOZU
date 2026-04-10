@@ -73,7 +73,7 @@
     "training_run_summary_json": {
       "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
       "schema": "docs/schemas/training_run_summary.schema.json",
-      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and external training lanes."
+      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and by external lanes that also publish a fixed wrapper-owned external run bundle."
     }
   },
   "manifest_version": 1,
@@ -13255,7 +13255,7 @@
       "examples": [
         {
           "command": "python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json",
-          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report."
+          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report plus the fixed external run bundle under work_dir/."
         },
         {
           "command": "python3 tools/support_external_training.py train-detectron2 --config configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_detectron2.json",
@@ -13267,7 +13267,7 @@
         },
         {
           "command": "python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json",
-          "description": "Dry-run the optional HF DETR bridge and emit the shared training summary interface contract."
+          "description": "Dry-run the optional HF DETR bridge and emit the shared training summary interface contract plus the wrapper-owned external run bundle."
         }
       ],
       "id": "support_external_training",
@@ -13353,7 +13353,7 @@
       ],
       "outputs": [
         {
-          "description": "Machine-readable training summary describing the selected external training lane.",
+          "description": "Machine-readable training summary describing the selected external training lane and its fixed external run bundle.",
           "kind": "file",
           "name": "training_run_summary_json"
         }
@@ -15698,7 +15698,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane plus optional Ultralytics and HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform now also exposes a shared training summary interface contract plus a lightweight train-orchestrate batch entrypoint.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane, a Detectron2 lane for bbox/instance segmentation/keypoints, and optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform now also exposes a shared training summary interface contract plus a fixed external run bundle and a lightweight train-orchestrate batch entrypoint.",
       "tags": [
         "cli",
         "predictions",

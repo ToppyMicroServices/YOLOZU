@@ -65,7 +65,8 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         maturity="stable",
         config_kind="yolox_exp_python",
         primary_use="Apache-2.0-friendly YOLO-style training launched through YOLOZU wrappers.",
-        interface_contract_level="training_summary_contract",
+        interface_contract_level="external_run_contract",
+        supports_run_contract=True,
         supports_export=True,
         supports_eval=True,
         supports_parity=True,
@@ -81,7 +82,8 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         maturity="experimental",
         config_kind="detectron2_config_yaml",
         primary_use="External Detectron2 training for bbox, instance segmentation, and keypoints via backend-native configs.",
-        interface_contract_level="training_summary_contract",
+        interface_contract_level="external_run_contract",
+        supports_run_contract=True,
         supports_export=True,
         supports_eval=True,
         supports_parity=True,
@@ -97,7 +99,8 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         maturity="experimental",
         config_kind="ultralytics_model_or_runtime_args",
         primary_use="Optional external runtime bridge when the user already depends on Ultralytics.",
-        interface_contract_level="training_summary_contract",
+        interface_contract_level="external_run_contract",
+        supports_run_contract=True,
         optional_bridge=True,
         supports_export=True,
         supports_eval=True,
@@ -114,7 +117,8 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         maturity="experimental",
         config_kind="hf_model_id_or_external_train_script",
         primary_use="External DETR-family fine-tuning path when a Transformers stack already exists.",
-        interface_contract_level="training_summary_contract",
+        interface_contract_level="external_run_contract",
+        supports_run_contract=True,
         optional_bridge=True,
         supports_export=True,
         supports_eval=True,
@@ -226,7 +230,7 @@ def training_run_output_contract(*, backend_id: str, report_path: str | Path, wo
     }
     if work_dir is not None:
         output_contract["work_dir"] = str(work_dir)
-    if spec.supports_run_contract:
+    if spec.supports_run_contract and spec.lane_kind == "reference":
         output_contract["stable_artifacts"] = [
             "checkpoints/last.pt",
             "checkpoints/best.pt",
@@ -245,6 +249,15 @@ def training_run_output_contract(*, backend_id: str, report_path: str | Path, wo
             )
         if spec.supports_parity:
             output_contract["stable_artifacts"].append("reports/onnx_parity.json")
+    elif spec.supports_run_contract and spec.lane_kind == "external":
+        output_contract["stable_artifacts"] = [
+            "dataset/",
+            "configs/train_config_projection.json",
+            "reports/training_summary.json",
+            "reports/external_run_meta.json",
+            "reports/launcher_plan.json",
+            "reports/execution.json",
+        ]
     return output_contract
 
 

@@ -16,7 +16,7 @@ Every training backend should expose the same high-level ideas:
 
 YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
 YOLOX, Detectron2, Ultralytics, and HF DETR as external lanes that still publish the same
-top-level summary interface contract.
+top-level summary interface contract plus one standardized external run bundle.
 
 ## Backend ids
 
@@ -87,8 +87,17 @@ The reference trainer also emits richer artifacts such as:
 - `exports/model.onnx`
 - `reports/onnx_parity.json`
 
-External lanes may not emit the same backend-native files, but they still emit
-the same top-level training summary shape.
+External lanes may not emit the same backend-native checkpoint layout, but they do emit
+the same top-level training summary shape and the same fixed wrapper artifacts under
+`work_dir/reports/` and `work_dir/configs/`.
+
+The standardized external bundle is:
+
+- `work_dir/configs/train_config_projection.json`
+- `work_dir/reports/training_summary.json`
+- `work_dir/reports/external_run_meta.json`
+- `work_dir/reports/launcher_plan.json`
+- `work_dir/reports/execution.json`
 
 ## Why this matters
 

@@ -41,7 +41,8 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertEqual(payload["format"], "yolozu_training_run_summary_v1")
         self.assertEqual(payload["backend"]["backend_id"], "yolox")
         self.assertEqual(payload["canonical_train_config"]["backend"], "yolox")
-        self.assertEqual(payload["run_output_contract"]["kind"], "training_summary_contract")
+        self.assertEqual(payload["run_output_contract"]["kind"], "external_run_contract")
+        self.assertIn("reports/training_summary.json", payload["run_output_contract"]["stable_artifacts"])
 
     def test_training_run_summary_is_json_serializable(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

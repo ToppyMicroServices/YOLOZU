@@ -46,6 +46,90 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _external_run_contract_paths(work_dir: Path) -> dict[str, Path]:
+    reports_dir = work_dir / "reports"
+    configs_dir = work_dir / "configs"
+    return {
+        "reports_dir": reports_dir,
+        "configs_dir": configs_dir,
+        "training_summary": reports_dir / "training_summary.json",
+        "external_run_meta": reports_dir / "external_run_meta.json",
+        "launcher_plan": reports_dir / "launcher_plan.json",
+        "execution": reports_dir / "execution.json",
+        "train_config_projection": configs_dir / "train_config_projection.json",
+    }
+
+
+def _write_external_run_contract_bundle(
+    *,
+    backend_id: str,
+    work_dir: Path,
+    report_path: Path,
+    report: dict[str, Any],
+    dataset_root: str,
+    split: str,
+    command: list[str] | None,
+    command_template: str | None,
+    train_script: str | None = None,
+    projection_payload: dict[str, Any] | None = None,
+    process_payload: dict[str, Any] | None = None,
+    runtime_error: str | None = None,
+    extra_env: dict[str, Any] | None = None,
+) -> dict[str, str]:
+    paths = _external_run_contract_paths(work_dir)
+
+    _write_json(paths["training_summary"], report)
+    if report_path.resolve() != paths["training_summary"].resolve():
+        _write_json(report_path, report)
+
+    meta = {
+        "format": "yolozu_external_training_run_meta_v1",
+        "timestamp": _now_utc(),
+        "backend_id": str(backend_id),
+        "dataset": {"root": str(dataset_root), "split": str(split)},
+        "dry_run": bool(report.get("dry_run")),
+        "training_executed": bool(report.get("training_executed")),
+        "ok": bool(report.get("ok")),
+        "work_dir": str(work_dir),
+        "report_json": str(report_path),
+    }
+    _write_json(paths["external_run_meta"], meta)
+
+    launcher_plan = {
+        "format": "yolozu_external_training_launcher_plan_v1",
+        "backend_id": str(backend_id),
+        "timestamp": _now_utc(),
+        "train_script": (str(train_script) if train_script else None),
+        "command": list(command or []),
+        "command_template": (str(command_template) if command_template else None),
+        "environment_hints": dict(extra_env or {}),
+    }
+    _write_json(paths["launcher_plan"], launcher_plan)
+
+    execution = {
+        "format": "yolozu_external_training_execution_v1",
+        "backend_id": str(backend_id),
+        "timestamp": _now_utc(),
+        "dry_run": bool(report.get("dry_run")),
+        "executed": bool(report.get("training_executed")),
+        "ok": bool(report.get("ok")),
+        "runtime_error": runtime_error,
+        "process": process_payload or None,
+    }
+    _write_json(paths["execution"], execution)
+
+    if projection_payload is not None:
+        _write_json(paths["train_config_projection"], projection_payload)
+
+    return {
+        "training_summary": str(paths["training_summary"]),
+        "external_run_meta": str(paths["external_run_meta"]),
+        "launcher_plan": str(paths["launcher_plan"]),
+        "execution": str(paths["execution"]),
+        "train_config_projection": str(paths["train_config_projection"]),
+    }
+
+
 def _run(
     cmd: list[str],
     *,
@@ -389,23 +473,21 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
     )
 
     projection_path = work_dir / "yolox_train_config_projection.json"
-    _write_json(
-        projection_path,
-        {
-            "format": "yolozu_external_training_projection_v1",
-            "provider": "yolox",
-            "train_config": train_cfg,
-            "dataset_resolution": {
-                "dataset_root": str(resolution.dataset_root),
-                "split": str(resolution.split),
-                "source_format": str(resolution.source_format),
-            },
-            "environment_hints": {
-                "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
-                "YOLOZU_SPLIT": str(resolution.split),
-            },
+    projection_payload = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": "yolox",
+        "train_config": train_cfg,
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
         },
-    )
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+        },
+    }
+    _write_json(projection_path, projection_payload)
 
     training_executed = False
     runtime_error: str | None = None
@@ -483,7 +565,25 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             },
         }
     )
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id="yolox",
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=command,
+        command_template=template,
+        train_script=train_script or None,
+        projection_payload=projection_payload,
+        process_payload=proc_info,
+        runtime_error=runtime_error,
+        extra_env=projection_payload.get("environment_hints"),
+    )
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
     _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
     return 0 if bool(report.get("ok")) else 1
 
@@ -563,25 +663,23 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
         )
 
     projection_path = work_dir / "detectron2_train_config_projection.json"
-    _write_json(
-        projection_path,
-        {
-            "format": "yolozu_external_training_projection_v1",
-            "provider": "detectron2",
-            "projection_error": projection_error,
-            "train_config": train_cfg.to_dict(),
-            "dataset_resolution": {
-                "dataset_root": str(resolution.dataset_root),
-                "split": str(resolution.split),
-                "source_format": str(resolution.source_format),
-            },
-            "environment_hints": {
-                "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
-                "YOLOZU_SPLIT": str(resolution.split),
-                "YOLOZU_TASK_FAMILY": str(task_family),
-            },
+    projection_payload = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": "detectron2",
+        "projection_error": projection_error,
+        "train_config": train_cfg.to_dict(),
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
         },
-    )
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+            "YOLOZU_TASK_FAMILY": str(task_family),
+        },
+    }
+    _write_json(projection_path, projection_payload)
 
     train_script = str(args.train_script).strip() if args.train_script else ""
     train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
@@ -671,7 +769,25 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             },
         }
     )
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id="detectron2",
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=command,
+        command_template=template,
+        train_script=train_script or None,
+        projection_payload=projection_payload,
+        process_payload=proc_info,
+        runtime_error=runtime_error,
+        extra_env=projection_payload.get("environment_hints"),
+    )
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
     _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
     return 0 if bool(report.get("ok")) else 1
 
@@ -831,7 +947,38 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             },
         }
     )
+    ultralytics_projection = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": "ultralytics",
+        "train_config": train_cfg.to_dict(),
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
+        },
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+        },
+        "data_yaml": str(data_yaml),
+    }
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id="ultralytics",
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=None,
+        command_template=template,
+        projection_payload=ultralytics_projection,
+        runtime_error=runtime_error,
+        extra_env=ultralytics_projection.get("environment_hints"),
+    )
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
     _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
     return 0 if bool(report.get("ok")) else 1
 
@@ -1002,7 +1149,39 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             },
         }
     )
+    hf_projection = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": "hf-detr",
+        "train_config": train_cfg.to_dict(),
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
+        },
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+        },
+    }
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id="hf-detr",
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=command,
+        command_template=" ".join(command),
+        train_script=train_script or None,
+        projection_payload=hf_projection,
+        process_payload=proc_info,
+        runtime_error=runtime_error,
+        extra_env=hf_projection.get("environment_hints"),
+    )
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
     _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
     return 0 if bool(report.get("ok")) else 1
 
