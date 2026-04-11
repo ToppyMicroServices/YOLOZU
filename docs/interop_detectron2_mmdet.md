@@ -1,6 +1,6 @@
-# Detectron2 / MMDetection interop
+# Detectron2 / MM family interop
 
-This page is the shortest path for users who keep training/inference in Detectron2 or MMDetection and only use YOLOZU for contract validation and apples-to-apples evaluation.
+This page is the shortest path for users who keep training/inference in Detectron2 or the OpenMMLab family and only use YOLOZU for interface contract validation and apples-to-apples evaluation.
 
 ## Scope (what YOLOZU guarantees)
 
@@ -9,6 +9,9 @@ This page is the shortest path for users who keep training/inference in Detectro
 - Level 3: fairness metadata via `export_settings` (preprocessing/protocol).
 
 YOLOZU does not require replacing your training framework.
+
+OpenCV DNN and ONNX Runtime are not training frameworks in this model. They stay
+on the inference/export side after a model has already been trained elsewhere.
 
 ## 1.5) External Detectron2 training lane
 
@@ -35,6 +38,55 @@ python3 -m yolozu train \
 To pass dataset registration names or other Detectron2 overrides, repeat
 `--train-opt KEY VALUE`. For a real run, also add
 `--train-script /path/to/detectron2/tools/train_net.py`.
+
+## 1.6) External MMDetection training lane
+
+YOLOZU can also launch an MMDetection training lane through an external launcher
+while still emitting the shared training summary interface contract.
+
+```bash
+python3 -m yolozu train \
+  --external-backend mmdetection \
+  configs/examples/finetune_external/mmdetection_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_mmdetection_bbox.json
+```
+
+For a real run, also add `--train-script /path/to/mmdetection/tools/train.py`.
+Repeat `--train-opt KEY VALUE` to forward `--cfg-options KEY=VALUE` style overrides.
+
+## 1.7) External MMPose training lane
+
+```bash
+python3 -m yolozu train \
+  --external-backend mmpose \
+  configs/examples/finetune_external/mmpose_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_mmpose.json
+```
+
+This lane standardizes the training run summary and wrapper-owned run bundle.
+Prediction export into the predictions interface contract is still backend-specific.
+
+## 1.8) External MMSeg training lane
+
+```bash
+python3 -m yolozu train \
+  --external-backend mmseg \
+  configs/examples/finetune_external/mmseg_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_mmseg.json
+```
+
+This lane standardizes the training run summary and wrapper-owned run bundle.
+Prediction export into segmentation JSON + mask files is still backend-specific.
 
 ## 1) Prepare dataset wrapper (COCO JSON to YOLOZU)
 
@@ -87,6 +139,11 @@ python3 tools/eval_coco.py \
 ```
 
 Use the same pattern for MMDetection predictions.
+
+For MMPose and MMSeg, YOLOZU currently expects a backend-side exporter that writes:
+
+- keypoints: `predictions.json` in the predictions interface contract
+- semantic segmentation: segmentation JSON + mask files for `tools/eval_segmentation.py`
 
 ## Pitfalls to avoid (critical)
 

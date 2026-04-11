@@ -22,6 +22,9 @@ class TestTrainingPlatform(unittest.TestCase):
         ids = {row["backend_id"] for row in training_capability_matrix()}
         self.assertIn("yolox", ids)
         self.assertIn("detectron2", ids)
+        self.assertIn("mmdetection", ids)
+        self.assertIn("mmpose", ids)
+        self.assertIn("mmseg", ids)
         self.assertIn("ultralytics", ids)
         self.assertIn("hf-detr", ids)
 

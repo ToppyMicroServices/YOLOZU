@@ -14,6 +14,9 @@ It complements:
 | `reference-rtdetr-pose` | Stable | Reference | Yes | Yes | Yes | Yes | Yes | Qualification path |
 | `yolox` | Stable | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
 | `detectron2` | Experimental | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `mmdetection` | Experimental | External | External run contract | Wrapper-ready (bbox primary) | Wrapper-ready (bbox primary) | Wrapper-ready (bbox primary) | Backend-specific | No blanket claim |
+| `mmpose` | Experimental | External | External run contract | Backend-specific exporter | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `mmseg` | Experimental | External | External run contract | Backend-specific exporter | Wrapper-ready | Backend-specific | Backend-specific | No blanket claim |
 | `ultralytics` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
 | `hf-detr` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
 
@@ -28,8 +31,12 @@ It complements:
 - Start with `reference-rtdetr-pose` if you want the richest in-repo training path.
 - Prefer `yolox` if you want an Apache-2.0-friendly external YOLO-style lane.
 - Use `detectron2` when bbox, instance segmentation, or keypoints training already lives in a Detectron2 stack.
+- Use `mmdetection` when bbox or instance-seg training already lives in an OpenMMLab detection stack.
+- Use `mmpose` for keypoints/pose training when the backend-native pipeline already lives in MMPose.
+- Use `mmseg` for semantic segmentation training when the backend-native pipeline already lives in MMSeg.
 - Use `reference-rtdetr-pose` when the task extends into depth or pose6d training.
 - Treat `ultralytics` and `hf-detr` as environment-qualified bridges.
+- OpenCV DNN and ONNX Runtime are not training backends in YOLOZU. They stay in export / inference / parity lanes.
 
 ## Machine-readable source
 

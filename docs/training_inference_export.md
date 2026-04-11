@@ -25,6 +25,9 @@ Use this scope boundary when deciding whether YOLOZU should own the training ste
 |---|---|---|---|
 | RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. |
 | YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. |
+| MMDetection external lane | Experimental external lane | Bbox / instance-seg training launched from the top-level CLI | Best fit when the backend-native detection stack already lives in OpenMMLab. |
+| MMPose external lane | Experimental external lane | Keypoints / pose training launched from the top-level CLI | Export stays backend-specific today; evaluation/parity still converge on YOLOZU once predictions are exported. |
+| MMSeg external lane | Experimental external lane | Semantic segmentation training launched from the top-level CLI | Export stays backend-specific today; YOLOZU takes over at evaluation once masks are exported. |
 | Ultralytics bridge | Optional external bridge | User-installed external runtime bridge | Keep the license boundary explicit; see `docs/license_policy.md`. |
 | HF DETR bridge | Optional external bridge | User-installed DETR-family bridge | Useful when a DETR-family training stack already exists outside this repo. |
 | Generic training platform for every model family | Not claimed | Universal training framework | YOLOZU does not claim this scope. It standardizes the run artifacts and the predictions interface contract around the supported lanes above. |
@@ -57,6 +60,14 @@ actual checkpoint layout.
 
 External lanes now also write `next_steps` into `training_summary.json`, so the
 report itself tells you which export / evaluation / parity command to run next.
+For MM-family lanes, these steps make the boundary explicit:
+
+- `mmdetection`: bbox is wrapper-ready; mask export can still be backend-specific.
+- `mmpose`: training is first-class, while prediction export remains backend-specific.
+- `mmseg`: training is first-class, while prediction export remains backend-specific.
+
+OpenCV DNN and ONNX Runtime are not training lanes. They remain inference/export
+targets after a model has already been trained.
 
 ## TL;DR (copy-paste)
 

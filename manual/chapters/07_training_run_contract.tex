@@ -185,6 +185,10 @@ The external training summary also records \path{next\_steps}: copy-paste
 follow-up commands for export, evaluation, and parity. In practice, this makes
 the training report itself the hand-off note for the next operator step.
 
+OpenCV DNN and ONNX Runtime do not appear in this training registry because
+YOLOZU treats them as inference/export runtimes after training, not as
+training backends in their own right.
+
 The repo-side orchestration command is:
 \begin{lstlisting}[language=bash]
 yolozu train-orchestrate \
@@ -205,6 +209,8 @@ For user convenience, YOLOZU includes template configs and a unified smoke runne
   \item YOLO-family runtime
   \item Detectron2
   \item MMDetection
+  \item MMPose
+  \item MMSeg
   \item RT-DETR (\path{rtdetr_pose})
 \end{itemize}
 
@@ -212,6 +218,8 @@ Template paths:
 \begin{itemize}
   \item \path{configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/mmdetection_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/mmpose_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/mmseg_finetune_smoke.py}
   \item \path{configs/examples/finetune_external/detectron2_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml}
 \end{itemize}

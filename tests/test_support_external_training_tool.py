@@ -22,6 +22,9 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             self.fail(f"support_external_training --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("train-yolox", proc.stdout)
         self.assertIn("train-detectron2", proc.stdout)
+        self.assertIn("train-mmdetection", proc.stdout)
+        self.assertIn("train-mmpose", proc.stdout)
+        self.assertIn("train-mmseg", proc.stdout)
         self.assertIn("train-ultralytics", proc.stdout)
         self.assertIn("train-hf-detr", proc.stdout)
 

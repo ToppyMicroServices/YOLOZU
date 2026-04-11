@@ -7,8 +7,9 @@ Provides three-layer support helpers:
 3) export/deploy (ONNX + optional TensorRT handoff).
 
 The primary Apache-2.0-friendly training lane is YOLOX-style training via an
-external YOLOX launcher. Optional bridges for Ultralytics YOLO and HF DETR are
-kept explicit so the runtime/license boundary stays visible.
+external YOLOX launcher. MM-family bridges (MMDetection / MMPose / MMSeg) are
+also supported as external lanes. Optional bridges for Ultralytics YOLO and HF
+DETR are kept explicit so the runtime/license boundary stays visible.
 """
 
 from __future__ import annotations
@@ -173,6 +174,40 @@ def _external_next_steps(
                 "Export Detectron2 predictions into the predictions interface contract after training.",
             )
         )
+    elif backend_id == "mmdetection" and config_path is not None and task_family in ("bbox", "detect", "auto", None, ""):
+        steps.append(
+            _step(
+                "export_predictions",
+                "python3 tools/export_predictions_mmdet.py "
+                f"--dataset {dataset_root} --split {split} --config {config_path} "
+                f"--checkpoint <path/to/epoch_*.pth> --protocol nms_applied --output {predictions_out}",
+                "Export MMDetection predictions into the predictions interface contract after training.",
+            )
+        )
+    elif backend_id == "mmdetection" and task_family == "segmentation":
+        steps.append(
+            _step(
+                "export_predictions",
+                f"# Export instance-seg predictions into {predictions_out} with your MMDetection-side exporter.",
+                "MMDetection training is supported here, but mask export remains backend-specific today.",
+            )
+        )
+    elif backend_id == "mmpose":
+        steps.append(
+            _step(
+                "export_predictions",
+                f"# Export MMPose detections/keypoints into the predictions interface contract at {predictions_out}.",
+                "Use a backend-side exporter that writes bbox + keypoints in the predictions interface contract.",
+            )
+        )
+    elif backend_id == "mmseg":
+        steps.append(
+            _step(
+                "export_predictions",
+                f"# Export MMSeg predictions into a segmentation predictions JSON plus mask files under {work_dir / 'reports'}.",
+                "Semantic-segmentation training is supported here, while export remains backend-specific today.",
+            )
+        )
     elif backend_id == "ultralytics" and model_name is not None:
         steps.append(
             _step(
@@ -203,7 +238,32 @@ def _external_next_steps(
             )
         )
 
-    if task_family in (None, "", "bbox", "detect"):
+    if backend_id == "mmpose":
+        steps.append(
+            _step(
+                "eval",
+                f"python3 tools/eval_keypoints.py --dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}",
+                "Evaluate keypoint predictions with the stable keypoints evaluation lane.",
+            )
+        )
+        steps.append(
+            _step(
+                "parity",
+                "python3 tools/check_keypoints_parity.py "
+                f"--reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}",
+                "Compare candidate keypoint predictions against a reference artifact.",
+            )
+        )
+    elif backend_id == "mmseg":
+        steps.append(
+            _step(
+                "eval",
+                "python3 tools/eval_segmentation.py "
+                f"--dataset-json <path/to/seg_dataset.json> --predictions <path/to/seg_predictions.json> --pred-root {work_dir / 'reports'} --output {eval_out}",
+                "Evaluate semantic segmentation predictions once the backend-side exporter has written masks + JSON.",
+            )
+        )
+    elif task_family in (None, "", "bbox", "detect"):
         steps.append(
             _step(
                 "eval",
@@ -480,6 +540,14 @@ def _infer_detectron2_task_family(config_path: Path) -> str:
     return "bbox"
 
 
+def _infer_mmdetection_task_family(config_path: Path) -> str:
+    text = config_path.read_text(encoding="utf-8", errors="ignore")
+    lowered = text.lower()
+    if "mask_head" in lowered or "instance" in lowered:
+        return "segmentation"
+    return "bbox"
+
+
 def _build_detectron2_train_command(
     *,
     python: str,
@@ -501,6 +569,108 @@ def _build_detectron2_train_command(
     for key, value in train_opts:
         cmd.extend([str(key), str(value)])
     return cmd
+
+
+def _build_mmengine_train_command(
+    *,
+    python: str,
+    train_script: str,
+    config: Path,
+    work_dir: Path,
+    train_opts: list[tuple[str, str]],
+) -> list[str]:
+    cmd = [
+        str(python),
+        str(train_script),
+        str(config),
+        "--work-dir",
+        str(work_dir),
+    ]
+    if train_opts:
+        cmd.append("--cfg-options")
+        cmd.extend([f"{str(key)}={str(value)}" for key, value in train_opts])
+    return cmd
+
+
+def _project_mmengine_training_config(
+    *,
+    backend_id: str,
+    config_path: Path,
+    dataset_root: Path,
+    split: str,
+    task_family: str,
+) -> tuple[TrainConfig, str | None]:
+    if backend_id == "mmdetection":
+        try:
+            train_cfg = project_mmdet_config(config=config_path)
+        except Exception as exc:
+            return (
+                TrainConfig(
+                    backend="mmdetection",
+                    task=task_family,
+                    model=str(config_path),
+                    dataset={"root": str(dataset_root), "split": str(split)},
+                    source={"from": "mmdetection", "config": str(config_path)},
+                ),
+                str(exc),
+            )
+        return (
+            replace(
+                train_cfg,
+                backend="mmdetection",
+                task=task_family,
+                model=str(config_path),
+                dataset={"root": str(dataset_root), "split": str(split)},
+                source={"from": "mmdetection", "config": str(config_path)},
+            ),
+            None,
+        )
+
+    try:
+        mmengine_config = _require_module("mmengine.config", pip_hint="pip install mmengine").Config
+        cfg_obj = mmengine_config.fromfile(str(config_path))
+        cfg = cfg_obj.to_dict() if hasattr(cfg_obj, "to_dict") else dict(cfg_obj)
+    except Exception as exc:
+        return (
+            TrainConfig(
+                backend=backend_id,
+                task=task_family,
+                model=str(config_path),
+                dataset={"root": str(dataset_root), "split": str(split)},
+                source={"from": backend_id, "config": str(config_path)},
+            ),
+            str(exc),
+        )
+
+    train_dataloader = cfg.get("train_dataloader") if isinstance(cfg, dict) else {}
+    batch = None
+    if isinstance(train_dataloader, dict):
+        raw_batch = train_dataloader.get("batch_size")
+        if isinstance(raw_batch, int):
+            batch = int(raw_batch)
+    train_cfg = cfg.get("train_cfg") if isinstance(cfg, dict) else {}
+    epochs = train_cfg.get("max_epochs") if isinstance(train_cfg, dict) else None
+    steps = train_cfg.get("max_iters") if isinstance(train_cfg, dict) else None
+    optim_wrapper = cfg.get("optim_wrapper") if isinstance(cfg, dict) else {}
+    optimizer = optim_wrapper.get("optimizer") if isinstance(optim_wrapper, dict) else {}
+    lr = optimizer.get("lr") if isinstance(optimizer, dict) else None
+    weight_decay = optimizer.get("weight_decay") if isinstance(optimizer, dict) else None
+    return (
+        TrainConfig(
+            backend=backend_id,
+            task=task_family,
+            model=str(config_path),
+            batch=(int(batch) if isinstance(batch, int) else None),
+            epochs=(int(epochs) if isinstance(epochs, int) else None),
+            steps=(int(steps) if isinstance(steps, int) else None),
+            optimizer=(str(optimizer.get("type")) if isinstance(optimizer, dict) and optimizer.get("type") else None),
+            lr=(float(lr) if isinstance(lr, (int, float)) else None),
+            weight_decay=(float(weight_decay) if isinstance(weight_decay, (int, float)) else None),
+            dataset={"root": str(dataset_root), "split": str(split)},
+            source={"from": backend_id, "config": str(config_path)},
+        ),
+        None,
+    )
 
 
 def _cmd_train_yolox(args: argparse.Namespace) -> int:
@@ -909,6 +1079,258 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
     return 0 if bool(report.get("ok")) else 1
+
+
+def _cmd_train_mmfamily(
+    args: argparse.Namespace,
+    *,
+    backend_id: str,
+    default_task_family: str,
+    default_work_dir: str,
+    default_output: str,
+    provider_label: str,
+    repo_impl_label: str,
+    export_deploy_label: str,
+) -> int:
+    preset_name, preset = _resolve_preset(getattr(args, "preset", None))
+    config_path = Path(
+        _require_nonempty(
+            _resolve_value(args.config),
+            message=f"{provider_label} config file is required (set --config).",
+        )
+    ).resolve()
+    if not config_path.exists():
+        raise SystemExit(f"--config not found: {config_path}")
+
+    dataset_input = _require_nonempty(
+        _resolve_value(
+            args.dataset,
+            env="YOLOZU_DATASET",
+            preset=preset,
+            preset_key="dataset",
+        ),
+        message="dataset is required (set --dataset/-d, YOLOZU_DATASET, or --preset).",
+    )
+    source_format = str(
+        _resolve_value(
+            args.from_format,
+            env="YOLOZU_FROM_FORMAT",
+            preset=preset,
+            preset_key="from_format",
+            fallback="auto",
+        )
+    )
+    split = str(
+        _resolve_value(
+            args.split,
+            env="YOLOZU_SPLIT",
+            preset=preset,
+            preset_key="split",
+            fallback="train",
+        )
+    )
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback=default_work_dir))).resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    resolution = resolve_internal_dataset(
+        source_format=source_format,
+        dataset=dataset_input,
+        split=split,
+        output=work_dir / "dataset",
+        instances_json=str(args.instances_json) if args.instances_json else None,
+        images_dir=str(args.images_dir) if args.images_dir else None,
+        force=bool(args.force),
+    )
+
+    task_family = str(getattr(args, "task_family", default_task_family) or default_task_family).strip().lower()
+    if task_family == "auto":
+        task_family = default_task_family
+        if backend_id == "mmdetection":
+            task_family = _infer_mmdetection_task_family(config_path)
+
+    train_cfg, projection_error = _project_mmengine_training_config(
+        backend_id=backend_id,
+        config_path=config_path,
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        task_family=task_family,
+    )
+
+    projection_path = work_dir / f"{backend_id}_train_config_projection.json"
+    projection_payload = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": backend_id,
+        "projection_error": projection_error,
+        "train_config": train_cfg.to_dict(),
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
+        },
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+            "YOLOZU_TASK_FAMILY": str(task_family),
+        },
+    }
+    _write_json(projection_path, projection_payload)
+
+    train_script = str(args.train_script).strip() if args.train_script else ""
+    train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
+    command = _build_mmengine_train_command(
+        python=str(args.python),
+        train_script=(train_script or f"<{backend_id}/tools/train.py>"),
+        config=config_path,
+        work_dir=work_dir,
+        train_opts=train_opts,
+    )
+    template = " ".join(command)
+
+    training_executed = False
+    runtime_error: str | None = None
+    proc_info: dict[str, Any] | None = None
+
+    if not bool(args.dry_run):
+        if not train_script:
+            runtime_error = (
+                f"{provider_label} non-dry execution requires --train-script pointing to an external "
+                f"{backend_id}/tools/train.py style launcher."
+            )
+        elif not Path(train_script).exists():
+            runtime_error = f"{provider_label} train script not found: {train_script}"
+        else:
+            env = dict(os.environ)
+            env["YOLOZU_DATASET_ROOT"] = str(resolution.dataset_root)
+            env["YOLOZU_SPLIT"] = str(resolution.split)
+            env["YOLOZU_TASK_FAMILY"] = str(task_family)
+            proc = _run(command, cwd=repo_root, env=env)
+            proc_info = {
+                "returncode": int(proc.returncode),
+                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+            }
+            training_executed = proc.returncode == 0
+            if proc.returncode != 0:
+                runtime_error = f"external {provider_label} train script failed ({proc.returncode})"
+
+    report_path = Path(str(_resolve_value(args.output, fallback=default_output))).resolve()
+    report = build_training_run_summary(
+        backend_id=backend_id,
+        report_path=report_path,
+        train_config=train_cfg,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": template,
+                "train_script": train_script or None,
+            },
+            "export": {"status": ("planned" if backend_id == "mmdetection" else "backend_specific"), "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": ("planned" if backend_id in {"mmdetection", "mmpose"} else "backend_specific"), "ok": True, "executed": False},
+        },
+        process=proc_info,
+        runtime_error=runtime_error,
+        notes=[
+            f"preset={preset_name}",
+            f"projection={projection_path}",
+            f"task family is reported as {task_family}.",
+        ],
+        license_boundary={
+            "repo_code": "Apache-2.0",
+            "optional_bridge": False,
+            "note": f"{provider_label} runtime remains external to YOLOZU; review upstream terms and environment setup separately.",
+        },
+    )
+    report.update(
+        {
+            "task": f"train_{backend_id}",
+            "task_family": task_family,
+            "config": str(config_path),
+            "train_script": train_script or None,
+            "template_train_command": template,
+            "train_config_projection": str(projection_path),
+            "projection_error": projection_error,
+            "layers": {
+                "trainer_runner": f"external {provider_label} train launcher",
+                "repo_impl": repo_impl_label,
+                "export_deploy": export_deploy_label,
+            },
+        }
+    )
+    report["next_steps"] = _external_next_steps(
+        backend_id=backend_id,
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        config_path=config_path,
+        task_family=task_family,
+    )
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id=backend_id,
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=command,
+        command_template=template,
+        train_script=train_script or None,
+        projection_payload=projection_payload,
+        process_payload=proc_info,
+        runtime_error=runtime_error,
+        extra_env=projection_payload.get("environment_hints"),
+    )
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
+    _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
+    print(str(report_path))
+    return 0 if bool(report.get("ok")) else 1
+
+
+def _cmd_train_mmdetection(args: argparse.Namespace) -> int:
+    return _cmd_train_mmfamily(
+        args,
+        backend_id="mmdetection",
+        default_task_family="bbox",
+        default_work_dir="runs/support_external_training/mmdetection",
+        default_output="reports/support_external_training.train_mmdetection.json",
+        provider_label="MMDetection",
+        repo_impl_label="support_external_training train-mmdetection",
+        export_deploy_label="export_predictions_mmdet + eval/benchmark lanes for bbox; mask export remains backend-specific.",
+    )
+
+
+def _cmd_train_mmpose(args: argparse.Namespace) -> int:
+    return _cmd_train_mmfamily(
+        args,
+        backend_id="mmpose",
+        default_task_family="keypoints",
+        default_work_dir="runs/support_external_training/mmpose",
+        default_output="reports/support_external_training.train_mmpose.json",
+        provider_label="MMPose",
+        repo_impl_label="support_external_training train-mmpose",
+        export_deploy_label="Use a backend-side exporter to write keypoints predictions into the predictions interface contract, then run eval_keypoints/parity.",
+    )
+
+
+def _cmd_train_mmseg(args: argparse.Namespace) -> int:
+    return _cmd_train_mmfamily(
+        args,
+        backend_id="mmseg",
+        default_task_family="segmentation",
+        default_work_dir="runs/support_external_training/mmseg",
+        default_output="reports/support_external_training.train_mmseg.json",
+        provider_label="MMSeg",
+        repo_impl_label="support_external_training train-mmseg",
+        export_deploy_label="Use a backend-side exporter to write segmentation masks + JSON, then run eval_segmentation.",
+    )
 
 
 def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
@@ -1674,6 +2096,108 @@ def _build_parser() -> argparse.ArgumentParser:
     td2.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     td2.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     td2.set_defaults(_fn=_cmd_train_detectron2)
+
+    tmmdet = sub.add_parser(
+        "train-mmdetection",
+        aliases=["tmm", "mmdet-train"],
+        help="MMDetection external training bridge for bbox and instance-segmentation workflows.",
+    )
+    tmmdet.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    tmmdet.add_argument("-c", "--config", required=True, help="MMDetection config Python path.")
+    tmmdet.add_argument("-t", "--train-script", default=None, help="Optional external MMDetection train launcher for non-dry execution.")
+    tmmdet.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    tmmdet.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    tmmdet.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    tmmdet.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    tmmdet.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    tmmdet.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    tmmdet.add_argument(
+        "--task-family",
+        choices=("auto", "bbox", "segmentation"),
+        default="auto",
+        help="Reported MMDetection task family; auto infers bbox vs segmentation from the config text.",
+    )
+    tmmdet.add_argument(
+        "--train-opt",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        default=[],
+        help="Extra MMDetection cfg-options pair forwarded to the external launcher. Repeat for data_root/load_from/etc.",
+    )
+    tmmdet.add_argument("-W", "--work-dir", default="runs/support_external_training/mmdetection", help="Work/cache dir.")
+    tmmdet.add_argument("-o", "--output", default="reports/support_external_training.train_mmdetection.json", help="Report JSON output path.")
+    tmmdet.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    tmmdet.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    tmmdet.set_defaults(_fn=_cmd_train_mmdetection)
+
+    tmmpose = sub.add_parser(
+        "train-mmpose",
+        aliases=["tmp", "mmpose-train"],
+        help="MMPose external training bridge for keypoints/pose workflows.",
+    )
+    tmmpose.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    tmmpose.add_argument("-c", "--config", required=True, help="MMPose config Python path.")
+    tmmpose.add_argument("-t", "--train-script", default=None, help="Optional external MMPose train launcher for non-dry execution.")
+    tmmpose.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    tmmpose.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    tmmpose.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    tmmpose.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    tmmpose.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    tmmpose.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    tmmpose.add_argument(
+        "--task-family",
+        choices=("keypoints",),
+        default="keypoints",
+        help="Reported task family for MMPose (fixed: keypoints).",
+    )
+    tmmpose.add_argument(
+        "--train-opt",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        default=[],
+        help="Extra MMPose cfg-options pair forwarded to the external launcher.",
+    )
+    tmmpose.add_argument("-W", "--work-dir", default="runs/support_external_training/mmpose", help="Work/cache dir.")
+    tmmpose.add_argument("-o", "--output", default="reports/support_external_training.train_mmpose.json", help="Report JSON output path.")
+    tmmpose.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    tmmpose.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    tmmpose.set_defaults(_fn=_cmd_train_mmpose)
+
+    tmmseg = sub.add_parser(
+        "train-mmseg",
+        aliases=["tms", "mmseg-train"],
+        help="MMSeg external training bridge for semantic segmentation workflows.",
+    )
+    tmmseg.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    tmmseg.add_argument("-c", "--config", required=True, help="MMSeg config Python path.")
+    tmmseg.add_argument("-t", "--train-script", default=None, help="Optional external MMSeg train launcher for non-dry execution.")
+    tmmseg.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    tmmseg.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    tmmseg.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    tmmseg.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    tmmseg.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    tmmseg.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    tmmseg.add_argument(
+        "--task-family",
+        choices=("segmentation",),
+        default="segmentation",
+        help="Reported task family for MMSeg (fixed: segmentation).",
+    )
+    tmmseg.add_argument(
+        "--train-opt",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        default=[],
+        help="Extra MMSeg cfg-options pair forwarded to the external launcher.",
+    )
+    tmmseg.add_argument("-W", "--work-dir", default="runs/support_external_training/mmseg", help="Work/cache dir.")
+    tmmseg.add_argument("-o", "--output", default="reports/support_external_training.train_mmseg.json", help="Report JSON output path.")
+    tmmseg.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    tmmseg.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    tmmseg.set_defaults(_fn=_cmd_train_mmseg)
 
     tul = sub.add_parser(
         "train-ultralytics",

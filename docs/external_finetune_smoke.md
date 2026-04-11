@@ -8,6 +8,10 @@ This page defines a practical smoke workflow to check whether finetune entrypoin
 - Detectron2
 - RT-DETR (`rtdetr_pose` in-repo)
 
+Top-level `yolozu train` also supports first-class external lanes for `mmdetection`,
+`mmpose`, and `mmseg`. This smoke page stays narrower on purpose: it focuses on
+the launcher paths that already have repo-backed smoke coverage.
+
 The focus is a stable interface contract for reproducible command inputs/outputs and a machine-readable report.
 YOLOX is the recommended external YOLO-style lane because it preserves YOLOZU's
 Apache-2.0 repository policy more cleanly than optional copyleft bridges.

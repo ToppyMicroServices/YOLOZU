@@ -15,7 +15,7 @@ Every training backend should expose the same high-level ideas:
 - one clear statement of whether export / eval / parity are supported
 
 YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
-YOLOX, Detectron2, Ultralytics, and HF DETR as external lanes that still publish the same
+YOLOX, Detectron2, MMDetection, MMPose, MMSeg, Ultralytics, and HF DETR as external lanes that still publish the same
 top-level summary interface contract plus one standardized external run bundle.
 
 ## Backend ids
@@ -25,6 +25,9 @@ Current backend ids:
 - `reference-rtdetr-pose`
 - `yolox`
 - `detectron2`
+- `mmdetection`
+- `mmpose`
+- `mmseg`
 - `ultralytics`
 - `hf-detr`
 
@@ -102,6 +105,9 @@ The standardized external bundle is:
 - `work_dir/reports/external_run_meta.json`
 - `work_dir/reports/launcher_plan.json`
 - `work_dir/reports/execution.json`
+
+OpenCV DNN and ONNX Runtime do not appear in this list because YOLOZU treats them as
+export / inference / parity runtimes, not as training backends.
 
 ## Why this matters
 

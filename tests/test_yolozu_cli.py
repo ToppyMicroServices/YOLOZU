@@ -41,6 +41,9 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("--external-backend", proc.stdout)
         self.assertIn("yolox", proc.stdout)
         self.assertIn("detectron2", proc.stdout)
+        self.assertIn("mmdetection", proc.stdout)
+        self.assertIn("mmpose", proc.stdout)
+        self.assertIn("mmseg", proc.stdout)
         self.assertIn("ultralytics", proc.stdout)
         self.assertIn("hf-detr", proc.stdout)
 

@@ -13262,6 +13262,18 @@
           "description": "Dry-run the Detectron2 external training lane; the config can target bbox, instance segmentation, or keypoints."
         },
         {
+          "command": "python3 tools/support_external_training.py train-mmdetection --config configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_mmdetection.json",
+          "description": "Dry-run the MMDetection external training lane for bbox or instance-segmentation workflows."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-mmpose --config configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmpose.json",
+          "description": "Dry-run the MMPose external training lane for keypoints workflows."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-mmseg --config configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmseg.json",
+          "description": "Dry-run the MMSeg external training lane for semantic-segmentation workflows."
+        },
+        {
           "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
           "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
         },
@@ -13273,7 +13285,7 @@
       "id": "support_external_training",
       "inputs": [
         {
-          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
+          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-mmdetection, train-mmpose, train-mmseg, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
           "flag": "--subcommand",
           "kind": "string",
           "name": "subcommand",
@@ -13337,14 +13349,14 @@
           "required": false
         },
         {
-          "description": "Reported Detectron2 task family: bbox, segmentation, or keypoints.",
+          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg external lanes.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
           "required": false
         },
         {
-          "description": "Repeatable Detectron2 config override pair forwarded to the external launcher.",
+          "description": "Repeatable backend-native config override pair forwarded to the external launcher.",
           "flag": "--train-opt",
           "kind": "string",
           "name": "train_opt",
@@ -13365,7 +13377,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2 external training for bbox/instance segmentation/keypoints, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",
@@ -13373,6 +13385,9 @@
         "ultralytics",
         "license-boundary",
         "detectron2",
+        "mmdetection",
+        "mmpose",
+        "mmseg",
         "keypoints",
         "segmentation"
       ]
@@ -14523,6 +14538,18 @@
         {
           "command": "python3 -m yolozu train --external-backend detectron2 configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_detectron2_bbox.json",
           "description": "Top-level train route for the Detectron2 external lane (bbox / instance segmentation / keypoints via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmdetection configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_mmdetection_bbox.json",
+          "description": "Top-level train route for the MMDetection external lane (bbox / instance segmentation via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmpose configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmpose.json",
+          "description": "Top-level train route for the MMPose external lane (keypoints / pose via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmseg configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmseg.json",
+          "description": "Top-level train route for the MMSeg external lane (semantic segmentation via backend-native configs)."
         },
         {
           "command": "python3 tools/yolozu.py sud ls -j",
