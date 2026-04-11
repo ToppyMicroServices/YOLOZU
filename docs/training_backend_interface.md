@@ -12,6 +12,8 @@ Every training backend should expose the same high-level ideas:
 - one canonical `TrainConfig`
 - one backend id
 - one machine-readable training run summary
+- one standardized export / eval / parity handoff bundle
+- one optional training registry entry
 - one clear statement of whether export / eval / parity are supported
 
 YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
@@ -105,6 +107,15 @@ The standardized external bundle is:
 - `work_dir/reports/external_run_meta.json`
 - `work_dir/reports/launcher_plan.json`
 - `work_dir/reports/execution.json`
+- `work_dir/reports/export_handoff.json`
+- `work_dir/reports/eval_handoff.json`
+- `work_dir/reports/parity_handoff.json`
+- `work_dir/reports/training_registry_entry.json`
+
+The handoff JSON files make export / eval / parity machine-readable even when the
+backend runtime itself stays external. This is how `mmpose` and `mmseg` stop being
+"placeholder only" lanes: YOLOZU now fixes the accepted handoff format even when the
+final exporter is still launched from the backend side.
 
 OpenCV DNN and ONNX Runtime do not appear in this list because YOLOZU treats them as
 export / inference / parity runtimes, not as training backends.
@@ -115,6 +126,7 @@ This separation makes it possible to:
 
 - compare training lanes without conflating them with one trainer implementation
 - orchestrate multi-backend experiments from one spec
+- append executed runs into one JSONL registry for later audit/replay
 - expose a capability matrix without pretending every backend is equally complete
 
 ## Related docs

@@ -11,6 +11,7 @@
     "spec": { "type": "string" },
     "execute": { "type": "boolean" },
     "forced_dry_run": { "type": "boolean" },
+    "registry_out": { "type": ["string", "null"] },
     "ok": { "type": "boolean" },
     "counts": { "type": "object" },
     "results": {

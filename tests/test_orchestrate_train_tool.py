@@ -154,6 +154,61 @@ class TestOrchestrateTrainTool(unittest.TestCase):
             self.assertTrue(train_out.is_file())
             self.assertTrue(bool(payload["results"][0].get("next_steps")))
 
+    def test_execute_appends_registry_entry(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "orchestrate_train.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            spec = root / "spec.json"
+            out = root / "orchestration.json"
+            registry = root / "training_registry.jsonl"
+            train_out = root / "train_mmpose.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "experiments": [
+                            {
+                                "name": "mmpose-smoke",
+                                "backend": "mmpose",
+                                "config": "configs/examples/finetune_external/mmpose_finetune_smoke.py",
+                                "dataset": "data/smoke",
+                                "split": "val",
+                                "extra_args": ["--dry-run", "--output", str(train_out)],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--spec",
+                    str(spec),
+                    "--output",
+                    str(out),
+                    "--execute",
+                    "--registry-out",
+                    str(registry),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"orchestrate_train registry execute failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(str(payload["registry_out"]), str(registry.resolve()))
+            lines = [line for line in registry.read_text(encoding="utf-8").splitlines() if line.strip()]
+            self.assertEqual(len(lines), 1)
+            entry = json.loads(lines[0])
+            self.assertEqual(entry["format"], "yolozu_training_registry_entry_v1")
+            self.assertEqual(entry["backend_id"], "mmpose")
+
 
 if __name__ == "__main__":
     unittest.main()

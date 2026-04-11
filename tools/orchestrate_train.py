@@ -13,6 +13,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.training.platform import get_training_backend_spec  # noqa: E402
+from yolozu.training.registry import append_training_registry, build_training_registry_entry  # noqa: E402
 
 
 def _now_utc() -> str:
@@ -75,6 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--execute", action="store_true", help="Actually run each planned command.")
     parser.add_argument("--dry-run", action="store_true", help="Append --dry-run to planned commands when missing.")
     parser.add_argument("--stop-on-failure", action="store_true", help="Stop the batch after the first failing execution.")
+    parser.add_argument("--registry-out", default=None, help="Optional JSONL registry file to append executed training runs.")
     return parser
 
 
@@ -133,6 +135,19 @@ def main(argv: list[str] | None = None) -> int:
                         row["work_dir"] = str(payload.get("work_dir"))
                     if isinstance(payload.get("next_steps"), list):
                         row["next_steps"] = payload.get("next_steps")
+                    registry_out = getattr(args, "registry_out", None)
+                    if registry_out:
+                        registry_entry = build_training_registry_entry(
+                            summary=payload,
+                            summary_path=output_path,
+                            orchestration={
+                                "spec": str(spec_path),
+                                "experiment": str(name),
+                                "batch_report": str(Path(str(args.output)).resolve()),
+                            },
+                        )
+                        append_training_registry(Path(str(registry_out)).resolve(), registry_entry)
+                        row["registry_out"] = str(Path(str(registry_out)).resolve())
         else:
             row["ok"] = True
         results.append(row)
@@ -144,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         "spec": str(spec_path),
         "execute": bool(args.execute),
         "forced_dry_run": bool(args.dry_run),
+        "registry_out": (str(Path(str(args.registry_out)).resolve()) if getattr(args, "registry_out", None) else None),
         "ok": ok,
         "counts": {
             "experiments": len(results),

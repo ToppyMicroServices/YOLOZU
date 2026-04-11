@@ -175,6 +175,10 @@ For external lanes, YOLOZU now also standardizes one wrapper-level bundle under
   \item \path{reports/external\_run\_meta.json}
   \item \path{reports/launcher\_plan.json}
   \item \path{reports/execution.json}
+  \item \path{reports/export\_handoff.json}
+  \item \path{reports/eval\_handoff.json}
+  \item \path{reports/parity\_handoff.json}
+  \item \path{reports/training\_registry\_entry.json}
 \end{itemize}
 
 This is not the same as forcing one backend-native checkpoint layout. It means
@@ -182,8 +186,11 @@ the wrapper-owned interface contract is now fixed even when the actual trainer
 remains external.
 
 The external training summary also records \path{next\_steps}: copy-paste
-follow-up commands for export, evaluation, and parity. In practice, this makes
-the training report itself the hand-off note for the next operator step.
+follow-up commands for export, evaluation, and parity. The handoff JSONs make
+those next steps machine-readable, so orchestration and CI do not need to infer
+backend-specific conventions from prose. In practice, this makes the training
+report itself the hand-off note for the next operator step while still keeping
+the export/eval/parity interface contract explicit.
 
 OpenCV DNN and ONNX Runtime do not appear in this training registry because
 YOLOZU treats them as inference/export runtimes after training, not as
@@ -193,8 +200,14 @@ The repo-side orchestration command is:
 \begin{lstlisting}[language=bash]
 yolozu train-orchestrate \
   --spec reports/train_orchestration_spec.json \
-  --output reports/training_orchestration_report.json
+  --output reports/training_orchestration_report.json \
+  --registry-out reports/training_registry.jsonl
 \end{lstlisting}
+
+When \cmd{--registry-out} is set, each executed training run appends one
+\path{yolozu\_training\_registry\_entry\_v1} record to a shared JSONL file.
+This is intentionally lightweight: it is an append-only experiment registry for
+cross-backend auditing, not a full experiment tracking server.
 
 Read next:
 \begin{itemize}

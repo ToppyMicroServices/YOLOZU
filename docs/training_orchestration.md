@@ -55,6 +55,16 @@ python3 tools/orchestrate_train.py \
   --execute
 ```
 
+Execute and append a JSONL run registry:
+
+```bash
+python3 tools/orchestrate_train.py \
+  --spec reports/train_orchestration_spec.json \
+  --output reports/training_orchestration_report.json \
+  --registry-out reports/training_registry.jsonl \
+  --execute
+```
+
 Top-level alias:
 
 ```bash
@@ -72,6 +82,7 @@ The report uses:
 - the exact command that was planned or executed
 - execution status and output tails when `--execute` is used
 - when the experiment writes a training summary JSON, the orchestration row also records `summary_json`, `work_dir`, and `next_steps`
+- when `--registry-out` is set, executed runs are also appended to one JSONL registry file using `yolozu_training_registry_entry_v1`
 
 Schema reference:
 
@@ -86,6 +97,7 @@ Think of it this way:
 
 - `training_summary.json` = one backend run
 - `training_orchestration_report.json` = one batch of runs
+- `training_registry.jsonl` = append-only index across many runs/batches
 
 For external backends, that means you can run one batch, then immediately open the
 captured `next_steps` commands to continue with export, evaluation, and parity.

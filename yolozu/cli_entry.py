@@ -646,6 +646,7 @@ def main(argv: list[str] | None = None) -> int:
         default="reports/training_orchestration_report.json",
         help="Output report JSON path.",
     )
+    train_orch.add_argument("--registry-out", default=None, help="Optional JSONL registry file to append executed training runs.")
     train_orch.add_argument("--execute", action="store_true", help="Run the planned commands.")
     train_orch.add_argument("--dry-run", action="store_true", help="Append --dry-run when missing.")
     train_orch.add_argument("--stop-on-failure", action="store_true", help="Stop after the first failing execution.")

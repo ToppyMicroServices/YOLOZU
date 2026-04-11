@@ -20,8 +20,10 @@
     "runtime_error": { "type": ["string", "null"] },
     "license_boundary": { "type": "object" },
     "notes": { "type": "array", "items": { "type": "string" } },
+    "handoff_contracts": { "type": "object" },
     "next_steps": { "type": "array", "items": { "type": "object" } },
-    "work_dir": { "type": "string" }
+    "work_dir": { "type": "string" },
+    "registry_entry": { "type": "string" }
   },
   "additionalProperties": true
 }

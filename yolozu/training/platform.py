@@ -33,6 +33,10 @@ class TrainingBackendSpec:
     supports_parity: bool = False
     supports_resume: bool = False
     supports_mps: bool = False
+    supported_tasks: tuple[str, ...] = ()
+    export_interface_contract: str | None = None
+    eval_interface_contract: str | None = None
+    parity_interface_contract: str | None = None
     notes: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,6 +59,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=True,
         supports_mps=True,
+        supported_tasks=("bbox", "keypoints", "depth", "pose6d"),
+        export_interface_contract="Reference lane exports ONNX and training artifacts under the full run contract.",
+        eval_interface_contract="YOLOZU-native eval lanes consume predictions/eval artifacts from the reference trainer.",
+        parity_interface_contract="Reference lane emits ONNX parity artifacts under the full run contract.",
         notes="Primary in-repo training lane; the default path behind `yolozu train`.",
     ),
     "yolox": TrainingBackendSpec(
@@ -72,6 +80,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
+        supported_tasks=("bbox",),
+        export_interface_contract="Predictions interface contract via export_predictions_yolox.py.",
+        eval_interface_contract="Detection eval through yolozu eval-coco.",
+        parity_interface_contract="Detection parity through yolozu parity.",
         notes="Primary external training lane for YOLO-style workflows.",
     ),
     "detectron2": TrainingBackendSpec(
@@ -89,6 +101,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
+        supported_tasks=("bbox", "segmentation", "keypoints"),
+        export_interface_contract="Predictions interface contract via Detectron2-side export bridge.",
+        eval_interface_contract="Detection/keypoints eval via YOLOZU wrappers once predictions are exported.",
+        parity_interface_contract="Detection/keypoints parity through YOLOZU wrappers once predictions are exported.",
         notes="Task family is selected by the Detectron2 config and optional train-time overrides.",
     ),
     "mmdetection": TrainingBackendSpec(
@@ -106,6 +122,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
+        supported_tasks=("bbox", "segmentation"),
+        export_interface_contract="BBox export uses export_predictions_mmdet.py; instance-seg export uses a standardized mask-manifest handoff.",
+        eval_interface_contract="Detection eval through yolozu eval-coco or instance/seg eval through mask-manifest handoff.",
+        parity_interface_contract="Detection parity through yolozu parity; mask parity through segmentation/instance parity handoff.",
         notes="Best fit when detection or instance-segmentation training already lives in an MMDetection stack.",
     ),
     "mmpose": TrainingBackendSpec(
@@ -118,12 +138,16 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         primary_use="External MMPose training for keypoints and pose estimation via backend-native configs.",
         interface_contract_level="external_run_contract",
         supports_run_contract=True,
-        supports_export=False,
+        supports_export=True,
         supports_eval=True,
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
-        notes="Training is first-class at the orchestration layer, while export remains backend-specific.",
+        supported_tasks=("keypoints", "pose"),
+        export_interface_contract="COCO keypoints results JSON + instances JSON can be normalized into the predictions interface contract.",
+        eval_interface_contract="Keypoints eval through tools/eval_keypoints.py.",
+        parity_interface_contract="Keypoints parity through tools/check_keypoints_parity.py.",
+        notes="Training and export handoff are first-class at the orchestration layer via standardized keypoints normalization.",
     ),
     "mmseg": TrainingBackendSpec(
         backend_id="mmseg",
@@ -135,12 +159,16 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         primary_use="External MMSegmentation training for semantic segmentation via backend-native configs.",
         interface_contract_level="external_run_contract",
         supports_run_contract=True,
-        supports_export=False,
+        supports_export=True,
         supports_eval=True,
-        supports_parity=False,
+        supports_parity=True,
         supports_resume=False,
         supports_mps=False,
-        notes="Training is first-class at the orchestration layer, while export remains backend-specific.",
+        supported_tasks=("segmentation",),
+        export_interface_contract="Class-id mask directory + dataset.json can be packaged into the segmentation predictions interface contract.",
+        eval_interface_contract="Semantic segmentation eval through tools/eval_segmentation.py.",
+        parity_interface_contract="Semantic segmentation parity through tools/check_segmentation_parity.py.",
+        notes="Training and export handoff are first-class at the orchestration layer via standardized segmentation packaging.",
     ),
     "ultralytics": TrainingBackendSpec(
         backend_id="ultralytics",
@@ -158,6 +186,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
+        supported_tasks=("bbox", "segmentation", "keypoints", "pose"),
+        export_interface_contract="Predictions interface contract via predict-normalize/export-onnx bridge.",
+        eval_interface_contract="YOLOZU eval lanes consume normalized predictions artifacts.",
+        parity_interface_contract="Parity runs consume normalized predictions artifacts.",
         notes="Keep the runtime/license boundary explicit; review upstream license terms separately.",
     ),
     "hf-detr": TrainingBackendSpec(
@@ -176,6 +208,10 @@ BACKEND_SPECS: dict[str, TrainingBackendSpec] = {
         supports_parity=True,
         supports_resume=False,
         supports_mps=False,
+        supported_tasks=("bbox",),
+        export_interface_contract="ONNX export via support_external_training export-onnx.",
+        eval_interface_contract="Detection eval through yolozu eval-coco once predictions are exported.",
+        parity_interface_contract="Detection parity through yolozu parity once predictions are exported.",
         notes="Useful when DETR-family training already lives outside YOLOZU.",
     ),
 }
@@ -308,6 +344,10 @@ def training_run_output_contract(*, backend_id: str, report_path: str | Path, wo
             "reports/external_run_meta.json",
             "reports/launcher_plan.json",
             "reports/execution.json",
+            "reports/export_handoff.json",
+            "reports/eval_handoff.json",
+            "reports/parity_handoff.json",
+            "reports/training_registry_entry.json",
         ]
     return output_contract
 
@@ -326,6 +366,7 @@ def build_training_run_summary(
     runtime_error: str | None = None,
     notes: list[str] | None = None,
     license_boundary: dict[str, Any] | None = None,
+    handoff_contracts: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     spec = get_training_backend_spec(backend_id)
     payload: dict[str, Any] = {
@@ -351,6 +392,7 @@ def build_training_run_summary(
         "runtime_error": runtime_error,
         "license_boundary": dict(license_boundary or {}),
         "notes": list(notes or []),
+        "handoff_contracts": dict(handoff_contracts or {}),
         "next_steps": [],
     }
     if work_dir is not None:

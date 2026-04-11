@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/training_registry_entry.schema.json",
+  "title": "YOLOZU training registry entry",
+  "type": "object",
+  "required": ["format", "timestamp", "summary_json", "backend_id", "ok"],
+  "properties": {
+    "format": { "const": "yolozu_training_registry_entry_v1" },
+    "timestamp": { "type": "string" },
+    "summary_json": { "type": "string" },
+    "backend_id": { "type": ["string", "null"] },
+    "backend_display_name": { "type": ["string", "null"] },
+    "maturity": { "type": ["string", "null"] },
+    "task": { "type": ["string", "null"] },
+    "dataset_root": { "type": ["string", "null"] },
+    "split": { "type": ["string", "null"] },
+    "dry_run": { "type": "boolean" },
+    "ok": { "type": "boolean" },
+    "training_executed": { "type": "boolean" },
+    "work_dir": { "type": ["string", "null"] },
+    "run_output_contract_kind": { "type": ["string", "null"] },
+    "next_steps": { "type": "array", "items": { "type": "object" } },
+    "steps": { "type": "object" },
+    "orchestration": { "type": "object" }
+  },
+  "additionalProperties": true
+}

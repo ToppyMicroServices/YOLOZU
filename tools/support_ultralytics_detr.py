@@ -41,6 +41,11 @@ from yolozu.datasets.imports import (  # noqa: E402
 )
 from yolozu.core.canonical import TrainConfig  # noqa: E402
 from yolozu.training.platform import build_training_run_summary  # noqa: E402
+from yolozu.training.registry import (  # noqa: E402
+    append_training_registry,
+    build_training_registry_entry,
+    write_training_registry_entry,
+)
 
 
 def _now_utc() -> str:
@@ -136,8 +141,238 @@ def _write_external_run_contract_bundle(
     }
 
 
+def _write_handoff_contracts(
+    *,
+    work_dir: Path,
+    report_path: Path,
+    handoff_contracts: dict[str, Any],
+) -> dict[str, str]:
+    reports_dir = work_dir / "reports"
+    paths = {
+        "export_handoff": reports_dir / "export_handoff.json",
+        "eval_handoff": reports_dir / "eval_handoff.json",
+        "parity_handoff": reports_dir / "parity_handoff.json",
+    }
+    export_payload = handoff_contracts.get("export")
+    eval_payload = handoff_contracts.get("eval")
+    parity_payload = handoff_contracts.get("parity")
+    if isinstance(export_payload, dict):
+        _write_json(paths["export_handoff"], export_payload)
+    if isinstance(eval_payload, dict):
+        _write_json(paths["eval_handoff"], eval_payload)
+    if isinstance(parity_payload, dict):
+        _write_json(paths["parity_handoff"], parity_payload)
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _standard_handoff_payload(
+    *,
+    stage: str,
+    backend_id: str,
+    task_family: str,
+    command: str,
+    description: str,
+    input_contract: dict[str, Any],
+    output_contract: dict[str, Any],
+    supported: bool = True,
+) -> dict[str, Any]:
+    return {
+        "format": "yolozu_training_handoff_v1",
+        "stage": str(stage),
+        "backend_id": str(backend_id),
+        "task_family": str(task_family),
+        "supported": bool(supported),
+        "command": str(command),
+        "description": str(description),
+        "input_contract": dict(input_contract),
+        "output_contract": dict(output_contract),
+    }
+
+
 def _step(label: str, command: str, description: str) -> dict[str, str]:
     return {"label": str(label), "command": str(command), "description": str(description)}
+
+
+def _external_handoff_contracts(
+    *,
+    backend_id: str,
+    dataset_root: Path,
+    split: str,
+    work_dir: Path,
+    report_path: Path,
+    config_path: Path | None = None,
+    exp_path: Path | None = None,
+    model_name: str | None = None,
+    model_id: str | None = None,
+    task_family: str | None = None,
+) -> dict[str, Any]:
+    task = str(task_family or "bbox")
+    predictions_out = work_dir / "reports" / f"{backend_id}_predictions.json"
+    eval_out = work_dir / "reports" / f"{backend_id}_eval.json"
+    parity_out = work_dir / "reports" / f"{backend_id}_parity.json"
+
+    export_command = ""
+    export_description = ""
+    export_input: dict[str, Any] = {}
+    export_output: dict[str, Any] = {}
+    export_supported = True
+
+    if backend_id == "yolox" and exp_path is not None:
+        export_command = (
+            "python3 tools/export_predictions_yolox.py "
+            f"--dataset {dataset_root} --split {split} --exp {exp_path} "
+            f"--weights <path/to/yolox_ckpt.pth> --output {predictions_out}"
+        )
+        export_description = "Export YOLOX detections into the predictions interface contract."
+        export_input = {"type": "yolox_checkpoint", "required": ["exp", "weights", "dataset", "split"]}
+        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
+    elif backend_id == "detectron2" and config_path is not None:
+        export_command = (
+            "python3 tools/export_predictions_detectron2.py "
+            f"--dataset {dataset_root} --split {split} --config {config_path} "
+            f"--weights <path/to/model_final.pth> --protocol nms_applied --output {predictions_out}"
+        )
+        export_description = "Export Detectron2 detections/keypoints into the predictions interface contract."
+        export_input = {"type": "detectron2_config_plus_weights", "required": ["config", "weights", "dataset", "split"]}
+        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
+    elif backend_id == "mmdetection" and config_path is not None and task in {"bbox", "detect", "auto"}:
+        export_command = (
+            "python3 tools/export_predictions_mmdet.py "
+            f"--dataset {dataset_root} --split {split} --config {config_path} "
+            f"--checkpoint <path/to/epoch_*.pth> --protocol nms_applied --output {predictions_out}"
+        )
+        export_description = "Export MMDetection detections into the predictions interface contract."
+        export_input = {"type": "mmdetection_config_plus_checkpoint", "required": ["config", "checkpoint", "dataset", "split"]}
+        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
+    elif backend_id == "mmdetection" and task == "segmentation":
+        export_command = (
+            "python3 tools/package_segmentation_predictions.py "
+            "--dataset-json <path/to/seg_dataset.json> "
+            "--masks-dir <path/to/pred_mask_dir> "
+            f"--output {predictions_out.with_name('mmdetection_segmentation_predictions.json')}"
+        )
+        export_description = "Package MMDetection-produced class-id masks into the segmentation predictions interface contract."
+        export_input = {"type": "segmentation_masks_dir", "required": ["dataset_json", "masks_dir"]}
+        export_output = {
+            "type": "segmentation predictions interface contract",
+            "path": str(predictions_out.with_name("mmdetection_segmentation_predictions.json")),
+        }
+    elif backend_id == "mmpose":
+        export_command = (
+            "python3 tools/export_predictions_coco_keypoints.py "
+            "--results-json <path/to/mmpose_results.json> "
+            "--instances-json <path/to/coco_instances.json> "
+            f"--output {predictions_out}"
+        )
+        export_description = "Normalize COCO-style keypoints results into the predictions interface contract."
+        export_input = {"type": "coco_keypoints_results", "required": ["results_json", "instances_json"]}
+        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
+    elif backend_id == "mmseg":
+        export_command = (
+            "python3 tools/package_segmentation_predictions.py "
+            "--dataset-json <path/to/seg_dataset.json> "
+            "--masks-dir <path/to/pred_mask_dir> "
+            f"--output {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'}"
+        )
+        export_description = "Package MMSeg class-id masks into the segmentation predictions interface contract."
+        export_input = {"type": "segmentation_masks_dir", "required": ["dataset_json", "masks_dir"]}
+        export_output = {
+            "type": "segmentation predictions interface contract",
+            "path": str(work_dir / "reports" / "mmseg_segmentation_predictions.json"),
+        }
+    elif backend_id == "ultralytics" and model_name is not None:
+        export_command = (
+            "python3 tools/support_external_training.py predict-normalize "
+            f"--ultralytics-model {model_name} --dataset {dataset_root} --split {split} "
+            f"--output {predictions_out} --report {work_dir / 'reports' / 'predict_normalize.json'}"
+        )
+        export_description = "Run Ultralytics prediction and normalize into the predictions interface contract."
+        export_input = {"type": "ultralytics_runtime_model", "required": ["model", "dataset", "split"]}
+        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
+    elif backend_id == "hf-detr" and model_id is not None:
+        export_command = (
+            "python3 tools/support_external_training.py export-onnx "
+            f"--provider hf_detr --model {model_id} --output {work_dir / 'exports' / 'model.onnx'} "
+            f"--report {work_dir / 'reports' / 'export_onnx.json'}"
+        )
+        export_description = "Export an ONNX artifact for downstream deploy/parity checks."
+        export_input = {"type": "hf_model_id", "required": ["model"]}
+        export_output = {"type": "onnx_artifact", "path": str(work_dir / 'exports' / 'model.onnx')}
+    else:
+        export_supported = False
+        export_command = f"Inspect {report_path} for backend-specific export requirements."
+        export_description = "No standardized export handoff is registered for this backend/task pair."
+        export_input = {"type": "backend_specific"}
+        export_output = {"type": "backend_specific"}
+
+    if backend_id == "mmseg":
+        eval_command = (
+            "python3 tools/eval_segmentation.py "
+            "--dataset-json <path/to/seg_dataset.json> "
+            f"--predictions {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} "
+            f"--pred-root {work_dir / 'reports'} --output {eval_out}"
+        )
+        eval_description = "Evaluate semantic segmentation predictions via the stable segmentation eval lane."
+        parity_command = (
+            "python3 tools/check_segmentation_parity.py "
+            f"--reference <reference_seg_predictions.json> --candidate {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} "
+            f"--output {parity_out}"
+        )
+        parity_description = "Compare semantic segmentation predictions against a reference artifact."
+    elif backend_id == "mmpose":
+        eval_command = f"python3 tools/eval_keypoints.py --dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}"
+        eval_description = "Evaluate keypoint predictions with the stable keypoints eval lane."
+        parity_command = f"python3 tools/check_keypoints_parity.py --reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}"
+        parity_description = "Compare keypoint predictions against a reference artifact."
+    else:
+        eval_command = f"python3 -m yolozu eval-coco --dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}"
+        eval_description = "Evaluate detection predictions with the stable eval lane."
+        parity_command = f"python3 -m yolozu parity --reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}"
+        parity_description = "Compare candidate predictions against a reference backend artifact."
+        if task == "segmentation":
+            eval_command = (
+                "python3 tools/eval_segmentation.py "
+                f"--dataset-json <path/to/seg_dataset.json> --predictions {predictions_out.with_name('mmdetection_segmentation_predictions.json')} "
+                f"--pred-root {work_dir / 'reports'} --output {eval_out}"
+            )
+            eval_description = "Evaluate packaged segmentation predictions through the stable segmentation eval lane."
+            parity_command = (
+                "python3 tools/check_segmentation_parity.py "
+                f"--reference <reference_seg_predictions.json> --candidate {predictions_out.with_name('mmdetection_segmentation_predictions.json')} "
+                f"--output {parity_out}"
+            )
+            parity_description = "Compare segmentation predictions against a reference artifact."
+
+    return {
+        "export": _standard_handoff_payload(
+            stage="export",
+            backend_id=backend_id,
+            task_family=task,
+            command=export_command,
+            description=export_description,
+            input_contract=export_input,
+            output_contract=export_output,
+            supported=export_supported,
+        ),
+        "eval": _standard_handoff_payload(
+            stage="eval",
+            backend_id=backend_id,
+            task_family=task,
+            command=eval_command,
+            description=eval_description,
+            input_contract={"type": "export_output"},
+            output_contract={"type": "evaluation_report", "path": str(eval_out)},
+        ),
+        "parity": _standard_handoff_payload(
+            stage="parity",
+            backend_id=backend_id,
+            task_family=task,
+            command=parity_command,
+            description=parity_description,
+            input_contract={"type": "reference_artifact_plus_export_output"},
+            output_contract={"type": "parity_report", "path": str(parity_out)},
+        ),
+    }
 
 
 def _external_next_steps(
@@ -201,16 +436,22 @@ def _external_next_steps(
         steps.append(
             _step(
                 "export_predictions",
-                f"# Export MMPose detections/keypoints into the predictions interface contract at {predictions_out}.",
-                "Use a backend-side exporter that writes bbox + keypoints in the predictions interface contract.",
+                "python3 tools/export_predictions_coco_keypoints.py "
+                "--results-json <path/to/mmpose_results.json> "
+                "--instances-json <path/to/coco_instances.json> "
+                f"--output {predictions_out}",
+                "Normalize COCO-style keypoints results into the predictions interface contract.",
             )
         )
     elif backend_id == "mmseg":
         steps.append(
             _step(
                 "export_predictions",
-                f"# Export MMSeg predictions into a segmentation predictions JSON plus mask files under {work_dir / 'reports'}.",
-                "Semantic-segmentation training is supported here, while export remains backend-specific today.",
+                "python3 tools/package_segmentation_predictions.py "
+                "--dataset-json <path/to/seg_dataset.json> "
+                "--masks-dir <path/to/pred_mask_dir> "
+                f"--output {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'}",
+                "Package MMSeg class-id masks into the segmentation predictions interface contract.",
             )
         )
     elif backend_id == "ultralytics" and model_name is not None:
@@ -264,8 +505,16 @@ def _external_next_steps(
             _step(
                 "eval",
                 "python3 tools/eval_segmentation.py "
-                f"--dataset-json <path/to/seg_dataset.json> --predictions <path/to/seg_predictions.json> --pred-root {work_dir / 'reports'} --output {eval_out}",
-                "Evaluate semantic segmentation predictions once the backend-side exporter has written masks + JSON.",
+                f"--dataset-json <path/to/seg_dataset.json> --predictions {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} --pred-root {work_dir / 'reports'} --output {eval_out}",
+                "Evaluate semantic segmentation predictions once the packaging bridge has written masks + JSON.",
+            )
+        )
+        steps.append(
+            _step(
+                "parity",
+                "python3 tools/check_segmentation_parity.py "
+                f"--reference <reference_seg_predictions.json> --candidate {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} --output {parity_out}",
+                "Compare candidate semantic-segmentation predictions against a reference artifact.",
             )
         )
     elif task_family in (None, "", "bbox", "detect"):
@@ -793,6 +1042,15 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
                 runtime_error = f"external YOLOX train script failed ({proc.returncode})"
 
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_yolox.json"))).resolve()
+    handoff_contracts = _external_handoff_contracts(
+        backend_id="yolox",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        exp_path=exp_path,
+        task_family="bbox",
+    )
     report = build_training_run_summary(
         backend_id="yolox",
         report_path=report_path,
@@ -824,6 +1082,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             "primary_lane": "YOLOX-style external training bridge",
             "optional_bridge": False,
         },
+        handoff_contracts=handoff_contracts,
     )
     report.update(
         {
@@ -865,8 +1124,17 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         runtime_error=runtime_error,
         extra_env=projection_payload.get("environment_hints"),
     )
+    handoff_paths = _write_handoff_contracts(work_dir=work_dir, report_path=report_path, handoff_contracts=handoff_contracts)
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
     report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
     report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
     _write_json(report_path, report)
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
@@ -1005,6 +1273,15 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
                 runtime_error = f"external Detectron2 train script failed ({proc.returncode})"
 
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_detectron2.json"))).resolve()
+    handoff_contracts = _external_handoff_contracts(
+        backend_id="detectron2",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        config_path=config_path,
+        task_family=task_family,
+    )
     report = build_training_run_summary(
         backend_id="detectron2",
         report_path=report_path,
@@ -1037,6 +1314,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             "optional_bridge": True,
             "note": "Detectron2 runtime remains external to YOLOZU; review upstream terms and environment setup separately.",
         },
+        handoff_contracts=handoff_contracts,
     )
     report.update(
         {
@@ -1078,8 +1356,17 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
         runtime_error=runtime_error,
         extra_env=projection_payload.get("environment_hints"),
     )
+    handoff_paths = _write_handoff_contracts(work_dir=work_dir, report_path=report_path, handoff_contracts=handoff_contracts)
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
     report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
     report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
     _write_json(report_path, report)
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
@@ -1218,6 +1505,15 @@ def _cmd_train_mmfamily(
                 runtime_error = f"external {provider_label} train script failed ({proc.returncode})"
 
     report_path = Path(str(_resolve_value(args.output, fallback=default_output))).resolve()
+    handoff_contracts = _external_handoff_contracts(
+        backend_id=backend_id,
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        config_path=config_path,
+        task_family=task_family,
+    )
     report = build_training_run_summary(
         backend_id=backend_id,
         report_path=report_path,
@@ -1234,9 +1530,9 @@ def _cmd_train_mmfamily(
                 "command_template": template,
                 "train_script": train_script or None,
             },
-            "export": {"status": ("planned" if backend_id == "mmdetection" else "backend_specific"), "ok": True, "executed": False},
+            "export": {"status": "planned", "ok": True, "executed": False},
             "eval": {"status": "planned", "ok": True, "executed": False},
-            "parity": {"status": ("planned" if backend_id in {"mmdetection", "mmpose"} else "backend_specific"), "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
         },
         process=proc_info,
         runtime_error=runtime_error,
@@ -1250,6 +1546,7 @@ def _cmd_train_mmfamily(
             "optional_bridge": False,
             "note": f"{provider_label} runtime remains external to YOLOZU; review upstream terms and environment setup separately.",
         },
+        handoff_contracts=handoff_contracts,
     )
     report.update(
         {
@@ -1291,8 +1588,21 @@ def _cmd_train_mmfamily(
         runtime_error=runtime_error,
         extra_env=projection_payload.get("environment_hints"),
     )
+    handoff_paths = _write_handoff_contracts(
+        work_dir=work_dir,
+        report_path=report_path,
+        handoff_contracts=handoff_contracts,
+    )
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
     report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
     report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
     _write_json(report_path, report)
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
@@ -1445,6 +1755,15 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
         source={"from": "ultralytics", "model": str(model_name)},
     )
+    handoff_contracts = _external_handoff_contracts(
+        backend_id="ultralytics",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        model_name=str(model_name),
+        task_family="bbox",
+    )
     report = build_training_run_summary(
         backend_id="ultralytics",
         report_path=report_path,
@@ -1471,6 +1790,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             "optional_bridge": True,
             "note": "Ultralytics runtime is optional and must be reviewed under its own license terms.",
         },
+        handoff_contracts=handoff_contracts,
     )
     report.update(
         {
@@ -1530,8 +1850,17 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         runtime_error=runtime_error,
         extra_env=ultralytics_projection.get("environment_hints"),
     )
+    handoff_paths = _write_handoff_contracts(work_dir=work_dir, report_path=report_path, handoff_contracts=handoff_contracts)
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
     report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
     report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
     _write_json(report_path, report)
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
@@ -1662,6 +1991,15 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
         source={"from": "hf-detr", "model_id": str(model_id)},
     )
+    handoff_contracts = _external_handoff_contracts(
+        backend_id="hf-detr",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        model_id=str(model_id),
+        task_family="bbox",
+    )
     report = build_training_run_summary(
         backend_id="hf-detr",
         report_path=report_path,
@@ -1689,6 +2027,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "repo_code": "Apache-2.0",
             "optional_bridge": True,
         },
+        handoff_contracts=handoff_contracts,
     )
     report.update(
         {
@@ -1742,8 +2081,17 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         runtime_error=runtime_error,
         extra_env=hf_projection.get("environment_hints"),
     )
+    handoff_paths = _write_handoff_contracts(work_dir=work_dir, report_path=report_path, handoff_contracts=handoff_contracts)
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
     report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
     report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
     _write_json(report_path, report)
     _write_json(Path(bundled_paths["training_summary"]), report)
     print(str(report_path))
@@ -2064,6 +2412,7 @@ def _build_parser() -> argparse.ArgumentParser:
     tyx.add_argument("-D", "--devices", type=int, default=1, help="Device count forwarded to the external YOLOX launcher (default: 1).")
     tyx.add_argument("-W", "--work-dir", default="runs/support_external_training/yolox", help="Work/cache dir.")
     tyx.add_argument("-o", "--output", default="reports/support_external_training.train_yolox.json", help="Report JSON output path.")
+    tyx.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tyx.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tyx.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tyx.set_defaults(_fn=_cmd_train_yolox)
@@ -2098,6 +2447,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     td2.add_argument("-W", "--work-dir", default="runs/support_external_training/detectron2", help="Work/cache dir.")
     td2.add_argument("-o", "--output", default="reports/support_external_training.train_detectron2.json", help="Report JSON output path.")
+    td2.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     td2.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     td2.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     td2.set_defaults(_fn=_cmd_train_detectron2)
@@ -2132,6 +2482,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmdet.add_argument("-W", "--work-dir", default="runs/support_external_training/mmdetection", help="Work/cache dir.")
     tmmdet.add_argument("-o", "--output", default="reports/support_external_training.train_mmdetection.json", help="Report JSON output path.")
+    tmmdet.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tmmdet.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tmmdet.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tmmdet.set_defaults(_fn=_cmd_train_mmdetection)
@@ -2166,6 +2517,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmpose.add_argument("-W", "--work-dir", default="runs/support_external_training/mmpose", help="Work/cache dir.")
     tmmpose.add_argument("-o", "--output", default="reports/support_external_training.train_mmpose.json", help="Report JSON output path.")
+    tmmpose.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tmmpose.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tmmpose.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tmmpose.set_defaults(_fn=_cmd_train_mmpose)
@@ -2200,6 +2552,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmseg.add_argument("-W", "--work-dir", default="runs/support_external_training/mmseg", help="Work/cache dir.")
     tmmseg.add_argument("-o", "--output", default="reports/support_external_training.train_mmseg.json", help="Report JSON output path.")
+    tmmseg.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tmmseg.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tmmseg.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tmmseg.set_defaults(_fn=_cmd_train_mmseg)
@@ -2225,6 +2578,7 @@ def _build_parser() -> argparse.ArgumentParser:
     tul.add_argument("-N", "--name", default="exp", help="Run name.")
     tul.add_argument("-W", "--work-dir", default="runs/support_external_training/ultralytics", help="Work/cache dir.")
     tul.add_argument("-o", "--output", default="reports/support_external_training.train_ultralytics.json", help="Report JSON output path.")
+    tul.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tul.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     tul.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tul.set_defaults(_fn=_cmd_train_ultralytics)
@@ -2249,6 +2603,7 @@ def _build_parser() -> argparse.ArgumentParser:
     thf.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     thf.add_argument("-W", "--work-dir", default="runs/support_external_training/hf_detr", help="Work/cache dir.")
     thf.add_argument("-o", "--output", default="reports/support_external_training.train_hf_detr.json", help="Report JSON output path.")
+    thf.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     thf.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
     thf.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     thf.set_defaults(_fn=_cmd_train_hf_detr)

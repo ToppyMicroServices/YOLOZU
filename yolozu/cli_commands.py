@@ -194,6 +194,8 @@ def _cmd_train_orchestrate(args: argparse.Namespace) -> int:
     if not helper.is_file():
         raise SystemExit("missing tools/orchestrate_train.py")
     cmd = [sys.executable, str(helper), "--spec", str(args.spec), "--output", str(args.output)]
+    if getattr(args, "registry_out", None):
+        cmd.extend(["--registry-out", str(args.registry_out)])
     if bool(getattr(args, "execute", False)):
         cmd.append("--execute")
     if bool(getattr(args, "dry_run", False)):

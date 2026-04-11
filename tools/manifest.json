@@ -70,6 +70,11 @@
       "schema": "docs/schemas/training_orchestration_report.schema.json",
       "summary": "Batch-level training orchestration report describing planned or executed multi-backend experiments."
     },
+    "training_registry_entry_json": {
+      "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
+      "schema": "docs/schemas/training_registry_entry.schema.json",
+      "summary": "Append-only training registry entry describing one executed training run and its wrapper-owned artifact bundle."
+    },
     "training_run_summary_json": {
       "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
       "schema": "docs/schemas/training_run_summary.schema.json",
@@ -2510,6 +2515,92 @@
         "security",
         "governance",
         "repo-policy"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes segmentation parity JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/check_segmentation_parity.py",
+      "examples": [
+        {
+          "command": "python3 tools/check_segmentation_parity.py --reference reports/segmentation_predictions_ref.json --candidate reports/segmentation_predictions_cand.json --output reports/segmentation_parity.json",
+          "description": "Compare two segmentation predictions artifacts and write a parity report."
+        }
+      ],
+      "id": "check_segmentation_parity",
+      "inputs": [
+        {
+          "flag": "--reference",
+          "kind": "file",
+          "name": "reference",
+          "required": true
+        },
+        {
+          "flag": "--candidate",
+          "kind": "file",
+          "name": "candidate",
+          "required": true
+        },
+        {
+          "flag": "--mismatch-atol",
+          "kind": "number",
+          "name": "mismatch_atol",
+          "required": false
+        },
+        {
+          "flag": "--max-samples",
+          "kind": "number",
+          "name": "max_samples",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Segmentation parity report JSON.",
+          "kind": "file",
+          "name": "segmentation_parity_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Compare two segmentation predictions artifacts and report mask-level parity mismatches.",
+      "tags": [
+        "segmentation",
+        "parity",
+        "evaluation"
       ]
     },
     {
@@ -5090,6 +5181,96 @@
       "tags": [
         "predictions",
         "adapter"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "predictions_json"
+        ],
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes YOLOZU predictions JSON converted from COCO keypoints results.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_predictions_coco_keypoints.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_predictions_coco_keypoints.py --results-json reports/mmpose_results.json --instances-json data/coco/person_keypoints_val2017.json --output reports/predictions_mmpose.json",
+          "description": "Convert COCO keypoints results JSON into the YOLOZU predictions interface contract."
+        }
+      ],
+      "id": "export_predictions_coco_keypoints",
+      "inputs": [
+        {
+          "flag": "--results-json",
+          "kind": "file",
+          "name": "results_json",
+          "required": true
+        },
+        {
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Predictions interface contract JSON produced from COCO keypoints results.",
+          "kind": "file",
+          "name": "predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity.",
+      "tags": [
+        "keypoints",
+        "predictions",
+        "interop",
+        "export"
       ]
     },
     {
@@ -8620,6 +8801,12 @@
           "kind": "string",
           "name": "stop_on_failure",
           "required": false
+        },
+        {
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
+          "required": false
         }
       ],
       "maturity": "experimental",
@@ -8628,6 +8815,11 @@
           "description": "Machine-readable orchestration report for the whole experiment batch.",
           "kind": "file",
           "name": "training_orchestration_report_json"
+        },
+        {
+          "description": "Optional append-only JSONL training registry file when --registry-out is set.",
+          "kind": "file",
+          "name": "training_registry_jsonl"
         }
       ],
       "platform": {
@@ -8637,11 +8829,107 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them and emit one orchestration report JSON.",
+      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry.",
       "tags": [
         "training",
         "orchestration",
         "platform"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "seg_dataset_json"
+        ],
+        "produces": [
+          "segmentation_predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes segmentation predictions JSON packaged from a class-id mask directory.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/package_segmentation_predictions.py",
+      "examples": [
+        {
+          "command": "python3 tools/package_segmentation_predictions.py --dataset-json data/seg/dataset.json --masks-dir reports/mmseg_masks --output reports/segmentation_predictions_mmseg.json",
+          "description": "Package a segmentation mask directory into the segmentation predictions interface contract."
+        }
+      ],
+      "id": "package_segmentation_predictions",
+      "inputs": [
+        {
+          "flag": "--dataset-json",
+          "kind": "file",
+          "name": "dataset_json",
+          "required": true
+        },
+        {
+          "flag": "--masks-dir",
+          "kind": "dir",
+          "name": "masks_dir",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "flag": "--suffix",
+          "kind": "string",
+          "name": "suffix",
+          "required": false
+        },
+        {
+          "flag": "--relative-to-output",
+          "kind": "string",
+          "name": "relative_to_output",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Segmentation predictions interface contract JSON.",
+          "kind": "file",
+          "name": "segmentation_predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Package a class-id mask directory into the YOLOZU segmentation predictions interface contract.",
+      "tags": [
+        "segmentation",
+        "predictions",
+        "interop",
+        "export"
       ]
     },
     {
@@ -13361,6 +13649,13 @@
           "kind": "string",
           "name": "train_opt",
           "required": false
+        },
+        {
+          "description": "Optional JSONL registry file that receives one append-only training registry entry per executed run.",
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
+          "required": false
         }
       ],
       "outputs": [
@@ -13368,6 +13663,11 @@
           "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
+        },
+        {
+          "description": "Wrapper-owned training registry entry JSON written under work_dir/reports/training_registry_entry.json.",
+          "kind": "file",
+          "name": "training_registry_entry_json"
         }
       ],
       "platform": {
@@ -13377,7 +13677,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",
@@ -14738,7 +15038,7 @@
           "required": false
         },
         {
-          "description": "Selects the external training lane (`yolox`, `detectron2`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
+          "description": "Selects the external training lane (`yolox`, `detectron2`, `mmdetection`, `mmpose`, `mmseg`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
@@ -15670,6 +15970,13 @@
           "required": false
         },
         {
+          "description": "Optional JSONL registry file appended by yolozu train-orchestrate when --execute is used.",
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
+          "required": false
+        },
+        {
           "flag": "--execute",
           "kind": "string",
           "name": "execute",
@@ -15682,14 +15989,14 @@
           "required": false
         },
         {
-          "description": "Forwarded Detectron2 task family for `train --external-backend detectron2`.",
+          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg`.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
           "required": false
         },
         {
-          "description": "Repeatable Detectron2 config override pair forwarded when `train --external-backend detectron2` is active.",
+          "description": "Repeatable backend-native config override pair forwarded when `train --external-backend ...` is active.",
           "flag": "--train-opt",
           "kind": "string",
           "name": "train_opt",
@@ -15725,7 +16032,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with a primary Apache-2.0-friendly YOLOX external lane, a Detectron2 lane for bbox/instance segmentation/keypoints, and optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform now also exposes a shared training summary interface contract plus a fixed external run bundle and a lightweight train-orchestrate batch entrypoint.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, and MMSeg, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
       "tags": [
         "cli",
         "predictions",

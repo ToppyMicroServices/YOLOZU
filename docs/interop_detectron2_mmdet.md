@@ -70,8 +70,16 @@ python3 -m yolozu train \
   --output reports/train_external_mmpose.json
 ```
 
-This lane standardizes the training run summary and wrapper-owned run bundle.
-Prediction export into the predictions interface contract is still backend-specific.
+This lane standardizes the training run summary, wrapper-owned run bundle, and
+an export handoff that converts COCO-style keypoints results JSON into the
+predictions interface contract:
+
+```bash
+python3 tools/export_predictions_coco_keypoints.py \
+  --results-json /path/to/mmpose_results.json \
+  --instances-json /path/to/coco_instances.json \
+  --output reports/pred_mmpose.json
+```
 
 ## 1.8) External MMSeg training lane
 
@@ -85,8 +93,20 @@ python3 -m yolozu train \
   --output reports/train_external_mmseg.json
 ```
 
-This lane standardizes the training run summary and wrapper-owned run bundle.
-Prediction export into segmentation JSON + mask files is still backend-specific.
+This lane standardizes the training run summary, wrapper-owned run bundle, and
+an export handoff that packages class-id masks into the segmentation predictions
+interface contract:
+
+```bash
+python3 tools/package_segmentation_predictions.py \
+  --dataset-json /path/to/seg_dataset.json \
+  --masks-dir /path/to/pred_mask_dir \
+  --output reports/pred_mmseg.json
+python3 tools/check_segmentation_parity.py \
+  --reference reports/pred_reference.json \
+  --candidate reports/pred_mmseg.json \
+  --output reports/mmseg_parity.json
+```
 
 ## 1) Prepare dataset wrapper (COCO JSON to YOLOZU)
 
@@ -140,10 +160,10 @@ python3 tools/eval_coco.py \
 
 Use the same pattern for MMDetection predictions.
 
-For MMPose and MMSeg, YOLOZU currently expects a backend-side exporter that writes:
+For MMPose and MMSeg, YOLOZU now standardizes the handoff boundary:
 
-- keypoints: `predictions.json` in the predictions interface contract
-- semantic segmentation: segmentation JSON + mask files for `tools/eval_segmentation.py`
+- keypoints: COCO keypoints results JSON → `tools/export_predictions_coco_keypoints.py` → predictions interface contract
+- semantic segmentation: class-id mask directory → `tools/package_segmentation_predictions.py` → segmentation predictions interface contract
 
 ## Pitfalls to avoid (critical)
 

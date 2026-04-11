@@ -61,6 +61,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.fail(f"yolozu train-orchestrate --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--spec", proc.stdout)
         self.assertIn("--execute", proc.stdout)
+        self.assertIn("--registry-out", proc.stdout)
 
     def test_completion_help_lists_flags(self):
         repo_root = Path(__file__).resolve().parents[1]

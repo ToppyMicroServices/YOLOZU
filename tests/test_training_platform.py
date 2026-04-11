@@ -27,6 +27,10 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertIn("mmseg", ids)
         self.assertIn("ultralytics", ids)
         self.assertIn("hf-detr", ids)
+        spec = get_training_backend_spec("mmpose")
+        self.assertTrue(spec.supports_export)
+        self.assertTrue(spec.supports_parity)
+        self.assertIn("keypoints", spec.supported_tasks)
 
     def test_training_run_summary_has_shared_format(self) -> None:
         cfg = TrainConfig(backend="yolox", model="exp.py", batch=4, epochs=1)
@@ -46,6 +50,7 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertEqual(payload["canonical_train_config"]["backend"], "yolox")
         self.assertEqual(payload["run_output_contract"]["kind"], "external_run_contract")
         self.assertIn("reports/training_summary.json", payload["run_output_contract"]["stable_artifacts"])
+        self.assertIn("reports/export_handoff.json", payload["run_output_contract"]["stable_artifacts"])
 
     def test_training_run_summary_is_json_serializable(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

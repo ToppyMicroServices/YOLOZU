@@ -417,6 +417,9 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "mmpose")
             self.assertEqual(str(payload.get("task_family")), "keypoints")
             self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "export_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "parity_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "training_registry_entry.json").is_file())
             self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
     def test_train_external_mmseg_dry_run_writes_bridge_report(self):
@@ -454,6 +457,9 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "mmseg")
             self.assertEqual(str(payload.get("task_family")), "segmentation")
             self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "export_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "parity_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "training_registry_entry.json").is_file())
             self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
 
     def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
