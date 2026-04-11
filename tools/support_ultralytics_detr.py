@@ -33,7 +33,12 @@ from yolozu.integrations.min_adapter import (  # noqa: E402
     resolve_internal_dataset,
     write_ultralytics_data_yaml,
 )
-from yolozu.datasets.imports import project_detectron2_config, project_yolox_exp  # noqa: E402
+from yolozu.datasets.imports import (  # noqa: E402
+    _require_module,
+    project_detectron2_config,
+    project_mmdet_config,
+    project_yolox_exp,
+)
 from yolozu.core.canonical import TrainConfig  # noqa: E402
 from yolozu.training.platform import build_training_run_summary  # noqa: E402
 
