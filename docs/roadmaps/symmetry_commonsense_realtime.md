@@ -10,8 +10,8 @@ bd search "<keyword>"
 Goal: Convert symmetry + commonsense + real-time constraints into an implementable, test-first plan with explicit gates.
 
 Status (2025-02-14)
-- Not stuck. Baseline and smoke-run use scaffolded utilities; real metrics still require a full training/inference repo.
-- Metric gates are checked against the scaffolded baseline (`reports/baseline.json`), not a real model.
+- Not stuck. Baseline and smoke-run use early-phase utilities; real metrics still require a full training/inference repo.
+- Metric gates are checked against the historical baseline (`reports/baseline.json`), not a real model.
 
 ---
 

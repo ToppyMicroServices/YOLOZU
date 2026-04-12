@@ -26,8 +26,8 @@ track tasks in `docs/roadmaps/yolo26_competition.md` and Beads issues.
 - [x] Deterministic splits + shuffling + reproducibility hooks (seeded)
 
 ### Model (RT-DETR)
-- [x] Minimal DETR-style scaffold wired to pose heads (shape-correct)
-- [x] Historical scaffold phase completed (backbone/neck/decoder stubs were replaced)
+- [x] Minimal DETR-style starter model wired to pose heads (shape-correct)
+- [x] Historical early-model phase completed (backbone/neck/decoder minimal components were replaced)
 - [x] Positional embedding: 2D sin/cos
 - [x] Full RT-DETR-style backbone + neck (CSPResNet/CSPDarknet + FPN/PAN path)
 - [x] RT-DETR hybrid encoder / multi-scale fusion path
@@ -53,12 +53,12 @@ track tasks in `docs/roadmaps/yolo26_competition.md` and Beads issues.
 - [x] TensorRT export + engine build + parity tests + benchmarks
 
 Status (2026-01-18)
-- Scaffold created in `rtdetr_pose/` with dataset loader, validator, and model stubs.
+- Initial `rtdetr_pose/` lane created with dataset loader, validator, and early minimal model components.
 - Dataset manifest supports metadata sidecar (`.json`) for mask/depth/pose/intrinsics; validator checks shapes and paths.
 - SIM/Blender sidecar schema added (M/D_obj/R_gt/t_gt/K_gt + cad_points) and content checks for mask/depth/bbox/projection.
-- Reports for baseline/gates/scenarios are implemented (some model components remain scaffold-level, not competitive).
-- rtdetr_pose scaffolding files are tracked in git; generated caches/reports are ignored.
-- Training loop scaffold + ONNX/TRT export/parity tooling are implemented (see `rtdetr_pose/tools/train_minimal.py`, `tools/run_rtdetr_pose_backend_suite.py`).
+- Reports for baseline/gates/scenarios are implemented (some model components remained early-phase at that point and were not yet competitive).
+- Early `rtdetr_pose` implementation files are tracked in git; generated caches/reports are ignored.
+- Training loop starter implementation + ONNX/TRT export/parity tooling are implemented (see `rtdetr_pose/tools/train_minimal.py`, `tools/run_rtdetr_pose_backend_suite.py`).
 - RT-DETR-style backbone/neck/encoder/decoder (CSPResNet + FPN/PAN + transformer encoder/decoder) is in place.
 
 Current priorities (auto)
@@ -80,19 +80,19 @@ Current priorities (auto)
 - [x] Loss/metric integration test: one training step + backward + no NaNs
 
 Notes (2026-01-21)
-- Training scaffold can now consume full GT availability for mask/depth via `gt_M_mask`/`gt_D_obj_mask` (propagated through Hungarian alignment as `M_mask`/`D_obj_mask`).
+- Training path can now consume full GT availability for mask/depth via `gt_M_mask`/`gt_D_obj_mask` (propagated through Hungarian alignment as `M_mask`/`D_obj_mask`).
 - Optional: when `t_gt` is missing, `tools/train_minimal.py` can derive `z` (and `t` if `K_gt` exists) from `D_obj` at bbox center via `--z-from-dobj` (arrays inline by default; paths require `--load-aux`).
 - [x] Inference-only utilities (later): decoding + constraints gate + template verify
 
 ## Stage 0) Repo + environment alignment
 - [x] Decide codebase location (new repo under `/Users/akira/YOLOZU` or existing).
 - [x] Lock framework versions (PyTorch, CUDA, TensorRT, onnxruntime) in `docs/versions.md`.
-- [x] Define experiment config structure (YAML/JSON) and checkpoints layout (scaffolded).
+- [x] Define experiment config structure (YAML/JSON) and checkpoints layout (initial version).
 
 ## Stage 1) Dataset + validation (per spec §4)
-- [x] Implement dataset loader with required GT fields (scaffolded for YOLO bboxes only):
+- [x] Implement dataset loader with required GT fields (initially YOLO-bbox-focused):
   - `I`, `class_gt`, `bbox_gt`, `M`, `D_obj`, `R_gt`, `t_gt`, `K_gt`
-- [x] Add DataSet type checks (scaffolded for image/labels):
+- [x] Add DataSet type checks (initial image/labels coverage):
   - shapes, ranges, missing depth mask handling
   - bbox/mask consistency; `D_obj` masked by `M`
   - project CAD points with `(R_gt, t_gt, K_gt)` to validate bbox/mask
@@ -127,7 +127,7 @@ Start next (着手)
 - [x] Implement RT-DETR-like backbone/decoder with HeadFast outputs:
   - class logits, bbox, `log_z`, `rot6D`, optional `log_sigma_z/rot`
 - [x] Replace baseline backbone/decoder with full RT-DETR-style backbone/neck/encoder/decoder.
-- [x] Implement CenterOffsetHead (`Δu, Δv`) and GlobalKHead (`δf/δc`) (stub).
+- [x] Implement CenterOffsetHead (`Δu, Δv`) and GlobalKHead (`δf/δc`) (initial simple heads).
 - [x] Implement rotation conversion `rot6D -> R ∈ SO(3)`.
 - [x] Ensure export-friendly ops for TensorRT (avoid meshgrid; export wrapper in place).
 

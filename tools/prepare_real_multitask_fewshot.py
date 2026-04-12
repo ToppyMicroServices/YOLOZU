@@ -115,7 +115,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--strict-realism",
         action="store_true",
-        help="Fail if heuristic/scaffold labels are present (bbox-derived keypoints/depth/pose).",
+        help="Fail if heuristic/derived labels are present (bbox-derived keypoints/depth/pose).",
     )
     p.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     return p
@@ -513,13 +513,13 @@ def _prepare_dataset(
     ]
     if bool(heuristic_fields):
         warnings.append(
-            "heuristic/scaffold labels detected for: " + ", ".join(sorted(heuristic_fields))
+            "heuristic/derived labels detected for: " + ", ".join(sorted(heuristic_fields))
         )
     if bool(strict_provenance) and bool(label_provenance.get("model_inference_used")):
         raise SystemExit("strict provenance violation: model_inference_used must be false")
     if bool(strict_realism) and bool(heuristic_fields):
         raise SystemExit(
-            "strict realism violation: heuristic/scaffold labels are present. "
+            "strict realism violation: heuristic/derived labels are present. "
             "Provide manually annotated keypoints/depth/pose to continue."
         )
 

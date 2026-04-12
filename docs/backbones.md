@@ -33,7 +33,7 @@ After projection, the `HybridEncoder` applies:
 - optional transformer encoder layers
 
 This is the active path used by `build_model()` and is no longer a per-scale
-identity/stub neck.
+identity-only neck.
 
 ## Supported backbone names
 

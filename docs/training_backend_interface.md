@@ -114,7 +114,7 @@ The standardized external bundle is:
 
 The handoff JSON files make export / eval / parity machine-readable even when the
 backend runtime itself stays external. This is how `mmpose` and `mmseg` stop being
-"placeholder only" lanes: YOLOZU now fixes the accepted handoff format even when the
+ad-hoc handoff lanes: YOLOZU now fixes the accepted handoff format even when the
 final exporter is still launched from the backend side.
 
 OpenCV DNN and ONNX Runtime do not appear in this list because YOLOZU treats them as
