@@ -65,7 +65,7 @@ These areas are supported for reproducible experimentation, but they are not the
 
 ## How this maps to the manifest
 
-Relevant entries in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carry a `maturity` field so agents and operators can tell whether a tool belongs to the stable, experimental, or research lanes.
+Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries a `maturity` field so agents and operators can tell whether a command belongs to the stable, experimental, or research lanes.
 
 ## Related docs
 

@@ -16,6 +16,7 @@ Each `tools[]` item MUST include:
 - `entrypoint` (repo-relative script path)
 - `runner` (`python3` or `bash`)
 - `summary` (human-readable purpose)
+- `maturity` (`stable`, `experimental`, or `research`)
 - `platform` object with `cpu_ok`, `gpu_required`, `macos_ok`, `linux_ok`
 - `inputs` array (can be empty, but field must exist)
 - `effects` object with `writes` and `fixed_writes` arrays

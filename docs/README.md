@@ -159,11 +159,12 @@ Reference docs:
 - [TTT protocol](ttt_protocol.md)
 - [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
 
-## D) Bench/Parity (parity check + benchmark entry)
+## D) Bench/Parity (qualification lane)
 
-Use this path for quick parity sanity checks and to discover benchmark CLI options,
-including explicit task semantics for `detect`, `segmentation`, `classification`,
-`obb`, `keypoints` / `pose`, `depth`, and `pose6d`.
+Use this path after the main validation/eval lane is already working and you are
+qualifying backend parity or benchmark behavior. Some formats already support
+artifact-backed real eval/parity lanes; others still report explicit
+placeholder/skipped semantics rather than pretending to be fully implemented.
 
 Shortest 3 commands:
 

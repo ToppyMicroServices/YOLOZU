@@ -10,6 +10,7 @@ repo_root = Path(__file__).resolve().parents[1]
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9_\-]*$")
 _RUNNERS = {"python3", "bash"}
+_MATURITY = {"stable", "experimental", "research"}
 _IO_KINDS = {"file", "dir", "string", "number", "json", "stdout"}
 _EFFECT_KINDS = {"file", "dir"}
 _EFFECT_SCOPES = {"path", "tree"}
@@ -99,6 +100,10 @@ def _validate_tool(tool: Any, *, index: int, require_declarative: bool = False) 
     summary = tool.get("summary")
     if not isinstance(summary, str) or not summary.strip():
         errors.append(f"{where}.summary: required string")
+
+    maturity = tool.get("maturity")
+    if not isinstance(maturity, str) or maturity not in _MATURITY:
+        errors.append(f"{where}.maturity: must be one of {sorted(_MATURITY)}")
 
     if require_declarative:
         required_top = ("platform", "inputs", "effects", "outputs", "examples")

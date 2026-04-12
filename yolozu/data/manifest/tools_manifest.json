@@ -266,6 +266,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/announce/announcement.json",
@@ -395,6 +396,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/backend_support_audit.json",
@@ -546,6 +548,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "runs/backend_parity_matrix/<run_id>/reports/backend_parity_matrix.json",
@@ -657,6 +660,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/eata_benchmark.json",
@@ -801,6 +805,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_keypoints_eval.json",
@@ -945,6 +950,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_latency.json",
@@ -1595,6 +1601,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/sar_robustness_report.json",
@@ -1644,6 +1651,7 @@
       ],
       "id": "build_manifest",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/manifest.json",
@@ -1829,6 +1837,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "engines/model.plan",
@@ -1969,6 +1978,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/predictions_calibrated.json",
@@ -2027,6 +2037,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Validation summary JSON; non-zero exit on incompatibility/hash mismatch.",
@@ -2117,6 +2128,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Mismatch report (JSON/text) and exit status.",
@@ -2156,6 +2168,7 @@
       ],
       "id": "check_license_policy",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK or failure reason.",
@@ -2217,6 +2230,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "JSON report with ok/failures.",
@@ -2305,6 +2319,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/mcp_settings_check.json",
@@ -2399,6 +2414,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Mismatch report (JSON/text) and exit status.",
@@ -2490,6 +2506,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "JSON report containing required checks, advisory checks, missing evidence, and manual followups.",
@@ -2817,6 +2834,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/instance_seg_predictions.json",
@@ -2978,6 +2996,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/predictions_distilled.json",
@@ -3090,6 +3109,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/coco",
@@ -3482,6 +3502,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/cotta_drift_report.json",
@@ -3781,6 +3802,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/instance_seg_eval.json",
@@ -3977,6 +3999,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/keypoints_eval.json",
@@ -4263,6 +4286,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/seg_eval.json",
@@ -4380,6 +4404,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/eval_suite.json",
@@ -4542,6 +4567,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Exported OpenAPI schema JSON.",
@@ -5162,6 +5188,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/predictions.json",
@@ -5431,6 +5458,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -5556,6 +5584,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_executorch.json",
@@ -5740,6 +5769,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -5972,6 +6002,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_onnxrt.json",
@@ -6184,6 +6215,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/pred_opencv_dnn.json",
@@ -6435,6 +6467,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/pred_rtdetr_opencv_dnn.json",
@@ -6625,6 +6658,7 @@
           "required": true
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -6851,6 +6885,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_trt.json",
@@ -7072,6 +7107,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7228,6 +7264,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7378,6 +7415,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7595,6 +7633,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "models/model.onnx",
@@ -7658,6 +7697,7 @@
       ],
       "id": "fetch_coco128",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/coco128",
@@ -7786,6 +7826,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Fetched model artifact under models/<id>/.",
@@ -7895,6 +7936,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/ci_trt_smoke/model.onnx",
@@ -7978,6 +8020,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/ci_trt_smoke/dataset",
@@ -8064,6 +8107,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Generated machine-readable MCP/Actions contract.",
@@ -8113,6 +8157,7 @@
       ],
       "id": "generate_smoke_assets",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/smoke",
@@ -8187,6 +8232,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/gpu_validation_preflight.json",
@@ -8272,6 +8318,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/hpo_sweep.jsonl",
@@ -8348,6 +8395,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Output dataset wrapper JSON under --output/dataset.json.",
@@ -8411,6 +8459,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Model list table or JSON.",
@@ -8509,6 +8558,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Subset dataset root created at --out.",
@@ -8622,6 +8672,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/latency_trt.json",
@@ -8714,6 +8765,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Normalized predictions JSON at --output.",
@@ -8988,6 +9040,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [],
       "platform": {
         "cpu_ok": true,
@@ -9067,6 +9120,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -9153,6 +9207,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -9251,6 +9306,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "YOLO-format dataset root created at --out.",
@@ -9337,6 +9393,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "YOLO-format dataset root created at --out.",
@@ -9494,6 +9551,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared dataset root with dataset.json for keypoints training.",
@@ -9647,6 +9705,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/real_multitask_fewshot",
@@ -9778,6 +9837,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Corrupted target dataset root for deterministic shift runs.",
@@ -9870,6 +9930,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -9988,6 +10049,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/benchmark_table.json",
@@ -10329,6 +10391,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/release_report.json",
@@ -10457,6 +10520,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/release_tag_report.json",
@@ -10722,6 +10786,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/dependency_licenses.json",
@@ -10901,6 +10966,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/rtdetr_pose_backend_suite.json",
@@ -10999,6 +11065,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "continual_run.json under the run dir.",
@@ -11090,6 +11157,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OpenAPI schema available at /openapi.json.",
@@ -11276,6 +11344,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/external_finetune_smoke.json",
@@ -11375,6 +11444,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "MCP stdio transport for compatible clients.",
@@ -11598,6 +11668,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json",
@@ -12107,6 +12178,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/reference_adapter_regression.json",
@@ -12413,6 +12485,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "runs/rtdetr_pose_backend_suite/<timestamp>/backend_suite.json",
@@ -12543,6 +12616,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/scenario_run.json",
@@ -12994,6 +13068,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Run folder containing run.json and copied artifacts.",
@@ -13344,6 +13419,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/smoke_coco_eval_dry_run.json",
@@ -13658,6 +13734,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for export/eval/parity.",
@@ -13857,6 +13934,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/support_yolo_detr.*.json",
@@ -14020,6 +14098,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
@@ -14261,6 +14340,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/gate_tuning_report.json",
@@ -14308,6 +14388,7 @@
           "required": true
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -14351,6 +14432,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK or error details.",
@@ -14459,6 +14541,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK line or validation error.",
@@ -14506,6 +14589,7 @@
           "required": true
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -14617,6 +14701,7 @@
       ],
       "id": "yolo26_pre_pr_quality",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Checklist run output.",
@@ -14655,6 +14740,7 @@
       ],
       "id": "yolo26_quality_gate",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Lint/test pass-fail output.",
@@ -16003,6 +16089,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Primary output artifact controlled by --output (subcommand-dependent).",

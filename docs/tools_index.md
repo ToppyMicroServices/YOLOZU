@@ -141,7 +141,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Validator: `python3 tools/validate_tool_manifest.py`
 - Declarative requirements: `docs/manifest_declarative_spec.md`
 - Authoring workflow: `docs/manifest_authoring_workflow.md`
-- Relevant tools may carry `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
+- Every manifest entry carries `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
 
 ## Policy helpers
 
