@@ -8820,6 +8820,10 @@
         {
           "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --execute",
           "description": "Execute the planned batch through the top-level CLI alias."
+        },
+        {
+          "command": "python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute",
+          "description": "Execute a batch, append the shared registry, and record counts.by_backend plus registry_summary in the orchestration report."
         }
       ],
       "id": "orchestrate_train",
@@ -8881,7 +8885,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry.",
+      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary.",
       "tags": [
         "training",
         "orchestration",
@@ -13638,6 +13642,10 @@
           "description": "Dry-run the MMSeg external training lane for semantic-segmentation workflows."
         },
         {
+          "command": "python3 tools/support_external_training.py train-tao --config configs/examples/finetune_external/tao_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_tao.json",
+          "description": "Dry-run the NVIDIA TAO external training lane and emit standardized resume/export/eval/parity handoff JSONs."
+        },
+        {
           "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
           "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
         },
@@ -13649,7 +13657,7 @@
       "id": "support_external_training",
       "inputs": [
         {
-          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-mmdetection, train-mmpose, train-mmseg, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
+          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-mmdetection, train-mmpose, train-mmseg, train-tao, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
           "flag": "--subcommand",
           "kind": "string",
           "name": "subcommand",
@@ -13713,10 +13721,24 @@
           "required": false
         },
         {
-          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg external lanes.",
+          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
+          "required": false
+        },
+        {
+          "description": "Optional checkpoint/model path forwarded into the standardized resume handoff for external training lanes.",
+          "flag": "--resume-from",
+          "kind": "file",
+          "name": "resume_from",
+          "required": false
+        },
+        {
+          "description": "Optional NVIDIA TAO task name when train-tao is used.",
+          "flag": "--tao-task",
+          "kind": "string",
+          "name": "tao_task",
           "required": false
         },
         {
@@ -13737,7 +13759,7 @@
       "maturity": "experimental",
       "outputs": [
         {
-          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for export/eval/parity.",
+          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },
@@ -13754,7 +13776,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",
@@ -13765,6 +13787,7 @@
         "mmdetection",
         "mmpose",
         "mmseg",
+        "tao",
         "keypoints",
         "segmentation"
       ]
@@ -14938,6 +14961,10 @@
           "description": "Top-level train route for the MMSeg external lane (semantic segmentation via backend-native configs)."
         },
         {
+          "command": "python3 -m yolozu train --external-backend tao configs/examples/finetune_external/tao_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_tao_bbox.json",
+          "description": "Top-level train route for the NVIDIA TAO external lane (bbox / segmentation / keypoints via backend-native configs)."
+        },
+        {
           "command": "python3 tools/yolozu.py sud ls -j",
           "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
         },
@@ -15124,10 +15151,24 @@
           "required": false
         },
         {
-          "description": "Selects the external training lane (`yolox`, `detectron2`, `mmdetection`, `mmpose`, `mmseg`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
+          "description": "Selects the external training lane (`yolox`, `detectron2`, `mmdetection`, `mmpose`, `mmseg`, `tao`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
+          "required": false
+        },
+        {
+          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
+          "flag": "--resume-from",
+          "kind": "file",
+          "name": "resume_from",
+          "required": false
+        },
+        {
+          "description": "Forwarded NVIDIA TAO task name when `train --external-backend tao` is active.",
+          "flag": "--tao-task",
+          "kind": "string",
+          "name": "tao_task",
           "required": false
         },
         {
@@ -16075,7 +16116,7 @@
           "required": false
         },
         {
-          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg`.",
+          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
@@ -16119,7 +16160,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, and MMSeg, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, MMSeg, and TAO, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with resume/export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
       "tags": [
         "cli",
         "predictions",

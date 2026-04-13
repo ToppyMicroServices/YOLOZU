@@ -28,6 +28,8 @@ def build_training_registry_entry(
     steps = steps if isinstance(steps, dict) else {}
     run_output_contract = summary.get("run_output_contract") if isinstance(summary, dict) else {}
     run_output_contract = run_output_contract if isinstance(run_output_contract, dict) else {}
+    handoff_contracts = summary.get("handoff_contracts") if isinstance(summary, dict) else {}
+    handoff_contracts = handoff_contracts if isinstance(handoff_contracts, dict) else {}
 
     entry: dict[str, Any] = {
         "format": "yolozu_training_registry_entry_v1",
@@ -43,7 +45,9 @@ def build_training_registry_entry(
         "ok": bool(summary.get("ok")),
         "training_executed": bool(summary.get("training_executed")),
         "work_dir": summary.get("work_dir"),
+        "resume_from": summary.get("resume_from"),
         "run_output_contract_kind": run_output_contract.get("kind"),
+        "handoff_stages": sorted([name for name, value in handoff_contracts.items() if isinstance(name, str) and isinstance(value, dict)]),
         "next_steps": summary.get("next_steps") if isinstance(summary.get("next_steps"), list) else [],
         "steps": {
             name: {

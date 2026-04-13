@@ -25,6 +25,7 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertIn("mmdetection", ids)
         self.assertIn("mmpose", ids)
         self.assertIn("mmseg", ids)
+        self.assertIn("tao", ids)
         self.assertIn("ultralytics", ids)
         self.assertIn("hf-detr", ids)
         spec = get_training_backend_spec("mmpose")
@@ -50,6 +51,7 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertEqual(payload["canonical_train_config"]["backend"], "yolox")
         self.assertEqual(payload["run_output_contract"]["kind"], "external_run_contract")
         self.assertIn("reports/training_summary.json", payload["run_output_contract"]["stable_artifacts"])
+        self.assertIn("reports/resume_handoff.json", payload["run_output_contract"]["stable_artifacts"])
         self.assertIn("reports/export_handoff.json", payload["run_output_contract"]["stable_artifacts"])
 
     def test_training_run_summary_is_json_serializable(self) -> None:

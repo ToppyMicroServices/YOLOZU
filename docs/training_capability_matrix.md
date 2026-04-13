@@ -12,18 +12,19 @@ It complements:
 | Backend | Maturity | Lane | Run contract | Export | Eval | Parity | Resume | MPS |
 |---|---|---|---|---|---|---|---|---|
 | `reference-rtdetr-pose` | Stable | Reference | Yes | Yes | Yes | Yes | Yes | Qualification path |
-| `yolox` | Stable | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
-| `detectron2` | Experimental | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
-| `mmdetection` | Experimental | External | External run contract | Wrapper-ready (bbox primary) | Wrapper-ready (bbox primary) | Wrapper-ready (bbox primary) | Backend-specific | No blanket claim |
-| `mmpose` | Experimental | External | External run contract | Standardized COCO-keypoints-to-predictions bridge | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
-| `mmseg` | Experimental | External | External run contract | Standardized mask-packaging bridge | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
-| `ultralytics` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
-| `hf-detr` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Backend-specific | No blanket claim |
+| `yolox` | Stable | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `detectron2` | Experimental | External | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `mmdetection` | Experimental | External | External run contract | Wrapper-ready (bbox / instance-seg handoff) | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `mmpose` | Experimental | External | External run contract | Standardized COCO-keypoints-to-predictions bridge | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `mmseg` | Experimental | External | External run contract | Standardized mask-packaging bridge | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `tao` | Experimental | Qualified external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `ultralytics` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
+| `hf-detr` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
 
 ## How to read this
 
 - `Run contract = Yes` means the backend owns the richer fixed artifact layout under `runs/<run_id>/`.
-- `Run contract = External run contract` means YOLOZU standardizes `work_dir/dataset/`, `work_dir/configs/train_config_projection.json`, `work_dir/reports/{training_summary,external_run_meta,launcher_plan,execution}.json`, the export/eval/parity handoff JSON files, and one registry entry even when the backend-native trainer remains external.
+- `Run contract = External run contract` means YOLOZU standardizes `work_dir/dataset/`, `work_dir/configs/train_config_projection.json`, `work_dir/reports/{training_summary,external_run_meta,launcher_plan,execution}.json`, `reports/resume_handoff.json`, the export/eval/parity handoff JSON files, and one registry entry even when the backend-native trainer remains external.
 - `MPS` is only claimed when the local runtime actually reports availability. Do not read this table as a blanket macOS guarantee.
 
 ## Production posture
@@ -34,6 +35,7 @@ It complements:
 - Use `mmdetection` when bbox or instance-seg training already lives in an OpenMMLab detection stack.
 - Use `mmpose` for keypoints/pose training when the backend-native pipeline already lives in MMPose; the recommended export handoff is COCO keypoints results JSON normalized into the predictions interface contract.
 - Use `mmseg` for semantic segmentation training when the backend-native pipeline already lives in MMSeg; the recommended export handoff is class-id mask packaging into the segmentation predictions interface contract.
+- Use `tao` when an NVIDIA TAO stack already owns the trainer/runtime environment and you want YOLOZU to normalize resume/export/eval/parity handoff around that external lane.
 - Use `reference-rtdetr-pose` when the task extends into depth or pose6d training.
 - Treat `ultralytics` and `hf-detr` as environment-qualified bridges.
 - OpenCV DNN and ONNX Runtime are not training backends in YOLOZU. They stay in export / inference / parity lanes.

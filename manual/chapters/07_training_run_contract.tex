@@ -175,6 +175,7 @@ For external lanes, YOLOZU now also standardizes one wrapper-level bundle under
   \item \path{reports/external\_run\_meta.json}
   \item \path{reports/launcher\_plan.json}
   \item \path{reports/execution.json}
+  \item \path{reports/resume\_handoff.json}
   \item \path{reports/export\_handoff.json}
   \item \path{reports/eval\_handoff.json}
   \item \path{reports/parity\_handoff.json}
@@ -186,11 +187,11 @@ the wrapper-owned interface contract is now fixed even when the actual trainer
 remains external.
 
 The external training summary also records \path{next\_steps}: copy-paste
-follow-up commands for export, evaluation, and parity. The handoff JSONs make
+follow-up commands for resume, export, evaluation, and parity. The handoff JSONs make
 those next steps machine-readable, so orchestration and CI do not need to infer
 backend-specific conventions from prose. In practice, this makes the training
 report itself the hand-off note for the next operator step while still keeping
-the export/eval/parity interface contract explicit.
+the resume/export/eval/parity interface contract explicit.
 
 OpenCV DNN and ONNX Runtime do not appear in this training registry because
 YOLOZU treats them as inference/export runtimes after training, not as
@@ -224,6 +225,7 @@ For user convenience, YOLOZU includes template configs and a unified smoke runne
   \item MMDetection
   \item MMPose
   \item MMSeg
+  \item NVIDIA TAO
   \item RT-DETR (\path{rtdetr_pose})
 \end{itemize}
 
@@ -233,6 +235,7 @@ Template paths:
   \item \path{configs/examples/finetune_external/mmdetection_finetune_smoke.py}
   \item \path{configs/examples/finetune_external/mmpose_finetune_smoke.py}
   \item \path{configs/examples/finetune_external/mmseg_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/tao_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/detectron2_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml}
 \end{itemize}

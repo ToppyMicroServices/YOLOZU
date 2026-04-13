@@ -55,6 +55,9 @@ def _build_command(exp: dict[str, Any], *, force_dry_run: bool) -> list[str]:
         split = str(exp.get("split") or "").strip()
         if split:
             cmd.extend(["--split", split])
+        resume_from = str(exp.get("resume_from") or "").strip()
+        if resume_from:
+            cmd.extend(["--resume-from", resume_from])
     extra_args = [str(x) for x in (exp.get("extra_args") or [])]
     if force_dry_run and "--dry-run" not in extra_args:
         extra_args.append("--dry-run")
@@ -86,6 +89,9 @@ def main(argv: list[str] | None = None) -> int:
     if not spec_path.exists():
         raise SystemExit(f"--spec not found: {spec_path}")
     spec = _load_json(spec_path)
+    defaults = spec.get("defaults") or {}
+    if defaults and not isinstance(defaults, dict):
+        raise SystemExit("orchestration spec `defaults` must be an object when present")
     experiments = list(spec.get("experiments") or [])
     if not experiments:
         raise SystemExit("orchestration spec must contain a non-empty `experiments` list")
@@ -95,9 +101,11 @@ def main(argv: list[str] | None = None) -> int:
     for idx, exp in enumerate(experiments):
         if not isinstance(exp, dict):
             raise SystemExit(f"experiment at index {idx} must be an object")
-        name = str(exp.get("name") or f"exp{idx:02d}")
-        backend = str(exp.get("backend") or "").strip().lower()
-        command = _build_command(exp, force_dry_run=bool(args.dry_run))
+        merged_exp = dict(defaults)
+        merged_exp.update(exp)
+        name = str(merged_exp.get("name") or f"exp{idx:02d}")
+        backend = str(merged_exp.get("backend") or "").strip().lower()
+        command = _build_command(merged_exp, force_dry_run=bool(args.dry_run))
         row: dict[str, Any] = {
             "name": name,
             "backend": backend,
@@ -105,6 +113,8 @@ def main(argv: list[str] | None = None) -> int:
             "command_str": subprocess.list2cmdline(command),
             "planned_only": not bool(args.execute),
         }
+        if merged_exp.get("resume_from") is not None:
+            row["resume_from"] = str(merged_exp.get("resume_from"))
         if args.execute:
             proc = subprocess.run(
                 command,
@@ -164,9 +174,21 @@ def main(argv: list[str] | None = None) -> int:
         "counts": {
             "experiments": len(results),
             "executed": sum(1 for row in results if not bool(row.get("planned_only"))),
+            "by_backend": {
+                backend: sum(1 for row in results if str(row.get("backend")) == backend)
+                for backend in sorted({str(row.get("backend")) for row in results})
+            },
         },
         "results": results,
     }
+    if args.execute and getattr(args, "registry_out", None):
+        registry_path = Path(str(args.registry_out)).resolve()
+        if registry_path.exists():
+            lines = [line for line in registry_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            report["registry_summary"] = {
+                "path": str(registry_path),
+                "entries": len(lines),
+            }
     out_path = Path(str(args.output)).resolve()
     _write_json(out_path, report)
     print(str(out_path))

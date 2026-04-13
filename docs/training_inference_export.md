@@ -28,6 +28,7 @@ Use this scope boundary when deciding whether YOLOZU should own the training ste
 | MMDetection external lane | Experimental external lane | Bbox / instance-seg training launched from the top-level CLI | Best fit when the backend-native detection stack already lives in OpenMMLab. |
 | MMPose external lane | Experimental external lane | Keypoints / pose training launched from the top-level CLI | Export handoff is standardized around COCO keypoints results JSON normalized into the predictions interface contract. |
 | MMSeg external lane | Experimental external lane | Semantic segmentation training launched from the top-level CLI | Export handoff is standardized around packaging class-id masks into the segmentation predictions interface contract. |
+| NVIDIA TAO external lane | Experimental qualified lane | Bbox / segmentation / keypoints training launched from the top-level CLI | Best fit when TAO already owns the NVIDIA-specific trainer/runtime environment and YOLOZU should standardize resume/export/eval/parity handoff around it. |
 | Ultralytics bridge | Optional external bridge | User-installed external runtime bridge | Keep the license boundary explicit; see `docs/license_policy.md`. |
 | HF DETR bridge | Optional external bridge | User-installed DETR-family bridge | Useful when a DETR-family training stack already exists outside this repo. |
 | Generic training platform for every model family | Not claimed | Universal training framework | YOLOZU does not claim this scope. It standardizes the run artifacts and the predictions interface contract around the supported lanes above. |
@@ -54,6 +55,7 @@ For external backends, YOLOZU now standardizes one wrapper-level run bundle unde
 - `reports/external_run_meta.json`
 - `reports/launcher_plan.json`
 - `reports/execution.json`
+- `reports/resume_handoff.json`
 - `reports/export_handoff.json`
 - `reports/eval_handoff.json`
 - `reports/parity_handoff.json`
@@ -63,12 +65,13 @@ This keeps external lanes auditable even when the backend-native trainer owns th
 actual checkpoint layout.
 
 External lanes now also write `next_steps` and one standardized handoff bundle into
-`training_summary.json`, so the report itself tells you which export / evaluation /
-parity command to run next. For MM-family lanes, the standardized handoff is:
+`training_summary.json`, so the report itself tells you which resume / export / evaluation /
+parity command to run next. For MM-family and TAO lanes, the standardized handoff is:
 
-- `mmdetection`: bbox uses `export_predictions_mmdet.py`; segmentation can package class-id masks through `package_segmentation_predictions.py`.
+- `mmdetection`: bbox uses the generic `predictions migrate --from coco-results` bridge; segmentation can package class-id masks through `package_segmentation_predictions.py`.
 - `mmpose`: `export_predictions_coco_keypoints.py` converts COCO-style keypoints results JSON into the predictions interface contract.
 - `mmseg`: `package_segmentation_predictions.py` packages class-id masks into the segmentation predictions interface contract, and `check_segmentation_parity.py` compares them.
+- `tao`: bbox uses the generic COCO-results migration bridge; segmentation uses `package_segmentation_predictions.py`; keypoints uses `export_predictions_coco_keypoints.py`.
 
 OpenCV DNN and ONNX Runtime are not training lanes. They remain inference/export
 targets after a model has already been trained.
@@ -378,6 +381,23 @@ python3 -m yolozu train \
 For non-dry execution, add `--train-script /path/to/detectron2/tools/train_net.py`.
 Use repeated `--train-opt KEY VALUE` pairs to pass Detectron2 config overrides
 such as dataset registration names.
+
+TAO external lane (qualified NVIDIA-owned runtime/trainer environment):
+
+```bash
+python3 -m yolozu train \
+  --external-backend tao \
+  configs/examples/finetune_external/tao_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --tao-task detectnet_v2 \
+  --dry-run \
+  --output reports/train_external_tao_bbox.json
+```
+
+The standardized handoff bundle still lands under `work_dir/reports/` even
+though the TAO runtime itself remains external.
 
 ### External finetune smoke matrix (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
 

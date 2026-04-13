@@ -594,7 +594,7 @@ def main(argv: list[str] | None = None) -> int:
         "train",
         help=(
             "Train with the RT-DETR pose reference trainer by default, or use "
-            "--external-backend yolox|detectron2|mmdetection|mmpose|mmseg|ultralytics|hf-detr for external training lanes."
+            "--external-backend yolox|detectron2|mmdetection|mmpose|mmseg|tao|ultralytics|hf-detr for external training lanes."
         ),
     )
     train_p.add_argument(
@@ -604,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Reference train config YAML/JSON. When --external-backend is selected, "
             "this becomes the backend-specific model/config handle "
-            "(YOLOX exp file, Detectron2/MM-family config path, Ultralytics model path/id, or HF model id)."
+            "(YOLOX exp file, Detectron2/MM-family/TAO config path, Ultralytics model path/id, or HF model id)."
         ),
     )
     train_p.add_argument(
@@ -628,12 +628,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     train_p.add_argument(
         "--external-backend",
-        choices=("yolox", "detectron2", "mmdetection", "mmpose", "mmseg", "ultralytics", "hf-detr"),
+        choices=("yolox", "detectron2", "mmdetection", "mmpose", "mmseg", "tao", "ultralytics", "hf-detr"),
         default=None,
         help=(
             "Optional repo-side external training lane. Use backend-specific flags after "
             "--external-backend; they are forwarded to tools/support_external_training.py."
         ),
+    )
+    train_p.add_argument(
+        "--resume-from",
+        default=None,
+        help="Forwarded checkpoint path for external fine-tune/resume flows.",
+    )
+    train_p.add_argument(
+        "--tao-task",
+        default=None,
+        help="Forwarded TAO task name when --external-backend tao is active.",
     )
 
     train_orch = sub.add_parser(

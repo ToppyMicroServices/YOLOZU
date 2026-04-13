@@ -105,6 +105,7 @@ class TestOrchestrateTrainTool(unittest.TestCase):
             self.assertTrue(train_out.is_file())
             self.assertEqual(str(payload["results"][0]["summary_json"]), str(train_out.resolve()))
             self.assertTrue(bool(payload["results"][0].get("next_steps")))
+            self.assertEqual(int(payload["counts"]["by_backend"]["yolox"]), 1)
 
     def test_execute_runs_detectron2_external_dry_run(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -203,11 +204,56 @@ class TestOrchestrateTrainTool(unittest.TestCase):
                 self.fail(f"orchestrate_train registry execute failed:\n{proc.stdout}\n{proc.stderr}")
             payload = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(str(payload["registry_out"]), str(registry.resolve()))
+            self.assertEqual(int(payload["registry_summary"]["entries"]), 1)
             lines = [line for line in registry.read_text(encoding="utf-8").splitlines() if line.strip()]
             self.assertEqual(len(lines), 1)
             entry = json.loads(lines[0])
             self.assertEqual(entry["format"], "yolozu_training_registry_entry_v1")
             self.assertEqual(entry["backend_id"], "mmpose")
+
+    def test_defaults_and_resume_are_forwarded(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "orchestrate_train.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            spec = root / "spec.json"
+            out = root / "orchestration.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "defaults": {
+                            "dataset": "data/smoke",
+                            "split": "val",
+                            "resume_from": "models/resume.ckpt",
+                        },
+                        "experiments": [
+                            {
+                                "name": "tao-smoke",
+                                "backend": "tao",
+                                "config": "configs/examples/finetune_external/tao_finetune_smoke.yaml",
+                                "extra_args": ["--dry-run", "--output", str(root / "train_tao.json")],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            proc = subprocess.run(
+                [sys.executable, str(script), "--spec", str(spec), "--output", str(out)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"orchestrate_train defaults failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            row = payload["results"][0]
+            self.assertEqual(row["backend"], "tao")
+            self.assertEqual(row["resume_from"], "models/resume.ckpt")
+            self.assertIn("--resume-from", row["command"])
 
 
 if __name__ == "__main__":

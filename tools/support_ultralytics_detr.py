@@ -149,13 +149,17 @@ def _write_handoff_contracts(
 ) -> dict[str, str]:
     reports_dir = work_dir / "reports"
     paths = {
+        "resume_handoff": reports_dir / "resume_handoff.json",
         "export_handoff": reports_dir / "export_handoff.json",
         "eval_handoff": reports_dir / "eval_handoff.json",
         "parity_handoff": reports_dir / "parity_handoff.json",
     }
+    resume_payload = handoff_contracts.get("resume")
     export_payload = handoff_contracts.get("export")
     eval_payload = handoff_contracts.get("eval")
     parity_payload = handoff_contracts.get("parity")
+    if isinstance(resume_payload, dict):
+        _write_json(paths["resume_handoff"], resume_payload)
     if isinstance(export_payload, dict):
         _write_json(paths["export_handoff"], export_payload)
     if isinstance(eval_payload, dict):
@@ -193,6 +197,40 @@ def _step(label: str, command: str, description: str) -> dict[str, str]:
     return {"label": str(label), "command": str(command), "description": str(description)}
 
 
+def _normalized_task_family(task_family: str | None) -> str:
+    task = str(task_family or "bbox").strip().lower()
+    if task in {"auto", "detect", ""}:
+        return "bbox"
+    if task == "pose":
+        return "keypoints"
+    return task
+
+
+def _build_external_resume_command(
+    *,
+    backend_id: str,
+    dataset_root: Path,
+    split: str,
+    config_token: str,
+    task_family: str,
+    report_path: Path,
+) -> str:
+    cmd = (
+        f"python3 -m yolozu train --external-backend {backend_id} "
+        f"{config_token} --dataset {dataset_root} --split {split} "
+    )
+    if task_family in {"segmentation", "keypoints"} and backend_id in {
+        "detectron2",
+        "mmdetection",
+        "mmpose",
+        "mmseg",
+        "tao",
+    }:
+        cmd += f"--task-family {task_family} "
+    cmd += f"--resume-from <path/to/checkpoint> --output {report_path}"
+    return cmd
+
+
 def _external_handoff_contracts(
     *,
     backend_id: str,
@@ -206,16 +244,32 @@ def _external_handoff_contracts(
     model_id: str | None = None,
     task_family: str | None = None,
 ) -> dict[str, Any]:
-    task = str(task_family or "bbox")
+    task = _normalized_task_family(task_family)
     predictions_out = work_dir / "reports" / f"{backend_id}_predictions.json"
+    segmentation_out = work_dir / "reports" / f"{backend_id}_segmentation_predictions.json"
     eval_out = work_dir / "reports" / f"{backend_id}_eval.json"
     parity_out = work_dir / "reports" / f"{backend_id}_parity.json"
+    config_token = (
+        str(exp_path)
+        if exp_path is not None
+        else str(config_path)
+        if config_path is not None
+        else str(model_name)
+        if model_name is not None
+        else str(model_id)
+        if model_id is not None
+        else "<config-or-model>"
+    )
 
     export_command = ""
     export_description = ""
     export_input: dict[str, Any] = {}
     export_output: dict[str, Any] = {}
     export_supported = True
+    eval_command = ""
+    eval_description = ""
+    parity_command = ""
+    parity_description = ""
 
     if backend_id == "yolox" and exp_path is not None:
         export_command = (
@@ -226,59 +280,45 @@ def _external_handoff_contracts(
         export_description = "Export YOLOX detections into the predictions interface contract."
         export_input = {"type": "yolox_checkpoint", "required": ["exp", "weights", "dataset", "split"]}
         export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
-    elif backend_id == "detectron2" and config_path is not None:
+    elif task == "bbox" and backend_id in {"detectron2", "mmdetection", "tao"}:
         export_command = (
-            "python3 tools/export_predictions_detectron2.py "
-            f"--dataset {dataset_root} --split {split} --config {config_path} "
-            f"--weights <path/to/model_final.pth> --protocol nms_applied --output {predictions_out}"
+            "python3 -m yolozu migrate predictions "
+            "--from coco-results "
+            "--results <path/to/coco_results.json> "
+            "--instances <path/to/coco_instances.json> "
+            f"--output {predictions_out}"
         )
-        export_description = "Export Detectron2 detections/keypoints into the predictions interface contract."
-        export_input = {"type": "detectron2_config_plus_weights", "required": ["config", "weights", "dataset", "split"]}
+        export_description = (
+            f"Normalize {backend_id} COCO-style detection results into the predictions interface contract."
+        )
+        export_input = {"type": "coco_results_json", "required": ["results", "instances"]}
         export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
-    elif backend_id == "mmdetection" and config_path is not None and task in {"bbox", "detect", "auto"}:
-        export_command = (
-            "python3 tools/export_predictions_mmdet.py "
-            f"--dataset {dataset_root} --split {split} --config {config_path} "
-            f"--checkpoint <path/to/epoch_*.pth> --protocol nms_applied --output {predictions_out}"
-        )
-        export_description = "Export MMDetection detections into the predictions interface contract."
-        export_input = {"type": "mmdetection_config_plus_checkpoint", "required": ["config", "checkpoint", "dataset", "split"]}
-        export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
-    elif backend_id == "mmdetection" and task == "segmentation":
-        export_command = (
-            "python3 tools/package_segmentation_predictions.py "
-            "--dataset-json <path/to/seg_dataset.json> "
-            "--masks-dir <path/to/pred_mask_dir> "
-            f"--output {predictions_out.with_name('mmdetection_segmentation_predictions.json')}"
-        )
-        export_description = "Package MMDetection-produced class-id masks into the segmentation predictions interface contract."
-        export_input = {"type": "segmentation_masks_dir", "required": ["dataset_json", "masks_dir"]}
-        export_output = {
-            "type": "segmentation predictions interface contract",
-            "path": str(predictions_out.with_name("mmdetection_segmentation_predictions.json")),
-        }
-    elif backend_id == "mmpose":
+    elif task == "keypoints" and backend_id in {"detectron2", "mmpose", "tao"}:
         export_command = (
             "python3 tools/export_predictions_coco_keypoints.py "
-            "--results-json <path/to/mmpose_results.json> "
+            "--results-json <path/to/keypoints_results.json> "
             "--instances-json <path/to/coco_instances.json> "
             f"--output {predictions_out}"
         )
-        export_description = "Normalize COCO-style keypoints results into the predictions interface contract."
+        export_description = (
+            f"Normalize {backend_id} COCO-style keypoints results into the predictions interface contract."
+        )
         export_input = {"type": "coco_keypoints_results", "required": ["results_json", "instances_json"]}
         export_output = {"type": "predictions interface contract", "path": str(predictions_out)}
-    elif backend_id == "mmseg":
+    elif task == "segmentation" and backend_id in {"detectron2", "mmdetection", "mmseg", "tao"}:
         export_command = (
             "python3 tools/package_segmentation_predictions.py "
             "--dataset-json <path/to/seg_dataset.json> "
             "--masks-dir <path/to/pred_mask_dir> "
-            f"--output {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'}"
+            f"--output {segmentation_out}"
         )
-        export_description = "Package MMSeg class-id masks into the segmentation predictions interface contract."
+        export_description = (
+            f"Package {backend_id} class-id masks into the segmentation predictions interface contract."
+        )
         export_input = {"type": "segmentation_masks_dir", "required": ["dataset_json", "masks_dir"]}
         export_output = {
             "type": "segmentation predictions interface contract",
-            "path": str(work_dir / "reports" / "mmseg_segmentation_predictions.json"),
+            "path": str(segmentation_out),
         }
     elif backend_id == "ultralytics" and model_name is not None:
         export_command = (
@@ -305,21 +345,21 @@ def _external_handoff_contracts(
         export_input = {"type": "backend_specific"}
         export_output = {"type": "backend_specific"}
 
-    if backend_id == "mmseg":
+    if task == "segmentation":
         eval_command = (
             "python3 tools/eval_segmentation.py "
             "--dataset-json <path/to/seg_dataset.json> "
-            f"--predictions {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} "
+            f"--predictions {segmentation_out} "
             f"--pred-root {work_dir / 'reports'} --output {eval_out}"
         )
         eval_description = "Evaluate semantic segmentation predictions via the stable segmentation eval lane."
         parity_command = (
             "python3 tools/check_segmentation_parity.py "
-            f"--reference <reference_seg_predictions.json> --candidate {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} "
+            f"--reference <reference_seg_predictions.json> --candidate {segmentation_out} "
             f"--output {parity_out}"
         )
         parity_description = "Compare semantic segmentation predictions against a reference artifact."
-    elif backend_id == "mmpose":
+    elif task == "keypoints":
         eval_command = f"python3 tools/eval_keypoints.py --dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}"
         eval_description = "Evaluate keypoint predictions with the stable keypoints eval lane."
         parity_command = f"python3 tools/check_keypoints_parity.py --reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}"
@@ -329,21 +369,34 @@ def _external_handoff_contracts(
         eval_description = "Evaluate detection predictions with the stable eval lane."
         parity_command = f"python3 -m yolozu parity --reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}"
         parity_description = "Compare candidate predictions against a reference backend artifact."
-        if task == "segmentation":
-            eval_command = (
-                "python3 tools/eval_segmentation.py "
-                f"--dataset-json <path/to/seg_dataset.json> --predictions {predictions_out.with_name('mmdetection_segmentation_predictions.json')} "
-                f"--pred-root {work_dir / 'reports'} --output {eval_out}"
-            )
-            eval_description = "Evaluate packaged segmentation predictions through the stable segmentation eval lane."
-            parity_command = (
-                "python3 tools/check_segmentation_parity.py "
-                f"--reference <reference_seg_predictions.json> --candidate {predictions_out.with_name('mmdetection_segmentation_predictions.json')} "
-                f"--output {parity_out}"
-            )
-            parity_description = "Compare segmentation predictions against a reference artifact."
 
     return {
+        "resume": _standard_handoff_payload(
+            stage="resume",
+            backend_id=backend_id,
+            task_family=task,
+            command=_build_external_resume_command(
+                backend_id=backend_id,
+                dataset_root=dataset_root,
+                split=split,
+                config_token=config_token,
+                task_family=task,
+                report_path=report_path,
+            ),
+            description="Resume or fine-tune the external backend from a prior checkpoint using the shared --resume-from surface.",
+            input_contract={
+                "type": "external_checkpoint_artifact",
+                "required": ["resume_from"],
+                "accepted_by": "--resume-from",
+            },
+            output_contract={
+                "type": "external_run_contract_bundle",
+                "paths": [
+                    str(work_dir / "reports" / "training_summary.json"),
+                    str(work_dir / "reports" / "resume_handoff.json"),
+                ],
+            },
+        ),
         "export": _standard_handoff_payload(
             stage="export",
             backend_id=backend_id,
@@ -375,163 +428,17 @@ def _external_handoff_contracts(
     }
 
 
-def _external_next_steps(
-    *,
-    backend_id: str,
-    dataset_root: Path,
-    split: str,
-    work_dir: Path,
-    report_path: Path,
-    exp_path: Path | None = None,
-    config_path: Path | None = None,
-    model_name: str | None = None,
-    model_id: str | None = None,
-    data_yaml: Path | None = None,
-    task_family: str | None = None,
-) -> list[dict[str, str]]:
-    predictions_out = work_dir / "reports" / f"{backend_id}_predictions.json"
-    eval_out = work_dir / "reports" / f"{backend_id}_eval.json"
-    parity_out = work_dir / "reports" / f"{backend_id}_parity.json"
+def _external_next_steps(handoff_contracts: dict[str, Any], *, report_path: Path) -> list[dict[str, str]]:
     steps: list[dict[str, str]] = []
-
-    if backend_id == "yolox" and exp_path is not None:
+    for stage in ("resume", "export", "eval", "parity"):
+        payload = handoff_contracts.get(stage)
+        if not isinstance(payload, dict) or not bool(payload.get("supported", True)):
+            continue
         steps.append(
             _step(
-                "export_predictions",
-                "python3 tools/export_predictions_yolox.py "
-                f"--dataset {dataset_root} --split {split} --exp {exp_path} "
-                f"--weights <path/to/yolox_ckpt.pth> --output {predictions_out}",
-                "Export YOLOX predictions into the predictions interface contract after training.",
-            )
-        )
-    elif backend_id == "detectron2" and config_path is not None:
-        steps.append(
-            _step(
-                "export_predictions",
-                "python3 tools/export_predictions_detectron2.py "
-                f"--dataset {dataset_root} --split {split} --config {config_path} "
-                f"--weights <path/to/model_final.pth> --protocol nms_applied --output {predictions_out}",
-                "Export Detectron2 predictions into the predictions interface contract after training.",
-            )
-        )
-    elif backend_id == "mmdetection" and config_path is not None and task_family in ("bbox", "detect", "auto", None, ""):
-        steps.append(
-            _step(
-                "export_predictions",
-                "python3 tools/export_predictions_mmdet.py "
-                f"--dataset {dataset_root} --split {split} --config {config_path} "
-                f"--checkpoint <path/to/epoch_*.pth> --protocol nms_applied --output {predictions_out}",
-                "Export MMDetection predictions into the predictions interface contract after training.",
-            )
-        )
-    elif backend_id == "mmdetection" and task_family == "segmentation":
-        steps.append(
-            _step(
-                "export_predictions",
-                f"# Export instance-seg predictions into {predictions_out} with your MMDetection-side exporter.",
-                "MMDetection training is supported here, but mask export remains backend-specific today.",
-            )
-        )
-    elif backend_id == "mmpose":
-        steps.append(
-            _step(
-                "export_predictions",
-                "python3 tools/export_predictions_coco_keypoints.py "
-                "--results-json <path/to/mmpose_results.json> "
-                "--instances-json <path/to/coco_instances.json> "
-                f"--output {predictions_out}",
-                "Normalize COCO-style keypoints results into the predictions interface contract.",
-            )
-        )
-    elif backend_id == "mmseg":
-        steps.append(
-            _step(
-                "export_predictions",
-                "python3 tools/package_segmentation_predictions.py "
-                "--dataset-json <path/to/seg_dataset.json> "
-                "--masks-dir <path/to/pred_mask_dir> "
-                f"--output {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'}",
-                "Package MMSeg class-id masks into the segmentation predictions interface contract.",
-            )
-        )
-    elif backend_id == "ultralytics" and model_name is not None:
-        steps.append(
-            _step(
-                "predict_normalize",
-                "python3 tools/support_external_training.py predict-normalize "
-                f"--ultralytics-model {model_name} --dataset {dataset_root} --split {split} "
-                f"--output {predictions_out} --report {work_dir / 'reports' / 'predict_normalize.json'}",
-                "Run Ultralytics prediction and normalize it into the predictions interface contract.",
-            )
-        )
-        steps.append(
-            _step(
-                "export_onnx",
-                "python3 tools/support_external_training.py export-onnx "
-                f"--provider ultralytics --model {model_name} --output {work_dir / 'exports' / 'model.onnx'} "
-                f"--report {work_dir / 'reports' / 'export_onnx.json'}",
-                "Export an ONNX artifact for downstream parity or deployment checks.",
-            )
-        )
-    elif backend_id == "hf-detr" and model_id is not None:
-        steps.append(
-            _step(
-                "export_onnx",
-                "python3 tools/support_external_training.py export-onnx "
-                f"--provider hf_detr --model {model_id} --output {work_dir / 'exports' / 'model.onnx'} "
-                f"--report {work_dir / 'reports' / 'export_onnx.json'}",
-                "Export an ONNX artifact for downstream parity or deployment checks.",
-            )
-        )
-
-    if backend_id == "mmpose":
-        steps.append(
-            _step(
-                "eval",
-                f"python3 tools/eval_keypoints.py --dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}",
-                "Evaluate keypoint predictions with the stable keypoints evaluation lane.",
-            )
-        )
-        steps.append(
-            _step(
-                "parity",
-                "python3 tools/check_keypoints_parity.py "
-                f"--reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}",
-                "Compare candidate keypoint predictions against a reference artifact.",
-            )
-        )
-    elif backend_id == "mmseg":
-        steps.append(
-            _step(
-                "eval",
-                "python3 tools/eval_segmentation.py "
-                f"--dataset-json <path/to/seg_dataset.json> --predictions {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} --pred-root {work_dir / 'reports'} --output {eval_out}",
-                "Evaluate semantic segmentation predictions once the packaging bridge has written masks + JSON.",
-            )
-        )
-        steps.append(
-            _step(
-                "parity",
-                "python3 tools/check_segmentation_parity.py "
-                f"--reference <reference_seg_predictions.json> --candidate {work_dir / 'reports' / 'mmseg_segmentation_predictions.json'} --output {parity_out}",
-                "Compare candidate semantic-segmentation predictions against a reference artifact.",
-            )
-        )
-    elif task_family in (None, "", "bbox", "detect"):
-        steps.append(
-            _step(
-                "eval",
-                "python3 -m yolozu eval-coco "
-                f"--dataset {dataset_root} --split {split} --predictions {predictions_out} --output {eval_out}",
-                "Evaluate detection predictions with the stable evaluation lane.",
-            )
-        )
-        steps.append(
-            _step(
-                "parity",
-                "python3 -m yolozu parity "
-                f"--reference <reference_predictions.json> --candidate {predictions_out} --output {parity_out}",
-                "Compare candidate predictions against a reference backend artifact.",
+                "resume_training" if stage == "resume" else str(stage),
+                str(payload.get("command") or ""),
+                str(payload.get("description") or ""),
             )
         )
 
@@ -725,12 +632,16 @@ def _ultralytics_train_template(
     device: str,
     project: str,
     name: str,
+    resume_from: str | None = None,
 ) -> str:
-    return (
+    command = (
         "yolo train "
         f"model={model} data={data_yaml} epochs={int(epochs)} imgsz={int(imgsz)} "
         f"batch={int(batch)} device={device} project={project} name={name}"
     )
+    if resume_from:
+        command += f" resume=False pretrained={resume_from}"
+    return command
 
 
 def _yolox_train_template(
@@ -767,7 +678,7 @@ def _build_yolox_train_command(
     exp_file: str,
     batch: int,
     devices: int,
-    weights: str | None,
+    resume_from: str | None,
 ) -> list[str]:
     cmd = [
         str(python),
@@ -779,8 +690,8 @@ def _build_yolox_train_command(
         "-b",
         str(int(batch)),
     ]
-    if weights:
-        cmd.extend(["-c", str(weights)])
+    if resume_from:
+        cmd.extend(["-c", str(resume_from)])
     return cmd
 
 
@@ -802,12 +713,23 @@ def _infer_mmdetection_task_family(config_path: Path) -> str:
     return "bbox"
 
 
+def _infer_tao_task_family(config_path: Path) -> str:
+    text = config_path.read_text(encoding="utf-8", errors="ignore")
+    lowered = text.lower()
+    if "keypoint" in lowered or "centerpose" in lowered or "pose" in lowered:
+        return "keypoints"
+    if "segmentation" in lowered or "mask" in lowered:
+        return "segmentation"
+    return "bbox"
+
+
 def _build_detectron2_train_command(
     *,
     python: str,
     train_script: str,
     config: Path,
     work_dir: Path,
+    resume_from: str | None,
     train_opts: list[tuple[str, str]],
 ) -> list[str]:
     cmd = [
@@ -820,6 +742,8 @@ def _build_detectron2_train_command(
         "OUTPUT_DIR",
         str(work_dir),
     ]
+    if resume_from:
+        cmd.extend(["MODEL.WEIGHTS", str(resume_from)])
     for key, value in train_opts:
         cmd.extend([str(key), str(value)])
     return cmd
@@ -831,6 +755,7 @@ def _build_mmengine_train_command(
     train_script: str,
     config: Path,
     work_dir: Path,
+    resume_from: str | None,
     train_opts: list[tuple[str, str]],
 ) -> list[str]:
     cmd = [
@@ -840,9 +765,55 @@ def _build_mmengine_train_command(
         "--work-dir",
         str(work_dir),
     ]
+    if resume_from:
+        cmd.extend(["--cfg-options", f"load_from={str(resume_from)}"])
     if train_opts:
         cmd.append("--cfg-options")
         cmd.extend([f"{str(key)}={str(value)}" for key, value in train_opts])
+    return cmd
+
+
+def _build_tao_train_command(
+    *,
+    python: str,
+    train_script: str | None,
+    tao_task: str,
+    config: Path,
+    work_dir: Path,
+    resume_from: str | None,
+    train_opts: list[tuple[str, str]],
+) -> list[str]:
+    if train_script:
+        cmd = [
+            str(python),
+            str(train_script),
+            "--spec",
+            str(config),
+            "--results-dir",
+            str(work_dir),
+            "--tao-task",
+            str(tao_task),
+        ]
+        if resume_from:
+            cmd.extend(["--resume-from", str(resume_from)])
+        for key, value in train_opts:
+            cmd.extend(["--set", f"{str(key)}={str(value)}"])
+        return cmd
+
+    cmd = [
+        "tao",
+        "model",
+        str(tao_task),
+        "train",
+        "-e",
+        str(config),
+        "-r",
+        str(work_dir),
+    ]
+    if resume_from:
+        cmd.extend(["--resume-from", str(resume_from)])
+    for key, value in train_opts:
+        cmd.extend(["--set", f"{str(key)}={str(value)}"])
     return cmd
 
 
@@ -978,7 +949,15 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
     )
 
     train_cfg = project_yolox_exp(config=exp_path).to_dict()
-    weights_path = Path(str(args.weights)).resolve() if args.weights else None
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    if resume_value is None and args.weights:
+        resume_value = str(args.weights)
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
     train_script = str(args.train_script).strip() if args.train_script else ""
     command = _build_yolox_train_command(
         python=str(args.python),
@@ -986,14 +965,14 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         exp_file=str(exp_path),
         batch=int(args.batch),
         devices=int(args.devices),
-        weights=(str(weights_path) if weights_path else None),
+        resume_from=(str(resume_path) if resume_path else None),
     )
     template = _yolox_train_template(
         python=str(args.python),
         train_script=(train_script or "<YOLOX/tools/train.py>"),
         exp_file=str(exp_path),
         batch=int(args.batch),
-        weights=(str(weights_path) if weights_path else None),
+        weights=(str(resume_path) if resume_path else None),
         devices=int(args.devices),
     )
 
@@ -1089,7 +1068,8 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             "task": "train_yolox",
             "preset": preset_name,
             "exp": str(exp_path),
-            "weights": str(weights_path) if weights_path else None,
+            "weights": str(resume_path) if resume_path else None,
+            "resume_from": str(resume_path) if resume_path else None,
             "train_script": train_script or None,
             "template_train_command": template,
             "train_config_projection": str(projection_path),
@@ -1100,15 +1080,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             },
         }
     )
-    report["next_steps"] = _external_next_steps(
-        backend_id="yolox",
-        dataset_root=Path(str(resolution.dataset_root)),
-        split=str(resolution.split),
-        work_dir=work_dir,
-        report_path=report_path,
-        exp_path=exp_path,
-        task_family="bbox",
-    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
     bundled_paths = _write_external_run_contract_bundle(
         backend_id="yolox",
         work_dir=work_dir,
@@ -1235,12 +1207,20 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
     _write_json(projection_path, projection_payload)
 
     train_script = str(args.train_script).strip() if args.train_script else ""
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
     train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
     command = _build_detectron2_train_command(
         python=str(args.python),
         train_script=(train_script or "<detectron2/tools/train_net.py>"),
         config=config_path,
         work_dir=work_dir,
+        resume_from=(str(resume_path) if resume_path else None),
         train_opts=train_opts,
     )
     template = " ".join(command)
@@ -1321,6 +1301,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             "task": "train_detectron2",
             "task_family": task_family,
             "config": str(config_path),
+            "resume_from": str(resume_path) if resume_path else None,
             "train_script": train_script or None,
             "template_train_command": template,
             "train_config_projection": str(projection_path),
@@ -1332,15 +1313,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             },
         }
     )
-    report["next_steps"] = _external_next_steps(
-        backend_id="detectron2",
-        dataset_root=Path(str(resolution.dataset_root)),
-        split=str(resolution.split),
-        work_dir=work_dir,
-        report_path=report_path,
-        config_path=config_path,
-        task_family=task_family,
-    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
     bundled_paths = _write_external_run_contract_bundle(
         backend_id="detectron2",
         work_dir=work_dir,
@@ -1467,12 +1440,20 @@ def _cmd_train_mmfamily(
     _write_json(projection_path, projection_payload)
 
     train_script = str(args.train_script).strip() if args.train_script else ""
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
     train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
     command = _build_mmengine_train_command(
         python=str(args.python),
         train_script=(train_script or f"<{backend_id}/tools/train.py>"),
         config=config_path,
         work_dir=work_dir,
+        resume_from=(str(resume_path) if resume_path else None),
         train_opts=train_opts,
     )
     template = " ".join(command)
@@ -1553,6 +1534,7 @@ def _cmd_train_mmfamily(
             "task": f"train_{backend_id}",
             "task_family": task_family,
             "config": str(config_path),
+            "resume_from": str(resume_path) if resume_path else None,
             "train_script": train_script or None,
             "template_train_command": template,
             "train_config_projection": str(projection_path),
@@ -1564,15 +1546,7 @@ def _cmd_train_mmfamily(
             },
         }
     )
-    report["next_steps"] = _external_next_steps(
-        backend_id=backend_id,
-        dataset_root=Path(str(resolution.dataset_root)),
-        split=str(resolution.split),
-        work_dir=work_dir,
-        report_path=report_path,
-        config_path=config_path,
-        task_family=task_family,
-    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
     bundled_paths = _write_external_run_contract_bundle(
         backend_id=backend_id,
         work_dir=work_dir,
@@ -1618,7 +1592,7 @@ def _cmd_train_mmdetection(args: argparse.Namespace) -> int:
         default_output="reports/support_external_training.train_mmdetection.json",
         provider_label="MMDetection",
         repo_impl_label="support_external_training train-mmdetection",
-        export_deploy_label="export_predictions_mmdet + eval/benchmark lanes for bbox; mask export remains backend-specific.",
+        export_deploy_label="task-family-specific handoff bridges normalize MMDetection outputs into YOLOZU export/eval/parity lanes.",
     )
 
 
@@ -1631,7 +1605,7 @@ def _cmd_train_mmpose(args: argparse.Namespace) -> int:
         default_output="reports/support_external_training.train_mmpose.json",
         provider_label="MMPose",
         repo_impl_label="support_external_training train-mmpose",
-        export_deploy_label="Use a backend-side exporter to write keypoints predictions into the predictions interface contract, then run eval_keypoints/parity.",
+        export_deploy_label="task-family-specific handoff bridges normalize MMPose outputs into YOLOZU export/eval/parity lanes.",
     )
 
 
@@ -1644,8 +1618,219 @@ def _cmd_train_mmseg(args: argparse.Namespace) -> int:
         default_output="reports/support_external_training.train_mmseg.json",
         provider_label="MMSeg",
         repo_impl_label="support_external_training train-mmseg",
-        export_deploy_label="Use a backend-side exporter to write segmentation masks + JSON, then run eval_segmentation.",
+        export_deploy_label="task-family-specific handoff bridges normalize MMSeg outputs into YOLOZU export/eval/parity lanes.",
     )
+
+
+def _cmd_train_tao(args: argparse.Namespace) -> int:
+    preset_name, preset = _resolve_preset(getattr(args, "preset", None))
+    config_path = Path(
+        _require_nonempty(
+            _resolve_value(args.config),
+            message="TAO spec file is required (set --config).",
+        )
+    ).resolve()
+    if not config_path.exists():
+        raise SystemExit(f"--config not found: {config_path}")
+
+    dataset_input = _require_nonempty(
+        _resolve_value(
+            args.dataset,
+            env="YOLOZU_DATASET",
+            preset=preset,
+            preset_key="dataset",
+        ),
+        message="dataset is required (set --dataset/-d, YOLOZU_DATASET, or --preset).",
+    )
+    source_format = str(
+        _resolve_value(
+            args.from_format,
+            env="YOLOZU_FROM_FORMAT",
+            preset=preset,
+            preset_key="from_format",
+            fallback="auto",
+        )
+    )
+    split = str(
+        _resolve_value(
+            args.split,
+            env="YOLOZU_SPLIT",
+            preset=preset,
+            preset_key="split",
+            fallback="train",
+        )
+    )
+    work_dir = Path(str(_resolve_value(args.work_dir, fallback="runs/support_external_training/tao"))).resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    resolution = resolve_internal_dataset(
+        source_format=source_format,
+        dataset=dataset_input,
+        split=split,
+        output=work_dir / "dataset",
+        instances_json=str(args.instances_json) if args.instances_json else None,
+        images_dir=str(args.images_dir) if args.images_dir else None,
+        force=bool(args.force),
+    )
+
+    task_family = str(getattr(args, "task_family", "auto") or "auto").strip().lower()
+    if task_family == "auto":
+        task_family = _infer_tao_task_family(config_path)
+
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
+    train_script = str(args.train_script).strip() if args.train_script else ""
+    train_opts = [(str(k), str(v)) for k, v in (getattr(args, "train_opt", None) or [])]
+    tao_task = str(
+        _resolve_value(
+            getattr(args, "tao_task", None),
+            preset=preset,
+            preset_key="tao_task",
+            fallback=("centerpose" if task_family == "keypoints" else "segformer" if task_family == "segmentation" else "dino"),
+        )
+    )
+    command = _build_tao_train_command(
+        python=str(args.python),
+        train_script=(train_script or None),
+        tao_task=tao_task,
+        config=config_path,
+        work_dir=work_dir,
+        resume_from=(str(resume_path) if resume_path else None),
+        train_opts=train_opts,
+    )
+    template = " ".join(command)
+
+    projection_payload = {
+        "format": "yolozu_external_training_projection_v1",
+        "provider": "tao",
+        "train_config": TrainConfig(
+            backend="tao",
+            task=task_family,
+            model=str(config_path),
+            dataset={"root": str(resolution.dataset_root), "split": str(resolution.split)},
+            source={"from": "tao", "config": str(config_path), "tao_task": str(tao_task)},
+        ).to_dict(),
+        "dataset_resolution": {
+            "dataset_root": str(resolution.dataset_root),
+            "split": str(resolution.split),
+            "source_format": str(resolution.source_format),
+        },
+        "environment_hints": {
+            "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
+            "YOLOZU_SPLIT": str(resolution.split),
+            "YOLOZU_TASK_FAMILY": str(task_family),
+            "YOLOZU_TAO_TASK": str(tao_task),
+        },
+    }
+    projection_path = work_dir / "tao_train_config_projection.json"
+    _write_json(projection_path, projection_payload)
+
+    training_executed = False
+    runtime_error: str | None = None
+    proc_info: dict[str, Any] | None = None
+    if not bool(args.dry_run):
+        proc = _run(command, cwd=repo_root, env=dict(os.environ))
+        proc_info = {
+            "returncode": int(proc.returncode),
+            "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+            "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+        }
+        training_executed = proc.returncode == 0
+        if proc.returncode != 0:
+            runtime_error = f"external NVIDIA TAO train command failed ({proc.returncode})"
+
+    report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_tao.json"))).resolve()
+    handoff_contracts = _external_handoff_contracts(
+        backend_id="tao",
+        dataset_root=Path(str(resolution.dataset_root)),
+        split=str(resolution.split),
+        work_dir=work_dir,
+        report_path=report_path,
+        config_path=config_path,
+        task_family=task_family,
+    )
+    report = build_training_run_summary(
+        backend_id="tao",
+        report_path=report_path,
+        train_config=projection_payload["train_config"],
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        dry_run=bool(args.dry_run),
+        work_dir=str(work_dir),
+        steps={
+            "train": {
+                "status": ("dry_run" if bool(args.dry_run) else ("ok" if training_executed else "failed")),
+                "ok": bool(args.dry_run) or training_executed,
+                "executed": training_executed,
+                "command_template": template,
+                "train_script": train_script or None,
+            },
+            "export": {"status": "planned", "ok": True, "executed": False},
+            "eval": {"status": "planned", "ok": True, "executed": False},
+            "parity": {"status": "planned", "ok": True, "executed": False},
+        },
+        process=proc_info,
+        runtime_error=runtime_error,
+        notes=[f"preset={preset_name}", f"projection={projection_path}", f"tao_task={tao_task}"],
+        license_boundary={
+            "repo_code": "Apache-2.0",
+            "optional_bridge": False,
+            "note": "NVIDIA TAO runtime remains external to YOLOZU; review NVIDIA tooling, container, and redistribution requirements separately.",
+        },
+        handoff_contracts=handoff_contracts,
+    )
+    report.update(
+        {
+            "task": "train_tao",
+            "task_family": task_family,
+            "config": str(config_path),
+            "tao_task": tao_task,
+            "resume_from": str(resume_path) if resume_path else None,
+            "train_script": train_script or None,
+            "template_train_command": template,
+            "train_config_projection": str(projection_path),
+            "layers": {
+                "trainer_runner": "external NVIDIA TAO launcher",
+                "repo_impl": "support_external_training train-tao",
+                "export_deploy": "task-family-specific handoff bridges into YOLOZU eval/parity lanes",
+            },
+        }
+    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
+    bundled_paths = _write_external_run_contract_bundle(
+        backend_id="tao",
+        work_dir=work_dir,
+        report_path=report_path,
+        report=report,
+        dataset_root=str(resolution.dataset_root),
+        split=str(resolution.split),
+        command=command,
+        command_template=template,
+        train_script=train_script or None,
+        projection_payload=projection_payload,
+        process_payload=proc_info,
+        runtime_error=runtime_error,
+        extra_env=projection_payload.get("environment_hints"),
+    )
+    handoff_paths = _write_handoff_contracts(work_dir=work_dir, report_path=report_path, handoff_contracts=handoff_contracts)
+    registry_entry = build_training_registry_entry(summary=report, summary_path=report_path)
+    registry_entry_path = work_dir / "reports" / "training_registry_entry.json"
+    write_training_registry_entry(registry_entry_path, registry_entry)
+    if getattr(args, "registry_out", None):
+        append_training_registry(Path(str(args.registry_out)).resolve(), registry_entry)
+    report["run_output_contract"]["stable_artifact_paths"] = bundled_paths
+    report["run_output_contract"]["stable_artifact_paths"].update(handoff_paths)
+    report["run_output_contract"]["stable_artifact_paths"]["training_registry_entry"] = str(registry_entry_path)
+    report["train_config_projection"] = bundled_paths["train_config_projection"]
+    report["registry_entry"] = str(registry_entry_path)
+    _write_json(report_path, report)
+    _write_json(Path(bundled_paths["training_summary"]), report)
+    print(str(report_path))
+    return 0 if bool(report.get("ok")) else 1
 
 
 def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
@@ -1708,8 +1893,16 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             output=work_dir / "ultralytics_data.yaml",
         )
 
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
+
     template = _ultralytics_train_template(
-        model=model_name,
+        model=(str(resume_path) if resume_path else model_name),
         data_yaml=data_yaml,
         epochs=int(args.epochs),
         imgsz=int(args.imgsz),
@@ -1717,6 +1910,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         device=str(args.device),
         project=str(args.project),
         name=str(args.name),
+        resume_from=(str(resume_path) if resume_path else None),
     )
 
     training_executed = False
@@ -1727,7 +1921,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         try:
             from ultralytics import YOLO  # type: ignore
 
-            model = YOLO(model_name)
+            model = YOLO(str(resume_path) if resume_path else model_name)
             result = model.train(
                 data=str(data_yaml),
                 epochs=int(args.epochs),
@@ -1797,6 +1991,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             "task": "train_ultralytics",
             "preset": preset_name,
             "model": model_name,
+            "resume_from": str(resume_path) if resume_path else None,
             "data_yaml": str(data_yaml),
             "template_train_command": template,
             "template_predict_normalize_command": (
@@ -1813,15 +2008,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             },
         }
     )
-    report["next_steps"] = _external_next_steps(
-        backend_id="ultralytics",
-        dataset_root=Path(str(resolution.dataset_root)),
-        split=str(resolution.split),
-        work_dir=work_dir,
-        report_path=report_path,
-        model_name=str(model_name),
-        task_family="bbox",
-    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
     ultralytics_projection = {
         "format": "yolozu_external_training_projection_v1",
         "provider": "ultralytics",
@@ -1919,6 +2106,13 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
     )
 
     train_script = str(args.train_script).strip() if args.train_script else ""
+    resume_value = _resolve_value(
+        getattr(args, "resume_from", None),
+        env="YOLOZU_RESUME_FROM",
+        preset=preset,
+        preset_key="resume_from",
+    )
+    resume_path = Path(str(resume_value)).resolve() if resume_value else None
     if train_script:
         command = [
             str(args.python),
@@ -1938,6 +2132,8 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "--max-steps",
             str(int(args.max_steps)),
         ]
+        if resume_path:
+            command.extend(["--resume-from", str(resume_path)])
     else:
         command = [
             "accelerate",
@@ -1958,6 +2154,8 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "--max-steps",
             str(int(args.max_steps)),
         ]
+        if resume_path:
+            command.extend(["--resume-from", str(resume_path)])
 
     training_executed = False
     runtime_error: str | None = None
@@ -2034,6 +2232,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "task": "train_hf_detr",
             "preset": preset_name,
             "model_id": model_id,
+            "resume_from": str(resume_path) if resume_path else None,
             "train_script": train_script or None,
             "template_train_command": " ".join(command),
             "layers": {
@@ -2043,15 +2242,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             },
         }
     )
-    report["next_steps"] = _external_next_steps(
-        backend_id="hf-detr",
-        dataset_root=Path(str(resolution.dataset_root)),
-        split=str(resolution.split),
-        work_dir=work_dir,
-        report_path=report_path,
-        model_id=str(model_id),
-        task_family="bbox",
-    )
+    report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)
     hf_projection = {
         "format": "yolozu_external_training_projection_v1",
         "provider": "hf-detr",
@@ -2401,6 +2592,7 @@ def _build_parser() -> argparse.ArgumentParser:
     tyx.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tyx.add_argument("-x", "--exp", required=True, help="YOLOX exp file path.")
     tyx.add_argument("-c", "--weights", default=None, help="Optional checkpoint path to resume/fine-tune from.")
+    tyx.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     tyx.add_argument("-t", "--train-script", default=None, help="Optional external YOLOX train launcher for non-dry execution.")
     tyx.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     tyx.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
@@ -2424,6 +2616,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     td2.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     td2.add_argument("-c", "--config", required=True, help="Detectron2 config YAML path.")
+    td2.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     td2.add_argument("-t", "--train-script", default=None, help="Optional external Detectron2 train launcher for non-dry execution.")
     td2.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     td2.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
@@ -2459,6 +2652,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmdet.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tmmdet.add_argument("-c", "--config", required=True, help="MMDetection config Python path.")
+    tmmdet.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     tmmdet.add_argument("-t", "--train-script", default=None, help="Optional external MMDetection train launcher for non-dry execution.")
     tmmdet.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     tmmdet.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
@@ -2494,6 +2688,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmpose.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tmmpose.add_argument("-c", "--config", required=True, help="MMPose config Python path.")
+    tmmpose.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     tmmpose.add_argument("-t", "--train-script", default=None, help="Optional external MMPose train launcher for non-dry execution.")
     tmmpose.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     tmmpose.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
@@ -2529,6 +2724,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tmmseg.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tmmseg.add_argument("-c", "--config", required=True, help="MMSeg config Python path.")
+    tmmseg.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     tmmseg.add_argument("-t", "--train-script", default=None, help="Optional external MMSeg train launcher for non-dry execution.")
     tmmseg.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
     tmmseg.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
@@ -2557,6 +2753,43 @@ def _build_parser() -> argparse.ArgumentParser:
     tmmseg.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
     tmmseg.set_defaults(_fn=_cmd_train_mmseg)
 
+    ttao = sub.add_parser(
+        "train-tao",
+        aliases=["ttao", "tao-train"],
+        help="NVIDIA TAO external training bridge for bbox, segmentation, and keypoints workflows.",
+    )
+    ttao.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
+    ttao.add_argument("-c", "--config", required=True, help="TAO spec/config path.")
+    ttao.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
+    ttao.add_argument("--tao-task", default=None, help="Optional TAO task name (for example dino, segformer, centerpose).")
+    ttao.add_argument("-t", "--train-script", default=None, help="Optional external TAO launcher wrapper for non-dry execution.")
+    ttao.add_argument("-p", "--python", default=sys.executable, help="Python executable for --train-script.")
+    ttao.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
+    ttao.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
+    ttao.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
+    ttao.add_argument("-i", "--instances-json", default=None, help="COCO instances JSON (for coco_instances mode).")
+    ttao.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
+    ttao.add_argument(
+        "--task-family",
+        choices=("auto", "bbox", "segmentation", "keypoints"),
+        default="auto",
+        help="Reported TAO task family; auto infers from the spec text.",
+    )
+    ttao.add_argument(
+        "--train-opt",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        default=[],
+        help="Extra TAO wrapper option pair. Repeat for task-specific overrides.",
+    )
+    ttao.add_argument("-W", "--work-dir", default="runs/support_external_training/tao", help="Work/cache dir.")
+    ttao.add_argument("-o", "--output", default="reports/support_external_training.train_tao.json", help="Report JSON output path.")
+    ttao.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
+    ttao.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")
+    ttao.add_argument("-F", "--force", action="store_true", help="Overwrite generated wrapper outputs.")
+    ttao.set_defaults(_fn=_cmd_train_tao)
+
     tul = sub.add_parser(
         "train-ultralytics",
         aliases=["tu", "ultra-train"],
@@ -2564,6 +2797,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     tul.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     tul.add_argument("-m", "--model", default=None, help="Ultralytics model path/id (e.g., yolo11n.pt).")
+    tul.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     tul.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
     tul.add_argument("-d", "--dataset", default=None, help="Dataset root or data.yaml path.")
     tul.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")
@@ -2590,6 +2824,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     thf.add_argument("-P", "--preset", choices=preset_choices, default=None, help=preset_help)
     thf.add_argument("-m", "--model-id", default=None, help="HF model id (e.g. facebook/detr-resnet-50).")
+    thf.add_argument("--resume-from", default=None, help="Standardized checkpoint handoff path for resume/fine-tune.")
     thf.add_argument("-f", "--from", dest="from_format", default=None, choices=format_choices)
     thf.add_argument("-d", "--dataset", default=None, help="Dataset root or descriptor.")
     thf.add_argument("-s", "--split", default=None, help="Split for training (preset/env fallback when omitted).")

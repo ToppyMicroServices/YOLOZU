@@ -44,6 +44,7 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("mmdetection", proc.stdout)
         self.assertIn("mmpose", proc.stdout)
         self.assertIn("mmseg", proc.stdout)
+        self.assertIn("tao", proc.stdout)
         self.assertIn("ultralytics", proc.stdout)
         self.assertIn("hf-detr", proc.stdout)
 

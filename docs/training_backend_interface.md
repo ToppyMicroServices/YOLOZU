@@ -12,12 +12,13 @@ Every training backend should expose the same high-level ideas:
 - one canonical `TrainConfig`
 - one backend id
 - one machine-readable training run summary
+- one machine-readable resume handoff
 - one standardized export / eval / parity handoff bundle
 - one optional training registry entry
 - one clear statement of whether export / eval / parity are supported
 
 YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
-YOLOX, Detectron2, MMDetection, MMPose, MMSeg, Ultralytics, and HF DETR as external lanes that still publish the same
+YOLOX, Detectron2, MMDetection, MMPose, MMSeg, TAO, Ultralytics, and HF DETR as external lanes that still publish the same
 top-level summary interface contract plus one standardized external run bundle.
 
 ## Backend ids
@@ -30,6 +31,7 @@ Current backend ids:
 - `mmdetection`
 - `mmpose`
 - `mmseg`
+- `tao`
 - `ultralytics`
 - `hf-detr`
 
@@ -79,6 +81,7 @@ Every backend-level training lane should be able to emit:
 - `canonical_train_config`
 - `run_output_contract`
 - `steps.train`
+- `steps.resume`
 - `steps.export`
 - `steps.eval`
 - `steps.parity`
@@ -87,7 +90,7 @@ Every backend-level training lane should be able to emit:
 This is the common top-level summary interface contract for training.
 
 `next_steps` is the standardized hand-off list of copy-paste commands that move a
-completed run into export, evaluation, or parity.
+completed run into resume, export, evaluation, or parity.
 
 The reference trainer also emits richer artifacts such as:
 
@@ -107,13 +110,14 @@ The standardized external bundle is:
 - `work_dir/reports/external_run_meta.json`
 - `work_dir/reports/launcher_plan.json`
 - `work_dir/reports/execution.json`
+- `work_dir/reports/resume_handoff.json`
 - `work_dir/reports/export_handoff.json`
 - `work_dir/reports/eval_handoff.json`
 - `work_dir/reports/parity_handoff.json`
 - `work_dir/reports/training_registry_entry.json`
 
-The handoff JSON files make export / eval / parity machine-readable even when the
-backend runtime itself stays external. This is how `mmpose` and `mmseg` stop being
+The handoff JSON files make resume / export / eval / parity machine-readable even when the
+backend runtime itself stays external. This is how `mmpose`, `mmseg`, and `tao` stop being
 ad-hoc handoff lanes: YOLOZU now fixes the accepted handoff format even when the
 final exporter is still launched from the backend side.
 

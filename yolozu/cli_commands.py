@@ -141,6 +141,7 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
         "mmdetection": "train-mmdetection",
         "mmpose": "train-mmpose",
         "mmseg": "train-mmseg",
+        "tao": "train-tao",
         "ultralytics": "train-ultralytics",
         "hf-detr": "train-hf-detr",
     }
@@ -150,7 +151,7 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     config_value = str(getattr(args, "config", "") or "").strip()
     if backend == "yolox" and not config_value:
         raise SystemExit("train config/exp is required when using --external-backend yolox")
-    if backend in {"detectron2", "mmdetection", "mmpose", "mmseg"} and not config_value:
+    if backend in {"detectron2", "mmdetection", "mmpose", "mmseg", "tao"} and not config_value:
         raise SystemExit(f"train config is required when using --external-backend {backend}")
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -164,7 +165,7 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
     cmd = [sys.executable, str(helper), backend_to_subcommand[backend]]
     if backend == "yolox":
         cmd.extend(["--exp", config_value])
-    elif backend in {"detectron2", "mmdetection", "mmpose", "mmseg"}:
+    elif backend in {"detectron2", "mmdetection", "mmpose", "mmseg", "tao"}:
         cmd.extend(["--config", config_value])
     elif backend == "ultralytics" and config_value:
         cmd.extend(["--model", config_value])

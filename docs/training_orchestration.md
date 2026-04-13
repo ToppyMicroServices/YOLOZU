@@ -36,6 +36,32 @@ Minimal example:
 }
 ```
 
+Spec with shared defaults and resume handoff:
+
+```json
+{
+  "schema_version": 1,
+  "defaults": {
+    "dataset": "data/smoke",
+    "split": "val",
+    "resume_from": "runs/bootstrap/checkpoints/last.pt"
+  },
+  "experiments": [
+    {
+      "name": "tao-bbox-smoke",
+      "backend": "tao",
+      "config": "configs/examples/finetune_external/tao_finetune_smoke.yaml",
+      "task_family": "bbox",
+      "extra_args": [
+        "--dry-run",
+        "--output",
+        "reports/train_external_tao_bbox.json"
+      ]
+    }
+  ]
+}
+```
+
 ## Commands
 
 Plan only:
@@ -81,8 +107,11 @@ The report uses:
 - one row per experiment
 - the exact command that was planned or executed
 - execution status and output tails when `--execute` is used
+- inherited/defaulted fields such as `dataset`, `split`, and `resume_from`
 - when the experiment writes a training summary JSON, the orchestration row also records `summary_json`, `work_dir`, and `next_steps`
 - when `--registry-out` is set, executed runs are also appended to one JSONL registry file using `yolozu_training_registry_entry_v1`
+- `counts.by_backend` summarizes how many experiments targeted each backend in the batch
+- `registry_summary` reports how many entries were appended when execution + registry output are enabled
 
 Schema reference:
 
