@@ -43,7 +43,7 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
 \section{Declarative Fields: Mandatory Tool Metadata}
 The manifest functions as a declarative interface contract. At a practical minimum, every tool entry must expose:
 \begin{itemize}
-  \item \textbf{Identity and Execution}: \texttt{id}, \texttt{entrypoint}, \texttt{runner}, and \texttt{summary}.
+  \item \textbf{Identity and Execution}: \texttt{id}, \texttt{entrypoint}, \texttt{runner}, \texttt{summary}, and \texttt{maturity}.
   \item \textbf{Environment}: \texttt{platform} constraints and optional \texttt{requires} dependencies.
   \item \textbf{Interface}: Explicit \texttt{inputs[]} and \texttt{outputs[]} definitions.
   \item \textbf{Side Effects}: Declared \texttt{effects.writes[]} and \texttt{effects.fixed\_writes[]}.
