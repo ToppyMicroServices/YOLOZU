@@ -1092,7 +1092,18 @@ def _release(_: argparse.Namespace) -> int:
 
 
 def _support_ultralytics_detr(args: argparse.Namespace) -> int:
-    cmd = [sys.executable, "tools/support_ultralytics_detr.py"]
+    cmd = [sys.executable, "tools/support_external_training.py"]
+    forwarded = getattr(args, "forward_args", None)
+    if isinstance(forwarded, list):
+        cmd.extend(str(x) for x in forwarded)
+    out = _subprocess_or_die(cmd)
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 0
+
+
+def _support_external_training(args: argparse.Namespace) -> int:
+    cmd = [sys.executable, "tools/support_external_training.py"]
     forwarded = getattr(args, "forward_args", None)
     if isinstance(forwarded, list):
         cmd.extend(str(x) for x in forwarded)
@@ -1298,15 +1309,27 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_release = sub.add_parser("release", help="Run single-command release automation (tag + GitHub/PyPI/Zenodo flow).")
     p_release.set_defaults(_fn=_release)
 
+    p_support_ext = sub.add_parser(
+        "support-external-training",
+        aliases=["set", "external-training"],
+        help="External training support wrapper (Apache-2.0 YOLOX lane + optional bridges).",
+    )
+    p_support_ext.add_argument(
+        "forward_args",
+        nargs=argparse.REMAINDER,
+        help="Arguments forwarded to tools/support_external_training.py.",
+    )
+    p_support_ext.set_defaults(_fn=_support_external_training)
+
     p_support_ud = sub.add_parser(
         "support-ultralytics-detr",
         aliases=["sud", "ud"],
-        help="Ultralytics/DETR support wrapper (trainer/repo/export layers + dataset/onnx/predict-normalize).",
+        help="Legacy alias for the external training support wrapper.",
     )
     p_support_ud.add_argument(
         "forward_args",
         nargs=argparse.REMAINDER,
-        help="Arguments forwarded to tools/support_ultralytics_detr.py.",
+        help="Arguments forwarded to tools/support_external_training.py.",
     )
     p_support_ud.set_defaults(_fn=_support_ultralytics_detr)
 

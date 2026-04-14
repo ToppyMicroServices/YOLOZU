@@ -37,7 +37,7 @@ Core tenets of the run contract (codified within the documentation and enforced 
     \begin{itemize}
       \item \path{checkpoints/last.pt}, \path{checkpoints/best.pt}
       \item \path{reports/train_metrics.jsonl}, \path{reports/val_metrics.jsonl}
-      \item \path{reports/config_resolved.yaml}, \path{reports/run_meta.json}
+      \item \path{reports/config_resolved.yaml}, \path{reports/run_meta.json}, \path{reports/training_summary.json}
     \end{itemize}
   \item Optional export/parity artifacts (when export/parity is enabled):
     \path{exports/model.onnx}, \path{exports/model.onnx.meta.json}, \path{reports/onnx_parity.json}.
@@ -85,6 +85,7 @@ Required & \path{runs/<run_id>/reports/run_meta.json} & Always in contracted run
 Optional & \path{runs/<run_id>/exports/model.onnx} & Present when ONNX export is enabled \\
 Optional & \path{runs/<run_id>/exports/model.onnx.meta.json} & Present when ONNX export metadata is emitted \\
 Optional & \path{runs/<run_id>/reports/onnx_parity.json} & Present when ONNX parity check is executed \\
+Optional & \path{runs/<run_id>/reports/training_summary.json} & Present as the backend-neutral top-level summary interface contract \\
 \bottomrule
 \end{longtable}
 
@@ -151,12 +152,80 @@ yolozu test configs/examples/test_setting.yaml --adapter precomputed --predictio
 
 \noindent For \cmd{yolozu test}, YAML keys are dynamically translated into \cmd{--key value} arguments (with booleans converted to flags), allowing subsequent CLI arguments to override them as necessary.
 
+\section{Backend interface and orchestration}
+The training platform now separates five concerns:
+\begin{enumerate}
+  \item a canonical \cmd{TrainConfig} projection,
+  \item a backend registry,
+  \item a shared \path{training_summary.json} style interface contract,
+  \item a capability matrix, and
+  \item a lightweight orchestration entrypoint.
+\end{enumerate}
+
+This means the reference trainer and the external lanes do not need to share
+one internal loop, but they do share one top-level description of what ran and
+what artifacts were promised.
+
+For external lanes, YOLOZU now also standardizes one wrapper-level bundle under
+\path{work_dir/}:
+\begin{itemize}
+  \item \path{dataset/}
+  \item \path{configs/train\_config\_projection.json}
+  \item \path{reports/training\_summary.json}
+  \item \path{reports/external\_run\_meta.json}
+  \item \path{reports/launcher\_plan.json}
+  \item \path{reports/execution.json}
+  \item \path{reports/resume\_handoff.json}
+  \item \path{reports/export\_handoff.json}
+  \item \path{reports/eval\_handoff.json}
+  \item \path{reports/parity\_handoff.json}
+  \item \path{reports/training\_registry\_entry.json}
+\end{itemize}
+
+This is not the same as forcing one backend-native checkpoint layout. It means
+the wrapper-owned interface contract is now fixed even when the actual trainer
+remains external.
+
+The external training summary also records \path{next\_steps}: copy-paste
+follow-up commands for resume, export, evaluation, and parity. The handoff JSONs make
+those next steps machine-readable, so orchestration and CI do not need to infer
+backend-specific conventions from prose. In practice, this makes the training
+report itself the hand-off note for the next operator step while still keeping
+the resume/export/eval/parity interface contract explicit.
+
+OpenCV DNN and ONNX Runtime do not appear in this training registry because
+YOLOZU treats them as inference/export runtimes after training, not as
+training backends in their own right.
+
+The repo-side orchestration command is:
+\begin{lstlisting}[language=bash]
+yolozu train-orchestrate \
+  --spec reports/train_orchestration_spec.json \
+  --output reports/training_orchestration_report.json \
+  --registry-out reports/training_registry.jsonl
+\end{lstlisting}
+
+When \cmd{--registry-out} is set, each executed training run appends one
+\path{yolozu\_training\_registry\_entry\_v1} record to a shared JSONL file.
+This is intentionally lightweight: it is an append-only experiment registry for
+cross-backend auditing, not a full experiment tracking server.
+
+Read next:
+\begin{itemize}
+  \item \path{docs/training_backend_interface.md}
+  \item \path{docs/training_capability_matrix.md}
+  \item \path{docs/training_orchestration.md}
+\end{itemize}
+
 \section{External framework finetune smoke matrix}
 For user convenience, YOLOZU includes template configs and a unified smoke runner for external finetune entrypoints:
 \begin{itemize}
   \item YOLO-family runtime
-  \item MMDetection
   \item Detectron2
+  \item MMDetection
+  \item MMPose
+  \item MMSeg
+  \item NVIDIA TAO
   \item RT-DETR (\path{rtdetr_pose})
 \end{itemize}
 
@@ -164,6 +233,9 @@ Template paths:
 \begin{itemize}
   \item \path{configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/mmdetection_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/mmpose_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/mmseg_finetune_smoke.py}
+  \item \path{configs/examples/finetune_external/tao_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/detectron2_finetune_smoke.yaml}
   \item \path{configs/examples/finetune_external/rtdetr_pose_finetune_smoke.yaml}
 \end{itemize}
@@ -174,6 +246,38 @@ python3 tools/run_external_finetune_smoke.py \
   --dataset-root data/smoke \
   --split train \
   --output reports/external_finetune_smoke.json
+\end{lstlisting}
+
+Top-level Detectron2 training lane examples:
+\begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  configs/examples/finetune_external/detectron2_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_detectron2_bbox.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/mask_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family segmentation \
+  --train-opt DATASETS.TRAIN "(\"my_seg_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_seg.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/keypoint_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family keypoints \
+  --train-opt DATASETS.TRAIN "(\"my_kpts_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_keypoints.json
 \end{lstlisting}
 
 Execute real training for selected frameworks:

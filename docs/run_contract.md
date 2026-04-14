@@ -62,6 +62,7 @@ Export + verification artifacts (enabled by default):
 - `runs/<run_id>/exports/model.onnx`
 - `runs/<run_id>/exports/model.onnx.meta.json`
 - `runs/<run_id>/reports/onnx_parity.json` (Torch vs ONNXRuntime diff stats)
+- `runs/<run_id>/reports/training_summary.json` (backend-neutral top-level training summary interface contract)
 
 Validation command:
 
@@ -115,8 +116,17 @@ You can relax this behavior with:
 
 Dependencies:
 - ONNX export requires `onnx`
+- `model.onnx.meta.json` records whether post-training export succeeded, was skipped, or failed with a structured error.
 - parity requires `onnxruntime`
   - easiest: `python3 -m pip install 'yolozu[onnxrt]'`
+
+The richer reference-trainer run contract now also writes a backend-neutral
+summary file:
+
+- `reports/training_summary.json`
+
+This is the common top-level training summary interface contract used across
+the reference trainer and the external training lanes.
 
 ## DDP (1-node multi-GPU)
 

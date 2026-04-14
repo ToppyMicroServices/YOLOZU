@@ -57,6 +57,7 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "dummy",
+                    "maturity": "stable",
                     "platform": {
                         "cpu_ok": True,
                         "gpu_required": False,
@@ -82,6 +83,7 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "dummy",
+                    "maturity": "stable",
                     "platform": {
                         "cpu_ok": True,
                         "gpu_required": False,
@@ -108,12 +110,14 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "a",
+                    "maturity": "stable",
                 },
                 {
                     "id": "dup_id",
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "b",
+                    "maturity": "stable",
                 },
             ],
         }
@@ -130,6 +134,7 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "x",
+                    "maturity": "stable",
                     "inputs": [{"name": "output", "kind": "file", "required": False, "flag": "--output"}],
                     "effects": {
                         "writes": [
@@ -161,6 +166,7 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "x",
+                    "maturity": "stable",
                     "contracts": {"produces": ["missing_contract"]},
                 }
             ],
@@ -178,6 +184,7 @@ class TestToolManifest(unittest.TestCase):
                     "entrypoint": "tools/validate_tool_manifest.py",
                     "runner": "python3",
                     "summary": "x",
+                    "maturity": "stable",
                     "platform": {
                         "cpu_ok": "yes",
                         "gpu_required": False,
@@ -194,6 +201,39 @@ class TestToolManifest(unittest.TestCase):
         proc = self._run_validator(manifest, require_declarative=True)
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("platform.cpu_ok: must be bool", proc.stderr)
+
+    def test_validate_tool_manifest_fails_missing_maturity(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "missing_maturity",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                }
+            ],
+        }
+        proc = self._run_validator(manifest)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(".maturity: must be one of", proc.stderr)
+
+    def test_validate_tool_manifest_fails_invalid_maturity(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "bad_maturity",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                    "maturity": "beta",
+                }
+            ],
+        }
+        proc = self._run_validator(manifest)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(".maturity: must be one of", proc.stderr)
 
 
 if __name__ == "__main__":

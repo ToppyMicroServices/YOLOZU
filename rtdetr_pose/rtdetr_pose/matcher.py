@@ -1,7 +1,7 @@
 """Assignment utilities (no external deps).
 
 Implements a minimal Hungarian algorithm for min-cost matching.
-Used for query-to-GT assignment in training-first scaffolds.
+Used for query-to-GT assignment in the reference trainer and related research lanes.
 """
 
 from __future__ import annotations

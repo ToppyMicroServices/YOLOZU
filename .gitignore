@@ -29,3 +29,7 @@ manual/build/
 .venv_py313/
 .venv-runpod/
 .venv-runpods/
+
+# Beads daemon runtime logs
+.beads/daemon-*.log
+.beads/daemon-*.log.gz

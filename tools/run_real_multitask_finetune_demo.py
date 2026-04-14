@@ -3,7 +3,7 @@
 
 Tasks covered:
 - bbox
-- segmentation (mask-supervised metadata + bbox objective scaffold)
+- segmentation (mask-supervised metadata + bbox objective path)
 - keypoints
 - depth
 - pose6d
@@ -74,7 +74,7 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--strict-realism",
         action="store_true",
-        help="Fail if dataset provenance indicates heuristic/scaffold labels.",
+        help="Fail if dataset provenance indicates heuristic/derived labels.",
     )
     p.add_argument(
         "--backbone-args",
@@ -157,10 +157,10 @@ def _validate_prepare_summary(*, summary: dict[str, Any] | None, strict_provenan
         if isinstance(value, str) and ("heuristic" in value or "derived" in value):
             heuristic_fields.append(str(key))
     if heuristic_fields:
-        warnings.append("heuristic_or_scaffold_labels:" + ",".join(sorted(heuristic_fields)))
+        warnings.append("heuristic_or_derived_labels:" + ",".join(sorted(heuristic_fields)))
     if bool(strict_realism) and heuristic_fields:
         raise SystemExit(
-            "strict realism violation: heuristic/scaffold labels are present. "
+            "strict realism violation: heuristic/derived labels are present. "
             "Use manually annotated labels for keypoints/depth/pose."
         )
     checks = summary.get("checks")
@@ -402,7 +402,7 @@ def main(argv: list[str] | None = None) -> int:
             "warnings": provenance_warnings,
         },
         "notes": {
-            "segmentation": "segmentation stage uses real mask metadata plus bbox objective in current train_minimal scaffold",
+            "segmentation": "segmentation stage uses real mask metadata plus bbox objective in the current train_minimal reference trainer",
             "data_policy": "real source images are used; pseudo keypoints/depth/pose labels are annotation-derived heuristics (no model-inference-generated labels)",
         },
     }

@@ -433,9 +433,8 @@ class ManifestDataset(Dataset):
         if self.hflip_prob > 0:
             flip = bool(torch.rand((), generator=gen) < float(self.hflip_prob))
 
-        # This is a training-loop scaffold.
-        # By default we use synthetic images (keeps deps minimal), but an optional
-        # mode can load real JPEGs from record['image_path'].
+        # Keep the reference trainer runnable with minimal deps by falling back to
+        # synthetic images unless real JPEG loading is explicitly enabled.
         image = None
         if self.real_images:
             image_path_raw = record.get("image_path")

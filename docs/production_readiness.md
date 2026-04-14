@@ -27,6 +27,7 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Continual learning / self-distillation | Research | Use for governed experiments and promotion-gated workflows, not as the first production lane | [`continual_learning.md`](continual_learning.md), `manual/chapters/14_continual_learning.tex` |
 | TTT | Research | Short-horizon inference adaptation; do not treat as an automatic checkpoint-promotion path | [`ttt_protocol.md`](ttt_protocol.md), `manual/chapters/15_ttt_tent_mim.tex` |
 | Hessian refinement | Research | Offline/local post-inference correction path | [`hessian_solver.md`](hessian_solver.md), `manual/chapters/10_ttt_hessian.tex` |
+| Training platform | Stable reference lane + qualified external lanes | RT-DETR pose reference trainer is the richest in-repo path and supports depth / pose6d training; external lanes now share a standardized external run bundle even when the backend-native trainer remains outside YOLOZU | [`training_backend_interface.md`](training_backend_interface.md), [`training_capability_matrix.md`](training_capability_matrix.md), [`training_orchestration.md`](training_orchestration.md) |
 
 ## Stable today
 
@@ -64,7 +65,7 @@ These areas are supported for reproducible experimentation, but they are not the
 
 ## How this maps to the manifest
 
-Relevant entries in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carry a `maturity` field so agents and operators can tell whether a tool belongs to the stable, experimental, or research lanes.
+Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries a `maturity` field so agents and operators can tell whether a command belongs to the stable, experimental, or research lanes.
 
 ## Related docs
 

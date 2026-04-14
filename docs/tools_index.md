@@ -28,6 +28,8 @@ For most day-to-day flows, start with:
 - `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
 - `python3 tools/yolozu.py sweep --config docs/hpo_sweep_example.json ...`
+- `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json`
+- `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute`
 
 ## AI/MCP entrypoints
 
@@ -139,7 +141,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Validator: `python3 tools/validate_tool_manifest.py`
 - Declarative requirements: `docs/manifest_declarative_spec.md`
 - Authoring workflow: `docs/manifest_authoring_workflow.md`
-- Relevant tools may carry `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
+- Every manifest entry carries `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
 
 ## Policy helpers
 
@@ -157,13 +159,33 @@ The manifest is intended for:
 - Release checklist: `docs/release_reliability_checklist.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 
-## YOLO/DETR helpers
+## External training helpers
 
-- 3-layer support matrix: `python3 tools/support_yolo_detr.py ls -j`
-- YOLO-family runtime fine-tune wrapper (dry-run): `python3 tools/support_yolo_detr.py tu -P smoke -n -o reports/support_yolo_detr.train_yolo_runtime.json`
-- HF DETR entry wrapper (dry-run): `python3 tools/support_yolo_detr.py th -P smoke -n -o reports/support_yolo_detr.train_hf_detr.json`
-- ONNX export wrapper (dry-run): `python3 tools/support_yolo_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_yolo_detr.export_onnx.json`
-- Details: `docs/yolo_detr_support.md`
+- Training platform docs:
+  - `docs/training_backend_interface.md`
+  - `docs/training_capability_matrix.md`
+  - `docs/training_orchestration.md`
+- 3-layer support matrix: `python3 tools/support_external_training.py ls -j`
+- Top-level train route (primary lane): `python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json`
+- Detectron2 external lane (`bbox` / instance `segmentation` / `keypoints` selected by config): `python3 -m yolozu train --external-backend detectron2 configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_detectron2_bbox.json`
+- MMDetection external lane (`bbox` / instance `segmentation`): `python3 -m yolozu train --external-backend mmdetection configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_mmdetection_bbox.json`
+- MMPose external lane (`keypoints`): `python3 -m yolozu train --external-backend mmpose configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmpose.json`
+- MMSeg external lane (semantic `segmentation`): `python3 -m yolozu train --external-backend mmseg configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmseg.json`
+- Optional top-level Ultralytics bridge: `python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json`
+- Optional top-level HF DETR bridge: `python3 -m yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/train_external_hf_detr.json`
+- Lightweight orchestration plan/execute: `python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json`
+- Shared experiment registry append: `python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute`
+- Apache-2.0-friendly YOLOX bridge (dry-run): `python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json`
+- Detectron2 bridge (dry-run): `python3 tools/support_external_training.py train-detectron2 --config configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_detectron2.json`
+- MMDetection bridge (dry-run): `python3 tools/support_external_training.py train-mmdetection --config configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_mmdetection.json`
+- MMPose bridge (dry-run): `python3 tools/support_external_training.py train-mmpose --config configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmpose.json`
+- MMSeg bridge (dry-run): `python3 tools/support_external_training.py train-mmseg --config configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmseg.json`
+- Optional Ultralytics bridge (dry-run): `python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json`
+- HF DETR entry wrapper (dry-run): `python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json`
+- ONNX export wrapper (dry-run): `python3 tools/support_external_training.py export-onnx -P smoke -o models/yolo11n.onnx -n -r reports/support_external_training.export_onnx.json`
+- Legacy alias: `python3 tools/support_yolo_detr.py ...`
+- Read first: `docs/interop_yolox.md`, `docs/training_inference_export.md`, `docs/license_policy.md`
+- External lanes now write a standardized wrapper-owned bundle under `work_dir/`, including `reports/export_handoff.json`, `reports/eval_handoff.json`, `reports/parity_handoff.json`, and `reports/training_registry_entry.json`.
 
 ### AI-required manifest fields
 

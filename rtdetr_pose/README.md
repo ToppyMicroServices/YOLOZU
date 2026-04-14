@@ -1,13 +1,14 @@
-# RT-DETR Pose Scaffolding
+# RT-DETR Pose Reference Trainer
 
-This folder contains a minimal PyTorch/TensorRT-oriented scaffolding for the RT-DETR 6DoF pose spec.
+This folder contains the in-repo reference trainer for the RT-DETR 6DoF pose spec.
+Training is supported here as the repo's official RT-DETR pose training lane.
 
 ## Quick checks
 - Dataset audit (default coco128 path): `python3 tools/dataset_audit.py`
 - Dataset audit (with deeper checks): `python3 tools/dataset_audit.py --check-content --check-ranges --fail-on-issues`
 - Dataset test: `python3 -m unittest tests/test_dataset.py`
 
-## Minimal training scaffold (CPU/GPU)
+## Reference trainer (CPU/GPU)
 - Install deps: `python3 -m pip install -r requirements-test.txt`
 - Fetch coco128 (once, from repo root): `bash tools/fetch_coco128.sh`
 - Run: `python3 tools/train_minimal.py --epochs 1 --batch-size 2 --max-steps 30`
@@ -41,7 +42,7 @@ Mask-only labels (optional)
 - Example config: `configs/base.json`
 
 ## Notes
-- The model is a stub to wire losses/metrics and export; integrate with a full RT-DETR implementation next.
+- The trainer is intended as the repo's reference implementation for training/export/run artifacts; it is not a model-zoo-wide one-click training framework.
 - Backbone swapping supports the new nested keys:
   - `model.backbone.name` (e.g. `cspresnet`, `cspdarknet_s`, `resnet50`, `convnext_tiny`)
   - `model.backbone.norm` (`bn|syncbn|frozenbn|gn`)

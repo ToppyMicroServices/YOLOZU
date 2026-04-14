@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/training_orchestration_report.schema.json",
+  "title": "YOLOZU training orchestration report",
+  "type": "object",
+  "required": ["format", "schema_version", "timestamp", "spec", "ok", "results"],
+  "properties": {
+    "format": { "const": "yolozu_training_orchestration_report_v1" },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "timestamp": { "type": "string" },
+    "spec": { "type": "string" },
+    "execute": { "type": "boolean" },
+    "forced_dry_run": { "type": "boolean" },
+    "registry_out": { "type": ["string", "null"] },
+    "ok": { "type": "boolean" },
+    "counts": { "type": "object" },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "backend", "command", "command_str", "ok"],
+        "properties": {
+          "name": { "type": "string" },
+          "backend": { "type": "string" },
+          "command": { "type": "array", "items": { "type": "string" } },
+          "command_str": { "type": "string" },
+          "ok": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

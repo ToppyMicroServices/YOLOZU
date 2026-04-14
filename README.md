@@ -44,7 +44,8 @@ flowchart LR
 ## Primary Focus
 
 - Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Secondary lane: export and reference training lanes that feed the same predictions interface contract
+- Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external copyleft-sensitive bridges kept separate
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
 ## Capability Maturity
@@ -79,7 +80,10 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 
 - Evaluate precomputed predictions: [`docs/external_inference.md`](docs/external_inference.md)
 - Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md)
-- Compare backends and benchmark paths: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
+- YOLO-style and Detectron2 external training lanes (`yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...`): [`docs/training_inference_export.md`](docs/training_inference_export.md)
+- Current training support matrix and scope boundary: [`docs/training_inference_export.md#current-training-support`](docs/training_inference_export.md#current-training-support)
+- Training backend interface / capability matrix / orchestration: [`docs/training_backend_interface.md`](docs/training_backend_interface.md), [`docs/training_capability_matrix.md`](docs/training_capability_matrix.md), [`docs/training_orchestration.md`](docs/training_orchestration.md)
+- Qualify backend-parity and benchmark paths after the main eval lane is working: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
 - Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
@@ -106,6 +110,7 @@ More repo-first guidance:
 
 - Support: [`docs/support.md`](docs/support.md)
 - License policy: [`docs/license_policy.md`](docs/license_policy.md)
+- External training boundary: YOLOX first, optional Ultralytics and HF DETR bridges second
 - Apache-2.0 license: [`LICENSE`](LICENSE)
 - Latest release: [GitHub Releases](https://github.com/ToppyMicroServices/YOLOZU/releases)
 - Zenodo software DOI: [10.5281/zenodo.18744756](https://doi.org/10.5281/zenodo.18744756)

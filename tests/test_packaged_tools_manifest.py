@@ -4,6 +4,23 @@ from pathlib import Path
 
 
 class TestPackagedToolsManifest(unittest.TestCase):
+    def test_every_tool_declares_maturity(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        for path in (
+            repo_root / "tools" / "manifest.json",
+            repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json",
+        ):
+            obj = json.loads(path.read_text(encoding="utf-8"))
+            for tool in obj.get("tools") or []:
+                if not isinstance(tool, dict):
+                    continue
+                self.assertIn("maturity", tool, f"missing maturity in {path}: {tool.get('id')}")
+                self.assertIn(
+                    tool.get("maturity"),
+                    {"stable", "experimental", "research"},
+                    f"invalid maturity in {path}: {tool.get('id')}",
+                )
+
     def test_packaged_tools_manifest_matches_repo_manifest(self):
         repo_root = Path(__file__).resolve().parents[1]
         repo_manifest = repo_root / "tools" / "manifest.json"

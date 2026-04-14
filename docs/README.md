@@ -27,7 +27,8 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 ## Primary Focus
 
 - Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export/train scaffolds that feed the same predictions interface contract
+- Secondary lane: export and reference training lanes that feed the same predictions interface contract
+- Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external runtime bridges called out explicitly
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
 ## Capability Maturity
@@ -46,7 +47,10 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 ## Quick route map
 
 - If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
-- If you need train/export/eval scaffolding: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-scaffold)
+- If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
+- If you need an external training lane: use `yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-optional-bridges-second)
+- If you need the current training scope boundary first: read [Current training support](training_inference_export.md#current-training-support)
+- If you need the platform view of training: read [Training backend interface](training_backend_interface.md), [Training capability matrix](training_capability_matrix.md), and [Training orchestration](training_orchestration.md)
 - If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke
@@ -109,7 +113,7 @@ Reference docs:
 - [External inference backends](external_inference.md)
 - [Predictions schema](predictions_schema.md)
 
-## B) Train → Export → Eval (RT-DETR scaffold)
+## B) Train → Export → Eval (RT-DETR reference trainer)
 
 Use this path when you want a train-like flow with smoke-safe local artifacts.
 
@@ -155,11 +159,12 @@ Reference docs:
 - [TTT protocol](ttt_protocol.md)
 - [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
 
-## D) Bench/Parity (parity check + benchmark entry)
+## D) Bench/Parity (qualification lane)
 
-Use this path for quick parity sanity checks and to discover benchmark CLI options,
-including explicit task semantics for `detect`, `segmentation`, `classification`,
-`obb`, `keypoints` / `pose`, `depth`, and `pose6d`.
+Use this path after the main validation/eval lane is already working and you are
+qualifying backend parity or benchmark behavior. Some formats already support
+artifact-backed real eval/parity lanes; others still report explicit
+placeholder/skipped semantics rather than pretending to be fully implemented.
 
 Shortest 3 commands:
 

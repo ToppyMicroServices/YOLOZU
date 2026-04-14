@@ -1,0 +1,14 @@
+format_version: 1
+experiment:
+  name: tao_smoke
+  task_family: bbox
+  model_family: dino
+dataset:
+  train_data: data/smoke
+  val_data: data/smoke
+training:
+  epochs: 1
+  batch_size: 2
+  learning_rate: 0.0001
+notes:
+  - Minimal TAO-style smoke spec for YOLOZU external training dry-runs.

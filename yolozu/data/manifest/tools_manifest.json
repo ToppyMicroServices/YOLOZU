@@ -64,6 +64,21 @@
       "spec": "docs/synthgen_contract.md",
       "summary": "SynthGen intake sample interface contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
       "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]"
+    },
+    "training_orchestration_report_json": {
+      "producer": "python3 tools/orchestrate_train.py --spec <spec.json> --output <path>",
+      "schema": "docs/schemas/training_orchestration_report.schema.json",
+      "summary": "Batch-level training orchestration report describing planned or executed multi-backend experiments."
+    },
+    "training_registry_entry_json": {
+      "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
+      "schema": "docs/schemas/training_registry_entry.schema.json",
+      "summary": "Append-only training registry entry describing one executed training run and its wrapper-owned artifact bundle."
+    },
+    "training_run_summary_json": {
+      "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
+      "schema": "docs/schemas/training_run_summary.schema.json",
+      "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and by external lanes that also publish a fixed wrapper-owned external run bundle and standardized next_steps commands."
     }
   },
   "manifest_version": 1,
@@ -251,6 +266,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/announce/announcement.json",
@@ -380,6 +396,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/backend_support_audit.json",
@@ -531,6 +548,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "runs/backend_parity_matrix/<run_id>/reports/backend_parity_matrix.json",
@@ -642,6 +660,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/eata_benchmark.json",
@@ -786,6 +805,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_keypoints_eval.json",
@@ -930,6 +950,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/benchmark_latency.json",
@@ -1456,17 +1477,17 @@
           "name": "history_jsonl"
         },
         {
-          "description": "Per-format predictions artifact (real output when the backend runs, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, placeholder otherwise).",
+          "description": "Per-format predictions artifact (real output when the backend runs, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
-          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, placeholder otherwise).",
+          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
         {
-          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d, placeholder otherwise).",
+          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "parity_report_json"
         },
@@ -1580,6 +1601,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/sar_robustness_report.json",
@@ -1629,6 +1651,7 @@
       ],
       "id": "build_manifest",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/manifest.json",
@@ -1814,6 +1837,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "engines/model.plan",
@@ -1954,6 +1978,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/predictions_calibrated.json",
@@ -2012,6 +2037,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Validation summary JSON; non-zero exit on incompatibility/hash mismatch.",
@@ -2102,6 +2128,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Mismatch report (JSON/text) and exit status.",
@@ -2141,6 +2168,7 @@
       ],
       "id": "check_license_policy",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK or failure reason.",
@@ -2202,6 +2230,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "JSON report with ok/failures.",
@@ -2290,6 +2319,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/mcp_settings_check.json",
@@ -2384,6 +2414,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Mismatch report (JSON/text) and exit status.",
@@ -2475,6 +2506,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "JSON report containing required checks, advisory checks, missing evidence, and manual followups.",
@@ -2500,6 +2532,92 @@
         "security",
         "governance",
         "repo-policy"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes segmentation parity JSON report.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/check_segmentation_parity.py",
+      "examples": [
+        {
+          "command": "python3 tools/check_segmentation_parity.py --reference reports/segmentation_predictions_ref.json --candidate reports/segmentation_predictions_cand.json --output reports/segmentation_parity.json",
+          "description": "Compare two segmentation predictions artifacts and write a parity report."
+        }
+      ],
+      "id": "check_segmentation_parity",
+      "inputs": [
+        {
+          "flag": "--reference",
+          "kind": "file",
+          "name": "reference",
+          "required": true
+        },
+        {
+          "flag": "--candidate",
+          "kind": "file",
+          "name": "candidate",
+          "required": true
+        },
+        {
+          "flag": "--mismatch-atol",
+          "kind": "number",
+          "name": "mismatch_atol",
+          "required": false
+        },
+        {
+          "flag": "--max-samples",
+          "kind": "number",
+          "name": "max_samples",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Segmentation parity report JSON.",
+          "kind": "file",
+          "name": "segmentation_parity_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Compare two segmentation predictions artifacts and report mask-level parity mismatches.",
+      "tags": [
+        "segmentation",
+        "parity",
+        "evaluation"
       ]
     },
     {
@@ -2716,6 +2834,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/instance_seg_predictions.json",
@@ -2877,6 +2996,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/predictions_distilled.json",
@@ -2989,6 +3109,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/coco",
@@ -3381,6 +3502,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/cotta_drift_report.json",
@@ -3680,6 +3802,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/instance_seg_eval.json",
@@ -3876,6 +3999,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/keypoints_eval.json",
@@ -4162,6 +4286,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/seg_eval.json",
@@ -4279,6 +4404,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/eval_suite.json",
@@ -4441,6 +4567,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Exported OpenAPI schema JSON.",
@@ -5061,6 +5188,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/predictions.json",
@@ -5080,6 +5208,96 @@
       "tags": [
         "predictions",
         "adapter"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "predictions_json"
+        ],
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes YOLOZU predictions JSON converted from COCO keypoints results.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_predictions_coco_keypoints.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_predictions_coco_keypoints.py --results-json reports/mmpose_results.json --instances-json data/coco/person_keypoints_val2017.json --output reports/predictions_mmpose.json",
+          "description": "Convert COCO keypoints results JSON into the YOLOZU predictions interface contract."
+        }
+      ],
+      "id": "export_predictions_coco_keypoints",
+      "inputs": [
+        {
+          "flag": "--results-json",
+          "kind": "file",
+          "name": "results_json",
+          "required": true
+        },
+        {
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Predictions interface contract JSON produced from COCO keypoints results.",
+          "kind": "file",
+          "name": "predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity.",
+      "tags": [
+        "keypoints",
+        "predictions",
+        "interop",
+        "export"
       ]
     },
     {
@@ -5240,6 +5458,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -5365,6 +5584,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_executorch.json",
@@ -5549,6 +5769,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -5781,6 +6002,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_onnxrt.json",
@@ -5993,6 +6215,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/pred_opencv_dnn.json",
@@ -6244,6 +6467,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/pred_rtdetr_opencv_dnn.json",
@@ -6434,6 +6658,7 @@
           "required": true
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -6660,6 +6885,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/predictions_trt.json",
@@ -6881,6 +7107,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7037,6 +7264,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7187,6 +7415,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Predictions JSON at --output.",
@@ -7404,6 +7633,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "models/model.onnx",
@@ -7467,6 +7697,7 @@
       ],
       "id": "fetch_coco128",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/coco128",
@@ -7595,6 +7826,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Fetched model artifact under models/<id>/.",
@@ -7704,6 +7936,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/ci_trt_smoke/model.onnx",
@@ -7787,6 +8020,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/ci_trt_smoke/dataset",
@@ -7873,6 +8107,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Generated machine-readable MCP/Actions contract.",
@@ -7922,6 +8157,7 @@
       ],
       "id": "generate_smoke_assets",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/smoke",
@@ -7996,6 +8232,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/gpu_validation_preflight.json",
@@ -8081,6 +8318,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/hpo_sweep.jsonl",
@@ -8157,6 +8395,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Output dataset wrapper JSON under --output/dataset.json.",
@@ -8220,6 +8459,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Model list table or JSON.",
@@ -8318,6 +8558,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Subset dataset root created at --out.",
@@ -8431,6 +8672,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/latency_trt.json",
@@ -8523,6 +8765,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Normalized predictions JSON at --output.",
@@ -8541,6 +8784,208 @@
       "tags": [
         "predictions",
         "transform"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "training_orchestration_report_json"
+        ]
+      },
+      "docs": [
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/tools_index.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes orchestration report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/orchestrate_train.py",
+      "examples": [
+        {
+          "command": "python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
+          "description": "Plan a multi-backend training batch without executing it."
+        },
+        {
+          "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --execute",
+          "description": "Execute the planned batch through the top-level CLI alias."
+        },
+        {
+          "command": "python3 tools/orchestrate_train.py --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute",
+          "description": "Execute a batch, append the shared registry, and record counts.by_backend plus registry_summary in the orchestration report."
+        }
+      ],
+      "id": "orchestrate_train",
+      "inputs": [
+        {
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--execute",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--stop-on-failure",
+          "kind": "string",
+          "name": "stop_on_failure",
+          "required": false
+        },
+        {
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Machine-readable orchestration report for the whole experiment batch.",
+          "kind": "file",
+          "name": "training_orchestration_report_json"
+        },
+        {
+          "description": "Optional append-only JSONL training registry file when --registry-out is set.",
+          "kind": "file",
+          "name": "training_registry_jsonl"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary.",
+      "tags": [
+        "training",
+        "orchestration",
+        "platform"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "seg_dataset_json"
+        ],
+        "produces": [
+          "segmentation_predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/interop_detectron2_mmdet.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/07_training_run_contract.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes segmentation predictions JSON packaged from a class-id mask directory.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/package_segmentation_predictions.py",
+      "examples": [
+        {
+          "command": "python3 tools/package_segmentation_predictions.py --dataset-json data/seg/dataset.json --masks-dir reports/mmseg_masks --output reports/segmentation_predictions_mmseg.json",
+          "description": "Package a segmentation mask directory into the segmentation predictions interface contract."
+        }
+      ],
+      "id": "package_segmentation_predictions",
+      "inputs": [
+        {
+          "flag": "--dataset-json",
+          "kind": "file",
+          "name": "dataset_json",
+          "required": true
+        },
+        {
+          "flag": "--masks-dir",
+          "kind": "dir",
+          "name": "masks_dir",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "flag": "--suffix",
+          "kind": "string",
+          "name": "suffix",
+          "required": false
+        },
+        {
+          "flag": "--relative-to-output",
+          "kind": "string",
+          "name": "relative_to_output",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Segmentation predictions interface contract JSON.",
+          "kind": "file",
+          "name": "segmentation_predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Package a class-id mask directory into the YOLOZU segmentation predictions interface contract.",
+      "tags": [
+        "segmentation",
+        "predictions",
+        "interop",
+        "export"
       ]
     },
     {
@@ -8599,6 +9044,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [],
       "platform": {
         "cpu_ok": true,
@@ -8678,6 +9124,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -8764,6 +9211,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -8862,6 +9310,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "YOLO-format dataset root created at --out.",
@@ -8948,6 +9397,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "YOLO-format dataset root created at --out.",
@@ -9105,6 +9555,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared dataset root with dataset.json for keypoints training.",
@@ -9251,13 +9702,14 @@
           "required": false
         },
         {
-          "description": "Fail if heuristic/scaffold labels are present.",
+          "description": "Fail if heuristic/derived labels are present.",
           "flag": "--strict-realism",
           "kind": "string",
           "name": "strict_realism",
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "data/real_multitask_fewshot",
@@ -9389,6 +9841,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "Corrupted target dataset root for deterministic shift runs.",
@@ -9481,6 +9934,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Prepared output root created at --out.",
@@ -9599,6 +10053,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/benchmark_table.json",
@@ -9940,6 +10395,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/release_report.json",
@@ -10068,6 +10524,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/release_tag_report.json",
@@ -10333,6 +10790,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/dependency_licenses.json",
@@ -10512,6 +10970,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/rtdetr_pose_backend_suite.json",
@@ -10610,6 +11069,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "description": "continual_run.json under the run dir.",
@@ -10701,6 +11161,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OpenAPI schema available at /openapi.json.",
@@ -10733,6 +11194,8 @@
       "docs": [
         "docs/external_finetune_smoke.md",
         "docs/interop_detectron2_mmdet.md",
+        "docs/interop_yolox.md",
+        "docs/license_policy.md",
         "docs/tools_index.md",
         "docs/training_inference_export.md"
       ],
@@ -10757,11 +11220,11 @@
       "examples": [
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json",
-          "description": "Dry-run matrix for YOLOv/MMDetection/Detectron2/RT-DETR finetune entrypoints."
+          "description": "Dry-run matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR finetune entrypoints."
         },
         {
-          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolov --non-dry-framework rtdetr --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
-          "description": "Execute real training for selected frameworks and fail when no training execution occurred."
+          "command": "python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolox --non-dry-framework yolov --non-dry-framework rtdetr --yolox-train-script /path/to/YOLOX/tools/train.py --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json",
+          "description": "Execute real training for selected frameworks, with YOLOX as the preferred Apache-2.0-friendly external lane."
         },
         {
           "command": "python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json",
@@ -10877,8 +11340,15 @@
           "kind": "file",
           "name": "detectron2_train_script",
           "required": false
+        },
+        {
+          "flag": "--yolox-train-script",
+          "kind": "file",
+          "name": "yolox_train_script",
+          "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/external_finetune_smoke.json",
@@ -10894,7 +11364,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures and train-path audit fields.",
+      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary.",
       "tags": [
         "finetune",
         "interop",
@@ -10978,6 +11448,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "MCP stdio transport for compatible clients.",
@@ -11194,13 +11665,14 @@
           "required": false
         },
         {
-          "description": "Fail if heuristic/scaffold labels are present.",
+          "description": "Fail if heuristic/derived labels are present.",
           "flag": "--strict-realism",
           "kind": "string",
           "name": "strict_realism",
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json",
@@ -11710,6 +12182,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/reference_adapter_regression.json",
@@ -12016,6 +12489,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "runs/rtdetr_pose_backend_suite/<timestamp>/backend_suite.json",
@@ -12146,6 +12620,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/scenario_run.json",
@@ -12597,6 +13072,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "description": "Run folder containing run.json and copied artifacts.",
@@ -12947,6 +13423,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "default": "reports/smoke_coco_eval_dry_run.json",
@@ -13101,6 +13578,218 @@
         "viz",
         "evaluation",
         "ai-safe"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "training_run_summary_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "docs/README.md",
+        "docs/interop_yolox.md",
+        "docs/license_policy.md",
+        "docs/tools_index.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/05_workflows_eval_export.tex",
+        "manual/chapters/09_parity_bench_protocols.tex",
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/run_contract.md",
+        "docs/interop_detectron2_mmdet.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes machine-readable bridge report JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes generated helper files and work directories for dataset resolution or projections.",
+            "flag": "--work-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/support_external_training.py",
+      "examples": [
+        {
+          "command": "python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json",
+          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report plus the fixed external run bundle under work_dir/."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-detectron2 --config configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_detectron2.json",
+          "description": "Dry-run the Detectron2 external training lane; the config can target bbox, instance segmentation, or keypoints."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-mmdetection --config configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_mmdetection.json",
+          "description": "Dry-run the MMDetection external training lane for bbox or instance-segmentation workflows."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-mmpose --config configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmpose.json",
+          "description": "Dry-run the MMPose external training lane for keypoints workflows."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-mmseg --config configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/support_external_training.train_mmseg.json",
+          "description": "Dry-run the MMSeg external training lane for semantic-segmentation workflows."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-tao --config configs/examples/finetune_external/tao_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_tao.json",
+          "description": "Dry-run the NVIDIA TAO external training lane and emit standardized resume/export/eval/parity handoff JSONs."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-ultralytics --dataset data/smoke --split val --preset smoke --dry-run --output reports/support_external_training.train_ultralytics.json",
+          "description": "Dry-run the optional Ultralytics bridge while keeping the runtime/license boundary explicit."
+        },
+        {
+          "command": "python3 tools/support_external_training.py train-hf-detr -P smoke -n -o reports/support_external_training.train_hf_detr.json",
+          "description": "Dry-run the optional HF DETR bridge and emit the shared training summary interface contract plus the wrapper-owned external run bundle."
+        }
+      ],
+      "id": "support_external_training",
+      "inputs": [
+        {
+          "description": "One of: layers, dataset, train-yolox, train-detectron2, train-mmdetection, train-mmpose, train-mmseg, train-tao, train-ultralytics, train-hf-detr, export-onnx, predict-normalize.",
+          "flag": "--subcommand",
+          "kind": "string",
+          "name": "subcommand",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "description": "YOLOX exp file for train-yolox.",
+          "flag": "--exp",
+          "kind": "file",
+          "name": "exp",
+          "required": false
+        },
+        {
+          "description": "Optional external launcher for train-yolox or train-hf-detr non-dry execution.",
+          "flag": "--train-script",
+          "kind": "file",
+          "name": "train_script",
+          "required": false
+        },
+        {
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--work-dir",
+          "kind": "dir",
+          "name": "work_dir",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "description": "Detectron2 config YAML for train-detectron2.",
+          "flag": "--config",
+          "kind": "file",
+          "name": "config",
+          "required": false
+        },
+        {
+          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes.",
+          "flag": "--task-family",
+          "kind": "string",
+          "name": "task_family",
+          "required": false
+        },
+        {
+          "description": "Optional checkpoint/model path forwarded into the standardized resume handoff for external training lanes.",
+          "flag": "--resume-from",
+          "kind": "file",
+          "name": "resume_from",
+          "required": false
+        },
+        {
+          "description": "Optional NVIDIA TAO task name when train-tao is used.",
+          "flag": "--tao-task",
+          "kind": "string",
+          "name": "tao_task",
+          "required": false
+        },
+        {
+          "description": "Repeatable backend-native config override pair forwarded to the external launcher.",
+          "flag": "--train-opt",
+          "kind": "string",
+          "name": "train_opt",
+          "required": false
+        },
+        {
+          "description": "Optional JSONL registry file that receives one append-only training registry entry per executed run.",
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for resume/export/eval/parity.",
+          "kind": "file",
+          "name": "training_run_summary_json"
+        },
+        {
+          "description": "Wrapper-owned training registry entry JSON written under work_dir/reports/training_registry_entry.json.",
+          "kind": "file",
+          "name": "training_registry_entry_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "tags": [
+        "training",
+        "interop",
+        "yolox",
+        "ultralytics",
+        "license-boundary",
+        "detectron2",
+        "mmdetection",
+        "mmpose",
+        "mmseg",
+        "tao",
+        "keypoints",
+        "segmentation"
       ]
     },
     {
@@ -13268,6 +13957,7 @@
           "required": false
         }
       ],
+      "maturity": "experimental",
       "outputs": [
         {
           "default": "reports/support_yolo_detr.*.json",
@@ -13431,6 +14121,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
@@ -13672,6 +14363,7 @@
           "required": false
         }
       ],
+      "maturity": "research",
       "outputs": [
         {
           "default": "reports/gate_tuning_report.json",
@@ -13719,6 +14411,7 @@
           "required": true
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -13762,6 +14455,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK or error details.",
@@ -13870,6 +14564,7 @@
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK line or validation error.",
@@ -13917,6 +14612,7 @@
           "required": true
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "OK/WARN lines.",
@@ -14028,6 +14724,7 @@
       ],
       "id": "yolo26_pre_pr_quality",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Checklist run output.",
@@ -14066,6 +14763,7 @@
       ],
       "id": "yolo26_quality_gate",
       "inputs": [],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Lint/test pass-fail output.",
@@ -14100,7 +14798,18 @@
         ]
       },
       "docs": [
-        "docs/tools_index.md"
+        "docs/tools_index.md",
+        "docs/import_adapters.md",
+        "docs/interop_yolox.md",
+        "docs/training_inference_export.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/05_workflows_eval_export.tex",
+        "docs/training_backend_interface.md",
+        "docs/training_capability_matrix.md",
+        "docs/training_orchestration.md",
+        "docs/run_contract.md",
+        "manual/chapters/07_training_run_contract.tex",
+        "docs/interop_detectron2_mmdet.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14232,61 +14941,48 @@
           "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
         },
         {
+          "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
+          "description": "Top-level train route for the Apache-2.0-friendly external YOLOX bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend detectron2 configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_detectron2_bbox.json",
+          "description": "Top-level train route for the Detectron2 external lane (bbox / instance segmentation / keypoints via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmdetection configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_mmdetection_bbox.json",
+          "description": "Top-level train route for the MMDetection external lane (bbox / instance segmentation via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmpose configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmpose.json",
+          "description": "Top-level train route for the MMPose external lane (keypoints / pose via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend mmseg configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmseg.json",
+          "description": "Top-level train route for the MMSeg external lane (semantic segmentation via backend-native configs)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend tao configs/examples/finetune_external/tao_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_tao_bbox.json",
+          "description": "Top-level train route for the NVIDIA TAO external lane (bbox / segmentation / keypoints via backend-native configs)."
+        },
+        {
           "command": "python3 tools/yolozu.py sud ls -j",
           "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json",
+          "description": "Top-level train route for the optional Ultralytics bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train --external-backend hf-detr facebook/detr-resnet-50 --dataset data/smoke --split val --dry-run --output reports/train_external_hf_detr.json",
+          "description": "Top-level train route for the optional HF DETR bridge (dry-run)."
+        },
+        {
+          "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
+          "description": "Plan a multi-backend training batch through the top-level CLI."
         }
       ],
       "id": "yolozu",
       "inputs": [
-        {
-          "default": "reports/predictions.json",
-          "flag": "--output",
-          "kind": "file",
-          "name": "output",
-          "required": false
-        },
-        {
-          "default": "runs/yolozu_runs",
-          "flag": "--cache-dir",
-          "kind": "dir",
-          "name": "cache_dir",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--tta-log-out",
-          "kind": "file",
-          "name": "tta_log_out",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--ttt-log-out",
-          "kind": "file",
-          "name": "ttt_log_out",
-          "required": false
-        },
-        {
-          "default": null,
-          "flag": "--run-dir",
-          "kind": "dir",
-          "name": "run_dir",
-          "required": false
-        },
-        {
-          "default": "reports/overlays",
-          "flag": "--overlays-dir",
-          "kind": "dir",
-          "name": "overlays_dir",
-          "required": false
-        },
-        {
-          "default": "reports/predict_images.html",
-          "flag": "--html",
-          "kind": "file",
-          "name": "html",
-          "required": false
-        },
         {
           "flag": "--allow-gpu",
           "kind": "string",
@@ -14342,6 +15038,13 @@
           "required": false
         },
         {
+          "description": "Forwarded batch size for external YOLOX/Ultralytics helper execution.",
+          "flag": "--batch",
+          "kind": "number",
+          "name": "batch",
+          "required": false
+        },
+        {
           "flag": "--boxes-scale",
           "kind": "string",
           "name": "boxes_scale",
@@ -14351,6 +15054,13 @@
           "flag": "--cache",
           "kind": "string",
           "name": "cache",
+          "required": false
+        },
+        {
+          "default": "runs/yolozu_runs",
+          "flag": "--cache-dir",
+          "kind": "dir",
+          "name": "cache_dir",
           "required": false
         },
         {
@@ -14402,9 +15112,16 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper when `train --external-backend` is active.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
+          "required": false
+        },
+        {
+          "flag": "--dataset-from",
+          "kind": "string",
+          "name": "dataset_from",
           "required": false
         },
         {
@@ -14414,15 +15131,44 @@
           "required": false
         },
         {
+          "description": "Forwarded device count for the external YOLOX launcher.",
+          "flag": "--devices",
+          "kind": "number",
+          "name": "devices",
+          "required": false
+        },
+        {
           "flag": "--diag-iou",
           "kind": "number",
           "name": "diag_iou",
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper; resolve/report without launching runtime training.",
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
+          "required": false
+        },
+        {
+          "description": "Selects the external training lane (`yolox`, `detectron2`, `mmdetection`, `mmpose`, `mmseg`, `tao`, `ultralytics`, or `hf-detr`) for `yolozu train`.",
+          "flag": "--external-backend",
+          "kind": "string",
+          "name": "external_backend",
+          "required": false
+        },
+        {
+          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
+          "flag": "--resume-from",
+          "kind": "file",
+          "name": "resume_from",
+          "required": false
+        },
+        {
+          "description": "Forwarded NVIDIA TAO task name when `train --external-backend tao` is active.",
+          "flag": "--tao-task",
+          "kind": "string",
+          "name": "tao_task",
           "required": false
         },
         {
@@ -14450,9 +15196,16 @@
           "required": false
         },
         {
+          "description": "Forwarded to the external training helper to overwrite generated artifacts.",
           "flag": "--force",
           "kind": "string",
           "name": "force",
+          "required": false
+        },
+        {
+          "flag": "--force-import-overwrite",
+          "kind": "string",
+          "name": "force_import_overwrite",
           "required": false
         },
         {
@@ -14480,9 +15233,23 @@
           "required": false
         },
         {
+          "default": "reports/predict_images.html",
+          "flag": "--html",
+          "kind": "file",
+          "name": "html",
+          "required": false
+        },
+        {
           "flag": "--image-size",
           "kind": "number",
           "name": "image_size",
+          "required": false
+        },
+        {
+          "description": "Forwarded image directory for COCO instance-style dataset resolution.",
+          "flag": "--images-dir",
+          "kind": "dir",
+          "name": "images_dir",
           "required": false
         },
         {
@@ -14498,15 +15265,22 @@
           "required": false
         },
         {
-          "flag": "--json",
-          "kind": "string",
-          "name": "json",
+          "description": "Forwarded COCO instances JSON for external dataset resolution.",
+          "flag": "--instances-json",
+          "kind": "file",
+          "name": "instances_json",
           "required": false
         },
         {
           "flag": "--iou-threshold",
           "kind": "number",
           "name": "iou_threshold",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
           "required": false
         },
         {
@@ -14588,9 +15362,9 @@
           "required": false
         },
         {
-          "flag": "--metric-plugin",
+          "flag": "--lr-scheduler",
           "kind": "string",
-          "name": "metric_plugin",
+          "name": "lr_scheduler",
           "required": false
         },
         {
@@ -14603,12 +15377,6 @@
           "flag": "--max-images",
           "kind": "number",
           "name": "max_images",
-          "required": false
-        },
-        {
-          "flag": "--lr-scheduler",
-          "kind": "string",
-          "name": "lr_scheduler",
           "required": false
         },
         {
@@ -14651,6 +15419,12 @@
           "flag": "--metric-key",
           "kind": "string",
           "name": "metric_key",
+          "required": false
+        },
+        {
+          "flag": "--metric-plugin",
+          "kind": "string",
+          "name": "metric_plugin",
           "required": false
         },
         {
@@ -14720,6 +15494,14 @@
           "required": false
         },
         {
+          "default": "reports/predictions.json",
+          "description": "Forwarded report JSON path for the external training helper.",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
           "flag": "--output-report",
           "kind": "file",
           "name": "output_report",
@@ -14741,6 +15523,13 @@
           "flag": "--overlay-sort",
           "kind": "string",
           "name": "overlay_sort",
+          "required": false
+        },
+        {
+          "default": "reports/overlays",
+          "flag": "--overlays-dir",
+          "kind": "dir",
+          "name": "overlays_dir",
           "required": false
         },
         {
@@ -14768,6 +15557,13 @@
           "required": false
         },
         {
+          "description": "Forwarded Python executable for external launcher subprocesses.",
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
           "flag": "--rebalance-sampler",
           "kind": "string",
           "name": "rebalance_sampler",
@@ -14792,9 +15588,22 @@
           "required": false
         },
         {
+          "flag": "--resolved-config-out",
+          "kind": "file",
+          "name": "resolved_config_out",
+          "required": false
+        },
+        {
           "flag": "--resume",
           "kind": "string",
           "name": "resume",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
           "required": false
         },
         {
@@ -14816,6 +15625,7 @@
           "required": false
         },
         {
+          "description": "Forwarded split name for the external training helper.",
           "flag": "--split",
           "kind": "string",
           "name": "split",
@@ -14864,6 +15674,12 @@
           "required": false
         },
         {
+          "flag": "--tag",
+          "kind": "string",
+          "name": "tag",
+          "required": false
+        },
+        {
           "flag": "--task",
           "kind": "string",
           "name": "task",
@@ -14888,12 +15704,6 @@
           "required": false
         },
         {
-          "flag": "--tag",
-          "kind": "string",
-          "name": "tag",
-          "required": false
-        },
-        {
           "flag": "--title",
           "kind": "string",
           "name": "title",
@@ -14906,6 +15716,13 @@
           "required": false
         },
         {
+          "description": "Forwarded external launcher path for non-dry YOLOX or HF DETR execution.",
+          "flag": "--train-script",
+          "kind": "file",
+          "name": "train_script",
+          "required": false
+        },
+        {
           "flag": "--tta",
           "kind": "string",
           "name": "tta",
@@ -14915,6 +15732,34 @@
           "flag": "--tta-flip-prob",
           "kind": "number",
           "name": "tta_flip_prob",
+          "required": false
+        },
+        {
+          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
+          "flag": "--tta-keypoint-swap-pairs",
+          "kind": "string",
+          "name": "tta_keypoint_swap_pairs",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--tta-log-out",
+          "kind": "file",
+          "name": "tta_log_out",
+          "required": false
+        },
+        {
+          "description": "TTA mode for export: postprocess or model.",
+          "flag": "--tta-mode",
+          "kind": "string",
+          "name": "tta_mode",
+          "required": false
+        },
+        {
+          "description": "IoU threshold for model-space TTA merge.",
+          "flag": "--tta-model-merge-iou",
+          "kind": "number",
+          "name": "tta_model_merge_iou",
           "required": false
         },
         {
@@ -14934,6 +15779,41 @@
           "flag": "--ttt",
           "kind": "string",
           "name": "ttt",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for depth heads. 0 disables.",
+          "flag": "--ttt-aux-depth-weight",
+          "kind": "number",
+          "name": "ttt_aux_depth_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables.",
+          "flag": "--ttt-aux-keypoints-weight",
+          "kind": "number",
+          "name": "ttt_aux_keypoints_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables.",
+          "flag": "--ttt-aux-pose-weight",
+          "kind": "number",
+          "name": "ttt_aux_pose_weight",
+          "required": false
+        },
+        {
+          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables.",
+          "flag": "--ttt-aux-seg-weight",
+          "kind": "number",
+          "name": "ttt_aux_seg_weight",
+          "required": false
+        },
+        {
+          "description": "Temperature for auxiliary consistency losses. Default 1.0.",
+          "flag": "--ttt-aux-temperature",
+          "kind": "number",
+          "name": "ttt_aux_temperature",
           "required": false
         },
         {
@@ -15024,6 +15904,41 @@
           "flag": "--ttt-include",
           "kind": "string",
           "name": "ttt_include",
+          "required": false
+        },
+        {
+          "description": "Entropy penalty weight for non-torch TTT-lite.",
+          "flag": "--ttt-lite-entropy-weight",
+          "kind": "number",
+          "name": "ttt_lite_entropy_weight",
+          "required": false
+        },
+        {
+          "description": "Enable min-max score normalization for non-torch TTT-lite.",
+          "flag": "--ttt-lite-minmax",
+          "kind": "string",
+          "name": "ttt_lite_minmax",
+          "required": false
+        },
+        {
+          "description": "Enable score-only TTT-lite for non-torch backends.",
+          "flag": "--ttt-lite-non-torch",
+          "kind": "string",
+          "name": "ttt_lite_non_torch",
+          "required": false
+        },
+        {
+          "description": "Temperature for non-torch TTT-lite score scaling.",
+          "flag": "--ttt-lite-temperature",
+          "kind": "number",
+          "name": "ttt_lite_temperature",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--ttt-log-out",
+          "kind": "file",
+          "name": "ttt_log_out",
           "required": false
         },
         {
@@ -15130,6 +16045,13 @@
           "required": false
         },
         {
+          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
+          "flag": "--ttt-sdft-task",
+          "kind": "string",
+          "name": "ttt_sdft_task",
+          "required": false
+        },
+        {
           "flag": "--ttt-seed",
           "kind": "number",
           "name": "ttt_seed",
@@ -15154,97 +16076,61 @@
           "required": false
         },
         {
-          "description": "SDFT task hint for preset auto-selection (pose | keypoints | depth | seg | full).",
-          "flag": "--ttt-sdft-task",
+          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "description": "Forwarded preset for the external training helper when `train --external-backend` is active.",
+          "flag": "--preset",
           "kind": "string",
-          "name": "ttt_sdft_task",
+          "name": "preset",
           "required": false
         },
         {
-          "description": "Auxiliary consistency loss weight for pose heads (rot6d/log_z/offsets/k_delta). 0 disables.",
-          "flag": "--ttt-aux-pose-weight",
-          "kind": "number",
-          "name": "ttt_aux_pose_weight",
+          "description": "Used by yolozu train-orchestrate to point at a batch spec.",
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
           "required": false
         },
         {
-          "description": "Auxiliary consistency loss weight for keypoint heads. 0 disables.",
-          "flag": "--ttt-aux-keypoints-weight",
-          "kind": "number",
-          "name": "ttt_aux_keypoints_weight",
+          "description": "Optional JSONL registry file appended by yolozu train-orchestrate when --execute is used.",
+          "flag": "--registry-out",
+          "kind": "file",
+          "name": "registry_out",
           "required": false
         },
         {
-          "description": "Auxiliary consistency loss weight for depth heads. 0 disables.",
-          "flag": "--ttt-aux-depth-weight",
-          "kind": "number",
-          "name": "ttt_aux_depth_weight",
-          "required": false
-        },
-        {
-          "description": "Auxiliary consistency loss weight for segmentation heads. 0 disables.",
-          "flag": "--ttt-aux-seg-weight",
-          "kind": "number",
-          "name": "ttt_aux_seg_weight",
-          "required": false
-        },
-        {
-          "description": "Temperature for auxiliary consistency losses. Default 1.0.",
-          "flag": "--ttt-aux-temperature",
-          "kind": "number",
-          "name": "ttt_aux_temperature",
-          "required": false
-        },
-        {
-          "description": "TTA mode for export: postprocess or model.",
-          "flag": "--tta-mode",
+          "flag": "--execute",
           "kind": "string",
-          "name": "tta_mode",
+          "name": "execute",
           "required": false
         },
         {
-          "description": "Optional keypoint swap pairs (e.g., '1:2,3:4').",
-          "flag": "--tta-keypoint-swap-pairs",
+          "flag": "--stop-on-failure",
           "kind": "string",
-          "name": "tta_keypoint_swap_pairs",
+          "name": "stop_on_failure",
           "required": false
         },
         {
-          "description": "IoU threshold for model-space TTA merge.",
-          "flag": "--tta-model-merge-iou",
-          "kind": "number",
-          "name": "tta_model_merge_iou",
-          "required": false
-        },
-        {
-          "description": "Enable score-only TTT-lite for non-torch backends.",
-          "flag": "--ttt-lite-non-torch",
+          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`.",
+          "flag": "--task-family",
           "kind": "string",
-          "name": "ttt_lite_non_torch",
+          "name": "task_family",
           "required": false
         },
         {
-          "description": "Temperature for non-torch TTT-lite score scaling.",
-          "flag": "--ttt-lite-temperature",
-          "kind": "number",
-          "name": "ttt_lite_temperature",
-          "required": false
-        },
-        {
-          "description": "Entropy penalty weight for non-torch TTT-lite.",
-          "flag": "--ttt-lite-entropy-weight",
-          "kind": "number",
-          "name": "ttt_lite_entropy_weight",
-          "required": false
-        },
-        {
-          "description": "Enable min-max score normalization for non-torch TTT-lite.",
-          "flag": "--ttt-lite-minmax",
+          "description": "Repeatable backend-native config override pair forwarded when `train --external-backend ...` is active.",
+          "flag": "--train-opt",
           "kind": "string",
-          "name": "ttt_lite_minmax",
+          "name": "train_opt",
           "required": false
         }
       ],
+      "maturity": "stable",
       "outputs": [
         {
           "description": "Primary output artifact controlled by --output (subcommand-dependent).",
@@ -15274,7 +16160,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training docs cover depth-mode operation in the RT-DETR pose scaffold (none/sidecar/fuse_mid with safety gating).",
+      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, MMSeg, and TAO, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with resume/export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
       "tags": [
         "cli",
         "predictions",

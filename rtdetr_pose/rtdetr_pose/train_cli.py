@@ -41,7 +41,9 @@ def load_config_file(path: str | Path) -> dict[str, Any]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Minimal RTDETRPose training scaffold.")
+    parser = argparse.ArgumentParser(
+        description="RTDETRPose reference trainer (in-repo training lane with run-contract artifacts)."
+    )
     parser.add_argument(
         "--config",
         default=None,
@@ -656,7 +658,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--synthetic-pose",
         action="store_true",
-        help="Generate synthetic z/R GT per instance (scaffold only)",
+        help="Generate synthetic z/R GT per instance (reference-trainer smoke path only)",
     )
     parser.add_argument(
         "--z-from-dobj",
@@ -776,6 +778,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--run-meta-out",
         default=None,
         help="Write run metadata JSON here (useful for run contracts).",
+    )
+    parser.add_argument(
+        "--training-summary-out",
+        default=None,
+        help="Write backend-neutral training summary JSON here.",
     )
     parser.add_argument(
         "--best-checkpoint-out",
@@ -1045,6 +1052,10 @@ def apply_run_contract_defaults(args: argparse.Namespace) -> tuple[argparse.Name
     args.val_metrics_jsonl = _default_path(getattr(args, "val_metrics_jsonl", None), reports_dir / "val_metrics.jsonl")
     args.config_resolved_out = _default_path(getattr(args, "config_resolved_out", None), reports_dir / "config_resolved.yaml")
     args.run_meta_out = _default_path(getattr(args, "run_meta_out", None), reports_dir / "run_meta.json")
+    args.training_summary_out = _default_path(
+        getattr(args, "training_summary_out", None),
+        reports_dir / "training_summary.json",
+    )
     args.fracal_stats_out = _default_path(
         getattr(args, "fracal_stats_out", None),
         reports_dir / f"fracal_stats_{str(getattr(args, 'fracal_stats_task', 'bbox') or 'bbox').strip().lower()}.json",
@@ -1095,6 +1106,7 @@ def apply_run_dir_defaults(args: argparse.Namespace) -> tuple[argparse.Namespace
         args.metrics_jsonl = _default_path(args.metrics_jsonl, "metrics.jsonl")
         args.metrics_json = _default_path(args.metrics_json, "metrics.json")
         args.metrics_csv = _default_path(args.metrics_csv, "metrics.csv")
+        args.training_summary_out = _default_path(getattr(args, "training_summary_out", None), "training_summary.json")
         args.checkpoint_out = _default_path(args.checkpoint_out, "checkpoint.pt")
         args.checkpoint_bundle_out = _default_path(args.checkpoint_bundle_out, "checkpoint_bundle.pt")
         args.onnx_out = _default_path(args.onnx_out, "model.onnx")

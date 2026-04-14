@@ -9,7 +9,7 @@ Public adapters
 ModelAdapter         -- abstract base.
 DummyAdapter         -- returns empty detections (smoke-testing).
 PrecomputedAdapter   -- loads predictions from a JSON file.
-RTDETRPoseAdapter    -- runs the RT-DETR pose scaffold (optional ``torch``).
+RTDETRPoseAdapter    -- runs the RT-DETR pose reference adapter (optional ``torch``).
 """
 
 from __future__ import annotations
@@ -109,7 +109,7 @@ class PrecomputedAdapter(ModelAdapter):
 
 
 class RTDETRPoseAdapter(ModelAdapter):
-    """Adapter that runs the RT-DETR pose scaffold (optional dependency).
+    """Adapter that runs the RT-DETR pose reference adapter (optional dependency).
 
     This adapter is intentionally dependency-light at import time.
     If torch isn't installed, it raises a clear RuntimeError on first use.

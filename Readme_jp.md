@@ -44,7 +44,8 @@ flowchart LR
 ## Primary Focus
 
 - 主戦場: 既存 predictions を framework / runtime をまたいで公平に評価すること
-- 次のレイヤ: 同じ predictions interface contract へつなぐ export / train scaffold
+- 次のレイヤ: 同じ predictions interface contract へつなぐ export と reference training lane
+- 外部 training lane: Apache-2.0 に寄せやすい YOLOX-style bridge。copyleft-sensitive な bridge は optional に分離
 - 発展レイヤ: continual learning、TTT、SynthGen、backend parity の research path
 
 ## Capability Maturity
@@ -79,6 +80,9 @@ flowchart LR
 
 - 既存 predictions を評価する: [`docs/external_inference.md`](docs/external_inference.md)
 - train → export → eval を試す: [`docs/training_inference_export.md`](docs/training_inference_export.md)
+- YOLO-style / Detectron2 external training lane（`yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...`）: [`docs/training_inference_export.md`](docs/training_inference_export.md)
+- 現在の training support matrix と scope 境界: [`docs/training_inference_export.md#current-training-support`](docs/training_inference_export.md#current-training-support)
+- training backend interface / capability matrix / orchestration: [`docs/training_backend_interface.md`](docs/training_backend_interface.md), [`docs/training_capability_matrix.md`](docs/training_capability_matrix.md), [`docs/training_orchestration.md`](docs/training_orchestration.md)
 - backend 比較や benchmark を見る: [`docs/backend_parity_matrix.md`](docs/backend_parity_matrix.md), [`docs/benchmark_mode.md`](docs/benchmark_mode.md)
 - YOLOZU-synthgen 連携を準備する: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
@@ -106,6 +110,7 @@ bash scripts/smoke.sh
 
 - Support: [`docs/support.md`](docs/support.md)
 - License policy: [`docs/license_policy.md`](docs/license_policy.md)
+- External training boundary: YOLOX first, optional Ultralytics / HF DETR bridges second
 - Apache-2.0 license: [`LICENSE`](LICENSE)
 - Latest release: [GitHub Releases](https://github.com/ToppyMicroServices/YOLOZU/releases)
 - Zenodo software DOI: [10.5281/zenodo.18744756](https://doi.org/10.5281/zenodo.18744756)

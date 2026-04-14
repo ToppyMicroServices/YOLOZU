@@ -1,11 +1,11 @@
 # Real model repo + interface (current selection)
 
 Current choice for a "real" training/inference path is the **in-repo** `rtdetr_pose`
-scaffold. It is Apache-2.0-compatible and already wired into the adapter layer.
+reference trainer. It is Apache-2.0-compatible and already wired into the adapter layer.
 
 ## Entry points
 
-Training (CPU scaffold, metrics output):
+Training (CPU reference lane, metrics output):
 - `python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --max-steps 50 --metrics-jsonl reports/train_metrics.jsonl --metrics-csv reports/train_metrics.csv`
 - Optional checkpoint save: `--checkpoint-out /path/to/checkpoint.pt`
 - GPU (AMP + accum + standard artifacts): `python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --device cuda --amp fp16 --grad-accum 2 --run-dir runs/train_minimal_demo --epochs 1 --max-steps 30`
@@ -95,5 +95,5 @@ Output per image (from `RTDETRPoseAdapter`):
 
 ## Gaps / follow-ups
 
-- `train_minimal.py` is a scaffold and not intended to reach strong mAP.
+- `train_minimal.py` is the repository's reference trainer and not a claim of a universal state-of-the-art training stack.
 - For competitive results, plug in a full training repo and keep the adapter contract identical.

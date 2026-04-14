@@ -217,7 +217,289 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(payload.get("format"), "yolozu_train_config_v1")
             self.assertEqual(int(payload.get("batch")), 6)
 
+    def test_train_external_yolox_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_yolox_bridge.json"
+            work_dir = root / "yolox_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "yolox",
+                    "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend yolox --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_yolox")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "yolox")
+            self.assertEqual(str((payload.get("license_boundary") or {}).get("primary_lane")), "YOLOX-style external training bridge")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "external_run_meta.json").is_file())
+            self.assertTrue((work_dir / "reports" / "launcher_plan.json").is_file())
+            self.assertTrue((work_dir / "reports" / "execution.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_ultralytics_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_ultralytics_bridge.json"
+            work_dir = root / "ultralytics_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "ultralytics",
+                    "yolo11n.pt",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend ultralytics --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_ultralytics")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "ultralytics")
+            self.assertTrue(bool((payload.get("license_boundary") or {}).get("optional_bridge")))
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_detectron2_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_detectron2_bridge.json"
+            work_dir = root / "detectron2_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "detectron2",
+                    "configs/examples/finetune_external/detectron2_finetune_smoke.yaml",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--task-family",
+                    "keypoints",
+                    "--work-dir",
+                    str(work_dir),
+                    "--train-opt",
+                    "DATASETS.TRAIN",
+                    "(\"dummy_train\",)",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend detectron2 --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_detectron2")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "detectron2")
+            self.assertEqual(str(payload.get("task_family")), "keypoints")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "launcher_plan.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_mmdetection_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_mmdetection_bridge.json"
+            work_dir = root / "mmdetection_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "mmdetection",
+                    "configs/examples/finetune_external/mmdetection_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--task-family",
+                    "bbox",
+                    "--work-dir",
+                    str(work_dir),
+                    "--train-opt",
+                    "train_cfg.max_epochs",
+                    "1",
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend mmdetection --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_mmdetection")
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "mmdetection")
+            self.assertEqual(str(payload.get("task_family")), "bbox")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_mmpose_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_mmpose_bridge.json"
+            work_dir = root / "mmpose_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "mmpose",
+                    "configs/examples/finetune_external/mmpose_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend mmpose --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_mmpose")
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "mmpose")
+            self.assertEqual(str(payload.get("task_family")), "keypoints")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "export_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "parity_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "training_registry_entry.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_mmseg_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_mmseg_bridge.json"
+            work_dir = root / "mmseg_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "mmseg",
+                    "configs/examples/finetune_external/mmseg_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend mmseg --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_mmseg")
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "mmseg")
+            self.assertEqual(str(payload.get("task_family")), "segmentation")
+            self.assertTrue((work_dir / "reports" / "training_summary.json").is_file())
+            self.assertTrue((work_dir / "reports" / "export_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "parity_handoff.json").is_file())
+            self.assertTrue((work_dir / "reports" / "training_registry_entry.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
+    def test_train_external_hf_detr_dry_run_writes_bridge_report(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "train_hf_detr_bridge.json"
+            work_dir = root / "hf_detr_work"
+
+            proc = self._run(
+                [
+                    "train",
+                    "--external-backend",
+                    "hf-detr",
+                    "facebook/detr-resnet-50",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out_path),
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"train --external-backend hf-detr --dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(out_path.is_file())
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertEqual(str(payload.get("task")), "train_hf_detr")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertEqual(((payload.get("backend") or {}).get("backend_id")), "hf-detr")
+            self.assertEqual(str(payload.get("model_id")), "facebook/detr-resnet-50")
+            self.assertTrue((work_dir / "reports" / "execution.json").is_file())
+            self.assertTrue((work_dir / "configs" / "train_config_projection.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
-

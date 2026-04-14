@@ -17,6 +17,23 @@ This repository is intended to be **Apache-2.0** code only.
 - Keep datasets and model weights out of git.
 - The packaged model registry for `yolozu fetch` is curated to Apache-friendly licenses only. Use a custom registry + `--allow-non-apache` only when you explicitly accept the risk and boundary the baseline environment.
 
+## External training boundary
+
+When YOLOZU needs a YOLO-style training lane outside the in-repo RT-DETR reference trainer:
+
+- prefer the **YOLOX external lane** first because YOLOX is Apache-2.0-friendly
+- keep the training loop in the external repo/runtime
+- let YOLOZU own dataset resolution, reports, and the predictions interface contract
+- treat the **Ultralytics bridge** as optional and review it under its own license terms before commercial use
+- treat the **HF DETR bridge** as optional and review its runtime/dependency boundary separately
+
+In practice this means:
+
+- `python3 -m yolozu train --external-backend yolox ...` is the recommended external YOLO-style path
+- `python3 -m yolozu train --external-backend ultralytics ...` is available only as an optional bridge
+- `python3 -m yolozu train --external-backend hf-detr ...` is available only as an optional bridge
+- the repository must not vendor Ultralytics or other copyleft implementation code
+
 ## Company release policy (naming + provenance)
 
 - Use consistent product/repo naming in release artifacts: `YOLOZU` (`ToppyMicroServices/YOLOZU`).

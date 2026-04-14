@@ -11,7 +11,7 @@ measurable and comparable across runs. It does not guarantee elimination of forg
 It treats **predictions—not models—as the stable interface contract**, so continual learning
 and test-time training are comparable, restartable, and CI-friendly across frameworks and runtimes.
 
-The repo also includes an optional training scaffold (`rtdetr_pose`) for real-time monocular RGB
+The repo also includes an optional in-repo reference trainer (`rtdetr_pose`) for real-time monocular RGB
 object detection + depth + 6DoF pose, while keeping training implementations decoupled from the evaluation surface.
 
 It emphasizes:
@@ -42,9 +42,9 @@ If YOLO txt labels are missing and a mask is provided, bbox+class can be derived
 - Instance mask (single-channel IDs): non-zero IDs become instances; class via
   `mask_class_id` (or `mask_class_map`)
 
-### 3) Training scaffold (reference adapter: `rtdetr_pose`)
+### 3) Reference trainer (reference adapter: `rtdetr_pose`)
 
-- Minimal training loop scaffold: `rtdetr_pose/tools/train_minimal.py`
+- Reference training entrypoint: `rtdetr_pose/tools/train_minimal.py`
 - Production-style run interface contract (Run Contract; `--run-contract`): fixed artifact paths under
   `runs/<run_id>/...`, full resume, export + parity gate
 - Optional Hungarian matcher with staged cost terms
@@ -121,9 +121,9 @@ Installed CLI:
 These commands are backend-facing and can evaluate predictions produced by external
 YOLO/RT-DETR/other model families as long as outputs follow the predictions schema.
 
-Training scaffold:
+Reference training lane:
 
-- `yolozu train ...` (requires `yolozu[train]`)
+- `yolozu train ...` (requires `yolozu[train]`; defaults to the RT-DETR pose reference trainer)
 
 Optional extra:
 
@@ -140,7 +140,7 @@ Power-user in-repo CLI (source checkout):
 
 ## Non-goals
 
-- Full training framework (this repo focuses on scaffold + artifact layout + run interface contract)
+- Full training framework for every model family (this repo focuses on reference training lanes + artifact layout + run interface contract)
 - Heavy dependencies required for local evaluation
 
 ## Versioning

@@ -15,7 +15,7 @@ Install only what you need:
 ```bash
 python3 -m pip install 'yolozu[demo]'     # torch/torchvision demos (CPU OK; includes timm + opencv-contrib + transformers for depth demo)
 python3 -m pip install 'yolozu[onnxrt]'   # ONNX Runtime tooling
-python3 -m pip install 'yolozu[train]'    # RT-DETR pose training scaffold
+python3 -m pip install 'yolozu[train]'    # RT-DETR pose reference trainer
 python3 -m pip install 'yolozu[coco]'     # COCOeval support (pycocotools)
 python3 -m pip install 'yolozu[mcp]'      # MCP server integration
 python3 -m pip install 'yolozu[actions]'  # Actions/OpenAPI integration (FastAPI)
@@ -48,8 +48,9 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 python3 rtdetr_pose/tools/train_minimal.py --devic
 Training-device notes:
 
 - `--device auto` now resolves in `cuda -> mps -> cpu` order
-- `--device mps` is allowed for the training scaffold
+- `--device mps` is allowed for the reference trainer
 - `--amp fp16|bf16` on MPS is best-effort beta; if autocast is unavailable, the trainer warns and falls back to fp32
+- post-train ONNX export is attempted on CPU by default, even when training itself ran on MPS/CUDA
 
 ## macOS / Apple Silicon Miniforge/MPS workflow
 

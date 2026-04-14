@@ -1,4 +1,4 @@
-"""RT-DETR 6DoF pose prototype scaffolding."""
+"""RT-DETR 6DoF pose reference-trainer package."""
 
 __all__ = [
     "config",

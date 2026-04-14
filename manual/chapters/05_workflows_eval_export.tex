@@ -192,6 +192,85 @@ python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predic
 
 The exporter records \path{weights\_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export\_settings}.
 
+\subsection{YOLO-style external training lane}
+When the goal is training rather than export-only interop, the recommended
+external YOLO-style lane is YOLOX because it fits the repository's Apache-2.0
+operational policy more naturally than optional copyleft-sensitive bridges.
+
+\begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_yolox.json
+\end{lstlisting}
+
+The repo helper remains available when you want the lower-level bridge
+surface directly:
+
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-yolox \
+  --dataset data/smoke \
+  --split val \
+  --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dry-run \
+  --output reports/support_external_training.train_yolox.json
+\end{lstlisting}
+
+\subsection{Current training support}
+\begin{itemize}
+  \item \textbf{Stable reference lane:} the in-repo RT-DETR pose reference trainer.
+  \item \textbf{Supported external lane:} the Apache-2.0-friendly YOLOX path exposed through \cmd{yolozu train --external-backend yolox}.
+  \item \textbf{Optional external bridges:} Ultralytics and HF DETR, kept explicit as external runtime/license boundaries.
+  \item \textbf{Not claimed:} a universal training platform for every model family.
+\end{itemize}
+
+When post-train ONNX export is enabled, the export attempt runs on CPU even if training itself ran on CUDA or MPS. This keeps the export path more portable and avoids backend-specific exporter failures at the end of an otherwise successful run.
+
+This writes a machine-readable report containing:
+\begin{itemize}
+  \item the resolved dataset root and split,
+  \item a projected training configuration,
+  \item the template command for the external launcher,
+  \item the runtime/license boundary for the lane.
+\end{itemize}
+
+For real execution, provide your local YOLOX train launcher:
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-yolox \
+  --dataset /path/to/coco-yolo \
+  --split train \
+  --exp /path/to/yolox_exp.py \
+  --train-script /path/to/YOLOX/tools/train.py \
+  --batch 16 \
+  --weights /path/to/yolox_ckpt.pth \
+  --output reports/support_external_training.train_yolox.exec.json
+\end{lstlisting}
+
+The Ultralytics bridge remains available on the same surface, but it is
+documented as optional and should be reviewed separately under its own license
+terms:
+\begin{lstlisting}[language=bash]
+python3 tools/support_external_training.py train-ultralytics \
+  --dataset data/smoke \
+  --split val \
+  --preset smoke \
+  --dry-run
+\end{lstlisting}
+
+The same top-level route also exposes the optional HF DETR bridge:
+\begin{lstlisting}[language=bash]
+python3 -m yolozu train \
+  --external-backend hf-detr \
+  facebook/detr-resnet-50 \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_hf_detr.json
+\end{lstlisting}
+
 \subsection{SynthGen intake workflow (external generator)}
 When synthetic shards are generated externally (for example in \path{YOLOZU-synthgen}), \yolozu{} provides the contract/eval side:
 \begin{lstlisting}[language=bash]

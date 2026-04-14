@@ -5,6 +5,8 @@ from __future__ import annotations
 from .cli_commands import (
     _cmd_train_import_preview,
     _cmd_train,
+    _cmd_train_external,
+    _cmd_train_orchestrate,
     _cmd_test,
     _cmd_doctor_import,
     _cmd_doctor,
@@ -588,8 +590,23 @@ def main(argv: list[str] | None = None) -> int:
     imp_cfg.add_argument("--output", required=True, help="Output path (file or directory).")
     imp_cfg.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
 
-    train_p = sub.add_parser("train", help="Train with RT-DETR pose scaffold (requires `yolozu[train]`).")
-    train_p.add_argument("config", nargs="?", type=str, help="Path to train config YAML/JSON (train_setting.yaml).")
+    train_p = sub.add_parser(
+        "train",
+        help=(
+            "Train with the RT-DETR pose reference trainer by default, or use "
+            "--external-backend yolox|detectron2|mmdetection|mmpose|mmseg|tao|ultralytics|hf-detr for external training lanes."
+        ),
+    )
+    train_p.add_argument(
+        "config",
+        nargs="?",
+        type=str,
+        help=(
+            "Reference train config YAML/JSON. When --external-backend is selected, "
+            "this becomes the backend-specific model/config handle "
+            "(YOLOX exp file, Detectron2/MM-family/TAO config path, Ultralytics model path/id, or HF model id)."
+        ),
+    )
     train_p.add_argument(
         "--import",
         dest="import_from",
@@ -610,19 +627,42 @@ def main(argv: list[str] | None = None) -> int:
         help="Overwrite --resolved-config-out if it already exists.",
     )
     train_p.add_argument(
-        "train_args",
-        nargs=argparse.REMAINDER,
-        help="Extra args forwarded to the trainer (e.g. --run-contract --run-id exp01 --resume).",
+        "--external-backend",
+        choices=("yolox", "detectron2", "mmdetection", "mmpose", "mmseg", "tao", "ultralytics", "hf-detr"),
+        default=None,
+        help=(
+            "Optional repo-side external training lane. Use backend-specific flags after "
+            "--external-backend; they are forwarded to tools/support_external_training.py."
+        ),
     )
+    train_p.add_argument(
+        "--resume-from",
+        default=None,
+        help="Forwarded checkpoint path for external fine-tune/resume flows.",
+    )
+    train_p.add_argument(
+        "--tao-task",
+        default=None,
+        help="Forwarded TAO task name when --external-backend tao is active.",
+    )
+
+    train_orch = sub.add_parser(
+        "train-orchestrate",
+        help="Plan or execute a small multi-backend training batch from one orchestration spec.",
+    )
+    train_orch.add_argument("--spec", required=True, help="JSON orchestration spec with experiments[].")
+    train_orch.add_argument(
+        "--output",
+        default="reports/training_orchestration_report.json",
+        help="Output report JSON path.",
+    )
+    train_orch.add_argument("--registry-out", default=None, help="Optional JSONL registry file to append executed training runs.")
+    train_orch.add_argument("--execute", action="store_true", help="Run the planned commands.")
+    train_orch.add_argument("--dry-run", action="store_true", help="Append --dry-run when missing.")
+    train_orch.add_argument("--stop-on-failure", action="store_true", help="Stop after the first failing execution.")
 
     test_p = sub.add_parser("test", help="Run scenario suite (dummy/precomputed adapters are CPU-only).")
     test_p.add_argument("config", type=str, help="Path to test config YAML/JSON (test_setting.yaml).")
-    test_p.add_argument(
-        "test_args",
-        nargs=argparse.REMAINDER,
-        help="Extra args forwarded to the scenario runner (e.g. --adapter rtdetr_pose --max-images 50).",
-    )
-
     demo = sub.add_parser("demo", help="Run small self-contained demos (CPU-friendly).")
     demo.add_argument(
         "--coco-instances-json",
@@ -946,23 +986,31 @@ def main(argv: list[str] | None = None) -> int:
     )
     completion.add_argument("--output", default="-", help="Output path (default: stdout).")
 
-    args = parser.parse_args(argv)
+    args, extra_argv = parser.parse_known_args(argv)
+    if args.command not in ("train", "test") and extra_argv:
+        parser.error(f"unrecognized arguments: {' '.join(extra_argv)}")
     if args.command == "train":
+        if getattr(args, "import_from", None) and getattr(args, "external_backend", None):
+            raise SystemExit("train cannot combine --import preview with --external-backend")
         if getattr(args, "import_from", None):
             _cmd_train_import_preview(args)
             if not getattr(args, "config", None):
                 return 0
+        if getattr(args, "external_backend", None):
+            return _cmd_train_external(args, extra_args=list(extra_argv or []))
         if not getattr(args, "config", None):
             raise SystemExit("train config is required unless using --import preview-only mode")
         config_path = Path(args.config)
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
-        return _cmd_train(config_path, extra_args=list(getattr(args, "train_args", []) or []))
+        return _cmd_train(config_path, extra_args=list(extra_argv or []))
     if args.command == "test":
         config_path = Path(args.config)
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
-        return _cmd_test(config_path, extra_args=list(getattr(args, "test_args", []) or []))
+        return _cmd_test(config_path, extra_args=list(extra_argv or []))
+    if args.command == "train-orchestrate":
+        return _cmd_train_orchestrate(args)
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)

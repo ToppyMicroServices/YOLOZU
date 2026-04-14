@@ -1,6 +1,7 @@
 # Repo Map
 
-This workspace contains a **contract-first evaluation harness** plus a **minimal training scaffold** (RT-DETR pose).
+This workspace contains a **contract-first evaluation harness** plus an **in-repo reference trainer** (RT-DETR pose).
+It also provides an **external training lane** for Apache-2.0-friendly YOLOX-style training, with optional copyleft-sensitive bridges kept explicit.
 
 Two usage modes:
 - **pip users**: `pip install yolozu` → stable, CPU-friendly CLI (`yolozu doctor|export|validate|eval-instance-seg|resources|demo`)
@@ -18,7 +19,8 @@ Two usage modes:
 - `docs/`: user-facing docs (protocols, pipelines, recipes)
 - `tests/`: unit/integration tests (CPU-friendly by default; GPU optional)
 - `tools/`: repo-only scripts (exporters, suites, benchmarks, smoke runs)
-- `rtdetr_pose/`: RT-DETR pose scaffold (training/inference/export helpers)
+  - `tools/support_external_training.py`: external training bridge (YOLOX primary, optional Ultralytics/HF bridges)
+- `rtdetr_pose/`: RT-DETR pose reference trainer (training/inference/export helpers)
 - `data/smoke/`: committed offline smoke assets (10 images + labels + fixed predictions)
 - `data/coco128/`: tiny COCO dataset for extended local checks (downloaded via `tools/fetch_coco128.sh`)
 

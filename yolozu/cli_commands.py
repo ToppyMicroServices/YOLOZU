@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -130,6 +131,91 @@ def _cmd_train(config_path: Path, extra_args: list[str] | None = None) -> int:
     if extra_args:
         argv.extend(list(extra_args))
     return int(train_main(argv))
+
+
+def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None = None) -> int:
+    backend = str(getattr(args, "external_backend", "") or "").strip().lower()
+    backend_to_subcommand = {
+        "yolox": "train-yolox",
+        "detectron2": "train-detectron2",
+        "mmdetection": "train-mmdetection",
+        "mmpose": "train-mmpose",
+        "mmseg": "train-mmseg",
+        "tao": "train-tao",
+        "ultralytics": "train-ultralytics",
+        "hf-detr": "train-hf-detr",
+    }
+    if backend not in backend_to_subcommand:
+        raise SystemExit("unsupported --external-backend value")
+
+    config_value = str(getattr(args, "config", "") or "").strip()
+    if backend == "yolox" and not config_value:
+        raise SystemExit("train config/exp is required when using --external-backend yolox")
+    if backend in {"detectron2", "mmdetection", "mmpose", "mmseg", "tao"} and not config_value:
+        raise SystemExit(f"train config is required when using --external-backend {backend}")
+
+    repo_root = Path(__file__).resolve().parents[1]
+    helper = repo_root / "tools" / "support_external_training.py"
+    if not helper.is_file():
+        raise SystemExit(
+            "train --external-backend requires a YOLOZU repo checkout with "
+            "tools/support_external_training.py available"
+        )
+
+    cmd = [sys.executable, str(helper), backend_to_subcommand[backend]]
+    if backend == "yolox":
+        cmd.extend(["--exp", config_value])
+    elif backend in {"detectron2", "mmdetection", "mmpose", "mmseg", "tao"}:
+        cmd.extend(["--config", config_value])
+    elif backend == "ultralytics" and config_value:
+        cmd.extend(["--model", config_value])
+    elif backend == "hf-detr" and config_value:
+        cmd.extend(["--model-id", config_value])
+    if extra_args:
+        cmd.extend(list(extra_args))
+
+    proc = subprocess.run(
+        cmd,
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    return int(proc.returncode)
+
+
+def _cmd_train_orchestrate(args: argparse.Namespace) -> int:
+    repo_root = Path(__file__).resolve().parents[1]
+    helper = repo_root / "tools" / "orchestrate_train.py"
+    if not helper.is_file():
+        raise SystemExit("missing tools/orchestrate_train.py")
+    cmd = [sys.executable, str(helper), "--spec", str(args.spec), "--output", str(args.output)]
+    if getattr(args, "registry_out", None):
+        cmd.extend(["--registry-out", str(args.registry_out)])
+    if bool(getattr(args, "execute", False)):
+        cmd.append("--execute")
+    if bool(getattr(args, "dry_run", False)):
+        cmd.append("--dry-run")
+    if bool(getattr(args, "stop_on_failure", False)):
+        cmd.append("--stop-on-failure")
+    proc = subprocess.run(
+        cmd,
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    return int(proc.returncode)
 
 
 def _cmd_train_import_preview(args: argparse.Namespace) -> int:

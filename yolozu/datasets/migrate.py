@@ -390,6 +390,122 @@ def migrate_coco_results_predictions(
     return out_path
 
 
+def migrate_coco_keypoints_results_predictions(
+    *,
+    results_json: str | Path,
+    instances_json: str | Path,
+    output: str | Path,
+    score_threshold: float = 0.0,
+    force: bool = False,
+) -> Path:
+    """Convert COCO-style keypoints results into YOLOZU predictions entries."""
+
+    results_path = Path(results_json)
+    instances_path = Path(instances_json)
+    out_path = Path(output)
+
+    if not results_path.exists():
+        raise FileNotFoundError(f"--results-json not found: {results_path}")
+    if not instances_path.exists():
+        raise FileNotFoundError(f"--instances-json not found: {instances_path}")
+    if out_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {out_path} (use --force to overwrite)")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    instances_doc = _load_json(instances_path)
+    images = instances_doc.get("images") or []
+    if not isinstance(images, list):
+        raise ValueError("invalid COCO instances JSON: images must be a list")
+
+    image_id_to_meta: dict[int, dict[str, Any]] = {}
+    for img in images:
+        if not isinstance(img, dict) or "id" not in img:
+            continue
+        try:
+            image_id_to_meta[int(img["id"])] = img
+        except Exception:
+            continue
+
+    from .coco_convert import build_category_map_from_coco
+
+    cat_map = build_category_map_from_coco(instances_doc)
+    raw_results = _normalize_coco_results_payload(_load_json(results_path))
+    grouped: dict[str, list[dict[str, Any]]] = {}
+
+    for det in raw_results:
+        try:
+            image_id = int(det["image_id"])
+            category_id = int(det["category_id"])
+        except Exception:
+            continue
+
+        score = det.get("score")
+        if not isinstance(score, (int, float)) or isinstance(score, bool):
+            continue
+        if float(score) < float(score_threshold):
+            continue
+
+        bbox = det.get("bbox")
+        keypoints = det.get("keypoints")
+        if not isinstance(bbox, list) or len(bbox) != 4:
+            continue
+        if not isinstance(keypoints, list) or len(keypoints) < 3 or len(keypoints) % 3 != 0:
+            continue
+
+        meta = image_id_to_meta.get(image_id)
+        if meta is None:
+            continue
+        file_name = str(meta.get("file_name") or "").strip()
+        if not file_name:
+            continue
+        width = int(meta.get("width") or 0)
+        height = int(meta.get("height") or 0)
+        if width <= 0 or height <= 0:
+            continue
+
+        class_id = cat_map.category_id_to_class_id.get(category_id)
+        if class_id is None:
+            continue
+
+        x, y, w, h = (float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3]))
+        if w <= 0.0 or h <= 0.0:
+            continue
+        cx = (x + w / 2.0) / float(width)
+        cy = (y + h / 2.0) / float(height)
+        wn = w / float(width)
+        hn = h / float(height)
+
+        normalized_keypoints: list[dict[str, Any]] = []
+        for idx in range(0, len(keypoints), 3):
+            xk = float(keypoints[idx]) / float(width)
+            yk = float(keypoints[idx + 1]) / float(height)
+            vis = float(keypoints[idx + 2])
+            payload: dict[str, Any] = {"x": float(xk), "y": float(yk)}
+            if 0.0 <= vis <= 2.0:
+                payload["v"] = float(vis)
+            else:
+                payload["score"] = float(vis)
+            normalized_keypoints.append(payload)
+
+        grouped.setdefault(file_name, []).append(
+            {
+                "class_id": int(class_id),
+                "score": float(score),
+                "bbox": {"cx": float(cx), "cy": float(cy), "w": float(wn), "h": float(hn)},
+                "keypoints": normalized_keypoints,
+            }
+        )
+
+    entries: list[dict[str, Any]] = []
+    for image in sorted(grouped.keys()):
+        dets = grouped[image]
+        dets.sort(key=lambda d: float(d.get("score", 0.0)), reverse=True)
+        entries.append({"image": image, "detections": dets})
+
+    out_path.write_text(json.dumps(entries, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    return out_path
+
+
 def _schema_tag_to_int(value: str) -> int:
     text = str(value).strip().lower()
     if text.startswith("v"):

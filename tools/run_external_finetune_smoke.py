@@ -30,11 +30,11 @@ from yolozu.core.config import simple_yaml_load
 
 logger = logging.getLogger(__name__)
 
-FRAMEWORKS = ("yolov", "mmdetection", "detectron2", "rtdetr")
+FRAMEWORKS = ("yolox", "yolov", "mmdetection", "detectron2", "rtdetr")
 
 
 def _parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Run external finetune smoke matrix for YOLOv/MMDetection/Detectron2/RT-DETR.")
+    p = argparse.ArgumentParser(description="Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR.")
     p.add_argument("--dataset-root", default="data/smoke", help="Dataset root (YOLO-style for YOLOv/RT-DETR).")
     p.add_argument("--split", default="train", help="Dataset split for smoke runs (default: train).")
     p.add_argument("--output", default="reports/external_finetune_smoke.json", help="Output report JSON path.")
@@ -78,6 +78,11 @@ def _parser() -> argparse.ArgumentParser:
         "--detectron2-train-script",
         default=None,
         help="Optional Detectron2 train launcher path (e.g., /path/to/detectron2/tools/train_net.py).",
+    )
+    p.add_argument(
+        "--yolox-train-script",
+        default=None,
+        help="Optional YOLOX train launcher path (e.g., /path/to/YOLOX/tools/train.py).",
     )
     return p
 
@@ -230,6 +235,19 @@ def _build_detectron2_command(*, python: str, train_script: Path, config: Path, 
     ]
 
 
+def _build_yolox_command(*, python: str, train_script: Path, config: Path, batch_size: int) -> list[str]:
+    return [
+        str(python),
+        str(train_script),
+        "-f",
+        str(config),
+        "-d",
+        "1",
+        "-b",
+        str(int(batch_size)),
+    ]
+
+
 def _tail(text: str, n: int = 10) -> list[str]:
     return str(text or "").splitlines()[-n:]
 
@@ -339,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
     non_dry = {str(x) for x in list(args.non_dry_framework or [])}
 
     config_map = {
+        "yolox": repo_root / "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
         "yolov": repo_root / "configs/examples/finetune_external/ultralytics_yolov8n_finetune_smoke.yaml",
         "mmdetection": repo_root / "configs/examples/finetune_external/mmdetection_finetune_smoke.py",
         "detectron2": repo_root / "configs/examples/finetune_external/detectron2_finetune_smoke.yaml",
@@ -353,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
 
     mmdet_train_script = _resolve_path(str(args.mmdet_train_script)) if args.mmdet_train_script else None
     detectron2_train_script = _resolve_path(str(args.detectron2_train_script)) if args.detectron2_train_script else None
+    yolox_train_script = _resolve_path(str(args.yolox_train_script)) if args.yolox_train_script else None
 
     for framework in selected:
         cfg_path = config_map[framework]
@@ -381,7 +401,25 @@ def main(argv: list[str] | None = None) -> int:
             runtime_error = f"missing config template: {cfg_path}"
             failure_code = "E_CONFIG_TEMPLATE_MISSING"
         elif dry_run:
-            if framework == "yolov":
+            if framework == "yolox":
+                train_script_configured = yolox_train_script is not None
+                command = [
+                    str(args.python),
+                    "-m",
+                    "yolozu",
+                    "import",
+                    "config",
+                    "--from",
+                    "yolox",
+                    "--config",
+                    str(cfg_path),
+                    "--output",
+                    str(row_dir / "train_config_import.json"),
+                    "--force",
+                ]
+                if yolox_train_script is None:
+                    row_warnings.append("YOLOX train script is not configured (set --yolox-train-script for non-dry training).")
+            elif framework == "yolov":
                 command = [
                     str(args.python),
                     "-m",
@@ -446,7 +484,76 @@ def main(argv: list[str] | None = None) -> int:
                         "Detectron2 train script is not configured (set --detectron2-train-script for non-dry training)."
                     )
         else:
-            if framework == "yolov":
+            if framework == "yolox":
+                train_script_configured = yolox_train_script is not None
+                command = [
+                    str(args.python),
+                    "-m",
+                    "yolozu",
+                    "import",
+                    "config",
+                    "--from",
+                    "yolox",
+                    "--config",
+                    str(cfg_path),
+                    "--output",
+                    str(row_dir / "train_config_import.json"),
+                    "--force",
+                ]
+                proc = _run(command, cwd=repo_root)
+                returncode = int(proc.returncode)
+                stdout_tail = _tail(proc.stdout)
+                stderr_tail = _tail(proc.stderr)
+                projection_ok = proc.returncode == 0
+                capability_checks.append("train_config_projection")
+                projection_executed = projection_ok
+                if not projection_ok:
+                    projection_error = "yolox config projection failed"
+                if yolox_train_script is None:
+                    ok = projection_ok
+                    if projection_ok:
+                        row_warnings.append("YOLOX non-dry run executed projection only (set --yolox-train-script for actual training).")
+                    if not projection_ok:
+                        runtime_error = "yolox config projection failed"
+                        failure_code = "E_YOLOX_PROJECTION_FAILED"
+                else:
+                    if not projection_ok:
+                        row_warnings.append(
+                            "YOLOX config projection failed (missing optional deps?) but train-path audit continues via --yolox-train-script."
+                        )
+                    train_path_audited = True
+                    if not yolox_train_script.exists():
+                        ok = False
+                        returncode = 2
+                        runtime_error = f"yolox train script not found: {yolox_train_script}"
+                        failure_code = "E_EXTERNAL_SCRIPT_NOT_FOUND"
+                        row_warnings.append("YOLOX train path audit failed: script path is missing.")
+                    else:
+                        train_cmd = _build_yolox_command(
+                            python=str(args.python),
+                            train_script=yolox_train_script,
+                            config=cfg_path,
+                            batch_size=int(args.batch_size),
+                        )
+                        env = dict(os.environ)
+                        env["YOLOZU_DATASET_ROOT"] = str(dataset_root)
+                        env["YOLOZU_SPLIT"] = split
+                        env["YOLOZU_BATCH_SIZE"] = str(int(args.batch_size))
+                        env["YOLOZU_MAX_EPOCHS"] = str(int(args.epochs))
+                        env["YOLOZU_IMAGE_SIZE"] = str(int(args.image_size))
+                        proc2 = _run(train_cmd, cwd=repo_root, env=env)
+                        aux_commands.append(train_cmd)
+                        returncode = int(proc2.returncode)
+                        stdout_tail = _tail(proc2.stdout)
+                        stderr_tail = _tail(proc2.stderr)
+                        ok = proc2.returncode == 0
+                        runtime_error = None if ok else runtime_error
+                        failure_code = None if ok else failure_code
+                        training_executed = ok
+                        if not ok:
+                            runtime_error = "yolox train command failed"
+                            failure_code = "E_YOLOX_TRAIN_FAILED"
+            elif framework == "yolov":
                 ok, extra_details, runtime_error = _execute_ultralytics(
                     config_path=cfg_path,
                     data_yaml=ultra_data_yaml,

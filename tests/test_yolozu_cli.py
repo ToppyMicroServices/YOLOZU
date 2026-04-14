@@ -26,6 +26,44 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("continual-eval", proc.stdout)
         self.assertIn("long-tail-recipe", proc.stdout)
 
+    def test_train_help_lists_external_backends(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "train", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"yolozu train --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--external-backend", proc.stdout)
+        self.assertIn("yolox", proc.stdout)
+        self.assertIn("detectron2", proc.stdout)
+        self.assertIn("mmdetection", proc.stdout)
+        self.assertIn("mmpose", proc.stdout)
+        self.assertIn("mmseg", proc.stdout)
+        self.assertIn("tao", proc.stdout)
+        self.assertIn("ultralytics", proc.stdout)
+        self.assertIn("hf-detr", proc.stdout)
+
+    def test_train_orchestrate_help_lists_core_flags(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "train-orchestrate", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"yolozu train-orchestrate --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--spec", proc.stdout)
+        self.assertIn("--execute", proc.stdout)
+        self.assertIn("--registry-out", proc.stdout)
+
     def test_completion_help_lists_flags(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

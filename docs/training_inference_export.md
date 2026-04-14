@@ -2,8 +2,79 @@
 
 This note provides a minimal, end-to-end path for training, inference, and exporting predictions.
 
-Note: the in-repo trainer under `rtdetr_pose/` is scaffold-first, but supports a **production-style run contract**
+Note: the in-repo trainer under `rtdetr_pose/` is the repo's **reference trainer**. In other words,
+training is supported in YOLOZU for this RT-DETR pose lane. What YOLOZU does not claim is a
+general-purpose training framework for every model family. The reference trainer still supports a **production-style run contract**
 (fixed artifact paths, full resume, safety guards, export + parity checks).
+
+For YOLO-style training outside the reference trainer, use the **external training lane**.
+YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
+is documented as a separate runtime/license boundary.
+
+The platform-level docs for training are:
+
+- [`training_backend_interface.md`](training_backend_interface.md)
+- [`training_capability_matrix.md`](training_capability_matrix.md)
+- [`training_orchestration.md`](training_orchestration.md)
+
+## Current training support
+
+Use this scope boundary when deciding whether YOLOZU should own the training step or just the artifact/evaluation boundary:
+
+| Lane | Status | What it is for | Notes |
+|---|---|---|---|
+| RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. |
+| YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. |
+| MMDetection external lane | Experimental external lane | Bbox / instance-seg training launched from the top-level CLI | Best fit when the backend-native detection stack already lives in OpenMMLab. |
+| MMPose external lane | Experimental external lane | Keypoints / pose training launched from the top-level CLI | Export handoff is standardized around COCO keypoints results JSON normalized into the predictions interface contract. |
+| MMSeg external lane | Experimental external lane | Semantic segmentation training launched from the top-level CLI | Export handoff is standardized around packaging class-id masks into the segmentation predictions interface contract. |
+| NVIDIA TAO external lane | Experimental qualified lane | Bbox / segmentation / keypoints training launched from the top-level CLI | Best fit when TAO already owns the NVIDIA-specific trainer/runtime environment and YOLOZU should standardize resume/export/eval/parity handoff around it. |
+| Ultralytics bridge | Optional external bridge | User-installed external runtime bridge | Keep the license boundary explicit; see `docs/license_policy.md`. |
+| HF DETR bridge | Optional external bridge | User-installed DETR-family bridge | Useful when a DETR-family training stack already exists outside this repo. |
+| Generic training platform for every model family | Not claimed | Universal training framework | YOLOZU does not claim this scope. It standardizes the run artifacts and the predictions interface contract around the supported lanes above. |
+
+## Training platform layer
+
+The training platform layer now has five explicit pieces:
+
+1. one canonical `TrainConfig` projection
+2. one backend interface registry
+3. one shared training run summary interface contract
+4. one training capability matrix
+5. one lightweight orchestration entrypoint
+
+This does not mean every backend is identical. It means the repo can describe
+different training lanes with one shared top-level shape.
+
+For external backends, YOLOZU now standardizes one wrapper-level run bundle under
+`work_dir/`:
+
+- `dataset/`
+- `configs/train_config_projection.json`
+- `reports/training_summary.json`
+- `reports/external_run_meta.json`
+- `reports/launcher_plan.json`
+- `reports/execution.json`
+- `reports/resume_handoff.json`
+- `reports/export_handoff.json`
+- `reports/eval_handoff.json`
+- `reports/parity_handoff.json`
+- `reports/training_registry_entry.json`
+
+This keeps external lanes auditable even when the backend-native trainer owns the
+actual checkpoint layout.
+
+External lanes now also write `next_steps` and one standardized handoff bundle into
+`training_summary.json`, so the report itself tells you which resume / export / evaluation /
+parity command to run next. For MM-family and TAO lanes, the standardized handoff is:
+
+- `mmdetection`: bbox uses the generic `predictions migrate --from coco-results` bridge; segmentation can package class-id masks through `package_segmentation_predictions.py`.
+- `mmpose`: `export_predictions_coco_keypoints.py` converts COCO-style keypoints results JSON into the predictions interface contract.
+- `mmseg`: `package_segmentation_predictions.py` packages class-id masks into the segmentation predictions interface contract, and `check_segmentation_parity.py` compares them.
+- `tao`: bbox uses the generic COCO-results migration bridge; segmentation uses `package_segmentation_predictions.py`; keypoints uses `export_predictions_coco_keypoints.py`.
+
+OpenCV DNN and ONNX Runtime are not training lanes. They remain inference/export
+targets after a model has already been trained.
 
 ## TL;DR (copy-paste)
 
@@ -80,7 +151,7 @@ The adapter registry (`yolozu.datasets.registry.probe_format`) auto-detects
 whether a directory is COCO-native or YOLO-format, so both `data/coco/` and
 `data/coco-yolo/` work transparently.
 
-## Training (RT-DETR pose scaffold)
+## Training (RT-DETR pose reference trainer)
 
 1) Install dependencies (CPU PyTorch for local dev):
 - python3 -m pip install -r requirements-test.txt
@@ -122,9 +193,10 @@ Common options:
 
 macOS / Apple Silicon beta notes:
 - `--device auto` resolves in `cuda -> mps -> cpu` order.
-- `--device mps` is supported for the scaffold trainer.
+- `--device mps` is supported for the reference trainer.
 - `--amp fp16|bf16` on MPS is best-effort; unsupported autocast modes warn and fall back to fp32.
 - If an op is still missing on MPS, retry with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+- Post-train ONNX export is attempted on CPU even when training ran on CUDA/MPS. This avoids backend-specific exporter failures and keeps the exported artifact path portable.
 - --cost-z 1.0 --cost-rot 1.0 --cost-t 1.0
 - --cost-z-start-step 500 --cost-rot-start-step 1000 --cost-t-start-step 1500
 - --checkpoint-out reports/rtdetr_pose_ckpt.pt
@@ -209,7 +281,125 @@ The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
 `prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
 
-### External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR)
+### External YOLO-style training lane (YOLOX primary, optional bridges second)
+
+Use this path when you want YOLOZU to standardize dataset resolution, reports, and the
+predictions interface contract while the actual YOLO training loop stays in an external repo/runtime.
+
+Top-level `yolozu train` route:
+
+```bash
+python3 -m yolozu train \
+  --external-backend yolox \
+  configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_yolox.json
+```
+
+Equivalent repo helper:
+
+```bash
+python3 tools/support_external_training.py train-yolox \
+  --dataset data/smoke \
+  --split val \
+  --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py \
+  --dry-run \
+  --output reports/support_external_training.train_yolox.json
+```
+
+Optional Ultralytics bridge:
+
+```bash
+python3 -m yolozu train \
+  --external-backend ultralytics \
+  yolo11n.pt \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_ultralytics.json
+
+python3 tools/support_external_training.py train-ultralytics \
+  --dataset data/smoke \
+  --split val \
+  --preset smoke \
+  --dry-run \
+  --output reports/support_external_training.train_ultralytics.json
+```
+
+Optional HF DETR bridge:
+
+```bash
+python3 -m yolozu train \
+  --external-backend hf-detr \
+  facebook/detr-resnet-50 \
+  --dataset data/smoke \
+  --split val \
+  --dry-run \
+  --output reports/train_external_hf_detr.json
+```
+
+Detectron2 external lane (`bbox`, instance `segmentation`, or `keypoints`
+selected by your Detectron2 config):
+
+```bash
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  configs/examples/finetune_external/detectron2_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --dry-run \
+  --output reports/train_external_detectron2_bbox.json
+```
+
+The same lane can describe Mask R-CNN and Keypoint R-CNN style runs:
+
+```bash
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/mask_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family segmentation \
+  --train-opt DATASETS.TRAIN "(\"my_seg_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_seg.json
+
+python3 -m yolozu train \
+  --external-backend detectron2 \
+  /path/to/keypoint_rcnn_config.yaml \
+  --dataset /path/to/dataset \
+  --split train \
+  --task-family keypoints \
+  --train-opt DATASETS.TRAIN "(\"my_kpts_train\",)" \
+  --dry-run \
+  --output reports/train_external_detectron2_keypoints.json
+```
+
+For non-dry execution, add `--train-script /path/to/detectron2/tools/train_net.py`.
+Use repeated `--train-opt KEY VALUE` pairs to pass Detectron2 config overrides
+such as dataset registration names.
+
+TAO external lane (qualified NVIDIA-owned runtime/trainer environment):
+
+```bash
+python3 -m yolozu train \
+  --external-backend tao \
+  configs/examples/finetune_external/tao_finetune_smoke.yaml \
+  --dataset data/smoke \
+  --split val \
+  --task-family bbox \
+  --tao-task detectnet_v2 \
+  --dry-run \
+  --output reports/train_external_tao_bbox.json
+```
+
+The standardized handoff bundle still lands under `work_dir/reports/` even
+though the TAO runtime itself remains external.
+
+### External finetune smoke matrix (YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR)
 
 Use a single command to audit external finetune entrypoints and emit a stable interface contract report:
 
@@ -226,8 +416,10 @@ Run real training for selected frameworks:
 python3 tools/run_external_finetune_smoke.py \
   --dataset-root data/smoke \
   --split train \
+  --non-dry-framework yolox \
   --non-dry-framework yolov \
   --non-dry-framework rtdetr \
+  --yolox-train-script /path/to/YOLOX/tools/train.py \
   --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 \
   --device cpu \
   --require-training-execution \
@@ -236,6 +428,7 @@ python3 tools/run_external_finetune_smoke.py \
 
 Prepared per-framework templates:
 
+- `configs/examples/finetune_external/yolox_s_finetune_smoke.py`
 - `configs/examples/finetune_external/yolo_runtime_yolov8n_finetune_smoke.yaml`
 - `configs/examples/finetune_external/mmdetection_finetune_smoke.py`
 - `configs/examples/finetune_external/detectron2_finetune_smoke.yaml`
@@ -246,6 +439,7 @@ For MMDetection/Detectron2 external launchers, see:
 
 Report behavior notes:
 
+- YOLOX is the preferred Apache-2.0-friendly YOLO-style lane for external training.
 - RT-DETR non-dry torch-missing failures are explicit (`failure_code=E_DEP_TORCH_MISSING`).
 - With `--mmdet-train-script` / `--detectron2-train-script`, train-path audit can continue even when projection deps are unavailable; `projection_error` is recorded while `training_executed` reflects external launcher execution.
 
@@ -561,7 +755,7 @@ Then validate and evaluate in this repo.
 - When using GPU, install CUDA-enabled PyTorch and use --device cuda:0.
 - Keep the predictions schema consistent with the adapter output: image path + detections list.
 
-## YOLO26n smoke (RT-DETR scaffold)
+## YOLO26n smoke (RT-DETR reference trainer)
 
 This repo includes a tiny “it runs end-to-end” smoke command that:
 - fetches `data/coco128` if missing

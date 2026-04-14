@@ -1,7 +1,6 @@
 """Post-training finalization helpers for train_minimal."""
 
 from __future__ import annotations
-
 import json
 import shutil
 import sys
@@ -14,8 +13,17 @@ except ImportError:  # pragma: no cover
     torch = None
 
 from yolozu.metrics_report import build_report, write_csv_row, write_json
+from yolozu.training.platform import build_training_run_summary, project_reference_train_config
 
 from rtdetr_pose.train_utils import _now_utc, collect_rng_state, load_checkpoint_into, run_onnxrt_parity, save_checkpoint_bundle, unwrap_model
+
+
+def _write_onnx_export_meta(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
 
 def finalize_training(
@@ -145,6 +153,10 @@ def finalize_training(
         save_si_state_fn(str(args.si_state_out), si_accum.finalize(unwrap_model(model)))
 
     onnx_path: Path | None = None
+    onnx_meta_path: Path | None = None
+    onnx_export_status = "disabled"
+    onnx_export_error: dict[str, str] | None = None
+    onnx_export_device = "cpu"
     if is_main and args.onnx_out:
         try:
             from rtdetr_pose.export import export_onnx
@@ -154,9 +166,15 @@ def finalize_training(
                 "Install 'onnx' to enable post-training ONNX export.",
                 file=sys.stderr,
             )
+            onnx_export_status = "import_failed"
+            onnx_export_error = {"type": type(exc).__name__, "message": str(exc)}
             export_onnx = None  # type: ignore[assignment]
 
         onnx_path = Path(str(args.onnx_out)) if export_onnx is not None else None
+        if args.onnx_meta_out:
+            onnx_meta_path = Path(str(args.onnx_meta_out))
+        elif args.onnx_out:
+            onnx_meta_path = Path(str(args.onnx_out)).with_suffix(Path(str(args.onnx_out)).suffix + ".meta.json")
         if onnx_path is not None:
             onnx_path.parent.mkdir(parents=True, exist_ok=True)
             if run_contract is not None and getattr(args, "best_checkpoint_out", None):
@@ -168,47 +186,51 @@ def finalize_training(
                         str(best_path),
                         restore_rng=False,
                     )
+            export_device = torch.device("cpu")
+            onnx_export_device = str(export_device)
+            # Export/parity run after training completes, so switching the live model to CPU
+            # avoids a second full model copy at finalize time.
+            export_model = unwrap_model(model).eval().to(export_device)
             dummy = torch.zeros(
                 (1, 3, int(args.image_size), int(args.image_size)),
                 dtype=torch.float32,
-                device=device,
+                device=export_device,
             )
             try:
                 export_onnx(
-                    unwrap_model(model).eval(),
+                    export_model,
                     dummy,
                     str(onnx_path),
                     opset_version=int(args.onnx_opset),
                     dynamic_hw=bool(args.onnx_dynamic_hw),
                 )
-            except RuntimeError as exc:
+                onnx_export_status = "ok"
+            except Exception as exc:
                 print(
                     f"WARNING: ONNX export failed — {exc}. Training results are saved; "
-                    "install 'onnx' to enable post-training ONNX export.",
+                    "the run continues without a post-training ONNX artifact.",
                     file=sys.stderr,
                 )
+                onnx_export_status = "failed"
+                onnx_export_error = {"type": type(exc).__name__, "message": str(exc)}
                 onnx_path = None
-            if onnx_path is not None:
-                if args.onnx_meta_out:
-                    meta_path = Path(str(args.onnx_meta_out))
-                else:
-                    meta_path = onnx_path.with_suffix(onnx_path.suffix + ".meta.json")
-                meta_path.parent.mkdir(parents=True, exist_ok=True)
-                meta = {
-                    "timestamp_utc": _now_utc(),
-                    "onnx": str(onnx_path),
-                    "opset": int(args.onnx_opset),
-                    "dynamic_hw": bool(args.onnx_dynamic_hw),
-                    "dummy_input": {
-                        "shape": [1, 3, int(args.image_size), int(args.image_size)],
-                        "dtype": "float32",
-                    },
-                    "run_record": run_record,
-                }
-                meta_path.write_text(
-                    json.dumps(meta, indent=2, sort_keys=True),
-                    encoding="utf-8",
-                )
+        if onnx_meta_path is not None:
+            meta = {
+                "timestamp_utc": _now_utc(),
+                "status": onnx_export_status,
+                "onnx": str(onnx_path) if onnx_path is not None else None,
+                "requested_output": str(args.onnx_out),
+                "opset": int(args.onnx_opset),
+                "dynamic_hw": bool(args.onnx_dynamic_hw),
+                "dummy_input": {
+                    "shape": [1, 3, int(args.image_size), int(args.image_size)],
+                    "dtype": "float32",
+                },
+                "export_device": onnx_export_device,
+                "error": onnx_export_error,
+                "run_record": run_record,
+            }
+            _write_onnx_export_meta(onnx_meta_path, meta)
 
     parity_out = getattr(args, "parity_json_out", None)
     if is_main and parity_out:
@@ -254,6 +276,52 @@ def finalize_training(
             json.dumps(run_record, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+
+    summary_out = getattr(args, "training_summary_out", None)
+    if is_main and summary_out:
+        summary_path = Path(str(summary_out))
+        parity_status = "not_requested"
+        if parity_out:
+            parity_status = "ok" if onnx_path is not None else "skipped"
+        summary = build_training_run_summary(
+            backend_id="reference-rtdetr-pose",
+            report_path=summary_path,
+            train_config=project_reference_train_config(args=args),
+            dataset_root=str(getattr(args, "dataset_root", None) or "") or None,
+            split=str(getattr(args, "split", None) or "") or None,
+            dry_run=False,
+            work_dir=str(run_dir) if run_dir is not None else None,
+            steps={
+                "train": {
+                    "status": "ok",
+                    "ok": True,
+                    "executed": True,
+                },
+                "export": {
+                    "status": onnx_export_status,
+                    "ok": onnx_export_status in {"ok", "disabled", "import_failed"},
+                    "executed": onnx_export_status == "ok",
+                    "artifact": str(onnx_path) if onnx_path is not None else None,
+                    "meta": str(onnx_meta_path) if onnx_meta_path is not None else None,
+                },
+                "eval": {
+                    "status": "embedded_in_train",
+                    "ok": True,
+                    "executed": True,
+                    "artifact": str(getattr(args, "val_metrics_jsonl", None) or ""),
+                },
+                "parity": {
+                    "status": parity_status,
+                    "ok": parity_status != "failed",
+                    "executed": bool(parity_out and onnx_path is not None),
+                    "artifact": str(parity_out) if parity_out else None,
+                },
+            },
+            notes=["Reference trainer emits the richer run contract under runs/<run_id>/ when enabled."],
+            license_boundary={"repo_code": "Apache-2.0", "optional_bridge": False},
+        )
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
 
     if ddp_enabled:
         torch.distributed.barrier()
