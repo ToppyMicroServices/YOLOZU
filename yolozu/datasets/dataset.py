@@ -891,7 +891,6 @@ def _resolve_segmentation_descriptor_layout(
     task = str(data.get("task") or "").strip().lower()
     if task != "semantic_segmentation":
         return None
-    samples = data.get("samples") or []
     split_candidates = [str(data.get("split"))] if data.get("split") else None
     return DatasetLayoutInfo(
         format_name="yolozu_segmentation_descriptor",
