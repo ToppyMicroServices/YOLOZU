@@ -7,6 +7,14 @@ training is supported in YOLOZU for this RT-DETR pose lane. What YOLOZU does not
 general-purpose training framework for every model family. The reference trainer still supports a **production-style run contract**
 (fixed artifact paths, full resume, safety guards, export + parity checks).
 
+Dataset-format boundary: the RT-DETR reference trainer consumes a dataset root that `build_manifest(...)`
+can read, which in practice means a YOLO-style root or a YOLOZU wrapper/descriptor that has already been
+normalized. Users still do not need to hand-pick the source layout manually: `yolozu doctor import --dataset-from auto`,
+`yolozu import dataset --from auto`, and `yolozu migrate dataset --from auto` can auto-detect supported native
+sources such as COCO, COCO keypoints, Ultralytics/YOLO, and supported semantic-segmentation roots before the
+training step. The multi-format boundary therefore lives in the preflight/import/migrate stage, not in the
+reference trainer itself.
+
 For YOLO-style training outside the reference trainer, use the **external training lane**.
 YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
 is documented as a separate runtime/license boundary.
@@ -23,7 +31,7 @@ Use this scope boundary when deciding whether YOLOZU should own the training ste
 
 | Lane | Status | What it is for | Notes |
 |---|---|---|---|
-| RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. |
+| RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. Feed it a normalized YOLOZU/YOLO-style dataset root; use auto-detect import/migrate for native layouts first. |
 | YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. |
 | MMDetection external lane | Experimental external lane | Bbox / instance-seg training launched from the top-level CLI | Best fit when the backend-native detection stack already lives in OpenMMLab. |
 | MMPose external lane | Experimental external lane | Keypoints / pose training launched from the top-level CLI | Export handoff is standardized around COCO keypoints results JSON normalized into the predictions interface contract. |
@@ -148,8 +156,10 @@ if not dataset_root.is_absolute():
 ```
 
 The adapter registry (`yolozu.datasets.registry.probe_format`) auto-detects
-whether a directory is COCO-native or YOLO-format, so both `data/coco/` and
-`data/coco-yolo/` work transparently.
+native COCO, COCO keypoints, YOLO/Ultralytics, YOLOZU wrappers, and the
+supported semantic-segmentation roots for doctor/import/migrate flows. For the
+RT-DETR reference trainer itself, pass the normalized YOLOZU/YOLO-style root
+produced by that step (for example `data/coco-yolo/` or a YOLOZU wrapper root).
 
 ## Training (RT-DETR pose reference trainer)
 
@@ -158,6 +168,26 @@ whether a directory is COCO-native or YOLO-format, so both `data/coco/` and
 
 2) Fetch the sample dataset (coco128):
 - bash tools/fetch_coco128.sh
+
+If your starting point is a native dataset root instead of an already-normalized
+YOLO/YOLOZU layout, normalize it first:
+
+```bash
+python3 -m yolozu doctor import \
+  --dataset-from auto \
+  --dataset /path/to/native_dataset_root \
+  --split val2017 \
+  --output -
+python3 -m yolozu migrate dataset \
+  --from auto \
+  --dataset /path/to/native_dataset_root \
+  --split val2017 \
+  --output reports/native_dataset_wrapper \
+  --force
+```
+
+The resulting wrapper root can then be passed to `--dataset-root` for the
+reference trainer.
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher

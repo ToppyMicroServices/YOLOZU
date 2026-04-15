@@ -14997,11 +14997,11 @@
         },
         {
           "command": "python3 -m yolozu doctor import --dataset-from auto --dataset data/conversion_tiny_coco --split val2017 --output -",
-          "description": "Auto-detect a dataset root before conversion so the user does not need to choose the source layout manually."
+          "description": "Auto-detect a native dataset root before wrapper conversion so the user does not need to choose the source layout manually."
         },
         {
           "command": "python3 -m yolozu migrate dataset --from auto --dataset data/conversion_tiny_coco --split val2017 --output reports/conversion_tiny_wrapper --force",
-          "description": "Create a YOLOZU wrapper from an auto-detected dataset root."
+          "description": "Create a YOLOZU wrapper from an auto-detected dataset root so the RT-DETR reference trainer can consume a normalized YOLOZU/YOLO-style layout."
         },
         {
           "command": "python3 -m yolozu export-dataset coco --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_coco --force",
@@ -15151,14 +15151,14 @@
           "required": false
         },
         {
-          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes; auto-detect covers YOLO/Ultralytics, COCO/COCO keypoints, YOLOZU wrappers, and supported semantic-segmentation roots/descriptors.",
+          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes. For the RT-DETR reference lane, pass the normalized YOLOZU/YOLO-style root produced by doctor/import/migrate; auto-detect spans YOLO/Ultralytics, COCO/COCO keypoints, YOLOZU wrappers, and supported semantic-segmentation roots/descriptors.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
           "required": false
         },
         {
-          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args and can resolve bbox, keypoints, and semantic-segmentation layouts.",
+          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args so users do not need to identify native bbox, keypoints, or semantic-segmentation layouts manually before wrapper normalization.",
           "flag": "--dataset-from",
           "kind": "string",
           "name": "dataset_from",
@@ -16219,7 +16219,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
+      "summary": "Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
       "tags": [
         "cli",
         "predictions",
