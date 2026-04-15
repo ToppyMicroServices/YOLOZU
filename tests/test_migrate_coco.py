@@ -34,6 +34,7 @@ class TestMigrateCoco(unittest.TestCase):
             instances_path.write_text(json.dumps(instances), encoding="utf-8")
 
             out_root = root / "out"
+            coco_root_arg = str(coco_root.relative_to(repo_root))
             proc = self._run(
                 [
                     "migrate",
@@ -41,7 +42,7 @@ class TestMigrateCoco(unittest.TestCase):
                     "--from",
                     "coco",
                     "--coco-root",
-                    str(coco_root),
+                    coco_root_arg,
                     "--split",
                     "val2017",
                     "--output",
@@ -55,6 +56,8 @@ class TestMigrateCoco(unittest.TestCase):
 
             wrapper = out_root / "dataset.json"
             self.assertTrue(wrapper.is_file())
+            wrapper_payload = json.loads(wrapper.read_text(encoding="utf-8"))
+            self.assertEqual(wrapper_payload.get("images_dir"), str((coco_root / "images" / "val2017").resolve()))
             label_path = out_root / "labels" / "val2017" / "0001.txt"
             self.assertTrue(label_path.is_file())
             self.assertTrue((out_root / "labels" / "val2017" / "classes.txt").is_file())
@@ -130,4 +133,3 @@ class TestMigrateCoco(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

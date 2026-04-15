@@ -1300,6 +1300,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_demo.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu demo`.")
     p_demo.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="demo")
 
+    p_export_dataset = sub.add_parser("export-dataset", help="Delegate to yolozu package CLI export-dataset command.")
+    p_export_dataset.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu export-dataset`.")
+    p_export_dataset.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="export-dataset")
+
     p_completion = sub.add_parser("completion", aliases=["comp"], help="Print shell completion script (bash/zsh).")
     p_completion.add_argument("-s", "--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
     p_completion.add_argument("-c", "--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
@@ -1391,7 +1395,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     raw_argv = sys.argv[1:] if argv is None else argv
-    if raw_argv and raw_argv[0] in {"calibrate", "eval-long-tail", "long-tail-recipe"}:
+    if raw_argv and raw_argv[0] in {"calibrate", "eval-long-tail", "long-tail-recipe", "export-dataset"}:
         from yolozu.cli import main as pkg_main
 
         return int(pkg_main(raw_argv))

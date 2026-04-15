@@ -13,6 +13,7 @@ from .cli_commands import (
     _cmd_list_models,
     _cmd_fetch_model,
     _cmd_export,
+    _cmd_export_dataset,
     _cmd_predict_images,
     _cmd_eval_coco,
     _cmd_calibrate,
@@ -111,6 +112,17 @@ def main(argv: list[str] | None = None) -> int:
         help="Predictions JSON output path (default: reports/predictions.json).",
     )
     export.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
+
+    export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO or KITTI layout.")
+    export_dataset.add_argument(
+        "to_format",
+        choices=("yolo", "kitti"),
+        help="Target dataset layout.",
+    )
+    export_dataset.add_argument("--dataset", required=True, help="YOLOZU dataset root or dataset.json wrapper.")
+    export_dataset.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
+    export_dataset.add_argument("--out-dir", required=True, help="Output directory for the exported dataset layout.")
+    export_dataset.add_argument("--force", action="store_true", help="Overwrite the output directory if it exists.")
 
     predict = sub.add_parser("predict-images", help="Run folder inference and write predictions JSON + overlays + HTML.")
     predict.add_argument("--backend", choices=("dummy", "onnxrt"), default="dummy", help="Inference backend.")
@@ -1023,6 +1035,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_fetch_model(args)
     if args.command == "export":
         return _cmd_export(args)
+    if args.command == "export-dataset":
+        return _cmd_export_dataset(args)
     if args.command == "predict-images":
         return _cmd_predict_images(args)
     if args.command == "eval-coco":

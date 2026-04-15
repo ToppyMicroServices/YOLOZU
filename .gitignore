@@ -13,6 +13,8 @@ rtdetr_pose/reports/
 /data/*
 !/data/smoke/
 !/data/smoke/**
+!/data/conversion_tiny_coco/
+!/data/conversion_tiny_coco/**
 
 # Training / build artifacts
 runs/

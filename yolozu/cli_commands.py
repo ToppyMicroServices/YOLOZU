@@ -591,6 +591,34 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_export_dataset(args: argparse.Namespace) -> int:
+    from yolozu.datasets.exports import export_kitti_dataset, export_yolo_dataset
+
+    target = str(getattr(args, "to_format", ""))
+    dataset = str(getattr(args, "dataset", "") or "")
+    out_dir = str(getattr(args, "out_dir", "") or "")
+    split = str(args.split) if getattr(args, "split", None) else None
+    force = bool(getattr(args, "force", False))
+
+    if not dataset:
+        raise SystemExit("--dataset is required")
+    if not out_dir:
+        raise SystemExit("--out-dir is required")
+
+    try:
+        if target == "yolo":
+            out_root = export_yolo_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+        elif target == "kitti":
+            out_root = export_kitti_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+        else:
+            raise SystemExit(f"unsupported export-dataset target: {target}")
+    except (FileExistsError, FileNotFoundError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+
+    print(str(out_root))
+    return 0
+
+
 def _cmd_validate(args: argparse.Namespace) -> int:
     if args.validate_command == "dataset":
         from yolozu.dataset import build_manifest

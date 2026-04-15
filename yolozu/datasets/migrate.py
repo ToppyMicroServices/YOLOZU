@@ -203,6 +203,8 @@ def migrate_coco_dataset_wrapper(
         raise ValueError("--mode must be manifest|copy|symlink")
 
     coco_root_path = Path(coco_root)
+    if not coco_root_path.is_absolute():
+        coco_root_path = (Path.cwd() / coco_root_path).resolve()
     split = str(split)
     images_src = _resolve_coco_images_dir(coco_root_path, split)
 

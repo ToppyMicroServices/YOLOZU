@@ -402,6 +402,19 @@ yolozu migrate dataset   --from coco   --coco-root /path/to/coco_like_root   --s
 yolozu validate dataset data/coco_yolo_like --strict
 \end{lstlisting}
 
+To export that wrapper into external training layouts:
+\begin{lstlisting}[language=bash]
+yolozu export-dataset yolo   --dataset data/coco_yolo_like   --split val2017   --out-dir data/coco_yolo_export   --force
+yolozu export-dataset kitti   --dataset data/coco_yolo_like   --split val2017   --out-dir data/coco_kitti_export   --force
+\end{lstlisting}
+
+For a repo-bundled tiny sample that exercises \cmd{COCO -> YOLOZU -> YOLO/KITTI} end to end:
+\begin{lstlisting}[language=bash]
+yolozu migrate dataset   --from coco   --coco-root data/conversion_tiny_coco   --split val2017   --output reports/conversion_tiny_wrapper   --force
+yolozu export-dataset yolo   --dataset reports/conversion_tiny_wrapper   --split val2017   --out-dir reports/conversion_tiny_yolo   --force
+yolozu export-dataset kitti   --dataset reports/conversion_tiny_wrapper   --split val2017   --out-dir reports/conversion_tiny_kitti   --force
+\end{lstlisting}
+
 \subsection{Detectron2 / MMDetection predictions interop}
 For Detectron2/MMDetection users, keep framework-native inference and only export detections into \path{predictions.json}:
 \begin{lstlisting}[language=bash]

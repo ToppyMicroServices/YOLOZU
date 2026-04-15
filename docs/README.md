@@ -268,6 +268,8 @@ Shortest flow:
 
 ```bash
 yolozu migrate dataset --from coco --coco-root /path/to/coco --split val2017 --output data/coco_yolo_like --mode manifest
+yolozu export-dataset yolo --dataset data/coco_yolo_like --split val2017 --out-dir data/coco_yolo_export --force
+yolozu export-dataset kitti --dataset data/coco_yolo_like --split val2017 --out-dir data/coco_kitti_export --force
 python3 tools/export_predictions_detectron2.py --dataset data/coco_yolo_like --split val2017 --config /path/to/d2_config.yaml --weights /path/to/model_final.pth --protocol nms_applied --output reports/pred_detectron2.json
 python3 tools/export_predictions_mmdet.py --dataset data/coco_yolo_like --split val2017 --config /path/to/mmdet_config.py --checkpoint /path/to/epoch_12.pth --protocol nms_applied --output reports/pred_mmdet.json
 ```

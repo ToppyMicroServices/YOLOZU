@@ -14809,7 +14809,8 @@
         "docs/training_orchestration.md",
         "docs/run_contract.md",
         "manual/chapters/07_training_run_contract.tex",
-        "docs/interop_detectron2_mmdet.md"
+        "docs/interop_detectron2_mmdet.md",
+        "docs/migrate.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14855,6 +14856,12 @@
             "flag": "--html",
             "kind": "file",
             "scope": "path"
+          },
+          {
+            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels or KITTI image_2/label_2).",
+            "flag": "--out-dir",
+            "kind": "dir",
+            "scope": "tree"
           }
         ]
       },
@@ -14979,6 +14986,14 @@
         {
           "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
           "description": "Plan a multi-backend training batch through the top-level CLI."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset yolo --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_yolo --force",
+          "description": "Export a YOLOZU wrapper into a standalone YOLO-style data.yaml/images/labels layout."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset kitti --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_kitti --force",
+          "description": "Export a YOLOZU wrapper into a KITTI-style image_2/label_2/ImageSets layout."
         }
       ],
       "id": "yolozu",
@@ -16128,6 +16143,13 @@
           "kind": "string",
           "name": "train_opt",
           "required": false
+        },
+        {
+          "description": "Output directory for dataset layout exports produced by `yolozu export-dataset`.",
+          "flag": "--out-dir",
+          "kind": "dir",
+          "name": "out_dir",
+          "required": false
         }
       ],
       "maturity": "stable",
@@ -16151,6 +16173,11 @@
           "description": "Optional overlay directory when --overlays-dir is used.",
           "kind": "dir",
           "name": "overlays_dir"
+        },
+        {
+          "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided.",
+          "kind": "dir",
+          "name": "export_dataset_root"
         }
       ],
       "platform": {

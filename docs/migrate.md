@@ -129,6 +129,42 @@ Then validate:
 yolozu validate dataset data/coco_yolo_like --split val2017
 ```
 
+### YOLOZU wrapper -> YOLO / KITTI
+
+Once a dataset is in YOLOZU wrapper form, you can export it into small external training layouts:
+
+```bash
+yolozu export-dataset yolo \
+  --dataset data/coco_yolo_like \
+  --split val2017 \
+  --out-dir data/coco_yolo_export \
+  --force
+
+yolozu export-dataset kitti \
+  --dataset data/coco_yolo_like \
+  --split val2017 \
+  --out-dir data/coco_kitti_export \
+  --force
+```
+
+YOLO export writes:
+- `data/coco_yolo_export/data.yaml`
+- `data/coco_yolo_export/images/<split>/*`
+- `data/coco_yolo_export/labels/<split>/*.txt`
+
+KITTI export writes:
+- `data/coco_kitti_export/image_2/*`
+- `data/coco_kitti_export/label_2/*.txt`
+- `data/coco_kitti_export/ImageSets/Main/<split>.txt`
+
+Repo-bundled tiny sample:
+
+```bash
+python3 -m yolozu migrate dataset --from coco --coco-root data/conversion_tiny_coco --split val2017 --output reports/conversion_tiny_wrapper --force
+python3 -m yolozu export-dataset yolo --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_yolo --force
+python3 -m yolozu export-dataset kitti --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_kitti --force
+```
+
 ### COCO results → `predictions.json`
 
 Detectron2/MMDetection/YOLOX often export **COCO detection results** (list of `image_id/category_id/bbox/score`).
