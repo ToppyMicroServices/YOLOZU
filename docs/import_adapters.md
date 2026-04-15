@@ -141,11 +141,18 @@ yolozu doctor import \
 Auto-detect mode is also available:
 
 ```bash
+yolozu doctor import --dataset-from auto --dataset /path/to/dataset_root --split val2017 --output -
 yolozu doctor import --dataset-from auto --instances /path/to/instances.json --images-dir /path/to/images --output -
 yolozu doctor import --config-from auto --args /path/to/args.yaml --output -
 ```
 
 When COCO categories include `category_id=0`, doctor/import reports a warning and expects normalized mapping via `classes.json` for fair cross-platform evaluation.
+
+For dataset roots, auto-detect covers the common cases:
+- plain COCO root: `images/<split>/` + `annotations/instances_<split>.json`
+- YOLO/Ultralytics `data.yaml`
+- direct YOLO layout: `images/<split>/` + `labels/<split>/`
+- YOLOZU wrapper: `dataset.json`
 
 ## Train shorthand (`train --import`)
 

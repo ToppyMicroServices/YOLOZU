@@ -8,6 +8,7 @@ produce a unified list of sample records.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -19,7 +20,42 @@ __all__ = [
     "load_yolo_dataset",
     "load_coco_instances_dataset",
     "build_manifest",
+    "inspect_dataset_layout",
 ]
+
+
+@dataclass(frozen=True)
+class DatasetLayoutInfo:
+    format_name: str
+    root: str
+    split: str | None = None
+    images_dir: str | None = None
+    labels_dir: str | None = None
+    data_yaml: str | None = None
+    instances_json: str | None = None
+    label_format: str | None = None
+    split_candidates: list[str] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "format": self.format_name,
+            "root": self.root,
+        }
+        if self.split is not None:
+            payload["split"] = self.split
+        if self.images_dir is not None:
+            payload["images_dir"] = self.images_dir
+        if self.labels_dir is not None:
+            payload["labels_dir"] = self.labels_dir
+        if self.data_yaml is not None:
+            payload["data_yaml"] = self.data_yaml
+        if self.instances_json is not None:
+            payload["instances_json"] = self.instances_json
+        if self.label_format is not None:
+            payload["label_format"] = self.label_format
+        if self.split_candidates:
+            payload["split_candidates"] = list(self.split_candidates)
+        return payload
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy as np
@@ -662,6 +698,164 @@ def _resolve_dataset_json_layout(dataset_root: Path, split: str | None) -> tuple
     return img, lbl, effective_split, label_format_out
 
 
+def _available_yolo_splits(dataset_root: Path) -> list[str]:
+    images_root = dataset_root / "images"
+    if not images_root.exists() or not images_root.is_dir():
+        return []
+    splits: list[str] = []
+    try:
+        for child in sorted(images_root.iterdir()):
+            if child.is_dir():
+                splits.append(child.name)
+    except OSError:
+        return []
+    return splits
+
+
+def _available_coco_splits(dataset_root: Path) -> list[str]:
+    ann_root = dataset_root / "annotations"
+    if not ann_root.exists() or not ann_root.is_dir():
+        return []
+    splits: list[str] = []
+    try:
+        for child in sorted(ann_root.glob("instances_*.json")):
+            name = child.stem
+            if name.startswith("instances_"):
+                splits.append(name[len("instances_") :])
+    except OSError:
+        return []
+    return splits
+
+
+def _resolve_coco_root_layout(
+    dataset_root: Path,
+    split: str | None,
+) -> tuple[Path, Path, str] | None:
+    ann_root = dataset_root / "annotations"
+    if not ann_root.exists() or not ann_root.is_dir():
+        return None
+
+    requested = str(split).strip() if split is not None else ""
+    candidates = [requested] if requested else []
+    if not candidates:
+        candidates = _available_coco_splits(dataset_root)
+        preferred = ("val2017", "val", "train2017", "train")
+        ordered: list[str] = []
+        for item in preferred:
+            if item in candidates and item not in ordered:
+                ordered.append(item)
+        for item in candidates:
+            if item not in ordered:
+                ordered.append(item)
+        candidates = ordered
+    for split_name in candidates:
+        if not split_name:
+            continue
+        instances_path = ann_root / f"instances_{split_name}.json"
+        if not instances_path.exists():
+            continue
+        images_dir = dataset_root / "images" / split_name
+        if not images_dir.exists():
+            fallback = dataset_root / split_name
+            if fallback.exists():
+                images_dir = fallback
+            else:
+                continue
+        return images_dir, instances_path, split_name
+    return None
+
+
+def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[str, Any] | None:
+    path = Path(dataset_root)
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+
+    if path.is_file():
+        if path.suffix.lower() in (".yaml", ".yml"):
+            resolved = _resolve_ultralytics_data_yaml(path, split)
+            if resolved is not None:
+                images_dir, labels_dir, split_effective, root, label_format = resolved
+                return DatasetLayoutInfo(
+                    format_name="ultralytics_data_yaml",
+                    root=str(root),
+                    split=split_effective,
+                    images_dir=str(images_dir),
+                    labels_dir=str(labels_dir),
+                    data_yaml=str(path),
+                    label_format=label_format,
+                    split_candidates=_available_yolo_splits(root),
+                ).to_dict()
+        if path.suffix.lower() == ".json":
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                data = None
+            if isinstance(data, dict):
+                fmt = str(data.get("format") or "").strip().lower()
+                if path.name == "dataset.json":
+                    if fmt in ("coco_instances", "coco-instances", "coco"):
+                        return DatasetLayoutInfo(
+                            format_name="yolozu_coco_wrapper",
+                            root=str(path.parent),
+                            split=str(data.get("split") or split or ""),
+                            images_dir=str(data.get("images_dir") or ""),
+                            instances_json=str(data.get("instances_json") or ""),
+                            split_candidates=([str(data.get("split"))] if data.get("split") else None),
+                        ).to_dict()
+                    resolved = _resolve_dataset_json_layout(path.parent, split)
+                    if resolved is not None:
+                        images_dir, labels_dir, split_effective, label_format = resolved
+                        return DatasetLayoutInfo(
+                            format_name="yolozu_wrapper",
+                            root=str(path.parent),
+                            split=split_effective,
+                            images_dir=str(images_dir),
+                            labels_dir=str(labels_dir),
+                            label_format=label_format,
+                            split_candidates=_available_yolo_splits(path.parent),
+                        ).to_dict()
+        return None
+
+    desc = path / "dataset.json"
+    if desc.exists():
+        info = inspect_dataset_layout(desc, split=split)
+        if info is not None:
+            return info
+
+    data_yaml = path / "data.yaml"
+    if data_yaml.exists():
+        info = inspect_dataset_layout(data_yaml, split=split)
+        if info is not None:
+            return info
+
+    coco_layout = _resolve_coco_root_layout(path, split)
+    if coco_layout is not None:
+        images_dir, instances_path, split_effective = coco_layout
+        return DatasetLayoutInfo(
+            format_name="coco_root",
+            root=str(path),
+            split=split_effective,
+            images_dir=str(images_dir),
+            instances_json=str(instances_path),
+            split_candidates=_available_coco_splits(path),
+        ).to_dict()
+
+    split_effective = _pick_split(path, split)
+    images_dir = path / "images" / split_effective
+    labels_dir = path / "labels" / split_effective
+    if images_dir.exists() and labels_dir.exists():
+        return DatasetLayoutInfo(
+            format_name="yolo_layout",
+            root=str(path),
+            split=split_effective,
+            images_dir=str(images_dir),
+            labels_dir=str(labels_dir),
+            split_candidates=_available_yolo_splits(path),
+        ).to_dict()
+
+    return None
+
+
 def _resolve_path_from_descriptor(value: Any, *, base: Path) -> Path | None:
     if not isinstance(value, str) or not value.strip():
         return None
@@ -850,6 +1044,15 @@ def build_manifest(dataset_root, *, split: str | None = None, label_format: str 
     resolved = _build_manifest_from_dataset_descriptor(desc, split=split, label_format=label_format)
     if resolved is not None:
         return resolved
+
+    coco_layout = _resolve_coco_root_layout(dataset_root, split)
+    if coco_layout is not None:
+        images_dir, instances_path, split_effective = coco_layout
+        instances_doc = json.loads(instances_path.read_text(encoding="utf-8"))
+        if not isinstance(instances_doc, dict):
+            raise ValueError("invalid COCO instances JSON (expected object)")
+        records = load_coco_instances_dataset(instances_doc, images_dir=images_dir, include_crowd=False)
+        return {"images": records, "split": split_effective}
 
     split_effective = _pick_split(dataset_root, split)
     images_dir = dataset_root / "images" / split_effective

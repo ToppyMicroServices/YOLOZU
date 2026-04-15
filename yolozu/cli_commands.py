@@ -63,8 +63,20 @@ def _resolve_auto_dataset_from_args(args: argparse.Namespace) -> str:
         return "coco-instances"
     if getattr(args, "data", None):
         return "ultralytics"
+    dataset_path = getattr(args, "dataset", None)
+    if dataset_path:
+        from yolozu.dataset import inspect_dataset_layout
+
+        info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+        if info is None:
+            raise SystemExit(f"could not auto-detect dataset source from path: {dataset_path}")
+        fmt = str(info.get("format") or "")
+        if fmt in ("coco_root", "yolozu_coco_wrapper"):
+            return "coco"
+        if fmt in ("ultralytics_data_yaml", "yolo_layout", "yolozu_wrapper"):
+            return "ultralytics"
     raise SystemExit(
-        "could not auto-detect dataset source; provide --data (ultralytics) or --instances + --images-dir (coco-instances)"
+        "could not auto-detect dataset source; provide --dataset, --data (ultralytics), or --instances + --images-dir (coco-instances)"
     )
 
 
@@ -374,7 +386,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 
     from yolozu.coco_convert import build_category_map_from_coco
-    from yolozu.dataset import build_manifest
+    from yolozu.dataset import build_manifest, inspect_dataset_layout
     from yolozu.imports import (
         project_detectron2_config,
         project_mmdet_config,
@@ -397,12 +409,24 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
 
     dataset_from = getattr(args, "dataset_from", None)
     config_from = getattr(args, "config_from", None)
+    dataset_arg = getattr(args, "dataset", None)
     if not dataset_from and not config_from:
         raise SystemExit("doctor import requires at least one of: --dataset-from, --config-from")
 
+    layout_info = None
+    if dataset_arg:
+        layout_info = inspect_dataset_layout(str(dataset_arg), split=str(args.split) if getattr(args, "split", None) else None)
+        if layout_info is None and dataset_from:
+            raise SystemExit(f"could not inspect dataset layout: {dataset_arg}")
+
     if dataset_from and str(dataset_from).strip().lower() == "auto":
-        dataset_from = _resolve_auto_dataset_from_args(args)
-        report["warnings"].append(f"dataset source auto-detected: {dataset_from}")
+        if layout_info is not None:
+            fmt = str(layout_info.get("format") or "")
+            dataset_from = "coco" if fmt == "coco_root" else "ultralytics"
+            report["warnings"].append(f"dataset source auto-detected: {dataset_from} (layout: {fmt})")
+        else:
+            dataset_from = _resolve_auto_dataset_from_args(args)
+            report["warnings"].append(f"dataset source auto-detected: {dataset_from}")
     if config_from and str(config_from).strip().lower() == "auto":
         config_from = _resolve_auto_config_from_args(args)
         report["warnings"].append(f"config source auto-detected: {config_from}")
@@ -459,16 +483,46 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "category_id_zero_present": bool(has_category_id_zero),
                 "classes_preview": list(cat_map.class_names[:20]),
             }
+        elif src == "coco":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --dataset-from coco")
+            info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+            if info is None or str(info.get("format") or "") != "coco_root":
+                raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+            instances_path = Path(str(info.get("instances_json") or "")).expanduser()
+            images_dir = Path(str(info.get("images_dir") or "")).expanduser()
+            instances_doc = json.loads(instances_path.read_text(encoding="utf-8"))
+            images = instances_doc.get("images") or []
+            annotations = instances_doc.get("annotations") or []
+            include_crowd = bool(getattr(args, "include_crowd", False))
+            if not include_crowd and isinstance(annotations, list):
+                annotations = [a for a in annotations if not (isinstance(a, dict) and int(a.get("iscrowd", 0) or 0) == 1)]
+            cat_map = build_category_map_from_coco(instances_doc)
+            report["dataset"] = {
+                "from": "coco",
+                "layout": info,
+                "split": str(info.get("split") or ""),
+                "instances_json": str(instances_path),
+                "images_dir": str(images_dir),
+                "include_crowd": include_crowd,
+                "counts": {
+                    "images": int(len(images)) if isinstance(images, list) else None,
+                    "annotations": int(len(annotations)) if isinstance(annotations, list) else None,
+                    "classes": int(len(cat_map.class_names)),
+                },
+                "classes_preview": list(cat_map.class_names[:20]),
+            }
         elif src == "ultralytics":
-            data_yaml = getattr(args, "data", None)
-            if not data_yaml:
-                raise SystemExit("--data is required for --dataset-from ultralytics")
+            dataset_source = getattr(args, "data", None) or getattr(args, "dataset", None)
+            if not dataset_source:
+                raise SystemExit("--data or --dataset is required for --dataset-from ultralytics")
             label_format = None
             task = getattr(args, "task", None)
             if task and str(task).strip().lower() == "segment":
                 label_format = "segment"
             manifest = build_manifest(
-                str(data_yaml),
+                str(dataset_source),
                 split=str(args.split) if getattr(args, "split", None) else None,
                 label_format=label_format,
             )
@@ -487,9 +541,10 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                         continue
             report["dataset"] = {
                 "from": "ultralytics",
-                "data_yaml": str(data_yaml),
+                "dataset": str(dataset_source),
                 "split": manifest.get("split"),
                 "label_format": label_format,
+                "layout": layout_info,
                 "counts": {
                     "images": int(len(records)),
                     "labels": int(label_count),
@@ -592,7 +647,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
 
 
 def _cmd_export_dataset(args: argparse.Namespace) -> int:
-    from yolozu.datasets.exports import export_kitti_dataset, export_yolo_dataset
+    from yolozu.datasets.exports import export_coco_dataset, export_kitti_dataset, export_yolo_dataset
 
     target = str(getattr(args, "to_format", ""))
     dataset = str(getattr(args, "dataset", "") or "")
@@ -610,6 +665,8 @@ def _cmd_export_dataset(args: argparse.Namespace) -> int:
             out_root = export_yolo_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
         elif target == "kitti":
             out_root = export_kitti_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+        elif target == "coco":
+            out_root = export_coco_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
         else:
             raise SystemExit(f"unsupported export-dataset target: {target}")
     except (FileExistsError, FileNotFoundError, ValueError) as exc:
@@ -1326,30 +1383,68 @@ def _cmd_resources(args: argparse.Namespace) -> int:
 
 
 def _cmd_migrate(args: argparse.Namespace) -> int:
+    from yolozu.dataset import inspect_dataset_layout
     from yolozu.migrate import (
         migrate_coco_dataset_wrapper,
         migrate_coco_results_predictions,
         migrate_seg_dataset_descriptor,
         migrate_ultralytics_dataset_wrapper,
+        write_dataset_wrapper,
     )
 
     if args.migrate_command == "dataset":
-        if str(args.from_format) == "ultralytics":
-            out = migrate_ultralytics_dataset_wrapper(
-                data_yaml=str(args.data) if args.data else None,
-                args_yaml=str(args.args) if args.args else None,
-                split=str(args.split) if args.split else None,
-                task=str(args.task) if args.task else None,
-                output=str(args.output),
-                force=bool(args.force),
-            )
-        elif str(args.from_format) == "coco":
-            if not args.coco_root:
-                raise SystemExit("--coco-root is required for --from coco")
-            split = str(args.split) if args.split else "val2017"
+        from_format = str(args.from_format)
+        if from_format == "auto":
+            from_format = _resolve_auto_dataset_from_args(args)
+
+        if from_format == "ultralytics":
+            dataset_path = getattr(args, "dataset", None)
+            if dataset_path:
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None:
+                    raise SystemExit(f"could not inspect dataset layout: {dataset_path}")
+                fmt = str(info.get("format") or "")
+                if fmt in ("yolo_layout", "yolozu_wrapper", "yolozu_coco_wrapper"):
+                    out = write_dataset_wrapper(
+                        str(args.output),
+                        images_dir=str(info.get("images_dir")),
+                        labels_dir=str(info.get("labels_dir")),
+                        split=str(info.get("split") or args.split or "val"),
+                        label_format=(str(info.get("label_format")) if info.get("label_format") else None),
+                        source={"from": fmt, "dataset": str(dataset_path)},
+                        force=bool(args.force),
+                    )
+                else:
+                    data_yaml = str(info.get("data_yaml") or dataset_path)
+                    out = migrate_ultralytics_dataset_wrapper(
+                        data_yaml=data_yaml,
+                        args_yaml=str(args.args) if args.args else None,
+                        split=str(args.split) if args.split else None,
+                        task=str(args.task) if args.task else None,
+                        output=str(args.output),
+                        force=bool(args.force),
+                    )
+            else:
+                out = migrate_ultralytics_dataset_wrapper(
+                    data_yaml=str(args.data) if args.data else None,
+                    args_yaml=str(args.args) if args.args else None,
+                    split=str(args.split) if args.split else None,
+                    task=str(args.task) if args.task else None,
+                    output=str(args.output),
+                    force=bool(args.force),
+                )
+        elif from_format == "coco":
+            coco_root = getattr(args, "coco_root", None) or getattr(args, "dataset", None)
+            if not coco_root:
+                raise SystemExit("--coco-root or --dataset is required for --from coco")
+            info = inspect_dataset_layout(str(coco_root), split=str(args.split) if args.split else None)
+            if info is not None and str(info.get("format") or "") == "coco_root":
+                effective_split = str(info.get("split") or args.split or "val2017")
+            else:
+                effective_split = str(args.split) if args.split else "val2017"
             out = migrate_coco_dataset_wrapper(
-                coco_root=str(args.coco_root),
-                split=split,
+                coco_root=str(coco_root),
+                split=effective_split,
                 instances_json=(str(args.instances_json) if args.instances_json else None),
                 output=str(args.output),
                 mode=str(args.mode),
@@ -1412,6 +1507,7 @@ def _cmd_predictions(args: argparse.Namespace) -> int:
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
+    from yolozu.dataset import inspect_dataset_layout
     from yolozu.imports import (
         import_coco_instances_dataset,
         import_detectron2_config,
@@ -1419,7 +1515,7 @@ def _cmd_import(args: argparse.Namespace) -> int:
         import_ultralytics_config,
         import_yolox_config,
     )
-    from yolozu.migrate import migrate_ultralytics_dataset_wrapper
+    from yolozu.migrate import migrate_ultralytics_dataset_wrapper, write_dataset_wrapper
 
     try:
         if args.import_command == "dataset":
@@ -1428,12 +1524,52 @@ def _cmd_import(args: argparse.Namespace) -> int:
                 from_format = _resolve_auto_dataset_from_args(args)
 
             if from_format == "ultralytics":
+                dataset_path = getattr(args, "dataset", None)
+                layout_info = None
+                if dataset_path:
+                    layout_info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                    if layout_info is None:
+                        raise SystemExit(f"could not inspect dataset layout: {dataset_path}")
+                    fmt = str(layout_info.get("format") or "")
+                    if fmt in ("yolo_layout", "yolozu_wrapper"):
+                        out = write_dataset_wrapper(
+                            str(args.output),
+                            images_dir=str(layout_info.get("images_dir")),
+                            labels_dir=str(layout_info.get("labels_dir")),
+                            split=str(layout_info.get("split") or args.split or "val"),
+                            label_format=(str(layout_info.get("label_format")) if layout_info.get("label_format") else None),
+                            source={"from": fmt, "dataset": str(dataset_path)},
+                            force=bool(args.force),
+                        )
+                        print(str(out))
+                        return 0
+                    data_yaml = str(layout_info.get("data_yaml") or dataset_path)
+                else:
+                    data_yaml = str(args.data) if args.data else None
                 out = migrate_ultralytics_dataset_wrapper(
-                    data_yaml=str(args.data) if args.data else None,
+                    data_yaml=data_yaml,
                     args_yaml=str(args.args) if args.args else None,
                     split=str(args.split) if args.split else None,
                     task=str(args.task) if args.task else None,
                     output=str(args.output),
+                    force=bool(args.force),
+                )
+                print(str(out))
+                return 0
+
+            if from_format == "coco":
+                dataset_path = getattr(args, "dataset", None)
+                if not dataset_path:
+                    raise SystemExit("--dataset is required for --from coco")
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None or str(info.get("format") or "") != "coco_root":
+                    raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+                out = import_coco_instances_dataset(
+                    instances_json=str(info.get("instances_json")),
+                    images_dir=str(info.get("images_dir")),
+                    split=str(info.get("split") or args.split or "val2017"),
+                    output=str(args.output),
+                    include_crowd=bool(args.include_crowd),
                     force=bool(args.force),
                 )
                 print(str(out))

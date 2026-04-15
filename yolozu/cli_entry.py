@@ -57,10 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
     doctor_imp.add_argument(
         "--dataset-from",
-        choices=("auto", "ultralytics", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances"),
         default=None,
         help="Optional dataset import adapter to summarize.",
     )
+    doctor_imp.add_argument("--dataset", default=None, help="(dataset-from auto|ultralytics|coco) dataset root or descriptor path.")
     doctor_imp.add_argument(
         "--config-from",
         choices=("auto", "ultralytics", "mmdet", "yolox", "detectron2"),
@@ -116,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
     export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO or KITTI layout.")
     export_dataset.add_argument(
         "to_format",
-        choices=("yolo", "kitti"),
+        choices=("yolo", "kitti", "coco"),
         help="Target dataset layout.",
     )
     export_dataset.add_argument("--dataset", required=True, help="YOLOZU dataset root or dataset.json wrapper.")
@@ -496,10 +497,11 @@ def main(argv: list[str] | None = None) -> int:
     mig_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("ultralytics", "coco"),
+        choices=("auto", "ultralytics", "coco"),
         required=True,
         help="Source ecosystem.",
     )
+    mig_dataset.add_argument("--dataset", default=None, help="(auto) Dataset root or descriptor path to inspect.")
     mig_dataset.add_argument("--data", default=None, help="(Ultralytics) data.yaml path (preferred).")
     mig_dataset.add_argument("--args", default=None, help="(Ultralytics) args.yaml (optional; used for task/data inference).")
     mig_dataset.add_argument(
@@ -573,10 +575,11 @@ def main(argv: list[str] | None = None) -> int:
     imp_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("auto", "ultralytics", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances"),
         required=True,
         help="Source ecosystem.",
     )
+    imp_dataset.add_argument("--dataset", default=None, help="(auto|ultralytics|coco) Dataset root or descriptor path.")
     imp_dataset.add_argument("--output", required=True, help="Output directory (wrapper) or dataset.json file path.")
     imp_dataset.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     imp_dataset.add_argument("--split", default=None, help="Split name (COCO default: val2017; Ultralytics: from data.yaml).")

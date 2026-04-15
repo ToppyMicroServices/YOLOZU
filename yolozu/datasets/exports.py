@@ -17,6 +17,7 @@ from typing import Any
 from yolozu.core.image_size import get_image_size
 
 __all__ = [
+    "export_coco_dataset",
     "export_yolo_dataset",
     "export_kitti_dataset",
 ]
@@ -195,6 +196,115 @@ def _to_kitti_label_line(label: dict[str, Any], *, class_names: list[str], image
         f"{x1:.2f} {y1:.2f} {x2:.2f} {y2:.2f} "
         "-1.00 -1.00 -1.00 -1000.00 -1000.00 -1000.00 -10.00"
     )
+
+
+def _category_mappings_from_payload(payload: dict[str, Any], *, class_names: list[str]) -> tuple[dict[int, int], dict[int, int]]:
+    class_to_category_raw = payload.get("class_id_to_category_id") or payload.get("class_to_category_id") or {}
+    category_to_class_raw = payload.get("category_id_to_class_id") or {}
+
+    class_to_category: dict[int, int] = {}
+    if isinstance(class_to_category_raw, dict):
+        for key, value in class_to_category_raw.items():
+            try:
+                class_to_category[int(key)] = int(value)
+            except (TypeError, ValueError):
+                continue
+    if not class_to_category:
+        class_to_category = {idx: idx + 1 for idx in range(len(class_names))}
+
+    category_to_class: dict[int, int] = {}
+    if isinstance(category_to_class_raw, dict):
+        for key, value in category_to_class_raw.items():
+            try:
+                category_to_class[int(key)] = int(value)
+            except (TypeError, ValueError):
+                continue
+    if not category_to_class:
+        category_to_class = {category_id: class_id for class_id, category_id in class_to_category.items()}
+    return class_to_category, category_to_class
+
+
+def export_coco_dataset(
+    *,
+    dataset_root: str | Path,
+    split: str | None,
+    out_dir: str | Path,
+    force: bool = False,
+) -> Path:
+    from .dataset import build_manifest
+
+    source_root = _resolve_dataset_root(dataset_root)
+    manifest = build_manifest(source_root, split=split)
+    records = manifest.get("images") or []
+    split_effective = str(manifest.get("split") or split or "val2017")
+    if not isinstance(records, list):
+        raise ValueError("invalid dataset manifest (expected list under 'images')")
+
+    out_root = _prepare_output_root(out_dir, force=force)
+    images_dir = out_root / "images" / split_effective
+    ann_dir = out_root / "annotations"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    ann_dir.mkdir(parents=True, exist_ok=True)
+
+    base_root, _ = _resolve_source_split(source_root, split_effective)
+    classes_payload = _load_classes_payload(dataset_root=base_root, split=split_effective, records=records)
+    class_names = _class_names_from_payload(classes_payload)
+    class_to_category, _ = _category_mappings_from_payload(classes_payload, class_names=class_names)
+
+    categories = [
+        {"id": int(class_to_category.get(class_id, class_id + 1)), "name": str(name)}
+        for class_id, name in enumerate(class_names)
+    ]
+
+    images: list[dict[str, Any]] = []
+    annotations: list[dict[str, Any]] = []
+    ann_id = 1
+    for image_id, record in enumerate(records, start=1):
+        image_path = Path(str(record.get("image")))
+        if not image_path.exists():
+            raise FileNotFoundError(f"image not found: {image_path}")
+        image_w, image_h = _record_image_size(record)
+        _copy_image(image_path, images_dir / image_path.name)
+
+        images.append(
+            {
+                "id": int(image_id),
+                "file_name": image_path.name,
+                "width": int(image_w),
+                "height": int(image_h),
+            }
+        )
+
+        for label in record.get("labels") or []:
+            class_id = int(label.get("class_id", 0))
+            category_id = int(class_to_category.get(class_id, class_id + 1))
+            bw = float(label.get("w", 0.0)) * float(image_w)
+            bh = float(label.get("h", 0.0)) * float(image_h)
+            cx = float(label.get("cx", 0.0)) * float(image_w)
+            cy = float(label.get("cy", 0.0)) * float(image_h)
+            x = cx - bw / 2.0
+            y = cy - bh / 2.0
+            if bw <= 0.0 or bh <= 0.0:
+                continue
+            annotations.append(
+                {
+                    "id": int(ann_id),
+                    "image_id": int(image_id),
+                    "category_id": int(category_id),
+                    "bbox": [float(x), float(y), float(bw), float(bh)],
+                    "area": float(bw * bh),
+                    "iscrowd": 0,
+                }
+            )
+            ann_id += 1
+
+    instances_path = ann_dir / f"instances_{split_effective}.json"
+    instances_path.write_text(
+        json.dumps({"images": images, "annotations": annotations, "categories": categories}, indent=2, sort_keys=True, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    return out_root
 
 
 def export_yolo_dataset(

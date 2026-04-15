@@ -130,6 +130,68 @@ class TestMigrateCoco(unittest.TestCase):
             self.assertAlmostEqual(float(bbox["w"]), 0.1, places=6)
             self.assertAlmostEqual(float(bbox["h"]), 0.1, places=6)
 
+    def test_validate_dataset_direct_on_coco_root_and_migrate_auto(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            coco_root = root / "coco"
+            images_dir = coco_root / "images" / "val2017"
+            ann_dir = coco_root / "annotations"
+            images_dir.mkdir(parents=True, exist_ok=True)
+            ann_dir.mkdir(parents=True, exist_ok=True)
+
+            img_path = images_dir / "0001.png"
+            img_path.write_bytes(
+                b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + (64).to_bytes(4, "big") + (32).to_bytes(4, "big")
+            )
+
+            instances = {
+                "images": [{"id": 1, "file_name": "0001.png", "width": 64, "height": 32}],
+                "annotations": [{"id": 1, "image_id": 1, "category_id": 7, "bbox": [0, 0, 10, 20], "iscrowd": 0}],
+                "categories": [{"id": 7, "name": "thing"}],
+            }
+            instances_path = ann_dir / "instances_val2017.json"
+            instances_path.write_text(json.dumps(instances), encoding="utf-8")
+
+            proc_validate = self._run(
+                [
+                    "validate",
+                    "dataset",
+                    str(coco_root),
+                    "--split",
+                    "val2017",
+                    "--strict",
+                    "--max-images",
+                    "1",
+                ],
+                cwd=repo_root,
+            )
+            if proc_validate.returncode != 0:
+                self.fail(f"validate dataset on plain coco root failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+
+            out_root = root / "out_auto"
+            proc_migrate = self._run(
+                [
+                    "migrate",
+                    "dataset",
+                    "--from",
+                    "auto",
+                    "--dataset",
+                    str(coco_root),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    str(out_root),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc_migrate.returncode != 0:
+                self.fail(f"migrate dataset --from auto failed:\n{proc_migrate.stdout}\n{proc_migrate.stderr}")
+
+            self.assertTrue((out_root / "dataset.json").is_file())
+            self.assertTrue((out_root / "labels" / "val2017" / "0001.txt").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14994,6 +14994,18 @@
         {
           "command": "python3 -m yolozu export-dataset kitti --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_kitti --force",
           "description": "Export a YOLOZU wrapper into a KITTI-style image_2/label_2/ImageSets layout."
+        },
+        {
+          "command": "python3 -m yolozu doctor import --dataset-from auto --dataset data/conversion_tiny_coco --split val2017 --output -",
+          "description": "Auto-detect a dataset root before conversion so the user does not need to choose the source layout manually."
+        },
+        {
+          "command": "python3 -m yolozu migrate dataset --from auto --dataset data/conversion_tiny_coco --split val2017 --output reports/conversion_tiny_wrapper --force",
+          "description": "Create a YOLOZU wrapper from an auto-detected dataset root."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset coco --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_coco --force",
+          "description": "Export a YOLOZU wrapper back into a standard COCO images/annotations layout."
         }
       ],
       "id": "yolozu",
@@ -15127,13 +15139,14 @@
           "required": false
         },
         {
-          "description": "Forwarded to the external training helper when `train --external-backend` is active.",
+          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
           "required": false
         },
         {
+          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args.",
           "flag": "--dataset-from",
           "kind": "string",
           "name": "dataset_from",
