@@ -14858,7 +14858,7 @@
             "scope": "path"
           },
           {
-            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels or KITTI image_2/label_2).",
+            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels, COCO images/annotations, KITTI image_2/label_2, or semantic-segmentation images/masks + dataset.json).",
             "flag": "--out-dir",
             "kind": "dir",
             "scope": "tree"
@@ -15006,6 +15006,18 @@
         {
           "command": "python3 -m yolozu export-dataset coco --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_coco --force",
           "description": "Export a YOLOZU wrapper back into a standard COCO images/annotations layout."
+        },
+        {
+          "command": "python3 -m yolozu doctor import --dataset-from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output -",
+          "description": "Auto-detect a semantic-segmentation dataset root and report its task family before conversion."
+        },
+        {
+          "command": "python3 -m yolozu import dataset --from auto --dataset /path/to/coco_keypoints_root --split val2017 --output reports/coco_keypoints_wrapper --force",
+          "description": "Auto-detect a COCO keypoints root and create a YOLOZU keypoints wrapper with keypoint schema metadata."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force",
+          "description": "Export a semantic-segmentation descriptor into an images/masks layout without copying large assets."
         }
       ],
       "id": "yolozu",
@@ -15139,14 +15151,14 @@
           "required": false
         },
         {
-          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes.",
+          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes; auto-detect covers YOLO/Ultralytics, COCO/COCO keypoints, YOLOZU wrappers, and supported semantic-segmentation roots/descriptors.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
           "required": false
         },
         {
-          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args.",
+          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args and can resolve bbox, keypoints, and semantic-segmentation layouts.",
           "flag": "--dataset-from",
           "kind": "string",
           "name": "dataset_from",
@@ -15653,7 +15665,7 @@
           "required": false
         },
         {
-          "description": "Forwarded split name for the external training helper.",
+          "description": "Forwarded split name for external training, dataset validation, auto-detect import, and dataset export helpers.",
           "flag": "--split",
           "kind": "string",
           "name": "split",
@@ -16158,10 +16170,17 @@
           "required": false
         },
         {
-          "description": "Output directory for dataset layout exports produced by `yolozu export-dataset`.",
+          "description": "Output directory for dataset layout exports produced by `yolozu export-dataset` (YOLO, COCO, KITTI, or semantic-segmentation images/masks layouts).",
           "flag": "--out-dir",
           "kind": "dir",
           "name": "out_dir",
+          "required": false
+        },
+        {
+          "description": "Asset materialization mode for `yolozu export-dataset`; `copy` duplicates files, `symlink` keeps a lightweight export tree.",
+          "flag": "--image-mode",
+          "kind": "string",
+          "name": "image_mode",
           "required": false
         }
       ],
@@ -16200,7 +16219,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, MMSeg, and TAO, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with resume/export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
+      "summary": "Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
       "tags": [
         "cli",
         "predictions",

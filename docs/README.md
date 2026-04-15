@@ -271,6 +271,7 @@ yolozu migrate dataset --from coco --coco-root /path/to/coco --split val2017 --o
 yolozu export-dataset yolo --dataset data/coco_yolo_like --split val2017 --out-dir data/coco_yolo_export --force
 yolozu export-dataset coco --dataset data/coco_yolo_like --split val2017 --out-dir data/coco_export --force
 yolozu export-dataset kitti --dataset data/coco_yolo_like --split val2017 --out-dir data/coco_kitti_export --force
+yolozu export-dataset segmentation --dataset reports/cityscapes_seg_wrapper --out-dir data/cityscapes_seg_export --image-mode symlink --force
 python3 tools/export_predictions_detectron2.py --dataset data/coco_yolo_like --split val2017 --config /path/to/d2_config.yaml --weights /path/to/model_final.pth --protocol nms_applied --output reports/pred_detectron2.json
 python3 tools/export_predictions_mmdet.py --dataset data/coco_yolo_like --split val2017 --config /path/to/mmdet_config.py --checkpoint /path/to/epoch_12.pth --protocol nms_applied --output reports/pred_mmdet.json
 ```
@@ -280,6 +281,8 @@ If you want a preflight that tells you what the dataset already is, use:
 ```bash
 yolozu doctor import --dataset-from auto --dataset /path/to/dataset_root --split val2017 --output -
 ```
+
+Auto-detect also recognizes semantic-segmentation roots/descriptors and COCO keypoints roots, so the same preflight works for bbox / keypoints / segmentation with one command.
 
 Validation/eval:
 

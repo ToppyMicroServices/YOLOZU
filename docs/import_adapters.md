@@ -150,9 +150,16 @@ When COCO categories include `category_id=0`, doctor/import reports a warning an
 
 For dataset roots, auto-detect covers the common cases:
 - plain COCO root: `images/<split>/` + `annotations/instances_<split>.json`
+- COCO keypoints root: `images/<split>/` + `annotations/person_keypoints_<split>.json`
 - YOLO/Ultralytics `data.yaml`
 - direct YOLO layout: `images/<split>/` + `labels/<split>/`
 - YOLOZU wrapper: `dataset.json`
+- semantic-segmentation descriptor: `dataset.json` with `task=semantic_segmentation`
+- Pascal VOC semantic-segmentation root
+- Cityscapes semantic-segmentation root
+- ADE20K semantic-segmentation root
+
+`doctor import --dataset-from auto` now also reports `task_family` so preflight can distinguish bbox / keypoints / segmentation before conversion.
 
 ## Train shorthand (`train --import`)
 

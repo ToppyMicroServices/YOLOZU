@@ -18,6 +18,7 @@ __all__ = [
     "project_detectron2_config",
     "project_yolox_exp",
     "import_coco_instances_dataset",
+    "import_coco_keypoints_dataset",
     "import_ultralytics_config",
     "import_mmdet_config",
     "import_detectron2_config",
@@ -26,6 +27,7 @@ __all__ = [
 
 from yolozu.core.canonical import TrainConfig
 from yolozu.core.config import simple_yaml_load
+from yolozu.core.keypoints import normalize_keypoints
 from .coco_convert import build_category_map_from_coco
 
 
@@ -420,6 +422,188 @@ def import_coco_instances_dataset(
     }
     if keypoint_schema:
         payload.update(keypoint_schema)
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    return out_path
+
+
+def import_coco_keypoints_dataset(
+    *,
+    annotations_json: str | Path,
+    images_dir: str | Path,
+    split: str,
+    output: str | Path,
+    include_crowd: bool = False,
+    force: bool = False,
+) -> Path:
+    """Create a YOLOZU keypoints wrapper from COCO keypoints JSON."""
+
+    annotations_path = Path(annotations_json)
+    if not annotations_path.is_absolute():
+        annotations_path = (Path.cwd() / annotations_path).resolve()
+
+    images_dir_path = Path(images_dir)
+    if not images_dir_path.is_absolute():
+        images_dir_path = (Path.cwd() / images_dir_path).resolve()
+
+    out_path = Path(output)
+    if out_path.suffix.lower() != ".json":
+        out_root = out_path
+        out_root.mkdir(parents=True, exist_ok=True)
+        out_path = out_root / "dataset.json"
+    else:
+        out_root = out_path.parent
+        out_root.mkdir(parents=True, exist_ok=True)
+
+    if not annotations_path.exists():
+        raise FileNotFoundError(f"--annotations not found: {annotations_path}")
+    if not images_dir_path.exists():
+        raise FileNotFoundError(f"--images-dir not found: {images_dir_path}")
+    if out_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {out_path} (use --force to overwrite)")
+
+    annotations_doc = json.loads(annotations_path.read_text(encoding="utf-8"))
+    images = annotations_doc.get("images") or []
+    annotations = annotations_doc.get("annotations") or []
+    categories = annotations_doc.get("categories") or []
+    if not isinstance(images, list) or not isinstance(annotations, list) or not isinstance(categories, list):
+        raise ValueError("invalid COCO keypoints JSON (expected images/annotations/categories)")
+
+    categories_dicts = [item for item in categories if isinstance(item, dict)]
+    category_ids = sorted({int(item["id"]) for item in categories_dicts if "id" in item})
+    if not category_ids:
+        raise ValueError("no categories found in COCO keypoints JSON")
+
+    category_id_to_class_id = {int(cat_id): idx for idx, cat_id in enumerate(category_ids)}
+    class_id_to_category_id = {str(idx): int(cat_id) for idx, cat_id in enumerate(category_ids)}
+    category_to_class = {str(cat_id): idx for idx, cat_id in enumerate(category_ids)}
+
+    class_names: list[str] = []
+    keypoint_names: list[str] = []
+    skeleton: list[list[int]] = []
+    keypoint_category_id: int | None = None
+    for cat_id in category_ids:
+        category = next((item for item in categories_dicts if int(item.get("id", -1)) == cat_id), None)
+        class_names.append(str(category.get("name") or f"class_{len(class_names)}") if category else f"class_{len(class_names)}")
+        if category is None or keypoint_names:
+            continue
+        raw_names = category.get("keypoints") or []
+        if isinstance(raw_names, list) and raw_names:
+            keypoint_names = [str(name).strip() for name in raw_names if str(name).strip()]
+            raw_skeleton = category.get("skeleton") or []
+            if isinstance(raw_skeleton, list):
+                for edge in raw_skeleton:
+                    if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+                        continue
+                    try:
+                        skeleton.append([int(edge[0]), int(edge[1])])
+                    except Exception:
+                        continue
+            keypoint_category_id = int(cat_id)
+
+    images_by_id: dict[int, dict[str, Any]] = {}
+    for image in images:
+        if not isinstance(image, dict):
+            continue
+        try:
+            images_by_id[int(image["id"])] = image
+        except Exception:
+            continue
+
+    anns_by_image: dict[int, list[dict[str, Any]]] = {}
+    for ann in annotations:
+        if not isinstance(ann, dict):
+            continue
+        if not include_crowd and int(ann.get("iscrowd", 0) or 0) == 1:
+            continue
+        try:
+            image_id = int(ann["image_id"])
+        except Exception:
+            continue
+        anns_by_image.setdefault(image_id, []).append(ann)
+
+    labels_dir = out_root / "labels" / str(split)
+    labels_dir.mkdir(parents=True, exist_ok=True)
+    mapping: dict[str, Any] = {
+        "category_id_to_class_id": category_to_class,
+        "class_id_to_category_id": class_id_to_category_id,
+        "class_names": class_names,
+    }
+    if keypoint_names:
+        mapping["keypoint_names"] = keypoint_names
+        mapping["num_keypoints"] = int(len(keypoint_names))
+    if skeleton:
+        mapping["skeleton"] = skeleton
+    if keypoint_category_id is not None:
+        mapping["keypoint_category_id"] = int(keypoint_category_id)
+    (labels_dir / "classes.json").write_text(json.dumps(mapping, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    (labels_dir / "classes.txt").write_text("\n".join(class_names) + "\n", encoding="utf-8")
+
+    for image_id, meta in images_by_id.items():
+        file_name = str(meta.get("file_name") or "").strip()
+        if not file_name:
+            continue
+        width = _optional_int(meta.get("width"))
+        height = _optional_int(meta.get("height"))
+        if not width or not height:
+            continue
+        lines: list[str] = []
+        for ann in anns_by_image.get(image_id, []):
+            bbox = ann.get("bbox") or []
+            if not isinstance(bbox, list) or len(bbox) != 4:
+                continue
+            try:
+                class_id = int(category_id_to_class_id[int(ann.get("category_id"))])
+                x, y, w, h = [float(value) for value in bbox]
+            except Exception:
+                continue
+            if w <= 0.0 or h <= 0.0:
+                continue
+            parts = [
+                f"{class_id:d}",
+                f"{(x + w / 2.0) / float(width):.6f}",
+                f"{(y + h / 2.0) / float(height):.6f}",
+                f"{w / float(width):.6f}",
+                f"{h / float(height):.6f}",
+            ]
+            raw_keypoints = ann.get("keypoints") or []
+            if isinstance(raw_keypoints, list) and len(raw_keypoints) >= 3 and len(raw_keypoints) % 3 == 0:
+                norm_triplets: list[float] = []
+                for idx in range(0, len(raw_keypoints), 3):
+                    try:
+                        norm_triplets.extend(
+                            [
+                                float(raw_keypoints[idx]) / float(width),
+                                float(raw_keypoints[idx + 1]) / float(height),
+                                float(raw_keypoints[idx + 2]),
+                            ]
+                        )
+                    except Exception:
+                        norm_triplets = []
+                        break
+                if norm_triplets:
+                    for keypoint in normalize_keypoints(norm_triplets, where="label.keypoints"):
+                        parts.extend(
+                            [
+                                f"{float(keypoint['x']):.6f}",
+                                f"{float(keypoint['y']):.6f}",
+                                f"{float(keypoint.get('v', 2.0)):.6f}",
+                            ]
+                        )
+            lines.append(" ".join(parts))
+        (labels_dir / f"{Path(file_name).stem}.txt").write_text(("\n".join(lines) + "\n") if lines else "", encoding="utf-8")
+
+    payload: dict[str, Any] = {
+        "images_dir": str(images_dir_path),
+        "labels_dir": str(labels_dir),
+        "split": str(split),
+        "task": "keypoints",
+        "source": {"from": "coco-keypoints", "annotations_json": str(annotations_path)},
+    }
+    if keypoint_names:
+        payload["keypoint_names"] = keypoint_names
+        payload["num_keypoints"] = int(len(keypoint_names))
+    if skeleton:
+        payload["skeleton"] = skeleton
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     return out_path
 

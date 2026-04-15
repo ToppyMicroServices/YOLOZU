@@ -71,13 +71,216 @@ def _resolve_auto_dataset_from_args(args: argparse.Namespace) -> str:
         if info is None:
             raise SystemExit(f"could not auto-detect dataset source from path: {dataset_path}")
         fmt = str(info.get("format") or "")
-        if fmt in ("coco_root", "yolozu_coco_wrapper"):
+        if fmt in ("coco_root", "coco_keypoints_root", "yolozu_coco_wrapper"):
             return "coco"
+        if fmt in (
+            "yolozu_segmentation_descriptor",
+            "voc_segmentation_root",
+            "cityscapes_segmentation_root",
+            "ade20k_segmentation_root",
+        ):
+            return "segmentation"
         if fmt in ("ultralytics_data_yaml", "yolo_layout", "yolozu_wrapper"):
             return "ultralytics"
     raise SystemExit(
         "could not auto-detect dataset source; provide --dataset, --data (ultralytics), or --instances + --images-dir (coco-instances)"
     )
+
+
+def _segmentation_output_path(output: str | Path) -> Path:
+    out_path = Path(output)
+    if out_path.suffix.lower() == ".json":
+        return out_path
+    return out_path / "dataset.json"
+
+
+def _copy_descriptor_file(source: Path, output: str | Path, *, force: bool) -> Path:
+    out_path = _segmentation_output_path(output)
+    if not out_path.is_absolute():
+        out_path = (Path.cwd() / out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {out_path} (use --force to overwrite)")
+    out_path.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return out_path
+
+
+def _write_segmentation_descriptor_from_layout(
+    *,
+    dataset_path: str | Path,
+    layout_info: dict[str, Any],
+    output: str | Path,
+    split: str | None,
+    force: bool,
+) -> Path:
+    from yolozu.migrate import migrate_seg_dataset_descriptor
+
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+
+    fmt = str(layout_info.get("format") or "")
+    if fmt == "yolozu_segmentation_descriptor":
+        descriptor = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        return _copy_descriptor_file(descriptor, output, force=force)
+
+    if fmt == "voc_segmentation_root":
+        from_format = "voc"
+    elif fmt == "cityscapes_segmentation_root":
+        from_format = "cityscapes"
+    elif fmt == "ade20k_segmentation_root":
+        from_format = "ade20k"
+    else:
+        raise ValueError(f"unsupported segmentation layout: {fmt}")
+
+    return migrate_seg_dataset_descriptor(
+        from_format=from_format,
+        root=str(layout_info.get("root") or dataset_root),
+        split=str(split or layout_info.get("split") or "val"),
+        output=_segmentation_output_path(output),
+        path_type="absolute",
+        mode="manifest",
+        force=force,
+    )
+
+
+def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dict[str, Any], split: str | None) -> dict[str, Any]:
+    fmt = str(layout_info.get("format") or "")
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+
+    if fmt == "yolozu_segmentation_descriptor":
+        from yolozu.segmentation_dataset import load_seg_dataset_descriptor
+
+        descriptor_path = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        desc = load_seg_dataset_descriptor(descriptor_path)
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": desc.dataset,
+            "split": desc.split,
+            "counts": {"images": int(len(desc.samples)), "masks": int(sum(1 for sample in desc.samples if sample.mask is not None))},
+            "classes_preview": list((desc.classes or [])[:20]),
+            "ignore_index": int(desc.ignore_index),
+        }
+
+    if fmt == "voc_segmentation_root":
+        from yolozu.datasets.pascal_voc import iter_pascal_voc_seg_samples
+
+        samples = list(iter_pascal_voc_seg_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": str(layout_info.get("dataset_name") or "pascal_voc"),
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+        }
+
+    if fmt == "cityscapes_segmentation_root":
+        from yolozu.datasets.cityscapes import iter_cityscapes_samples
+
+        samples = list(iter_cityscapes_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": "cityscapes",
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+        }
+
+    if fmt == "ade20k_segmentation_root":
+        from yolozu.datasets.ade20k import iter_ade20k_samples, load_ade20k_classes
+
+        samples = list(iter_ade20k_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        classes = load_ade20k_classes(dataset_root) or []
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": "ade20k",
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+            "classes_preview": list(classes[:20]),
+        }
+
+    raise ValueError(f"unsupported segmentation layout: {fmt}")
+
+
+def _validate_segmentation_layout(
+    *,
+    dataset_path: str | Path,
+    layout_info: dict[str, Any],
+    max_images: int | None,
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    errors: list[str] = []
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+    fmt = str(layout_info.get("format") or "")
+
+    if fmt == "yolozu_segmentation_descriptor":
+        from yolozu.segmentation_dataset import load_seg_dataset_descriptor, resolve_dataset_path
+
+        descriptor_path = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        desc = load_seg_dataset_descriptor(descriptor_path)
+        samples = list(desc.samples)
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            image_path = resolve_dataset_path(sample.image, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+            if not image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {image_path}")
+            if sample.mask is not None:
+                mask_path = resolve_dataset_path(sample.mask, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+                if not mask_path.exists():
+                    errors.append(f"samples[{idx}]: mask file does not exist: {mask_path}")
+        return warnings, errors
+
+    if fmt == "voc_segmentation_root":
+        from yolozu.datasets.pascal_voc import iter_pascal_voc_seg_samples
+
+        samples = list(iter_pascal_voc_seg_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    if fmt == "cityscapes_segmentation_root":
+        from yolozu.datasets.cityscapes import iter_cityscapes_samples
+
+        samples = list(iter_cityscapes_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    if fmt == "ade20k_segmentation_root":
+        from yolozu.datasets.ade20k import iter_ade20k_samples
+
+        samples = list(iter_ade20k_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    raise ValueError(f"unsupported segmentation layout: {fmt}")
 
 
 def _detect_config_source_from_path(path_like: str | Path) -> str:
@@ -422,7 +625,17 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
     if dataset_from and str(dataset_from).strip().lower() == "auto":
         if layout_info is not None:
             fmt = str(layout_info.get("format") or "")
-            dataset_from = "coco" if fmt == "coco_root" else "ultralytics"
+            if fmt in ("coco_root", "coco_keypoints_root", "yolozu_coco_wrapper"):
+                dataset_from = "coco"
+            elif fmt in (
+                "yolozu_segmentation_descriptor",
+                "voc_segmentation_root",
+                "cityscapes_segmentation_root",
+                "ade20k_segmentation_root",
+            ):
+                dataset_from = "segmentation"
+            else:
+                dataset_from = "ultralytics"
             report["warnings"].append(f"dataset source auto-detected: {dataset_from} (layout: {fmt})")
         else:
             dataset_from = _resolve_auto_dataset_from_args(args)
@@ -488,7 +701,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
             if not dataset_path:
                 raise SystemExit("--dataset is required for --dataset-from coco")
             info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
-            if info is None or str(info.get("format") or "") != "coco_root":
+            if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
                 raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
             instances_path = Path(str(info.get("instances_json") or "")).expanduser()
             images_dir = Path(str(info.get("images_dir") or "")).expanduser()
@@ -499,9 +712,11 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
             if not include_crowd and isinstance(annotations, list):
                 annotations = [a for a in annotations if not (isinstance(a, dict) and int(a.get("iscrowd", 0) or 0) == 1)]
             cat_map = build_category_map_from_coco(instances_doc)
+            task_family = str(info.get("task_family") or ("keypoints" if str(info.get("format") or "") == "coco_keypoints_root" else "bbox"))
             report["dataset"] = {
                 "from": "coco",
                 "layout": info,
+                "task_family": task_family,
                 "split": str(info.get("split") or ""),
                 "instances_json": str(instances_path),
                 "images_dir": str(images_dir),
@@ -545,12 +760,25 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "split": manifest.get("split"),
                 "label_format": label_format,
                 "layout": layout_info,
+                "task_family": str((layout_info or {}).get("task_family") or "bbox"),
                 "counts": {
                     "images": int(len(records)),
                     "labels": int(label_count),
                     "classes_hint": int(max_class + 1) if max_class >= 0 else None,
                 },
             }
+        elif src == "segmentation":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --dataset-from segmentation")
+            info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+            if info is None:
+                raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+            report["dataset"] = _summarize_segmentation_layout(
+                dataset_path=str(dataset_path),
+                layout_info=info,
+                split=str(args.split) if getattr(args, "split", None) else None,
+            )
         else:
             raise SystemExit(f"unsupported --dataset-from: {src}")
 
@@ -647,12 +875,13 @@ def _cmd_export(args: argparse.Namespace) -> int:
 
 
 def _cmd_export_dataset(args: argparse.Namespace) -> int:
-    from yolozu.datasets.exports import export_coco_dataset, export_kitti_dataset, export_yolo_dataset
+    from yolozu.datasets.exports import export_coco_dataset, export_kitti_dataset, export_segmentation_dataset, export_yolo_dataset
 
     target = str(getattr(args, "to_format", ""))
     dataset = str(getattr(args, "dataset", "") or "")
     out_dir = str(getattr(args, "out_dir", "") or "")
     split = str(args.split) if getattr(args, "split", None) else None
+    image_mode = str(getattr(args, "image_mode", "copy") or "copy")
     force = bool(getattr(args, "force", False))
 
     if not dataset:
@@ -662,11 +891,13 @@ def _cmd_export_dataset(args: argparse.Namespace) -> int:
 
     try:
         if target == "yolo":
-            out_root = export_yolo_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+            out_root = export_yolo_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
         elif target == "kitti":
-            out_root = export_kitti_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+            out_root = export_kitti_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
         elif target == "coco":
-            out_root = export_coco_dataset(dataset_root=dataset, split=split, out_dir=out_dir, force=force)
+            out_root = export_coco_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
+        elif target == "segmentation":
+            out_root = export_segmentation_dataset(dataset_root=dataset, out_dir=out_dir, image_mode=image_mode, force=force)
         else:
             raise SystemExit(f"unsupported export-dataset target: {target}")
     except (FileExistsError, FileNotFoundError, ValueError) as exc:
@@ -678,8 +909,23 @@ def _cmd_export_dataset(args: argparse.Namespace) -> int:
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     if args.validate_command == "dataset":
-        from yolozu.dataset import build_manifest
+        from yolozu.dataset import build_manifest, inspect_dataset_layout
         from yolozu.dataset_validator import validate_dataset_records
+
+        layout_info = inspect_dataset_layout(str(args.dataset), split=str(args.split) if args.split else None)
+        if layout_info is not None and str(layout_info.get("task_family") or "") == "segmentation":
+            warnings, errors = _validate_segmentation_layout(
+                dataset_path=str(args.dataset),
+                layout_info=layout_info,
+                max_images=(int(args.max_images) if args.max_images is not None else None),
+            )
+            for warning in warnings:
+                print(warning, file=sys.stderr)
+            if errors:
+                for error in errors:
+                    print(error, file=sys.stderr)
+                return 1
+            return 0
 
         try:
             manifest = build_manifest(
@@ -1438,10 +1684,23 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
             if not coco_root:
                 raise SystemExit("--coco-root or --dataset is required for --from coco")
             info = inspect_dataset_layout(str(coco_root), split=str(args.split) if args.split else None)
-            if info is not None and str(info.get("format") or "") == "coco_root":
+            if info is not None and str(info.get("format") or "") in ("coco_root", "coco_keypoints_root"):
                 effective_split = str(info.get("split") or args.split or "val2017")
             else:
                 effective_split = str(args.split) if args.split else "val2017"
+            if info is not None and str(info.get("format") or "") == "coco_keypoints_root":
+                from yolozu.imports import import_coco_keypoints_dataset
+
+                out = import_coco_keypoints_dataset(
+                    annotations_json=str(info.get("instances_json")),
+                    images_dir=str(info.get("images_dir")),
+                    split=effective_split,
+                    output=str(args.output),
+                    include_crowd=bool(args.include_crowd),
+                    force=bool(args.force),
+                )
+                print(str(out))
+                return 0
             out = migrate_coco_dataset_wrapper(
                 coco_root=str(coco_root),
                 split=effective_split,
@@ -1449,6 +1708,20 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
                 output=str(args.output),
                 mode=str(args.mode),
                 include_crowd=bool(args.include_crowd),
+                force=bool(args.force),
+            )
+        elif from_format == "segmentation":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --from segmentation")
+            info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+            if info is None:
+                raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+            out = _write_segmentation_descriptor_from_layout(
+                dataset_path=str(dataset_path),
+                layout_info=info,
+                output=str(args.output),
+                split=str(args.split) if args.split else None,
                 force=bool(args.force),
             )
         else:
@@ -1510,6 +1783,7 @@ def _cmd_import(args: argparse.Namespace) -> int:
     from yolozu.dataset import inspect_dataset_layout
     from yolozu.imports import (
         import_coco_instances_dataset,
+        import_coco_keypoints_dataset,
         import_detectron2_config,
         import_mmdet_config,
         import_ultralytics_config,
@@ -1562,16 +1836,26 @@ def _cmd_import(args: argparse.Namespace) -> int:
                 if not dataset_path:
                     raise SystemExit("--dataset is required for --from coco")
                 info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
-                if info is None or str(info.get("format") or "") != "coco_root":
+                if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
                     raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
-                out = import_coco_instances_dataset(
-                    instances_json=str(info.get("instances_json")),
-                    images_dir=str(info.get("images_dir")),
-                    split=str(info.get("split") or args.split or "val2017"),
-                    output=str(args.output),
-                    include_crowd=bool(args.include_crowd),
-                    force=bool(args.force),
-                )
+                if str(info.get("format") or "") == "coco_keypoints_root":
+                    out = import_coco_keypoints_dataset(
+                        annotations_json=str(info.get("instances_json")),
+                        images_dir=str(info.get("images_dir")),
+                        split=str(info.get("split") or args.split or "val2017"),
+                        output=str(args.output),
+                        include_crowd=bool(args.include_crowd),
+                        force=bool(args.force),
+                    )
+                else:
+                    out = import_coco_instances_dataset(
+                        instances_json=str(info.get("instances_json")),
+                        images_dir=str(info.get("images_dir")),
+                        split=str(info.get("split") or args.split or "val2017"),
+                        output=str(args.output),
+                        include_crowd=bool(args.include_crowd),
+                        force=bool(args.force),
+                    )
                 print(str(out))
                 return 0
 
@@ -1584,6 +1868,23 @@ def _cmd_import(args: argparse.Namespace) -> int:
                     split=str(args.split) if args.split else "val2017",
                     output=str(args.output),
                     include_crowd=bool(args.include_crowd),
+                    force=bool(args.force),
+                )
+                print(str(out))
+                return 0
+
+            if from_format == "segmentation":
+                dataset_path = getattr(args, "dataset", None)
+                if not dataset_path:
+                    raise SystemExit("--dataset is required for --from segmentation")
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None:
+                    raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+                out = _write_segmentation_descriptor_from_layout(
+                    dataset_path=str(dataset_path),
+                    layout_info=info,
+                    output=str(args.output),
+                    split=str(args.split) if args.split else None,
                     force=bool(args.force),
                 )
                 print(str(out))

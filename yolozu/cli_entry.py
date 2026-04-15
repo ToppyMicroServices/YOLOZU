@@ -57,11 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
     doctor_imp.add_argument(
         "--dataset-from",
-        choices=("auto", "ultralytics", "coco", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
         default=None,
         help="Optional dataset import adapter to summarize.",
     )
-    doctor_imp.add_argument("--dataset", default=None, help="(dataset-from auto|ultralytics|coco) dataset root or descriptor path.")
+    doctor_imp.add_argument("--dataset", default=None, help="(dataset-from auto|ultralytics|coco|segmentation) dataset root or descriptor path.")
     doctor_imp.add_argument(
         "--config-from",
         choices=("auto", "ultralytics", "mmdet", "yolox", "detectron2"),
@@ -114,15 +114,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     export.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
 
-    export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO or KITTI layout.")
+    export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO, COCO, KITTI, or segmentation layout.")
     export_dataset.add_argument(
         "to_format",
-        choices=("yolo", "kitti", "coco"),
+        choices=("yolo", "kitti", "coco", "segmentation"),
         help="Target dataset layout.",
     )
     export_dataset.add_argument("--dataset", required=True, help="YOLOZU dataset root or dataset.json wrapper.")
     export_dataset.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
     export_dataset.add_argument("--out-dir", required=True, help="Output directory for the exported dataset layout.")
+    export_dataset.add_argument("--image-mode", choices=("copy", "symlink"), default="copy", help="How to materialize exported assets (default: copy).")
     export_dataset.add_argument("--force", action="store_true", help="Overwrite the output directory if it exists.")
 
     predict = sub.add_parser("predict-images", help="Run folder inference and write predictions JSON + overlays + HTML.")
@@ -497,7 +498,7 @@ def main(argv: list[str] | None = None) -> int:
     mig_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("auto", "ultralytics", "coco"),
+        choices=("auto", "ultralytics", "coco", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
@@ -507,7 +508,7 @@ def main(argv: list[str] | None = None) -> int:
     mig_dataset.add_argument(
         "--split",
         default=None,
-        help="Split name (Ultralytics: select from data.yaml; COCO: instances_<split>.json, default: val2017).",
+        help="Split name (Ultralytics/segmentation: inferred from layout; COCO: annotations split, default: val2017).",
     )
     mig_dataset.add_argument(
         "--task",
@@ -575,11 +576,11 @@ def main(argv: list[str] | None = None) -> int:
     imp_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("auto", "ultralytics", "coco", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
-    imp_dataset.add_argument("--dataset", default=None, help="(auto|ultralytics|coco) Dataset root or descriptor path.")
+    imp_dataset.add_argument("--dataset", default=None, help="(auto|ultralytics|coco|segmentation) Dataset root or descriptor path.")
     imp_dataset.add_argument("--output", required=True, help="Output directory (wrapper) or dataset.json file path.")
     imp_dataset.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     imp_dataset.add_argument("--split", default=None, help="Split name (COCO default: val2017; Ultralytics: from data.yaml).")

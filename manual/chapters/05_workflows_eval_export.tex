@@ -409,6 +409,20 @@ yolozu export-dataset coco   --dataset data/coco_yolo_like   --split val2017   -
 yolozu export-dataset kitti   --dataset data/coco_yolo_like   --split val2017   --out-dir data/coco_kitti_export   --force
 \end{lstlisting}
 
+For semantic-segmentation descriptors, export keeps the \path{dataset.json} contract while materializing \path{images/} and \path{masks/} into a lightweight external layout:
+\begin{lstlisting}[language=bash]
+yolozu doctor import --dataset-from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output -
+yolozu import dataset   --from auto   --dataset /path/to/VOCdevkit/VOC2012   --split val   --output reports/voc_seg_wrapper   --force
+yolozu export-dataset segmentation   --dataset reports/voc_seg_wrapper   --out-dir reports/voc_seg_export   --image-mode symlink   --force
+\end{lstlisting}
+
+For COCO keypoints roots that expose only \path{person\_keypoints\_<split>.json}, the same auto-detect preflight now recognizes the richer keypoints layout and writes a YOLOZU wrapper with \path{keypoint\_names} / \path{skeleton} metadata before export:
+\begin{lstlisting}[language=bash]
+yolozu doctor import --dataset-from auto --dataset /path/to/coco_keypoints_root --split val2017 --output -
+yolozu import dataset   --from auto   --dataset /path/to/coco_keypoints_root   --split val2017   --output reports/coco_keypoints_wrapper   --force
+yolozu export-dataset coco   --dataset reports/coco_keypoints_wrapper   --split val2017   --out-dir reports/coco_keypoints_export   --force
+\end{lstlisting}
+
 For a repo-bundled tiny sample that exercises automatic detection plus \cmd{COCO -> YOLOZU -> YOLO/COCO/KITTI} end to end:
 \begin{lstlisting}[language=bash]
 yolozu validate dataset data/conversion_tiny_coco --split val2017 --strict

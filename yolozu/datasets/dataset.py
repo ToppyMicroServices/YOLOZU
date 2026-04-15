@@ -29,11 +29,16 @@ class DatasetLayoutInfo:
     format_name: str
     root: str
     split: str | None = None
+    task_family: str | None = None
+    dataset_name: str | None = None
     images_dir: str | None = None
     labels_dir: str | None = None
     data_yaml: str | None = None
     instances_json: str | None = None
     label_format: str | None = None
+    mode: str | None = None
+    path_type: str | None = None
+    ignore_index: int | None = None
     split_candidates: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,6 +48,10 @@ class DatasetLayoutInfo:
         }
         if self.split is not None:
             payload["split"] = self.split
+        if self.task_family is not None:
+            payload["task_family"] = self.task_family
+        if self.dataset_name is not None:
+            payload["dataset_name"] = self.dataset_name
         if self.images_dir is not None:
             payload["images_dir"] = self.images_dir
         if self.labels_dir is not None:
@@ -53,6 +62,12 @@ class DatasetLayoutInfo:
             payload["instances_json"] = self.instances_json
         if self.label_format is not None:
             payload["label_format"] = self.label_format
+        if self.mode is not None:
+            payload["mode"] = self.mode
+        if self.path_type is not None:
+            payload["path_type"] = self.path_type
+        if self.ignore_index is not None:
+            payload["ignore_index"] = int(self.ignore_index)
         if self.split_candidates:
             payload["split_candidates"] = list(self.split_candidates)
         return payload
@@ -538,6 +553,55 @@ def _pick_split(dataset_root: Path, split: str | None) -> str:
     return "train2017"
 
 
+def _load_json_dict(path: Path) -> dict[str, Any] | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _load_yolo_split_metadata(dataset_root: Path, split: str | None) -> tuple[dict[str, Any], dict[str, Any]]:
+    dataset_payload = _load_json_dict(dataset_root / "dataset.json") or {}
+    classes_payload: dict[str, Any] = {}
+    labels_root = dataset_root / "labels" / str(split) if split else None
+    if labels_root is not None:
+        classes_payload = _load_json_dict(labels_root / "classes.json") or {}
+    if not classes_payload and split and isinstance(dataset_payload.get("labels_dir"), str):
+        labels_dir = Path(str(dataset_payload.get("labels_dir")))
+        if not labels_dir.is_absolute():
+            labels_dir = dataset_root / labels_dir
+        classes_payload = _load_json_dict(labels_dir / "classes.json") or {}
+    return dataset_payload, classes_payload
+
+
+def _infer_task_family_from_metadata(
+    *,
+    label_format: str | None,
+    dataset_payload: dict[str, Any] | None,
+    classes_payload: dict[str, Any] | None,
+) -> str:
+    payload = dataset_payload or {}
+    classes = classes_payload or {}
+    raw_task = payload.get("task") or payload.get("label_format") or label_format
+    if isinstance(raw_task, str) and raw_task.strip():
+        lowered = raw_task.strip().lower()
+        if lowered in ("segment", "seg", "polygon", "yolo-seg", "yolo_seg", "semantic_segmentation"):
+            return "segmentation"
+        if lowered in ("pose", "keypoints"):
+            return "keypoints"
+        if lowered in ("multi", "multitask"):
+            if classes.get("keypoint_names") or payload.get("keypoint_names"):
+                return "keypoints"
+    if classes.get("keypoint_names") or payload.get("keypoint_names"):
+        return "keypoints"
+    if isinstance(label_format, str) and label_format.strip().lower() in ("segment", "seg", "polygon", "yolo-seg", "yolo_seg"):
+        return "segmentation"
+    return "bbox"
+
+
 def _resolve_ultralytics_data_yaml(
     config_path: Path,
     split: str | None,
@@ -727,6 +791,21 @@ def _available_coco_splits(dataset_root: Path) -> list[str]:
     return splits
 
 
+def _available_coco_keypoints_splits(dataset_root: Path) -> list[str]:
+    ann_root = dataset_root / "annotations"
+    if not ann_root.exists() or not ann_root.is_dir():
+        return []
+    splits: list[str] = []
+    try:
+        for child in sorted(ann_root.glob("person_keypoints_*.json")):
+            name = child.stem
+            if name.startswith("person_keypoints_"):
+                splits.append(name[len("person_keypoints_") :])
+    except OSError:
+        return []
+    return splits
+
+
 def _resolve_coco_root_layout(
     dataset_root: Path,
     split: str | None,
@@ -765,6 +844,126 @@ def _resolve_coco_root_layout(
     return None
 
 
+def _resolve_coco_keypoints_root_layout(
+    dataset_root: Path,
+    split: str | None,
+) -> tuple[Path, Path, str] | None:
+    ann_root = dataset_root / "annotations"
+    if not ann_root.exists() or not ann_root.is_dir():
+        return None
+
+    requested = str(split).strip() if split is not None else ""
+    candidates = [requested] if requested else []
+    if not candidates:
+        candidates = _available_coco_keypoints_splits(dataset_root)
+        preferred = ("val2017", "val", "train2017", "train")
+        ordered: list[str] = []
+        for item in preferred:
+            if item in candidates and item not in ordered:
+                ordered.append(item)
+        for item in candidates:
+            if item not in ordered:
+                ordered.append(item)
+        candidates = ordered
+    for split_name in candidates:
+        if not split_name:
+            continue
+        annotations_path = ann_root / f"person_keypoints_{split_name}.json"
+        if not annotations_path.exists():
+            continue
+        images_dir = dataset_root / "images" / split_name
+        if not images_dir.exists():
+            fallback = dataset_root / split_name
+            if fallback.exists():
+                images_dir = fallback
+            else:
+                continue
+        return images_dir, annotations_path, split_name
+    return None
+
+
+def _resolve_segmentation_descriptor_layout(
+    descriptor_path: Path,
+) -> DatasetLayoutInfo | None:
+    data = _load_json_dict(descriptor_path)
+    if not data:
+        return None
+    task = str(data.get("task") or "").strip().lower()
+    if task != "semantic_segmentation":
+        return None
+    samples = data.get("samples") or []
+    split_candidates = [str(data.get("split"))] if data.get("split") else None
+    return DatasetLayoutInfo(
+        format_name="yolozu_segmentation_descriptor",
+        root=str(descriptor_path.parent),
+        split=str(data.get("split") or "") or None,
+        task_family="segmentation",
+        dataset_name=(str(data.get("dataset")) if data.get("dataset") else None),
+        mode=(str(data.get("mode")) if data.get("mode") else None),
+        path_type=(str(data.get("path_type")) if data.get("path_type") else None),
+        ignore_index=(int(data.get("ignore_index")) if isinstance(data.get("ignore_index"), int) else None),
+        split_candidates=split_candidates,
+    )
+
+
+def _resolve_segmentation_root_layout(dataset_root: Path, split: str | None) -> DatasetLayoutInfo | None:
+    split_effective = str(split or "val")
+
+    try:
+        from .pascal_voc import resolve_pascal_voc_root
+
+        voc_paths = resolve_pascal_voc_root(dataset_root)
+        return DatasetLayoutInfo(
+            format_name="voc_segmentation_root",
+            root=str(voc_paths.root),
+            split=split_effective,
+            task_family="segmentation",
+            dataset_name=("pascal_voc" if voc_paths.year is None else f"pascal_voc{voc_paths.year}"),
+            split_candidates=["train", "val", "trainval", "test"],
+        )
+    except Exception:
+        pass
+
+    try:
+        from .cityscapes import resolve_cityscapes_paths
+
+        paths = resolve_cityscapes_paths(dataset_root)
+        split_candidates = [name for name in ("train", "val", "test") if (paths.images_root / name).is_dir()]
+        return DatasetLayoutInfo(
+            format_name="cityscapes_segmentation_root",
+            root=str(dataset_root),
+            split=split_effective,
+            task_family="segmentation",
+            dataset_name="cityscapes",
+            split_candidates=split_candidates,
+        )
+    except Exception:
+        pass
+
+    try:
+        from .ade20k import resolve_ade20k_paths
+
+        paths = resolve_ade20k_paths(dataset_root)
+        if not ((paths.images_root / "training").is_dir() or (paths.images_root / "validation").is_dir()):
+            raise ValueError("ADE20K-style training/validation directories not found")
+        split_candidates: list[str] = []
+        for alias, src_name in (("train", "training"), ("val", "validation"), ("test", "test")):
+            if (paths.images_root / src_name).is_dir():
+                split_candidates.append(alias)
+        return DatasetLayoutInfo(
+            format_name="ade20k_segmentation_root",
+            root=str(paths.root),
+            split=split_effective,
+            task_family="segmentation",
+            dataset_name="ade20k",
+            split_candidates=split_candidates,
+        )
+    except Exception:
+        pass
+
+    return None
+
+
 def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[str, Any] | None:
     path = Path(dataset_root)
     if not path.is_absolute():
@@ -775,10 +974,16 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
             resolved = _resolve_ultralytics_data_yaml(path, split)
             if resolved is not None:
                 images_dir, labels_dir, split_effective, root, label_format = resolved
+                dataset_payload, classes_payload = _load_yolo_split_metadata(root, split_effective)
                 return DatasetLayoutInfo(
                     format_name="ultralytics_data_yaml",
                     root=str(root),
                     split=split_effective,
+                    task_family=_infer_task_family_from_metadata(
+                        label_format=label_format,
+                        dataset_payload=dataset_payload,
+                        classes_payload=classes_payload,
+                    ),
                     images_dir=str(images_dir),
                     labels_dir=str(labels_dir),
                     data_yaml=str(path),
@@ -791,6 +996,9 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
             except Exception:
                 data = None
             if isinstance(data, dict):
+                seg_layout = _resolve_segmentation_descriptor_layout(path)
+                if seg_layout is not None:
+                    return seg_layout.to_dict()
                 fmt = str(data.get("format") or "").strip().lower()
                 if path.name == "dataset.json":
                     if fmt in ("coco_instances", "coco-instances", "coco"):
@@ -798,6 +1006,7 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
                             format_name="yolozu_coco_wrapper",
                             root=str(path.parent),
                             split=str(data.get("split") or split or ""),
+                            task_family=("keypoints" if data.get("keypoint_names") else "bbox"),
                             images_dir=str(data.get("images_dir") or ""),
                             instances_json=str(data.get("instances_json") or ""),
                             split_candidates=([str(data.get("split"))] if data.get("split") else None),
@@ -805,10 +1014,17 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
                     resolved = _resolve_dataset_json_layout(path.parent, split)
                     if resolved is not None:
                         images_dir, labels_dir, split_effective, label_format = resolved
+                        dataset_payload, classes_payload = _load_yolo_split_metadata(path.parent, split_effective)
                         return DatasetLayoutInfo(
                             format_name="yolozu_wrapper",
                             root=str(path.parent),
                             split=split_effective,
+                            task_family=_infer_task_family_from_metadata(
+                                label_format=label_format,
+                                dataset_payload=dataset_payload,
+                                classes_payload=classes_payload,
+                            ),
+                            dataset_name=(str(data.get("name")) if data.get("name") else None),
                             images_dir=str(images_dir),
                             labels_dir=str(labels_dir),
                             label_format=label_format,
@@ -828,6 +1044,10 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
         if info is not None:
             return info
 
+    seg_layout = _resolve_segmentation_root_layout(path, split)
+    if seg_layout is not None:
+        return seg_layout.to_dict()
+
     coco_layout = _resolve_coco_root_layout(path, split)
     if coco_layout is not None:
         images_dir, instances_path, split_effective = coco_layout
@@ -835,21 +1055,53 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
             format_name="coco_root",
             root=str(path),
             split=split_effective,
+            task_family="bbox",
             images_dir=str(images_dir),
             instances_json=str(instances_path),
             split_candidates=_available_coco_splits(path),
+        ).to_dict()
+
+    coco_keypoints_layout = _resolve_coco_keypoints_root_layout(path, split)
+    if coco_keypoints_layout is not None:
+        images_dir, annotations_path, split_effective = coco_keypoints_layout
+        return DatasetLayoutInfo(
+            format_name="coco_keypoints_root",
+            root=str(path),
+            split=split_effective,
+            task_family="keypoints",
+            images_dir=str(images_dir),
+            instances_json=str(annotations_path),
+            split_candidates=_available_coco_keypoints_splits(path),
         ).to_dict()
 
     split_effective = _pick_split(path, split)
     images_dir = path / "images" / split_effective
     labels_dir = path / "labels" / split_effective
     if images_dir.exists() and labels_dir.exists():
+        dataset_payload, classes_payload = _load_yolo_split_metadata(path, split_effective)
+        label_format = None
+        if isinstance(dataset_payload.get("label_format"), str) and str(dataset_payload.get("label_format")).strip():
+            label_format = str(dataset_payload.get("label_format")).strip()
+        elif isinstance(dataset_payload.get("task"), str) and str(dataset_payload.get("task")).strip().lower() in (
+            "segment",
+            "seg",
+            "polygon",
+            "yolo-seg",
+            "yolo_seg",
+        ):
+            label_format = "segment"
         return DatasetLayoutInfo(
             format_name="yolo_layout",
             root=str(path),
             split=split_effective,
+            task_family=_infer_task_family_from_metadata(
+                label_format=label_format,
+                dataset_payload=dataset_payload,
+                classes_payload=classes_payload,
+            ),
             images_dir=str(images_dir),
             labels_dir=str(labels_dir),
+            label_format=label_format,
             split_candidates=_available_yolo_splits(path),
         ).to_dict()
 
@@ -941,6 +1193,153 @@ def load_coco_instances_dataset(
         )
 
     return records
+
+
+def load_coco_keypoints_dataset(
+    annotations_json: dict[str, Any],
+    *,
+    images_dir: Path,
+    include_crowd: bool = False,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    images = annotations_json.get("images") or []
+    annotations = annotations_json.get("annotations") or []
+    categories = annotations_json.get("categories") or []
+    if not isinstance(images, list) or not isinstance(annotations, list):
+        raise ValueError("invalid COCO keypoints JSON (images/annotations)")
+
+    keypoint_names: list[str] = []
+    skeleton: list[list[int]] = []
+    keypoint_category_id: int | None = None
+    class_names: list[str] = []
+    class_id_to_category_id: dict[str, int] = {}
+    category_id_to_class_id: dict[str, int] = {}
+    category_ids: list[int] = []
+    if isinstance(categories, list):
+        for category in categories:
+            if not isinstance(category, dict):
+                continue
+            try:
+                cat_id = int(category.get("id"))
+            except Exception:
+                continue
+            category_ids.append(cat_id)
+        category_ids = sorted(set(category_ids))
+        for class_id, cat_id in enumerate(category_ids):
+            class_id_to_category_id[str(class_id)] = int(cat_id)
+            category_id_to_class_id[str(cat_id)] = int(class_id)
+        for cat_id in category_ids:
+            category = next((c for c in categories if isinstance(c, dict) and int(c.get("id", -1)) == cat_id), None)
+            if category is None:
+                class_names.append(f"class_{len(class_names)}")
+                continue
+            class_names.append(str(category.get("name") or f"class_{len(class_names)}"))
+            raw_names = category.get("keypoints") or []
+            if not keypoint_names and isinstance(raw_names, list) and raw_names:
+                keypoint_names = [str(name).strip() for name in raw_names if str(name).strip()]
+                raw_skeleton = category.get("skeleton") or []
+                if isinstance(raw_skeleton, list):
+                    for edge in raw_skeleton:
+                        if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+                            continue
+                        try:
+                            a = int(edge[0])
+                            b = int(edge[1])
+                        except Exception:
+                            continue
+                        skeleton.append([a, b])
+                keypoint_category_id = int(cat_id)
+
+    image_id_to_meta: dict[int, dict[str, Any]] = {}
+    for img in images:
+        if not isinstance(img, dict) or "id" not in img:
+            continue
+        try:
+            image_id_to_meta[int(img["id"])] = img
+        except (TypeError, ValueError):
+            continue
+
+    ann_by_image: dict[int, list[dict[str, Any]]] = {}
+    for ann in annotations:
+        if not isinstance(ann, dict):
+            continue
+        if not include_crowd and int(ann.get("iscrowd", 0) or 0) == 1:
+            continue
+        try:
+            img_id = int(ann["image_id"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        ann_by_image.setdefault(img_id, []).append(ann)
+
+    records: list[dict[str, Any]] = []
+    for img_id, meta in sorted(image_id_to_meta.items(), key=lambda kv: str(kv[1].get("file_name") or "")):
+        file_name = str(meta.get("file_name") or "").strip()
+        if not file_name:
+            continue
+        width = int(meta.get("width") or 0)
+        height = int(meta.get("height") or 0)
+        if width <= 0 or height <= 0:
+            continue
+        image_path = images_dir / file_name
+
+        labels: list[dict[str, Any]] = []
+        for ann in ann_by_image.get(img_id, []):
+            try:
+                cat_id = int(ann["category_id"])
+            except Exception:
+                continue
+            class_id = category_id_to_class_id.get(str(cat_id))
+            if class_id is None:
+                continue
+            bbox = ann.get("bbox") or []
+            if not isinstance(bbox, list) or len(bbox) != 4:
+                continue
+            x, y, w, h = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+            if w <= 0.0 or h <= 0.0:
+                continue
+            label: dict[str, Any] = {
+                "class_id": int(class_id),
+                "cx": float((x + w / 2.0) / float(width)),
+                "cy": float((y + h / 2.0) / float(height)),
+                "w": float(w / float(width)),
+                "h": float(h / float(height)),
+            }
+            raw_keypoints = ann.get("keypoints") or []
+            if isinstance(raw_keypoints, list) and len(raw_keypoints) >= 3 and len(raw_keypoints) % 3 == 0:
+                keypoints_norm: list[float] = []
+                for idx in range(0, len(raw_keypoints), 3):
+                    try:
+                        kp_x = float(raw_keypoints[idx]) / float(width)
+                        kp_y = float(raw_keypoints[idx + 1]) / float(height)
+                        kp_v = float(raw_keypoints[idx + 2])
+                    except Exception:
+                        keypoints_norm = []
+                        break
+                    keypoints_norm.extend([kp_x, kp_y, kp_v])
+                if keypoints_norm:
+                    label["keypoints"] = normalize_keypoints(keypoints_norm, where="label.keypoints")
+            labels.append(label)
+
+        records.append(
+            {
+                "image": str(image_path),
+                "labels": labels,
+                "image_hw": [int(height), int(width)],
+            }
+        )
+
+    metadata: dict[str, Any] = {
+        "class_names": class_names,
+        "class_id_to_category_id": class_id_to_category_id,
+        "category_id_to_class_id": category_id_to_class_id,
+    }
+    if keypoint_names:
+        metadata["keypoint_names"] = keypoint_names
+        metadata["num_keypoints"] = int(len(keypoint_names))
+    if skeleton:
+        metadata["skeleton"] = skeleton
+    if keypoint_category_id is not None:
+        metadata["keypoint_category_id"] = int(keypoint_category_id)
+    return records, metadata
 
 
 def _build_manifest_from_dataset_descriptor(
@@ -1045,6 +1444,7 @@ def build_manifest(dataset_root, *, split: str | None = None, label_format: str 
     if resolved is not None:
         return resolved
 
+    coco_keypoints_layout = _resolve_coco_keypoints_root_layout(dataset_root, split)
     coco_layout = _resolve_coco_root_layout(dataset_root, split)
     if coco_layout is not None:
         images_dir, instances_path, split_effective = coco_layout
@@ -1052,6 +1452,14 @@ def build_manifest(dataset_root, *, split: str | None = None, label_format: str 
         if not isinstance(instances_doc, dict):
             raise ValueError("invalid COCO instances JSON (expected object)")
         records = load_coco_instances_dataset(instances_doc, images_dir=images_dir, include_crowd=False)
+        return {"images": records, "split": split_effective}
+
+    if coco_keypoints_layout is not None:
+        images_dir, annotations_path, split_effective = coco_keypoints_layout
+        annotations_doc = json.loads(annotations_path.read_text(encoding="utf-8"))
+        if not isinstance(annotations_doc, dict):
+            raise ValueError("invalid COCO keypoints JSON (expected object)")
+        records, _metadata = load_coco_keypoints_dataset(annotations_doc, images_dir=images_dir, include_crowd=False)
         return {"images": records, "split": split_effective}
 
     split_effective = _pick_split(dataset_root, split)

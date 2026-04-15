@@ -20,6 +20,7 @@ __all__ = [
     "export_coco_dataset",
     "export_yolo_dataset",
     "export_kitti_dataset",
+    "export_segmentation_dataset",
 ]
 
 
@@ -40,6 +41,16 @@ def _resolve_source_split(dataset_root: Path, split: str | None) -> tuple[Path, 
 
 
 def _load_classes_payload(*, dataset_root: Path, split: str, records: list[dict[str, Any]]) -> dict[str, Any]:
+    dataset_payload: dict[str, Any] = {}
+    descriptor = dataset_root / "dataset.json"
+    if descriptor.exists():
+        try:
+            raw_descriptor = json.loads(descriptor.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            raw_descriptor = None
+        if isinstance(raw_descriptor, dict):
+            dataset_payload = raw_descriptor
+
     candidates = [
         dataset_root / "labels" / split / "classes.json",
         dataset_root / "labels" / split / "classes.txt",
@@ -53,6 +64,9 @@ def _load_classes_payload(*, dataset_root: Path, split: str, records: list[dict[
             except (OSError, json.JSONDecodeError):
                 continue
             if isinstance(payload, dict):
+                for key in ("keypoint_names", "num_keypoints", "skeleton", "task"):
+                    if key in dataset_payload and key not in payload:
+                        payload[key] = dataset_payload.get(key)
                 return payload
         else:
             try:
@@ -60,7 +74,11 @@ def _load_classes_payload(*, dataset_root: Path, split: str, records: list[dict[
             except OSError:
                 continue
             if names:
-                return {"class_names": names}
+                payload: dict[str, Any] = {"class_names": names}
+                for key in ("keypoint_names", "num_keypoints", "skeleton", "task"):
+                    if key in dataset_payload:
+                        payload[key] = dataset_payload.get(key)
+                return payload
 
     max_class_id = -1
     for record in records:
@@ -71,11 +89,15 @@ def _load_classes_payload(*, dataset_root: Path, split: str, records: list[dict[
                 continue
 
     class_names = [f"class_{idx}" for idx in range(max_class_id + 1)] if max_class_id >= 0 else []
-    return {
+    payload = {
         "class_names": class_names,
         "class_id_to_category_id": {str(idx): idx for idx in range(len(class_names))},
         "category_id_to_class_id": {str(idx): idx for idx in range(len(class_names))},
     }
+    for key in ("keypoint_names", "num_keypoints", "skeleton", "task"):
+        if key in dataset_payload:
+            payload[key] = dataset_payload.get(key)
+    return payload
 
 
 def _class_names_from_payload(payload: dict[str, Any]) -> list[str]:
@@ -129,9 +151,17 @@ def _prepare_output_root(out_dir: str | Path, *, force: bool) -> Path:
     return out_root
 
 
-def _copy_image(src: Path, dst: Path) -> None:
+def _materialize_file(src: Path, dst: Path, *, mode: str = "copy") -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst)
+    if mode == "copy":
+        shutil.copy2(src, dst)
+        return
+    if mode == "symlink":
+        if dst.exists() or dst.is_symlink():
+            dst.unlink()
+        dst.symlink_to(src)
+        return
+    raise ValueError("mode must be copy|symlink")
 
 
 def _format_yolo_label(label: dict[str, Any]) -> str:
@@ -150,7 +180,23 @@ def _format_yolo_label(label: dict[str, Any]) -> str:
     ]
     out = f"{class_id} " + " ".join(f"{value:.6g}" for value in coords)
     if isinstance(keypoints, list) and keypoints:
-        out = out + " " + " ".join(f"{float(value):.6g}" for value in keypoints)
+        flat_keypoints: list[float] = []
+        if isinstance(keypoints[0], dict):
+            for item in keypoints:
+                if not isinstance(item, dict):
+                    continue
+                flat_keypoints.extend(
+                    [
+                        float(item.get("x", 0.0)),
+                        float(item.get("y", 0.0)),
+                        float(item.get("v", 2.0)),
+                    ]
+                )
+        else:
+            for value in keypoints:
+                flat_keypoints.append(float(value))
+        if flat_keypoints:
+            out = out + " " + " ".join(f"{float(value):.6g}" for value in flat_keypoints)
     return out
 
 
@@ -224,11 +270,75 @@ def _category_mappings_from_payload(payload: dict[str, Any], *, class_names: lis
     return class_to_category, category_to_class
 
 
+def _keypoint_schema_from_payload(payload: dict[str, Any]) -> tuple[list[str], list[list[int]]]:
+    raw_names = payload.get("keypoint_names") or []
+    keypoint_names: list[str] = []
+    if isinstance(raw_names, list):
+        for item in raw_names:
+            text = str(item).strip()
+            if text:
+                keypoint_names.append(text)
+    raw_skeleton = payload.get("skeleton") or []
+    skeleton: list[list[int]] = []
+    if isinstance(raw_skeleton, list):
+        for edge in raw_skeleton:
+            if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+                continue
+            try:
+                skeleton.append([int(edge[0]), int(edge[1])])
+            except Exception:
+                continue
+    return keypoint_names, skeleton
+
+
+def _keypoints_to_coco_list(
+    keypoints: Any,
+    *,
+    image_w: int,
+    image_h: int,
+    expected_count: int,
+) -> tuple[list[float], int]:
+    out: list[float] = []
+    num_labeled = 0
+    normalized = keypoints if isinstance(keypoints, list) else []
+    for idx in range(expected_count):
+        base = idx * 3
+        if base + 2 < len(normalized):
+            try:
+                x = float(normalized[base]) * float(image_w)
+                y = float(normalized[base + 1]) * float(image_h)
+                v = float(normalized[base + 2])
+            except Exception:
+                x = y = 0.0
+                v = 0.0
+        else:
+            x = y = 0.0
+            v = 0.0
+        if v > 0.0:
+            num_labeled += 1
+        out.extend([float(x), float(y), int(round(v))])
+    return out, int(num_labeled)
+
+
+def _polygon_to_coco_segmentation(polygon: Any, *, image_w: int, image_h: int) -> list[list[float]]:
+    if not isinstance(polygon, list) or len(polygon) < 6 or len(polygon) % 2 != 0:
+        return []
+    coords: list[float] = []
+    for idx, value in enumerate(polygon):
+        try:
+            numeric = float(value)
+        except Exception:
+            return []
+        coords.append(numeric * float(image_w if idx % 2 == 0 else image_h))
+    return [coords]
+
+
 def export_coco_dataset(
     *,
     dataset_root: str | Path,
     split: str | None,
     out_dir: str | Path,
+    image_mode: str = "copy",
     force: bool = False,
 ) -> Path:
     from .dataset import build_manifest
@@ -250,11 +360,16 @@ def export_coco_dataset(
     classes_payload = _load_classes_payload(dataset_root=base_root, split=split_effective, records=records)
     class_names = _class_names_from_payload(classes_payload)
     class_to_category, _ = _category_mappings_from_payload(classes_payload, class_names=class_names)
+    keypoint_names, skeleton = _keypoint_schema_from_payload(classes_payload)
 
-    categories = [
-        {"id": int(class_to_category.get(class_id, class_id + 1)), "name": str(name)}
-        for class_id, name in enumerate(class_names)
-    ]
+    categories: list[dict[str, Any]] = []
+    for class_id, name in enumerate(class_names):
+        category: dict[str, Any] = {"id": int(class_to_category.get(class_id, class_id + 1)), "name": str(name)}
+        if keypoint_names and class_id == 0:
+            category["keypoints"] = list(keypoint_names)
+            if skeleton:
+                category["skeleton"] = list(skeleton)
+        categories.append(category)
 
     images: list[dict[str, Any]] = []
     annotations: list[dict[str, Any]] = []
@@ -264,7 +379,7 @@ def export_coco_dataset(
         if not image_path.exists():
             raise FileNotFoundError(f"image not found: {image_path}")
         image_w, image_h = _record_image_size(record)
-        _copy_image(image_path, images_dir / image_path.name)
+        _materialize_file(image_path, images_dir / image_path.name, mode=image_mode)
 
         images.append(
             {
@@ -286,24 +401,51 @@ def export_coco_dataset(
             y = cy - bh / 2.0
             if bw <= 0.0 or bh <= 0.0:
                 continue
-            annotations.append(
-                {
-                    "id": int(ann_id),
-                    "image_id": int(image_id),
-                    "category_id": int(category_id),
-                    "bbox": [float(x), float(y), float(bw), float(bh)],
-                    "area": float(bw * bh),
-                    "iscrowd": 0,
-                }
-            )
+            annotation: dict[str, Any] = {
+                "id": int(ann_id),
+                "image_id": int(image_id),
+                "category_id": int(category_id),
+                "bbox": [float(x), float(y), float(bw), float(bh)],
+                "area": float(bw * bh),
+                "iscrowd": 0,
+            }
+            segmentation = _polygon_to_coco_segmentation(label.get("polygon"), image_w=image_w, image_h=image_h)
+            if segmentation:
+                annotation["segmentation"] = segmentation
+            if keypoint_names and label.get("keypoints") is not None and class_id == 0:
+                flat_keypoints = label.get("keypoints")
+                if isinstance(flat_keypoints, list) and flat_keypoints and isinstance(flat_keypoints[0], dict):
+                    normalized: list[float] = []
+                    for item in flat_keypoints:
+                        if not isinstance(item, dict):
+                            continue
+                        normalized.extend(
+                            [
+                                float(item.get("x", 0.0)),
+                                float(item.get("y", 0.0)),
+                                float(item.get("v", 2.0)),
+                            ]
+                        )
+                    flat_keypoints = normalized
+                coco_keypoints, num_keypoints = _keypoints_to_coco_list(
+                    flat_keypoints,
+                    image_w=image_w,
+                    image_h=image_h,
+                    expected_count=len(keypoint_names),
+                )
+                annotation["keypoints"] = coco_keypoints
+                annotation["num_keypoints"] = int(num_keypoints)
+            annotations.append(annotation)
             ann_id += 1
 
     instances_path = ann_dir / f"instances_{split_effective}.json"
-    instances_path.write_text(
-        json.dumps({"images": images, "annotations": annotations, "categories": categories}, indent=2, sort_keys=True, ensure_ascii=False)
-        + "\n",
-        encoding="utf-8",
-    )
+    coco_payload = {"images": images, "annotations": annotations, "categories": categories}
+    instances_path.write_text(json.dumps(coco_payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    if keypoint_names:
+        (ann_dir / f"person_keypoints_{split_effective}.json").write_text(
+            json.dumps(coco_payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
     return out_root
 
 
@@ -312,6 +454,7 @@ def export_yolo_dataset(
     dataset_root: str | Path,
     split: str | None,
     out_dir: str | Path,
+    image_mode: str = "copy",
     force: bool = False,
 ) -> Path:
     from .dataset import build_manifest
@@ -335,7 +478,7 @@ def export_yolo_dataset(
         if not image_path.exists():
             raise FileNotFoundError(f"image not found: {image_path}")
         dst_image = images_dir / image_path.name
-        _copy_image(image_path, dst_image)
+        _materialize_file(image_path, dst_image, mode=image_mode)
 
         label_lines = [_format_yolo_label(label) for label in (record.get("labels") or [])]
         (labels_dir / f"{image_path.stem}.txt").write_text(
@@ -353,6 +496,9 @@ def export_yolo_dataset(
         yaml_lines.extend(f"  {idx}: {name}" for idx, name in enumerate(class_names))
     else:
         yaml_lines.append("  0: class_0")
+    keypoint_names, _skeleton = _keypoint_schema_from_payload(classes_payload)
+    if keypoint_names:
+        yaml_lines.append(f"kpt_shape: [{len(keypoint_names)}, 3]")
     (out_root / "data.yaml").write_text("\n".join(yaml_lines) + "\n", encoding="utf-8")
     return out_root
 
@@ -362,6 +508,7 @@ def export_kitti_dataset(
     dataset_root: str | Path,
     split: str | None,
     out_dir: str | Path,
+    image_mode: str = "copy",
     force: bool = False,
 ) -> Path:
     from .dataset import build_manifest
@@ -397,7 +544,7 @@ def export_kitti_dataset(
         if not image_path.exists():
             raise FileNotFoundError(f"image not found: {image_path}")
         stems.append(image_path.stem)
-        _copy_image(image_path, images_dir / image_path.name)
+        _materialize_file(image_path, images_dir / image_path.name, mode=image_mode)
 
         image_w, image_h = _record_image_size(record)
         label_lines = [
@@ -413,4 +560,60 @@ def export_kitti_dataset(
         ("\n".join(stems) + "\n") if stems else "",
         encoding="utf-8",
     )
+    return out_root
+
+
+def export_segmentation_dataset(
+    *,
+    dataset_root: str | Path,
+    out_dir: str | Path,
+    image_mode: str = "copy",
+    force: bool = False,
+) -> Path:
+    from .segmentation_dataset import load_seg_dataset_descriptor, resolve_dataset_path
+
+    source_root = _resolve_dataset_root(dataset_root)
+    descriptor_path = source_root if source_root.is_file() else source_root / "dataset.json"
+    desc = load_seg_dataset_descriptor(descriptor_path)
+
+    out_root = _prepare_output_root(out_dir, force=force)
+    images_dir = out_root / "images" / str(desc.split)
+    masks_dir = out_root / "masks" / str(desc.split)
+    images_dir.mkdir(parents=True, exist_ok=True)
+    masks_dir.mkdir(parents=True, exist_ok=True)
+
+    out_samples: list[dict[str, Any]] = []
+    for sample in desc.samples:
+        image_src = resolve_dataset_path(sample.image, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+        image_dst = images_dir / image_src.name
+        _materialize_file(image_src, image_dst, mode=image_mode)
+
+        mask_out: str | None = None
+        if sample.mask is not None:
+            mask_src = resolve_dataset_path(sample.mask, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+            mask_dst = masks_dir / mask_src.name
+            _materialize_file(mask_src, mask_dst, mode=image_mode)
+            mask_out = str(Path("masks") / str(desc.split) / mask_dst.name)
+
+        out_samples.append(
+            {
+                "id": sample.sample_id,
+                "image": str(Path("images") / str(desc.split) / image_dst.name),
+                "mask": mask_out,
+            }
+        )
+
+    payload: dict[str, Any] = {
+        "dataset": desc.dataset,
+        "task": "semantic_segmentation",
+        "split": desc.split,
+        "mode": ("copy" if image_mode == "copy" else "symlink"),
+        "path_type": "relative",
+        "ignore_index": int(desc.ignore_index),
+        "samples": out_samples,
+    }
+    if desc.classes is not None:
+        payload["classes"] = list(desc.classes)
+        (out_root / "classes.txt").write_text("\n".join(desc.classes) + "\n", encoding="utf-8")
+    (out_root / "dataset.json").write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     return out_root

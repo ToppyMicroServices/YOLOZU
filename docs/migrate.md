@@ -77,6 +77,16 @@ The output descriptor contains:
 - `ignore_index`
 - `path_type`: `absolute` (default) or `relative`
 
+The same layouts are now recognized by `yolozu doctor import --dataset-from auto`, `yolozu import dataset --from auto`, `yolozu migrate dataset --from auto`, and `yolozu validate dataset`, so the user does not need to remember a separate preflight path just to figure out the dataset family.
+
+Example:
+
+```bash
+yolozu doctor import --dataset-from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output -
+yolozu import dataset --from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output reports/voc_seg_wrapper --force
+yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force
+```
+
 ## 3) COCO JSON datasets (YOLOX / Detectron2 / MMDetection)
 
 Many ecosystems (YOLOX, Detectron2, MMDetection) use COCO-style `instances_*.json` for detection datasets.
@@ -98,6 +108,8 @@ yolozu migrate dataset \
 This writes:
 - `data/coco_yolo_like/labels/val2017/*.txt`
 - `data/coco_yolo_like/dataset.json` (points at `images_dir` and `labels_dir`)
+
+If the COCO root only exposes `person_keypoints_<split>.json`, `yolozu import dataset --from auto` now detects that automatically and creates a keypoints-ready YOLOZU wrapper with `keypoint_names` / `skeleton` metadata.
 
 Validate (label-only):
 
@@ -151,6 +163,12 @@ yolozu export-dataset kitti \
   --split val2017 \
   --out-dir data/coco_kitti_export \
   --force
+
+yolozu export-dataset segmentation \
+  --dataset reports/cityscapes_seg_wrapper \
+  --out-dir reports/cityscapes_seg_export \
+  --image-mode symlink \
+  --force
 ```
 
 YOLO export writes:
@@ -161,11 +179,19 @@ YOLO export writes:
 COCO export writes:
 - `data/coco_export/images/<split>/*`
 - `data/coco_export/annotations/instances_<split>.json`
+- `data/coco_export/annotations/person_keypoints_<split>.json` when keypoints metadata is present
 
 KITTI export writes:
 - `data/coco_kitti_export/image_2/*`
 - `data/coco_kitti_export/label_2/*.txt`
 - `data/coco_kitti_export/ImageSets/Main/<split>.txt`
+
+Segmentation export writes:
+- `reports/cityscapes_seg_export/images/<split>/*`
+- `reports/cityscapes_seg_export/masks/<split>/*`
+- `reports/cityscapes_seg_export/dataset.json`
+
+Use `--image-mode symlink` when you want an export tree without copying large image/mask assets.
 
 Repo-bundled tiny sample:
 
