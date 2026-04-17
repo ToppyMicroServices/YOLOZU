@@ -1482,44 +1482,13 @@ def _cmd_onnxrt_quantize(args: argparse.Namespace) -> int:
 
 
 def _cmd_predict_images(args: argparse.Namespace) -> int:
-    from yolozu.predict_images import predict_images
+    from yolozu.predict_images import predict_images_with_namespace
 
     try:
-        max_images = require_non_negative_int(args.max_images, flag_name="--max-images")
-    except ValueError as exc:
-        raise SystemExit(str(exc)) from exc
-
-    try:
-        out_json, out_html = predict_images(
-            backend=str(args.backend),
-            input_dir=str(args.input_dir),
-            output=str(args.output),
-            score=float(args.score),
-            max_images=max_images,
-            force=bool(args.force),
-            glob_patterns=list(args.glob) if args.glob else None,
-            overlays_dir=str(args.overlays_dir) if args.overlays_dir else None,
-            html=str(args.html) if args.html else None,
-            title=str(args.title),
-            onnx=(str(args.onnx) if args.onnx else None),
-            input_name=str(args.input_name),
-            boxes_output=str(args.boxes_output),
-            scores_output=str(args.scores_output),
-            class_output=(str(args.class_output) if args.class_output else None),
-            combined_output=(str(args.combined_output) if args.combined_output else None),
-            combined_format=str(args.combined_format),
-            raw_output=(str(args.raw_output) if args.raw_output else None),
-            raw_format=str(args.raw_format),
-            raw_postprocess=str(args.raw_postprocess),
-            boxes_format=str(args.boxes_format),
-            boxes_scale=str(args.boxes_scale),
-            min_score=float(args.min_score),
-            topk=int(args.topk),
-            nms_iou=float(args.nms_iou),
-            agnostic_nms=bool(args.agnostic_nms),
-            imgsz=int(args.imgsz),
-            dry_run=bool(args.dry_run),
-            strict=bool(args.strict),
+        out_json, out_html = predict_images_with_namespace(
+            args,
+            subprocess_or_die=_subprocess_or_die,
+            base_run_meta=_base_run_meta,
         )
     except Exception as exc:
         raise SystemExit(str(exc)) from exc

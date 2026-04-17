@@ -160,8 +160,8 @@ python3 scripts/prepare_ttt_domain_shift_target.py \
   --max-images 1 \
   --force
 
-# 2) Inference overlays without TTT (repo checkout compatibility wrapper for folder inference).
-python3 tools/yolozu.py predict-images \
+# 2) Inference overlays without TTT.
+python3 -m yolozu predict-images \
   --backend torch --device cpu \
   --config rtdetr_pose/configs/base.json \
   --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
@@ -173,7 +173,7 @@ python3 tools/yolozu.py predict-images \
   --force
 
 # 3) Same inference but with TTT enabled (Tent safe preset, reset per sample).
-python3 tools/yolozu.py predict-images \
+python3 -m yolozu predict-images \
   --backend torch --device cpu \
   --config rtdetr_pose/configs/base.json \
   --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \

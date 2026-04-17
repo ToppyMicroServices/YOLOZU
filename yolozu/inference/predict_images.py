@@ -6,16 +6,21 @@ schema-correct ``predictions.json`` and optional overlay images.
 
 from __future__ import annotations
 
+import argparse
 import os
+import platform
 import shutil
+import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
 
-__all__ = ["predict_images"]
-from typing import Any, Iterable
+__all__ = ["predict_images", "predict_images_with_namespace"]
+from typing import Any, Callable, Iterable
 
-from yolozu.export import export_dummy_predictions, write_predictions_json
+from yolozu.export import write_predictions_json
+from yolozu.inference.export_orchestrator import export_with_backend, load_json, sha256_json
 
 
 def _now_utc() -> str:
@@ -189,12 +194,142 @@ def _write_html_report(*, html_path: Path, overlays: dict[str, Any], title: str)
     html_path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def _default_subprocess_or_die(cmd: list[str]) -> str:
+    if len(cmd) >= 2:
+        candidate = Path(str(cmd[1]))
+        if candidate.suffix == ".py":
+            script_path = candidate if candidate.is_absolute() else (Path.cwd() / candidate)
+            if not script_path.is_file():
+                raise SystemExit(f"required script not found: {candidate}")
+    proc = subprocess.run(
+        cmd,
+        cwd=str(Path.cwd()),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stderr and proc.stderr.strip():
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    if proc.returncode != 0:
+        raise SystemExit(f"command failed ({proc.returncode}): {' '.join(cmd)}\n{proc.stdout}\n{proc.stderr}")
+    return proc.stdout
+
+
+def _default_base_run_meta(*, seed: int | None, notes: str | None, config_fingerprint: dict[str, Any]) -> dict[str, Any]:
+    from yolozu.core import doctor as doctor_mod
+
+    cwd = Path.cwd()
+    git = doctor_mod._gather_git_info(cwd=cwd)
+    return {
+        "timestamp": _now_utc(),
+        "seed": seed,
+        "notes": notes,
+        "config_hash": sha256_json(config_fingerprint),
+        "git": {"head": git.get("head"), "dirty": git.get("dirty")},
+        "python": sys.version,
+        "platform": {
+            "system": platform.system(),
+            "release": platform.release(),
+            "version": platform.version(),
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+        },
+        "gpu": doctor_mod._gather_gpu_info(),
+        "env": {
+            "python_executable": sys.executable,
+            "cwd": str(cwd),
+        },
+    }
+
+
+def predict_images_with_namespace(
+    args: argparse.Namespace,
+    *,
+    subprocess_or_die: Callable[[list[str]], str] | None = None,
+    base_run_meta: Callable[..., dict[str, Any]] | None = None,
+) -> tuple[Path, Path | None]:
+    subprocess_fn = _default_subprocess_or_die if subprocess_or_die is None else subprocess_or_die
+    run_meta_fn = _default_base_run_meta if base_run_meta is None else base_run_meta
+
+    input_dir_path = Path(str(args.input_dir)).expanduser()
+    if not input_dir_path.is_absolute():
+        input_dir_path = Path.cwd() / input_dir_path
+    if not input_dir_path.is_dir():
+        raise FileNotFoundError(f"input dir not found: {input_dir_path}")
+
+    patterns = list(args.glob) if getattr(args, "glob", None) else ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"]
+    images = _iter_images(input_dir_path, patterns=patterns)
+    max_images = getattr(args, "max_images", None)
+    if max_images is not None:
+        images = images[: max(0, int(max_images))]
+    if not images:
+        raise FileNotFoundError(f"no images matched under: {input_dir_path}")
+
+    output_path = Path(str(args.output)).expanduser()
+    if not output_path.is_absolute():
+        output_path = Path.cwd() / output_path
+
+    overlays_path: Path | None = None
+    if getattr(args, "overlays_dir", None) is not None:
+        overlays_path = Path(str(args.overlays_dir)).expanduser()
+        if not overlays_path.is_absolute():
+            overlays_path = Path.cwd() / overlays_path
+
+    html_path: Path | None = None
+    if getattr(args, "html", None) is not None:
+        html_path = Path(str(args.html)).expanduser()
+        if not html_path.is_absolute():
+            html_path = Path.cwd() / html_path
+
+    with tempfile.TemporaryDirectory(prefix="yolozu_predict_images_") as temp_dir:
+        temp_root = Path(temp_dir)
+        split = "train2017"
+        temp_images = temp_root / "images" / split
+        temp_labels = temp_root / "labels" / split
+        temp_images.mkdir(parents=True, exist_ok=True)
+        temp_labels.mkdir(parents=True, exist_ok=True)
+
+        mapping: dict[str, str] = {}
+        for index, src in enumerate(images):
+            dst = temp_images / f"{index:06d}_{src.name}"
+            try:
+                os.symlink(str(src.resolve()), str(dst))
+            except Exception:
+                shutil.copy2(src, dst)
+            mapping[str(dst)] = str(src.resolve())
+            mapping[str(dst.resolve())] = str(src.resolve())
+            (temp_labels / f"{dst.stem}.txt").touch()
+
+        export_args = argparse.Namespace(**vars(args))
+        export_args.dataset = str(temp_root)
+        export_args.split = split
+        export_args.output = str(output_path)
+        export_path = export_with_backend(
+            export_args,
+            subprocess_or_die=subprocess_fn,
+            base_run_meta=run_meta_fn,
+            dataset_override=str(temp_root),
+            dataset_meta=str(input_dir_path),
+        )
+
+        wrapped_payload = _ensure_wrapper(load_json(export_path))
+        _rewrite_image_paths(wrapped_payload, mapping)
+        out_path = write_predictions_json(output=output_path, payload=wrapped_payload, force=True)
+
+    if overlays_path is None:
+        return out_path, None
+    overlay_index = _render_overlays(payload=wrapped_payload, overlays_dir=overlays_path, max_images=max_images)
+    if html_path is not None:
+        _write_html_report(html_path=html_path, overlays=overlay_index, title=str(getattr(args, "title", "YOLOZU predict-images report")))
+    return out_path, html_path
+
+
 def predict_images(
     *,
     backend: str,
     input_dir: str | Path,
     output: str | Path,
-    score: float,
     max_images: int | None,
     force: bool,
     glob_patterns: list[str] | None = None,
@@ -221,100 +356,128 @@ def predict_images(
     dry_run: bool = False,
     strict: bool = False,
 ) -> tuple[Path, Path | None]:
-    input_dir_path = Path(input_dir).expanduser()
-    if not input_dir_path.is_absolute():
-        input_dir_path = Path.cwd() / input_dir_path
-    if not input_dir_path.is_dir():
-        raise FileNotFoundError(f"input dir not found: {input_dir_path}")
-
-    patterns = glob_patterns if glob_patterns else ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"]
-    images = _iter_images(input_dir_path, patterns=patterns)
-    if max_images is not None:
-        images = images[: max(0, int(max_images))]
-    if not images:
-        raise FileNotFoundError(f"no images matched under: {input_dir_path}")
-
-    output_path = Path(output).expanduser()
-    if not output_path.is_absolute():
-        output_path = Path.cwd() / output_path
-
-    overlays_path: Path | None = None
-    if overlays_dir is not None:
-        overlays_path = Path(overlays_dir).expanduser()
-        if not overlays_path.is_absolute():
-            overlays_path = Path.cwd() / overlays_path
-
-    html_path: Path | None = None
-    if html is not None:
-        html_path = Path(html).expanduser()
-        if not html_path.is_absolute():
-            html_path = Path.cwd() / html_path
-
-    with tempfile.TemporaryDirectory(prefix="yolozu_predict_images_") as temp_dir:
-        temp_root = Path(temp_dir)
-        split = "train2017"
-        temp_images = temp_root / "images" / split
-        temp_labels = temp_root / "labels" / split
-        temp_images.mkdir(parents=True, exist_ok=True)
-        temp_labels.mkdir(parents=True, exist_ok=True)
-
-        mapping: dict[str, str] = {}
-        for index, src in enumerate(images):
-            dst = temp_images / f"{index:06d}_{src.name}"
-            try:
-                os.symlink(str(src.resolve()), str(dst))
-            except Exception:
-                shutil.copy2(src, dst)
-            mapping[str(dst)] = str(src.resolve())
-            mapping[str(dst.resolve())] = str(src.resolve())
-            # Keep a valid YOLO layout even when no labels are available.
-            (temp_labels / f"{dst.stem}.txt").touch()
-
-        payload: dict[str, Any]
-        if backend == "dummy":
-            payload, _ = export_dummy_predictions(
-                dataset_root=temp_root,
-                split=split,
-                max_images=max_images,
-                score=float(score),
-            )
-        elif backend == "onnxrt":
-            from yolozu.onnxrt_export import export_predictions_onnxrt
-
-            payload = export_predictions_onnxrt(
-                dataset_root=temp_root,
-                split=split,
-                max_images=max_images,
-                onnx=str(onnx) if onnx else None,
-                input_name=str(input_name),
-                boxes_output=str(boxes_output),
-                scores_output=str(scores_output),
-                class_output=(str(class_output) if class_output else None),
-                combined_output=(str(combined_output) if combined_output else None),
-                combined_format=str(combined_format),
-                raw_output=(str(raw_output) if raw_output else None),
-                raw_format=str(raw_format),
-                raw_postprocess=str(raw_postprocess),
-                boxes_format=str(boxes_format),
-                boxes_scale=str(boxes_scale),
-                min_score=float(min_score),
-                topk=int(topk),
-                nms_iou=float(nms_iou),
-                agnostic_nms=bool(agnostic_nms),
-                imgsz=int(imgsz),
-                dry_run=bool(dry_run),
-                strict=bool(strict),
-            )
-        else:
-            raise ValueError(f"unsupported backend: {backend}")
-
-    wrapped_payload = _ensure_wrapper(payload)
-    _rewrite_image_paths(wrapped_payload, mapping)
-    out_path = write_predictions_json(output=output_path, payload=wrapped_payload, force=bool(force))
-
-    if overlays_path is None:
-        return out_path, None
-    overlay_index = _render_overlays(payload=wrapped_payload, overlays_dir=overlays_path, max_images=max_images)
-    if html_path is not None:
-        _write_html_report(html_path=html_path, overlays=overlay_index, title=str(title))
-    return out_path, html_path
+    args = argparse.Namespace(
+        backend=backend,
+        input_dir=str(input_dir),
+        output=str(output),
+        max_images=max_images,
+        force=force,
+        glob=list(glob_patterns) if glob_patterns else None,
+        overlays_dir=str(overlays_dir) if overlays_dir is not None else None,
+        html=str(html) if html is not None else None,
+        title=title,
+        onnx=str(onnx) if onnx is not None else None,
+        input_name=input_name,
+        boxes_output=boxes_output,
+        scores_output=scores_output,
+        class_output=class_output,
+        combined_output=combined_output,
+        combined_format=combined_format,
+        raw_output=raw_output,
+        raw_format=raw_format,
+        raw_postprocess=raw_postprocess,
+        boxes_format=boxes_format,
+        boxes_scale=boxes_scale,
+        min_score=min_score,
+        topk=topk,
+        nms_iou=nms_iou,
+        agnostic_nms=agnostic_nms,
+        imgsz=imgsz,
+        dry_run=dry_run,
+        strict=strict,
+        dataset=None,
+        split=None,
+        run_dir=None,
+        cache=False,
+        cache_dir="runs/yolozu_runs",
+        notes=None,
+        seed=None,
+        config="rtdetr_pose/configs/base.json",
+        checkpoint=None,
+        device="cpu",
+        infer_batch_size=1,
+        image_size=None,
+        score_threshold=0.3,
+        max_detections=50,
+        torch_compile=False,
+        torch_compile_backend="inductor",
+        torch_compile_mode="reduce-overhead",
+        torch_amp="off",
+        torch_channels_last=False,
+        torch_inference_mode=True,
+        lora_r=0,
+        lora_alpha=None,
+        lora_dropout=0.0,
+        lora_target="head",
+        lora_freeze_base=False,
+        lora_train_bias="none",
+        tta=False,
+        tta_mode="postprocess",
+        tta_seed=None,
+        tta_flip_prob=0.5,
+        tta_norm_only=False,
+        tta_keypoint_swap_pairs=None,
+        tta_model_merge_iou=0.55,
+        tta_flip_keypoints=True,
+        tta_flip_pose_offsets=True,
+        tta_log_out=None,
+        ttt=False,
+        ttt_preset=None,
+        ttt_method="tent",
+        ttt_reset="stream",
+        ttt_steps=1,
+        ttt_batch_size=1,
+        ttt_lr=1e-4,
+        ttt_stop_on_non_finite=True,
+        ttt_rollback_on_stop=True,
+        ttt_max_grad_norm=None,
+        ttt_max_update_norm=None,
+        ttt_max_total_update_norm=None,
+        ttt_max_loss_ratio=None,
+        ttt_max_loss_increase=None,
+        ttt_update_filter="all",
+        ttt_include=None,
+        ttt_exclude=None,
+        ttt_max_batches=1,
+        ttt_seed=None,
+        ttt_mask_prob=0.6,
+        ttt_patch_size=16,
+        ttt_mask_value=0.0,
+        ttt_cotta_ema_momentum=0.999,
+        ttt_cotta_augmentations=None,
+        ttt_cotta_aggregation="confidence_weighted_mean",
+        ttt_cotta_restore_prob=0.01,
+        ttt_cotta_restore_interval=1,
+        ttt_eata_conf_min=0.2,
+        ttt_eata_entropy_min=0.05,
+        ttt_eata_entropy_max=3.0,
+        ttt_eata_min_valid_dets=1,
+        ttt_eata_anchor_lambda=1e-3,
+        ttt_eata_selected_ratio_min=0.0,
+        ttt_eata_max_skip_streak=3,
+        ttt_sar_rho=0.05,
+        ttt_sar_adaptive=False,
+        ttt_sar_first_step_scale=1.0,
+        ttt_sdft_task=None,
+        ttt_aux_pose_weight=0.0,
+        ttt_aux_keypoints_weight=0.0,
+        ttt_aux_depth_weight=0.0,
+        ttt_aux_seg_weight=0.0,
+        ttt_aux_temperature=1.0,
+        ttt_log_out=None,
+        ttt_lite_non_torch=False,
+        ttt_lite_temperature=1.0,
+        ttt_lite_entropy_weight=0.0,
+        ttt_lite_minmax=True,
+        model=None,
+        exp=None,
+        weights=None,
+        score_thr=0.01,
+        keep_aspect=False,
+        dnn_backend="opencv",
+        dnn_target="cpu",
+        decode="auto",
+        preprocess=None,
+        dump_io=None,
+    )
+    return predict_images_with_namespace(args)
