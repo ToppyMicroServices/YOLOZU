@@ -15,7 +15,7 @@ Use YOLOZU as an interface-contract-first execution layer where agents:
 
 - **Determinism first**: prefer `--dry-run`, fixed `--max-images`, stable output paths.
 - **Reproducibility**: always emit JSON artifacts under `reports/` with explicit config fields.
-- **Allowlist execution**: use `python3 tools/yolozu.py registry run ...` for side-effect checks.
+- **Allowlist execution**: use `python3 -m yolozu registry run ...` for side-effect checks.
 - **No-network by default**: network/GPU operations are opt-in and not part of the default AI-safe set.
 
 ## 3) Official MCP support boundary

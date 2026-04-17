@@ -1,6 +1,6 @@
 """CLI argument parsing and path resolution helpers.
 
-Used internally by ``yolozu.cli`` to validate flags before they reach the
+Used internally by the ``yolozu`` CLI to validate flags before they reach the
 core library functions.
 """
 

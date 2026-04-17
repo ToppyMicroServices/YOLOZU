@@ -10,6 +10,10 @@ from .cli_commands import (
     _cmd_test,
     _cmd_doctor_import,
     _cmd_doctor,
+    _cmd_registry_list,
+    _cmd_registry_run,
+    _cmd_registry_show,
+    _cmd_registry_validate,
     _cmd_list_models,
     _cmd_fetch_model,
     _cmd_export,
@@ -32,6 +36,7 @@ from .cli_commands import (
 )
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
+from yolozu.inference.export_orchestrator import parse_common_export_args
 from yolozu import __version__
 import argparse
 from pathlib import Path
@@ -50,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    doctor = sub.add_parser("doctor", help="Print environment diagnostics as JSON.")
+    doctor = sub.add_parser("doctor", aliases=["dr"], help="Print environment diagnostics as JSON.")
     doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path (use - for stdout).")
     doctor_sub = doctor.add_subparsers(dest="doctor_command", required=False)
     doctor_imp = doctor_sub.add_parser("import", help="Summarize dataset/config import resolution (宣伝用).")
@@ -96,23 +101,8 @@ def main(argv: list[str] | None = None) -> int:
     fetch.add_argument("--timeout", type=float, default=60.0, help="Download timeout in seconds (default: 60).")
     fetch.add_argument("--force", action="store_true", help="Re-download to cache and overwrite output artifact.")
 
-    export = sub.add_parser("export", help="Export predictions.json artifacts.")
-    export.add_argument(
-        "--backend",
-        choices=("dummy", "labels"),
-        default="dummy",
-        help="Export backend (dummy=1 det/image; labels=use dataset labels).",
-    )
-    export.add_argument("--dataset", default="data/coco128", help="YOLO-format dataset root.")
-    export.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
-    export.add_argument("--max-images", type=int, default=50, help="Optional cap for number of images.")
-    export.add_argument("--score", type=float, default=0.9, help="Score to assign to exported detections (default: 0.9).")
-    export.add_argument(
-        "--output",
-        default=None,
-        help="Predictions JSON output path (default: reports/predictions.json).",
-    )
-    export.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
+    export = sub.add_parser("export", help="Export predictions.json artifacts across the supported backend lanes.")
+    parse_common_export_args(export)
 
     export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO, COCO, KITTI, or segmentation layout.")
     export_dataset.add_argument(
@@ -992,7 +982,32 @@ def main(argv: list[str] | None = None) -> int:
     demo_tr.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64).")
     demo_tr.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4).")
 
-    completion = sub.add_parser("completion", help="Print shell completion script (bash/zsh).")
+    reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
+    reg_sub = reg.add_subparsers(dest="registry_command", required=True)
+    reg_validate = reg_sub.add_parser("validate", help="Validate the canonical tool manifest (repo checkout required).")
+    reg_validate.set_defaults(_fn=_cmd_registry_validate)
+    reg_list = reg_sub.add_parser("list", help="List tools in the canonical manifest.")
+    reg_list.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
+    reg_list.add_argument("--tag", action="append", default=None, help="Filter by tag (repeatable, AND).")
+    reg_list.add_argument("--contract", action="append", default=None, help="Filter by contract id (repeatable, AND).")
+    reg_list.set_defaults(_fn=_cmd_registry_list)
+    reg_show = reg_sub.add_parser("show", help="Show one tool spec from the canonical manifest.")
+    reg_show.add_argument("id", help="Tool id from the manifest.")
+    reg_show.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
+    reg_show.set_defaults(_fn=_cmd_registry_show)
+    reg_run = reg_sub.add_parser("run", help="Safely run a tool by id with allowlisted side effects (repo checkout required).")
+    reg_run.add_argument("id", help="Tool id from the manifest.")
+    reg_run.add_argument("-n", "--dry-run", action="store_true", help="Print the resolved command without executing.")
+    reg_run.add_argument("--allow-network", action="store_true", help="Allow tools that require network access.")
+    reg_run.add_argument("--allow-gpu", action="store_true", help="Allow tools that require GPU.")
+    reg_run.add_argument("--allow-write-root", action="append", default=None, help="Allow writing under this repo-relative root (repeatable). Default: reports.")
+    reg_run.add_argument("--allow-unsafe-paths", action="store_true", help="Allow absolute paths or '..' segments.")
+    reg_run.add_argument("--allow-unknown-flags", action="store_true", help="Allow forwarding flags not declared in tool.inputs (not recommended for agents).")
+    reg_run.add_argument("--allow-undeclared-effects", action="store_true", help="Allow running tools without tool.effects declarations (not recommended for agents).")
+    reg_run.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to the tool entrypoint.")
+    reg_run.set_defaults(_fn=_cmd_registry_run)
+
+    completion = sub.add_parser("completion", aliases=["comp"], help="Print shell completion script (bash/zsh).")
     completion.add_argument("--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
     completion.add_argument(
         "--command",
@@ -1031,6 +1046,11 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
         return _cmd_doctor(str(args.output))
+    if args.command == "registry":
+        fn = getattr(args, "_fn", None)
+        if fn is None:
+            raise SystemExit("missing registry handler")
+        return int(fn(args))
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)

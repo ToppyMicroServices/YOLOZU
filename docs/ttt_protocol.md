@@ -1,7 +1,7 @@
 # TTT (Tent / MIM) protocol: safe + reproducible comparisons
 
 This repo supports **test-time training (TTT)** for the `rtdetr_pose` adapter via `tools/export_predictions.py`
-(or the unified wrapper `tools/yolozu.py export --backend torch ...`).
+(or the canonical CLI `yolozu export --backend torch ...` / `python3 -m yolozu export --backend torch ...`).
 
 TTT updates model weights **in-memory** using unlabeled test data before (or per-sample during) inference.
 
@@ -65,7 +65,7 @@ python3 -m pip install -U 'yolozu[demo]'
 yolozu demo ttt
 
 # repo checkout equivalent:
-python3 tools/yolozu.py demo ttt
+python3 -m yolozu demo ttt
 ```
 
 This writes `ttt_improvement_report.json` containing `metrics.no_ttt`, `metrics.with_ttt`, and `metrics.delta`,
@@ -645,7 +645,7 @@ The method is still usually Tent first; what changes is the preset and auxiliary
 
 ```bash
 # pose-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset pose_safe \
@@ -654,7 +654,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_pose_safe.json
 
 # keypoints-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset keypoints_safe \
@@ -663,7 +663,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_keypoints_safe.json
 
 # depth-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset depth_safe \
@@ -672,7 +672,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_depth_safe.json
 
 # segmentation-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset seg_safe \
@@ -707,7 +707,7 @@ Practical guidance:
 Example (stream reset, bounded adaptation cost):
 
 ```bash
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset reports/coco128_50 \
   --split train2017 \
@@ -761,7 +761,7 @@ If you need the raw export commands for debugging or custom orchestration, the w
 Baseline (no TTT):
 
 ```bash
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset reports/coco128_50 \
   --split train2017 \
@@ -774,7 +774,7 @@ python3 tools/yolozu.py export \
 TTT (safe preset, per-sample reset, with a log):
 
 ```bash
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset reports/coco128_50 \
   --split train2017 \

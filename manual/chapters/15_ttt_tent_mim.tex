@@ -17,7 +17,7 @@ See \path{docs/production_readiness.md}.
 
 \section{Scope and support}
 \yolozu{} supports controlled test-time training (TTT) for the \path{rtdetr_pose} adapter via
-\path{tools/export_predictions.py} or the unified wrapper \path{tools/yolozu.py}.
+\path{tools/export_predictions.py} or the canonical \cmd{yolozu export} / \cmd{python3 -m yolozu export} surface.
 
 Authoritative references:
 \begin{itemize}
@@ -160,7 +160,7 @@ python3 scripts/prepare_ttt_domain_shift_target.py \
   --max-images 1 \
   --force
 
-# 2) Inference overlays without TTT (torch backend + small repo-shipped checkpoint).
+# 2) Inference overlays without TTT (repo checkout compatibility wrapper for folder inference).
 python3 tools/yolozu.py predict-images \
   --backend torch --device cpu \
   --config rtdetr_pose/configs/base.json \
@@ -218,7 +218,7 @@ python3 -m pip install -U 'yolozu[demo]'
 yolozu demo ttt
 
 # repo checkout equivalent:
-python3 tools/yolozu.py demo ttt
+python3 -m yolozu demo ttt
 \end{lstlisting}
 
 Outputs include:
@@ -1000,7 +1000,7 @@ These examples keep the method explicit and only change the task-aware preset/au
 
 \begin{lstlisting}[language=bash,caption={Task-aware TTT examples using the same export surface.}]
 # pose-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset pose_safe \
@@ -1009,7 +1009,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_pose_safe.json
 
 # keypoints-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset keypoints_safe \
@@ -1018,7 +1018,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_keypoints_safe.json
 
 # depth-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset depth_safe \
@@ -1027,7 +1027,7 @@ python3 tools/yolozu.py export \
   --output reports/pred_depth_safe.json
 
 # segmentation-heavy Tent
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch --dataset reports/smoke_50 --split val \
   --checkpoint /path/to.ckpt --device cuda \
   --ttt --ttt-method tent --ttt-preset seg_safe \
@@ -1341,7 +1341,7 @@ TTT method can be selected with \cmd{--ttt-method}:
 \end{itemize}
 
 The current canonical CLI surface is reflected in \path{tools/manifest.json}
-for \path{tools/export_predictions.py} and \path{tools/yolozu.py}.
+for \path{tools/export_predictions.py} and the top-level \cmd{yolozu} CLI; \path{tools/yolozu.py} remains the repo-checkout compatibility wrapper.
 
 \section{Make a fixed evaluation subset}
 TTT comparisons must be run on the exact same images.
@@ -1360,7 +1360,7 @@ This writes \path{subset.json} (including an image hash) and a frozen image list
 \section{Example: baseline vs TTT}
 Baseline export:
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset reports/smoke_50 \
   --split val \
@@ -1372,7 +1372,7 @@ python3 tools/yolozu.py export \
 
 TTT export (safe preset, per-sample reset, with a log):
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset reports/smoke_50 \
   --split val \

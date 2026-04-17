@@ -15,7 +15,7 @@ YOLOZU exposes a fixed 3-layer support surface for YOLO-family runtime / DETR wo
 
 ```bash
 python3 tools/support_yolo_detr.py --help
-python3 tools/yolozu.py sud --help
+python3 tools/support_yolo_detr.py ls -j
 ```
 
 Layer matrix:

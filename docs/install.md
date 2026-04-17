@@ -54,7 +54,9 @@ Training-device notes:
 
 ## macOS / Apple Silicon Miniforge/MPS workflow
 
-If `pip`-installed PyTorch reports `mps_available=false` on a compatible Apple Silicon Mac, try a Miniforge/conda PyTorch build before giving up on MPS.
+You can build the environment with plain Python tooling (`venv` + `pip`) first. Miniforge/conda is not a hard requirement for YOLOZU or for Python itself. The fallback exists because MPS availability is decided by the installed Torch binary/runtime combination, not by whether Python can create the environment.
+
+If a `pip`-installed PyTorch build reports `mps_available=false` on a compatible Apple Silicon Mac, try a Miniforge/conda PyTorch build before giving up on MPS.
 
 The repo was verified on `macOS 26.3.1 arm64` with:
 
@@ -118,6 +120,7 @@ If MPS still stays unavailable:
 
 - keep `PYTORCH_ENABLE_MPS_FALLBACK=1` for partial CPU fallback when an op is unsupported
 - prefer `--device auto` for day-to-day safety
+- treat Miniforge/conda as a workaround for Torch packaging/runtime mismatches, not as a requirement for Python environment creation
 - compare `pip` and `conda` outputs with `yolozu doctor --output -` to isolate whether the blocker is the Torch build or the repo config
 
 ## CI dependency tiers

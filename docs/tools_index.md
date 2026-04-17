@@ -13,23 +13,26 @@ Source of truth:
 - Research: continual learning, TTT, Hessian refinement
 - Read first: `docs/production_readiness.md`
 
-## Unified CLI (recommended entrypoint)
+## Canonical CLI (recommended entrypoint)
 
 For most day-to-day flows, start with:
 
-- `python3 tools/yolozu.py doctor ...`
-- `python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + recommended commands)
-- `python3 tools/yolozu.py completion --shell bash` (or `--shell zsh`) to print shell completion script for `yolozu`.
-- `python3 tools/yolozu.py export --backend {dummy,torch,onnxrt,trt,executorch} ...`
+- `python3 -m yolozu doctor ...`
+- `python3 -m yolozu demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + recommended commands)
+- `python3 -m yolozu completion --shell bash` (or `--shell zsh`) to print shell completion script for `yolozu`.
+- `python3 -m yolozu export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
   - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
   - Non-torch score-only adaptation: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs).
-- `python3 tools/yolozu.py predict-images --input-dir /path/to/images ...`
-- `python3 tools/yolozu.py eval-keypoints --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
-- `python3 tools/yolozu.py eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
-- `python3 tools/yolozu.py sweep --config docs/hpo_sweep_example.json ...`
+- `python3 -m yolozu predict-images --input-dir /path/to/images ...`
+- `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
+- `python3 -m yolozu eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
+- `python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json ...`
 - `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json`
 - `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute`
+
+Compatibility note:
+- `python3 tools/yolozu.py ...` remains available in a repo checkout as a legacy wrapper, but `yolozu` / `python3 -m yolozu` is the single supported top-level CLI surface.
 
 ## AI/MCP entrypoints
 
@@ -206,7 +209,7 @@ When driving tools from an agent:
 - cap work with `--max-images` (e.g. 50)
 - keep outputs in `reports/`
 - assume `no-network` unless the tool explicitly requires network
-- route execution through `python3 tools/yolozu.py registry run ...` for allowlist checks
+- route execution through `python3 -m yolozu registry run ...` for allowlist checks
 
 ## Interface Contracts (recommended)
 

@@ -127,6 +127,7 @@ On macOS, you can typically run CPU-bound tooling (validation, evaluation, and O
 Treat MPS as available only when the local Torch runtime reports success for
 \cmd{torch.backends.mps.is_available()}.
 If that check is false, treat the machine as CPU-only for \yolozu{} purposes.
+Python itself can still create the environment with \cmd{venv} and \cmd{pip}; when MPS does not come up, the usual blocker is the Torch wheel/runtime combination rather than Python environment creation. Miniforge/conda is therefore a fallback for some Apple Silicon hosts, not a hard requirement.
 TensorRT execution is generally Linux/NVIDIA-centric.
 TensorRT workflows are covered in the Real-Time vs. Batch Inference chapter. The canonical pipeline strictly follows PyTorch $\rightarrow$ ONNX $\rightarrow$ TensorRT and includes parity checks at each stage.
 

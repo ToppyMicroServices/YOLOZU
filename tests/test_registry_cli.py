@@ -8,12 +8,10 @@ from pathlib import Path
 class TestRegistryCLI(unittest.TestCase):
     def test_registry_list_show_validate(self):
         repo_root = Path(__file__).resolve().parents[1]
-        cli = repo_root / "tools" / "yolozu.py"
-        self.assertTrue(cli.is_file(), "missing tools/yolozu.py")
 
         # validate
         proc = subprocess.run(
-            [sys.executable, str(cli), "registry", "validate"],
+            [sys.executable, "-m", "yolozu", "registry", "validate"],
             cwd=str(repo_root),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -25,7 +23,7 @@ class TestRegistryCLI(unittest.TestCase):
 
         # list --json
         proc = subprocess.run(
-            [sys.executable, str(cli), "registry", "list", "--json"],
+            [sys.executable, "-m", "yolozu", "registry", "list", "--json"],
             cwd=str(repo_root),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -43,7 +41,7 @@ class TestRegistryCLI(unittest.TestCase):
 
         # show --json
         proc = subprocess.run(
-            [sys.executable, str(cli), "registry", "show", "export_predictions", "--json"],
+            [sys.executable, "-m", "yolozu", "registry", "show", "export_predictions", "--json"],
             cwd=str(repo_root),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -61,7 +59,6 @@ class TestRegistryCLI(unittest.TestCase):
 
     def test_registry_run_normalize_predictions(self):
         repo_root = Path(__file__).resolve().parents[1]
-        cli = repo_root / "tools" / "yolozu.py"
 
         reports = repo_root / "reports"
         reports.mkdir(parents=True, exist_ok=True)
@@ -91,7 +88,8 @@ class TestRegistryCLI(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                str(cli),
+                "-m",
+                "yolozu",
                 "registry",
                 "run",
                 "--allow-write-root",

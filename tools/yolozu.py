@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Legacy compatibility wrapper around the canonical ``yolozu`` CLI.
+
+The supported top-level entrypoint is ``yolozu`` (or ``python3 -m yolozu``).
+This repo-local script remains for backwards compatibility in existing checkouts
+and forwards overlapping commands while still exposing a few repo-only helper
+wrappers.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -1116,7 +1124,7 @@ def _support_external_training(args: argparse.Namespace) -> int:
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="yolozu",
-        description="YOLOZU unified CLI (P0/P1/P2 building blocks).",
+        description="Legacy compatibility wrapper around the canonical `yolozu` CLI.",
         epilog=(
             "© 2026 ToppyMicroServices OÜ\n"
             "Legal address: Karamelli tn 2, 11317 Tallinn, Harju County, Estonia\n"

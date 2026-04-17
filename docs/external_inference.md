@@ -29,16 +29,16 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 ## Fast paths already in this repo
 
 - PyTorch adapter (research reference adapter): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
-- YOLOX backend wrapper: `python3 tools/yolozu.py export --backend yolox --dataset data/coco-yolo --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json --force`
+- YOLOX backend wrapper: `python3 -m yolozu export --backend yolox --dataset data/coco-yolo --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json --force`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - ExecuTorch (exported `.pte`): `python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --model /abs/path/model.pte --output reports/pred_executorch.json --wrap`
-- OpenCV DNN (single-backend UX): `python3 tools/yolozu.py export --backend opencv-dnn --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json --force`
+- OpenCV DNN (single-backend UX): `python3 -m yolozu export --backend opencv-dnn --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json --force`
 - OpenCV DNN (single-backend script): `python3 tools/export_predictions_opencv_dnn_unified.py --dataset data/coco-yolo --split val2017 --max-images 8 --onnx path/to/model.onnx --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn.json`
 - OpenCV DNN (YOLO-style heads): `python3 tools/export_predictions_opencv_dnn.py ...`
-- OpenCV DNN (YOLO-style heads via unified CLI): `python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.25 --output reports/pred_opencv_dnn_yolo.json --force`
+- OpenCV DNN (YOLO-style heads via canonical CLI): `python3 -m yolozu export --backend opencv-dnn-yolo --onnx path/to/model.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.25 --output reports/pred_opencv_dnn_yolo.json --force`
 - OpenCV DNN (RT-DETR decode, no NMS):
   - Direct script: `python3 tools/export_predictions_opencv_dnn_rtdetr.py --dataset data/coco-yolo --onnx path/to/rtdetr.onnx --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_dnn.json`
-  - Unified wrapper: `python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx path/to/rtdetr.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force`
+  - Canonical CLI: `python3 -m yolozu export --backend opencv-dnn-rtdetr --onnx path/to/rtdetr.onnx --dataset data/coco-yolo --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force`
 - TensorRT (exported `.plan`): `python3 tools/export_predictions_trt.py ...`
 - Full TRT pipeline (engine build → export → parity → eval → latency): `python3 tools/run_trt_pipeline.py ...`
 

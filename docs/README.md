@@ -98,10 +98,10 @@ Use this path when predictions are exported elsewhere and you only need validati
 Shortest 3 commands:
 
 ```bash
-python3 -m yolozu.cli validate dataset data/smoke --strict
-python3 -m yolozu.cli validate predictions \
+python3 -m yolozu validate dataset data/smoke --strict
+python3 -m yolozu validate predictions \
 	data/smoke/predictions/predictions_dummy.json --strict
-python3 -m yolozu.cli eval-coco \
+python3 -m yolozu eval-coco \
 	--dataset data/smoke \
 	--split val \
 	--predictions data/smoke/predictions/predictions_dummy.json \
@@ -120,13 +120,13 @@ Use this path when you want a train-like flow with smoke-safe local artifacts.
 Shortest 3 commands:
 
 ```bash
-python3 -m yolozu.cli validate dataset data/smoke --strict
-python3 -m yolozu.cli export \
+python3 -m yolozu validate dataset data/smoke --strict
+python3 -m yolozu export \
 	--backend labels \
 	--dataset data/smoke \
 	--output runs/smoke/predictions_labels.json \
 	--force
-python3 -m yolozu.cli eval-coco \
+python3 -m yolozu eval-coco \
 	--dataset data/smoke \
 	--split val \
 	--predictions runs/smoke/predictions_labels.json \
@@ -145,9 +145,9 @@ Use this path to confirm JSON interface contracts and manifest consistency befor
 Shortest 3 commands:
 
 ```bash
-python3 -m yolozu.cli validate predictions \
+python3 -m yolozu validate predictions \
 	data/smoke/predictions/predictions_dummy.json --strict
-python3 -m yolozu.cli validate dataset data/smoke --strict
+python3 -m yolozu validate dataset data/smoke --strict
 python3 tools/validate_tool_manifest.py \
 	--manifest tools/manifest.json \
 	--require-declarative
@@ -169,7 +169,7 @@ placeholder/skipped semantics rather than pretending to be fully implemented.
 Shortest 3 commands:
 
 ```bash
-python3 -m yolozu.cli parity \
+python3 -m yolozu parity \
 	--reference data/smoke/predictions/predictions_dummy.json \
 	--candidate data/smoke/predictions/predictions_dummy.json
 python3 tools/benchmark_model.py \
@@ -251,7 +251,7 @@ Shortest 3 commands:
 ```bash
 python3 tools/import_yolo_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/yolo_wrapper --force
 python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
-python3 -m yolozu.cli eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --protocol nms_applied --output reports/coco_eval_yolo_runtime.json
+python3 -m yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --protocol nms_applied --output reports/coco_eval_yolo_runtime.json
 ```
 
 Protocol guidance:
@@ -300,12 +300,12 @@ External finetune smoke matrix:
 ## H) OpenCV-DNN migration (CPU/CUDA/OpenVINO)
 
 Use this path when OpenCV DNN is your runtime of record (C++/embedded/field inference) and you want YOLOZU validation/eval/parity.
-Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
+Canonical CLI shown below (`yolozu ...` or `python3 -m yolozu ...`). The legacy `python3 tools/yolozu.py ...` wrapper still works in a repo checkout but is now compatibility-only.
 
 Shortest flow:
 
 ```bash
-python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/coco-yolo --split val2017 --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json
+python3 -m yolozu export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/coco-yolo --split val2017 --imgsz 640 --decode auto --preprocess yolo_letterbox_640 --dump-io reports/opencv_dump_io.json --output reports/pred_opencv.json
 python3 tools/validate_predictions.py reports/pred_opencv.json --strict
 python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_opencv.json --output reports/eval_opencv.json
 ```
@@ -319,10 +319,10 @@ Reference: [OpenCV-DNN inference exporter](opencv_dnn_inference.md)
 ## I) YOLOX migration
 
 Use this path when YOLOX is your training/inference stack and you want YOLOZU interface-contract validation + eval.
-Repo wrapper shown below (`python3 tools/yolozu.py ...`); pip equivalent is `yolozu export ...`.
+Canonical CLI shown below (`yolozu ...` or `python3 -m yolozu ...`).
 
 ```bash
-python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
+python3 -m yolozu export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
 python3 tools/validate_predictions.py reports/pred_yolox.json --strict
 python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
 ```
@@ -334,8 +334,8 @@ Reference: [YOLOX interop](interop_yolox.md)
 Use this path to download curated model artifacts with license gating, cache reuse, and metadata recording.
 
 ```bash
-python3 tools/yolozu.py list models
-python3 tools/yolozu.py fetch yolox-s-coco --out models --accept-license
+python3 -m yolozu list models
+python3 -m yolozu fetch yolox-s-coco --out models --accept-license
 cat models/yolox-s-coco/meta.json
 ```
 

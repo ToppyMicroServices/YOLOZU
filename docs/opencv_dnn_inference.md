@@ -10,7 +10,7 @@ This is useful when:
 ## 5-minute unified path
 
 ```bash
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend opencv-dnn \
   --onnx /abs/path/model.onnx \
   --dataset /path/to/coco-yolo \

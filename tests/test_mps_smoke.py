@@ -97,6 +97,7 @@ class TestMacOSMpsSmoke(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         warnings = report.get("warnings") or []
         self.assertTrue(any("MPS support" in warning and "not available at runtime" in warning for warning in warnings))
+        self.assertTrue(any("qualified path only when `torch.backends.mps.is_available()` is true" in warning for warning in warnings))
 
 
 if __name__ == "__main__":

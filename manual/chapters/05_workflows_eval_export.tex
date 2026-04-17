@@ -131,22 +131,22 @@ examples/infer_rust/target/release/yolozu_infer_rust \
 \noindent\textbf{Environment note:} The ONNXRuntime feature is intended for pinned Linux production images where Rust toolchains and ONNXRuntime shared libraries are provisioned explicitly.
 
 \textbf{Conceptual (not copy-paste as-is):} repository-wrapper export shape.
-Use real paths from \path{tools/yolozu.py export --help} for execution.
+Use real paths from \path{python3 -m yolozu export --help} for execution.
 \begin{lstlisting}[language=bash]
 # ONNXRuntime backend (input shape must match ONNX)
-python3 tools/yolozu.py export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --output reports/predictions.json
+python3 -m yolozu export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --output reports/predictions.json
 
 # ExecuTorch backend (.pte model; dry-run available for contract checks)
-python3 tools/yolozu.py export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --output reports/pred_executorch.json --dry-run
+python3 -m yolozu export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --output reports/pred_executorch.json --dry-run
 
 # OpenCV DNN unified backend (auto decode + preset preprocess + IO dump)
-python3 tools/yolozu.py export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --split val --max-images 8 --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn_unified.json --force
+python3 -m yolozu export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --split val --max-images 8 --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn_unified.json --force
 
 # OpenCV DNN RT-DETR backend (no NMS)
-python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx /path/to/rtdetr.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force
+python3 -m yolozu export --backend opencv-dnn-rtdetr --onnx /path/to/rtdetr.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force
 
 # OpenCV DNN YOLO backend (with NMS)
-python3 tools/yolozu.py export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.25 --nms-iou 0.45 --output reports/pred_opencv_dnn_yolo.json --force
+python3 -m yolozu export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --dataset /path/to/yolo-dataset --imgsz 640 --score-thr 0.25 --nms-iou 0.45 --output reports/pred_opencv_dnn_yolo.json --force
 \end{lstlisting}
 
 For further details, consult:\\
@@ -185,7 +185,7 @@ yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/p
 \subsection{YOLOX interoperability path}
 For teams already operating YOLOX experiments (\path{exp.py} + checkpoints), keep native inference and export directly to the YOLOZU contract:
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
+python3 -m yolozu export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
 python3 tools/validate_predictions.py reports/pred_yolox.json --strict
 python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
 \end{lstlisting}

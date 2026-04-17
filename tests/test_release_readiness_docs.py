@@ -36,9 +36,10 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertIn("### Breaking", changelog)
         self.assertIn("### Deprecated", changelog)
 
-    def test_package_metadata_is_stable_classifier(self):
+    def test_package_metadata_matches_lane_based_readiness(self):
         pyproject = (self.repo_root / "pyproject.toml").read_text(encoding="utf-8")
-        self.assertIn("Development Status :: 5 - Production/Stable", pyproject)
+        self.assertIn("Development Status :: 4 - Beta", pyproject)
+        self.assertIn("stable predictions interface contract", pyproject)
         self.assertNotIn("Development Status :: 3 - Alpha", pyproject)
 
     def test_ci_contains_release_integrity_gates(self):

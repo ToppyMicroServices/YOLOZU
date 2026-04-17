@@ -239,7 +239,7 @@ python3 tools/eval_continual.py \
   --max-images 50
 ```
 
-On macOS, you can switch `--device` to `mps` when `python3 tools/yolozu.py doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. In other words, MPS is supported when `torch.backends.mps.is_available()` is `true`. If MPS is not available on that machine, use `cpu`.
+On macOS, you can switch `--device` to `mps` when `yolozu doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. In other words, MPS is supported when `torch.backends.mps.is_available()` is `true`. If MPS is not available on that machine, use `cpu`.
 
 Pose/depth metrics (requires pose sidecar metadata in `labels/<split>/*.json`):
 

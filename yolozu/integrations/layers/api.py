@@ -58,7 +58,7 @@ def _allowed_from_manifest() -> set[str]:
             if not isinstance(cmd, str):
                 continue
             parts = cmd.strip().split()
-            if len(parts) >= 4 and parts[0].startswith("python") and parts[1] == "-m" and parts[2] == "yolozu.cli":
+            if len(parts) >= 4 and parts[0].startswith("python") and parts[1] == "-m" and parts[2] in {"yolozu", "yolozu.cli"}:
                 allowed.add(parts[3])
             elif len(parts) >= 2 and parts[0] == "yolozu":
                 allowed.add(parts[1])
@@ -109,7 +109,7 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
     except ValueError as exc:
         return fail_response(name, message=str(exc), exc=exc)
 
-    cmd = [sys.executable, "-m", "yolozu.cli", *args]
+    cmd = [sys.executable, "-m", "yolozu", *args]
     try:
         proc = subprocess.run(
             cmd,
@@ -201,7 +201,7 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
     except ValueError:
         return fail_response(name, message="invalid command arguments")
 
-    cmd = [sys.executable, "-m", "yolozu.cli", *args]
+    cmd = [sys.executable, "-m", "yolozu", *args]
     try:
         proc = subprocess.run(
             cmd,

@@ -5,24 +5,24 @@ This chapter provides a concise summary of the most frequently utilized commands
 }{
 It is designed to minimize the time to first execution and to clearly delineate which commands are install-safe versus those restricted to repository-only workflows.
 }{
-Utilize \cmd{yolozu --help} for the pip-installed CLI, or \cmd{python3 tools/yolozu.py --help} for the repository wrapper. Because implementation details evolve, the \cmd{--help} output remains the definitive source of truth.
+Utilize \cmd{yolozu --help} or \cmd{python3 -m yolozu --help} for the supported CLI surface. The legacy \cmd{python3 tools/yolozu.py --help} wrapper remains available in a repo checkout for backwards compatibility only. Because implementation details evolve, the \cmd{--help} output remains the definitive source of truth.
 }
 \ChapterAudience{Read this chapter when you want copy-paste entrypoints first and detailed tool discovery second.}
 
 
 \section{Design Philosophy}
-The CLI surface is intentionally bifurcated to serve distinct user profiles:
+The CLI surface now has one supported top-level entrypoint plus a compatibility shim:
 \begin{itemize}
-  \item \cmd{yolozu}: The end-user safe CLI, installed globally or virtually via pip.
-  \item \cmd{python3 tools/yolozu.py}: The repository wrapper, specifically tailored for research and evaluation pipelines.
+  \item \cmd{yolozu} / \cmd{python3 -m yolozu}: the supported top-level CLI.
+  \item \cmd{python3 tools/yolozu.py}: a legacy compatibility wrapper for older repo-local scripts.
 \end{itemize}
 
-This chapter documents the \textit{high-traffic commands} and outlines the methodology for discovering the broader command set.
+This chapter documents the \textit{high-traffic commands} on the supported surface and points directly to repo-only helper scripts when a workflow does not belong on the top-level CLI.
 
 \section{Discoverability}
 As a best practice, always initiate discovery with:\\
 \cmd{yolozu --help} and \cmd{yolozu <command> --help}.\\
-For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}.
+In a source checkout, \cmd{python3 -m yolozu --help} is equivalent. The legacy \cmd{python3 tools/yolozu.py --help} wrapper is compatibility-only.
 
 \section{Common Commands}
 \small
