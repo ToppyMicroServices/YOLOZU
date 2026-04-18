@@ -58,6 +58,44 @@ class TestSmokeCliHelp(unittest.TestCase):
             self.assertIn("Usage:", out)
             self.assertIn("--profile", out)
 
+    def test_smoke_script_accepts_repo_local_python_via_pythonpath_bootstrap(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "smoke.sh"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            wrapper = Path(td) / "python-wrapper"
+            wrapper.write_text(
+                """#!/usr/bin/env bash
+real_python="$(command -v python3)"
+if [[ "${1:-}" == "-" ]]; then
+  exec "$real_python" -I "$@"
+fi
+exec "$real_python" "$@"
+""",
+                encoding="utf-8",
+            )
+            wrapper.chmod(0o755)
+
+            env = dict(os.environ)
+            env["YOLOZU_PYTHON"] = str(wrapper)
+            proc = subprocess.run(
+                ["bash", str(script), "--help"],
+                cwd=str(repo_root),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(
+                    "smoke --help pythonpath bootstrap failed:\n"
+                    f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+                )
+            out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            self.assertIn("Usage:", out)
+            self.assertIn("--walkthrough-report", out)
+
 
 if __name__ == "__main__":
     unittest.main()
