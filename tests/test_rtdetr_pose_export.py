@@ -4,7 +4,6 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
-from unittest import mock
 
 
 class TestRtDetrPoseExport(unittest.TestCase):
@@ -34,8 +33,8 @@ class TestRtDetrPoseExport(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             out_path = Path(td) / "model.onnx"
-            with mock.patch.dict(sys.modules, {"onnx": fake_onnx}):
-                with mock.patch("torch.onnx.export", side_effect=_fake_export):
+            with unittest.mock.patch.dict(sys.modules, {"onnx": fake_onnx}):
+                with unittest.mock.patch("torch.onnx.export", side_effect=_fake_export):
                     export_onnx(FakeModel(), torch.zeros((1, 3, 8, 8)), str(out_path))
 
         dyn_axes = captured.get("dynamic_axes")

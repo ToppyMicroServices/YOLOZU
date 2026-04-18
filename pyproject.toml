@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
   "PyYAML>=6.0",
   "numpy>=1.24",
-  "Pillow>=12.1.1",
+  "Pillow>=12.2.0",
   "typing_extensions>=4.8; python_version < '3.11'",
 ]
 
@@ -78,7 +78,7 @@ yolox = ["yolox"]
 
 # Local development / testing (optional)
 test = [
-  "pytest>=7.0",
+  "pytest>=9.0.3",
   "torch>=2.8.0",
   "torchvision>=0.23.0",
   "onnx>=1.21.0",
@@ -86,7 +86,7 @@ test = [
   "onnxscript>=0.1",
 ]
 dev = [
-  "pytest>=7.0",
+  "pytest>=9.0.3",
   "torch>=2.8.0",
   "torchvision>=0.23.0",
   "onnx>=1.21.0",

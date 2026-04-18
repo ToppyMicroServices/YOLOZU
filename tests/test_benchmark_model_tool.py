@@ -134,6 +134,8 @@ class TestBenchmarkModelTool(TestCase):
             )
 
     def test_segmentation_task_supports_real_artifact_eval(self):
+        np = None
+        Image = None
         try:
             import numpy as np
             from PIL import Image
@@ -239,6 +241,7 @@ class TestBenchmarkModelTool(TestCase):
         )
 
     def test_depth_task_supports_real_artifact_eval(self):
+        np = None
         try:
             import numpy as np
         except Exception as exc:  # pragma: no cover

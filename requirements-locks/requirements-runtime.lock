@@ -1,7 +1,7 @@
 # Runtime lock for hash-verified packaging smoke / container bootstrap.
 PyYAML==6.0.3
 numpy==1.26.4
-Pillow==12.1.1
+Pillow==12.2.0
 typing-extensions==4.15.0
 setuptools==82.0.1
 wheel==0.46.3
