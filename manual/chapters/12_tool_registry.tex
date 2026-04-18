@@ -157,6 +157,14 @@ For release operations, YOLOZU intentionally keeps software DOI and manual DOI l
   \item Manual PDF DOI publishing is handled by \path{.github/workflows/manual_doi.yml}.
 \end{itemize}
 
+The software publish workflow now enforces release metadata consistency before PyPI publish:
+\begin{itemize}
+  \item release-triggered runs validate that tag \texttt{vX.Y.Z} matches \path{yolozu/\_\_init\_\_.py}
+  \item manual \texttt{workflow\_dispatch} runs require \texttt{expected\_version}
+  \item optional manual input \texttt{release\_tag} can re-check tag/version alignment during recovery
+  \item \path{CHANGELOG.md} must contain a matching \texttt{## [X.Y.Z] - YYYY-MM-DD} section
+\end{itemize}
+
 Operational helper script (no required options):
 \begin{lstlisting}[language=bash]
 bash release.sh
@@ -172,6 +180,14 @@ Dry-run preview:
 \begin{lstlisting}[language=bash]
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 \end{lstlisting}
+
+When operators need to recover a failed publish without cutting a new tag, the supported path is the
+\path{publish.yml} manual trigger with:
+\begin{itemize}
+  \item \texttt{expected\_version = X.Y.Z}
+  \item optional \texttt{release\_tag = vX.Y.Z}
+\end{itemize}
+This keeps the PyPI publish path explicit instead of allowing a loosely-scoped manual rerun.
 
 The manual DOI workflow builds \path{manual/build/yolozu_manual.pdf} and publishes it to Zenodo either as:
 \begin{itemize}

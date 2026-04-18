@@ -73,7 +73,8 @@ TensorRT is not installed via pip; use an NVIDIA/TensorRT base image and add Pyt
 
 ## Prebuilt images (GHCR)
 
-If enabled in CI, release-tag pushes (`vX.Y.Z`) publish images to GHCR.
+For container-related pull requests, `.github/workflows/container.yml` builds these images as a validation gate without publishing them.
+If enabled in CI, release-tag pushes (`vX.Y.Z`) and manual workflow runs publish images to GHCR.
 All published images also receive the `latest` tag on release-tag builds.
 
 CPU images:
@@ -93,6 +94,10 @@ docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:X.Y.Z
 docker pull ghcr.io/toppymicroservices/yolozu-trt:latest
 docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:latest
 ```
+
+Notes:
+- Pull-request validation only checks that the Dockerfiles still build; it does not push images.
+- GPU image publication still requires `NGC_API_KEY`, even when the workflow is triggered manually.
 
 Build (example):
 
