@@ -10,9 +10,14 @@ from .cli_commands import (
     _cmd_test,
     _cmd_doctor_import,
     _cmd_doctor,
+    _cmd_registry_list,
+    _cmd_registry_run,
+    _cmd_registry_show,
+    _cmd_registry_validate,
     _cmd_list_models,
     _cmd_fetch_model,
     _cmd_export,
+    _cmd_export_dataset,
     _cmd_predict_images,
     _cmd_eval_coco,
     _cmd_calibrate,
@@ -31,6 +36,7 @@ from .cli_commands import (
 )
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
+from yolozu.inference.export_orchestrator import parse_common_export_args
 from yolozu import __version__
 import argparse
 from pathlib import Path
@@ -49,17 +55,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    doctor = sub.add_parser("doctor", help="Print environment diagnostics as JSON.")
+    doctor = sub.add_parser("doctor", aliases=["dr"], help="Print environment diagnostics as JSON.")
     doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path (use - for stdout).")
     doctor_sub = doctor.add_subparsers(dest="doctor_command", required=False)
     doctor_imp = doctor_sub.add_parser("import", help="Summarize dataset/config import resolution (宣伝用).")
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
     doctor_imp.add_argument(
         "--dataset-from",
-        choices=("auto", "ultralytics", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
         default=None,
         help="Optional dataset import adapter to summarize.",
     )
+    doctor_imp.add_argument("--dataset", default=None, help="(dataset-from auto|ultralytics|coco|segmentation) dataset root or descriptor path.")
     doctor_imp.add_argument(
         "--config-from",
         choices=("auto", "ultralytics", "mmdet", "yolox", "detectron2"),
@@ -94,54 +101,28 @@ def main(argv: list[str] | None = None) -> int:
     fetch.add_argument("--timeout", type=float, default=60.0, help="Download timeout in seconds (default: 60).")
     fetch.add_argument("--force", action="store_true", help="Re-download to cache and overwrite output artifact.")
 
-    export = sub.add_parser("export", help="Export predictions.json artifacts.")
-    export.add_argument(
-        "--backend",
-        choices=("dummy", "labels"),
-        default="dummy",
-        help="Export backend (dummy=1 det/image; labels=use dataset labels).",
+    export = sub.add_parser("export", help="Export predictions.json artifacts across the supported backend lanes.")
+    parse_common_export_args(export)
+
+    export_dataset = sub.add_parser("export-dataset", help="Export a YOLOZU dataset into YOLO, COCO, KITTI, or segmentation layout.")
+    export_dataset.add_argument(
+        "to_format",
+        choices=("yolo", "kitti", "coco", "segmentation"),
+        help="Target dataset layout.",
     )
-    export.add_argument("--dataset", default="data/coco128", help="YOLO-format dataset root.")
-    export.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
-    export.add_argument("--max-images", type=int, default=50, help="Optional cap for number of images.")
-    export.add_argument("--score", type=float, default=0.9, help="Score to assign to exported detections (default: 0.9).")
-    export.add_argument(
-        "--output",
-        default=None,
-        help="Predictions JSON output path (default: reports/predictions.json).",
-    )
-    export.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
+    export_dataset.add_argument("--dataset", required=True, help="YOLOZU dataset root or dataset.json wrapper.")
+    export_dataset.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
+    export_dataset.add_argument("--out-dir", required=True, help="Output directory for the exported dataset layout.")
+    export_dataset.add_argument("--image-mode", choices=("copy", "symlink"), default="copy", help="How to materialize exported assets (default: copy).")
+    export_dataset.add_argument("--force", action="store_true", help="Overwrite the output directory if it exists.")
 
     predict = sub.add_parser("predict-images", help="Run folder inference and write predictions JSON + overlays + HTML.")
-    predict.add_argument("--backend", choices=("dummy", "onnxrt"), default="dummy", help="Inference backend.")
-    predict.add_argument("--input-dir", required=True, help="Input directory containing images.")
-    predict.add_argument("--glob", action="append", default=None, help="Glob pattern(s) under input dir (repeatable).")
-    predict.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images.")
-    predict.add_argument("--score", type=float, default=0.9, help="Dummy score when --backend=dummy.")
-    predict.add_argument("--output", default="reports/predict_images.json", help="Predictions JSON output path.")
-    predict.add_argument("--force", action="store_true", help="Overwrite outputs if they exist.")
-    predict.add_argument("--overlays-dir", default="reports/overlays", help="Overlay images output directory.")
-    predict.add_argument("--html", default="reports/predict_images.html", help="Optional HTML report path.")
+    parse_common_export_args(predict)
+    predict.add_argument("-i", "--input-dir", required=True, help="Folder containing images.")
+    predict.add_argument("--glob", action="append", default=None, help="Glob pattern under --input-dir (repeatable).")
+    predict.add_argument("-v", "--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
+    predict.add_argument("-H", "--html", default="reports/predict_images.html", help="Optional HTML report output path.")
     predict.add_argument("--title", default="YOLOZU predict-images report", help="HTML title.")
-    predict.add_argument("--onnx", default=None, help="Path to ONNX model (required for --backend onnxrt unless --dry-run).")
-    predict.add_argument("--input-name", default="images", help="ONNX input name (default: images).")
-    predict.add_argument("--boxes-output", default="boxes", help="Output name for boxes tensor (default: boxes).")
-    predict.add_argument("--scores-output", default="scores", help="Output name for scores tensor (default: scores).")
-    predict.add_argument("--class-output", default=None, help="Optional output name for class_id tensor.")
-    predict.add_argument("--combined-output", default=None, help="Optional output name for [x1,y1,x2,y2,score,class_id].")
-    predict.add_argument("--combined-format", choices=("xyxy_score_class",), default="xyxy_score_class")
-    predict.add_argument("--raw-output", default=None, help="Optional output name for raw head output.")
-    predict.add_argument("--raw-format", choices=("yolo_84",), default="yolo_84")
-    predict.add_argument("--raw-postprocess", choices=("native", "ultralytics", "yolo_runtime"), default="native")
-    predict.add_argument("--boxes-format", choices=("xyxy",), default="xyxy")
-    predict.add_argument("--boxes-scale", choices=("abs", "norm"), default="norm")
-    predict.add_argument("--min-score", type=float, default=0.001, help="Score threshold (default: 0.001).")
-    predict.add_argument("--topk", type=int, default=300, help="Top-K detections per image (default: 300).")
-    predict.add_argument("--nms-iou", type=float, default=0.7, help="NMS IoU for raw output decode (default: 0.7).")
-    predict.add_argument("--agnostic-nms", action="store_true", help="Class-agnostic NMS for raw output decode.")
-    predict.add_argument("--imgsz", type=int, default=640, help="Input image size (square, default: 640).")
-    predict.add_argument("--dry-run", action="store_true", help="Write schema-correct JSON without running inference.")
-    predict.add_argument("--strict", action="store_true", help="Strict prediction schema validation before writing.")
 
     eval_coco = sub.add_parser("eval-coco", help="Evaluate detections with COCOeval (optional extra: yolozu[coco]).")
     eval_coco.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
@@ -484,16 +465,17 @@ def main(argv: list[str] | None = None) -> int:
     mig_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("ultralytics", "coco"),
+        choices=("auto", "ultralytics", "coco", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
+    mig_dataset.add_argument("--dataset", default=None, help="(auto) Dataset root or descriptor path to inspect.")
     mig_dataset.add_argument("--data", default=None, help="(Ultralytics) data.yaml path (preferred).")
     mig_dataset.add_argument("--args", default=None, help="(Ultralytics) args.yaml (optional; used for task/data inference).")
     mig_dataset.add_argument(
         "--split",
         default=None,
-        help="Split name (Ultralytics: select from data.yaml; COCO: instances_<split>.json, default: val2017).",
+        help="Split name (Ultralytics/segmentation: inferred from layout; COCO: annotations split, default: val2017).",
     )
     mig_dataset.add_argument(
         "--task",
@@ -561,10 +543,11 @@ def main(argv: list[str] | None = None) -> int:
     imp_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("auto", "ultralytics", "coco-instances"),
+        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
+    imp_dataset.add_argument("--dataset", default=None, help="(auto|ultralytics|coco|segmentation) Dataset root or descriptor path.")
     imp_dataset.add_argument("--output", required=True, help="Output directory (wrapper) or dataset.json file path.")
     imp_dataset.add_argument("--force", action="store_true", help="Overwrite output if it exists.")
     imp_dataset.add_argument("--split", default=None, help="Split name (COCO default: val2017; Ultralytics: from data.yaml).")
@@ -976,7 +959,32 @@ def main(argv: list[str] | None = None) -> int:
     demo_tr.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64).")
     demo_tr.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4).")
 
-    completion = sub.add_parser("completion", help="Print shell completion script (bash/zsh).")
+    reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
+    reg_sub = reg.add_subparsers(dest="registry_command", required=True)
+    reg_validate = reg_sub.add_parser("validate", help="Validate the canonical tool manifest (repo checkout required).")
+    reg_validate.set_defaults(_fn=_cmd_registry_validate)
+    reg_list = reg_sub.add_parser("list", help="List tools in the canonical manifest.")
+    reg_list.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
+    reg_list.add_argument("--tag", action="append", default=None, help="Filter by tag (repeatable, AND).")
+    reg_list.add_argument("--contract", action="append", default=None, help="Filter by contract id (repeatable, AND).")
+    reg_list.set_defaults(_fn=_cmd_registry_list)
+    reg_show = reg_sub.add_parser("show", help="Show one tool spec from the canonical manifest.")
+    reg_show.add_argument("id", help="Tool id from the manifest.")
+    reg_show.add_argument("-j", "--json", action="store_true", help="Emit machine-readable JSON.")
+    reg_show.set_defaults(_fn=_cmd_registry_show)
+    reg_run = reg_sub.add_parser("run", help="Safely run a tool by id with allowlisted side effects (repo checkout required).")
+    reg_run.add_argument("id", help="Tool id from the manifest.")
+    reg_run.add_argument("-n", "--dry-run", action="store_true", help="Print the resolved command without executing.")
+    reg_run.add_argument("--allow-network", action="store_true", help="Allow tools that require network access.")
+    reg_run.add_argument("--allow-gpu", action="store_true", help="Allow tools that require GPU.")
+    reg_run.add_argument("--allow-write-root", action="append", default=None, help="Allow writing under this repo-relative root (repeatable). Default: reports.")
+    reg_run.add_argument("--allow-unsafe-paths", action="store_true", help="Allow absolute paths or '..' segments.")
+    reg_run.add_argument("--allow-unknown-flags", action="store_true", help="Allow forwarding flags not declared in tool.inputs (not recommended for agents).")
+    reg_run.add_argument("--allow-undeclared-effects", action="store_true", help="Allow running tools without tool.effects declarations (not recommended for agents).")
+    reg_run.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to the tool entrypoint.")
+    reg_run.set_defaults(_fn=_cmd_registry_run)
+
+    completion = sub.add_parser("completion", aliases=["comp"], help="Print shell completion script (bash/zsh).")
     completion.add_argument("--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
     completion.add_argument(
         "--command",
@@ -1015,6 +1023,11 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
         return _cmd_doctor(str(args.output))
+    if args.command == "registry":
+        fn = getattr(args, "_fn", None)
+        if fn is None:
+            raise SystemExit("missing registry handler")
+        return int(fn(args))
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)
@@ -1023,6 +1036,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_fetch_model(args)
     if args.command == "export":
         return _cmd_export(args)
+    if args.command == "export-dataset":
+        return _cmd_export_dataset(args)
     if args.command == "predict-images":
         return _cmd_predict_images(args)
     if args.command == "eval-coco":

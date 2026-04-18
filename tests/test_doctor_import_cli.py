@@ -104,6 +104,36 @@ class TestDoctorImportCLI(unittest.TestCase):
             warnings = payload.get("warnings") or []
             self.assertTrue(any("category_id=0" in str(w) for w in warnings))
 
+    def test_doctor_import_dataset_auto_from_dataset_root_detects_coco(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        sample_root = repo_root / "data" / "conversion_tiny_coco"
+
+        proc = self._run(
+            [
+                "doctor",
+                "import",
+                "--dataset-from",
+                "auto",
+                "--dataset",
+                str(sample_root),
+                "--split",
+                "val2017",
+                "--output",
+                "-",
+            ],
+            cwd=repo_root,
+        )
+        if proc.returncode != 0:
+            self.fail(f"doctor import (dataset root auto) failed:\n{proc.stdout}\n{proc.stderr}")
+
+        payload = json.loads(proc.stdout)
+        ds = payload.get("dataset") or {}
+        self.assertEqual(ds.get("from"), "coco")
+        layout = ds.get("layout") or {}
+        self.assertEqual(layout.get("format"), "coco_root")
+        warnings = payload.get("warnings") or []
+        self.assertTrue(any("auto-detected" in str(w) for w in warnings))
+
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

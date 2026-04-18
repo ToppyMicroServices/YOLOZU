@@ -13,6 +13,29 @@ It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or
 \section{Model-family policy and reference training stack}
 YOLOZU contracts (predictions schema, evaluation reports, scenario outputs) are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical aspect is the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs, independent of the producing model family.
 
+\subsection{Dataset-format boundary for the reference trainer}
+The RT-DETR reference trainer does not claim that it can ingest every native dataset layout directly at training time. Its expected input is a dataset root that \cmd{build\_manifest(...)} can resolve, which in practice means a YOLO-style root or a YOLOZU wrapper/descriptor that has already been normalized. The multi-format user convenience layer therefore lives one step earlier: \cmd{yolozu doctor import --dataset-from auto}, \cmd{yolozu import dataset --from auto}, and \cmd{yolozu migrate dataset --from auto} can auto-detect supported native sources such as COCO, COCO keypoints, Ultralytics/YOLO, and the supported semantic-segmentation roots, then materialize a normalized wrapper for training.
+
+In other words, users do not need to manually classify the incoming dataset family, but the reference trainer itself still consumes the normalized YOLOZU/YOLO-style result of that preflight/import step.
+
+\begin{lstlisting}[language=bash]
+python3 -m yolozu doctor import \
+  --dataset-from auto \
+  --dataset /path/to/native_dataset_root \
+  --split val2017 \
+  --output -
+python3 -m yolozu migrate dataset \
+  --from auto \
+  --dataset /path/to/native_dataset_root \
+  --split val2017 \
+  --output reports/native_dataset_wrapper \
+  --force
+python3 rtdetr_pose/tools/train_minimal.py \
+  --dataset-root reports/native_dataset_wrapper \
+  --config rtdetr_pose/configs/base.json \
+  --max-steps 50
+\end{lstlisting}
+
 \section{The Run Contract: Rationale and implementation}
 A standardized run directory typically encompasses:
 \begin{itemize}

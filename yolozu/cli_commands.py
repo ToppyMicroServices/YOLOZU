@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
+import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +22,10 @@ from yolozu.core.cli_args import parse_image_size_arg, require_non_negative_int
 from yolozu.core.config import simple_yaml_load
 
 __all__: list[str] = []
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
 
 
 def _load_config(path: Path) -> dict:
@@ -58,14 +65,391 @@ def _build_args_from_config(cfg: dict) -> list[str]:
     return args
 
 
+def _now_utc() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _git_run_meta(cwd: Path) -> dict[str, Any]:
+    from yolozu.core import doctor as doctor_mod
+
+    info = doctor_mod._gather_git_info(cwd=cwd)
+    return {"head": info.get("head"), "dirty": info.get("dirty")}
+
+
+def _gpu_run_meta() -> dict[str, Any]:
+    from yolozu.core import doctor as doctor_mod
+
+    return doctor_mod._gather_gpu_info()
+
+
+def _base_run_meta(*, seed: int | None, notes: str | None, config_fingerprint: dict[str, Any]) -> dict[str, Any]:
+    from yolozu.inference.export_orchestrator import sha256_json
+
+    cwd = _repo_root()
+    return {
+        "timestamp": _now_utc(),
+        "seed": seed,
+        "notes": notes,
+        "config_hash": sha256_json(config_fingerprint),
+        "git": _git_run_meta(cwd),
+        "python": sys.version,
+        "platform": {
+            "system": platform.system(),
+            "release": platform.release(),
+            "version": platform.version(),
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+        },
+        "gpu": _gpu_run_meta(),
+        "env": {
+            "python_executable": sys.executable,
+            "cwd": str(cwd),
+        },
+    }
+
+
+def _subprocess_or_die(cmd: list[str]) -> str:
+    if len(cmd) >= 2:
+        candidate = Path(str(cmd[1]))
+        if candidate.suffix == ".py":
+            script_path = candidate if candidate.is_absolute() else (_repo_root() / candidate)
+            if not script_path.is_file():
+                raise SystemExit(f"required script not found: {candidate}")
+    proc = subprocess.run(
+        cmd,
+        cwd=str(_repo_root()),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stderr and proc.stderr.strip():
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    if proc.returncode != 0:
+        raise SystemExit(f"command failed ({proc.returncode}): {' '.join(cmd)}\n{proc.stdout}\n{proc.stderr}")
+    return proc.stdout
+
+
+def _repo_manifest_path() -> Path:
+    return _repo_root() / "tools" / "manifest.json"
+
+
+def _packaged_manifest_path() -> Path:
+    return Path(__file__).resolve().parent / "data" / "manifest" / "tools_manifest.json"
+
+
+def _load_tool_manifest(*, prefer_repo: bool = True) -> tuple[dict[str, Any], Path, bool]:
+    repo_manifest = _repo_manifest_path()
+    if prefer_repo and repo_manifest.is_file():
+        return json.loads(repo_manifest.read_text(encoding="utf-8")), repo_manifest, True
+    packaged_manifest = _packaged_manifest_path()
+    if packaged_manifest.is_file():
+        return json.loads(packaged_manifest.read_text(encoding="utf-8")), packaged_manifest, False
+    raise SystemExit("could not locate a tool manifest (repo or packaged copy)")
+
+
+def _registry_payload(*, manifest: dict[str, Any], tool: dict[str, Any] | None = None) -> dict[str, Any]:
+    if tool is not None:
+        return {
+            "kind": "yolozu_tool_spec",
+            "schema_version": 1,
+            "timestamp": _now_utc(),
+            "repo": manifest.get("repo"),
+            "contracts": manifest.get("contracts"),
+            "tool": tool,
+        }
+    return {
+        "kind": "yolozu_tool_registry",
+        "schema_version": 1,
+        "timestamp": _now_utc(),
+        "repo": manifest.get("repo"),
+        "contracts": manifest.get("contracts"),
+        "tools": manifest.get("tools") or [],
+    }
+
+
+def _find_flag_value(argv: list[str], flag: str) -> str | None:
+    for i in range(len(argv) - 1):
+        if argv[i] == flag:
+            return argv[i + 1]
+    return None
+
+
+def _find_flag_value_any(argv: list[str], flag: str) -> str | None:
+    value = _find_flag_value(argv, flag)
+    if value is not None:
+        return value
+    prefix = flag + "="
+    for token in argv:
+        if token.startswith(prefix):
+            return token[len(prefix) :]
+    return None
+
+
+def _extract_forwarded_flags(argv: list[str]) -> set[str]:
+    flags: set[str] = set()
+    for token in argv:
+        if token == "--":
+            continue
+        if token == "-h":
+            flags.add("-h")
+            continue
+        if token.startswith("--"):
+            flags.add(token.split("=", 1)[0])
+    return flags
+
+
+def _is_repo_relative_path_like(value: str) -> bool:
+    if not isinstance(value, str) or not value or value.startswith("/"):
+        return False
+    parts = Path(value).parts
+    return ".." not in parts
+
+
+def _within(root: Path, path: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except Exception:
+        return False
+
+
+def _parse_contract_validator_cmd(template: str, *, path: str) -> list[str] | None:
+    if not isinstance(template, str) or not template.strip():
+        return None
+    cleaned = " ".join(token for token in template.split() if not (token.startswith("[") and token.endswith("]")))
+    if "<path>" not in cleaned:
+        return None
+    try:
+        tokens = shlex.split(cleaned)
+    except Exception:
+        tokens = cleaned.split()
+    return [path if token == "<path>" else token for token in tokens]
+
+
 def _resolve_auto_dataset_from_args(args: argparse.Namespace) -> str:
     if getattr(args, "instances", None) and getattr(args, "images_dir", None):
         return "coco-instances"
     if getattr(args, "data", None):
         return "ultralytics"
+    dataset_path = getattr(args, "dataset", None)
+    if dataset_path:
+        from yolozu.dataset import inspect_dataset_layout
+
+        info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+        if info is None:
+            raise SystemExit(f"could not auto-detect dataset source from path: {dataset_path}")
+        fmt = str(info.get("format") or "")
+        if fmt in ("coco_root", "coco_keypoints_root", "yolozu_coco_wrapper"):
+            return "coco"
+        if fmt in (
+            "yolozu_segmentation_descriptor",
+            "voc_segmentation_root",
+            "cityscapes_segmentation_root",
+            "ade20k_segmentation_root",
+        ):
+            return "segmentation"
+        if fmt in ("ultralytics_data_yaml", "yolo_layout", "yolozu_wrapper"):
+            return "ultralytics"
     raise SystemExit(
-        "could not auto-detect dataset source; provide --data (ultralytics) or --instances + --images-dir (coco-instances)"
+        "could not auto-detect dataset source; provide --dataset, --data (ultralytics), or --instances + --images-dir (coco-instances)"
     )
+
+
+def _segmentation_output_path(output: str | Path) -> Path:
+    out_path = Path(output)
+    if out_path.suffix.lower() == ".json":
+        return out_path
+    return out_path / "dataset.json"
+
+
+def _copy_descriptor_file(source: Path, output: str | Path, *, force: bool) -> Path:
+    out_path = _segmentation_output_path(output)
+    if not out_path.is_absolute():
+        out_path = (Path.cwd() / out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {out_path} (use --force to overwrite)")
+    out_path.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return out_path
+
+
+def _write_segmentation_descriptor_from_layout(
+    *,
+    dataset_path: str | Path,
+    layout_info: dict[str, Any],
+    output: str | Path,
+    split: str | None,
+    force: bool,
+) -> Path:
+    from yolozu.migrate import migrate_seg_dataset_descriptor
+
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+
+    fmt = str(layout_info.get("format") or "")
+    if fmt == "yolozu_segmentation_descriptor":
+        descriptor = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        return _copy_descriptor_file(descriptor, output, force=force)
+
+    if fmt == "voc_segmentation_root":
+        from_format = "voc"
+    elif fmt == "cityscapes_segmentation_root":
+        from_format = "cityscapes"
+    elif fmt == "ade20k_segmentation_root":
+        from_format = "ade20k"
+    else:
+        raise ValueError(f"unsupported segmentation layout: {fmt}")
+
+    return migrate_seg_dataset_descriptor(
+        from_format=from_format,
+        root=str(layout_info.get("root") or dataset_root),
+        split=str(split or layout_info.get("split") or "val"),
+        output=_segmentation_output_path(output),
+        path_type="absolute",
+        mode="manifest",
+        force=force,
+    )
+
+
+def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dict[str, Any], split: str | None) -> dict[str, Any]:
+    fmt = str(layout_info.get("format") or "")
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+
+    if fmt == "yolozu_segmentation_descriptor":
+        from yolozu.segmentation_dataset import load_seg_dataset_descriptor
+
+        descriptor_path = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        desc = load_seg_dataset_descriptor(descriptor_path)
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": desc.dataset,
+            "split": desc.split,
+            "counts": {"images": int(len(desc.samples)), "masks": int(sum(1 for sample in desc.samples if sample.mask is not None))},
+            "classes_preview": list((desc.classes or [])[:20]),
+            "ignore_index": int(desc.ignore_index),
+        }
+
+    if fmt == "voc_segmentation_root":
+        from yolozu.datasets.pascal_voc import iter_pascal_voc_seg_samples
+
+        samples = list(iter_pascal_voc_seg_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": str(layout_info.get("dataset_name") or "pascal_voc"),
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+        }
+
+    if fmt == "cityscapes_segmentation_root":
+        from yolozu.datasets.cityscapes import iter_cityscapes_samples
+
+        samples = list(iter_cityscapes_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": "cityscapes",
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+        }
+
+    if fmt == "ade20k_segmentation_root":
+        from yolozu.datasets.ade20k import iter_ade20k_samples, load_ade20k_classes
+
+        samples = list(iter_ade20k_samples(dataset_root, split=str(split or layout_info.get("split") or "val")))
+        classes = load_ade20k_classes(dataset_root) or []
+        return {
+            "from": "segmentation",
+            "layout": layout_info,
+            "task_family": "segmentation",
+            "dataset": "ade20k",
+            "split": str(split or layout_info.get("split") or "val"),
+            "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
+            "classes_preview": list(classes[:20]),
+        }
+
+    raise ValueError(f"unsupported segmentation layout: {fmt}")
+
+
+def _validate_segmentation_layout(
+    *,
+    dataset_path: str | Path,
+    layout_info: dict[str, Any],
+    max_images: int | None,
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    errors: list[str] = []
+    dataset_root = Path(dataset_path)
+    if not dataset_root.is_absolute():
+        dataset_root = (Path.cwd() / dataset_root).resolve()
+    fmt = str(layout_info.get("format") or "")
+
+    if fmt == "yolozu_segmentation_descriptor":
+        from yolozu.segmentation_dataset import load_seg_dataset_descriptor, resolve_dataset_path
+
+        descriptor_path = dataset_root if dataset_root.is_file() else dataset_root / "dataset.json"
+        desc = load_seg_dataset_descriptor(descriptor_path)
+        samples = list(desc.samples)
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            image_path = resolve_dataset_path(sample.image, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+            if not image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {image_path}")
+            if sample.mask is not None:
+                mask_path = resolve_dataset_path(sample.mask, dataset_root=descriptor_path.parent, path_type=desc.path_type)
+                if not mask_path.exists():
+                    errors.append(f"samples[{idx}]: mask file does not exist: {mask_path}")
+        return warnings, errors
+
+    if fmt == "voc_segmentation_root":
+        from yolozu.datasets.pascal_voc import iter_pascal_voc_seg_samples
+
+        samples = list(iter_pascal_voc_seg_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    if fmt == "cityscapes_segmentation_root":
+        from yolozu.datasets.cityscapes import iter_cityscapes_samples
+
+        samples = list(iter_cityscapes_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    if fmt == "ade20k_segmentation_root":
+        from yolozu.datasets.ade20k import iter_ade20k_samples
+
+        samples = list(iter_ade20k_samples(dataset_root, split=str(layout_info.get("split") or "val")))
+        if max_images is not None:
+            samples = samples[: int(max_images)]
+        for idx, sample in enumerate(samples):
+            if not sample.image_path.exists():
+                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
+            if sample.mask_path is None or not sample.mask_path.exists():
+                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+        return warnings, errors
+
+    raise ValueError(f"unsupported segmentation layout: {fmt}")
 
 
 def _detect_config_source_from_path(path_like: str | Path) -> str:
@@ -295,6 +679,252 @@ def _cmd_doctor(output: str) -> int:
     return int(write_doctor_report(output=output))
 
 
+def _cmd_registry_validate(_: argparse.Namespace) -> int:
+    repo_root = _repo_root()
+    manifest_path = repo_root / "tools" / "manifest.json"
+    validator = repo_root / "tools" / "validate_tool_manifest.py"
+    if not manifest_path.is_file() or not validator.is_file():
+        raise SystemExit(
+            "yolozu registry validate requires a repo checkout with tools/manifest.json "
+            "and tools/validate_tool_manifest.py available"
+        )
+    proc = subprocess.run(
+        [sys.executable, str(validator), "--manifest", str(manifest_path), "--require-declarative"],
+        cwd=str(repo_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.stdout:
+        print(proc.stdout, end="" if proc.stdout.endswith("\n") else "\n")
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="" if proc.stderr.endswith("\n") else "\n")
+    return int(proc.returncode)
+
+
+def _cmd_registry_list(args: argparse.Namespace) -> int:
+    manifest, _, _ = _load_tool_manifest()
+    tools = list(manifest.get("tools") or [])
+    tags = getattr(args, "tag", None) or []
+    contracts = getattr(args, "contract", None) or []
+
+    def _tool_matches(tool: dict[str, Any]) -> bool:
+        if tags:
+            tool_tags = set(tool.get("tags") or [])
+            if not all(tag in tool_tags for tag in tags):
+                return False
+        if contracts:
+            contract_spec = tool.get("contracts") or {}
+            consumes = set(contract_spec.get("consumes") or [])
+            produces = set(contract_spec.get("produces") or [])
+            have = consumes | produces
+            if not all(contract_id in have for contract_id in contracts):
+                return False
+        return True
+
+    tools = [tool for tool in tools if isinstance(tool, dict) and _tool_matches(tool)]
+    if bool(getattr(args, "json", False)):
+        payload = _registry_payload(manifest=manifest)
+        payload["tools"] = tools
+        print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+        return 0
+    for tool in tools:
+        print(f"- {tool.get('id')}: {tool.get('summary')} ({tool.get('runner')} {tool.get('entrypoint')})")
+    return 0
+
+
+def _cmd_registry_show(args: argparse.Namespace) -> int:
+    tool_id = str(getattr(args, "id"))
+    manifest, _, _ = _load_tool_manifest()
+    matches = [tool for tool in (manifest.get("tools") or []) if isinstance(tool, dict) and tool.get("id") == tool_id]
+    if not matches:
+        raise SystemExit(f"unknown tool id: {tool_id}")
+    tool = matches[0]
+    if bool(getattr(args, "json", False)):
+        print(json.dumps(_registry_payload(manifest=manifest, tool=tool), indent=2, sort_keys=True, ensure_ascii=False))
+        return 0
+    print(json.dumps(tool, indent=2, sort_keys=True, ensure_ascii=False))
+    return 0
+
+
+def _cmd_registry_run(args: argparse.Namespace) -> int:
+    repo_root = _repo_root()
+    manifest_path = repo_root / "tools" / "manifest.json"
+    if not manifest_path.is_file():
+        raise SystemExit("yolozu registry run requires a repo checkout with tools/manifest.json available")
+
+    manifest, _, _ = _load_tool_manifest(prefer_repo=True)
+    tool_id = str(getattr(args, "id"))
+    forwarded = getattr(args, "forward_args", None)
+    forward_args: list[str] = [str(item) for item in forwarded] if isinstance(forwarded, list) else []
+    if forward_args and forward_args[0] == "--":
+        forward_args = forward_args[1:]
+
+    matches = [tool for tool in (manifest.get("tools") or []) if isinstance(tool, dict) and tool.get("id") == tool_id]
+    if not matches:
+        raise SystemExit(f"unknown tool id: {tool_id}")
+    tool = matches[0]
+
+    requires = tool.get("requires") or {}
+    platform_spec = tool.get("platform") or {}
+    if bool(requires.get("network")) and not bool(getattr(args, "allow_network", False)):
+        raise SystemExit("tool requires network access; rerun with --allow-network")
+    if bool(platform_spec.get("gpu_required")) and not bool(getattr(args, "allow_gpu", False)):
+        raise SystemExit("tool requires GPU; rerun with --allow-gpu")
+
+    allowed_write_roots = list(getattr(args, "allow_write_root", None) or ["reports"])
+    allow_unsafe_paths = bool(getattr(args, "allow_unsafe_paths", False))
+    dry_run = bool(getattr(args, "dry_run", False))
+    allow_undeclared_effects = bool(getattr(args, "allow_undeclared_effects", False))
+    allow_unknown_flags_cli = bool(getattr(args, "allow_unknown_flags", False))
+
+    declared_flags: set[str] = set()
+    for item in (tool.get("inputs") or []):
+        if isinstance(item, dict) and isinstance(item.get("flag"), str) and item.get("flag"):
+            declared_flags.add(str(item["flag"]))
+
+    effects = tool.get("effects")
+    if effects is None:
+        if not allow_undeclared_effects:
+            raise SystemExit(
+                "tool has no declarative effects metadata (tool.effects). "
+                "Add effects to tools/manifest.json or rerun with --allow-undeclared-effects."
+            )
+        effects = {}
+    if not isinstance(effects, dict):
+        raise SystemExit("invalid tool.effects (expected object)")
+
+    allow_unknown_flags = bool(effects.get("allow_unknown_flags", False) or allow_unknown_flags_cli)
+    forwarded_flags = _extract_forwarded_flags(forward_args)
+    always_ok = {"-h", "--help"}
+    unknown = sorted(flag for flag in forwarded_flags if flag not in always_ok and flag not in declared_flags)
+    if unknown and not allow_unknown_flags:
+        raise SystemExit(
+            "unknown forwarded flags (not declared in tools/manifest.json inputs):\n"
+            + "\n".join(f"- {flag}" for flag in unknown)
+            + "\nUse --allow-unknown-flags to bypass (not recommended for agents)."
+        )
+
+    runner = tool.get("runner")
+    entrypoint = tool.get("entrypoint")
+    if runner not in {"python3", "bash"}:
+        raise SystemExit("unsupported runner")
+    if not isinstance(entrypoint, str) or not entrypoint:
+        raise SystemExit("missing entrypoint")
+    if entrypoint.startswith("/") or ".." in Path(entrypoint).parts:
+        raise SystemExit("invalid entrypoint path")
+    entry_path = repo_root / entrypoint
+    if not entry_path.exists():
+        raise SystemExit(f"entrypoint not found: {entrypoint}")
+
+    cmd: list[str] = ["python3", str(entry_path)] if runner == "python3" else ["bash", str(entry_path)]
+    cmd.extend(forward_args)
+
+    roots: list[Path] = []
+    for root in allowed_write_roots:
+        if not isinstance(root, str) or not root:
+            continue
+        if root.startswith("/") or ".." in Path(root).parts:
+            raise SystemExit(f"invalid --allow-write-root: {root}")
+        roots.append(repo_root / root)
+
+    def _check_write_path(src: str, value: str) -> None:
+        if not isinstance(value, str) or not value or value.strip() == "-":
+            return
+        if (value.startswith("/") or ".." in Path(value).parts) and not allow_unsafe_paths:
+            raise SystemExit(f"unsafe path blocked ({src}): {value} (use --allow-unsafe-paths to override)")
+        if _is_repo_relative_path_like(value):
+            resolved = repo_root / value
+            if roots and not any(_within(root, resolved) for root in roots):
+                roots_str = ", ".join(str(Path(root).relative_to(repo_root)) for root in roots)
+                raise SystemExit(
+                    f"write path blocked ({src}): {value} is outside allowed roots: {roots_str} "
+                    "(use --allow-write-root to add a root)"
+                )
+
+    fixed = effects.get("fixed_writes")
+    if fixed is not None:
+        if not isinstance(fixed, list):
+            raise SystemExit("invalid tool.effects.fixed_writes (expected list)")
+        for index, item in enumerate(fixed):
+            if not isinstance(item, dict):
+                raise SystemExit(f"invalid tool.effects.fixed_writes[{index}] (expected object)")
+            path = item.get("path")
+            if isinstance(path, str) and path:
+                _check_write_path(f"fixed_writes[{index}]", path)
+
+    writes = effects.get("writes")
+    if writes is not None:
+        if not isinstance(writes, list):
+            raise SystemExit("invalid tool.effects.writes (expected list)")
+        for index, item in enumerate(writes):
+            if not isinstance(item, dict):
+                raise SystemExit(f"invalid tool.effects.writes[{index}] (expected object)")
+            flag = item.get("flag")
+            if not isinstance(flag, str) or not flag.startswith("--"):
+                raise SystemExit(f"invalid tool.effects.writes[{index}].flag")
+            value = _find_flag_value_any(forward_args, flag)
+            if value is None:
+                default_value: str | None = None
+                for declared in (tool.get("inputs") or []):
+                    if isinstance(declared, dict) and declared.get("flag") == flag:
+                        default = declared.get("default")
+                        if isinstance(default, str) and default:
+                            default_value = default
+                        break
+                if default_value is None:
+                    continue
+                if "<" in default_value or ">" in default_value:
+                    raise SystemExit(
+                        f"write effect default contains placeholder; pass an explicit value for {flag}: {default_value}"
+                    )
+                value = default_value
+            _check_write_path(flag, value)
+
+    if dry_run:
+        print("DRY_RUN:")
+        print(" ".join(shlex.quote(item) for item in cmd))
+        return 0
+
+    proc = subprocess.run(cmd, cwd=str(repo_root), check=False)
+    if proc.returncode != 0:
+        raise SystemExit(proc.returncode)
+
+    contracts_registry = manifest.get("contracts") or {}
+    produces = (tool.get("contracts") or {}).get("produces") or []
+    contract_outputs = tool.get("contract_outputs") or {}
+    for contract_id in produces:
+        if not isinstance(contract_id, str) or not contract_id:
+            continue
+        spec = contracts_registry.get(contract_id) if isinstance(contracts_registry, dict) else None
+        if not isinstance(spec, dict):
+            continue
+        validator_tpl = spec.get("validator")
+        if not isinstance(validator_tpl, str) or not validator_tpl.strip():
+            continue
+
+        output_name = contract_outputs.get(contract_id) if isinstance(contract_outputs, dict) else None
+        output_default: str | None = None
+        if isinstance(output_name, str) and output_name:
+            for output in (tool.get("outputs") or []):
+                if isinstance(output, dict) and output.get("name") == output_name:
+                    default = output.get("default")
+                    if isinstance(default, str) and default:
+                        output_default = default
+                    break
+
+        out_path = _find_flag_value_any(forward_args, "--output") or output_default
+        if not out_path:
+            continue
+        validator_cmd = _parse_contract_validator_cmd(validator_tpl, path=out_path)
+        if not validator_cmd:
+            continue
+        subprocess.run(validator_cmd, cwd=str(repo_root), check=True)
+
+    return 0
+
+
 def _cmd_list_models(args: argparse.Namespace) -> int:
     from yolozu.model_fetch import list_models
 
@@ -374,7 +1004,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 
     from yolozu.coco_convert import build_category_map_from_coco
-    from yolozu.dataset import build_manifest
+    from yolozu.dataset import build_manifest, inspect_dataset_layout
     from yolozu.imports import (
         project_detectron2_config,
         project_mmdet_config,
@@ -397,12 +1027,34 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
 
     dataset_from = getattr(args, "dataset_from", None)
     config_from = getattr(args, "config_from", None)
+    dataset_arg = getattr(args, "dataset", None)
     if not dataset_from and not config_from:
         raise SystemExit("doctor import requires at least one of: --dataset-from, --config-from")
 
+    layout_info = None
+    if dataset_arg:
+        layout_info = inspect_dataset_layout(str(dataset_arg), split=str(args.split) if getattr(args, "split", None) else None)
+        if layout_info is None and dataset_from:
+            raise SystemExit(f"could not inspect dataset layout: {dataset_arg}")
+
     if dataset_from and str(dataset_from).strip().lower() == "auto":
-        dataset_from = _resolve_auto_dataset_from_args(args)
-        report["warnings"].append(f"dataset source auto-detected: {dataset_from}")
+        if layout_info is not None:
+            fmt = str(layout_info.get("format") or "")
+            if fmt in ("coco_root", "coco_keypoints_root", "yolozu_coco_wrapper"):
+                dataset_from = "coco"
+            elif fmt in (
+                "yolozu_segmentation_descriptor",
+                "voc_segmentation_root",
+                "cityscapes_segmentation_root",
+                "ade20k_segmentation_root",
+            ):
+                dataset_from = "segmentation"
+            else:
+                dataset_from = "ultralytics"
+            report["warnings"].append(f"dataset source auto-detected: {dataset_from} (layout: {fmt})")
+        else:
+            dataset_from = _resolve_auto_dataset_from_args(args)
+            report["warnings"].append(f"dataset source auto-detected: {dataset_from}")
     if config_from and str(config_from).strip().lower() == "auto":
         config_from = _resolve_auto_config_from_args(args)
         report["warnings"].append(f"config source auto-detected: {config_from}")
@@ -459,16 +1111,48 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "category_id_zero_present": bool(has_category_id_zero),
                 "classes_preview": list(cat_map.class_names[:20]),
             }
+        elif src == "coco":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --dataset-from coco")
+            info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+            if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
+                raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+            instances_path = Path(str(info.get("instances_json") or "")).expanduser()
+            images_dir = Path(str(info.get("images_dir") or "")).expanduser()
+            instances_doc = json.loads(instances_path.read_text(encoding="utf-8"))
+            images = instances_doc.get("images") or []
+            annotations = instances_doc.get("annotations") or []
+            include_crowd = bool(getattr(args, "include_crowd", False))
+            if not include_crowd and isinstance(annotations, list):
+                annotations = [a for a in annotations if not (isinstance(a, dict) and int(a.get("iscrowd", 0) or 0) == 1)]
+            cat_map = build_category_map_from_coco(instances_doc)
+            task_family = str(info.get("task_family") or ("keypoints" if str(info.get("format") or "") == "coco_keypoints_root" else "bbox"))
+            report["dataset"] = {
+                "from": "coco",
+                "layout": info,
+                "task_family": task_family,
+                "split": str(info.get("split") or ""),
+                "instances_json": str(instances_path),
+                "images_dir": str(images_dir),
+                "include_crowd": include_crowd,
+                "counts": {
+                    "images": int(len(images)) if isinstance(images, list) else None,
+                    "annotations": int(len(annotations)) if isinstance(annotations, list) else None,
+                    "classes": int(len(cat_map.class_names)),
+                },
+                "classes_preview": list(cat_map.class_names[:20]),
+            }
         elif src == "ultralytics":
-            data_yaml = getattr(args, "data", None)
-            if not data_yaml:
-                raise SystemExit("--data is required for --dataset-from ultralytics")
+            dataset_source = getattr(args, "data", None) or getattr(args, "dataset", None)
+            if not dataset_source:
+                raise SystemExit("--data or --dataset is required for --dataset-from ultralytics")
             label_format = None
             task = getattr(args, "task", None)
             if task and str(task).strip().lower() == "segment":
                 label_format = "segment"
             manifest = build_manifest(
-                str(data_yaml),
+                str(dataset_source),
                 split=str(args.split) if getattr(args, "split", None) else None,
                 label_format=label_format,
             )
@@ -487,15 +1171,29 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                         continue
             report["dataset"] = {
                 "from": "ultralytics",
-                "data_yaml": str(data_yaml),
+                "dataset": str(dataset_source),
                 "split": manifest.get("split"),
                 "label_format": label_format,
+                "layout": layout_info,
+                "task_family": str((layout_info or {}).get("task_family") or "bbox"),
                 "counts": {
                     "images": int(len(records)),
                     "labels": int(label_count),
                     "classes_hint": int(max_class + 1) if max_class >= 0 else None,
                 },
             }
+        elif src == "segmentation":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --dataset-from segmentation")
+            info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
+            if info is None:
+                raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+            report["dataset"] = _summarize_segmentation_layout(
+                dataset_path=str(dataset_path),
+                layout_info=info,
+                split=str(args.split) if getattr(args, "split", None) else None,
+            )
         else:
             raise SystemExit(f"unsupported --dataset-from: {src}")
 
@@ -552,49 +1250,71 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
 
 
 def _cmd_export(args: argparse.Namespace) -> int:
-    from yolozu.export import (
-        DEFAULT_PREDICTIONS_PATH,
-        export_dummy_predictions,
-        export_labels_predictions,
-        write_predictions_json,
+    from yolozu.inference.export_orchestrator import export_with_backend
+
+    if not getattr(args, "dataset", None):
+        args.dataset = str(_repo_root() / "data" / "coco128")
+    out_path = export_with_backend(
+        args,
+        subprocess_or_die=_subprocess_or_die,
+        base_run_meta=_base_run_meta,
     )
+    print(str(out_path))
+    return 0
 
-    backend = str(getattr(args, "backend", "dummy"))
 
-    dataset = str(args.dataset)
+def _cmd_export_dataset(args: argparse.Namespace) -> int:
+    from yolozu.datasets.exports import export_coco_dataset, export_kitti_dataset, export_segmentation_dataset, export_yolo_dataset
+
+    target = str(getattr(args, "to_format", ""))
+    dataset = str(getattr(args, "dataset", "") or "")
+    out_dir = str(getattr(args, "out_dir", "") or "")
+    split = str(args.split) if getattr(args, "split", None) else None
+    image_mode = str(getattr(args, "image_mode", "copy") or "copy")
+    force = bool(getattr(args, "force", False))
+
     if not dataset:
         raise SystemExit("--dataset is required")
+    if not out_dir:
+        raise SystemExit("--out-dir is required")
 
     try:
-        if backend == "dummy":
-            payload, _run = export_dummy_predictions(
-                dataset_root=dataset,
-                split=str(args.split) if args.split else None,
-                max_images=int(args.max_images) if args.max_images is not None else None,
-                score=float(args.score),
-            )
-        elif backend == "labels":
-            payload, _run = export_labels_predictions(
-                dataset_root=dataset,
-                split=str(args.split) if args.split else None,
-                max_images=int(args.max_images) if args.max_images is not None else None,
-                score=float(args.score),
-            )
+        if target == "yolo":
+            out_root = export_yolo_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
+        elif target == "kitti":
+            out_root = export_kitti_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
+        elif target == "coco":
+            out_root = export_coco_dataset(dataset_root=dataset, split=split, out_dir=out_dir, image_mode=image_mode, force=force)
+        elif target == "segmentation":
+            out_root = export_segmentation_dataset(dataset_root=dataset, out_dir=out_dir, image_mode=image_mode, force=force)
         else:
-            raise SystemExit(f"unsupported --backend: {backend}")
-    except FileNotFoundError as exc:
+            raise SystemExit(f"unsupported export-dataset target: {target}")
+    except (FileExistsError, FileNotFoundError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
-    output = str(args.output) if args.output else DEFAULT_PREDICTIONS_PATH
-    out_path = write_predictions_json(output=output, payload=payload, force=bool(args.force))
-    print(str(out_path))
+    print(str(out_root))
     return 0
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     if args.validate_command == "dataset":
-        from yolozu.dataset import build_manifest
+        from yolozu.dataset import build_manifest, inspect_dataset_layout
         from yolozu.dataset_validator import validate_dataset_records
+
+        layout_info = inspect_dataset_layout(str(args.dataset), split=str(args.split) if args.split else None)
+        if layout_info is not None and str(layout_info.get("task_family") or "") == "segmentation":
+            warnings, errors = _validate_segmentation_layout(
+                dataset_path=str(args.dataset),
+                layout_info=layout_info,
+                max_images=(int(args.max_images) if args.max_images is not None else None),
+            )
+            for warning in warnings:
+                print(warning, file=sys.stderr)
+            if errors:
+                for error in errors:
+                    print(error, file=sys.stderr)
+                return 1
+            return 0
 
         try:
             manifest = build_manifest(
@@ -762,44 +1482,13 @@ def _cmd_onnxrt_quantize(args: argparse.Namespace) -> int:
 
 
 def _cmd_predict_images(args: argparse.Namespace) -> int:
-    from yolozu.predict_images import predict_images
+    from yolozu.predict_images import predict_images_with_namespace
 
     try:
-        max_images = require_non_negative_int(args.max_images, flag_name="--max-images")
-    except ValueError as exc:
-        raise SystemExit(str(exc)) from exc
-
-    try:
-        out_json, out_html = predict_images(
-            backend=str(args.backend),
-            input_dir=str(args.input_dir),
-            output=str(args.output),
-            score=float(args.score),
-            max_images=max_images,
-            force=bool(args.force),
-            glob_patterns=list(args.glob) if args.glob else None,
-            overlays_dir=str(args.overlays_dir) if args.overlays_dir else None,
-            html=str(args.html) if args.html else None,
-            title=str(args.title),
-            onnx=(str(args.onnx) if args.onnx else None),
-            input_name=str(args.input_name),
-            boxes_output=str(args.boxes_output),
-            scores_output=str(args.scores_output),
-            class_output=(str(args.class_output) if args.class_output else None),
-            combined_output=(str(args.combined_output) if args.combined_output else None),
-            combined_format=str(args.combined_format),
-            raw_output=(str(args.raw_output) if args.raw_output else None),
-            raw_format=str(args.raw_format),
-            raw_postprocess=str(args.raw_postprocess),
-            boxes_format=str(args.boxes_format),
-            boxes_scale=str(args.boxes_scale),
-            min_score=float(args.min_score),
-            topk=int(args.topk),
-            nms_iou=float(args.nms_iou),
-            agnostic_nms=bool(args.agnostic_nms),
-            imgsz=int(args.imgsz),
-            dry_run=bool(args.dry_run),
-            strict=bool(args.strict),
+        out_json, out_html = predict_images_with_namespace(
+            args,
+            subprocess_or_die=_subprocess_or_die,
+            base_run_meta=_base_run_meta,
         )
     except Exception as exc:
         raise SystemExit(str(exc)) from exc
@@ -1298,34 +1987,99 @@ def _cmd_resources(args: argparse.Namespace) -> int:
 
 
 def _cmd_migrate(args: argparse.Namespace) -> int:
+    from yolozu.dataset import inspect_dataset_layout
     from yolozu.migrate import (
         migrate_coco_dataset_wrapper,
         migrate_coco_results_predictions,
         migrate_seg_dataset_descriptor,
         migrate_ultralytics_dataset_wrapper,
+        write_dataset_wrapper,
     )
 
     if args.migrate_command == "dataset":
-        if str(args.from_format) == "ultralytics":
-            out = migrate_ultralytics_dataset_wrapper(
-                data_yaml=str(args.data) if args.data else None,
-                args_yaml=str(args.args) if args.args else None,
-                split=str(args.split) if args.split else None,
-                task=str(args.task) if args.task else None,
-                output=str(args.output),
-                force=bool(args.force),
-            )
-        elif str(args.from_format) == "coco":
-            if not args.coco_root:
-                raise SystemExit("--coco-root is required for --from coco")
-            split = str(args.split) if args.split else "val2017"
+        from_format = str(args.from_format)
+        if from_format == "auto":
+            from_format = _resolve_auto_dataset_from_args(args)
+
+        if from_format == "ultralytics":
+            dataset_path = getattr(args, "dataset", None)
+            if dataset_path:
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None:
+                    raise SystemExit(f"could not inspect dataset layout: {dataset_path}")
+                fmt = str(info.get("format") or "")
+                if fmt in ("yolo_layout", "yolozu_wrapper", "yolozu_coco_wrapper"):
+                    out = write_dataset_wrapper(
+                        str(args.output),
+                        images_dir=str(info.get("images_dir")),
+                        labels_dir=str(info.get("labels_dir")),
+                        split=str(info.get("split") or args.split or "val"),
+                        label_format=(str(info.get("label_format")) if info.get("label_format") else None),
+                        source={"from": fmt, "dataset": str(dataset_path)},
+                        force=bool(args.force),
+                    )
+                else:
+                    data_yaml = str(info.get("data_yaml") or dataset_path)
+                    out = migrate_ultralytics_dataset_wrapper(
+                        data_yaml=data_yaml,
+                        args_yaml=str(args.args) if args.args else None,
+                        split=str(args.split) if args.split else None,
+                        task=str(args.task) if args.task else None,
+                        output=str(args.output),
+                        force=bool(args.force),
+                    )
+            else:
+                out = migrate_ultralytics_dataset_wrapper(
+                    data_yaml=str(args.data) if args.data else None,
+                    args_yaml=str(args.args) if args.args else None,
+                    split=str(args.split) if args.split else None,
+                    task=str(args.task) if args.task else None,
+                    output=str(args.output),
+                    force=bool(args.force),
+                )
+        elif from_format == "coco":
+            coco_root = getattr(args, "coco_root", None) or getattr(args, "dataset", None)
+            if not coco_root:
+                raise SystemExit("--coco-root or --dataset is required for --from coco")
+            info = inspect_dataset_layout(str(coco_root), split=str(args.split) if args.split else None)
+            if info is not None and str(info.get("format") or "") in ("coco_root", "coco_keypoints_root"):
+                effective_split = str(info.get("split") or args.split or "val2017")
+            else:
+                effective_split = str(args.split) if args.split else "val2017"
+            if info is not None and str(info.get("format") or "") == "coco_keypoints_root":
+                from yolozu.imports import import_coco_keypoints_dataset
+
+                out = import_coco_keypoints_dataset(
+                    annotations_json=str(info.get("instances_json")),
+                    images_dir=str(info.get("images_dir")),
+                    split=effective_split,
+                    output=str(args.output),
+                    include_crowd=bool(args.include_crowd),
+                    force=bool(args.force),
+                )
+                print(str(out))
+                return 0
             out = migrate_coco_dataset_wrapper(
-                coco_root=str(args.coco_root),
-                split=split,
+                coco_root=str(coco_root),
+                split=effective_split,
                 instances_json=(str(args.instances_json) if args.instances_json else None),
                 output=str(args.output),
                 mode=str(args.mode),
                 include_crowd=bool(args.include_crowd),
+                force=bool(args.force),
+            )
+        elif from_format == "segmentation":
+            dataset_path = getattr(args, "dataset", None)
+            if not dataset_path:
+                raise SystemExit("--dataset is required for --from segmentation")
+            info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+            if info is None:
+                raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+            out = _write_segmentation_descriptor_from_layout(
+                dataset_path=str(dataset_path),
+                layout_info=info,
+                output=str(args.output),
+                split=str(args.split) if args.split else None,
                 force=bool(args.force),
             )
         else:
@@ -1384,14 +2138,16 @@ def _cmd_predictions(args: argparse.Namespace) -> int:
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
+    from yolozu.dataset import inspect_dataset_layout
     from yolozu.imports import (
         import_coco_instances_dataset,
+        import_coco_keypoints_dataset,
         import_detectron2_config,
         import_mmdet_config,
         import_ultralytics_config,
         import_yolox_config,
     )
-    from yolozu.migrate import migrate_ultralytics_dataset_wrapper
+    from yolozu.migrate import migrate_ultralytics_dataset_wrapper, write_dataset_wrapper
 
     try:
         if args.import_command == "dataset":
@@ -1400,14 +2156,64 @@ def _cmd_import(args: argparse.Namespace) -> int:
                 from_format = _resolve_auto_dataset_from_args(args)
 
             if from_format == "ultralytics":
+                dataset_path = getattr(args, "dataset", None)
+                layout_info = None
+                if dataset_path:
+                    layout_info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                    if layout_info is None:
+                        raise SystemExit(f"could not inspect dataset layout: {dataset_path}")
+                    fmt = str(layout_info.get("format") or "")
+                    if fmt in ("yolo_layout", "yolozu_wrapper"):
+                        out = write_dataset_wrapper(
+                            str(args.output),
+                            images_dir=str(layout_info.get("images_dir")),
+                            labels_dir=str(layout_info.get("labels_dir")),
+                            split=str(layout_info.get("split") or args.split or "val"),
+                            label_format=(str(layout_info.get("label_format")) if layout_info.get("label_format") else None),
+                            source={"from": fmt, "dataset": str(dataset_path)},
+                            force=bool(args.force),
+                        )
+                        print(str(out))
+                        return 0
+                    data_yaml = str(layout_info.get("data_yaml") or dataset_path)
+                else:
+                    data_yaml = str(args.data) if args.data else None
                 out = migrate_ultralytics_dataset_wrapper(
-                    data_yaml=str(args.data) if args.data else None,
+                    data_yaml=data_yaml,
                     args_yaml=str(args.args) if args.args else None,
                     split=str(args.split) if args.split else None,
                     task=str(args.task) if args.task else None,
                     output=str(args.output),
                     force=bool(args.force),
                 )
+                print(str(out))
+                return 0
+
+            if from_format == "coco":
+                dataset_path = getattr(args, "dataset", None)
+                if not dataset_path:
+                    raise SystemExit("--dataset is required for --from coco")
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
+                    raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+                if str(info.get("format") or "") == "coco_keypoints_root":
+                    out = import_coco_keypoints_dataset(
+                        annotations_json=str(info.get("instances_json")),
+                        images_dir=str(info.get("images_dir")),
+                        split=str(info.get("split") or args.split or "val2017"),
+                        output=str(args.output),
+                        include_crowd=bool(args.include_crowd),
+                        force=bool(args.force),
+                    )
+                else:
+                    out = import_coco_instances_dataset(
+                        instances_json=str(info.get("instances_json")),
+                        images_dir=str(info.get("images_dir")),
+                        split=str(info.get("split") or args.split or "val2017"),
+                        output=str(args.output),
+                        include_crowd=bool(args.include_crowd),
+                        force=bool(args.force),
+                    )
                 print(str(out))
                 return 0
 
@@ -1420,6 +2226,23 @@ def _cmd_import(args: argparse.Namespace) -> int:
                     split=str(args.split) if args.split else "val2017",
                     output=str(args.output),
                     include_crowd=bool(args.include_crowd),
+                    force=bool(args.force),
+                )
+                print(str(out))
+                return 0
+
+            if from_format == "segmentation":
+                dataset_path = getattr(args, "dataset", None)
+                if not dataset_path:
+                    raise SystemExit("--dataset is required for --from segmentation")
+                info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
+                if info is None:
+                    raise SystemExit(f"dataset is not a detectable segmentation layout: {dataset_path}")
+                out = _write_segmentation_descriptor_from_layout(
+                    dataset_path=str(dataset_path),
+                    layout_info=info,
+                    output=str(args.output),
+                    split=str(args.split) if args.split else None,
                     force=bool(args.force),
                 )
                 print(str(out))

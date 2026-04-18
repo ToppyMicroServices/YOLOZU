@@ -20,7 +20,7 @@ yolozu migrate dataset \
   --output data/coco_yolo_like \
   --mode manifest
 
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend yolox \
   --dataset data/coco_yolo_like \
   --split val2017 \

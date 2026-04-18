@@ -8,6 +8,8 @@ from pathlib import Path
 
 class TestCheckSegmentationParityTool(unittest.TestCase):
     def test_check_segmentation_parity_ok(self) -> None:
+        np = None
+        Image = None
         try:
             import numpy as np
             from PIL import Image

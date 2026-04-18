@@ -8,6 +8,8 @@ from yolozu.eval.segmentation_parity import compare_segmentation_predictions
 
 class TestSegmentationParity(TestCase):
     def test_compare_segmentation_predictions_reports_drift(self):
+        np = None
+        Image = None
         try:
             import numpy as np
             from PIL import Image

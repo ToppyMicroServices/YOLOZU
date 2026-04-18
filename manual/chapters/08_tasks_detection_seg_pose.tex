@@ -78,7 +78,7 @@ The semantic segmentation suite provides robust dataset preparation utilities an
 
 Dataset preparation is streamlined into a single command:
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py prepare-keypoints-dataset   --source /path/to/export   --format auto   --out /path/to/keypoints_dataset
+python3 tools/prepare_keypoints_dataset.py   --source /path/to/export   --format auto   --out /path/to/keypoints_dataset
 \end{lstlisting}
 
 Supported direct input formats include: \cmd{auto}, \cmd{yolo_pose}, \cmd{coco}, and \cmd{cvat_xml}. When processing CVAT XML, you may provide either a specific XML file or a directory containing an \path{annotations.xml} file. If the image root inference is ambiguous, explicitly define it using the \cmd{--cvat-images-dir} parameter.

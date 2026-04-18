@@ -5,24 +5,24 @@ This chapter provides a concise summary of the most frequently utilized commands
 }{
 It is designed to minimize the time to first execution and to clearly delineate which commands are install-safe versus those restricted to repository-only workflows.
 }{
-Utilize \cmd{yolozu --help} for the pip-installed CLI, or \cmd{python3 tools/yolozu.py --help} for the repository wrapper. Because implementation details evolve, the \cmd{--help} output remains the definitive source of truth.
+Utilize \cmd{yolozu --help} or \cmd{python3 -m yolozu --help} for the supported CLI surface. The legacy \cmd{python3 tools/yolozu.py --help} wrapper remains available in a repo checkout for backwards compatibility only. Because implementation details evolve, the \cmd{--help} output remains the definitive source of truth.
 }
 \ChapterAudience{Read this chapter when you want copy-paste entrypoints first and detailed tool discovery second.}
 
 
 \section{Design Philosophy}
-The CLI surface is intentionally bifurcated to serve distinct user profiles:
+The CLI surface now has one supported top-level entrypoint plus a compatibility shim:
 \begin{itemize}
-  \item \cmd{yolozu}: The end-user safe CLI, installed globally or virtually via pip.
-  \item \cmd{python3 tools/yolozu.py}: The repository wrapper, specifically tailored for research and evaluation pipelines.
+  \item \cmd{yolozu} / \cmd{python3 -m yolozu}: the supported top-level CLI.
+  \item \cmd{python3 tools/yolozu.py}: a legacy compatibility wrapper for older repo-local scripts.
 \end{itemize}
 
-This chapter documents the \textit{high-traffic commands} and outlines the methodology for discovering the broader command set.
+This chapter documents the \textit{high-traffic commands} on the supported surface and points directly to repo-only helper scripts when a workflow does not belong on the top-level CLI.
 
 \section{Discoverability}
 As a best practice, always initiate discovery with:\\
 \cmd{yolozu --help} and \cmd{yolozu <command> --help}.\\
-For repository-specific workflows, utilize: \cmd{python3 tools/yolozu.py --help}.
+In a source checkout, \cmd{python3 -m yolozu --help} is equivalent. The legacy \cmd{python3 tools/yolozu.py --help} wrapper is compatibility-only.
 
 \section{Common Commands}
 \small
@@ -53,6 +53,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu train-orchestrate} & Plans or executes a small multi-backend training batch from one JSON spec and writes \path{training\_orchestration\_report.json}. The spec may define top-level defaults (for example dataset, split, or resume source), and when \cmd{--registry-out} is set, executed runs are also appended to a shared JSONL training registry with backend counts summarized in the report. This is repository-side experiment orchestration, not a cluster scheduler. \\
 \cmd{yolozu test} & Executes the YAML/JSON scenario runner (compatible with dummy, precomputed, and rtdetr\_pose adapters). \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
+\cmd{yolozu export-dataset yolo|coco|kitti|segmentation} & Exports a YOLOZU dataset wrapper into a standalone YOLO training layout (\path{data.yaml} + \path{images/}/\path{labels/}), a standard COCO layout (\path{images/<split>/} + \path{annotations/instances\_<split>.json} plus \path{person\_keypoints\_<split>.json} when keypoints metadata is present), a KITTI-style layout (\path{image\_2}/\path{label\_2}/\path{ImageSets/Main}), or a semantic-segmentation layout (\path{images/}/\path{masks/} + \path{dataset.json}). Use \cmd{--image-mode symlink} when you want an export tree without copying large assets. \\
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
 \cmd{yolozu benchmark} & Parity-target benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine} when artifacts and runtimes exist; for \cmd{--task segmentation}, \cmd{--task keypoints}, \cmd{--task depth}, and \cmd{--task pose6d}, it uses artifact-backed real eval/parity lanes rather than pretending YOLOZU executed the backend inference itself. Key knobs include \cmd{--protocol}, backend-specific model overrides (\cmd{--torch-model}, \cmd{--onnx-model}, \cmd{--engine-model}), \cmd{--latency-source auto|artifact\_eval}, \cmd{--parity-reference-backend auto|torch|onnx|engine}, segmentation-specific \cmd{--segmentation-parity-mismatch-atol}, keypoints-specific \cmd{--keypoints-parity-*} thresholds, depth-specific \cmd{--depth-mask}/\cmd{--depth-align}, and pose-specific \cmd{--pose-parity-*} thresholds. \\
 \cmd{python3}\\\path{tools/eval\_pose.py} & Evaluates one pose-aware predictions artifact against dataset sidecars and writes \cmd{pose\_success}, \cmd{rot\_deg\_mean}, \cmd{trans\_l2\_mean}, optional depth error, and optional CAD-point metrics such as \cmd{add\_mean} / \cmd{adds\_mean}. \\

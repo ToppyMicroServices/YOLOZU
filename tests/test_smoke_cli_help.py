@@ -1,4 +1,6 @@
+import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -29,6 +31,32 @@ class TestSmokeCliHelp(unittest.TestCase):
         self.assertIn("--torch-device", out)
         self.assertIn("--profile", out)
         self.assertIn("--walkthrough-report", out)
+
+    def test_smoke_script_falls_back_when_yolozu_python_candidate_is_broken(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "smoke.sh"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            fake_python = Path(td) / "fake-python"
+            fake_python.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            fake_python.chmod(0o755)
+
+            env = dict(os.environ)
+            env["YOLOZU_PYTHON"] = str(fake_python)
+            proc = subprocess.run(
+                ["bash", str(script), "--help"],
+                cwd=str(repo_root),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"smoke --help fallback failed:\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            self.assertIn("Usage:", out)
+            self.assertIn("--profile", out)
 
 
 if __name__ == "__main__":

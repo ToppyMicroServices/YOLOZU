@@ -25,6 +25,7 @@ class TestEvalDepthTool(unittest.TestCase):
         self.assertIn("--align", proc.stdout)
 
     def test_cli_writes_report_with_median_scale_alignment(self) -> None:
+        np = None
         try:
             import numpy as np
         except Exception as exc:  # pragma: no cover

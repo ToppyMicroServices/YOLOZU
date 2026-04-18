@@ -47,7 +47,7 @@ Practical macOS triage:
 
 - if `mps_built=false`, your Torch build has no MPS backend
 - if `mps_built=true` but `mps_available=false`, the wheel/runtime combo is the likely blocker
-- on some Apple Silicon hosts, Miniforge/conda PyTorch may expose MPS correctly even when `pip` wheels do not
+- Python itself can create the environment with `venv`/`pip`; on some Apple Silicon hosts, Miniforge/conda PyTorch may expose MPS correctly even when `pip` wheels do not
 - after switching environments, rerun `yolozu doctor --output -` and compare `runtime_capabilities.torch.*`
 
 For a tested Miniforge setup path, see [`install.md`](install.md#macos--apple-silicon-miniforgemps-workflow).

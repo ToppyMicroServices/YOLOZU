@@ -5,7 +5,6 @@ import types
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
 
 torch = None
 finalize_training = None
@@ -53,7 +52,7 @@ class TestTrainFinalize(unittest.TestCase):
 
             fake_export = types.SimpleNamespace(export_onnx=_fake_export)
 
-            with mock.patch.dict("sys.modules", {"rtdetr_pose.export": fake_export}):
+            with unittest.mock.patch.dict("sys.modules", {"rtdetr_pose.export": fake_export}):
                 finalize_training(
                     args=args,
                     is_main=True,
@@ -122,7 +121,7 @@ class TestTrainFinalize(unittest.TestCase):
                 export_onnx=lambda *a, **k: (_ for _ in ()).throw(IndexError("bad axis"))
             )
 
-            with mock.patch.dict("sys.modules", {"rtdetr_pose.export": fake_export}):
+            with unittest.mock.patch.dict("sys.modules", {"rtdetr_pose.export": fake_export}):
                 finalize_training(
                     args=args,
                     is_main=True,

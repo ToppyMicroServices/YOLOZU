@@ -129,7 +129,12 @@ Optional extra:
 
 - `yolozu onnxrt export ...` (install `yolozu[onnxrt]`)
 
-Power-user in-repo CLI (source checkout):
+Canonical CLI:
+
+- `yolozu ...`
+- `python3 -m yolozu ...`
+
+Legacy compatibility wrapper (source checkout only):
 
 - `python3 tools/yolozu.py ...`
 

@@ -55,7 +55,7 @@ Value: Reproducible test-time adaptation with bounded cost caps, reset policies 
 Representative command (export predictions with TTT enabled):
 
 ```bash
-python3 tools/yolozu.py export \
+python3 -m yolozu export \
   --backend torch \
   --dataset data/coco128 \
   --split train2017 \
@@ -141,7 +141,7 @@ Value: Generate a reproducible long-tail training plan with explicit PyTorch-rea
 Representative command:
 
 ```bash
-python3 tools/yolozu.py long-tail-recipe \
+python3 -m yolozu long-tail-recipe \
   --dataset data/smoke \
   --split val \
   --loss-plugin torch_cross_entropy \

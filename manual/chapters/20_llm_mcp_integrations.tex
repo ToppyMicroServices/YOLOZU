@@ -71,9 +71,9 @@ curl -sS http://127.0.0.1:8080/healthz
 
 \subsection{Minimal end-to-end check}
 \begin{lstlisting}[language=bash]
-python3 tools/yolozu.py doctor --output reports/doctor.json
-python3 tools/yolozu.py validate predictions data/smoke/predictions/predictions_dummy.json --strict
-python3 tools/yolozu.py eval-coco --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --dry-run --output reports/mcp_eval_coco_dry.json
+python3 -m yolozu doctor --output reports/doctor.json
+python3 -m yolozu validate predictions data/smoke/predictions/predictions_dummy.json --strict
+python3 -m yolozu eval-coco --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --dry-run --output reports/mcp_eval_coco_dry.json
 \end{lstlisting}
 
 \section{Client routing}

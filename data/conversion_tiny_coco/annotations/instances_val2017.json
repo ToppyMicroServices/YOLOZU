@@ -1,0 +1,67 @@
+{
+  "images": [
+    {
+      "id": 1,
+      "file_name": "000000000009.jpg",
+      "width": 640,
+      "height": 480
+    },
+    {
+      "id": 2,
+      "file_name": "000000000025.jpg",
+      "width": 640,
+      "height": 426
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 7,
+      "bbox": [
+        96,
+        120,
+        224,
+        168
+      ],
+      "area": 37632,
+      "iscrowd": 0
+    },
+    {
+      "id": 2,
+      "image_id": 1,
+      "category_id": 8,
+      "bbox": [
+        332,
+        42,
+        142,
+        204
+      ],
+      "area": 28968,
+      "iscrowd": 0
+    },
+    {
+      "id": 3,
+      "image_id": 2,
+      "category_id": 7,
+      "bbox": [
+        52,
+        34,
+        118,
+        208
+      ],
+      "area": 24544,
+      "iscrowd": 0
+    }
+  ],
+  "categories": [
+    {
+      "id": 7,
+      "name": "crate"
+    },
+    {
+      "id": 8,
+      "name": "cone"
+    }
+  ]
+}

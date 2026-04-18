@@ -6280,7 +6280,7 @@
           "description": "Export RT-DETR OpenCV-DNN predictions (dry-run works without OpenCV installed)."
         },
         {
-          "command": "python3 tools/yolozu.py export --backend opencv-dnn-rtdetr --onnx path/to/model.onnx --dataset data/coco128 --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force",
+          "command": "python3 -m yolozu export --backend opencv-dnn-rtdetr --onnx path/to/model.onnx --dataset data/coco128 --imgsz 640 --score-thr 0.01 --output reports/pred_rtdetr_opencv_backend.json --force",
           "description": "Run via unified yolozu export backend"
         }
       ],
@@ -7739,14 +7739,14 @@
           }
         ]
       },
-      "entrypoint": "tools/yolozu.py",
+      "entrypoint": "yolozu/cli.py",
       "examples": [
         {
-          "command": "python3 tools/yolozu.py fetch yolox-s-coco --out models --accept-license",
+          "command": "python3 -m yolozu fetch yolox-s-coco --out models --accept-license",
           "description": "Fetch a packaged model ID to ./models."
         },
         {
-          "command": "python3 tools/yolozu.py fetch yolox-s-coco --out models --cache-dir ~/.cache/yolozu/models --accept-license",
+          "command": "python3 -m yolozu fetch yolox-s-coco --out models --cache-dir ~/.cache/yolozu/models --accept-license",
           "description": "Fetch with explicit cache location."
         }
       ],
@@ -8431,14 +8431,14 @@
         "fixed_writes": [],
         "writes": []
       },
-      "entrypoint": "tools/yolozu.py",
+      "entrypoint": "yolozu/cli.py",
       "examples": [
         {
-          "command": "python3 tools/yolozu.py list models",
+          "command": "python3 -m yolozu list models",
           "description": "List packaged model IDs."
         },
         {
-          "command": "python3 tools/yolozu.py list models --registry path/to/model_registry.json --json",
+          "command": "python3 -m yolozu list models --registry path/to/model_registry.json --json",
           "description": "List with custom registry in JSON."
         }
       ],
@@ -14809,7 +14809,8 @@
         "docs/training_orchestration.md",
         "docs/run_contract.md",
         "manual/chapters/07_training_run_contract.tex",
-        "docs/interop_detectron2_mmdet.md"
+        "docs/interop_detectron2_mmdet.md",
+        "docs/migrate.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14855,57 +14856,63 @@
             "flag": "--html",
             "kind": "file",
             "scope": "path"
+          },
+          {
+            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels, COCO images/annotations, KITTI image_2/label_2, or semantic-segmentation images/masks + dataset.json).",
+            "flag": "--out-dir",
+            "kind": "dir",
+            "scope": "tree"
           }
         ]
       },
-      "entrypoint": "tools/yolozu.py",
+      "entrypoint": "yolozu/cli.py",
       "examples": [
         {
-          "command": "python3 tools/yolozu.py dr -o reports/doctor.json",
+          "command": "python3 -m yolozu doctor -o reports/doctor.json",
           "description": "Doctor report."
         },
         {
-          "command": "python3 tools/yolozu.py comp -s bash",
+          "command": "python3 -m yolozu completion -s bash",
           "description": "Print bash completion script for yolozu CLI (eval output to enable tab completion)."
         },
         {
-          "command": "python3 tools/yolozu.py demo overview --output reports/demo_overview_report.json",
+          "command": "python3 -m yolozu demo overview --output reports/demo_overview_report.json",
           "description": "Demo overview report (capability coverage + dependency checks + recommended commands)."
         },
         {
-          "command": "python3 tools/yolozu.py demo ttt --run-dir reports/demo_ttt_improvement --force",
+          "command": "python3 -m yolozu demo ttt --run-dir reports/demo_ttt_improvement --force",
           "description": "TTT improvement micro-demo (few-shot train + deterministic domain shift + simple mAP proxy delta; requires torch)."
         },
         {
-          "command": "python3 tools/yolozu.py demo instance-seg-tta --run-dir reports/demo_instance_seg_tta",
+          "command": "python3 -m yolozu demo instance-seg-tta --run-dir reports/demo_instance_seg_tta",
           "description": "Instance-seg TTA compare demo (real COCO image, deterministic corruption, raw Mask R-CNN vs augmentation-based TTA overlays; brightness shift uses brightness-lift+hflip, other shifts use hflip; requires torch+torchvision)."
         },
         {
-          "command": "python3 tools/yolozu.py demo keypoints",
+          "command": "python3 -m yolozu demo keypoints",
           "description": "Keypoints inference demo (passthrough to package CLI)."
         },
         {
-          "command": "python3 tools/yolozu.py demo pose",
+          "command": "python3 -m yolozu demo pose",
           "description": "6D pose demo (chessboard + OpenCV solvePnP)."
         },
         {
-          "command": "python3 tools/yolozu.py demo pose --backend aruco",
+          "command": "python3 -m yolozu demo pose --backend aruco",
           "description": "6D pose demo (ArUco marker pose; cached sample under demo_output/pose/_samples)."
         },
         {
-          "command": "python3 tools/yolozu.py demo pose --backend densefusion",
+          "command": "python3 -m yolozu demo pose --backend densefusion",
           "description": "6D pose demo (DenseFusion backend; CUDA + large downloads)."
         },
         {
-          "command": "python3 tools/yolozu.py demo depth",
+          "command": "python3 -m yolozu demo depth",
           "description": "Monocular depth demo (default: Depth Anything via Transformers; optional MiDaS/DPT)."
         },
         {
-          "command": "python3 tools/yolozu.py demo depth --compare",
+          "command": "python3 -m yolozu demo depth --compare",
           "description": "Monocular depth compare (runs Depth Anything + MiDaS + DPT; writes suffixed images)."
         },
         {
-          "command": "python3 tools/yolozu.py demo train --max-steps 40",
+          "command": "python3 -m yolozu demo train --max-steps 40",
           "description": "Training demo (MNIST fine-tune; bounded by --max-steps; downloads ResNet18 on first run)."
         },
         {
@@ -14913,23 +14920,23 @@
           "description": "Doctor import auto-detect (config)."
         },
         {
-          "command": "python3 tools/yolozu.py export --backend dummy --dataset data/coco128 --max-images 5 --output reports/predictions_dummy_run.json",
+          "command": "python3 -m yolozu export --backend dummy --dataset data/coco128 --max-images 5 --output reports/predictions_dummy_run.json",
           "description": "Export dummy predictions with run meta."
         },
         {
-          "command": "python3 tools/yolozu.py predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html",
+          "command": "python3 -m yolozu predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html",
           "description": "Folder input → predictions JSON + overlays + HTML (dummy backend)."
         },
         {
-          "command": "python3 tools/yolozu.py eval-instance-seg --dataset examples/instance_seg_demo/dataset --split val2017 --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json --pred-root examples/instance_seg_demo/predictions --classes examples/instance_seg_demo/classes.txt --html reports/instance_seg_demo_eval.html --overlays-dir reports/instance_seg_demo_overlays --max-overlays 10",
+          "command": "python3 -m yolozu eval-instance-seg --dataset examples/instance_seg_demo/dataset --split val2017 --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json --pred-root examples/instance_seg_demo/predictions --classes examples/instance_seg_demo/classes.txt --html reports/instance_seg_demo_eval.html --overlays-dir reports/instance_seg_demo_overlays --max-overlays 10",
           "description": "Evaluate instance-seg demo predictions (mask mAP) with HTML overlays."
         },
         {
-          "command": "python3 tools/yolozu.py sw -c docs/hpo_sweep_example.json -n",
-          "description": "Run a sweep config (dry-run)."
+          "command": "python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json --dry-run",
+          "description": "Run a sweep config directly via the repo-local sweep helper (dry-run)."
         },
         {
-          "command": "python3 tools/yolozu.py calibrate --method fracal --dataset data/coco128 --predictions reports/predictions.json --output reports/predictions_calibrated.json && python3 tools/yolozu.py eval-long-tail --dataset data/coco128 --predictions reports/predictions_calibrated.json --output reports/long_tail_eval.json",
+          "command": "python3 -m yolozu calibrate --method fracal --dataset data/coco128 --predictions reports/predictions.json --output reports/predictions_calibrated.json && python3 -m yolozu eval-long-tail --dataset data/coco128 --predictions reports/predictions_calibrated.json --output reports/long_tail_eval.json",
           "description": "Long-tail post-hoc calibration + standardized eval."
         },
         {
@@ -14937,8 +14944,8 @@
           "description": "Train import preview with auto framework detection."
         },
         {
-          "command": "python3 tools/yolozu.py release",
-          "description": "Run no-option release automation wrapper (auto bump + tag + GitHub/PyPI/Zenodo handoff)."
+          "command": "python3 -m yolozu registry validate",
+          "description": "Validate the canonical tool manifest through the top-level CLI."
         },
         {
           "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
@@ -14965,8 +14972,8 @@
           "description": "Top-level train route for the NVIDIA TAO external lane (bbox / segmentation / keypoints via backend-native configs)."
         },
         {
-          "command": "python3 tools/yolozu.py sud ls -j",
-          "description": "Use wrapper CLI to access YOLO/DETR layered support helpers."
+          "command": "python3 tools/support_external_training.py ls -j",
+          "description": "Inspect external training support helpers from the repo-local bridge."
         },
         {
           "command": "python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json",
@@ -14979,6 +14986,38 @@
         {
           "command": "python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json",
           "description": "Plan a multi-backend training batch through the top-level CLI."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset yolo --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_yolo --force",
+          "description": "Export a YOLOZU wrapper into a standalone YOLO-style data.yaml/images/labels layout."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset kitti --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_kitti --force",
+          "description": "Export a YOLOZU wrapper into a KITTI-style image_2/label_2/ImageSets layout."
+        },
+        {
+          "command": "python3 -m yolozu doctor import --dataset-from auto --dataset data/conversion_tiny_coco --split val2017 --output -",
+          "description": "Auto-detect a native dataset root before wrapper conversion so the user does not need to choose the source layout manually."
+        },
+        {
+          "command": "python3 -m yolozu migrate dataset --from auto --dataset data/conversion_tiny_coco --split val2017 --output reports/conversion_tiny_wrapper --force",
+          "description": "Create a YOLOZU wrapper from an auto-detected dataset root so the RT-DETR reference trainer can consume a normalized YOLOZU/YOLO-style layout."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset coco --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_coco --force",
+          "description": "Export a YOLOZU wrapper back into a standard COCO images/annotations layout."
+        },
+        {
+          "command": "python3 -m yolozu doctor import --dataset-from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output -",
+          "description": "Auto-detect a semantic-segmentation dataset root and report its task family before conversion."
+        },
+        {
+          "command": "python3 -m yolozu import dataset --from auto --dataset /path/to/coco_keypoints_root --split val2017 --output reports/coco_keypoints_wrapper --force",
+          "description": "Auto-detect a COCO keypoints root and create a YOLOZU keypoints wrapper with keypoint schema metadata."
+        },
+        {
+          "command": "python3 -m yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force",
+          "description": "Export a semantic-segmentation descriptor into an images/masks layout without copying large assets."
         }
       ],
       "id": "yolozu",
@@ -15112,13 +15151,14 @@
           "required": false
         },
         {
-          "description": "Forwarded to the external training helper when `train --external-backend` is active.",
+          "description": "Dataset root or descriptor path used by validation, doctor/import auto-detect, export-dataset, and external training lanes. For the RT-DETR reference lane, pass the normalized YOLOZU/YOLO-style root produced by doctor/import/migrate; auto-detect spans YOLO/Ultralytics, COCO/COCO keypoints, YOLOZU wrappers, and supported semantic-segmentation roots/descriptors.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
           "required": false
         },
         {
+          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args so users do not need to identify native bbox, keypoints, or semantic-segmentation layouts manually before wrapper normalization.",
           "flag": "--dataset-from",
           "kind": "string",
           "name": "dataset_from",
@@ -15625,7 +15665,7 @@
           "required": false
         },
         {
-          "description": "Forwarded split name for the external training helper.",
+          "description": "Forwarded split name for external training, dataset validation, auto-detect import, and dataset export helpers.",
           "flag": "--split",
           "kind": "string",
           "name": "split",
@@ -16128,6 +16168,20 @@
           "kind": "string",
           "name": "train_opt",
           "required": false
+        },
+        {
+          "description": "Output directory for dataset layout exports produced by `yolozu export-dataset` (YOLO, COCO, KITTI, or semantic-segmentation images/masks layouts).",
+          "flag": "--out-dir",
+          "kind": "dir",
+          "name": "out_dir",
+          "required": false
+        },
+        {
+          "description": "Asset materialization mode for `yolozu export-dataset`; `copy` duplicates files, `symlink` keeps a lightweight export tree.",
+          "flag": "--image-mode",
+          "kind": "string",
+          "name": "image_mode",
+          "required": false
         }
       ],
       "maturity": "stable",
@@ -16151,6 +16205,11 @@
           "description": "Optional overlay directory when --overlays-dir is used.",
           "kind": "dir",
           "name": "overlays_dir"
+        },
+        {
+          "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided.",
+          "kind": "dir",
+          "name": "export_dataset_root"
         }
       ],
       "platform": {
@@ -16160,7 +16219,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Unified CLI for model-family-agnostic interface contracts: doctor/import + export (dummy/torch/onnxrt/trt) + predict-images (folder→JSON+overlays+HTML) + eval-instance-seg + long-tail calibrate/eval + sweep wrapper + fingerprinted caching. Training covers the RT-DETR pose reference trainer by default, with first-class external lanes for YOLOX, Detectron2, MMDetection, MMPose, MMSeg, and TAO, plus optional Ultralytics/HF DETR bridges via `train --external-backend ...`. Post-train ONNX export is attempted on CPU for portability. The training platform also exposes a shared training summary interface contract, fixed external run bundles with resume/export/eval/parity handoff JSONs, and a lightweight train-orchestrate batch entrypoint with optional JSONL registry append.",
+      "summary": "Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
       "tags": [
         "cli",
         "predictions",

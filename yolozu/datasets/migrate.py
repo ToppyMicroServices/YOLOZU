@@ -73,6 +73,7 @@ def write_dataset_wrapper(
     labels_dir: str | Path,
     split: str,
     label_format: str | None = None,
+    metadata: dict[str, Any] | None = None,
     source: dict[str, Any] | None = None,
     force: bool = False,
 ) -> Path:
@@ -93,6 +94,11 @@ def write_dataset_wrapper(
     }
     if label_format is not None:
         payload["label_format"] = str(label_format)
+    if metadata is not None:
+        for key, value in dict(metadata).items():
+            if value is None:
+                continue
+            payload[str(key)] = value
     if source is not None:
         payload["source"] = dict(source)
 
@@ -203,6 +209,8 @@ def migrate_coco_dataset_wrapper(
         raise ValueError("--mode must be manifest|copy|symlink")
 
     coco_root_path = Path(coco_root)
+    if not coco_root_path.is_absolute():
+        coco_root_path = (Path.cwd() / coco_root_path).resolve()
     split = str(split)
     images_src = _resolve_coco_images_dir(coco_root_path, split)
 

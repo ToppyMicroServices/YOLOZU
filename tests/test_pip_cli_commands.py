@@ -386,6 +386,16 @@ class TestPipCLICommands(unittest.TestCase):
             self.assertTrue(overlays_dir.is_dir(), f"missing overlays dir: {overlays_dir}")
             self.assertTrue(list(overlays_dir.glob("*.png")), "expected overlay image")
 
+    def test_predict_images_help_surfaces_backend_rich_lane(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = self._run(["predict-images", "--help"], cwd=repo_root)
+        if proc.returncode != 0:
+            self.fail(f"predict-images --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--backend {dummy,torch,onnxrt,trt,executorch,yolox,opencv-dnn,opencv-dnn-rtdetr,opencv-dnn-yolo}", proc.stdout)
+        self.assertIn("--config", proc.stdout)
+        self.assertIn("--checkpoint", proc.stdout)
+        self.assertIn("--ttt", proc.stdout)
+
     def test_eval_coco_dry_run_smoke(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

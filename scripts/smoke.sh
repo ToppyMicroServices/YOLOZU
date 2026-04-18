@@ -64,19 +64,19 @@ pick_python() {
 
   local candidate
   for candidate in "${candidates[@]}"; do
-    if [[ -x "$candidate" ]]; then
+    if [[ -x "$candidate" ]] && can_import_yolozu "$candidate"; then
       printf '%s\n' "$candidate"
       return 0
     fi
   done
 
-  echo "error: no executable python interpreter found." >&2
+  echo "error: no python interpreter with repo-local yolozu import support was found." >&2
   exit 2
 }
 
 PY_BIN="$(pick_python)"
 
-if can_import_yolozu "$PY_BIN"; then
+if [[ -n "$PY_BIN" ]]; then
   YOLOZU_BIN=("$PY_BIN" -m yolozu.cli)
 elif command -v yolozu >/dev/null 2>&1; then
   YOLOZU_BIN=(yolozu)

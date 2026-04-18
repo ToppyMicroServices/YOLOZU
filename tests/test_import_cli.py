@@ -180,7 +180,35 @@ class TestImportCLI(unittest.TestCase):
             self.assertEqual(classes_json.get("keypoint_names"), ["nose", "left_eye", "right_eye"])
             self.assertEqual(classes_json.get("skeleton"), [[1, 2], [1, 3]])
 
+    def test_import_dataset_auto_from_coco_root(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        sample_root = repo_root / "data" / "conversion_tiny_coco"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out_dir = Path(td) / "wrapper_auto"
+
+            proc = self._run(
+                [
+                    "import",
+                    "dataset",
+                    "--from",
+                    "auto",
+                    "--dataset",
+                    str(sample_root),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    str(out_dir),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"import dataset auto from coco root failed:\n{proc.stdout}\n{proc.stderr}")
+
+            dataset_json = json.loads((out_dir / "dataset.json").read_text(encoding="utf-8"))
+            self.assertEqual(dataset_json.get("format"), "coco_instances")
+            self.assertEqual(dataset_json.get("split"), "val2017")
+
 
 if __name__ == "__main__":
     unittest.main()
-

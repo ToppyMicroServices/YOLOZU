@@ -204,18 +204,19 @@ operator handbook, this is a good strategy:
 \end{enumerate}
 
 
-\section{Dual CLI Surfaces: Pip vs. Repository}
-\yolozu{} exposes two distinct command surfaces to accommodate different user needs:
+\section{Canonical CLI and compatibility wrapper}
+\yolozu{} now defines one supported top-level CLI surface:
 \begin{itemize}
-  \item \textbf{Pip CLI}: Invoked via \cmd{yolozu ...}, this is the install-safe, user-facing command interface.
-  \item \textbf{Repository CLI}: Invoked via \cmd{python3 tools/yolozu.py ...}, this interface is tailored for research, evaluation, and advanced workflows.
+  \item \textbf{Canonical CLI}: Invoked via \cmd{yolozu ...} or \cmd{python3 -m yolozu ...}, this is the supported command interface for both installed and repository-root workflows.
+  \item \textbf{Compatibility wrapper}: \cmd{python3 tools/yolozu.py ...} remains available in a repo checkout for older scripts, but it should be treated as a legacy shim rather than as a second supported surface.
 \end{itemize}
 
-Both CLIs share underlying concepts and data interface contracts. This manual references whichever CLI is most appropriate for the specific workflow under discussion.
+Direct helper scripts under \path{tools/} still matter for repo-only workflows, but the supported top-level entrypoint is the canonical \cmd{yolozu} CLI.
 
 \paragraph{Rule of thumb.}
 If you are unsure which CLI to start with:
 \begin{itemize}
-  \item use \cmd{yolozu ...} when acting as a user,
-  \item use \cmd{python3 tools/yolozu.py ...} when working inside the repository and you want the research surface.
+  \item start with \cmd{yolozu ...} (or \cmd{python3 -m yolozu ...}),
+  \item reach for direct \path{tools/*.py} helpers only when a workflow is explicitly documented as repo-only,
+  \item treat \cmd{python3 tools/yolozu.py ...} as a backwards-compatibility bridge.
 \end{itemize}

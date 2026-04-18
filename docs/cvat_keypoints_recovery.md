@@ -42,7 +42,7 @@ python3 tools/prepare_keypoints_dataset.py --list-formats
 または
 
 ```bash
-python3 tools/yolozu.py prepare-keypoints-dataset --list-formats --source . --out .
+python3 tools/prepare_keypoints_dataset.py --list-formats
 ```
 
 ---

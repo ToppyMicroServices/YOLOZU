@@ -6,6 +6,7 @@ from pathlib import Path
 
 TOP_LEVEL_COMMANDS: tuple[str, ...] = (
     "doctor",
+    "registry",
     "list",
     "fetch",
     "export",
@@ -30,6 +31,7 @@ TOP_LEVEL_COMMANDS: tuple[str, ...] = (
 
 NESTED_COMMANDS: dict[str, tuple[str, ...]] = {
     "doctor": ("import",),
+    "registry": ("validate", "list", "show", "run"),
     "list": ("models",),
     "predictions": ("migrate",),
     "onnxrt": ("export", "quantize"),
@@ -143,4 +145,3 @@ def write_completion(*, shell: str, command: str, output: str) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return str(path)
-
