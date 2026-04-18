@@ -40,11 +40,10 @@ require_value() {
   fi
 }
 
-can_import_yolozu() {
+can_use_yolozu_cli() {
   local py="$1"
-  "$py" - <<'PY' >/dev/null 2>&1
-import yolozu.cli  # noqa: F401
-PY
+  env PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}" \
+    "$py" -m yolozu.cli --help >/dev/null 2>&1
 }
 
 pick_python() {
@@ -64,17 +63,17 @@ pick_python() {
 
   local candidate
   for candidate in "${candidates[@]}"; do
-    if [[ -x "$candidate" ]] && can_import_yolozu "$candidate"; then
+    if [[ -x "$candidate" ]] && can_use_yolozu_cli "$candidate"; then
       printf '%s\n' "$candidate"
       return 0
     fi
   done
 
-  echo "error: no python interpreter with repo-local yolozu import support was found." >&2
-  exit 2
+  return 1
 }
 
-PY_BIN="$(pick_python)"
+PY_BIN="$(pick_python || true)"
+export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ -n "$PY_BIN" ]]; then
   YOLOZU_BIN=("$PY_BIN" -m yolozu.cli)
