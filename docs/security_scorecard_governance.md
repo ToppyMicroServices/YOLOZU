@@ -124,11 +124,18 @@ security findings:
 - `.clusterfuzzlite/Dockerfile` installs from a hash-locked requirements file with `pip --require-hashes`
 - `osv-scanner.toml` documents a scoped ignore for `GHSA-hqmj-h5c6-369m`
 - `.github/workflows/scorecard.yml` is pinned to `ossf/scorecard-action` `v2.4.3`
+- `.github/workflows/scorecard.yml` now also runs on pull requests targeting `main`, so Scorecard/SAST posture regressions surface before merge instead of only after landing on the default branch
 - `pyproject.toml`, `requirements-test.txt`, and repository lockfiles pin `onnx>=1.21.0` / `onnx==1.21.0` to pick up fixes for:
   - `GHSA-3r9x-f23j-gc73`
   - `GHSA-538c-55jv-c5g9`
   - `GHSA-cmw6-hcpp-c6jp`
   - `GHSA-p433-9wv8-28xj`
+
+Additional CI/CD hardening now enforced in-repo:
+
+- workflow-only edits are no longer a blind spot: `.github/workflows/build_and_test.yml` runs release/security regression tests in `workflows_meta`
+- `.github/workflows/container.yml` builds on pull requests for container-related changes, so dependency/bootstrap breakage is caught before merge
+- `.github/workflows/publish.yml` now fails fast when package version, release/manual trigger inputs, and `CHANGELOG.md` are not aligned
 
 The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This
 repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore

@@ -91,14 +91,24 @@ jobs:
         run: echo "No code/runtime changes detected. Heavy CI jobs are skipped."
 
   workflows_meta:
-    name: workflows fast path
+    name: workflows fast path (release/security regression)
     needs:
       - changes
     if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci != 'true' && needs.changes.outputs.workflows_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Skip heavy CI for workflow-only changes
-        run: echo "Only .github/workflows/** changed. Heavy CI jobs are skipped."
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Release/security workflow regression tests
+        run: |
+          python -m unittest \
+            tests.test_release_readiness_docs \
+            tests.test_workflow_release_security -v
 
   manual_build:
     name: manual build (main.tex only)

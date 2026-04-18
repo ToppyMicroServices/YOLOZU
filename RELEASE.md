@@ -9,7 +9,7 @@ This avoids long-lived PyPI API tokens.
 - Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
 - **Tag push alone does not publish to PyPI**
 - Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs
-- `publish.yml` now validates that release tag `vX.Y.Z` matches `yolozu/__init__.py::__version__`.
+- `publish.yml` now validates release tag/manual inputs against `yolozu/__init__.py::__version__` and requires a matching `CHANGELOG.md` section.
 
 ## One-time setup (PyPI)
 
@@ -65,7 +65,12 @@ This action triggers `.github/workflows/publish.yml`, which builds and publishes
 ## Optional manual publish trigger
 
 `publish.yml` also supports manual execution (`workflow_dispatch`) for operational recovery.
-Use only when release metadata (tag/release/version/changelog) is already aligned.
+Use only when release metadata is already aligned, and provide:
+
+- `expected_version`: exact package version to publish
+- `release_tag` (optional): `vX.Y.Z` tag to validate against when re-running release automation
+
+Manual runs now fail fast if `__version__`, the optional tag, and `CHANGELOG.md` do not agree.
 
 ## Manual PDF DOI (separate from software DOI)
 

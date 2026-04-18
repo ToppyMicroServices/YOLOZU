@@ -14,6 +14,11 @@ YOLOZU uses a tiered CI dependency model to keep signal high while avoiding opti
 - Purpose: docs/manual/README and MCP/Actions surface checks without running full runtime regression gates.
 - Jobs: `docs_mcp_gate`.
 
+`workflow_meta`
+- Install: none beyond stock Python on the runner.
+- Purpose: release/security workflow regression checks for `.github/workflows/**`-only changes.
+- Jobs: `workflows_meta`.
+
 3. `recommended`
 - Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock`
 - Purpose: pinned interface contract/behavior gates (`schema`, `manifest`, `reference regression`, deep smoke walkthrough, focused tests).

@@ -1,6 +1,22 @@
 name: container
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/container.yml"
+      - "deploy/docker/**"
+      - "deploy/runpod/**"
+      - "requirements-locks/**"
+      - "tools/ci/install_with_hashes.py"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "README.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "COPYRIGHT"
+      - "yolozu/**"
   push:
     branches:
       - main
