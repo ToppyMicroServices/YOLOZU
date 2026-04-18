@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-04-18
+
+### Fixed
+- CI smoke bootstrap now chooses a Python interpreter that can actually start the repo-local `yolozu` CLI, preventing deep smoke failures caused by stale or broken local virtualenvs.
+- Container bootstrap locks are aligned with current build targets: `requirements-runtime.lock` now carries a Python 3.14-compatible `numpy`, and the RT-DETR pose image lock aligns `cuda-python` with the pinned `torch` CUDA bindings.
+
+### Changed
+- Release/publish automation is stricter: `.github/workflows/publish.yml` now validates package version, optional manual-release tag input, and `CHANGELOG.md` release heading before publishing.
+- Workflow-only edits are no longer a blind spot in CI. `.github/workflows/build_and_test.yml` now runs release/security workflow regression tests on `.github/workflows/**`-only changes.
+- Security/reliability workflows now fail earlier in pull requests: container builds run for container-related PRs, and Scorecard also runs on PRs targeting `main`.
+
 ### Contract change
 - Reference adapter regression metadata now records provenance/SBOM snapshots in `baseline_meta.provenance` (`pip freeze`, `python -VV`, OS/CPU/torch build hashes).
 - Added matrix baseline layout support for reference adapter regression paths (`baselines/<adapter>/<backend>/<device>/<version>/<profile>.json`).
