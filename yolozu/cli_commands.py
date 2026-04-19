@@ -1302,7 +1302,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         from yolozu.dataset_validator import validate_dataset_records
 
         layout_info = inspect_dataset_layout(str(args.dataset), split=str(args.split) if args.split else None)
-        if layout_info is not None and str(layout_info.get("task_family") or "") == "segmentation":
+        if (
+            layout_info is not None
+            and str(layout_info.get("task_family") or "") == "segmentation"
+            and str(layout_info.get("format") or "") != "yolozu_wrapper"
+        ):
             warnings, errors = _validate_segmentation_layout(
                 dataset_path=str(args.dataset),
                 layout_info=layout_info,
