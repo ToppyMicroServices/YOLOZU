@@ -243,7 +243,7 @@ def _split_csv(value: str | None) -> list[str]:
 
 
 def _support_status_for_format(fmt: str, *, device: str, task_label: str = "detect") -> tuple[bool, str | None]:
-    if task_label in {"keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))

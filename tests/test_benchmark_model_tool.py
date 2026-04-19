@@ -160,7 +160,10 @@ class TestBenchmarkModelTool(TestCase):
             (dataset_root / "dataset.json").write_text(
                 json.dumps(
                     {
+                        "dataset": "unit_segmentation",
                         "task": "semantic_segmentation",
+                        "split": "val",
+                        "mode": "manifest",
                         "path_type": "absolute",
                         "ignore_index": 255,
                         "classes": ["background", "fg"],
