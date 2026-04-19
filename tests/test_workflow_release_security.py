@@ -44,7 +44,8 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         pose_lock = (
             self.repo_root / "requirements-locks" / "requirements-rtdetr-pose-image-extra.lock"
         ).read_text(encoding="utf-8")
-        self.assertIn("numpy==2.4.4", runtime_lock)
+        self.assertIn('numpy==2.2.6 ; python_version < "3.14"', runtime_lock)
+        self.assertIn('numpy==2.4.4 ; python_version >= "3.14"', runtime_lock)
         self.assertIn("cuda-python==12.9.4", pose_lock)
 
 

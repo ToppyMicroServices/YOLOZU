@@ -40,10 +40,12 @@ require_value() {
   fi
 }
 
-can_use_yolozu_cli() {
+can_run_python() {
   local py="$1"
-  env PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}" \
-    "$py" -m yolozu.cli --help >/dev/null 2>&1
+  "$py" - <<'PY' >/dev/null 2>&1
+import sys
+print(sys.version)
+PY
 }
 
 pick_python() {
@@ -51,19 +53,19 @@ pick_python() {
   if [[ -n "${YOLOZU_PYTHON:-}" ]]; then
     candidates+=("${YOLOZU_PYTHON}")
   fi
-  if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
-    candidates+=("$ROOT_DIR/.venv/bin/python")
-  fi
   if command -v python3 >/dev/null 2>&1; then
     candidates+=("$(command -v python3)")
   fi
   if command -v python >/dev/null 2>&1; then
     candidates+=("$(command -v python)")
   fi
+  if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+    candidates+=("$ROOT_DIR/.venv/bin/python")
+  fi
 
   local candidate
   for candidate in "${candidates[@]}"; do
-    if [[ -x "$candidate" ]] && can_use_yolozu_cli "$candidate"; then
+    if [[ -x "$candidate" ]] && can_run_python "$candidate"; then
       printf '%s\n' "$candidate"
       return 0
     fi

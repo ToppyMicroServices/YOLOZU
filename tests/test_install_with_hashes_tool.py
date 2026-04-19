@@ -3,6 +3,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "tools" / "ci" / "install_with_hashes.py"
 SPEC = importlib.util.spec_from_file_location("install_with_hashes", MODULE_PATH)
@@ -52,6 +53,38 @@ class InstallWithHashesToolTests(unittest.TestCase):
                 "https://mirror.example.com/simple",
             ],
         )
+
+    def test_install_hash_locked_requirements_uses_ignore_installed(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            wheelhouse = root / "wheelhouse"
+            wheelhouse.mkdir()
+            req = root / "req.lock"
+            req.write_text("demo==1.0\n", encoding="utf-8")
+            fake_wheel = wheelhouse / "demo-1.0-py3-none-any.whl"
+            fake_wheel.write_bytes(b"wheel")
+
+            with patch.object(install_with_hashes, "_download_exact_requirements", return_value=[fake_wheel]):
+                with patch.object(install_with_hashes, "_run") as run_mock:
+                    install_with_hashes._install_hash_locked_requirements("python3", [req], wheelhouse)
+
+            cmd = run_mock.call_args[0][0]
+            self.assertIn("--ignore-installed", cmd)
+
+    def test_install_local_wheel_uses_ignore_installed(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            wheelhouse = root / "wheelhouse"
+            wheelhouse.mkdir()
+            fake_wheel = wheelhouse / "demo_pkg-1.2.3-py3-none-any.whl"
+            fake_wheel.write_bytes(b"fake-wheel")
+
+            with patch.object(install_with_hashes, "_build_local_wheel", return_value=fake_wheel):
+                with patch.object(install_with_hashes, "_run") as run_mock:
+                    install_with_hashes._install_local_wheel("python3", root, wheelhouse)
+
+            cmd = run_mock.call_args[0][0]
+            self.assertIn("--ignore-installed", cmd)
 
 
 if __name__ == "__main__":
