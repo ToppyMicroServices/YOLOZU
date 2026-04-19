@@ -1,3 +1,4 @@
+import importlib
 import sys
 import unittest
 from pathlib import Path
@@ -10,7 +11,7 @@ class TestTTAImportSurface(unittest.TestCase):
         sys.modules.pop("yolozu.tta", None)
         sys.modules.pop("yolozu.tta.tent", None)
 
-        import yolozu.tta as tta
+        tta = importlib.import_module("yolozu.tta")
 
         self.assertTrue(hasattr(tta, "TTTConfig"))
         self.assertNotIn("yolozu.tta.tent", sys.modules)
@@ -19,7 +20,9 @@ class TestTTAImportSurface(unittest.TestCase):
         sys.modules.pop("yolozu.tta", None)
         sys.modules.pop("yolozu.tta.tent", None)
 
-        from yolozu.tta import TentConfig, TentRunner
+        tta = importlib.import_module("yolozu.tta")
+        TentConfig = getattr(tta, "TentConfig")
+        TentRunner = getattr(tta, "TentRunner")
 
         self.assertEqual(TentConfig.__name__, "TentConfig")
         self.assertEqual(TentRunner.__name__, "TentRunner")
