@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-from ..predictions_transform import TransformResult, apply_tta
+from ..predictions.predictions_transform import TransformResult, apply_tta
 
 
 class TTARunner:

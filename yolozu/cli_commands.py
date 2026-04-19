@@ -1509,7 +1509,7 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
     from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
     from yolozu.dataset import build_manifest
     from yolozu.predictions import load_predictions_entries, validate_predictions_entries
-    from yolozu.predictions_transform import load_classes_json, normalize_class_ids
+    from yolozu.predictions.predictions_transform import load_classes_json, normalize_class_ids
 
     dataset_root = Path(str(args.dataset)).expanduser()
     if not dataset_root.is_absolute():

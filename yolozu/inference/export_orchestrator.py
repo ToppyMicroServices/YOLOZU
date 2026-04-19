@@ -14,7 +14,7 @@ from yolozu.core.cli_args import (
     require_positive_int,
 )
 from yolozu.predictions import normalize_predictions_payload
-from yolozu.predictions_transform import apply_ttt_lite, summarize_task_coverage
+from yolozu.predictions.predictions_transform import apply_ttt_lite, summarize_task_coverage
 from yolozu.tta.cli_options import add_ttt_arguments, build_ttt_cli_args
 from yolozu.tta.presets import apply_ttt_preset_args
 
