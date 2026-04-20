@@ -12,7 +12,8 @@ class TestReleaseReadinessDocs(unittest.TestCase):
 
         self.assertIn("release:", publish)
         self.assertIn("published", publish)
-        self.assertIn("Validate release tag matches package version", publish)
+        self.assertIn("Validate version and changelog alignment", publish)
+        self.assertIn("expected_version:", publish)
         self.assertIn("Validate built wheel version matches package version", publish)
         self.assertIn("GitHub Release", release_md)
         self.assertIn("Tag push alone does not publish", release_md)

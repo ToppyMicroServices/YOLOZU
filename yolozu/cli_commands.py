@@ -1302,7 +1302,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         from yolozu.dataset_validator import validate_dataset_records
 
         layout_info = inspect_dataset_layout(str(args.dataset), split=str(args.split) if args.split else None)
-        if layout_info is not None and str(layout_info.get("task_family") or "") == "segmentation":
+        if (
+            layout_info is not None
+            and str(layout_info.get("task_family") or "") == "segmentation"
+            and str(layout_info.get("format") or "") != "yolozu_wrapper"
+        ):
             warnings, errors = _validate_segmentation_layout(
                 dataset_path=str(args.dataset),
                 layout_info=layout_info,
@@ -1505,7 +1509,7 @@ def _cmd_eval_coco(args: argparse.Namespace) -> int:
     from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
     from yolozu.dataset import build_manifest
     from yolozu.predictions import load_predictions_entries, validate_predictions_entries
-    from yolozu.predictions_transform import load_classes_json, normalize_class_ids
+    from yolozu.predictions.predictions_transform import load_classes_json, normalize_class_ids
 
     dataset_root = Path(str(args.dataset)).expanduser()
     if not dataset_root.is_absolute():

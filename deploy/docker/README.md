@@ -6,7 +6,8 @@ Published images (if enabled in CI) live on **GitHub Container Registry (GHCR)**
 
 ## GHCR images
 
-On a release tag `vX.Y.Z`, the workflow `.github/workflows/container.yml` publishes:
+For container-related pull requests, `.github/workflows/container.yml` now performs build validation without publishing images.
+On a release tag `vX.Y.Z` (or a manual workflow run), the same workflow publishes:
 
 - Minimal (no torch): `ghcr.io/toppymicroservices/yolozu:X.Y.Z`
 - Demo (includes torch extra): `ghcr.io/toppymicroservices/yolozu-demo:X.Y.Z`
@@ -22,6 +23,7 @@ docker pull ghcr.io/toppymicroservices/yolozu-demo:latest
 ```
 
 Notes:
+- Pull requests that touch container workflow/deploy/packaging inputs now build these Dockerfiles before merge, but they do not push to GHCR.
 - If you created the tag *before* adding the workflow, it won’t auto-run for that historical tag.
   Use **Actions → container → Run workflow** and select the tag, or cut a new tag.
 - After the first push, you may need to set the package visibility to **Public** in GitHub UI.
@@ -67,3 +69,8 @@ Refresh base layers and rebuild locally:
 docker build --pull -f deploy/docker/Dockerfile -t yolozu:local .
 docker build --pull -f deploy/docker/Dockerfile.demo -t yolozu-demo:local .
 ```
+
+The CPU images are intentionally bootstrapped from exact-version lockfiles via
+\path{tools/ci/install_with_hashes.py}, so container breakage should be debugged by inspecting
+\path{requirements-locks/requirements-runtime.lock} and
+\path{requirements-locks/requirements-demo-extra.lock} first.

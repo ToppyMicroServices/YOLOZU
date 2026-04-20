@@ -10298,6 +10298,7 @@
     {
       "docs": [
         "README.md",
+        "RELEASE.md",
         "docs/release_reliability_checklist.md",
         "docs/manual_doi_release.md",
         "docs/tools_index.md",
@@ -10414,7 +10415,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff.",
+      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow now validates package version, optional manual release_tag input, and CHANGELOG heading alignment before PyPI publish.",
       "tags": [
         "release",
         "tag",

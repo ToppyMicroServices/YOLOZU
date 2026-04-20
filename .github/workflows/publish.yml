@@ -5,8 +5,21 @@ on:
     types:
       - published
   workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Version expected in yolozu/__init__.py and CHANGELOG.md (for recovery/manual publish).
+        required: true
+        type: string
+      release_tag:
+        description: Optional tag to validate against (for example v4.3.1).
+        required: false
+        type: string
 
 permissions: read-all
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name || github.event.inputs.release_tag || github.event.inputs.expected_version || github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   pypi:
@@ -18,25 +31,43 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Validate release tag matches package version
-        if: ${{ github.event_name == 'release' }}
+      - name: Validate version and changelog alignment
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
+          EXPECTED_VERSION_INPUT: ${{ github.event.inputs.expected_version }}
         run: |
           python - <<'PY'
+          import os
           import pathlib
           import re
 
-          tag = "${{ github.event.release.tag_name }}"
-          expected = tag[1:] if tag.startswith("v") else tag
           source = pathlib.Path("yolozu/__init__.py").read_text(encoding="utf-8")
           match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', source)
           if not match:
             raise SystemExit("Could not parse __version__ from yolozu/__init__.py")
           package_version = match.group(1)
-          if package_version != expected:
+
+          tag = (os.environ.get("RELEASE_TAG") or "").strip()
+          expected_input = (os.environ.get("EXPECTED_VERSION_INPUT") or "").strip()
+
+          if expected_input and package_version != expected_input:
             raise SystemExit(
-              f"Release tag/version mismatch: tag={tag} expected={expected} package={package_version}"
+              f"Manual publish/version mismatch: expected={expected_input} package={package_version}"
             )
-          print(f"release tag matches package version: {package_version}")
+
+          if tag:
+            expected = tag[1:] if tag.startswith("v") else tag
+            if package_version != expected:
+              raise SystemExit(
+                f"Release tag/version mismatch: tag={tag} expected={expected} package={package_version}"
+              )
+
+          changelog = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          heading = f"## [{package_version}] - "
+          if heading not in changelog:
+            raise SystemExit(f"CHANGELOG.md missing release heading: {heading}YYYY-MM-DD")
+
+          print(f"package version + changelog OK: {package_version}")
           PY
 
       - name: Set up Python
@@ -52,7 +83,8 @@ jobs:
 
       - name: Validate built wheel version matches package version (and release tag)
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
+          EXPECTED_VERSION_INPUT: ${{ github.event.inputs.expected_version }}
         run: |
           python - <<'PY'
           import glob
@@ -97,6 +129,12 @@ jobs:
               raise SystemExit(
                 f"wheel/tag version mismatch: tag={tag} expected={expected} wheel={wheel_version} whl={whl}"
               )
+
+          expected_input = (os.environ.get("EXPECTED_VERSION_INPUT") or "").strip()
+          if expected_input and wheel_version != expected_input:
+            raise SystemExit(
+              f"wheel/manual version mismatch: expected={expected_input} wheel={wheel_version} whl={whl}"
+            )
 
           print(f"wheel version OK: {wheel_version} ({whl})")
           PY

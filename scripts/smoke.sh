@@ -40,10 +40,11 @@ require_value() {
   fi
 }
 
-can_import_yolozu() {
+can_run_python() {
   local py="$1"
   "$py" - <<'PY' >/dev/null 2>&1
-import yolozu.cli  # noqa: F401
+import sys
+print(sys.version)
 PY
 }
 
@@ -52,29 +53,29 @@ pick_python() {
   if [[ -n "${YOLOZU_PYTHON:-}" ]]; then
     candidates+=("${YOLOZU_PYTHON}")
   fi
-  if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
-    candidates+=("$ROOT_DIR/.venv/bin/python")
-  fi
   if command -v python3 >/dev/null 2>&1; then
     candidates+=("$(command -v python3)")
   fi
   if command -v python >/dev/null 2>&1; then
     candidates+=("$(command -v python)")
   fi
+  if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+    candidates+=("$ROOT_DIR/.venv/bin/python")
+  fi
 
   local candidate
   for candidate in "${candidates[@]}"; do
-    if [[ -x "$candidate" ]] && can_import_yolozu "$candidate"; then
+    if [[ -x "$candidate" ]] && can_run_python "$candidate"; then
       printf '%s\n' "$candidate"
       return 0
     fi
   done
 
-  echo "error: no python interpreter with repo-local yolozu import support was found." >&2
-  exit 2
+  return 1
 }
 
-PY_BIN="$(pick_python)"
+PY_BIN="$(pick_python || true)"
+export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ -n "$PY_BIN" ]]; then
   YOLOZU_BIN=("$PY_BIN" -m yolozu.cli)

@@ -159,7 +159,9 @@ The manifest is intended for:
 
 - single-command release automation: `bash release.sh`
 - dry-run preview: `bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json`
+- manual publish recovery: `.github/workflows/publish.yml` `workflow_dispatch` with `expected_version=X.Y.Z` and optional `release_tag=vX.Y.Z`
 - Release checklist: `docs/release_reliability_checklist.md`
+- Release workflow details: `RELEASE.md`
 - Manual DOI workflow details: `docs/manual_doi_release.md`
 
 ## External training helpers
