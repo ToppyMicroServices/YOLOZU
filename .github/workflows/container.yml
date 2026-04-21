@@ -83,7 +83,7 @@ jobs:
 
       - name: Log in to GHCR
         if: ${{ github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ${{ env.GHCR_REGISTRY }}
           username: ${{ github.actor }}
@@ -91,7 +91,7 @@ jobs:
 
       - name: Log in to NVIDIA NGC (nvcr.io)
         if: ${{ env.NGC_API_KEY != '' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ${{ env.NGC_REGISTRY }}
           username: $oauthtoken
@@ -214,7 +214,7 @@ jobs:
 
       - name: Login to NVIDIA NGC (nvcr.io)
         if: ${{ env.NGC_API_KEY != '' }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: nvcr.io
           username: $oauthtoken
@@ -222,7 +222,7 @@ jobs:
 
       - name: Log in to GHCR
         if: ${{ env.NGC_API_KEY != '' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ${{ env.GHCR_REGISTRY }}
           username: ${{ github.actor }}
