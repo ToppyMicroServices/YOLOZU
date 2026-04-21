@@ -8,7 +8,7 @@ This avoids long-lived PyPI API tokens.
 - PyPI publish workflow: `.github/workflows/publish.yml`
 - Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
 - **Tag push alone does not publish to PyPI**
-- Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs
+- Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs to GHCR and mirror to `nvcr.io/yolozu/...` when `NGC_API_KEY` is configured
 - `publish.yml` now validates release tag/manual inputs against `yolozu/__init__.py::__version__` and requires a matching `CHANGELOG.md` section.
 
 ## One-time setup (PyPI)
@@ -69,6 +69,16 @@ Use only when release metadata is already aligned, and provide:
 
 - `expected_version`: exact package version to publish
 - `release_tag` (optional): `vX.Y.Z` tag to validate against when re-running release automation
+
+`container.yml` also supports manual execution (`workflow_dispatch`) for container republish/recovery.
+Provide:
+
+- `release_tag`: exact `vX.Y.Z` tag to reuse for GHCR + NGC image tags on a manual run
+
+Container notes:
+- CPU images: `nvcr.io/yolozu/yolozu`, `nvcr.io/yolozu/yolozu-demo`
+- RunPod/TensorRT images: `nvcr.io/yolozu/yolozu-trt`, `nvcr.io/yolozu/yolozu-rtdetr-pose`
+- NGC publication requires repository secret `NGC_API_KEY`
 
 Manual runs now fail fast if `__version__`, the optional tag, and `CHANGELOG.md` do not agree.
 

@@ -19,11 +19,16 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
     def test_container_workflow_builds_on_pull_requests_but_pushes_only_on_tag_or_manual(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")
         self.assertIn("pull_request:", container)
+        self.assertIn("release_tag:", container)
         self.assertIn("branches:", container)
         self.assertIn("- main", container)
         self.assertIn("deploy/docker/**", container)
         self.assertIn("deploy/runpod/**", container)
         self.assertIn("push:", container)
+        self.assertIn("NGC_REGISTRY: nvcr.io", container)
+        self.assertIn("NGC_NAMESPACE: yolozu", container)
+        self.assertIn("github.event.inputs.release_tag", container)
+        self.assertIn("nvcr.io", container)
         self.assertIn("github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'", container)
 
     def test_scorecard_and_codeql_cover_pull_requests(self):

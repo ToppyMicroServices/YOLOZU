@@ -10299,6 +10299,8 @@
       "docs": [
         "README.md",
         "RELEASE.md",
+        "deploy/docker/README.md",
+        "deploy/runpod/README.md",
         "docs/release_reliability_checklist.md",
         "docs/manual_doi_release.md",
         "docs/tools_index.md",
@@ -10415,7 +10417,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow now validates package version, optional manual release_tag input, and CHANGELOG heading alignment before PyPI publish.",
+      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow now validates package version, optional manual release_tag input, and CHANGELOG heading alignment before PyPI publish, while the container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",
@@ -10426,6 +10428,9 @@
     },
     {
       "docs": [
+        "RELEASE.md",
+        "deploy/docker/README.md",
+        "deploy/runpod/README.md",
         "docs/release_reliability_checklist.md",
         "docs/manual_doi_release.md",
         "docs/tools_index.md",
@@ -10541,7 +10546,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output.",
+      "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",

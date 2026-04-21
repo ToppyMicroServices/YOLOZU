@@ -86,17 +86,22 @@ docker pull ghcr.io/toppymicroservices/yolozu:latest
 docker pull ghcr.io/toppymicroservices/yolozu-demo:latest
 ```
 
-Optional RunPod GPU images (require an NVIDIA NGC API key configured as a GitHub secret named `NGC_API_KEY`):
+Optional RunPod GPU images are published to GHCR and mirrored to NVIDIA NGC (requires GitHub secret `NGC_API_KEY`):
 
 ```bash
 docker pull ghcr.io/toppymicroservices/yolozu-trt:X.Y.Z
 docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:X.Y.Z
 docker pull ghcr.io/toppymicroservices/yolozu-trt:latest
 docker pull ghcr.io/toppymicroservices/yolozu-rtdetr-pose:latest
+docker pull nvcr.io/yolozu/yolozu-trt:X.Y.Z
+docker pull nvcr.io/yolozu/yolozu-rtdetr-pose:X.Y.Z
+docker pull nvcr.io/yolozu/yolozu-trt:latest
+docker pull nvcr.io/yolozu/yolozu-rtdetr-pose:latest
 ```
 
 Notes:
 - Pull-request validation only checks that the Dockerfiles still build; it does not push images.
+- Manual republish should use **Actions → container → Run workflow** with `release_tag=vX.Y.Z` so GHCR and NGC receive the same release tags.
 - GPU image publication still requires `NGC_API_KEY`, even when the workflow is triggered manually.
 
 Build (example):

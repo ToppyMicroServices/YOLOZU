@@ -37,12 +37,19 @@ on:
       - "COPYRIGHT"
       - "yolozu/**"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Optional release tag to reuse on manual publish runs (for example v4.3.1).
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 env:
-  REGISTRY: ghcr.io
+  GHCR_REGISTRY: ghcr.io
+  NGC_REGISTRY: nvcr.io
+  NGC_NAMESPACE: yolozu
 
 concurrency:
   group: container-${{ github.ref }}
@@ -54,6 +61,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -76,9 +85,17 @@ jobs:
         if: ${{ github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.GHCR_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to NVIDIA NGC (nvcr.io)
+        if: ${{ env.NGC_API_KEY != '' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ${{ env.NGC_REGISTRY }}
+          username: $oauthtoken
+          password: ${{ env.NGC_API_KEY }}
 
       - name: Compute image tags
         id: tags
@@ -87,10 +104,13 @@ jobs:
           set -euo pipefail
           owner="${{ github.repository_owner }}"
           owner="${owner,,}"
-          image="${REGISTRY}/${owner}/${{ matrix.image }}"
+          ghcr_image="${GHCR_REGISTRY}/${owner}/${{ matrix.image }}"
+          ngc_image="${NGC_REGISTRY}/${NGC_NAMESPACE}/${{ matrix.image }}"
 
           ref_type="${{ github.ref_type }}"
           ref_name="${{ github.ref_name }}"
+          event_name="${{ github.event_name }}"
+          requested_tag="${{ github.event.inputs.release_tag || '' }}"
 
           sanitize_tag() {
             # Docker tags allow [A-Za-z0-9_.-] only.
@@ -100,8 +120,20 @@ jobs:
               | sed -E 's/^[^A-Za-z0-9_]+//'
           }
 
+          publish_to_ngc="false"
+          if [[ -n "${NGC_API_KEY:-}" && ( "${ref_type}" == "tag" || "${event_name}" == "workflow_dispatch" ) ]]; then
+            publish_to_ngc="true"
+          fi
+
           if [[ "${ref_type}" == "tag" ]]; then
             ref="${ref_name}"
+          elif [[ "${event_name}" == "workflow_dispatch" && -n "${requested_tag}" ]]; then
+            ref="${requested_tag}"
+          else
+            ref=""
+          fi
+
+          if [[ -n "${ref}" ]]; then
             safe_ref="$(sanitize_tag "${ref}")"
             version="${ref#release/}"
             version="${version#v}"
@@ -110,17 +142,25 @@ jobs:
               safe_version="${safe_ref}"
             fi
             {
-              echo "tags<<EOF"
-              echo "${image}:${safe_version}"
-              echo "${image}:${safe_ref}"
-              echo "${image}:latest"
+              echo "all_tags<<EOF"
+              echo "${ghcr_image}:${safe_version}"
+              echo "${ghcr_image}:${safe_ref}"
+              echo "${ghcr_image}:latest"
+              if [[ "${publish_to_ngc}" == "true" ]]; then
+                echo "${ngc_image}:${safe_version}"
+                echo "${ngc_image}:${safe_ref}"
+                echo "${ngc_image}:latest"
+              fi
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
           else
             short="${GITHUB_SHA::12}"
             {
-              echo "tags<<EOF"
-              echo "${image}:sha-${short}"
+              echo "all_tags<<EOF"
+              echo "${ghcr_image}:sha-${short}"
+              if [[ "${publish_to_ngc}" == "true" ]]; then
+                echo "${ngc_image}:sha-${short}"
+              fi
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
           fi
@@ -132,7 +172,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: ${{ github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
-          tags: ${{ steps.tags.outputs.tags }}
+          tags: ${{ steps.tags.outputs.all_tags }}
           labels: |
             org.opencontainers.image.title=${{ matrix.title }}
             org.opencontainers.image.description=${{ matrix.description }}
@@ -184,7 +224,7 @@ jobs:
         if: ${{ env.NGC_API_KEY != '' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.GHCR_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -196,10 +236,13 @@ jobs:
           set -euo pipefail
           owner="${{ github.repository_owner }}"
           owner="${owner,,}"
-          image="${REGISTRY}/${owner}/${{ matrix.image }}"
+          ghcr_image="${GHCR_REGISTRY}/${owner}/${{ matrix.image }}"
+          ngc_image="${NGC_REGISTRY}/${NGC_NAMESPACE}/${{ matrix.image }}"
 
           ref_type="${{ github.ref_type }}"
           ref_name="${{ github.ref_name }}"
+          event_name="${{ github.event_name }}"
+          requested_tag="${{ github.event.inputs.release_tag || '' }}"
 
           sanitize_tag() {
             # Docker tags allow [A-Za-z0-9_.-] only.
@@ -211,6 +254,13 @@ jobs:
 
           if [[ "${ref_type}" == "tag" ]]; then
             ref="${ref_name}"
+          elif [[ "${event_name}" == "workflow_dispatch" && -n "${requested_tag}" ]]; then
+            ref="${requested_tag}"
+          else
+            ref=""
+          fi
+
+          if [[ -n "${ref}" ]]; then
             safe_ref="$(sanitize_tag "${ref}")"
             version="${ref#release/}"
             version="${version#v}"
@@ -219,17 +269,21 @@ jobs:
               safe_version="${safe_ref}"
             fi
             {
-              echo "tags<<EOF"
-              echo "${image}:${safe_version}"
-              echo "${image}:${safe_ref}"
-              echo "${image}:latest"
+              echo "all_tags<<EOF"
+              echo "${ghcr_image}:${safe_version}"
+              echo "${ghcr_image}:${safe_ref}"
+              echo "${ghcr_image}:latest"
+              echo "${ngc_image}:${safe_version}"
+              echo "${ngc_image}:${safe_ref}"
+              echo "${ngc_image}:latest"
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
           else
             short="${GITHUB_SHA::12}"
             {
-              echo "tags<<EOF"
-              echo "${image}:sha-${short}"
+              echo "all_tags<<EOF"
+              echo "${ghcr_image}:sha-${short}"
+              echo "${ngc_image}:sha-${short}"
               echo "EOF"
             } >> "${GITHUB_OUTPUT}"
           fi
@@ -242,7 +296,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: ${{ github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
-          tags: ${{ steps.tags.outputs.tags }}
+          tags: ${{ steps.tags.outputs.all_tags }}
           labels: |
             org.opencontainers.image.title=${{ matrix.title }}
             org.opencontainers.image.description=${{ matrix.description }}
