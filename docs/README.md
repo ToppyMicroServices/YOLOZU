@@ -1,7 +1,8 @@
 # YOLOZU Docs
 
-Use this page as the shortest route into the repo.
-Start with the 1-minute demo, read the first three docs, then pick one next route.
+Use this page as the calmest short route into the repo.
+Start with the 1-minute demo, read the first three docs, then choose the lane
+that matches the work in front of you.
 
 ## 1-Minute Demo
 
@@ -12,17 +13,33 @@ yolozu demo overview
 
 Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 
+## Quick Menu
+
+- Start here: the demo below, then [`install.md`](install.md)
+- Core idea first:
+  [`predictions_schema.md`](predictions_schema.md),
+  [`external_inference.md`](external_inference.md)
+- Choose a lane: evaluation, train/export/eval, interface-contract checks, or
+  benchmark/parity qualification
+- Check stability and scope:
+  [`production_readiness.md`](production_readiness.md),
+  [`support.md`](support.md),
+  [`license_policy.md`](license_policy.md)
+
 ## Read These 3 First
 
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`install.md`](install.md): install, `doctor`, and environment setup
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 
-## Next 3 Routes
+## Route Menu
 
-- Main production lane: evaluate precomputed predictions and keep the predictions interface contract stable
-- Secondary lane: train/export flows that emit the same predictions interface contract
-- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
+- Main production lane: evaluate precomputed predictions and keep the
+  predictions interface contract stable
+- Secondary lane: train/export flows that emit the same predictions interface
+  contract
+- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT,
+  and Hessian refinement
 
 ## Primary Focus
 
@@ -31,20 +48,15 @@ Writes `demo_output/overview/<utc>/demo_overview_report.json`.
 - Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external runtime bridges called out explicitly
 - Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
 
-## Capability Maturity
+## Stability Snapshot
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, install/doctor flow, repo smoke/demo path
-- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
-- Research: continual learning, self-distillation, TTT, Hessian refinement
-
-## Production Readiness
-
-- Production-ready today: prediction validation/evaluation and the predictions interface contract
-- Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
+- Needs qualification in your environment: backend parity, benchmark
+  orchestration, SynthGen handoff, macOS/MPS paths
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Details: [`production_readiness.md`](production_readiness.md)
 
-## Quick route map
+## Quick Route Map
 
 - If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
 - If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
