@@ -232,15 +232,19 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["torch"]["eval_metrics"]["miou"], 1.0)
             self.assertIn("max_mismatch_rate", results["onnx"]["parity"])
 
-    def test_auto_keeps_detect_on_dataset_pass_and_torchscript_on_synthetic(self):
+    def test_auto_uses_real_sources_for_torchscript_detect_and_artifact_tasks(self):
         args = self._args(latency_source="auto")
         self.assertEqual(
             benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label="detect"),
             "dataset_pass_wall_time",
         )
         self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="torchscript", task_label="detect"),
+            "dataset_pass_wall_time",
+        )
+        self.assertEqual(
             benchmark_mode._selected_benchmark_source(args, fmt="torchscript", task_label="keypoints"),
-            "synthetic_step",
+            "artifact_eval",
         )
 
     def test_depth_task_supports_real_artifact_eval(self):
@@ -607,6 +611,24 @@ class TestBenchmarkModelTool(TestCase):
             self.assertTrue(str(artifacts.get("eval", "")).endswith("eval_torchscript.json"))
             self.assertTrue(str(artifacts.get("parity", "")).endswith("parity_torchscript.json"))
 
+    def test_module_cli_benchmark_help_matches_real_surface(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "benchmark", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"python -m yolozu benchmark --help failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("--torchscript-model", proc.stdout)
+        self.assertIn("--segmentation-parity-mismatch-atol", proc.stdout)
+        self.assertIn("--parity-reference-backend", proc.stdout)
+        self.assertIn("--protocol", proc.stdout)
+        self.assertIn("torchscript", proc.stdout)
+
     def _args(self, **overrides):
         root = Path(__file__).resolve().parents[1]
         base = dict(
@@ -614,6 +636,7 @@ class TestBenchmarkModelTool(TestCase):
             torch_model=None,
             onnx_model=None,
             engine_model=None,
+            torchscript_model=None,
             data=str(root / "data" / "smoke"),
             imgsz=640,
             half=False,
@@ -713,19 +736,55 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["status"], "skipped")
         self.assertEqual(result["skip_reason"], "model_artifact_required")
 
-    def test_torchscript_supported_runtime_uses_synthetic_semantics_for_now(self):
-        args = self._args(format="torchscript", model="runs/foo/model.torchscript", latency_source="auto")
-        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
-            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
-                report, code = benchmark_mode.run_benchmark_mode(args)
+    def test_torchscript_supported_runtime_uses_real_orchestration(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
 
-        self.assertEqual(code, 0)
-        self.assertEqual(report["status"], "ok")
-        result = report["results"][0]
-        self.assertEqual(result["format"], "torchscript")
-        self.assertEqual(result["status"], "ok")
-        self.assertEqual(result["latency_source"], "synthetic_step")
-        self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
+            def fake_run(cmd, cwd, capture_output, text, check):
+                cmd = [str(x) for x in cmd]
+                if cmd[1].endswith("export_predictions_torchscript.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {"image": "images/val/000001.jpg", "detections": []},
+                            {"image": "images/val/000002.jpg", "detections": []},
+                        ],
+                        "meta": {"adapter": "torchscript"},
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("eval_suite.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {"metrics": {"bbox_mAP50": 0.37}}
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                raise AssertionError(f"unexpected subprocess command: {cmd}")
+
+            args = self._args(
+                output=str(report_path),
+                data=str(repo_root / "data" / "smoke"),
+                format="torchscript",
+                model="runs/foo/model.torchscript",
+                latency_source="auto",
+            )
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(benchmark_mode.subprocess, "run", side_effect=fake_run):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "ok")
+            result = report["results"][0]
+            self.assertEqual(result["format"], "torchscript")
+            self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["latency_source"], "dataset_pass_wall_time")
+            self.assertEqual(result["execution_semantics"]["execution_mode"], "real_backend_eval")
+            self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.37)
+            self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
 
     def test_real_torch_and_onnx_backends_write_real_parity_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]

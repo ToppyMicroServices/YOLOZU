@@ -95,6 +95,10 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Keypoints eval benchmark: `python3 tools/benchmark_keypoints_eval.py --dataset /path/to/yolo --predictions reports/predictions.json --max-images 50 --warmup 1 --iterations 5 --output reports/benchmark_keypoints_eval.json`
 - Keypoints backend benchmark/parity: `python3 tools/benchmark_model.py --task keypoints --model reports/keypoints_torch.json --onnx-model reports/keypoints_onnx.json --data /path/to/yolo_keypoints_dataset --format torch,onnx --latency-source artifact_eval --keypoints-parity-kp-atol 1e-4 --output reports/benchmark_keypoints_report.json`
   - artifact-backed real eval/parity lane for backend-specific predictions artifacts; evaluates with `tools/eval_keypoints.py` and compares normalized keypoints directly
+- Benchmark support matrix: `docs/benchmark_support_matrix.md`
+  - canonical per-format/per-task status for real, artifact-real, placeholder, skipped, and planned benchmark artifacts
+- Manual CLI drift audit: `python3 tools/audit_manual_cli_drift.py --json`
+  - checks manual chapter 04 against `python3 -m yolozu --help` and the legacy wrapper help surface
 - SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval.json`
 - Generic depth pair eval: `python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --align median_scale --output reports/depth_eval.json`
   - writes `abs_rel`, `sq_rel`, `rmse`, `rmse_log`, `delta1/2/3`, plus valid-pixel counts

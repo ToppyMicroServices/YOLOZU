@@ -24,6 +24,11 @@ As a best practice, always initiate discovery with:\\
 \cmd{yolozu --help} and \cmd{yolozu <command> --help}.\\
 In a source checkout, \cmd{python3 -m yolozu --help} is equivalent. The legacy \cmd{python3 tools/yolozu.py --help} wrapper is compatibility-only.
 
+Manual drift is guarded by \cmd{python3 tools/audit\_manual\_cli\_drift.py}.
+When the top-level CLI changes, update this chapter and only extend
+\path{docs/manual\_cli\_drift\_allowlist.json} for intentional prose placeholders
+or repo-only helpers, not for real \cmd{yolozu} commands.
+
 \section{Common Commands}
 \small
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.46\textwidth}>{\raggedright\arraybackslash}p{0.49\textwidth}@{}}
@@ -55,7 +60,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{yolozu predict-images} & Performs folder-level inference, generating predictions, visual overlays, and an HTML summary. \\
 \cmd{yolozu export-dataset yolo|coco|kitti|segmentation} & Exports a YOLOZU dataset wrapper into a standalone YOLO training layout (\path{data.yaml} + \path{images/}/\path{labels/}), a standard COCO layout (\path{images/<split>/} + \path{annotations/instances\_<split>.json} plus \path{person\_keypoints\_<split>.json} when keypoints metadata is present), a KITTI-style layout (\path{image\_2}/\path{label\_2}/\path{ImageSets/Main}), or a semantic-segmentation layout (\path{images/}/\path{masks/} + \path{dataset.json}). Use \cmd{--image-mode symlink} when you want an export tree without copying large assets. \\
 \cmd{yolozu eval-coco} & Conducts COCO mAP evaluation derived from \path{predictions.json} (requires COCO tooling to be installed). \\
-\cmd{yolozu benchmark} & Parity-target benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine} when artifacts and runtimes exist; for \cmd{--task segmentation}, \cmd{--task keypoints}, \cmd{--task depth}, and \cmd{--task pose6d}, it uses artifact-backed real eval/parity lanes rather than pretending YOLOZU executed the backend inference itself. Key knobs include \cmd{--protocol}, backend-specific model overrides (\cmd{--torch-model}, \cmd{--onnx-model}, \cmd{--engine-model}), \cmd{--latency-source auto|artifact\_eval}, \cmd{--parity-reference-backend auto|torch|onnx|engine}, segmentation-specific \cmd{--segmentation-parity-mismatch-atol}, keypoints-specific \cmd{--keypoints-parity-*} thresholds, depth-specific \cmd{--depth-mask}/\cmd{--depth-align}, and pose-specific \cmd{--pose-parity-*} thresholds. \\
+\cmd{yolozu benchmark} & Parity-target benchmark entrypoint. Runs real backend orchestration for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} when artifacts and runtimes exist; for \cmd{--task segmentation}, \cmd{--task keypoints}, \cmd{--task depth}, and \cmd{--task pose6d}, it uses artifact-backed real eval/parity lanes rather than pretending YOLOZU executed the backend inference itself. Key knobs include \cmd{--protocol}, backend-specific model overrides (\cmd{--torch-model}, \cmd{--onnx-model}, \cmd{--engine-model}, \cmd{--torchscript-model}), \cmd{--latency-source auto|artifact\_eval}, \cmd{--parity-reference-backend auto|torch|onnx|engine|torchscript}, segmentation-specific \cmd{--segmentation-parity-mismatch-atol}, keypoints-specific \cmd{--keypoints-parity-*} thresholds, depth-specific \cmd{--depth-mask}/\cmd{--depth-align}, and pose-specific \cmd{--pose-parity-*} thresholds. \\
 \cmd{python3}\\\path{tools/eval\_pose.py} & Evaluates one pose-aware predictions artifact against dataset sidecars and writes \cmd{pose\_success}, \cmd{rot\_deg\_mean}, \cmd{trans\_l2\_mean}, optional depth error, and optional CAD-point metrics such as \cmd{add\_mean} / \cmd{adds\_mean}. \\
 \cmd{yolozu parity} & Compares two distinct predictions artifacts to detect backend drift or discrepancies. \\
 \cmd{yolozu predictions migrate} & Migrates predictions entry schema versions (currently \cmd{--from v1 --to v2}) with optional strict source checking. \\
@@ -71,6 +76,7 @@ For polygon masks/inference: \cmd{--background coco-instances}. \\
 \cmd{python3 tools/benchmark_latency.py} & Runs the latency/FPS benchmark harness, maintaining a JSONL history to track performance regressions. \\
 \cmd{python3 tools/check\_repo\_governance.py} & Audits local governance evidence plus exported GitHub settings snapshots for branch protection, review policy, and repository-security posture. Writes a JSON summary and keeps history-based items explicit instead of pretending they are source-only facts. \\
 \cmd{python3 tools/validate_tool_manifest.py} & Validates the structural integrity of the machine-readable registry (\path{tools/manifest.json}). \\
+\cmd{python3 tools/audit\_manual\_cli\_drift.py} & Audits this manual chapter against \cmd{python3 -m yolozu --help} and the legacy wrapper help surface. \\
 \cmd{bash release.sh} & Runs no-option release automation: auto SemVer/CalVer version bump policy, tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. Downstream publish now re-validates version/tag/changelog alignment before PyPI release. \\
 \path{python3 tools/support\_external\_training.py} & External training support utility with a fixed 3-layer interface contract. The primary lane is \cmd{train-yolox} (Apache-2.0-friendly external YOLOX bridge); \cmd{train-detectron2}, \cmd{train-mmdetection}, \cmd{train-mmpose}, \cmd{train-mmseg}, and \cmd{train-tao} cover common external vision stacks; \cmd{train-ultralytics} remains an optional bridge. Shared dataset conversion, ONNX export templates, prediction canonicalization, and standardized resume/export/eval/parity handoff JSONs stay on the same surface. Legacy alias: \path{tools/support\_yolo\_detr.py}. \\
 \bottomrule

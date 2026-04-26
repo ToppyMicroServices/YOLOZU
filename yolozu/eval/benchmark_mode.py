@@ -9,14 +9,13 @@ Phase 1 established:
 - reproducibility metadata,
 - a clearly labeled synthetic latency probe.
 
-Phase 2 adds real backend orchestration for ``torch``, ``onnx``, and
-``engine`` by delegating to existing exporter/eval tools when the requested
-artifacts and runtime dependencies are present.
+Phase 2 adds real backend orchestration for ``torch``, ``onnx``, ``engine``,
+and ``torchscript`` by delegating to existing exporter/eval tools when the
+requested artifacts and runtime dependencies are present.
 
-Phase 2.1 adds ``torchscript`` as a first-class benchmark format while keeping
-its current behavior honest: it is accepted by the CLI and report schema,
-depends only on a local PyTorch runtime, and currently uses synthetic/skip
-semantics until a dedicated real-orchestration path lands.
+Phase 2.1 promotes ``torchscript`` from accepted planning surface to a real
+detect-task orchestration lane backed by a declared combined-output decode
+path.
 
 Phase 2.2 adds explicit task semantics for ``detect``, ``segmentation``,
 ``classification``, ``obb``, ``keypoints``/``pose``, ``depth``, and
@@ -48,7 +47,7 @@ from yolozu.predictions.segmentation_predictions import load_segmentation_predic
 repo_root = Path(__file__).resolve().parents[2]
 
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
-REAL_BACKEND_FORMATS = ("torch", "onnx", "engine")
+REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript")
 TASK_ALIASES = {
     "detect": "detect",
     "detection": "detect",
@@ -72,10 +71,10 @@ TASK_SEMANTICS = {
         "display_name": "Detection",
         "metric_family": "bbox_map",
         "expected_metric_keys": ["mAP50-95", "mAP50", "AR@100"],
-        "support_level": "real_for_torch_onnx_engine",
+        "support_level": "real_for_torch_onnx_engine_torchscript",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Default benchmark semantics. Real backend orchestration is available for torch/onnx/engine when artifacts and runtimes are present.",
+        "notes": "Default benchmark semantics. Real backend orchestration is available for torch/onnx/engine/torchscript when artifacts and runtimes are present.",
     },
     "segmentation": {
         "display_name": "Segmentation",
@@ -158,7 +157,7 @@ FORMAT_FLAG_RULES = {
     },
     "torchscript": {
         "supported_nondefault_flags": set(),
-        "notes": "TorchScript is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+        "notes": "TorchScript detect benchmarking consumes an existing TorchScript artifact through the declared combined-output decode path; export-oriented flags remain unsupported.",
     },
     "executorch": {
         "supported_nondefault_flags": set(),
@@ -502,6 +501,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
         "torch": getattr(args, "torch_model", None),
         "onnx": getattr(args, "onnx_model", None),
         "engine": getattr(args, "engine_model", None),
+        "torchscript": getattr(args, "torchscript_model", None),
     }
     candidate = override_map.get(fmt) or getattr(args, "model", None)
     if not candidate:
@@ -528,6 +528,12 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
         if override_map.get(fmt):
             return text, None
         if suffix in {".engine", ".plan"}:
+            return text, None
+        return None, "model_artifact_required"
+    if fmt == "torchscript":
+        if override_map.get(fmt):
+            return text, None
+        if suffix in {".torchscript", ".ts", ".pt", ".pth"}:
             return text, None
         return None, "model_artifact_required"
     return None, "unsupported_format"
@@ -786,6 +792,28 @@ def _prediction_command(args: Any, *, fmt: str, model_artifact: str, output: Pat
             "--strict",
             "--imgsz",
             str(int(getattr(args, "imgsz", 640))),
+        ]
+        if split:
+            cmd.extend(["--split", str(split)])
+        if max_images is not None:
+            cmd.extend(["--max-images", str(int(max_images))])
+        return cmd
+
+    if fmt == "torchscript":
+        cmd = base + [
+            _tool_path("export_predictions_torchscript.py"),
+            "--dataset",
+            data,
+            "--model",
+            str(model_artifact),
+            "--output",
+            str(output),
+            "--wrap",
+            "--strict",
+            "--imgsz",
+            str(int(getattr(args, "imgsz", 640))),
+            "--device",
+            str(getattr(args, "device", "cpu")),
         ]
         if split:
             cmd.extend(["--split", str(split)])
@@ -2399,6 +2427,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--torch-model", default=None, help="Optional torch backend model override (typically .pt).")
     parser.add_argument("--onnx-model", default=None, help="Optional ONNX backend model override (typically .onnx).")
     parser.add_argument("--engine-model", default=None, help="Optional TensorRT engine override (typically .engine or .plan).")
+    parser.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).")
     parser.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     parser.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     parser.add_argument(
@@ -2417,7 +2446,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--parity-reference-backend",
-        choices=("auto", "torch", "onnx", "engine"),
+        choices=("auto", "torch", "onnx", "engine", "torchscript"),
         default="auto",
         help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
     )

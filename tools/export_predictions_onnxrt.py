@@ -403,7 +403,7 @@ def main(argv=None):
         print(shape_warning, file=sys.stderr)
 
     _validate_decode_contract(
-        exporter_name="skeleton",
+        exporter_name="onnxruntime",
         boxes_format=str(args.boxes_format),
         boxes_scale=str(args.boxes_scale),
         raw_output=args.raw_output,

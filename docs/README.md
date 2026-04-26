@@ -165,6 +165,8 @@ Use this path after the main validation/eval lane is already working and you are
 qualifying backend parity or benchmark behavior. Some formats already support
 artifact-backed real eval/parity lanes; others still report explicit
 placeholder/skipped semantics rather than pretending to be fully implemented.
+The canonical support-status table is
+[Benchmark support matrix](benchmark_support_matrix.md).
 
 Shortest 3 commands:
 
@@ -182,7 +184,7 @@ python3 tools/benchmark_latency.py --help
 ```
 
 When backend artifacts are available, the benchmark entry can orchestrate real
-`torch` / `onnx` / `engine` runs:
+`torch` / `onnx` / `engine` / `torchscript` runs:
 
 ```bash
 python3 tools/benchmark_model.py \
@@ -203,9 +205,9 @@ Typical outputs:
 - `reports/eval_<format>.json`
 - `reports/parity_<format>.json`
 
-`torchscript` is also accepted as a benchmark format now; in the current phase
-it is reported with honest synthetic/skip semantics until a dedicated
-real-orchestration path lands.
+`torchscript` is now a real detect benchmark lane when a local PyTorch runtime
+and compatible TorchScript artifact are present. The declared decode path
+expects `[x1,y1,x2,y2,score,class_id]` combined output rows.
 
 The benchmark report now records:
 - canonical task label
@@ -216,6 +218,7 @@ The benchmark report now records:
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
 - [Benchmark mode](benchmark_mode.md)
+- [Benchmark support matrix](benchmark_support_matrix.md)
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 - [License policy and no-telemetry repository boundary](license_policy.md)
 - [Benchmark latency](benchmark_latency.md)
