@@ -14954,6 +14954,10 @@
           "description": "Validate the canonical tool manifest through the top-level CLI."
         },
         {
+          "command": "python3 tools/yolozu.py eval-coco --help",
+          "description": "Check that the repo-local legacy wrapper forwards canonical package CLI commands and help output."
+        },
+        {
           "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
           "description": "Top-level train route for the Apache-2.0-friendly external YOLOX bridge (dry-run)."
         },

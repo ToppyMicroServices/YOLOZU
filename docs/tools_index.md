@@ -32,7 +32,7 @@ For most day-to-day flows, start with:
 - `python3 -m yolozu train-orchestrate --spec reports/train_orchestration_spec.json --output reports/training_orchestration_report.json --registry-out reports/training_registry.jsonl --execute`
 
 Compatibility note:
-- `python3 tools/yolozu.py ...` remains available in a repo checkout as a legacy wrapper, but `yolozu` / `python3 -m yolozu` is the single supported top-level CLI surface.
+- `python3 tools/yolozu.py ...` remains available in a repo checkout as a legacy wrapper. It forwards canonical package commands such as `eval-coco`, `benchmark`, `validate`, `train`, and `train-orchestrate`, but `yolozu` / `python3 -m yolozu` is the single supported top-level CLI surface.
 
 ## AI/MCP entrypoints
 

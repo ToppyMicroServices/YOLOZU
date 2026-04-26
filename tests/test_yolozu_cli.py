@@ -26,6 +26,36 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("continual-eval", proc.stdout)
         self.assertIn("long-tail-recipe", proc.stdout)
 
+    def test_legacy_wrapper_forwards_supported_package_commands(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        help_proc = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if help_proc.returncode != 0:
+            self.fail(f"tools/yolozu.py --help failed:\n{help_proc.stdout}\n{help_proc.stderr}")
+        for cmd in ("eval-coco", "benchmark", "parity", "validate", "train"):
+            self.assertIn(cmd, help_proc.stdout)
+
+        forwarded_proc = subprocess.run(
+            [sys.executable, str(script), "eval-coco", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if forwarded_proc.returncode != 0:
+            self.fail(f"tools/yolozu.py eval-coco --help failed:\n{forwarded_proc.stdout}\n{forwarded_proc.stderr}")
+        self.assertIn("COCOeval", forwarded_proc.stdout)
+        self.assertIn("--predictions", forwarded_proc.stdout)
+
     def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
         proc = subprocess.run(
