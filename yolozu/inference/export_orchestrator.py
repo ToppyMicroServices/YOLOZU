@@ -277,6 +277,9 @@ def build_accel_backend_command(*, args: argparse.Namespace, backend: str, datas
         )
     elif backend == "executorch":
         cmd.extend(["--model", model])
+        if getattr(args, "runtime_output_json", None):
+            cmd.extend(["--runtime-output-json", str(args.runtime_output_json)])
+        cmd.extend(["--boxes-scale", str(args.boxes_scale)])
     else:
         raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
 
@@ -438,6 +441,11 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--weights", default=None, help="YOLOX checkpoint path for --backend yolox.")
     p.add_argument("--input-name", default="images", help="Input tensor/binding name (default: images).")
     p.add_argument("--combined-output", default="output0", help="Combined output name (default: output0).")
+    p.add_argument(
+        "--runtime-output-json",
+        default=None,
+        help="ExecuTorch runtime output JSON to decode for --backend executorch non-dry runs.",
+    )
     p.add_argument(
         "--boxes-scale",
         choices=("abs", "norm"),

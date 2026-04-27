@@ -136,8 +136,14 @@ Use real paths from \path{python3 -m yolozu export --help} for execution.
 # ONNXRuntime backend (input shape must match ONNX)
 python3 -m yolozu export --backend onnxrt --dataset /path/to/yolo-dataset --split val --onnx /path/to/model.onnx --output reports/predictions.json
 
-# ExecuTorch backend (.pte model; dry-run available for contract checks)
+# TorchScript detection artifact with declared combined-output decode
+python3 tools/export_predictions_torchscript.py --dataset /path/to/yolo-dataset --split val --model /path/to/model.torchscript --output reports/pred_torchscript.json --wrap
+
+# ExecuTorch backend (.pte model; dry-run available for interface contract checks)
 python3 -m yolozu export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --output reports/pred_executorch.json --dry-run
+
+# ExecuTorch non-dry decode: run ExecuTorch externally, then decode runtime rows
+python3 -m yolozu export --backend executorch --dataset /path/to/yolo-dataset --split val --model /path/to/model.pte --runtime-output-json reports/executorch_runtime_outputs.json --boxes-scale norm --output reports/pred_executorch.json --force
 
 # OpenCV DNN unified backend (auto decode + preset preprocess + IO dump)
 python3 -m yolozu export --backend opencv-dnn --onnx /path/to/model.onnx --dataset /path/to/yolo-dataset --split val --max-images 8 --imgsz 640 --preprocess yolo_letterbox_640 --decode auto --dump-io reports/opencv_dump_io.json --output reports/pred_opencv_dnn_unified.json --force
@@ -152,6 +158,13 @@ python3 -m yolozu export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --d
 For further details, consult:\\
 \path{docs/training_inference_export.md}, \path{docs/external_inference.md}, and \path{docs/opencv_dnn_inference.md}.
 For CI command-surface checks, prefer each exporter's \cmd{--dry-run} mode so schema and metadata contracts are validated without heavyweight runtime dependencies.
+
+ExecuTorch non-dry mode intentionally does not pretend to execute a generic
+mobile runtime inside YOLOZU. The declared path is: execute the \path{.pte}
+artifact in the target ExecuTorch environment, write rows shaped
+\cmd{[x1,y1,x2,y2,score,class\_id]}, and pass that JSON via
+\cmd{--runtime-output-json}. Unsupported row shapes fail before a predictions
+artifact is written.
 
 \subsection{Model intake before export (registry fetch)}
 To standardize external checkpoints before running exporters, use the model fetch flow:

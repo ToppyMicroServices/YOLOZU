@@ -171,6 +171,18 @@ rotation, translation, and depth. The remaining non-detect tasks still fail earl
 ask for \cmd{--dry-run} or \cmd{--latency-source synthetic\_step} until their
 dedicated backend/eval paths land.
 
+\subsection{Canonical benchmark support matrix}
+The source of truth for per-format, per-task artifact status is
+\path{docs/benchmark\_support\_matrix.md}. Use that matrix when deciding whether
+a benchmark lane writes real inference artifacts, consumes artifact-backed real
+eval/parity inputs, emits placeholders, skips because a runtime/artifact is
+missing, or remains planned.
+
+The manual intentionally avoids duplicating the full table. When benchmark
+semantics change, update the canonical matrix, \path{docs/benchmark\_mode.md},
+this chapter, \path{tools/manifest.json}, and the packaged manifest copy in the
+same change.
+
 \subsection{Runtime / license boundary matrix}
 Benchmark support does not imply that a runtime is bundled with YOLOZU. The
 repository remains Apache-2.0, but several backends rely on external runtimes

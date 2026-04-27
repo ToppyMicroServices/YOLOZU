@@ -15283,6 +15283,10 @@
         {
           "command": "python3 -m yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force",
           "description": "Export a semantic-segmentation descriptor into an images/masks layout without copying large assets."
+        },
+        {
+          "command": "python3 -m yolozu export --backend executorch --dataset data/smoke --split val --model exports/model.pte --runtime-output-json reports/executorch_runtime_outputs.json --boxes-scale norm --output reports/pred_executorch.json --force",
+          "description": "Decode ExecuTorch runtime output JSON through the canonical export surface."
         }
       ],
       "id": "yolozu",
@@ -15909,6 +15913,13 @@
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
+          "required": false
+        },
+        {
+          "description": "ExecuTorch runtime output JSON decoded by yolozu export --backend executorch.",
+          "flag": "--runtime-output-json",
+          "kind": "file",
+          "name": "runtime_output_json",
           "required": false
         },
         {

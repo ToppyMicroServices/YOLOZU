@@ -381,6 +381,59 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertEqual(meta.get("adapter"), "executorch")
             self.assertEqual((meta.get("extra") or {}).get("exporter"), "executorch")
 
+    def test_export_executorch_runtime_output_decode_succeeds(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset_root = repo_root / "data" / "smoke"
+            model_path = root / "dummy.pte"
+            runtime_output = root / "executorch_runtime_outputs.json"
+            out_path = root / "preds.json"
+            model_path.write_bytes(b"dummy")
+            runtime_output.write_text(
+                json.dumps({"000000000009.jpg": [[0.1, 0.2, 0.5, 0.7, 0.9, 3]]}),
+                encoding="utf-8",
+            )
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "export",
+                    "--backend",
+                    "executorch",
+                    "--dataset",
+                    str(dataset_root),
+                    "--split",
+                    "val",
+                    "--max-images",
+                    "1",
+                    "--model",
+                    str(model_path),
+                    "--runtime-output-json",
+                    str(runtime_output),
+                    "--boxes-scale",
+                    "norm",
+                    "--output",
+                    str(out_path),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu export --backend executorch runtime decode failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            entries = payload.get("predictions") or []
+            self.assertEqual(entries[0]["detections"][0]["class_id"], 3)
+            extra = payload.get("meta", {}).get("extra", {})
+            self.assertEqual(extra.get("runtime_decode", {}).get("contract"), "combined_xyxy_score_class")
+
     def test_export_rejects_torch_only_flags_on_yolox(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
