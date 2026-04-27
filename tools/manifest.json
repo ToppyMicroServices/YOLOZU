@@ -459,6 +459,12 @@
           "required": false
         },
         {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
           "flag": "--skip-wrapper",
           "kind": "string",
           "name": "skip_wrapper",
@@ -6851,6 +6857,12 @@
           "flag": "--imgsz",
           "kind": "number",
           "name": "imgsz",
+          "required": false
+        },
+        {
+          "flag": "--input-size",
+          "kind": "number",
+          "name": "input_size",
           "required": false
         },
         {
