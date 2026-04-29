@@ -151,12 +151,42 @@ def _load_image_tensor(image_path: str, *, input_size: int, device: str):
     return torch.from_numpy(arr).to(device), (orig_w, orig_h), letterbox
 
 
+def _default_tta_meta() -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "seed": None,
+        "flip_prob": 0.0,
+        "norm_only": False,
+        "warnings": [],
+        "summary": None,
+    }
+
+
+def _default_ttt_meta() -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "method": "none",
+        "steps": 0,
+        "batch_size": 0,
+        "lr": 0.0,
+        "update_filter": "none",
+        "include": None,
+        "exclude": None,
+        "max_batches": 0,
+        "seed": None,
+        "mim": {"mask_prob": 0.0, "patch_size": 0, "mask_value": 0.0},
+        "report": None,
+    }
+
+
 def _meta(*, args: argparse.Namespace, model_path: Path | None, images: int, split: str) -> dict[str, Any]:
     return {
         "timestamp": _now_utc(),
         "adapter": "torchscript",
         "config": str(model_path) if model_path is not None else "torchscript",
         "images": int(images),
+        "tta": _default_tta_meta(),
+        "ttt": _default_ttt_meta(),
         "extra": {
             "exporter": "torchscript",
             "protocol_id": "yolo26",
