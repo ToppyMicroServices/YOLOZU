@@ -132,20 +132,20 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
 \subsection*{SynthGen intake tools (registry additions)}
 The registry now exposes explicit intake utilities for externally generated synthetic shards:
 \begin{itemize}
-  \item \cmd{validate\_synthgen\_contract}: validate required SynthGen fields and tensor/range constraints.
-  \item \cmd{render\_synthgen\_overlay}: generate semantic/instance/keypoint debug overlays.
-  \item \cmd{eval\_synthgen}: compute keypoint, segmentation, and depth summaries for SynthGen predictions.
-  \item \cmd{smoke\_synthgen}: run a deterministic interface-contract+overlay+eval smoke pass on \path{data/smoke/synthgen\_minishard}.
+  \item \cmd{validate_synthgen_contract}: validate required SynthGen fields and tensor/range constraints.
+  \item \cmd{render_synthgen_overlay}: generate semantic/instance/keypoint debug overlays.
+  \item \cmd{eval_synthgen}: compute keypoint, segmentation, and depth summaries for SynthGen predictions.
+  \item \cmd{smoke_synthgen}: run a deterministic interface-contract+overlay+eval smoke pass on \path{data/smoke/synthgen_minishard}.
 \end{itemize}
 
 These tools reference the canonical SynthGen interface contract at \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}.
 
 \subsection*{TTT figure renderer (registry addition)}
-The registry also exposes \cmd{render\_ttt\_manual\_figures}, which regenerates:
+The registry also exposes \cmd{render_ttt_manual_figures}, which regenerates:
 \begin{itemize}
-  \item \path{docs/assets/ttt\_method\_results\_summary.png}
-  \item \path{docs/assets/ttt\_compare\_pipeline.png}
-  \item \path{docs/assets/ttt\_probe\_example\_panel.png}
+  \item \path{docs/assets/ttt_method_results_summary.png}
+  \item \path{docs/assets/ttt_compare_pipeline.png}
+  \item \path{docs/assets/ttt_probe_example_panel.png}
 \end{itemize}
 
 This keeps the TTT chapter's beginner-facing PNG figures reproducible and synchronized with fixed result artifacts rather than hand-edited screenshots.
@@ -159,10 +159,10 @@ For release operations, YOLOZU intentionally keeps software DOI and manual DOI l
 
 The software publish workflow now enforces release metadata consistency before PyPI publish:
 \begin{itemize}
-  \item release-triggered runs validate that tag \texttt{vX.Y.Z} matches \path{yolozu/\_\_init\_\_.py}
-  \item manual \texttt{workflow\_dispatch} runs require \texttt{expected\_version}
-  \item optional manual input \texttt{release\_tag} can re-check tag/version alignment during recovery
-  \item \path{CHANGELOG.md} must contain a matching \texttt{## [X.Y.Z] - YYYY-MM-DD} section
+  \item release-triggered runs validate that tag \cmd{vX.Y.Z} matches \path{yolozu/__init__.py}
+  \item manual \cmd{workflow_dispatch} runs require \cmd{expected_version}
+  \item optional manual input \cmd{release_tag} can re-check tag/version alignment during recovery
+  \item \path{CHANGELOG.md} must contain a matching \cmd{## [X.Y.Z] - YYYY-MM-DD} section
 \end{itemize}
 
 Operational helper script (no required options):

@@ -65,22 +65,36 @@ yolozu demo instance-seg-tta
 yolozu demo instance-seg --background yolo-bbox --yolo-root data/smoke --yolo-split val --inference none
 yolozu demo keypoints
 yolozu demo pose
-yolozu demo pose --backend aruco  % cached sample in demo_output/pose/_samples
+yolozu demo pose --backend aruco  # cached sample in demo_output/pose/_samples
 yolozu demo pose --backend densefusion
 yolozu demo depth
 yolozu demo depth --compare
-yolozu demo train  % downloads ResNet18 on first run
+yolozu demo train  # downloads ResNet18 on first run
 yolozu demo continual --compare --markdown
 \end{lstlisting}
 
 \noindent Note: \cmd{yolozu demo depth} defaults to Depth Anything (via Transformers) and can also run MiDaS/DPT. Both paths download weights on the first run.
 
 \subsection{Real-image showcase}
-For a compact visual proof that the demo suite produces useful artifacts on real images, the repository includes a shared showcase montage spanning keypoints, instance segmentation, and 6DoF pose:
+For compact visual proof that the demo suite produces useful artifacts on real images, the manual shows one artifact for each advertised task:
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{figures/readme_multitask_showcase.png}
-  \caption{Real-image outputs from \cmd{yolozu demo keypoints}, \cmd{yolozu demo instance-seg}, and \cmd{yolozu demo pose --backend aruco}. The three tasks differ, but all remain aligned with the same predictions interface contract mindset.}
+  \begin{subfigure}[t]{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/demo_keypoints_overlay.png}
+    \caption{\cmd{yolozu demo keypoints}}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/demo_instance_seg_overlay.png}
+    \caption{\cmd{yolozu demo instance-seg}}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.32\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/demo_pose_overlay.png}
+    \caption{\cmd{yolozu demo pose --backend aruco}}
+  \end{subfigure}
+  \caption{Real-image outputs from the keypoints, instance segmentation, and 6DoF pose demos. The tasks differ, but all stay aligned with the predictions interface contract mindset.}
 \end{figure}
 
 The corresponding commands are:
@@ -135,31 +149,33 @@ TensorRT workflows are covered in the Real-Time vs. Batch Inference chapter. The
 \centering
 \resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[
-  node distance=10mm,
+  node distance=8mm and 10mm,
   font=\small,
   box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  lane/.style={draw, rounded corners, inner sep=5pt, fill=gray!6},
   arrow/.style={-{Latex[length=2mm]}, thick},
   dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed}
 ]
 
-\node[box] (torch) {\textbf{PyTorch}\\
+\node[box] (torch) {\textbf{PyTorch artifact}\\
 train/checkpoint\\
 \path{runs/<run_id>/checkpoints/*}};
-\node[box, right=18mm of torch] (onnx) {\textbf{ONNX export}\\
+\node[box, right=14mm of torch] (onnx) {\textbf{ONNX artifact}\\
 \path{model.onnx}\\
 \path{model.onnx.meta.json}};
-\node[box, right=18mm of onnx] (trt) {\textbf{TensorRT build}\\
+\node[box, right=14mm of onnx] (trt) {\textbf{TensorRT artifact}\\
 \path{engine.plan}\\
 \path{engine.meta.json}};
 
-\node[box, below=14mm of onnx] (export) {\textbf{Export predictions}\\
+\node[box, below=12mm of onnx] (export) {\textbf{Runtime adapter}\\
 torch / onnxrt / opencv-dnn / trt};
-\node[box, right=20mm of export] (pred) {\textbf{predictions.json}\\
+\node[box, right=16mm of export] (pred) {\textbf{Prediction artifact}\\
+\path{predictions.json}\\
 schema-valid + relocatable\\
-\texttt{meta.export\_settings}};
-\node[box, right=20mm of pred] (eval) {\textbf{Validate \& eval}\\
-\path{eval\_suite.json}\\
-\path{metrics\_report.json}};
+\cmd{meta.export_settings}};
+\node[box, right=16mm of pred] (eval) {\textbf{Validation reports}\\
+\path{eval_suite.json}\\
+\path{metrics_report.json}};
 
 \draw[arrow] (torch) -- (onnx);
 \draw[arrow] (onnx) -- (trt);
@@ -171,8 +187,14 @@ schema-valid + relocatable\\
 \draw[arrow] (export) -- (pred);
 \draw[arrow] (pred) -- (eval);
 
+\begin{pgfonlayer}{bg}
+\node[lane, fit=(torch)(onnx)(trt), label=above:{\textbf{Artifacts}}] {};
+\node[lane, fit=(export), label=below:{\textbf{Runtime}}] {};
+\node[lane, fit=(pred)(eval), label=below:{\textbf{Validation}}] {};
+\end{pgfonlayer}
+
 \end{tikzpicture}
 }
-\caption{Recommended deployment flow and where key interface contract artifacts are produced.}
+\caption{Recommended deployment flow, grouped by artifact creation, runtime adaptation, and validation evidence.}
 \end{figure}
 %
