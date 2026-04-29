@@ -105,27 +105,20 @@
 \maketitle
 
 \begin{abstract}
-\yolozu{} is a framework-agnostic evaluation toolkit for vision models.
-Its primary production lane is predictions validation/evaluation through one stable predictions interface contract.
-Continual learning, test-time adaptation, SynthGen handoff, and refinement workflows remain available as secondary or research-oriented lanes.
+\yolozu{} is a framework-agnostic evaluation toolkit for vision model outputs.
+Its stable production lane is predictions validation and evaluation through one
+predictions interface contract, so teams can compare outputs across training
+stacks, export paths, and runtime backends without changing the scoring
+surface. The toolkit supports detection, segmentation, keypoints, monocular
+depth, and 6DoF pose evaluation, while keeping model training implementations
+optional and decoupled.
 
-\textbf{\yolozu{} exists to measure, compare, and enable mitigation of catastrophic forgetting
-and inference-time adaptation in a reproducible way.}
-
-\yolozu{} treats \textbf{predictions---not models---as the stable interface contract},
-making continual learning and test-time training comparable,
-restartable, and CI-friendly across frameworks and runtimes.
-
-\yolozu{} supports evaluation workflows for object detection, segmentation,
-keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation},
-while keeping training implementations optional and decoupled.
-
-\yolozu{} supports ONNX export and deployment across PyTorch, ONNX Runtime,
-and TensorRT, with inference modules in C++ and Rust.
-
-\yolozu{} is built for interface-contract-first, AI-first development:
-every experiment produces versioned artifacts that can be
-compared and regression-tested automatically in CI.
+The manual is organized around artifact-first operation: save predictions,
+validate them early, score them under pinned settings, and record enough
+metadata to reproduce decisions. Backend parity, benchmark orchestration,
+SynthGen handoff, continual learning, test-time training, and refinement
+workflows are documented as secondary, experimental, or research lanes rather
+than as the default production path.
 \end{abstract}
 
 \noindent\textbf{Support / legal:}

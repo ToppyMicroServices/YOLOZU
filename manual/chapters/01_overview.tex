@@ -1,10 +1,10 @@
 \chapter{Overview}
 
 \ChapterMeta{
-This chapter introduces \yolozu{}'s interface-contract-first evaluation paradigm (predictions-first artifacts for continual learning and test-time adaptation), delineates the primary repository entry points, and clarifies the distinction between its two Command Line Interface (CLI) surfaces.
+This chapter introduces \yolozu{}'s predictions-first evaluation paradigm, the primary repository entry points, and the manual's readiness labels.
 }{
 
-It is designed to expedite workflow selection and eliminate ambiguity regarding command execution and artifact management.
+It is designed to make workflow selection quick and reduce ambiguity around command execution, artifact handling, and support boundaries.
 }{
 No prerequisites are required beyond reading. Rely on the \cmd{--help} flag for the specific CLI in use, and treat JSON artifacts as the definitive, stable interface.
 }
@@ -22,12 +22,12 @@ If you only remember one sentence from this chapter, let it be this:
 \yolozu{} is the part of the stack that keeps model outputs comparable and reproducible even when the underlying training or inference stack changes.
 \end{quote}
 
-That is why the rest of the manual keeps coming back to the same habits:
+These habits are the manual's operating rules:
 \begin{itemize}
-  \item save artifacts,
-  \item validate them early,
-  \item compare them under pinned settings,
-  \item do not let backend differences silently turn into research drift.
+  \item \textbf{Operating Rule 1: Save artifacts.} Keep predictions, reports, settings, and provenance with the run.
+  \item \textbf{Operating Rule 2: Validate before scoring.} Run schema/interface checks before interpreting metrics.
+  \item \textbf{Operating Rule 3: Pin the protocol.} Compare runs only when dataset split, preprocessing, thresholds, and metric settings are explicit.
+  \item \textbf{Operating Rule 4: Separate production from research.} Do not let backend, TTT, or refinement differences silently become evaluation drift.
 \end{itemize}
 
 \paragraph{If you are learning this space for the first time.}
@@ -65,14 +65,18 @@ teach two habits:
   \item AI-first development: stable CLIs, machine-readable manifests, and regression-testable artifacts.
 \end{itemize}
 
-\section{Primary lane and capability maturity}
+\section{Readiness Levels}
 
-The shortest operational picture is:
-\begin{itemize}
-  \item \textbf{Stable}: predictions validation/evaluation and the predictions interface contract
-  \item \textbf{Experimental}: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS qualification paths
-  \item \textbf{Research}: continual learning, TTT, and Hessian refinement
-\end{itemize}
+The manual uses three readiness labels:
+\begin{center}
+\begin{tabular}{p{0.18\linewidth} p{0.34\linewidth} p{0.38\linewidth}}
+\textbf{Label} & \textbf{Meaning} & \textbf{Primary chapters/workflows} \\
+\hline
+\textbf{Stable} & CI-backed default path for normal users. & Installation, predictions interface contract, validation/evaluation, dataset wrappers, CLI entrypoints. \\
+\textbf{Experimental} & Useful but runtime-, environment-, or artifact-dependent. & Backend parity, benchmark orchestration, runtime export paths, SynthGen handoff, macOS/MPS qualification. \\
+\textbf{Research} & Reproduction, ablation, or method exploration; not the production default. & Continual learning, TTT, Hessian/refinement workflows, geometry/depth/6DoF experiments. \\
+\end{tabular}
+\end{center}
 
 Use \path{docs/production_readiness.md} as the prose source of truth for this classification.
 
@@ -85,25 +89,6 @@ This improves enterprise deployability, but it does not remove the separate
 review boundary for datasets, model weights, vendor runtimes, or hosted
 deployment environments.
 
-\textbf{\yolozu{} exists to measure, compare, and enable mitigation of catastrophic forgetting
-and inference-time adaptation in a reproducible way.}
-
-\yolozu{} treats \textbf{predictions---not models---as the stable interface contract},
-making continual learning and test-time training comparable,
-restartable, and CI-friendly across frameworks and runtimes.
-
-\yolozu{} supports evaluation workflows for object detection, segmentation,
-keypoint estimation, \textbf{monocular depth estimation}, and \textbf{6DoF pose estimation},
-while keeping training implementations optional and decoupled.
-
-\yolozu{} supports ONNX export and deployment across PyTorch, ONNX Runtime,
-and TensorRT, with inference modules in C++ and Rust.
-
-\yolozu{} is built for interface-contract-first, AI-first development:
-every experiment produces versioned artifacts that can be
-compared and regression-tested automatically in CI.
-
-
 \section{AI-First Design Intent}
 This repository is architected as an \textbf{AI-first} codebase.
 In practical terms, this implies:
@@ -113,7 +98,7 @@ In practical terms, this implies:
   \item JSON schemas and machine-readable registries are treated as first-class interfaces, rather than optional metadata.
 \end{itemize}
 
-Operational guidance for both human operators and agentic workflows dictates that artifacts must be treated as first-class entities, interface contracts must be validated early in the pipeline, and evaluation protocols must remain strictly pinned.
+Operational guidance for both human operators and agentic workflows follows the operating rules above: artifacts are first-class, interface contracts are validated before scoring, and evaluation protocols remain pinned.
 
 High-level objectives include:
 \begin{itemize}
