@@ -1,7 +1,8 @@
 # Benchmark Backend Runtime / License Boundary Matrix
 
 This page is the benchmark-side source of truth for runtime and redistribution
-boundaries.
+boundaries. For per-task artifact status, use the canonical
+[Benchmark support matrix](benchmark_support_matrix.md).
 
 YOLOZU itself remains an **Apache-2.0** repository. Several benchmark/export
 backends rely on **external runtimes or vendor SDKs** with their own license
@@ -18,10 +19,10 @@ benchmark users and maintainers.
 
 | Backend / format | Current benchmark state | Runtime requirement | License / redistribution note | Bundled with YOLOZU |
 | --- | --- | --- | --- | --- |
-| `torch` | real orchestration for `detect`; other tasks planning-only | Local PyTorch + external YOLO-family runtime | Python packages have their own terms; verify your chosen model/runtime stack separately | No |
-| `onnx` | real orchestration for `detect`; other tasks planning-only | Local ONNX Runtime install | ONNX Runtime is external to this repo; keep binary/runtime terms separate from YOLOZU | No |
-| `engine` / TensorRT | real orchestration for `detect`; other tasks planning-only | Linux + NVIDIA GPU + TensorRT runtime/engine | Requires external NVIDIA runtime/SDK; verify redistribution terms for CUDA/TensorRT/NGC artifacts | No |
-| `torchscript` | accepted; synthetic / planning-only | Local PyTorch runtime | No vendor GPU runtime is implied; still external to this repo | No |
+| `torch` | real orchestration for `detect`; artifact-backed real lanes for segmentation/keypoints/depth/pose6d | Local PyTorch + external YOLO-family runtime | Python packages have their own terms; verify your chosen model/runtime stack separately | No |
+| `onnx` | real orchestration for `detect`; artifact-backed real lanes for segmentation/keypoints/depth/pose6d | Local ONNX Runtime install | ONNX Runtime is external to this repo; keep binary/runtime terms separate from YOLOZU | No |
+| `engine` / TensorRT | real orchestration for `detect`; artifact-backed real lanes for segmentation/keypoints/depth/pose6d | Linux + NVIDIA GPU + TensorRT runtime/engine | Requires external NVIDIA runtime/SDK; verify redistribution terms for CUDA/TensorRT/NGC artifacts | No |
+| `torchscript` | real orchestration for `detect`; artifact-backed real lanes for segmentation/keypoints/depth/pose6d | Local PyTorch runtime | No vendor GPU runtime is implied; still external to this repo | No |
 | `executorch` | synthetic / planning-only | External ExecuTorch runtime if used | ExecuTorch runtime is external; verify platform packaging constraints separately | No |
 | `opencv_dnn` | synthetic / planning-only | Local OpenCV runtime | OpenCV is external to this repo; optional contrib/nonfree modules are not bundled here | No |
 | `openvino` | planned / conditional | External Intel OpenVINO runtime | External vendor/runtime terms apply; do not assume redistribution from YOLOZU | No |

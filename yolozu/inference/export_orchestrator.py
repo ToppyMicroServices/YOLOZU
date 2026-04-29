@@ -223,6 +223,7 @@ def build_accel_backend_config(*, args: argparse.Namespace, backend: str, datase
             "dry_run": bool(args.dry_run),
         }
     if backend == "executorch":
+        runtime_output_json = getattr(args, "runtime_output_json", None)
         return {
             "backend": backend,
             "dataset": str(dataset_fp),
@@ -230,6 +231,9 @@ def build_accel_backend_config(*, args: argparse.Namespace, backend: str, datase
             "max_images": args.max_images,
             "model": model,
             "model_sha256": sha256_file(model),
+            "runtime_output_json": str(runtime_output_json) if runtime_output_json else None,
+            "runtime_output_json_sha256": sha256_file(runtime_output_json) if runtime_output_json else None,
+            "boxes_scale": str(args.boxes_scale),
             "min_score": float(args.min_score),
             "topk": int(args.topk),
             "dry_run": bool(args.dry_run),
@@ -277,6 +281,9 @@ def build_accel_backend_command(*, args: argparse.Namespace, backend: str, datas
         )
     elif backend == "executorch":
         cmd.extend(["--model", model])
+        if getattr(args, "runtime_output_json", None):
+            cmd.extend(["--runtime-output-json", str(args.runtime_output_json)])
+        cmd.extend(["--boxes-scale", str(args.boxes_scale)])
     else:
         raise SystemExit(f"internal error: unsupported accelerator backend: {backend}")
 
@@ -438,6 +445,11 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--weights", default=None, help="YOLOX checkpoint path for --backend yolox.")
     p.add_argument("--input-name", default="images", help="Input tensor/binding name (default: images).")
     p.add_argument("--combined-output", default="output0", help="Combined output name (default: output0).")
+    p.add_argument(
+        "--runtime-output-json",
+        default=None,
+        help="ExecuTorch runtime output JSON to decode for --backend executorch non-dry runs.",
+    )
     p.add_argument(
         "--boxes-scale",
         choices=("abs", "norm"),

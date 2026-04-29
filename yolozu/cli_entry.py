@@ -223,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--torch-model", default=None, help="Optional torch backend model/depth-artifact override.")
     bench.add_argument("--onnx-model", default=None, help="Optional ONNX backend model/depth-artifact override.")
     bench.add_argument("--engine-model", default=None, help="Optional TensorRT engine/depth-artifact override.")
+    bench.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model/artifact override.")
     bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     bench.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     bench.add_argument(
@@ -233,6 +234,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument("--depth-parity-mae-atol", type=float, default=0.02, help="Depth parity MAE threshold (default: 0.02).")
     bench.add_argument("--depth-parity-rmse-atol", type=float, default=0.03, help="Depth parity RMSE threshold (default: 0.03).")
+    bench.add_argument(
+        "--segmentation-parity-mismatch-atol",
+        type=float,
+        default=0.0,
+        help="Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).",
+    )
+    bench.add_argument(
+        "--parity-reference-backend",
+        choices=("auto", "torch", "onnx", "engine", "torchscript"),
+        default="auto",
+        help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
+    )
     bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
     bench.add_argument("--keypoints-parity-bbox-atol", type=float, default=1e-4, help="Keypoints parity bbox tolerance (default: 1e-4).")
@@ -246,8 +259,35 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--device", default="cpu", help="Target device string (default: cpu).")
     bench.add_argument("--verbose", action="store_true", help="Print per-format status lines.")
     bench.add_argument("-f", "--format", default="all", help="Comma-separated Phase-1 formats or all.")
-    bench.add_argument("--task", default="detect", help="Task label recorded in the report (default: detect).")
+    bench.add_argument(
+        "--task",
+        default="detect",
+        choices=(
+            "6dof",
+            "classification",
+            "classify",
+            "cls",
+            "depth",
+            "detect",
+            "detection",
+            "keypoints",
+            "obb",
+            "pose",
+            "pose-6d",
+            "pose6d",
+            "pose_6d",
+            "seg",
+            "segmentation",
+        ),
+        help="Benchmark task label. Canonical tasks: detect, segmentation, classification, obb, keypoints, depth, pose6d.",
+    )
     bench.add_argument("--split", default=None, help="Dataset split label.")
+    bench.add_argument(
+        "--protocol",
+        choices=("yolo26", "nms_applied", "e2e_nms_free"),
+        default=None,
+        help="Optional eval protocol passed through to eval_suite and torch exporter.",
+    )
     bench.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
     bench.add_argument("--dry-run", action="store_true", help="Validate wiring and planned artifacts without timing runs.")
     bench.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped.")
@@ -270,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for task=keypoints/depth/pose6d.",
+        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for task=segmentation/keypoints/depth/pose6d.",
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

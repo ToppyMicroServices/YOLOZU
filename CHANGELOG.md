@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-04-29
+
+### Added
+- Added real TorchScript benchmark orchestration via `tools/export_predictions_torchscript.py`, emitting predictions under the predictions interface contract when PyTorch runtime support is available.
+- Added an automated manual-vs-CLI drift audit (`tools/audit_manual_cli_drift.py`) with a documented allowlist for intentional wrapper/manual differences.
+- Added a consolidated benchmark support matrix covering real, placeholder, and skipped runtime lanes.
+
+### Changed
+- Promoted benchmark reporting to distinguish real execution, placeholder output, and skipped runtime support across ONNX Runtime, TensorRT, TorchScript, and ExecuTorch paths.
+- Replaced the ExecuTorch skeleton exporter path with declared runtime decode metadata and explicit skip/fallback reporting.
+- Forwarded canonical `yolozu` wrapper commands through the package CLI so documented examples and implementation stay aligned.
+- Synchronized tool manifests with new CLI inputs and packaged manifest data.
+
+### Fixed
+- Fixed manifest/help drift for `audit_manual_cli_drift --python` and the TorchScript `--input-size` alias.
+- Updated manual export and benchmark guidance so CLI examples match the current implementation.
+
 ## [4.3.1] - 2026-04-18
 
 ### Fixed

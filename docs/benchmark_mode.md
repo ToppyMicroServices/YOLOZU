@@ -8,6 +8,7 @@ Related docs:
 
 - [Benchmark mode spec (parity target)](benchmark_mode_spec_parity_target.md)
 - [Benchmark gap audit](benchmark_mode_gap_audit.md)
+- [Benchmark support matrix](benchmark_support_matrix.md)
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 - [Latency benchmark harness](benchmark_latency.md)
 - [Docs index](README.md)
@@ -22,11 +23,11 @@ Today the command provides:
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
-- real backend orchestration for `torch`, `onnx`, and `engine` when artifacts and runtimes are available.
-- artifact-backed segmentation evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific mask-prediction artifacts are available.
-- artifact-backed keypoints evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific predictions artifacts are available.
-- artifact-backed depth evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific depth-map artifacts are available.
-- artifact-backed pose6d evaluation/parity for `torch`, `onnx`, and `engine` when backend-specific predictions artifacts are available.
+- real backend orchestration for `torch`, `onnx`, `engine`, and `torchscript` when artifacts and runtimes are available.
+- artifact-backed segmentation evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific mask-prediction artifacts are available.
+- artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
+- artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific depth-map artifacts are available.
+- artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
@@ -58,10 +59,9 @@ best next steps are:
 - keep the segmentation lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the depth lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the pose6d lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
-- promote `torchscript` to a real backend path and follow with conditional
-  `openvino`
-- keep one support matrix that distinguishes real inference/eval/parity from
-  placeholder or skipped semantics
+- keep the canonical [Benchmark support matrix](benchmark_support_matrix.md)
+  synced whenever format/task semantics change
+- add conditional `openvino` after the current `torchscript` detect lane
 - expand real parity artifacts beyond the current `torch`-anchored comparisons
 - keep format-specific flag validation strict so unsupported combinations fail
   early
@@ -215,16 +215,18 @@ yolozu benchmark \
   --output reports/benchmark_pose6d_report.json
 ```
 
-TorchScript acceptance with the current honest support semantics:
+TorchScript real detect benchmark path:
 
 ```bash
 yolozu benchmark \
   --model exports/foo.torchscript \
   --data data/coco8.yaml \
   --format torchscript \
-  --dry-run \
   --output reports/benchmark_report.json
 ```
+
+The TorchScript exporter expects a combined detection tensor shaped `(N,6)` or
+`(1,N,6)` with rows `[x1,y1,x2,y2,score,class_id]`.
 
 ## Core arguments
 
@@ -289,7 +291,8 @@ Current rules:
 
 In addition, real backend execution is currently detect-first:
 
-- `--task detect` can use real `torch` / `onnx` / `engine` orchestration
+- `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` orchestration
+- `--task segmentation` can use `--latency-source artifact_eval` to evaluate backend-specific mask-prediction artifacts with `tools/eval_segmentation.py` and attach real parity reports
 - `--task keypoints` can use `--latency-source artifact_eval` to evaluate backend-specific predictions artifacts with `tools/eval_keypoints.py` and attach real parity reports
 - `--task depth` can use `--latency-source artifact_eval` to evaluate backend-specific depth artifacts and attach real parity reports
 - `--task pose6d` can use `--latency-source artifact_eval` to evaluate backend-specific predictions artifacts with `tools/eval_pose.py` and attach real parity reports
@@ -307,7 +310,7 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
-When `torch`, `onnx`, or `engine` can run for real, the benchmark writes actual
+When `torch`, `onnx`, `engine`, or `torchscript` can run for real, the benchmark writes actual
 predictions and eval artifacts and attaches real parity artifacts for candidate
 backends against the chosen reference backend (preferring `torch` when
 available). When a backend is unavailable or the command is invoked with
@@ -316,7 +319,7 @@ inference ran.
 
 For `--task segmentation`, the real lane is artifact-backed rather than inference-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` point to backend-specific segmentation predictions artifacts
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific segmentation predictions artifacts
 - `--data` points to the dataset root or `dataset.json` used by `tools/eval_segmentation.py`
 - `predictions_<format>.json` is a normalized benchmark-local copy whose relative mask paths have been rewritten under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_segmentation.py`
@@ -324,7 +327,7 @@ For `--task segmentation`, the real lane is artifact-backed rather than inferenc
 
 For `--task depth`, the real lane is artifact-backed rather than inference-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` point to backend-specific depth artifacts such as `.npy`, `.npz`, or single-channel image files
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific depth artifacts such as `.npy`, `.npz`, or single-channel image files
 - `--data` points to the ground-truth depth artifact
 - `predictions_<format>.json` records the source depth artifact metadata rather than fabricating a `predictions.json`
 - `eval_<format>.json` is produced by `tools/eval_depth.py`
@@ -332,7 +335,7 @@ For `--task depth`, the real lane is artifact-backed rather than inference-backe
 
 For `--task keypoints`, the real lane is also artifact-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` point to backend-specific `predictions.json` artifacts with keypoints
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific `predictions.json` artifacts with keypoints
 - `--data` points to the dataset root used by `tools/eval_keypoints.py`
 - `predictions_<format>.json` is a copied backend predictions artifact kept under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_keypoints.py`
@@ -340,7 +343,7 @@ For `--task keypoints`, the real lane is also artifact-backed:
 
 For `--task pose6d`, the real lane is also artifact-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` point to backend-specific `predictions.json` artifacts with pose fields
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific `predictions.json` artifacts with pose fields
 - `--data` points to the dataset root used by `tools/eval_pose.py`
 - `predictions_<format>.json` is a copied backend predictions artifact kept under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_pose.py`
@@ -381,7 +384,7 @@ The top-level benchmark report records, per format:
 
 By default the benchmark chooses `torch` as the parity reference backend when
 `torch` succeeded. If `torch` is unavailable, it falls back to the first
-eligible real backend. Use `--parity-reference-backend torch|onnx|engine` when
+eligible real backend. Use `--parity-reference-backend torch|onnx|engine|torchscript` when
 you want a specific backend to act as the reference for detect/parity reports.
 
 ## Status model
@@ -413,8 +416,8 @@ The CLI now defaults to:
 - `--latency-source auto`
 
 `auto` prefers a real dataset-pass wall-clock measurement for `torch`, `onnx`,
-and `engine`, prefers `artifact_eval` for `--task keypoints`, `--task depth`,
-and `--task pose6d`, and falls back to `synthetic_step` for the remaining
+`engine`, and `torchscript`, prefers `artifact_eval` for `--task segmentation`,
+`--task keypoints`, `--task depth`, and `--task pose6d`, and falls back to `synthetic_step` for the remaining
 formats.
 The report records the per-format `latency_source` so CI and readers do not
 confuse placeholder timing with a real backend pass.
@@ -426,13 +429,13 @@ following canonical tasks and aliases:
 
 | Canonical task | Accepted labels | Metric family | Current benchmark state | Notes |
 | --- | --- | --- | --- | --- |
-| `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` | Default benchmark path. |
-| `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
+| `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` | Default benchmark path. |
+| `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
 | `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | documented planned | Visible in the benchmark interface contract and report schema, but dedicated real eval wiring is still pending. |
 | `obb` | `obb` | `obb_map` | documented planned | Explicitly benchmarkable at the interface level; backend/eval implementation remains a follow-up. |
-| `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
-| `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
-| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
+| `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
+| `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
+| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 
 The top-level `task_semantics` block and each per-format result include:
 
@@ -461,7 +464,7 @@ future work.
 | `torch` | real orchestration when runtime + model are available | Delegates to the current torch exporter path and suite eval. |
 | `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
 | `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
-| `torchscript` | accepted now; synthetic / skipped semantics for the current phase | Depends on a local PyTorch runtime only; the benchmark writes honest placeholder artifacts until a dedicated real-orchestration path lands. |
+| `torchscript` | real detect orchestration when runtime + model are available | Depends on local PyTorch and a compatible combined-output decode path. |
 | `executorch` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
 | `opencv_dnn` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
 

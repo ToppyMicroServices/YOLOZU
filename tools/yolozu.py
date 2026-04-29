@@ -36,6 +36,27 @@ from yolozu.inference.export_orchestrator import (  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
+_PKG_PASSTHROUGH_COMMANDS = {
+    "benchmark",
+    "calibrate",
+    "demo",
+    "eval-coco",
+    "eval-long-tail",
+    "export-dataset",
+    "fetch",
+    "import",
+    "long-tail-recipe",
+    "migrate",
+    "onnxrt",
+    "parity",
+    "predictions",
+    "resources",
+    "test",
+    "train",
+    "train-orchestrate",
+    "validate",
+}
+
 
 def _manifest_path() -> Path:
     return repo_root / "tools" / "manifest.json"
@@ -1073,6 +1094,18 @@ def _passthrough_pkg_cli(args: argparse.Namespace) -> int:
     return int(pkg_main(argv))
 
 
+def _add_pkg_passthrough_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    name: str,
+    *,
+    help: str,
+    aliases: list[str] | None = None,
+) -> None:
+    parser = subparsers.add_parser(name, aliases=aliases or (), add_help=False, help=help)
+    parser.add_argument("forward_args", nargs=argparse.REMAINDER, help=f"Arguments forwarded to `yolozu {name}`.")
+    parser.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd=name)
+
+
 def _passthrough_list_models(args: argparse.Namespace) -> int:
     from yolozu.cli import main as pkg_main
 
@@ -1312,6 +1345,22 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_export_dataset.add_argument("forward_args", nargs=argparse.REMAINDER, help="Arguments forwarded to `yolozu export-dataset`.")
     p_export_dataset.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="export-dataset")
 
+    for pkg_cmd, pkg_help in (
+        ("eval-coco", "Delegate to yolozu package CLI eval-coco command."),
+        ("benchmark", "Delegate to yolozu package CLI benchmark command."),
+        ("parity", "Delegate to yolozu package CLI parity command."),
+        ("predictions", "Delegate to yolozu package CLI predictions command."),
+        ("validate", "Delegate to yolozu package CLI validate command."),
+        ("onnxrt", "Delegate to yolozu package CLI onnxrt command."),
+        ("resources", "Delegate to yolozu package CLI resources command."),
+        ("migrate", "Delegate to yolozu package CLI migrate command."),
+        ("import", "Delegate to yolozu package CLI import command."),
+        ("train", "Delegate to yolozu package CLI train command."),
+        ("train-orchestrate", "Delegate to yolozu package CLI train-orchestrate command."),
+        ("test", "Delegate to yolozu package CLI test command."),
+    ):
+        _add_pkg_passthrough_parser(sub, pkg_cmd, help=pkg_help)
+
     p_completion = sub.add_parser("completion", aliases=["comp"], help="Print shell completion script (bash/zsh).")
     p_completion.add_argument("-s", "--shell", choices=("bash", "zsh"), default="bash", help="Target shell (default: bash).")
     p_completion.add_argument("-c", "--command", default="yolozu", help="Command name to bind completion to (default: yolozu).")
@@ -1403,7 +1452,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     raw_argv = sys.argv[1:] if argv is None else argv
-    if raw_argv and raw_argv[0] in {"calibrate", "eval-long-tail", "long-tail-recipe", "export-dataset"}:
+    if raw_argv and raw_argv[0] in _PKG_PASSTHROUGH_COMMANDS:
         from yolozu.cli import main as pkg_main
 
         return int(pkg_main(raw_argv))

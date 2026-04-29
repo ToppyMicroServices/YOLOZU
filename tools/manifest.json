@@ -421,6 +421,84 @@
       ]
     },
     {
+      "docs": [
+        "manual/chapters/04_cli_reference.tex",
+        "docs/release_reliability_checklist.md",
+        "docs/manual_cli_drift_allowlist.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "tools/audit_manual_cli_drift.py",
+      "examples": [
+        {
+          "command": "python3 tools/audit_manual_cli_drift.py --json",
+          "description": "Audit documented top-level yolozu commands against canonical CLI help and legacy wrapper help."
+        }
+      ],
+      "id": "audit_manual_cli_drift",
+      "inputs": [
+        {
+          "default": "manual/chapters/04_cli_reference.tex",
+          "flag": "--manual",
+          "kind": "file",
+          "name": "manual",
+          "required": false
+        },
+        {
+          "default": "docs/manual_cli_drift_allowlist.json",
+          "flag": "--allowlist",
+          "kind": "file",
+          "name": "allowlist",
+          "required": false
+        },
+        {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "flag": "--skip-wrapper",
+          "kind": "string",
+          "name": "skip_wrapper",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "description": "Human-readable or JSON audit summary on stdout.",
+          "kind": "stdout",
+          "name": "audit_report"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true,
+        "notes": "Uses --help probes only; does not require optional backend runtimes."
+      },
+      "requires": {
+        "python_packages": []
+      },
+      "runner": "python3",
+      "summary": "Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface.",
+      "tags": [
+        "cli",
+        "manual",
+        "quality-gate"
+      ]
+    },
+    {
       "contracts": {
         "consumes": [
           "predictions_json"
@@ -989,6 +1067,7 @@
       },
       "docs": [
         "docs/benchmark_mode.md",
+        "docs/benchmark_support_matrix.md",
         "docs/benchmark_mode_spec_parity_target.md",
         "docs/benchmark_latency.md",
         "docs/benchmark_mode_gap_audit.md",
@@ -1037,20 +1116,20 @@
           "description": "Dry-run the benchmark wiring and artifact layout for all supported formats."
         },
         {
-          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --engine-model exports/example.plan --data data/coco8.yaml --format torch,onnx,engine --latency-source auto --output reports/benchmark_report.json",
-          "description": "Run real torch/onnx/engine backend orchestration when backend artifacts are available."
+          "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --engine-model exports/example.plan --data data/coco8.yaml --format torch,onnx,engine,torchscript --torchscript-model exports/example.torchscript --latency-source auto --output reports/benchmark_report.json",
+          "description": "Run real torch/onnx/engine/torchscript detect backend orchestration when backend artifacts are available."
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --engine-model exports/example.plan --data data/coco8.yaml --format torch,onnx,engine --protocol nms_applied --latency-source auto --history reports/benchmark_report.jsonl --output reports/benchmark_report.json",
           "description": "Run protocol-pinned backend orchestration and append JSONL history."
         },
         {
-          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_mode_gap_audit.md and docs/benchmark_backend_runtime_matrix.md",
+          "command": "python3 tools/benchmark_model.py --help  # then read docs/benchmark_support_matrix.md",
           "description": "Review the current benchmark/export-surface gap before extending format coverage."
         },
         {
-          "command": "python3 tools/benchmark_model.py --model exports/example.torchscript --data data/coco8.yaml --format torchscript --dry-run --output reports/benchmark_report.json",
-          "description": "Plan a TorchScript benchmark run with the current honest dry-run semantics."
+          "command": "python3 tools/benchmark_model.py --model exports/example.torchscript --data data/coco8.yaml --format torchscript --output reports/benchmark_report.json",
+          "description": "Run a TorchScript detect benchmark using the declared combined-output decode path."
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --data data/coco8.yaml --format torch,onnx --latency-source auto --output reports/benchmark_report.json",
@@ -1086,7 +1165,7 @@
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task pose6d --format torchscript --dry-run --output reports/benchmark_report.json",
-          "description": "Show that non-detect YOLOZU-native tasks are planning-only today and keep runtime boundaries explicit."
+          "description": "Inspect YOLOZU-native pose6d dry-run semantics while real artifact_eval remains artifact-backed."
         }
       ],
       "id": "benchmark_model",
@@ -1369,6 +1448,12 @@
           "required": false
         },
         {
+          "flag": "--torchscript-model",
+          "kind": "file",
+          "name": "torchscript_model",
+          "required": false
+        },
+        {
           "flag": "--depth-mask",
           "kind": "file",
           "name": "depth_mask",
@@ -1504,7 +1589,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine orchestration when available, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, torchscript accepted with honest synthetic/skip semantics for the current phase, stable artifacts, explicit skipped-format reporting, and docs that rank the remaining gap-closing work (broader real task coverage, broader format matrix, and clearer support-status tables).",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",
@@ -5518,6 +5603,10 @@
         {
           "command": "python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --dry-run --wrap --output reports/pred_executorch.json",
           "description": "Dry-run ExecuTorch exporter for schema/interface-contract validation."
+        },
+        {
+          "command": "python3 tools/export_predictions_executorch.py --dataset data/smoke --split val --model exports/model.pte --runtime-output-json reports/executorch_runtime_outputs.json --wrap --output reports/pred_executorch.json",
+          "description": "Decode an ExecuTorch runtime output JSON artifact into strict predictions JSON."
         }
       ],
       "id": "export_predictions_executorch",
@@ -5544,6 +5633,18 @@
           "flag": "--model",
           "kind": "file",
           "name": "model",
+          "required": false
+        },
+        {
+          "flag": "--boxes-scale",
+          "kind": "string",
+          "name": "boxes_scale",
+          "required": false
+        },
+        {
+          "flag": "--runtime-output-json",
+          "kind": "file",
+          "name": "runtime_output_json",
           "required": false
         },
         {
@@ -5597,15 +5698,13 @@
         "gpu_required": false,
         "linux_ok": true,
         "macos_ok": true,
-        "notes": "Non-dry-run requires ExecuTorch runtime availability in the execution environment."
+        "notes": "Non-dry mode requires a .pte model path plus --runtime-output-json from an external ExecuTorch runtime pass."
       },
       "requires": {
-        "python_packages": [
-          "executorch"
-        ]
+        "python_packages": []
       },
       "runner": "python3",
-      "summary": "Run ExecuTorch export flow and emit YOLOZU predictions JSON (dry-run supported for interface-contract validation).",
+      "summary": "Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation).",
       "tags": [
         "predictions",
         "executorch"
@@ -6682,6 +6781,169 @@
         "interop",
         "benchmark",
         "parity"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/benchmark_support_matrix.md",
+        "docs/benchmark_mode.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes predictions JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_predictions_torchscript.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_predictions_torchscript.py --dataset data/smoke --split val --model exports/model.torchscript --wrap --output reports/pred_torchscript.json",
+          "description": "Run TorchScript detection export with the declared combined-output decode path."
+        },
+        {
+          "command": "python3 tools/export_predictions_torchscript.py --dataset data/smoke --split val --dry-run --wrap --output reports/pred_torchscript.json",
+          "description": "Dry-run TorchScript exporter schema wiring."
+        }
+      ],
+      "id": "export_predictions_torchscript",
+      "inputs": [
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--model",
+          "kind": "file",
+          "name": "model",
+          "required": false
+        },
+        {
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--imgsz",
+          "kind": "number",
+          "name": "imgsz",
+          "required": false
+        },
+        {
+          "flag": "--input-size",
+          "kind": "number",
+          "name": "input_size",
+          "required": false
+        },
+        {
+          "flag": "--combined-output",
+          "kind": "string",
+          "name": "combined_output",
+          "required": false
+        },
+        {
+          "flag": "--combined-format",
+          "kind": "string",
+          "name": "combined_format",
+          "required": false
+        },
+        {
+          "flag": "--boxes-scale",
+          "kind": "string",
+          "name": "boxes_scale",
+          "required": false
+        },
+        {
+          "flag": "--min-score",
+          "kind": "number",
+          "name": "min_score",
+          "required": false
+        },
+        {
+          "flag": "--topk",
+          "kind": "number",
+          "name": "topk",
+          "required": false
+        },
+        {
+          "default": "reports/predictions_torchscript.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--wrap",
+          "kind": "string",
+          "name": "wrap",
+          "required": false
+        },
+        {
+          "flag": "--strict",
+          "kind": "string",
+          "name": "strict",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/predictions_torchscript.json",
+          "kind": "file",
+          "name": "predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true,
+        "notes": "Requires local PyTorch for non-dry mode."
+      },
+      "requires": {
+        "python_packages": [
+          "torch",
+          "numpy",
+          "pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path.",
+      "tags": [
+        "predictions",
+        "torchscript",
+        "benchmark"
       ]
     },
     {
@@ -14954,6 +15216,10 @@
           "description": "Validate the canonical tool manifest through the top-level CLI."
         },
         {
+          "command": "python3 tools/yolozu.py eval-coco --help",
+          "description": "Check that the repo-local legacy wrapper forwards canonical package CLI commands and help output."
+        },
+        {
           "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",
           "description": "Top-level train route for the Apache-2.0-friendly external YOLOX bridge (dry-run)."
         },
@@ -15024,6 +15290,10 @@
         {
           "command": "python3 -m yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force",
           "description": "Export a semantic-segmentation descriptor into an images/masks layout without copying large assets."
+        },
+        {
+          "command": "python3 -m yolozu export --backend executorch --dataset data/smoke --split val --model exports/model.pte --runtime-output-json reports/executorch_runtime_outputs.json --boxes-scale norm --output reports/pred_executorch.json --force",
+          "description": "Decode ExecuTorch runtime output JSON through the canonical export surface."
         }
       ],
       "id": "yolozu",
@@ -15650,6 +15920,13 @@
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
+          "required": false
+        },
+        {
+          "description": "ExecuTorch runtime output JSON decoded by yolozu export --backend executorch.",
+          "flag": "--runtime-output-json",
+          "kind": "file",
+          "name": "runtime_output_json",
           "required": false
         },
         {

@@ -49,6 +49,7 @@ bash scripts/smoke.sh --profile deep
 # CUDA machine: run TTT probe on GPU
 bash scripts/smoke.sh --profile deep --torch-device cuda
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 tools/audit_manual_cli_drift.py
 python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest

@@ -84,11 +84,9 @@ Latency and FPS benchmarks constitute a vital component of the regression testin
 
 The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
 current implementation remains artifact-first and additionally wires real
-backend orchestration for \cmd{torch}, \cmd{onnx}, and \cmd{engine}. It also
-accepts \cmd{torchscript} in the benchmark surface; until a dedicated
-torchscript execution path exists, those entries are recorded explicitly as
-dry-run or synthetic-latency results instead of being misreported as fully
-executed runs. When the real backends can execute, the command records a real
+backend orchestration for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
+\cmd{torchscript}. TorchScript uses a declared combined-output decode path
+with rows \cmd{[x1,y1,x2,y2,score,class\_id]}. When the real backends can execute, the command records a real
 dataset-pass wall-clock measurement. When they cannot, it still records
 skipped formats honestly rather than fabricating success.
 
@@ -146,13 +144,13 @@ The current task matrix is:
 \begin{tabular}{p{1.9cm} p{2.9cm} p{2.3cm} p{2.8cm} p{4.2cm}}
 \textbf{Task} & \textbf{Accepted labels} & \textbf{Metric family} & \textbf{State} & \textbf{Notes} \\
 \hline
-\cmd{detect} & \cmd{detect}, \cmd{detection} & \cmd{bbox\_map} & real for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Default benchmark path. \\
-\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & Benchmark mode evaluates backend mask-prediction artifacts with \path{tools/eval\_segmentation.py} and compares matched masks directly. \\
+\cmd{detect} & \cmd{detect}, \cmd{detection} & \cmd{bbox\_map} & real for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} & Default benchmark path. \\
+\cmd{segmentation} & \cmd{segmentation}, \cmd{seg} & \cmd{mask\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} & Benchmark mode evaluates backend mask-prediction artifacts with \path{tools/eval\_segmentation.py} and compares matched masks directly. \\
 \cmd{classification} & \cmd{classification}, \cmd{classify}, \cmd{cls} & \cmd{topk\_accuracy} & interface-defined only & Explicit in the benchmark interface contract, but dedicated real eval wiring is still pending. \\
 \cmd{obb} & \cmd{obb} & \cmd{obb\_map} & interface-defined only & Visible in the benchmark surface, but not yet wired for real backend execution. \\
-\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & \cmd{pose} is normalized to canonical \cmd{keypoints}; benchmark mode evaluates backend predictions artifacts with \path{tools/eval\_keypoints.py} and compares normalized keypoints directly. \\
-\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
-\cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine} & YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
+\cmd{keypoints} & \cmd{keypoints}, \cmd{pose} & \cmd{oks\_map} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} & \cmd{pose} is normalized to canonical \cmd{keypoints}; benchmark mode evaluates backend predictions artifacts with \path{tools/eval\_keypoints.py} and compares normalized keypoints directly. \\
+\cmd{depth} & \cmd{depth} & \cmd{depth\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} & YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
+\cmd{pose6d} & \cmd{pose6d}, \cmd{6dof}, \cmd{pose\_6d}, \cmd{pose-6d} & \cmd{pose6d\_error} & artifact-backed real eval/parity for \cmd{torch}/\cmd{onnx}/\cmd{engine}/\cmd{torchscript} & YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. \\
 \end{tabular}
 \end{center}
 
@@ -173,6 +171,18 @@ rotation, translation, and depth. The remaining non-detect tasks still fail earl
 ask for \cmd{--dry-run} or \cmd{--latency-source synthetic\_step} until their
 dedicated backend/eval paths land.
 
+\subsection{Canonical benchmark support matrix}
+The source of truth for per-format, per-task artifact status is
+\path{docs/benchmark\_support\_matrix.md}. Use that matrix when deciding whether
+a benchmark lane writes real inference artifacts, consumes artifact-backed real
+eval/parity inputs, emits placeholders, skips because a runtime/artifact is
+missing, or remains planned.
+
+The manual intentionally avoids duplicating the full table. When benchmark
+semantics change, update the canonical matrix, \path{docs/benchmark\_mode.md},
+this chapter, \path{tools/manifest.json}, and the packaged manifest copy in the
+same change.
+
 \subsection{Runtime / license boundary matrix}
 Benchmark support does not imply that a runtime is bundled with YOLOZU. The
 repository remains Apache-2.0, but several backends rely on external runtimes
@@ -187,7 +197,7 @@ or vendor SDKs with separate terms.
 \cmd{torch} & real detect path & local PyTorch runtime stack & External runtime; verify your chosen runtime/model stack separately. \\
 \cmd{onnx} & real detect path & local ONNX Runtime & External runtime; supported does not mean bundled. \\
 \cmd{engine} & real detect path & Linux + NVIDIA GPU + TensorRT runtime & External NVIDIA runtime/SDK; verify CUDA/TensorRT/NGC redistribution terms separately. \\
-\cmd{torchscript} & dry-run / synthetic latency only & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
+\cmd{torchscript} & real detect path & local PyTorch runtime & No vendor runtime implied; still external to this repo. \\
 \cmd{executorch} & adapter target only & external ExecuTorch runtime & External runtime with separate packaging constraints. \\
 \cmd{opencv\_dnn} & adapter target only & local OpenCV runtime & External runtime; optional contrib/nonfree modules are not bundled. \\
 \cmd{openvino}, \cmd{coreml},\\\cmd{ncnn}, \cmd{rknn},\\\cmd{tflite}, \cmd{paddle} & adapter target only\\/ conditional & external runtime\\or vendor SDK & Treat as adapter targets only; verify redistribution separately. \\
@@ -218,10 +228,9 @@ surface quickly, the most effective implementation order is:
   \item add real backend/eval paths for
   \cmd{classification} and \cmd{obb} on top of the existing
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
-  \item promote \cmd{torchscript} from dry-run/synthetic-latency semantics to a real path,
-  followed by conditional \cmd{openvino}
-  \item keep one support matrix that distinguishes real inference/eval/parity
-  from dry-run, synthetic, or skipped paths
+  \item promote conditional \cmd{openvino} after the current \cmd{torchscript} detect path
+  \item keep \path{docs/benchmark\_support\_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
+  from dry-run, placeholder, planned, or skipped paths
   \item expand real parity artifacts beyond the current
   \cmd{torch}-anchored backend comparisons
   \item keep format-specific flag validation strict so inert combinations fail
