@@ -67,7 +67,7 @@ Depth integration modes in the reference trainer:
 ]
 
 \node[box] (rgb) {\textbf{RGB image}};
-\node[box, below=10mm of rgb] (depth) {\textbf{Depth sidecar} (optional)\\\cmd{depth\_path}/\cmd{depth}};
+\node[box, below=10mm of rgb] (depth) {\textbf{Depth sidecar} (optional)\\\cmd{depth_path}/\cmd{depth}};
 \node[box, right=20mm of rgb] (pre) {\textbf{Preprocess}\\resize/letterbox\\normalize};
 \node[box, right=20mm of pre] (bb) {\textbf{Backbone}\\\([P3,P4,P5]\)};
 \node[box, right=20mm of bb] (proj) {\textbf{Projector}\\1x1 convs\\(boundary stable)};
@@ -88,7 +88,7 @@ Depth integration modes in the reference trainer:
 
 \end{tikzpicture}
 }
-\caption{Depth modes: \cmd{sidecar} carries depth as metadata; \cmd{fuse\_mid} fuses depth after the projector (outside the backbone swap boundary).}
+\caption{Depth modes: \cmd{sidecar} carries depth as metadata; \cmd{fuse_mid} fuses depth after the projector (outside the backbone swap boundary).}
 \end{figure}
 
 Metric safety rule:
@@ -110,13 +110,13 @@ python3 tools/eval_depth.py \
 This CLI is intentionally generic and CPU-friendly. It compares one predicted
 depth map against one ground-truth map and writes a JSON report with:
 \begin{itemize}
-  \item \cmd{abs\_rel}, \cmd{sq\_rel}, \cmd{rmse}, and \cmd{rmse\_log}
+  \item \cmd{abs_rel}, \cmd{sq_rel}, \cmd{rmse}, and \cmd{rmse_log}
   \item threshold metrics \cmd{delta1}, \cmd{delta2}, and \cmd{delta3}
   \item valid-pixel counts and the applied alignment scale factor
 \end{itemize}
 
 Use \cmd{--mask} when only part of the depth map should be scored. The default
-\cmd{--align median\_scale} mode is appropriate for relative monocular depth
+\cmd{--align median_scale} mode is appropriate for relative monocular depth
 predictions where the global scale is ambiguous.
 
 \subsection{Artifact-backed depth benchmark/parity}
@@ -137,8 +137,8 @@ python3 tools/benchmark_model.py \
 This path is intentionally artifact-backed. YOLOZU does not pretend it ran the
 underlying backend inference; instead it:
 \begin{itemize}
-  \item records the backend-specific depth artifact under \path{predictions\_<format>.json}
-  \item evaluates each artifact with \path{tools/eval\_depth.py}
+  \item records the backend-specific depth artifact under \path{predictions_<format>.json}
+  \item evaluates each artifact with \path{tools/eval_depth.py}
   \item compares candidate depth arrays against the reference backend and writes a real parity report
 \end{itemize}
 
@@ -163,7 +163,7 @@ This lane is intentionally artifact-backed. YOLOZU does not pretend it
 ran the underlying backend inference; instead it:
 \begin{itemize}
   \item copies each backend \path{predictions.json} artifact into the benchmark artifact layout
-  \item evaluates each artifact with \path{tools/eval\_keypoints.py}
+  \item evaluates each artifact with \path{tools/eval_keypoints.py}
   \item compares candidate predictions against the reference backend and records score/bbox/keypoint parity
 \end{itemize}
 
@@ -188,7 +188,7 @@ This lane is also intentionally artifact-backed. YOLOZU does not pretend it
 ran the underlying backend inference; instead it:
 \begin{itemize}
   \item copies each backend \path{predictions.json} artifact into the benchmark artifact layout
-  \item evaluates each artifact with \path{tools/eval\_pose.py}
+  \item evaluates each artifact with \path{tools/eval_pose.py}
   \item compares candidate predictions against the reference backend and records rotation/translation/depth parity
 \end{itemize}
 
@@ -206,9 +206,9 @@ python3 tools/eval_pose.py \
 
 This CLI matches detections to GT by IoU and reports:
 \begin{itemize}
-  \item pose core metrics such as \cmd{pose\_success}, \cmd{rot\_deg\_mean}, and \cmd{trans\_l2\_mean}
+  \item pose core metrics such as \cmd{pose_success}, \cmd{rot_deg_mean}, and \cmd{trans_l2_mean}
   \item optional depth error when the predictions expose depth/translation
-  \item optional CAD-point metrics such as \cmd{add\_mean} and \cmd{adds\_mean}
+  \item optional CAD-point metrics such as \cmd{add_mean} and \cmd{adds_mean}
 \end{itemize}
 
 Use \cmd{--success-rot-deg} and \cmd{--success-trans} to make the success gate
@@ -356,8 +356,8 @@ Implementation entry points:
 
 Jitter utilities provide:
 \begin{itemize}
-  \item Intrinsics drift sampling (e.g. $\delta f,\delta c$): \cmd{sample\_intrinsics_jitter(...)}
-  \item Extrinsics jitter sampling: \cmd{sample\_extrinsics_jitter(...)}
+  \item Intrinsics drift sampling (e.g. $\delta f,\delta c$): \cmd{sample_intrinsics_jitter(...)}
+  \item Extrinsics jitter sampling: \cmd{sample_extrinsics_jitter(...)}
   \item A baseline profile with jitter disabled: \cmd{jitter_off()}
 \end{itemize}
 
@@ -500,8 +500,8 @@ For context and intended gates (including real-time constraints), see:
 \section{Available evaluation metrics (current implementation)}
 The pose/depth evaluator (\path{yolozu/pose_eval.py}) reports these keys:
 \begin{itemize}
-  \item Depth: \cmd{depth\_abs_mean}, \cmd{depth\_abs_median}
-  \item Pose core: \cmd{rot\_deg_mean}, \cmd{trans\_l2_mean}, \cmd{pose_success}
+  \item Depth: \cmd{depth_abs_mean}, \cmd{depth_abs_median}
+  \item Pose core: \cmd{rot_deg_mean}, \cmd{trans_l2_mean}, \cmd{pose_success}
   \item CAD-point pose: \cmd{add_mean}, \cmd{add_median}, \cmd{adds_mean}, \cmd{adds_median}
 \end{itemize}
 

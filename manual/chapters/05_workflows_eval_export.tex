@@ -55,7 +55,7 @@ If you are unsure where to start:
 
 % Row B
 \node[box, below=10mm of a_in] (b_in) {\textbf{B}\\backend\\inference};
-\node[box, right=12mm of b_in] (b_exp) {export\\\path{predictions.json}\\+\texttt{export\_settings}};
+\node[box, right=12mm of b_in] (b_exp) {export\\\path{predictions.json}\\+\cmd{export_settings}};
 \node[box, right=12mm of b_exp] (b_val) {validate};
 \node[box, right=12mm of b_val] (b_rep) {eval + reports};
 \draw[arrow] (b_in) -- (b_exp);
@@ -162,7 +162,7 @@ For CI command-surface checks, prefer each exporter's \cmd{--dry-run} mode so sc
 ExecuTorch non-dry mode intentionally does not pretend to execute a generic
 mobile runtime inside YOLOZU. The declared path is: execute the \path{.pte}
 artifact in the target ExecuTorch environment, write rows shaped
-\cmd{[x1,y1,x2,y2,score,class\_id]}, and pass that JSON via
+\cmd{[x1,y1,x2,y2,score,class_id]}, and pass that JSON via
 \cmd{--runtime-output-json}. Unsupported row shapes fail before a predictions
 artifact is written.
 
@@ -174,7 +174,7 @@ yolozu fetch yolox-s-coco --out models --accept-license
 cat models/yolox-s-coco/meta.json
 \end{lstlisting}
 
-The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created\_at}.
+The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created_at}.
 
 \subsection{YOLO user migration entrypoint (v5/v8/11/26)}
 For users already operating within YOLO-family pipelines, \yolozu{} provides a direct interface-contract-first migration path:
@@ -203,7 +203,7 @@ python3 tools/validate_predictions.py reports/pred_yolox.json --strict
 python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
 \end{lstlisting}
 
-The exporter records \path{weights\_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export\_settings}.
+The exporter records \path{weights_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export_settings}.
 
 \subsection{YOLO-style external training lane}
 When the goal is training rather than export-only interop, the recommended
@@ -429,7 +429,7 @@ yolozu import dataset   --from auto   --dataset /path/to/VOCdevkit/VOC2012   --s
 yolozu export-dataset segmentation   --dataset reports/voc_seg_wrapper   --out-dir reports/voc_seg_export   --image-mode symlink   --force
 \end{lstlisting}
 
-For COCO keypoints roots that expose only \path{person\_keypoints\_<split>.json}, the same auto-detect preflight now recognizes the richer keypoints layout and writes a YOLOZU wrapper with \path{keypoint\_names} / \path{skeleton} metadata before export:
+For COCO keypoints roots that expose only \path{person_keypoints_<split>.json}, the same auto-detect preflight now recognizes the richer keypoints layout and writes a YOLOZU wrapper with \path{keypoint_names} / \path{skeleton} metadata before export:
 \begin{lstlisting}[language=bash]
 yolozu doctor import --dataset-from auto --dataset /path/to/coco_keypoints_root --split val2017 --output -
 yolozu import dataset   --from auto   --dataset /path/to/coco_keypoints_root   --split val2017   --output reports/coco_keypoints_wrapper   --force
@@ -460,7 +460,7 @@ python3 tools/validate_predictions.py reports/pred_detectron2.json --strict
 python3 tools/eval_coco.py   --dataset data/coco_yolo_like   --split val2017   --predictions reports/pred_detectron2.json   --protocol nms_applied   --classes data/coco_yolo_like/labels/val2017/classes.json   --output reports/coco_eval_detectron2.json
 \end{lstlisting}
 
-The exporters preserve raw framework box convention (\texttt{xyxy\_abs}) in \path{export\_settings.raw\_output\_bbox\_format}, while normalizing contract output to \texttt{cxcywh\_norm} for strict schema validation.
+The exporters preserve raw framework box convention (\cmd{xyxy_abs}) in \path{export_settings.raw_output_bbox_format}, while normalizing contract output to \cmd{cxcywh_norm} for strict schema validation.
 
 \subsection{COCO results (inference outputs) \texorpdfstring{$\rightarrow$}{->} predictions.json}
 To convert COCO-style detection results into the standardized YOLOZU predictions contract:

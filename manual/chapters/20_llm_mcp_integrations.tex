@@ -15,21 +15,21 @@ python3 tools/run_mcp_server.py
 Core exposed tools:
 \begin{itemize}
   \item \cmd{doctor}
-  \item \cmd{generate\_config}
-  \item \cmd{review\_config}
-  \item \cmd{validate\_predictions}
-  \item \cmd{validate\_dataset}
-  \item \cmd{eval\_coco}
-  \item \cmd{run\_scenarios}
-  \item \cmd{convert\_dataset} (optional)
+  \item \cmd{generate_config}
+  \item \cmd{review_config}
+  \item \cmd{validate_predictions}
+  \item \cmd{validate_dataset}
+  \item \cmd{eval_coco}
+  \item \cmd{run_scenarios}
+  \item \cmd{convert_dataset} (optional)
 \end{itemize}
 
 Return payload policy (for all clients):
 \begin{itemize}
   \item machine-readable JSON
   \item short textual summary in \cmd{summary}
-  \item stable top-level keys: \cmd{ok}, \cmd{tool}, \cmd{summary}, \cmd{exit\_code}
-  \item optional metadata: \cmd{meta.git\_sha}, \cmd{meta.manifest\_sha256}, runtime details
+  \item stable top-level keys: \cmd{ok}, \cmd{tool}, \cmd{summary}, \cmd{exit_code}
+  \item optional metadata: \cmd{meta.git_sha}, \cmd{meta.manifest_sha256}, runtime details
 \end{itemize}
 
 \section{Layer model (fixed)}
@@ -37,7 +37,7 @@ Return payload policy (for all clients):
 \begin{enumerate}
   \item Core layer: I/O envelope, auth/log hooks, error shaping.
   \item YOLOZU API layer: CLI/Python wrapper, argument normalization, manifest resolution.
-  \item Job layer: long-running operations with \cmd{job\_id} tracking.
+  \item Job layer: long-running operations with \cmd{job_id} tracking.
   \item Artifact layer: run artifacts and metadata return (git SHA / manifest hash / environment).
 \end{enumerate}
 
@@ -51,8 +51,8 @@ python3 tools/run_mcp_server.py
 Official MCP Lite surface (deterministic, intended for AI-safe clients):
 \begin{itemize}
   \item \cmd{doctor}
-  \item \cmd{generate\_config}
-  \item \cmd{review\_config}
+  \item \cmd{generate_config}
+  \item \cmd{review_config}
 \end{itemize}
 
 Copy-paste sanity checks:
@@ -127,8 +127,8 @@ curl -sS http://127.0.0.1:11434/v1/models
 
 Notes:
 \begin{itemize}
-  \item MCP tool execution still routes to \cmd{python3 tools/run\_mcp\_server.py}; only the LLM provider/model changes.
-  \item Environment variable names are client-specific; some clients use \cmd{OPENAI\_API\_BASE} instead of \cmd{OPENAI\_BASE\_URL}.
+  \item MCP tool execution still routes to \cmd{python3 tools/run_mcp_server.py}; only the LLM provider/model changes.
+  \item Environment variable names are client-specific; some clients use \cmd{OPENAI_API_BASE} instead of \cmd{OPENAI_BASE_URL}.
   \item Model capability varies by local weights; if tool selection is unstable, prefer a stronger local model and keep prompts/tool wrappers thin.
   \item Verify the endpoint is reachable via \cmd{http://127.0.0.1:11434/v1/models} (OpenAI-compatible) in environments that support it.
 \end{itemize}
@@ -141,7 +141,7 @@ Operational guards in v2 layer implementation:
 \begin{itemize}
   \item Allowlist is manifest-first (\path{tools/manifest.json}) with conservative fallback defaults.
   \item Path tokens are guarded (\cmd{..} rejected; absolute paths outside workspace rejected).
-  \item Job state persistence to \cmd{runs/mcp\_jobs/*.json} for restart-safe status retrieval.
+  \item Job state persistence to \cmd{runs/mcp_jobs/*.json} for restart-safe status retrieval.
   \item Stale in-flight states (queued/running after restart) are surfaced as \cmd{unknown}.
   \item CLI execution timeout and output-size caps with explicit truncation metadata.
 \end{itemize}
@@ -150,21 +150,21 @@ Operational guards in v2 layer implementation:
 
 \subsection{Official support boundary (1.0.x)}
 \begin{itemize}
-  \item Guaranteed (deterministic/lightweight): \cmd{doctor}, \cmd{generate\_config}, \cmd{review\_config}, \cmd{validate\_predictions}
+  \item Guaranteed (deterministic/lightweight): \cmd{doctor}, \cmd{generate_config}, \cmd{review_config}, \cmd{validate_predictions}
   \item Best-effort (environment dependent): long training jobs, TensorRT build/export, OpenCV CUDA/OpenVINO backends
 \end{itemize}
 
 \subsection{Synchronous tools}
 \begin{itemize}
-  \item Data/validation: \cmd{doctor}, \cmd{validate\_predictions}, \cmd{validate\_dataset}, \cmd{convert\_dataset}
-  \item Inference/calibration: \cmd{predict\_images}, \cmd{parity\_check}, \cmd{calibrate\_predictions}
-  \item Evaluation: \cmd{eval\_coco}, \cmd{eval\_instance\_seg}, \cmd{eval\_long\_tail}, \cmd{run\_scenarios}
+  \item Data/validation: \cmd{doctor}, \cmd{validate_predictions}, \cmd{validate_dataset}, \cmd{convert_dataset}
+  \item Inference/calibration: \cmd{predict_images}, \cmd{parity_check}, \cmd{calibrate_predictions}
+  \item Evaluation: \cmd{eval_coco}, \cmd{eval_instance_seg}, \cmd{eval_long_tail}, \cmd{run_scenarios}
 \end{itemize}
 
 \subsection{Asynchronous job tools}
 \begin{itemize}
-  \item \cmd{train\_job}, \cmd{export\_predictions\_job}, \cmd{test\_job}, \cmd{ttt\_job}, \cmd{ctta\_job}
-  \item compatibility alias: \cmd{export\_onnx\_job} (same behavior as \cmd{export\_predictions\_job})
+  \item \cmd{train_job}, \cmd{export_predictions_job}, \cmd{test_job}, \cmd{ttt_job}, \cmd{ctta_job}
+  \item compatibility alias: \cmd{export_onnx_job} (same behavior as \cmd{export_predictions_job})
   \item control/query: \cmd{jobs.list}, \cmd{jobs.status}, \cmd{jobs.cancel}, \cmd{runs.list}, \cmd{runs.describe}
 \end{itemize}
 
@@ -173,10 +173,10 @@ Operational guards in v2 layer implementation:
 \begin{enumerate}
   \item Always pass \cmd{dataset} as a YOLO root and specify \cmd{split} explicitly.
   \item Prefer workspace-relative paths to avoid API-layer path guard rejections.
-  \item Treat \cmd{ok/tool/summary/exit\_code} as the canonical status contract.
-  \item For long tasks, do not poll stdout; use \cmd{job\_id} with \cmd{jobs.status}.
+  \item Treat \cmd{ok/tool/summary/exit_code} as the canonical status contract.
+  \item For long tasks, do not poll stdout; use \cmd{job_id} with \cmd{jobs.status}.
   \item Assume post-restart in-flight jobs become \cmd{unknown}; requeue deterministically if needed.
-  \item Set \cmd{dry\_run}/\cmd{strict}/\cmd{force} explicitly to avoid client-default drift.
+  \item Set \cmd{dry_run}/\cmd{strict}/\cmd{force} explicitly to avoid client-default drift.
 \end{enumerate}
 
 \section{Efficiency backlog for MCP hardening}
@@ -185,10 +185,10 @@ High-value follow-ups that reduce AI ambiguity and integration drift:
 \begin{itemize}
   \item Generated MCP/Actions reference now lives at:
   \begin{itemize}
-    \item \path{docs/generated/mcp\_actions\_tool\_reference.json}
-    \item \path{docs/generated/mcp\_actions\_tool\_reference.md}
+    \item \path{docs/generated/mcp_actions_tool_reference.json}
+    \item \path{docs/generated/mcp_actions_tool_reference.md}
   \end{itemize}
-  \item Regenerate/check command: \cmd{python3 tools/generate\_integration\_tool\_reference.py --check}
+  \item Regenerate/check command: \cmd{python3 tools/generate_integration_tool_reference.py --check}
   \item Add explicit error-code taxonomy for allowlist/path/timeout failures in integration responses.
 \end{itemize}
 
@@ -204,7 +204,7 @@ For MCP-related changes:
 \section{Cross references}
 
 \begin{itemize}
-  \item OpenAI details: \cmd{docs/openai\_mcp\_actions.md}
-  \item Copilot details: \cmd{docs/copilot\_mcp\_integration.md}
-  \item Shared overview: \cmd{docs/llm\_integrations.md}
+  \item OpenAI details: \cmd{docs/openai_mcp_actions.md}
+  \item Copilot details: \cmd{docs/copilot_mcp_integration.md}
+  \item Shared overview: \cmd{docs/llm_integrations.md}
 \end{itemize}

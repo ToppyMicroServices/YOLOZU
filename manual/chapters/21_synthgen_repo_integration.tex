@@ -28,24 +28,24 @@ Ownership split:
   \item \yolozu{}: interface-contract validation, shard loading, overlay rendering, evaluation, smoke checks
 \end{itemize}
 
-Each record in \path{shards/*.jsonl} must satisfy \cmd{schema\_version="1"} and provide the required tensors and metadata fields used by the intake adapters.
+Each record in \path{shards/*.jsonl} must satisfy \cmd{schema_version="1"} and provide the required tensors and metadata fields used by the intake adapters.
 
 \section{One-page handoff order}
 \begin{enumerate}
   \item Export a YOLOZU-compatible dataset root from the generator repo.
   \item Keep shard rows and asset paths explicit.
-  \item Place \path{predictions\_synthgen.json} where its relative paths still resolve.
-  \item Run \cmd{validate\_synthgen\_contract.py}.
-  \item Run \cmd{render\_synthgen\_overlay.py}.
-  \item Run \cmd{eval\_synthgen.py}.
-  \item Run \cmd{smoke\_synthgen.py} if you want one bundled acceptance probe.
+  \item Place \path{predictions_synthgen.json} where its relative paths still resolve.
+  \item Run \cmd{validate_synthgen_contract.py}.
+  \item Run \cmd{render_synthgen_overlay.py}.
+  \item Run \cmd{eval_synthgen.py}.
+  \item Run \cmd{smoke_synthgen.py} if you want one bundled acceptance probe.
 \end{enumerate}
 
 \section{How samples are generated in YOLOZU-synthgen}
 
 The generator is intentionally \textbf{split-responsibility}, not ``gen AI does everything'':
 \begin{itemize}
-  \item Renderer-owned: geometry, object count, pose, camera, base lighting, depth, instance ids, semantic ids, keypoints, and the authoritative \path{scene\_spec}
+  \item Renderer-owned: geometry, object count, pose, camera, base lighting, depth, instance ids, semantic ids, keypoints, and the authoritative \path{scene_spec}
   \item Gen-AI-owned: recipe drafting assistance, appearance recipe drafting, appearance editing, visual QA assistance, and captions/metadata assistance
 \end{itemize}
 
@@ -55,8 +55,8 @@ In other words, \textbf{ground truth is renderer-derived}; gen AI may improve re
 
 Current generator rules allow object geometry to come from:
 \begin{itemize}
-  \item \cmd{primitive\_box} entries for early geometry bootstrapping
-  \item \cmd{mesh\_file} assets for real object geometry
+  \item \cmd{primitive_box} entries for early geometry bootstrapping
+  \item \cmd{mesh_file} assets for real object geometry
 \end{itemize}
 
 This means CAD-derived assets fit naturally once they are exported into mesh files and referenced from the generator-side asset catalogs. The renderer still owns object pose, camera projection, depth, and id passes, so labels remain consistent even when the visual source is a CAD or mesh asset.
@@ -67,14 +67,14 @@ This means CAD-derived assets fit naturally once they are exported into mesh fil
 
 Supported modes are:
 \begin{itemize}
-  \item \cmd{render\_only}: the renderer output is the final image
-  \item \cmd{bg\_only\_inpaint}: only the background outside the foreground union mask is edited
-  \item \cmd{appearance\_only\_conditioned}: conditioned appearance editing may change object interiors while preserving object count and silhouette
+  \item \cmd{render_only}: the renderer output is the final image
+  \item \cmd{bg_only_inpaint}: only the background outside the foreground union mask is edited
+  \item \cmd{appearance_only_conditioned}: conditioned appearance editing may change object interiors while preserving object count and silhouette
 \end{itemize}
 
 Intentionally unsupported as the main labeled-data path:
 \begin{itemize}
-  \item full image regeneration (\cmd{full\_regen})
+  \item full image regeneration (\cmd{full_regen})
   \item gen-AI-predicted masks or keypoints as ground truth
   \item text-to-3D as the main geometry source
 \end{itemize}
@@ -85,17 +85,17 @@ This policy is what makes the downstream handoff to \yolozu{} reliable: the fina
 
 The generator-side pipeline is:
 \begin{enumerate}
-  \item Create \cmd{scene\_recipe}
-  \item Materialize \cmd{scene\_spec}
-  \item Render \cmd{image\_render} plus ground-truth passes
-  \item Create \cmd{appearance\_recipe}
-  \item Materialize \cmd{appearance\_spec}
+  \item Create \cmd{scene_recipe}
+  \item Materialize \cmd{scene_spec}
+  \item Render \cmd{image_render} plus ground-truth passes
+  \item Create \cmd{appearance_recipe}
+  \item Materialize \cmd{appearance_spec}
   \item Apply appearance editing, if enabled by mode
   \item Run QA gate
   \item Emit accepted dataset sample or shard entry
 \end{enumerate}
 
-The important handoff idea is that \cmd{scene\_spec} is fully materialized before rendering, and the renderer-produced passes remain authoritative throughout the rest of the pipeline.
+The important handoff idea is that \cmd{scene_spec} is fully materialized before rendering, and the renderer-produced passes remain authoritative throughout the rest of the pipeline.
 
 \begin{figure}[h]
 \centering
@@ -141,37 +141,37 @@ The important handoff idea is that \cmd{scene\_spec} is fully materialized befor
 The generator runtime emits a canonical sample record with fields such as:
 \begin{itemize}
   \item \cmd{image}
-  \item \cmd{image\_source}
-  \item \cmd{render\_backend}
-  \item \cmd{depth\_ndc}
-  \item \cmd{inst\_id}
-  \item \cmd{sem\_id}
+  \item \cmd{image_source}
+  \item \cmd{render_backend}
+  \item \cmd{depth_ndc}
+  \item \cmd{inst_id}
+  \item \cmd{sem_id}
   \item \cmd{kpts2d}
   \item \cmd{prompt}
-  \item \cmd{scene\_spec}
-  \item \cmd{appearance\_spec}
-  \item \cmd{qa\_report}
-  \item \cmd{schema\_id}, \cmd{schema\_version}
-  \item \cmd{asset\_ids}, \cmd{inst\_map}
+  \item \cmd{scene_spec}
+  \item \cmd{appearance_spec}
+  \item \cmd{qa_report}
+  \item \cmd{schema_id}, \cmd{schema_version}
+  \item \cmd{asset_ids}, \cmd{inst_map}
 \end{itemize}
 
 \subsection{Image handling}
 
 There are two distinct image concepts:
 \begin{itemize}
-  \item \cmd{image\_render}: the direct renderer output before any optional appearance editing
+  \item \cmd{image_render}: the direct renderer output before any optional appearance editing
   \item \cmd{image}: the final training/evaluation image after the selected mode has been applied
 \end{itemize}
 
-For \cmd{render\_only}, \cmd{image == image\_render}. For appearance-edited modes, \cmd{image} may differ visually, but the labels remain anchored to the renderer-owned geometry and passes.
+For \cmd{render_only}, \cmd{image == image_render}. For appearance-edited modes, \cmd{image} may differ visually, but the labels remain anchored to the renderer-owned geometry and passes.
 
 \subsection{Label handling}
 
 Labels are not hand-annotated after rendering and are not guessed from the final image. Instead:
 \begin{itemize}
-  \item \cmd{depth\_ndc} comes from the renderer depth pass
-  \item \cmd{inst\_id} comes from the renderer instance-id pass
-  \item \cmd{sem\_id} comes from the renderer semantic-id pass
+  \item \cmd{depth_ndc} comes from the renderer depth pass
+  \item \cmd{inst_id} comes from the renderer instance-id pass
+  \item \cmd{sem_id} comes from the renderer semantic-id pass
   \item \cmd{kpts2d} is projected from object-space keypoints through the scene camera and then refined against depth and instance-id where available
 \end{itemize}
 
@@ -182,14 +182,14 @@ This is why \path{YOLOZU-synthgen} can support synthetic depth/segmentation/keyp
 At shard-export time, each sample directory typically stores:
 \begin{itemize}
   \item \path{image.png}
-  \item \path{depth\_ndc.npy}
-  \item \path{inst\_id.npy}
-  \item \path{sem\_id.npy}
+  \item \path{depth_ndc.npy}
+  \item \path{inst_id.npy}
+  \item \path{sem_id.npy}
   \item \path{kpts2d.npy}
   \item \path{meta.json}
   \item \path{appearance.json}
   \item \path{qa.json}
-  \item \path{image\_render.png} when the final image is not \cmd{render\_only}
+  \item \path{image_render.png} when the final image is not \cmd{render_only}
 \end{itemize}
 
 When exported for \yolozu{} intake, these assets are summarized into shard rows plus referenced sidecar files. \yolozu{} then validates and loads them through the SynthGen sample interface contract instead of re-deriving labels itself.
@@ -200,9 +200,9 @@ When exported for \yolozu{} intake, these assets are summarized into shard rows 
 
 The base background is not chosen by a free-form text-to-image model. It is first determined by the renderer-side scene settings:
 \begin{itemize}
-  \item \cmd{scene\_recipe.lighting\_policy.envmap\_ids} provides the candidate environment maps
-  \item the compiler samples one \cmd{envmap\_id} from that list
-  \item \cmd{scene\_recipe.lighting\_policy.env\_intensity\_range} controls the sampled background / ambient intensity
+  \item \cmd{scene_recipe.lighting_policy.envmap_ids} provides the candidate environment maps
+  \item the compiler samples one \cmd{envmap_id} from that list
+  \item \cmd{scene_recipe.lighting_policy.env_intensity_range} controls the sampled background / ambient intensity
 \end{itemize}
 
 So the first background decision is a \textbf{lighting/environment selection problem}, not a relabeling problem. This keeps the object labels stable because the background is chosen before the authoritative render passes are produced.
@@ -211,8 +211,8 @@ So the first background decision is a \textbf{lighting/environment selection pro
 
 Background selection is currently policy-driven through the recipe:
 \begin{itemize}
-  \item choose the allowed \cmd{envmap\_ids} set for the target domain
-  \item control brightness variation with \cmd{env\_intensity\_range}
+  \item choose the allowed \cmd{envmap_ids} set for the target domain
+  \item control brightness variation with \cmd{env_intensity_range}
   \item keep camera and object placement within recipe bounds so the chosen background remains compatible with the target task
 \end{itemize}
 
@@ -220,19 +220,19 @@ If the goal is domain coverage, the practical lever is to diversify the recipe's
 
 \subsection{Optional background editing}
 
-After rendering, \path{YOLOZU-synthgen} may optionally modify the image appearance using \cmd{appearance\_spec}. For background-safe generation the important mode is:
+After rendering, \path{YOLOZU-synthgen} may optionally modify the image appearance using \cmd{appearance_spec}. For background-safe generation the important mode is:
 \begin{itemize}
-  \item \cmd{bg\_only\_inpaint}: edit only the background, leaving labeled object regions untouched
+  \item \cmd{bg_only_inpaint}: edit only the background, leaving labeled object regions untouched
 \end{itemize}
 
-The current contract for \cmd{appearance\_spec} makes this explicit:
+The current contract for \cmd{appearance_spec} makes this explicit:
 \begin{itemize}
-  \item \cmd{mode = bg\_only\_inpaint}
-  \item \cmd{mask\_scope = background\_only}
-  \item controls can include renderer-derived guides such as \cmd{depth\_ndc}, \cmd{inst\_boundary}, and \cmd{foreground\_union\_mask}
+  \item \cmd{mode = bg_only_inpaint}
+  \item \cmd{mask_scope = background_only}
+  \item controls can include renderer-derived guides such as \cmd{depth_ndc}, \cmd{inst_boundary}, and \cmd{foreground_union_mask}
 \end{itemize}
 
-Operationally, the background edit should be guided by renderer-owned masks. In the current background-only implementation, this is approximated by changing pixels where \cmd{inst\_id == 0}. In a fuller provider-backed pipeline, the same rule would be enforced with masks and QA checks rather than with direct pixel loops.
+Operationally, the background edit should be guided by renderer-owned masks. In the current background-only implementation, this is approximated by changing pixels where \cmd{inst_id == 0}. In a fuller provider-backed pipeline, the same rule would be enforced with masks and QA checks rather than with direct pixel loops.
 
 \subsection{What is not allowed}
 
@@ -240,7 +240,7 @@ The background stage must not:
 \begin{itemize}
   \item add or remove labeled objects
   \item cross object boundaries and change silhouettes
-  \item become the source of new \cmd{inst\_id}, \cmd{sem\_id}, or \cmd{kpts2d}
+  \item become the source of new \cmd{inst_id}, \cmd{sem_id}, or \cmd{kpts2d}
 \end{itemize}
 
 That is the key safety rule behind the whole integration: backgrounds may vary, but labels do not drift with them.
@@ -263,7 +263,7 @@ Practical note: if the predictions artifact reuses shard-relative asset paths su
 
 This makes the path rule explicit:
 \begin{itemize}
-  \item safest default: keep \path{predictions\_synthgen.json} under \path{shards/}
+  \item safest default: keep \path{predictions_synthgen.json} under \path{shards/}
   \item move it elsewhere only after rewriting relative asset paths and verifying one overlay plus one eval run
 \end{itemize}
 
@@ -311,27 +311,27 @@ python3 tools/smoke_synthgen.py \
 
 Recommended operator reading order:
 \begin{enumerate}
-  \item \cmd{validate\_synthgen\_contract.py}
-  \item \cmd{render\_synthgen\_overlay.py}
-  \item \cmd{eval\_synthgen.py}
-  \item \cmd{smoke\_synthgen.py}
+  \item \cmd{validate_synthgen_contract.py}
+  \item \cmd{render_synthgen_overlay.py}
+  \item \cmd{eval_synthgen.py}
+  \item \cmd{smoke_synthgen.py}
 \end{enumerate}
 
 \section{Acceptance criteria}
 
 The handoff is ready when all of the following are true:
 \begin{itemize}
-  \item \cmd{validate\_synthgen\_contract.py} returns \texttt{OK}
-  \item \cmd{render\_synthgen\_overlay.py} writes a non-empty overlay image
-  \item \cmd{eval\_synthgen.py} writes a report JSON without schema or shape errors
-  \item \cmd{smoke\_synthgen.py} writes overlay, eval, and summary artifacts under the chosen output directory
+  \item \cmd{validate_synthgen_contract.py} returns \texttt{OK}
+  \item \cmd{render_synthgen_overlay.py} writes a non-empty overlay image
+  \item \cmd{eval_synthgen.py} writes a report JSON without schema or shape errors
+  \item \cmd{smoke_synthgen.py} writes overlay, eval, and summary artifacts under the chosen output directory
 \end{itemize}
 
 \section{Versioning rule}
 
 \begin{itemize}
   \item Add optional fields freely.
-  \item Add new \cmd{schema\_id} values freely.
-  \item Do not change required dtype, shape, or range semantics inside \cmd{schema\_version="1"}.
+  \item Add new \cmd{schema_id} values freely.
+  \item Do not change required dtype, shape, or range semantics inside \cmd{schema_version="1"}.
   \item If the generator needs a breaking change, version the interface contract in \yolozu{} first, then enable it in adapters and docs.
 \end{itemize}

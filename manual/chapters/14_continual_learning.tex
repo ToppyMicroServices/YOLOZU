@@ -181,8 +181,8 @@ The repository can automate the \emph{decision layer} even when the data curatio
 The intended pattern is:
 \begin{enumerate}
   \item run continual training,
-  \item run \cmd{eval\_continual.py},
-  \item feed the resulting eval report into \cmd{continual\_decide.py},
+  \item run \cmd{eval_continual.py},
+  \item feed the resulting eval report into \cmd{continual_decide.py},
   \item promote only if the decision report says \cmd{promote}.
 \end{enumerate}
 
@@ -218,7 +218,7 @@ python3 tools/continual_decide.py \
   --min-total-curated-examples 60
 \end{lstlisting}
 
-This writes a decision report (by default \path{runs/continual/<run>/continual\_promotion\_decision.json}) with one of three outcomes:
+This writes a decision report (by default \path{runs/continual/<run>/continual_promotion_decision.json}) with one of three outcomes:
 \begin{itemize}
   \item \cmd{hold}: hard gate failed,
   \item \cmd{review}: hard gates passed, but a soft review gate still requires operator confirmation,
@@ -485,7 +485,7 @@ python3 rtdetr_pose/tools/train_continual.py \
 
 And the manual low-level mental model is:
 \begin{itemize}
-  \item \cmd{train\_minimal.py}: the per-stage trainer,
+  \item \cmd{train_minimal.py}: the per-stage trainer,
   \item \cmd{--self-distill-from}: the frozen teacher checkpoint input,
   \item continual config: controls replay, distillation keys, and distillation weight.
 \end{itemize}
@@ -541,7 +541,7 @@ Both runs used the same detector config and the same tiny budget:
   \item image size: $160$,
   \item batch size: $1$,
   \item max steps per task: $2$,
-  \item replay: disabled (\cmd{replay\_size: 0}).
+  \item replay: disabled (\cmd{replay_size: 0}).
 \end{itemize}
 
 We then executed two runs:
@@ -589,16 +589,16 @@ The important thing to notice is not a claimed accuracy gain, but that the SDFT 
 Run & Task B teacher & Task B final loss & Extra recorded loss terms \\
 \midrule
 Naive & none & 2.673 & none \\
-SDFT & Task A checkpoint & 1.975 & \cmd{loss\_sdft}=0.187,\ \cmd{loss\_sdft\_bbox}=0.057,\ \cmd{loss\_sdft\_logits}=0.130 \\
+SDFT & Task A checkpoint & 1.975 & \cmd{loss_sdft}=0.187,\ \cmd{loss_sdft_bbox}=0.057,\ \cmd{loss_sdft_logits}=0.130 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 More specifically:
 \begin{itemize}
-  \item \path{runs/continual/manual\_sdft\_smoke\_sdft/task01\_task\_b/run\_record.json} recorded \cmd{self\_distill\_from} pointing to the Task A checkpoint.
-  \item \path{runs/continual/manual\_sdft\_smoke\_sdft/task01\_task\_b/metrics.json} contained \cmd{loss\_sdft}, \cmd{loss\_sdft\_bbox}, and \cmd{loss\_sdft\_logits}, which do not appear in the naive run.
-  \item Both runs wrote the expected continual-learning outputs: \path{continual\_run.json}, per-task checkpoints, per-task metrics, and \path{continual\_eval.json}.
+  \item \path{runs/continual/manual_sdft_smoke_sdft/task01_task_b/run_record.json} recorded \cmd{self_distill_from} pointing to the Task A checkpoint.
+  \item \path{runs/continual/manual_sdft_smoke_sdft/task01_task_b/metrics.json} contained \cmd{loss_sdft}, \cmd{loss_sdft_bbox}, and \cmd{loss_sdft_logits}, which do not appear in the naive run.
+  \item Both runs wrote the expected continual-learning outputs: \path{continual_run.json}, per-task checkpoints, per-task metrics, and \path{continual_eval.json}.
 \end{itemize}
 
 \paragraph{What this smoke run does \emph{not} prove.}

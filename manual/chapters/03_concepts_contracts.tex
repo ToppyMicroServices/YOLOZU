@@ -50,7 +50,7 @@ or external C++/Rust};
 
 \node[box, right=18mm of adapter] (pred) {\textbf{Interface contract}\\
 \path{predictions.json}\\
-\texttt{meta.export\_settings}};
+\cmd{meta.export_settings}};
 
 \node[box, right=18mm of pred] (eval) {\textbf{Validate \& evaluate}\\
 schema validators\\
@@ -110,8 +110,8 @@ The overarching objective is to preserve the integrity of source datasets while 
 \path{data.yaml}\\
 \path{images/<split>/}};
 \node[box, below=10mm of ultra] (coco) {\textbf{COCO dataset}\\
-\path{instances\_*.json}\\
-category\_id};
+\path{instances_*.json}\\
+\cmd{category_id}};
 \node[box, below=10mm of coco] (extpred) {\textbf{External results}\\
 COCO results JSON\\
 or framework output};
@@ -171,7 +171,7 @@ Following conversion, proceed with standard validation and evaluation.
 
 \subsection{External SynthGen intake contract}
 For synthetic data pipelines, \yolozu{} intentionally limits scope to \textbf{intake and evaluation}; generation remains in an external repository.
-The intake boundary is fixed by \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}, with required fields such as \cmd{image}, \cmd{depth\_ndc}, \cmd{inst\_id}, \cmd{sem\_id}, and \cmd{kpts2d}.
+The intake boundary is fixed by \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}, with required fields such as \cmd{image}, \cmd{depth_ndc}, \cmd{inst_id}, \cmd{sem_id}, and \cmd{kpts2d}.
 
 Validate shard metadata before training/evaluation:
 \begin{lstlisting}[language=bash]
