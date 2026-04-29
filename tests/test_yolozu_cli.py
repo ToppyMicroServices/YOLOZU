@@ -390,7 +390,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             dataset_root = repo_root / "data" / "smoke"
             model_path = root / "dummy.pte"
             runtime_output = root / "executorch_runtime_outputs.json"
-            out_path = root / "preds.json"
+            run_dir = root / "run"
             model_path.write_bytes(b"dummy")
             runtime_output.write_text(
                 json.dumps({"000000000009.jpg": [[0.1, 0.2, 0.5, 0.7, 0.9, 3]]}),
@@ -416,8 +416,8 @@ class TestYOLOZUCLI(unittest.TestCase):
                     str(runtime_output),
                     "--boxes-scale",
                     "norm",
-                    "--output",
-                    str(out_path),
+                    "--run-dir",
+                    str(run_dir),
                     "--force",
                 ],
                 cwd=str(repo_root),
@@ -428,11 +428,17 @@ class TestYOLOZUCLI(unittest.TestCase):
             )
             if proc.returncode != 0:
                 self.fail(f"yolozu export --backend executorch runtime decode failed:\n{proc.stdout}\n{proc.stderr}")
+            out_path = Path(proc.stdout.strip().splitlines()[-1])
             payload = json.loads(out_path.read_text(encoding="utf-8"))
             entries = payload.get("predictions") or []
             self.assertEqual(entries[0]["detections"][0]["class_id"], 3)
             extra = payload.get("meta", {}).get("extra", {})
             self.assertEqual(extra.get("runtime_decode", {}).get("contract"), "combined_xyxy_score_class")
+            run_config = json.loads((run_dir / "run_config.json").read_text(encoding="utf-8"))
+            config_fp = run_config.get("config_fingerprint", {})
+            self.assertEqual(config_fp.get("runtime_output_json"), str(runtime_output))
+            self.assertIsInstance(config_fp.get("runtime_output_json_sha256"), str)
+            self.assertEqual(config_fp.get("boxes_scale"), "norm")
 
     def test_export_rejects_torch_only_flags_on_yolox(self):
         repo_root = Path(__file__).resolve().parents[1]

@@ -223,6 +223,7 @@ def build_accel_backend_config(*, args: argparse.Namespace, backend: str, datase
             "dry_run": bool(args.dry_run),
         }
     if backend == "executorch":
+        runtime_output_json = getattr(args, "runtime_output_json", None)
         return {
             "backend": backend,
             "dataset": str(dataset_fp),
@@ -230,6 +231,9 @@ def build_accel_backend_config(*, args: argparse.Namespace, backend: str, datase
             "max_images": args.max_images,
             "model": model,
             "model_sha256": sha256_file(model),
+            "runtime_output_json": str(runtime_output_json) if runtime_output_json else None,
+            "runtime_output_json_sha256": sha256_file(runtime_output_json) if runtime_output_json else None,
+            "boxes_scale": str(args.boxes_scale),
             "min_score": float(args.min_score),
             "topk": int(args.topk),
             "dry_run": bool(args.dry_run),

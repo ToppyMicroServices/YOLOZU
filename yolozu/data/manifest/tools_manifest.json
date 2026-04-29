@@ -421,11 +421,6 @@
       ]
     },
     {
-      "contracts": {
-        "produces": [
-          "metrics_report_json"
-        ]
-      },
       "docs": [
         "manual/chapters/04_cli_reference.tex",
         "docs/release_reliability_checklist.md",

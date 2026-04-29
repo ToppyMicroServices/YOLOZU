@@ -42,7 +42,6 @@ def _load_allowlist(path: Path) -> dict[str, Any]:
 def _latex_text(path: Path) -> str:
     text = path.read_text(encoding="utf-8")
     text = text.replace("\\_", "_")
-    text = text.replace("\\cmd{", "\\cmd{")
     return text
 
 
