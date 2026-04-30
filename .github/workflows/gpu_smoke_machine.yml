@@ -2,16 +2,6 @@ name: gpu-smoke-machine
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - .github/workflows/gpu_smoke_machine.yml
-      - tools/build_trt_engine.py
-      - tools/ci/**
-      - tools/export_trt.py
-      - tools/export_predictions_trt.py
-      - tools/measure_trt_latency.py
-      - tools/run_trt_pipeline.py
 
 concurrency:
   group: gpu-smoke-machine-${{ github.ref }}

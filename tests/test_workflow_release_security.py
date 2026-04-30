@@ -18,14 +18,13 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("EXPECTED_VERSION_INPUT", publish)
         self.assertIn("wheel/manual version mismatch", publish)
 
-    def test_container_workflow_runs_on_main_tag_or_manual_only(self):
+    def test_container_workflow_runs_on_tag_or_manual_only(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")
         self.assertNotIn("pull_request:", container)
         self.assertIn("release_tag:", container)
-        self.assertIn("branches:", container)
-        self.assertIn("- main", container)
-        self.assertIn("deploy/docker/**", container)
-        self.assertIn("deploy/runpod/**", container)
+        self.assertNotIn("branches:", container)
+        self.assertIn("deploy/docker/Dockerfile", container)
+        self.assertIn("deploy/runpod/Dockerfile", container)
         self.assertIn("push:", container)
         self.assertIn("NGC_REGISTRY: nvcr.io", container)
         self.assertIn("NGC_NAMESPACE: yolozu", container)
@@ -49,6 +48,24 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("pull_request:", ci)
         self.assertIn("branches:\n      - main", ci)
         self.assertIn("github.event_name == 'push' && github.ref == 'refs/heads/main'", ci)
+
+    def test_expensive_gpu_and_full_sweep_workflows_are_manual_only(self):
+        workflow_names = [
+            "gpu_smoke_machine.yml",
+            "gpu_practical_suite_machine.yml",
+            "gpu_zisn_pipeline.yml",
+            "pytest_gpu_machine.yml",
+            "reference_adapter_full.yml",
+            "cflite_batch.yml",
+            "Debug4TensorRT",
+        ]
+        for name in workflow_names:
+            with self.subTest(workflow=name):
+                workflow = (self.repo_root / ".github" / "workflows" / name).read_text(encoding="utf-8")
+                self.assertIn("workflow_dispatch:", workflow)
+                self.assertNotIn("pull_request:", workflow)
+                self.assertNotIn("\n  push:", workflow)
+                self.assertNotIn("\n  schedule:", workflow)
 
     def test_workflow_only_changes_still_run_release_and_security_regressions(self):
         ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")

@@ -2,8 +2,6 @@ name: gpu-ngc
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   trt_and_opencv_cuda:

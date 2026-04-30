@@ -2,9 +2,6 @@ name: gpu-practical-suite-machine
 
 on:
   workflow_dispatch:
-  schedule:
-    # Nightly (UTC). Keep GPU regressions separate from default CI tiers.
-    - cron: "0 3 * * *"
 
 concurrency:
   group: gpu-practical-suite-machine-${{ github.ref }}

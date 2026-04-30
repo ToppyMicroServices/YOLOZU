@@ -6,8 +6,9 @@ Default cost policy:
 
 - Pull requests run lightweight Ubuntu checks: docs/metadata gates, runtime smoke, and focused quality tests.
 - Pushes to `main` run the full CPU evaluation gate, including Python matrix and full unittest discovery.
-- GPU checks stay on Ubuntu/Linux GPU runners and run only from main, schedules, or manual dispatch.
+- GPU checks stay on Ubuntu/Linux GPU runners and run only by manual dispatch.
 - macOS is reserved for release-time wheel build validation only.
+- Expensive full/fuzz/regression sweeps are manual-only unless there is an explicit release or incident reason to re-enable a schedule.
 
 ## Tiers
 
@@ -33,7 +34,8 @@ Default cost policy:
 
 5. `full`
 - Purpose: GPU/backend matrix (TensorRT/CUDA/provider parity, full reference regression profile).
-- Workflows: `gpu_smoke_machine.yml`, `gpu_practical_suite_machine.yml`, `gpu_zisn_pipeline.yml`, `reference_adapter_full.yml`.
+- Trigger: manual dispatch only.
+- Workflows: `gpu_smoke_machine.yml`, `gpu_practical_suite_machine.yml`, `gpu_zisn_pipeline.yml`, `reference_adapter_full.yml`, `cflite_batch.yml`.
 
 6. `release`
 - Purpose: publish-time packaging confidence, including macOS wheel build validation before the Ubuntu publish job.
@@ -44,7 +46,7 @@ Default cost policy:
 - `core` catches packaging/runtime breakages cheaply.
 - `docs_mcp` validates docs/MCP changes quickly without spending runtime-heavy CI budget.
 - `recommended` gives stable regression signals with an exact-version lock that is installed via a generated `--require-hashes` wheelhouse.
-- `full` is intentionally separated because GPU/provider stacks are expensive and noisy for every PR. The GPU shell helpers and container images now also layer exact-version extras on top of `requirements-locks/requirements-runtime.lock` via `tools/ci/install_with_hashes.py`.
+- `full` is intentionally separated because GPU/provider stacks are expensive and noisy for every PR or nightly schedule. The GPU shell helpers and container images now also layer exact-version extras on top of `requirements-locks/requirements-runtime.lock` via `tools/ci/install_with_hashes.py`.
 
 ## Optional extras policy
 
