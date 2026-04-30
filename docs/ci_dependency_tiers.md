@@ -2,12 +2,19 @@
 
 YOLOZU uses a tiered CI dependency model to keep signal high while avoiding optional-extras combination explosion.
 
+Default cost policy:
+
+- Pull requests run lightweight Ubuntu checks: docs/metadata gates, runtime smoke, and focused quality tests.
+- Pushes to `main` run the full CPU evaluation gate, including Python matrix and full unittest discovery.
+- GPU checks stay on Ubuntu/Linux GPU runners and run only from main, schedules, or manual dispatch.
+- macOS is reserved for release-time wheel build validation only.
+
 ## Tiers
 
 1. `core`
 - Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel`
 - Purpose: packaging and CLI/runtime smoke only.
-- Jobs: `smoke_gate`, `pip_smoke`.
+- Jobs: `smoke_gate`; `pip_smoke` is main-push only.
 
 2. `docs_mcp`
 - Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock`
@@ -22,11 +29,15 @@ YOLOZU uses a tiered CI dependency model to keep signal high while avoiding opti
 4. `recommended`
 - Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock`
 - Purpose: pinned interface contract/behavior gates (`schema`, `manifest`, `reference regression`, deep smoke walkthrough, focused tests).
-- Jobs: `quality_gate`, `test`.
+- Jobs: `quality_gate`; `test` is main-push only.
 
 5. `full`
 - Purpose: GPU/backend matrix (TensorRT/CUDA/provider parity, full reference regression profile).
 - Workflows: `gpu_smoke_machine.yml`, `gpu_practical_suite_machine.yml`, `gpu_zisn_pipeline.yml`, `reference_adapter_full.yml`.
+
+6. `release`
+- Purpose: publish-time packaging confidence, including macOS wheel build validation before the Ubuntu publish job.
+- Workflows: `publish.yml`, `container.yml`, `manual_doi.yml`, `announce_release.yml`.
 
 ## Why this split
 

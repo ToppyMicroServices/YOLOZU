@@ -2,9 +2,8 @@ name: ci
 
 on:
   push:
-    branches-ignore:
-      - beads-sync
-      - "ci-logs/**"
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -245,7 +244,7 @@ jobs:
     needs:
       - changes
       - smoke_gate
-    if: ${{ needs.changes.outputs.full_ci == 'true' }}
+    if: ${{ needs.changes.outputs.full_ci == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -278,7 +277,7 @@ jobs:
   test:
     name: "ci tier: recommended (full gate suite)"
     needs: [changes, smoke_gate, quality_gate]
-    if: ${{ needs.changes.outputs.full_ci == 'true' }}
+    if: ${{ needs.changes.outputs.full_ci == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6

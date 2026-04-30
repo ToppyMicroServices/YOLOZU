@@ -22,7 +22,86 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  macos_wheel_check:
+    name: macOS wheel build check
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel only
+        run: |
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-build.lock
+          python -m build --wheel
+          python -m twine check dist/*.whl
+
+      - name: Validate built wheel version matches package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
+          EXPECTED_VERSION_INPUT: ${{ github.event.inputs.expected_version }}
+        run: |
+          python - <<'PY'
+          import glob
+          import os
+          import pathlib
+          import re
+          import zipfile
+
+          source = pathlib.Path("yolozu/__init__.py").read_text(encoding="utf-8")
+          match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', source)
+          if not match:
+            raise SystemExit("Could not parse __version__ from yolozu/__init__.py")
+          package_version = match.group(1)
+
+          wheels = sorted(glob.glob("dist/*.whl"))
+          if not wheels:
+            raise SystemExit("no wheels found under dist/")
+          whl = wheels[-1]
+
+          with zipfile.ZipFile(whl, "r") as z:
+            meta = None
+            for name in z.namelist():
+              if name.endswith(".dist-info/METADATA"):
+                meta = z.read(name).decode("utf-8", errors="replace")
+                break
+          if not meta:
+            raise SystemExit(f"wheel METADATA not found: {whl}")
+          m = re.search(r"^Version:\s*(.+)$", meta, re.MULTILINE)
+          if not m:
+            raise SystemExit(f"wheel Version field not found in METADATA: {whl}")
+          wheel_version = m.group(1).strip()
+
+          if wheel_version != package_version:
+            raise SystemExit(
+              f"wheel/package version mismatch: wheel={wheel_version} package={package_version} whl={whl}"
+            )
+
+          tag = (os.environ.get("RELEASE_TAG") or "").strip()
+          if tag:
+            expected = tag[1:] if tag.startswith("v") else tag
+            if wheel_version != expected:
+              raise SystemExit(
+                f"wheel/tag version mismatch: tag={tag} expected={expected} wheel={wheel_version} whl={whl}"
+              )
+
+          expected_input = (os.environ.get("EXPECTED_VERSION_INPUT") or "").strip()
+          if expected_input and wheel_version != expected_input:
+            raise SystemExit(
+              f"wheel/manual version mismatch: expected={expected_input} wheel={wheel_version} whl={whl}"
+            )
+
+          print(f"macOS wheel version OK: {wheel_version} ({whl})")
+          PY
+
   pypi:
+    needs:
+      - macos_wheel_check
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

@@ -1,13 +1,7 @@
-name: ClusterFuzzLite PR fuzzing
+name: ClusterFuzzLite manual fuzzing
 
 on:
-  pull_request:
-    paths:
-      - "fuzz/**"
-      - ".clusterfuzzlite/**"
-      - "yolozu/predictions/**"
-      - ".github/workflows/cflite_pr.yml"
-      - ".github/workflows/cflite_batch.yml"
+  workflow_dispatch:
 
 permissions: read-all
 

@@ -11,14 +11,16 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("workflow_dispatch:", publish)
         self.assertIn("expected_version:", publish)
         self.assertIn("release_tag:", publish)
+        self.assertIn("macOS wheel build check", publish)
+        self.assertIn("python -m build --wheel", publish)
         self.assertIn("Validate version and changelog alignment", publish)
         self.assertIn("CHANGELOG.md", publish)
         self.assertIn("EXPECTED_VERSION_INPUT", publish)
         self.assertIn("wheel/manual version mismatch", publish)
 
-    def test_container_workflow_builds_on_pull_requests_but_pushes_only_on_tag_or_manual(self):
+    def test_container_workflow_runs_on_main_tag_or_manual_only(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")
-        self.assertIn("pull_request:", container)
+        self.assertNotIn("pull_request:", container)
         self.assertIn("release_tag:", container)
         self.assertIn("branches:", container)
         self.assertIn("- main", container)
@@ -31,16 +33,22 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("nvcr.io", container)
         self.assertIn("github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'", container)
 
-    def test_scorecard_and_codeql_cover_pull_requests(self):
+    def test_scorecard_and_codeql_run_on_main_not_pull_requests(self):
         scorecard = (self.repo_root / ".github" / "workflows" / "scorecard.yml").read_text(encoding="utf-8")
         codeql = (self.repo_root / ".github" / "workflows" / "codeql.yml").read_text(encoding="utf-8")
-        self.assertIn("pull_request:", scorecard)
+        self.assertNotIn("pull_request:", scorecard)
         self.assertIn("branches:", scorecard)
         self.assertIn("main", scorecard)
         self.assertIn("security-events: write", scorecard)
-        self.assertIn("pull_request:", codeql)
+        self.assertNotIn("pull_request:", codeql)
         self.assertIn("branches:", codeql)
         self.assertIn("main", codeql)
+
+    def test_default_ci_keeps_pr_lightweight_and_main_full(self):
+        ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
+        self.assertIn("pull_request:", ci)
+        self.assertIn("branches:\n      - main", ci)
+        self.assertIn("github.event_name == 'push' && github.ref == 'refs/heads/main'", ci)
 
     def test_workflow_only_changes_still_run_release_and_security_regressions(self):
         ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
