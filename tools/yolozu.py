@@ -703,7 +703,10 @@ def _render_overlays(
     *,
     overlays_dir: Path,
     max_images: int | None,
+    progress: bool | None = None,
 ) -> dict[str, Any]:
+    from yolozu.core.progress import ProgressBar
+
     try:
         from PIL import Image, ImageDraw  # type: ignore
     except Exception as exc:  # pragma: no cover
@@ -715,12 +718,15 @@ def _render_overlays(
     if not isinstance(preds, list):
         raise SystemExit("invalid predictions payload: missing predictions[]")
 
+    total = len(preds) if max_images is None else min(len(preds), max(0, int(max_images)))
+    bar = ProgressBar(label="render overlays", total=total, unit="image", enabled=progress)
     written = 0
     index: list[dict[str, Any]] = []
 
-    for entry in preds:
+    for item_index, entry in enumerate(preds):
         if max_images is not None and written >= int(max_images):
             break
+        bar.update(item_index + 1, "drawing")
         if not isinstance(entry, dict):
             continue
         image_path = entry.get("image")
@@ -788,6 +794,7 @@ def _render_overlays(
         )
         written += 1
 
+    bar.close(f"wrote {written} overlay PNG(s)")
     return {"overlays_dir": str(overlays_dir), "count": int(written), "items": index}
 
 
@@ -864,6 +871,11 @@ def _predict_images(args: argparse.Namespace) -> int:
         images = images[: int(args.max_images)]
     if not images:
         raise SystemExit(f"no images matched under: {input_dir}")
+    from yolozu.core.progress import ProgressBar
+
+    progress = getattr(args, "progress", None)
+    stages = ProgressBar(label="predict-images", total=4, unit="stage", enabled=progress)
+    stages.step(f"found {len(images)} image(s)")
 
     out_path = Path(args.output)
     if not out_path.is_absolute():
@@ -880,6 +892,7 @@ def _predict_images(args: argparse.Namespace) -> int:
             html_path = repo_root / html_path
 
     with tempfile.TemporaryDirectory(prefix="yolozu_predict_images_") as td:
+        stages.step("prepare temporary dataset")
         tmp_root = Path(td)
         split = "train2017"
         images_dir = tmp_root / "images" / split
@@ -901,6 +914,7 @@ def _predict_images(args: argparse.Namespace) -> int:
         export_args.dataset = str(tmp_root)
         export_args.split = split
         export_args.output = str(out_path)
+        stages.step(f"run {getattr(args, 'backend', 'backend')} backend")
         export_path = _export_with_backend(
             export_args,
             dataset_override=str(tmp_root),
@@ -917,7 +931,8 @@ def _predict_images(args: argparse.Namespace) -> int:
                 entry["image"] = mapping[img]
         _write_json(out_path, payload)
 
-    overlays_index = _render_overlays(payload, overlays_dir=overlays_dir, max_images=args.max_images)
+    stages.step("render PNG overlays")
+    overlays_index = _render_overlays(payload, overlays_dir=overlays_dir, max_images=args.max_images, progress=progress)
     if html_path is not None:
         _write_html_report(html_path=html_path, overlays_index=overlays_index, title=str(args.title))
         print(out_path)
@@ -933,6 +948,7 @@ def _predict_images(args: argparse.Namespace) -> int:
         first_overlay = items[0].get("overlay")
         if isinstance(first_overlay, str) and first_overlay:
             print(f"first_overlay: {first_overlay}")
+    stages.close("done")
     return 0
 
 
@@ -1244,6 +1260,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_pi.add_argument("-v", "--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
     p_pi.add_argument("-H", "--html", default="reports/predict_images.html", help="Optional HTML report output path.")
     p_pi.add_argument("--title", default="YOLOZU predict-images report", help="HTML title.")
+    p_pi.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Show stderr progress bars (default: auto on interactive terminals).",
+    )
     p_pi.set_defaults(_fn=_predict_images)
 
     p_pkd = sub.add_parser(

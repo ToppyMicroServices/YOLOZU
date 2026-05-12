@@ -371,6 +371,7 @@ class TestPipCLICommands(unittest.TestCase):
                     str(overlays_dir),
                     "--html",
                     str(html_path),
+                    "--progress",
                 ],
                 cwd=repo_root,
             )
@@ -388,6 +389,8 @@ class TestPipCLICommands(unittest.TestCase):
             self.assertTrue(overlays, "expected overlay image")
             self.assertIn("overlays_dir:", proc.stdout)
             self.assertIn("first_overlay:", proc.stdout)
+            self.assertIn("predict-images", proc.stderr)
+            self.assertIn("render overlays", proc.stderr)
 
     def test_predict_images_help_surfaces_backend_rich_lane(self):
         repo_root = Path(__file__).resolve().parents[1]

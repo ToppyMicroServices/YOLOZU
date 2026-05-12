@@ -50,14 +50,14 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "commands": [
             "python3 -m pip install -U yolozu",
             "yolozu doctor --explain",
-            "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
+            "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
         ],
         "outputs": [
             "reports/doctor.json",
             "reports/quickstart_instance_seg/instance_seg_demo_report.json",
             "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
         ],
-        "docs": ["docs/install.md", "docs/README.md"],
+        "docs": ["docs/install.md", "docs/README.md", "configs/quickstart/instance_seg_demo.yaml"],
     },
     "evaluate": {
         "title": "Evaluate existing predictions",
@@ -73,11 +73,11 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "title": "Export predictions from images or a runtime",
         "use_when": "You need YOLOZU predictions.json before evaluation.",
         "commands": [
-            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json --overlays-dir reports/predict_overlays --html reports/predict_images.html",
+            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json --overlays-dir reports/predict_overlays --html reports/predict_images.html --progress",
             "yolozu validate predictions reports/predictions.json --strict",
         ],
         "outputs": ["reports/predictions.json", "reports/predict_images.html", "reports/predict_overlays/000000_<image>.png"],
-        "docs": ["docs/training_inference_export.md", "docs/predictions_schema.md"],
+        "docs": ["docs/training_inference_export.md", "docs/predictions_schema.md", "configs/quickstart/predict_images_dummy.yaml"],
     },
     "debug": {
         "title": "Debug environment or dataset issues",
@@ -226,6 +226,12 @@ def main(argv: list[str] | None = None) -> int:
     predict.add_argument("-v", "--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
     predict.add_argument("-H", "--html", default="reports/predict_images.html", help="Optional HTML report output path.")
     predict.add_argument("--title", default="YOLOZU predict-images report", help="HTML title.")
+    predict.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Show stderr progress bars (default: auto on interactive terminals).",
+    )
 
     eval_coco = sub.add_parser("eval-coco", help="Evaluate detections with COCOeval (optional extra: yolozu[coco]).")
     eval_coco.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
@@ -872,6 +878,12 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=0.5,
         help="(inference) Score threshold for predicted instances (default: 0.5).",
+    )
+    demo_is.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Show stderr progress bars (default: auto on interactive terminals).",
     )
 
     demo_ist = demo_sub.add_parser(

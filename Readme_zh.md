@@ -21,11 +21,12 @@ English README: [`README.md`](README.md) | 日本語README: [`Readme_jp.md`](Rea
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --explain
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 
 输出位置：`reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可视化 PNG：`reports/quickstart_instance_seg/overlays/`
+对应检查清单：`configs/quickstart/instance_seg_demo.yaml`
 如果不确定下一步该运行什么，可以先看内置路线图：
 
 ```bash

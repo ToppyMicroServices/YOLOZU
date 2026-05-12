@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from yolozu.core.progress import ProgressBar
+
 
 def _utc_run_id() -> str:
     return time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
@@ -228,6 +230,7 @@ def run_instance_seg_demo(
     device: str = "cpu",
     score_threshold: float = 0.5,
     output_name: str = "instance_seg_demo_report.json",
+    progress: bool | None = None,
 ) -> Path:
     """Create a tiny synthetic instance-seg dataset + predictions, then evaluate mask mAP.
 
@@ -256,6 +259,7 @@ def run_instance_seg_demo(
 
     records: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
+    progress_bar = ProgressBar(label="demo instance-seg", total=int(num_images), unit="image", enabled=progress)
 
     gt_mask_kinds: dict[str, int] = {}
 
@@ -409,6 +413,7 @@ def run_instance_seg_demo(
         coco_image_ids = rng.sample(candidate_ids, k=int(num_images))
 
     for i in range(int(num_images)):
+        progress_bar.update(i + 1, "generate/evaluate")
         image_name = f"img_{i:04d}.png"
         image_path = images_dir / image_name
 
@@ -905,4 +910,5 @@ def run_instance_seg_demo(
 
     out_path = run_dir / str(output_name)
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    progress_bar.close("done")
     return out_path

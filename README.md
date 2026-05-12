@@ -16,11 +16,12 @@ wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --explain
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 
 Writes `reports/quickstart_instance_seg/instance_seg_demo_report.json` and visible PNG overlays under
 `reports/quickstart_instance_seg/overlays/`.
+The matching checklist lives at `configs/quickstart/instance_seg_demo.yaml`.
 If you are unsure what to run next, use the built-in guide:
 
 ```bash

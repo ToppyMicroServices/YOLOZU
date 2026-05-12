@@ -8,10 +8,11 @@ Start with the 1-minute demo, read the first three docs, then pick one next rout
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --explain
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 
 Writes a report plus visible PNG overlays under `reports/quickstart_instance_seg/`.
+Use `configs/quickstart/instance_seg_demo.yaml` as the checklist for expected files.
 For an interactive-feeling route map in the terminal:
 
 ```bash

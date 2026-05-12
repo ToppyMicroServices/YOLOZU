@@ -1,0 +1,17 @@
+kind: yolozu_quickstart_settings
+schema_version: 1
+command: yolozu demo instance-seg
+description: Beginner-visible instance segmentation demo with images, masks, report, and PNG overlays.
+copy_paste:
+  - yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+expected_outputs:
+  report: reports/quickstart_instance_seg/instance_seg_demo_report.json
+  config: reports/quickstart_instance_seg/demo_config.json
+  images_dir: reports/quickstart_instance_seg/images
+  gt_masks_dir: reports/quickstart_instance_seg/gt_masks
+  pred_masks_dir: reports/quickstart_instance_seg/pred_masks
+  overlays_dir: reports/quickstart_instance_seg/overlays
+  first_overlay: reports/quickstart_instance_seg/overlays/overlay_img_0000.png
+notes:
+  - Without torch/torchvision, the demo falls back to synthetic predictions and still writes PNG evidence.
+  - Install yolozu[demo] if you want the real torchvision inference path.

@@ -324,10 +324,10 @@ Choose this when you care more about ``show me the result'' than about setting u
 
 A highly convenient, user-facing approach for batch inference is:
 \begin{lstlisting}[language=bash]
-yolozu predict-images   --backend dummy   --input-dir /path/to/images   --output reports/predict_images.json   --overlays-dir reports/predict_images_overlays   --html reports/predict_images.html
+yolozu predict-images   --backend dummy   --input-dir /path/to/images   --output reports/predict_images.json   --overlays-dir reports/predict_images_overlays   --html reports/predict_images.html   --progress
 \end{lstlisting}
 
-This command generates a standardized predictions artifact, PNG visual overlays, and an HTML summary. The terminal output prints the predictions path, HTML path, overlays directory, and first overlay path so new users know exactly what to open next.
+This command generates a standardized predictions artifact, PNG visual overlays, and an HTML summary. With \cmd{--progress}, stderr shows stage and overlay progress. The terminal output prints the predictions path, HTML path, overlays directory, and first overlay path so new users know exactly what to open next. Use \path{configs/quickstart/predict_images_dummy.yaml} as the checklist for expected files.
 
 \section{Post-result display and reporting}
 Following inference or evaluation, YOLOZU generates both machine-readable artifacts and human-readable summaries.

@@ -1,0 +1,14 @@
+kind: yolozu_quickstart_settings
+schema_version: 1
+command: yolozu predict-images
+description: CPU-only folder inference smoke path with visible PNG overlays.
+copy_paste:
+  - yolozu predict-images --backend dummy --input-dir data/smoke/images/val --max-images 2 --output reports/quickstart_predict_images/predictions.json --overlays-dir reports/quickstart_predict_images/overlays --html reports/quickstart_predict_images/report.html --progress
+expected_outputs:
+  predictions_json: reports/quickstart_predict_images/predictions.json
+  html_report: reports/quickstart_predict_images/report.html
+  overlays_dir: reports/quickstart_predict_images/overlays
+  first_overlay: reports/quickstart_predict_images/overlays/000000_000000000009.png
+notes:
+  - This file is an operator checklist, not an input config for predict-images.
+  - Use --progress when you want visible stderr progress in non-interactive logs.

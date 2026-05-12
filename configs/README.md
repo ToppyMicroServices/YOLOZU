@@ -7,6 +7,12 @@ This directory keeps operational config assets out of the repository root.
   - Current files:
     - `constraints.yaml`
     - `symmetry.json`
+- `configs/quickstart/`
+  - Beginner/operator checklists that pin the command, expected output folders,
+    and first PNG artifact for the most common smoke paths.
+  - Current files:
+    - `predict_images_dummy.yaml`
+    - `instance_seg_demo.yaml`
 - `configs/examples/`
   - Source-checkout CLI examples.
   - Current files:

@@ -15160,8 +15160,8 @@
           "description": "Demo overview report (capability coverage + dependency checks + visible quickstart command)."
         },
         {
-          "command": "python3 -m yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
-          "description": "Beginner-visible instance-seg demo; writes images, masks, PNG overlays, and a JSON report."
+          "command": "python3 -m yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
+          "description": "Beginner-visible instance-seg demo; writes images, masks, PNG overlays, a JSON report, and stderr progress."
         },
         {
           "command": "python3 -m yolozu demo ttt --run-dir reports/demo_ttt_improvement --force",
@@ -15208,8 +15208,8 @@
           "description": "Export dummy predictions with run meta."
         },
         {
-          "command": "python3 -m yolozu predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html",
-          "description": "Folder input to predictions JSON + PNG overlays + HTML (dummy backend)."
+          "command": "python3 -m yolozu predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html --progress",
+          "description": "Folder input to predictions JSON + PNG overlays + HTML (dummy backend), with stderr progress."
         },
         {
           "command": "python3 -m yolozu eval-instance-seg --dataset examples/instance_seg_demo/dataset --split val2017 --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json --pred-root examples/instance_seg_demo/predictions --classes examples/instance_seg_demo/classes.txt --html reports/instance_seg_demo_eval.html --overlays-dir reports/instance_seg_demo_overlays --max-overlays 10",
@@ -15900,6 +15900,13 @@
           "flag": "--predictions",
           "kind": "file",
           "name": "predictions",
+          "required": false
+        },
+        {
+          "description": "Show stderr progress bars for user-facing loops; --no-progress disables them.",
+          "flag": "--progress",
+          "kind": "string",
+          "name": "progress",
           "required": false
         },
         {

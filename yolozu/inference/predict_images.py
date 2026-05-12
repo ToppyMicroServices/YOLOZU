@@ -20,6 +20,7 @@ __all__ = ["predict_images", "predict_images_with_namespace"]
 from typing import Any, Callable, Iterable
 
 from yolozu.export import write_predictions_json
+from yolozu.core.progress import ProgressBar
 from yolozu.inference.export_orchestrator import export_with_backend, load_json, sha256_json
 
 
@@ -78,6 +79,7 @@ def _render_overlays(
     payload: dict[str, Any],
     overlays_dir: Path,
     max_images: int | None,
+    progress: bool | None = None,
 ) -> dict[str, Any]:
     try:
         from PIL import Image, ImageDraw  # type: ignore
@@ -89,11 +91,14 @@ def _render_overlays(
     if not isinstance(predictions, list):
         raise ValueError("invalid predictions payload: missing predictions[]")
 
+    total = len(predictions) if max_images is None else min(len(predictions), max(0, int(max_images)))
+    bar = ProgressBar(label="render overlays", total=total, unit="image", enabled=progress)
     written = 0
     items: list[dict[str, Any]] = []
-    for entry in predictions:
+    for index, entry in enumerate(predictions):
         if max_images is not None and int(written) >= int(max_images):
             break
+        bar.update(index + 1, "drawing")
         if not isinstance(entry, dict):
             continue
         image_value = entry.get("image")
@@ -139,6 +144,7 @@ def _render_overlays(
         items.append({"image": str(image_path), "overlay": str(out_path), "detections": int(len(detections))})
         written += 1
 
+    bar.close(f"wrote {written} overlay PNG(s)")
     return {"overlays_dir": str(overlays_dir), "count": int(written), "items": items}
 
 
@@ -265,6 +271,9 @@ def predict_images_with_namespace(
         images = images[: max(0, int(max_images))]
     if not images:
         raise FileNotFoundError(f"no images matched under: {input_dir_path}")
+    progress = getattr(args, "progress", None)
+    stages = ProgressBar(label="predict-images", total=4, unit="stage", enabled=progress)
+    stages.step(f"found {len(images)} image(s)")
 
     output_path = Path(str(args.output)).expanduser()
     if not output_path.is_absolute():
@@ -283,6 +292,7 @@ def predict_images_with_namespace(
             html_path = Path.cwd() / html_path
 
     with tempfile.TemporaryDirectory(prefix="yolozu_predict_images_") as temp_dir:
+        stages.step("prepare temporary dataset")
         temp_root = Path(temp_dir)
         split = "train2017"
         temp_images = temp_root / "images" / split
@@ -305,6 +315,7 @@ def predict_images_with_namespace(
         export_args.dataset = str(temp_root)
         export_args.split = split
         export_args.output = str(output_path)
+        stages.step(f"run {getattr(args, 'backend', 'backend')} backend")
         export_path = export_with_backend(
             export_args,
             subprocess_or_die=subprocess_fn,
@@ -318,10 +329,13 @@ def predict_images_with_namespace(
         out_path = write_predictions_json(output=output_path, payload=wrapped_payload, force=True)
 
     if overlays_path is None:
+        stages.close("wrote predictions JSON")
         return out_path, None
-    overlay_index = _render_overlays(payload=wrapped_payload, overlays_dir=overlays_path, max_images=max_images)
+    stages.step("render PNG overlays")
+    overlay_index = _render_overlays(payload=wrapped_payload, overlays_dir=overlays_path, max_images=max_images, progress=progress)
     if html_path is not None:
         _write_html_report(html_path=html_path, overlays=overlay_index, title=str(getattr(args, "title", "YOLOZU predict-images report")))
+    stages.close("done")
     return out_path, html_path
 
 
@@ -355,6 +369,7 @@ def predict_images(
     imgsz: int = 640,
     dry_run: bool = False,
     strict: bool = False,
+    progress: bool | None = None,
 ) -> tuple[Path, Path | None]:
     args = argparse.Namespace(
         backend=backend,
@@ -479,5 +494,6 @@ def predict_images(
         decode="auto",
         preprocess=None,
         dump_io=None,
+        progress=progress,
     )
     return predict_images_with_namespace(args)

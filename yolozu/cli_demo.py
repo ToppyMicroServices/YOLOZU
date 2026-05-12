@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,7 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
     ]
 
     recommended_commands = [
-        "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
+        "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
         "yolozu demo overview",
         "yolozu demo",
         "yolozu demo ttt",
@@ -107,7 +108,8 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
         "coverage": coverage,
         "dependency_checks": dependency_checks,
         "visible_quickstart": {
-            "command": "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
+            "command": "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
+            "settings": "configs/quickstart/instance_seg_demo.yaml",
             "report": "reports/quickstart_instance_seg/instance_seg_demo_report.json",
             "png_overlay": "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
             "notes": "Use this when you want a folder with images, masks, overlays, and a JSON report.",
@@ -728,7 +730,8 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                     ) from exc
                 print(
                     "note: torch/torchvision not available; falling back to --inference none "
-                    "(synthetic predictions). To enable inference: python3 -m pip install -U 'yolozu[demo]'"
+                    "(synthetic predictions). To enable inference: python3 -m pip install -U 'yolozu[demo]'",
+                    file=sys.stderr,
                 )
                 resolved_inference = "none"
 
@@ -746,6 +749,7 @@ def handle_demo_command(args: argparse.Namespace) -> int:
             inference=str(resolved_inference),
             device=str(getattr(args, "device", "cpu")),
             score_threshold=float(getattr(args, "score_threshold", 0.5)),
+            progress=getattr(args, "progress", None),
         )
         try:
             cfg_path = Path(out).parent / "demo_config.json"
@@ -845,7 +849,9 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         print("demo overview:")
         print(str(out))
         print("visible quickstart (writes PNG overlays):")
-        print("yolozu demo instance-seg --run-dir reports/quickstart_instance_seg")
+        print("yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress")
+        print("settings checklist:")
+        print("configs/quickstart/instance_seg_demo.yaml")
         print("expected PNG:")
         print("reports/quickstart_instance_seg/overlays/overlay_img_0000.png")
         return 0

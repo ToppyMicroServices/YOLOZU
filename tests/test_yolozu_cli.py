@@ -144,6 +144,22 @@ class TestYOLOZUCLI(unittest.TestCase):
             payload = json.loads(out_path.read_text(encoding="utf-8"))
             self.assertIn("visible_quickstart", payload)
 
+    def test_packaged_quickstart_settings_are_listed(self):
+        repo_root = Path(__file__).resolve().parents[1]
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "resources", "list"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"yolozu resources list failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("configs/quickstart/instance_seg_demo.yaml", proc.stdout)
+        self.assertIn("configs/quickstart/predict_images_dummy.yaml", proc.stdout)
+
     def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
         proc = subprocess.run(
@@ -777,6 +793,7 @@ class TestYOLOZUCLI(unittest.TestCase):
                     str(overlays_dir),
                     "--html",
                     str(html_path),
+                    "--progress",
                 ],
                 cwd=str(repo_root),
                 stdout=subprocess.PIPE,
@@ -800,6 +817,8 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertIn("overlays_dir:", proc.stdout)
             self.assertIn("first_overlay:", proc.stdout)
             self.assertIn(str(overlays[0]), proc.stdout)
+            self.assertIn("predict-images", proc.stderr)
+            self.assertIn("render overlays", proc.stderr)
 
     def test_eval_instance_seg_demo_writes_html_and_overlays(self):
         repo_root = Path(__file__).resolve().parents[1]
