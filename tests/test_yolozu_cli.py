@@ -107,7 +107,7 @@ class TestYOLOZUCLI(unittest.TestCase):
         if proc.returncode != 0:
             self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("demo overview", proc.stdout)
-        self.assertIn("doctor --output -", proc.stdout)
+        self.assertIn("doctor --explain", proc.stdout)
 
     def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -240,6 +240,42 @@ class TestYOLOZUCLI(unittest.TestCase):
             if proc.returncode == 1:
                 errors = payload.get("errors") or []
                 self.assertTrue(errors, "doctor exit code 1 should include errors")
+
+    def test_doctor_explain_prints_human_summary_and_preserves_json_output(self):
+        repo_root = Path(__file__).resolve().parents[1]
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out_path = root / "doctor.json"
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "doctor", "--explain", "--output", str(out_path)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            self.assertIn(proc.returncode, (0, 1), f"unexpected doctor --explain exit code: {proc.returncode}")
+            self.assertIn("YOLOZU doctor explanation", proc.stdout)
+            self.assertIn("Status:", proc.stdout)
+            self.assertIn("Recommended next commands:", proc.stdout)
+            self.assertIn("yolozu guide --goal first-run", proc.stdout)
+            self.assertTrue(out_path.is_file(), "doctor --explain should still write JSON to --output")
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("kind"), "yolozu_doctor")
+
+        json_proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "doctor", "--output", "-"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertIn(json_proc.returncode, (0, 1), f"unexpected doctor JSON exit code: {json_proc.returncode}")
+        payload = json.loads(json_proc.stdout)
+        self.assertEqual(payload.get("kind"), "yolozu_doctor")
+        self.assertNotIn("YOLOZU doctor explanation", json_proc.stdout)
 
     def test_support_ultralytics_detr_alias_forwards(self):
         repo_root = Path(__file__).resolve().parents[1]

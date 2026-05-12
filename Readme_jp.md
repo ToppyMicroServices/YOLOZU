@@ -24,6 +24,7 @@ yolozu demo overview
 ```bash
 yolozu guide
 yolozu guide --goal evaluate
+yolozu doctor --explain
 ```
 
 ```mermaid

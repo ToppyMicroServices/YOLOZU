@@ -29,6 +29,7 @@ yolozu demo overview
 ```bash
 yolozu guide
 yolozu guide --goal evaluate
+yolozu doctor --explain
 ```
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。

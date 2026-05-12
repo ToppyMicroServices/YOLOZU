@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-__all__ = ["build_doctor_report", "write_doctor_report"]
+__all__ = ["build_doctor_report", "explain_doctor_report", "write_doctor_report"]
 
 
 logger = logging.getLogger(__name__)
@@ -420,8 +420,118 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
     return report, int(exit_code)
 
 
-def write_doctor_report(*, output: str | Path, cwd: Path | None = None) -> int:
+def _runtime_available(report: dict[str, Any], name: str) -> bool:
+    runtime = (report.get("runtime_capabilities") or {}).get(name) or {}
+    if name == "torch":
+        return bool(runtime.get("installed"))
+    if name == "onnxruntime":
+        return bool(runtime.get("installed"))
+    if name == "tensorrt":
+        return bool(runtime.get("python_module_available") or runtime.get("trtexec_available"))
+    return bool(runtime)
+
+
+def _warning_action(warning: str) -> str:
+    lowered = warning.lower()
+    if "version mismatch" in lowered:
+        return "Reinstall in the active environment, for example: python3 -m pip install -U --force-reinstall yolozu"
+    if "nvidia-smi" in lowered:
+        return "Ignore on CPU-only/macOS. On Linux GPU machines, install/activate the NVIDIA driver and retry."
+    if "trtexec" in lowered:
+        return "Ignore unless you need TensorRT. For TensorRT export/benchmarking, install TensorRT and add trtexec to PATH."
+    if "mps" in lowered:
+        return "Use CPU for stable checks, or verify your PyTorch/macOS MPS build before relying on macOS acceleration."
+    return "Review the linked docs in guidance_links or run yolozu guide --goal debug."
+
+
+def explain_doctor_report(report: dict[str, Any], *, exit_code: int) -> str:
+    """Render a beginner-friendly explanation for a doctor JSON report."""
+
+    errors = list(report.get("errors") or [])
+    warnings = list(report.get("warnings") or [])
+    drift_hints = list(report.get("drift_hints") or [])
+    runtime = report.get("runtime_capabilities") or {}
+    cuda = runtime.get("cuda") or {}
+    gpu_count = int(cuda.get("gpu_count_from_nvidia_smi") or 0)
+    torch_ok = _runtime_available(report, "torch")
+    ort_ok = _runtime_available(report, "onnxruntime")
+    trt_ok = _runtime_available(report, "tensorrt")
+
+    status = "OK" if exit_code == 0 and not errors else "NEEDS ATTENTION"
+    lines = [
+        "YOLOZU doctor explanation",
+        f"Status: {status}",
+        "",
+        "What this means:",
+    ]
+    if errors:
+        lines.append("  Required Python packages are missing or failed to import.")
+    elif warnings:
+        lines.append("  Core runtime dependencies are present, but optional environment warnings were found.")
+    else:
+        lines.append("  Core runtime dependencies are present. You can start with validation/evaluation workflows.")
+
+    lines.extend(
+        [
+            "",
+            "Runtime summary:",
+            f"  Python: {str(report.get('python') or '').splitlines()[0]}",
+            f"  YOLOZU: {(report.get('yolozu') or {}).get('version')}",
+            f"  GPU detected by nvidia-smi: {gpu_count}",
+            f"  Torch runtime: {'available' if torch_ok else 'not available'}",
+            f"  ONNXRuntime: {'available' if ort_ok else 'not available'}",
+            f"  TensorRT: {'available' if trt_ok else 'not available'}",
+        ]
+    )
+
+    if errors:
+        lines.append("")
+        lines.append("Must fix:")
+        for error in errors:
+            lines.append(f"  - {error}")
+        lines.append("  Next action: python3 -m pip install -U 'yolozu[demo]'")
+
+    if warnings:
+        lines.append("")
+        lines.append("Warnings and next actions:")
+        for warning in warnings:
+            lines.append(f"  - {warning}")
+            lines.append(f"    Action: {_warning_action(str(warning))}")
+
+    if drift_hints:
+        lines.append("")
+        lines.append("Drift hints:")
+        for hint in drift_hints[:3]:
+            if isinstance(hint, dict):
+                title = hint.get("title") or hint.get("id") or "runtime drift hint"
+                action = hint.get("action") or hint.get("doc") or "review linked guidance"
+                lines.append(f"  - {title}: {action}")
+
+    lines.extend(
+        [
+            "",
+            "Recommended next commands:",
+            "  yolozu guide --goal first-run",
+            "  yolozu guide --goal evaluate",
+            "  yolozu doctor import --dataset-from auto --dataset <dataset_root> --output -",
+        ]
+    )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_doctor_report(*, output: str | Path, cwd: Path | None = None, explain: bool = False) -> int:
     report, exit_code = build_doctor_report(cwd=cwd)
+
+    if explain:
+        if str(output) != "-":
+            out_path = Path(output)
+            if not out_path.is_absolute():
+                out_path = Path.cwd() / out_path
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+            print(f"Doctor JSON: {out_path}")
+        print(explain_doctor_report(report, exit_code=exit_code), end="")
+        return int(exit_code)
 
     if str(output) == "-":
         print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))

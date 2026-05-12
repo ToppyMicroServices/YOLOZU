@@ -15136,8 +15136,12 @@
       "entrypoint": "yolozu/cli.py",
       "examples": [
         {
-          "command": "python3 -m yolozu doctor -o reports/doctor.json",
+          "command": "python3 -m yolozu doctor --output reports/doctor.json",
           "description": "Doctor report."
+        },
+        {
+          "command": "python3 -m yolozu doctor --explain",
+          "description": "Print a beginner-friendly environment summary with next actions and save reports/doctor.json."
         },
         {
           "command": "python3 -m yolozu guide --goal evaluate",
@@ -15475,6 +15479,13 @@
           "flag": "--external-backend",
           "kind": "string",
           "name": "external_backend",
+          "required": false
+        },
+        {
+          "description": "Print a human-readable doctor summary with next commands while preserving the JSON report at --output.",
+          "flag": "--explain",
+          "kind": "string",
+          "name": "explain",
           "required": false
         },
         {

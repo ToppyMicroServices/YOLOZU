@@ -16,6 +16,7 @@ For an interactive-feeling route map in the terminal:
 ```bash
 yolozu guide
 yolozu guide --goal debug
+yolozu doctor --explain
 ```
 
 ## Read These 3 First

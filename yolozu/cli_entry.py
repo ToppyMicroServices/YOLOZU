@@ -49,10 +49,10 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "use_when": "You are new to YOLOZU and want a safe smoke path.",
         "commands": [
             "python3 -m pip install -U yolozu",
-            "yolozu doctor --output -",
+            "yolozu doctor --explain",
             "yolozu demo overview",
         ],
-        "outputs": ["demo_output/overview/<utc>/demo_overview_report.json"],
+        "outputs": ["reports/doctor.json", "demo_output/overview/<utc>/demo_overview_report.json"],
         "docs": ["docs/install.md", "docs/README.md"],
     },
     "evaluate": {
@@ -79,7 +79,7 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "title": "Debug environment or dataset issues",
         "use_when": "Install, imports, dataset layout, or runtime checks are failing.",
         "commands": [
-            "yolozu doctor --output -",
+            "yolozu doctor --explain",
             "yolozu doctor import --dataset-from auto --dataset data/smoke --output -",
             "yolozu validate dataset data/smoke --mode warn",
         ],
@@ -149,8 +149,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     guide.add_argument("--json", action="store_true", help="Emit machine-readable guide JSON.")
 
-    doctor = sub.add_parser("doctor", aliases=["dr"], help="Print environment diagnostics as JSON.")
+    doctor = sub.add_parser(
+        "doctor",
+        aliases=["dr"],
+        help="Check the environment. Use --explain for beginner-friendly next actions.",
+    )
     doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path (use - for stdout).")
+    doctor.add_argument("--explain", action="store_true", help="Print a human-readable summary and next commands.")
     doctor_sub = doctor.add_subparsers(dest="doctor_command", required=False)
     doctor_imp = doctor_sub.add_parser("import", help="Summarize dataset/config import resolution (宣伝用).")
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
@@ -1163,7 +1168,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
-        return _cmd_doctor(str(args.output))
+        return _cmd_doctor(str(args.output), explain=bool(getattr(args, "explain", False)))
     if args.command == "registry":
         fn = getattr(args, "_fn", None)
         if fn is None:

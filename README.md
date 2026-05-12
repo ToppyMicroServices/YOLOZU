@@ -24,6 +24,7 @@ If you are unsure what to run next, use the built-in guide:
 ```bash
 yolozu guide
 yolozu guide --goal evaluate
+yolozu doctor --explain
 ```
 
 ```mermaid
