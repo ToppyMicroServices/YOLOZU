@@ -15148,12 +15148,20 @@
           "description": "Print beginner-friendly route guidance with copy-paste evaluation commands."
         },
         {
+          "command": "python3 -m yolozu guide --goal first-run",
+          "description": "Print the beginner-safe route that writes a report plus visible PNG overlays."
+        },
+        {
           "command": "python3 -m yolozu completion -s bash",
           "description": "Print bash completion script for yolozu CLI (eval output to enable tab completion)."
         },
         {
           "command": "python3 -m yolozu demo overview --output reports/demo_overview_report.json",
-          "description": "Demo overview report (capability coverage + dependency checks + recommended commands)."
+          "description": "Demo overview report (capability coverage + dependency checks + visible quickstart command)."
+        },
+        {
+          "command": "python3 -m yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
+          "description": "Beginner-visible instance-seg demo; writes images, masks, PNG overlays, and a JSON report."
         },
         {
           "command": "python3 -m yolozu demo ttt --run-dir reports/demo_ttt_improvement --force",
@@ -15201,7 +15209,7 @@
         },
         {
           "command": "python3 -m yolozu predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html",
-          "description": "Folder input → predictions JSON + overlays + HTML (dummy backend)."
+          "description": "Folder input to predictions JSON + PNG overlays + HTML (dummy backend)."
         },
         {
           "command": "python3 -m yolozu eval-instance-seg --dataset examples/instance_seg_demo/dataset --split val2017 --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json --pred-root examples/instance_seg_demo/predictions --classes examples/instance_seg_demo/classes.txt --html reports/instance_seg_demo_eval.html --overlays-dir reports/instance_seg_demo_overlays --max-overlays 10",

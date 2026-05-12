@@ -15,16 +15,18 @@ YOLOZU が基準にするのは、安定した predictions interface contract �
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu demo overview
+yolozu doctor --explain
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
 ```
 
-出力: `demo_output/overview/<utc>/demo_overview_report.json`
+出力: `reports/quickstart_instance_seg/instance_seg_demo_report.json`
+可視化PNG: `reports/quickstart_instance_seg/overlays/`
 次に何を実行すればよいか迷ったら、CLI 内蔵の guide を使えます。
 
 ```bash
 yolozu guide
+yolozu guide --goal first-run
 yolozu guide --goal evaluate
-yolozu doctor --explain
 ```
 
 ```mermaid

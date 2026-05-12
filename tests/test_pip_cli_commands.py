@@ -350,7 +350,7 @@ class TestPipCLICommands(unittest.TestCase):
             root = Path(td)
             input_dir = root / "images"
             input_dir.mkdir(parents=True, exist_ok=True)
-            image_path = input_dir / "000001.png"
+            image_path = input_dir / "000001.jpg"
             Image.new("RGB", (16, 16), color=(0, 0, 0)).save(image_path)
 
             out_json = root / "predict_images.json"
@@ -384,7 +384,10 @@ class TestPipCLICommands(unittest.TestCase):
             self.assertEqual(Path(preds[0]["image"]), image_path)
             self.assertTrue(html_path.is_file(), f"missing html report: {html_path}")
             self.assertTrue(overlays_dir.is_dir(), f"missing overlays dir: {overlays_dir}")
-            self.assertTrue(list(overlays_dir.glob("*.png")), "expected overlay image")
+            overlays = list(overlays_dir.glob("*.png"))
+            self.assertTrue(overlays, "expected overlay image")
+            self.assertIn("overlays_dir:", proc.stdout)
+            self.assertIn("first_overlay:", proc.stdout)
 
     def test_predict_images_help_surfaces_backend_rich_lane(self):
         repo_root = Path(__file__).resolve().parents[1]

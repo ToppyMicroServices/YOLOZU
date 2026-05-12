@@ -18,13 +18,15 @@ Source of truth:
 For most day-to-day flows, start with:
 
 - `python3 -m yolozu doctor ...`
-- `python3 -m yolozu demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + recommended commands)
+- `python3 -m yolozu guide --goal first-run` (beginner-safe route with visible PNG output)
+- `python3 -m yolozu demo instance-seg --run-dir reports/quickstart_instance_seg` (writes images, masks, PNG overlays, and a JSON report)
+- `python3 -m yolozu demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + visible quickstart command)
 - `python3 -m yolozu completion --shell bash` (or `--shell zsh`) to print shell completion script for `yolozu`.
 - `python3 -m yolozu export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
   - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
   - Non-torch score-only adaptation: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs).
-- `python3 -m yolozu predict-images --input-dir /path/to/images ...`
+- `python3 -m yolozu predict-images --input-dir /path/to/images ...` (writes predictions JSON, PNG overlays, and optional HTML)
 - `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 -m yolozu eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
 - `python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json ...`

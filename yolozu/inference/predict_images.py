@@ -134,7 +134,7 @@ def _render_overlays(
             y2 = (cy + box_h / 2.0) * float(height)
             draw.rectangle([x1, y1, x2, y2], outline=(255, 0, 0), width=2)
 
-        out_path = overlays_dir / f"{written:06d}_{image_path.name}"
+        out_path = overlays_dir / f"{written:06d}_{image_path.stem}.png"
         image.save(out_path)
         items.append({"image": str(image_path), "overlay": str(out_path), "detections": int(len(detections))})
         written += 1

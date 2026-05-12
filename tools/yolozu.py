@@ -776,7 +776,7 @@ def _render_overlays(
                 except Exception as exc:
                     logger.debug("keypoint overlay rendering skipped: %s", exc, exc_info=True)
 
-        out_name = f"{written:06d}_{Path(image_path).name}"
+        out_name = f"{written:06d}_{Path(image_path).stem}.png"
         out_path = overlays_dir / out_name
         img.save(out_path)
         index.append(
@@ -920,9 +920,19 @@ def _predict_images(args: argparse.Namespace) -> int:
     overlays_index = _render_overlays(payload, overlays_dir=overlays_dir, max_images=args.max_images)
     if html_path is not None:
         _write_html_report(html_path=html_path, overlays_index=overlays_index, title=str(args.title))
+        print(out_path)
+        print(f"predictions_json: {out_path}")
         print(html_path)
+        print(f"html_report: {html_path}")
     else:
         print(out_path)
+        print(f"predictions_json: {out_path}")
+    print(f"overlays_dir: {overlays_dir}")
+    items = overlays_index.get("items") if isinstance(overlays_index, dict) else None
+    if isinstance(items, list) and items:
+        first_overlay = items[0].get("overlay")
+        if isinstance(first_overlay, str) and first_overlay:
+            print(f"first_overlay: {first_overlay}")
     return 0
 
 

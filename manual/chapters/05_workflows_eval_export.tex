@@ -327,7 +327,7 @@ A highly convenient, user-facing approach for batch inference is:
 yolozu predict-images   --backend dummy   --input-dir /path/to/images   --output reports/predict_images.json   --overlays-dir reports/predict_images_overlays   --html reports/predict_images.html
 \end{lstlisting}
 
-This command generates a standardized predictions artifact, alongside optional visual overlays and an HTML summary, within a designated run directory.
+This command generates a standardized predictions artifact, PNG visual overlays, and an HTML summary. The terminal output prints the predictions path, HTML path, overlays directory, and first overlay path so new users know exactly what to open next.
 
 \section{Post-result display and reporting}
 Following inference or evaluation, YOLOZU generates both machine-readable artifacts and human-readable summaries.
@@ -338,7 +338,7 @@ Following inference or evaluation, YOLOZU generates both machine-readable artifa
 \midrule
 \cmd{yolozu predict-images} & \path{reports/predict_images.json} & Normalized predictions artifact \\
 \cmd{yolozu predict-images} & \path{reports/predict_images.html} & Visual summary page \\
-\cmd{yolozu predict-images} & \path{reports/predict_images_overlays/} & Per-image visual overlays \\
+\cmd{yolozu predict-images} & \path{reports/predict_images_overlays/*.png} & Per-image visual overlays \\
 \cmd{python3 tools/eval_suite.py} & \path{reports/eval_suite.json} & Protocol-pinned comparison report \\
 \cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.jsonl} & Trial-level raw history \\
 \cmd{python3 tools/hpo_sweep.py} & \path{reports/hpo_sweep.csv}, \path{reports/hpo_sweep.md} & Leaderboard and table views \\

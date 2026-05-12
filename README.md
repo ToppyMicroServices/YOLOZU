@@ -15,16 +15,18 @@ wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu demo overview
+yolozu doctor --explain
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
 ```
 
-Writes `demo_output/overview/<utc>/demo_overview_report.json`.
+Writes `reports/quickstart_instance_seg/instance_seg_demo_report.json` and visible PNG overlays under
+`reports/quickstart_instance_seg/overlays/`.
 If you are unsure what to run next, use the built-in guide:
 
 ```bash
 yolozu guide
+yolozu guide --goal first-run
 yolozu guide --goal evaluate
-yolozu doctor --explain
 ```
 
 ```mermaid

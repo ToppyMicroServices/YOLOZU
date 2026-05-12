@@ -36,10 +36,10 @@ or repo-only helpers, not for real \cmd{yolozu} commands.
 \textbf{Command} & \textbf{When to use} & \textbf{Minimal command} & \textbf{Primary output} & \textbf{Repo?} \\
 \midrule
 \cmd{yolozu doctor} & Check environment and runtime availability. & \cmd{yolozu doctor --explain} & readable diagnostics & No \\
-\cmd{yolozu guide} & Pick the next beginner-safe route. & \cmd{yolozu guide --goal evaluate} & route map and commands & No \\
+\cmd{yolozu guide} & Pick the next beginner-safe route. & \cmd{yolozu guide --goal first-run} & route map with PNG demo output & No \\
 \cmd{bash scripts/smoke.sh} & First offline acceptance run from repo assets. & \cmd{bash scripts/smoke.sh} & \path{reports/smoke_coco_eval_dry_run.json} and PNG evidence & Yes \\
 \cmd{yolozu demo} & Run the bundled CPU-friendly demo suite. & \cmd{yolozu demo} & \path{demo_output/} & No \\
-\cmd{yolozu demo instance-seg} & Produce a quick instance-seg overlay. & \cmd{yolozu demo instance-seg} & \path{demo_output/instance_seg/} & No \\
+\cmd{yolozu demo instance-seg} & Produce a quick instance-seg overlay. & \cmd{yolozu demo instance-seg --run-dir reports/quickstart_instance_seg} & report plus PNG overlays & No \\
 \cmd{yolozu demo keypoints} & Produce a keypoint overlay. & \cmd{yolozu demo keypoints} & \path{demo_output/keypoints/} & No \\
 \cmd{yolozu demo pose} & Produce a 6DoF pose overlay. & \cmd{yolozu demo pose --backend aruco} & \path{demo_output/pose/} & No \\
 \cmd{yolozu demo depth} & Produce a monocular depth visualization. & \cmd{yolozu demo depth} & \path{demo_output/depth/} & No \\

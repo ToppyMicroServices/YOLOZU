@@ -84,10 +84,10 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
     ]
 
     recommended_commands = [
+        "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
         "yolozu demo overview",
         "yolozu demo",
         "yolozu demo ttt",
-        "yolozu demo instance-seg",
         "yolozu demo instance-seg-tta",
         "yolozu demo keypoints",
         "yolozu demo depth",
@@ -106,6 +106,12 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "coverage": coverage,
         "dependency_checks": dependency_checks,
+        "visible_quickstart": {
+            "command": "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
+            "report": "reports/quickstart_instance_seg/instance_seg_demo_report.json",
+            "png_overlay": "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
+            "notes": "Use this when you want a folder with images, masks, overlays, and a JSON report.",
+        },
         "recommended_commands": recommended_commands,
         "docs": [
             "README.md",
@@ -157,11 +163,12 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                         _debug_demo_summary("instance-seg overlays directory scan skipped", exc)
                         overlays = []
                     if overlays:
-                        print(str(overlays[0]))
+                        print(f"first_overlay: {overlays[0]}")
         except Exception as exc:
             _debug_demo_summary("instance-seg report summary skipped", exc)
             if label:
                 print(label)
+        print(f"report: {out_path}")
         print(str(out_path))
 
     if args.demo_command is None:
@@ -837,6 +844,10 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         out = _write_demo_overview_report(output=getattr(args, "output", None))
         print("demo overview:")
         print(str(out))
+        print("visible quickstart (writes PNG overlays):")
+        print("yolozu demo instance-seg --run-dir reports/quickstart_instance_seg")
+        print("expected PNG:")
+        print("reports/quickstart_instance_seg/overlays/overlay_img_0000.png")
         return 0
 
     if args.demo_command == "continual":

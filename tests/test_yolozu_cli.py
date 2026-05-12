@@ -74,6 +74,19 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("eval-coco", text_proc.stdout)
         self.assertIn("docs/predictions_schema.md", text_proc.stdout)
 
+        first_proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "guide", "--goal", "first-run"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if first_proc.returncode != 0:
+            self.fail(f"yolozu guide --goal first-run failed:\n{first_proc.stdout}\n{first_proc.stderr}")
+        self.assertIn("demo instance-seg", first_proc.stdout)
+        self.assertIn("overlays/overlay_img_0000.png", first_proc.stdout)
+
         json_proc = subprocess.run(
             [sys.executable, "-m", "yolozu", "guide", "--goal", "debug", "--json"],
             cwd=str(repo_root),
@@ -106,8 +119,30 @@ class TestYOLOZUCLI(unittest.TestCase):
         )
         if proc.returncode != 0:
             self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
-        self.assertIn("demo overview", proc.stdout)
+        self.assertIn("demo instance-seg", proc.stdout)
         self.assertIn("doctor --explain", proc.stdout)
+
+    def test_demo_overview_points_to_visible_png_quickstart(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out_path = Path(td) / "overview.json"
+            proc = subprocess.run(
+                [sys.executable, str(script), "demo", "overview", "--output", str(out_path)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"tools/yolozu.py demo overview failed:\n{proc.stdout}\n{proc.stderr}")
+            self.assertIn("visible quickstart", proc.stdout)
+            self.assertIn("demo instance-seg", proc.stdout)
+            self.assertIn("overlays/overlay_img_0000.png", proc.stdout)
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertIn("visible_quickstart", payload)
 
     def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -717,7 +752,7 @@ class TestYOLOZUCLI(unittest.TestCase):
             root = Path(td)
             input_dir = root / "images"
             input_dir.mkdir(parents=True, exist_ok=True)
-            img_path = input_dir / "a.png"
+            img_path = input_dir / "a.jpg"
             self.assertIsNotNone(pil_image)
             pil_image.new("RGB", (16, 16), color=(0, 0, 0)).save(img_path)
 
@@ -762,6 +797,9 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.assertTrue(overlays_dir.is_dir())
             overlays = list(overlays_dir.glob("*.png"))
             self.assertTrue(overlays, "expected at least one overlay image")
+            self.assertIn("overlays_dir:", proc.stdout)
+            self.assertIn("first_overlay:", proc.stdout)
+            self.assertIn(str(overlays[0]), proc.stdout)
 
     def test_eval_instance_seg_demo_writes_html_and_overlays(self):
         repo_root = Path(__file__).resolve().parents[1]

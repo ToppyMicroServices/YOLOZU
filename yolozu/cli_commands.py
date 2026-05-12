@@ -1486,6 +1486,8 @@ def _cmd_onnxrt_quantize(args: argparse.Namespace) -> int:
 
 
 def _cmd_predict_images(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
     from yolozu.predict_images import predict_images_with_namespace
 
     try:
@@ -1498,8 +1500,22 @@ def _cmd_predict_images(args: argparse.Namespace) -> int:
         raise SystemExit(str(exc)) from exc
 
     print(str(out_json))
+    print(f"predictions_json: {out_json}")
     if out_html is not None:
         print(str(out_html))
+        print(f"html_report: {out_html}")
+    overlays_arg = getattr(args, "overlays_dir", None)
+    if overlays_arg:
+        overlays_dir = Path(str(overlays_arg)).expanduser()
+        if not overlays_dir.is_absolute():
+            overlays_dir = Path.cwd() / overlays_dir
+        print(f"overlays_dir: {overlays_dir}")
+        try:
+            overlays = sorted(overlays_dir.glob("*.png"))
+        except Exception:
+            overlays = []
+        if overlays:
+            print(f"first_overlay: {overlays[0]}")
     return 0
 
 

@@ -7,15 +7,16 @@ Start with the 1-minute demo, read the first three docs, then pick one next rout
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu demo overview
+yolozu doctor --explain
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg
 ```
 
-Writes `demo_output/overview/<utc>/demo_overview_report.json`.
+Writes a report plus visible PNG overlays under `reports/quickstart_instance_seg/`.
 For an interactive-feeling route map in the terminal:
 
 ```bash
 yolozu guide
-yolozu guide --goal debug
+yolozu guide --goal first-run
 yolozu doctor --explain
 ```
 

@@ -45,14 +45,18 @@ from pathlib import Path
 
 GUIDE_ROUTES: dict[str, dict[str, object]] = {
     "first-run": {
-        "title": "First run: install, check, demo",
-        "use_when": "You are new to YOLOZU and want a safe smoke path.",
+        "title": "First run: install, check, visible PNG demo",
+        "use_when": "You are new to YOLOZU and want a safe smoke path with files you can inspect.",
         "commands": [
             "python3 -m pip install -U yolozu",
             "yolozu doctor --explain",
-            "yolozu demo overview",
+            "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg",
         ],
-        "outputs": ["reports/doctor.json", "demo_output/overview/<utc>/demo_overview_report.json"],
+        "outputs": [
+            "reports/doctor.json",
+            "reports/quickstart_instance_seg/instance_seg_demo_report.json",
+            "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
+        ],
         "docs": ["docs/install.md", "docs/README.md"],
     },
     "evaluate": {
@@ -69,10 +73,10 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "title": "Export predictions from images or a runtime",
         "use_when": "You need YOLOZU predictions.json before evaluation.",
         "commands": [
-            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json",
+            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json --overlays-dir reports/predict_overlays --html reports/predict_images.html",
             "yolozu validate predictions reports/predictions.json --strict",
         ],
-        "outputs": ["reports/predictions.json", "reports/predict_images.html"],
+        "outputs": ["reports/predictions.json", "reports/predict_images.html", "reports/predict_overlays/000000_<image>.png"],
         "docs": ["docs/training_inference_export.md", "docs/predictions_schema.md"],
     },
     "debug": {
