@@ -164,7 +164,7 @@ Reference docs:
 Use this path after the main validation/eval lane is already working and you are
 qualifying backend parity or benchmark behavior. Some formats already support
 artifact-backed real eval/parity lanes; others still report explicit
-placeholder/skipped semantics rather than pretending to be fully implemented.
+unsupported/skipped semantics rather than pretending to be fully implemented.
 The canonical support-status table is
 [Benchmark support matrix](benchmark_support_matrix.md).
 

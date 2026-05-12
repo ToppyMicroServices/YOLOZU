@@ -202,16 +202,16 @@ image files) against the ground-truth depth artifact and then attaches real
 parity reports. For \cmd{pose6d}, YOLOZU evaluates backend-specific
 \path{predictions.json} artifacts with \path{tools/eval_pose.py} and then
 attaches real parity reports over matched detections plus pose fields such as
-rotation, translation, and depth. The remaining non-detect tasks still fail early and
-ask for \cmd{--dry-run} or \cmd{--latency-source synthetic_step} until their
-dedicated backend/eval paths land.
+rotation, translation, and depth. Non-detect tasks without shipped evaluator
+wiring are reported as unsupported/skipped rather than as synthetic benchmark
+successes.
 
 \subsection{Canonical benchmark support matrix}
 The source of truth for per-format, per-task artifact status is
 \path{docs/benchmark_support_matrix.md}. Use that matrix when deciding whether
 a benchmark lane writes real inference artifacts, consumes artifact-backed real
-eval/parity inputs, emits placeholders, skips because a runtime/artifact is
-missing, or remains planned.
+eval/parity inputs, emits dry-run placeholders, or skips because runtime,
+artifact, format, or task wiring is unavailable.
 
 The manual intentionally avoids duplicating the full table. When benchmark
 semantics change, update the canonical matrix, \path{docs/benchmark_mode.md},
@@ -236,9 +236,9 @@ Use these categories instead of reading backend names as license promises:
   or prepare the lane, but users must supply and validate the external runtime.
   For OpenCV, optional contrib/nonfree modules are not bundled.
 
-  \item[Planned or conditional adapter targets]
+  \item[Conditional adapter targets]
   \cmd{openvino}, \cmd{coreml}, \cmd{ncnn}, \cmd{rknn}, \cmd{tflite}, and
-  \cmd{paddle} are not bundled runtimes. Treat them as planned or conditional
+  \cmd{paddle} are not bundled runtimes. Treat them as conditional
   adapter targets unless the support matrix explicitly says a real lane exists
   for the selected task and format.
 \end{description}
@@ -267,7 +267,7 @@ surface quickly, the most effective implementation order is:
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
   \item promote conditional \cmd{openvino} after the current \cmd{torchscript} detect path
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
-  from dry-run, placeholder, planned, or skipped paths
+  from dry-run placeholders and unsupported/skipped paths
   \item expand real parity artifacts beyond the current
   \cmd{torch}-anchored backend comparisons
   \item keep format-specific flag validation strict so inert combinations fail

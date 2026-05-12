@@ -30,8 +30,8 @@ Today the command provides:
 - artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
-format. `executorch` and `opencv_dnn` remain explicit synthetic/skip territory
-for now, and missing runtime/model artifacts are reported honestly.
+format. `executorch` and `opencv_dnn` are explicit unsupported/skipped benchmark
+orchestration lanes for now, and missing runtime/model artifacts are reported honestly.
 
 ## Where YOLOZU still trails the broader benchmark/export surface
 
@@ -431,8 +431,8 @@ following canonical tasks and aliases:
 | --- | --- | --- | --- | --- |
 | `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` | Default benchmark path. |
 | `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
-| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | documented planned | Visible in the benchmark interface contract and report schema, but dedicated real eval wiring is still pending. |
-| `obb` | `obb` | `obb_map` | documented planned | Explicitly benchmarkable at the interface level; backend/eval implementation remains a follow-up. |
+| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | unsupported/skipped | Visible in the benchmark interface contract and report schema, but dedicated real eval wiring is not shipped. Runs report `benchmark_task_not_wired`. |
+| `obb` | `obb` | `obb_map` | unsupported/skipped | Explicitly visible at the interface level, but backend/eval implementation is not shipped. Runs report `benchmark_task_not_wired`. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
@@ -449,8 +449,8 @@ The top-level `task_semantics` block and each per-format result include:
 
 The per-format `execution_semantics` block now complements that task matrix:
 
-- `execution_mode`: `real_backend_eval`, `real_artifact_eval`, `synthetic_planning_only`, or `dry_run_planning`
-- `artifact_expectation`: whether predictions/eval/parity are expected to be real or placeholders
+- `execution_mode`: `real_backend_eval`, `real_artifact_eval`, `unsupported_skipped`, `synthetic_planning_only`, or `dry_run_planning`
+- `artifact_expectation`: whether predictions/eval/parity are expected to be real, skipped, or dry-run placeholders
 - `eval_expectation`: metric family + expected metric keys for that task/backend combination
 
 For `segmentation`, `keypoints`, `depth`, and `pose6d`, this is especially important: the benchmark report now
@@ -465,8 +465,8 @@ future work.
 | `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
 | `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
 | `torchscript` | real detect orchestration when runtime + model are available | Depends on local PyTorch and a compatible combined-output decode path. |
-| `executorch` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
-| `opencv_dnn` | synthetic / skipped | Artifact-first placeholder behavior only for now. |
+| `executorch` | unsupported/skipped in benchmark orchestration | Standalone exporter supports declared runtime-output decode, but `yolozu benchmark` does not claim this lane as real yet. |
+| `opencv_dnn` | unsupported/skipped in benchmark orchestration | Standalone OpenCV-DNN exporters exist, but `yolozu benchmark` does not claim this lane as real yet. |
 
 ## Runtime / license boundary
 

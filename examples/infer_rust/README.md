@@ -32,14 +32,18 @@ cargo build --release --features onnxruntime
   --mode onnxrt \
   --onnx /abs/path/model.onnx \
   --input-shape 1,3,64,64 \
+  --combined-format xyxy_score_class \
+  --boxes-scale norm \
+  --input-size 64x64 \
   --image images/val/000001.jpg \
   --out reports/pred_rust_onnxrt.json
 
 python3 tools/validate_predictions.py reports/pred_rust_onnxrt.json --strict
 ```
 
-The ONNXRuntime mode currently performs a minimal forward pass and emits empty detections with backend metadata (`meta.extra.input_shape`, `meta.extra.output_shapes`).
-You can then plug in model-specific decode logic without changing the YOLOZU contract surface.
+The ONNXRuntime mode performs a minimal forward pass and decodes the first output with the declared
+`xyxy_score_class` contract (`x1,y1,x2,y2,score,class_id`). If your model uses a different output layout,
+add another declared decoder rather than silently emitting empty detections.
 
 ## Expected build/runtime environment (production)
 
@@ -50,6 +54,6 @@ You can then plug in model-specific decode logic without changing the YOLOZU con
 - CI/container recommendation: keep `cargo build --release` (stub) as baseline, and run `--features onnxruntime` in a dedicated image where ONNXRuntime dependencies are intentionally provisioned.
 
 Notes:
-- The output is empty predictions and intentionally omits `meta` so `--strict` validation passes. It is intended as a wiring/contract template, not a model runner.
+- Stub mode outputs empty predictions and intentionally omits `meta` so `--strict` validation passes. It is intended as a wiring/interface-contract template, not a model runner.
 - In `onnxruntime` mode the template includes a `meta` block for reproducibility/debugging.
 - For integrating into YOLOZU parity checks, use `custom_cpp` (external backend) routes in `docs/external_inference.md`.

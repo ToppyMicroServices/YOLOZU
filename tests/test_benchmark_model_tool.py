@@ -16,6 +16,7 @@ class TestBenchmarkModelTool(TestCase):
         self._root_artifacts = [
             self.repo_root / "tmp_benchmark_report.json",
             self.repo_root / "export_settings_onnx.json",
+            self.repo_root / "export_settings_opencv_dnn.json",
             self.repo_root / "export_settings_torchscript.json",
         ]
         for path in self._root_artifacts:
@@ -86,9 +87,27 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["task"], "classification")
         self.assertEqual(report["task_semantics"]["metric_family"], "topk_accuracy")
-        self.assertEqual(report["task_semantics"]["support_level"], "documented_planned")
+        self.assertEqual(report["task_semantics"]["support_level"], "unsupported_skipped")
         self.assertEqual(report["task_semantics"]["expected_metric_keys"], ["top1", "top5", "accuracy"])
-        self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "dry_run_planning")
+        self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "unsupported_skipped")
+        self.assertEqual(report["results"][0]["status"], "skipped")
+        self.assertEqual(report["results"][0]["skip_reason"], "benchmark_task_not_wired")
+
+    def test_unwired_benchmark_formats_report_skipped_not_synthetic_placeholder(self):
+        args = self._args(format="opencv_dnn", model="runs/foo/model.onnx", task="detect", dry_run=False)
+        with mock.patch.object(benchmark_mode, "_module_available", return_value=True):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["status"], "skipped")
+        result = report["results"][0]
+        self.assertEqual(result["status"], "skipped")
+        self.assertEqual(result["skip_reason"], "benchmark_format_not_wired")
+        self.assertEqual(result["execution_semantics"]["execution_mode"], "unsupported_skipped")
+        self.assertEqual(result["execution_semantics"]["artifact_expectation"]["predictions"], "skipped")
+        skipped_artifact = json.loads(Path(result["artifacts"]["predictions"]).read_text(encoding="utf-8"))
+        self.assertEqual(skipped_artifact["kind"], "benchmark_predictions_skipped")
 
     def test_depth_task_records_yolozu_native_execution_semantics(self):
         args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="depth", dry_run=True)

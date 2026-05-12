@@ -179,6 +179,17 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
         self.assertIn("onnxruntime", features, "expected onnxruntime feature in Rust template")
         self.assertEqual(features.get("default"), [], "Rust template default features should stay empty")
 
+    def test_rust_onnxruntime_mode_declares_decode_contract(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        src = (repo_root / "examples" / "infer_rust" / "src" / "main.rs").read_text(encoding="utf-8")
+        readme = (repo_root / "examples" / "infer_rust" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("--combined-format", src)
+        self.assertIn("xyxy_score_class", src)
+        self.assertIn("decoded_detections_per_image", src)
+        self.assertIn("xyxy_score_class", readme)
+        self.assertNotIn("emits empty detections with backend metadata", readme)
+
 
 if __name__ == "__main__":
     unittest.main()

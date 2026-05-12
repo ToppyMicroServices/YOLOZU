@@ -68,6 +68,39 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertIn("Supported runtime scope", security)
         self.assertIn("Dependency and third-party policy", security)
 
+    def test_stable_entry_docs_do_not_use_placeholder_language(self):
+        checked_paths = [
+            "README.md",
+            "Readme_jp.md",
+            "Readme_zh.md",
+            "docs/README.md",
+            "docs/install.md",
+            "deploy/docker/README.md",
+            "deploy/runpod/README.md",
+            "deploy/pyinstaller/README.md",
+        ]
+        forbidden = (
+            "scafold",
+            "scaffold",
+            "stub",
+            "placeholder",
+            "planned",
+            "not implemented",
+            "todo",
+            "fixme",
+            "未作成",
+            "未実装",
+            "仮実装",
+            "ダミー",
+        )
+        hits = []
+        for rel in checked_paths:
+            text = (self.repo_root / rel).read_text(encoding="utf-8").lower()
+            for token in forbidden:
+                if token in text:
+                    hits.append(f"{rel}: {token}")
+        self.assertEqual(hits, [], "stable entry docs should avoid placeholder/scaffold language")
+
 
 if __name__ == "__main__":
     unittest.main()

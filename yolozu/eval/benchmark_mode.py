@@ -48,6 +48,8 @@ repo_root = Path(__file__).resolve().parents[2]
 
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript")
+BENCHMARK_UNWIRED_FORMATS = {"executorch", "opencv_dnn"}
+BENCHMARK_UNWIRED_TASKS = {"classification", "obb"}
 TASK_ALIASES = {
     "detect": "detect",
     "detection": "detect",
@@ -89,19 +91,19 @@ TASK_SEMANTICS = {
         "display_name": "Classification",
         "metric_family": "topk_accuracy",
         "expected_metric_keys": ["top1", "top5", "accuracy"],
-        "support_level": "documented_planned",
+        "support_level": "unsupported_skipped",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Classification is now explicit in the benchmark task matrix, but real benchmark orchestration still needs a dedicated evaluation path.",
+        "notes": "Classification is explicit in the benchmark task matrix, but real benchmark orchestration is not shipped; benchmark runs report this lane as skipped rather than writing placeholder artifacts.",
     },
     "obb": {
         "display_name": "Oriented Bounding Boxes",
         "metric_family": "obb_map",
         "expected_metric_keys": ["obb_mAP50-95", "obb_mAP50", "obb_AR"],
-        "support_level": "documented_planned",
+        "support_level": "unsupported_skipped",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "OBB is visible in the benchmark surface and report schema, but backend/eval wiring remains a follow-up implementation item.",
+        "notes": "OBB is visible in the benchmark surface and report schema, but backend/eval wiring is not shipped; benchmark runs report this lane as skipped rather than writing placeholder artifacts.",
     },
     "keypoints": {
         "display_name": "Keypoints / Pose",
@@ -242,6 +244,10 @@ def _split_csv(value: str | None) -> list[str]:
 
 
 def _support_status_for_format(fmt: str, *, device: str, task_label: str = "detect") -> tuple[bool, str | None]:
+    if task_label in BENCHMARK_UNWIRED_TASKS:
+        return False, "benchmark_task_not_wired"
+    if fmt in BENCHMARK_UNWIRED_FORMATS:
+        return False, "benchmark_format_not_wired"
     if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
@@ -336,7 +342,9 @@ def _task_execution_semantics(
     dry_run: bool,
 ) -> dict[str, Any]:
     task_meta = TASK_SEMANTICS[task_label]
-    if dry_run:
+    if task_label in BENCHMARK_UNWIRED_TASKS or fmt in BENCHMARK_UNWIRED_FORMATS:
+        execution_mode = "unsupported_skipped"
+    elif dry_run:
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
@@ -357,6 +365,12 @@ def _task_execution_semantics(
             "predictions": "placeholder",
             "eval": "placeholder",
             "parity": "placeholder",
+        }
+    elif execution_mode == "unsupported_skipped":
+        artifact_expectation = {
+            "predictions": "skipped",
+            "eval": "skipped",
+            "parity": "skipped",
         }
     else:
         artifact_expectation = {
@@ -428,16 +442,6 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
             raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
 
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
-        if (
-            task_label not in {"detect", "segmentation", "keypoints", "depth", "pose6d"}
-            and not dry_run
-            and fmt in REAL_BACKEND_FORMATS
-            and benchmark_source in {"dataset_pass_wall_time", "artifact_eval"}
-        ):
-            raise ValueError(
-                f"--task {task_label} is not wired to a real {fmt} benchmark/eval path yet; "
-                "use --dry-run or --latency-source synthetic_step until the dedicated task backend lands."
-            )
         if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
             raise ValueError(
                 f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
@@ -1692,7 +1696,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             status = "skipped"
             _write_placeholder(
                 predictions_path,
-                kind="benchmark_predictions_placeholder",
+                kind="benchmark_predictions_skipped",
                 fmt=fmt,
                 status=status,
                 reason=skip_reason,
@@ -1700,7 +1704,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             )
             _write_placeholder(
                 eval_path,
-                kind="benchmark_eval_placeholder",
+                kind="benchmark_eval_skipped",
                 fmt=fmt,
                 status=status,
                 reason=skip_reason,
@@ -1708,7 +1712,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             )
             _write_placeholder(
                 parity_path,
-                kind="benchmark_parity_placeholder",
+                kind="benchmark_parity_skipped",
                 fmt=fmt,
                 status=status,
                 reason=skip_reason,
@@ -2477,7 +2481,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional eval protocol passed through to eval_suite and torch exporter.",
     )
     parser.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
-    parser.add_argument("--dry-run", action="store_true", help="Validate wiring and planned artifacts without backend runs.")
+    parser.add_argument("--dry-run", action="store_true", help="Validate wiring and dry-run artifacts without backend runs.")
     parser.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped or fails.")
     parser.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
     parser.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
