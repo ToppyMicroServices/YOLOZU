@@ -19,6 +19,12 @@ yolozu demo overview
 ```
 
 出力: `demo_output/overview/<utc>/demo_overview_report.json`
+次に何を実行すればよいか迷ったら、CLI 内蔵の guide を使えます。
+
+```bash
+yolozu guide
+yolozu guide --goal evaluate
+```
 
 ```mermaid
 flowchart LR

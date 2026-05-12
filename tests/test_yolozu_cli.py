@@ -56,6 +56,59 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("COCOeval", forwarded_proc.stdout)
         self.assertIn("--predictions", forwarded_proc.stdout)
 
+    def test_guide_prints_beginner_routes_and_json(self):
+        repo_root = Path(__file__).resolve().parents[1]
+
+        text_proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "guide", "--goal", "evaluate"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if text_proc.returncode != 0:
+            self.fail(f"yolozu guide failed:\n{text_proc.stdout}\n{text_proc.stderr}")
+        self.assertIn("YOLOZU guide", text_proc.stdout)
+        self.assertIn("validate predictions", text_proc.stdout)
+        self.assertIn("eval-coco", text_proc.stdout)
+        self.assertIn("docs/predictions_schema.md", text_proc.stdout)
+
+        json_proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "guide", "--goal", "debug", "--json"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if json_proc.returncode != 0:
+            self.fail(f"yolozu guide --json failed:\n{json_proc.stdout}\n{json_proc.stderr}")
+        payload = json.loads(json_proc.stdout)
+        self.assertEqual(payload["kind"], "yolozu_guide")
+        self.assertEqual(payload["goal"], "debug")
+        self.assertIn("doctor", " ".join(payload["routes"]["debug"]["commands"]))
+        for route in payload["routes"].values():
+            for doc in route["docs"]:
+                self.assertTrue((repo_root / doc).is_file(), f"guide references missing doc: {doc}")
+
+    def test_legacy_wrapper_forwards_guide(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "yolozu.py"
+
+        proc = subprocess.run(
+            [sys.executable, str(script), "guide", "--goal", "first-run"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        if proc.returncode != 0:
+            self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
+        self.assertIn("demo overview", proc.stdout)
+        self.assertIn("doctor --output -", proc.stdout)
+
     def test_train_help_lists_external_backends(self):
         repo_root = Path(__file__).resolve().parents[1]
         proc = subprocess.run(

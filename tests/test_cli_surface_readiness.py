@@ -26,6 +26,7 @@ class TestCLISurfaceReadiness(unittest.TestCase):
             "predict-images",
             "registry",
             "completion",
+            "guide",
         ]
         entrypoints = [
             [sys.executable, "-m", "yolozu", "--help"],

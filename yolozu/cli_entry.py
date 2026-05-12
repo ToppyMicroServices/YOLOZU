@@ -39,7 +39,92 @@ from .cli_completion import write_completion
 from yolozu.inference.export_orchestrator import parse_common_export_args
 from yolozu import __version__
 import argparse
+import json
 from pathlib import Path
+
+
+GUIDE_ROUTES: dict[str, dict[str, object]] = {
+    "first-run": {
+        "title": "First run: install, check, demo",
+        "use_when": "You are new to YOLOZU and want a safe smoke path.",
+        "commands": [
+            "python3 -m pip install -U yolozu",
+            "yolozu doctor --output -",
+            "yolozu demo overview",
+        ],
+        "outputs": ["demo_output/overview/<utc>/demo_overview_report.json"],
+        "docs": ["docs/install.md", "docs/README.md"],
+    },
+    "evaluate": {
+        "title": "Evaluate existing predictions",
+        "use_when": "You already have a predictions.json artifact and a YOLO-style dataset.",
+        "commands": [
+            "yolozu validate predictions reports/predictions.json --strict",
+            "yolozu eval-coco --dataset data/smoke --predictions reports/predictions.json --dry-run --output reports/eval.json",
+        ],
+        "outputs": ["reports/eval.json"],
+        "docs": ["docs/predictions_schema.md", "docs/external_inference.md"],
+    },
+    "export": {
+        "title": "Export predictions from images or a runtime",
+        "use_when": "You need YOLOZU predictions.json before evaluation.",
+        "commands": [
+            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json",
+            "yolozu validate predictions reports/predictions.json --strict",
+        ],
+        "outputs": ["reports/predictions.json", "reports/predict_images.html"],
+        "docs": ["docs/training_inference_export.md", "docs/predictions_schema.md"],
+    },
+    "debug": {
+        "title": "Debug environment or dataset issues",
+        "use_when": "Install, imports, dataset layout, or runtime checks are failing.",
+        "commands": [
+            "yolozu doctor --output -",
+            "yolozu doctor import --dataset-from auto --dataset data/smoke --output -",
+            "yolozu validate dataset data/smoke --mode warn",
+        ],
+        "outputs": ["stdout diagnostics", "reports/doctor.json when --output is a path"],
+        "docs": ["docs/install.md", "docs/support.md"],
+    },
+}
+
+
+def _guide_payload(goal: str) -> dict[str, object]:
+    routes = GUIDE_ROUTES if goal == "all" else {goal: GUIDE_ROUTES[goal]}
+    return {
+        "kind": "yolozu_guide",
+        "schema_version": 1,
+        "goal": goal,
+        "routes": routes,
+        "tip": "Start with first-run if you are unsure; use --json for automation.",
+    }
+
+
+def _render_guide_text(goal: str) -> str:
+    payload = _guide_payload(goal)
+    lines = [
+        "YOLOZU guide",
+        "Start with `yolozu guide --goal first-run` if you are unsure.",
+        "",
+    ]
+    routes = payload["routes"]
+    assert isinstance(routes, dict)
+    for route_id, route in routes.items():
+        assert isinstance(route, dict)
+        lines.append(f"[{route_id}] {route['title']}")
+        lines.append(f"Use when: {route['use_when']}")
+        lines.append("Commands:")
+        for command in route["commands"]:
+            lines.append(f"  {command}")
+        lines.append("Expected output:")
+        for output in route["outputs"]:
+            lines.append(f"  {output}")
+        lines.append("Read next:")
+        for doc in route["docs"]:
+            lines.append(f"  {doc}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
@@ -54,6 +139,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    guide = sub.add_parser("guide", help="Show beginner-friendly routes and copy-paste commands.")
+    guide.add_argument(
+        "--goal",
+        choices=tuple(["all", *GUIDE_ROUTES.keys()]),
+        default="all",
+        help="Route to show (default: all).",
+    )
+    guide.add_argument("--json", action="store_true", help="Emit machine-readable guide JSON.")
 
     doctor = sub.add_parser("doctor", aliases=["dr"], help="Print environment diagnostics as JSON.")
     doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path (use - for stdout).")
@@ -1037,6 +1131,13 @@ def main(argv: list[str] | None = None) -> int:
     args, extra_argv = parser.parse_known_args(argv)
     if args.command not in ("train", "test") and extra_argv:
         parser.error(f"unrecognized arguments: {' '.join(extra_argv)}")
+    if args.command == "guide":
+        payload = _guide_payload(str(args.goal))
+        if bool(args.json):
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(_render_guide_text(str(args.goal)), end="")
+        return 0
     if args.command == "train":
         if getattr(args, "import_from", None) and getattr(args, "external_backend", None):
             raise SystemExit("train cannot combine --import preview with --external-backend")

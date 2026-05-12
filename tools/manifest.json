@@ -15140,6 +15140,10 @@
           "description": "Doctor report."
         },
         {
+          "command": "python3 -m yolozu guide --goal evaluate",
+          "description": "Print beginner-friendly route guidance with copy-paste evaluation commands."
+        },
+        {
           "command": "python3 -m yolozu completion -s bash",
           "description": "Print bash completion script for yolozu CLI (eval output to enable tab completion)."
         },
@@ -15534,6 +15538,13 @@
           "flag": "--glob",
           "kind": "string",
           "name": "glob",
+          "required": false
+        },
+        {
+          "description": "Selects the beginner guide route for `yolozu guide` (`all`, `first-run`, `evaluate`, `export`, or `debug`).",
+          "flag": "--goal",
+          "kind": "string",
+          "name": "goal",
           "required": false
         },
         {

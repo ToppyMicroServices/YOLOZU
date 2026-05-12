@@ -24,6 +24,12 @@ yolozu demo overview
 ```
 
 输出位置：`demo_output/overview/<utc>/demo_overview_report.json`
+如果不确定下一步该运行什么，可以先看内置路线图：
+
+```bash
+yolozu guide
+yolozu guide --goal evaluate
+```
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 

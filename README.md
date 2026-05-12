@@ -19,6 +19,12 @@ yolozu demo overview
 ```
 
 Writes `demo_output/overview/<utc>/demo_overview_report.json`.
+If you are unsure what to run next, use the built-in guide:
+
+```bash
+yolozu guide
+yolozu guide --goal evaluate
+```
 
 ```mermaid
 flowchart LR

@@ -11,6 +11,12 @@ yolozu demo overview
 ```
 
 Writes `demo_output/overview/<utc>/demo_overview_report.json`.
+For an interactive-feeling route map in the terminal:
+
+```bash
+yolozu guide
+yolozu guide --goal debug
+```
 
 ## Read These 3 First
 
