@@ -147,7 +147,7 @@ Hessian refinement 指南（用更直观的方式说明它为什么常用于 pos
 ## 从这里开始（4 个入口）
 
 - **A: 从已有 predictions 开始评估**：`predictions.json` → validate → eval
-- **B: 训练 → 导出 → 评估**：RT-DETR scaffold + run interface contract / Run Contract
+- **B: 训练 → 导出 → 评估**：RT-DETR reference trainer + run interface contract / Run Contract
 - **C: interface contract 本身**：predictions / adapter / TTT protocol
 - **D: parity / benchmark**：TensorRT、latency benchmark、backend drift
 

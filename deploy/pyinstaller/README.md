@@ -24,7 +24,7 @@ pyinstaller -y -F -n yolozu \
 
 ## 2) Training-enabled binary (`yolozu train/test`)
 
-This bundles the RT-DETR pose scaffold. Install the extra deps first:
+This bundles the RT-DETR pose reference trainer. Install the extra deps first:
 
 ```bash
 python3 -m pip install -U pip

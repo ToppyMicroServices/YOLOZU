@@ -73,8 +73,9 @@ TensorRT is not installed via pip; use an NVIDIA/TensorRT base image and add Pyt
 
 ## Prebuilt images (GHCR)
 
-For container-related pull requests, `.github/workflows/container.yml` builds these images as a validation gate without publishing them.
-If enabled in CI, release-tag pushes (`vX.Y.Z`) and manual workflow runs publish images to GHCR.
+`.github/workflows/container.yml` builds these images on release-tag pushes (`vX.Y.Z`) and manual workflow runs.
+Pull requests do not build container images by default; run the workflow manually when a container change needs validation before release.
+Release-tag pushes and manual workflow runs publish images to GHCR.
 All published images also receive the `latest` tag on release-tag builds.
 
 CPU images:

@@ -77,7 +77,7 @@ Thresholds support backend-first configuration (`metric_by_backend`, `backend_pa
 ## Two-stage regression policy
 
 - `micro` (PR/fast): prioritize interface contract break detection (`schema_drift`, `consistency_drift`).
-- `full` (nightly/manual): emphasize score/perf regression (`metric_drift`, `speed_drift`) and backend parity checks.
+- `full` (manual): emphasize score/perf regression (`metric_drift`, `speed_drift`) and backend parity checks.
 
 ## Fixed real scenario automation
 

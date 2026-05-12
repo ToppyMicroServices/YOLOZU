@@ -134,7 +134,7 @@ security findings:
 Additional CI/CD hardening now enforced in-repo:
 
 - workflow-only edits are no longer a blind spot: `.github/workflows/build_and_test.yml` runs release/security regression tests in `workflows_meta`
-- `.github/workflows/container.yml` builds on pull requests for container-related changes, so dependency/bootstrap breakage is caught before merge
+- `.github/workflows/container.yml` builds only on release tags or manual dispatch; container dependency/bootstrap validation should be manually triggered before releases that depend on image artifacts
 - `.github/workflows/publish.yml` now fails fast when package version, release/manual trigger inputs, and `CHANGELOG.md` are not aligned
 
 The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` release. This

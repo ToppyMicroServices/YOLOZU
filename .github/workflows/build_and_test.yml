@@ -18,7 +18,7 @@ jobs:
   # - core:       hash-locked runtime deps + local wheel install (packaging + CLI smoke)
   # - docs_mcp:   hash-locked docs/MCP/Actions deps from exact top-level lock
   # - recommended: hash-locked requirements-locks/requirements-ci.lock (regression + schema/manifest gates)
-  # - full:       GPU/backends in separate manual/nightly workflows
+  # - full:       GPU/backends in separate manual workflows
   # docs: docs/ci_dependency_tiers.md
   changes:
     name: change scope

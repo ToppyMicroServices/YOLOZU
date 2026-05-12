@@ -129,7 +129,7 @@ YOLOZU CI uses three install tiers to reduce optional-extras combinatorial noise
 
 - `core`: `pip install .` only (packaging + CLI smoke)
 - `recommended`: pinned lock install via `requirements-locks/requirements-ci.lock` (interface contract/behavior regression gates)
-- `full`: GPU/backends (`tensorrt`, CUDA providers) in optional/nightly/manual workflows
+- `full`: GPU/backends (`tensorrt`, CUDA providers) in optional manual workflows
 
 For deterministic CI reproduction, install the same lock file locally:
 

@@ -117,7 +117,8 @@ full = [
 [tool.yolozu.ci_tiers.core]
 install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel"
 scope = "Packaging + CLI smoke (no optional extras)."
-jobs = ["smoke_gate", "pip_smoke"]
+jobs = ["smoke_gate"]
+main_push_jobs = ["pip_smoke"]
 
 [tool.yolozu.ci_tiers.docs_mcp]
 install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock"
@@ -128,20 +129,23 @@ jobs = ["docs_mcp_gate"]
 install = "python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock"
 scope = "Pinned dependency lock for regression/schema/manifest gates."
 lockfile = "requirements-locks/requirements-ci.lock"
-jobs = ["quality_gate", "test"]
+jobs = ["quality_gate"]
+main_push_jobs = ["test"]
 
 [tool.yolozu.ci_tiers.full]
-scope = "GPU/backend matrix in separate workflows to avoid optional-extras combination explosion."
+scope = "Manual-only GPU/backend/full-sweep workflows to avoid optional-extras combination explosion and recurring runner spend."
 workflows = [
   ".github/workflows/gpu_smoke_machine.yml",
+  ".github/workflows/gpu_practical_suite_machine.yml",
   ".github/workflows/gpu_zisn_pipeline.yml",
   ".github/workflows/reference_adapter_full.yml",
+  ".github/workflows/cflite_batch.yml",
 ]
 
 [tool.yolozu.optional_extras_rationale]
 demo = "Torch + vision demos and practical local smoke runs."
 onnxrt = "ONNX export/inference and parity checks."
-train = "RT-DETR pose training scaffold and exporter bridge."
+train = "RT-DETR pose reference trainer and exporter bridge."
 coco = "COCO metrics via pycocotools."
 mcp = "MCP server integration."
 actions = "FastAPI/OpenAPI action server."

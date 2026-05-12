@@ -6,8 +6,8 @@ Published images (if enabled in CI) live on **GitHub Container Registry (GHCR)**
 
 ## Published images
 
-For container-related pull requests, `.github/workflows/container.yml` now performs build validation without publishing images.
-On a release tag `vX.Y.Z` (or a manual workflow run with `release_tag=vX.Y.Z`), the same workflow publishes:
+`.github/workflows/container.yml` builds and publishes these images on a release tag `vX.Y.Z` or a manual workflow run with `release_tag=vX.Y.Z`.
+Pull requests do not build container images by default; run the workflow manually when a container change needs validation before release.
 
 - Minimal (no torch):
   - `ghcr.io/toppymicroservices/yolozu:X.Y.Z`
@@ -31,7 +31,8 @@ docker pull nvcr.io/yolozu/yolozu-demo:latest
 ```
 
 Notes:
-- Pull requests that touch container workflow/deploy/packaging inputs now build these Dockerfiles before merge, but they do not publish to GHCR/NGC.
+- Pull requests that touch container workflow/deploy/packaging inputs do not build these Dockerfiles automatically.
+  Use **Actions → container → Run workflow** for pre-release validation.
 - If you created the tag *before* adding the workflow, it won’t auto-run for that historical tag.
   Use **Actions → container → Run workflow** and provide `release_tag=vX.Y.Z`, or cut a new tag.
 - After the first push, you may need to set the package visibility to **Public** in GitHub UI.
