@@ -93,6 +93,63 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(report["results"][0]["status"], "skipped")
         self.assertEqual(report["results"][0]["skip_reason"], "benchmark_task_not_wired")
 
+    def test_unwired_task_writes_all_skipped_artifacts_without_launching_backend(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
+            artifact_dir = root / "artifacts"
+            args = self._args(
+                format="torchscript",
+                model="runs/foo/model.torchscript",
+                task="classification",
+                dry_run=False,
+                output=str(report_path),
+                predictions_output=str(artifact_dir),
+                eval_output=str(artifact_dir),
+                parity_output=str(artifact_dir),
+                run_id="unwired-task-test",
+            )
+
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(
+                        benchmark_mode.subprocess,
+                        "run",
+                        side_effect=AssertionError("backend should not launch"),
+                    ):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "skipped")
+            self.assertTrue(report_path.is_file(), "expected benchmark report to be written")
+            result = report["results"][0]
+            self.assertEqual(result["format"], "torchscript")
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
+            self.assertEqual(result["execution_semantics"]["execution_mode"], "unsupported_skipped")
+
+            expected_artifacts = {
+                "predictions": "benchmark_predictions_skipped",
+                "eval": "benchmark_eval_skipped",
+                "parity": "benchmark_parity_skipped",
+            }
+            for key, expected_kind in expected_artifacts.items():
+                artifact_path = Path(result["artifacts"][key])
+                self.assertTrue(artifact_path.is_file(), f"missing skipped artifact: {artifact_path}")
+                payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+                self.assertEqual(payload["kind"], expected_kind)
+                self.assertEqual(payload["format"], "torchscript")
+                self.assertEqual(payload["status"], "skipped")
+                self.assertEqual(payload["reason"], "benchmark_task_not_wired")
+                self.assertEqual(payload["run_meta"]["backend"], "torchscript")
+                self.assertEqual(payload["run_meta"]["run_id"], "unwired-task-test")
+
+            export_settings = json.loads((root / "export_settings_torchscript.json").read_text(encoding="utf-8"))
+            self.assertEqual(export_settings["status"], "skipped")
+            self.assertEqual(export_settings["skip_reason"], "benchmark_task_not_wired")
+            self.assertEqual(export_settings["execution_semantics"]["execution_mode"], "unsupported_skipped")
+
     def test_unwired_benchmark_formats_report_skipped_not_synthetic_placeholder(self):
         args = self._args(format="opencv_dnn", model="runs/foo/model.onnx", task="detect", dry_run=False)
         with mock.patch.object(benchmark_mode, "_module_available", return_value=True):
