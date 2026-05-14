@@ -39,7 +39,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ToppyMicroServices/YOLOZU"
+Homepage = "https://www.toppymicros.com/yolozu/"
 Repository = "https://github.com/ToppyMicroServices/YOLOZU"
 Issues = "https://github.com/ToppyMicroServices/YOLOZU/issues"
 Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md"

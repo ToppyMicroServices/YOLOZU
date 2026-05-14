@@ -2,6 +2,8 @@
 
 Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.md)
 
+Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
+
 YOLOZU is an Apache-2.0 vision evaluation toolkit for teams that do not want workflow lock-in.
 
 Bring your own inference.
