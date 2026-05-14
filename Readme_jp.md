@@ -2,6 +2,8 @@
 
 English: [`README.md`](README.md) | 中文: [`Readme_zh.md`](Readme_zh.md)
 
+Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
+
 YOLOZU は、workflow を単一の training framework に lock-in したくないチーム向けの Apache-2.0 vision evaluation toolkit です。
 
 Bring your own inference.
