@@ -22,6 +22,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from yolozu.datasets.coco_convert import resolve_coco_file_path
+
 logger = logging.getLogger(__name__)
 
 _DATASET_LICENSE_WARNING = (
@@ -371,7 +376,7 @@ def _prepare_dataset(
         if split not in ("train", "val"):
             continue
 
-        src_image = images_dir / file_name
+        src_image = resolve_coco_file_path(images_dir, file_name)
         if not src_image.exists():
             raise SystemExit(f"missing source image: {src_image}")
 

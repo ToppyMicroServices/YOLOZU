@@ -234,10 +234,13 @@ def main(argv: list[str] | None = None) -> int:
         file_name = im.get("file_name")
         if not isinstance(file_name, str) or not file_name:
             continue
-        dst = img_dir / file_name
+        rel_name = Path(file_name)
+        if rel_name.is_absolute() or ".." in rel_name.parts:
+            raise SystemExit(f"unsafe COCO file_name: {file_name!r}")
+        dst = img_dir / rel_name.name
         if dst.exists() and not args.force:
             continue
-        url = COCO_VAL_IMAGE_HTTP_PREFIX + file_name
+        url = COCO_VAL_IMAGE_HTTP_PREFIX + rel_name.name
         print(f"downloading image: {url} -> {dst}")
         try:
             _urlretrieve(url, dst, timeout=float(args.timeout))

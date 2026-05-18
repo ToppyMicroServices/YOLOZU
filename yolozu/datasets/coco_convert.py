@@ -13,6 +13,7 @@ from pathlib import Path
 __all__ = [
     "CocoCategoryMap",
     "build_category_map_from_coco",
+    "resolve_coco_file_path",
     "yolo_line_from_coco_bbox",
     "convert_coco_instances_to_yolo_labels",
 ]
@@ -49,6 +50,22 @@ def build_category_map_from_coco(annotations: dict) -> CocoCategoryMap:
         class_id_to_category_id=class_id_to_category_id,
         class_names=class_names,
     )
+
+
+def resolve_coco_file_path(images_dir: Path, file_name: str) -> Path:
+    """Resolve a COCO image file_name under images_dir without traversal."""
+    raw = str(file_name or "").strip()
+    rel = Path(raw)
+    if not raw or rel.is_absolute() or raw in {".", ".."} or ".." in rel.parts:
+        raise ValueError(f"unsafe COCO file_name: {raw!r}")
+
+    base = images_dir.resolve()
+    candidate = (base / rel).resolve()
+    try:
+        candidate.relative_to(base)
+    except ValueError as exc:
+        raise ValueError(f"unsafe COCO file_name: {raw!r}") from exc
+    return candidate
 
 
 def yolo_line_from_coco_bbox(
@@ -113,6 +130,9 @@ def convert_coco_instances_to_yolo_labels(
         file_name = str(meta.get("file_name") or "")
         if not file_name:
             continue
+        # Validate before writing labels so malformed COCO metadata cannot
+        # leave partial outputs behind.
+        _ = resolve_coco_file_path(images_dir, file_name)
         width = int(meta.get("width") or 0)
         height = int(meta.get("height") or 0)
         stem = Path(file_name).stem
@@ -138,10 +158,6 @@ def convert_coco_instances_to_yolo_labels(
 
         (labels_dir / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
 
-        # Optional: ensure images exist without copying; we don't write symlinks here.
-        # The surrounding tool can copy/link as desired.
-        _ = images_dir / file_name
-
     # Persist mapping for downstream inference implementations.
     mapping = {
         "category_id_to_class_id": cat_map.category_id_to_class_id,
@@ -152,4 +168,3 @@ def convert_coco_instances_to_yolo_labels(
     (labels_dir / "classes.txt").write_text("\n".join(cat_map.class_names) + "\n")
 
     return cat_map
-

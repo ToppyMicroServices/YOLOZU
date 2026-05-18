@@ -16,6 +16,10 @@ class TestDatasetFetchSecurity(unittest.TestCase):
         with self.assertRaises(ValueError):
             dataset_fetch._validated_download_url("https://127.0.0.1/data.zip")
 
+    def test_validated_download_url_rejects_localhost_name(self):
+        with self.assertRaises(ValueError):
+            dataset_fetch._validated_download_url("https://localhost/data.zip")
+
     def test_fetch_dataset_mirror_urls_fallback(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from yolozu.core.config import simple_yaml_load
-from .coco_convert import build_category_map_from_coco
+from .coco_convert import build_category_map_from_coco, resolve_coco_file_path
 from yolozu.core.keypoints import normalize_keypoints
 
 __all__ = [
@@ -1160,7 +1160,7 @@ def load_coco_instances_dataset(
         if width <= 0 or height <= 0:
             continue
 
-        image_path = images_dir / file_name
+        image_path = resolve_coco_file_path(images_dir, file_name)
 
         labels: list[dict[str, Any]] = []
         for ann in ann_by_image.get(img_id, []):
@@ -1278,7 +1278,7 @@ def load_coco_keypoints_dataset(
         height = int(meta.get("height") or 0)
         if width <= 0 or height <= 0:
             continue
-        image_path = images_dir / file_name
+        image_path = resolve_coco_file_path(images_dir, file_name)
 
         labels: list[dict[str, Any]] = []
         for ann in ann_by_image.get(img_id, []):

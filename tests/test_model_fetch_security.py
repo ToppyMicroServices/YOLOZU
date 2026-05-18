@@ -21,6 +21,10 @@ class TestModelFetchSecurity(unittest.TestCase):
         with self.assertRaises(ValueError):
             model_fetch._validated_download_url("https://127.0.0.1/model.bin")
 
+    def test_validated_download_url_rejects_localhost_name(self):
+        with self.assertRaises(ValueError):
+            model_fetch._validated_download_url("https://localhost/model.bin")
+
     def test_fetch_model_supports_file_uri_registry_entries(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

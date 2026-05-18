@@ -7,7 +7,7 @@ from pathlib import Path
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
-from yolozu.coco_convert import convert_coco_instances_to_yolo_labels
+from yolozu.coco_convert import convert_coco_instances_to_yolo_labels, resolve_coco_file_path
 from yolozu.core.diagnostics import format_cli_error
 
 
@@ -88,7 +88,7 @@ def main(argv=None):
             file_name = str(img.get("file_name") or "")
             if not file_name:
                 continue
-            src = images_src / file_name
+            src = resolve_coco_file_path(images_src, file_name)
             dst = images_out / Path(file_name).name
             if dst.exists():
                 continue

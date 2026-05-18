@@ -15,6 +15,7 @@ from yolozu.demos.instance_seg import (
     _overlay_masks,
     _require_deps,
 )
+from yolozu.datasets.coco_convert import resolve_coco_file_path
 from yolozu.eval.instance_segmentation_eval import mask_iou
 
 
@@ -614,7 +615,7 @@ def run_instance_seg_tta_demo(
         file_name = str(image_meta.get("file_name") or "")
         if not file_name:
             continue
-        src_img = images_root / file_name
+        src_img = resolve_coco_file_path(images_root, file_name)
         if not src_img.exists():
             continue
         rgb = Image.open(src_img).convert("RGB")

@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
 
+from .coco_convert import resolve_coco_file_path
 from .registry import DatasetInfo, DatasetSample, register_adapter
 
 __all__ = [
@@ -220,7 +221,7 @@ def iter_coco_detection_samples(
         if width <= 0 or height <= 0:
             continue
 
-        image_path = images_dir / file_name
+        image_path = resolve_coco_file_path(images_dir, file_name)
 
         labels: list[dict[str, Any]] = []
         for ann in ann_by_image.get(img_id, []):

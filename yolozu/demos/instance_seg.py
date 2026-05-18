@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.core.progress import ProgressBar
+from yolozu.datasets.coco_convert import resolve_coco_file_path
 
 
 def _utc_run_id() -> str:
@@ -434,7 +435,7 @@ def run_instance_seg_demo(
             file_name = str(im.get("file_name") or "")
             if not file_name:
                 raise FileNotFoundError(f"COCO image file_name missing for id={image_id}")
-            src_img = coco_images_root / file_name
+            src_img = resolve_coco_file_path(coco_images_root, file_name)
             if not src_img.exists():
                 raise FileNotFoundError(f"COCO image not found: {src_img}")
 

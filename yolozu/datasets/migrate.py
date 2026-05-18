@@ -233,7 +233,7 @@ def migrate_coco_dataset_wrapper(
     labels_dir.mkdir(parents=True, exist_ok=True)
     images_out.mkdir(parents=True, exist_ok=True)
 
-    from .coco_convert import convert_coco_instances_to_yolo_labels
+    from .coco_convert import convert_coco_instances_to_yolo_labels, resolve_coco_file_path
 
     instances_doc = _load_json(instances_path)
     convert_coco_instances_to_yolo_labels(
@@ -251,7 +251,7 @@ def migrate_coco_dataset_wrapper(
             file_name = str(img.get("file_name") or "").strip()
             if not file_name:
                 continue
-            src = images_src / file_name
+            src = resolve_coco_file_path(images_src, file_name)
             dst = images_out / Path(file_name).name
             if dst.exists():
                 continue

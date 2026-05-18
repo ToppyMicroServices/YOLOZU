@@ -139,6 +139,8 @@ def _validated_download_url(url: str) -> urllib.parse.ParseResult:
     host = (parsed.hostname or "").strip().lower()
     if not host:
         raise ValueError("https model URL must include host")
+    if host == "localhost" or host.endswith(".localhost"):
+        raise ValueError(f"refusing insecure/private download host: {host}")
     try:
         ip = ipaddress.ip_address(host)
     except ValueError:

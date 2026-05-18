@@ -1,7 +1,13 @@
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from yolozu.datasets.coco_convert import resolve_coco_file_path
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -224,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
             height = int(im.get("height"))
         except Exception:
             continue
-        src_img = images_dir / file_name
+        src_img = resolve_coco_file_path(images_dir, file_name)
         if not src_img.exists():
             continue
 
@@ -291,4 +297,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
