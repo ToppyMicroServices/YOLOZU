@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:26.03-py3@sha256:ade1b30517b3d66b911a3cd7faf0146484ab8956098abe66b96b944fa36f4861
+FROM nvcr.io/nvidia/tensorrt:26.05-py3@sha256:94aa793e6db548940168186172b5acbe413cae9e56f7a656d171cd0dd9b6a869
 
 ARG DEBIAN_FRONTEND=noninteractive
 
