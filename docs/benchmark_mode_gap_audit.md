@@ -38,14 +38,12 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Turn `classification` and `obb` into real
-   backend/eval paths for the existing `torch` / `onnx` / `engine` / `torchscript` benchmark
-   flow.
-2. Add `openvino` as the next conditional runtime target after the current
+1. Add `openvino` as the next conditional runtime target after the current
    `torchscript` detect lane.
-3. Keep the canonical support matrix that shows whether each format has real inference,
+2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
-4. Expand parity artifacts beyond today's `torch`-anchored backend comparisons.
+3. Expand parity artifacts beyond today's `torch`-anchored backend comparisons,
+   including the artifact-backed classification and OBB lanes.
 5. Keep format-specific flag validation strict so inert combinations fail early
    instead of looking supported.
 
@@ -103,15 +101,14 @@ YOLOZU already has extra task value beyond that baseline:
 - 6DoF pose
 
 The benchmark entrypoint now records explicit task semantics in the benchmark
-report, and artifact-backed real eval/parity coverage now exists for
-`segmentation`, `keypoints`, `depth`, and `pose6d`. The remaining lagging tasks are:
-
-- classification
-- OBB
+report, and artifact-backed real eval coverage now exists for `classification`
+and `obb`; artifact-backed real eval/parity coverage exists for `segmentation`,
+`keypoints`, `depth`, and `pose6d`. The remaining lag is parity attachment for
+the classification and OBB artifact lanes.
 
 Improvement priority:
 
-1. Turn the task matrix into task-specific real backend/eval execution paths
+1. Expand parity artifacts for artifact-backed classification and OBB reports
 2. Keep task-specific eval metric keys visible in the report examples
 3. Keep explicit `classification` and `obb` support-status lines in docs/manual
 4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
@@ -202,9 +199,9 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Turn the new task matrix into real benchmark/eval coverage for `classification` and `obb`
-2. Promote `openvino` to conditional support if the runtime path is available
-3. Add per-format flag validation so unsupported knobs fail early
+1. Promote `openvino` to conditional support if the runtime path is available
+2. Expand parity artifacts for artifact-backed classification and OBB reports
+3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change
 
 ## Repository policy reminder

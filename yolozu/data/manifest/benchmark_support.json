@@ -86,7 +86,7 @@
       "id": "obb",
       "metric_family": "obb_map",
       "surface": "mainstream",
-      "semantics": "visible but not wired; benchmark reports benchmark_task_not_wired"
+      "semantics": "artifact-backed real eval for real backend formats"
     },
     {
       "id": "keypoints",
@@ -135,10 +135,10 @@
     {
       "format": "torch",
       "task": "obb",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torch",
@@ -191,10 +191,10 @@
     {
       "format": "onnx",
       "task": "obb",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "onnx",
@@ -247,10 +247,10 @@
     {
       "format": "engine",
       "task": "obb",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "engine",
@@ -303,10 +303,10 @@
     {
       "format": "torchscript",
       "task": "obb",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torchscript",
@@ -362,7 +362,7 @@
       "inference_artifact": "skipped",
       "eval_artifact": "skipped",
       "parity_artifact": "skipped",
-      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Benchmark format lane is not shipped; benchmark reports benchmark_format_not_wired."
     },
     {
       "format": "executorch",
@@ -418,7 +418,7 @@
       "inference_artifact": "skipped",
       "eval_artifact": "skipped",
       "parity_artifact": "skipped",
-      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Benchmark format lane is not shipped; benchmark reports benchmark_format_not_wired."
     },
     {
       "format": "opencv_dnn",

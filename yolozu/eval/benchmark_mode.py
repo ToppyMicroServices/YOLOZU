@@ -27,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import math
 import platform
 import shutil
 import subprocess
@@ -49,7 +50,7 @@ repo_root = Path(__file__).resolve().parents[2]
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript")
 BENCHMARK_UNWIRED_FORMATS = {"executorch", "opencv_dnn"}
-BENCHMARK_UNWIRED_TASKS = {"obb"}
+BENCHMARK_UNWIRED_TASKS: set[str] = set()
 TASK_ALIASES = {
     "detect": "detect",
     "detection": "detect",
@@ -100,10 +101,10 @@ TASK_SEMANTICS = {
         "display_name": "Oriented Bounding Boxes",
         "metric_family": "obb_map",
         "expected_metric_keys": ["obb_mAP50-95", "obb_mAP50", "obb_AR"],
-        "support_level": "unsupported_skipped",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "OBB is visible in the benchmark surface and report schema, but backend/eval wiring is not shipped; benchmark runs report this lane as skipped rather than writing placeholder artifacts.",
+        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript rotated-box prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "keypoints": {
         "display_name": "Keypoints / Pose",
@@ -248,7 +249,7 @@ def _support_status_for_format(fmt: str, *, device: str, task_label: str = "dete
         return False, "benchmark_task_not_wired"
     if fmt in BENCHMARK_UNWIRED_FORMATS:
         return False, "benchmark_format_not_wired"
-    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))
@@ -348,7 +349,7 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
-    elif task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+    elif task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
         execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
@@ -384,6 +385,12 @@ def _task_execution_semantics(
         note = (
             f"{note} Current classification benchmarking is artifact-backed: backend-specific score vectors are "
             "evaluated against class labels directly, without pretending YOLOZU performed the underlying backend "
+            "inference itself."
+        )
+    elif task_label == "obb" and execution_mode == "real_artifact_eval":
+        note = (
+            f"{note} Current OBB benchmarking is artifact-backed: backend-specific rotated-box predictions are "
+            "evaluated against oriented labels directly, without pretending YOLOZU performed the underlying backend "
             "inference itself."
         )
     elif task_label == "segmentation" and execution_mode == "real_artifact_eval":
@@ -516,7 +523,7 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
             raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
 
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
-        if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
+        if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
             raise ValueError(
                 f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
             )
@@ -606,7 +613,7 @@ def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
-    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
@@ -626,7 +633,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
     text = str(candidate)
     suffix = Path(text).suffix.lower()
 
-    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"}:
+    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"}:
         return text, None
 
     if fmt == "torch":
@@ -1316,6 +1323,383 @@ def _write_classification_eval_report(
     return payload
 
 
+def _obb_payload_entries(payload: dict[str, Any] | list[Any], key: str) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    entries = payload.get(key)
+    if isinstance(entries, list):
+        return entries
+    if key == "samples":
+        labels = payload.get("labels")
+        if isinstance(labels, list):
+            return labels
+    return []
+
+
+def _obb_classes(*payloads: dict[str, Any] | list[Any]) -> list[str]:
+    for payload in payloads:
+        if isinstance(payload, dict):
+            classes = payload.get("classes")
+            if isinstance(classes, list) and classes:
+                return [str(item) for item in classes]
+    return []
+
+
+def _obb_class_id(value: Any, classes: list[str], *, where: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{where}: class_id must be an int index or class name")
+    if isinstance(value, int):
+        if value < 0:
+            raise ValueError(f"{where}: class_id must be non-negative")
+        return int(value)
+    text = str(value)
+    if text in classes:
+        return classes.index(text)
+    raise ValueError(f"{where}: class name not present in classes: {text}")
+
+
+def _obb_box(value: Any, *, where: str) -> dict[str, float]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{where}: obb must be an object")
+    out: dict[str, float] = {}
+    for key in ("cx", "cy", "w", "h"):
+        if key not in value:
+            raise ValueError(f"{where}: obb missing {key}")
+        try:
+            parsed = float(value[key])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{where}: obb.{key} must be numeric") from exc
+        if not math.isfinite(parsed):
+            raise ValueError(f"{where}: obb.{key} must be finite")
+        out[key] = parsed
+    angle_key = "angle_deg" if "angle_deg" in value else "angle"
+    if angle_key not in value:
+        raise ValueError(f"{where}: obb missing angle_deg")
+    try:
+        angle = float(value[angle_key])
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{where}: obb.angle_deg must be numeric") from exc
+    if not math.isfinite(angle):
+        raise ValueError(f"{where}: obb.angle_deg must be finite")
+    if not (0.0 <= out["cx"] <= 1.0):
+        raise ValueError(f"{where}: obb.cx must be in [0,1]")
+    if not (0.0 <= out["cy"] <= 1.0):
+        raise ValueError(f"{where}: obb.cy must be in [0,1]")
+    if not (0.0 < out["w"] <= 1.0):
+        raise ValueError(f"{where}: obb.w must be in (0,1]")
+    if not (0.0 < out["h"] <= 1.0):
+        raise ValueError(f"{where}: obb.h must be in (0,1]")
+    if not (-180.0 <= angle <= 180.0):
+        raise ValueError(f"{where}: obb.angle_deg must be in [-180,180]")
+    out["angle_deg"] = angle
+    return out
+
+
+def _load_obb_labels(path: Path) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
+    payload = _load_json_payload(path)
+    if payload is None:
+        raise ValueError("OBB labels JSON could not be read")
+    classes = _obb_classes(payload)
+    labels: dict[str, list[dict[str, Any]]] = {}
+    for sample_idx, sample in enumerate(_obb_payload_entries(payload, "samples")):
+        if not isinstance(sample, dict):
+            raise ValueError("OBB label samples must be objects")
+        sample_id = sample.get("id", sample.get("sample_id"))
+        if sample_id is None:
+            raise ValueError("OBB label sample missing id")
+        objects = sample.get("objects", sample.get("annotations"))
+        if not isinstance(objects, list):
+            raise ValueError(f"OBB label sample missing objects for id={sample_id}")
+        parsed_objects: list[dict[str, Any]] = []
+        for obj_idx, obj in enumerate(objects):
+            if not isinstance(obj, dict):
+                raise ValueError(f"labels[{sample_idx}].objects[{obj_idx}]: object must be a dict")
+            raw_class = obj.get("class_id", obj.get("class"))
+            if raw_class is None:
+                raise ValueError(f"labels[{sample_idx}].objects[{obj_idx}]: missing class_id")
+            box = obj.get("obb", obj.get("bbox"))
+            parsed_objects.append(
+                {
+                    "class_id": _obb_class_id(raw_class, classes, where=f"labels[{sample_idx}].objects[{obj_idx}]"),
+                    "obb": _obb_box(box, where=f"labels[{sample_idx}].objects[{obj_idx}]"),
+                }
+            )
+        labels[str(sample_id)] = parsed_objects
+    if not labels:
+        raise ValueError("OBB labels JSON has no samples")
+    return labels, classes
+
+
+def _load_obb_predictions(path: Path, classes: list[str]) -> dict[str, list[dict[str, Any]]]:
+    payload = _load_json_payload(path)
+    if payload is None:
+        raise ValueError("OBB predictions JSON could not be read")
+    if not classes:
+        classes = _obb_classes(payload)
+    predictions: dict[str, list[dict[str, Any]]] = {}
+    for sample_idx, sample in enumerate(_obb_payload_entries(payload, "predictions")):
+        if not isinstance(sample, dict):
+            raise ValueError("OBB prediction samples must be objects")
+        sample_id = sample.get("id", sample.get("sample_id"))
+        if sample_id is None:
+            raise ValueError("OBB prediction sample missing id")
+        detections = sample.get("detections", sample.get("objects"))
+        if not isinstance(detections, list):
+            raise ValueError(f"OBB prediction sample missing detections for id={sample_id}")
+        parsed_detections: list[dict[str, Any]] = []
+        for det_idx, det in enumerate(detections):
+            if not isinstance(det, dict):
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: detection must be a dict")
+            raw_class = det.get("class_id", det.get("class"))
+            if raw_class is None:
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: missing class_id")
+            try:
+                score = float(det.get("score"))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be numeric") from exc
+            if not math.isfinite(score):
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be finite")
+            box = det.get("obb", det.get("bbox"))
+            parsed_detections.append(
+                {
+                    "class_id": _obb_class_id(raw_class, classes, where=f"predictions[{sample_idx}].detections[{det_idx}]"),
+                    "score": score,
+                    "obb": _obb_box(box, where=f"predictions[{sample_idx}].detections[{det_idx}]"),
+                }
+            )
+        predictions[str(sample_id)] = sorted(parsed_detections, key=lambda item: float(item["score"]), reverse=True)
+    if not predictions:
+        raise ValueError("OBB predictions JSON has no predictions")
+    return predictions
+
+
+def _write_obb_predictions_artifact(
+    path: Path,
+    *,
+    fmt: str,
+    source_path: Path,
+    run_meta: dict[str, Any],
+    classes: list[str],
+) -> dict[str, Any]:
+    predictions = _load_obb_predictions(source_path, classes)
+    normalized = [
+        {"id": sample_id, "detections": detections}
+        for sample_id, detections in sorted(predictions.items())
+    ]
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_obb_predictions_artifact",
+        "format": fmt,
+        "status": "reference_artifact",
+        "classes": list(classes),
+        "predictions": normalized,
+        "meta": {
+            "source_path": str(source_path),
+            "source_sha256": _sha256_file(source_path),
+            "bbox_format": "cxcywh_norm_angle_deg",
+        },
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
+def _obb_corners(box: dict[str, float]) -> list[tuple[float, float]]:
+    cx = float(box["cx"])
+    cy = float(box["cy"])
+    hw = float(box["w"]) / 2.0
+    hh = float(box["h"]) / 2.0
+    theta = math.radians(float(box["angle_deg"]))
+    cos_t = math.cos(theta)
+    sin_t = math.sin(theta)
+    corners: list[tuple[float, float]] = []
+    for x, y in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)):
+        corners.append((cx + x * cos_t - y * sin_t, cy + x * sin_t + y * cos_t))
+    return corners
+
+
+def _polygon_area(points: list[tuple[float, float]]) -> float:
+    if len(points) < 3:
+        return 0.0
+    area = 0.0
+    for idx, point in enumerate(points):
+        nxt = points[(idx + 1) % len(points)]
+        area += point[0] * nxt[1] - nxt[0] * point[1]
+    return abs(area) / 2.0
+
+
+def _clip_polygon(
+    subject: list[tuple[float, float]],
+    clip: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    def inside(point: tuple[float, float], edge_start: tuple[float, float], edge_end: tuple[float, float]) -> bool:
+        return (edge_end[0] - edge_start[0]) * (point[1] - edge_start[1]) >= (
+            edge_end[1] - edge_start[1]
+        ) * (point[0] - edge_start[0])
+
+    def intersection(
+        p1: tuple[float, float],
+        p2: tuple[float, float],
+        e1: tuple[float, float],
+        e2: tuple[float, float],
+    ) -> tuple[float, float]:
+        x1, y1 = p1
+        x2, y2 = p2
+        x3, y3 = e1
+        x4, y4 = e2
+        denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if abs(denom) < 1e-12:
+            return p2
+        px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom
+        py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom
+        return px, py
+
+    output = list(subject)
+    for edge_idx, edge_start in enumerate(clip):
+        edge_end = clip[(edge_idx + 1) % len(clip)]
+        input_points = output
+        output = []
+        if not input_points:
+            break
+        prev = input_points[-1]
+        for cur in input_points:
+            cur_inside = inside(cur, edge_start, edge_end)
+            prev_inside = inside(prev, edge_start, edge_end)
+            if cur_inside:
+                if not prev_inside:
+                    output.append(intersection(prev, cur, edge_start, edge_end))
+                output.append(cur)
+            elif prev_inside:
+                output.append(intersection(prev, cur, edge_start, edge_end))
+            prev = cur
+    return output
+
+
+def _obb_iou(box_a: dict[str, float], box_b: dict[str, float]) -> float:
+    poly_a = _obb_corners(box_a)
+    poly_b = _obb_corners(box_b)
+    area_a = _polygon_area(poly_a)
+    area_b = _polygon_area(poly_b)
+    if area_a <= 0.0 or area_b <= 0.0:
+        return 0.0
+    inter = _polygon_area(_clip_polygon(poly_a, poly_b))
+    union = area_a + area_b - inter
+    if union <= 0.0:
+        return 0.0
+    return max(0.0, min(1.0, inter / union))
+
+
+def _obb_match_count(
+    labels: dict[str, list[dict[str, Any]]],
+    predictions: dict[str, list[dict[str, Any]]],
+    *,
+    threshold: float,
+) -> tuple[int, list[dict[str, Any]]]:
+    matched = 0
+    per_sample: list[dict[str, Any]] = []
+    for sample_id, gt_objects in sorted(labels.items()):
+        detections = list(predictions.get(sample_id, []))
+        used: set[int] = set()
+        sample_matches: list[dict[str, Any]] = []
+        for gt_idx, gt in enumerate(gt_objects):
+            best_idx = None
+            best_iou = 0.0
+            for det_idx, det in enumerate(detections):
+                if det_idx in used or int(det["class_id"]) != int(gt["class_id"]):
+                    continue
+                iou = _obb_iou(gt["obb"], det["obb"])
+                if iou > best_iou:
+                    best_iou = iou
+                    best_idx = det_idx
+            ok = best_idx is not None and best_iou >= threshold
+            if ok and best_idx is not None:
+                used.add(best_idx)
+                matched += 1
+            sample_matches.append(
+                {
+                    "gt_index": gt_idx,
+                    "matched": bool(ok),
+                    "iou": float(best_iou),
+                    "prediction_index": best_idx,
+                }
+            )
+        per_sample.append(
+            {
+                "id": sample_id,
+                "ground_truth": len(gt_objects),
+                "predictions": len(detections),
+                "matched": sum(1 for item in sample_matches if item["matched"]),
+                "matches": sample_matches,
+            }
+        )
+    return matched, per_sample
+
+
+def _evaluate_obb(
+    labels: dict[str, list[dict[str, Any]]],
+    predictions: dict[str, list[dict[str, Any]]],
+    classes: list[str],
+) -> dict[str, Any]:
+    total_gt = sum(len(items) for items in labels.values())
+    total_pred = sum(len(items) for items in predictions.values())
+    if total_gt <= 0:
+        raise ValueError("OBB evaluation requires at least one ground-truth object")
+    thresholds = [round(0.5 + 0.05 * idx, 2) for idx in range(10)]
+    by_threshold: dict[str, dict[str, Any]] = {}
+    recalls: list[float] = []
+    per_sample_at_50: list[dict[str, Any]] = []
+    for threshold in thresholds:
+        matched, per_sample = _obb_match_count(labels, predictions, threshold=threshold)
+        recall = matched / total_gt
+        recalls.append(recall)
+        if threshold == 0.5:
+            per_sample_at_50 = per_sample
+        by_threshold[f"{threshold:.2f}"] = {
+            "matched": int(matched),
+            "recall": recall,
+        }
+    map_50_95 = sum(recalls) / len(recalls)
+    matched_50 = int(by_threshold["0.50"]["matched"])
+    return {
+        "samples": len(labels),
+        "ground_truth": int(total_gt),
+        "predictions": int(total_pred),
+        "matched_iou50": matched_50,
+        "obb_mAP50": matched_50 / total_gt,
+        "obb_mAP50-95": map_50_95,
+        "obb_AR": map_50_95,
+        "thresholds": by_threshold,
+        "classes": list(classes),
+        "per_sample": per_sample_at_50,
+    }
+
+
+def _write_obb_eval_report(
+    path: Path,
+    *,
+    fmt: str,
+    labels_path: Path,
+    predictions_path: Path,
+    metrics: dict[str, Any],
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_obb_eval_report",
+        "task": "obb",
+        "format": fmt,
+        "status": "ok",
+        "labels_path": str(labels_path),
+        "predictions_path": str(predictions_path),
+        "metrics": metrics,
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
 def _export_settings_payload(
     args: Any,
     *,
@@ -1379,7 +1763,7 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
 
 
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
-    if results and str(results[0].get("task")) == "classification":
+    if results and str(results[0].get("task")) in {"classification", "obb"}:
         return
     if results and str(results[0].get("task")) == "segmentation":
         _attach_segmentation_parity(results, args=args)
@@ -2237,6 +2621,128 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                         latency = None
                         throughput = None
                         command_meta = {"eval": {"mode": "in_process_classification_artifact_eval"}}
+                elif task_label == "obb" and benchmark_source == "artifact_eval":
+                    pred_source = _resolve_path(model_artifact)
+                    label_source = _resolve_path(data_text)
+                    if pred_source is None or not pred_source.exists():
+                        status = "skipped"
+                        skip_reason = "model_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    elif label_source is None or not label_source.exists():
+                        status = "skipped"
+                        skip_reason = "dataset_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    else:
+                        try:
+                            labels, classes = _load_obb_labels(label_source)
+                            _write_obb_predictions_artifact(
+                                predictions_path,
+                                fmt=fmt,
+                                source_path=pred_source,
+                                run_meta=format_run_meta,
+                                classes=classes,
+                            )
+                            predictions = _load_obb_predictions(predictions_path, classes)
+                            metrics = _evaluate_obb(labels, predictions, classes)
+                            _write_obb_eval_report(
+                                eval_path,
+                                fmt=fmt,
+                                labels_path=label_source,
+                                predictions_path=predictions_path,
+                                metrics=metrics,
+                                run_meta=format_run_meta,
+                            )
+                        except ValueError as exc:
+                            status = "failed"
+                            skip_reason = "obb_artifact_invalid"
+                            error = str(exc)
+                            if not predictions_path.exists():
+                                _write_placeholder(
+                                    predictions_path,
+                                    kind="benchmark_predictions_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason=skip_reason,
+                                run_meta=format_run_meta,
+                            )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="artifact_backed_obb_parity_pending_attach",
+                                run_meta=format_run_meta,
+                            )
+                        latency = None
+                        throughput = None
+                        command_meta = {"eval": {"mode": "in_process_obb_artifact_eval"}}
                 elif task_label == "segmentation" and benchmark_source == "artifact_eval":
                     pred_source = _resolve_path(model_artifact)
                     dataset_json = _segmentation_dataset_json(args)
@@ -2947,7 +3453,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for classification, segmentation, keypoints, depth, and pose6d.",
+        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.",
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

@@ -96,12 +96,12 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(report["results"][0]["support_status"], "skipped")
         self.assertEqual(report["support_summary"]["by_format"]["torchscript"], "skipped")
 
-    def test_dod_semantics_keep_requested_unwired_task_formats(self):
+    def test_dod_semantics_keep_requested_obb_formats_when_artifacts_missing(self):
         args = self._args(format="torch,onnx,engine,torchscript", task="obb", dry_run=False)
         with mock.patch.object(
             benchmark_mode.subprocess,
             "run",
-            side_effect=AssertionError("unwired benchmark task should not launch backends"),
+            side_effect=AssertionError("artifact-backed OBB benchmark should not launch backends"),
         ):
             with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
                 report, code = benchmark_mode.run_benchmark_mode(args)
@@ -115,12 +115,12 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(report["support_summary"]["counts"], {"real": 0, "artifact-backed": 0, "skipped": 4})
         for result in report["results"]:
             self.assertEqual(result["status"], "skipped")
-            self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
+            self.assertEqual(result["skip_reason"], "model_artifact_required")
             self.assertEqual(result["support_status"], "skipped")
-            self.assertEqual(result["support_reason"], "benchmark_task_not_wired")
-            self.assertEqual(result["artifact_status"]["predictions"], "skipped")
-            self.assertEqual(result["artifact_status"]["eval"], "skipped")
-            self.assertEqual(result["artifact_status"]["parity"], "skipped")
+            self.assertEqual(result["support_reason"], "model_artifact_required")
+            self.assertEqual(result["artifact_status"]["predictions"], "real")
+            self.assertEqual(result["artifact_status"]["eval"], "real")
+            self.assertEqual(result["artifact_status"]["parity"], "real_when_comparable")
             self.assertIn("available", result["runtime"])
             self.assertIn("predictions", result["artifacts"])
             self.assertIn("eval", result["artifacts"])
@@ -142,7 +142,7 @@ class TestBenchmarkModelTool(TestCase):
             self.assertTrue(result["support_reason"])
             self.assertIn("latency_source", result["runtime"])
 
-    def test_unwired_obb_task_writes_all_skipped_artifacts_without_launching_backend(self):
+    def test_obb_task_writes_missing_artifact_placeholders_without_launching_backend(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
@@ -175,13 +175,13 @@ class TestBenchmarkModelTool(TestCase):
             result = report["results"][0]
             self.assertEqual(result["format"], "torchscript")
             self.assertEqual(result["status"], "skipped")
-            self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
-            self.assertEqual(result["execution_semantics"]["execution_mode"], "unsupported_skipped")
+            self.assertEqual(result["skip_reason"], "model_artifact_required")
+            self.assertEqual(result["execution_semantics"]["execution_mode"], "real_artifact_eval")
 
             expected_artifacts = {
-                "predictions": "benchmark_predictions_skipped",
-                "eval": "benchmark_eval_skipped",
-                "parity": "benchmark_parity_skipped",
+                "predictions": "benchmark_predictions_placeholder",
+                "eval": "benchmark_eval_placeholder",
+                "parity": "benchmark_parity_placeholder",
             }
             for key, expected_kind in expected_artifacts.items():
                 artifact_path = Path(result["artifacts"][key])
@@ -190,14 +190,14 @@ class TestBenchmarkModelTool(TestCase):
                 self.assertEqual(payload["kind"], expected_kind)
                 self.assertEqual(payload["format"], "torchscript")
                 self.assertEqual(payload["status"], "skipped")
-                self.assertEqual(payload["reason"], "benchmark_task_not_wired")
+                self.assertEqual(payload["reason"], "model_artifact_required")
                 self.assertEqual(payload["run_meta"]["backend"], "torchscript")
                 self.assertEqual(payload["run_meta"]["run_id"], "unwired-task-test")
 
             export_settings = json.loads((root / "export_settings_torchscript.json").read_text(encoding="utf-8"))
-            self.assertEqual(export_settings["status"], "skipped")
-            self.assertEqual(export_settings["skip_reason"], "benchmark_task_not_wired")
-            self.assertEqual(export_settings["execution_semantics"]["execution_mode"], "unsupported_skipped")
+            self.assertEqual(export_settings["status"], "supported")
+            self.assertEqual(export_settings["skip_reason"], "model_artifact_required")
+            self.assertEqual(export_settings["execution_semantics"]["execution_mode"], "real_artifact_eval")
 
     def test_unwired_benchmark_formats_report_skipped_not_synthetic_placeholder(self):
         args = self._args(format="opencv_dnn", model="runs/foo/model.onnx", task="detect", dry_run=False)
@@ -244,7 +244,7 @@ class TestBenchmarkModelTool(TestCase):
 
     def test_auto_prefers_artifact_eval_for_artifact_backed_tasks(self):
         args = self._args(latency_source="auto")
-        for task_label in ("classification", "segmentation", "keypoints", "depth", "pose6d"):
+        for task_label in ("classification", "obb", "segmentation", "keypoints", "depth", "pose6d"):
             self.assertEqual(
                 benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label=task_label),
                 "artifact_eval",
@@ -368,6 +368,202 @@ class TestBenchmarkModelTool(TestCase):
                 json.loads(Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8"))["kind"],
                 "benchmark_classification_eval_report",
             )
+
+    def test_obb_task_supports_real_artifact_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            labels = root / "obb_labels.json"
+            torch_pred = root / "obb_torch.json"
+            onnx_pred = root / "obb_onnx.json"
+            labels.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "samples": [
+                            {
+                                "id": "img0",
+                                "objects": [
+                                    {
+                                        "class_id": 0,
+                                        "obb": {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 30.0},
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            torch_pred.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "predictions": [
+                            {
+                                "id": "img0",
+                                "detections": [
+                                    {
+                                        "class_id": 0,
+                                        "score": 0.99,
+                                        "obb": {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 30.0},
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            onnx_pred.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "predictions": [
+                            {
+                                "id": "img0",
+                                "detections": [
+                                    {
+                                        "class_id": 0,
+                                        "score": 0.99,
+                                        "obb": {"cx": 0.52, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 31.0},
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            report = root / "benchmark_obb_report.json"
+            artifact_dir = root / "artifacts"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "obb",
+                    "--model",
+                    str(torch_pred),
+                    "--onnx-model",
+                    str(onnx_pred),
+                    "--data",
+                    str(labels),
+                    "--format",
+                    "torch,onnx,opencv_dnn",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark OBB artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "obb")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["opencv_dnn"]["execution_mode"], "unsupported_skipped")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["opencv_dnn"]["status"], "skipped")
+            self.assertEqual(results["opencv_dnn"]["skip_reason"], "benchmark_format_not_wired")
+            self.assertEqual(results["torch"]["support_status"], "artifact-backed")
+            self.assertEqual(results["onnx"]["support_status"], "artifact-backed")
+            self.assertEqual(payload["support_summary"]["counts"]["artifact-backed"], 2)
+            self.assertEqual(payload["support_summary"]["counts"]["skipped"], 1)
+            self.assertEqual(results["torch"]["eval_metrics"]["obb_mAP50"], 1.0)
+            self.assertGreater(results["onnx"]["eval_metrics"]["obb_mAP50"], 0.0)
+            self.assertEqual(
+                json.loads(Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8"))["kind"],
+                "benchmark_obb_eval_report",
+            )
+
+    def test_obb_task_rejects_invalid_angle_artifact(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            labels = root / "obb_labels.json"
+            pred = root / "obb_bad.json"
+            labels.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "samples": [
+                            {
+                                "id": "img0",
+                                "objects": [
+                                    {
+                                        "class_id": 0,
+                                        "obb": {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0},
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            pred.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "predictions": [
+                            {
+                                "id": "img0",
+                                "detections": [
+                                    {
+                                        "class_id": 0,
+                                        "score": 0.9,
+                                        "obb": {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 270.0},
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            report = root / "benchmark_obb_report.json"
+            args = self._args(
+                format="torch",
+                model=str(pred),
+                task="obb",
+                data=str(labels),
+                output=str(report),
+                predictions_output=str(root / "artifacts"),
+                eval_output=str(root / "artifacts"),
+                parity_output=str(root / "artifacts"),
+            )
+
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                payload, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            result = payload["results"][0]
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["skip_reason"], "obb_artifact_invalid")
+            self.assertIn("angle_deg", result["error"])
 
     def test_segmentation_task_supports_real_artifact_eval(self):
         np = None
@@ -770,7 +966,7 @@ class TestBenchmarkModelTool(TestCase):
         self.assertFalse(summary["openvino_applicable"])
         for fmt in ("torch", "onnx", "torchscript"):
             item = summary["by_format"][fmt]
-            self.assertEqual(item["execution_mode"], "unsupported_skipped")
+            self.assertEqual(item["execution_mode"], "real_artifact_eval")
             self.assertEqual(item["missing_runtime_policy"], "report_skipped")
             self.assertEqual(item["missing_artifact_policy"], "report_skipped")
             self.assertEqual(item["unsupported_nondefault_flags"], [])
