@@ -265,7 +265,7 @@ Shortest 3 commands:
 ```bash
 python3 tools/import_yolo_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/yolo_wrapper --force
 python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
-python3 -m yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --protocol nms_applied --output reports/coco_eval_yolo_runtime.json
+python3 -m yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/pred_yolo_runtime.json --output reports/coco_eval_yolo_runtime.json
 ```
 
 Protocol guidance:

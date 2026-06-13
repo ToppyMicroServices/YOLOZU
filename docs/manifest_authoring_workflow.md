@@ -40,6 +40,7 @@ Optional but recommended when applicable:
 ```bash
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 tools/audit_docs_examples_drift.py --json
 ```
 
 4. Sync packaged manifest copy (single source of truth sync):
