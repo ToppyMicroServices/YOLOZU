@@ -216,6 +216,7 @@ The top-level benchmark report should contain:
 - `device`
 - `precision`
 - `status`
+- `validation_summary`
 - `support_summary`
 - `latency`
 - `throughput`
