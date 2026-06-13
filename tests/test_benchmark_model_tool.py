@@ -641,6 +641,45 @@ class TestBenchmarkModelTool(TestCase):
             with self.assertRaisesRegex(ValueError, r"--workspace not supported for --format engine"):
                 benchmark_mode.run_benchmark_mode(args)
 
+    def test_torchscript_rejects_dynamic_flag_early(self):
+        args = self._args(format="torchscript", model="exports/example.torchscript", dynamic=True)
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
+            with self.assertRaisesRegex(ValueError, r"--dynamic not supported for --format torchscript"):
+                benchmark_mode.run_benchmark_mode(args)
+
+    def test_validation_summary_records_strict_format_policy(self):
+        args = self._args(format="torch,onnx,torchscript", task="classification", strict=True)
+        with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+            report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 2)
+        summary = report["validation_summary"]
+        self.assertEqual(summary["task"], "classification")
+        self.assertEqual(summary["requested_formats"], ["torch", "onnx", "torchscript"])
+        self.assertTrue(summary["strict"])
+        self.assertEqual(summary["bad_flag_policy"], "fail_early")
+        self.assertEqual(summary["unsupported_task_policy"], "report_skipped")
+        self.assertFalse(summary["openvino_applicable"])
+        for fmt in ("torch", "onnx", "torchscript"):
+            item = summary["by_format"][fmt]
+            self.assertEqual(item["execution_mode"], "unsupported_skipped")
+            self.assertEqual(item["missing_runtime_policy"], "report_skipped")
+            self.assertEqual(item["missing_artifact_policy"], "report_skipped")
+            self.assertEqual(item["unsupported_nondefault_flags"], [])
+
+    def test_validation_summary_records_missing_artifact_skip_policy(self):
+        args = self._args(format="onnx", model="runs/foo/model.pt", latency_source="dataset_pass_wall_time")
+        with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "onnxruntime"):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["results"][0]["skip_reason"], "model_artifact_required")
+        policy = report["validation_summary"]["by_format"]["onnx"]
+        self.assertEqual(policy["execution_mode"], "real_backend_eval")
+        self.assertEqual(policy["missing_artifact_policy"], "report_skipped")
+        self.assertEqual(policy["missing_runtime_policy"], "report_skipped")
+
     def test_module_cli_dry_run_writes_stable_artifacts(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

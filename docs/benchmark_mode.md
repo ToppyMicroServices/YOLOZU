@@ -371,6 +371,7 @@ The top-level benchmark report records, per format:
 - `task_requested`
 - `task_semantics.metric_family` / `task_semantics.expected_metric_keys`
 - `status`
+- `validation_summary`
 - `support_status` (`real`, `artifact-backed`, or `skipped`)
 - `support_reason`
 - `skip_reason` when skipped
@@ -413,6 +414,18 @@ For P1 benchmark DoD checks, read `support_status` instead of guessing from
 The top-level `support_summary` records requested formats, reported formats,
 missing formats, per-format support statuses, and counts. CI and release smoke
 checks should fail if a requested format silently disappears from `results`.
+
+The top-level `validation_summary` records the format-specific strict
+validation policy that was applied before execution:
+
+- `bad_flag_policy: fail_early` for unsupported non-default export/benchmark flags
+- `bad_task_source_policy: fail_early` for task/source combinations such as
+  artifact-backed tasks forced to dataset-pass timing
+- `missing_runtime_policy: report_skipped`
+- `missing_artifact_policy: report_skipped`
+
+`openvino_applicable` remains `false` until the OpenVINO conditional lane is
+added to the benchmark format surface.
 
 Typical skip reasons:
 

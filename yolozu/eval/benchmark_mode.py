@@ -516,6 +516,45 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
             )
 
 
+def _validation_summary(args: Any, requested_formats: list[str], *, task_label: str) -> dict[str, Any]:
+    nondefault = _nondefault_flag_values(args)
+    by_format: dict[str, Any] = {}
+    for fmt in requested_formats:
+        rule = FORMAT_FLAG_RULES.get(fmt, {"supported_nondefault_flags": set(), "notes": None})
+        supported_flags = sorted(str(name) for name in rule.get("supported_nondefault_flags", set()))
+        unsupported = sorted(name for name in nondefault if name not in supported_flags)
+        benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
+        execution = _task_execution_semantics(
+            task_label,
+            fmt=fmt,
+            benchmark_source=benchmark_source,
+            dry_run=bool(getattr(args, "dry_run", False)),
+        )
+        by_format[fmt] = {
+            "supported_nondefault_flags": supported_flags,
+            "unsupported_nondefault_flags": unsupported,
+            "format_notes": rule.get("notes"),
+            "benchmark_source": benchmark_source,
+            "execution_mode": execution["execution_mode"],
+            "missing_runtime_policy": "report_skipped",
+            "missing_artifact_policy": "report_skipped",
+        }
+
+    return {
+        "schema_version": 1,
+        "task": task_label,
+        "requested_formats": list(requested_formats),
+        "strict": bool(getattr(args, "strict", False)),
+        "dry_run": bool(getattr(args, "dry_run", False)),
+        "nondefault_flags": dict(nondefault),
+        "bad_flag_policy": "fail_early",
+        "bad_task_source_policy": "fail_early",
+        "unsupported_task_policy": "report_skipped",
+        "openvino_applicable": "openvino" in PHASE1_FORMATS,
+        "by_format": by_format,
+    }
+
+
 def _artifact_path(base: str | None, *, fmt: str, default_name: str) -> Path:
     if not base:
         return (repo_root / "reports" / default_name.format(format=fmt)).resolve()
@@ -1700,6 +1739,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     )
     task_semantics = _task_semantics(task_requested)
     _validate_benchmark_args(args, requested_formats, task_label=task_label)
+    validation_summary = _validation_summary(args, requested_formats, task_label=task_label)
 
     report_path = _resolve_path(str(getattr(args, "output", "reports/benchmark_report.json")))
     if report_path is None:
@@ -2484,6 +2524,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         "status": aggregate_status,
         "requested_format": str(getattr(args, "format", "all") or "all"),
         "benchmark_source": str(getattr(args, "latency_source", "auto") or "auto"),
+        "validation_summary": validation_summary,
         "support_summary": _support_summary(results, list(requested_formats)),
         "results": results,
         "artifacts": {
