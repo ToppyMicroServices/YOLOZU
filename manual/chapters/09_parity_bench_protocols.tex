@@ -256,8 +256,9 @@ surface breadth.
 
 The most important remaining gaps are:
 \begin{itemize}
-  \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
-  \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
+  \item broader format coverage beyond conditional \cmd{openvino}, such as
+  \cmd{coreml}, \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and
+  \cmd{paddle}
   \item broader parity attachment for artifact-backed \cmd{classification} and
   \cmd{obb} lanes
   \item stronger validation of format-specific knobs so unsupported
@@ -268,7 +269,7 @@ The most important remaining gaps are:
 If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
-  \item promote conditional \cmd{openvino} after the current \cmd{torchscript} detect path
+  \item keep conditional \cmd{openvino} honest after the current \cmd{torchscript} detect path
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
   from dry-run placeholders and unsupported/skipped paths
   \item expand real parity artifacts beyond the current

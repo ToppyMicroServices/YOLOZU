@@ -17,6 +17,7 @@ class TestBenchmarkModelTool(TestCase):
             self.repo_root / "tmp_benchmark_report.json",
             self.repo_root / "export_settings_engine.json",
             self.repo_root / "export_settings_onnx.json",
+            self.repo_root / "export_settings_openvino.json",
             self.repo_root / "export_settings_opencv_dnn.json",
             self.repo_root / "export_settings_torch.json",
             self.repo_root / "export_settings_torchscript.json",
@@ -50,6 +51,7 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--onnx-model", proc.stdout)
         self.assertIn("--engine-model", proc.stdout)
         self.assertIn("--protocol", proc.stdout)
+        self.assertIn("--openvino-model", proc.stdout)
         self.assertIn("--task", proc.stdout)
         self.assertIn("pose6d", proc.stdout)
         self.assertIn("--depth-mask", proc.stdout)
@@ -64,6 +66,10 @@ class TestBenchmarkModelTool(TestCase):
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
+
+    def test_openvino_is_accepted_as_conditional_benchmark_format(self):
+        self.assertIn("openvino", benchmark_mode.PHASE1_FORMATS)
+        self.assertIn("openvino", benchmark_mode.REAL_BACKEND_FORMATS)
 
     def test_task_alias_pose_canonicalizes_to_keypoints(self):
         args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="pose", dry_run=True)
@@ -89,7 +95,7 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["task"], "classification")
         self.assertEqual(report["task_semantics"]["metric_family"], "topk_accuracy")
-        self.assertEqual(report["task_semantics"]["support_level"], "artifact_backed_real_for_torch_onnx_engine_torchscript")
+        self.assertEqual(report["task_semantics"]["support_level"], "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino")
         self.assertEqual(report["task_semantics"]["expected_metric_keys"], ["top1", "top5", "accuracy"])
         self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "dry_run_planning")
         self.assertEqual(report["results"][0]["status"], "dry_run")
@@ -141,6 +147,22 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["support_status"], "skipped")
             self.assertTrue(result["support_reason"])
             self.assertIn("latency_source", result["runtime"])
+
+    def test_openvino_missing_runtime_reports_skipped_without_install_requirement(self):
+        args = self._args(format="openvino", task="detect", model="exports/example.xml", dry_run=False)
+        with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report["validation_summary"]["openvino_applicable"], True)
+        self.assertEqual(report["support_summary"]["by_format"]["openvino"], "skipped")
+        result = report["results"][0]
+        self.assertEqual(result["format"], "openvino")
+        self.assertEqual(result["status"], "skipped")
+        self.assertEqual(result["skip_reason"], "missing_runtime_dependency")
+        self.assertEqual(result["runtime"]["available"], False)
+        self.assertEqual(result["runtime"]["reason"], "missing_runtime_dependency")
 
     def test_obb_task_writes_missing_artifact_placeholders_without_launching_backend(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -678,7 +700,15 @@ class TestBenchmarkModelTool(TestCase):
             "dataset_pass_wall_time",
         )
         self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="openvino", task_label="detect"),
+            "dataset_pass_wall_time",
+        )
+        self.assertEqual(
             benchmark_mode._selected_benchmark_source(args, fmt="torchscript", task_label="keypoints"),
+            "artifact_eval",
+        )
+        self.assertEqual(
+            benchmark_mode._selected_benchmark_source(args, fmt="openvino", task_label="keypoints"),
             "artifact_eval",
         )
 
@@ -967,7 +997,7 @@ class TestBenchmarkModelTool(TestCase):
         self.assertTrue(summary["strict"])
         self.assertEqual(summary["bad_flag_policy"], "fail_early")
         self.assertEqual(summary["unsupported_task_policy"], "report_skipped")
-        self.assertFalse(summary["openvino_applicable"])
+        self.assertTrue(summary["openvino_applicable"])
         for fmt in ("torch", "onnx", "torchscript"):
             item = summary["by_format"][fmt]
             self.assertEqual(item["execution_mode"], "real_artifact_eval")
@@ -1115,6 +1145,7 @@ class TestBenchmarkModelTool(TestCase):
             onnx_model=None,
             engine_model=None,
             torchscript_model=None,
+            openvino_model=None,
             data=str(root / "data" / "smoke"),
             imgsz=640,
             half=False,
@@ -1268,6 +1299,58 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["execution_semantics"]["execution_mode"], "real_backend_eval")
             self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.37)
             self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
+
+    def test_openvino_supported_runtime_uses_real_orchestration(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report_path = root / "benchmark_report.json"
+
+            def fake_run(cmd, cwd, capture_output, text, check):
+                cmd = [str(x) for x in cmd]
+                if cmd[1].endswith("export_predictions_openvino.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {"image": "images/val/000001.jpg", "detections": []},
+                            {"image": "images/val/000002.jpg", "detections": []},
+                        ],
+                        "meta": {"adapter": "openvino"},
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("eval_suite.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {"metrics": {"bbox_mAP50": 0.39}}
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                raise AssertionError(f"unexpected subprocess command: {cmd}")
+
+            args = self._args(
+                output=str(report_path),
+                data=str(repo_root / "data" / "smoke"),
+                format="openvino",
+                model="runs/foo/model.xml",
+                latency_source="auto",
+            )
+            with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "openvino"):
+                with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                    with mock.patch.object(benchmark_mode.subprocess, "run", side_effect=fake_run):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(report["status"], "ok")
+            result = report["results"][0]
+            self.assertEqual(result["format"], "openvino")
+            self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["support_status"], "real")
+            self.assertEqual(result["runtime"]["available"], True)
+            self.assertEqual(result["latency_source"], "dataset_pass_wall_time")
+            self.assertEqual(result["execution_semantics"]["execution_mode"], "real_backend_eval")
+            self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.39)
+            self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_openvino.json"))
 
     def test_detect_four_format_request_writes_real_parity_and_skips_engine(self):
         repo_root = Path(__file__).resolve().parents[1]
