@@ -49,7 +49,7 @@ repo_root = Path(__file__).resolve().parents[2]
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript")
 BENCHMARK_UNWIRED_FORMATS = {"executorch", "opencv_dnn"}
-BENCHMARK_UNWIRED_TASKS = {"classification", "obb"}
+BENCHMARK_UNWIRED_TASKS = {"obb"}
 TASK_ALIASES = {
     "detect": "detect",
     "detection": "detect",
@@ -91,10 +91,10 @@ TASK_SEMANTICS = {
         "display_name": "Classification",
         "metric_family": "topk_accuracy",
         "expected_metric_keys": ["top1", "top5", "accuracy"],
-        "support_level": "unsupported_skipped",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Classification is explicit in the benchmark task matrix, but real benchmark orchestration is not shipped; benchmark runs report this lane as skipped rather than writing placeholder artifacts.",
+        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "obb": {
         "display_name": "Oriented Bounding Boxes",
@@ -248,7 +248,7 @@ def _support_status_for_format(fmt: str, *, device: str, task_label: str = "dete
         return False, "benchmark_task_not_wired"
     if fmt in BENCHMARK_UNWIRED_FORMATS:
         return False, "benchmark_format_not_wired"
-    if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))
@@ -348,7 +348,7 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
-    elif task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+    elif task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
         execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
@@ -380,7 +380,13 @@ def _task_execution_semantics(
         }
 
     note = task_meta["notes"]
-    if task_label == "segmentation" and execution_mode == "real_artifact_eval":
+    if task_label == "classification" and execution_mode == "real_artifact_eval":
+        note = (
+            f"{note} Current classification benchmarking is artifact-backed: backend-specific score vectors are "
+            "evaluated against class labels directly, without pretending YOLOZU performed the underlying backend "
+            "inference itself."
+        )
+    elif task_label == "segmentation" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current segmentation benchmarking is artifact-backed: backend-specific mask predictions artifacts are "
             "evaluated with tools/eval_segmentation.py and compared directly, without pretending YOLOZU performed the "
@@ -510,7 +516,7 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
             raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
 
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
-        if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
+        if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
             raise ValueError(
                 f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
             )
@@ -600,7 +606,7 @@ def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
-    if task_label in {"segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
         return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
@@ -620,7 +626,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
     text = str(candidate)
     suffix = Path(text).suffix.lower()
 
-    if task_label in {"segmentation", "keypoints", "depth", "pose6d"}:
+    if task_label in {"classification", "segmentation", "keypoints", "depth", "pose6d"}:
         return text, None
 
     if fmt == "torch":
@@ -1115,6 +1121,201 @@ def _write_segmentation_predictions_artifact(
     return payload
 
 
+def _classification_payload_entries(payload: dict[str, Any] | list[Any], key: str) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    entries = payload.get(key)
+    if isinstance(entries, list):
+        return entries
+    if key == "samples":
+        labels = payload.get("labels")
+        if isinstance(labels, list):
+            return labels
+    return []
+
+
+def _classification_classes(*payloads: dict[str, Any] | list[Any]) -> list[str]:
+    for payload in payloads:
+        if isinstance(payload, dict):
+            classes = payload.get("classes")
+            if isinstance(classes, list) and classes:
+                return [str(item) for item in classes]
+    return []
+
+
+def _classification_label_index(value: Any, classes: list[str]) -> int:
+    if isinstance(value, bool):
+        raise ValueError("classification label must be an int index or class name")
+    if isinstance(value, int):
+        if value < 0:
+            raise ValueError("classification label index must be non-negative")
+        return int(value)
+    text = str(value)
+    if text in classes:
+        return classes.index(text)
+    raise ValueError(f"classification label not present in classes: {text}")
+
+
+def _load_classification_labels(path: Path) -> tuple[dict[str, int], list[str]]:
+    payload = _load_json_payload(path)
+    if payload is None:
+        raise ValueError("classification labels JSON could not be read")
+    classes = _classification_classes(payload)
+    labels: dict[str, int] = {}
+    for entry in _classification_payload_entries(payload, "samples"):
+        if not isinstance(entry, dict):
+            raise ValueError("classification label entries must be objects")
+        sample_id = entry.get("id", entry.get("sample_id"))
+        if sample_id is None:
+            raise ValueError("classification label entry missing id")
+        raw_label = entry.get("label", entry.get("class_id", entry.get("class")))
+        if raw_label is None:
+            raise ValueError(f"classification label entry missing label for id={sample_id}")
+        labels[str(sample_id)] = _classification_label_index(raw_label, classes)
+    if not labels:
+        raise ValueError("classification labels JSON has no samples")
+    return labels, classes
+
+
+def _load_classification_predictions(path: Path, classes: list[str]) -> dict[str, list[float]]:
+    payload = _load_json_payload(path)
+    if payload is None:
+        raise ValueError("classification predictions JSON could not be read")
+    if not classes:
+        classes = _classification_classes(payload)
+    predictions: dict[str, list[float]] = {}
+    for entry in _classification_payload_entries(payload, "predictions"):
+        if not isinstance(entry, dict):
+            raise ValueError("classification prediction entries must be objects")
+        sample_id = entry.get("id", entry.get("sample_id"))
+        if sample_id is None:
+            raise ValueError("classification prediction entry missing id")
+        scores = entry.get("scores", entry.get("probabilities", entry.get("logits")))
+        if not isinstance(scores, list) or not scores:
+            raise ValueError(f"classification prediction entry missing scores for id={sample_id}")
+        try:
+            parsed = [float(value) for value in scores]
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"classification prediction scores must be numeric for id={sample_id}") from exc
+        if classes and len(parsed) != len(classes):
+            raise ValueError(f"classification prediction score count does not match classes for id={sample_id}")
+        predictions[str(sample_id)] = parsed
+    if not predictions:
+        raise ValueError("classification predictions JSON has no predictions")
+    return predictions
+
+
+def _write_classification_predictions_artifact(
+    path: Path,
+    *,
+    fmt: str,
+    source_path: Path,
+    run_meta: dict[str, Any],
+    classes: list[str],
+) -> dict[str, Any]:
+    predictions = _load_classification_predictions(source_path, classes)
+    normalized = [
+        {"id": sample_id, "scores": scores}
+        for sample_id, scores in sorted(predictions.items())
+    ]
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_classification_predictions_artifact",
+        "format": fmt,
+        "status": "reference_artifact",
+        "classes": list(classes),
+        "predictions": normalized,
+        "meta": {
+            "source_path": str(source_path),
+            "source_sha256": _sha256_file(source_path),
+        },
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
+def _evaluate_classification(
+    labels: dict[str, int],
+    predictions: dict[str, list[float]],
+    classes: list[str],
+) -> dict[str, Any]:
+    sample_ids = sorted(labels)
+    if not sample_ids:
+        raise ValueError("classification evaluation requires at least one label")
+    missing = [sample_id for sample_id in sample_ids if sample_id not in predictions]
+    if missing:
+        raise ValueError(f"classification predictions missing labels: {', '.join(missing[:5])}")
+
+    correct_top1 = 0
+    correct_top5 = 0
+    per_sample: list[dict[str, Any]] = []
+    for sample_id in sample_ids:
+        label = labels[sample_id]
+        scores = predictions[sample_id]
+        if label >= len(scores):
+            raise ValueError(f"classification label index out of range for id={sample_id}")
+        ranked = sorted(range(len(scores)), key=lambda idx: scores[idx], reverse=True)
+        top1 = ranked[0]
+        topk = ranked[: min(5, len(ranked))]
+        top1_ok = top1 == label
+        top5_ok = label in topk
+        correct_top1 += int(top1_ok)
+        correct_top5 += int(top5_ok)
+        per_sample.append(
+            {
+                "id": sample_id,
+                "label": label,
+                "label_name": classes[label] if classes and label < len(classes) else None,
+                "top1": top1,
+                "top1_name": classes[top1] if classes and top1 < len(classes) else None,
+                "top1_score": float(scores[top1]),
+                "top1_correct": bool(top1_ok),
+                "top5_correct": bool(top5_ok),
+            }
+        )
+
+    total = len(sample_ids)
+    top1_value = correct_top1 / total
+    top5_value = correct_top5 / total
+    return {
+        "samples": total,
+        "correct_top1": int(correct_top1),
+        "correct_top5": int(correct_top5),
+        "top1": top1_value,
+        "top5": top5_value,
+        "accuracy": top1_value,
+        "classes": list(classes),
+        "per_sample": per_sample,
+    }
+
+
+def _write_classification_eval_report(
+    path: Path,
+    *,
+    fmt: str,
+    labels_path: Path,
+    predictions_path: Path,
+    metrics: dict[str, Any],
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": 1,
+        "kind": "benchmark_classification_eval_report",
+        "task": "classification",
+        "format": fmt,
+        "status": "ok",
+        "labels_path": str(labels_path),
+        "predictions_path": str(predictions_path),
+        "metrics": metrics,
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    write_json(path, payload)
+    return payload
+
+
 def _export_settings_payload(
     args: Any,
     *,
@@ -1178,6 +1379,8 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
 
 
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    if results and str(results[0].get("task")) == "classification":
+        return
     if results and str(results[0].get("task")) == "segmentation":
         _attach_segmentation_parity(results, args=args)
         return
@@ -1912,7 +2115,129 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                     run_meta=format_run_meta,
                 )
             else:
-                if task_label == "segmentation" and benchmark_source == "artifact_eval":
+                if task_label == "classification" and benchmark_source == "artifact_eval":
+                    pred_source = _resolve_path(model_artifact)
+                    label_source = _resolve_path(data_text)
+                    if pred_source is None or not pred_source.exists():
+                        status = "skipped"
+                        skip_reason = "model_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    elif label_source is None or not label_source.exists():
+                        status = "skipped"
+                        skip_reason = "dataset_artifact_required"
+                        _write_placeholder(
+                            predictions_path,
+                            kind="benchmark_predictions_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            eval_path,
+                            kind="benchmark_eval_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                        _write_placeholder(
+                            parity_path,
+                            kind="benchmark_parity_placeholder",
+                            fmt=fmt,
+                            status=status,
+                            reason=skip_reason,
+                            run_meta=format_run_meta,
+                        )
+                    else:
+                        try:
+                            labels, classes = _load_classification_labels(label_source)
+                            _write_classification_predictions_artifact(
+                                predictions_path,
+                                fmt=fmt,
+                                source_path=pred_source,
+                                run_meta=format_run_meta,
+                                classes=classes,
+                            )
+                            predictions = _load_classification_predictions(predictions_path, classes)
+                            metrics = _evaluate_classification(labels, predictions, classes)
+                            _write_classification_eval_report(
+                                eval_path,
+                                fmt=fmt,
+                                labels_path=label_source,
+                                predictions_path=predictions_path,
+                                metrics=metrics,
+                                run_meta=format_run_meta,
+                            )
+                        except ValueError as exc:
+                            status = "failed"
+                            skip_reason = "classification_artifact_invalid"
+                            error = str(exc)
+                            if not predictions_path.exists():
+                                _write_placeholder(
+                                    predictions_path,
+                                    kind="benchmark_predictions_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            if not eval_path.exists():
+                                _write_placeholder(
+                                    eval_path,
+                                    kind="benchmark_eval_placeholder",
+                                    fmt=fmt,
+                                    status=status,
+                                    reason=skip_reason,
+                                    run_meta=format_run_meta,
+                                )
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason=skip_reason,
+                                run_meta=format_run_meta,
+                            )
+                        else:
+                            status = "ok"
+                            skip_reason = None
+                            eval_metrics = _eval_metrics(eval_path)
+                            _write_placeholder(
+                                parity_path,
+                                kind="benchmark_parity_placeholder",
+                                fmt=fmt,
+                                status=status,
+                                reason="artifact_backed_classification_parity_pending_attach",
+                                run_meta=format_run_meta,
+                            )
+                        latency = None
+                        throughput = None
+                        command_meta = {"eval": {"mode": "in_process_classification_artifact_eval"}}
+                elif task_label == "segmentation" and benchmark_source == "artifact_eval":
                     pred_source = _resolve_path(model_artifact)
                     dataset_json = _segmentation_dataset_json(args)
                     if pred_source is None or not pred_source.exists():
@@ -2622,7 +2947,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for task=segmentation/keypoints/depth/pose6d.",
+        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for classification, segmentation, keypoints, depth, and pose6d.",
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

@@ -89,45 +89,42 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["task"], "classification")
         self.assertEqual(report["task_semantics"]["metric_family"], "topk_accuracy")
-        self.assertEqual(report["task_semantics"]["support_level"], "unsupported_skipped")
+        self.assertEqual(report["task_semantics"]["support_level"], "artifact_backed_real_for_torch_onnx_engine_torchscript")
         self.assertEqual(report["task_semantics"]["expected_metric_keys"], ["top1", "top5", "accuracy"])
-        self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "unsupported_skipped")
-        self.assertEqual(report["results"][0]["status"], "skipped")
-        self.assertEqual(report["results"][0]["skip_reason"], "benchmark_task_not_wired")
+        self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "dry_run_planning")
+        self.assertEqual(report["results"][0]["status"], "dry_run")
         self.assertEqual(report["results"][0]["support_status"], "skipped")
         self.assertEqual(report["support_summary"]["by_format"]["torchscript"], "skipped")
 
     def test_dod_semantics_keep_requested_unwired_task_formats(self):
-        for task in ("classification", "obb"):
-            with self.subTest(task=task):
-                args = self._args(format="torch,onnx,engine,torchscript", task=task, dry_run=False)
-                with mock.patch.object(
-                    benchmark_mode.subprocess,
-                    "run",
-                    side_effect=AssertionError("unwired benchmark task should not launch backends"),
-                ):
-                    with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
-                        report, code = benchmark_mode.run_benchmark_mode(args)
+        args = self._args(format="torch,onnx,engine,torchscript", task="obb", dry_run=False)
+        with mock.patch.object(
+            benchmark_mode.subprocess,
+            "run",
+            side_effect=AssertionError("unwired benchmark task should not launch backends"),
+        ):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
 
-                self.assertEqual(code, 0)
-                requested = ["torch", "onnx", "engine", "torchscript"]
-                self.assertEqual(report["format"], requested)
-                self.assertEqual(report["support_summary"]["requested_formats"], requested)
-                self.assertEqual(report["support_summary"]["reported_formats"], requested)
-                self.assertEqual(report["support_summary"]["missing_formats"], [])
-                self.assertEqual(report["support_summary"]["counts"], {"real": 0, "artifact-backed": 0, "skipped": 4})
-                for result in report["results"]:
-                    self.assertEqual(result["status"], "skipped")
-                    self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
-                    self.assertEqual(result["support_status"], "skipped")
-                    self.assertEqual(result["support_reason"], "benchmark_task_not_wired")
-                    self.assertEqual(result["artifact_status"]["predictions"], "skipped")
-                    self.assertEqual(result["artifact_status"]["eval"], "skipped")
-                    self.assertEqual(result["artifact_status"]["parity"], "skipped")
-                    self.assertIn("available", result["runtime"])
-                    self.assertIn("predictions", result["artifacts"])
-                    self.assertIn("eval", result["artifacts"])
-                    self.assertIn("parity", result["artifacts"])
+        self.assertEqual(code, 0)
+        requested = ["torch", "onnx", "engine", "torchscript"]
+        self.assertEqual(report["format"], requested)
+        self.assertEqual(report["support_summary"]["requested_formats"], requested)
+        self.assertEqual(report["support_summary"]["reported_formats"], requested)
+        self.assertEqual(report["support_summary"]["missing_formats"], [])
+        self.assertEqual(report["support_summary"]["counts"], {"real": 0, "artifact-backed": 0, "skipped": 4})
+        for result in report["results"]:
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
+            self.assertEqual(result["support_status"], "skipped")
+            self.assertEqual(result["support_reason"], "benchmark_task_not_wired")
+            self.assertEqual(result["artifact_status"]["predictions"], "skipped")
+            self.assertEqual(result["artifact_status"]["eval"], "skipped")
+            self.assertEqual(result["artifact_status"]["parity"], "skipped")
+            self.assertIn("available", result["runtime"])
+            self.assertIn("predictions", result["artifacts"])
+            self.assertIn("eval", result["artifacts"])
+            self.assertIn("parity", result["artifacts"])
 
     def test_dod_semantics_keep_requested_detect_formats_when_runtimes_missing(self):
         args = self._args(format="torch,onnx,engine,torchscript", task="detect", dry_run=False)
@@ -145,7 +142,7 @@ class TestBenchmarkModelTool(TestCase):
             self.assertTrue(result["support_reason"])
             self.assertIn("latency_source", result["runtime"])
 
-    def test_unwired_task_writes_all_skipped_artifacts_without_launching_backend(self):
+    def test_unwired_obb_task_writes_all_skipped_artifacts_without_launching_backend(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
@@ -154,7 +151,7 @@ class TestBenchmarkModelTool(TestCase):
             args = self._args(
                 format="torchscript",
                 model="runs/foo/model.torchscript",
-                task="classification",
+                task="obb",
                 dry_run=False,
                 output=str(report_path),
                 predictions_output=str(artifact_dir),
@@ -245,9 +242,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["execution_semantics"]["eval_expectation"]["metric_family"], "pose6d_error")
         self.assertEqual(result["execution_semantics"]["artifact_expectation"]["parity"], "placeholder")
 
-    def test_auto_prefers_artifact_eval_for_segmentation_keypoints_depth_and_pose6d(self):
+    def test_auto_prefers_artifact_eval_for_artifact_backed_tasks(self):
         args = self._args(latency_source="auto")
-        for task_label in ("segmentation", "keypoints", "depth", "pose6d"):
+        for task_label in ("classification", "segmentation", "keypoints", "depth", "pose6d"):
             self.assertEqual(
                 benchmark_mode._selected_benchmark_source(args, fmt="torch", task_label=task_label),
                 "artifact_eval",
@@ -259,6 +256,117 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(
                 benchmark_mode._selected_benchmark_source(args, fmt="engine", task_label=task_label),
                 "artifact_eval",
+            )
+
+    def test_classification_task_supports_real_artifact_eval(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            labels = root / "classification_labels.json"
+            torch_pred = root / "classification_torch.json"
+            onnx_pred = root / "classification_onnx.json"
+            labels.write_text(
+                json.dumps(
+                    {
+                        "classes": ["cat", "dog", "bird"],
+                        "samples": [
+                            {"id": "img0", "label": "cat"},
+                            {"id": "img1", "label": "dog"},
+                            {"id": "img2", "label": 2},
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            torch_pred.write_text(
+                json.dumps(
+                    {
+                        "classes": ["cat", "dog", "bird"],
+                        "predictions": [
+                            {"id": "img0", "scores": [0.9, 0.05, 0.05]},
+                            {"id": "img1", "scores": [0.1, 0.8, 0.1]},
+                            {"id": "img2", "scores": [0.1, 0.2, 0.7]},
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            onnx_pred.write_text(
+                json.dumps(
+                    {
+                        "classes": ["cat", "dog", "bird"],
+                        "predictions": [
+                            {"id": "img0", "scores": [0.9, 0.05, 0.05]},
+                            {"id": "img1", "scores": [0.6, 0.3, 0.1]},
+                            {"id": "img2", "scores": [0.1, 0.2, 0.7]},
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            report = root / "benchmark_classification_report.json"
+            artifact_dir = root / "artifacts"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "classification",
+                    "--model",
+                    str(torch_pred),
+                    "--onnx-model",
+                    str(onnx_pred),
+                    "--data",
+                    str(labels),
+                    "--format",
+                    "torch,onnx,opencv_dnn",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark classification artifact_eval failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("task"), "classification")
+            by_format = payload.get("execution_semantics", {}).get("by_format", {})
+            self.assertEqual(by_format["torch"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["onnx"]["execution_mode"], "real_artifact_eval")
+            self.assertEqual(by_format["opencv_dnn"]["execution_mode"], "unsupported_skipped")
+            results = {item["format"]: item for item in payload.get("results") or []}
+            self.assertEqual(results["torch"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["opencv_dnn"]["status"], "skipped")
+            self.assertEqual(results["opencv_dnn"]["skip_reason"], "benchmark_format_not_wired")
+            self.assertEqual(results["torch"]["support_status"], "artifact-backed")
+            self.assertEqual(results["onnx"]["support_status"], "artifact-backed")
+            self.assertEqual(payload["support_summary"]["counts"]["artifact-backed"], 2)
+            self.assertEqual(payload["support_summary"]["counts"]["skipped"], 1)
+            self.assertEqual(results["torch"]["eval_metrics"]["top1"], 1.0)
+            self.assertEqual(results["onnx"]["eval_metrics"]["top1"], 2 / 3)
+            self.assertEqual(results["onnx"]["eval_metrics"]["top5"], 1.0)
+            self.assertEqual(
+                json.loads(Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8"))["kind"],
+                "benchmark_classification_eval_report",
             )
 
     def test_segmentation_task_supports_real_artifact_eval(self):
@@ -648,13 +756,13 @@ class TestBenchmarkModelTool(TestCase):
                 benchmark_mode.run_benchmark_mode(args)
 
     def test_validation_summary_records_strict_format_policy(self):
-        args = self._args(format="torch,onnx,torchscript", task="classification", strict=True)
+        args = self._args(format="torch,onnx,torchscript", task="obb", strict=True)
         with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
             report, code = benchmark_mode.run_benchmark_mode(args)
 
         self.assertEqual(code, 2)
         summary = report["validation_summary"]
-        self.assertEqual(summary["task"], "classification")
+        self.assertEqual(summary["task"], "obb")
         self.assertEqual(summary["requested_formats"], ["torch", "onnx", "torchscript"])
         self.assertTrue(summary["strict"])
         self.assertEqual(summary["bad_flag_policy"], "fail_early")
