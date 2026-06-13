@@ -21,6 +21,8 @@ yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 Writes `reports/quickstart_instance_seg/instance_seg_demo_report.json` and visible PNG overlays under
 `reports/quickstart_instance_seg/overlays/`.
 The matching checklist lives at `configs/quickstart/instance_seg_demo.yaml`.
+For the full CPU-only DoD path (`doctor --proof -> demo -> validate -> eval`), see
+[`docs/cpu_only_dod.md`](docs/cpu_only_dod.md).
 If you are unsure what to run next, use the built-in guide:
 
 ```bash

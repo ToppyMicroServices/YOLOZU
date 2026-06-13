@@ -26,6 +26,7 @@ yolozu doctor --proof
 
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`install.md`](install.md): install, `doctor`, and environment setup
+- [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 
 ## Next 3 Routes

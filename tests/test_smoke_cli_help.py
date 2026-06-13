@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import tempfile
@@ -95,6 +96,48 @@ exec "$real_python" "$@"
             out = (proc.stdout or "") + "\n" + (proc.stderr or "")
             self.assertIn("Usage:", out)
             self.assertIn("--walkthrough-report", out)
+
+    def test_dod_cpu_smoke_script_supports_help(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "dod_cpu_smoke.sh"
+        self.assertTrue(script.exists(), "missing scripts/dod_cpu_smoke.sh")
+
+        proc = subprocess.run(
+            ["bash", str(script), "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            self.fail(f"dod_cpu_smoke --help failed:\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+        out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        self.assertIn("Usage:", out)
+        self.assertIn("--run-dir", out)
+        self.assertIn("doctor --proof", out)
+
+    def test_dod_cpu_smoke_script_runs_public_path(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "dod_cpu_smoke.sh"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            run_dir = Path(td) / "dod"
+            proc = subprocess.run(
+                ["bash", str(script), "--run-dir", str(run_dir)],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"dod_cpu_smoke failed:\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}")
+            report = run_dir / "dod_cpu_smoke_report.json"
+            self.assertTrue(report.is_file())
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("kind"), "yolozu_dod_cpu_smoke")
+            self.assertEqual(payload.get("status"), "pass")
 
 
 if __name__ == "__main__":

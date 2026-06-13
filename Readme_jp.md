@@ -21,6 +21,8 @@ yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 出力: `reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可視化PNG: `reports/quickstart_instance_seg/overlays/`
 対応するチェックリスト: `configs/quickstart/instance_seg_demo.yaml`
+CPU-only の完全な DoD path（`doctor --proof -> demo -> validate -> eval`）は
+[`docs/cpu_only_dod.md`](docs/cpu_only_dod.md) に固定しています。
 次に何を実行すればよいか迷ったら、CLI 内蔵の guide を使えます。
 
 ```bash

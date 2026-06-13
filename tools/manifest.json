@@ -3136,6 +3136,106 @@
     },
     {
       "docs": [
+        "docs/cpu_only_dod.md",
+        "README.md",
+        "Readme_jp.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes doctor proof, demo, validation, eval, and DoD summary artifacts.",
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "scripts/dod_cpu_smoke.sh",
+      "examples": [
+        {
+          "command": "bash scripts/dod_cpu_smoke.sh",
+          "description": "Run the CPU-only DoD preflight from a repo checkout."
+        },
+        {
+          "command": "bash scripts/dod_cpu_smoke.sh --run-dir /tmp/yolozu_dod_cpu_smoke",
+          "description": "Write DoD artifacts to a temporary run directory."
+        },
+        {
+          "command": "bash scripts/dod_cpu_smoke.sh --help",
+          "description": "Show DoD smoke options."
+        }
+      ],
+      "id": "dod_cpu_smoke",
+      "inputs": [
+        {
+          "default": "reports/dod_cpu_smoke",
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false
+        },
+        {
+          "default": "val2017",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "default": "reports/dod_cpu_smoke/dod_cpu_smoke_report.json",
+          "description": "CPU-only DoD smoke summary report.",
+          "kind": "file",
+          "name": "dod_report"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/doctor.json",
+          "description": "Doctor report from the proof run.",
+          "kind": "file",
+          "name": "doctor_report"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/doctor_proof/proof_report.json",
+          "description": "Doctor proof report with dataset and predictions artifact paths.",
+          "kind": "file",
+          "name": "proof_report"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/demo_instance_seg/instance_seg_demo_report.json",
+          "description": "Instance-seg demo report.",
+          "kind": "file",
+          "name": "demo_report"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/eval_coco_dry_run.json",
+          "description": "Evaluation dry-run report for proof predictions.",
+          "kind": "file",
+          "name": "eval_report"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "bash",
+      "summary": "Run the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run.",
+      "tags": [
+        "dod",
+        "smoke",
+        "evaluation",
+        "cpu"
+      ]
+    },
+    {
+      "docs": [
         "docs/install.md",
         "docs/proof_onepager.md"
       ],
