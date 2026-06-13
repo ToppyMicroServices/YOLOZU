@@ -309,8 +309,8 @@ Recommended behavior:
 Task-specific behavior should also be explicit:
 
 - real backend execution is detect-first for inference-backed runs
+- `classification` and `obb` are allowed as artifact-backed real eval paths for `torch` / `onnx` / `engine` / `torchscript`, with parity artifacts still explicit placeholders
 - `segmentation`, `keypoints`, `depth`, and `pose6d` are allowed as artifact-backed real eval/parity paths for `torch` / `onnx` / `engine` / `torchscript`
-- `classification` and `obb` should remain planned until dedicated backend/eval paths exist
 - `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions
 
 ## 10. Mapping to Existing YOLOZU Tools

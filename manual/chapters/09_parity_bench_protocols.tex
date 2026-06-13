@@ -164,8 +164,10 @@ PDF stays readable:
 
   \item[\cmd{obb}]
   Alias: \cmd{obb}. Metric family: \cmd{obb_map}. Execution support:
-  interface-defined only. The task is visible in the benchmark surface, but not
-  yet wired for real backend execution.
+  artifact-backed real eval for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
+  \cmd{torchscript}. Benchmark mode evaluates backend rotated-box artifacts
+  directly and reports OBB metrics without claiming YOLOZU ran backend
+  inference.
 
   \item[\cmd{keypoints}]
   Aliases: \cmd{keypoints}, \cmd{pose}. Metric family: \cmd{oks_map}.
@@ -192,8 +194,11 @@ PDF stays readable:
 \end{description}
 
 For the current implementation, inference-backed real backend execution remains
-\cmd{detect}-first. The exceptions are \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
-use \cmd{--latency-source artifact_eval}. For \cmd{segmentation}, YOLOZU evaluates
+\cmd{detect}-first. The exceptions are \cmd{classification}, \cmd{obb},
+\cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
+use \cmd{--latency-source artifact_eval}. For \cmd{classification} and
+\cmd{obb}, YOLOZU evaluates backend score or rotated-box artifacts and writes
+explicit parity placeholders. For \cmd{segmentation}, YOLOZU evaluates
 backend-specific mask-prediction artifacts with \path{tools/eval_segmentation.py}
 and then attaches real parity reports over matched sample ids plus per-mask mismatch summaries.
 For \cmd{keypoints}, YOLOZU evaluates
@@ -204,9 +209,8 @@ image files) against the ground-truth depth artifact and then attaches real
 parity reports. For \cmd{pose6d}, YOLOZU evaluates backend-specific
 \path{predictions.json} artifacts with \path{tools/eval_pose.py} and then
 attaches real parity reports over matched detections plus pose fields such as
-rotation, translation, and depth. Non-detect tasks without shipped evaluator
-wiring are reported as unsupported/skipped rather than as synthetic benchmark
-successes.
+rotation, translation, and depth. Formats without shipped benchmark wiring are
+reported as unsupported/skipped rather than as synthetic benchmark successes.
 
 \subsection{Canonical benchmark support matrix}
 The source of truth for per-format, per-task artifact status is
@@ -254,7 +258,8 @@ The most important remaining gaps are:
 \begin{itemize}
   \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
   \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
-  \item broader real backend/eval coverage for \cmd{obb}
+  \item broader parity attachment for artifact-backed \cmd{classification} and
+  \cmd{obb} lanes
   \item stronger validation of format-specific knobs so unsupported
   combinations fail early rather than acting like inert flags
 \end{itemize}
@@ -263,14 +268,12 @@ The most important remaining gaps are:
 If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
-  \item add a real backend/eval path for
-  \cmd{obb} on top of the existing
-  \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
   \item promote conditional \cmd{openvino} after the current \cmd{torchscript} detect path
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
   from dry-run placeholders and unsupported/skipped paths
   \item expand real parity artifacts beyond the current
-  \cmd{torch}-anchored backend comparisons
+  \cmd{torch}-anchored backend comparisons, including the artifact-backed
+  \cmd{classification} and \cmd{obb} placeholder parity reports
   \item keep format-specific flag validation strict so inert combinations fail
   early rather than appearing supported
 \end{enumerate}

@@ -431,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, segmentation, keypoints, depth, and pose6d.",
+        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.",
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

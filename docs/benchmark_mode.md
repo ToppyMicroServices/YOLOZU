@@ -29,6 +29,7 @@ Today the command provides:
 - artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific depth-map artifacts are available.
 - artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
 - artifact-backed classification evaluation for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific score artifacts are available.
+- artifact-backed OBB evaluation for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific rotated-box artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` are explicit unsupported/skipped benchmark
@@ -41,7 +42,7 @@ paths than YOLOZU does. Today the most important remaining gaps are:
 
 - missing benchmark/export formats such as `openvino`, `coreml`,
   `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
-- partial backend/eval execution coverage for tasks such as `obb`
+- incomplete parity attachment for artifact-backed classification and OBB lanes
 - incomplete flag validation for format-specific knobs
 
 The detailed audit and recommended implementation order live in:
@@ -53,7 +54,7 @@ The detailed audit and recommended implementation order live in:
 If we want to close the user-visible gap efficiently, the
 best next steps are:
 
-- add a real `obb` execution path to the existing `torch` / `onnx` / `engine` benchmark flow
+- keep the OBB lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the classification lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the keypoints lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the segmentation lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
@@ -214,6 +215,19 @@ yolozu benchmark \
   --output reports/benchmark_classification_report.json
 ```
 
+Artifact-backed OBB benchmark:
+
+```bash
+yolozu benchmark \
+  --task obb \
+  --model reports/obb_torch.json \
+  --onnx-model reports/obb_onnx.json \
+  --data data/obb_labels.json \
+  --format torch,onnx \
+  --latency-source artifact_eval \
+  --output reports/benchmark_obb_report.json
+```
+
 Artifact-backed 6DoF benchmark/parity:
 
 ```bash
@@ -306,11 +320,11 @@ In addition, real backend execution is intentionally split between backend orche
 
 - `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` orchestration
 - `--task classification` can use `--latency-source artifact_eval` to evaluate backend-specific class-score artifacts and report top-k metrics
+- `--task obb` can use `--latency-source artifact_eval` to evaluate backend-specific rotated-box artifacts and report OBB metrics
 - `--task segmentation` can use `--latency-source artifact_eval` to evaluate backend-specific mask-prediction artifacts with `tools/eval_segmentation.py` and attach real parity reports
 - `--task keypoints` can use `--latency-source artifact_eval` to evaluate backend-specific predictions artifacts with `tools/eval_keypoints.py` and attach real parity reports
 - `--task depth` can use `--latency-source artifact_eval` to evaluate backend-specific depth artifacts and attach real parity reports
 - `--task pose6d` can use `--latency-source artifact_eval` to evaluate backend-specific predictions artifacts with `tools/eval_pose.py` and attach real parity reports
-- `--task obb` is still visible but unwired and reports `benchmark_task_not_wired`
 
 ## Output artifacts
 
@@ -458,7 +472,7 @@ The CLI now defaults to:
 - `--latency-source auto`
 
 `auto` prefers a real dataset-pass wall-clock measurement for `torch`, `onnx`,
-`engine`, and `torchscript`, prefers `artifact_eval` for `--task classification`,
+`engine`, and `torchscript`, prefers `artifact_eval` for `--task classification`, `--task obb`,
 `--task segmentation`, `--task keypoints`, `--task depth`, and `--task pose6d`, and falls back to `synthetic_step` for the remaining
 formats.
 The report records the per-format `latency_source` so CI and readers do not
@@ -474,7 +488,7 @@ following canonical tasks and aliases:
 | `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` | Default benchmark path. |
 | `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
 | `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend class-score artifacts directly and reports top1/top5/accuracy without claiming YOLOZU ran backend inference. |
-| `obb` | `obb` | `obb_map` | unsupported/skipped | Explicitly visible at the interface level, but backend/eval implementation is not shipped. Runs report `benchmark_task_not_wired`. |
+| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend rotated-box artifacts directly and reports OBB metrics without claiming YOLOZU ran backend inference. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
@@ -495,7 +509,7 @@ The per-format `execution_semantics` block now complements that task matrix:
 - `artifact_expectation`: whether predictions/eval/parity are expected to be real, skipped, or dry-run placeholders
 - `eval_expectation`: metric family + expected metric keys for that task/backend combination
 
-For `classification`, `segmentation`, `keypoints`, `depth`, and `pose6d`, this is especially important: the benchmark report now
+For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`, this is especially important: the benchmark report now
 records explicit metric expectations and artifact-backed real eval/parity semantics instead of leaving those tasks as vague
 future work.
 
