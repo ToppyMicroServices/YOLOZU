@@ -20,6 +20,16 @@ It is a capability report, not a blanket production-readiness verdict.
 yolozu doctor --output -
 ```
 
+## CPU proof
+
+Use `--proof` when you want more than an environment inventory:
+
+```bash
+yolozu doctor --proof
+```
+
+This writes a tiny YOLO-style dataset, known predictions, an eval report, and a proof report under `reports/doctor_proof/`. The proof validates the toy dataset and predictions interface contract, runs the detection mAP path, and compares the observed metrics against pinned expected values (`map50=1.0`, `map50_95=1.0`). It is CPU-only and does not download models or datasets.
+
 ## Example drift hints
 
 - Torch uses CUDA but ONNXRuntime has no CUDA provider

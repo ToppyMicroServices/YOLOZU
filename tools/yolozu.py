@@ -573,7 +573,15 @@ def _export_with_backend(
 def _doctor(args: argparse.Namespace) -> int:
     from yolozu.doctor import write_doctor_report
 
-    return int(write_doctor_report(output=str(args.output), cwd=repo_root, explain=bool(getattr(args, "explain", False))))
+    return int(
+        write_doctor_report(
+            output=str(args.output),
+            cwd=repo_root,
+            explain=bool(getattr(args, "explain", False)),
+            proof=bool(getattr(args, "proof", False)),
+            proof_dir=str(getattr(args, "proof_dir", "reports/doctor_proof")),
+        )
+    )
 
 
 def _sweep(args: argparse.Namespace) -> int:
@@ -1198,6 +1206,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_doctor = sub.add_parser("doctor", aliases=["dr"], help="Check the environment. Use --explain for beginner-friendly next actions.")
     p_doctor.add_argument("-o", "--output", default="reports/doctor.json", help="Output JSON path.")
     p_doctor.add_argument("--explain", action="store_true", help="Print a human-readable summary and next commands.")
+    p_doctor.add_argument("--proof", action="store_true", help="Run a CPU-only toy dataset + known predictions validation/eval proof.")
+    p_doctor.add_argument(
+        "--proof-dir",
+        default="reports/doctor_proof",
+        help="Directory for doctor proof artifacts (default: reports/doctor_proof).",
+    )
     p_doctor.set_defaults(_fn=_doctor)
 
     p_sweep = sub.add_parser("sweep", aliases=["sw"], help="Run a parameter sweep (wrapper around tools/hpo_sweep.py).")

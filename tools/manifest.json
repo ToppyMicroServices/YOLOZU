@@ -15068,6 +15068,7 @@
       "docs": [
         "docs/tools_index.md",
         "docs/import_adapters.md",
+        "docs/doctor_diagnostics.md",
         "docs/interop_yolox.md",
         "docs/training_inference_export.md",
         "manual/chapters/04_cli_reference.tex",
@@ -15088,6 +15089,12 @@
             "flag": "--output",
             "kind": "file",
             "scope": "path"
+          },
+          {
+            "description": "Writes doctor proof artifacts when `doctor --proof` is used.",
+            "flag": "--proof-dir",
+            "kind": "dir",
+            "scope": "tree"
           },
           {
             "description": "Writes fingerprinted cache artifacts under --cache-dir.",
@@ -15142,6 +15149,10 @@
         {
           "command": "python3 -m yolozu doctor --explain",
           "description": "Print a beginner-friendly environment summary with next actions and save reports/doctor.json."
+        },
+        {
+          "command": "python3 -m yolozu doctor --proof",
+          "description": "Run a CPU-only toy dataset, known predictions, validation, eval report, and expected-metric comparison proof."
         },
         {
           "command": "python3 -m yolozu guide --goal evaluate",
@@ -15854,6 +15865,20 @@
           "required": false
         },
         {
+          "flag": "--proof",
+          "kind": "string",
+          "name": "proof",
+          "required": false
+        },
+        {
+          "default": "reports/doctor_proof",
+          "description": "Directory for CPU-only doctor proof artifacts.",
+          "flag": "--proof-dir",
+          "kind": "dir",
+          "name": "proof_dir",
+          "required": false
+        },
+        {
           "flag": "--overlay-alpha",
           "kind": "number",
           "name": "overlay_alpha",
@@ -16530,6 +16555,12 @@
           "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided.",
           "kind": "dir",
           "name": "export_dataset_root"
+        },
+        {
+          "default": "reports/doctor_proof",
+          "description": "Doctor proof artifact directory containing toy dataset, known predictions, eval report, and proof report when --proof is used.",
+          "kind": "dir",
+          "name": "doctor_proof_dir"
         }
       ],
       "platform": {

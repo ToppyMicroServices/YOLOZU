@@ -49,11 +49,12 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "use_when": "You are new to YOLOZU and want a safe smoke path with files you can inspect.",
         "commands": [
             "python3 -m pip install -U yolozu",
-            "yolozu doctor --explain",
+            "yolozu doctor --proof",
             "yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
         ],
         "outputs": [
             "reports/doctor.json",
+            "reports/doctor_proof/proof_report.json",
             "reports/quickstart_instance_seg/instance_seg_demo_report.json",
             "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
         ],
@@ -84,6 +85,7 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "use_when": "Install, imports, dataset layout, or runtime checks are failing.",
         "commands": [
             "yolozu doctor --explain",
+            "yolozu doctor --proof",
             "yolozu doctor import --dataset-from auto --dataset data/smoke --output -",
             "yolozu validate dataset data/smoke --mode warn",
         ],
@@ -160,6 +162,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     doctor.add_argument("--output", default="reports/doctor.json", help="Output JSON path (use - for stdout).")
     doctor.add_argument("--explain", action="store_true", help="Print a human-readable summary and next commands.")
+    doctor.add_argument(
+        "--proof",
+        action="store_true",
+        help="Run a CPU-only toy dataset + known predictions validation/eval proof.",
+    )
+    doctor.add_argument(
+        "--proof-dir",
+        default="reports/doctor_proof",
+        help="Directory for doctor proof artifacts (default: reports/doctor_proof).",
+    )
     doctor_sub = doctor.add_subparsers(dest="doctor_command", required=False)
     doctor_imp = doctor_sub.add_parser("import", help="Summarize dataset/config import resolution (宣伝用).")
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
@@ -1184,7 +1196,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
-        return _cmd_doctor(str(args.output), explain=bool(getattr(args, "explain", False)))
+        return _cmd_doctor(
+            str(args.output),
+            explain=bool(getattr(args, "explain", False)),
+            proof=bool(getattr(args, "proof", False)),
+            proof_dir=str(getattr(args, "proof_dir", "reports/doctor_proof")),
+        )
     if args.command == "registry":
         fn = getattr(args, "_fn", None)
         if fn is None:

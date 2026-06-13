@@ -35,7 +35,7 @@ or repo-only helpers, not for real \cmd{yolozu} commands.
 \toprule
 \textbf{Command} & \textbf{When to use} & \textbf{Minimal command} & \textbf{Primary output} & \textbf{Repo?} \\
 \midrule
-\cmd{yolozu doctor} & Check environment and runtime availability. & \cmd{yolozu doctor --explain} & readable diagnostics & No \\
+\cmd{yolozu doctor} & Check environment and proof the CPU eval path. & \cmd{yolozu doctor --proof} & diagnostics plus proof report & No \\
 \cmd{yolozu guide} & Pick the next beginner-safe route. & \cmd{yolozu guide --goal first-run} & route map with PNG demo output & No \\
 \cmd{bash scripts/smoke.sh} & First offline acceptance run from repo assets. & \cmd{bash scripts/smoke.sh} & \path{reports/smoke_coco_eval_dry_run.json} and PNG evidence & Yes \\
 \cmd{yolozu demo} & Run the bundled CPU-friendly demo suite. & \cmd{yolozu demo} & \path{demo_output/} & No \\

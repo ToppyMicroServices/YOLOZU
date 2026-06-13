@@ -14,7 +14,7 @@ wrapped `predictions.json` を渡し、predictions interface contract を検証�
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu doctor --explain
+yolozu doctor --proof
 yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 

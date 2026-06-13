@@ -8,7 +8,7 @@ Use this page as the shortest route from a wrapped `predictions.json` to a valid
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu doctor --explain
+yolozu doctor --proof
 yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 
@@ -19,7 +19,7 @@ For an interactive-feeling route map in the terminal:
 ```bash
 yolozu guide
 yolozu guide --goal first-run
-yolozu doctor --explain
+yolozu doctor --proof
 ```
 
 ## Read These 3 First

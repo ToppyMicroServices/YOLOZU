@@ -20,7 +20,7 @@ English README: [`README.md`](README.md) | 日本語README: [`Readme_jp.md`](Rea
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu doctor --explain
+yolozu doctor --proof
 yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 

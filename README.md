@@ -14,7 +14,7 @@ Give it a wrapped `predictions.json`, validate the predictions interface contrac
 
 ```bash
 python3 -m pip install -U yolozu
-yolozu doctor --explain
+yolozu doctor --proof
 yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
 ```
 
