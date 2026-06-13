@@ -673,10 +673,10 @@ def _cmd_test(config_path: Path, extra_args: list[str] | None = None) -> int:
     return 0
 
 
-def _cmd_doctor(output: str, *, explain: bool = False) -> int:
+def _cmd_doctor(output: str, *, explain: bool = False, proof: bool = False, proof_dir: str = "reports/doctor_proof") -> int:
     from yolozu.doctor import write_doctor_report
 
-    return int(write_doctor_report(output=output, explain=explain))
+    return int(write_doctor_report(output=output, explain=explain, proof=proof, proof_dir=proof_dir))
 
 
 def _cmd_registry_validate(_: argparse.Namespace) -> int:

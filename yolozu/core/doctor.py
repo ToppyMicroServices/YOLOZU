@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-__all__ = ["build_doctor_report", "explain_doctor_report", "write_doctor_report"]
+__all__ = ["build_doctor_report", "explain_doctor_report", "run_doctor_proof", "write_doctor_report"]
 
 
 logger = logging.getLogger(__name__)
@@ -420,6 +420,184 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
     return report, int(exit_code)
 
 
+_MINIMAL_PNG_1X1 = bytes.fromhex(
+    "89504e470d0a1a0a"
+    "0000000d4948445200000001000000010802000000907753de"
+    "0000000c49444154789c6360f8cf000003010101c9fe92ef"
+    "0000000049454e44ae426082"
+)
+
+
+def _round_metric(value: float) -> float:
+    return round(float(value), 6)
+
+
+def run_doctor_proof(*, output_dir: str | Path = "reports/doctor_proof", cwd: Path | None = None) -> tuple[dict[str, Any], int]:
+    """Run a tiny artifact-backed validation/evaluation proof.
+
+    The proof intentionally stays CPU-only and dependency-light: it writes a
+    one-image YOLO dataset plus matching predictions, validates both contracts,
+    runs the simple detection mAP evaluator, writes an eval report, and compares
+    the observed metrics with pinned expected values.
+    """
+
+    here = Path.cwd() if cwd is None else Path(cwd)
+    out_root = Path(output_dir)
+    if not out_root.is_absolute():
+        out_root = here / out_root
+
+    dataset_root = out_root / "toy_dataset"
+    images_dir = dataset_root / "images" / "val2017"
+    labels_dir = dataset_root / "labels" / "val2017"
+    image_path = images_dir / "proof_0001.png"
+    label_path = labels_dir / "proof_0001.txt"
+    predictions_path = out_root / "known_predictions.json"
+    eval_report_path = out_root / "eval_report.json"
+    proof_report_path = out_root / "proof_report.json"
+
+    errors: list[str] = []
+    warnings: list[str] = []
+    checks: list[dict[str, Any]] = []
+
+    def add_check(name: str, ok: bool, detail: str, **extra: Any) -> None:
+        payload = {"name": name, "ok": bool(ok), "detail": detail}
+        payload.update(extra)
+        checks.append(payload)
+        if not ok:
+            errors.append(f"{name}: {detail}")
+
+    try:
+        images_dir.mkdir(parents=True, exist_ok=True)
+        labels_dir.mkdir(parents=True, exist_ok=True)
+        image_path.write_bytes(_MINIMAL_PNG_1X1)
+        label_path.write_text("0 0.5 0.5 0.5 0.5\n", encoding="utf-8")
+        add_check("toy_dataset", True, "wrote one-image YOLO dataset")
+    except OSError as exc:
+        add_check("toy_dataset", False, f"failed to write toy dataset ({exc})")
+
+    predictions_payload = {
+        "schema_version": 1,
+        "predictions": [
+            {
+                "schema_version": 2,
+                "image": str(image_path),
+                "detections": [
+                    {
+                        "class_id": 0,
+                        "score": 0.99,
+                        "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.5, "h": 0.5},
+                    }
+                ],
+            }
+        ]
+    }
+    try:
+        predictions_path.parent.mkdir(parents=True, exist_ok=True)
+        predictions_path.write_text(json.dumps(predictions_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        add_check("known_predictions", True, "wrote known predictions artifact")
+    except OSError as exc:
+        add_check("known_predictions", False, f"failed to write known predictions ({exc})")
+
+    records: list[dict[str, Any]] = []
+    predictions_entries: list[dict[str, Any]] = []
+    try:
+        from yolozu.dataset import build_manifest
+        from yolozu.dataset_validator import validate_dataset_records
+
+        manifest = build_manifest(dataset_root, split="val2017")
+        records = list(manifest.get("images") or [])
+        validation = validate_dataset_records(records, strict=True, mode="fail", check_images=True)
+        warnings.extend(validation.warnings)
+        add_check(
+            "dataset_schema_validation",
+            not validation.errors and len(records) == 1,
+            "validated toy dataset schema",
+            errors=validation.errors,
+            records=len(records),
+        )
+    except Exception as exc:
+        add_check("dataset_schema_validation", False, f"failed to validate toy dataset ({exc})")
+
+    try:
+        from yolozu.predictions import load_predictions_entries, validate_predictions_payload
+
+        validation = validate_predictions_payload(predictions_payload, strict=True)
+        warnings.extend(validation.warnings)
+        predictions_entries = load_predictions_entries(predictions_path)
+        add_check(
+            "predictions_schema_validation",
+            len(predictions_entries) == 1,
+            "validated known predictions schema",
+            entries=len(predictions_entries),
+        )
+    except Exception as exc:
+        add_check("predictions_schema_validation", False, f"failed to validate known predictions ({exc})")
+
+    expected_metrics = {"map50": 1.0, "map50_95": 1.0}
+    observed_metrics: dict[str, float | None] = {"map50": None, "map50_95": None}
+    try:
+        from yolozu.simple_map import evaluate_map
+
+        thresholds = [0.5 + 0.05 * idx for idx in range(10)]
+        result = evaluate_map(records, predictions_entries, iou_thresholds=thresholds)
+        observed_metrics = {
+            "map50": _round_metric(result.map50),
+            "map50_95": _round_metric(result.map50_95),
+        }
+        eval_payload = {
+            "kind": "yolozu_doctor_proof_eval",
+            "schema_version": 1,
+            "timestamp": _now_utc(),
+            "task": "detect",
+            "dataset": str(dataset_root),
+            "predictions": str(predictions_path),
+            "metrics": observed_metrics,
+            "expected_metrics": expected_metrics,
+            "counts": {"images": len(records), "prediction_entries": len(predictions_entries)},
+            "per_class": result.per_class,
+        }
+        eval_report_path.write_text(json.dumps(eval_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        add_check("report_generation", eval_report_path.is_file(), "wrote proof eval report", path=str(eval_report_path))
+    except Exception as exc:
+        add_check("report_generation", False, f"failed to generate proof eval report ({exc})")
+
+    metric_matches = all(observed_metrics.get(key) == expected for key, expected in expected_metrics.items())
+    add_check(
+        "compare_result",
+        metric_matches,
+        "compared observed metrics with pinned expected values",
+        expected=expected_metrics,
+        observed=observed_metrics,
+    )
+
+    status = "pass" if not errors else "fail"
+    proof_payload: dict[str, Any] = {
+        "kind": "yolozu_doctor_proof",
+        "schema_version": 1,
+        "timestamp": _now_utc(),
+        "status": status,
+        "artifacts": {
+            "dataset": str(dataset_root),
+            "predictions": str(predictions_path),
+            "eval_report": str(eval_report_path),
+            "proof_report": str(proof_report_path),
+        },
+        "checks": checks,
+        "expected_metrics": expected_metrics,
+        "observed_metrics": observed_metrics,
+        "warnings": warnings,
+        "errors": errors,
+    }
+    try:
+        proof_report_path.write_text(json.dumps(proof_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    except OSError as exc:
+        proof_payload["status"] = "fail"
+        proof_payload.setdefault("errors", []).append(f"proof_report: failed to write proof report ({exc})")
+        return proof_payload, 1
+
+    return proof_payload, 0 if status == "pass" else 1
+
+
 def _runtime_available(report: dict[str, Any], name: str) -> bool:
     runtime = (report.get("runtime_capabilities") or {}).get(name) or {}
     if name == "torch":
@@ -519,8 +697,19 @@ def explain_doctor_report(report: dict[str, Any], *, exit_code: int) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def write_doctor_report(*, output: str | Path, cwd: Path | None = None, explain: bool = False) -> int:
+def write_doctor_report(
+    *,
+    output: str | Path,
+    cwd: Path | None = None,
+    explain: bool = False,
+    proof: bool = False,
+    proof_dir: str | Path = "reports/doctor_proof",
+) -> int:
     report, exit_code = build_doctor_report(cwd=cwd)
+    if proof:
+        proof_report, proof_exit_code = run_doctor_proof(output_dir=proof_dir, cwd=cwd)
+        report["proof"] = proof_report
+        exit_code = max(int(exit_code), int(proof_exit_code))
 
     if explain:
         if str(output) != "-":
@@ -543,4 +732,12 @@ def write_doctor_report(*, output: str | Path, cwd: Path | None = None, explain:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(str(out_path))
+    if proof:
+        proof_artifacts = (report.get("proof") or {}).get("artifacts") or {}
+        proof_report_path = proof_artifacts.get("proof_report")
+        eval_report_path = proof_artifacts.get("eval_report")
+        if proof_report_path:
+            print(f"proof_report: {proof_report_path}")
+        if eval_report_path:
+            print(f"proof_eval_report: {eval_report_path}")
     return int(exit_code)

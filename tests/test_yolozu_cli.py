@@ -120,7 +120,46 @@ class TestYOLOZUCLI(unittest.TestCase):
         if proc.returncode != 0:
             self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("demo instance-seg", proc.stdout)
-        self.assertIn("doctor --explain", proc.stdout)
+        self.assertIn("doctor --proof", proc.stdout)
+
+    def test_doctor_proof_writes_artifacts_and_compares_metrics(self):
+        repo_root = Path(__file__).resolve().parents[1]
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            doctor_out = root / "doctor.json"
+            proof_dir = root / "doctor_proof"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "doctor",
+                    "--proof",
+                    "--output",
+                    str(doctor_out),
+                    "--proof-dir",
+                    str(proof_dir),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu doctor --proof failed:\n{proc.stdout}\n{proc.stderr}")
+
+            self.assertTrue(doctor_out.is_file())
+            payload = json.loads(doctor_out.read_text(encoding="utf-8"))
+            proof = payload.get("proof") or {}
+            self.assertEqual(proof.get("status"), "pass")
+            self.assertEqual(proof.get("warnings"), [])
+            self.assertEqual((proof.get("observed_metrics") or {}).get("map50"), 1.0)
+            self.assertEqual((proof.get("observed_metrics") or {}).get("map50_95"), 1.0)
+            artifacts = proof.get("artifacts") or {}
+            for key in ("dataset", "predictions", "eval_report", "proof_report"):
+                self.assertTrue(Path(str(artifacts.get(key))).exists(), f"missing proof artifact: {key}")
 
     def test_demo_overview_points_to_visible_png_quickstart(self):
         repo_root = Path(__file__).resolve().parents[1]
