@@ -499,6 +499,65 @@ def _support_summary(results: list[dict[str, Any]], requested_formats: list[str]
     }
 
 
+def _benchmark_parity_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    by_format: dict[str, Any] = {}
+    reference_backend = None
+    comparisons = 0
+    ok = 0
+    drift = 0
+    failed = 0
+    skipped = 0
+    for item in results:
+        fmt = str(item.get("format"))
+        parity = item.get("parity") if isinstance(item.get("parity"), dict) else None
+        artifact_path = str((item.get("artifacts") or {}).get("parity") or "")
+        if parity is None:
+            skipped += 1
+            by_format[fmt] = {
+                "status": "skipped",
+                "reason": item.get("skip_reason") or item.get("support_reason") or item.get("status"),
+                "artifact": artifact_path,
+            }
+            continue
+        if parity.get("reference_backend") == fmt and "candidate_backends" in parity:
+            reference_backend = fmt
+            status = "reference"
+        elif parity.get("error") or item.get("skip_reason") == "parity_generation_failed":
+            comparisons += 1
+            failed += 1
+            status = "failed"
+        elif parity.get("ok") is False or item.get("skip_reason") == "parity_drift":
+            comparisons += 1
+            drift += 1
+            status = "drift"
+        elif parity.get("ok") is True or str(item.get("status")) in {"ok", "partial"}:
+            comparisons += 1
+            ok += 1
+            status = "ok"
+        else:
+            comparisons += 1
+            drift += 1
+            status = "drift"
+        by_format[fmt] = {
+            "status": status,
+            "reference_backend": parity.get("reference_backend"),
+            "candidate_backend": parity.get("candidate_backend"),
+            "candidate_backends": parity.get("candidate_backends"),
+            "artifact": artifact_path,
+            "summary": parity,
+        }
+    return {
+        "schema_version": 1,
+        "reference_backend": reference_backend,
+        "comparisons": int(comparisons),
+        "ok": int(ok),
+        "drift": int(drift),
+        "failed": int(failed),
+        "skipped": int(skipped),
+        "by_format": by_format,
+    }
+
+
 def _nondefault_flag_values(args: Any) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for name, default in FLAG_DEFAULTS.items():
@@ -3357,6 +3416,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         "benchmark_source": str(getattr(args, "latency_source", "auto") or "auto"),
         "validation_summary": validation_summary,
         "support_summary": _support_summary(results, list(requested_formats)),
+        "parity_summary": _benchmark_parity_summary(results),
         "results": results,
         "artifacts": {
             "report": str(report_path),

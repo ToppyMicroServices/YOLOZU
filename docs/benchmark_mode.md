@@ -408,6 +408,7 @@ The top-level benchmark report records, per format:
 - `execution_semantics.eval_expectation`
 - `artifact_status.predictions` / `artifact_status.eval` / `artifact_status.parity`
 - `parity.reference_backend` / `parity.candidate_backends` or parity summary stats
+- top-level `parity_summary` with reference backend, comparison counts, skipped formats, and per-format parity artifacts
 - `artifacts.predictions`
 - `artifacts.eval`
 - `artifacts.parity`

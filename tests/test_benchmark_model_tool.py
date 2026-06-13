@@ -749,6 +749,10 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["onnx"]["status"], "ok")
             self.assertEqual(results["torch"]["eval_metrics"]["abs_rel"], 0.0)
             self.assertIn("mae", results["onnx"]["parity"]["metrics"])
+            self.assertEqual(payload["parity_summary"]["reference_backend"], "torch")
+            self.assertEqual(payload["parity_summary"]["comparisons"], 1)
+            self.assertEqual(payload["parity_summary"]["ok"], 1)
+            self.assertEqual(payload["parity_summary"]["drift"], 0)
 
     def test_keypoints_task_supports_real_artifact_eval(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -1265,7 +1269,7 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.37)
             self.assertTrue(result["artifacts"]["predictions"].endswith("predictions_torchscript.json"))
 
-    def test_real_torch_and_onnx_backends_write_real_parity_artifacts(self):
+    def test_detect_four_format_request_writes_real_parity_and_skips_engine(self):
         repo_root = Path(__file__).resolve().parents[1]
         image_1 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000009.jpg").resolve())
         image_2 = str((repo_root / "data" / "smoke" / "images" / "val" / "000000000025.jpg").resolve())
@@ -1309,6 +1313,23 @@ class TestBenchmarkModelTool(TestCase):
                     out.parent.mkdir(parents=True, exist_ok=True)
                     out.write_text(json.dumps(payload), encoding="utf-8")
                     return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
+                if cmd[1].endswith("export_predictions_torchscript.py"):
+                    out = Path(cmd[cmd.index("--output") + 1])
+                    payload = {
+                        "predictions": [
+                            {
+                                "image": image_1,
+                                "detections": [{"class_id": 0, "score": 0.90001, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                            },
+                            {
+                                "image": image_2,
+                                "detections": [{"class_id": 1, "score": 0.80001, "bbox": {"cx": 0.4, "cy": 0.4, "w": 0.2, "h": 0.2}}],
+                            },
+                        ],
+                    }
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_text(json.dumps(payload), encoding="utf-8")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=str(out), stderr="")
                 if cmd[1].endswith("eval_suite.py"):
                     out = Path(cmd[cmd.index("--output") + 1])
                     payload = {"metrics": {"bbox_mAP50": 0.42}}
@@ -1318,13 +1339,14 @@ class TestBenchmarkModelTool(TestCase):
                 raise AssertionError(f"unexpected subprocess command: {cmd}")
 
             def fake_module_available(name):
-                return name in {"ultralytics", "onnxruntime"}
+                return name in {"ultralytics", "onnxruntime", "torch"}
 
             args = self._args(
                 output=str(report_path),
                 data=str(repo_root / "data" / "smoke"),
-                format="torch,onnx",
+                format="torch,onnx,engine,torchscript",
                 onnx_model="exports/example.onnx",
+                torchscript_model="exports/example.torchscript",
             )
             with mock.patch.object(benchmark_mode, "_module_available", side_effect=fake_module_available):
                 with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
@@ -1332,10 +1354,13 @@ class TestBenchmarkModelTool(TestCase):
                         report, code = benchmark_mode.run_benchmark_mode(args)
 
             self.assertEqual(code, 0)
-            self.assertEqual(report["status"], "ok")
+            self.assertEqual(report["status"], "partial")
             results = {item["format"]: item for item in report["results"]}
             self.assertEqual(results["torch"]["parity"]["reference_backend"], "torch")
-            self.assertEqual(results["torch"]["parity"]["candidate_backends"], ["onnx"])
+            self.assertEqual(results["torch"]["parity"]["candidate_backends"], ["onnx", "torchscript"])
+            self.assertEqual(results["engine"]["status"], "skipped")
+            self.assertEqual(results["engine"]["support_status"], "skipped")
+            self.assertIn(results["engine"]["support_reason"], {"gpu_required", "platform_not_supported", "missing_runtime_dependency"})
             self.assertTrue(Path(results["torch"]["artifacts"]["parity"]).is_file())
             torch_parity_payload = json.loads(Path(results["torch"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
             self.assertEqual(torch_parity_payload["kind"], "benchmark_parity_reference")
@@ -1346,6 +1371,14 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(onnx_parity_payload["reference_backend"], "torch")
             self.assertEqual(onnx_parity_payload["candidate_backend"], "onnx")
             self.assertTrue(onnx_parity_payload["summary"]["ok"])
+            torchscript_parity_payload = json.loads(Path(results["torchscript"]["artifacts"]["parity"]).read_text(encoding="utf-8"))
+            self.assertEqual(torchscript_parity_payload["candidate_backend"], "torchscript")
+            self.assertTrue(torchscript_parity_payload["summary"]["ok"])
+            self.assertEqual(report["parity_summary"]["reference_backend"], "torch")
+            self.assertEqual(report["parity_summary"]["comparisons"], 2)
+            self.assertEqual(report["parity_summary"]["ok"], 2)
+            self.assertEqual(report["parity_summary"]["skipped"], 1)
+            self.assertEqual(report["parity_summary"]["by_format"]["engine"]["status"], "skipped")
 
     def test_detect_parity_can_use_explicit_onnx_reference_backend(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -1425,6 +1458,9 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(torch_parity_payload["reference_backend"], "onnx")
             self.assertEqual(torch_parity_payload["candidate_backend"], "torch")
             self.assertTrue(torch_parity_payload["summary"]["ok"])
+            self.assertEqual(report["parity_summary"]["reference_backend"], "onnx")
+            self.assertEqual(report["parity_summary"]["comparisons"], 1)
+            self.assertEqual(report["parity_summary"]["ok"], 1)
 
 
 if __name__ == "__main__":
