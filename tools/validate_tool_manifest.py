@@ -226,6 +226,22 @@ def _validate_tool(tool: Any, *, index: int, require_declarative: bool = False) 
             flag = item.get("flag")
             if flag is not None and (not isinstance(flag, str) or (flag and not flag.startswith("--"))):
                 errors.append(f"{where}.{field}[{j}].flag: expected '--foo' style flag string")
+            if require_declarative and field == "outputs":
+                description = item.get("description")
+                if not isinstance(description, str) or not description.strip():
+                    errors.append(f"{where}.{field}[{j}].description: required in declarative mode")
+                if kind in {"file", "dir"}:
+                    if "default" not in item:
+                        errors.append(f"{where}.{field}[{j}].default: required for file/dir outputs in declarative mode")
+                    else:
+                        default = item.get("default")
+                        if default is not None:
+                            if not isinstance(default, str) or not default:
+                                errors.append(f"{where}.{field}[{j}].default: must be string or null")
+                            elif default.startswith("/"):
+                                errors.append(f"{where}.{field}[{j}].default: must be repo-relative when set")
+                            elif ".." in Path(default).parts:
+                                errors.append(f"{where}.{field}[{j}].default: must not contain '..'")
 
     examples = tool.get("examples")
     if examples is not None:

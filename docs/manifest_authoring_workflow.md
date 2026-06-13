@@ -97,7 +97,12 @@ python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manife
     "fixed_writes": []
   },
   "outputs": [
-    { "name": "report_json", "kind": "file", "default": "reports/benchmark_latency.json" }
+    {
+      "name": "report_json",
+      "kind": "file",
+      "default": "reports/benchmark_latency.json",
+      "description": "Benchmark latency report JSON."
+    }
   ],
   "examples": [
     { "description": "Run synthetic benchmark.", "command": "python3 tools/benchmark_latency.py --output reports/benchmark_latency.json" }
@@ -110,6 +115,8 @@ python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manife
 - missing `inputs`/`outputs` field when there are no items (use `[]`)
 - declaring `effects.writes[].flag` not present in `inputs[].flag`
 - missing `effects.fixed_writes` key
+- missing `outputs[].description`
+- missing `outputs[].default` for file/dir outputs; use `null` when no built-in default path exists
 - no runnable `examples[].command`
 - using non-repo-relative paths in `entrypoint`/`docs`/schema references
 
