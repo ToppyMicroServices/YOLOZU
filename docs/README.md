@@ -1,7 +1,8 @@
 # YOLOZU Docs
 
-Use this page as the shortest route into the repo.
-Start with the 1-minute demo, read the first three docs, then pick one next route.
+Evaluate existing predictions first.
+
+Use this page as the shortest route from a wrapped `predictions.json` to a validated, comparable report.
 
 ## 1-Minute Demo
 
@@ -29,21 +30,21 @@ yolozu doctor --explain
 
 ## Next 3 Routes
 
-- Main production lane: evaluate precomputed predictions and keep the predictions interface contract stable
-- Secondary lane: train/export flows that emit the same predictions interface contract
-- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
+- Stable lane: evaluate precomputed predictions and keep the predictions interface contract stable
+- Bridge lane: train/export flows that emit the same predictions interface contract
+- Benchmark/Research lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
 
 ## Primary Focus
 
-- Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export and reference training lanes that feed the same predictions interface contract
-- Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external runtime bridges called out explicitly
-- Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
+- Stable lane: evaluate precomputed predictions fairly across frameworks and runtimes
+- Bridge lane: export and external training flows that emit the same predictions interface contract
+- Benchmark lane: qualify backend parity after the stable evaluation path is working
+- Research lane: continual learning, TTT, SynthGen, and Hessian workflows as opt-in extensions
 
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, install/doctor flow, repo smoke/demo path
-- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
+- Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths
 - Research: continual learning, self-distillation, TTT, Hessian refinement
 
 ## Production Readiness
