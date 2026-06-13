@@ -4,14 +4,11 @@ Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.m
 
 Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
 
-YOLOZU is an Apache-2.0 vision evaluation toolkit for teams that do not want workflow lock-in.
+## Evaluate existing predictions
 
-Bring your own inference.
-Export once.
-Evaluate fairly.
+YOLOZU is an Apache-2.0 evaluation layer for predictions produced by your existing vision stack.
 
-YOLOZU uses one stable predictions interface contract:
-wrapped `predictions.json` with protocol-pinned `meta.export_settings`.
+Give it a wrapped `predictions.json`, validate the predictions interface contract, and produce a comparable report.
 
 ## 1-Minute Demo
 
@@ -55,15 +52,15 @@ flowchart LR
 
 ## Primary Focus
 
-- Main lane: evaluate precomputed predictions fairly across frameworks and runtimes
-- Secondary lane: export and reference training lanes that feed the same predictions interface contract
-- Secondary external lane: Apache-2.0-friendly YOLOX-style training bridge, with optional external copyleft-sensitive bridges kept separate
-- Advanced lane: continual learning, TTT, SynthGen, and backend parity research paths
+- Stable lane: evaluate precomputed predictions fairly across frameworks and runtimes
+- Bridge lane: export or external training flows that emit the same predictions interface contract
+- Benchmark lane: qualify backend parity after the stable evaluation path is working
+- Research lane: continual learning, TTT, SynthGen, and Hessian workflows as opt-in extensions
 
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
-- Experimental: backend parity, benchmark orchestration, SynthGen intake and handoff, macOS/MPS evaluation paths
+- Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths
 - Research: continual learning, self-distillation, TTT, Hessian refinement
 
 ## Production Readiness
@@ -99,11 +96,13 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 - Prepare YOLOZU-synthgen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - Tool and manifest references: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-## More Than The Demo
+## Secondary And Research Lanes
 
-- Advanced docs map: [`docs/README.md`](docs/README.md)
+- Training, export, benchmark, SynthGen, and research workflows feed or extend the evaluation boundary.
+- External training bridge: YOLOX first, optional Ultralytics and HF DETR bridges second
+- SynthGen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
+- Research workflows: [`docs/learning_features.md`](docs/learning_features.md)
 - Real-image showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
-- Learning and research workflows: [`docs/learning_features.md`](docs/learning_features.md)
 
 ## Repo Users
 
