@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "task": "segmentation",
+  "required_input_keys": ["task", "num_classes", "ignore_index", "class_names", "ground_truth_mask", "prediction_mask"],
+  "required_report_keys": ["kind", "schema_version", "task", "metrics", "confusion_matrix", "stats"]
+}

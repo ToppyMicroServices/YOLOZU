@@ -1,0 +1,16 @@
+{
+  "task": "depth",
+  "align": "median_scale",
+  "ground_truth_depth": [
+    [1.0, 2.0],
+    [3.0, 4.0]
+  ],
+  "prediction_depth": [
+    [2.0, 4.0],
+    [6.0, 8.0]
+  ],
+  "mask": [
+    [1, 1],
+    [0, 1]
+  ]
+}

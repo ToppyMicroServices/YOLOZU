@@ -1,0 +1,27 @@
+{
+  "kind": "yolozu_depth_eval_report",
+  "schema_version": 1,
+  "task": "depth",
+  "alignment": "median_scale",
+  "scale_factor": 0.5,
+  "counts": {
+    "total_pixels": 4,
+    "valid_pixels": 3,
+    "masked_out_pixels": 1
+  },
+  "metrics": {
+    "mae": 0.0,
+    "median_abs": 0.0,
+    "rmse": 0.0,
+    "rmse_log": 0.0,
+    "abs_rel": 0.0,
+    "sq_rel": 0.0,
+    "delta1": 1.0,
+    "delta2": 1.0,
+    "delta3": 1.0,
+    "pred_min": 1.0,
+    "pred_max": 4.0,
+    "gt_min": 1.0,
+    "gt_max": 4.0
+  }
+}

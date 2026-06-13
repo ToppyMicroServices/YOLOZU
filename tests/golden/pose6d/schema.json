@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "task": "pose6d",
+  "required_input_keys": ["task", "records", "predictions", "iou_threshold", "min_score", "success_rot_deg", "success_trans"],
+  "required_report_keys": ["kind", "schema_version", "task", "metrics", "counts", "per_image", "warnings"]
+}

@@ -1,0 +1,50 @@
+{
+  "kind": "yolozu_golden_segmentation_report",
+  "schema_version": 1,
+  "task": "segmentation",
+  "metrics": {
+    "miou": 0.5,
+    "pixel_accuracy": 0.666666666667,
+    "num_classes": 2,
+    "classes": [
+      {
+        "id": 0,
+        "name": "background",
+        "iou": 0.5,
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "gt_pixels": 2,
+        "pred_pixels": 1,
+        "union": 2,
+        "included_in_miou": true
+      },
+      {
+        "id": 1,
+        "name": "object",
+        "iou": 0.5,
+        "tp": 1,
+        "fp": 1,
+        "fn": 0,
+        "gt_pixels": 1,
+        "pred_pixels": 2,
+        "union": 2,
+        "included_in_miou": true
+      }
+    ],
+    "pred_unknown_pixels": 0,
+    "pixels_total": 3
+  },
+  "confusion_matrix": [
+    [1, 1, 0],
+    [0, 1, 0]
+  ],
+  "stats": {
+    "pixels_total": 4,
+    "pixels_ignored": 1,
+    "pixels_gt_out_of_range": 0,
+    "pixels_pred_out_of_range": 0,
+    "pixels_valid": 3,
+    "pixels_mismatched": 1
+  }
+}

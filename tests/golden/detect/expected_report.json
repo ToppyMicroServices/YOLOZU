@@ -1,0 +1,19 @@
+{
+  "kind": "yolozu_golden_detect_report",
+  "schema_version": 1,
+  "task": "detect",
+  "metrics": {
+    "map50": 1.0,
+    "map50_95": 1.0
+  },
+  "per_class": {
+    "0": {
+      "ap@0.50": 1.0,
+      "ap@0.75": 1.0
+    },
+    "1": {
+      "ap@0.50": 1.0,
+      "ap@0.75": 1.0
+    }
+  }
+}

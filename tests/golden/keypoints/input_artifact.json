@@ -1,0 +1,36 @@
+{
+  "task": "keypoints",
+  "iou_threshold": 0.5,
+  "pck_threshold": 0.1,
+  "min_score": 0.0,
+  "records": [
+    {
+      "image": "keypoints/0001.jpg",
+      "labels": [
+        {
+          "class_id": 0,
+          "cx": 0.5,
+          "cy": 0.5,
+          "w": 0.4,
+          "h": 0.4,
+          "keypoints": [0.5, 0.5, 2, 0.6, 0.5, 2]
+        }
+      ]
+    }
+  ],
+  "predictions_index": {
+    "keypoints/0001.jpg": [
+      {
+        "class_id": 0,
+        "score": 1.0,
+        "bbox": {
+          "cx": 0.5,
+          "cy": 0.5,
+          "w": 0.4,
+          "h": 0.4
+        },
+        "keypoints": [0.52, 0.5, 2, 0.7, 0.5, 2]
+      }
+    ]
+  }
+}
