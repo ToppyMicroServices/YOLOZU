@@ -119,7 +119,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Build manual PDF (main.tex)
-        uses: xu-cheng/latex-action@25080975331dc4fc8e6f1af55788e00f84f51fff # v4
+        uses: xu-cheng/latex-action@6549dc21effb2730855a1281407ecfcececc6c1b # v4
         with:
           working_directory: manual
           root_file: main.tex
