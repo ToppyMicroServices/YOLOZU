@@ -216,12 +216,20 @@ The top-level benchmark report should contain:
 - `device`
 - `precision`
 - `status`
+- `support_summary`
 - `latency`
 - `throughput`
 - `eval_metrics`
 - `parity`
 - `artifacts`
 - `run_meta`
+
+Each per-format result should also expose:
+
+- `support_status`: one of `real`, `artifact-backed`, or `skipped`
+- `support_reason`
+- `runtime`
+- `artifact_status`
 
 ### 6.2 Reproducibility metadata
 
