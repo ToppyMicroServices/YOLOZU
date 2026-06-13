@@ -422,6 +422,87 @@
     },
     {
       "docs": [
+        "docs/manifest_authoring_workflow.md",
+        "docs/README.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "tools/audit_docs_examples_drift.py",
+      "examples": [
+        {
+          "command": "python3 tools/audit_docs_examples_drift.py --json",
+          "description": "Run the full docs example drift gate."
+        },
+        {
+          "command": "python3 tools/audit_docs_examples_drift.py --docs docs/cpu_only_dod.md --skip-manual --skip-manifest --json",
+          "description": "Audit a single markdown file without subchecks."
+        }
+      ],
+      "id": "audit_docs_examples_drift",
+      "inputs": [
+        {
+          "default": null,
+          "flag": "--docs",
+          "kind": "file",
+          "name": "docs",
+          "required": false
+        },
+        {
+          "default": "sys.executable",
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
+        },
+        {
+          "flag": "--skip-manual",
+          "kind": "string",
+          "name": "skip_manual",
+          "required": false
+        },
+        {
+          "flag": "--skip-manifest",
+          "kind": "string",
+          "name": "skip_manifest",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "description": "Docs example drift audit JSON or text summary.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates.",
+      "tags": [
+        "docs",
+        "manifest",
+        "ci",
+        "drift"
+      ]
+    },
+    {
+      "docs": [
         "manual/chapters/04_cli_reference.tex",
         "docs/release_reliability_checklist.md",
         "docs/manual_cli_drift_allowlist.json"
@@ -15179,6 +15260,68 @@
         "keypoints",
         "segmentation",
         "depth"
+      ]
+    },
+    {
+      "docs": [
+        "docs/manifest_authoring_workflow.md",
+        "docs/manifest_coverage_audit.md",
+        "docs/README.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "tools/validate_tool_manifest.py",
+      "examples": [
+        {
+          "command": "python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative",
+          "description": "Validate the canonical manifest in strict declarative mode."
+        },
+        {
+          "command": "python3 tools/validate_tool_manifest.py --help",
+          "description": "Show manifest validator options."
+        }
+      ],
+      "id": "validate_tool_manifest",
+      "inputs": [
+        {
+          "default": "tools/manifest.json",
+          "flag": "--manifest",
+          "kind": "file",
+          "name": "manifest",
+          "required": false
+        },
+        {
+          "flag": "--require-declarative",
+          "kind": "string",
+          "name": "require_declarative",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "description": "Validation status or actionable manifest errors.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Validate tools/manifest.json structure, references, and declarative metadata.",
+      "tags": [
+        "manifest",
+        "validation",
+        "ci"
       ]
     },
     {
