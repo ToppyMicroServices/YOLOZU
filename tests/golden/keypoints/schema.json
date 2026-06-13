@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "task": "keypoints",
+  "required_input_keys": ["task", "records", "predictions_index", "iou_threshold", "pck_threshold", "min_score"],
+  "required_report_keys": ["kind", "schema_version", "task", "metrics", "per_keypoint", "per_class", "per_image", "warnings"]
+}

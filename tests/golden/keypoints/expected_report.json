@@ -1,0 +1,53 @@
+{
+  "kind": "yolozu_golden_keypoints_report",
+  "schema_version": 1,
+  "task": "keypoints",
+  "metrics": {
+    "pck": 0.5,
+    "pck_threshold": 0.1,
+    "iou_threshold": 0.5,
+    "min_score": 0.0,
+    "instances_gt": 1,
+    "instances_pred": 1,
+    "instances_matched": 1,
+    "keypoints_labeled": 2,
+    "keypoints_correct": 1,
+    "mean_norm_l2": 0.15
+  },
+  "per_keypoint": {
+    "0": {
+      "labeled": 1,
+      "correct": 1,
+      "pck": 1.0,
+      "mean_norm_l2": 0.05
+    },
+    "1": {
+      "labeled": 1,
+      "correct": 0,
+      "pck": 0.0,
+      "mean_norm_l2": 0.25
+    }
+  },
+  "per_class": {
+    "0": {
+      "instances_gt": 1,
+      "instances_matched": 1,
+      "keypoints_labeled": 2,
+      "keypoints_correct": 1,
+      "pck": 0.5,
+      "mean_norm_l2": 0.15
+    }
+  },
+  "per_image": [
+    {
+      "image": "keypoints/0001.jpg",
+      "gt_instances": 1,
+      "pred_instances": 1,
+      "matched_instances": 1,
+      "keypoints_labeled": 2,
+      "keypoints_correct": 1,
+      "pck": 0.5
+    }
+  ],
+  "warnings": []
+}

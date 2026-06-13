@@ -1,0 +1,14 @@
+{
+  "task": "segmentation",
+  "num_classes": 2,
+  "ignore_index": 255,
+  "class_names": ["background", "object"],
+  "ground_truth_mask": [
+    [0, 0],
+    [1, 255]
+  ],
+  "prediction_mask": [
+    [0, 1],
+    [1, 0]
+  ]
+}

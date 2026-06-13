@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "task": "depth",
+  "required_input_keys": ["task", "align", "ground_truth_depth", "prediction_depth", "mask"],
+  "required_report_keys": ["kind", "schema_version", "task", "alignment", "scale_factor", "counts", "metrics"]
+}

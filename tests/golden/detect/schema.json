@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "task": "detect",
+  "required_input_keys": ["task", "records", "predictions", "iou_thresholds"],
+  "required_report_keys": ["kind", "schema_version", "task", "metrics", "per_class"]
+}

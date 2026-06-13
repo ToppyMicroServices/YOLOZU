@@ -1,0 +1,48 @@
+{
+  "kind": "yolozu_golden_pose6d_report",
+  "schema_version": 1,
+  "task": "pose6d",
+  "metrics": {
+    "match_rate": 1.0,
+    "iou_mean": 1.0,
+    "rot_deg_mean": 0.0,
+    "rot_deg_median": 0.0,
+    "trans_l2_mean": 0.0,
+    "trans_l2_median": 0.0,
+    "depth_abs_mean": 0.0,
+    "depth_abs_median": 0.0,
+    "add_mean": 0.0,
+    "add_median": 0.0,
+    "adds_mean": 0.0,
+    "adds_median": 0.0,
+    "rot_success": 1.0,
+    "trans_success": 1.0,
+    "pose_success": 1.0
+  },
+  "counts": {
+    "gt_instances": 1,
+    "pred_instances": 1,
+    "matches": 1,
+    "rot_measured": 1,
+    "trans_measured": 1,
+    "depth_measured": 1,
+    "add_measured": 1,
+    "adds_measured": 1,
+    "pose_measured": 1
+  },
+  "per_image": [
+    {
+      "image": "0001.jpg",
+      "gt": 1,
+      "pred": 1,
+      "matches": 1,
+      "match_rate": 1.0,
+      "rot_deg_mean": 0.0,
+      "trans_l2_mean": 0.0,
+      "depth_abs_mean": 0.0,
+      "iou_mean": 1.0,
+      "pose_success": 1.0
+    }
+  ],
+  "warnings": []
+}

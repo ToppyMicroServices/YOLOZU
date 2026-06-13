@@ -1,0 +1,62 @@
+{
+  "task": "detect",
+  "iou_thresholds": [0.5, 0.75],
+  "records": [
+    {
+      "image": "detect/0001.jpg",
+      "labels": [
+        {
+          "class_id": 0,
+          "cx": 0.5,
+          "cy": 0.5,
+          "w": 0.25,
+          "h": 0.25
+        }
+      ]
+    },
+    {
+      "image": "detect/0002.jpg",
+      "labels": [
+        {
+          "class_id": 1,
+          "cx": 0.25,
+          "cy": 0.25,
+          "w": 0.2,
+          "h": 0.2
+        }
+      ]
+    }
+  ],
+  "predictions": [
+    {
+      "image": "detect/0001.jpg",
+      "detections": [
+        {
+          "class_id": 0,
+          "score": 0.95,
+          "bbox": {
+            "cx": 0.5,
+            "cy": 0.5,
+            "w": 0.25,
+            "h": 0.25
+          }
+        }
+      ]
+    },
+    {
+      "image": "detect/0002.jpg",
+      "detections": [
+        {
+          "class_id": 1,
+          "score": 0.9,
+          "bbox": {
+            "cx": 0.25,
+            "cy": 0.25,
+            "w": 0.2,
+            "h": 0.2
+          }
+        }
+      ]
+    }
+  ]
+}
