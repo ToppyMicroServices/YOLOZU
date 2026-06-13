@@ -153,6 +153,7 @@ jobs:
         run: |
           python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
           python tools/audit_docs_examples_drift.py --json
+          python tools/generate_benchmark_support_matrix.py --check --json
           python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
 
       - name: MCP/actions smoke
@@ -226,6 +227,7 @@ jobs:
             tests/test_predictions.py \
             tests/test_manifest_docs_references.py \
             tests/test_docs_examples_drift.py \
+            tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \
             tests/test_ai_first_mcp_surface.py

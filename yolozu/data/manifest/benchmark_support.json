@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "generated_doc": "docs/benchmark_support_matrix.md",
+  "generator": "tools/generate_benchmark_support_matrix.py",
+  "scope": "Canonical benchmark support metadata for yolozu benchmark and tools/benchmark_model.py.",
+  "legend": [
+    {
+      "term": "real",
+      "description": "Benchmark runs the backend/export/eval path and writes real predictions/eval artifacts when the required model artifact and runtime are present; otherwise the report is skipped."
+    },
+    {
+      "term": "artifact-real",
+      "description": "Benchmark consumes a backend-specific artifact and writes real eval/parity artifacts without claiming YOLOZU ran backend inference."
+    },
+    {
+      "term": "placeholder",
+      "description": "Benchmark writes an explicit placeholder artifact for dry-run planning only."
+    },
+    {
+      "term": "skipped",
+      "description": "Benchmark records a missing runtime, missing model artifact, platform, or GPU requirement."
+    },
+    {
+      "term": "unsupported/skipped",
+      "description": "Task or format is visible in the interface contract but real benchmark wiring is not shipped; benchmark runs report skipped."
+    }
+  ],
+  "formats": [
+    {
+      "id": "torch",
+      "support_state": "conditional real",
+      "runtime_requirements": "Python runtime plus task-specific torch/Ultralytics dependencies for detect; artifact-backed tasks consume supplied files.",
+      "license_runtime_notes": "No runtime is bundled by benchmark mode; users provide model artifacts and optional framework dependencies."
+    },
+    {
+      "id": "onnx",
+      "support_state": "conditional real",
+      "runtime_requirements": "ONNX Runtime and an .onnx artifact for detect; artifact-backed tasks consume supplied files.",
+      "license_runtime_notes": "ONNX Runtime is optional and environment-provided."
+    },
+    {
+      "id": "engine",
+      "support_state": "conditional real",
+      "runtime_requirements": "Linux, GPU, TensorRT/CUDA bindings, and an .engine or .plan artifact for detect; artifact-backed tasks consume supplied files.",
+      "license_runtime_notes": "TensorRT/CUDA are optional external runtimes; benchmark reports skipped when unavailable."
+    },
+    {
+      "id": "torchscript",
+      "support_state": "conditional real",
+      "runtime_requirements": "Local PyTorch and a TorchScript artifact for detect; artifact-backed tasks consume supplied files.",
+      "license_runtime_notes": "PyTorch is optional for this lane and supplied by the runtime environment."
+    },
+    {
+      "id": "executorch",
+      "support_state": "unsupported/skipped",
+      "runtime_requirements": "Standalone exporter utilities may exist, but benchmark orchestration is not wired.",
+      "license_runtime_notes": "Visible for planning; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "id": "opencv_dnn",
+      "support_state": "unsupported/skipped",
+      "runtime_requirements": "Standalone OpenCV-DNN exporters may exist, but benchmark orchestration is not wired.",
+      "license_runtime_notes": "Visible for planning; benchmark reports benchmark_format_not_wired."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "detect",
+      "metric_family": "bbox_map",
+      "surface": "mainstream",
+      "semantics": "real backend eval when a supported runtime and artifact are available"
+    },
+    {
+      "id": "segmentation",
+      "metric_family": "mask_map",
+      "surface": "mainstream",
+      "semantics": "artifact-backed real eval/parity for real backend formats"
+    },
+    {
+      "id": "classification",
+      "metric_family": "topk_accuracy",
+      "surface": "mainstream",
+      "semantics": "visible but not wired; benchmark reports benchmark_task_not_wired"
+    },
+    {
+      "id": "obb",
+      "metric_family": "obb_map",
+      "surface": "mainstream",
+      "semantics": "visible but not wired; benchmark reports benchmark_task_not_wired"
+    },
+    {
+      "id": "keypoints",
+      "metric_family": "oks_map",
+      "surface": "mainstream",
+      "semantics": "artifact-backed real eval/parity for real backend formats"
+    },
+    {
+      "id": "depth",
+      "metric_family": "depth_error",
+      "surface": "yolozu-native",
+      "semantics": "artifact-backed real eval/parity for real backend formats"
+    },
+    {
+      "id": "pose6d",
+      "metric_family": "pose6d_error",
+      "surface": "yolozu-native",
+      "semantics": "artifact-backed real eval/parity for real backend formats"
+    }
+  ],
+  "support": [
+    {
+      "format": "torch",
+      "task": "detect",
+      "inference_artifact": "real or skipped",
+      "eval_artifact": "real or skipped",
+      "parity_artifact": "real when comparable",
+      "notes": "Uses export_predictions_ultralytics.py plus eval_suite.py."
+    },
+    {
+      "format": "torch",
+      "task": "segmentation",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend mask-prediction artifacts."
+    },
+    {
+      "format": "torch",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "torch",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "torch",
+      "task": "keypoints",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend predictions artifacts."
+    },
+    {
+      "format": "torch",
+      "task": "depth",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend depth artifacts."
+    },
+    {
+      "format": "torch",
+      "task": "pose6d",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend pose predictions artifacts."
+    },
+    {
+      "format": "onnx",
+      "task": "detect",
+      "inference_artifact": "real or skipped",
+      "eval_artifact": "real or skipped",
+      "parity_artifact": "real when comparable",
+      "notes": "Requires ONNX Runtime and an .onnx artifact or --onnx-model."
+    },
+    {
+      "format": "onnx",
+      "task": "segmentation",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend mask-prediction artifacts."
+    },
+    {
+      "format": "onnx",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "onnx",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "onnx",
+      "task": "keypoints",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend predictions artifacts."
+    },
+    {
+      "format": "onnx",
+      "task": "depth",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend depth artifacts."
+    },
+    {
+      "format": "onnx",
+      "task": "pose6d",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend pose predictions artifacts."
+    },
+    {
+      "format": "engine",
+      "task": "detect",
+      "inference_artifact": "real or skipped",
+      "eval_artifact": "real or skipped",
+      "parity_artifact": "real when comparable",
+      "notes": "Requires Linux, GPU, TensorRT/CUDA bindings, and .engine/.plan."
+    },
+    {
+      "format": "engine",
+      "task": "segmentation",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend mask-prediction artifacts."
+    },
+    {
+      "format": "engine",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "engine",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "engine",
+      "task": "keypoints",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend predictions artifacts."
+    },
+    {
+      "format": "engine",
+      "task": "depth",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend depth artifacts."
+    },
+    {
+      "format": "engine",
+      "task": "pose6d",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend pose predictions artifacts."
+    },
+    {
+      "format": "torchscript",
+      "task": "detect",
+      "inference_artifact": "real or skipped",
+      "eval_artifact": "real or skipped",
+      "parity_artifact": "real when comparable",
+      "notes": "Uses local PyTorch and the declared combined-output decode path in export_predictions_torchscript.py."
+    },
+    {
+      "format": "torchscript",
+      "task": "segmentation",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend mask-prediction artifacts."
+    },
+    {
+      "format": "torchscript",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "torchscript",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Dedicated OBB eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "torchscript",
+      "task": "keypoints",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend predictions artifacts."
+    },
+    {
+      "format": "torchscript",
+      "task": "depth",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend depth artifacts."
+    },
+    {
+      "format": "torchscript",
+      "task": "pose6d",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend pose predictions artifacts."
+    },
+    {
+      "format": "executorch",
+      "task": "detect",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Standalone export_predictions_executorch.py has a declared runtime-output decode path; benchmark orchestration reports benchmark_format_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "segmentation",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "keypoints",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "depth",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "executorch",
+      "task": "pose6d",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "detect",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Standalone OpenCV-DNN exporters exist; benchmark orchestration reports benchmark_format_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "segmentation",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "classification",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "obb",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "keypoints",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "depth",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    },
+    {
+      "format": "opencv_dnn",
+      "task": "pose6d",
+      "inference_artifact": "skipped",
+      "eval_artifact": "skipped",
+      "parity_artifact": "skipped",
+      "notes": "Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired."
+    }
+  ],
+  "sync_targets": [
+    "docs/benchmark_mode.md",
+    "manual/chapters/09_parity_bench_protocols.tex",
+    "tools/manifest.json",
+    "yolozu/data/manifest/tools_manifest.json"
+  ]
+}
