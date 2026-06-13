@@ -156,9 +156,11 @@ PDF stays readable:
 
   \item[\cmd{classification}]
   Aliases: \cmd{classification}, \cmd{classify}, \cmd{cls}. Metric family:
-  \cmd{topk_accuracy}. Execution support: interface-defined only. The
-  benchmark interface contract is explicit, but dedicated real eval wiring is
-  still pending.
+  \cmd{topk_accuracy}. Execution support: artifact-backed real eval for
+  \cmd{torch}, \cmd{onnx}, \cmd{engine}, and \cmd{torchscript}. Benchmark mode
+  evaluates backend class-score artifacts directly and reports
+  \cmd{top1}/\cmd{top5}/\cmd{accuracy} without claiming YOLOZU ran backend
+  inference.
 
   \item[\cmd{obb}]
   Alias: \cmd{obb}. Metric family: \cmd{obb_map}. Execution support:
@@ -252,8 +254,7 @@ The most important remaining gaps are:
 \begin{itemize}
   \item broader format coverage such as \cmd{openvino}, \cmd{coreml},
   \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and \cmd{paddle}
-  \item broader real backend/eval coverage for
-  \cmd{classification}, \cmd{obb}
+  \item broader real backend/eval coverage for \cmd{obb}
   \item stronger validation of format-specific knobs so unsupported
   combinations fail early rather than acting like inert flags
 \end{itemize}
@@ -262,8 +263,8 @@ The most important remaining gaps are:
 If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
-  \item add real backend/eval paths for
-  \cmd{classification} and \cmd{obb} on top of the existing
+  \item add a real backend/eval path for
+  \cmd{obb} on top of the existing
   \cmd{torch}/\cmd{onnx}/\cmd{engine} benchmark flow
   \item promote conditional \cmd{openvino} after the current \cmd{torchscript} detect path
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity

@@ -80,7 +80,7 @@
       "id": "classification",
       "metric_family": "topk_accuracy",
       "surface": "mainstream",
-      "semantics": "visible but not wired; benchmark reports benchmark_task_not_wired"
+      "semantics": "artifact-backed real eval for real backend formats"
     },
     {
       "id": "obb",
@@ -127,10 +127,10 @@
     {
       "format": "torch",
       "task": "classification",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torch",
@@ -183,10 +183,10 @@
     {
       "format": "onnx",
       "task": "classification",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "onnx",
@@ -239,10 +239,10 @@
     {
       "format": "engine",
       "task": "classification",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "engine",
@@ -295,10 +295,10 @@
     {
       "format": "torchscript",
       "task": "classification",
-      "inference_artifact": "skipped",
-      "eval_artifact": "skipped",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Dedicated classification eval wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torchscript",
@@ -354,7 +354,7 @@
       "inference_artifact": "skipped",
       "eval_artifact": "skipped",
       "parity_artifact": "skipped",
-      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Benchmark format lane is not shipped; benchmark reports benchmark_format_not_wired."
     },
     {
       "format": "executorch",
@@ -410,7 +410,7 @@
       "inference_artifact": "skipped",
       "eval_artifact": "skipped",
       "parity_artifact": "skipped",
-      "notes": "Benchmark wiring is not shipped; benchmark reports benchmark_task_not_wired."
+      "notes": "Benchmark format lane is not shipped; benchmark reports benchmark_format_not_wired."
     },
     {
       "format": "opencv_dnn",
@@ -447,6 +447,7 @@
   ],
   "sync_targets": [
     "docs/benchmark_mode.md",
+    "docs/benchmark_backend_runtime_matrix.md",
     "manual/chapters/09_parity_bench_protocols.tex",
     "tools/manifest.json",
     "yolozu/data/manifest/tools_manifest.json"

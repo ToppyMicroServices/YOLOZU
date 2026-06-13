@@ -1240,6 +1240,10 @@
           "description": "Run the artifact-backed keypoints benchmark/parity lane for backend-specific predictions artifacts."
         },
         {
+          "command": "python3 tools/benchmark_model.py --task classification --model reports/classification_torch.json --onnx-model reports/classification_onnx.json --data data/classification_labels.json --format torch,onnx --latency-source artifact_eval --output reports/benchmark_classification_report.json",
+          "description": "Run the artifact-backed classification benchmark lane for backend-specific score artifacts."
+        },
+        {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task depth --format torchscript --dry-run --output reports/benchmark_report.json",
           "description": "Inspect YOLOZU-native depth benchmark semantics without claiming mainstream benchmark-surface parity."
         },
@@ -1652,19 +1656,19 @@
         },
         {
           "default": null,
-          "description": "Per-format predictions artifact (real output when the backend runs, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, non-real fallback artifact otherwise).",
+          "description": "Per-format predictions artifact (real output when the backend runs, normalized backend classification score artifact for task=classification artifact_eval, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
           "default": null,
-          "description": "Per-format evaluation artifact (real output when evaluation runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
+          "description": "Per-format evaluation artifact (real output when evaluation runs, including artifact_eval reports for task=classification and reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
         {
           "default": null,
-          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
+          "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d; task=classification currently writes an explicit parity placeholder, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "parity_report_json"
         },
@@ -1682,7 +1686,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed classification eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",
