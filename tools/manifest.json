@@ -630,11 +630,13 @@
       "outputs": [
         {
           "default": "runs/backend_parity_matrix/<run_id>/reports/backend_parity_matrix.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         },
         {
           "default": "runs/backend_parity_matrix/<run_id>/reports/backend_parity_matrix.html",
+          "description": "HTML report artifact.",
           "kind": "file",
           "name": "report_html"
         }
@@ -742,11 +744,13 @@
       "outputs": [
         {
           "default": "reports/eata_benchmark.json",
+          "description": "EATA benchmark JSON artifact.",
           "kind": "file",
           "name": "eata_benchmark_json"
         },
         {
           "default": "reports/eata_benchmark.md",
+          "description": "EATA benchmark Markdown artifact.",
           "kind": "file",
           "name": "eata_benchmark_md"
         }
@@ -887,6 +891,7 @@
       "outputs": [
         {
           "default": "reports/benchmark_keypoints_eval.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -1032,10 +1037,12 @@
       "outputs": [
         {
           "default": "reports/benchmark_latency.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         },
         {
+          "default": null,
           "description": "Optional JSONL history when --history is set.",
           "kind": "file",
           "name": "history_jsonl"
@@ -1557,26 +1564,31 @@
           "name": "benchmark_report_json"
         },
         {
+          "default": null,
           "description": "Optional JSONL history when --history is set.",
           "kind": "file",
           "name": "history_jsonl"
         },
         {
+          "default": null,
           "description": "Per-format predictions artifact (real output when the backend runs, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
-          "description": "Per-format eval artifact (real output when eval runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
+          "default": null,
+          "description": "Per-format evaluation artifact (real output when evaluation runs, including artifact_eval reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
         {
+          "default": null,
           "description": "Per-format parity artifact (real backend diff for successful real backend comparisons, including artifact-backed parity for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "parity_report_json"
         },
         {
+          "default": null,
           "description": "Per-format export settings artifact.",
           "kind": "file",
           "name": "export_settings_json"
@@ -1690,11 +1702,13 @@
       "outputs": [
         {
           "default": "reports/sar_robustness_report.json",
+          "description": "SAR robustness JSON artifact.",
           "kind": "file",
           "name": "sar_robustness_json"
         },
         {
           "default": "reports/sar_robustness_report.md",
+          "description": "SAR robustness Markdown artifact.",
           "kind": "file",
           "name": "sar_robustness_md"
         }
@@ -1740,6 +1754,7 @@
       "outputs": [
         {
           "default": "reports/manifest.json",
+          "description": "Manifest JSON artifact.",
           "kind": "file",
           "name": "manifest_json"
         }
@@ -1926,16 +1941,19 @@
       "outputs": [
         {
           "default": "engines/model.plan",
+          "description": "Engine plan artifact.",
           "kind": "file",
           "name": "engine_plan"
         },
         {
           "default": "engines/timing.cache",
+          "description": "Timing cache artifact.",
           "kind": "file",
           "name": "timing_cache"
         },
         {
           "default": "reports/trt_engine_meta.json",
+          "description": "Meta output artifact.",
           "kind": "file",
           "name": "meta_output"
         }
@@ -2067,11 +2085,13 @@
       "outputs": [
         {
           "default": "reports/predictions_calibrated.json",
+          "description": "Predictions calibrated artifact.",
           "kind": "file",
           "name": "predictions_calibrated"
         },
         {
           "default": "reports/calibration_report.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -2686,6 +2706,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Segmentation parity report JSON.",
           "kind": "file",
           "name": "segmentation_parity_json"
@@ -2828,6 +2849,7 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "Promotion decision JSON report.",
           "kind": "file",
           "name": "continual_promotion_decision_json"
@@ -2923,11 +2945,13 @@
       "outputs": [
         {
           "default": "reports/instance_seg_predictions.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         },
         {
           "default": "reports/instance_seg_masks",
+          "description": "Masks directory artifact.",
           "kind": "dir",
           "name": "masks_dir"
         }
@@ -3324,6 +3348,7 @@
       "outputs": [
         {
           "default": "reports/coco_eval.json",
+          "description": "COCO evaluation JSON artifact.",
           "kind": "file",
           "name": "coco_eval_json"
         }
@@ -3477,11 +3502,13 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "<run_dir>/continual_eval.json by default.",
           "kind": "file",
           "name": "eval_json"
         },
         {
+          "default": null,
           "description": "<run_dir>/continual_eval.html by default.",
           "kind": "file",
           "name": "eval_html"
@@ -3591,11 +3618,13 @@
       "outputs": [
         {
           "default": "reports/cotta_drift_report.json",
+          "description": "CoTTA drift report JSON artifact.",
           "kind": "file",
           "name": "cotta_drift_report_json"
         },
         {
           "default": "reports/cotta_drift_report.md",
+          "description": "CoTTA drift report Markdown artifact.",
           "kind": "file",
           "name": "cotta_drift_report_md"
         }
@@ -3891,6 +3920,7 @@
       "outputs": [
         {
           "default": "reports/instance_seg_eval.json",
+          "description": "Instance segmentation evaluation JSON artifact.",
           "kind": "file",
           "name": "instance_seg_eval_json"
         }
@@ -4088,6 +4118,7 @@
       "outputs": [
         {
           "default": "reports/keypoints_eval.json",
+          "description": "Keypoints evaluation JSON artifact.",
           "kind": "file",
           "name": "keypoints_eval_json"
         }
@@ -4375,6 +4406,7 @@
       "outputs": [
         {
           "default": "reports/seg_eval.json",
+          "description": "Segmentation evaluation JSON artifact.",
           "kind": "file",
           "name": "seg_eval_json"
         }
@@ -4493,6 +4525,7 @@
       "outputs": [
         {
           "default": "reports/eval_suite.json",
+          "description": "Evaluation suite JSON artifact.",
           "kind": "file",
           "name": "eval_suite_json"
         }
@@ -4655,6 +4688,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Exported OpenAPI schema JSON.",
           "kind": "file",
           "name": "openapi_json"
@@ -5365,6 +5399,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions interface contract JSON produced from COCO keypoints results.",
           "kind": "file",
           "name": "predictions_json"
@@ -5546,6 +5581,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -5689,6 +5725,7 @@
       "outputs": [
         {
           "default": "reports/predictions_executorch.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -5871,6 +5908,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -6105,25 +6143,30 @@
       "outputs": [
         {
           "default": "reports/predictions_onnxrt.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         },
         {
+          "default": null,
           "description": "Optional raw boxes output when --boxes-output is set.",
           "kind": "file",
           "name": "boxes_output"
         },
         {
+          "default": null,
           "description": "Optional raw class output when --class-output is set.",
           "kind": "file",
           "name": "class_output"
         },
         {
+          "default": null,
           "description": "Optional raw scores output when --scores-output is set.",
           "kind": "file",
           "name": "scores_output"
         },
         {
+          "default": null,
           "description": "Optional raw tensor output when --raw-output is set.",
           "kind": "file",
           "name": "raw_output"
@@ -6318,11 +6361,13 @@
       "outputs": [
         {
           "default": "reports/pred_opencv_dnn.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         },
         {
           "default": "reports/pred_opencv_dnn.json.meta.json",
+          "description": "Meta JSON artifact.",
           "kind": "file",
           "name": "meta_json"
         }
@@ -6570,11 +6615,13 @@
       "outputs": [
         {
           "default": "reports/pred_rtdetr_opencv_dnn.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         },
         {
           "default": "reports/pred_rtdetr_opencv_dnn.json.meta.json",
+          "description": "Meta JSON artifact.",
           "kind": "file",
           "name": "meta_json"
         }
@@ -6760,6 +6807,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -6920,6 +6968,7 @@
       "outputs": [
         {
           "default": "reports/predictions_torchscript.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -7151,25 +7200,30 @@
       "outputs": [
         {
           "default": "reports/predictions_trt.json",
+          "description": "Predictions JSON artifact.",
           "kind": "file",
           "name": "predictions_json"
         },
         {
+          "default": null,
           "description": "Optional raw boxes output when --boxes-output is set.",
           "kind": "file",
           "name": "boxes_output"
         },
         {
+          "default": null,
           "description": "Optional raw class output when --class-output is set.",
           "kind": "file",
           "name": "class_output"
         },
         {
+          "default": null,
           "description": "Optional raw scores output when --scores-output is set.",
           "kind": "file",
           "name": "scores_output"
         },
         {
+          "default": null,
           "description": "Optional raw tensor output when --raw-output is set.",
           "kind": "file",
           "name": "raw_output"
@@ -7372,6 +7426,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -7529,6 +7584,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -7680,6 +7736,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -7899,16 +7956,19 @@
       "outputs": [
         {
           "default": "models/model.onnx",
+          "description": "ONNX model artifact.",
           "kind": "file",
           "name": "onnx_model"
         },
         {
           "default": "engines/model_fp16.plan",
+          "description": "Engine plan artifact.",
           "kind": "file",
           "name": "engine_plan"
         },
         {
           "default": "engines/timing.cache",
+          "description": "Timing cache artifact.",
           "kind": "file",
           "name": "timing_cache"
         }
@@ -8091,6 +8151,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Fetched model artifact under models/<id>/.",
           "kind": "file",
           "name": "artifact"
@@ -8372,11 +8433,13 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Generated machine-readable MCP/Actions contract.",
           "kind": "file",
           "name": "contract_json"
         },
         {
+          "default": null,
           "description": "Generated human-readable MCP/Actions contract.",
           "kind": "file",
           "name": "contract_md"
@@ -8498,6 +8561,7 @@
       "outputs": [
         {
           "default": "reports/gpu_validation_preflight.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -8584,16 +8648,19 @@
       "outputs": [
         {
           "default": "reports/hpo_sweep.jsonl",
+          "description": "Result jsonl report artifact.",
           "kind": "file",
           "name": "result_jsonl"
         },
         {
           "default": "reports/hpo_sweep.csv",
+          "description": "Result csv CSV artifact.",
           "kind": "file",
           "name": "result_csv"
         },
         {
           "default": "reports/hpo_sweep.md",
+          "description": "Result Markdown artifact.",
           "kind": "file",
           "name": "result_md"
         }
@@ -8660,11 +8727,13 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Output dataset wrapper JSON under --output/dataset.json.",
           "kind": "file",
           "name": "dataset_wrapper_json"
         },
         {
+          "default": null,
           "description": "Output classes mapping under --output/labels/<split>/classes.json.",
           "kind": "file",
           "name": "classes_json"
@@ -8823,6 +8892,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Subset dataset root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -8938,6 +9008,7 @@
       "outputs": [
         {
           "default": "reports/latency_trt.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -9030,6 +9101,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Normalized predictions JSON at --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -9130,11 +9202,13 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Machine-readable orchestration report for the whole experiment batch.",
           "kind": "file",
           "name": "training_orchestration_report_json"
         },
         {
+          "default": null,
           "description": "Optional append-only JSONL training registry file when --registry-out is set.",
           "kind": "file",
           "name": "training_registry_jsonl"
@@ -9230,6 +9304,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Segmentation predictions interface contract JSON.",
           "kind": "file",
           "name": "segmentation_predictions_json"
@@ -9389,6 +9464,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Prepared output root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -9476,6 +9552,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Prepared output root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -9575,6 +9652,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "YOLO-format dataset root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -9662,6 +9740,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "YOLO-format dataset root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -9820,6 +9899,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Prepared dataset root with dataset.json for keypoints training.",
           "kind": "file",
           "name": "dataset_descriptor"
@@ -10106,11 +10186,13 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "Corrupted target dataset root for deterministic shift runs.",
           "kind": "dir",
           "name": "target_dataset_root"
         },
         {
+          "default": null,
           "description": "Recipe JSON including export_settings.domain_shift_target.",
           "kind": "file",
           "name": "domain_shift_recipe_json"
@@ -10199,6 +10281,7 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Prepared output root created at --out.",
           "kind": "dir",
           "name": "dataset_root"
@@ -10319,11 +10402,13 @@
       "outputs": [
         {
           "default": "reports/benchmark_table.json",
+          "description": "Benchmark table JSON artifact.",
           "kind": "file",
           "name": "benchmark_table_json"
         },
         {
           "default": "reports/benchmark_table.md",
+          "description": "Benchmark table Markdown artifact.",
           "kind": "file",
           "name": "benchmark_table_md"
         }
@@ -10532,6 +10617,7 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "Refined predictions JSON written to --output.",
           "kind": "file",
           "name": "predictions_json"
@@ -10884,6 +10970,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Rendered overlay PNG.",
           "kind": "file",
           "name": "overlay_png"
@@ -10968,24 +11055,28 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "Real-result TTT summary chart PNG.",
           "kind": "file",
           "name": "summary_png",
           "path": "docs/assets/ttt_method_results_summary.png"
         },
         {
+          "default": null,
           "description": "TTT compare workflow PNG.",
           "kind": "file",
           "name": "pipeline_png",
           "path": "docs/assets/ttt_compare_pipeline.png"
         },
         {
+          "default": null,
           "description": "Qualitative shifted-probe example PNG.",
           "kind": "file",
           "name": "qualitative_png",
           "path": "docs/assets/ttt_probe_example_panel.png"
         },
         {
+          "default": null,
           "description": "Fixed result source JSON used to render the manual figures.",
           "kind": "file",
           "name": "summary_source_json",
@@ -11062,6 +11153,7 @@
       "outputs": [
         {
           "default": "reports/dependency_licenses.json",
+          "description": "Dependency licenses JSON artifact.",
           "kind": "file",
           "name": "dependency_licenses_json"
         }
@@ -11242,6 +11334,7 @@
       "outputs": [
         {
           "default": "reports/rtdetr_pose_backend_suite.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -11340,6 +11433,7 @@
       "maturity": "research",
       "outputs": [
         {
+          "default": null,
           "description": "continual_run.json under the run dir.",
           "kind": "file",
           "name": "run_json"
@@ -12761,6 +12855,7 @@
       "outputs": [
         {
           "default": "runs/rtdetr_pose_backend_suite/<timestamp>/backend_suite.json",
+          "description": "Suite report report artifact.",
           "kind": "file",
           "name": "suite_report"
         }
@@ -12892,6 +12987,7 @@
       "outputs": [
         {
           "default": "reports/scenario_run.json",
+          "description": "Scenario run JSON artifact.",
           "kind": "file",
           "name": "scenario_run_json"
         }
@@ -13343,6 +13439,7 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Run folder containing run.json and copied artifacts.",
           "kind": "dir",
           "name": "run_dir"
@@ -13503,36 +13600,43 @@
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
+          "description": "Run directory artifact.",
           "kind": "dir",
           "name": "run_dir"
         },
         {
           "default": "reports/ttt_compare/<method>/plan.json",
+          "description": "Plan JSON artifact.",
           "kind": "file",
           "name": "plan_json"
         },
         {
           "default": "reports/ttt_compare/<method>/baseline_predictions.json",
+          "description": "Baseline predictions artifact.",
           "kind": "file",
           "name": "baseline_predictions"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_predictions.json",
+          "description": "Adapted predictions artifact.",
           "kind": "file",
           "name": "adapted_predictions"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
+          "description": "Ttt log artifact.",
           "kind": "file",
           "name": "ttt_log"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
+          "description": "Compare JSON artifact.",
           "kind": "file",
           "name": "compare_json"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
+          "description": "Compare Markdown artifact.",
           "kind": "file",
           "name": "compare_md"
         }
@@ -14027,11 +14131,13 @@
       "maturity": "experimental",
       "outputs": [
         {
+          "default": null,
           "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },
         {
+          "default": null,
           "description": "Wrapper-owned training registry entry JSON written under work_dir/reports/training_registry_entry.json.",
           "kind": "file",
           "name": "training_registry_entry_json"
@@ -14393,36 +14499,43 @@
       "outputs": [
         {
           "default": "reports/ttt_compare/<method>",
+          "description": "Run directory artifact.",
           "kind": "dir",
           "name": "run_dir"
         },
         {
           "default": "reports/ttt_compare/<method>/plan.json",
+          "description": "Plan JSON artifact.",
           "kind": "file",
           "name": "plan_json"
         },
         {
           "default": "reports/ttt_compare/<method>/baseline_predictions.json",
+          "description": "Baseline predictions artifact.",
           "kind": "file",
           "name": "baseline_predictions"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_predictions.json",
+          "description": "Adapted predictions artifact.",
           "kind": "file",
           "name": "adapted_predictions"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
+          "description": "Ttt log artifact.",
           "kind": "file",
           "name": "ttt_log"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
+          "description": "Compare JSON artifact.",
           "kind": "file",
           "name": "compare_json"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.md",
+          "description": "Compare Markdown artifact.",
           "kind": "file",
           "name": "compare_md"
         }
@@ -14635,6 +14748,7 @@
       "outputs": [
         {
           "default": "reports/gate_tuning_report.json",
+          "description": "JSON report artifact.",
           "kind": "file",
           "name": "report_json"
         }
@@ -16532,33 +16646,38 @@
       "maturity": "stable",
       "outputs": [
         {
+          "default": null,
           "description": "Primary output artifact controlled by --output (subcommand-dependent).",
           "kind": "file",
           "name": "output_json"
         },
         {
+          "default": null,
           "description": "Cache artifacts directory when --cache-dir is used.",
           "kind": "dir",
           "name": "cache_dir"
         },
         {
+          "default": null,
           "description": "Optional HTML output when --html is used.",
           "kind": "file",
           "name": "html"
         },
         {
+          "default": null,
           "description": "Optional overlay directory when --overlays-dir is used.",
           "kind": "dir",
           "name": "overlays_dir"
         },
         {
+          "default": null,
           "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided.",
           "kind": "dir",
           "name": "export_dataset_root"
         },
         {
           "default": "reports/doctor_proof",
-          "description": "Doctor proof artifact directory containing toy dataset, known predictions, eval report, and proof report when --proof is used.",
+          "description": "Doctor proof artifact directory containing toy dataset, known predictions, evaluation report, and proof report when --proof is used.",
           "kind": "dir",
           "name": "doctor_proof_dir"
         }

@@ -92,7 +92,7 @@ class TestToolManifest(unittest.TestCase):
                     },
                     "inputs": [{"name": "manifest", "kind": "file", "required": False, "flag": "--manifest"}],
                     "effects": {"writes": [], "fixed_writes": []},
-                    "outputs": [{"name": "status", "kind": "stdout"}],
+                    "outputs": [{"name": "status", "kind": "stdout", "description": "Validation status on stdout."}],
                     "examples": [{"description": "x", "command": "python3 tools/validate_tool_manifest.py --help"}],
                 }
             ],
@@ -201,6 +201,60 @@ class TestToolManifest(unittest.TestCase):
         proc = self._run_validator(manifest, require_declarative=True)
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("platform.cpu_ok: must be bool", proc.stderr)
+
+    def test_validate_tool_manifest_fails_missing_output_description(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "missing_output_description",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                    "maturity": "stable",
+                    "platform": {
+                        "cpu_ok": True,
+                        "gpu_required": False,
+                        "macos_ok": True,
+                        "linux_ok": True,
+                    },
+                    "inputs": [],
+                    "effects": {"writes": [], "fixed_writes": []},
+                    "outputs": [{"name": "status", "kind": "stdout"}],
+                    "examples": [{"description": "x", "command": "python3 tools/validate_tool_manifest.py --help"}],
+                }
+            ],
+        }
+        proc = self._run_validator(manifest, require_declarative=True)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("outputs[0].description: required in declarative mode", proc.stderr)
+
+    def test_validate_tool_manifest_fails_missing_file_output_default(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "missing_file_output_default",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                    "maturity": "stable",
+                    "platform": {
+                        "cpu_ok": True,
+                        "gpu_required": False,
+                        "macos_ok": True,
+                        "linux_ok": True,
+                    },
+                    "inputs": [],
+                    "effects": {"writes": [], "fixed_writes": []},
+                    "outputs": [{"name": "report_json", "kind": "file", "description": "Report JSON."}],
+                    "examples": [{"description": "x", "command": "python3 tools/validate_tool_manifest.py --help"}],
+                }
+            ],
+        }
+        proc = self._run_validator(manifest, require_declarative=True)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("outputs[0].default: required for file/dir outputs", proc.stderr)
 
     def test_validate_tool_manifest_fails_missing_maturity(self):
         manifest = {
