@@ -30,9 +30,9 @@ yolozu doctor --explain
 
 ## Next 3 Routes
 
-- Main production lane: evaluate precomputed predictions and keep the predictions interface contract stable
-- Secondary lane: train/export flows that emit the same predictions interface contract
-- Advanced lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
+- Stable lane: evaluate precomputed predictions and keep the predictions interface contract stable
+- Bridge lane: train/export flows that emit the same predictions interface contract
+- Benchmark/Research lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
 
 ## Primary Focus
 

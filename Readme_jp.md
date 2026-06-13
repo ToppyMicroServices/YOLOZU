@@ -96,7 +96,7 @@ flowchart LR
 - YOLOZU-synthgen 連携を準備する: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
 - tool / manifest の参照先: [`docs/tools_index.md`](docs/tools_index.md), [`tools/manifest.json`](tools/manifest.json)
 
-## Secondary / Research lane
+## Secondary / Research lanes
 
 - training、export、benchmark、SynthGen、research workflow は、この evaluation boundary に接続する secondary lane です。
 - External training bridge: YOLOX first、optional Ultralytics / HF DETR bridges second
