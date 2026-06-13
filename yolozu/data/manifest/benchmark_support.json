@@ -51,6 +51,12 @@
       "license_runtime_notes": "PyTorch is optional for this lane and supplied by the runtime environment."
     },
     {
+      "id": "openvino",
+      "support_state": "conditional real",
+      "runtime_requirements": "OpenVINO runtime and an OpenVINO IR .xml artifact for detect; artifact-backed tasks consume supplied files.",
+      "license_runtime_notes": "OpenVINO is optional and environment-provided; benchmark reports skipped when unavailable."
+    },
+    {
       "id": "executorch",
       "support_state": "unsupported/skipped",
       "runtime_requirements": "Standalone exporter utilities may exist, but benchmark orchestration is not wired.",
@@ -326,6 +332,62 @@
     },
     {
       "format": "torchscript",
+      "task": "pose6d",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend pose predictions artifacts."
+    },
+    {
+      "format": "openvino",
+      "task": "detect",
+      "inference_artifact": "real or skipped",
+      "eval_artifact": "real or skipped",
+      "parity_artifact": "real when comparable",
+      "notes": "Requires OpenVINO runtime and an OpenVINO IR .xml artifact; reports missing runtime/artifact as skipped."
+    },
+    {
+      "format": "openvino",
+      "task": "segmentation",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend mask-prediction artifacts."
+    },
+    {
+      "format": "openvino",
+      "task": "classification",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "skipped",
+      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+    },
+    {
+      "format": "openvino",
+      "task": "obb",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "skipped",
+      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+    },
+    {
+      "format": "openvino",
+      "task": "keypoints",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend predictions artifacts."
+    },
+    {
+      "format": "openvino",
+      "task": "depth",
+      "inference_artifact": "artifact-real",
+      "eval_artifact": "real",
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend depth artifacts."
+    },
+    {
+      "format": "openvino",
       "task": "pose6d",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",

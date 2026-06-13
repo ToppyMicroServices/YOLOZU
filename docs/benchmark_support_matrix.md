@@ -22,6 +22,7 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | `onnx` | conditional real | ONNX Runtime and an .onnx artifact for detect; artifact-backed tasks consume supplied files. | ONNX Runtime is optional and environment-provided. |
 | `engine` | conditional real | Linux, GPU, TensorRT/CUDA bindings, and an .engine or .plan artifact for detect; artifact-backed tasks consume supplied files. | TensorRT/CUDA are optional external runtimes; benchmark reports skipped when unavailable. |
 | `torchscript` | conditional real | Local PyTorch and a TorchScript artifact for detect; artifact-backed tasks consume supplied files. | PyTorch is optional for this lane and supplied by the runtime environment. |
+| `openvino` | conditional real | OpenVINO runtime and an OpenVINO IR .xml artifact for detect; artifact-backed tasks consume supplied files. | OpenVINO is optional and environment-provided; benchmark reports skipped when unavailable. |
 | `executorch` | unsupported/skipped | Standalone exporter utilities may exist, but benchmark orchestration is not wired. | Visible for planning; benchmark reports benchmark_format_not_wired. |
 | `opencv_dnn` | unsupported/skipped | Standalone OpenCV-DNN exporters may exist, but benchmark orchestration is not wired. | Visible for planning; benchmark reports benchmark_format_not_wired. |
 
@@ -69,6 +70,13 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | `torchscript` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `torchscript` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `torchscript` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
+| `openvino` | `detect` | real or skipped | real or skipped | real when comparable | Requires OpenVINO runtime and an OpenVINO IR .xml artifact; reports missing runtime/artifact as skipped. |
+| `openvino` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
+| `openvino` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
+| `openvino` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference. |
+| `openvino` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
+| `openvino` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
+| `openvino` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
 | `executorch` | `detect` | skipped | skipped | skipped | Standalone export_predictions_executorch.py has a declared runtime-output decode path; benchmark orchestration reports benchmark_format_not_wired. |
 | `executorch` | `segmentation` | skipped | skipped | skipped | Benchmark artifact lane is not shipped; benchmark reports benchmark_format_not_wired. |
 | `executorch` | `classification` | skipped | skipped | skipped | Benchmark format lane is not shipped; benchmark reports benchmark_format_not_wired. |

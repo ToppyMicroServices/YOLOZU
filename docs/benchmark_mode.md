@@ -40,8 +40,9 @@ orchestration lanes for now, and missing runtime/model artifacts are reported ho
 The broader public benchmark/export surface still exposes more formats and task
 paths than YOLOZU does. Today the most important remaining gaps are:
 
-- missing benchmark/export formats such as `openvino`, `coreml`,
-  `saved_model`, `tflite`, `ncnn`, `rknn`, and `paddle`
+- missing benchmark/export formats such as `coreml`, `saved_model`, `tflite`,
+  `ncnn`, `rknn`, and `paddle`; `openvino` is conditional and reports skipped
+  when the runtime or IR artifact is unavailable
 - incomplete parity attachment for artifact-backed classification and OBB lanes
 - incomplete flag validation for format-specific knobs
 
@@ -62,7 +63,8 @@ best next steps are:
 - keep the pose6d lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the canonical [Benchmark support matrix](benchmark_support_matrix.md)
   synced whenever format/task semantics change
-- add conditional `openvino` after the current `torchscript` detect lane
+- keep conditional `openvino` reporting honest after the current `torchscript`
+  detect lane
 - expand real parity artifacts beyond the current `torch`-anchored comparisons
 - keep format-specific flag validation strict so unsupported combinations fail
   early
@@ -451,8 +453,9 @@ validation policy that was applied before execution:
 - `missing_runtime_policy: report_skipped`
 - `missing_artifact_policy: report_skipped`
 
-`openvino_applicable` remains `false` until the OpenVINO conditional lane is
-added to the benchmark format surface.
+`openvino_applicable` is `true` once OpenVINO is present in the benchmark format
+surface. OpenVINO remains optional: missing runtime or missing IR artifacts are
+reported as skipped instead of becoming an install requirement.
 
 Typical skip reasons:
 

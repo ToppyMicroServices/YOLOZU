@@ -47,8 +47,8 @@ from yolozu.predictions.segmentation_predictions import load_segmentation_predic
 
 repo_root = Path(__file__).resolve().parents[2]
 
-PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "executorch", "opencv_dnn")
-REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript")
+PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "openvino", "executorch", "opencv_dnn")
+REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript", "openvino")
 BENCHMARK_UNWIRED_FORMATS = {"executorch", "opencv_dnn"}
 BENCHMARK_UNWIRED_TASKS: set[str] = set()
 TASK_ALIASES = {
@@ -74,10 +74,10 @@ TASK_SEMANTICS = {
         "display_name": "Detection",
         "metric_family": "bbox_map",
         "expected_metric_keys": ["mAP50-95", "mAP50", "AR@100"],
-        "support_level": "real_for_torch_onnx_engine_torchscript",
+        "support_level": "real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Default benchmark semantics. Real backend orchestration is available for torch/onnx/engine/torchscript when artifacts and runtimes are present.",
+        "notes": "Default benchmark semantics. Real backend orchestration is available for torch/onnx/engine/torchscript/openvino when artifacts and runtimes are present.",
     },
     "segmentation": {
         "display_name": "Segmentation",
@@ -92,19 +92,19 @@ TASK_SEMANTICS = {
         "display_name": "Classification",
         "metric_family": "topk_accuracy",
         "expected_metric_keys": ["top1", "top5", "accuracy"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "obb": {
         "display_name": "Oriented Bounding Boxes",
         "metric_family": "obb_map",
         "expected_metric_keys": ["obb_mAP50-95", "obb_mAP50", "obb_AR"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript rotated-box prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "keypoints": {
         "display_name": "Keypoints / Pose",
@@ -161,6 +161,10 @@ FORMAT_FLAG_RULES = {
     "torchscript": {
         "supported_nondefault_flags": set(),
         "notes": "TorchScript detect benchmarking consumes an existing TorchScript artifact through the declared combined-output decode path; export-oriented flags remain unsupported.",
+    },
+    "openvino": {
+        "supported_nondefault_flags": set(),
+        "notes": "OpenVINO detect benchmarking consumes an existing OpenVINO IR artifact through the declared combined-output decode path; export-oriented flags remain unsupported.",
     },
     "executorch": {
         "supported_nondefault_flags": set(),
@@ -263,6 +267,11 @@ def _support_status_for_format(fmt: str, *, device: str, task_label: str = "dete
         return (
             _module_available("onnxruntime"),
             None if _module_available("onnxruntime") else "missing_runtime_dependency",
+        )
+    if fmt == "openvino":
+        return (
+            _module_available("openvino"),
+            None if _module_available("openvino") else "missing_runtime_dependency",
         )
     if fmt == "opencv_dnn":
         return (_module_available("cv2"), None if _module_available("cv2") else "missing_runtime_dependency")
@@ -685,6 +694,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
         "onnx": getattr(args, "onnx_model", None),
         "engine": getattr(args, "engine_model", None),
         "torchscript": getattr(args, "torchscript_model", None),
+        "openvino": getattr(args, "openvino_model", None),
     }
     candidate = override_map.get(fmt) or getattr(args, "model", None)
     if not candidate:
@@ -717,6 +727,12 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
         if override_map.get(fmt):
             return text, None
         if suffix in {".torchscript", ".ts", ".pt", ".pth"}:
+            return text, None
+        return None, "model_artifact_required"
+    if fmt == "openvino":
+        if override_map.get(fmt):
+            return text, None
+        if suffix in {".xml", ".onnx"}:
             return text, None
         return None, "model_artifact_required"
     return None, "unsupported_format"
@@ -997,6 +1013,26 @@ def _prediction_command(args: Any, *, fmt: str, model_artifact: str, output: Pat
             str(int(getattr(args, "imgsz", 640))),
             "--device",
             str(getattr(args, "device", "cpu")),
+        ]
+        if split:
+            cmd.extend(["--split", str(split)])
+        if max_images is not None:
+            cmd.extend(["--max-images", str(int(max_images))])
+        return cmd
+
+    if fmt == "openvino":
+        cmd = base + [
+            _tool_path("export_predictions_openvino.py"),
+            "--dataset",
+            data,
+            "--model",
+            str(model_artifact),
+            "--output",
+            str(output),
+            "--wrap",
+            "--strict",
+            "--imgsz",
+            str(int(getattr(args, "imgsz", 640))),
         ]
         if split:
             cmd.extend(["--split", str(split)])
@@ -3443,6 +3479,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--onnx-model", default=None, help="Optional ONNX backend model override (typically .onnx).")
     parser.add_argument("--engine-model", default=None, help="Optional TensorRT engine override (typically .engine or .plan).")
     parser.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).")
+    parser.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model override (typically .xml).")
     parser.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     parser.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     parser.add_argument(
@@ -3461,7 +3498,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--parity-reference-backend",
-        choices=("auto", "torch", "onnx", "engine", "torchscript"),
+        choices=("auto", "torch", "onnx", "engine", "torchscript", "openvino"),
         default="auto",
         help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
     )

@@ -38,7 +38,7 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Add `openvino` as the next conditional runtime target after the current
+1. Keep `openvino` as a conditional runtime target after the current
    `torchscript` detect lane.
 2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
@@ -81,7 +81,7 @@ Missing or only planned relative to that public surface:
 Improvement priority:
 
 1. Keep the current `torchscript` detect orchestration synced with docs/manifest
-2. Promote `openvino` from planned to conditional implementation
+2. Keep `openvino` in the conditional implementation set
 3. Promote `ncnn` and `rknn` from planned to explicit adapter targets
 4. Keep `implemented`, `conditional`, and `planned` formats aligned with the runtime/license matrix
 
@@ -199,7 +199,7 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Promote `openvino` to conditional support if the runtime path is available
+1. Keep `openvino` conditional support honest when the runtime path is unavailable
 2. Expand parity artifacts for artifact-backed classification and OBB reports
 3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change

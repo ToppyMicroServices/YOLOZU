@@ -1220,6 +1220,10 @@
           "description": "Run a TorchScript detect benchmark using the declared combined-output decode path."
         },
         {
+          "command": "python3 tools/benchmark_model.py --model exports/example.xml --openvino-model exports/example.xml --data data/coco8.yaml --format openvino --latency-source auto --output reports/benchmark_report.json",
+          "description": "Run the conditional OpenVINO detect benchmark lane when OpenVINO runtime and IR artifacts are available."
+        },
+        {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --onnx-model exports/example.onnx --data data/coco8.yaml --format torch,onnx --latency-source auto --output reports/benchmark_report.json",
           "description": "Run real torch+onnx backend orchestration and emit backend parity artifacts."
         },
@@ -1547,6 +1551,12 @@
           "flag": "--torchscript-model",
           "kind": "file",
           "name": "torchscript_model",
+          "required": false
+        },
+        {
+          "flag": "--openvino-model",
+          "kind": "file",
+          "name": "openvino_model",
           "required": false
         },
         {
@@ -7018,6 +7028,176 @@
         "interop",
         "benchmark",
         "parity"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/benchmark_support_matrix.md",
+        "docs/benchmark_mode.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes predictions JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_predictions_openvino.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_predictions_openvino.py --dataset data/smoke --split val --model exports/model.xml --wrap --output reports/pred_openvino.json",
+          "description": "Run OpenVINO detection export with the declared combined-output decode path."
+        },
+        {
+          "command": "python3 tools/export_predictions_openvino.py --dataset data/smoke --split val --dry-run --wrap --output reports/pred_openvino.json",
+          "description": "Dry-run OpenVINO exporter schema wiring without requiring OpenVINO runtime."
+        }
+      ],
+      "id": "export_predictions_openvino",
+      "inputs": [
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--model",
+          "kind": "file",
+          "name": "model",
+          "required": false
+        },
+        {
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--imgsz",
+          "kind": "number",
+          "name": "imgsz",
+          "required": false
+        },
+        {
+          "flag": "--input-size",
+          "kind": "number",
+          "name": "input_size",
+          "required": false
+        },
+        {
+          "flag": "--input-name",
+          "kind": "string",
+          "name": "input_name",
+          "required": false
+        },
+        {
+          "flag": "--combined-output",
+          "kind": "string",
+          "name": "combined_output",
+          "required": false
+        },
+        {
+          "flag": "--combined-format",
+          "kind": "string",
+          "name": "combined_format",
+          "required": false
+        },
+        {
+          "flag": "--boxes-scale",
+          "kind": "string",
+          "name": "boxes_scale",
+          "required": false
+        },
+        {
+          "flag": "--min-score",
+          "kind": "number",
+          "name": "min_score",
+          "required": false
+        },
+        {
+          "flag": "--topk",
+          "kind": "number",
+          "name": "topk",
+          "required": false
+        },
+        {
+          "default": "reports/predictions_openvino.json",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--wrap",
+          "kind": "string",
+          "name": "wrap",
+          "required": false
+        },
+        {
+          "flag": "--strict",
+          "kind": "string",
+          "name": "strict",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/predictions_openvino.json",
+          "description": "Predictions JSON artifact.",
+          "kind": "file",
+          "name": "predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true,
+        "notes": "Requires OpenVINO runtime for non-dry mode."
+      },
+      "requires": {
+        "python_packages": [
+          "openvino",
+          "numpy",
+          "pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path.",
+      "tags": [
+        "predictions",
+        "openvino",
+        "benchmark"
       ]
     },
     {

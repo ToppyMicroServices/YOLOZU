@@ -43,7 +43,7 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         if proc.returncode != 0:
             self.fail(f"benchmark support matrix drifted:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}")
         payload = json.loads(proc.stdout)
-        self.assertEqual(payload["rows"], 42)
+        self.assertEqual(payload["rows"], 49)
         self.assertFalse(payload["drifted"])
 
     def test_metadata_matches_benchmark_runtime_surface(self) -> None:
