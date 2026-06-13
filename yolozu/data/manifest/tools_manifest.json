@@ -8555,6 +8555,102 @@
     },
     {
       "docs": [
+        "docs/benchmark_support_matrix.md",
+        "docs/benchmark_mode.md",
+        "docs/manifest_authoring_workflow.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "Regenerates the canonical benchmark support matrix Markdown.",
+            "kind": "file",
+            "path": "docs/benchmark_support_matrix.md",
+            "scope": "path"
+          }
+        ],
+        "writes": [
+          {
+            "description": "Optional generated benchmark support matrix output path.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/generate_benchmark_support_matrix.py",
+      "examples": [
+        {
+          "command": "python3 tools/generate_benchmark_support_matrix.py --check --json",
+          "description": "Verify the generated benchmark support matrix is in sync with metadata."
+        },
+        {
+          "command": "python3 tools/generate_benchmark_support_matrix.py --metadata yolozu/data/manifest/benchmark_support.json --output docs/benchmark_support_matrix.md",
+          "description": "Regenerate the canonical benchmark support matrix from support metadata."
+        }
+      ],
+      "id": "generate_benchmark_support_matrix",
+      "inputs": [
+        {
+          "default": "yolozu/data/manifest/benchmark_support.json",
+          "flag": "--metadata",
+          "kind": "file",
+          "name": "metadata",
+          "required": false
+        },
+        {
+          "default": "docs/benchmark_support_matrix.md",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--check",
+          "kind": "string",
+          "name": "check",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "default": "docs/benchmark_support_matrix.md",
+          "description": "Generated benchmark support matrix Markdown.",
+          "kind": "file",
+          "name": "benchmark_support_matrix_md"
+        },
+        {
+          "description": "Generation or drift-check status.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Generate the canonical benchmark support matrix from support metadata.",
+      "tags": [
+        "benchmark",
+        "docs",
+        "generated-docs",
+        "manifest"
+      ]
+    },
+    {
+      "docs": [
         "docs/llm_integrations.md",
         "docs/mcp_extension_architecture.md",
         "docs/generated/mcp_actions_tool_reference.md",

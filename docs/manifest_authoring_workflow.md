@@ -41,6 +41,7 @@ Optional but recommended when applicable:
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
 python3 tools/audit_docs_examples_drift.py --json
+python3 tools/generate_benchmark_support_matrix.py --check --json
 ```
 
 4. Sync packaged manifest copy (single source of truth sync):
@@ -52,7 +53,7 @@ python3 tools/sync_tools_manifest.py
 5. Run regression tests:
 
 ```bash
-python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manifest.py tests/test_manifest_docs_references.py
+python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manifest.py tests/test_manifest_docs_references.py tests/test_benchmark_support_matrix_generator.py
 ```
 
 6. Update related docs if command surface changed:
@@ -126,5 +127,6 @@ python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manife
 - [ ] `tools/manifest.json` updated for changed tool behavior
 - [ ] `python3 tools/sync_tools_manifest.py` run (`yolozu/data/manifest/tools_manifest.json` synced)
 - [ ] strict declarative validation passes
+- [ ] generated benchmark support matrix check passes when benchmark support metadata changed
 - [ ] manifest regression tests pass (`test_packaged_tools_manifest`, `test_manifest_docs_references`)
 - [ ] docs links/examples updated
