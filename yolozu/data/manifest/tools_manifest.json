@@ -1648,7 +1648,7 @@
       "outputs": [
         {
           "default": "reports/benchmark_report.json",
-          "description": "Top-level benchmark report including task_requested/task/task_semantics, execution_semantics, and per-format results.",
+          "description": "Top-level benchmark report including task_requested/task/task_semantics, execution_semantics, support_summary, parity_summary, and per-format results.",
           "kind": "file",
           "name": "benchmark_report_json"
         },
