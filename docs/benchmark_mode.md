@@ -371,11 +371,15 @@ The top-level benchmark report records, per format:
 - `task_requested`
 - `task_semantics.metric_family` / `task_semantics.expected_metric_keys`
 - `status`
+- `support_status` (`real`, `artifact-backed`, or `skipped`)
+- `support_reason`
 - `skip_reason` when skipped
 - `latency_source`
+- `runtime.available` / `runtime.reason` / `runtime.latency_source`
 - `execution_semantics.execution_mode`
 - `execution_semantics.artifact_expectation`
 - `execution_semantics.eval_expectation`
+- `artifact_status.predictions` / `artifact_status.eval` / `artifact_status.parity`
 - `parity.reference_backend` / `parity.candidate_backends` or parity summary stats
 - `artifacts.predictions`
 - `artifacts.eval`
@@ -396,6 +400,19 @@ Per-format result statuses are:
 - `failed`
 - `dry_run`
 - `skipped`
+
+For P1 benchmark DoD checks, read `support_status` instead of guessing from
+`status`. It is restricted to:
+
+- `real`: YOLOZU ran a real backend/eval path for that requested format.
+- `artifact-backed`: YOLOZU consumed backend-specific artifacts and ran real
+  eval/parity without claiming it executed backend inference.
+- `skipped`: the path was dry-run-only, unsupported, missing a runtime, missing
+  an artifact, or otherwise did not produce real benchmark evidence.
+
+The top-level `support_summary` records requested formats, reported formats,
+missing formats, per-format support statuses, and counts. CI and release smoke
+checks should fail if a requested format silently disappears from `results`.
 
 Typical skip reasons:
 

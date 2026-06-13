@@ -418,6 +418,74 @@ def _task_execution_semantics(
     }
 
 
+def _support_status_from_result(status: str, execution_semantics: dict[str, Any]) -> str:
+    if status in {"skipped", "failed", "dry_run"}:
+        return "skipped"
+    mode = str(execution_semantics.get("execution_mode") or "")
+    if mode == "real_backend_eval":
+        return "real"
+    if mode == "real_artifact_eval":
+        return "artifact-backed"
+    return "skipped"
+
+
+def _support_reason_from_result(
+    *,
+    support_status: str,
+    status: str,
+    skip_reason: str | None,
+    execution_semantics: dict[str, Any],
+) -> str:
+    if skip_reason:
+        return str(skip_reason)
+    mode = str(execution_semantics.get("execution_mode") or "")
+    if support_status == "skipped":
+        return mode or str(status)
+    return mode
+
+
+def _annotate_result_support(result: dict[str, Any], *, runtime_available: bool, runtime_reason: str | None) -> None:
+    execution_semantics = result.get("execution_semantics") or {}
+    status = str(result.get("status") or "")
+    skip_reason = result.get("skip_reason")
+    support_status = _support_status_from_result(status, execution_semantics)
+    result["support_status"] = support_status
+    result["support_reason"] = _support_reason_from_result(
+        support_status=support_status,
+        status=status,
+        skip_reason=str(skip_reason) if skip_reason else None,
+        execution_semantics=execution_semantics,
+    )
+    result["artifact_status"] = dict(execution_semantics.get("artifact_expectation") or {})
+    runtime = result.get("runtime") if isinstance(result.get("runtime"), dict) else {}
+    runtime.update(
+        {
+            "available": bool(runtime_available),
+            "reason": runtime_reason,
+            "latency_source": result.get("latency_source"),
+            "runtime_lock": (result.get("run_meta") or {}).get("runtime_lock"),
+        }
+    )
+    result["runtime"] = runtime
+
+
+def _support_summary(results: list[dict[str, Any]], requested_formats: list[str]) -> dict[str, Any]:
+    by_format = {str(item.get("format")): str(item.get("support_status")) for item in results}
+    counts = {"real": 0, "artifact-backed": 0, "skipped": 0}
+    for value in by_format.values():
+        if value in counts:
+            counts[value] += 1
+    missing = [fmt for fmt in requested_formats if fmt not in by_format]
+    return {
+        "allowed_statuses": ["real", "artifact-backed", "skipped"],
+        "requested_formats": list(requested_formats),
+        "reported_formats": [str(item.get("format")) for item in results],
+        "missing_formats": missing,
+        "counts": counts,
+        "by_format": by_format,
+    }
+
+
 def _nondefault_flag_values(args: Any) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for name, default in FLAG_DEFAULTS.items():
@@ -1667,6 +1735,8 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             device=str(getattr(args, "device", "cpu")),
             task_label=task_label,
         )
+        runtime_available = bool(supported)
+        runtime_reason = skip_reason
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         execution_semantics = _task_execution_semantics(
             task_label,
@@ -2358,9 +2428,17 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "error": error,
             "run_meta": format_run_meta,
         }
+        _annotate_result_support(result, runtime_available=runtime_available, runtime_reason=runtime_reason)
         results.append(result)
 
     _attach_real_parity(results, args=args)
+    for item in results:
+        runtime = item.get("runtime") if isinstance(item.get("runtime"), dict) else {}
+        _annotate_result_support(
+            item,
+            runtime_available=bool(runtime.get("available", False)),
+            runtime_reason=runtime.get("reason"),
+        )
 
     statuses = {item["status"] for item in results}
     if statuses == {"ok"}:
@@ -2406,6 +2484,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         "status": aggregate_status,
         "requested_format": str(getattr(args, "format", "all") or "all"),
         "benchmark_source": str(getattr(args, "latency_source", "auto") or "auto"),
+        "support_summary": _support_summary(results, list(requested_formats)),
         "results": results,
         "artifacts": {
             "report": str(report_path),

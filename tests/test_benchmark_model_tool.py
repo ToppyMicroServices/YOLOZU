@@ -15,8 +15,10 @@ class TestBenchmarkModelTool(TestCase):
         self.repo_root = Path(__file__).resolve().parents[1]
         self._root_artifacts = [
             self.repo_root / "tmp_benchmark_report.json",
+            self.repo_root / "export_settings_engine.json",
             self.repo_root / "export_settings_onnx.json",
             self.repo_root / "export_settings_opencv_dnn.json",
+            self.repo_root / "export_settings_torch.json",
             self.repo_root / "export_settings_torchscript.json",
         ]
         for path in self._root_artifacts:
@@ -92,6 +94,56 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(report["execution_semantics"]["by_format"]["torchscript"]["execution_mode"], "unsupported_skipped")
         self.assertEqual(report["results"][0]["status"], "skipped")
         self.assertEqual(report["results"][0]["skip_reason"], "benchmark_task_not_wired")
+        self.assertEqual(report["results"][0]["support_status"], "skipped")
+        self.assertEqual(report["support_summary"]["by_format"]["torchscript"], "skipped")
+
+    def test_dod_semantics_keep_requested_unwired_task_formats(self):
+        for task in ("classification", "obb"):
+            with self.subTest(task=task):
+                args = self._args(format="torch,onnx,engine,torchscript", task=task, dry_run=False)
+                with mock.patch.object(
+                    benchmark_mode.subprocess,
+                    "run",
+                    side_effect=AssertionError("unwired benchmark task should not launch backends"),
+                ):
+                    with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                        report, code = benchmark_mode.run_benchmark_mode(args)
+
+                self.assertEqual(code, 0)
+                requested = ["torch", "onnx", "engine", "torchscript"]
+                self.assertEqual(report["format"], requested)
+                self.assertEqual(report["support_summary"]["requested_formats"], requested)
+                self.assertEqual(report["support_summary"]["reported_formats"], requested)
+                self.assertEqual(report["support_summary"]["missing_formats"], [])
+                self.assertEqual(report["support_summary"]["counts"], {"real": 0, "artifact-backed": 0, "skipped": 4})
+                for result in report["results"]:
+                    self.assertEqual(result["status"], "skipped")
+                    self.assertEqual(result["skip_reason"], "benchmark_task_not_wired")
+                    self.assertEqual(result["support_status"], "skipped")
+                    self.assertEqual(result["support_reason"], "benchmark_task_not_wired")
+                    self.assertEqual(result["artifact_status"]["predictions"], "skipped")
+                    self.assertEqual(result["artifact_status"]["eval"], "skipped")
+                    self.assertEqual(result["artifact_status"]["parity"], "skipped")
+                    self.assertIn("available", result["runtime"])
+                    self.assertIn("predictions", result["artifacts"])
+                    self.assertIn("eval", result["artifacts"])
+                    self.assertIn("parity", result["artifacts"])
+
+    def test_dod_semantics_keep_requested_detect_formats_when_runtimes_missing(self):
+        args = self._args(format="torch,onnx,engine,torchscript", task="detect", dry_run=False)
+        with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
+            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                report, code = benchmark_mode.run_benchmark_mode(args)
+
+        self.assertEqual(code, 0)
+        requested = ["torch", "onnx", "engine", "torchscript"]
+        self.assertEqual(report["support_summary"]["reported_formats"], requested)
+        self.assertEqual(report["support_summary"]["missing_formats"], [])
+        self.assertEqual(report["support_summary"]["counts"]["skipped"], 4)
+        for result in report["results"]:
+            self.assertEqual(result["support_status"], "skipped")
+            self.assertTrue(result["support_reason"])
+            self.assertIn("latency_source", result["runtime"])
 
     def test_unwired_task_writes_all_skipped_artifacts_without_launching_backend(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -305,6 +357,9 @@ class TestBenchmarkModelTool(TestCase):
             results = {item["format"]: item for item in payload.get("results") or []}
             self.assertEqual(results["torch"]["status"], "ok")
             self.assertEqual(results["onnx"]["status"], "partial")
+            self.assertEqual(results["torch"]["support_status"], "artifact-backed")
+            self.assertEqual(results["onnx"]["support_status"], "artifact-backed")
+            self.assertEqual(payload["support_summary"]["counts"]["artifact-backed"], 2)
             self.assertEqual(results["torch"]["eval_metrics"]["miou"], 1.0)
             self.assertIn("max_mismatch_rate", results["onnx"]["parity"])
 
@@ -792,6 +847,8 @@ class TestBenchmarkModelTool(TestCase):
             result = report["results"][0]
             self.assertEqual(result["format"], "torch")
             self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["support_status"], "real")
+            self.assertEqual(report["support_summary"]["counts"]["real"], 1)
             self.assertEqual(result["latency_source"], "dataset_pass_wall_time")
             self.assertEqual(result["throughput"]["images"], 2)
             self.assertEqual(result["eval_metrics"]["bbox_mAP50"], 0.42)
@@ -811,6 +868,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["format"], "onnx")
         self.assertEqual(result["status"], "skipped")
         self.assertEqual(result["skip_reason"], "model_artifact_required")
+        self.assertEqual(result["support_status"], "skipped")
+        self.assertEqual(result["support_reason"], "model_artifact_required")
+        self.assertTrue(result["runtime"]["available"])
 
     def test_torchscript_supported_runtime_uses_real_orchestration(self):
         repo_root = Path(__file__).resolve().parents[1]
