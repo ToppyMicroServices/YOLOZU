@@ -181,6 +181,24 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
         self.assertIn("onnxruntime", features, "expected onnxruntime feature in Rust template")
         self.assertEqual(features.get("default"), [], "Rust template default features should stay empty")
 
+    def test_external_inference_docs_pin_production_lane_handoff(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        docs = [
+            repo_root / "docs" / "external_inference.md",
+            repo_root / "examples" / "infer_cpp" / "README.md",
+            repo_root / "examples" / "infer_rust" / "README.md",
+        ]
+
+        for path in docs:
+            with self.subTest(path=path.relative_to(repo_root)):
+                text = path.read_text(encoding="utf-8")
+                self.assertIn("Production lane interface contract", text)
+                self.assertIn("predictions interface contract", text)
+                self.assertIn("Error behavior:", text)
+                self.assertIn("python3 tools/validate_predictions.py /path/to/predictions.json --strict", text)
+                self.assertIn("python3 tools/eval_suite.py --dataset /path/to/coco-yolo", text)
+                self.assertIn("reports/external_parity.json", text)
+
     def test_rust_onnxruntime_mode_declares_decode_contract(self):
         repo_root = Path(__file__).resolve().parents[1]
         src = (repo_root / "examples" / "infer_rust" / "src" / "main.rs").read_text(encoding="utf-8")
