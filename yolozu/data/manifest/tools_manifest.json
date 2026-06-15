@@ -14597,7 +14597,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
+          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, optional bridge runtime_license_boundary metadata, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },

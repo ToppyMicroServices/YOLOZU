@@ -504,6 +504,25 @@ def _yolox_artifact_plan(
     }
 
 
+def _optional_bridge_runtime_boundary(
+    *,
+    bridge_id: str,
+    external_runtime: str,
+    license_note: str,
+) -> dict[str, Any]:
+    return {
+        "format": "yolozu_optional_bridge_runtime_boundary_v1",
+        "bridge_id": str(bridge_id),
+        "bridge_kind": "optional_external_runtime",
+        "stable_core_boundary": "YOLOZU owns dataset resolution, reports, and predictions interface contract artifacts.",
+        "external_runtime": str(external_runtime),
+        "bundled_with_yolozu": False,
+        "default_install_dependency": False,
+        "license_review_required": True,
+        "license_note": str(license_note),
+    }
+
+
 def _run(
     cmd: list[str],
     *,
@@ -2011,6 +2030,11 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         model_name=str(model_name),
         task_family="bbox",
     )
+    runtime_license_boundary = _optional_bridge_runtime_boundary(
+        bridge_id="ultralytics",
+        external_runtime="Ultralytics",
+        license_note="Ultralytics runtime is optional and must be reviewed under its own license terms.",
+    )
     report = build_training_run_summary(
         backend_id="ultralytics",
         report_path=report_path,
@@ -2036,6 +2060,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             "repo_code": "Apache-2.0",
             "optional_bridge": True,
             "note": "Ultralytics runtime is optional and must be reviewed under its own license terms.",
+            "runtime_license_boundary": runtime_license_boundary,
         },
         handoff_contracts=handoff_contracts,
     )
@@ -2054,6 +2079,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
                 "--report reports/ultralytics_predict_normalize_report.json"
             ),
             "run_dir": run_dir,
+            "runtime_license_boundary": runtime_license_boundary,
             "layers": {
                 "trainer_runner": "ultralytics.YOLO.train",
                 "repo_impl": "support_external_training train-ultralytics",
@@ -2251,6 +2277,11 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         model_id=str(model_id),
         task_family="bbox",
     )
+    runtime_license_boundary = _optional_bridge_runtime_boundary(
+        bridge_id="hf-detr",
+        external_runtime="Transformers/Accelerate DETR-family runtime",
+        license_note="HF DETR bridge is optional and deployment teams must review model/runtime dependency licenses separately.",
+    )
     report = build_training_run_summary(
         backend_id="hf-detr",
         report_path=report_path,
@@ -2277,6 +2308,8 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         license_boundary={
             "repo_code": "Apache-2.0",
             "optional_bridge": True,
+            "note": "HF DETR bridge is optional and deployment teams must review model/runtime dependency licenses separately.",
+            "runtime_license_boundary": runtime_license_boundary,
         },
         handoff_contracts=handoff_contracts,
     )
@@ -2288,6 +2321,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "resume_from": str(resume_path) if resume_path else None,
             "train_script": train_script or None,
             "template_train_command": " ".join(command),
+            "runtime_license_boundary": runtime_license_boundary,
             "layers": {
                 "trainer_runner": "transformers/accelerate entry script",
                 "repo_impl": "support_external_training train-hf-detr",
