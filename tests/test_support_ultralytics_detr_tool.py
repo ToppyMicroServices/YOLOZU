@@ -107,6 +107,16 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertTrue(bool(ultra_payload.get("ok")))
             self.assertTrue(bool(ultra_payload.get("dry_run")))
             self.assertIn("template_train_command", ultra_payload)
+            ultra_boundary = ultra_payload.get("runtime_license_boundary") or {}
+            self.assertEqual(ultra_boundary.get("bridge_id"), "ultralytics")
+            self.assertEqual(ultra_boundary.get("bridge_kind"), "optional_external_runtime")
+            self.assertFalse(bool(ultra_boundary.get("bundled_with_yolozu")))
+            self.assertFalse(bool(ultra_boundary.get("default_install_dependency")))
+            self.assertTrue(bool(ultra_boundary.get("license_review_required")))
+            self.assertEqual(
+                ((ultra_payload.get("license_boundary") or {}).get("runtime_license_boundary") or {}).get("bridge_id"),
+                "ultralytics",
+            )
 
             train_yolox_report = root / "train_yolox_report.json"
             proc_yolox = subprocess.run(
@@ -176,6 +186,10 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertTrue(bool(hf_payload.get("ok")))
             self.assertTrue(bool(hf_payload.get("dry_run")))
             self.assertTrue(bool(hf_payload.get("next_steps")))
+            hf_boundary = hf_payload.get("runtime_license_boundary") or {}
+            self.assertEqual(hf_boundary.get("bridge_id"), "hf-detr")
+            self.assertFalse(bool(hf_boundary.get("bundled_with_yolozu")))
+            self.assertTrue(bool(hf_boundary.get("license_review_required")))
 
             export_report = root / "export_onnx_report.json"
             out_onnx = root / "model.onnx"

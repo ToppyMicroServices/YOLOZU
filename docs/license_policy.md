@@ -34,6 +34,10 @@ In practice this means:
 - `python3 -m yolozu train --external-backend hf-detr ...` is available only as an optional bridge
 - the repository must not vendor Ultralytics or other copyleft implementation code
 
+Optional bridge reports include `runtime_license_boundary` metadata. That field records the
+external runtime name, that the runtime is not bundled with YOLOZU, that it is not a default
+install dependency, and that runtime/model license review remains required before deployment.
+
 ## Company release policy (naming + provenance)
 
 - Use consistent product/repo naming in release artifacts: `YOLOZU` (`ToppyMicroServices/YOLOZU`).

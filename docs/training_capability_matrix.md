@@ -37,7 +37,7 @@ It complements:
 - Use `mmseg` for semantic segmentation training when the backend-native pipeline already lives in MMSeg; the recommended export handoff is class-id mask packaging into the segmentation predictions interface contract.
 - Use `tao` when an NVIDIA TAO stack already owns the trainer/runtime environment and you want YOLOZU to normalize resume/export/eval/parity handoff around that external lane.
 - Use `reference-rtdetr-pose` when the task extends into depth or pose6d training.
-- Treat `ultralytics` and `hf-detr` as environment-qualified bridges.
+- Treat `ultralytics` and `hf-detr` as environment-qualified optional bridges. Their dry-run reports include `runtime_license_boundary` so the runtime/license boundary is preserved without implying the third-party runtime is bundled or installed by default.
 - OpenCV DNN and ONNX Runtime are not training backends in YOLOZU. They stay in export / inference / parity lanes.
 
 ## Machine-readable source

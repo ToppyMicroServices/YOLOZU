@@ -133,4 +133,6 @@ python3 -m yolozu train \
 ```
 
 These optional bridges keep the runtime/license boundary explicit while reusing the
-same dataset resolution and machine-readable reporting surface.
+same dataset resolution and machine-readable reporting surface. Their dry-run reports include
+`runtime_license_boundary` with `bundled_with_yolozu=false`, `default_install_dependency=false`,
+and `license_review_required=true`.
