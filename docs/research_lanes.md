@@ -47,7 +47,7 @@ Every research result should say:
 - rollback or reset behavior for adaptive methods
 - schema and validation status for any new artifact
 
-Machine-readable reports should carry a `research_report` object shaped by
+Research-lane machine-readable reports should carry a `research_report` object shaped by
 [`schemas/research_lane_report.schema.json`](schemas/research_lane_report.schema.json):
 
 - `stable_baseline_artifact`
@@ -57,6 +57,18 @@ Machine-readable reports should carry a `research_report` object shaped by
 - `promotion_gate`
 
 If the report cannot provide those fields, keep the result in a local experiment log rather than presenting it as a stable YOLOZU result.
+
+## DoD Gate
+
+The research lane DoD is intentionally separate from the stable evaluation DoD:
+
+- stable evaluation reports remain unchanged and do not embed `research_report`
+- only research-lane artifacts carry `research_report`
+- research workflows start from an evaluated input artifact
+- research workflows write a separate research output artifact or research report
+- TTT / continual / Hessian workflows are opt-in and not production defaults
+- Hessian examples stay framed as offline analysis or controlled studies
+- promotion gates decide whether a research result is promoted, reviewed, or held
 
 ## Related Entrypoints
 

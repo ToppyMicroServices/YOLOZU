@@ -106,6 +106,33 @@ class TestResearchLaneDocs(unittest.TestCase):
         self.assertIn("Stable baseline artifact is named and remains unchanged", template)
         self.assertIn("research_note_template.md", (self.repo_root / "docs" / "README.md").read_text(encoding="utf-8"))
 
+    def test_research_lane_dod_keeps_stable_reports_separate(self):
+        research_doc = self.research_doc.read_text(encoding="utf-8")
+        for phrase in (
+            "stable evaluation reports remain unchanged",
+            "evaluated input artifact",
+            "separate research output artifact",
+            "offline analysis or controlled studies",
+        ):
+            self.assertIn(phrase, research_doc)
+
+        stable_schema_files = (
+            "docs/schemas/coco_eval_report.schema.json",
+            "docs/schemas/eval_suite_report.schema.json",
+            "docs/schemas/metrics_report.schema.json",
+            "docs/schemas/instance_seg_eval_report.schema.json",
+            "docs/schemas/seg_eval_report.schema.json",
+        )
+        hits = []
+        for rel in stable_schema_files:
+            schema = json.loads((self.repo_root / rel).read_text(encoding="utf-8"))
+            properties = schema.get("properties") or {}
+            required = set(schema.get("required") or [])
+            if "research_report" in properties or "research_report" in required:
+                hits.append(rel)
+
+        self.assertEqual(hits, [], "stable evaluation report schemas should not embed research_report")
+
 
 if __name__ == "__main__":
     unittest.main()
