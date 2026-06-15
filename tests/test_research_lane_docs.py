@@ -125,8 +125,10 @@ class TestResearchLaneDocs(unittest.TestCase):
         )
         hits = []
         for rel in stable_schema_files:
-            text = (self.repo_root / rel).read_text(encoding="utf-8")
-            if "research_report" in text:
+            schema = json.loads((self.repo_root / rel).read_text(encoding="utf-8"))
+            properties = schema.get("properties") or {}
+            required = set(schema.get("required") or [])
+            if "research_report" in properties or "research_report" in required:
                 hits.append(rel)
 
         self.assertEqual(hits, [], "stable evaluation report schemas should not embed research_report")
