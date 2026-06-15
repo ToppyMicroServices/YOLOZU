@@ -146,7 +146,7 @@ AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools
 
 工具列表与参数示例：[`docs/tools_index.md`](docs/tools_index.md)
 
-学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/learning_features.md`](docs/learning_features.md)
+Research lane / 学习 / 持续学习 / TTT / distillation / long-tail 配方：[`docs/research_lanes.md`](docs/research_lanes.md)
 
 Prediction distillation 指南（面向初学者的逐步说明 + sample YAML）：[`docs/distillation.md`](docs/distillation.md)
 

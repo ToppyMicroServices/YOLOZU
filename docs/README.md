@@ -33,14 +33,14 @@ yolozu doctor --proof
 
 - Stable lane: evaluate precomputed predictions and keep the predictions interface contract stable
 - Bridge lane: train/export flows that emit the same predictions interface contract
-- Benchmark/Research lanes: backend parity, SynthGen handoff, continual learning, TTT, and Hessian refinement
+- Benchmark/Research lanes: backend parity, SynthGen handoff, and opt-in research lanes over already evaluated artifacts
 
 ## Primary Focus
 
 - Stable lane: evaluate precomputed predictions fairly across frameworks and runtimes
 - Bridge lane: export and external training flows that emit the same predictions interface contract
 - Benchmark lane: qualify backend parity after the stable evaluation path is working
-- Research lane: continual learning, TTT, SynthGen, and Hessian workflows as opt-in extensions
+- Research lane: opt-in workflows over already evaluated artifacts
 
 ## Capability Maturity
 
@@ -62,7 +62,7 @@ yolozu doctor --proof
 - If you need an external training lane: use `yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-optional-bridges-second)
 - If you need the current training scope boundary first: read [Current training support](training_inference_export.md#current-training-support)
 - If you need the platform view of training: read [Training backend interface](training_backend_interface.md), [Training capability matrix](training_capability_matrix.md), and [Training orchestration](training_orchestration.md)
-- If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Continual learning](continual_learning.md), or [SynthGen handoff](synthgen_repo_integration.md)
+- If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Research lanes](research_lanes.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke
 
@@ -98,6 +98,7 @@ Supporting docs:
 - Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
 - Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
 - Production readiness: [`production_readiness.md`](production_readiness.md)
+- Research lanes: [`research_lanes.md`](research_lanes.md)
 - Learning features overview: [`learning_features.md`](learning_features.md)
 
 ---

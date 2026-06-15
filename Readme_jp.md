@@ -57,7 +57,7 @@ flowchart LR
 - Stable lane: 既存 predictions を framework / runtime をまたいで公平に評価すること
 - Bridge lane: 同じ predictions interface contract を出す export / external training flow
 - Benchmark lane: stable evaluation path が動いた後に backend parity を検証すること
-- Research lane: continual learning、TTT、SynthGen、Hessian workflow は opt-in extension
+- Research lane: 評価済み artifact に対する opt-in workflow
 
 ## Capability Maturity
 
@@ -103,7 +103,7 @@ flowchart LR
 - training、export、benchmark、SynthGen、research workflow は、この evaluation boundary に接続する secondary lane です。
 - External training bridge: YOLOX first、optional Ultralytics / HF DETR bridges second
 - SynthGen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
-- Research workflow: [`docs/learning_features.md`](docs/learning_features.md)
+- Research workflow: [`docs/research_lanes.md`](docs/research_lanes.md)
 - 実画像 showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
 
 ## repo checkout で使う場合
