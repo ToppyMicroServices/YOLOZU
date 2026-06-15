@@ -136,6 +136,21 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertEqual(str(yolox_payload.get("task")), "train_yolox")
             self.assertIn("template_train_command", yolox_payload)
             self.assertTrue(bool(yolox_payload.get("next_steps")))
+            artifact_plan = yolox_payload.get("artifact_plan") or {}
+            self.assertEqual(artifact_plan.get("lane"), "yolox")
+            self.assertEqual(
+                artifact_plan.get("runtime_license_boundary", {}).get("external_runtime_license"),
+                "Apache-2.0-friendly",
+            )
+            expected_outputs = artifact_plan.get("expected_outputs") or {}
+            self.assertTrue(str(expected_outputs.get("predictions_json", "")).endswith("yolox_predictions.json"))
+            self.assertTrue(str(expected_outputs.get("eval_report", "")).endswith("yolox_eval.json"))
+            self.assertTrue(str(expected_outputs.get("parity_report", "")).endswith("yolox_parity.json"))
+            next_commands = artifact_plan.get("next_commands") or {}
+            self.assertIn("tools/export_predictions_yolox.py", next_commands.get("export", ""))
+            self.assertIn("yolox_predictions.json", next_commands.get("eval", ""))
+            self.assertIn("yolox_predictions.json", next_commands.get("parity", ""))
+            self.assertIn("expected_outputs", artifact_plan.get("dry_run_validates") or [])
 
             train_hf_report = root / "train_hf_report.json"
             proc_hf = subprocess.run(
