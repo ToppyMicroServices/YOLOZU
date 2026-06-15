@@ -188,10 +188,176 @@ A predictions artifact typically manifests as a JSON array containing per-image 
   \item \textbf{Traceability}: Metadata (such as run ID, Git SHA, and environment details) is embedded alongside the results.
 \end{itemize}
 
+\subsection{Minimal task examples}
+Use these examples as shape checks, not as good predictions. They show the smallest artifact that a downstream evaluator can understand, plus the fields that actually affect scoring.
+
+\paragraph{Detection}
+\begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
+{
+  "predictions": [
+    {
+      "schema_version": 2,
+      "image": "images/val/img_0001.jpg",
+      "image_w": 640,
+      "image_h": 480,
+      "detections": [
+        {
+          "class_id": 0,
+          "score": 0.91,
+          "bbox": {"cx": 0.50, "cy": 0.48, "w": 0.20, "h": 0.16}
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "task": "detect",
+    "export_settings": {"bbox_format": "cxcywh_norm"}
+  }
+}
+\end{lstlisting}
+
+\begin{itemize}
+  \item Required: \cmd{predictions}, per-entry \cmd{image}, and each detection's \cmd{score} plus \cmd{bbox}.
+  \item Usually required for evaluation: \cmd{class_id}, \cmd{image_w}, and \cmd{image_h}.
+  \item Protocol metadata should pin \cmd{meta.export_settings}.
+  \item Scoring uses: class ID, score order, box coordinates, dataset labels, and the chosen evaluation protocol.
+\end{itemize}
+
+\paragraph{Instance segmentation}
+\begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
+{
+  "schema_version": 1,
+  "predictions": [
+    {
+      "image": "images/val/img_0001.jpg",
+      "instances": [
+        {
+          "class_id": 0,
+          "score": 0.88,
+          "mask": "pred_masks/img_0001_inst0.png"
+        }
+      ]
+    }
+  ],
+  "meta": {"task": "instance_segmentation"}
+}
+\end{lstlisting}
+
+\begin{itemize}
+  \item Required: per-entry \cmd{image}, \cmd{instances}, and each instance's \cmd{class_id} plus \cmd{mask}.
+  \item Optional but normally useful: \cmd{score}; without it, ranking-sensitive AP summaries are less informative.
+  \item Scoring uses: mask pixels, class ID, score order, GT masks, and the mask loading policy.
+\end{itemize}
+
+\paragraph{Keypoints}
+\begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
+{
+  "predictions": [
+    {
+      "schema_version": 2,
+      "image": "images/val/person_0001.jpg",
+      "image_w": 640,
+      "image_h": 480,
+      "detections": [
+        {
+          "class_id": 0,
+          "score": 0.93,
+          "bbox": {"cx": 0.52, "cy": 0.50, "w": 0.28, "h": 0.62},
+          "keypoints": [
+            {"x": 0.50, "y": 0.22, "v": 2},
+            {"x": 0.54, "y": 0.24, "v": 2}
+          ]
+        }
+      ]
+    }
+  ],
+  "meta": {"task": "keypoints", "keypoints_format": "xy_norm"}
+}
+\end{lstlisting}
+
+\begin{itemize}
+  \item Required by the base predictions interface contract: the same detection fields as detection.
+  \item Required for keypoint scoring: \cmd{keypoints}; visibility \cmd{v} is optional but recommended when the dataset uses visible/labeled states.
+  \item Scoring uses: detection matching by IoU, keypoint coordinates, visibility, bbox-normalized PCK, and optional OKS settings.
+\end{itemize}
+
+\paragraph{Depth artifact}
+Depth evaluation compares a predicted depth map with a GT depth map. In the benchmark lane, depth is therefore represented as an artifact-backed depth record rather than as a list of boxes:
+
+\begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
+{
+  "schema_version": 1,
+  "kind": "benchmark_depth_predictions_artifact",
+  "format": "onnx",
+  "status": "reference_artifact",
+  "source_path": "reports/depth/pred_depth.npy",
+  "shape": [480, 640],
+  "dtype": "float32",
+  "sha256": "..."
+}
+\end{lstlisting}
+
+\begin{itemize}
+  \item Required: \cmd{source_path}; benchmark reports also record \cmd{shape}, \cmd{dtype}, and \cmd{sha256} for reproducibility.
+  \item Optional but useful: \cmd{min}, \cmd{max}, and \cmd{run_meta}.
+  \item Depth reports should also record the alignment mode used by \cmd{eval_depth.py}.
+  \item Scoring uses: predicted depth pixels, GT depth pixels, optional valid-pixel mask, scale factors, and alignment policy.
+\end{itemize}
+
+\paragraph{6DoF pose}
+\begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
+{
+  "predictions": [
+    {
+      "schema_version": 2,
+      "image": "images/val/pose_0001.jpg",
+      "image_w": 640,
+      "image_h": 480,
+      "detections": [
+        {
+          "class_id": 2,
+          "score": 0.86,
+          "bbox": {"cx": 0.46, "cy": 0.55, "w": 0.18, "h": 0.22},
+          "rot6d": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+          "log_z": 0.18,
+          "offsets": [0.01, -0.02]
+        }
+      ]
+    }
+  ],
+  "meta": {"task": "pose6d", "depth_unit": "metric"}
+}
+\end{lstlisting}
+
+\begin{itemize}
+  \item Required by the base predictions interface contract: the same detection fields as detection.
+  \item Required for pose scoring: \cmd{rot6d} plus either recoverable depth fields such as \cmd{log_z} and \cmd{offsets}, or an explicit translation field when the producing backend writes one.
+  \item Scoring uses: detection matching by IoU, rotation error, translation/depth error, optional CAD-point ADD/ADDS, and success thresholds.
+\end{itemize}
+
 To rigorously validate a predictions artifact:
 \begin{lstlisting}[language=bash]
 python3 tools/validate_predictions.py /path/to/predictions.json --strict
 \end{lstlisting}
+
+\subsection{Metric glossary}
+\begin{description}
+  \item[\cmd{mAP}] Mean Average Precision. It summarizes precision-recall quality after sorting predictions by score.
+  \item[\cmd{mAP50}] AP at IoU 0.50. Useful for quick detection sanity checks, but less strict than multi-threshold AP.
+  \item[\cmd{mAP50-95}] COCO-style AP averaged across IoU thresholds from 0.50 to 0.95. This is stricter about box or mask localization.
+  \item[\cmd{IoU}] Intersection over Union. The overlap between predicted and GT boxes or masks divided by their union.
+  \item[\cmd{NMS}] Non-Maximum Suppression. A postprocess that removes overlapping detections. Protocols must say whether NMS already happened before evaluation.
+  \item[\cmd{OKS}] Object Keypoint Similarity. COCO's keypoint match score; it scales keypoint error by object size and keypoint-specific sigmas.
+  \item[\cmd{PCK}] Percentage of Correct Keypoints. YOLOZU's lightweight keypoint score uses a distance threshold normalized by object size.
+  \item[\cmd{ADD}] Average Distance of Model Points. A 6DoF pose metric using fixed point correspondences.
+  \item[\cmd{ADDS}] Symmetry-aware ADD variant that matches each transformed point to the nearest GT point.
+  \item[\cmd{abs_rel}] Mean absolute relative depth error: \cmd{|pred - gt| / gt}.
+  \item[\cmd{RMSE}] Root mean squared depth error. It penalizes large depth mistakes more strongly than mean absolute error.
+  \item[\cmd{delta1}] Depth threshold accuracy: the fraction of pixels where predicted and GT depth are within a fixed ratio threshold.
+  \item[\cmd{calibration}] Whether confidence scores behave like probabilities. A calibrated score of 0.8 should be correct about 80 percent of the time on similar data.
+  \item[\cmd{parity}] A backend agreement check. It asks whether two runtimes or formats produce equivalent artifacts under pinned tolerances.
+  \item[\cmd{protocol pinning}] Recording dataset split, preprocessing, thresholds, NMS state, metric family, and tool version so future comparisons remain fair.
+\end{description}
 
 \section{Adapters (Bring-Your-Own Inference)}
 An adapter functions as a thin interface layer bridging a specific inference implementation and \yolozu{}'s standardized interface contracts. If your system can generate a compliant \path{predictions.json}, it can be evaluated.
