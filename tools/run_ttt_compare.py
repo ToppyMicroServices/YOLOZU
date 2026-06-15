@@ -196,6 +196,8 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
     warnings: list[str] = []
     steps_run = 0
     guard_breaches = 0
+    rollback_steps = 0
+    stopped_early_count = 0
     for part in parts:
         part_losses = part.get("losses")
         if isinstance(part_losses, list):
@@ -208,6 +210,11 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
             warning_text = [str(x) for x in warnings_list]
             warnings.extend(warning_text)
             guard_breaches += sum(1 for x in warning_text if ("exceeded" in x or "non_finite" in x))
+        step_metrics = part.get("step_metrics")
+        if isinstance(step_metrics, list):
+            rollback_steps += sum(1 for step in step_metrics if isinstance(step, dict) and bool(step.get("rolled_back")))
+        if bool(part.get("stopped_early")):
+            stopped_early_count += 1
         steps_run += int(part.get("steps_run") or 0)
         seconds.append(_safe_float(part.get("seconds"), 0.0))
     return {
@@ -221,6 +228,8 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
         "mean_final_loss": float(sum(final_losses) / len(final_losses)) if final_losses else None,
         "mean_seconds": float(sum(seconds) / len(seconds)) if seconds else None,
         "guard_breaches": int(guard_breaches),
+        "rollback_steps": int(rollback_steps),
+        "stopped_early_count": int(stopped_early_count),
         "warnings": warnings,
     }
 
@@ -643,6 +652,35 @@ def main(argv: list[str] | None = None) -> int:
         report["protocol"] = str(args.protocol)
     report["baseline_eval"] = baseline_eval_metrics
     report["adapted_eval"] = adapted_eval_metrics
+    baseline_summary = report["baseline"]["ttt_summary"]
+    adapted_summary = report["adapted"]["ttt_summary"]
+    baseline_seconds = baseline_summary.get("mean_seconds")
+    adapted_seconds = adapted_summary.get("mean_seconds")
+    latency_delta = None
+    if baseline_seconds is not None and adapted_seconds is not None:
+        latency_delta = float(adapted_seconds) - float(baseline_seconds)
+    report["research_report"] = {
+        "kind": "research_lane_report",
+        "lane": "ttt",
+        "stable_baseline_artifact": _short(baseline_predictions),
+        "research_output_artifact": _short(adapted_predictions),
+        "report_artifact": _short(compare_json),
+        "latency_overhead": {
+            "baseline_mean_seconds": baseline_seconds,
+            "adapted_mean_seconds": adapted_seconds,
+            "delta_mean_seconds": latency_delta,
+        },
+        "rollback": {
+            "reset_policy": reset,
+            "rollback_steps": int(adapted_summary.get("rollback_steps") or 0),
+            "stopped_early_count": int(adapted_summary.get("stopped_early_count") or 0),
+            "guard_breaches": int(adapted_summary.get("guard_breaches") or 0),
+        },
+        "promotion_gate": {
+            "decision": "review_required",
+            "reason": "TTT compare outputs are research-lane evidence and do not promote checkpoints automatically.",
+        },
+    }
     if eval_results:
         report["eval_commands"] = {
             key: " ".join(shlex.quote(x) for x in value.get("command") or []) for key, value in eval_results.items()

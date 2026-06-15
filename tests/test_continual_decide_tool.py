@@ -102,6 +102,10 @@ class TestContinualDecideTool(unittest.TestCase):
             payload = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(payload.get("decision"), "promote")
             self.assertEqual(payload.get("recommended_next"), "promote_candidate_checkpoint")
+            report = payload.get("research_report") or {}
+            self.assertEqual(report.get("kind"), "research_lane_report")
+            self.assertEqual(report.get("lane"), "continual")
+            self.assertEqual((report.get("promotion_gate") or {}).get("decision"), "promote")
 
     def test_hold_when_forgetting_exceeds_threshold(self) -> None:
         eval_payload = {
@@ -178,6 +182,9 @@ class TestContinualDecideTool(unittest.TestCase):
                 payload.get("recommended_next"),
                 "review_ttt_scope_separately_before_checkpoint_promotion",
             )
+            report = payload.get("research_report") or {}
+            self.assertEqual((report.get("rollback") or {}).get("status"), "review_required")
+            self.assertEqual((report.get("promotion_gate") or {}).get("decision"), "review")
 
 
 if __name__ == "__main__":

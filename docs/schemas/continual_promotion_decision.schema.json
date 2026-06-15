@@ -12,7 +12,8 @@
     "hard_gates",
     "soft_gates",
     "decision",
-    "recommended_next"
+    "recommended_next",
+    "research_report"
   ],
   "properties": {
     "schema_version": {
@@ -51,6 +52,9 @@
     },
     "recommended_next": {
       "type": "string"
+    },
+    "research_report": {
+      "$ref": "research_lane_report.schema.json"
     },
     "run_record": {
       "type": "object"

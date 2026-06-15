@@ -801,6 +801,25 @@ def main(argv: list[str] | None = None) -> int:
             "predictions": str(in_path),
             "output": str(out_path),
             "enabled": bool(args.enabled),
+            "research_report": {
+                "kind": "research_lane_report",
+                "lane": "hessian",
+                "stable_baseline_artifact": str(in_path),
+                "research_output_artifact": str(out_path),
+                "report_artifact": str(log_path),
+                "latency_overhead": {
+                    "source": "not_measured_by_refine_predictions_hessian",
+                    "value": None,
+                },
+                "rollback": {
+                    "status": "not_applicable",
+                    "reason": "Hessian refinement writes a separate output artifact and does not mutate the input predictions.",
+                },
+                "promotion_gate": {
+                    "decision": "review_required",
+                    "reason": "Refined predictions are research-lane evidence and must be evaluated separately before promotion.",
+                },
+            },
             "config": {
                 "config_path": args.config_path,
                 "dataset": args.dataset,

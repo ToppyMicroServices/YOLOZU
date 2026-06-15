@@ -89,6 +89,10 @@ class TestRefinePredictionsHessianCLI(unittest.TestCase):
 
             log_payload = json.loads(log_path.read_text())
             self.assertIn("images", log_payload)
+            report = log_payload.get("research_report") or {}
+            self.assertEqual(report.get("kind"), "research_lane_report")
+            self.assertEqual(report.get("lane"), "hessian")
+            self.assertEqual((report.get("promotion_gate") or {}).get("decision"), "review_required")
 
 
 if __name__ == "__main__":
