@@ -81,6 +81,31 @@ class TestResearchLaneDocs(unittest.TestCase):
         self.assertIn("schemas/research_lane_report.schema.json", research_doc)
         self.assertIn("stable_baseline_artifact", research_doc)
 
+    def test_research_note_template_captures_paper_report_fields(self):
+        template_path = self.repo_root / "docs" / "research_note_template.md"
+        schema_path = self.repo_root / "docs" / "schemas" / "research_note.schema.json"
+        template = template_path.read_text(encoding="utf-8")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        required = set(schema.get("required") or [])
+
+        for field in (
+            "stable_baseline_artifact",
+            "research_output_artifact",
+            "research_report_artifact",
+            "metrics",
+            "latency_overhead",
+            "rollback",
+            "promotion_gate",
+            "environment",
+            "limitations",
+        ):
+            self.assertIn(field, required)
+            self.assertIn(field, template)
+
+        self.assertIn("Keep stable and research metrics in separate columns", template)
+        self.assertIn("Stable baseline artifact is named and remains unchanged", template)
+        self.assertIn("research_note_template.md", (self.repo_root / "docs" / "README.md").read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
