@@ -119,6 +119,7 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             )
 
             train_yolox_report = root / "train_yolox_report.json"
+            train_yolox_work_dir = root / "train_yolox_work"
             proc_yolox = subprocess.run(
                 [
                     sys.executable,
@@ -129,6 +130,8 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
                     "-P",
                     "smoke",
                     "-n",
+                    "-W",
+                    str(train_yolox_work_dir),
                     "-o",
                     str(train_yolox_report),
                 ],
@@ -161,6 +164,20 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertIn("yolox_predictions.json", next_commands.get("eval", ""))
             self.assertIn("yolox_predictions.json", next_commands.get("parity", ""))
             self.assertIn("expected_outputs", artifact_plan.get("dry_run_validates") or [])
+            next_steps_by_stage = {
+                str(item.get("stage")): item for item in yolox_payload.get("next_steps") or [] if isinstance(item, dict)
+            }
+            for stage in ("resume", "export", "eval", "parity"):
+                self.assertIn(stage, next_steps_by_stage)
+                self.assertTrue(next_steps_by_stage[stage].get("command"))
+                self.assertIsInstance(next_steps_by_stage[stage].get("input_contract"), dict)
+                self.assertIsInstance(next_steps_by_stage[stage].get("output_contract"), dict)
+            handoff_schema = json.loads((repo_root / "docs" / "schemas" / "training_handoff.schema.json").read_text(encoding="utf-8"))
+            required_handoff_keys = set(handoff_schema["required"])
+            for filename in ("resume_handoff.json", "export_handoff.json", "eval_handoff.json", "parity_handoff.json"):
+                handoff_payload = json.loads((train_yolox_work_dir / "reports" / filename).read_text(encoding="utf-8"))
+                self.assertTrue(required_handoff_keys.issubset(handoff_payload.keys()), filename)
+                self.assertEqual(handoff_payload.get("format"), "yolozu_training_handoff_v1")
 
             train_hf_report = root / "train_hf_report.json"
             proc_hf = subprocess.run(

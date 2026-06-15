@@ -14428,6 +14428,8 @@
         "docs/README.md",
         "docs/interop_yolox.md",
         "docs/license_policy.md",
+        "docs/schemas/training_handoff.schema.json",
+        "docs/schemas/training_run_summary.schema.json",
         "docs/tools_index.md",
         "docs/training_inference_export.md",
         "manual/chapters/04_cli_reference.tex",
