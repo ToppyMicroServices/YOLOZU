@@ -2,7 +2,9 @@
 
 This repo supports **continual fine-tuning** on multiple datasets/tasks while mitigating catastrophic forgetting.
 This is a research-oriented lane in YOLOZU: use it with explicit evaluation and promotion gates, not as the default production lane.
-See [`production_readiness.md`](production_readiness.md).
+See [`research_lanes.md`](research_lanes.md) and [`production_readiness.md`](production_readiness.md).
+
+Continual learning is **opt-in**. It is not enabled by YOLOZU's default validation, evaluation, demo, or export commands, and a candidate checkpoint should not be promoted without `continual_eval.json` plus an explicit promotion decision report.
 
 The baseline strategy is:
 

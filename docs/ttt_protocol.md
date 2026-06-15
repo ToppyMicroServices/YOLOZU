@@ -5,7 +5,10 @@ This repo supports **test-time training (TTT)** for the `rtdetr_pose` adapter vi
 
 TTT updates model weights **in-memory** using unlabeled test data before (or per-sample during) inference.
 
+TTT is an **opt-in research lane**, not a stable production default. It starts from a baseline evaluated artifact and writes separate adapted predictions, logs, and before/after reports.
+
 TTT is **OFF by default** and only enabled when you pass `--ttt` (opt-in).
+Default validation, evaluation, demo, and export commands do not enable TTT implicitly.
 
 ## When COCO is a good choice
 

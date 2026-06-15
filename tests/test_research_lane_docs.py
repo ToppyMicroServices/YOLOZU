@@ -28,6 +28,38 @@ class TestResearchLaneDocs(unittest.TestCase):
             text = (self.repo_root / rel).read_text(encoding="utf-8")
             self.assertIn("research_lanes.md", text, rel)
 
+    def test_research_workflow_docs_mark_methods_as_opt_in(self):
+        expected = {
+            "docs/ttt_protocol.md": ("opt-in research lane", "OFF by default", "Default validation"),
+            "docs/continual_learning.md": ("research-oriented lane", "opt-in", "promotion decision report"),
+            "docs/hessian_solver.md": ("opt-in research lane", "offline analysis or controlled studies", "--enable"),
+            "docs/learning_features.md": ("opt-in research workflows", "default export/eval commands do not enable `--ttt`", "default evaluation does not run Hessian refinement"),
+            "docs/tools_index.md": ("Research-only opt-in TTT extensions", "stable export/eval defaults do not enable these flags"),
+        }
+
+        for rel, phrases in expected.items():
+            text = (self.repo_root / rel).read_text(encoding="utf-8")
+            for phrase in phrases:
+                self.assertIn(phrase, text, rel)
+
+    def test_stable_entry_examples_do_not_enable_research_flags(self):
+        protected_docs = ("README.md", "Readme_jp.md", "docs/README.md", "docs/cpu_only_dod.md")
+        forbidden = (
+            "--ttt",
+            "refine_predictions_hessian.py",
+            "train_continual.py",
+            "yolozu demo continual",
+        )
+
+        hits = []
+        for rel in protected_docs:
+            text = (self.repo_root / rel).read_text(encoding="utf-8")
+            for token in forbidden:
+                if token in text:
+                    hits.append(f"{rel}: {token}")
+
+        self.assertEqual(hits, [], "stable entry examples should not enable research workflows")
+
 
 if __name__ == "__main__":
     unittest.main()

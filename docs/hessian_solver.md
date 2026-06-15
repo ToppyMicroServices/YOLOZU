@@ -4,11 +4,14 @@
 
 YOLOZU provides Hessian-based refinement as an **engine-external post-processing step** over `predictions.json`.
 
+This is an **opt-in research lane** for offline analysis or controlled studies, not a real-time production default. Start from an already evaluated artifact, enable refinement explicitly, then evaluate the refined artifact separately.
+
 - Input: `predictions.json`
 - Output: refined `predictions.json`
 - Scope today: `tools/refine_predictions_hessian.py` currently refines **offsets** (safe/experimental path)
 
 This is intentionally separated from model training and from TensorRT graph conversion.
+Default validation, evaluation, demo, and export commands do not run Hessian refinement implicitly.
 
 ## Motivation
 
