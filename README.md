@@ -57,7 +57,7 @@ flowchart LR
 - Stable lane: evaluate precomputed predictions fairly across frameworks and runtimes
 - Bridge lane: export or external training flows that emit the same predictions interface contract
 - Benchmark lane: qualify backend parity after the stable evaluation path is working
-- Research lane: continual learning, TTT, SynthGen, and Hessian workflows as opt-in extensions
+- Research lane: opt-in workflows over already evaluated artifacts
 
 ## Capability Maturity
 
@@ -103,7 +103,7 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 - Training, export, benchmark, SynthGen, and research workflows feed or extend the evaluation boundary.
 - External training bridge: YOLOX first, optional Ultralytics and HF DETR bridges second
 - SynthGen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)
-- Research workflows: [`docs/learning_features.md`](docs/learning_features.md)
+- Research workflows: [`docs/research_lanes.md`](docs/research_lanes.md)
 - Real-image showcase: [`docs/assets/readme_multitask_showcase.png`](docs/assets/readme_multitask_showcase.png)
 
 ## Repo Users
