@@ -1,7 +1,7 @@
 # Learning features
 
 This page collects training and adaptation workflows that are intentionally *optional* in YOLOZU.
-The README stays focused on evaluation entrypoints; use this doc when you want continual learning / test-time adaptation / distillation workflows.
+The README stays focused on evaluation entrypoints; use this doc when you want opt-in research workflows such as continual learning, test-time adaptation, distillation, or Hessian refinement after the stable evaluation path has produced an artifact.
 
 ## 1) Run interface contract training (Run Contract: reproducible artifacts)
 
@@ -26,6 +26,7 @@ Details: [`docs/run_contract.md`](run_contract.md), [`docs/training_inference_ex
 ## 2) Continual learning (anti-forgetting across task/domain sequences)
 
 Value: Fine-tune across a task/domain sequence while measuring and mitigating catastrophic forgetting via (a) memoryless self-distillation, (b) optional replay buffer, and (c) optional parameter-efficient updates (LoRA) + regularizers (EWC/SI/DER++).
+This is an opt-in research workflow and should be promoted only through explicit evaluation and decision reports.
 
 If you are new to LoRA / QLoRA, start with the plain-language diagrams in [`docs/continual_learning.md`](continual_learning.md) before reading the full config tables.
 
@@ -51,6 +52,7 @@ Details: [`docs/continual_learning.md`](continual_learning.md).
 ## 3) Test-time training (TTT) under domain shift (Tent / MIM / CoTTA / EATA / SAR)
 
 Value: Reproducible test-time adaptation with bounded cost caps, reset policies (`stream` vs `sample`), and fixed eval subsets for fair comparisons.
+This is an opt-in research workflow; default export/eval commands do not enable `--ttt`.
 
 Representative command (export predictions with TTT enabled):
 
@@ -114,6 +116,7 @@ Details: [`docs/distillation.md`](distillation.md).
 ## 5) Hessian-based refinement (post-inference, per-detection; experimental)
 
 Value: A safe Newton / finite-diff Hessian stepper to refine pose-related prediction fields as an engine-external postprocess over `predictions.json`.
+This is an opt-in offline analysis or controlled-study workflow; default evaluation does not run Hessian refinement.
 
 Read [`docs/hessian_solver.md`](hessian_solver.md) if you want the plain-language intuition for why pose and geometry-heavy outputs benefit from this kind of local second-order correction.
 

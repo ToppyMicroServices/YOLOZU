@@ -25,7 +25,7 @@ For most day-to-day flows, start with:
 - `python3 -m yolozu export --backend {dummy,torch,onnxrt,trt,executorch} ...`
   - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration.
   - TTA extensions: `--tta-mode {postprocess,model}`, `--tta-keypoint-swap-pairs`, `--tta-model-merge-iou`.
-  - Non-torch score-only adaptation: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs).
+  - Research-only opt-in TTT extensions: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs); stable export/eval defaults do not enable these flags.
 - `python3 -m yolozu predict-images --input-dir /path/to/images ... --progress` (writes predictions JSON, PNG overlays, and optional HTML; checklist: `configs/quickstart/predict_images_dummy.yaml`)
 - `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions /path/to/predictions.json ...`
 - `python3 -m yolozu eval-instance-seg --dataset /path/to/yolo --predictions /path/to/instance_seg_predictions.json ...`
