@@ -87,6 +87,8 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
   - policy docs: `docs/reference_adapter_regression_policy.md`
 - External backend support audit (YOLOX/YOLOv8/Detectron2/MMDetection; optional non-dry checks): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox`
   - report includes `multitask_coverage` (training/inference/prediction/eval coverage for `bbox/segmentation/keypoints/depth/pose6d`) and enumerated `gaps`.
+- External bridge dry-run DoD gate: `python3 -m unittest tests.test_support_external_training_tool`
+  - covers YOLOX dry-run artifact plan, runtime/license boundary, next commands, expected outputs, and handoff files without executing external training.
 - External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR): `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
   - RT-DETR non-dry torch-missing path is explicit (`failure_code=E_DEP_TORCH_MISSING`).
   - MMDetection/Detectron2 with external train launchers can continue train-path audit even if projection deps are missing (`projection_error` + `train_path_audited=true`).

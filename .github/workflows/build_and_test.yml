@@ -230,6 +230,7 @@ jobs:
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \
+            tests/test_support_external_training_tool.py \
             tests/test_ai_first_mcp_surface.py
 
       - name: Smoke walkthrough (deep, offline)

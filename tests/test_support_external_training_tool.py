@@ -68,6 +68,73 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             self.assertIn("resume", payload["handoff_contracts"])
             self.assertIn("reports/resume_handoff.json", payload["run_output_contract"]["stable_artifacts"])
 
+    def test_yolox_dry_run_dod_gate(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out = root / "train_yolox.json"
+            work_dir = root / "yolox_work"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "train-yolox",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--exp",
+                    "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                    "--dry-run",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"support_external_training train-yolox DoD dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("format"), "yolozu_training_run_summary_v1")
+            self.assertTrue(bool(payload.get("dry_run")))
+            self.assertFalse(bool(payload.get("training_executed")))
+
+            artifact_plan = payload.get("artifact_plan") or {}
+            self.assertEqual(artifact_plan.get("format"), "yolozu_external_training_artifact_plan_v1")
+            self.assertEqual(artifact_plan.get("lane"), "yolox")
+            self.assertIn("expected_outputs", artifact_plan.get("dry_run_validates") or [])
+            runtime_boundary = artifact_plan.get("runtime_license_boundary") or {}
+            self.assertEqual(runtime_boundary.get("repo_code"), "Apache-2.0")
+            self.assertFalse(bool(runtime_boundary.get("vendored")))
+
+            expected_outputs = artifact_plan.get("expected_outputs") or {}
+            for key in ("predictions_json", "eval_report", "parity_report", "training_summary"):
+                self.assertTrue(expected_outputs.get(key), key)
+
+            next_commands = artifact_plan.get("next_commands") or {}
+            self.assertIn("tools/export_predictions_yolox.py", next_commands.get("export", ""))
+            self.assertIn("yolox_predictions.json", next_commands.get("eval", ""))
+            self.assertIn("yolox_predictions.json", next_commands.get("parity", ""))
+
+            next_steps_by_stage = {
+                str(item.get("stage")): item for item in payload.get("next_steps") or [] if isinstance(item, dict)
+            }
+            for stage in ("resume", "export", "eval", "parity"):
+                self.assertIn(stage, next_steps_by_stage)
+                self.assertTrue(next_steps_by_stage[stage].get("command"))
+                self.assertIsInstance(next_steps_by_stage[stage].get("input_contract"), dict)
+                self.assertIsInstance(next_steps_by_stage[stage].get("output_contract"), dict)
+
+            for filename in ("training_summary.json", "resume_handoff.json", "export_handoff.json", "eval_handoff.json", "parity_handoff.json"):
+                self.assertTrue((work_dir / "reports" / filename).is_file(), filename)
+
 
 if __name__ == "__main__":
     unittest.main()
