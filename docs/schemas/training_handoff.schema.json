@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/training_handoff.schema.json",
+  "title": "YOLOZU training handoff",
+  "type": "object",
+  "required": [
+    "format",
+    "stage",
+    "backend_id",
+    "task_family",
+    "supported",
+    "command",
+    "description",
+    "input_contract",
+    "output_contract"
+  ],
+  "properties": {
+    "format": { "const": "yolozu_training_handoff_v1" },
+    "stage": { "enum": ["resume", "export", "eval", "parity"] },
+    "backend_id": { "type": "string", "minLength": 1 },
+    "task_family": { "type": "string", "minLength": 1 },
+    "supported": { "type": "boolean" },
+    "command": { "type": "string" },
+    "description": { "type": "string" },
+    "input_contract": { "type": "object" },
+    "output_contract": { "type": "object" }
+  },
+  "additionalProperties": true
+}

@@ -21,7 +21,22 @@
     "license_boundary": { "type": "object" },
     "notes": { "type": "array", "items": { "type": "string" } },
     "handoff_contracts": { "type": "object" },
-    "next_steps": { "type": "array", "items": { "type": "object" } },
+    "next_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "command", "description", "stage", "input_contract", "output_contract"],
+        "properties": {
+          "label": { "type": "string" },
+          "command": { "type": "string" },
+          "description": { "type": "string" },
+          "stage": { "type": "string" },
+          "input_contract": { "type": "object" },
+          "output_contract": { "type": "object" }
+        },
+        "additionalProperties": true
+      }
+    },
     "work_dir": { "type": "string" },
     "registry_entry": { "type": "string" }
   },

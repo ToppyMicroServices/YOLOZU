@@ -88,9 +88,12 @@ Every backend-level training lane should be able to emit:
 - `next_steps`
 
 This is the common top-level summary interface contract for training.
+Schema: [`schemas/training_run_summary.schema.json`](schemas/training_run_summary.schema.json).
 
 `next_steps` is the standardized hand-off list of copy-paste commands that move a
 completed run into resume, export, evaluation, or parity.
+Each step records `stage`, `command`, `input_contract`, and `output_contract` so
+agents and downstream automation can route the handoff without scraping prose.
 
 The reference trainer also emits richer artifacts such as:
 
@@ -115,6 +118,9 @@ The standardized external bundle is:
 - `work_dir/reports/eval_handoff.json`
 - `work_dir/reports/parity_handoff.json`
 - `work_dir/reports/training_registry_entry.json`
+
+Each `*_handoff.json` follows
+[`schemas/training_handoff.schema.json`](schemas/training_handoff.schema.json).
 
 The handoff JSON files make resume / export / eval / parity machine-readable even when the
 backend runtime itself stays external. This is how `mmpose`, `mmseg`, and `tao` stop being

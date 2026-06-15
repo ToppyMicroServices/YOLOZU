@@ -193,8 +193,23 @@ def _standard_handoff_payload(
     }
 
 
-def _step(label: str, command: str, description: str) -> dict[str, str]:
-    return {"label": str(label), "command": str(command), "description": str(description)}
+def _step(
+    label: str,
+    command: str,
+    description: str,
+    *,
+    stage: str | None = None,
+    input_contract: dict[str, Any] | None = None,
+    output_contract: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {"label": str(label), "command": str(command), "description": str(description)}
+    if stage is not None:
+        payload["stage"] = str(stage)
+    if input_contract is not None:
+        payload["input_contract"] = dict(input_contract)
+    if output_contract is not None:
+        payload["output_contract"] = dict(output_contract)
+    return payload
 
 
 def _normalized_task_family(task_family: str | None) -> str:
@@ -439,6 +454,9 @@ def _external_next_steps(handoff_contracts: dict[str, Any], *, report_path: Path
                 "resume_training" if stage == "resume" else str(stage),
                 str(payload.get("command") or ""),
                 str(payload.get("description") or ""),
+                stage=str(stage),
+                input_contract=payload.get("input_contract") if isinstance(payload.get("input_contract"), dict) else {},
+                output_contract=payload.get("output_contract") if isinstance(payload.get("output_contract"), dict) else {},
             )
         )
 
@@ -447,6 +465,9 @@ def _external_next_steps(handoff_contracts: dict[str, Any], *, report_path: Path
             "inspect_summary",
             f"python3 - <<'PY'\nimport json\nprint(json.dumps(json.load(open(r'{report_path}','r',encoding='utf-8')), indent=2)[:4000])\nPY",
             "Inspect the machine-readable training summary and wrapper-owned run bundle.",
+            stage="inspect",
+            input_contract={"type": "training_run_summary_json", "path": str(report_path)},
+            output_contract={"type": "stdout_preview"},
         )
     )
     return steps
