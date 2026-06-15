@@ -2838,7 +2838,9 @@
         "docs/continual_learning.md",
         "docs/tools_index.md",
         "manual/chapters/14_continual_learning.tex",
-        "docs/production_readiness.md"
+        "docs/production_readiness.md",
+        "docs/research_lanes.md",
+        "docs/schemas/research_lane_report.schema.json"
       ],
       "effects": {
         "fixed_writes": [],
@@ -2949,7 +2951,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Promotion decision JSON report.",
+          "description": "Promotion decision JSON report including research_report latency/rollback/promotion-gate boundary fields.",
           "kind": "file",
           "name": "continual_promotion_decision_json"
         }
@@ -2961,7 +2963,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report.",
+      "summary": "Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary.",
       "tags": [
         "continual",
         "promotion",
@@ -10906,7 +10908,9 @@
         "docs/README.md",
         "docs/ttt_protocol.md",
         "docs/hessian_solver.md",
-        "docs/production_readiness.md"
+        "docs/production_readiness.md",
+        "docs/research_lanes.md",
+        "docs/schemas/research_lane_report.schema.json"
       ],
       "effects": {
         "fixed_writes": [],
@@ -11083,7 +11087,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Refined predictions JSON written to --output.",
+          "description": "Refined predictions JSON written to --output; --log-output writes a research_report boundary when enabled.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -11100,7 +11104,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper; the current public CLI rollout is offsets-first, while the docs explain the broader pose/depth intuition (experimental).",
+      "summary": "Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in.",
       "tags": [
         "predictions",
         "refine",
@@ -13936,7 +13940,9 @@
         "docs/ttt_protocol.md",
         "docs/ttt_compare_boilerplates.md",
         "manual/chapters/15_ttt_tent_mim.tex",
-        "docs/production_readiness.md"
+        "docs/production_readiness.md",
+        "docs/research_lanes.md",
+        "docs/schemas/research_lane_report.schema.json"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14089,13 +14095,13 @@
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
-          "description": "Ttt log artifact.",
+          "description": "TTT log artifact with adaptation step metrics used to summarize rollback counters.",
           "kind": "file",
           "name": "ttt_log"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
-          "description": "Compare JSON artifact.",
+          "description": "Compare JSON artifact including research_report latency/rollback/promotion-gate boundary fields.",
           "kind": "file",
           "name": "compare_json"
         },
@@ -14116,7 +14122,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts under one run directory, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
+      "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory.",
       "tags": [
         "ttt",
         "ctta",

@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -59,6 +60,26 @@ class TestResearchLaneDocs(unittest.TestCase):
                     hits.append(f"{rel}: {token}")
 
         self.assertEqual(hits, [], "stable entry examples should not enable research workflows")
+
+    def test_research_lane_report_schema_is_documented(self):
+        schema_path = self.repo_root / "docs" / "schemas" / "research_lane_report.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        required = set(schema.get("required") or [])
+
+        for field in (
+            "kind",
+            "lane",
+            "stable_baseline_artifact",
+            "research_output_artifact",
+            "latency_overhead",
+            "rollback",
+            "promotion_gate",
+        ):
+            self.assertIn(field, required)
+
+        research_doc = self.research_doc.read_text(encoding="utf-8")
+        self.assertIn("schemas/research_lane_report.schema.json", research_doc)
+        self.assertIn("stable_baseline_artifact", research_doc)
 
 
 if __name__ == "__main__":

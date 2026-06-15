@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU Research Lane Report",
+  "type": "object",
+  "required": [
+    "kind",
+    "lane",
+    "stable_baseline_artifact",
+    "research_output_artifact",
+    "latency_overhead",
+    "rollback",
+    "promotion_gate"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "research_lane_report"
+    },
+    "lane": {
+      "type": "string",
+      "enum": [
+        "ttt",
+        "continual",
+        "hessian"
+      ]
+    },
+    "stable_baseline_artifact": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "research_output_artifact": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "latency_overhead": {
+      "type": "object"
+    },
+    "rollback": {
+      "type": "object"
+    },
+    "promotion_gate": {
+      "type": "object",
+      "required": [
+        "decision"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "report_artifact": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

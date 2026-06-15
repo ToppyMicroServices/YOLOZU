@@ -47,6 +47,15 @@ Every research result should say:
 - rollback or reset behavior for adaptive methods
 - schema and validation status for any new artifact
 
+Machine-readable reports should carry a `research_report` object shaped by
+[`schemas/research_lane_report.schema.json`](schemas/research_lane_report.schema.json):
+
+- `stable_baseline_artifact`
+- `research_output_artifact`
+- `latency_overhead`
+- `rollback`
+- `promotion_gate`
+
 If the report cannot provide those fields, keep the result in a local experiment log rather than presenting it as a stable YOLOZU result.
 
 ## Related Entrypoints

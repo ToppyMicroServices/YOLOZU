@@ -413,6 +413,28 @@ def main(argv: list[str] | None = None) -> int:
         "soft_gates": soft_gates,
         "decision": decision,
         "recommended_next": recommended_next,
+        "research_report": {
+            "kind": "research_lane_report",
+            "lane": "continual",
+            "stable_baseline_artifact": (str(run_json_path) if run_json_path is not None else None),
+            "research_output_artifact": str(eval_json_path),
+            "report_artifact": str(out_path),
+            "latency_overhead": {
+                "source": "not_measured_by_continual_decide",
+                "value": None,
+            },
+            "rollback": {
+                "ttt_active": bool(args.ttt_active),
+                "rollback_required": bool(args.ttt_active and not args.allow_ttt_active_promotion),
+                "status": "review_required" if bool(args.ttt_active and not args.allow_ttt_active_promotion) else "not_applicable",
+            },
+            "promotion_gate": {
+                "decision": decision,
+                "reason": recommended_next,
+                "hard_failed": len(hard_failed),
+                "soft_failed": len(soft_failed),
+            },
+        },
         "run_record": build_run_record(
             repo_root=repo_root,
             argv=(sys.argv[1:] if argv is None else argv),

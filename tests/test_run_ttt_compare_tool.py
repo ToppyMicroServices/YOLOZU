@@ -219,6 +219,29 @@ class TestRunTTTCompareTool(unittest.TestCase):
         }
         self.assertTrue(run_ttt_compare._should_use_simple_map_proxy(result))
 
+    def test_ttt_summary_counts_rollback_steps(self):
+        payload = {
+            "meta": {
+                "ttt": {
+                    "enabled": True,
+                    "method": "tent",
+                    "report": {
+                        "method": "tent",
+                        "seconds": 0.1,
+                        "steps_run": 2,
+                        "stopped_early": True,
+                        "step_metrics": [
+                            {"rolled_back": False},
+                            {"rolled_back": True},
+                        ],
+                    },
+                }
+            }
+        }
+        summary = run_ttt_compare._extract_ttt_summary(payload)
+        self.assertEqual(summary.get("rollback_steps"), 1)
+        self.assertEqual(summary.get("stopped_early_count"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
