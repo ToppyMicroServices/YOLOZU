@@ -339,6 +339,11 @@ python3 tools/support_external_training.py train-yolox \
   --output reports/support_external_training.train_yolox.json
 ```
 
+The YOLOX dry-run report includes `artifact_plan.expected_outputs` for the planned
+YOLOX `predictions.json`, eval report, and parity report, plus machine-readable
+`artifact_plan.next_commands` for export/eval/parity. External training does not
+need to run for this plan to be validated.
+
 Optional Ultralytics bridge:
 
 ```bash

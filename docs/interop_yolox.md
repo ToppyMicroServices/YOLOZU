@@ -78,7 +78,18 @@ This writes a machine-readable report that includes:
 - resolved dataset root and split
 - projected YOLOX train config
 - the template training command
+- `artifact_plan` with expected `predictions.json`, eval report, parity report, and next commands
 - the runtime/license boundary for this lane
+
+The dry-run does not execute external training. It validates the artifact plan, confirms the
+Apache-2.0-friendly YOLOX runtime boundary, and records the export/eval/parity commands that
+consume YOLOX-produced `predictions.json`:
+
+```bash
+python3 tools/export_predictions_yolox.py --dataset data/coco-yolo --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --weights <path/to/yolox_ckpt.pth> --output runs/support_external_training/yolox/reports/yolox_predictions.json
+python3 -m yolozu eval-coco --dataset data/coco-yolo --split val --predictions runs/support_external_training/yolox/reports/yolox_predictions.json --output runs/support_external_training/yolox/reports/yolox_eval.json
+python3 -m yolozu parity --reference <reference_predictions.json> --candidate runs/support_external_training/yolox/reports/yolox_predictions.json --output runs/support_external_training/yolox/reports/yolox_parity.json
+```
 
 To execute a real external launcher, pass your local YOLOX train script:
 

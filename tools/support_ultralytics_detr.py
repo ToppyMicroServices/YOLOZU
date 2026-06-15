@@ -452,6 +452,58 @@ def _external_next_steps(handoff_contracts: dict[str, Any], *, report_path: Path
     return steps
 
 
+def _yolox_artifact_plan(
+    *,
+    work_dir: Path,
+    handoff_contracts: dict[str, Any],
+) -> dict[str, Any]:
+    paths = _external_run_contract_paths(work_dir)
+    export_contract = handoff_contracts.get("export") if isinstance(handoff_contracts, dict) else None
+    eval_contract = handoff_contracts.get("eval") if isinstance(handoff_contracts, dict) else None
+    parity_contract = handoff_contracts.get("parity") if isinstance(handoff_contracts, dict) else None
+
+    next_commands: dict[str, str] = {}
+    for stage in ("resume", "export", "eval", "parity"):
+        payload = handoff_contracts.get(stage)
+        if isinstance(payload, dict) and bool(payload.get("supported", True)):
+            next_commands[stage] = str(payload.get("command") or "")
+
+    return {
+        "format": "yolozu_external_training_artifact_plan_v1",
+        "lane": "yolox",
+        "status": "artifact_backed_dry_run_plan",
+        "runtime_license_boundary": {
+            "repo_code": "Apache-2.0",
+            "external_runtime": "YOLOX",
+            "external_runtime_license": "Apache-2.0-friendly",
+            "vendored": False,
+        },
+        "expected_inputs": {
+            "exp": "YOLOX exp file",
+            "weights": "External YOLOX checkpoint for export/eval handoff",
+            "dataset": "YOLOZU dataset root plus split",
+        },
+        "expected_outputs": {
+            "training_summary": str(paths["training_summary"]),
+            "external_run_meta": str(paths["external_run_meta"]),
+            "launcher_plan": str(paths["launcher_plan"]),
+            "execution": str(paths["execution"]),
+            "train_config_projection": str(paths["train_config_projection"]),
+            "predictions_json": str(((export_contract or {}).get("output_contract") or {}).get("path") or ""),
+            "eval_report": str(((eval_contract or {}).get("output_contract") or {}).get("path") or ""),
+            "parity_report": str(((parity_contract or {}).get("output_contract") or {}).get("path") or ""),
+        },
+        "next_commands": next_commands,
+        "dry_run_validates": [
+            "dataset_resolution",
+            "train_config_projection",
+            "runtime_license_boundary",
+            "resume_export_eval_parity_next_commands",
+            "expected_outputs",
+        ],
+    }
+
+
 def _run(
     cmd: list[str],
     *,
@@ -1078,6 +1130,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
                 "repo_impl": "support_external_training train-yolox",
                 "export_deploy": "export_predictions_yolox + eval/benchmark lanes",
             },
+            "artifact_plan": _yolox_artifact_plan(work_dir=work_dir, handoff_contracts=handoff_contracts),
         }
     )
     report["next_steps"] = _external_next_steps(handoff_contracts, report_path=report_path)

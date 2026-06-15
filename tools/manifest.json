@@ -14460,7 +14460,7 @@
       "examples": [
         {
           "command": "python3 tools/support_external_training.py train-yolox --dataset data/smoke --split val --exp configs/examples/finetune_external/yolox_s_finetune_smoke.py --dry-run --output reports/support_external_training.train_yolox.json",
-          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report plus the fixed external run bundle under work_dir/."
+          "description": "Dry-run Apache-2.0-friendly YOLOX-style training bridge and write a machine-readable report plus artifact_plan, next_commands, and the fixed external run bundle under work_dir/."
         },
         {
           "command": "python3 tools/support_external_training.py train-detectron2 --config configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/support_external_training.train_detectron2.json",
@@ -14597,7 +14597,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, and next_steps for resume/export/eval/parity.",
+          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },
