@@ -24,7 +24,7 @@ class TestResearchLaneDocs(unittest.TestCase):
             self.assertIn(term, text)
 
     def test_entry_docs_point_to_research_landing_page(self):
-        for rel in ("README.md", "README_jp.md", "Readme_zh.md", "docs/README.md", "docs/production_readiness.md"):
+        for rel in ("README.md", "Readme_jp.md", "Readme_zh.md", "docs/README.md", "docs/production_readiness.md"):
             text = (self.repo_root / rel).read_text(encoding="utf-8")
             self.assertIn("research_lanes.md", text, rel)
 
