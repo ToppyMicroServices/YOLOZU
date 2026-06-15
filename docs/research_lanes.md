@@ -61,5 +61,6 @@ If the report cannot provide those fields, keep the result in a local experiment
 ## Related Entrypoints
 
 - Research feature overview: [`learning_features.md`](learning_features.md)
+- Research note template: [`research_note_template.md`](research_note_template.md)
 - Production posture source of truth: [`production_readiness.md`](production_readiness.md)
 - Tool registry and maturity labels: [`tools_index.md`](tools_index.md)

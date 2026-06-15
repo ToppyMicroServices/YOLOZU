@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU Research Note",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "title",
+    "lane",
+    "status",
+    "stable_baseline_artifact",
+    "research_output_artifact",
+    "research_report_artifact",
+    "method",
+    "metrics",
+    "latency_overhead",
+    "rollback",
+    "promotion_gate",
+    "environment",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "const": "yolozu_research_note"
+    },
+    "title": {
+      "type": "string"
+    },
+    "lane": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "accepted",
+        "rejected"
+      ]
+    },
+    "stable_baseline_artifact": {
+      "type": "string"
+    },
+    "research_output_artifact": {
+      "type": "string"
+    },
+    "research_report_artifact": {
+      "type": "string"
+    },
+    "method": {
+      "type": "object"
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "stable",
+        "research",
+        "delta"
+      ]
+    },
+    "latency_overhead": {
+      "type": "object"
+    },
+    "rollback": {
+      "type": "object"
+    },
+    "promotion_gate": {
+      "type": "object",
+      "required": [
+        "decision"
+      ]
+    },
+    "environment": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

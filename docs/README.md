@@ -99,6 +99,7 @@ Supporting docs:
 - Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
 - Production readiness: [`production_readiness.md`](production_readiness.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
+- Research note template: [`research_note_template.md`](research_note_template.md)
 - Learning features overview: [`learning_features.md`](learning_features.md)
 
 ---
