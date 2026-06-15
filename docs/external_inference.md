@@ -3,9 +3,9 @@
 YOLOZU is an evaluation + tooling harness. You can run inference **inside this repo** (PyTorch adapter, ONNXRuntime, TensorRT),
 or you can run inference **elsewhere** (C++/Rust/mobile/edge) and bring results back as a `predictions.json`.
 
-The key design is: **bring your own inference**, but keep a stable **interface contract** for outputs.
+The key design is: **bring your own inference**, but keep a stable **predictions interface contract** for outputs.
 
-## Interface-contract-first workflow (recommended)
+## Predictions-interface-contract-first workflow (recommended)
 
 1) Produce a YOLOZU predictions JSON artifact:
    - Canonical shape:
@@ -55,7 +55,40 @@ The main benefit of YOLOZU is you can incrementally migrate:
 
 - Research/Eval: Python (pip) + Docker on GPU (Runpod)
 - Production: C++ (TensorRT official path) and/or Rust (ONNXRuntime)
-- Verification: parity + interface contract validation stays the same
+- Verification: parity + predictions interface contract validation stays the same
+
+### Production lane interface contract
+
+Treat the C++/Rust runner as the owner of model execution, and YOLOZU as the owner of validation, evaluation, and report handoff.
+The stable handoff is `predictions.json`; any runtime is acceptable if it emits the same predictions interface contract.
+
+Inputs:
+- model/runtime inputs owned by your inference project (`.onnx`, TensorRT engine, TorchScript, camera frame, batch file, or device stream)
+- image identity preserved in each prediction item as `image`
+- optional dataset root or manifest only when YOLOZU evaluation needs labels
+
+Outputs:
+- `predictions.json` as the only required artifact
+- optional runtime metadata in a wrapper-owned report, not as a substitute for schema-valid predictions
+- YOLOZU evaluation/parity reports written under `reports/`
+
+Error behavior:
+- return nonzero for missing arguments, runtime initialization failures, unreadable inputs, invalid decode settings, or write failures
+- do not report success after writing a partial or schema-invalid `predictions.json`
+- report optional runtime gaps as skipped/missing-runtime in the wrapper or benchmark report instead of silently passing
+
+Schema validation:
+
+```bash
+python3 tools/validate_predictions.py /path/to/predictions.json --strict
+```
+
+Report handoff:
+
+```bash
+python3 tools/eval_suite.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json --output reports/external_parity.json
+```
 
 ### C++ template (submodule-ready)
 
@@ -69,7 +102,7 @@ It focuses on:
 
 ### Rust template (submodule-ready)
 
-See `examples/infer_rust/` for a minimal Rust starter. It keeps a no-deps **stub** binary as the default contract path, and also provides an
+See `examples/infer_rust/` for a minimal Rust starter. It keeps a no-deps **stub** binary as the default predictions interface contract path, and also provides an
 optional ONNXRuntime mode behind a Cargo feature:
 
 ```bash

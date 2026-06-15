@@ -23,13 +23,41 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 python3 tools/eval_suite.py --predictions /path/to/predictions.json --dataset /path/to/coco-yolo
 ```
 
+## Production lane interface contract
+
+Use this template as the production runner boundary: C++ owns inference, decode, and file writes; YOLOZU owns schema validation, evaluation, parity, and reports.
+The only required handoff artifact is `predictions.json` in the YOLOZU predictions interface contract.
+
+Inputs:
+- model/runtime inputs owned by the C++ project (`.onnx`, TensorRT engine, calibration files, or camera/batch source)
+- image identity forwarded into each `predictions[*].image`
+- optional dataset root only when running YOLOZU evaluation after export
+
+Outputs:
+- `predictions.json` with normalized `cx, cy, w, h` boxes and numeric scores
+- optional backend metadata in a separate report or wrapper log
+- YOLOZU reports such as `reports/external_eval.json` and `reports/external_parity.json`
+
+Error behavior:
+- exit nonzero for missing arguments, runtime load failures, unreadable input images, decode mismatches, or write failures
+- never treat a partial or schema-invalid `predictions.json` as success
+- keep optional ONNXRuntime/TensorRT dependency failures explicit in the runner output or wrapper report
+
+Schema validation and report handoff:
+
+```bash
+python3 tools/validate_predictions.py /path/to/predictions.json --strict
+python3 tools/eval_suite.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json --output reports/external_parity.json
+```
+
 ## Recommended workflow
 
-1) Start with the stub to validate your end-to-end I/O contract (C++ → `predictions.json` → Python validators).
+1) Start with the stub to validate your end-to-end predictions interface contract (C++ → `predictions.json` → Python validators).
 2) Implement real inference in ONNXRuntime or TensorRT while keeping the JSON output stable.
 3) Use YOLOZU’s evaluator/suite to compare backends apples-to-apples.
 
-Note: the stub intentionally emits **empty detections**, so COCO mAP will be ~0. It is only a contract check.
+Note: the stub intentionally emits **empty detections**, so COCO mAP will be ~0. It is only a predictions interface contract check.
 The stub intentionally omits `meta` to keep `python3 tools/validate_predictions.py ... --strict` passing; you can add backend metadata later.
 For a “sanity mAP” run without any inference backend, use:
 
