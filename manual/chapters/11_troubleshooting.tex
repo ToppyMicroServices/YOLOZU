@@ -25,17 +25,26 @@ python3 tools/validate_instance_segmentation_predictions.py /path/to/preds.json
 
 \section{Common failure modes}
 \begin{itemize}
+  \item \textbf{Pip install failures}: Confirm Python 3.10 or newer with \cmd{python3 --version}, then confirm the installer with \cmd{python3 -m pip --version}. If the interpreter is too old, create a fresh environment before installing \yolozu{}.
+  \item \textbf{Missing optional extras}: Import errors for demo, ONNX Runtime, COCO, or backend utilities usually mean the base package was installed without the needed extra. Reinstall the specific lane with \cmd{python3 -m pip install 'yolozu[demo]'} or \cmd{python3 -m pip install 'yolozu[onnxrt]'}, or the extra documented by the workflow.
+  \item \textbf{COCO \cmd{category_id} mismatches}: If scores look shifted by class, validate the predictions artifact and compare \cmd{category_id} values against the dataset wrapper and \path{classes.txt}. Start with \cmd{yolozu validate predictions}.
+  \item \textbf{Invalid predictions schema}: Missing fields, non-relocatable paths, or task-specific payload errors should be fixed before evaluation. In a source checkout, run:
+\begin{lstlisting}[language=bash]
+yolozu validate predictions <predictions.json> --strict
+\end{lstlisting}
+  For packaged installs, run \cmd{yolozu validate predictions}.
+  \item \textbf{ONNX Runtime model-load failures}: If ORT reports unsupported ONNX IR versions, regenerate artifacts with a compatible IR version (CI smoke pins IR v11 for compatibility). Confirm the runtime version before changing the exporter.
+  \item \textbf{TensorRT environment}: TensorRT environment constraints are Linux/NVIDIA-centric. Use \cmd{python3 tools/gpu_validation_preflight.py --help} and the documented container workflow to keep CUDA/TRT/ORT compatibility pinned.
+  \item \textbf{Protocol-driven metric changes}: A metric change after a config or workflow edit may be legitimate if IoU thresholds, class order, score filtering, NMS, or protocol pins changed. Inspect the saved report and suite metadata before comparing old and new scores.
   \item \textbf{Pathing issues}: Relative paths embedded within the JSON artifact fail to resolve correctly against the specified \cmd{--pred-root}.
   \item \textbf{Class mapping mismatches}: The ordering defined in \path{classes.txt} diverges from the internal mapping utilized by the model or exporter.
   \item \textbf{Backend discrepancies}: Pre-processing or post-processing logic varies subtly across different inference backends.
-  \item \textbf{TensorRT environment constraints}: TensorRT execution is strictly pinned to Linux/NVIDIA environments; use the documented container workflow to keep CUDA/TRT/ORT compatibility pinned.
   \item \textbf{CI scope optimization}: Required CI uses a change-scope fast path; docs/metadata-only commits skip heavy test jobs by design.
   \item \textbf{Container workflow expectations}: \path{.github/workflows/container.yml} now builds container-related pull requests for early validation, while image publication remains gated to tag/manual runs. Manual republishes should pass \texttt{release\_tag=vX.Y.Z}; when \texttt{NGC\_API\_KEY} is configured, the same workflow mirrors images to \path{nvcr.io/yolozu/...}.
   \item \textbf{Container trigger scope}: Container checks on pull requests and \texttt{main} pushes stay restricted to container-related paths (workflow/deploy/packaging inputs) to avoid unnecessary runs.
   \item \textbf{Security scan backlog vs real regressions}: \path{.github/workflows/codeql.yml} and \path{.github/workflows/scorecard.yml} report repository posture, not just runtime test failures. Scorecard also runs on pull requests targeting \texttt{main}, so posture regressions should surface before merge rather than only after landing on the default branch.
   \item \textbf{Fuzzing coverage expectations}: \path{.github/workflows/cflite_pr.yml} and \path{.github/workflows/cflite_batch.yml} exercise predictions normalization via ClusterFuzzLite. When predictions parsing/canonicalization changes, update \path{.clusterfuzzlite/} and \path{fuzz/} in the same pull request.
   \item \textbf{Self-hosted GPU workflow behavior}: \path{.github/workflows/ngc_test.yml} probes for an idle \texttt{self-hosted + gpu} runner first; if none is online/idle, the workflow exits via a deterministic skip job. If probe API access is denied (\texttt{403}), configure repository secret \texttt{RUNNER\_DISCOVERY\_TOKEN} to enable runner discovery.
-  \item \textbf{ONNXRuntime model-load failures}: If ORT reports unsupported ONNX IR versions, regenerate artifacts with a compatible IR version (CI smoke pins IR v11 for compatibility).
 \end{itemize}
 
 \section{Further reading and resources}
