@@ -42,6 +42,61 @@ If your predictions come from another backend, validate first:
 yolozu validate predictions data/smoke/predictions/predictions_dummy.json --strict
 \end{lstlisting}
 
+\subsection{First-failure checklist}
+If the first run fails, do not jump straight into backend debugging. Check the
+artifact path first, then the optional runtime that produced it. The checklist
+below gives a symptom, likely cause, and verification command for the common
+first-run failures; Chapter~11 expands the same cases into a fuller
+troubleshooting playbook.
+
+\begin{description}
+  \item[Symptom: \cmd{pip install yolozu} fails.] Likely cause: Python or the
+  packaging toolchain is too old. Verification command:
+\begin{lstlisting}[language=bash]
+python3 --version
+python3 -m pip --version
+\end{lstlisting}
+
+  \item[Symptom: missing import after install.] Likely cause: the workflow needs
+  an optional extra. Verification command:
+\begin{lstlisting}[language=bash]
+python3 -m pip install 'yolozu[demo]'
+python3 -m pip install 'yolozu[onnxrt]'
+\end{lstlisting}
+
+  \item[Symptom: COCO metrics look shifted.] Likely cause: \cmd{category_id}
+  values do not match the evaluator class mapping. Verification command:
+\begin{lstlisting}[language=bash]
+yolozu validate predictions <predictions.json> --strict
+\end{lstlisting}
+
+  \item[Symptom: predictions schema error.] Likely cause: required fields,
+  paths, or task-specific payloads are missing. Verification command:
+\begin{lstlisting}[language=bash]
+python3 tools/validate_predictions.py <predictions.json> --strict
+\end{lstlisting}
+
+  \item[Symptom: ONNX Runtime model-load error.] Likely cause: ORT cannot load
+  the exported ONNX IR/opset or runtime build. Verification command:
+\begin{lstlisting}[language=bash]
+python3 -c "import onnxruntime as ort; print(ort.__version__)"
+\end{lstlisting}
+
+  \item[Symptom: TensorRT command fails locally.] Likely cause: TensorRT needs a
+  compatible Linux/NVIDIA/CUDA stack. Verification command:
+\begin{lstlisting}[language=bash]
+python3 tools/gpu_validation_preflight.py --output -
+\end{lstlisting}
+
+  \item[Symptom: metrics changed after protocol edit.] Likely cause: evaluation
+  thresholds, class order, score filtering, NMS, or protocol pins changed.
+  Verification command:
+\begin{lstlisting}[language=bash]
+yolozu eval-suite --help
+\end{lstlisting}
+  Then inspect the saved suite/report protocol fields.
+\end{description}
+
 Optional extras let you install only the dependencies you need for a given workflow:
 \begin{lstlisting}[language=bash]
 python3 -m pip install 'yolozu[demo]'    # PyTorch demonstration utilities (includes timm + opencv-contrib + transformers for depth demo)
