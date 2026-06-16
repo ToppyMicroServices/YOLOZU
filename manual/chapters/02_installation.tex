@@ -73,7 +73,7 @@ yolozu validate predictions <predictions.json> --strict
   \item[Symptom: predictions schema error.] Likely cause: required fields,
   paths, or task-specific payloads are missing. Verification command:
 \begin{lstlisting}[language=bash]
-python3 tools/validate_predictions.py <predictions.json> --strict
+yolozu validate predictions <predictions.json> --strict
 \end{lstlisting}
 
   \item[Symptom: ONNX Runtime model-load error.] Likely cause: ORT cannot load
@@ -85,7 +85,7 @@ python3 -c "import onnxruntime as ort; print(ort.__version__)"
   \item[Symptom: TensorRT command fails locally.] Likely cause: TensorRT needs a
   compatible Linux/NVIDIA/CUDA stack. Verification command:
 \begin{lstlisting}[language=bash]
-python3 tools/gpu_validation_preflight.py --output -
+python3 tools/gpu_validation_preflight.py --help
 \end{lstlisting}
 
   \item[Symptom: metrics changed after protocol edit.] Likely cause: evaluation

@@ -7,6 +7,8 @@ class TestManualTroubleshootingPath(unittest.TestCase):
         self.repo_root = Path(__file__).resolve().parents[1]
         self.install_chapter = self.repo_root / "manual" / "chapters" / "02_installation.tex"
         self.troubleshooting_chapter = self.repo_root / "manual" / "chapters" / "11_troubleshooting.tex"
+        self.assertTrue(self.install_chapter.exists())
+        self.assertTrue(self.troubleshooting_chapter.exists())
 
     def test_install_chapter_includes_first_failure_checklist(self):
         text = self.install_chapter.read_text(encoding="utf-8")
