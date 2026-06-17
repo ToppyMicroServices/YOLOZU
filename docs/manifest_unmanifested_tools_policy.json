@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "manifest_scope": "Public, user-facing, or automation-facing tool entrypoints are declared in tools/manifest.json.",
+    "allowed_unmanifested_scope": "Repo-local compatibility shims, release/operator scripts, fixture generators, one-off migration helpers, and maintenance audits may stay outside the manifest when their disposition is documented here.",
+    "review_rule": "A new direct file under tools/ with .py or .sh suffix must either be added to tools/manifest.json or added here with a disposition and rationale."
+  },
+  "tools": [
+    {
+      "path": "tools/ablate_constraints.py",
+      "disposition": "research_helper",
+      "rationale": "Scenario ablation helper documented from the 6DoF chapter, not a stable public CLI surface."
+    },
+    {
+      "path": "tools/audit_manifest_inputs_vs_help.py",
+      "disposition": "maintenance_audit",
+      "rationale": "Repository maintenance check for manifest/help drift; not shipped as a user workflow."
+    },
+    {
+      "path": "tools/audit_yolozu_manifest_flags.py",
+      "disposition": "maintenance_audit",
+      "rationale": "Repository maintenance check for top-level CLI flag drift."
+    },
+    {
+      "path": "tools/benchmark.py",
+      "disposition": "compatibility_wrapper",
+      "rationale": "Compatibility wrapper retained for older repo-local workflows; canonical benchmark entrypoints are manifest-declared elsewhere."
+    },
+    {
+      "path": "tools/calibrate_predictions.py",
+      "disposition": "internal_helper",
+      "rationale": "Calibration helper kept for source-checkout experiments rather than a stable public workflow."
+    },
+    {
+      "path": "tools/check_gates.py",
+      "disposition": "release_operator",
+      "rationale": "Operator gate helper referenced from release/runtime docs; not part of the packaged tool registry."
+    },
+    {
+      "path": "tools/check_predictions_parity_trt.py",
+      "disposition": "backend_operator",
+      "rationale": "TensorRT-specific parity helper for local backend work."
+    },
+    {
+      "path": "tools/check_schema_compatibility.py",
+      "disposition": "maintenance_audit",
+      "rationale": "Schema compatibility maintenance check."
+    },
+    {
+      "path": "tools/download_bop_dataset.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Dataset acquisition helper for optional BOP workflows."
+    },
+    {
+      "path": "tools/example_mim_inference.py",
+      "disposition": "example_helper",
+      "rationale": "Small example script for MIM experimentation, not a supported CLI."
+    },
+    {
+      "path": "tools/export_predictions_ultralytics.py",
+      "disposition": "optional_bridge_helper",
+      "rationale": "Optional third-party bridge kept outside the stable Apache-2.0 core path."
+    },
+    {
+      "path": "tools/fetch_coco128_official.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Dataset fetch helper for local smoke data preparation."
+    },
+    {
+      "path": "tools/format_json.py",
+      "disposition": "maintenance_helper",
+      "rationale": "Formatting helper for repository maintenance."
+    },
+    {
+      "path": "tools/generate_manual_import_graphs.py",
+      "disposition": "manual_build_helper",
+      "rationale": "Manual figure generation helper used during docs maintenance."
+    },
+    {
+      "path": "tools/import_ultralytics_data_yaml.py",
+      "disposition": "migration_helper",
+      "rationale": "One-off data migration helper for Ultralytics-style data.yaml files."
+    },
+    {
+      "path": "tools/import_yolo26_baseline.py",
+      "disposition": "migration_helper",
+      "rationale": "Baseline import helper for YOLO26 comparison data."
+    },
+    {
+      "path": "tools/link_beads_to_github.py",
+      "disposition": "repository_operator",
+      "rationale": "Repository issue-tracker maintenance helper."
+    },
+    {
+      "path": "tools/make_coco128_pose_dataset.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Dataset fixture builder for local pose experiments."
+    },
+    {
+      "path": "tools/make_dummy_predictions.py",
+      "disposition": "fixture_generator",
+      "rationale": "Test/smoke fixture generator."
+    },
+    {
+      "path": "tools/make_oracle_keypoints_predictions.py",
+      "disposition": "fixture_generator",
+      "rationale": "Oracle fixture generator for keypoints evaluation tests."
+    },
+    {
+      "path": "tools/make_split.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Small dataset split helper for repo-local experiments."
+    },
+    {
+      "path": "tools/manual_redundancy_check.py",
+      "disposition": "manual_audit",
+      "rationale": "Manual maintenance check, not a product workflow."
+    },
+    {
+      "path": "tools/mock_train.py",
+      "disposition": "test_helper",
+      "rationale": "Mock trainer for tests and smoke paths."
+    },
+    {
+      "path": "tools/plot_metrics.py",
+      "disposition": "analysis_helper",
+      "rationale": "Local plotting helper for run analysis."
+    },
+    {
+      "path": "tools/prepare_bop_yolozu.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Optional BOP preparation helper."
+    },
+    {
+      "path": "tools/prepare_coco_keypoints_yolozu.py",
+      "disposition": "dataset_recipe",
+      "rationale": "Optional COCO keypoints preparation helper."
+    },
+    {
+      "path": "tools/print_leaderboard.py",
+      "disposition": "analysis_helper",
+      "rationale": "Local report-printing helper."
+    },
+    {
+      "path": "tools/profile_onnx_compute.py",
+      "disposition": "analysis_helper",
+      "rationale": "Local ONNX profiling helper referenced from model-size documentation."
+    },
+    {
+      "path": "tools/release.py",
+      "disposition": "release_operator",
+      "rationale": "Release operator helper, not part of the user-facing evaluation toolkit."
+    },
+    {
+      "path": "tools/run_baseline.py",
+      "disposition": "release_operator",
+      "rationale": "Baseline report helper for gate checks."
+    },
+    {
+      "path": "tools/run_rtdetr_pose_map_sweep.py",
+      "disposition": "research_helper",
+      "rationale": "Pose mAP sweep helper for repo-local research."
+    },
+    {
+      "path": "tools/run_scenario_suite.py",
+      "disposition": "scenario_helper",
+      "rationale": "Scenario-suite wrapper used by manual examples and local studies."
+    },
+    {
+      "path": "tools/run_trt_workflow.py",
+      "disposition": "backend_operator",
+      "rationale": "TensorRT workflow helper retained for local backend operations."
+    },
+    {
+      "path": "tools/run_yolo26_smoke_rtdetr_pose.py",
+      "disposition": "smoke_helper",
+      "rationale": "YOLO26 smoke helper for a specific local baseline lane."
+    },
+    {
+      "path": "tools/run_yolo26n_smoke_rtdetr_pose.py",
+      "disposition": "smoke_helper",
+      "rationale": "YOLO26n smoke helper for a specific local baseline lane."
+    },
+    {
+      "path": "tools/smoke_run.py",
+      "disposition": "smoke_helper",
+      "rationale": "Repo-local smoke helper; packaged smoke path is exposed through stable commands."
+    },
+    {
+      "path": "tools/support_ultralytics_detr.py",
+      "disposition": "optional_bridge_helper",
+      "rationale": "Optional Ultralytics/DETR support helper with third-party runtime boundaries."
+    },
+    {
+      "path": "tools/sync_tools_manifest.py",
+      "disposition": "maintenance_helper",
+      "rationale": "Manifest packaging synchronizer used by maintainers."
+    },
+    {
+      "path": "tools/update_map_targets_from_suite.py",
+      "disposition": "maintenance_helper",
+      "rationale": "Maintainer helper for refreshing mAP targets from suite outputs."
+    },
+    {
+      "path": "tools/validate_dataset.py",
+      "disposition": "compatibility_wrapper",
+      "rationale": "Legacy repo-local validation helper; stable package path is the yolozu validate command."
+    },
+    {
+      "path": "tools/yolozu.py",
+      "disposition": "compatibility_wrapper",
+      "rationale": "Legacy repo-local compatibility wrapper; canonical package CLI is python3 -m yolozu or yolozu."
+    }
+  ]
+}
