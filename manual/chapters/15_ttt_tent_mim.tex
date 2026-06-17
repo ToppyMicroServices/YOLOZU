@@ -23,6 +23,49 @@ TTT is a \textbf{research-oriented} lane in \yolozu{}.
 Use it as an inference-time adaptation mode with bounded cost and explicit review, not as the default production update loop.
 See \path{docs/production_readiness.md}.
 
+\section{TTT Quickstart (operator first)}
+This is the shortest safe route through the chapter:
+\begin{enumerate}
+  \item freeze a small target subset,
+  \item run one baseline export and one adapted export,
+  \item open the before/after compare markdown,
+  \item only then inspect raw TTT logs or method internals.
+\end{enumerate}
+
+Start with the compare wrapper instead of hand-building a long export command:
+\begin{lstlisting}[language=bash]
+bash scripts/ttt_compare.sh \
+  --boilerplate tent \
+  --dataset data/smoke \
+  --split val \
+  --checkpoint /path/to.ckpt \
+  --run-dir reports/ttt_compare/tent \
+  --device cpu
+\end{lstlisting}
+
+Expected outputs:
+\begin{itemize}
+  \item \path{reports/ttt_compare/tent/baseline_predictions.json}
+  \item \path{reports/ttt_compare/tent/tent_predictions.json}
+  \item \path{reports/ttt_compare/tent/tent_before_after_compare.md}
+  \item \path{reports/ttt_compare/tent/tent_ttt_log.json}
+\end{itemize}
+
+How to verify the run:
+\begin{itemize}
+  \item open the compare markdown first,
+  \item check that \cmd{steps_run > 0},
+  \item check \cmd{changed_images} and the before/after metric fields,
+  \item confirm the same dataset split, checkpoint, seed, and reset policy were used.
+\end{itemize}
+
+Common failures:
+\begin{itemize}
+  \item the target subset has no real domain shift, so predictions do not change,
+  \item the checkpoint path is missing or incompatible with the config,
+  \item the update filter is too broad for a first run,
+  \item stream reset is used without an explicit batch cap.
+\end{itemize}
 
 \section{Scope and support}
 \yolozu{} supports controlled test-time training (TTT) for the \path{rtdetr_pose} adapter via
@@ -271,7 +314,7 @@ Both CLIs expose \cmd{--ttt-preset}:
 Presets override core knobs (method, steps, lr, update filter, max batches) and set conservative guard rails unless you override them.
 Use \cmd{--ttt-sdft-task \{pose,keypoints,depth,seg,full\}} and \cmd{--ttt-aux-*} weights to steer multi-task adaptation losses.
 
-\section{Algorithm catalog with concrete examples}
+\section{Method Catalog with concrete examples}
 The currently implemented parameter-updating TTT/CTTA methods are:
 \cmd{tent}, \cmd{mim}, \cmd{cotta}, \cmd{eata}, and \cmd{sar}.
 In practice, the fastest way to compare them fairly is:
@@ -1048,7 +1091,7 @@ python3 -m yolozu export \
 \textbf{Rule of thumb.}
 Start from the task-aware Tent preset, then escalate to MIM/CoTTA/EATA/SAR only when the shift evidence justifies the extra complexity and latency.
 
-\section{YOLOZU introduction priority (high \texorpdfstring{$\to$}{->} low)}
+\section{Implementation Notes: YOLOZU rollout priority (high \texorpdfstring{$\to$}{->} low)}
 For \yolozu{} (detection/pose), the recommended operational rollout order is:
 \begin{enumerate}
   \item \textbf{CoTTA (highest priority)}: standardize \emph{teacher=EMA(model)}, use \emph{augmentation-averaged predictions} (e.g., flips) as prediction stabilization, and enable \emph{stochastic restoration} to suppress long-run drift.
@@ -1276,6 +1319,24 @@ Phase-1 SAR should record at least:
     \cmd{ttt.max_total_update_norm}, \cmd{ttt.max_loss_ratio}
 \end{itemize}
 
+\section{Evaluation and Failure Modes}
+Evaluate TTT as a before/after artifact comparison, not as a live-model update.
+The minimum acceptance check is:
+\begin{itemize}
+  \item baseline and adapted predictions use the same target subset,
+  \item the report records method, preset, seed, reset policy, and update scope,
+  \item runtime and warning fields are inspected before claiming an improvement,
+  \item unchanged predictions are reported as such instead of treated as a failure.
+\end{itemize}
+
+Failure modes to check first:
+\begin{itemize}
+  \item \textbf{No domain shift}: the method runs but has no useful signal.
+  \item \textbf{Unsafe update scope}: too many parameters move for a first comparison.
+  \item \textbf{State leakage}: stream adaptation carries state into the next comparison.
+  \item \textbf{Cost drift}: adaptation latency exceeds the budget for the target workflow.
+\end{itemize}
+
 \section{Guard rails (safety limits)}
 If you do not explicitly set these, defaults are applied by preset:
 \begin{itemize}
@@ -1412,7 +1473,7 @@ In this repo, the important operational points are:
   \item compare against a non-adapted baseline under the same pinned evaluation protocol.
 \end{itemize}
 
-\section{Operational notes}
+\section{Implementation Notes: operational notes}
 \begin{itemize}
   \item TTT adds latency. Always report throughput and the chosen \cmd{batch_size/max_batches}.
   \item Keep the evaluation subset fixed and record the exact preset and guards.
