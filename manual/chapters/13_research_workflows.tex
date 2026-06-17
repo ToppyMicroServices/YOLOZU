@@ -129,25 +129,25 @@ So the separation is:
   \item \textbf{TTT / CTTA}: adapt model parameters in memory during inference-time operation.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 \centering
-\resizebox{\linewidth}{!}{%
+\resizebox{0.94\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\small,
-  box/.style={draw, rounded corners, align=left, inner sep=8pt},
-  artifactbox/.style={box, fill=blue!8, text width=0.28\linewidth},
-  matchbox/.style={box, fill=orange!10, text width=0.34\linewidth},
-  actionbox/.style={box, fill=green!10, text width=0.28\linewidth},
-  outputbox/.style={box, fill=purple!8, text width=0.28\linewidth},
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  artifactbox/.style={box, fill=blue!8, text width=3.8cm},
+  matchbox/.style={box, fill=orange!10, text width=4.4cm},
+  actionbox/.style={box, fill=green!10, text width=3.8cm},
+  outputbox/.style={box, fill=purple!8, text width=4.0cm},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 
-\node[artifactbox] (student) at (0,2.2) {\textbf{Student artifact}\\\path{predictions_student.json}};
-\node[artifactbox] (teacher) at (8.8,2.2) {\textbf{Teacher artifact}\\\path{predictions_teacher.json}};
-\node[matchbox] (match) at (4.4,0.2) {\textbf{Match detections}\\same image, same class, IoU threshold};
-\node[actionbox] (blend) at (0,-2.3) {\textbf{Blend matched scores}\\controlled by \cmd{--alpha}};
-\node[actionbox] (inject) at (8.8,-2.3) {\textbf{Optionally inject teacher-only detections}\\guarded by score / duplicate / count caps};
-\node[outputbox] (output) at (4.4,-4.8) {\textbf{Distilled artifacts}\\\path{predictions_distilled.json}\\\path{distill_report.json}};
+\node[artifactbox] (student) at (0,2.45) {\textbf{Student artifact}\\\path{predictions_student.json}};
+\node[artifactbox] (teacher) at (9.2,2.45) {\textbf{Teacher artifact}\\\path{predictions_teacher.json}};
+\node[matchbox] (match) at (4.6,0.15) {\textbf{Match detections}\\same image, same class, IoU threshold};
+\node[actionbox] (blend) at (0,-2.75) {\textbf{Blend matched scores}\\controlled by \cmd{--alpha}};
+\node[actionbox] (inject) at (9.2,-2.75) {\textbf{Optionally inject teacher-only detections}\\guarded by score / duplicate / count caps};
+\node[outputbox] (output) at (4.6,-5.55) {\textbf{Distilled artifacts}\\\path{predictions_distilled.json}\\\path{distill_report.json}};
 
 \draw[arrow] (student) -- (match);
 \draw[arrow] (teacher) -- (match);
