@@ -13,7 +13,7 @@ class TestManualPartStructure(unittest.TestCase):
             "\\part{User Quickstart}",
             "\\part{Production Evaluation Manual}",
             "\\part{Training and Research Workflows}",
-            "\\part{Maintainer, Automation, and Appendices}",
+            "\\part{Maintainer, Automation, and Integration Appendices}",
         ]
         for part in parts:
             with self.subTest(part=part):
