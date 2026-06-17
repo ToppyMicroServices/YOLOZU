@@ -58,12 +58,20 @@ teach two habits:
 \begin{itemize}
   \item Framework-agnostic evaluation toolkit for vision models.
   \item Primary lane: predictions validation/evaluation across frameworks and runtimes.
-  \item Secondary/research lanes: continual learning, TTT, SynthGen handoff, backend parity, Hessian refinement.
+  \item Secondary/research lanes: continual learning, TTT, backend parity, Hessian refinement.
+  \item Optional integration appendices: MCP automation and SynthGen handoff.
   \item Predictions interface contract (JSON artifacts).
   \item Multi-task: detection, segmentation, keypoints, monocular depth, and 6DoF pose.
   \item Deployment + interoperability: ONNX export and runtime backends.
   \item AI-first development: stable CLIs, machine-readable manifests, and regression-testable artifacts.
 \end{itemize}
+
+\paragraph{Where MCP and SynthGen fit.}
+MCP automation and SynthGen handoff are useful integration surfaces, but they
+are not part of the primary production evaluation lane. Read the core path
+first: installation, predictions interface contract, validation, evaluation,
+and benchmark qualification. Use the integration appendices only when you need
+client automation or synthetic-data intake after that core workflow is clear.
 
 \section{Readiness Levels}
 
@@ -131,12 +139,13 @@ Legacy top-level imports are preserved through package-level aliasing for compat
 \section{How to use this manual}
 Different readers usually arrive with different first questions. A quick routing guide helps:
 \begin{itemize}
-  \item \textbf{``I want the main production lane.''} Start with Chapters~2, 3, and 5.
-  \item \textbf{``I already have predictions and only need evaluation.''} Start with Chapters~3 and 5.
-  \item \textbf{``I need parity or benchmark qualification.''} Start with Chapter~9 after Chapters~2 and 5.
-  \item \textbf{``I care about forgetting, TTT, or research ablations.''} Start with Chapters~13, 14, and 15.
-  \item \textbf{``I care about geometry, depth, or pose refinement.''} Start with Chapters~10 and 15.
-  \item \textbf{``I am modifying tools or documentation.''} Start with Chapters~11 and 17.
+  \item \textbf{``I want the main production lane.''} Start with installation, predictions interface contract, and evaluation/export workflows.
+  \item \textbf{``I already have predictions and only need evaluation.''} Start with predictions interface contract and evaluation/export workflows.
+  \item \textbf{``I need parity or benchmark qualification.''} Start with parity and benchmark protocols after installation and evaluation/export workflows.
+  \item \textbf{``I care about forgetting, TTT, or research ablations.''} Start with the research workflow, continual-learning, and TTT chapters.
+  \item \textbf{``I care about geometry, depth, or pose refinement.''} Start with the depth/6DoF and TTT/refinement chapters.
+  \item \textbf{``I am integrating MCP clients or SynthGen handoff.''} Start with the integration appendices after the production evaluation path.
+  \item \textbf{``I am modifying tools or documentation.''} Start with the tool registry and manifest-driven documentation chapters.
 \end{itemize}
 
 \paragraph{A good first reading order for most users.}
