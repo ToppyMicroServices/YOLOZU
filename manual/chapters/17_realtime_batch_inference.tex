@@ -208,8 +208,8 @@ The \texttt{yolozu.inference.profiler} module wraps \texttt{torch.profiler} to p
 
 \begin{lstlisting}[language=Python]
 profiler_available()
-profile_inference(adapter, records, warmup, active, output_dir)
-profile_callable(fn, *args, iterations, warmup)
+profile_inference(adapter, records, *, warmup, active, output_dir)
+profile_callable(fn, *args, iterations=10, warmup=3)
 \end{lstlisting}
 
 \begin{itemize}
