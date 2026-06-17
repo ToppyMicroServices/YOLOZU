@@ -1,11 +1,11 @@
 \chapter{Training and the Run Contract}
 
 \ChapterMeta{
-This chapter elucidates the architecture of the training stack and the principles of the run contract, emphasizing stable artifact layouts, strict configuration resolution, and standardized resumption protocols.
+This chapter explains the training stack and the run interface contract: stable artifact layout, strict config resolution, and resumable runs.
 }{
-Adhering to the run contract ensures rigorous reproducibility, facilitates parity checks, and enables consistent comparisons across disparate machines and branches by rendering run outputs entirely predictable.
+Following the run interface contract keeps runs reproducible, makes parity checks easier, and keeps outputs predictable across machines and branches.
 }{
-It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or \cmd{--run-contract}) and mandates strict adherence to configuration keys; standard training dependencies apply.
+It assumes run-interface-contract mode, such as \cmd{--run-id} or \cmd{--run-contract}, strict config keys, and the standard training dependencies.
 }
 \ChapterAudience{Read this chapter when you are running training jobs and want reproducible artifact layout, resume behavior, and tuning surfaces.}
 
@@ -19,7 +19,7 @@ It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or
 {Native dataset layouts passed directly to the reference trainer, missing config keys, stale resume paths, backend-specific export failures, or unexpected training dependencies.}
 
 \section{Model-family policy and reference training stack}
-YOLOZU contracts (predictions schema, evaluation reports, scenario outputs) are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical aspect is the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs, independent of the producing model family.
+YOLOZU interface contracts for predictions, evaluation reports, and scenario outputs are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical part is the \textbf{run interface contract}: stable artifact paths and resumable training runs, independent of the model family that produced them.
 
 \subsection{Dataset-format boundary for the reference trainer}
 The RT-DETR reference trainer does not claim that it can ingest every native dataset layout directly at training time. Its expected input is a dataset root that \cmd{build_manifest(...)} can resolve, which in practice means a YOLO-style root or a YOLOZU wrapper/descriptor that has already been normalized. The multi-format user convenience layer therefore lives one step earlier: \cmd{yolozu doctor import --dataset-from auto}, \cmd{yolozu import dataset --from auto}, and \cmd{yolozu migrate dataset --from auto} can auto-detect supported native sources such as COCO, COCO keypoints, Ultralytics/YOLO, and the supported semantic-segmentation roots, then materialize a normalized wrapper for training.
@@ -45,25 +45,25 @@ python3 rtdetr_pose/tools/train_minimal.py \
 \end{lstlisting}
 
 \section{The Run Contract: Rationale and implementation}
-A standardized run directory typically encompasses:
+A standardized run directory contains:
 \begin{itemize}
   \item Checkpoints (e.g., \path{runs/<run-id>/checkpoints/best.pt})
   \item Exported models (e.g., ONNX formats)
-  \item Predictions and comprehensive evaluation reports
+  \item Predictions and evaluation reports
   \item Calibration statistics artifacts (when explicitly enabled)
 \end{itemize}
 
-This structured approach significantly streamlines:
+This layout makes these operations easier:
 \begin{itemize}
-  \item The reproduction of experimental results
-  \item The execution of rigorous parity checks
-  \item Systematic comparisons across different Git branches or compute nodes
+  \item Reproducing experiment results
+  \item Running parity checks
+  \item Comparing runs across Git branches or compute nodes
 \end{itemize}
 
-Core tenets of the run contract (codified within the documentation and enforced by the trainer):
+Core rules of the run interface contract, documented here and enforced by the trainer:
 \begin{itemize}
   \item Activation via the \cmd{--run-contract} or \cmd{--run-id <id>} flags.
-  \item Contract mode mandates explicit configuration keys and strictly rejects unrecognized keys to prevent silent configuration drift.
+  \item Run-interface-contract mode requires explicit configuration keys and rejects unrecognized keys to prevent silent configuration drift.
   \item A deterministic artifact layout under \path{runs/<run_id>/}:
     \begin{itemize}
       \item \path{checkpoints/last.pt}, \path{checkpoints/best.pt}
@@ -124,7 +124,7 @@ Optional & \path{runs/<run_id>/reports/training_summary.json} & Present as the b
 \noindent\textbf{Note (low-level trainer):} When invoking \cmd{python3 -m rtdetr_pose.train_minimal} directly, specifying \cmd{--run-id} implicitly activates run-contract mode and necessitates a \cmd{--config} argument (a YAML/JSON file such as \path{configs/examples/train_contract.yaml}). For rapid smoke tests bypassing the run contract, use explicit values such as \cmd{--run-dir runs/exp001} and \cmd{--onnx-out runs/exp001/model.onnx}.
 
 \section{Configuration resolution and strictness}
-The training entry point ingests YAML/JSON configurations via \cmd{--config}, subsequently applying explicit CLI overrides. The resolution hierarchy is strictly defined as:
+The training entry point reads YAML/JSON configurations via \cmd{--config}, then applies explicit CLI overrides. The resolution hierarchy is:
 \begin{center}
 \textbf{CLI flags \(>\) config file \(>\) built-in defaults}
 \end{center}
@@ -497,7 +497,7 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 Backbone-specific configurations are not primarily governed by solver flags; rather, they are derived from the model configuration file specified by \texttt{model\_config} in the training YAML.
 This section applies to the in-repo \path{rtdetr_pose} adapter boundary.
 
-Comprehensive notes and examples regarding the backbone contract are maintained in \path{docs/backbones.md}.
+Backbone notes and examples are maintained in \path{docs/backbones.md}.
 
 The backbone output contract strictly mandates three feature maps: \texttt{[P3, P4, P5]} with corresponding strides of \texttt{[8, 16, 32]}. Each level is independently projected to the transformer's \texttt{d\_model} dimension via 1x1 convolutions, then processed by the RT-DETR-style FPN/PAN + hybrid encoder path.
 
