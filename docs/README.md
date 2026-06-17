@@ -100,6 +100,7 @@ Supporting docs:
 - Production readiness: [`production_readiness.md`](production_readiness.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
+- Web docs plan: [`web_docs_plan.md`](web_docs_plan.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
 - Research note template: [`research_note_template.md`](research_note_template.md)
 - Learning features overview: [`learning_features.md`](learning_features.md)

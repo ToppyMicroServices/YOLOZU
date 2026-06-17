@@ -51,9 +51,28 @@ class TestReleaseReadinessDocs(unittest.TestCase):
 
         self.assertTrue(template.is_file(), "missing evaluation protocol template")
         self.assertIn("evaluation_protocol_template.md", docs_index)
+        self.assertIn("web_docs_plan.md", docs_index)
         self.assertIn("Version Compatibility Matrix", readiness)
         self.assertIn("Production Readiness Matrix", readiness)
         self.assertIn("Schema Browser Coverage", schema)
+
+    def test_web_docs_plan_covers_expected_surfaces(self):
+        plan_path = self.repo_root / "docs" / "web_docs_plan.md"
+        self.assertTrue(plan_path.is_file(), "missing web docs plan")
+        plan = plan_path.read_text(encoding="utf-8")
+        expected = [
+            "30-minute path",
+            "2-hour path",
+            "Command reference",
+            "Schema browser",
+            "Examples gallery",
+            "Glossary",
+            "What can go wrong",
+            "Report reading guides",
+        ]
+        for item in expected:
+            with self.subTest(item=item):
+                self.assertIn(item, plan)
 
     def test_ci_contains_release_integrity_gates(self):
         ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
