@@ -9,6 +9,15 @@ It is optimally suited for offline and batch processing workflows where addition
 }
 \ChapterAudience{Read this chapter when you need post-inference local correction and want to understand when Hessian refinement helps more than it hurts.}
 
+\WorkflowOpening
+{Apply bounded post-inference local refinement to an already produced predictions artifact.}
+{Use this for offline analysis or controlled studies where small geometric corrections are worth extra compute.}
+{A predictions artifact, dataset context, refinement settings, and an evaluation protocol for before/after comparison.}
+{\cmd{python3 tools/refine_predictions_hessian.py --help} first, then run with explicit input, output, and report paths.}
+{A refined predictions artifact plus a research report describing iterations, convergence, damping, and changed fields.}
+{Validate both input and output artifacts, compare before/after metrics, and inspect whether updates stayed within the configured bounds.}
+{Using refinement as a production default, missing dataset sidecars, unstable damping settings, excessive latency, or interpreting local correction as model retraining.}
+
 \paragraph{Readiness classification.}
 Hessian refinement is a \textbf{research-oriented} path in \yolozu{}.
 Use it as a controlled post-inference study or offline correction stage, not as the default production lane.

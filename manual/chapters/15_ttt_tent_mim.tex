@@ -9,6 +9,15 @@ It is most relevant when there is clear domain shift; comparisons require fixed 
 }
 \ChapterAudience{Read this chapter when you are adapting models under domain shift and want a method-by-method guide to Tent, MIM, CoTTA, EATA, and SAR.}
 
+\WorkflowOpening
+{Run bounded test-time adaptation experiments and compare before/after artifacts under a fixed target shift.}
+{Use this when the model faces domain shift and you want controlled Tent, MIM, CoTTA, EATA, or SAR comparisons.}
+{A fixed target image set, baseline export settings, TTT preset or method knobs, seed/reset policy, and output report paths.}
+{\cmd{bash scripts/ttt_compare.sh --help} for the compare route, or \cmd{yolozu export --ttt ...} with bounded TTT flags.}
+{Baseline and adapted predictions, compare JSON/Markdown, TTT logs, and optional method-specific research reports.}
+{Check changed image counts, final losses, guard warnings, reset policy, runtime cost, and before/after metrics on the same target set.}
+{No real domain shift, broad update filters, missing reset policy, unbounded streaming adaptation, or mixing TTA with TTT claims.}
+
 \paragraph{Readiness classification.}
 TTT is a \textbf{research-oriented} lane in \yolozu{}.
 Use it as an inference-time adaptation mode with bounded cost and explicit review, not as the default production update loop.
@@ -65,8 +74,8 @@ caused by an overly broad update scope or an unsafe reset policy.
 \subsection{Operator quick guide (read first)}
 \begin{itemize}
   \item \textbf{Default OFF}: TTT is opt-in and only activates when \cmd{--ttt} is set.
-  \item \textbf{Default update scope}: start with safe presets (norm-only / adapter-safe). For CoTTA/EATA/SAR rollout, keep updates constrained to LoRA/Norm-safe subsets first.
-  \item \textbf{Reset recommendation}: for controlled comparisons, prefer \cmd{--ttt-reset sample}; for streaming latency operation, use bounded \cmd{--ttt-reset stream} with explicit \cmd{--ttt-max-batches}.
+  \item \textbf{Default update scope}: start with safe presets (norm-only / adapter-safe). Keep CoTTA/EATA/SAR constrained to LoRA/Norm-safe subsets first.
+  \item \textbf{Reset recommendation}: for controlled comparisons, prefer \cmd{--ttt-reset sample}. For streaming, use \cmd{--ttt-reset stream} only with an explicit batch cap.
 \end{itemize}
 
 \begin{figure}[h]

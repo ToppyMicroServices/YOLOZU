@@ -9,6 +9,15 @@ It requires continual configs and run artifacts (for example \cmd{continual_run.
 }
 \ChapterAudience{Read this chapter when you are training across tasks or domains and need to reason about forgetting, replay, self-distillation, LoRA, or QLoRA.}
 
+\WorkflowOpening
+{Evaluate staged model updates across tasks or domains while measuring forgetting before any checkpoint promotion.}
+{Use this when training happens in phases and old-task behavior must remain visible alongside new-task learning.}
+{Continual configs, task datasets or wrappers, prior checkpoint paths, optional replay buffers, and run/eval JSON artifacts.}
+{Run \cmd{train_continual.py}, then \cmd{eval_continual.py} and \cmd{continual_decide.py} with explicit report paths.}
+{\path{continual_run.json}, per-stage metrics, \path{continual_eval.json}, and a promotion decision report.}
+{Confirm old-task and new-task metrics are present, forgetting thresholds are recorded, and promotion gates explain promote/review/hold.}
+{Treating online updates as approved continual learning, missing old-task eval, weak replay provenance, stale teacher checkpoints, or unclear LoRA update scope.}
+
 \paragraph{Readiness classification.}
 Continual learning in \yolozu{} is a \textbf{research-oriented} lane with explicit promotion gates.
 It is supported for reproducible experiments and governed checkpoint promotion, but it is not the first production lane for most adopters.

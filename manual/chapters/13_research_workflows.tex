@@ -9,6 +9,14 @@ It assumes the utilization of stable JSON artifacts and, where applicable, proto
 }
 \ChapterAudience{Read this chapter when you are planning ablations, sweeps, offline distillation, or artifact-first research loops.}
 
+\WorkflowOpening
+{Run repeatable research loops while keeping the evaluation boundary artifact-first and comparable.}
+{Use this for ablations, frozen subsets, protocol-pinned comparisons, sweeps, prediction distillation, and research notes.}
+{Stable JSON artifacts, a fixed dataset subset or protocol, and explicit output paths for reports and histories.}
+{Start with validation and protocol-pinned eval; use the specific sweep, distillation, or benchmark helper only after artifacts are valid.}
+{Suite reports, sweep histories, distilled predictions, benchmark summaries, and research-note inputs.}
+{Check that subset seeds, protocol files, metric keys, and artifact paths are recorded before interpreting the result.}
+{Changing subsets mid-study, mixing conceptual and executable commands, skipping validation, or comparing reports with different protocol settings.}
 
 \section{The research loop in \yolozu{}}
 A canonical research iteration proceeds as follows:

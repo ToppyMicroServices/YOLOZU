@@ -9,6 +9,15 @@ You will require a dataset root and one or more prediction artifacts; backend-sp
 }
 \ChapterAudience{Read this chapter when you already have data or model outputs and need to decide the fastest safe path to evaluation, export, or migration.}
 
+\WorkflowOpening
+{Pick the shortest route from existing outputs, backend inference, folder inference, or migration to a validated evaluation report.}
+{Use this when you need to evaluate \path{predictions.json}, export one from a backend, inspect folder-level overlays, or normalize data from another ecosystem.}
+{A dataset root or image folder; optionally an existing \path{predictions.json}, model artifact, backend runtime, or native dataset definition.}
+{\cmd{yolozu validate predictions ... --strict} first, then the matching eval/export/migrate command for Workflow A--D.}
+{\path{predictions.json}, validation output, evaluation JSON/HTML, overlays, or normalized dataset wrappers depending on the workflow.}
+{Open the report JSON, confirm schema validation passed, and check that dataset split, class ids, and prediction counts match the intended run.}
+{Missing files, stale relative paths, class-id drift, backend runtime imports, unsupported model shapes, or conceptual examples copied without real paths.}
+
 \paragraph{Readiness classification.}
 Workflow A in this chapter is the \textbf{stable main production lane} for \yolozu{}: validate predictions, then evaluate them under one pinned predictions interface contract.
 Export paths and backend-specific execution remain useful, but they should be understood as secondary to that main lane.
