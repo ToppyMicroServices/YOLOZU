@@ -107,24 +107,24 @@ This improves enterprise deployability, but it does not remove the separate
 review boundary for datasets, model weights, vendor runtimes, or hosted
 deployment environments.
 
-\section{AI-First Design Intent}
-This repository is architected as an \textbf{AI-first} codebase.
-In practical terms, this implies:
+\section{Automation-Oriented Design Intent}
+This repository is designed for reliable automation and human review.
+In practical terms, this means:
 \begin{itemize}
-  \item AI agents must be capable of \textbf{utilizing} the codebase safely via stable command surfaces and well-defined interface contracts.
-  \item AI agents must be able to \textbf{extend} workflows (e.g., introducing new experiments, scripts, or reports) without violating existing interfaces.
-  \item JSON schemas and machine-readable registries are treated as first-class interfaces, rather than optional metadata.
+  \item Automation clients can use the codebase safely through stable command surfaces and well-defined interface contracts.
+  \item Scripted workflows can add experiments, scripts, or reports without breaking existing interfaces.
+  \item JSON schemas and machine-readable registries are first-class interfaces, not optional metadata.
 \end{itemize}
 
-Operational guidance for both human operators and agentic workflows follows the operating rules above: artifacts are first-class, interface contracts are validated before scoring, and evaluation protocols remain pinned.
+Operational guidance for human operators and automated workflows follows the operating rules above: artifacts are first-class, interface contracts are validated before scoring, and evaluation protocols remain pinned.
 
 High-level objectives include:
 \begin{itemize}
-  \item Generating stable, versioned JSON artifacts (encompassing predictions, evaluation reports, and run metadata).
+  \item Generating stable, versioned JSON artifacts for predictions, evaluation reports, and run metadata.
   \item Ensuring CPU-minimum compatibility for development and testing; GPU acceleration remains optional for training and inference.
-  \item Facilitating backend-agnostic workflows (supporting PyTorch, ONNX Runtime, TensorRT, and custom C++/Rust implementations).
-  \item Streamlining migration by accepting prevalent dataset ecosystems (e.g., YOLO-style data.yaml formats, COCO JSON) via lightweight wrapper artifacts, thereby preserving the integrity of original datasets.
-  \item Enforcing a production-oriented run interface contract (Run Contract) for training operations, which standardizes artifact paths, resumption capabilities, and model exports.
+  \item Supporting backend-agnostic workflows across PyTorch, ONNX Runtime, TensorRT, and custom C++/Rust implementations.
+  \item Making migration easier by accepting common dataset ecosystems, such as YOLO-style data.yaml formats and COCO JSON, through lightweight wrapper artifacts that preserve original datasets.
+  \item Enforcing a production-oriented run interface contract for training operations, with standard artifact paths, resume behavior, and model exports.
   \item Maintaining a strict Apache-2.0 operational posture, ensuring no non-Apache dependencies are present in shipped code paths.
   \item Avoiding built-in telemetry in shipped tooling; quality control is performed through explicit, reviewable checks instead.
 \end{itemize}
@@ -135,7 +135,7 @@ The primary entry points for navigating the project are:
 \begin{itemize}
   \item \path{README.md}: Provides a concise overview and essential canonical commands.
   \item \path{docs/README.md}: Serves as the documentation index, organized by \textit{task objective}.
-  \item \path{docs/yolozu_spec.md}: Contains the comprehensive feature summary and technical specification.
+  \item \path{docs/yolozu_spec.md}: Contains the feature summary and technical specification.
   \item \path{tools/}: Houses power-user scripts and the repository's wrapper CLI.
 \end{itemize}
 

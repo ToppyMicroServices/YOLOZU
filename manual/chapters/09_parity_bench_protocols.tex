@@ -1,11 +1,11 @@
 \chapter{Parity, Benchmarks, and Protocols}
 
 \ChapterMeta{
-This chapter details parity checking methodologies, protocol-pinned evaluation configurations, and the utilization of benchmark and sweep harnesses.
+This chapter explains parity checks, protocol-pinned evaluation settings, and benchmark/sweep harnesses.
 }{
-These tools ensure that comparisons remain stable and actionable by proactively detecting silent numerical drift and systematically tracking performance and metric trends over time.
+These tools keep comparisons stable by catching silent numerical drift and tracking performance and metric trends over time.
 }{
-Execution requires a minimum of two comparable prediction artifacts for parity analysis; protocol-driven runs necessitate pinned settings files alongside consistent preprocessing and output formats.
+You need at least two comparable prediction artifacts for parity analysis. Protocol-driven runs also need pinned settings files, consistent preprocessing, and consistent output formats.
 }
 \ChapterAudience{Read this chapter when you are comparing backends, benchmarking runs, or trying to make metrics fair across repeated experiments.}
 
@@ -25,7 +25,7 @@ See \path{docs/production_readiness.md}.
 
 
 \section{Backend parity}
-When exporting predictions across disparate backends (e.g., PyTorch, ONNX Runtime, TensorRT), it is critical to detect any silent numerical drift. Parity tooling systematically compares two prediction artifacts and generates a comprehensive report of any discrepancies.
+When exporting predictions across backends such as PyTorch, ONNX Runtime, and TensorRT, check for silent numerical drift. Parity tooling compares two prediction artifacts and reports the differences.
 
 \begin{figure}[h]
 \centering
@@ -72,7 +72,7 @@ yolozu parity   --reference reports/pred_torch.json   --candidate reports/pred_o
 \end{lstlisting}
 
 \section{Protocols (pinning evaluation settings)}
-Protocols establish immutable evaluation configurations (such as dataset splits, image dimensions, and specific metric keys). This standardization is paramount for ensuring stable, longitudinal comparisons.
+Protocols pin evaluation settings such as dataset splits, image dimensions, and metric keys. This keeps long-running comparisons stable.
 
 For YOLO26 comparisons, the pinned protocol is defined as follows:
 \begin{itemize}
@@ -83,13 +83,13 @@ For YOLO26 comparisons, the pinned protocol is defined as follows:
   \item Primary score key: \cmd{map50_95}
 \end{itemize}
 
-A critical semantic rule derived from the protocol documentation:
+A key semantic rule from the protocol documentation:
 \begin{itemize}
   \item "End-to-end (e2e) mAP" dictates that the evaluator scores detections exactly as provided; it explicitly does \textit{not} apply Non-Maximum Suppression (NMS).
 \end{itemize}
 
 \section{Benchmarks}
-Latency and FPS benchmarks constitute a vital component of the regression testing surface.
+Latency and FPS benchmarks are part of the regression testing surface.
 
 The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
 current implementation remains artifact-first and additionally wires real

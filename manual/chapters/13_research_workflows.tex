@@ -1,11 +1,11 @@
 \chapter{Research Workflows (End-to-end Loops)}
 
 \ChapterMeta{
-This chapter delineates end-to-end research loops and introduces the supporting utilities designed for managing subsets, executing sweeps, and conducting benchmarks.
+This chapter defines repeatable research loops and the utilities for subsets, sweeps, and benchmarks.
 }{
-It establishes a framework for repeatable experiments grounded in an artifact-first discipline, ensuring that results can be reliably compared and regressed over time.
+It keeps experiments artifact-first so results can be compared and regressed over time.
 }{
-It assumes the utilization of stable JSON artifacts and, where applicable, protocol presets. Maintaining deterministic subsets is crucial for ensuring fair and valid comparisons.
+It assumes stable JSON artifacts and, when needed, protocol presets. Keep subsets deterministic so comparisons stay fair and valid.
 }
 \ChapterAudience{Read this chapter when you are planning ablations, sweeps, offline distillation, or artifact-first research loops.}
 
@@ -22,15 +22,15 @@ It assumes the utilization of stable JSON artifacts and, where applicable, proto
 A canonical research iteration proceeds as follows:
 \begin{enumerate}
   \item Build or acquire a model (either via internal training or external sourcing).
-  \item Export predictions adhering strictly to the stable JSON contract.
-  \item Validate all contracts immediately (adopting a fail-fast methodology).
+  \item Export predictions that follow the stable JSON interface contract.
+  \item Validate artifacts immediately and fail fast.
   \item Evaluate the artifacts under a pinned protocol (generating suite reports).
-  \item Conduct backend parity checks and compare historical runs (utilizing JSONL/CSV/MD histories).
-  \item (Optional) Apply post-hoc calibration and subsequently re-evaluate.
+  \item Run backend parity checks and compare historical runs with JSONL/CSV/MD histories.
+  \item (Optional) Apply post-hoc calibration and then re-evaluate.
   \item (Optional) Execute hyperparameter sweeps and benchmark latency metrics.
 \end{enumerate}
 
-The foundational discipline is: \textbf{treat artifacts as first-class entities}. Every run must generate JSON files that facilitate seamless reproduction and rigorous comparison.
+The discipline is simple: \textbf{treat artifacts as first-class entities}. Every run must generate JSON files that support reproduction and comparison.
 
 \section{Freezing a dataset subset for ablations}
 Rapid ablation studies frequently require a deterministic subset of a larger dataset. \yolozu{} provides a dedicated utility for this purpose:
@@ -38,22 +38,22 @@ Rapid ablation studies frequently require a deterministic subset of a larger dat
 python3 tools/make_subset_dataset.py   --dataset data/coco128   --split train2017   --n 50   --seed 0   --out reports/coco128_50
 \end{lstlisting}
 
-This command generates:
+This command writes:
 \begin{itemize}
   \item A dedicated subset dataset directory.
-  \item A frozen image list (guaranteeing reproducible sampling).
-  \item A subset metadata JSON file (ensuring clear provenance).
+  \item A frozen image list for reproducible sampling.
+  \item A subset metadata JSON file for clear provenance.
 \end{itemize}
 
 \section{Protocol-pinned evaluation (YOLO26 example)}
-Protocols rigidly pin evaluation settings to guarantee that metrics remain comparable across extended timeframes. For YOLO26, the protocol is explicitly defined within \path{protocols/yolo26_eval.json} (the evaluation tool ingests this file and embeds its parameters into the final suite reports).
+Protocols pin evaluation settings so metrics remain comparable over time. For YOLO26, the protocol is defined in \path{protocols/yolo26_eval.json}; the evaluation tool reads this file and embeds its parameters into the final suite reports.
 
 To execute a suite evaluation across multiple prediction artifacts:
 \begin{lstlisting}[language=bash]
 python3 tools/eval_suite.py   --protocol yolo26   --dataset /path/to/yolo-dataset   --predictions-glob '/path/to/pred_*.json'   --output reports/eval_suite.json
 \end{lstlisting}
 
-The resulting report incorporates protocol metadata (e.g., split definitions, bounding box formats), which is absolutely essential for valid research comparisons.
+The resulting report includes protocol metadata, such as split definitions and bounding box formats. This metadata is required for valid research comparisons.
 
 \section{Validating contracts as a research quality gate}
 Before investing time in metric interpretation, you must validate your artifacts:
@@ -65,7 +65,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 This step is particularly critical when ingesting predictions exported from external pipelines.
 
 \section{Backend parity (Torch vs. ONNX Runtime vs. TensorRT)}
-When evaluating different inference backends, establishing output alignment is the mandatory first step. Utilize the parity tooling to compare two \path{predictions.json} artifacts and identify systematic discrepancies (e.g., variations in preprocessing, coordinate formatting, or underlying numerics).
+When evaluating different inference backends, output alignment comes first. Use the parity tooling to compare two \path{predictions.json} artifacts and identify systematic differences, such as preprocessing, coordinate formatting, or numerical drift.
 
 \textbf{Conceptual (not copy-paste as-is):} parity command shape.
 Use real artifacts and validate them first as shown in the quality-gate section above.
@@ -74,7 +74,7 @@ yolozu parity   --reference reports/pred_torch.json   --candidate reports/pred_o
 \end{lstlisting}
 
 \section{Sweeps (Hyperparameter search harness)}
-Research workflows frequently necessitate parameter sweeps that operate independently of the primary training loop. The sweep harness executes external commands, aggregates metrics, and generates comprehensive summary tables.
+Research workflows often need parameter sweeps that run outside the primary training loop. The sweep harness runs external commands, aggregates metrics, and writes summary tables.
 
 Quick start:
 \begin{lstlisting}[language=bash]
@@ -88,7 +88,7 @@ Default outputs include:
   \item \path{reports/hpo_sweep.md}
 \end{itemize}
 
-Employ the \cmd{--resume} flag to render sweeps incremental and highly resilient to unexpected interruptions.
+Use the \cmd{--resume} flag to make sweeps incremental and resilient to interruptions.
 
 Critical configuration fields (detailed in \path{docs/hpo_sweep.md}):
 \begin{itemize}
@@ -98,7 +98,7 @@ Critical configuration fields (detailed in \path{docs/hpo_sweep.md}):
   \item \textbf{Optional runtime controls}: \cmd{env}, \cmd{shell}.
 \end{itemize}
 
-The harness is intentionally framework-agnostic; it makes no assumptions regarding the underlying training stack.
+The harness is intentionally framework-agnostic; it makes no assumptions about the underlying training stack.
 
 \section{Prediction distillation workflow}
 \yolozu{} includes a beginner-friendly \emph{offline prediction distillation} helper at
