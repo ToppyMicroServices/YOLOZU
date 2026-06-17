@@ -10,6 +10,12 @@ Consult this chapter when introducing new tools, modifying CLI flags, or revisin
 \ChapterAudience{Read this chapter when changing code and documentation together, especially if command surfaces, examples, or write effects are involved.}
 
 
+\section{Relationship to the Tool Registry Chapter}
+Chapter~12 explains how users and automation discover declared tools from the
+registry. This chapter is different: it is the maintainer checklist for changing
+that registry. Use it when a code, CLI, manifest, docs, or manual change must
+land together in the same pull request.
+
 \section{The Necessity of a Dedicated Chapter}
 As the repository's tool surface expands, command examples embedded within narrative chapters are prone to becoming obsolete. A dedicated, manifest-driven workflow guarantees that:
 \begin{itemize}
@@ -85,7 +91,7 @@ For each affected command family, rigorously verify the following:
 \end{itemize}
 
 \section{Understanding Manifest Capabilities}
-The manifest is not merely a list of scripts; it is a declarative governance tool. By inspecting \path{tools/manifest.json}, users can ascertain:
+The manifest is not merely a list of scripts; it is a declarative governance tool. Chapter~12 covers day-to-day discovery. In this chapter, inspect \path{tools/manifest.json} to decide what must be updated when behavior changes:
 \begin{itemize}
   \item \textbf{Platform Compatibility}: The \texttt{platform} object indicates whether a tool requires a GPU (\texttt{gpu\_required}) or supports macOS/Linux.
   \item \textbf{Dependencies}: The \texttt{requires} object lists necessary Python packages and system-level dependencies (e.g., TensorRT).

@@ -7,7 +7,14 @@ It underpins reproducible automation and Continuous Integration (CI)-style workf
 }{
 This documentation assumes that tools are invoked exclusively via their declared entrypoints and validated using \cmd{python3 tools/validate_tool_manifest.py}. Path-resolution rules are critical for robust automation.
 }
-\ChapterAudience{Read this chapter when you maintain tools, automation, or manifest-driven documentation and need the operational source of truth.}
+\ChapterAudience{Read this chapter when you need to discover declared tools, understand their inputs and outputs, or build automation from the registry.}
+
+\section{Boundary With the Maintenance Chapter}
+This chapter explains how to \emph{read and use} the tool registry: what the
+manifest contains, how to query it, and how automation should treat declared
+entrypoints. Chapter~18 owns the \emph{maintenance workflow}: changing tool
+behavior, updating \path{tools/manifest.json}, syncing packaged copies, and
+keeping docs/manual examples aligned.
 
 
 \section{The Rationale for a Tool Registry}
@@ -25,13 +32,14 @@ This architecture is explicitly designed to serve:
   \item \textbf{CI-Style Reproducibility}: Ensuring stable commands and deterministic artifact generation.
 \end{itemize}
 
-\section{Authority and the Update Imperative}
-For CLI capabilities and tool I/O behavior, \path{tools/manifest.json} serves as the \textbf{authoritative source of truth}. Manual documentation must be synchronized from the manifest, rather than maintained as an independent, potentially divergent list.
+\section{Authority for Discovery and Execution}
+For CLI capabilities and tool I/O behavior, \path{tools/manifest.json} serves as the \textbf{authoritative source of truth}. Treat prose examples as derived guidance: use the manifest and the tool's \cmd{--help} output when wiring automation.
 
-In the event of a discrepancy:
+When discovery surfaces disagree:
 \begin{itemize}
   \item \textbf{Behavioral Truth}: Resides in the code and the manifest.
-  \item \textbf{Documentation Action}: Update this manual chapter and any related chapters to reflect the manifest.
+  \item \textbf{Operator Action}: Prefer the declared manifest entry and verify the tool's \cmd{--help} output.
+  \item \textbf{Maintainer Action}: Use Chapter~18 to update the manifest, packaged copy, docs, and manual together.
   \item \textbf{Quality Gate}: Re-run the manifest validator prior to publishing any changes.
 \end{itemize}
 
@@ -112,22 +120,16 @@ For autonomous or semi-autonomous operations, the recommended stable entrypoints
 
 This represents an explicit design objective of \yolozu{}: AI agents must be capable of discovering, validating, executing, and extending workflows utilizing stable, well-defined interface contracts.
 
-\section{Manifest-Synchronized Documentation Workflow}
-When introducing or modifying a tool, adhere to the following workflow:
-\begin{enumerate}
-  \item Update the script's behavior within \path{tools/} and ensure the CLI help output remains accurate.
-  \item Update \path{tools/manifest.json} to reflect changes in inputs, effects, outputs, examples, and contracts.
-  \item Validate the manifest's structure and internal references.
-  \item Revise the corresponding manual chapter sections and examples.
-  \item Maintain synchronization of documentation links (e.g., \path{docs/README.md}, \path{docs/tools_index.md}).
-\end{enumerate}
-
-This rigorous process keeps manual chapters aligned with the registry, thereby minimizing stale command drift.
-
-Validate the tool registry using:
-\begin{lstlisting}[language=bash]
-python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
-\end{lstlisting}
+\section{When You Need to Change the Registry}
+Do not treat this chapter as the maintenance checklist. If you add a flag,
+change an output path, add a public tool, or alter manifest metadata, follow
+Chapter~18. That chapter is the canonical update procedure for:
+\begin{itemize}
+  \item changing tool behavior and \cmd{--help} output,
+  \item updating \path{tools/manifest.json} and the packaged manifest copy,
+  \item syncing docs/manual examples, and
+  \item running the manifest and docs-reference quality gates.
+\end{itemize}
 
 \subsection*{SynthGen intake tools (registry additions)}
 The registry now exposes explicit intake utilities for externally generated synthetic shards:
