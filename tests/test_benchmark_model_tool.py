@@ -73,10 +73,9 @@ class TestBenchmarkModelTool(TestCase):
 
     def test_artifact_eval_tasks_do_not_require_backend_runtimes(self):
         artifact_tasks = ("classification", "obb", "segmentation", "keypoints", "depth", "pose6d")
-        formats = ("torch", "onnx", "engine", "torchscript", "openvino")
         with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
             for task_label in artifact_tasks:
-                for fmt in formats:
+                for fmt in benchmark_mode.REAL_BACKEND_FORMATS:
                     with self.subTest(task=task_label, fmt=fmt):
                         supported, reason = benchmark_mode._support_status_for_format(
                             fmt,
