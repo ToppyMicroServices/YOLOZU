@@ -75,6 +75,32 @@ Recommended next step:
 - map checklist evidence from `docs/release_reliability_checklist.md`
 - keep the repository governance snapshot audit current in `docs/repo_governance_audit.md`
 
+### `SASTID`
+
+This depends on GitHub recognizing static-analysis coverage for the relevant
+commits. The source-level control is the pinned CodeQL workflow; after that, the
+signal may lag until CodeQL completes on the default branch and GitHub refreshes
+code-scanning state.
+
+Recommended operational rule:
+
+- keep `.github/workflows/codeql.yml` enabled on `main` and on a schedule
+- require the default `ci` workflow before merge
+- verify the latest CodeQL run after security-sensitive workflow changes
+
+### `CITestsID`
+
+This depends on repository history and whether merged changes are associated
+with CI-tested commits. The repository's default `ci` workflow now runs on pull
+requests and `main`; the remaining risk is operational, such as admin merges or
+manual pushes that bypass the normal review path.
+
+Recommended operational rule:
+
+- land changes through pull requests with passing `ci`
+- avoid direct pushes to `main`
+- keep workflow-only changes covered by the release/security regression fast path
+
 ### `VulnerabilitiesID`
 
 This tracks dependency vulnerabilities and reachable package exposure. Some findings can be reduced in-code by raising minimum versions or locking installs, but others require dependency updates over time.
@@ -124,7 +150,7 @@ security findings:
 - `.clusterfuzzlite/Dockerfile` installs from a hash-locked requirements file with `pip --require-hashes`
 - `osv-scanner.toml` documents a scoped ignore for `GHSA-hqmj-h5c6-369m`
 - `.github/workflows/scorecard.yml` is pinned to `ossf/scorecard-action` `v2.4.3`
-- `.github/workflows/scorecard.yml` now also runs on pull requests targeting `main`, so Scorecard/SAST posture regressions surface before merge instead of only after landing on the default branch
+- `.github/workflows/build_and_test.yml` runs a workflow-only release/security regression fast path on pull requests, while `.github/workflows/scorecard.yml` uploads default-branch posture to code scanning after merge
 - `pyproject.toml`, `requirements-test.txt`, and repository lockfiles pin `onnx>=1.21.0` / `onnx==1.21.0` to pick up fixes for:
   - `GHSA-3r9x-f23j-gc73`
   - `GHSA-538c-55jv-c5g9`

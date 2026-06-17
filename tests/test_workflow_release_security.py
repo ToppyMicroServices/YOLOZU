@@ -73,6 +73,14 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("tests.test_release_readiness_docs", ci)
         self.assertIn("tests.test_workflow_release_security", ci)
 
+    def test_scorecard_governance_tracks_sast_and_ci_history_findings(self):
+        governance = (self.repo_root / "docs" / "security_scorecard_governance.md").read_text(encoding="utf-8")
+        audit_tool = (self.repo_root / "tools" / "check_repo_governance.py").read_text(encoding="utf-8")
+        for finding in ["SASTID", "CITestsID"]:
+            with self.subTest(finding=finding):
+                self.assertIn(f"### `{finding}`", governance)
+                self.assertIn(f'"id": "{finding}"', audit_tool)
+
     def test_container_bootstrap_locks_keep_incident_fix_versions(self):
         runtime_lock = (self.repo_root / "requirements-locks" / "requirements-runtime.lock").read_text(encoding="utf-8")
         pose_lock = (
