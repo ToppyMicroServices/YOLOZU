@@ -27,24 +27,24 @@ The default strategy combines:
   \item \textbf{Optional parameter-efficiency}: restrict trainable parameters (e.g., LoRA) to reduce forgetting pressure.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 \centering
-\resizebox{\linewidth}{!}{%
+\resizebox{0.94\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\small,
-  box/.style={draw, rounded corners, align=left, inner sep=8pt},
-  streambox/.style={box, fill=blue!8, text width=0.28\linewidth},
-  memorybox/.style={box, fill=orange!10, text width=0.24\linewidth},
-  trainbox/.style={box, fill=green!10, text width=0.29\linewidth},
-  evalbox/.style={box, fill=purple!8, text width=0.25\linewidth},
+  box/.style={draw, rounded corners, align=left, inner sep=6pt},
+  streambox/.style={box, fill=blue!8, text width=3.7cm},
+  memorybox/.style={box, fill=orange!10, text width=3.5cm},
+  trainbox/.style={box, fill=green!10, text width=4.0cm},
+  evalbox/.style={box, fill=purple!8, text width=3.7cm},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 
 \node[streambox] (tasks) at (0,0) {\textbf{Incoming task stream}\\Task A $\rightarrow$ Task B $\rightarrow$ Task C};
-\node[memorybox] (prev) at (5.6,1.45) {\textbf{Previous checkpoint}\\acts as a teacher / anchor};
-\node[memorybox] (replay) at (5.6,-1.45) {\textbf{Replay buffer}\\small memory of older samples};
-\node[trainbox] (train) at (11.8,0) {\textbf{New training run}\\current task + replay + self-distill};
-\node[evalbox] (eval) at (17.8,0) {\textbf{Evaluation}\\old tasks and new task are measured together};
+\node[memorybox] (prev) at (5.7,1.75) {\textbf{Previous checkpoint}\\acts as a teacher / anchor};
+\node[memorybox] (replay) at (5.7,-1.75) {\textbf{Replay buffer}\\small memory of older samples};
+\node[trainbox] (train) at (11.6,0) {\textbf{New training run}\\current task + replay + self-distill};
+\node[evalbox] (eval) at (17.1,0) {\textbf{Evaluation}\\old tasks and new task are measured together};
 
 \draw[arrow] (tasks) -- (train);
 \draw[arrow] (prev) -- (train);
