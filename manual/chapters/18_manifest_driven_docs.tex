@@ -36,6 +36,9 @@ Relevant supplementary references include:
 \begin{itemize}
   \item \path{docs/manifest_declarative_spec.md}
   \item \path{docs/tools_index.md}
+  \item \path{docs/production_readiness.md}
+  \item \path{docs/evaluation_protocol_template.md}
+  \item \path{docs/schema_governance.md}
   \item \path{docs/repo_governance_audit.md}
   \item \path{tools/validate_tool_manifest.py}
 \end{itemize}
@@ -164,4 +167,13 @@ To avoid double maintenance:
   \item Keep \path{docs/README.md} as an \textbf{index/entry page} with links only.
   \item Keep procedural depth and operational nuance in chapter docs and \path{manual/chapters/}.
   \item When overlap is unavoidable, prefer a single canonical page and link to it from all other surfaces.
+\end{itemize}
+
+\section{Technical credibility artifacts}
+Keep the technical credibility tables in the GitHub docs and link to them from
+the manual instead of copying the same matrix into multiple chapters:
+\begin{itemize}
+  \item \path{docs/production_readiness.md}: version compatibility and production readiness matrices.
+  \item \path{docs/evaluation_protocol_template.md}: reusable evaluation protocol template for benchmark or customer-facing reports.
+  \item \path{docs/schema_governance.md}: schema browser coverage for predictions, dataset, training, SynthGen, and research artifacts.
 \end{itemize}
