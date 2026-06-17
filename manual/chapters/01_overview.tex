@@ -63,8 +63,18 @@ teach two habits:
   \item Predictions interface contract (JSON artifacts).
   \item Multi-task: detection, segmentation, keypoints, monocular depth, and 6DoF pose.
   \item Deployment + interoperability: ONNX export and runtime backends.
-  \item AI-first development: stable CLIs, machine-readable manifests, and regression-testable artifacts.
+  \item Automation-ready development: stable CLIs, machine-readable manifests, and regression-testable artifacts.
 \end{itemize}
+
+\paragraph{Continual, online, and TTT in one line.}
+These terms all involve distribution shift, but they should lead to different
+operational choices:
+\begin{itemize}
+  \item \textbf{Continual learning}: staged retraining with explicit evaluation gates before checkpoint promotion.
+  \item \textbf{Online learning}: live or near-live model updates; highest operational risk and not the default YOLOZU path.
+  \item \textbf{TTT}: temporary inference-time adaptation for the current batch or stream; compare before/after artifacts and reset policy.
+\end{itemize}
+Read Chapter~14 for continual-learning governance and Chapter~15 for TTT method details.
 
 \paragraph{Where MCP and SynthGen fit.}
 MCP automation and SynthGen handoff are useful integration surfaces, but they

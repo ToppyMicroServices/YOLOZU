@@ -8,6 +8,15 @@ The practical goal is to make a synthetic dataset handoff reproducible, CI-frien
 }
 \ChapterAudience{Read this chapter when you are connecting \path{YOLOZU-synthgen} or another external synthetic-data generator to the YOLOZU intake and evaluation path.}
 
+\WorkflowOpening
+{Validate and evaluate synthetic-data handoffs without letting generator details leak into YOLOZU's evaluation boundary.}
+{Use this when an external renderer or generator emits shards, assets, and predictions that YOLOZU must inspect and score.}
+{A generated dataset root, shard JSONL files, asset paths that still resolve, and optional \path{predictions_synthgen.json}.}
+{\cmd{python3 tools/smoke_synthgen.py ...} for the bundled check, or run validate, overlay render, and eval helpers separately.}
+{Validation results, overlay PNGs, SynthGen eval JSON, summary JSON, and any failed sample diagnostics.}
+{Open at least one overlay, confirm schema validation passed, and check that renderer-derived labels and asset paths are still consistent.}
+{Broken relative paths, schema-version drift, generator-owned labels mixed with YOLOZU outputs, or treating appearance generation as ground truth.}
+
 \paragraph{Readiness classification.}
 This chapter belongs to the \textbf{experimental} lane in \yolozu{}.
 The intake and evaluation path is reproducible, but the external generator environment still needs qualification and path discipline before production use.

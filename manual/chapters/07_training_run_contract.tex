@@ -9,6 +9,14 @@ It assumes operation within run-contract mode (e.g., utilizing \cmd{--run-id} or
 }
 \ChapterAudience{Read this chapter when you are running training jobs and want reproducible artifact layout, resume behavior, and tuning surfaces.}
 
+\WorkflowOpening
+{Run training so checkpoints, summaries, exports, resume state, and evaluation handoff files land in predictable locations.}
+{Use this when YOLOZU owns the reference training run or when an external lane must emit a stable training summary and next-step handoff.}
+{A normalized dataset root or wrapper, a YAML/JSON training config, and optional resume/export/parity settings.}
+{\cmd{yolozu train ...} for the public route, or \cmd{python3 rtdetr_pose/tools/train_minimal.py ...} when using the low-level reference trainer.}
+{\path{runs/<run_id>/checkpoints/}, \path{runs/<run_id>/reports/}, optional \path{exports/}, and \path{training_summary.json}.}
+{Check that \path{config_resolved.yaml}, metrics JSONL, checkpoint paths, and optional export/parity reports exist and match the selected run id.}
+{Native dataset layouts passed directly to the reference trainer, missing config keys, stale resume paths, backend-specific export failures, or unexpected training dependencies.}
 
 \section{Model-family policy and reference training stack}
 YOLOZU contracts (predictions schema, evaluation reports, scenario outputs) are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical aspect is the \textbf{run contract}: a formalized guarantee of stable artifact paths and seamlessly resumable training runs, independent of the producing model family.

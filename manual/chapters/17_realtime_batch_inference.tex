@@ -9,6 +9,14 @@ Real-time TensorRT paths are typically Linux with an NVIDIA GPU; parity requires
 }
 \ChapterAudience{Read this chapter when you need to choose between offline throughput and real-time deployment constraints.}
 
+\WorkflowOpening
+{Choose batch or real-time inference while keeping \path{predictions.json}, parity, and latency evidence explicit.}
+{Use this when moving from offline evaluation toward ONNX Runtime, TensorRT, or streaming deployment constraints.}
+{Model/export artifacts, input shape assumptions, preprocessing settings, runtime backend, and hardware notes.}
+{\cmd{python3 tools/export_trt.py ...}, \cmd{python3 tools/build_trt_engine.py ...}, and backend export/parity commands with real paths.}
+{ONNX or engine artifacts, metadata JSON, predictions artifacts, parity reports, and latency/FPS reports.}
+{Confirm shape metadata, preprocessing, backend output format, parity tolerance, and hardware-pinned latency are all recorded.}
+{Shape mismatch, hidden preprocessing drift, unsupported GPU/runtime libraries, unbudgeted TTT/refinement, or latency claims without hardware evidence.}
 
 \section{Two operating modes}
 \begin{description}

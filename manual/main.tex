@@ -83,6 +83,24 @@
   \vspace{0.75em}
 }
 
+\newcommand{\WorkflowOpening}[7]{%
+  \begingroup
+  \small
+  \raggedright
+  \sloppy
+  \paragraph{Operator opening.}
+  \begin{description}
+    \item[Goal] #1
+    \item[When to use] #2
+    \item[Inputs] #3
+    \item[Command] #4
+    \item[Outputs] #5
+    \item[How to verify] #6
+    \item[Common failure modes] #7
+  \end{description}
+  \endgroup
+}
+
 \title{\yolozu{} Manual (Detailed)}
 \author{YOLOZU contributors}
 \date{\today}

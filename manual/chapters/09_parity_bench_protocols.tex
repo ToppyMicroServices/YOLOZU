@@ -9,6 +9,15 @@ Execution requires a minimum of two comparable prediction artifacts for parity a
 }
 \ChapterAudience{Read this chapter when you are comparing backends, benchmarking runs, or trying to make metrics fair across repeated experiments.}
 
+\WorkflowOpening
+{Compare backend outputs and benchmark reports without mixing runtime drift into metric conclusions.}
+{Use this when at least two artifacts, formats, or runs must be compared under the same protocol and preprocessing assumptions.}
+{Comparable \path{predictions.json} files, protocol settings, backend export settings, and hardware/runtime notes for benchmark runs.}
+{\cmd{yolozu parity ...} for artifact comparison, or \cmd{yolozu benchmark ...} / \cmd{python3 tools/benchmark_model.py ...} for benchmark reports.}
+{Parity JSON, benchmark JSON, export settings, evaluation reports, and skipped-format records when a backend cannot execute.}
+{Confirm the report states real, artifact-backed, synthetic, or skipped status and records the reference backend and protocol settings.}
+{Mismatched preprocessing, shape-pinned engines, hidden NMS differences, absent optional runtimes, or treating skipped formats as successful benchmarks.}
+
 \paragraph{Readiness classification.}
 This chapter belongs to the \textbf{experimental} lane in \yolozu{}.
 Parity and benchmark tooling are valuable qualification tools, but they still depend strongly on the local runtime matrix and should not be mistaken for the main production lane by themselves.
