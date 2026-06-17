@@ -97,14 +97,14 @@ The generator-side pipeline is:
 
 The important handoff idea is that \cmd{scene_spec} is fully materialized before rendering, and the renderer-produced passes remain authoritative throughout the rest of the pipeline.
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 \centering
-\resizebox{\linewidth}{!}{%
+\resizebox{0.92\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\small,
-  box/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.0cm, fill=white},
-  wide/.style={draw, rounded corners, align=left, inner sep=6pt, text width=4.6cm, fill=white},
-  smallbox/.style={draw, rounded corners, align=left, inner sep=6pt, text width=3.4cm, fill=white},
+  box/.style={draw, rounded corners, align=left, inner sep=5pt, text width=4.0cm, fill=white},
+  wide/.style={draw, rounded corners, align=left, inner sep=5pt, text width=4.6cm, fill=white},
+  smallbox/.style={draw, rounded corners, align=left, inner sep=5pt, text width=3.4cm, fill=white},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
 \node[box] (assets) at (0, 0) {\textbf{Asset sources}\\CAD / mesh files\\or primitive boxes\\asset metadata\\+ keypoints};
@@ -131,7 +131,7 @@ The important handoff idea is that \cmd{scene_spec} is fully materialized before
 \end{pgfonlayer}
 \end{tikzpicture}
 }
-\caption{SynthGen generation path: CAD/mesh or primitive assets are compiled into a renderer-ready scene, the renderer owns the labels, and background editing is limited to label-safe appearance stages.}
+\caption{SynthGen path: assets become a renderer-ready scene, renderer outputs remain authoritative labels, and appearance edits stay within label-safe stages.}
 \end{figure}
 
 \section{How images and labels are handled}
