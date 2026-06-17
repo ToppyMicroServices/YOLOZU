@@ -1,0 +1,194 @@
+# Generated CLI Reference
+
+This file is generated from `python3 -m yolozu --help` and `tools/manifest.json`.
+Keep narrative docs short and link here for the full command surface.
+
+## Top-level `yolozu --help`
+
+```text
+usage: yolozu [-h] [--version]
+              {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp} ...
+
+positional arguments:
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp}
+    guide               Show beginner-friendly routes and copy-paste commands.
+    doctor (dr)         Check the environment. Use --explain for beginner-
+                        friendly next actions.
+    list                List registries and built-in catalogs.
+    fetch               Download a model artifact from the built-in (or
+                        custom) model registry.
+    export              Export predictions.json artifacts across the supported
+                        backend lanes.
+    export-dataset      Export a YOLOZU dataset into YOLO, COCO, KITTI, or
+                        segmentation layout.
+    predict-images      Run folder inference and write predictions JSON +
+                        overlays + HTML.
+    eval-coco           Evaluate detections with COCOeval (optional extra:
+                        yolozu[coco]).
+    calibrate           Apply post-hoc FRACAL calibration to bbox or instance-
+                        seg predictions JSON.
+    eval-long-tail      Evaluate long-tail detection metrics in one
+                        standardized report.
+    long-tail-recipe    Generate a decoupled long-tail training recipe with
+                        plugin-style rebalance config.
+    benchmark           Ultralytics-parity benchmark entrypoint (Phase 1:
+                        honest synthetic probe + explicit skipped formats).
+    parity              Compare two predictions JSON artifacts for backend
+                        parity.
+    predictions         Predictions artifact utilities.
+    validate            Validate artifacts (predictions JSON, instance-seg
+                        predictions).
+    eval-instance-seg   Evaluate instance segmentation predictions (mask mAP
+                        over PNG masks).
+    onnxrt              ONNXRuntime utilities (optional extra:
+                        yolozu[onnxrt]).
+    resources           Access packaged configs/schemas/protocols.
+    migrate             Migration helpers (dataset/config/predictions).
+    import              Import adapters (read-only projection into canonical
+                        schema).
+    train               Train with the RT-DETR pose reference trainer by
+                        default, or use --external-backend yolox|detectron2|mm
+                        detection|mmpose|mmseg|tao|ultralytics|hf-detr for
+                        external training lanes.
+    train-orchestrate   Plan or execute a small multi-backend training batch
+                        from one orchestration spec.
+    test                Run scenario suite (dummy/precomputed adapters are
+                        CPU-only).
+    demo                Run small self-contained demos (CPU-friendly).
+    registry            AI-first tool registry: list/show/validate/run tools
+                        from the canonical manifest.
+    completion (comp)   Print shell completion script (bash/zsh).
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+
+© 2026 ToppyMicroServices OÜ
+Legal address: Karamelli tn 2, 11317 Tallinn, Harju County, Estonia
+Registry code: 16551297
+Contact: develop@toppymicros.com
+```
+
+## Manifest Tool Registry
+
+| Tool ID | Maturity | Entry point | Summary |
+|---|---|---|---|
+| adapter_parity_suite | experimental | tools/adapter_parity_suite.py | Run parity checks for multiple adapter outputs against a reference adapter predictions file. |
+| announce_release | stable | tools/announce_release.py | Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. |
+| audit_backend_support | experimental | tools/audit_backend_support.py | Dry-run interface contract audit for YOLOX/YOLOv8/Detectron2/MMDetection export backends. |
+| audit_docs_examples_drift | stable | tools/audit_docs_examples_drift.py | Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates. |
+| audit_manual_cli_drift | stable | tools/audit_manual_cli_drift.py | Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface. |
+| backend_parity_matrix | experimental | tools/backend_parity_matrix.py | Run one-command backend parity matrix checks across torch/onnxrt/trt/opencv_dnn/custom_cpp and export JSON+HTML reports. |
+| benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. |
+| benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
+| benchmark_latency | experimental | tools/benchmark_latency.py | Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. |
+| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
+| benchmark_sar_robustness | research | tools/benchmark_sar_robustness.py | Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. |
+| build_manifest | stable | tools/build_manifest.py | Build a dataset manifest for data/coco128 (writes reports/manifest.json). |
+| build_trt_engine | experimental | tools/build_trt_engine.py | Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. |
+| calibrate_scores | stable | tools/calibrate_scores.py | Temperature-scale detection scores to improve mAP proxy on a fixed subset (no NMS). |
+| check_golden_compatibility | experimental | tools/check_golden_compatibility.py | Validate versioned golden compatibility assets and hash-pinned eval protocol snapshots. |
+| check_keypoints_parity | experimental | tools/check_keypoints_parity.py | Compare two keypoints prediction JSONs and report mismatches (IoU/tolerance-based). |
+| check_license_policy | stable | tools/check_license_policy.py | Enforce Apache-2.0-only constraints (denylist + no vendored GPL/AGPL license texts). |
+| check_map_targets | stable | tools/check_map_targets.py | Compare eval_suite results against a target table and exit non-zero on failure. |
+| check_mcp_settings | stable | tools/check_mcp_settings.py | Audit MCP settings by checking manifest alignment and generated MCP/Actions reference freshness. |
+| check_predictions_parity | experimental | tools/check_predictions_parity.py | Compare two prediction JSONs and report mismatches (IoU/tolerance-based). |
+| check_repo_governance | stable | tools/check_repo_governance.py | Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. |
+| check_segmentation_parity | experimental | tools/check_segmentation_parity.py | Compare two segmentation predictions artifacts and report mask-level parity mismatches. |
+| continual_decide | research | tools/continual_decide.py | Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. |
+| convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract. |
+| distill_predictions | research | tools/distill_predictions.py | Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT. |
+| dod_cpu_smoke | stable | scripts/dod_cpu_smoke.sh | Run the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. |
+| download_coco_instances_tiny | stable | scripts/download_coco_instances_tiny.py | Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. |
+| eval_coco | stable | tools/eval_coco.py | Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate). |
+| eval_continual | research | tools/eval_continual.py | Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. |
+| eval_cotta_drift | research | tools/eval_cotta_drift.py | Compare baseline-vs-CoTTA TTT reports and generate reproducible drift/stability evidence artifacts (JSON+Markdown). |
+| eval_depth | experimental | tools/eval_depth.py | Evaluate one predicted depth map against one ground-truth map and report depth_error metrics. |
+| eval_instance_segmentation | stable | tools/eval_instance_segmentation.py | Evaluate instance segmentation predictions (mask mAP) from binary PNG masks with optional HTML/overlays. |
+| eval_keypoints | stable | tools/eval_keypoints.py | Evaluate keypoint predictions using PCK (bbox-normalized distance) with optional COCO OKS mAP, HTML, and overlays. |
+| eval_pose | experimental | tools/eval_pose.py | Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics. |
+| eval_segmentation | stable | tools/eval_segmentation.py | Evaluate semantic segmentation predictions (mIoU / per-class IoU) with ignore_index support and optional HTML/overlays. |
+| eval_suite | stable | tools/eval_suite.py | Evaluate a set of bucketed prediction JSONs (glob) and write a single suite report JSON. |
+| eval_synthgen | experimental | tools/eval_synthgen.py | Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth. |
+| export_actions_openapi | stable | tools/export_actions_openapi.py | Export a static OpenAPI JSON schema for YOLOZU Actions API registration. |
+| export_predictions | stable | tools/export_predictions.py | Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips. |
+| export_predictions_coco_keypoints | experimental | tools/export_predictions_coco_keypoints.py | Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity. |
+| export_predictions_detectron2 | experimental | tools/export_predictions_detectron2.py | Run Detectron2 inference and export YOLOZU predictions.json with protocol/export_settings metadata. |
+| export_predictions_executorch | experimental | tools/export_predictions_executorch.py | Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation). |
+| export_predictions_mmdet | experimental | tools/export_predictions_mmdet.py | Run MMDetection inference and export YOLOZU predictions.json with protocol/export_settings metadata. |
+| export_predictions_onnxrt | experimental | tools/export_predictions_onnxrt.py | Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv; see Rust ONNXRuntime template notes in external inference docs). |
+| export_predictions_opencv_dnn | experimental | tools/export_predictions_opencv_dnn.py | Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8 84 or YOLOv5 85+obj raw heads supported). |
+| export_predictions_opencv_dnn_rtdetr | experimental | tools/export_predictions_opencv_dnn_rtdetr.py | Run OpenCV-DNN inference on an RT-DETR ONNX model and export YOLOZU predictions JSON (no NMS), recording fixed preprocess/export_settings. |
+| export_predictions_opencv_dnn_unified | experimental | tools/export_predictions_opencv_dnn_unified.py | Unified OpenCV-DNN exporter with preprocess/decode presets, IO dump, and backend/target controls. |
+| export_predictions_openvino | experimental | tools/export_predictions_openvino.py | Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
+| export_predictions_torchscript | experimental | tools/export_predictions_torchscript.py | Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
+| export_predictions_trt | experimental | tools/export_predictions_trt.py | Run TensorRT engine inference and export YOLOZU predictions JSON (requires tensorrt + CUDA bindings). |
+| export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run external YOLO-runtime inference and export YOLOZU predictions.json with protocol and export_settings metadata. |
+| export_predictions_yolov5 | experimental | tools/export_predictions_yolov5.py | Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings. |
+| export_predictions_yolox | experimental | tools/export_predictions_yolox.py | Run YOLOX inference (or dry-run) and export YOLOZU predictions.json with exp parameter capture. |
+| export_trt | experimental | tools/export_trt.py | Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. |
+| fetch_coco128 | stable | tools/fetch_coco128.sh | Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting). |
+| fetch_model | stable | yolozu/cli.py | Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates. |
+| gen_ci_dummy_dets_onnx | stable | tools/ci/gen_dummy_dets_onnx.py | Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks. |
+| gen_ci_smoke_dataset | stable | tools/ci/gen_smoke_dataset.py | Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. |
+| generate_benchmark_support_matrix | stable | tools/generate_benchmark_support_matrix.py | Generate the canonical benchmark support matrix from support metadata. |
+| generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode. |
+| generate_smoke_assets | stable | tools/generate_smoke_assets.py | Generate deterministic offline smoke assets under data/smoke from local data/coco128. |
+| gpu_validation_preflight | experimental | tools/gpu_validation_preflight.py | Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. |
+| hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
+| import_yolo_data_yaml | stable | tools/import_yolo_data_yaml.py | Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). |
+| list_models | stable | yolozu/cli.py | List fetchable model IDs from the built-in (or custom) model registry. |
+| make_subset_dataset | stable | tools/make_subset_dataset.py | Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs. |
+| measure_trt_latency | experimental | tools/measure_trt_latency.py | Measure a TensorRT engine's latency/FPS and write a metrics report JSON. |
+| normalize_predictions | stable | tools/normalize_predictions.py | Normalize prediction class ids (category_id↔class_id) and optionally wrap with meta. |
+| orchestrate_train | experimental | tools/orchestrate_train.py | Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary. |
+| package_segmentation_predictions | experimental | tools/package_segmentation_predictions.py | Package a class-id mask directory into the YOLOZU segmentation predictions interface contract. |
+| pre_push | stable | scripts/pre_push.sh | Run local pre-push gates (ruff + focused unit tests including external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing. |
+| prepare_ade20k_seg | stable | tools/prepare_ade20k_seg.py | Prepare ADE20K semantic segmentation layout + dataset.json manifest. |
+| prepare_cityscapes_seg | stable | tools/prepare_cityscapes_seg.py | Prepare Cityscapes semantic segmentation layout + dataset.json manifest. |
+| prepare_coco_instance_seg | stable | tools/prepare_coco_instance_seg.py | Convert official COCO instances JSON into YOLO-format labels + per-instance PNG masks + sidecar metadata for instance-seg eval. |
+| prepare_coco_yolo | stable | tools/prepare_coco_yolo.py | Convert official COCO instances JSON into YOLO-format labels + (optional) copy images. |
+| prepare_keypoints_dataset | stable | tools/prepare_keypoints_dataset.py | Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. |
+| prepare_real_multitask_fewshot | stable | tools/prepare_real_multitask_fewshot.py | Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata. |
+| prepare_ttt_domain_shift_target | research | scripts/prepare_ttt_domain_shift_target.py | Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence. |
+| prepare_voc_seg | stable | tools/prepare_voc_seg.py | Prepare Pascal VOC semantic segmentation layout + dataset.json manifest. |
+| publish_benchmark_table | stable | tools/publish_benchmark_table.py | Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. |
+| refine_predictions_hessian | research | tools/refine_predictions_hessian.py | Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. |
+| release | stable | release.sh | Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow now validates package version, optional manual release_tag input, and CHANGELOG heading alignment before PyPI publish, while the container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... |
+| release_tag | stable | tools/release_tag.py | Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... |
+| render_synthgen_overlay | experimental | tools/render_synthgen_overlay.py | Render semantic + instance + keypoint overlays from SynthGen shard samples. |
+| render_ttt_manual_figures | research | tools/render_ttt_manual_figures.py | Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use. |
+| report_dependency_licenses | stable | tools/report_dependency_licenses.py | Generate a best-effort dependency license report from installed Python packages (not legal advice). |
+| rtdetr_pose_backend_suite | experimental | tools/rtdetr_pose_backend_suite.py | Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt). |
+| rtdetr_pose_train_continual | research | rtdetr_pose/tools/train_continual.py | Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract). |
+| run_actions_api | stable | tools/run_actions_api.py | Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend. |
+| run_external_finetune_smoke | experimental | tools/run_external_finetune_smoke.py | Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary. |
+| run_mcp_server | stable | tools/run_mcp_server.py | Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config). |
+| run_real_multitask_finetune_demo | experimental | tools/run_real_multitask_finetune_demo.py | Run staged real-image multitask finetune demo across bbox/segmentation/keypoints/depth/pose6d with strict task-data checks. |
+| run_reference_adapter_regression | experimental | tools/run_reference_adapter_regression.py | Run RT-DETR reference-adapter regression with hardened record I/O+preprocess interface contract checks, profile-aware micro/full flows, backend-aware behavior gates, optional parity checks, provenance/SBOM capture, and automatic diff-summary/top-k failure artifacts. |
+| run_rtdetr_pose_backend_suite | experimental | tools/run_rtdetr_pose_backend_suite.py | End-to-end runner for rtdetr_pose: export (PyTorch→ONNX→TRT) + backend parity/benchmark suite. |
+| run_scenarios | stable | tools/run_scenarios.py | Run the scenario suite pipeline (adapter + constraints utilities) and write a report JSON. |
+| run_trt_pipeline | experimental | tools/run_trt_pipeline.py | Orchestrate the YOLO26 TensorRT pipeline (engine build → predictions export → parity → eval_suite → latency report). |
+| run_ttt_compare | research | tools/run_ttt_compare.py | Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory. |
+| smoke | stable | scripts/smoke.sh | Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks. |
+| smoke_synthgen | experimental | tools/smoke_synthgen.py | Run deterministic SynthGen smoke (interface-contract validate + one overlay + eval) using local mini-shard fixtures. |
+| support_external_training | experimental | tools/support_external_training.py | External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends. |
+| support_yolo_detr | experimental | tools/support_yolo_detr.py | YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization. |
+| ttt_compare | research | scripts/ttt_compare.sh | Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare. |
+| tune_gate_weights | research | tools/tune_gate_weights.py | Offline grid-search for inference-time score-fusion weights (CPU-only, simple mAP proxy). |
+| validate_instance_segmentation_predictions | stable | tools/validate_instance_segmentation_predictions.py | Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks). |
+| validate_map_targets | stable | tools/validate_map_targets.py | Validate the mAP target table file (baselines/yolo26_targets.json). |
+| validate_predictions | stable | tools/validate_predictions.py | Validate YOLOZU predictions JSON schema (permissive by default; strict optional). |
+| validate_run_meta | stable | tools/validate_run_meta.py | Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command). |
+| validate_segmentation_predictions | stable | tools/validate_segmentation_predictions.py | Validate YOLOZU segmentation predictions JSON (id→mask path mapping; meta optional). |
+| validate_synthgen_contract | experimental | tools/validate_synthgen_contract.py | Validate SynthGen sample/shard interface-contract fields, dtypes, shapes, and ranges before training/eval. |
+| validate_tool_manifest | stable | tools/validate_tool_manifest.py | Validate tools/manifest.json structure, references, and declarative metadata. |
+| yolo26_pre_pr_quality | stable | scripts/pre_pr_quality.sh | Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests). |
+| yolo26_quality_gate | stable | tools/yolo26_quality_gate.sh | Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks. |
+| yolozu | stable | yolozu/cli.py | Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes. |
+
+## Smoke Coverage
+
+- `tests/test_docs_examples_drift.py` checks documented shell examples against help/manifest flags.
+- `tests/test_manual_cli_drift_audit.py` checks manual chapter 04 command references against top-level help.
+- `tests/test_generated_cli_reference.py` fails when this generated reference drifts.
