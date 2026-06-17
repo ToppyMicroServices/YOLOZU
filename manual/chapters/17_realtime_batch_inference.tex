@@ -206,13 +206,16 @@ DoD summaries to \path{ci-logs/gpu-zisn}.
 \section{Inference profiler integration}
 The \texttt{yolozu.inference.profiler} module wraps \texttt{torch.profiler} to produce kernel-level latency traces that complement wall-clock benchmarks.
 
+\begin{lstlisting}[language=Python]
+profiler_available()
+profile_inference(adapter, records, *, warmup, active, output_dir)
+profile_callable(fn, *args, iterations=10, warmup=3)
+\end{lstlisting}
+
 \begin{itemize}
-  \item \texttt{profiler\_available()}\\
-  checks for \texttt{torch.profiler.profile}.
-  \item \texttt{profile\_inference(adapter, records, warmup, active, output\_dir)}\\
-  profiles \texttt{adapter.predict()} calls and writes TensorBoard/Chrome-trace output.
-  \item \texttt{profile\_callable(fn, *args, iterations, warmup)}\\
-  profiles any callable and returns a text summary table.
+  \item \texttt{profiler\_available()} checks for \texttt{torch.profiler.profile}.
+  \item \texttt{profile\_inference(...)} profiles \texttt{adapter.predict()} calls and writes TensorBoard/Chrome-trace output.
+  \item \texttt{profile\_callable(...)} profiles any callable and returns a text summary table.
 \end{itemize}
 
 \begin{lstlisting}[language=Python]
