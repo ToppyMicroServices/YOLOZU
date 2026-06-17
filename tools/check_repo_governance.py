@@ -249,6 +249,18 @@ def run_audit(
             "why": "Badge enrollment and checklist completion happen outside the repository tree.",
             "operator_action": "Maintain the OpenSSF Best Practices badge project and keep the linked evidence current.",
         },
+        {
+            "id": "SASTID",
+            "status": "manual",
+            "why": "Scorecard depends on GitHub recognizing static-analysis coverage for recent default-branch commits.",
+            "operator_action": "Keep CodeQL enabled on main and on a schedule, then verify the latest CodeQL run after security-sensitive workflow changes.",
+        },
+        {
+            "id": "CITestsID",
+            "status": "manual",
+            "why": "Scorecard depends on merged-change history showing CI-tested commits, not only workflow files existing.",
+            "operator_action": "Land changes through pull requests with passing CI and avoid direct pushes to main.",
+        },
     ]
 
     failed_required = [check for check in checks if check["required"] and not check["ok"]]
