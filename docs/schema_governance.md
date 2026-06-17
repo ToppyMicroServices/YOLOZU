@@ -95,3 +95,18 @@ In addition, golden compatibility assets are versioned under `baselines/golden/`
 - `python3 tools/check_golden_compatibility.py`
 
 This gate pins protocol + golden artifact hashes and fails when schema/protocol behavior changes without coordinated golden updates.
+
+## Schema Browser Coverage
+
+Use this table as the maintained schema browser until a generated web page is
+introduced. Each row points to the canonical schema or the closest current
+schema surface for that artifact family.
+
+| Artifact family | Canonical schema | Main docs | Notes |
+|---|---|---|---|
+| Predictions | `docs/schemas/predictions.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Packaged copies live in `schemas/` and `yolozu/data/schemas/`. |
+| Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | Protocol hash must be recorded before fair comparison. |
+| Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |
+| Training handoff | `docs/schemas/training_run_summary.schema.json`, `docs/schemas/training_handoff.schema.json` | [`training_orchestration.md`](training_orchestration.md) | Handoff JSON carries next steps for resume/export/eval/parity. |
+| SynthGen sample | `schemas/synthgen_sample.schema.json` | [`synthgen_contract.md`](synthgen_contract.md), [`synthgen_repo_integration.md`](synthgen_repo_integration.md) | SynthGen intake remains an external generator handoff. |
+| Research reports | `docs/schemas/research_lane_report.schema.json`, `docs/schemas/research_note.schema.json` | [`research_lanes.md`](research_lanes.md), [`research_note_template.md`](research_note_template.md) | Research results stay separate from stable evaluation reports. |

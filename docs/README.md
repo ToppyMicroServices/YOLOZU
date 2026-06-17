@@ -98,6 +98,8 @@ Supporting docs:
 - Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
 - Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
 - Production readiness: [`production_readiness.md`](production_readiness.md)
+- Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
+- Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
 - Research note template: [`research_note_template.md`](research_note_template.md)
 - Learning features overview: [`learning_features.md`](learning_features.md)

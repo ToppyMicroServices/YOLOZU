@@ -43,6 +43,18 @@ class TestReleaseReadinessDocs(unittest.TestCase):
         self.assertIn("stable predictions interface contract", pyproject)
         self.assertNotIn("Development Status :: 3 - Alpha", pyproject)
 
+    def test_technical_credibility_docs_are_linked(self):
+        docs_index = (self.repo_root / "docs" / "README.md").read_text(encoding="utf-8")
+        readiness = (self.repo_root / "docs" / "production_readiness.md").read_text(encoding="utf-8")
+        schema = (self.repo_root / "docs" / "schema_governance.md").read_text(encoding="utf-8")
+        template = self.repo_root / "docs" / "evaluation_protocol_template.md"
+
+        self.assertTrue(template.is_file(), "missing evaluation protocol template")
+        self.assertIn("evaluation_protocol_template.md", docs_index)
+        self.assertIn("Version Compatibility Matrix", readiness)
+        self.assertIn("Production Readiness Matrix", readiness)
+        self.assertIn("Schema Browser Coverage", schema)
+
     def test_ci_contains_release_integrity_gates(self):
         ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
         self.assertIn("Sdist contents gate", ci)

@@ -29,6 +29,26 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Hessian refinement | Research | Offline/local post-inference correction path over evaluated artifacts | [`research_lanes.md`](research_lanes.md), [`hessian_solver.md`](hessian_solver.md), `manual/chapters/10_ttt_hessian.tex` |
 | Training platform | Stable reference lane + qualified external lanes | RT-DETR pose reference trainer is the richest in-repo path and supports depth / pose6d training; external lanes now share a standardized external run bundle even when the backend-native trainer remains outside YOLOZU | [`training_backend_interface.md`](training_backend_interface.md), [`training_capability_matrix.md`](training_capability_matrix.md), [`training_orchestration.md`](training_orchestration.md) |
 
+## Version Compatibility Matrix
+
+| Surface | Pinned / expected version | Production rule | Reference |
+|---|---|---|---|
+| Predictions schema | `schema_version=1`, entry `schema_version=2` | Stable validation/evaluation path; breaking changes require schema governance | [`schema_governance.md`](schema_governance.md), [`predictions_schema.md`](predictions_schema.md) |
+| Python package | `pyproject.toml` package metadata | Release gates must keep package version, changelog, and release trigger aligned | [`release_reliability_checklist.md`](release_reliability_checklist.md) |
+| ONNX export | Opset 17 target unless a protocol overrides it | Regenerate artifacts when runtime compatibility changes | [`versions.md`](versions.md), [`onnx_export_parity.md`](onnx_export_parity.md) |
+| TensorRT / CUDA | TensorRT 8.6.1, CUDA 12.1 target envelope | Treat as environment-qualified, not CPU default | [`versions.md`](versions.md), [`tensorrt_pipeline.md`](tensorrt_pipeline.md) |
+| Training handoff | `training_run_summary` / `training_handoff` schemas | Machine-readable handoff must validate before external promotion | [`training_orchestration.md`](training_orchestration.md), [`schema_governance.md`](schema_governance.md) |
+
+## Production Readiness Matrix
+
+| Lane | Default? | Required proof before relying on it | Promotion boundary |
+|---|---:|---|---|
+| Evaluate existing predictions | Yes | `doctor --proof`, strict validation, evaluation report | Production-ready when report schema and protocol match |
+| External inference bridge | Yes, when predictions are supplied | Predictions interface contract validation plus license/runtime note | Production remains with the caller's inference stack |
+| Benchmark / parity | No | Artifact-backed or real backend report with explicit skipped lanes | Promote per backend/runtime after environment qualification |
+| Training / external bridge | No | Dry-run or run bundle with next command, expected outputs, and license boundary | Promote only after exported predictions evaluate cleanly |
+| Research lanes | No | Separate research report over already evaluated artifacts | Never overwrite the stable evaluation result |
+
 ## Stable today
 
 - predictions interface contract: wrapped `predictions.json` plus protocol-pinned `meta.export_settings`
@@ -72,6 +92,7 @@ Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest
 
 - [`../README.md`](../README.md)
 - [`README.md`](README.md)
+- [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
 - [`predictions_schema.md`](predictions_schema.md)
 - [`external_inference.md`](external_inference.md)
 - [`install.md`](install.md)
