@@ -71,6 +71,21 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("openvino", benchmark_mode.PHASE1_FORMATS)
         self.assertIn("openvino", benchmark_mode.REAL_BACKEND_FORMATS)
 
+    def test_artifact_eval_tasks_do_not_require_backend_runtimes(self):
+        artifact_tasks = ("classification", "obb", "segmentation", "keypoints", "depth", "pose6d")
+        formats = ("torch", "onnx", "engine", "torchscript", "openvino")
+        with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
+            for task_label in artifact_tasks:
+                for fmt in formats:
+                    with self.subTest(task=task_label, fmt=fmt):
+                        supported, reason = benchmark_mode._support_status_for_format(
+                            fmt,
+                            device="cpu",
+                            task_label=task_label,
+                        )
+                        self.assertTrue(supported)
+                        self.assertIsNone(reason)
+
     def test_task_alias_pose_canonicalizes_to_keypoints(self):
         args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="pose", dry_run=True)
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
