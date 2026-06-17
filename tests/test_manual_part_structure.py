@@ -15,11 +15,21 @@ class TestManualPartStructure(unittest.TestCase):
             "\\part{Training and Research Workflows}",
             "\\part{Maintainer, Automation, and Appendices}",
         ]
+        for part in parts:
+            with self.subTest(part=part):
+                self.assertIn(part, text)
         positions = [text.index(part) for part in parts]
         self.assertEqual(positions, sorted(positions))
 
     def test_troubleshooting_is_in_quickstart_part(self):
         text = self.main_tex.read_text(encoding="utf-8")
+        for marker in (
+            "\\part{User Quickstart}",
+            "\\part{Production Evaluation Manual}",
+            "\\include{chapters/11_troubleshooting}",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, text)
         quickstart = text.index("\\part{User Quickstart}")
         production = text.index("\\part{Production Evaluation Manual}")
         troubleshooting = text.index("\\include{chapters/11_troubleshooting}")
