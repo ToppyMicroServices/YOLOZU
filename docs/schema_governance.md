@@ -6,7 +6,7 @@ This document defines how YOLOZU evolves JSON artifact schemas without breaking 
 
 The authoritative predictions JSON Schema lives at `docs/schemas/predictions.schema.json`
 (JSON Schema draft 2020-12). The copies at `schemas/predictions.schema.json` and
-`yolozu/data/schemas/predictions.schema.json` (packaged) must stay in sync — they are
+`yolozu/data/schemas/predictions.schema.json` (packaged) must stay in sync - they are
 overwritten from the canonical copy during release preparation.
 
 ## Scope

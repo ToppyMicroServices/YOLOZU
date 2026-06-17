@@ -204,7 +204,7 @@ This repo’s checkpoint-based self-distillation is a pragmatic anti-forgetting 
 - Self-distillation (classic reference): Furlanello et al., “Born Again Neural Networks” (arXiv:1805.04770)
   - https://arxiv.org/abs/1805.04770
 - Continual learning via self-distillation: “Self-Distillation Enables Continual Learning” (arXiv:2601.19897)
-  - https://arxiv.org/abs/2601.19897?utm_source=chatgpt.com
+  - https://arxiv.org/abs/2601.19897
 
 ## 0-minute start (pip users; CPU)
 

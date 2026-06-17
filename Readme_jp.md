@@ -1,4 +1,4 @@
-# YOLOZU (萬) — 日本語README
+# YOLOZU (萬) - 日本語README
 
 English: [`README.md`](README.md) | 中文: [`Readme_zh.md`](Readme_zh.md)
 
