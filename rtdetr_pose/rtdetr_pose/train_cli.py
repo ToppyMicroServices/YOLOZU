@@ -136,6 +136,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional JSON file containing extra records to append to the scanned dataset records.",
     )
+    parser.add_argument(
+        "--val-records-json",
+        default=None,
+        help="Optional JSON file containing validation records (overrides val-split scan).",
+    )
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument(

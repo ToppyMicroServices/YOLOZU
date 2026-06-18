@@ -7,6 +7,26 @@ from pathlib import Path
 from typing import Any, Callable
 
 
+def _resolve_records_json_path(value: str, *, workspace_root: Path) -> Path:
+    path = Path(str(value))
+    if not path.is_absolute():
+        path = (workspace_root / path).resolve()
+        if not path.exists():
+            path = (workspace_root.parent / Path(str(value))).resolve()
+    return path
+
+
+def _load_records_json(path: Path, *, label: str) -> list[dict[str, Any]]:
+    if not path.exists():
+        raise SystemExit(f"{label} records json not found: {path}")
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(loaded, dict) and "images" in loaded:
+        loaded = loaded.get("images")
+    if not isinstance(loaded, list):
+        raise SystemExit(f"{label} records json must be a list or {{images:[...]}}: {path}")
+    return [r for r in loaded if isinstance(r, dict)]
+
+
 def load_train_records(
     *,
     args: Any,
@@ -20,38 +40,16 @@ def load_train_records(
     keypoint_skeleton: list[list[int]] = []
 
     if getattr(args, "records_json", None):
-        records_path = Path(str(args.records_json))
-        if not records_path.is_absolute():
-            records_path = (workspace_root / records_path).resolve()
-            if not records_path.exists():
-                records_path = (workspace_root.parent / Path(str(args.records_json))).resolve()
-        if not records_path.exists():
-            raise SystemExit(f"records json not found: {records_path}")
-        loaded = json.loads(records_path.read_text(encoding="utf-8"))
-        if isinstance(loaded, dict) and "images" in loaded:
-            loaded = loaded.get("images")
-        if not isinstance(loaded, list):
-            raise SystemExit(f"records json must be a list or {{images:[...]}}: {records_path}")
-        records = [r for r in loaded if isinstance(r, dict)]
+        records_path = _resolve_records_json_path(str(args.records_json), workspace_root=workspace_root)
+        records = _load_records_json(records_path, label="records")
     else:
         manifest = build_manifest_fn(dataset_root, split=args.split)
         records = list(manifest.get("images") or [])
         keypoint_names, keypoint_skeleton = extract_manifest_keypoints_meta_fn(manifest)
 
     if getattr(args, "extra_records_json", None):
-        extra_path = Path(str(args.extra_records_json))
-        if not extra_path.is_absolute():
-            extra_path = (workspace_root / extra_path).resolve()
-            if not extra_path.exists():
-                extra_path = (workspace_root.parent / Path(str(args.extra_records_json))).resolve()
-        if not extra_path.exists():
-            raise SystemExit(f"extra records json not found: {extra_path}")
-        loaded = json.loads(extra_path.read_text(encoding="utf-8"))
-        if isinstance(loaded, dict) and "images" in loaded:
-            loaded = loaded.get("images")
-        if not isinstance(loaded, list):
-            raise SystemExit(f"extra records json must be a list or {{images:[...]}}: {extra_path}")
-        extra = [r for r in loaded if isinstance(r, dict)]
+        extra_path = _resolve_records_json_path(str(args.extra_records_json), workspace_root=workspace_root)
+        extra = _load_records_json(extra_path, label="extra")
         if extra:
             records = list(records) + extra
 
@@ -231,6 +229,7 @@ def resolve_val_records(
     *,
     args: Any,
     dataset_root: Path,
+    workspace_root: Path,
     build_manifest_fn: Callable[..., dict[str, Any]],
     flatten_records_for_map_fn: Callable[[list[dict[str, Any]]], list[dict[str, Any]]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -241,7 +240,10 @@ def resolve_val_records(
             val_split = "val2017"
 
     val_records: list[dict[str, Any]] = []
-    if val_split:
+    if getattr(args, "val_records_json", None):
+        records_path = _resolve_records_json_path(str(args.val_records_json), workspace_root=workspace_root)
+        val_records = _load_records_json(records_path, label="validation")
+    elif val_split:
         try:
             val_manifest = build_manifest_fn(dataset_root, split=val_split)
             val_records = list(val_manifest.get("images") or [])

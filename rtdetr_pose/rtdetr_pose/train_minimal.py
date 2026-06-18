@@ -372,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
     val_records, val_records_map = resolve_val_records(
         args=args,
         dataset_root=dataset_root,
+        workspace_root=workspace_root,
         build_manifest_fn=build_manifest,
         flatten_records_for_map_fn=flatten_records_for_map,
     )

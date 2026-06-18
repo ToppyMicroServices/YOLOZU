@@ -100,6 +100,7 @@ def _write_external_run_contract_bundle(
         "dataset": {"root": str(dataset_root), "split": str(split)},
         "dry_run": bool(report.get("dry_run")),
         "training_executed": bool(report.get("training_executed")),
+        "execution_status": dict(report.get("execution_status") or {}),
         "ok": bool(report.get("ok")),
         "work_dir": str(work_dir),
         "report_json": str(report_path),
@@ -123,6 +124,7 @@ def _write_external_run_contract_bundle(
         "timestamp": _now_utc(),
         "dry_run": bool(report.get("dry_run")),
         "executed": bool(report.get("training_executed")),
+        "execution_status": dict(report.get("execution_status") or {}),
         "ok": bool(report.get("ok")),
         "runtime_error": runtime_error,
         "process": process_payload or None,
@@ -138,6 +140,39 @@ def _write_external_run_contract_bundle(
         "launcher_plan": str(paths["launcher_plan"]),
         "execution": str(paths["execution"]),
         "train_config_projection": str(paths["train_config_projection"]),
+    }
+
+
+def _external_execution_status(
+    *,
+    dry_run: bool,
+    training_executed: bool,
+    runtime_error: str | None,
+    train_script: str | None = None,
+    requires_train_script: bool = False,
+) -> dict[str, Any]:
+    train_script_value = str(train_script).strip() if train_script else ""
+    if dry_run:
+        state = "dry_run_handoff"
+        reason = "dry-run report and handoff artifacts were generated without executing backend training"
+    elif training_executed:
+        state = "executed"
+        reason = None
+    elif requires_train_script and not train_script_value:
+        state = "requires_external_train_script"
+        reason = runtime_error or "non-dry execution requires an external train script"
+    else:
+        state = "runtime_failed"
+        reason = runtime_error or "backend runtime did not complete training"
+
+    return {
+        "state": state,
+        "real_training_executed": bool(training_executed),
+        "handoff_ready": bool(dry_run or training_executed or runtime_error is not None),
+        "artifact_backed": True,
+        "requires_external_train_script": bool(requires_train_script),
+        "train_script": train_script_value or None,
+        "skip_reason": reason,
     }
 
 
@@ -1155,6 +1190,13 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         },
         handoff_contracts=handoff_contracts,
     )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        train_script=train_script or None,
+        requires_train_script=True,
+    )
     report.update(
         {
             "task": "train_yolox",
@@ -1389,6 +1431,13 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
         },
         handoff_contracts=handoff_contracts,
     )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        train_script=train_script or None,
+        requires_train_script=True,
+    )
     report.update(
         {
             "task": "train_detectron2",
@@ -1621,6 +1670,13 @@ def _cmd_train_mmfamily(
             "note": f"{provider_label} runtime remains external to YOLOZU; review upstream terms and environment setup separately.",
         },
         handoff_contracts=handoff_contracts,
+    )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        train_script=train_script or None,
+        requires_train_script=True,
     )
     report.update(
         {
@@ -1876,6 +1932,13 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
         },
         handoff_contracts=handoff_contracts,
     )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        train_script=train_script or None,
+        requires_train_script=False,
+    )
     report.update(
         {
             "task": "train_tao",
@@ -2084,6 +2147,12 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
             "runtime_license_boundary": runtime_license_boundary,
         },
         handoff_contracts=handoff_contracts,
+    )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        requires_train_script=False,
     )
     report.update(
         {
@@ -2333,6 +2402,13 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
             "runtime_license_boundary": runtime_license_boundary,
         },
         handoff_contracts=handoff_contracts,
+    )
+    report["execution_status"] = _external_execution_status(
+        dry_run=bool(args.dry_run),
+        training_executed=training_executed,
+        runtime_error=runtime_error,
+        train_script=train_script or None,
+        requires_train_script=True,
     )
     report.update(
         {

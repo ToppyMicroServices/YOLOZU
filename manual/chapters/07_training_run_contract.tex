@@ -26,6 +26,8 @@ The RT-DETR reference trainer does not claim that it can ingest every native dat
 
 In other words, users do not need to manually classify the incoming dataset family, but the reference trainer itself still consumes a train-ready YOLOZU/YOLO-style result of that preflight/import step. Semantic-segmentation descriptors and SynthGen intake shards are import/evaluation inputs unless they are converted into train-ready image and label records.
 
+For record-based training, \cmd{--records-json} supplies the training records and \cmd{--val-records-json} supplies validation records. Both files may be a JSON list of records or an object with an \path{images} list. Use this path when the dataset cannot be cleanly represented as one YOLO-style split directory.
+
 \begin{lstlisting}[language=bash]
 python3 -m yolozu doctor import \
   --dataset-from auto \
