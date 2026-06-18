@@ -259,6 +259,39 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertFalse(bool((payload.get("reference_trainer") or {}).get("direct_train_ready")))
             self.assertTrue(payload.get("errors"))
 
+    def test_doctor_train_dataset_rejects_records_with_missing_image_file(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            records_path = root / "records.json"
+            records_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "image": "images/missing.png",
+                            "labels": [{"class_id": 0, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}}],
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--records-json",
+                    str(records_path),
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            self.assertEqual(proc.returncode, 2)
+            payload = json.loads(proc.stdout)
+            records = payload.get("records") or {}
+            self.assertEqual(int(records.get("missing_image_file") or 0), 1)
+            self.assertFalse(bool((payload.get("reference_trainer") or {}).get("direct_train_ready")))
+
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
