@@ -157,9 +157,12 @@ if not dataset_root.is_absolute():
 
 The adapter registry (`yolozu.datasets.registry.probe_format`) auto-detects
 native COCO, COCO keypoints, YOLO/Ultralytics, YOLOZU wrappers, and the
-supported semantic-segmentation roots for doctor/import/migrate flows. For the
-RT-DETR reference trainer itself, pass the normalized YOLOZU/YOLO-style root
-produced by that step (for example `data/coco-yolo/` or a YOLOZU wrapper root).
+supported semantic-segmentation roots for doctor/import/migrate flows. The
+RT-DETR reference trainer accepts YOLO-style roots, YOLO/Ultralytics
+`data.yaml`, and `dataset.json` wrappers that resolve to YOLO label files via
+`images_dir` and `labels_dir`. Semantic-segmentation descriptors and SynthGen
+intake shards remain import/evaluation inputs, not direct reference-trainer
+training inputs.
 
 ## Training (RT-DETR pose reference trainer)
 
@@ -187,7 +190,9 @@ python3 -m yolozu migrate dataset \
 ```
 
 The resulting wrapper root can then be passed to `--dataset-root` for the
-reference trainer.
+reference trainer when it resolves to image files and YOLO label files
+(`images_dir` / `labels_dir` in `dataset.json`, or a direct
+`images/<split>/` + `labels/<split>/` layout).
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher
