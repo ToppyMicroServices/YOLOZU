@@ -201,6 +201,16 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             self.assertEqual(dataset_json.get("task"), "keypoints")
             self.assertEqual(dataset_json.get("keypoint_names"), ["nose", "eye"])
 
+            from rtdetr_pose.dataset import build_manifest as build_rtdetr_manifest
+
+            train_manifest = build_rtdetr_manifest(wrapper, split="val2017")
+            train_records = train_manifest.get("images") or []
+            self.assertEqual(len(train_records), 1)
+            train_label = train_records[0]["labels"][0]
+            self.assertEqual(train_label["class_id"], 0)
+            self.assertEqual(len(train_label.get("keypoints") or []), 2)
+            self.assertEqual((train_manifest.get("keypoints_meta") or {}).get("num_keypoints"), 2)
+
             export_yolo = Path(td) / "export_yolo"
             proc_export_yolo = self._run(
                 [
