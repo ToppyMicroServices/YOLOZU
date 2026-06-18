@@ -61,6 +61,33 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             self.assertFalse(bool(readiness.get("direct_train_ready")))
             self.assertFalse(bool(readiness.get("train_ready_after_migration")))
 
+            proc_train_check = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--from",
+                    "segmentation",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "val",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc_train_check.returncode != 0:
+                self.fail(
+                    "doctor train-dataset on VOC root failed:\n"
+                    f"{proc_train_check.stdout}\n{proc_train_check.stderr}"
+                )
+            train_payload = json.loads(proc_train_check.stdout)
+            train_readiness = train_payload.get("reference_trainer") or {}
+            self.assertEqual(train_readiness.get("task_family"), "segmentation")
+            self.assertFalse(bool(train_readiness.get("direct_train_ready")))
+            self.assertFalse(bool(train_readiness.get("train_ready_after_migration")))
+            self.assertTrue(any("external training lane" in str(cmd) for cmd in train_payload.get("next_commands") or []))
+
             proc_validate_root = self._run(
                 [
                     "validate",
@@ -263,6 +290,32 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             explicit_dataset_json = json.loads((explicit_wrapper / "dataset.json").read_text(encoding="utf-8"))
             self.assertEqual(explicit_dataset_json.get("task"), "keypoints")
             self.assertEqual(explicit_dataset_json.get("keypoint_names"), ["nose", "eye"])
+
+            migrated_wrapper = Path(td) / "migrated_wrapper"
+            proc_migrate_explicit = self._run(
+                [
+                    "migrate",
+                    "dataset",
+                    "--from",
+                    "coco-keypoints",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    str(migrated_wrapper),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc_migrate_explicit.returncode != 0:
+                self.fail(
+                    "migrate dataset coco-keypoints failed:\n"
+                    f"{proc_migrate_explicit.stdout}\n{proc_migrate_explicit.stderr}"
+                )
+            migrated_dataset_json = json.loads((migrated_wrapper / "dataset.json").read_text(encoding="utf-8"))
+            self.assertEqual(migrated_dataset_json.get("task"), "keypoints")
+            self.assertEqual(migrated_dataset_json.get("num_keypoints"), 2)
 
             export_yolo = Path(td) / "export_yolo"
             proc_export_yolo = self._run(
