@@ -1,11 +1,10 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "YOLOZU"
-version: "0.1.0"
-license: "Apache-2.0"
-repository-code: "https://github.com/ToppyMicroServices/YOLOZU"
-url: "https://github.com/ToppyMicroServices/YOLOZU"
+version: "4.4.1"
+date-released: "2026-06-18"
 authors:
   - name: "YOLOZU contributors"
-date-released: "2026-02-15"
-
+license: "Apache-2.0"
+repository-code: "https://github.com/ToppyMicroServices/YOLOZU"
+url: "https://www.toppymicros.com/yolozu/"
