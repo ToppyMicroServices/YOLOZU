@@ -198,7 +198,9 @@ For record-based training, use `--records-json` for the training records and
 `--val-records-json` for validation records. Both files may be either a JSON
 list of records or an object with an `images` list. This keeps train and
 validation inputs explicit when the source dataset cannot be represented as a
-single YOLO-style split directory.
+single YOLO-style split directory. Records may use either `image` or
+`image_path`; label boxes may use flat `cx`/`cy`/`w`/`h` fields or nested
+`bbox: {cx, cy, w, h}` fields.
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher

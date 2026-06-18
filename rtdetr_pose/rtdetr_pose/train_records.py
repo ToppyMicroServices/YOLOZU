@@ -27,6 +27,54 @@ def _load_records_json(path: Path, *, label: str) -> list[dict[str, Any]]:
     return [r for r in loaded if isinstance(r, dict)]
 
 
+def _normalize_label_instance(inst: dict[str, Any]) -> dict[str, Any]:
+    out = dict(inst)
+    bbox = out.get("bbox")
+    if isinstance(bbox, dict):
+        if all(k in bbox for k in ("cx", "cy", "w", "h")):
+            out["bbox"] = {
+                "cx": float(bbox.get("cx", 0.0)),
+                "cy": float(bbox.get("cy", 0.0)),
+                "w": float(bbox.get("w", 0.0)),
+                "h": float(bbox.get("h", 0.0)),
+            }
+        return out
+    if isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
+        out["bbox"] = {
+            "cx": float(bbox[0]),
+            "cy": float(bbox[1]),
+            "w": float(bbox[2]),
+            "h": float(bbox[3]),
+        }
+        return out
+    if all(k in out for k in ("cx", "cy", "w", "h")):
+        out["bbox"] = {
+            "cx": float(out.get("cx", 0.0)),
+            "cy": float(out.get("cy", 0.0)),
+            "w": float(out.get("w", 0.0)),
+            "h": float(out.get("h", 0.0)),
+        }
+    return out
+
+
+def normalize_training_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize YOLOZU dataset records into the reference trainer record shape."""
+
+    normalized: list[dict[str, Any]] = []
+    for record in records or []:
+        if not isinstance(record, dict):
+            continue
+        out = dict(record)
+        image_path = out.get("image_path") or out.get("image")
+        if image_path is not None:
+            out["image_path"] = str(image_path)
+        labels = out.get("labels")
+        if isinstance(labels, list):
+            out["labels"] = [_normalize_label_instance(inst) for inst in labels if isinstance(inst, dict)]
+        normalized.append(out)
+    return normalized
+
+
 def load_train_records(
     *,
     args: Any,
@@ -59,7 +107,7 @@ def load_train_records(
             "Fetch coco128 first: bash tools/fetch_coco128.sh"
         )
 
-    return records, keypoint_names, keypoint_skeleton
+    return normalize_training_records(records), keypoint_names, keypoint_skeleton
 
 
 def enforce_strict_task_data(*, args: Any, records: list[dict[str, Any]], workspace_root: Path) -> None:
@@ -252,5 +300,6 @@ def resolve_val_records(
 
     if val_records and int(getattr(args, "val_max_images", 0) or 0) > 0:
         val_records = list(val_records)[: int(args.val_max_images)]
+    val_records = normalize_training_records(val_records)
     val_records_map = flatten_records_for_map_fn(val_records)
     return val_records, val_records_map
