@@ -30,7 +30,7 @@ Notes:
   - `mask` / `mask_path`, `depth` / `depth_path` / `D_obj`
   - `pose`, `intrinsics`, `meta`
 
-Implementation reference: `yolozu/canonical.py`.
+Implementation reference: `yolozu/core/canonical.py`.
 
 ### TrainConfig (major keys only)
 
@@ -38,7 +38,7 @@ Canonical training config projection focuses on “same meaning” keys:
 - `imgsz`, `batch`, `epochs/steps`, `optimizer`, `lr`, `weight_decay`, `seed`, `device`
 - plus optional buckets: `preprocess`, `aug`, `loss`, `eval`, `export`
 
-Implementation reference: `yolozu/canonical.py` (`TrainConfig`).
+Implementation reference: `yolozu/core/canonical.py` (`TrainConfig`).
 
 ## Dataset import (read-only)
 
@@ -137,6 +137,7 @@ yolozu doctor import \
 yolozu doctor import \
   --config-from auto \
   --args /path/to/runs/.../args.yaml
+```
 
 Auto-detect mode is also available:
 
@@ -163,7 +164,7 @@ For dataset roots, auto-detect covers the common cases:
 
 ## Train shorthand (`train --import`)
 
-For quick demos/宣伝, you can use a shorthand that resolves external config into canonical `TrainConfig`
+For quick demos, you can use a shorthand that resolves external config into canonical `TrainConfig`
 and prints doctor-import summary first.
 
 ```bash

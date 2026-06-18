@@ -344,10 +344,10 @@ def _mask_to_labels(mask, *, class_map=None, instances=False):
     return labels
 
 
-def load_yolo_dataset(root, split="train2017"):
-    root = Path(root)
-    images_dir = root / "images" / split
-    labels_dir = root / "labels" / split
+def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root):
+    images_dir = Path(images_dir)
+    labels_dir = Path(labels_dir)
+    metadata_root = Path(metadata_root)
     records = []
     images = []
     for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tif", "*.tiff", "*.webp", "*.gif"):
@@ -356,7 +356,7 @@ def load_yolo_dataset(root, split="train2017"):
         label_path = labels_dir / f"{image_path.stem}.txt"
         meta_path = labels_dir / f"{image_path.stem}.json"
         labels = _load_yolo_labels(label_path)
-        metadata = _load_metadata(meta_path, root)
+        metadata = _load_metadata(meta_path, metadata_root)
 
         if not labels and metadata.get("mask_path") is not None:
             mask_value = metadata.get("mask") or metadata.get("mask_path")
@@ -419,6 +419,100 @@ def load_yolo_dataset(root, split="train2017"):
             }
         )
     return records
+
+
+def _resolve_relative_path(value, *, base):
+    if not isinstance(value, str) or not value.strip():
+        return None
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = Path(base) / path
+    return path
+
+
+def _resolve_dataset_json_layout(root, split):
+    root = Path(root)
+    descriptor = root if root.is_file() and root.suffix.lower() == ".json" else root / "dataset.json"
+    if not descriptor.exists():
+        return None
+    base = descriptor.parent
+    try:
+        data = json.loads(descriptor.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    images_dir = _resolve_relative_path(data.get("images_dir"), base=base)
+    labels_dir = _resolve_relative_path(data.get("labels_dir"), base=base)
+    if images_dir is None or labels_dir is None:
+        return None
+
+    effective_split = str(split or data.get("split") or labels_dir.name)
+    if split:
+        images_candidate = images_dir.parent / str(split)
+        labels_candidate = labels_dir.parent / str(split)
+        if images_candidate.exists():
+            images_dir = images_candidate
+        if labels_candidate.exists():
+            labels_dir = labels_candidate
+    return images_dir, labels_dir, effective_split, base
+
+
+def _load_yaml_mapping(path):
+    try:
+        import yaml
+    except Exception as exc:  # pragma: no cover - depends on optional runtime
+        raise SystemExit("PyYAML is required to read data.yaml dataset descriptors.") from exc
+    with Path(path).open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data if isinstance(data, dict) else {}
+
+
+def _resolve_data_yaml_layout(root, split):
+    root = Path(root)
+    yaml_path = root if root.is_file() and root.suffix.lower() in (".yaml", ".yml") else root / "data.yaml"
+    if not yaml_path.exists():
+        return None
+    data = _load_yaml_mapping(yaml_path)
+    base = _resolve_relative_path(data.get("path"), base=yaml_path.parent) or yaml_path.parent
+
+    split_key = "train"
+    split_text = str(split or "").strip().lower()
+    if split_text in ("val", "valid", "validation") or split_text.startswith("val"):
+        split_key = "val"
+    elif split_text in ("test", "testing") or split_text.startswith("test"):
+        split_key = "test"
+    elif split_text in data:
+        split_key = split_text
+
+    images_dir = _resolve_relative_path(data.get(split_key), base=base)
+    if images_dir is None:
+        return None
+    labels_dir = images_dir
+    if images_dir.name:
+        if images_dir.parent.name == "images":
+            labels_dir = images_dir.parent.parent / "labels" / images_dir.name
+        elif (images_dir / "images").exists():
+            labels_dir = images_dir / "labels"
+            images_dir = images_dir / "images"
+        else:
+            labels_dir = images_dir.parent / "labels" / images_dir.name
+    return images_dir, labels_dir, str(split or split_key), base
+
+
+def load_yolo_dataset(root, split="train2017"):
+    root = Path(root)
+    resolved = _resolve_data_yaml_layout(root, split)
+    if resolved is None:
+        resolved = _resolve_dataset_json_layout(root, split)
+    if resolved is not None:
+        images_dir, labels_dir, _effective_split, metadata_root = resolved
+        return _load_yolo_dataset_dirs(images_dir, labels_dir, metadata_root=metadata_root)
+
+    images_dir = root / "images" / split
+    labels_dir = root / "labels" / split
+    return _load_yolo_dataset_dirs(images_dir, labels_dir, metadata_root=root)
 
 
 def _availability_stats(records):
@@ -571,9 +665,17 @@ def _load_keypoints_meta(root, split):
 
 
 def build_manifest(root, split="train2017"):
+    root = Path(root)
+    resolved_split = split
+    resolved = _resolve_data_yaml_layout(root, split)
+    if resolved is None:
+        resolved = _resolve_dataset_json_layout(root, split)
+    if resolved is not None:
+        _images_dir, _labels_dir, resolved_split, _metadata_root = resolved
+
     images = load_yolo_dataset(root, split=split)
     manifest = {"images": images, "stats": _availability_stats(images)}
-    keypoints_meta = _load_keypoints_meta(root, split)
+    keypoints_meta = _load_keypoints_meta(root, resolved_split)
     if keypoints_meta:
         manifest["keypoints_meta"] = keypoints_meta
     return manifest
