@@ -64,6 +64,52 @@ class TestTrainMinimalRunDirDefaults(unittest.TestCase):
             expected = contract["reports_dir"] / "fracal_stats_bbox.json"
             self.assertEqual(Path(args.fracal_stats_out), expected)
 
+    def test_run_contract_sets_stable_artifacts_and_resume_path(self):
+        import tempfile
+
+        mod = _load_train_minimal_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            cfg_path = root / "dummy.yaml"
+            cfg_path.write_text("{}\n", encoding="utf-8")
+            args = mod.parse_args(
+                [
+                    "--run-contract",
+                    "--runs-dir",
+                    str(root / "runs"),
+                    "--run-id",
+                    "resume-test",
+                    "--config",
+                    str(cfg_path),
+                    "--resume",
+                ]
+            )
+            args, contract = mod.apply_run_contract_defaults(args)
+
+            self.assertIsNotNone(contract)
+            assert contract is not None
+            run_dir = root / "runs" / "resume-test"
+            self.assertEqual(Path(args.checkpoint_bundle_out), run_dir / "checkpoints" / "last.pt")
+            self.assertEqual(Path(args.best_checkpoint_out), run_dir / "checkpoints" / "best.pt")
+            self.assertEqual(Path(args.resume_from), run_dir / "checkpoints" / "last.pt")
+            self.assertEqual(Path(args.training_summary_out), run_dir / "reports" / "training_summary.json")
+            self.assertEqual(Path(args.config_resolved_out), run_dir / "reports" / "config_resolved.yaml")
+            self.assertEqual(Path(args.run_meta_out), run_dir / "reports" / "run_meta.json")
+            self.assertEqual(Path(args.parity_json_out), run_dir / "reports" / "onnx_parity.json")
+            self.assertEqual(Path(args.onnx_out), run_dir / "exports" / "model.onnx")
+            self.assertEqual(args.parity_policy, "fail")
+
+    def test_run_contract_rejects_run_dir(self):
+        import tempfile
+
+        mod = _load_train_minimal_module()
+        with tempfile.TemporaryDirectory() as td:
+            cfg_path = Path(td) / "dummy.yaml"
+            cfg_path.write_text("{}\n", encoding="utf-8")
+            args = mod.parse_args(["--run-contract", "--run-dir", str(Path(td) / "legacy"), "--config", str(cfg_path)])
+            with self.assertRaises(SystemExit):
+                mod.apply_run_contract_defaults(args)
+
     def test_run_contract_sets_seg_fracal_stats_out_when_task_seg(self):
         import tempfile
 
