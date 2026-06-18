@@ -740,6 +740,11 @@ def main(argv: list[str] | None = None) -> int:
             "Train with the RT-DETR pose reference trainer by default, or use "
             "--external-backend yolox|detectron2|mmdetection|mmpose|mmseg|tao|ultralytics|hf-detr for external training lanes."
         ),
+        epilog=(
+            "Reference trainer options after the config path are forwarded to rtdetr_pose.train_minimal. "
+            "Common dataset inputs include --dataset-root, --records-json, --extra-records-json, "
+            "and --val-records-json."
+        ),
     )
     train_p.add_argument(
         "config",

@@ -16110,6 +16110,13 @@
           "required": false
         },
         {
+          "description": "Forwarded to the RT-DETR reference trainer; points at a train-ready YOLOZU/YOLO-style dataset root or dataset.json/data.yaml descriptor.",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
           "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args so users do not need to identify native bbox, keypoints, or semantic-segmentation layouts manually before wrapper normalization.",
           "flag": "--dataset-from",
           "kind": "string",
@@ -16140,6 +16147,13 @@
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
+          "required": false
+        },
+        {
+          "description": "Forwarded to the RT-DETR reference trainer; optional JSON records to append to the scanned training dataset.",
+          "flag": "--extra-records-json",
+          "kind": "file",
+          "name": "extra_records_json",
           "required": false
         },
         {
@@ -16597,6 +16611,13 @@
           "required": false
         },
         {
+          "description": "Forwarded to the RT-DETR reference trainer; JSON list or object with an images list containing training records.",
+          "flag": "--records-json",
+          "kind": "file",
+          "name": "records_json",
+          "required": false
+        },
+        {
           "flag": "--replay-fraction",
           "kind": "number",
           "name": "replay_fraction",
@@ -16760,6 +16781,13 @@
           "flag": "--tta",
           "kind": "string",
           "name": "tta",
+          "required": false
+        },
+        {
+          "description": "Forwarded to the RT-DETR reference trainer; JSON list or object with an images list containing validation records.",
+          "flag": "--val-records-json",
+          "kind": "file",
+          "name": "val_records_json",
           "required": false
         },
         {
