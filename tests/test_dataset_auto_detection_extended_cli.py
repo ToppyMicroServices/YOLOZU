@@ -57,6 +57,9 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             self.assertEqual(dataset.get("from"), "segmentation")
             self.assertEqual((dataset.get("layout") or {}).get("format"), "voc_segmentation_root")
             self.assertEqual(dataset.get("task_family"), "segmentation")
+            readiness = dataset.get("reference_trainer") or {}
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertFalse(bool(readiness.get("train_ready_after_migration")))
 
             proc_validate_root = self._run(
                 [
@@ -155,6 +158,10 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             self.assertEqual(dataset.get("from"), "coco")
             self.assertEqual((dataset.get("layout") or {}).get("format"), "coco_keypoints_root")
             self.assertEqual(dataset.get("task_family"), "keypoints")
+            readiness = dataset.get("reference_trainer") or {}
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertTrue(bool(readiness.get("train_ready_after_migration")))
+            self.assertEqual(readiness.get("task_family"), "keypoints")
 
             proc_validate_root = self._run(
                 [

@@ -160,7 +160,15 @@ For dataset roots, auto-detect covers the common cases:
 - Cityscapes semantic-segmentation root
 - ADE20K semantic-segmentation root
 
-`doctor import --dataset-from auto` now also reports `task_family` so preflight can distinguish bbox / keypoints / segmentation before conversion.
+`doctor import --dataset-from auto` reports `task_family` and
+`reference_trainer` readiness. Use `reference_trainer.direct_train_ready` to
+check whether the source can be passed directly to the RT-DETR reference
+trainer, and `reference_trainer.train_ready_after_migration` to check whether
+`yolozu migrate dataset` / `yolozu import dataset` can produce a train-ready
+YOLO label wrapper or record JSON. Native COCO bbox/keypoints roots normally
+need that migration step; semantic-segmentation descriptors remain
+import/evaluation inputs for the segmentation lane rather than direct
+reference-trainer inputs.
 
 ## Train shorthand (`train --import`)
 
