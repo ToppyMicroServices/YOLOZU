@@ -395,7 +395,7 @@ def _reference_trainer_readiness(*, task_family: str, source_format: str, label_
     ]
 
     if task in {"bbox", "detect", "detection"} and label not in {"segment", "seg", "polygon", "yolo-seg", "yolo_seg"}:
-        direct = source in {"ultralytics", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
+        direct = source in {"ultralytics", "ultralytics_data_yaml", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
         return {
             "task_family": "bbox",
             "direct_train_ready": bool(direct),
@@ -410,7 +410,7 @@ def _reference_trainer_readiness(*, task_family: str, source_format: str, label_
         }
 
     if task in {"keypoints", "pose"}:
-        direct = source in {"ultralytics", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
+        direct = source in {"ultralytics", "ultralytics_data_yaml", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
         return {
             "task_family": "keypoints",
             "direct_train_ready": bool(direct),
@@ -421,6 +421,65 @@ def _reference_trainer_readiness(*, task_family: str, source_format: str, label_
                 "already resolves to YOLO pose/keypoint labels"
                 if direct
                 else "COCO keypoints must be imported/exported to YOLO keypoint labels or record JSON before reference training"
+            ),
+        }
+
+    if task in {"classification", "classify", "cls"}:
+        return {
+            "task_family": "classification",
+            "direct_train_ready": False,
+            "train_ready_after_migration": False,
+            "requires_normalization": True,
+            "accepted_inputs": [
+                "classification folder layout such as train/<class>/*.jpg",
+                "classification label manifest with image_path and class_id/class_name",
+            ],
+            "reason": "classification intake is recognized for preflight and external lanes, but the RT-DETR reference trainer does not consume classification-only records",
+        }
+
+    if task == "obb":
+        return {
+            "task_family": "obb",
+            "direct_train_ready": False,
+            "train_ready_after_migration": False,
+            "requires_normalization": True,
+            "accepted_inputs": [
+                "YOLO OBB labels with class cx cy w h angle",
+                "YOLO OBB labels with class x1 y1 x2 y2 x3 y3 x4 y4",
+                "records JSON labels with bbox plus angle/obb",
+            ],
+            "reason": "OBB intake is recognized for validation and external lanes, but the RT-DETR reference trainer does not train rotated boxes directly",
+        }
+
+    if task == "depth":
+        direct = source in {"ultralytics", "ultralytics_data_yaml", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout", "records"}
+        return {
+            "task_family": "depth",
+            "direct_train_ready": bool(direct),
+            "train_ready_after_migration": bool(direct),
+            "requires_normalization": not bool(direct),
+            "accepted_inputs": accepted_inputs
+            + ["sidecar JSON with depth_path/depth/D_obj next to each label file or in records JSON"],
+            "reason": (
+                "bbox labels plus depth sidecars can be consumed by the reference trainer when depth fields are present"
+                if direct
+                else "depth training requires normalized bbox records plus depth sidecars"
+            ),
+        }
+
+    if task in {"pose6d", "6dof", "pose_6d", "pose-6d"}:
+        direct = source in {"ultralytics", "ultralytics_data_yaml", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout", "records"}
+        return {
+            "task_family": "pose6d",
+            "direct_train_ready": bool(direct),
+            "train_ready_after_migration": bool(direct),
+            "requires_normalization": not bool(direct),
+            "accepted_inputs": accepted_inputs
+            + ["sidecar JSON with R_gt/t_gt or pose plus K_gt/intrinsics next to each label file or in records JSON"],
+            "reason": (
+                "bbox labels plus pose/intrinsics sidecars can be consumed by the reference trainer when pose fields are present"
+                if direct
+                else "pose6d training requires normalized bbox records plus pose/intrinsics sidecars"
             ),
         }
 
@@ -1368,25 +1427,46 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
         "errors": [],
     }
 
-    def _record_summary(records_path: Path, *, label: str) -> dict[str, Any]:
-        records = normalize_training_records(_load_records_json(records_path, label=label))
+    def _candidate_exists(value: Any, *, base: Path) -> bool:
+        if not isinstance(value, str) or not value.strip():
+            return False
+        path = Path(value).expanduser()
+        candidates = [path] if path.is_absolute() else [base / path, Path.cwd() / path]
+        return any(candidate.exists() for candidate in candidates)
+
+    def _summarize_records(records: list[dict[str, Any]], *, base: Path) -> dict[str, Any]:
         inspected = records[: int(getattr(args, "max_images", 200) or 200)]
         label_count = 0
         missing_image_path = 0
         missing_image_file = 0
+        missing_depth_file = 0
         malformed_labels = 0
+        classification_labels = 0
+        obb_labels = 0
         keypoint_labels = 0
         depth_labels = 0
         pose_labels = 0
+        pose_intrinsics = 0
         for record in inspected:
             image_path_value = record.get("image_path")
             if not image_path_value:
                 missing_image_path += 1
             else:
-                image_path = Path(str(image_path_value)).expanduser()
-                candidates = [image_path] if image_path.is_absolute() else [records_path.parent / image_path, Path.cwd() / image_path]
-                if not any(candidate.exists() for candidate in candidates):
+                if not _candidate_exists(image_path_value, base=base):
                     missing_image_file += 1
+
+            if record.get("class_id") is not None or record.get("class_name") is not None or record.get("label") is not None:
+                classification_labels += 1
+            depth_value = record.get("depth_path") or record.get("depth") or record.get("D_obj")
+            if depth_value is not None:
+                depth_labels += 1
+                if isinstance(depth_value, str) and not _candidate_exists(depth_value, base=base):
+                    missing_depth_file += 1
+            if record.get("pose") is not None or record.get("R_gt") is not None or record.get("t_gt") is not None:
+                pose_labels += 1
+            if record.get("K_gt") is not None or record.get("intrinsics") is not None:
+                pose_intrinsics += 1
+
             labels = record.get("labels") or []
             if not isinstance(labels, list):
                 malformed_labels += 1
@@ -1398,25 +1478,79 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
                 label_count += 1
                 if not isinstance(inst.get("bbox"), dict):
                     malformed_labels += 1
+                if inst.get("class_id") is not None or inst.get("class_name") is not None:
+                    classification_labels += 1
+                if any(k in inst for k in ("angle", "theta", "rotation", "obb", "rotated_bbox")):
+                    obb_labels += 1
                 if inst.get("keypoints") is not None:
                     keypoint_labels += 1
                 if any(k in inst for k in ("depth", "depth_path", "z", "z_gt", "D_obj")):
                     depth_labels += 1
+                    depth_value = inst.get("depth_path") or inst.get("depth") or inst.get("D_obj")
+                    if isinstance(depth_value, str) and not _candidate_exists(depth_value, base=base):
+                        missing_depth_file += 1
                 if any(k in inst for k in ("pose6d", "rot6d", "R", "t", "translation")):
                     pose_labels += 1
         return {
-            "path": str(records_path),
-            "direct_train_ready": bool(records) and missing_image_path == 0 and missing_image_file == 0 and malformed_labels == 0,
             "count": int(len(records)),
             "inspected": int(len(inspected)),
             "labels": int(label_count),
             "missing_image_path": int(missing_image_path),
             "missing_image_file": int(missing_image_file),
+            "missing_depth_file": int(missing_depth_file),
             "malformed_labels": int(malformed_labels),
+            "classification_labels": int(classification_labels),
+            "obb_labels": int(obb_labels),
             "keypoint_labels": int(keypoint_labels),
             "depth_labels": int(depth_labels),
             "pose_labels": int(pose_labels),
+            "pose_intrinsics": int(pose_intrinsics),
         }
+
+    def _apply_task_readiness(readiness: dict[str, Any], summary: dict[str, Any]) -> dict[str, Any]:
+        task = str(readiness.get("task_family") or "").strip().lower()
+        base_ready = bool(summary.get("count")) and int(summary.get("missing_image_path") or 0) == 0
+        base_ready = base_ready and int(summary.get("missing_image_file") or 0) == 0
+        base_ready = base_ready and int(summary.get("malformed_labels") or 0) == 0
+        if task == "depth":
+            ready = base_ready and int(summary.get("depth_labels") or 0) > 0 and int(summary.get("missing_depth_file") or 0) == 0
+            readiness["direct_train_ready"] = bool(readiness.get("direct_train_ready")) and bool(ready)
+            readiness["train_ready_after_migration"] = bool(readiness.get("train_ready_after_migration")) and bool(ready)
+            if not ready:
+                readiness["requires_normalization"] = True
+                readiness["reason"] = "depth training requires bbox records plus existing depth sidecars"
+        elif task == "pose6d":
+            ready = base_ready and int(summary.get("pose_labels") or 0) > 0 and int(summary.get("pose_intrinsics") or 0) > 0
+            readiness["direct_train_ready"] = bool(readiness.get("direct_train_ready")) and bool(ready)
+            readiness["train_ready_after_migration"] = bool(readiness.get("train_ready_after_migration")) and bool(ready)
+            if not ready:
+                readiness["requires_normalization"] = True
+                readiness["reason"] = "pose6d training requires bbox records plus pose and intrinsics sidecars"
+        elif task == "obb":
+            readiness["direct_train_ready"] = False
+            readiness["train_ready_after_migration"] = False
+            readiness["requires_normalization"] = True
+        elif task == "classification":
+            readiness["direct_train_ready"] = False
+            readiness["train_ready_after_migration"] = False
+            readiness["requires_normalization"] = True
+        else:
+            readiness["direct_train_ready"] = bool(readiness.get("direct_train_ready")) and bool(base_ready)
+            readiness["train_ready_after_migration"] = bool(readiness.get("train_ready_after_migration"))
+        return readiness
+
+    def _record_summary(records_path: Path, *, label: str) -> dict[str, Any]:
+        records = normalize_training_records(_load_records_json(records_path, label=label))
+        summary = _summarize_records(records, base=records_path.parent)
+        summary["path"] = str(records_path)
+        summary["direct_train_ready"] = (
+            bool(records)
+            and int(summary.get("missing_image_path") or 0) == 0
+            and int(summary.get("missing_image_file") or 0) == 0
+            and int(summary.get("missing_depth_file") or 0) == 0
+            and int(summary.get("malformed_labels") or 0) == 0
+        )
+        return summary
 
     try:
         records_json = _resolve_path(getattr(args, "records_json", None))
@@ -1426,24 +1560,30 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             report["records"] = train_summary
             if val_records_json is not None:
                 report["validation_records"] = _record_summary(val_records_json, label="validation")
-            report["reference_trainer"] = {
-                "task_family": "records",
-                "direct_train_ready": bool(train_summary.get("direct_train_ready")),
-                "train_ready_after_migration": bool(train_summary.get("direct_train_ready")),
-                "requires_normalization": False,
-                "accepted_inputs": ["records JSON using image/image_path and normalized bbox labels"],
-                "reason": (
-                    "records JSON can be consumed by the reference trainer"
-                    if train_summary.get("direct_train_ready")
-                    else "records JSON has missing image paths or malformed labels"
-                ),
-            }
+            records_task = dataset_from if dataset_from != "auto" else "records"
+            if records_task == "records":
+                readiness = {
+                    "task_family": "records",
+                    "direct_train_ready": bool(train_summary.get("direct_train_ready")),
+                    "train_ready_after_migration": bool(train_summary.get("direct_train_ready")),
+                    "requires_normalization": False,
+                    "accepted_inputs": ["records JSON using image/image_path and normalized bbox labels"],
+                    "reason": (
+                        "records JSON can be consumed by the reference trainer"
+                        if train_summary.get("direct_train_ready")
+                        else "records JSON has missing image paths or malformed labels"
+                    ),
+                }
+            else:
+                readiness = _reference_trainer_readiness(task_family=records_task, source_format="records")
+                readiness = _apply_task_readiness(readiness, train_summary)
+            report["reference_trainer"] = readiness
             report["next_commands"].append(
                 "python3 -m yolozu train <config> --records-json "
                 f"{records_json}"
                 + (f" --val-records-json {val_records_json}" if val_records_json else "")
             )
-            if not train_summary.get("direct_train_ready"):
+            if not (report.get("reference_trainer") or {}).get("direct_train_ready"):
                 report["errors"].append("records JSON is not train-ready")
             return _write_report(report)
 
@@ -1477,6 +1617,8 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             task_family = "keypoints"
         elif dataset_from == "segmentation":
             task_family = "segmentation"
+        elif dataset_from in {"classification", "obb", "depth", "pose6d"}:
+            task_family = dataset_from
         else:
             task_family = str((layout_info or {}).get("task_family") or "bbox")
 
@@ -1488,18 +1630,17 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             label_format=(label_format or None),
         )
 
-        if bool(readiness.get("direct_train_ready")):
+        scan_yolo_like = source_format in {"ultralytics", "ultralytics_data_yaml", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
+        if bool(readiness.get("direct_train_ready")) or (task_family == "obb" and scan_yolo_like):
             try:
                 manifest = build_rtdetr_manifest(dataset_path, split=split or str((layout_info or {}).get("split") or "train"))
                 records = list(manifest.get("images") or [])
                 inspected = records[: int(getattr(args, "max_images", 200) or 200)]
-                label_count = sum(len(r.get("labels") or []) for r in inspected if isinstance(r, dict))
-                report["records"] = {
-                    "count": int(len(records)),
-                    "inspected": int(len(inspected)),
-                    "labels": int(label_count),
-                    "keypoints_meta": manifest.get("keypoints_meta"),
-                }
+                summary = _summarize_records(normalize_training_records(records), base=dataset_path)
+                summary["inspected"] = int(len(inspected))
+                summary["keypoints_meta"] = manifest.get("keypoints_meta")
+                report["records"] = summary
+                readiness = _apply_task_readiness(readiness, summary)
                 if not records:
                     readiness["direct_train_ready"] = False
                     readiness["requires_normalization"] = True

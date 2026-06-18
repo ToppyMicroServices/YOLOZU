@@ -36,6 +36,7 @@ class DatasetLayoutInfo:
     data_yaml: str | None = None
     instances_json: str | None = None
     label_format: str | None = None
+    labels_file: str | None = None
     mode: str | None = None
     path_type: str | None = None
     ignore_index: int | None = None
@@ -62,6 +63,8 @@ class DatasetLayoutInfo:
             payload["instances_json"] = self.instances_json
         if self.label_format is not None:
             payload["label_format"] = self.label_format
+        if self.labels_file is not None:
+            payload["labels_file"] = self.labels_file
         if self.mode is not None:
             payload["mode"] = self.mode
         if self.path_type is not None:
@@ -495,6 +498,39 @@ def load_yolo_dataset(
                     labels.append(label)
                     continue
 
+                if label_format in ("obb", "rotated_bbox", "rotated-bbox"):
+                    values = [float(value) for value in parts[1:]]
+                    if len(values) == 5:
+                        cx, cy, bw, bh, angle = values
+                        labels.append(
+                            {
+                                "class_id": class_id,
+                                "cx": float(cx),
+                                "cy": float(cy),
+                                "w": float(bw),
+                                "h": float(bh),
+                                "angle": float(angle),
+                            }
+                        )
+                        continue
+                    if len(values) >= 8 and len(values) % 2 == 0:
+                        bbox = _bbox_from_poly(values)
+                        if bbox is None:
+                            raise ValueError(f"invalid OBB label line: {line}")
+                        cx, cy, bw, bh = bbox
+                        labels.append(
+                            {
+                                "class_id": class_id,
+                                "cx": float(cx),
+                                "cy": float(cy),
+                                "w": float(bw),
+                                "h": float(bh),
+                                "obb": [float(v) for v in values],
+                            }
+                        )
+                        continue
+                    raise ValueError(f"invalid OBB label line: {line}")
+
                 if len(parts) < 5:
                     raise ValueError(f"invalid label line: {line}")
 
@@ -592,6 +628,14 @@ def _infer_task_family_from_metadata(
             return "segmentation"
         if lowered in ("pose", "keypoints"):
             return "keypoints"
+        if lowered in ("classify", "classification", "cls"):
+            return "classification"
+        if lowered in ("obb", "rotated_bbox", "rotated-bbox"):
+            return "obb"
+        if lowered in ("depth", "monocular_depth", "monocular-depth"):
+            return "depth"
+        if lowered in ("pose6d", "6dof", "pose_6d", "pose-6d"):
+            return "pose6d"
         if lowered in ("multi", "multitask"):
             if classes.get("keypoint_names") or payload.get("keypoint_names"):
                 return "keypoints"
@@ -599,6 +643,10 @@ def _infer_task_family_from_metadata(
         return "keypoints"
     if isinstance(label_format, str) and label_format.strip().lower() in ("segment", "seg", "polygon", "yolo-seg", "yolo_seg"):
         return "segmentation"
+    if isinstance(label_format, str) and label_format.strip().lower() in ("classify", "classification", "cls"):
+        return "classification"
+    if isinstance(label_format, str) and label_format.strip().lower() in ("obb", "rotated_bbox", "rotated-bbox"):
+        return "obb"
     return "bbox"
 
 
@@ -647,6 +695,10 @@ def _resolve_ultralytics_data_yaml(
             label_format = "detect"
         elif lowered in ("pose", "keypoints"):
             label_format = "detect"
+        elif lowered in ("classify", "classification", "cls"):
+            label_format = "classification"
+        elif lowered in ("obb", "rotated_bbox", "rotated-bbox"):
+            label_format = "obb"
         elif lowered in ("segment", "seg", "polygon", "yolo-seg", "yolo_seg"):
             label_format = "segment"
 
@@ -963,6 +1015,51 @@ def _resolve_segmentation_root_layout(dataset_root: Path, split: str | None) -> 
     return None
 
 
+def _available_classification_splits(dataset_root: Path) -> list[str]:
+    splits: list[str] = []
+    for name in ("train", "val", "valid", "validation", "test"):
+        split_dir = dataset_root / name
+        if not split_dir.is_dir():
+            continue
+        try:
+            if any(child.is_dir() for child in split_dir.iterdir()):
+                splits.append(name)
+        except OSError:
+            continue
+    return splits
+
+
+def _resolve_classification_folder_layout(dataset_root: Path, split: str | None) -> DatasetLayoutInfo | None:
+    split_candidates = _available_classification_splits(dataset_root)
+    if split_candidates:
+        preferred = str(split).strip() if split else ""
+        split_effective = preferred if preferred in split_candidates else split_candidates[0]
+        return DatasetLayoutInfo(
+            format_name="classification_folder",
+            root=str(dataset_root),
+            split=split_effective,
+            task_family="classification",
+            images_dir=str(dataset_root / split_effective),
+            label_format="classification",
+            split_candidates=split_candidates,
+        )
+
+    for labels_name in ("labels.json", "classification.json"):
+        labels_path = dataset_root / labels_name
+        if labels_path.is_file():
+            data = _load_json_dict(labels_path)
+            if data is not None:
+                return DatasetLayoutInfo(
+                    format_name="classification_manifest",
+                    root=str(dataset_root),
+                    split=(str(split) if split else None),
+                    task_family="classification",
+                    label_format="classification",
+                    labels_file=str(labels_path),
+                )
+    return None
+
+
 def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[str, Any] | None:
     path = Path(dataset_root)
     if not path.is_absolute():
@@ -1000,6 +1097,22 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
                     return seg_layout.to_dict()
                 fmt = str(data.get("format") or "").strip().lower()
                 if path.name == "dataset.json":
+                    task = str(data.get("task") or data.get("label_format") or "").strip().lower()
+                    if task in ("classify", "classification", "cls"):
+                        labels_file = data.get("labels_file") or data.get("labels")
+                        labels_path = Path(str(labels_file)) if isinstance(labels_file, str) and labels_file.strip() else None
+                        if labels_path is not None and not labels_path.is_absolute():
+                            labels_path = path.parent / labels_path
+                        return DatasetLayoutInfo(
+                            format_name="classification_manifest",
+                            root=str(path.parent),
+                            split=str(data.get("split") or split or "") or None,
+                            task_family="classification",
+                            images_dir=(str(data.get("images_dir")) if data.get("images_dir") else None),
+                            label_format="classification",
+                            labels_file=(str(labels_path) if labels_path is not None else None),
+                            split_candidates=([str(data.get("split"))] if data.get("split") else None),
+                        ).to_dict()
                     if fmt in ("coco_instances", "coco-instances", "coco"):
                         return DatasetLayoutInfo(
                             format_name="yolozu_coco_wrapper",
@@ -1046,6 +1159,10 @@ def inspect_dataset_layout(dataset_root, *, split: str | None = None) -> dict[st
     seg_layout = _resolve_segmentation_root_layout(path, split)
     if seg_layout is not None:
         return seg_layout.to_dict()
+
+    cls_layout = _resolve_classification_folder_layout(path, split)
+    if cls_layout is not None:
+        return cls_layout.to_dict()
 
     coco_layout = _resolve_coco_root_layout(path, split)
     if coco_layout is not None:

@@ -7,10 +7,11 @@ except Exception:  # pragma: no cover
     np = None  # type: ignore
 
 
-def _load_yolo_labels(label_path):
+def _load_yolo_labels(label_path, *, label_format=None):
     labels = []
     if not label_path.exists():
         return labels
+    label_format = str(label_format or "detect").strip().lower()
     for line in label_path.read_text().splitlines():
         stripped = line.strip()
         if not stripped:
@@ -18,10 +19,39 @@ def _load_yolo_labels(label_path):
         parts = stripped.split()
         if len(parts) < 5:
             raise ValueError(f"invalid label line: {line}")
-        if len(parts) != 5 and (len(parts) - 5) % 3 != 0:
-            raise ValueError(f"invalid label line: {line}")
         class_id = int(float(parts[0]))
         coords = [float(value) for value in parts[1:]]
+        if label_format in ("obb", "rotated_bbox", "rotated-bbox"):
+            if len(coords) == 5:
+                labels.append(
+                    {
+                        "class_id": class_id,
+                        "bbox": {"cx": coords[0], "cy": coords[1], "w": coords[2], "h": coords[3]},
+                        "angle": coords[4],
+                    }
+                )
+                continue
+            if len(coords) >= 8 and len(coords) % 2 == 0:
+                xs = coords[0::2]
+                ys = coords[1::2]
+                x_min, x_max = min(xs), max(xs)
+                y_min, y_max = min(ys), max(ys)
+                labels.append(
+                    {
+                        "class_id": class_id,
+                        "bbox": {
+                            "cx": (x_min + x_max) / 2.0,
+                            "cy": (y_min + y_max) / 2.0,
+                            "w": x_max - x_min,
+                            "h": y_max - y_min,
+                        },
+                        "obb": coords,
+                    }
+                )
+                continue
+            raise ValueError(f"invalid label line: {line}")
+        if len(parts) != 5 and (len(parts) - 5) % 3 != 0:
+            raise ValueError(f"invalid label line: {line}")
         entry = {
             "class_id": class_id,
             "bbox": {
@@ -344,7 +374,7 @@ def _mask_to_labels(mask, *, class_map=None, instances=False):
     return labels
 
 
-def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root):
+def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root, label_format=None):
     images_dir = Path(images_dir)
     labels_dir = Path(labels_dir)
     metadata_root = Path(metadata_root)
@@ -355,7 +385,7 @@ def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root):
     for image_path in sorted(images):
         label_path = labels_dir / f"{image_path.stem}.txt"
         meta_path = labels_dir / f"{image_path.stem}.json"
-        labels = _load_yolo_labels(label_path)
+        labels = _load_yolo_labels(label_path, label_format=label_format)
         metadata = _load_metadata(meta_path, metadata_root)
 
         if not labels and metadata.get("mask_path") is not None:
@@ -456,7 +486,8 @@ def _resolve_dataset_json_layout(root, split):
             images_dir = images_candidate
         if labels_candidate.exists():
             labels_dir = labels_candidate
-    return images_dir, labels_dir, effective_split, base
+    label_format = data.get("label_format") or data.get("task")
+    return images_dir, labels_dir, effective_split, base, (str(label_format) if label_format else None)
 
 
 def _load_yaml_mapping(path):
@@ -498,7 +529,8 @@ def _resolve_data_yaml_layout(root, split):
             images_dir = images_dir / "images"
         else:
             labels_dir = images_dir.parent / "labels" / images_dir.name
-    return images_dir, labels_dir, str(split or split_key), base
+    label_format = data.get("label_format") or data.get("task")
+    return images_dir, labels_dir, str(split or split_key), base, (str(label_format) if label_format else None)
 
 
 def load_yolo_dataset(root, split="train2017"):
@@ -507,8 +539,9 @@ def load_yolo_dataset(root, split="train2017"):
     if resolved is None:
         resolved = _resolve_dataset_json_layout(root, split)
     if resolved is not None:
-        images_dir, labels_dir, _effective_split, metadata_root = resolved
-        return _load_yolo_dataset_dirs(images_dir, labels_dir, metadata_root=metadata_root)
+        images_dir, labels_dir, _effective_split, metadata_root, *rest = resolved
+        label_format = rest[0] if rest else None
+        return _load_yolo_dataset_dirs(images_dir, labels_dir, metadata_root=metadata_root, label_format=label_format)
 
     images_dir = root / "images" / split
     labels_dir = root / "labels" / split
@@ -671,7 +704,7 @@ def build_manifest(root, split="train2017"):
     if resolved is None:
         resolved = _resolve_dataset_json_layout(root, split)
     if resolved is not None:
-        _images_dir, _labels_dir, resolved_split, _metadata_root = resolved
+        _images_dir, _labels_dir, resolved_split, _metadata_root, *_rest = resolved
 
     images = load_yolo_dataset(root, split=split)
     manifest = {"images": images, "stats": _availability_stats(images)}

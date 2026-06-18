@@ -292,6 +292,136 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(int(records.get("missing_image_file") or 0), 1)
             self.assertFalse(bool((payload.get("reference_trainer") or {}).get("direct_train_ready")))
 
+    def test_doctor_train_dataset_reports_classification_folder_boundary(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td) / "cls"
+            (root / "train" / "cat").mkdir(parents=True, exist_ok=True)
+            (root / "train" / "cat" / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--from",
+                    "classification",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "train",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"doctor train-dataset classification failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(proc.stdout)
+            self.assertEqual((payload.get("layout") or {}).get("format"), "classification_folder")
+            readiness = payload.get("reference_trainer") or {}
+            self.assertEqual(readiness.get("task_family"), "classification")
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertFalse(bool(readiness.get("train_ready_after_migration")))
+            self.assertTrue(any("external training lane" in str(cmd) for cmd in payload.get("next_commands") or []))
+
+    def test_doctor_train_dataset_reports_obb_label_contract(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td) / "obb"
+            images = root / "images" / "train"
+            labels = root / "labels" / "train"
+            images.mkdir(parents=True, exist_ok=True)
+            labels.mkdir(parents=True, exist_ok=True)
+            (images / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            (labels / "0001.txt").write_text("0 0.5 0.5 0.25 0.20 0.78\n", encoding="utf-8")
+            (root / "dataset.json").write_text(
+                json.dumps(
+                    {
+                        "task": "obb",
+                        "label_format": "obb",
+                        "images_dir": "images/train",
+                        "labels_dir": "labels/train",
+                        "split": "train",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--from",
+                    "obb",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "train",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"doctor train-dataset obb failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(proc.stdout)
+            readiness = payload.get("reference_trainer") or {}
+            records = payload.get("records") or {}
+            self.assertEqual(readiness.get("task_family"), "obb")
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertEqual(int(records.get("labels") or 0), 1)
+            self.assertEqual(int(records.get("obb_labels") or 0), 1)
+
+    def test_doctor_train_dataset_reports_depth_and_pose6d_sidecars(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td) / "geom"
+            images = root / "images" / "train"
+            labels = root / "labels" / "train"
+            images.mkdir(parents=True, exist_ok=True)
+            labels.mkdir(parents=True, exist_ok=True)
+            (images / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            (labels / "0001.txt").write_text("0 0.5 0.5 0.25 0.20\n", encoding="utf-8")
+            (root / "depth_0001.npy").write_bytes(b"placeholder")
+            (labels / "0001.json").write_text(
+                json.dumps(
+                    {
+                        "depth_path": "depth_0001.npy",
+                        "R_gt": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+                        "t_gt": [0.0, 0.0, 1.2],
+                        "K_gt": [[40.0, 0.0, 32.0], [0.0, 40.0, 16.0], [0.0, 0.0, 1.0]],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            for task in ("depth", "pose6d"):
+                proc = self._run(
+                    [
+                        "doctor",
+                        "train-dataset",
+                        "--from",
+                        task,
+                        "--dataset",
+                        str(root),
+                        "--split",
+                        "train",
+                        "--output",
+                        "-",
+                    ],
+                    cwd=repo_root,
+                )
+                if proc.returncode != 0:
+                    self.fail(f"doctor train-dataset {task} failed:\n{proc.stdout}\n{proc.stderr}")
+                payload = json.loads(proc.stdout)
+                readiness = payload.get("reference_trainer") or {}
+                records = payload.get("records") or {}
+                self.assertEqual(readiness.get("task_family"), task)
+                self.assertTrue(bool(readiness.get("direct_train_ready")))
+                self.assertEqual(int(records.get("depth_labels") or 0), 1)
+                self.assertEqual(int(records.get("pose_labels") or 0), 1)
+                self.assertEqual(int(records.get("pose_intrinsics") or 0), 1)
+
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

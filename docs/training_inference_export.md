@@ -169,7 +169,14 @@ training inputs.
 direct training inputs from native sources that need `migrate dataset` /
 `import dataset` first.
 For train-specific preflight, use `yolozu doctor train-dataset`; it checks the
-same boundary and prints the next command without launching training.
+same boundary and prints the next command without launching training. The
+train preflight also recognizes explicit `classification`, `obb`, `depth`, and
+`pose6d` source families. Classification folders/manifests and OBB labels are
+reported as recognized training intake contracts for external lanes, not as
+direct RT-DETR reference-trainer inputs. Depth and pose6d are direct only when
+the normalized bbox records also include the required sidecars: existing
+`depth_path`/`depth`/`D_obj` for depth, and `R_gt`/`t_gt` or `pose` plus
+`K_gt`/`intrinsics` for pose6d.
 
 ## Training (RT-DETR pose reference trainer)
 
@@ -220,7 +227,10 @@ files may be either a JSON list of records or an object with an `images` list.
 This keeps train and validation inputs explicit when the source dataset cannot
 be represented as a single YOLO-style split directory. Records may use either
 `image` or `image_path`; label boxes may use flat `cx`/`cy`/`w`/`h` fields or
-nested `bbox: {cx, cy, w, h}` fields.
+nested `bbox: {cx, cy, w, h}` fields. OBB records may include `angle` or `obb`
+fields. Depth and pose6d records may carry sidecars at the record level or on
+individual labels; `doctor train-dataset` counts those fields and rejects
+missing sidecar files when an explicit path is present.
 
 COCO keypoints roots can be selected explicitly when auto-detection is not
 desirable:
