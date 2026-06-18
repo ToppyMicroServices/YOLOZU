@@ -328,6 +328,7 @@ def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dic
             "from": "segmentation",
             "layout": layout_info,
             "task_family": "segmentation",
+            "reference_trainer": _reference_trainer_readiness(task_family="segmentation", source_format=fmt),
             "dataset": desc.dataset,
             "split": desc.split,
             "counts": {"images": int(len(desc.samples)), "masks": int(sum(1 for sample in desc.samples if sample.mask is not None))},
@@ -343,6 +344,7 @@ def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dic
             "from": "segmentation",
             "layout": layout_info,
             "task_family": "segmentation",
+            "reference_trainer": _reference_trainer_readiness(task_family="segmentation", source_format=fmt),
             "dataset": str(layout_info.get("dataset_name") or "pascal_voc"),
             "split": str(split or layout_info.get("split") or "val"),
             "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
@@ -356,6 +358,7 @@ def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dic
             "from": "segmentation",
             "layout": layout_info,
             "task_family": "segmentation",
+            "reference_trainer": _reference_trainer_readiness(task_family="segmentation", source_format=fmt),
             "dataset": "cityscapes",
             "split": str(split or layout_info.get("split") or "val"),
             "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
@@ -370,6 +373,7 @@ def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dic
             "from": "segmentation",
             "layout": layout_info,
             "task_family": "segmentation",
+            "reference_trainer": _reference_trainer_readiness(task_family="segmentation", source_format=fmt),
             "dataset": "ade20k",
             "split": str(split or layout_info.get("split") or "val"),
             "counts": {"images": int(len(samples)), "masks": int(sum(1 for sample in samples if sample.mask_path is not None))},
@@ -377,6 +381,57 @@ def _summarize_segmentation_layout(*, dataset_path: str | Path, layout_info: dic
         }
 
     raise ValueError(f"unsupported segmentation layout: {fmt}")
+
+
+def _reference_trainer_readiness(*, task_family: str, source_format: str, label_format: str | None = None) -> dict[str, Any]:
+    task = str(task_family or "bbox").strip().lower()
+    source = str(source_format or "").strip().lower()
+    label = str(label_format or "").strip().lower()
+    accepted_inputs = [
+        "YOLO-style images/<split> + labels/<split>",
+        "YOLO/Ultralytics data.yaml for detection labels",
+        "dataset.json with images_dir and labels_dir pointing to YOLO label files",
+        "records JSON using image/image_path and normalized bbox labels",
+    ]
+
+    if task in {"bbox", "detect", "detection"} and label not in {"segment", "seg", "polygon", "yolo-seg", "yolo_seg"}:
+        direct = source in {"ultralytics", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
+        return {
+            "task_family": "bbox",
+            "direct_train_ready": bool(direct),
+            "train_ready_after_migration": True,
+            "requires_normalization": not bool(direct),
+            "accepted_inputs": accepted_inputs,
+            "reason": (
+                "already resolves to image files and YOLO detection labels"
+                if direct
+                else "native source must be migrated to YOLO labels or record JSON before reference training"
+            ),
+        }
+
+    if task in {"keypoints", "pose"}:
+        direct = source in {"ultralytics", "yolo", "yolozu_wrapper", "data_yaml", "yolo_layout"}
+        return {
+            "task_family": "keypoints",
+            "direct_train_ready": bool(direct),
+            "train_ready_after_migration": True,
+            "requires_normalization": not bool(direct),
+            "accepted_inputs": accepted_inputs,
+            "reason": (
+                "already resolves to YOLO pose/keypoint labels"
+                if direct
+                else "COCO keypoints must be imported/exported to YOLO keypoint labels or record JSON before reference training"
+            ),
+        }
+
+    return {
+        "task_family": task or "unknown",
+        "direct_train_ready": False,
+        "train_ready_after_migration": False,
+        "requires_normalization": True,
+        "accepted_inputs": accepted_inputs,
+        "reason": "reference trainer does not consume semantic-segmentation descriptors or masks as a direct training dataset",
+    }
 
 
 def _validate_segmentation_layout(
@@ -1099,6 +1154,8 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 )
             report["dataset"] = {
                 "from": "coco-instances",
+                "task_family": "bbox",
+                "reference_trainer": _reference_trainer_readiness(task_family="bbox", source_format="coco-instances"),
                 "split": str(args.split) if getattr(args, "split", None) else None,
                 "instances_json": str(instances_path),
                 "images_dir": str(images_dir),
@@ -1132,6 +1189,10 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "from": "coco",
                 "layout": info,
                 "task_family": task_family,
+                "reference_trainer": _reference_trainer_readiness(
+                    task_family=task_family,
+                    source_format=str(info.get("format") or "coco"),
+                ),
                 "split": str(info.get("split") or ""),
                 "instances_json": str(instances_path),
                 "images_dir": str(images_dir),
@@ -1176,6 +1237,11 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "label_format": label_format,
                 "layout": layout_info,
                 "task_family": str((layout_info or {}).get("task_family") or "bbox"),
+                "reference_trainer": _reference_trainer_readiness(
+                    task_family=str((layout_info or {}).get("task_family") or "bbox"),
+                    source_format="ultralytics",
+                    label_format=label_format,
+                ),
                 "counts": {
                     "images": int(len(records)),
                     "labels": int(label_count),

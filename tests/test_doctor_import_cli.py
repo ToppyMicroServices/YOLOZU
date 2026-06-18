@@ -57,6 +57,10 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(payload.get("kind"), "yolozu_doctor_import")
             ds = payload.get("dataset") or {}
             self.assertEqual(ds.get("from"), "coco-instances")
+            readiness = ds.get("reference_trainer") or {}
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertTrue(bool(readiness.get("train_ready_after_migration")))
+            self.assertEqual(readiness.get("task_family"), "bbox")
             counts = ds.get("counts") or {}
             self.assertEqual(int(counts.get("images")), 1)
 
@@ -131,8 +135,38 @@ class TestDoctorImportCLI(unittest.TestCase):
         self.assertEqual(ds.get("from"), "coco")
         layout = ds.get("layout") or {}
         self.assertEqual(layout.get("format"), "coco_root")
+        readiness = ds.get("reference_trainer") or {}
+        self.assertFalse(bool(readiness.get("direct_train_ready")))
+        self.assertTrue(bool(readiness.get("train_ready_after_migration")))
         warnings = payload.get("warnings") or []
         self.assertTrue(any("auto-detected" in str(w) for w in warnings))
+
+    def test_doctor_import_ultralytics_reports_reference_train_ready(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = self._run(
+            [
+                "doctor",
+                "import",
+                "--dataset-from",
+                "ultralytics",
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--output",
+                "-",
+            ],
+            cwd=repo_root,
+        )
+        if proc.returncode != 0:
+            self.fail(f"doctor import ultralytics failed:\n{proc.stdout}\n{proc.stderr}")
+
+        payload = json.loads(proc.stdout)
+        ds = payload.get("dataset") or {}
+        readiness = ds.get("reference_trainer") or {}
+        self.assertTrue(bool(readiness.get("direct_train_ready")))
+        self.assertTrue(bool(readiness.get("train_ready_after_migration")))
+        self.assertFalse(bool(readiness.get("requires_normalization")))
 
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]

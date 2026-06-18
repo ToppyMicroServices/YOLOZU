@@ -164,6 +164,11 @@ RT-DETR reference trainer accepts YOLO-style roots, YOLO/Ultralytics
 intake shards remain import/evaluation inputs, not direct reference-trainer
 training inputs.
 
+`yolozu doctor import` reports `reference_trainer.direct_train_ready` and
+`reference_trainer.train_ready_after_migration` so callers can distinguish
+direct training inputs from native sources that need `migrate dataset` /
+`import dataset` first.
+
 ## Training (RT-DETR pose reference trainer)
 
 1) Install dependencies (CPU PyTorch for local dev):
