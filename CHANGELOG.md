@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.1] - 2026-06-18
+
+### Added
+- Added `yolozu doctor --proof` as a CPU-only proof path covering toy data, known predictions, schema validation, report generation, and result comparison.
+- Added golden artifact evaluation coverage across detection, segmentation, keypoints, depth, and 6D pose lanes.
+- Added generated CLI reference documentation and drift coverage for documented commands.
+- Added benchmark support matrix generation and clearer real/artifact-backed/skipped benchmark status reporting.
+
+### Changed
+- Refocused README and manual onboarding around evaluation-first workflows.
+- Improved manual structure, workflow openings, TTT guidance, and representative prose readability.
+- Clarified production, external bridge, optional runtime, and research-lane boundaries in documentation.
+- Tightened manifest metadata, docs example drift checks, and docs copyability/layout regression coverage.
+
+### Fixed
+- Fixed manual PDF layout and workflow diagram issues found during the documentation overhaul.
+- Fixed benchmark strict validation and optional runtime reporting so skipped formats are not reported as successful execution.
+
 ## [4.4.0] - 2026-04-29
 
 ### Added
