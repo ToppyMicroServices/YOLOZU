@@ -207,7 +207,18 @@ def main(argv: list[str] | None = None) -> int:
     doctor_train.add_argument(
         "--from",
         dest="dataset_from",
-        choices=("auto", "ultralytics", "coco", "coco-keypoints", "coco-instances", "segmentation"),
+        choices=(
+            "auto",
+            "ultralytics",
+            "coco",
+            "coco-keypoints",
+            "coco-instances",
+            "segmentation",
+            "classification",
+            "obb",
+            "depth",
+            "pose6d",
+        ),
         default="auto",
         help="Dataset source family to check (default: auto).",
     )

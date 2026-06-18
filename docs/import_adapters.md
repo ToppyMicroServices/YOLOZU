@@ -171,13 +171,18 @@ import/evaluation inputs for the segmentation lane rather than direct
 reference-trainer inputs.
 
 For training-specific checks, use `doctor train-dataset`. It accepts the same
-source families plus explicit `--from coco-keypoints`, validates direct
+source families plus explicit `--from coco-keypoints`, `--from classification`,
+`--from obb`, `--from depth`, and `--from pose6d`, validates direct
 reference-trainer readiness or records JSON shape, and prints the next command
-without launching training:
+without launching training. Classification and OBB are recognized intake
+contracts for external training lanes. Depth and pose6d are direct for the
+reference trainer only when the normalized bbox records include the required
+sidecars.
 
 ```bash
 yolozu doctor train-dataset --from auto --dataset /path/to/dataset_root --split val2017 --output -
 yolozu doctor train-dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output -
+yolozu doctor train-dataset --from pose6d --dataset /path/to/yolozu_pose_wrapper --split train --output -
 ```
 
 ## Train shorthand (`train --import`)

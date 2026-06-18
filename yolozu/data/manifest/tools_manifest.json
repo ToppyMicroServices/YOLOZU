@@ -15892,6 +15892,14 @@
           "description": "Check whether a dataset is directly train-ready for the RT-DETR reference trainer and print next commands."
         },
         {
+          "command": "python3 -m yolozu doctor train-dataset --from obb --dataset /path/to/yolo_obb_root --split train --output -",
+          "description": "Check a YOLO OBB training intake and report that it belongs to an external training lane rather than the RT-DETR reference trainer."
+        },
+        {
+          "command": "python3 -m yolozu doctor train-dataset --from pose6d --dataset /path/to/yolozu_pose_wrapper --split train --output -",
+          "description": "Check that a pose6d training wrapper has bbox labels plus pose/intrinsics sidecars before reference training."
+        },
+        {
           "command": "python3 -m yolozu registry validate",
           "description": "Validate the canonical tool manifest through the top-level CLI."
         },
@@ -16230,7 +16238,7 @@
           "required": false
         },
         {
-          "description": "Dataset source selector for `yolozu doctor train-dataset`, `yolozu import dataset`, and `yolozu migrate dataset`; supports auto, ultralytics, coco, coco-keypoints, coco-instances where available, and segmentation.",
+          "description": "Dataset source selector for `yolozu doctor train-dataset`, `yolozu import dataset`, and `yolozu migrate dataset`; train-dataset supports auto, ultralytics, coco, coco-keypoints, coco-instances, segmentation, classification, obb, depth, and pose6d. Import/migrate support the subset implemented by their dataset adapters.",
           "flag": "--from",
           "kind": "string",
           "name": "from_format",

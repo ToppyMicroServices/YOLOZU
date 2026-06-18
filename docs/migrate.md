@@ -121,6 +121,13 @@ yolozu import dataset --from coco-keypoints --dataset /path/to/coco_keypoints_ro
 Both routes create a keypoints-ready YOLOZU wrapper with `keypoint_names` /
 `skeleton` metadata.
 
+`doctor train-dataset` also accepts explicit `--from classification`,
+`--from obb`, `--from depth`, and `--from pose6d` for training intake
+preflight. Classification folders/manifests and OBB labels are reported as
+recognized external-lane intake contracts. Depth and pose6d are direct for the
+reference trainer only after the dataset resolves to bbox records with the
+required sidecars.
+
 Validate (label-only):
 
 ```bash
