@@ -441,7 +441,8 @@ yolozu export-dataset segmentation   --dataset reports/voc_seg_wrapper   --out-d
 For COCO keypoints roots that expose only \path{person_keypoints_<split>.json}, the same auto-detect preflight now recognizes the richer keypoints layout and writes a YOLOZU wrapper with \path{keypoint_names} / \path{skeleton} metadata before export:
 \begin{lstlisting}[language=bash]
 yolozu doctor import --dataset-from auto --dataset /path/to/coco_keypoints_root --split val2017 --output -
-yolozu import dataset   --from auto   --dataset /path/to/coco_keypoints_root   --split val2017   --output reports/coco_keypoints_wrapper   --force
+yolozu doctor train-dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output -
+yolozu import dataset   --from coco-keypoints   --dataset /path/to/coco_keypoints_root   --split val2017   --output reports/coco_keypoints_wrapper   --force
 yolozu export-dataset coco   --dataset reports/coco_keypoints_wrapper   --split val2017   --out-dir reports/coco_keypoints_export   --force
 \end{lstlisting}
 

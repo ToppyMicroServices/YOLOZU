@@ -240,6 +240,37 @@ class TestYOLOZUCLI(unittest.TestCase):
         self.assertIn("--execute", proc.stdout)
         self.assertIn("--registry-out", proc.stdout)
 
+    def test_dataset_training_help_lists_preflight_and_keypoints_lane(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        commands = [
+            ["doctor", "train-dataset", "--help"],
+            ["doctor", "import", "--help"],
+            ["import", "dataset", "--help"],
+            ["migrate", "dataset", "--help"],
+        ]
+        for args in commands:
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", *args],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu {' '.join(args)} failed:\n{proc.stdout}\n{proc.stderr}")
+            self.assertIn("coco-keypoints", proc.stdout)
+        proc = subprocess.run(
+            [sys.executable, "-m", "yolozu", "doctor", "train-dataset", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertIn("--records-json", proc.stdout)
+        self.assertIn("--val-records-json", proc.stdout)
+
     def test_completion_help_lists_flags(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

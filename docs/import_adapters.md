@@ -170,6 +170,16 @@ need that migration step; semantic-segmentation descriptors remain
 import/evaluation inputs for the segmentation lane rather than direct
 reference-trainer inputs.
 
+For training-specific checks, use `doctor train-dataset`. It accepts the same
+source families plus explicit `--from coco-keypoints`, validates direct
+reference-trainer readiness or records JSON shape, and prints the next command
+without launching training:
+
+```bash
+yolozu doctor train-dataset --from auto --dataset /path/to/dataset_root --split val2017 --output -
+yolozu doctor train-dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output -
+```
+
 ## Train shorthand (`train --import`)
 
 For quick demos, you can use a shorthand that resolves external config into canonical `TrainConfig`

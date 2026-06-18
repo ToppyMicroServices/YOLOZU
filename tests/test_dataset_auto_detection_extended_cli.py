@@ -211,6 +211,59 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             self.assertEqual(len(train_label.get("keypoints") or []), 2)
             self.assertEqual((train_manifest.get("keypoints_meta") or {}).get("num_keypoints"), 2)
 
+            proc_doctor_train = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--from",
+                    "coco-keypoints",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc_doctor_train.returncode != 0:
+                self.fail(
+                    "doctor train-dataset on COCO keypoints root failed:\n"
+                    f"{proc_doctor_train.stdout}\n{proc_doctor_train.stderr}"
+                )
+            train_payload = json.loads(proc_doctor_train.stdout)
+            self.assertEqual(train_payload.get("dataset_from"), "coco-keypoints")
+            train_readiness = train_payload.get("reference_trainer") or {}
+            self.assertFalse(bool(train_readiness.get("direct_train_ready")))
+            self.assertTrue(bool(train_readiness.get("train_ready_after_migration")))
+            self.assertTrue(any("--from coco-keypoints" in str(cmd) for cmd in train_payload.get("next_commands") or []))
+
+            explicit_wrapper = Path(td) / "explicit_wrapper"
+            proc_import_explicit = self._run(
+                [
+                    "import",
+                    "dataset",
+                    "--from",
+                    "coco-keypoints",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    str(explicit_wrapper),
+                    "--force",
+                ],
+                cwd=repo_root,
+            )
+            if proc_import_explicit.returncode != 0:
+                self.fail(
+                    "import dataset coco-keypoints failed:\n"
+                    f"{proc_import_explicit.stdout}\n{proc_import_explicit.stderr}"
+                )
+            explicit_dataset_json = json.loads((explicit_wrapper / "dataset.json").read_text(encoding="utf-8"))
+            self.assertEqual(explicit_dataset_json.get("task"), "keypoints")
+            self.assertEqual(explicit_dataset_json.get("keypoint_names"), ["nose", "eye"])
+
             export_yolo = Path(td) / "export_yolo"
             proc_export_yolo = self._run(
                 [

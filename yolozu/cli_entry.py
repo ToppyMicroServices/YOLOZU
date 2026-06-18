@@ -9,6 +9,7 @@ from .cli_commands import (
     _cmd_train_orchestrate,
     _cmd_test,
     _cmd_doctor_import,
+    _cmd_doctor_train_dataset,
     _cmd_doctor,
     _cmd_registry_list,
     _cmd_registry_run,
@@ -177,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     doctor_imp.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
     doctor_imp.add_argument(
         "--dataset-from",
-        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
+        choices=("auto", "ultralytics", "coco", "coco-keypoints", "coco-instances", "segmentation"),
         default=None,
         help="Optional dataset import adapter to summarize.",
     )
@@ -197,6 +198,27 @@ def main(argv: list[str] | None = None) -> int:
     doctor_imp.add_argument("--images-dir", default=None, help="(dataset-from coco-instances) images directory for this split.")
     doctor_imp.add_argument("--include-crowd", action="store_true", help="(dataset-from coco-instances) Include iscrowd annotations.")
     doctor_imp.add_argument("--config", default=None, help="(config-from mmdet/yolox/detectron2) config file path.")
+
+    doctor_train = doctor_sub.add_parser(
+        "train-dataset",
+        help="Check whether a dataset is ready for the RT-DETR reference trainer.",
+    )
+    doctor_train.add_argument("--output", default="-", help="Output JSON path (use - for stdout).")
+    doctor_train.add_argument(
+        "--from",
+        dest="dataset_from",
+        choices=("auto", "ultralytics", "coco", "coco-keypoints", "coco-instances", "segmentation"),
+        default="auto",
+        help="Dataset source family to check (default: auto).",
+    )
+    doctor_train.add_argument("--dataset", default=None, help="Dataset root, data.yaml, or dataset.json path.")
+    doctor_train.add_argument("--split", default=None, help="Split name (for example train, val, val2017).")
+    doctor_train.add_argument("--records-json", default=None, help="Training records JSON to check instead of scanning --dataset.")
+    doctor_train.add_argument("--val-records-json", default=None, help="Optional validation records JSON to check.")
+    doctor_train.add_argument("--instances", default=None, help="COCO instances/person_keypoints JSON path for explicit COCO checks.")
+    doctor_train.add_argument("--images-dir", default=None, help="COCO images directory for explicit COCO checks.")
+    doctor_train.add_argument("--include-crowd", action="store_true", help="Include COCO iscrowd annotations.")
+    doctor_train.add_argument("--max-images", type=int, default=200, help="Cap records inspected for summary (default: 200).")
 
     list_p = sub.add_parser("list", help="List registries and built-in catalogs.")
     list_sub = list_p.add_subparsers(dest="list_command", required=True)
@@ -624,9 +646,9 @@ def main(argv: list[str] | None = None) -> int:
 
     mig_dataset = migrate_sub.add_parser("dataset", help="Generate dataset.json wrapper for external dataset layouts.")
     mig_dataset.add_argument(
-        "--from",
-        dest="from_format",
-        choices=("auto", "ultralytics", "coco", "segmentation"),
+                            "--from",
+                            dest="from_format",
+                            choices=("auto", "ultralytics", "coco", "coco-keypoints", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
@@ -704,7 +726,7 @@ def main(argv: list[str] | None = None) -> int:
     imp_dataset.add_argument(
         "--from",
         dest="from_format",
-        choices=("auto", "ultralytics", "coco", "coco-instances", "segmentation"),
+        choices=("auto", "ultralytics", "coco", "coco-keypoints", "coco-instances", "segmentation"),
         required=True,
         help="Source ecosystem.",
     )
@@ -1201,6 +1223,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "doctor":
         if getattr(args, "doctor_command", None) == "import":
             return _cmd_doctor_import(args)
+        if getattr(args, "doctor_command", None) == "train-dataset":
+            return _cmd_doctor_train_dataset(args)
         return _cmd_doctor(
             str(args.output),
             explain=bool(getattr(args, "explain", False)),

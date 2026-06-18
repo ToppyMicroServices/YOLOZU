@@ -15888,6 +15888,10 @@
           "description": "Train import preview with auto framework detection."
         },
         {
+          "command": "python3 -m yolozu doctor train-dataset --dataset data/smoke --split val --output -",
+          "description": "Check whether a dataset is directly train-ready for the RT-DETR reference trainer and print next commands."
+        },
+        {
           "command": "python3 -m yolozu registry validate",
           "description": "Validate the canonical tool manifest through the top-level CLI."
         },
@@ -15962,6 +15966,10 @@
         {
           "command": "python3 -m yolozu import dataset --from auto --dataset /path/to/coco_keypoints_root --split val2017 --output reports/coco_keypoints_wrapper --force",
           "description": "Auto-detect a COCO keypoints root and create a YOLOZU keypoints wrapper with keypoint schema metadata."
+        },
+        {
+          "command": "python3 -m yolozu import dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output reports/coco_keypoints_wrapper --force",
+          "description": "Explicitly import a COCO keypoints root into a train-ready YOLOZU keypoints wrapper."
         },
         {
           "command": "python3 -m yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir reports/voc_seg_export --image-mode symlink --force",
@@ -16117,7 +16125,7 @@
           "required": false
         },
         {
-          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args so users do not need to identify native bbox, keypoints, or semantic-segmentation layouts manually before wrapper normalization.",
+          "description": "Dataset import source selector for doctor/import flows; `auto` inspects the provided dataset path or explicit COCO args so users do not need to identify native bbox, keypoints, or semantic-segmentation layouts manually before wrapper normalization. `coco-keypoints` selects COCO person_keypoints-style roots explicitly.",
           "flag": "--dataset-from",
           "kind": "string",
           "name": "dataset_from",
@@ -16219,6 +16227,13 @@
           "flag": "--force-import-overwrite",
           "kind": "string",
           "name": "force_import_overwrite",
+          "required": false
+        },
+        {
+          "description": "Dataset source selector for `yolozu doctor train-dataset`, `yolozu import dataset`, and `yolozu migrate dataset`; supports auto, ultralytics, coco, coco-keypoints, coco-instances where available, and segmentation.",
+          "flag": "--from",
+          "kind": "string",
+          "name": "from_format",
           "required": false
         },
         {
@@ -17252,7 +17267,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
+      "summary": "Top-level YOLOZU CLI for validation, migration, train-ready dataset preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
       "tags": [
         "cli",
         "predictions",
