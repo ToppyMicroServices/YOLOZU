@@ -1168,13 +1168,14 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
                 "category_id_zero_present": bool(has_category_id_zero),
                 "classes_preview": list(cat_map.class_names[:20]),
             }
-        elif src == "coco":
+        elif src in {"coco", "coco-keypoints"}:
             dataset_path = getattr(args, "dataset", None)
             if not dataset_path:
-                raise SystemExit("--dataset is required for --dataset-from coco")
+                raise SystemExit(f"--dataset is required for --dataset-from {src}")
             info = layout_info or inspect_dataset_layout(str(dataset_path), split=str(args.split) if getattr(args, "split", None) else None)
-            if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
-                raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+            expected_formats = ("coco_keypoints_root",) if src == "coco-keypoints" else ("coco_root", "coco_keypoints_root")
+            if info is None or str(info.get("format") or "") not in expected_formats:
+                raise SystemExit(f"dataset is not a detectable {src} root: {dataset_path}")
             instances_path = Path(str(info.get("instances_json") or "")).expanduser()
             images_dir = Path(str(info.get("images_dir") or "")).expanduser()
             instances_doc = json.loads(instances_path.read_text(encoding="utf-8"))
@@ -1186,7 +1187,7 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
             cat_map = build_category_map_from_coco(instances_doc)
             task_family = str(info.get("task_family") or ("keypoints" if str(info.get("format") or "") == "coco_keypoints_root" else "bbox"))
             report["dataset"] = {
-                "from": "coco",
+                "from": src,
                 "layout": info,
                 "task_family": task_family,
                 "reference_trainer": _reference_trainer_readiness(
@@ -1313,6 +1314,238 @@ def _cmd_doctor_import(args: argparse.Namespace) -> int:
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(str(out_path))
     return 0 if not report["errors"] else 2
+
+
+def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
+    import time
+
+    from rtdetr_pose.dataset import build_manifest as build_rtdetr_manifest
+    from rtdetr_pose.train_records import _load_records_json, normalize_training_records
+    from yolozu.dataset import inspect_dataset_layout
+
+    def _now_utc() -> str:
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+    def _resolve_path(value: str | None) -> Path | None:
+        if not value:
+            return None
+        path = Path(str(value)).expanduser()
+        if not path.is_absolute():
+            path = (Path.cwd() / path).resolve()
+        return path
+
+    def _write_report(payload: dict[str, Any]) -> int:
+        output = str(getattr(args, "output", "-") or "-")
+        if output == "-":
+            print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+            return 0 if not payload["errors"] else 2
+        out_path = Path(output)
+        if not out_path.is_absolute():
+            out_path = Path.cwd() / out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(str(out_path))
+        return 0 if not payload["errors"] else 2
+
+    dataset_from = str(getattr(args, "dataset_from", "auto") or "auto").strip().lower().replace("_", "-")
+    if dataset_from == "coco-keypoint":
+        dataset_from = "coco-keypoints"
+    dataset_path = _resolve_path(getattr(args, "dataset", None))
+    split = str(getattr(args, "split", "") or "")
+    report: dict[str, Any] = {
+        "kind": "yolozu_doctor_train_dataset",
+        "schema_version": 1,
+        "timestamp": _now_utc(),
+        "dataset_from": dataset_from,
+        "dataset": str(dataset_path) if dataset_path else None,
+        "split": split or None,
+        "layout": None,
+        "reference_trainer": None,
+        "records": None,
+        "validation_records": None,
+        "next_commands": [],
+        "warnings": [],
+        "errors": [],
+    }
+
+    def _record_summary(records_path: Path, *, label: str) -> dict[str, Any]:
+        records = normalize_training_records(_load_records_json(records_path, label=label))
+        inspected = records[: int(getattr(args, "max_images", 200) or 200)]
+        label_count = 0
+        missing_image_path = 0
+        missing_image_file = 0
+        malformed_labels = 0
+        keypoint_labels = 0
+        depth_labels = 0
+        pose_labels = 0
+        for record in inspected:
+            image_path_value = record.get("image_path")
+            if not image_path_value:
+                missing_image_path += 1
+            else:
+                image_path = Path(str(image_path_value)).expanduser()
+                candidates = [image_path] if image_path.is_absolute() else [records_path.parent / image_path, Path.cwd() / image_path]
+                if not any(candidate.exists() for candidate in candidates):
+                    missing_image_file += 1
+            labels = record.get("labels") or []
+            if not isinstance(labels, list):
+                malformed_labels += 1
+                continue
+            for inst in labels:
+                if not isinstance(inst, dict):
+                    malformed_labels += 1
+                    continue
+                label_count += 1
+                if not isinstance(inst.get("bbox"), dict):
+                    malformed_labels += 1
+                if inst.get("keypoints") is not None:
+                    keypoint_labels += 1
+                if any(k in inst for k in ("depth", "depth_path", "z", "z_gt", "D_obj")):
+                    depth_labels += 1
+                if any(k in inst for k in ("pose6d", "rot6d", "R", "t", "translation")):
+                    pose_labels += 1
+        return {
+            "path": str(records_path),
+            "direct_train_ready": bool(records) and missing_image_path == 0 and missing_image_file == 0 and malformed_labels == 0,
+            "count": int(len(records)),
+            "inspected": int(len(inspected)),
+            "labels": int(label_count),
+            "missing_image_path": int(missing_image_path),
+            "missing_image_file": int(missing_image_file),
+            "malformed_labels": int(malformed_labels),
+            "keypoint_labels": int(keypoint_labels),
+            "depth_labels": int(depth_labels),
+            "pose_labels": int(pose_labels),
+        }
+
+    try:
+        records_json = _resolve_path(getattr(args, "records_json", None))
+        val_records_json = _resolve_path(getattr(args, "val_records_json", None))
+        if records_json is not None:
+            train_summary = _record_summary(records_json, label="records")
+            report["records"] = train_summary
+            if val_records_json is not None:
+                report["validation_records"] = _record_summary(val_records_json, label="validation")
+            report["reference_trainer"] = {
+                "task_family": "records",
+                "direct_train_ready": bool(train_summary.get("direct_train_ready")),
+                "train_ready_after_migration": bool(train_summary.get("direct_train_ready")),
+                "requires_normalization": False,
+                "accepted_inputs": ["records JSON using image/image_path and normalized bbox labels"],
+                "reason": (
+                    "records JSON can be consumed by the reference trainer"
+                    if train_summary.get("direct_train_ready")
+                    else "records JSON has missing image paths or malformed labels"
+                ),
+            }
+            report["next_commands"].append(
+                "python3 -m yolozu train <config> --records-json "
+                f"{records_json}"
+                + (f" --val-records-json {val_records_json}" if val_records_json else "")
+            )
+            if not train_summary.get("direct_train_ready"):
+                report["errors"].append("records JSON is not train-ready")
+            return _write_report(report)
+
+        if dataset_path is None:
+            report["errors"].append("--dataset or --records-json is required")
+            return _write_report(report)
+
+        layout_info = inspect_dataset_layout(str(dataset_path), split=split or None)
+        report["layout"] = layout_info
+        if dataset_from == "auto":
+            if layout_info is None:
+                dataset_from = "unknown"
+            else:
+                fmt = str(layout_info.get("format") or "")
+                if fmt == "coco_keypoints_root":
+                    dataset_from = "coco-keypoints"
+                elif fmt in ("coco_root", "yolozu_coco_wrapper"):
+                    dataset_from = "coco"
+                elif fmt in (
+                    "yolozu_segmentation_descriptor",
+                    "voc_segmentation_root",
+                    "cityscapes_segmentation_root",
+                    "ade20k_segmentation_root",
+                ):
+                    dataset_from = "segmentation"
+                else:
+                    dataset_from = "ultralytics"
+            report["dataset_from"] = dataset_from
+
+        if dataset_from == "coco-keypoints":
+            task_family = "keypoints"
+        elif dataset_from == "segmentation":
+            task_family = "segmentation"
+        else:
+            task_family = str((layout_info or {}).get("task_family") or "bbox")
+
+        source_format = str((layout_info or {}).get("format") or dataset_from)
+        label_format = str((layout_info or {}).get("label_format") or "")
+        readiness = _reference_trainer_readiness(
+            task_family=task_family,
+            source_format=source_format,
+            label_format=(label_format or None),
+        )
+
+        if bool(readiness.get("direct_train_ready")):
+            try:
+                manifest = build_rtdetr_manifest(dataset_path, split=split or str((layout_info or {}).get("split") or "train"))
+                records = list(manifest.get("images") or [])
+                inspected = records[: int(getattr(args, "max_images", 200) or 200)]
+                label_count = sum(len(r.get("labels") or []) for r in inspected if isinstance(r, dict))
+                report["records"] = {
+                    "count": int(len(records)),
+                    "inspected": int(len(inspected)),
+                    "labels": int(label_count),
+                    "keypoints_meta": manifest.get("keypoints_meta"),
+                }
+                if not records:
+                    readiness["direct_train_ready"] = False
+                    readiness["requires_normalization"] = True
+                    readiness["reason"] = "reference trainer resolved the layout but found no records"
+                    report["errors"].append("no training records found")
+            except Exception as exc:
+                readiness["direct_train_ready"] = False
+                readiness["requires_normalization"] = True
+                readiness["reason"] = f"reference trainer could not resolve dataset: {exc}"
+                report["errors"].append(str(exc))
+
+        report["reference_trainer"] = readiness
+
+        if bool(readiness.get("direct_train_ready")):
+            report["next_commands"].append(f"python3 -m yolozu train <config> --dataset-root {dataset_path}" + (f" --split {split}" if split else ""))
+        elif bool(readiness.get("train_ready_after_migration")):
+            if dataset_from == "coco-keypoints":
+                report["next_commands"].append(
+                    f"python3 -m yolozu import dataset --from coco-keypoints --dataset {dataset_path} "
+                    f"--output reports/train_dataset_wrapper --force"
+                    + (f" --split {split}" if split else "")
+                )
+            elif dataset_from == "coco":
+                report["next_commands"].append(
+                    f"python3 -m yolozu migrate dataset --from coco --dataset {dataset_path} "
+                    f"--output reports/train_dataset_wrapper --force"
+                    + (f" --split {split}" if split else "")
+                )
+            else:
+                report["next_commands"].append(
+                    f"python3 -m yolozu import dataset --from auto --dataset {dataset_path} "
+                    f"--output reports/train_dataset_wrapper --force"
+                    + (f" --split {split}" if split else "")
+                )
+            report["next_commands"].append("python3 -m yolozu train <config> --dataset-root reports/train_dataset_wrapper")
+        else:
+            report["next_commands"].append(
+                "Use an external training lane or convert the source into YOLO labels or records JSON before reference training."
+            )
+
+    except SystemExit as exc:
+        report["errors"].append(str(exc))
+    except Exception as exc:
+        report["errors"].append(str(exc))
+
+    return _write_report(report)
 
 
 def _cmd_export(args: argparse.Namespace) -> int:
@@ -2123,15 +2356,17 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
                     output=str(args.output),
                     force=bool(args.force),
                 )
-        elif from_format == "coco":
+        elif from_format in {"coco", "coco-keypoints"}:
             coco_root = getattr(args, "coco_root", None) or getattr(args, "dataset", None)
             if not coco_root:
-                raise SystemExit("--coco-root or --dataset is required for --from coco")
+                raise SystemExit(f"--coco-root or --dataset is required for --from {from_format}")
             info = inspect_dataset_layout(str(coco_root), split=str(args.split) if args.split else None)
             if info is not None and str(info.get("format") or "") in ("coco_root", "coco_keypoints_root"):
                 effective_split = str(info.get("split") or args.split or "val2017")
             else:
                 effective_split = str(args.split) if args.split else "val2017"
+            if from_format == "coco-keypoints" and (info is None or str(info.get("format") or "") != "coco_keypoints_root"):
+                raise SystemExit(f"dataset is not a detectable COCO keypoints root: {coco_root}")
             if info is not None and str(info.get("format") or "") == "coco_keypoints_root":
                 from yolozu.imports import import_coco_keypoints_dataset
 
@@ -2275,13 +2510,14 @@ def _cmd_import(args: argparse.Namespace) -> int:
                 print(str(out))
                 return 0
 
-            if from_format == "coco":
+            if from_format in {"coco", "coco-keypoints"}:
                 dataset_path = getattr(args, "dataset", None)
                 if not dataset_path:
-                    raise SystemExit("--dataset is required for --from coco")
+                    raise SystemExit(f"--dataset is required for --from {from_format}")
                 info = inspect_dataset_layout(str(dataset_path), split=str(args.split) if args.split else None)
-                if info is None or str(info.get("format") or "") not in ("coco_root", "coco_keypoints_root"):
-                    raise SystemExit(f"dataset is not a detectable COCO root: {dataset_path}")
+                expected_formats = ("coco_keypoints_root",) if from_format == "coco-keypoints" else ("coco_root", "coco_keypoints_root")
+                if info is None or str(info.get("format") or "") not in expected_formats:
+                    raise SystemExit(f"dataset is not a detectable {from_format} root: {dataset_path}")
                 if str(info.get("format") or "") == "coco_keypoints_root":
                     out = import_coco_keypoints_dataset(
                         annotations_json=str(info.get("instances_json")),

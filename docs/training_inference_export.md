@@ -168,6 +168,8 @@ training inputs.
 `reference_trainer.train_ready_after_migration` so callers can distinguish
 direct training inputs from native sources that need `migrate dataset` /
 `import dataset` first.
+For train-specific preflight, use `yolozu doctor train-dataset`; it checks the
+same boundary and prints the next command without launching training.
 
 ## Training (RT-DETR pose reference trainer)
 
@@ -181,6 +183,11 @@ If your starting point is a native dataset root instead of an already-normalized
 YOLO/YOLOZU layout, normalize it first:
 
 ```bash
+python3 -m yolozu doctor train-dataset \
+  --from auto \
+  --dataset /path/to/native_dataset_root \
+  --split val2017 \
+  --output -
 python3 -m yolozu doctor import \
   --dataset-from auto \
   --dataset /path/to/native_dataset_root \
@@ -214,6 +221,23 @@ This keeps train and validation inputs explicit when the source dataset cannot
 be represented as a single YOLO-style split directory. Records may use either
 `image` or `image_path`; label boxes may use flat `cx`/`cy`/`w`/`h` fields or
 nested `bbox: {cx, cy, w, h}` fields.
+
+COCO keypoints roots can be selected explicitly when auto-detection is not
+desirable:
+
+```bash
+python3 -m yolozu doctor train-dataset \
+  --from coco-keypoints \
+  --dataset /path/to/coco_keypoints_root \
+  --split val2017 \
+  --output -
+python3 -m yolozu import dataset \
+  --from coco-keypoints \
+  --dataset /path/to/coco_keypoints_root \
+  --split val2017 \
+  --output reports/coco_keypoints_wrapper \
+  --force
+```
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher

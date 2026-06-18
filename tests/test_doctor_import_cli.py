@@ -168,6 +168,97 @@ class TestDoctorImportCLI(unittest.TestCase):
         self.assertTrue(bool(readiness.get("train_ready_after_migration")))
         self.assertFalse(bool(readiness.get("requires_normalization")))
 
+    def test_doctor_train_dataset_reports_direct_train_ready(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = self._run(
+            [
+                "doctor",
+                "train-dataset",
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--output",
+                "-",
+            ],
+            cwd=repo_root,
+        )
+        if proc.returncode != 0:
+            self.fail(f"doctor train-dataset failed:\n{proc.stdout}\n{proc.stderr}")
+
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload.get("kind"), "yolozu_doctor_train_dataset")
+        readiness = payload.get("reference_trainer") or {}
+        self.assertTrue(bool(readiness.get("direct_train_ready")))
+        self.assertFalse(bool(readiness.get("requires_normalization")))
+        records = payload.get("records") or {}
+        self.assertGreater(int(records.get("count") or 0), 0)
+        self.assertTrue(any("--dataset-root" in str(cmd) for cmd in payload.get("next_commands") or []))
+
+    def test_doctor_train_dataset_reports_records_json_readiness(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            (root / "images").mkdir(parents=True, exist_ok=True)
+            (root / "images" / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            records_path = root / "records.json"
+            records_path.write_text(
+                json.dumps(
+                    {
+                        "images": [
+                            {
+                                "image": "images/0001.png",
+                                "labels": [{"class_id": 0, "cx": 0.5, "cy": 0.5, "w": 0.25, "h": 0.25}],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--records-json",
+                    str(records_path),
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"doctor train-dataset records failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(proc.stdout)
+            readiness = payload.get("reference_trainer") or {}
+            self.assertTrue(bool(readiness.get("direct_train_ready")))
+            records = payload.get("records") or {}
+            self.assertEqual(int(records.get("count") or 0), 1)
+            self.assertEqual(int(records.get("labels") or 0), 1)
+            self.assertEqual(int(records.get("missing_image_file") or 0), 0)
+
+    def test_doctor_train_dataset_rejects_malformed_records_json(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            records_path = root / "records.json"
+            records_path.write_text(json.dumps([{"labels": [{"class_id": 0}]}]), encoding="utf-8")
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--records-json",
+                    str(records_path),
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            self.assertEqual(proc.returncode, 2)
+            payload = json.loads(proc.stdout)
+            self.assertFalse(bool((payload.get("reference_trainer") or {}).get("direct_train_ready")))
+            self.assertTrue(payload.get("errors"))
+
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

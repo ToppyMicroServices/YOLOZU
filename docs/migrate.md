@@ -109,7 +109,17 @@ This writes:
 - `data/coco_yolo_like/labels/val2017/*.txt`
 - `data/coco_yolo_like/dataset.json` (points at `images_dir` and `labels_dir`)
 
-If the COCO root only exposes `person_keypoints_<split>.json`, `yolozu import dataset --from auto` now detects that automatically and creates a keypoints-ready YOLOZU wrapper with `keypoint_names` / `skeleton` metadata.
+If the COCO root only exposes `person_keypoints_<split>.json`,
+`yolozu import dataset --from auto` detects that automatically. You can also
+select the lane explicitly:
+
+```bash
+yolozu doctor train-dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output -
+yolozu import dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output data/coco_keypoints_yolo_like --force
+```
+
+Both routes create a keypoints-ready YOLOZU wrapper with `keypoint_names` /
+`skeleton` metadata.
 
 Validate (label-only):
 
