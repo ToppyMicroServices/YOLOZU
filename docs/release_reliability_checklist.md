@@ -25,6 +25,7 @@ Operational summary:
 - the default release path is **not** "always minor"
 - default SemVer behavior is `small -> patch`, `medium/large -> minor`
 - `major` is intentionally gated so it cannot be published accidentally during routine tagging
+- the release helper updates `yolozu/__init__.py` and inserts the matching `CHANGELOG.md` release heading in the same release commit
 
 For CalVer mode:
 

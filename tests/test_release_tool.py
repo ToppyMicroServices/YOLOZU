@@ -213,6 +213,22 @@ class TestReleaseTool(unittest.TestCase):
             )
         )
 
+    def test_changelog_entry_from_conventional_subject(self) -> None:
+        from tools import release as release_tool
+
+        self.assertEqual(
+            release_tool._entry_from_subject("docs: improve manual training page break (#156)"),
+            "- Improve manual training page break.",
+        )
+
+    def test_changelog_section_contains_release_heading(self) -> None:
+        from tools import release as release_tool
+
+        section = release_tool._changelog_section("4.4.2", date="2026-06-18", ref="HEAD")
+        self.assertIn("## [4.4.2] - 2026-06-18", section)
+        self.assertIn("### Changed", section)
+        self.assertIn("-", section)
+
     def test_tools_wrapper_release_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         wrapper = repo_root / "tools" / "yolozu.py"
