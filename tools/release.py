@@ -25,6 +25,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INIT_PATH = REPO_ROOT / "yolozu" / "__init__.py"
+CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
 PYTHON = sys.executable  # Use the same interpreter as release.sh selected.
 SEMVER_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 CALVER_RE = re.compile(r"(\d{4})\.(\d{2})\.(\d{2})\.(\d+)")
@@ -67,6 +68,10 @@ def _parser() -> argparse.ArgumentParser:
 
 def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _today_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
 def _run(cmd: list[str], *, cwd: Path = REPO_ROOT, dry_run: bool = False) -> dict[str, Any]:
@@ -146,6 +151,54 @@ def _set_version_in_init(next_version: str) -> None:
     if nxt == text:
         raise RuntimeError("failed to update __version__ in yolozu/__init__.py")
     INIT_PATH.write_text(nxt, encoding="utf-8")
+
+
+def _release_subjects_since(ref: str | None) -> list[str]:
+    if ref:
+        out = _git_stdout("log", "--format=%s", f"{ref}..HEAD")
+    else:
+        out = _git_stdout("log", "--format=%s", "--root", "HEAD")
+    subjects: list[str] = []
+    for line in out.splitlines():
+        subject = line.strip()
+        if not subject:
+            continue
+        if subject.lower().startswith(("release ", "chore: release ")):
+            continue
+        subjects.append(subject)
+    return subjects
+
+
+def _entry_from_subject(subject: str) -> str:
+    text = re.sub(r"\s*\(#\d+\)\s*$", "", subject.strip())
+    conventional = re.match(r"^[a-z]+(?:\([^)]+\))?!?:\s*(.+)$", text)
+    if conventional:
+        text = conventional.group(1).strip()
+    if not text:
+        text = "Prepare release metadata"
+    text = text[0].upper() + text[1:]
+    if text[-1:] not in ".!?":
+        text += "."
+    return f"- {text}"
+
+
+def _changelog_section(next_version: str, *, date: str, ref: str | None) -> str:
+    entries = [_entry_from_subject(subject) for subject in _release_subjects_since(ref)]
+    if not entries:
+        entries = [f"- Prepare release metadata for v{next_version}."]
+    return f"## [{next_version}] - {date}\n\n### Changed\n" + "\n".join(entries) + "\n"
+
+
+def _set_changelog_release(next_version: str, *, ref: str | None, date: str | None = None) -> None:
+    text = CHANGELOG_PATH.read_text(encoding="utf-8")
+    heading = f"## [{next_version}] - "
+    if heading in text:
+        return
+    marker = "## [Unreleased]"
+    if marker not in text:
+        raise RuntimeError("CHANGELOG.md missing ## [Unreleased] marker")
+    section = _changelog_section(next_version, date=date or _today_utc(), ref=ref)
+    CHANGELOG_PATH.write_text(text.replace(marker, f"{marker}\n\n{section}", 1), encoding="utf-8")
 
 
 def _detect_versioning_scheme(version: str) -> str:
@@ -458,9 +511,39 @@ def main(argv: list[str] | None = None) -> int:
             errors.append("failed to update package version")
 
     if not errors:
+        if bool(args.dry_run):
+            step = _run([PYTHON, "tools/release.py", "(set-changelog)", next_version], dry_run=True)
+        else:
+            try:
+                _set_changelog_release(next_version, ref=latest_tag)
+                step = {
+                    "type": "set_changelog",
+                    "ok": True,
+                    "returncode": 0,
+                    "stdout": f"updated CHANGELOG.md for {next_version}\n",
+                    "stderr": "",
+                    "cmd": [PYTHON, "tools/release.py", "(set-changelog)", next_version],
+                    "cwd": str(REPO_ROOT),
+                }
+            except Exception as exc:
+                step = {
+                    "type": "set_changelog",
+                    "ok": False,
+                    "returncode": 1,
+                    "stdout": "",
+                    "stderr": str(exc),
+                    "cmd": [PYTHON, "tools/release.py", "(set-changelog)", next_version],
+                    "cwd": str(REPO_ROOT),
+                }
+        step["type"] = "set_changelog"
+        steps.append(step)
+        if not bool(step.get("ok")):
+            errors.append("failed to update changelog")
+
+    if not errors:
         for cmd, step_type, err in [
-            (["git", "add", "yolozu/__init__.py"], "git_add_version", "failed to stage version file"),
-            (["git", "commit", "-m", f"Release {tag}"], "git_commit", "failed to create release commit"),
+            (["git", "add", "yolozu/__init__.py", "CHANGELOG.md"], "git_add_version", "failed to stage release files"),
+            (["git", "commit", "-m", f"chore: release {tag}"], "git_commit", "failed to create release commit"),
             (["git", "tag", "-a", tag, "-m", f"YOLOZU {next_version}"], "git_tag", "failed to create release tag"),
             (["git", "push", "origin", "main"], "git_push_main", "failed to push main branch"),
             (["git", "push", "origin", tag], "git_push_tag", "failed to push release tag"),

@@ -34,33 +34,30 @@ This avoids long-lived PyPI API tokens.
 
 ## Each release
 
-1) Bump version in `yolozu/__init__.py` (`__version__`).
-
-2) Update `CHANGELOG.md`:
-   - create/update `[X.Y.Z] - YYYY-MM-DD`
-   - keep `[Unreleased]` empty (or with new post-release changes only)
-   - make `Breaking` / `Changed` / `Deprecated` explicit
-
-3) Push to `main`.
-
-4) Create and push an annotated tag:
+1) Run the release helper from `main`:
 
 ```bash
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push origin vX.Y.Z
+bash release.sh
 ```
 
-Tag push prepares release metadata but does **not** trigger PyPI publish.
+The helper bumps `yolozu/__init__.py`, inserts a matching `CHANGELOG.md` release section, runs release checks, commits, tags, pushes, creates the GitHub Release, and dispatches the manual DOI workflow.
 
-5) Create a GitHub Release from that tag and click **Publish release**.
+For a preview:
 
-Use `.github/release_notes_template.md` as the minimal release note template.
+```bash
+bash release.sh --dry-run --output reports/release_report.dry_run.json
+```
 
-This action triggers `.github/workflows/publish.yml`, which builds and publishes to PyPI.
-
-6) Verify publish result:
+2) Verify publish result:
    - GitHub Actions `publish` job is green
    - PyPI project page shows the new version
+   - manual DOI workflow either published a record or produced an explicit skip reason
+
+Manual fallback:
+- If you bypass `release.sh`, bump `yolozu/__init__.py`, add `## [X.Y.Z] - YYYY-MM-DD` to `CHANGELOG.md`, push to `main`, create an annotated tag, then publish a GitHub Release.
+- Tag push alone prepares release metadata but does **not** trigger PyPI publish.
+
+Use `.github/release_notes_template.md` as the minimal release note template.
 
 ## Optional manual publish trigger
 
