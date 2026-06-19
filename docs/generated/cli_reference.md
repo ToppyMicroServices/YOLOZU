@@ -6,57 +6,35 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version]
-              {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp} ...
 
 positional arguments:
   {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
-    doctor (dr)         Check the environment. Use --explain for beginner-
-                        friendly next actions.
+    doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
-    fetch               Download a model artifact from the built-in (or
-                        custom) model registry.
-    export              Export predictions.json artifacts across the supported
-                        backend lanes.
-    export-dataset      Export a YOLOZU dataset into YOLO, COCO, KITTI, or
-                        segmentation layout.
-    predict-images      Run folder inference and write predictions JSON +
-                        overlays + HTML.
-    eval-coco           Evaluate detections with COCOeval (optional extra:
-                        yolozu[coco]).
-    calibrate           Apply post-hoc FRACAL calibration to bbox or instance-
-                        seg predictions JSON.
-    eval-long-tail      Evaluate long-tail detection metrics in one
-                        standardized report.
-    long-tail-recipe    Generate a decoupled long-tail training recipe with
-                        plugin-style rebalance config.
-    benchmark           Ultralytics-parity benchmark entrypoint (Phase 1:
-                        honest synthetic probe + explicit skipped formats).
-    parity              Compare two predictions JSON artifacts for backend
-                        parity.
+    fetch               Download a model artifact from the built-in (or custom) model registry.
+    export              Export predictions.json artifacts across the supported backend lanes.
+    export-dataset      Export a YOLOZU dataset into YOLO, COCO, KITTI, or segmentation layout.
+    predict-images      Run folder inference and write predictions JSON + overlays + HTML.
+    eval-coco           Evaluate detections with COCOeval (optional extra: yolozu[coco]).
+    calibrate           Apply post-hoc FRACAL calibration to bbox or instance-seg predictions JSON.
+    eval-long-tail      Evaluate long-tail detection metrics in one standardized report.
+    long-tail-recipe    Generate a decoupled long-tail training recipe with plugin-style rebalance config.
+    benchmark           Ultralytics-parity benchmark entrypoint (Phase 1: honest synthetic probe + explicit skipped formats).
+    parity              Compare two predictions JSON artifacts for backend parity.
     predictions         Predictions artifact utilities.
-    validate            Validate artifacts (predictions JSON, instance-seg
-                        predictions).
-    eval-instance-seg   Evaluate instance segmentation predictions (mask mAP
-                        over PNG masks).
-    onnxrt              ONNXRuntime utilities (optional extra:
-                        yolozu[onnxrt]).
+    validate            Validate artifacts (predictions JSON, instance-seg predictions).
+    eval-instance-seg   Evaluate instance segmentation predictions (mask mAP over PNG masks).
+    onnxrt              ONNXRuntime utilities (optional extra: yolozu[onnxrt]).
     resources           Access packaged configs/schemas/protocols.
     migrate             Migration helpers (dataset/config/predictions).
-    import              Import adapters (read-only projection into canonical
-                        schema).
-    train               Train with the RT-DETR pose reference trainer by
-                        default, or use --external-backend yolox|detectron2|mm
-                        detection|mmpose|mmseg|tao|ultralytics|hf-detr for
-                        external training lanes.
-    train-orchestrate   Plan or execute a small multi-backend training batch
-                        from one orchestration spec.
-    test                Run scenario suite (dummy/precomputed adapters are
-                        CPU-only).
+    import              Import adapters (read-only projection into canonical schema).
+    train               Train with the RT-DETR pose reference trainer by default, or use --external-backend yolox|detectron2|mmdetection|mmpose|mmseg|tao|ultralytics|hf-detr for external training lanes.
+    train-orchestrate   Plan or execute a small multi-backend training batch from one orchestration spec.
+    test                Run scenario suite (dummy/precomputed adapters are CPU-only).
     demo                Run small self-contained demos (CPU-friendly).
-    registry            AI-first tool registry: list/show/validate/run tools
-                        from the canonical manifest.
+    registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
 
 options:

@@ -15,7 +15,7 @@ def _cell(value: object) -> str:
 def render_cli_reference(repo_root: Path) -> str:
     manifest = json.loads((repo_root / "tools" / "manifest.json").read_text(encoding="utf-8"))
     env = os.environ.copy()
-    env["COLUMNS"] = "80"
+    env["COLUMNS"] = "1000"
     proc = subprocess.run(
         [sys.executable, "-m", "yolozu", "--help"],
         cwd=str(repo_root),
