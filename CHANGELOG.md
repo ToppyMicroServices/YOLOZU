@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-06-19
+
+### Changed
+- Sync release changelog automation.
+- Improve manual training page break.
+- Add train dataset intake checks.
+- Cover train dataset preflight paths.
+- Add train dataset preflight.
+- Sync train manifest help.
+- Cover keypoint wrapper training manifest.
+- Report reference trainer readiness.
+- Normalize training record inputs.
+- Clarify training execution status.
+- Support training dataset descriptors.
+- Update citation file.
+
+
 ## [4.4.1] - 2026-06-18
 
 ### Added
