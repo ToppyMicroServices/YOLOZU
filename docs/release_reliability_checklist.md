@@ -80,7 +80,8 @@ DoD:
 - `.github/workflows/codeql.yml` (**required for security posture**): must be green on target commit or explicitly skipped for unsupported languages.
 - `.github/workflows/cflite_pr.yml` / `.github/workflows/cflite_batch.yml` (**required for fuzzing posture**): keep the ClusterFuzzLite harness for predictions interface contract normalization/build green so Scorecard can observe an active fuzzing path.
 - `.github/workflows/manual_doi.yml` (**required when shipping manual update**): publishes `manual/build/yolozu_manual.pdf` to a separate Zenodo record and links it to software concept DOI.
-- `.github/workflows/container.yml` (**optional publish**): builds and publishes only on tag/manual; manual reruns should pass `release_tag=vX.Y.Z`, and NGC mirrors use `nvcr.io/yolozu/...` when `NGC_API_KEY` is configured.
+- `.github/workflows/container.yml` (**optional publish**): builds and publishes only on tag/manual; manual reruns should pass `release_tag=vX.Y.Z`.
+  GHCR publishing is the primary container artifact path. NGC mirrors use `nvcr.io/yolozu/...` when `NGC_API_KEY` is configured, but mirror push failures should remain non-blocking because NGC namespace/repository permissions are managed outside this repo.
 - `.github/workflows/announce_release.yml` (**optional announce**): posts GitHub Release announcement to LinkedIn/X/Reddit when secrets are configured; always uploads a post bundle artifact.
 - `.github/workflows/ngc_test.yml` (**optional GPU smoke**): must produce deterministic `pass` or `skip` summary in `ci-logs/gpu-ngc`.
 - `.github/workflows/gpu_zisn_pipeline.yml` (**optional GPU validation split**): manual machine-runner path for `YOLOZU-zisn.1/.2/.3` artifacts.
