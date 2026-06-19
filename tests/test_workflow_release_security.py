@@ -31,6 +31,10 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("github.event.inputs.release_tag", container)
         self.assertIn("nvcr.io", container)
         self.assertIn("github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'", container)
+        self.assertIn("Mirror to NVIDIA NGC (optional)", container)
+        self.assertIn("continue-on-error: true", container)
+        self.assertIn("steps.tags.outputs.ghcr_tags", container)
+        self.assertIn("steps.tags.outputs.ngc_tags", container)
 
     def test_scorecard_and_codeql_run_on_main_not_pull_requests(self):
         scorecard = (self.repo_root / ".github" / "workflows" / "scorecard.yml").read_text(encoding="utf-8")
