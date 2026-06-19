@@ -185,7 +185,7 @@ Contact: develop@toppymicros.com
 | validate_tool_manifest | stable | tools/validate_tool_manifest.py | Validate tools/manifest.json structure, references, and declarative metadata. |
 | yolo26_pre_pr_quality | stable | scripts/pre_pr_quality.sh | Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests). |
 | yolo26_quality_gate | stable | tools/yolo26_quality_gate.sh | Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks. |
-| yolozu | stable | yolozu/cli.py | Top-level YOLOZU CLI for validation, migration, auto-detected dataset import preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes. |
+| yolozu | stable | yolozu/cli.py | Top-level YOLOZU CLI for validation, migration, train-ready dataset preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes. |
 
 ## Smoke Coverage
 
