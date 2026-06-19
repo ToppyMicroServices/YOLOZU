@@ -28,7 +28,7 @@ jobs:
     runs-on: [machine, gpu=t4]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
 
       - name: GPU visible
         shell: bash
@@ -70,7 +70,7 @@ jobs:
     env:
       NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
 
       - name: Download zisn1 artifacts (optional)
         continue-on-error: true
@@ -117,7 +117,7 @@ jobs:
     runs-on: [machine, gpu=t4]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
 
       - name: Download zisn1 artifacts (optional)
         continue-on-error: true
@@ -166,7 +166,7 @@ jobs:
       ZISN2_RESULT: ${{ needs.zisn2_trt.result }}
       ZISN3_RESULT: ${{ needs.zisn3_opencv_ttt.result }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
         with:
           fetch-depth: 0
           persist-credentials: false
