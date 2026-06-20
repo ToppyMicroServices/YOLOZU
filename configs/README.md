@@ -17,7 +17,9 @@ This directory keeps operational config assets out of the repository root.
   - Source-checkout CLI examples.
   - Current files:
     - `train_setting.yaml`
+    - `train_rtdetr_stable.yaml`
     - `test_setting.yaml`
+    - `finetune_external/yolox_s_finetune_smoke.py`
     - `finetune_external/ultralytics_yolov8n_finetune_smoke.yaml`
     - `finetune_external/mmdetection_finetune_smoke.py`
     - `finetune_external/detectron2_finetune_smoke.yaml`
