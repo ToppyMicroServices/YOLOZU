@@ -19,6 +19,15 @@ For YOLO-style training outside the reference trainer, use the **external traini
 YOLOX is the primary Apache-2.0-friendly path; the Ultralytics bridge remains optional and
 is documented as a separate runtime/license boundary.
 
+The two detector-family lanes have different stable defaults:
+
+- RT-DETR / DETR-family: use AdamW, separate backbone/head LR groups, and stability
+  controls such as gradient clipping, LR warmup, EMA, and strict run-contract mode.
+  Start from `configs/examples/train_rtdetr_stable.yaml`.
+- YOLO-family: preserve letterbox preprocessing and NMS-applied export/eval assumptions.
+  The YOLOX smoke exp uses SGD-style settings and records the letterbox/NMS boundary in
+  `configs/examples/finetune_external/yolox_s_finetune_smoke.py`.
+
 The platform-level docs for training are:
 
 - [`training_backend_interface.md`](training_backend_interface.md)
@@ -32,7 +41,7 @@ Use this scope boundary when deciding whether YOLOZU should own the training ste
 | Lane | Status | What it is for | Notes |
 |---|---|---|---|
 | RT-DETR pose reference trainer | Stable reference lane | In-repo training, resume, export, parity, and run artifacts | This is the default `yolozu train` path. Feed it a normalized YOLOZU/YOLO-style dataset root; use auto-detect import/migrate for native layouts first. |
-| YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. |
+| YOLOX external lane | Supported external lane | Apache-2.0-friendly YOLO-style training launched from the top-level CLI | Prefer this when you want a YOLO-style trainer without pulling copyleft code into YOLOZU. Keeps letterbox + NMS assumptions explicit. |
 | MMDetection external lane | Experimental external lane | Bbox / instance-seg training launched from the top-level CLI | Best fit when the backend-native detection stack already lives in OpenMMLab. |
 | MMPose external lane | Experimental external lane | Keypoints / pose training launched from the top-level CLI | Export handoff is standardized around COCO keypoints results JSON normalized into the predictions interface contract. |
 | MMSeg external lane | Experimental external lane | Semantic segmentation training launched from the top-level CLI | Export handoff is standardized around packaging class-id masks into the segmentation predictions interface contract. |
@@ -179,6 +188,16 @@ the normalized bbox records also include the required sidecars: existing
 `K_gt`/`intrinsics` for pose6d.
 
 ## Training (RT-DETR pose reference trainer)
+
+Stable fine-tuning recipe:
+
+```bash
+python3 -m yolozu train configs/examples/train_rtdetr_stable.yaml
+```
+
+This recipe uses AdamW, separate backbone/head parameter groups, warmup, EMA,
+and gradient clipping. It is intentionally different from YOLO-family recipes,
+which assume letterbox preprocessing and NMS-applied predictions.
 
 1) Install dependencies (CPU PyTorch for local dev):
 - python3 -m pip install -r requirements-test.txt

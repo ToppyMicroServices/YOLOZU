@@ -17,6 +17,8 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertEqual(spec.maturity, "stable")
         self.assertTrue(spec.supports_run_contract)
         self.assertEqual(spec.interface_contract_level, "full_run_contract")
+        self.assertEqual(spec.training_family, "rtdetr")
+        self.assertIn("AdamW", spec.optimizer_policy or "")
 
     def test_capability_matrix_lists_external_lanes(self) -> None:
         ids = {row["backend_id"] for row in training_capability_matrix()}
@@ -32,6 +34,9 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertTrue(spec.supports_export)
         self.assertTrue(spec.supports_parity)
         self.assertIn("keypoints", spec.supported_tasks)
+        yolox = get_training_backend_spec("yolox")
+        self.assertEqual(yolox.training_family, "yolo")
+        self.assertIn("letterbox", yolox.preprocess_policy or "")
 
     def test_training_run_summary_has_shared_format(self) -> None:
         cfg = TrainConfig(backend="yolox", model="exp.py", batch=4, epochs=1)

@@ -1,0 +1,46 @@
+# RT-DETR-family stable fine-tuning settings.
+#
+# This is the DETR-style counterpart to the YOLO external lane configs:
+# - AdamW, not SGD, is the default solver.
+# - Backbone and head use separate parameter groups.
+# - Gradient clipping and warmup are enabled for stable small-data runs.
+# - Postprocess is NMS-free unless an export/eval protocol says otherwise.
+config_version: 1
+model_config: rtdetr_pose/configs/base.json
+dataset_root: data/smoke
+split: val
+device: cpu
+epochs: 1
+batch_size: 2
+max_steps: 3
+use_matcher: true
+image_size: 96
+
+# DETR-style solver / optimizer
+optimizer: adamw
+lr: 1.0e-4
+weight_decay: 0.01
+use_param_groups: true
+backbone_lr_mult: 0.1
+head_lr_mult: 1.0
+backbone_wd_mult: 1.0
+head_wd_mult: 1.0
+wd_exclude_bias: true
+wd_exclude_norm: true
+
+# Stability controls
+scheduler: cosine
+min_lr: 1.0e-6
+lr_warmup_steps: 2
+lr_warmup_init: 1.0e-6
+gradient_accumulation_steps: 1
+clip_grad_norm: 1.0
+log_grad_norm: true
+use_ema: true
+ema_decay: 0.999
+ema_eval: false
+amp: none
+
+metrics_jsonl: reports/train_rtdetr_stable_metrics.jsonl
+metrics_csv: reports/train_rtdetr_stable_metrics.csv
+export_onnx: false

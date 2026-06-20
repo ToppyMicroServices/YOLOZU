@@ -48,6 +48,13 @@ python3 tools/eval_coco.py \
 - Preprocess assumptions are stored in `export_settings.preprocessing` (letterbox/normalize/input color).
 - `weights_sha256` is stored for reproducibility.
 
+YOLO-family training/export defaults should stay separate from the RT-DETR reference lane:
+
+- YOLOX uses letterbox-shaped square inputs.
+- YOLOX uses SGD-style optimization by default in the smoke exp.
+- YOLOX export/eval assumes NMS-applied predictions.
+- RT-DETR uses AdamW-style DETR settings and NMS-free predictions by default.
+
 ## Training lane (external launcher family)
 
 The primary Apache-2.0-friendly route is:

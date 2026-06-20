@@ -21,6 +21,23 @@ It assumes run-interface-contract mode, such as \cmd{--run-id} or \cmd{--run-con
 \section{Model-family policy and reference training stack}
 YOLOZU interface contracts for predictions, evaluation reports, and scenario outputs are model-family agnostic. The in-repo training reference implementation is the RT-DETR-style adapter under \path{rtdetr_pose/}. The critical part is the \textbf{run interface contract}: stable artifact paths and resumable training runs, independent of the model family that produced them.
 
+Two detector-family lanes are supported at the training surface:
+\begin{itemize}
+  \item \textbf{RT-DETR / DETR-family}: the in-repo reference lane. Use AdamW,
+  separate backbone/head learning-rate groups, gradient clipping, warmup, EMA,
+  and NMS-free evaluation/export assumptions by default. See
+  \path{configs/examples/train_rtdetr_stable.yaml}.
+  \item \textbf{YOLO-family}: external YOLO lanes such as YOLOX. Preserve
+  letterbox preprocessing, SGD-style optimization defaults, and NMS-applied
+  export/evaluation assumptions. See
+  \path{configs/examples/finetune_external/yolox_s_finetune_smoke.py}.
+\end{itemize}
+
+Do not copy one family's defaults into the other. A DETR-family run should not
+silently inherit YOLO letterbox/NMS assumptions, and a YOLO-family run should not
+silently inherit DETR AdamW/head-backbone group assumptions unless the backend
+configuration explicitly says so.
+
 \subsection{Dataset-format boundary for the reference trainer}
 The RT-DETR reference trainer does not claim that it can ingest every native dataset layout directly at training time. Its expected input is a dataset root that \cmd{build_manifest(...)} can resolve: a YOLO-style root, a YOLO/Ultralytics \path{data.yaml}, or a \path{dataset.json} wrapper with \path{images_dir} and \path{labels_dir} pointing to image files and YOLO label files. The multi-format user convenience layer therefore lives one step earlier: \cmd{yolozu doctor import --dataset-from auto}, \cmd{yolozu import dataset --from auto}, and \cmd{yolozu migrate dataset --from auto} can auto-detect supported native sources such as COCO, COCO keypoints, Ultralytics/YOLO, and the supported semantic-segmentation roots, then materialize a normalized wrapper for training.
 

@@ -21,6 +21,26 @@ YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
 YOLOX, Detectron2, MMDetection, MMPose, MMSeg, TAO, Ultralytics, and HF DETR as external lanes that still publish the same
 top-level summary interface contract plus one standardized external run bundle.
 
+## Supported model-family lanes
+
+YOLOZU supports two first-class detector-family routes at the training surface:
+
+- `reference-rtdetr-pose`: the in-repo RT-DETR-family reference lane.
+- `yolox` / optional YOLO bridges: YOLO-family external lanes.
+
+They intentionally do not share optimizer, preprocessing, or postprocess defaults:
+
+| Family | Primary lane | Optimizer policy | Preprocess policy | Postprocess policy |
+|---|---|---|---|---|
+| RT-DETR / DETR-family | `reference-rtdetr-pose` | AdamW with separate backbone/head parameter groups; backbone LR is normally lower than head LR. | Reference trainer transforms; do not assume YOLO letterbox inside the DETR trainer loop. | NMS-free by default; use `e2e_nms_free` when recording the eval protocol. |
+| YOLO-family | `yolox` and optional YOLO bridges | SGD with momentum/Nesterov-style YOLO defaults unless the backend config overrides them. | Letterbox resize/pad is part of the model/export assumption and must be recorded in metadata. | NMS-applied predictions by default; use `nms_applied` when recording the eval protocol. |
+
+RT-DETR stability knobs are part of the reference trainer surface: gradient clipping,
+LR warmup, EMA, optional AMP, and strict run-contract mode. The example recipe is
+[`../configs/examples/train_rtdetr_stable.yaml`](../configs/examples/train_rtdetr_stable.yaml).
+The YOLOX smoke exp records the YOLO-family counterpart:
+[`../configs/examples/finetune_external/yolox_s_finetune_smoke.py`](../configs/examples/finetune_external/yolox_s_finetune_smoke.py).
+
 ## Backend ids
 
 Current backend ids:
@@ -67,6 +87,11 @@ Important fields:
 - `export`
 - `run_contract`
 - `source`
+
+For RT-DETR-family runs, populate `optimizer=adamw`, `use_param_groups=true`,
+`backbone_lr_mult < head_lr_mult`, and `clip_grad_norm > 0` for stable fine-tuning.
+For YOLO-family runs, keep `preprocess.method=letterbox` and `eval.protocol=nms_applied`
+when exporting/evaluating backend predictions.
 
 Implementation reference:
 

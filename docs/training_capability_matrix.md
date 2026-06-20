@@ -21,6 +21,15 @@ It complements:
 | `ultralytics` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
 | `hf-detr` | Experimental | Optional external bridge | External run contract | Wrapper-ready | Wrapper-ready | Wrapper-ready | Shared resume handoff | No blanket claim |
 
+## Detector-family policy
+
+| Backend | Family | Optimizer policy | Preprocess policy | Postprocess policy |
+|---|---|---|---|---|
+| `reference-rtdetr-pose` | RT-DETR / DETR-family | AdamW with separate backbone/head parameter groups; use a lower backbone LR for stable fine-tuning. | Reference trainer transforms; do not assume YOLO letterbox in the DETR trainer loop. | NMS-free by default; record `e2e_nms_free` when applicable. |
+| `yolox` | YOLO-family | SGD with momentum/Nesterov-style YOLO defaults unless the exp overrides them. | Letterbox resize/pad is part of the export/eval assumption. | NMS-applied predictions by default; record `nms_applied`. |
+| `ultralytics` | YOLO-family | Backend-native YOLO optimizer settings from the user-provided runtime/config. | Preserve YOLO-family letterbox assumptions in export/eval metadata. | NMS-applied predictions by default; keep the runtime/license boundary explicit. |
+| `hf-detr` | DETR-family | External trainer should supply DETR-family AdamW-style settings. | Record backend-native DETR preprocessing through the external run handoff. | NMS-free outputs when supported by the external stack. |
+
 ## How to read this
 
 - `Run contract = Yes` means the backend owns the richer fixed artifact layout under `runs/<run_id>/`.
