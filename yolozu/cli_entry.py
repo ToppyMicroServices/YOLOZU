@@ -38,7 +38,7 @@ from .cli_commands import (
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
 from yolozu.inference.export_orchestrator import parse_common_export_args
-from yolozu import __version__
+from . import __version__
 import argparse
 import json
 from pathlib import Path

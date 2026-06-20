@@ -1115,7 +1115,7 @@ def _eval_instance_seg(args: argparse.Namespace) -> int:
 
 
 def _passthrough_pkg_cli(args: argparse.Namespace) -> int:
-    from yolozu.cli import main as pkg_main
+    from yolozu.cli_entry import main as pkg_main
 
     forwarded = getattr(args, "forward_args", None)
     prefix = getattr(args, "_pkg_argv", None)
@@ -1142,7 +1142,7 @@ def _add_pkg_passthrough_parser(
 
 
 def _passthrough_list_models(args: argparse.Namespace) -> int:
-    from yolozu.cli import main as pkg_main
+    from yolozu.cli_entry import main as pkg_main
 
     argv = ["list", "models"]
     if getattr(args, "registry", None):
@@ -1153,7 +1153,7 @@ def _passthrough_list_models(args: argparse.Namespace) -> int:
 
 
 def _completion(args: argparse.Namespace) -> int:
-    from yolozu.cli import main as pkg_main
+    from yolozu.cli_entry import main as pkg_main
 
     argv = ["completion", "--shell", str(args.shell), "--command", str(args.command), "--output", str(args.output)]
     return int(pkg_main(argv))
@@ -1502,7 +1502,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     raw_argv = sys.argv[1:] if argv is None else argv
     if raw_argv and raw_argv[0] in _PKG_PASSTHROUGH_COMMANDS:
-        from yolozu.cli import main as pkg_main
+        from yolozu.cli_entry import main as pkg_main
 
         return int(pkg_main(raw_argv))
 
