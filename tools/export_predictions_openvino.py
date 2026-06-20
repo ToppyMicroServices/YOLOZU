@@ -112,10 +112,12 @@ def _tensor_names(tensor: Any) -> set[str]:
     try:
         names.update(str(name) for name in tensor.get_names())
     except Exception:
+        # Some OpenVINO tensor-like objects do not expose the names collection.
         pass
     try:
         names.add(str(tensor.get_any_name()))
     except Exception:
+        # Anonymous tensors are matched by other available names or by position.
         pass
     return names
 
