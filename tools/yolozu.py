@@ -555,6 +555,13 @@ def _subprocess_or_die(cmd: list[str]) -> str:
     return proc.stdout
 
 
+def _run_pkg_cli(argv: list[str]) -> int:
+    out = _subprocess_or_die([sys.executable, "-m", "yolozu.cli", *argv])
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return 0
+
+
 def _export_with_backend(
     args: argparse.Namespace,
     *,
@@ -1115,8 +1122,6 @@ def _eval_instance_seg(args: argparse.Namespace) -> int:
 
 
 def _passthrough_pkg_cli(args: argparse.Namespace) -> int:
-    from yolozu.cli_entry import main as pkg_main
-
     forwarded = getattr(args, "forward_args", None)
     prefix = getattr(args, "_pkg_argv", None)
     if isinstance(prefix, list) and prefix:
@@ -1126,7 +1131,7 @@ def _passthrough_pkg_cli(args: argparse.Namespace) -> int:
         argv = [cmd]
     if isinstance(forwarded, list):
         argv.extend(str(token) for token in forwarded)
-    return int(pkg_main(argv))
+    return _run_pkg_cli(argv)
 
 
 def _add_pkg_passthrough_parser(
@@ -1142,21 +1147,17 @@ def _add_pkg_passthrough_parser(
 
 
 def _passthrough_list_models(args: argparse.Namespace) -> int:
-    from yolozu.cli_entry import main as pkg_main
-
     argv = ["list", "models"]
     if getattr(args, "registry", None):
         argv.extend(["--registry", str(args.registry)])
     if bool(getattr(args, "json", False)):
         argv.append("--json")
-    return int(pkg_main(argv))
+    return _run_pkg_cli(argv)
 
 
 def _completion(args: argparse.Namespace) -> int:
-    from yolozu.cli_entry import main as pkg_main
-
     argv = ["completion", "--shell", str(args.shell), "--command", str(args.command), "--output", str(args.output)]
-    return int(pkg_main(argv))
+    return _run_pkg_cli(argv)
 
 
 def _release(_: argparse.Namespace) -> int:
@@ -1502,9 +1503,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     raw_argv = sys.argv[1:] if argv is None else argv
     if raw_argv and raw_argv[0] in _PKG_PASSTHROUGH_COMMANDS:
-        from yolozu.cli_entry import main as pkg_main
-
-        return int(pkg_main(raw_argv))
+        return _run_pkg_cli(raw_argv)
 
     args = _parse_args(raw_argv)
     fn = getattr(args, "_fn", None)

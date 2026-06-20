@@ -38,10 +38,13 @@ from .cli_commands import (
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
 from yolozu.inference.export_orchestrator import parse_common_export_args
-from . import __version__
 import argparse
 import json
 from pathlib import Path
+import sys
+
+_PACKAGE = sys.modules.get(__package__)
+__version__ = str(getattr(_PACKAGE, "__version__", "unknown"))
 
 
 GUIDE_ROUTES: dict[str, dict[str, object]] = {
