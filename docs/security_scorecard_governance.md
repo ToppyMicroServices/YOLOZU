@@ -167,6 +167,23 @@ The `GHSA-hqmj-h5c6-369m` advisory currently has no fixed upstream `onnx` releas
 repository does not call `onnx.hub.load()`, which is the affected API surface, so the ignore
 is limited to that advisory and should be revisited as soon as a patched `onnx` version exists.
 
+## 2026-06-21 follow-up
+
+The default-branch Scorecard alert set reported two source-actionable items:
+
+- `VulnerabilitiesID` listed seven PyTorch advisories. YOLOZU keeps PyTorch out
+  of the base runtime dependencies, but optional train/demo/test extras now
+  require `torch>=2.10.0` and `torchvision>=0.25.0` so fixed PyTorch advisories
+  do not remain reachable through broad lower bounds. Two PyTorch advisories
+  still had no fixed upstream version in OSV on 2026-06-21:
+  `GHSA-rrmf-rvhw-rf47` and `PYSEC-2026-139`. They are documented in
+  `osv-scanner.toml` as temporary ignores because the dependency is optional and
+  no patched torch release is available yet.
+- `SASTID` reported that CodeQL was not visible across recent commits even
+  though `.github/workflows/codeql.yml` was running successfully. The Scorecard
+  job now grants `actions: read` and `contents: read` so the SAST check can read
+  workflow/run metadata while still keeping the job permissions narrow.
+
 ## 2026-04-02 residual alert disposition
 
 After the repository-local fixes above landed on `main`, the remaining open

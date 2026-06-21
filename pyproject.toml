@@ -46,8 +46,8 @@ Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md
 
 [project.optional-dependencies]
 demo = [
-  "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
   "timm>=0.9",
   "opencv-contrib-python>=4.8",
   "transformers>=4.38",
@@ -56,8 +56,8 @@ demo = [
 ]
 onnxrt = ["onnx>=1.21.0", "onnxruntime>=1.17"]
 train = [
-  "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
   "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
@@ -79,16 +79,16 @@ yolox = ["yolox"]
 # Local development / testing (optional)
 test = [
   "pytest>=9.0.3",
-  "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
   "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
 ]
 dev = [
   "pytest>=9.0.3",
-  "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
   "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
@@ -97,8 +97,8 @@ dev = [
 
 # Everything in the docs install list (demo/onnxrt/train/coco/mcp/actions)
 full = [
-  "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
   "timm>=0.9",
   "opencv-contrib-python>=4.8",
   "transformers>=4.38",

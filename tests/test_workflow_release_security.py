@@ -42,6 +42,8 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertNotIn("pull_request:", scorecard)
         self.assertIn("branches:", scorecard)
         self.assertIn("main", scorecard)
+        self.assertIn("actions: read", scorecard)
+        self.assertIn("contents: read", scorecard)
         self.assertIn("security-events: write", scorecard)
         self.assertNotIn("pull_request:", codeql)
         self.assertIn("branches:", codeql)
@@ -84,6 +86,21 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
             with self.subTest(finding=finding):
                 self.assertIn(f"### `{finding}`", governance)
                 self.assertIn(f'"id": "{finding}"', audit_tool)
+        self.assertIn("actions: read", governance)
+        self.assertIn("torch>=2.10.0", governance)
+
+    def test_optional_torch_bounds_start_at_patched_envelope(self):
+        pyproject = (self.repo_root / "pyproject.toml").read_text(encoding="utf-8")
+        requirements_test = (self.repo_root / "requirements-test.txt").read_text(encoding="utf-8")
+        osv_config = (self.repo_root / "osv-scanner.toml").read_text(encoding="utf-8")
+
+        self.assertNotIn("torch>=2.8.0", pyproject)
+        self.assertNotIn("torchvision>=0.23.0", pyproject)
+        self.assertIn("torch>=2.10.0", pyproject)
+        self.assertIn("torchvision>=0.25.0", pyproject)
+        self.assertIn("torch>=2.10.0", requirements_test)
+        self.assertIn("GHSA-rrmf-rvhw-rf47", osv_config)
+        self.assertIn("PYSEC-2026-139", osv_config)
 
     def test_container_bootstrap_locks_keep_incident_fix_versions(self):
         runtime_lock = (self.repo_root / "requirements-locks" / "requirements-runtime.lock").read_text(encoding="utf-8")
