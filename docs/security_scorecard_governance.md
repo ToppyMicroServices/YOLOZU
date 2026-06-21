@@ -182,7 +182,9 @@ The default-branch Scorecard alert set reported two source-actionable items:
 - `SASTID` reported that CodeQL was not visible across recent commits even
   though `.github/workflows/codeql.yml` was running successfully. The Scorecard
   job now grants `actions: read` and `contents: read` so the SAST check can read
-  workflow/run metadata while still keeping the job permissions narrow.
+  workflow/run metadata while still keeping the job permissions narrow. CodeQL
+  also runs on pull requests into `main`, not only on default-branch pushes, so
+  Scorecard can observe SAST coverage for the commits that later enter `main`.
 
 ## 2026-04-02 residual alert disposition
 

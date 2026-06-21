@@ -36,7 +36,7 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("steps.tags.outputs.ghcr_tags", container)
         self.assertIn("steps.tags.outputs.ngc_tags", container)
 
-    def test_scorecard_and_codeql_run_on_main_not_pull_requests(self):
+    def test_scorecard_runs_on_main_and_codeql_covers_pr_commits(self):
         scorecard = (self.repo_root / ".github" / "workflows" / "scorecard.yml").read_text(encoding="utf-8")
         codeql = (self.repo_root / ".github" / "workflows" / "codeql.yml").read_text(encoding="utf-8")
         self.assertNotIn("pull_request:", scorecard)
@@ -45,7 +45,7 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("actions: read", scorecard)
         self.assertIn("contents: read", scorecard)
         self.assertIn("security-events: write", scorecard)
-        self.assertNotIn("pull_request:", codeql)
+        self.assertIn("pull_request:", codeql)
         self.assertIn("branches:", codeql)
         self.assertIn("main", codeql)
 
