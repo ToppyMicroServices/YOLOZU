@@ -1,3 +1,11 @@
 [[IgnoredVulns]]
 id = "GHSA-hqmj-h5c6-369m"
 reason = "The repo depends on onnx for model serialization and validation, but it does not invoke onnx.hub.load(), which is the vulnerable API surface. No patched upstream release exists yet, so this is a temporary documented exception."
+
+[[IgnoredVulns]]
+id = "GHSA-rrmf-rvhw-rf47"
+reason = "PyTorch is an optional training/demo dependency in YOLOZU, not part of the base runtime install. The advisory has no fixed upstream version in OSV as of 2026-06-21; keep the ignore temporary and revisit when a patched torch release is available."
+
+[[IgnoredVulns]]
+id = "PYSEC-2026-139"
+reason = "PyTorch is an optional training/demo dependency in YOLOZU, not part of the base runtime install. The advisory has no fixed upstream version in OSV as of 2026-06-21; keep the ignore temporary and revisit when a patched torch release is available."
