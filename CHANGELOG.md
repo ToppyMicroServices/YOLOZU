@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.1] - 2026-06-21
+
+### Added
+- Add YOLO and RT-DETR training-family recipes with task-specific optimizer, augmentation, and stability defaults.
+
+### Changed
+- Run CodeQL on pull requests into `main` and give Scorecard read access to workflow metadata.
+- Raise optional PyTorch dependency bounds and document temporary no-fixed-version OSV ignores for PyTorch advisories.
+
 ## [4.5.0] - 2026-06-19
 
 ### Changed
