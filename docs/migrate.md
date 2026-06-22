@@ -1,8 +1,11 @@
 # Migration helpers (`yolozu migrate`)
 
-YOLOZU aims to accept common dataset layouts “as-is” and convert them into a stable internal contract.
+YOLOZU aims to accept common dataset layouts “as-is” and convert them into a stable Dataset Contract v1.
 The `yolozu migrate` subcommands generate small **descriptor artifacts** so downstream commands can treat
 external datasets uniformly.
+
+Dataset Contract v1 uses `xyxy_abs` as the preferred stored bbox representation. YOLO `cxcywh_norm`
+and COCO `xywh_abs` are adapter views derived from the same record when image size is available.
 
 ## 1) YOLO-style data.yaml / YOLO (detect/pose/segment)
 
@@ -91,8 +94,8 @@ yolozu export-dataset segmentation --dataset reports/voc_seg_wrapper --out-dir r
 
 Many ecosystems (YOLOX, Detectron2, MMDetection) use COCO-style `instances_*.json` for detection datasets.
 
-YOLOZU consumes **YOLO-style bbox labels** (`labels/<split>/*.txt`), so the simplest migration path is:
-COCO JSON → YOLO labels + `dataset.json` wrapper.
+YOLOZU can read COCO JSON directly through a `dataset.json` wrapper. When exporting to a YOLO-family
+trainer, the adapter derives `cxcywh_norm` labels from the Dataset Contract v1 bbox fields.
 
 ### `yolozu migrate dataset --from coco`
 

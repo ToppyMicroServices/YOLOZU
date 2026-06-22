@@ -16,15 +16,34 @@ __all__ = ["BBox", "Label", "SampleRecord", "TrainConfig"]
 
 @dataclass(frozen=True)
 class BBox:
-    """Canonical bbox representation (cxcywh_norm).
+    """Dataset Contract v1 bbox representation.
 
-    - cx, cy, w, h are normalized to [0,1] relative to image width/height.
+    Preferred storage is ``xyxy_abs`` (absolute pixels).  ``cxcywh_norm`` and
+    ``xywh_abs`` are adapter views for YOLO-family and COCO-style consumers.
+    The ``cx/cy/w/h`` fields remain first for backward-compatible callers.
     """
 
-    cx: float
-    cy: float
-    w: float
-    h: float
+    cx: float | None = None
+    cy: float | None = None
+    w: float | None = None
+    h: float | None = None
+    format: str = "cxcywh_norm"
+    x1: float | None = None
+    y1: float | None = None
+    x2: float | None = None
+    y2: float | None = None
+    x: float | None = None
+    y: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        fmt = str(self.format or "cxcywh_norm")
+        if fmt == "xyxy_abs":
+            out = {"format": "xyxy_abs", "x1": self.x1, "y1": self.y1, "x2": self.x2, "y2": self.y2}
+        elif fmt == "xywh_abs":
+            out = {"format": "xywh_abs", "x": self.x, "y": self.y, "w": self.w, "h": self.h}
+        else:
+            out = {"format": "cxcywh_norm", "cx": self.cx, "cy": self.cy, "w": self.w, "h": self.h}
+        return {k: v for k, v in out.items() if v is not None}
 
 
 @dataclass(frozen=True)
@@ -35,7 +54,18 @@ class Label:
     meta: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        out: dict[str, Any] = {"class_id": int(self.class_id), **asdict(self.bbox)}
+        bbox = self.bbox.to_dict()
+        out: dict[str, Any] = {"class_id": int(self.class_id)}
+        if bbox.get("format") == "cxcywh_norm":
+            out.update({k: v for k, v in bbox.items() if k != "format"})
+            out["bbox_cxcywh_norm"] = bbox
+        else:
+            out["bbox"] = bbox
+            out["bbox_format"] = bbox.get("format")
+            if bbox.get("format") == "xyxy_abs":
+                out["bbox_xyxy_abs"] = bbox
+            elif bbox.get("format") == "xywh_abs":
+                out["bbox_xywh_abs"] = bbox
         if self.polygon is not None:
             out["polygon"] = list(self.polygon)
         if self.meta is not None:
@@ -47,9 +77,10 @@ class Label:
 class SampleRecord:
     """Canonical per-image record.
 
-    This is YOLOZU's internal "SampleRecord" representation. Most tools use the
-    dict form returned by `to_record_dict()`:
-      {"image": "...", "labels": [{"class_id": 0, "cx":..., "cy":..., "w":..., "h":...}, ...], ...}
+    This is YOLOZU's internal "SampleRecord" representation. Dataset Contract
+    v1 prefers ``bbox_xyxy_abs`` / ``bbox: {format: xyxy_abs, ...}`` for stored
+    records, while backend adapters can derive YOLO ``cxcywh_norm`` or COCO
+    ``xywh_abs`` views.
     """
 
     image_path: str
@@ -67,6 +98,8 @@ class SampleRecord:
         out: dict[str, Any] = {
             "image": str(self.image_path),
             "labels": [lab.to_dict() for lab in self.labels],
+            "dataset_contract_version": "1",
+            "bbox_storage_preference": "xyxy_abs",
         }
         if self.width is not None and self.height is not None:
             out["image_hw"] = [int(self.height), int(self.width)]

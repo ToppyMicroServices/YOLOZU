@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 from yolozu.core.config import simple_yaml_load
 from .coco_convert import build_category_map_from_coco
+from .dataset_contract import normalize_record_bboxes
 from yolozu.core.keypoints import normalize_keypoints
 
 __all__ = [
@@ -554,7 +555,7 @@ def load_yolo_dataset(
         record.update(_load_sidecar_metadata(meta_path, dataset_root))
         if not record["labels"]:
             record["labels"] = _derive_labels_from_mask(record)
-        records.append(record)
+        records.append(normalize_record_bboxes(record, bbox_field="preserve"))
     return records
 
 
@@ -1298,14 +1299,26 @@ def load_coco_instances_dataset(
             cy = (y + h / 2.0) / float(height)
             wn = w / float(width)
             hn = h / float(height)
-            labels.append({"class_id": int(class_id), "cx": float(cx), "cy": float(cy), "w": float(wn), "h": float(hn)})
+            labels.append(
+                {
+                    "class_id": int(class_id),
+                    "bbox": {"format": "xywh_abs", "x": float(x), "y": float(y), "w": float(w), "h": float(h)},
+                    "cx": float(cx),
+                    "cy": float(cy),
+                    "w": float(wn),
+                    "h": float(hn),
+                }
+            )
 
         records.append(
-            {
-                "image": str(image_path),
-                "labels": labels,
-                "image_hw": [int(height), int(width)],
-            }
+            normalize_record_bboxes(
+                {
+                    "image": str(image_path),
+                    "labels": labels,
+                    "image_hw": [int(height), int(width)],
+                },
+                bbox_field="xyxy_abs",
+            )
         )
 
     return records
@@ -1414,6 +1427,7 @@ def load_coco_keypoints_dataset(
                 continue
             label: dict[str, Any] = {
                 "class_id": int(class_id),
+                "bbox": {"format": "xywh_abs", "x": float(x), "y": float(y), "w": float(w), "h": float(h)},
                 "cx": float((x + w / 2.0) / float(width)),
                 "cy": float((y + h / 2.0) / float(height)),
                 "w": float(w / float(width)),
@@ -1436,11 +1450,14 @@ def load_coco_keypoints_dataset(
             labels.append(label)
 
         records.append(
-            {
-                "image": str(image_path),
-                "labels": labels,
-                "image_hw": [int(height), int(width)],
-            }
+            normalize_record_bboxes(
+                {
+                    "image": str(image_path),
+                    "labels": labels,
+                    "image_hw": [int(height), int(width)],
+                },
+                bbox_field="xyxy_abs",
+            )
         )
 
     metadata: dict[str, Any] = {

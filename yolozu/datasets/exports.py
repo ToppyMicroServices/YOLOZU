@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.core.image_size import get_image_size
+from yolozu.datasets.dataset_contract import normalize_label_bbox
 
 __all__ = [
     "export_coco_dataset",
@@ -164,7 +165,9 @@ def _materialize_file(src: Path, dst: Path, *, mode: str = "copy") -> None:
     raise ValueError("mode must be copy|symlink")
 
 
-def _format_yolo_label(label: dict[str, Any]) -> str:
+def _format_yolo_label(label: dict[str, Any], *, image_wh: tuple[int, int] | None = None) -> str:
+    if image_wh is not None:
+        label = normalize_label_bbox(label, image_wh=(float(image_wh[0]), float(image_wh[1])), bbox_field="cxcywh_norm")
     class_id = int(label.get("class_id", 0))
     polygon = label.get("polygon")
     keypoints = label.get("keypoints")
@@ -480,7 +483,8 @@ def export_yolo_dataset(
         dst_image = images_dir / image_path.name
         _materialize_file(image_path, dst_image, mode=image_mode)
 
-        label_lines = [_format_yolo_label(label) for label in (record.get("labels") or [])]
+        image_wh = _record_image_size(record)
+        label_lines = [_format_yolo_label(label, image_wh=image_wh) for label in (record.get("labels") or [])]
         (labels_dir / f"{image_path.stem}.txt").write_text(
             ("\n".join(label_lines) + "\n") if label_lines else "",
             encoding="utf-8",

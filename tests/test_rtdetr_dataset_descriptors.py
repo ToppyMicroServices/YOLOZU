@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 from rtdetr_pose.dataset import build_manifest
+from rtdetr_pose.train_records import normalize_training_records
 
 
 class TestRTDETRDatasetDescriptors(unittest.TestCase):
@@ -61,6 +62,30 @@ class TestRTDETRDatasetDescriptors(unittest.TestCase):
         label = manifest["images"][0]["labels"][0]
         self.assertEqual(label["class_id"], 1)
         self.assertEqual(label["bbox"]["h"], 0.3)
+
+    def test_training_records_accept_xyxy_abs_dataset_contract_bbox(self):
+        records = normalize_training_records(
+            [
+                {
+                    "image_path": "sample.jpg",
+                    "image_hw": [100, 200],
+                    "labels": [
+                        {
+                            "class_id": 2,
+                            "bbox": {"format": "xyxy_abs", "x1": 10, "y1": 20, "x2": 50, "y2": 80},
+                        }
+                    ],
+                }
+            ]
+        )
+
+        label = records[0]["labels"][0]
+        self.assertEqual(records[0]["dataset_contract_version"], "1")
+        self.assertEqual(label["bbox"]["format"], "cxcywh_norm")
+        self.assertEqual(label["bbox_format"], "cxcywh_norm")
+        self.assertAlmostEqual(label["bbox"]["cx"], 0.15)
+        self.assertAlmostEqual(label["bbox"]["cy"], 0.5)
+        self.assertEqual(label["bbox_xyxy_abs"]["x2"], 50.0)
 
 
 if __name__ == "__main__":

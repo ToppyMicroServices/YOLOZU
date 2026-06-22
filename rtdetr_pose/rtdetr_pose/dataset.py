@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from yolozu.datasets.dataset_contract import normalize_label_bbox, normalize_record_bboxes
+
 try:
     import numpy as np
 except Exception:  # pragma: no cover
@@ -24,11 +26,14 @@ def _load_yolo_labels(label_path, *, label_format=None):
         if label_format in ("obb", "rotated_bbox", "rotated-bbox"):
             if len(coords) == 5:
                 labels.append(
-                    {
-                        "class_id": class_id,
-                        "bbox": {"cx": coords[0], "cy": coords[1], "w": coords[2], "h": coords[3]},
-                        "angle": coords[4],
-                    }
+                    normalize_label_bbox(
+                        {
+                            "class_id": class_id,
+                            "bbox": {"format": "cxcywh_norm", "cx": coords[0], "cy": coords[1], "w": coords[2], "h": coords[3]},
+                            "angle": coords[4],
+                        },
+                        bbox_field="cxcywh_norm",
+                    )
                 )
                 continue
             if len(coords) >= 8 and len(coords) % 2 == 0:
@@ -37,16 +42,20 @@ def _load_yolo_labels(label_path, *, label_format=None):
                 x_min, x_max = min(xs), max(xs)
                 y_min, y_max = min(ys), max(ys)
                 labels.append(
-                    {
-                        "class_id": class_id,
-                        "bbox": {
-                            "cx": (x_min + x_max) / 2.0,
-                            "cy": (y_min + y_max) / 2.0,
-                            "w": x_max - x_min,
-                            "h": y_max - y_min,
+                    normalize_label_bbox(
+                        {
+                            "class_id": class_id,
+                            "bbox": {
+                                "format": "cxcywh_norm",
+                                "cx": (x_min + x_max) / 2.0,
+                                "cy": (y_min + y_max) / 2.0,
+                                "w": x_max - x_min,
+                                "h": y_max - y_min,
+                            },
+                            "obb": coords,
                         },
-                        "obb": coords,
-                    }
+                        bbox_field="cxcywh_norm",
+                    )
                 )
                 continue
             raise ValueError(f"invalid label line: {line}")
@@ -55,6 +64,7 @@ def _load_yolo_labels(label_path, *, label_format=None):
         entry = {
             "class_id": class_id,
             "bbox": {
+                "format": "cxcywh_norm",
                 "cx": coords[0],
                 "cy": coords[1],
                 "w": coords[2],
@@ -70,7 +80,7 @@ def _load_yolo_labels(label_path, *, label_format=None):
                 v = float(extras[i + 2])
                 kps.append({"x": x, "y": y, "v": v})
             entry["keypoints"] = kps
-        labels.append(entry)
+        labels.append(normalize_label_bbox(entry, bbox_field="cxcywh_norm"))
     return labels
 
 
@@ -157,6 +167,12 @@ def _load_metadata(meta_path, root):
         resolved = _resolve_optional_value(depth_value, root)
         metadata["depth_path"] = resolved
         metadata["depth"] = resolved
+
+    image_hw = data.get("image_hw") or data.get("hw")
+    if image_hw is not None:
+        metadata["image_hw"] = image_hw
+    if data.get("image_size") is not None:
+        metadata["image_size"] = data.get("image_size")
 
     if "pose" in data:
         metadata["pose"] = data["pose"]
@@ -429,9 +445,12 @@ def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root, label_form
         k_prime_3x3 = _k_to_3x3(k_prime_raw)
 
         records.append(
-            {
+            normalize_record_bboxes(
+                {
                 "image_path": str(image_path),
                 "labels": labels,
+                "image_hw": metadata.get("image_hw"),
+                "image_size": metadata.get("image_size"),
                 "mask_path": metadata.get("mask_path"),
                 "mask": metadata.get("mask"),
                 "depth_path": metadata.get("depth_path"),
@@ -446,7 +465,9 @@ def _load_yolo_dataset_dirs(images_dir, labels_dir, *, metadata_root, label_form
                 "cad_points": metadata.get("cad_points"),
                 "M": metadata.get("mask"),
                 "D_obj": metadata.get("depth"),
-            }
+                },
+                bbox_field="cxcywh_norm",
+            )
         )
     return records
 
