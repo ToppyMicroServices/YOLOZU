@@ -83,6 +83,9 @@ When links and prose disagree, treat these interface contract documents as canon
 
 \section{Datasets}
 Dataset intake uses Dataset Contract v1. Its preferred stored box form is absolute pixel \cmd{xyxy_abs}; YOLO \cmd{cxcywh_norm} and COCO \cmd{xywh_abs} are adapter views derived at backend boundaries when image size is available.
+Training data follows the same boundary: raw datasets pass through a
+DatasetAdapter, then through the YOLOZU Dataset Contract, before a YOLO-family
+or DETR-family TrainingBackend consumes the family-specific adapter view.
 Supported image formats: JPEG (\texttt{.jpg}, \texttt{.jpeg}), PNG, BMP, TIFF (\texttt{.tif}, \texttt{.tiff}), WebP, and GIF.
 
 \subsection{Frictionless Migration (Utilizing Datasets "As-Is")}

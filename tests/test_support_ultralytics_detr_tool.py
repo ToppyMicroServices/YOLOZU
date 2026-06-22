@@ -149,6 +149,10 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertEqual(str(yolox_payload.get("task")), "train_yolox")
             self.assertIn("template_train_command", yolox_payload)
             self.assertTrue(bool(yolox_payload.get("next_steps")))
+            yolox_flow = yolox_payload.get("training_data_flow") or {}
+            self.assertEqual(yolox_flow.get("format"), "yolozu_training_data_flow_v1")
+            self.assertEqual((yolox_flow.get("raw_dataset") or {}).get("format"), "internal")
+            self.assertEqual((yolox_flow.get("training_backend") or {}).get("bbox_view"), "cxcywh_norm")
             artifact_plan = yolox_payload.get("artifact_plan") or {}
             self.assertEqual(artifact_plan.get("lane"), "yolox")
             self.assertEqual(
@@ -203,6 +207,9 @@ class TestSupportUltralyticsDetrTool(unittest.TestCase):
             self.assertTrue(bool(hf_payload.get("ok")))
             self.assertTrue(bool(hf_payload.get("dry_run")))
             self.assertTrue(bool(hf_payload.get("next_steps")))
+            hf_flow = hf_payload.get("training_data_flow") or {}
+            self.assertEqual(hf_flow.get("format"), "yolozu_training_data_flow_v1")
+            self.assertEqual((hf_flow.get("training_backend") or {}).get("bbox_view"), "xyxy_abs")
             hf_boundary = hf_payload.get("runtime_license_boundary") or {}
             self.assertEqual(hf_boundary.get("bridge_id"), "hf-detr")
             self.assertFalse(bool(hf_boundary.get("bundled_with_yolozu")))

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from yolozu.core.canonical import TrainConfig
 from yolozu.training.platform import (
+    build_training_data_flow,
     build_training_run_summary,
     get_training_backend_spec,
     training_capability_matrix,
@@ -58,6 +59,28 @@ class TestTrainingPlatform(unittest.TestCase):
         self.assertIn("reports/training_summary.json", payload["run_output_contract"]["stable_artifacts"])
         self.assertIn("reports/resume_handoff.json", payload["run_output_contract"]["stable_artifacts"])
         self.assertIn("reports/export_handoff.json", payload["run_output_contract"]["stable_artifacts"])
+        flow = payload["training_data_flow"]
+        self.assertEqual(flow["format"], "yolozu_training_data_flow_v1")
+        self.assertEqual(
+            flow["stages"],
+            ["raw_dataset", "DatasetAdapter", "YOLOZU Dataset Contract", "TrainingBackend"],
+        )
+        self.assertEqual(flow["dataset_contract"]["bbox_storage_preference"], "xyxy_abs")
+        self.assertEqual(flow["training_backend"]["backend_id"], "yolox")
+        self.assertEqual(flow["training_backend"]["bbox_view"], "cxcywh_norm")
+
+    def test_training_data_flow_uses_contract_before_detr_backend(self) -> None:
+        flow = build_training_data_flow(
+            backend_id="reference-rtdetr-pose",
+            dataset_root="data/coco128",
+            split="train2017",
+            raw_dataset_format="YOLO data.yaml",
+        )
+        self.assertEqual(flow["raw_dataset"]["format"], "YOLO data.yaml")
+        self.assertEqual(flow["dataset_contract"]["version"], "1")
+        self.assertIn("xywh_abs", flow["dataset_contract"]["adapter_views"])
+        self.assertEqual(flow["training_backend"]["family"], "rtdetr")
+        self.assertEqual(flow["training_backend"]["bbox_view"], "xyxy_abs")
 
     def test_training_run_summary_is_json_serializable(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

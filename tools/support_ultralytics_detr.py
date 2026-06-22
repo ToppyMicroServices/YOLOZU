@@ -1163,6 +1163,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         train_config=train_cfg,
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={
@@ -1403,6 +1404,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
         train_config=train_cfg,
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={
@@ -1643,6 +1645,7 @@ def _cmd_train_mmfamily(
         train_config=train_cfg,
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={
@@ -1908,6 +1911,7 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
         train_config=projection_payload["train_config"],
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={
@@ -2125,6 +2129,7 @@ def _cmd_train_ultralytics(args: argparse.Namespace) -> int:
         train_config=train_cfg,
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={
@@ -2378,6 +2383,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
         train_config=train_cfg,
         dataset_root=str(resolution.dataset_root),
         split=str(resolution.split),
+        raw_dataset_format=str(resolution.source_format),
         dry_run=bool(args.dry_run),
         work_dir=str(work_dir),
         steps={

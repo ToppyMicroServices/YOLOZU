@@ -21,6 +21,29 @@ YOLOZU keeps the in-repo RT-DETR pose trainer as the reference lane, then treats
 YOLOX, Detectron2, MMDetection, MMPose, MMSeg, TAO, Ultralytics, and HF DETR as external lanes that still publish the same
 top-level summary interface contract plus one standardized external run bundle.
 
+## Training data flow
+
+All detector-family training lanes use the same data route:
+
+```text
+raw dataset
+  -> DatasetAdapter
+  -> YOLOZU Dataset Contract
+  -> TrainingBackend
+      -> YOLO family
+      -> DETR family
+```
+
+The DatasetAdapter is the only layer that handles source-format differences
+such as YOLO `data.yaml`, `dataset.json` wrappers, COCO JSON, and SynthGen
+shards. The YOLOZU Dataset Contract is the training boundary: dataset records
+prefer `xyxy_abs` storage and expose `xywh_abs` and `cxcywh_norm` adapter
+views when image size is available. Backends select their family-specific view
+after this boundary.
+
+Training summaries expose this as `training_data_flow` with
+`format = yolozu_training_data_flow_v1`.
+
 ## Supported model-family lanes
 
 YOLOZU supports two first-class detector-family routes at the training surface:
@@ -104,6 +127,7 @@ Every backend-level training lane should be able to emit:
 - `format = yolozu_training_run_summary_v1`
 - `backend`
 - `canonical_train_config`
+- `training_data_flow`
 - `run_output_contract`
 - `steps.train`
 - `steps.resume`

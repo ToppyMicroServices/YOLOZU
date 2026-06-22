@@ -64,8 +64,14 @@ class TestTrainRecords(unittest.TestCase):
             )
 
         self.assertEqual([r["image_path"] for r in records], ["train.jpg", "extra.jpg"])
-        self.assertEqual(records[0]["labels"][0]["bbox"], {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.3})
-        self.assertEqual(records[1]["labels"][0]["bbox"], {"cx": 0.1, "cy": 0.2, "w": 0.3, "h": 0.4})
+        self.assertEqual(records[0]["dataset_contract_version"], "1")
+        self.assertEqual(records[0]["bbox_storage_preference"], "xyxy_abs")
+        self.assertEqual(records[0]["labels"][0]["bbox"]["format"], "cxcywh_norm")
+        self.assertEqual(records[0]["labels"][0]["bbox"]["cx"], 0.5)
+        self.assertEqual(records[0]["labels"][0]["bbox"]["h"], 0.3)
+        self.assertEqual(records[1]["labels"][0]["bbox"]["format"], "cxcywh_norm")
+        self.assertEqual(records[1]["labels"][0]["bbox"]["cx"], 0.1)
+        self.assertEqual(records[1]["labels"][0]["bbox"]["h"], 0.4)
         self.assertEqual(keypoint_names, [])
         self.assertEqual(keypoint_skeleton, [])
 
