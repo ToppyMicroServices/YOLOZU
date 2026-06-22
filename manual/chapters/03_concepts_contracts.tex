@@ -82,7 +82,7 @@ SynthGen intake};
 When links and prose disagree, treat these interface contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
 
 \section{Datasets}
-The majority of tools anticipate a YOLO-style dataset hierarchy (comprising \path{images/}, \path{labels/}, and splits), supplemented by optional metadata.
+Dataset intake uses Dataset Contract v1. Its preferred stored box form is absolute pixel \cmd{xyxy_abs}; YOLO \cmd{cxcywh_norm} and COCO \cmd{xywh_abs} are adapter views derived at backend boundaries when image size is available.
 Supported image formats: JPEG (\texttt{.jpg}, \texttt{.jpeg}), PNG, BMP, TIFF (\texttt{.tif}, \texttt{.tiff}), WebP, and GIF.
 
 \subsection{Frictionless Migration (Utilizing Datasets "As-Is")}
@@ -91,7 +91,7 @@ Supported image formats: JPEG (\texttt{.jpg}, \texttt{.jpeg}), PNG, BMP, TIFF (\
 In practice, migration commands yield:
 \begin{itemize}
   \item A concise \path{dataset.json} wrapper (which references existing images and labels), and/or
-  \item Converted label files (e.g., translating COCO JSON to YOLO text labels) accompanied by a wrapper.
+  \item Converted adapter files when a backend requires a specific training layout.
 \end{itemize}
 
 The overarching objective is to preserve the integrity of source datasets while rendering evaluation inputs explicit and versionable.
@@ -143,8 +143,7 @@ If your dataset is already defined by a YOLO-style \path{data.yaml} (referencing
 For precise command syntax and validation procedures, refer to Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
 
 \subsection{COCO JSON Datasets (Migration)}
-Numerous ecosystems rely on COCO-style \path{instances_*.json} files for object detection. Because \yolozu{} consumes YOLO-style text labels, the supported migration trajectory is:
-COCO JSON \texorpdfstring{$\rightarrow$}{->} YOLO labels + \path{dataset.json} wrapper.
+Numerous ecosystems rely on COCO-style \path{instances_*.json} files for object detection. \yolozu{} can read these through a \path{dataset.json} wrapper, keep dataset boxes as \cmd{xyxy_abs}, and derive YOLO or COCO adapter views when exporting or training.
 
 For the specific conversion command, consult Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
 

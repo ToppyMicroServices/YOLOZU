@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
+from yolozu.datasets.dataset_contract import image_wh_from_record, normalize_label_bbox
+
 
 def _resolve_records_json_path(value: str, *, workspace_root: Path) -> Path:
     path = Path(str(value))
@@ -27,12 +29,14 @@ def _load_records_json(path: Path, *, label: str) -> list[dict[str, Any]]:
     return [r for r in loaded if isinstance(r, dict)]
 
 
-def _normalize_label_instance(inst: dict[str, Any]) -> dict[str, Any]:
+def _normalize_label_instance(inst: dict[str, Any], *, image_wh: tuple[float, float] | None = None) -> dict[str, Any]:
     out = dict(inst)
+    out = normalize_label_bbox(out, image_wh=image_wh, bbox_field="cxcywh_norm")
     bbox = out.get("bbox")
     if isinstance(bbox, dict):
         if all(k in bbox for k in ("cx", "cy", "w", "h")):
             out["bbox"] = {
+                "format": "cxcywh_norm",
                 "cx": float(bbox.get("cx", 0.0)),
                 "cy": float(bbox.get("cy", 0.0)),
                 "w": float(bbox.get("w", 0.0)),
@@ -41,6 +45,7 @@ def _normalize_label_instance(inst: dict[str, Any]) -> dict[str, Any]:
         return out
     if isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
         out["bbox"] = {
+            "format": "cxcywh_norm",
             "cx": float(bbox[0]),
             "cy": float(bbox[1]),
             "w": float(bbox[2]),
@@ -49,6 +54,7 @@ def _normalize_label_instance(inst: dict[str, Any]) -> dict[str, Any]:
         return out
     if all(k in out for k in ("cx", "cy", "w", "h")):
         out["bbox"] = {
+            "format": "cxcywh_norm",
             "cx": float(out.get("cx", 0.0)),
             "cy": float(out.get("cy", 0.0)),
             "w": float(out.get("w", 0.0)),
@@ -69,8 +75,11 @@ def normalize_training_records(records: list[dict[str, Any]]) -> list[dict[str, 
         if image_path is not None:
             out["image_path"] = str(image_path)
         labels = out.get("labels")
+        image_wh = image_wh_from_record(out)
         if isinstance(labels, list):
-            out["labels"] = [_normalize_label_instance(inst) for inst in labels if isinstance(inst, dict)]
+            out["labels"] = [_normalize_label_instance(inst, image_wh=image_wh) for inst in labels if isinstance(inst, dict)]
+        out["dataset_contract_version"] = "1"
+        out["bbox_storage_preference"] = "xyxy_abs"
         normalized.append(out)
     return normalized
 

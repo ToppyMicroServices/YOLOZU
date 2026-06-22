@@ -18,19 +18,26 @@ Canonical representation is a list of records:
 {
   "image": "/abs/or/rel/path.jpg",
   "labels": [
-    { "class_id": 0, "cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2 }
+    {
+      "class_id": 0,
+      "bbox": { "format": "xyxy_abs", "x1": 256, "y1": 192, "x2": 384, "y2": 288 },
+      "bbox_cxcywh_norm": { "format": "cxcywh_norm", "cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2 },
+      "bbox_xywh_abs": { "format": "xywh_abs", "x": 256, "y": 192, "w": 128, "h": 96 }
+    }
   ],
   "image_hw": [480, 640]
 }
 ```
 
 Notes:
-- bbox is **`cxcywh_norm`** (normalized to `[0,1]`).
+- Dataset Contract v1 prefers **`xyxy_abs`** for stored boxes.
+- `cxcywh_norm` is the YOLO-family adapter view.
+- `xywh_abs` is the COCO/export adapter view.
 - Optional fields are allowed and may be absent:
   - `mask` / `mask_path`, `depth` / `depth_path` / `D_obj`
   - `pose`, `intrinsics`, `meta`
 
-Implementation reference: `yolozu/core/canonical.py`.
+Implementation references: `yolozu/core/canonical.py`, `yolozu/datasets/dataset_contract.py`.
 
 ### TrainConfig (major keys only)
 
