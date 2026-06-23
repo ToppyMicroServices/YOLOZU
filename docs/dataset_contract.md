@@ -29,3 +29,28 @@ Rules:
 - `image_hw: [height, width]` or `image_size: {width, height}` is required when converting between absolute and normalized coordinates.
 
 The implementation reference is `yolozu/datasets/dataset_contract.py`.
+
+## Training data flow
+
+Training data uses the same route for every detector-family backend:
+
+```text
+raw dataset
+  -> DatasetAdapter
+  -> YOLOZU Dataset Contract
+  -> TrainingBackend
+      -> YOLO family
+      -> DETR family
+```
+
+The DatasetAdapter owns source-format differences such as YOLO `data.yaml`,
+`dataset.json` wrappers, COCO JSON, and SynthGen shards. The TrainingBackend
+receives Dataset Contract records and selects the backend view it needs:
+
+- YOLO-family backends consume the `cxcywh_norm` adapter view and keep
+  letterbox/NMS assumptions explicit in run metadata.
+- DETR-family backends consume `xyxy_abs` and keep DETR preprocessing,
+  AdamW parameter groups, and NMS-free assumptions explicit in run metadata.
+
+Training summaries expose this route as `training_data_flow` so downstream
+automation can verify that a backend did not bypass the Dataset Contract.

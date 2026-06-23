@@ -14,6 +14,23 @@
     "training_executed": { "type": "boolean" },
     "canonical_train_config": { "type": "object" },
     "dataset": { "type": "object" },
+    "training_data_flow": {
+      "type": "object",
+      "required": ["format", "schema_version", "stages", "dataset_contract", "training_backend"],
+      "properties": {
+        "format": { "const": "yolozu_training_data_flow_v1" },
+        "schema_version": { "type": "integer", "minimum": 1 },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "raw_dataset": { "type": "object" },
+        "dataset_adapter": { "type": "object" },
+        "dataset_contract": { "type": "object" },
+        "training_backend": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
     "run_output_contract": { "type": "object" },
     "steps": { "type": "object" },
     "process": { "type": ["object", "null"] },

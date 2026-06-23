@@ -34,6 +34,7 @@ It complements:
 
 - `Run contract = Yes` means the backend owns the richer fixed artifact layout under `runs/<run_id>/`.
 - `Run contract = External run contract` means YOLOZU standardizes `work_dir/dataset/`, `work_dir/configs/train_config_projection.json`, `work_dir/reports/{training_summary,external_run_meta,launcher_plan,execution}.json`, `reports/resume_handoff.json`, the export/eval/parity handoff JSON files, and one registry entry even when the backend-native trainer remains external.
+- All detector-family lanes use `raw dataset -> DatasetAdapter -> YOLOZU Dataset Contract -> TrainingBackend`. The training summary records this as `training_data_flow`; YOLO-family lanes consume the `cxcywh_norm` adapter view, while DETR-family lanes consume `xyxy_abs`.
 - External training reports include `execution_status.state` so callers can distinguish `dry_run_handoff`, `requires_external_train_script`, `runtime_failed`, and `executed` without treating every wrapper report as real backend training.
 - `MPS` is only claimed when the local runtime actually reports availability. Do not read this table as a blanket macOS guarantee.
 

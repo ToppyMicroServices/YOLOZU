@@ -38,6 +38,26 @@ silently inherit YOLO letterbox/NMS assumptions, and a YOLO-family run should no
 silently inherit DETR AdamW/head-backbone group assumptions unless the backend
 configuration explicitly says so.
 
+\subsection{Training data flow}
+Training data uses one common route before it reaches a backend:
+\begin{center}
+\textbf{raw dataset}
+\(\rightarrow\)
+\textbf{DatasetAdapter}
+\(\rightarrow\)
+\textbf{YOLOZU Dataset Contract}
+\(\rightarrow\)
+\textbf{TrainingBackend}.
+\end{center}
+
+The DatasetAdapter handles source formats such as YOLO \path{data.yaml},
+\path{dataset.json} wrappers, COCO JSON, and SynthGen shards. The YOLOZU Dataset
+Contract is the shared training boundary: records prefer \cmd{xyxy_abs} storage
+and expose \cmd{xywh_abs} and \cmd{cxcywh_norm} adapter views when image size is
+available. YOLO-family backends consume the \cmd{cxcywh_norm} view; DETR-family
+backends consume \cmd{xyxy_abs}. The training summary records this boundary in
+\cmd{training_data_flow}.
+
 \subsection{Dataset-format boundary for the reference trainer}
 The RT-DETR reference trainer does not claim that it can ingest every native dataset layout directly at training time. Its expected input is a dataset root that \cmd{build_manifest(...)} can resolve: a YOLO-style root, a YOLO/Ultralytics \path{data.yaml}, or a \path{dataset.json} wrapper with \path{images_dir} and \path{labels_dir} pointing to image files and YOLO label files. The multi-format user convenience layer therefore lives one step earlier: \cmd{yolozu doctor import --dataset-from auto}, \cmd{yolozu import dataset --from auto}, and \cmd{yolozu migrate dataset --from auto} can auto-detect supported native sources such as COCO, COCO keypoints, Ultralytics/YOLO, and the supported semantic-segmentation roots, then materialize a normalized wrapper for training.
 

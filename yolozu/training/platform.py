@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.core.canonical import TrainConfig
+from yolozu.datasets.dataset_contract import DATASET_CONTRACT_VERSION
 
 
 def _now_utc() -> str:
@@ -397,6 +398,61 @@ def training_run_output_contract(*, backend_id: str, report_path: str | Path, wo
     return output_contract
 
 
+def _backend_training_bbox_view(spec: TrainingBackendSpec) -> str:
+    family = str(spec.training_family or "").strip().lower()
+    if family == "yolo":
+        return "cxcywh_norm"
+    if family in {"rtdetr", "detr"}:
+        return "xyxy_abs"
+    return "backend_native_from_dataset_contract"
+
+
+def build_training_data_flow(
+    *,
+    backend_id: str,
+    dataset_root: str | Path | None = None,
+    split: str | None = None,
+    raw_dataset_format: str | None = None,
+) -> dict[str, Any]:
+    """Describe the standard training-data route before backend execution."""
+
+    spec = get_training_backend_spec(backend_id)
+    backend_bbox_view = _backend_training_bbox_view(spec)
+    return {
+        "format": "yolozu_training_data_flow_v1",
+        "schema_version": 1,
+        "stages": [
+            "raw_dataset",
+            "DatasetAdapter",
+            "YOLOZU Dataset Contract",
+            "TrainingBackend",
+        ],
+        "raw_dataset": {
+            "root": str(dataset_root) if dataset_root is not None else None,
+            "split": str(split) if split is not None else None,
+            "format": (str(raw_dataset_format) if raw_dataset_format else "auto"),
+        },
+        "dataset_adapter": {
+            "role": "normalize raw dataset files into YOLOZU Dataset Contract records",
+            "supported_inputs": ["YOLO data.yaml", "dataset.json", "COCO JSON", "SynthGen shards"],
+        },
+        "dataset_contract": {
+            "version": DATASET_CONTRACT_VERSION,
+            "record_contract": "YOLOZU Dataset Contract",
+            "bbox_storage_preference": "xyxy_abs",
+            "adapter_views": ["xyxy_abs", "xywh_abs", "cxcywh_norm"],
+        },
+        "training_backend": {
+            "backend_id": spec.backend_id,
+            "family": spec.training_family,
+            "bbox_view": backend_bbox_view,
+            "optimizer_policy": spec.optimizer_policy,
+            "preprocess_policy": spec.preprocess_policy,
+            "postprocess_policy": spec.postprocess_policy,
+        },
+    }
+
+
 def build_training_run_summary(
     *,
     backend_id: str,
@@ -412,6 +468,7 @@ def build_training_run_summary(
     notes: list[str] | None = None,
     license_boundary: dict[str, Any] | None = None,
     handoff_contracts: dict[str, Any] | None = None,
+    raw_dataset_format: str | None = None,
 ) -> dict[str, Any]:
     spec = get_training_backend_spec(backend_id)
     payload: dict[str, Any] = {
@@ -427,6 +484,12 @@ def build_training_run_summary(
             "root": str(dataset_root) if dataset_root is not None else None,
             "split": str(split) if split is not None else None,
         },
+        "training_data_flow": build_training_data_flow(
+            backend_id=backend_id,
+            dataset_root=dataset_root,
+            split=split,
+            raw_dataset_format=raw_dataset_format,
+        ),
         "run_output_contract": training_run_output_contract(
             backend_id=backend_id,
             report_path=report_path,
