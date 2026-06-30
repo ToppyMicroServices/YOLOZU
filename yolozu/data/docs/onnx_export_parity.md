@@ -86,11 +86,16 @@ python3 tools/export_predictions_onnxrt.py \
 python3 tools/check_predictions_parity.py \
   --reference /path/to/pred_ref.json \
   --candidate /path/to/pred_onnxrt.json \
+  --bbox-format auto \
   --image-size 640 \
   --iou-thresh 0.99 \
   --score-atol 1e-4 \
   --bbox-atol 1e-4
 ```
+
+The parity checker accepts `auto`, `cxcywh_norm`, `cxcywh_abs`, `xywh_abs`, and
+`xyxy_abs`. Use `auto` when each detection carries `bbox.format`; otherwise pin
+the format explicitly.
 
 ### End2end ONNX models (combined output)
 

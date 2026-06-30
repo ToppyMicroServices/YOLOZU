@@ -38,6 +38,7 @@ from .cli_commands import (
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
 from yolozu.inference.export_orchestrator import parse_common_export_args
+from yolozu.predictions.bbox_formats import SUPPORTED_PREDICTION_BBOX_FORMATS
 import argparse
 import json
 from pathlib import Path
@@ -476,6 +477,12 @@ def main(argv: list[str] | None = None) -> int:
     parity = sub.add_parser("parity", help="Compare two predictions JSON artifacts for backend parity.")
     parity.add_argument("--reference", required=True, help="Reference predictions JSON (e.g. PyTorch).")
     parity.add_argument("--candidate", required=True, help="Candidate predictions JSON (e.g. ONNXRuntime).")
+    parity.add_argument(
+        "--bbox-format",
+        choices=SUPPORTED_PREDICTION_BBOX_FORMATS,
+        default="auto",
+        help="BBox format stored in both JSONs, or auto to use bbox.format/keys (default: auto).",
+    )
     parity.add_argument("--iou-thresh", type=float, default=0.99, help="IoU threshold for a match.")
     parity.add_argument("--score-atol", type=float, default=1e-4, help="Absolute tolerance for score differences.")
     parity.add_argument("--bbox-atol", type=float, default=1e-4, help="Absolute tolerance for bbox differences.")

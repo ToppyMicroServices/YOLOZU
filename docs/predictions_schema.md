@@ -122,8 +122,9 @@ Also accepted by some tools:
 
 ## BBox format responsibility split
 
-Canonical JSON shape always uses `bbox` with keys `{cx, cy, w, h}`.
-Interpretation is evaluator-side and controlled by `--bbox-format`.
+Canonical protocol outputs use `bbox` with keys `{cx, cy, w, h}`.
+Evaluation and parity tools can also consume explicit raw forms when the
+format is provided through `--bbox-format` or `bbox.format`.
 
 Supported formats:
 
@@ -135,6 +136,8 @@ Supported formats:
 Tool expectations:
 
 - `tools/eval_coco.py` / `tools/eval_suite.py` default to `cxcywh_norm`
+- `tools/check_predictions_parity.py` defaults to `auto` and accepts
+  `bbox.format` when present
 - YOLO26 protocol requires `cxcywh_norm` (`docs/yolo26_eval_protocol.md`)
 - `tools/export_predictions.py --adapter rtdetr_pose` emits `cxcywh_norm`
 
