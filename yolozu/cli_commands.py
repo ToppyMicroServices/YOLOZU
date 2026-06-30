@@ -2420,6 +2420,7 @@ def _cmd_parity(args: argparse.Namespace) -> int:
         iou_thresh=float(args.iou_thresh),
         score_atol=float(args.score_atol),
         bbox_atol=float(args.bbox_atol),
+        bbox_format=str(args.bbox_format),
     )
     print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
     return 0 if bool(report.get("ok")) else 2

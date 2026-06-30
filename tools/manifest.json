@@ -2582,6 +2582,8 @@
           "required": true
         },
         {
+          "default": "auto",
+          "description": "BBox format in both prediction artifacts: auto, cxcywh_norm, cxcywh_abs, xywh_abs, or xyxy_abs.",
           "flag": "--bbox-format",
           "kind": "string",
           "name": "bbox_format",

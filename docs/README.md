@@ -190,7 +190,8 @@ Shortest 3 commands:
 ```bash
 python3 -m yolozu parity \
 	--reference data/smoke/predictions/predictions_dummy.json \
-	--candidate data/smoke/predictions/predictions_dummy.json
+	--candidate data/smoke/predictions/predictions_dummy.json \
+	--bbox-format auto
 python3 tools/benchmark_model.py \
 	--model runs/example/model.pt \
 	--data data/coco8.yaml \

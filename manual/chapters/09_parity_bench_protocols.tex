@@ -68,8 +68,15 @@ When exporting predictions across backends such as PyTorch, ONNX Runtime, and Te
 \textbf{Conceptual (not copy-paste as-is):} parity command shape.
 For a runnable shortest command, use Chapter~5 Workflow A with real artifact paths.
 \begin{lstlisting}[language=bash]
-yolozu parity   --reference reports/pred_torch.json   --candidate reports/pred_onnxrt.json
+yolozu parity \
+  --reference reports/pred_torch.json \
+  --candidate reports/pred_onnxrt.json \
+  --bbox-format auto
 \end{lstlisting}
+
+\cmd{--bbox-format auto} reads \cmd{bbox.format} or the bbox keys when present.
+Pin \cmd{cxcywh_norm}, \cmd{cxcywh_abs}, \cmd{xywh_abs}, or \cmd{xyxy_abs} when
+both artifacts use one known format.
 
 \section{Protocols (pinning evaluation settings)}
 Protocols pin evaluation settings such as dataset splits, image dimensions, and metric keys. This keeps long-running comparisons stable.

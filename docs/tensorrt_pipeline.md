@@ -157,6 +157,7 @@ python3 tools/export_predictions_onnxrt.py \
 python3 tools/check_predictions_parity.py \
   --reference reports/pred_onnxrt_yolo26n.json \
   --candidate reports/pred_trt_yolo26n.json \
+  --bbox-format auto \
   --image-size 640 \
   --iou-thresh 0.99 \
   --score-atol 1e-4 \
