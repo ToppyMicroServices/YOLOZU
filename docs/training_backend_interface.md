@@ -116,6 +116,13 @@ For RT-DETR-family runs, populate `optimizer=adamw`, `use_param_groups=true`,
 For YOLO-family runs, keep `preprocess.method=letterbox` and `eval.protocol=nms_applied`
 when exporting/evaluating backend predictions.
 
+RT-DETR-family model configs may enable optional query-level graph refinement with
+`model.graph_refine.mode=gcnv2` or `gcnv3`. The default is `none`; this keeps the
+stable reference path unchanged unless the run config explicitly opts in. GCNv2
+uses residual query graph aggregation, while GCNv3 adds gated aggregation before
+the prediction heads. Example configs are available as `builtin:gcnv2` and
+`builtin:gcnv3` in the RT-DETR pose reference package.
+
 Implementation reference:
 
 - `yolozu/core/canonical.py`

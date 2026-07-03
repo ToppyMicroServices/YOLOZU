@@ -566,6 +566,13 @@ Supported backbone architectures in the current codebase include:
 
 While legacy compatibility fields (e.g., \texttt{backbone\_name}, \texttt{backbone\_channels}) remain functional, the strongly preferred convention is to use \path{model.backbone.*} together with \path{model.projector.d_model}.
 
+Optional query-level graph refinement is configured in the same model JSON with
+\texttt{model.graph\_refine}. The default is \texttt{\{"mode": "none"\}}. Set
+\texttt{mode} to \texttt{gcnv2} or \texttt{gcnv3} to add a residual graph
+refinement stage after the RT-DETR decoder and before the prediction heads.
+Packaged examples are available as \path{rtdetr_pose/configs/gcnv2.json} and
+\path{rtdetr_pose/configs/gcnv3.json}.
+
 \begin{longtable}{@{}p{0.28\textwidth}p{0.24\textwidth}p{0.42\textwidth}@{}}
 \toprule
 \textbf{Location} & \textbf{Key} & \textbf{Role} \\

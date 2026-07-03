@@ -28,6 +28,7 @@ def entropy_loss(logits):
     return losses_entropy_loss(logits)
 
 from .backbone_projector import BackboneProjector
+from .graph_refine import QueryGraphRefiner, normalize_graph_refine_config
 
 
 def _normalize_activation_name(name: str) -> str:
@@ -469,6 +470,7 @@ class RTDETRPose(nn.Module):
         depth_dropout=0.0,
         backbone_activation="silu",
         head_activation="silu",
+        graph_refine=None,
     ):
         super().__init__()
         if backbone is None:
@@ -499,6 +501,17 @@ class RTDETRPose(nn.Module):
             dim_feedforward=decoder_dim_feedforward,
         )
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
+        graph_cfg = normalize_graph_refine_config(graph_refine)
+        self.graph_refiner = None
+        self.graph_refine_config = graph_cfg
+        if bool(graph_cfg.get("enabled", False)):
+            self.graph_refiner = QueryGraphRefiner(
+                hidden_dim=int(hidden_dim),
+                version=str(graph_cfg["version"]),
+                layers=int(graph_cfg["layers"]),
+                topk=int(graph_cfg["topk"]),
+                dropout=float(graph_cfg["dropout"]),
+            )
         self.head = HeadFast(hidden_dim, num_classes, use_uncertainty=use_uncertainty)
         self.offset_head = CenterOffsetHead(hidden_dim)
         self.k_head = GlobalKHead(hidden_dim)
@@ -543,6 +556,8 @@ class RTDETRPose(nn.Module):
         queries = self.query_embed.weight.unsqueeze(0).repeat(batch, 1, 1)
         tgt = torch.zeros_like(queries) + queries
         dec = self.decoder(tgt, memory)
+        if self.graph_refiner is not None:
+            dec = self.graph_refiner(dec)
         out = self.head(dec)
         out["offsets"] = self.offset_head(dec)
         out["k_delta"] = self.k_head(dec.mean(dim=1))

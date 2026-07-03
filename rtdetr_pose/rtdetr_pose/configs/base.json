@@ -23,7 +23,10 @@
     "activation_preset": "default",
     "backbone_activation": "silu",
     "head_activation": "silu",
-    "backbone_kwargs": {}
+    "backbone_kwargs": {},
+    "graph_refine": {
+      "mode": "none"
+    }
   },
   "loss": {
     "name": "default",
@@ -36,4 +39,3 @@
     "epochs": 1
   }
 }
-
