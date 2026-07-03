@@ -25,7 +25,10 @@
     "head_activation": "silu",
     "backbone_kwargs": {},
     "graph_refine": {
-      "mode": "none"
+      "mode": "gcnv2",
+      "layers": 1,
+      "topk": 16,
+      "dropout": 0.0
     }
   },
   "loss": {

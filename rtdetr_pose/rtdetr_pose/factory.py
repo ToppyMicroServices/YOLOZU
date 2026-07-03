@@ -13,6 +13,7 @@ except ImportError:  # pragma: no cover
     torch = None
 
 from .config import LossConfig, ModelConfig
+from .graph_refine import normalize_graph_refine_config
 from .losses import Losses
 from .model import RTDETRPose
 from .models.backbones import build_backbone as build_registered_backbone
@@ -134,6 +135,7 @@ def build_model(cfg: ModelConfig) -> RTDETRPose:
     projector_cfg = getattr(cfg, "projector", None)
     projector_cfg = projector_cfg if isinstance(projector_cfg, dict) else {}
     d_model = int(projector_cfg.get("d_model", getattr(cfg, "hidden_dim", 256)) or 256)
+    graph_refine = normalize_graph_refine_config(getattr(cfg, "graph_refine", None))
 
     return RTDETRPose(
         # Keep cfg.num_classes as the number of foreground classes and reserve the
@@ -158,6 +160,7 @@ def build_model(cfg: ModelConfig) -> RTDETRPose:
         backbone=backbone,
         backbone_activation=activation_backbone,
         head_activation=activation_head,
+        graph_refine=graph_refine,
     )
 
 

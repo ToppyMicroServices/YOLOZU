@@ -12,6 +12,7 @@ __all__ = [
     "config",
     "dataset",
     "geometry",
+    "graph_refine",
     "losses",
     "metrics",
     "model",

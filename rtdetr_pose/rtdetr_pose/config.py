@@ -41,6 +41,7 @@ class ModelConfig:
     backbone_norm: str = "bn"
     backbone: dict[str, Any] = field(default_factory=dict)
     projector: dict[str, Any] = field(default_factory=dict)
+    graph_refine: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
