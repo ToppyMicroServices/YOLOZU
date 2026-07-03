@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:26.05-py3@sha256:94aa793e6db548940168186172b5acbe413cae9e56f7a656d171cd0dd9b6a869
+FROM nvcr.io/nvidia/tensorrt:26.06-py3@sha256:7cd94ee931d2b5b85ad1c5af723d485b2625f6ce167e1e4abe577850b96ceac3
 
 ARG TORCH_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu121
 
