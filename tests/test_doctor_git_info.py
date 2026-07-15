@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +17,25 @@ class DoctorGitInfoTests(unittest.TestCase):
             info = _gather_git_info(cwd=Path(td))
 
         self.assertEqual(info, {"head": None, "dirty": None})
+
+    def test_doctor_cli_is_quiet_outside_a_worktree(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(repo_root) + os.pathsep + env.get("PYTHONPATH", "")
+        with tempfile.TemporaryDirectory() as td:
+            proc = subprocess.run(
+                [sys.executable, "-m", "yolozu", "doctor", "--output", "-"],
+                cwd=td,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stderr, "")
+        self.assertEqual(json.loads(proc.stdout)["git"], {"head": None, "dirty": None})
 
     def test_clean_and_dirty_worktrees_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as td:
