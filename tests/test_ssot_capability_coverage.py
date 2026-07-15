@@ -70,7 +70,11 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        config_path = self.repo_root / baseline["adapter"]["config"]
+        config_ref = Path(baseline["adapter"]["config"])
+        self.assertFalse(config_ref.is_absolute(), "baseline config path must be repository-relative")
+        self.assertNotIn("..", config_ref.parts, "baseline config path must stay within the repository")
+        config_path = self.repo_root / config_ref
+        self.assertTrue(config_path.is_file(), f"baseline config file is missing: {config_ref}")
         observed = hashlib.sha256(config_path.read_bytes()).hexdigest()
 
         self.assertEqual(baseline["baseline_meta"]["config_hash"], observed)
