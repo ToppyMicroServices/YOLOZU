@@ -35,8 +35,9 @@ class DoctorGitInfoTests(unittest.TestCase):
             )
 
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertNotIn("Not a git repository", proc.stderr)
-        self.assertNotIn("usage: git diff", proc.stderr)
+        stderr = proc.stderr.casefold()
+        self.assertNotIn("not a git repository", stderr)
+        self.assertNotIn("usage: git diff", stderr)
         self.assertEqual(json.loads(proc.stdout)["git"], {"head": None, "dirty": None})
 
     def test_clean_and_dirty_worktrees_are_reported(self) -> None:
