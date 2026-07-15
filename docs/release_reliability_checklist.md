@@ -5,6 +5,7 @@ Use this checklist before publishing a GitHub Release. The goal is deterministic
 Release trigger note:
 - PyPI publish is triggered by `.github/workflows/publish.yml` on `release: published`.
 - Tag push alone is insufficient for PyPI publish.
+- After upload, the workflow polls the version-specific PyPI JSON endpoint and requires both wheel and sdist metadata before it succeeds.
 - Recommended operator helper: `bash release.sh`
 
 ## Auto bump policy
@@ -91,6 +92,7 @@ DoD:
 - `ci` completed successfully.
 - `container` failures are triaged only if release depends on image artifacts.
 - `ci` includes schema compatibility, golden compatibility, and sdist/wheel package-content gates.
+- The `publish` workflow succeeds only after the released version, wheel, and sdist are visible through PyPI's version-specific JSON endpoint.
 - GitHub Actions references are SHA-pinned and Python workflow installs use `tools/ci/install_with_hashes.py` so release automation is supply-chain hardened.
 - Keep GitHub Actions pins on Node 24-capable releases (for example `actions/checkout@v6`, `actions/setup-python@v6`, and `dorny/paths-filter@v4`) to avoid runner deprecation drift.
 - Container base images are pinned by digest, including the TensorRT/NGC images used by RunPod and TRT example builds.

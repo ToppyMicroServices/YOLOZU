@@ -17,6 +17,9 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("CHANGELOG.md", publish)
         self.assertIn("EXPECTED_VERSION_INPUT", publish)
         self.assertIn("wheel/manual version mismatch", publish)
+        self.assertIn("Verify published release on PyPI", publish)
+        self.assertIn('https://pypi.org/pypi/yolozu/{version}/json', publish)
+        self.assertIn('required_types = {"bdist_wheel", "sdist"}', publish)
 
     def test_container_workflow_runs_on_tag_or_manual_only(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")

@@ -9,7 +9,7 @@ This avoids long-lived PyPI API tokens.
 - Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
 - **Tag push alone does not publish to PyPI**
 - Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs to GHCR and mirror to `nvcr.io/yolozu/...` when `NGC_API_KEY` is configured
-- `publish.yml` now validates release tag/manual inputs against `yolozu/__init__.py::__version__` and requires a matching `CHANGELOG.md` section.
+- `publish.yml` validates release tag/manual inputs against `yolozu/__init__.py::__version__`, requires a matching `CHANGELOG.md` section, and confirms that PyPI exposes both the wheel and sdist after upload.
 
 ## One-time setup (PyPI)
 
@@ -49,8 +49,8 @@ bash release.sh --dry-run --output reports/release_report.dry_run.json
 ```
 
 2) Verify publish result:
-   - GitHub Actions `publish` job is green
-   - PyPI project page shows the new version
+   - GitHub Actions `publish` job is green; its final gate confirms that PyPI exposes the new version with both wheel and sdist
+   - PyPI project page shows the new version (operator confirmation)
    - manual DOI workflow either published a record or produced an explicit skip reason
 
 Manual fallback:

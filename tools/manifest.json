@@ -11236,7 +11236,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow now validates package version, optional manual release_tag input, and CHANGELOG heading alignment before PyPI publish, while the container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",
