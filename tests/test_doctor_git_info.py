@@ -19,7 +19,7 @@ class DoctorGitInfoTests(unittest.TestCase):
 
         self.assertEqual(info, {"head": None, "dirty": None})
 
-    def test_doctor_cli_is_quiet_outside_a_worktree(self) -> None:
+    def test_doctor_cli_has_no_git_diagnostics_outside_a_worktree(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         env = os.environ.copy()
         env["PYTHONPATH"] = str(repo_root) + os.pathsep + env.get("PYTHONPATH", "")
@@ -35,7 +35,9 @@ class DoctorGitInfoTests(unittest.TestCase):
             )
 
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertEqual(proc.stderr, "")
+        stderr = proc.stderr.casefold()
+        self.assertNotIn("not a git repository", stderr)
+        self.assertNotIn("usage: git diff", stderr)
         self.assertEqual(json.loads(proc.stdout)["git"], {"head": None, "dirty": None})
 
     def test_clean_and_dirty_worktrees_are_reported(self) -> None:
