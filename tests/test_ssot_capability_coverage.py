@@ -10,7 +10,11 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
         readiness = (self.repo_root / "docs" / "production_readiness.md").read_text(encoding="utf-8")
         audit = (self.repo_root / "docs" / "ssot_capability_coverage_audit.md").read_text(encoding="utf-8")
 
-        table = readiness.split("## Capability map", 1)[1].split("## Version Compatibility Matrix", 1)[0]
+        start_heading = "## Capability map"
+        end_heading = "## Version Compatibility Matrix"
+        self.assertIn(start_heading, readiness, "production readiness is missing the capability map heading")
+        self.assertIn(end_heading, readiness, "production readiness is missing the version matrix heading")
+        table = readiness.partition(start_heading)[2].partition(end_heading)[0]
         areas = []
         for line in table.splitlines():
             if not line.startswith("|"):
