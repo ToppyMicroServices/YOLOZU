@@ -59,7 +59,7 @@
     "bbox_format": "cxcywh_norm",
     "canonical_decimals": 6,
     "checkpoint_hash": null,
-    "config_hash": "369aa76ebf5ccc013b45618b301b13c358b44f07387818b7d515c176f34bee30",
+    "config_hash": "4a02c59ad6f4f803c925b623ee41f545ffc9542a5c381ab57a6b1bc95c4be06a",
     "dataset_count": 2,
     "dataset_hash": "93b97b4f2412d0310c63fbc23afd168adbc2692827cf1e82702c621f3acf91df",
     "dataset_missing": [],
