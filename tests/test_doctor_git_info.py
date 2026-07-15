@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -38,6 +39,9 @@ class DoctorGitInfoTests(unittest.TestCase):
         self.assertEqual(json.loads(proc.stdout)["git"], {"head": None, "dirty": None})
 
     def test_clean_and_dirty_worktrees_are_reported(self) -> None:
+        if shutil.which("git") is None:
+            self.skipTest("git is required for clean/dirty worktree fixtures")
+
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             subprocess.run(["git", "init", "--quiet"], cwd=root, check=True)
