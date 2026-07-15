@@ -25,17 +25,26 @@ yolozu doctor --output -
 The default stable path is CPU-first install plus predictions evaluation.
 macOS/MPS should be treated as a \textbf{qualification path}: it is supported when \cmd{torch.backends.mps.is_available()} returns true, but it is not implied merely because a tool can run on macOS.
 
-\subsection{First successful run (2 commands: install \texorpdfstring{$\rightarrow$}{->} smoke)}
-For the quickest reproducible success path with evaluation output and PNG evidence:
+\subsection{First successful run from the installed package}
+For the shortest public-package path with a proof report and PNG evidence:
 \begin{lstlisting}[language=bash]
 python3 -m pip install yolozu
-bash scripts/smoke.sh
+yolozu doctor --proof --output reports/first_run/doctor.json --proof-dir reports/first_run/proof
+yolozu demo instance-seg --inference none --run-dir reports/first_run/demo
 \end{lstlisting}
 
-The smoke script uses committed assets under \path{data/smoke} and writes
-\path{reports/smoke_coco_eval_dry_run.json} plus SynthGen smoke artifacts under \path{reports/}
-(\path{smoke_synthgen_summary.json}, \path{smoke_synthgen_eval.json}, \path{smoke_synthgen_overlay.png}),
-and instance-seg overlay PNGs under \path{reports/smoke_demo_instance_seg/overlays/*.png}.
+The proof run writes a known predictions artifact and pinned evaluation result under
+\path{reports/first_run/proof}. The instance-seg demo writes its report and visible overlays under
+\path{reports/first_run/demo}. The full validation and evaluation sequence is documented in
+\path{docs/cpu_only_dod.md}.
+
+The repository-only smoke and fresh-install evidence harnesses require a source checkout:
+\begin{lstlisting}[language=bash]
+bash scripts/smoke.sh
+bash scripts/fresh_install_journey.sh --run-dir /tmp/yolozu_fresh_install
+\end{lstlisting}
+The fresh-install harness creates a new virtual environment, installs from public PyPI, and records
+the resolved version, exact commands, exit codes, elapsed times, logs, and stable-lane reports.
 
 If your predictions come from another backend, validate first:
 \begin{lstlisting}[language=bash]

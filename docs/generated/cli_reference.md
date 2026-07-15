@@ -76,7 +76,7 @@ Contact: develop@toppymicros.com
 | continual_decide | research | tools/continual_decide.py | Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. |
 | convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract. |
 | distill_predictions | research | tools/distill_predictions.py | Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT. |
-| dod_cpu_smoke | stable | scripts/dod_cpu_smoke.sh | Run the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. |
+| dod_cpu_smoke | stable | scripts/dod_cpu_smoke.sh | Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. |
 | download_coco_instances_tiny | stable | scripts/download_coco_instances_tiny.py | Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. |
 | eval_coco | stable | tools/eval_coco.py | Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate). |
 | eval_continual | research | tools/eval_continual.py | Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. |
@@ -107,6 +107,7 @@ Contact: develop@toppymicros.com
 | export_trt | experimental | tools/export_trt.py | Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. |
 | fetch_coco128 | stable | tools/fetch_coco128.sh | Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting). |
 | fetch_model | stable | yolozu/cli.py | Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates. |
+| fresh_install_journey | stable | scripts/fresh_install_journey.sh | Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey. |
 | gen_ci_dummy_dets_onnx | stable | tools/ci/gen_dummy_dets_onnx.py | Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks. |
 | gen_ci_smoke_dataset | stable | tools/ci/gen_smoke_dataset.py | Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. |
 | generate_benchmark_support_matrix | stable | tools/generate_benchmark_support_matrix.py | Generate the canonical benchmark support matrix from support metadata. |
