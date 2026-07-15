@@ -55,6 +55,7 @@ python3 tools/audit_manual_cli_drift.py
 python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
+python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.json
 # optional but recommended when auditing repository settings / badge evidence
@@ -71,6 +72,7 @@ DoD:
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.
 - Unit tests pass without unexpected failures.
+- Generated CLI reference and SSOT capability coverage tests pass before manifest or capability-claim changes merge.
 - MCP settings check report shows `ok=true`.
 - When governance snapshots are provided, `tools/check_repo_governance.py` reports `ok=true`.
 

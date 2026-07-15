@@ -80,6 +80,8 @@ else
   python3 -m unittest \
     tests.test_packaged_tools_manifest \
     tests.test_manifest_docs_references \
+    tests.test_generated_cli_reference \
+    tests.test_ssot_capability_coverage \
     tests.test_release_readiness_docs \
     tests.test_support_external_training_tool
 fi

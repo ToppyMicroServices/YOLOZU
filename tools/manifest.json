@@ -9796,7 +9796,9 @@
     },
     {
       "docs": [
-        "CONTRIBUTING.md"
+        "CONTRIBUTING.md",
+        "docs/release_reliability_checklist.md",
+        "docs/ssot_capability_coverage_audit.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -9862,7 +9864,7 @@
         "network": false
       },
       "runner": "bash",
-      "summary": "Run local pre-push gates (ruff + focused unit tests including external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing.",
+      "summary": "Run local pre-push gates (ruff, focused unit tests including manifest/generated-reference/SSOT coverage and external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing.",
       "tags": [
         "ci",
         "devx",

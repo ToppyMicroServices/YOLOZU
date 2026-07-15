@@ -37,6 +37,7 @@ Relevant supplementary references include:
   \item \path{docs/manifest_declarative_spec.md}
   \item \path{docs/tools_index.md}
   \item \path{docs/production_readiness.md}
+  \item \path{docs/ssot_capability_coverage_audit.md}
   \item \path{docs/evaluation_protocol_template.md}
   \item \path{docs/schema_governance.md}
   \item \path{docs/repo_governance_audit.md}
@@ -51,6 +52,7 @@ When altering tool behavior, you must follow this sequential procedure:
   \item Validate the manifest structure and constraints:
 \begin{lstlisting}[language=bash]
 python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
+python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage
 \end{lstlisting}
   \item Revise the impacted manual chapters located under \path{manual/chapters/}.
   \item Cross-reference and verify all documentation examples against the manifest's \texttt{examples[].command} fields.

@@ -23,6 +23,10 @@ It emphasizes:
 
 ## Core capabilities
 
+This section is an implementation summary, not a production-maturity declaration. Use
+[`production_readiness.md`](production_readiness.md) for current maturity boundaries and
+[`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) for evidence coverage.
+
 ### 1) Dataset I/O (YOLO format)
 
 - Image layout: `images/<split>/*.{jpg,jpeg,png,bmp,tif,tiff,webp,gif}`
@@ -108,7 +112,7 @@ Current in-repo `rtdetr_pose` backbone choices:
 
 ### 9) CLI convenience
 
-Installed CLI:
+Core installed CLI examples (not an exhaustive command list):
 
 - `yolozu doctor`
 - `yolozu export`
@@ -117,6 +121,8 @@ Installed CLI:
 - `yolozu resources`
 - `yolozu demo`
 - `yolozu test`
+
+See [`generated/cli_reference.md`](generated/cli_reference.md) for the complete current command surface.
 
 These commands are backend-facing and can evaluate predictions produced by external
 YOLO/RT-DETR/other model families as long as outputs follow the predictions schema.
@@ -150,7 +156,7 @@ Legacy compatibility wrapper (source checkout only):
 
 ## Versioning
 
-- Internal schema versioning for predictions JSON (v1)
+- Predictions wrapper schema version `1`; canonical entry schema version `2`
 - Backward-compatible additions are allowed
 - Breaking changes require version bump
 - 1.0 interface contract stability boundary: `docs/release_1_0_stability.md`
