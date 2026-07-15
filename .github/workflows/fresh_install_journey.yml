@@ -1,0 +1,81 @@
+name: Public PyPI fresh-install journey
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fresh_install_journey.yml"
+      - "scripts/dod_cpu_smoke.sh"
+      - "scripts/fresh_install_journey.sh"
+      - "yolozu/core/doctor.py"
+      - "pyproject.toml"
+      - "tools/manifest.json"
+      - "yolozu/data/manifest/tools_manifest.json"
+      - "docs/cpu_only_dod.md"
+      - "manual/chapters/02_installation.tex"
+      - "tests/test_doctor_git_info.py"
+      - "tests/test_fresh_install_workflow.py"
+      - "tests/test_smoke_cli_help.py"
+  workflow_dispatch:
+    inputs:
+      package_spec:
+        description: "Public PyPI package spec (yolozu or yolozu==VERSION)"
+        required: false
+        default: "yolozu"
+        type: string
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fresh-install-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  journey:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-14
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run public-package stable lane
+        env:
+          YOLOZU_PACKAGE_SPEC: ${{ inputs.package_spec || 'yolozu' }}
+        run: |
+          bash scripts/fresh_install_journey.sh \
+            --python python3 \
+            --package "${YOLOZU_PACKAGE_SPEC}" \
+            --run-dir "${RUNNER_TEMP}/yolozu-fresh-install"
+
+      - name: Upload journey evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fresh-install-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            ${{ runner.temp }}/yolozu-fresh-install/fresh_install_journey_report.json
+            ${{ runner.temp }}/yolozu-fresh-install/install_metadata.json
+            ${{ runner.temp }}/yolozu-fresh-install/steps.jsonl
+            ${{ runner.temp }}/yolozu-fresh-install/logs
+            ${{ runner.temp }}/yolozu-fresh-install/dod
+          if-no-files-found: warn
+          retention-days: 14

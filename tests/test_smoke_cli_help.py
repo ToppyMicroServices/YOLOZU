@@ -115,7 +115,32 @@ exec "$real_python" "$@"
         out = (proc.stdout or "") + "\n" + (proc.stderr or "")
         self.assertIn("Usage:", out)
         self.assertIn("--run-dir", out)
+        self.assertIn("--installed-package", out)
         self.assertIn("doctor --proof", out)
+
+    def test_fresh_install_journey_script_supports_help(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "fresh_install_journey.sh"
+        self.assertTrue(script.exists(), "missing scripts/fresh_install_journey.sh")
+
+        proc = subprocess.run(
+            ["bash", str(script), "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            self.fail(
+                "fresh_install_journey --help failed:\n"
+                f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+            )
+        out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        self.assertIn("Usage:", out)
+        self.assertIn("--python", out)
+        self.assertIn("--package", out)
+        self.assertIn("--run-dir", out)
 
     def test_dod_cpu_smoke_script_runs_public_path(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -138,6 +163,13 @@ exec "$real_python" "$@"
             payload = json.loads(report.read_text(encoding="utf-8"))
             self.assertEqual(payload.get("kind"), "yolozu_dod_cpu_smoke")
             self.assertEqual(payload.get("status"), "pass")
+            self.assertEqual(payload.get("execution", {}).get("mode"), "repo_checkout")
+            steps = payload.get("execution", {}).get("steps", [])
+            self.assertEqual(
+                [step.get("name") for step in steps],
+                ["doctor_proof", "demo_instance_seg", "validate_dataset", "validate_predictions", "eval_coco"],
+            )
+            self.assertTrue(all(step.get("exit_code") == 0 for step in steps))
 
 
 if __name__ == "__main__":

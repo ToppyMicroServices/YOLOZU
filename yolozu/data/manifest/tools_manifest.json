@@ -3241,7 +3241,8 @@
       "docs": [
         "docs/cpu_only_dod.md",
         "README.md",
-        "Readme_jp.md"
+        "Readme_jp.md",
+        "manual/chapters/02_installation.tex"
       ],
       "effects": {
         "fixed_writes": [],
@@ -3265,6 +3266,10 @@
           "description": "Write DoD artifacts to a temporary run directory."
         },
         {
+          "command": "YOLOZU_PYTHON=/path/to/venv/bin/python bash scripts/dod_cpu_smoke.sh --installed-package --run-dir /tmp/yolozu_dod_cpu_smoke",
+          "description": "Run the DoD against an installed package without source-checkout imports."
+        },
+        {
           "command": "bash scripts/dod_cpu_smoke.sh --help",
           "description": "Show DoD smoke options."
         }
@@ -3283,6 +3288,14 @@
           "flag": "--split",
           "kind": "string",
           "name": "split",
+          "required": false
+        },
+        {
+          "default": false,
+          "description": "Use the installed yolozu package without adding the repository to PYTHONPATH.",
+          "flag": "--installed-package",
+          "kind": "string",
+          "name": "installed_package",
           "required": false
         }
       ],
@@ -3317,6 +3330,18 @@
           "description": "Evaluation dry-run report for proof predictions.",
           "kind": "file",
           "name": "eval_report"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/steps.jsonl",
+          "description": "Exact commands, exit codes, elapsed times, and output-log paths.",
+          "kind": "file",
+          "name": "steps"
+        },
+        {
+          "default": "reports/dod_cpu_smoke/logs",
+          "description": "Combined stdout and stderr for each stable-lane step.",
+          "kind": "dir",
+          "name": "logs"
         }
       ],
       "platform": {
@@ -3329,7 +3354,7 @@
         "network": false
       },
       "runner": "bash",
-      "summary": "Run the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run.",
+      "summary": "Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run.",
       "tags": [
         "dod",
         "smoke",
@@ -8555,6 +8580,106 @@
         "yolox",
         "detectron2",
         "mmdetection"
+      ]
+    },
+    {
+      "docs": [
+        "docs/cpu_only_dod.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/02_installation.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates a clean virtual environment, command logs, and stable-lane evidence.",
+            "flag": "--run-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "scripts/fresh_install_journey.sh",
+      "examples": [
+        {
+          "command": "bash scripts/fresh_install_journey.sh --run-dir /tmp/yolozu_fresh_install",
+          "description": "Install the latest public PyPI release and run the stable lane in a new environment."
+        },
+        {
+          "command": "bash scripts/fresh_install_journey.sh --python python3.12 --package yolozu==4.5.1 --run-dir /tmp/yolozu_4_5_1_py312",
+          "description": "Pin the interpreter and published release for reproducible evidence."
+        },
+        {
+          "command": "bash scripts/fresh_install_journey.sh --help",
+          "description": "Show fresh-install journey options."
+        }
+      ],
+      "id": "fresh_install_journey",
+      "inputs": [
+        {
+          "default": "python3",
+          "description": "Python executable used to create the clean virtual environment.",
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "default": "yolozu",
+          "description": "Public PyPI package spec: yolozu or yolozu==VERSION.",
+          "flag": "--package",
+          "kind": "string",
+          "name": "package",
+          "required": false
+        },
+        {
+          "default": "reports/fresh_install_journey",
+          "description": "New output directory; existing paths are rejected to preserve fresh-install evidence.",
+          "flag": "--run-dir",
+          "kind": "dir",
+          "name": "run_dir",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "default": "reports/fresh_install_journey/fresh_install_journey_report.json",
+          "description": "Environment, resolved version, commands, elapsed times, exit codes, and artifact paths.",
+          "kind": "file",
+          "name": "journey_report"
+        },
+        {
+          "default": "reports/fresh_install_journey/dod/dod_cpu_smoke_report.json",
+          "description": "Nested stable-lane DoD report from the installed package.",
+          "kind": "file",
+          "name": "dod_report"
+        },
+        {
+          "default": "reports/fresh_install_journey/logs",
+          "description": "Virtual-environment creation, install, and stable-lane output logs.",
+          "kind": "dir",
+          "name": "logs"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "runner": "bash",
+      "summary": "Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey.",
+      "tags": [
+        "adoption",
+        "onboarding",
+        "packaging",
+        "pypi",
+        "smoke"
       ]
     },
     {

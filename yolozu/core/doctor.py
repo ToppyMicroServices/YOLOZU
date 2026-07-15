@@ -77,12 +77,24 @@ def _torch_mps_state(torch_module: Any) -> tuple[bool, bool]:
 
 
 def _gather_git_info(*, cwd: Path) -> dict[str, Any]:
+    inside_worktree = _run_capture(["git", "rev-parse", "--is-inside-work-tree"], cwd=cwd)
+    if inside_worktree != "true":
+        return {"head": None, "dirty": None}
+
     head = _run_capture(["git", "rev-parse", "HEAD"], cwd=cwd)
     dirty = None
     try:
-        unstaged = subprocess.run(["git", "diff", "--quiet"], cwd=str(cwd), check=False).returncode != 0
-        staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(cwd), check=False).returncode != 0
-        dirty = bool(unstaged or staged)
+        results = [
+            subprocess.run(
+                command,
+                cwd=str(cwd),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            ).returncode
+            for command in (["git", "diff", "--quiet"], ["git", "diff", "--cached", "--quiet"])
+        ]
+        dirty = None if any(code not in (0, 1) for code in results) else any(code == 1 for code in results)
     except (OSError, ValueError, subprocess.SubprocessError):
         dirty = None
     return {"head": head, "dirty": dirty}
