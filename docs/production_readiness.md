@@ -86,13 +86,16 @@ Start from [`research_lanes.md`](research_lanes.md) so the stable evaluation res
 
 ## How this maps to the manifest
 
-Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries a `maturity` field so agents and operators can tell whether a command belongs to the stable, experimental, or research lanes.
+Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries an entrypoint-level `maturity` field. A stable entrypoint can expose opt-in experimental or research sub-lanes, so do not infer the maturity of every subcommand or flag from the parent entry alone. Capability-specific matrices and research-lane docs provide the narrower boundary.
+
+The dated mapping from capability claims to implementation, CLI, manifest, packaged copy, docs, tests, and evidence is in [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md).
 
 ## Related docs
 
 - [`../README.md`](../README.md)
 - [`README.md`](README.md)
 - [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
+- [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - [`predictions_schema.md`](predictions_schema.md)
 - [`external_inference.md`](external_inference.md)
 - [`install.md`](install.md)

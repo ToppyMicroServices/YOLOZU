@@ -82,6 +82,11 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("tests.test_release_readiness_docs", ci)
         self.assertIn("tests.test_workflow_release_security", ci)
 
+    def test_full_ci_checks_generated_cli_and_ssot_coverage(self):
+        ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")
+        self.assertIn("tests/test_generated_cli_reference.py", ci)
+        self.assertIn("tests/test_ssot_capability_coverage.py", ci)
+
     def test_scorecard_governance_tracks_sast_and_ci_history_findings(self):
         governance = (self.repo_root / "docs" / "security_scorecard_governance.md").read_text(encoding="utf-8")
         audit_tool = (self.repo_root / "tools" / "check_repo_governance.py").read_text(encoding="utf-8")
