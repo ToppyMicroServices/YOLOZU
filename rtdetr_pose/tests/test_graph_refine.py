@@ -13,6 +13,9 @@ class TestGraphRefineConfig(unittest.TestCase):
     def test_disabled_by_default(self):
         self.assertEqual(normalize_graph_refine_config({}), {"enabled": False})
 
+    def test_explicit_none_matches_omitted_default(self):
+        self.assertEqual(normalize_graph_refine_config({"mode": "none"}), normalize_graph_refine_config({}))
+
     def test_rejects_unknown_version(self):
         with self.assertRaises(ValueError):
             normalize_graph_refine_config({"mode": "gcnv4"})

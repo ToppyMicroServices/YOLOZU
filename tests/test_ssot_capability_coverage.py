@@ -1,3 +1,5 @@
+import hashlib
+import json
 import unittest
 from pathlib import Path
 
@@ -61,6 +63,17 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
         self.assertIn("not a production-maturity declaration", spec)
         self.assertIn("entrypoint-level `maturity`", readiness)
         self.assertIn("do not infer the maturity of every subcommand or flag", readiness)
+
+    def test_reference_adapter_baseline_tracks_the_config_fingerprint(self) -> None:
+        baseline = json.loads(
+            (self.repo_root / "baselines" / "reference_adapter" / "rtdetr_pose_smoke_val.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        config_path = self.repo_root / baseline["adapter"]["config"]
+        observed = hashlib.sha256(config_path.read_bytes()).hexdigest()
+
+        self.assertEqual(baseline["baseline_meta"]["config_hash"], observed)
 
 
 if __name__ == "__main__":
