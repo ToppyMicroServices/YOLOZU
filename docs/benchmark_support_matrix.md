@@ -41,7 +41,7 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 ## Backend Flag Applicability
 
 Applicability is evaluated after `auto` resolves to an effective latency source.
-Default values are always accepted: `--no-half`, `--batch 1`, `--no-nms`.
+Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.
 
 | Task scope | Requested latency source | Effective latency source | Formats | Accepted non-default flags | Rejected non-default flags | Behavior |
 | --- | --- | --- | --- | --- | --- | --- |

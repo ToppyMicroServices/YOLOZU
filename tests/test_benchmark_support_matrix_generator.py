@@ -123,6 +123,22 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         with self.assertRaises(SystemExit):
             generator.render_markdown(meta, metadata_path=self.metadata)
 
+    def test_renderer_sorts_flag_defaults_independently_of_json_order(self) -> None:
+        generator = _load_generator()
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        defaults = meta["flag_applicability"]["defaults"]
+        meta["flag_applicability"]["defaults"] = {
+            name: defaults[name]
+            for name in reversed(tuple(defaults))
+        }
+
+        rendered = generator.render_markdown(meta, metadata_path=self.metadata)
+
+        self.assertIn(
+            "Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.",
+            rendered,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

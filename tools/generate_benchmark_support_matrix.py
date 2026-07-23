@@ -188,6 +188,7 @@ def _default_flag(name: str, value: Any) -> str:
 
 def render_markdown(meta: dict[str, Any], *, metadata_path: Path) -> str:
     _validate_metadata(meta)
+    flag_defaults = meta["flag_applicability"]["defaults"]
     lines: list[str] = [
         "# Benchmark Support Matrix",
         "",
@@ -244,8 +245,8 @@ def render_markdown(meta: dict[str, Any], *, metadata_path: Path) -> str:
             "Applicability is evaluated after `auto` resolves to an effective latency source.",
             "Default values are always accepted: "
             + ", ".join(
-                _default_flag(name, value)
-                for name, value in meta["flag_applicability"]["defaults"].items()
+                _default_flag(name, flag_defaults[name])
+                for name in sorted(flag_defaults)
             )
             + ".",
             "",
