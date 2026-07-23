@@ -60,9 +60,9 @@
       "worst_k_map50": 0.0
     },
     "speed": {
-      "fps": 19.46502,
+      "fps": 9.740046,
       "images": 2,
-      "seconds": 0.102748
+      "seconds": 0.205338
     },
     "summary": {
       "bbox_checksum": 94.824458,
@@ -109,8 +109,8 @@
     "deterministic_algorithms_enabled": true,
     "device": "cpu",
     "dtype": "torch.float32",
-    "generated_utc": "2026-07-23T09:56:53Z",
-    "git_sha": "4cae4d6763003a771eed853a8bf694cac0c9b9e5",
+    "generated_utc": "2026-07-23T09:58:17Z",
+    "git_sha": "db6af49243e5c5f8fdaa753555c1d7f1eaeba427",
     "profile": "full",
     "provenance": {
       "capture_mode": "full",
@@ -124,14 +124,14 @@
         "workflow": null
       },
       "generator": {
-        "generated_utc": "2026-07-23T09:56:52Z",
+        "generated_utc": "2026-07-23T09:58:16Z",
         "tool": "tools/run_reference_adapter_regression.py",
         "user": "runner"
       },
       "git": {
         "ref": null,
         "ref_name": null,
-        "sha": "4cae4d6763003a771eed853a8bf694cac0c9b9e5",
+        "sha": "db6af49243e5c5f8fdaa753555c1d7f1eaeba427",
         "tag": null
       },
       "snapshot": {
@@ -252,7 +252,7 @@
     "schema_drift": "hard",
     "speed_drift": "warn"
   },
-  "generated_utc": "2026-07-23T09:56:53Z",
+  "generated_utc": "2026-07-23T09:58:17Z",
   "profile": "full",
   "protocol": {
     "behavior": {
