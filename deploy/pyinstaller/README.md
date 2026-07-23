@@ -16,6 +16,7 @@ python3 -m pip install yolozu pyinstaller
 
 pyinstaller -y -F -n yolozu \
   deploy/pyinstaller/yolozu_entrypoint.py \
+  --additional-hooks-dir deploy/pyinstaller \
   --collect-data yolozu.data
 
 ./dist/yolozu --help
@@ -36,6 +37,7 @@ Build:
 ```bash
 pyinstaller -y -F -n yolozu \
   deploy/pyinstaller/yolozu_entrypoint.py \
+  --additional-hooks-dir deploy/pyinstaller \
   --collect-data yolozu.data \
   --collect-data rtdetr_pose
 ```
@@ -48,6 +50,7 @@ Quick smoke:
 ```
 
 Notes:
+- `deploy/pyinstaller/hook-yolozu.py` registers modules loaded through the legacy lazy-alias map. Keep `--additional-hooks-dir deploy/pyinstaller` in every supported build.
 - `rtdetr_pose` uses `importlib.resources` to load builtin JSON configs. `--collect-data rtdetr_pose` is required.
 - ONNX export/parity during training additionally needs `onnx` / `onnxruntime` to be installed in the build env.
 
@@ -55,7 +58,8 @@ Notes:
 
 PyArmor can be layered on top of the entrypoint before PyInstaller bundling.
 Keep the entrypoint stable (`deploy/pyinstaller/yolozu_entrypoint.py`) and ensure that data files are still collected
-(`--collect-data yolozu.data --collect-data rtdetr_pose`).
+(`--collect-data yolozu.data --collect-data rtdetr_pose`) and the YOLOZU hook directory is enabled
+(`--additional-hooks-dir deploy/pyinstaller`).
 
 Recommended approach:
 1) Obfuscate your application code (per your org’s PyArmor policy).
@@ -66,11 +70,13 @@ Recommended approach:
 
 - Missing packaged JSON/config resources:
   - ensure `--collect-data yolozu.data` and (if training) `--collect-data rtdetr_pose`
+- Missing modules loaded through a legacy `yolozu.*` alias:
+  - ensure `--additional-hooks-dir deploy/pyinstaller` is present
 - Optional deps not present in the build environment:
   - install the extras you need *before* running PyInstaller, e.g. `pip install 'yolozu[full]'`
 
 ## CI verification
 
-- GitHub Actions runs a PyInstaller smoke build on every CI run (`pyinstaller ... --collect-data yolozu.data --collect-data rtdetr_pose`).
+- GitHub Actions runs a PyInstaller smoke build on every full CI run with the YOLOZU hook directory and packaged data enabled.
 - PyArmor integration is optional (it may require a license). To enable the CI smoke, set a repository Actions variable:
   - `PYARMOR_SMOKE=1`

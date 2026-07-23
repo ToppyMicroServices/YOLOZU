@@ -892,6 +892,7 @@ jobs:
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-pyinstaller.lock
           pyinstaller -y -n yolozu_bin \
             deploy/pyinstaller/yolozu_entrypoint.py \
+            --additional-hooks-dir deploy/pyinstaller \
             --collect-data yolozu.data \
             --collect-data rtdetr_pose
           ./dist/yolozu_bin/yolozu_bin --help
@@ -905,6 +906,7 @@ jobs:
           pyarmor gen -O build/pyarmor_obf deploy/pyinstaller/yolozu_entrypoint.py
           pyinstaller -y -n yolozu_pyarmor \
             build/pyarmor_obf/yolozu_entrypoint.py \
+            --additional-hooks-dir deploy/pyinstaller \
             --collect-data yolozu.data \
             --collect-data rtdetr_pose
           ./dist/yolozu_pyarmor/yolozu_pyarmor --help
