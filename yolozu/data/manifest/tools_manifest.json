@@ -15943,6 +15943,7 @@
         "docs/import_adapters.md",
         "docs/doctor_diagnostics.md",
         "docs/interop_yolox.md",
+        "docs/byop_quickstarts.md",
         "docs/training_inference_export.md",
         "manual/chapters/04_cli_reference.tex",
         "manual/chapters/05_workflows_eval_export.tex",

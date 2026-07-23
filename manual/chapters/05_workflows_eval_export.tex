@@ -139,15 +139,20 @@ The document keeps two evidence classes separate:
   generation without claiming third-party inference.
 \end{itemize}
 
-The first real run is capped at ten images with a ten-minute operator stop
-condition. This is a troubleshooting budget, not a performance guarantee.
-Framework, model, hardware, and input sizes determine actual runtime.
+Each real block stops at the first failed command and requires a new output
+directory, so a failed exporter cannot feed a stale artifact into validation or
+evaluation. The first real run is capped at ten images with a ten-minute
+operator stop condition. This is a troubleshooting budget, not a performance
+guarantee. Framework, model, hardware, and input sizes determine actual runtime.
 
 \path{tools/eval_suite.py} preserves bundled exporter settings from
 \path{meta.extra.export_settings} in each report result. Equal report schemas
 alone do not make metrics scientifically comparable: dataset identity, class
-order, preprocessing, score/NMS settings, bounding-box representation, and
-protocol hash must also match.
+order, preprocessing, score/NMS settings, and bounding-box representation must
+also match. The default user-supplied quickstarts have no named protocol and a
+null protocol hash; null is not comparison evidence. Canonical parity requires
+the same named protocol, successful fixed-condition checks, and the same
+non-null protocol hash.
 
 \subsection{Rust template: optional ONNXRuntime mode}
 The Rust template defaults to a minimal no-dependency interface-contract example, and can optionally enable ONNXRuntime via Cargo feature flags:

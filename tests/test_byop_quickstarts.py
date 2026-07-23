@@ -40,6 +40,8 @@ class TestByopQuickstarts(unittest.TestCase):
                 self.assertIn("tools/eval_suite.py", block)
                 self.assertIn("--predictions-glob", block)
                 self.assertIn("--strict", block)
+                self.assertIn("set -euo pipefail", block)
+                self.assertIn('test ! -e "$BYOP_RUN_DIR"', block)
                 self.assertIn('"$BYOP_RUN_DIR/predictions.json"', block)
                 self.assertIn('"$BYOP_RUN_DIR/eval_report.json"', block)
 
@@ -69,6 +71,16 @@ class TestByopQuickstarts(unittest.TestCase):
         report = json.loads(proc.stdout)
         self.assertTrue(report["ok"])
         self.assertGreaterEqual(report["checked_examples"], 25)
+
+    def test_top_level_cli_manifest_links_the_quickstart(self):
+        for manifest_path in (
+            self.repo_root / "tools" / "manifest.json",
+            self.repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json",
+        ):
+            with self.subTest(manifest=manifest_path):
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                yolozu_tool = next(tool for tool in manifest["tools"] if tool["id"] == "yolozu")
+                self.assertIn("docs/byop_quickstarts.md", yolozu_tool["docs"])
 
     def test_schema_smoke_blocks_produce_strict_valid_common_reports(self):
         blocks = _extract_blocks(self.text, "smoke")
@@ -118,6 +130,31 @@ class TestByopQuickstarts(unittest.TestCase):
                     self.assertEqual(result["export_settings"]["score_threshold"], 0.25)
                     self.assertEqual(result["export_settings"]["max_detections"], 300)
                     self.assertEqual(result["predictions_meta_ref"]["exporter"], source)
+                    self.assertIsNone(report["protocol_id"])
+                    self.assertIsNone(report["protocol_hash"])
+
+                    predictions_before = predictions_path.read_bytes()
+                    report_before = report_path.read_bytes()
+                    rerun = subprocess.run(
+                        ["bash", "-c", blocks[source]],
+                        cwd=str(self.repo_root),
+                        env=env,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        check=False,
+                        timeout=120,
+                    )
+                    self.assertNotEqual(rerun.returncode, 0)
+                    self.assertEqual(predictions_path.read_bytes(), predictions_before)
+                    self.assertEqual(report_path.read_bytes(), report_before)
+
+    def test_null_protocol_hash_is_not_described_as_comparison_evidence(self):
+        self.assertIn(
+            "treat a `null` protocol hash as no comparable protocol evidence",
+            self.text,
+        )
+        self.assertIn("same non-null protocol hash", self.text)
 
 
 if __name__ == "__main__":

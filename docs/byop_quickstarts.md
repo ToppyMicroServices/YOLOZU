@@ -43,11 +43,14 @@ The dataset must have matching `images/<split>/` and `labels/<split>/`
 directories. The framework class indices must match the YOLO-format label
 indices. Keep model files and datasets outside git.
 
-Every real block below uses a fresh output directory, at most ten images, and a
-ten-minute first-run diagnostic budget. Ten minutes is an operator stop
-condition, not a performance claim: runtime depends on the model, framework,
-hardware, and image sizes. If the command exceeds that budget, stop it and use
-the failure route for that framework before attempting a larger run.
+Every real block below requires a new output directory, stops on the first
+failed command, uses at most ten images, and has a ten-minute first-run
+diagnostic budget. Ten minutes is an operator stop condition, not a performance
+claim: runtime depends on the model, framework, hardware, and image sizes. If
+the command exceeds that budget, stop it and use the failure route for that
+framework before attempting a larger run. Choose a different `BYOP_RUN_DIR`
+before rerunning; this prevents an older artifact from being accepted as
+evidence for a failed exporter command.
 
 ## Ultralytics
 
@@ -61,6 +64,7 @@ end-to-end NMS-free model.
 
 <!-- byop-real:ultralytics:start -->
 ```bash
+set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
 export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
@@ -69,6 +73,7 @@ export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop/ultralytics}"
 export ULTRALYTICS_MODEL="${ULTRALYTICS_MODEL:-/absolute/path/to/model.pt}"
 test -d "$BYOP_DATASET"
 test -f "$ULTRALYTICS_MODEL"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 
 python3 tools/export_predictions_yolo_runtime.py \
@@ -120,7 +125,9 @@ this exact block with a per-source 120-second timeout.
 
 <!-- byop-smoke:ultralytics:start -->
 ```bash
+set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/ultralytics}"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 python3 tools/export_predictions_yolo_runtime.py \
   --model /path/to/ultralytics_model.pt \
@@ -159,6 +166,7 @@ either file is missing.
 
 <!-- byop-real:detectron2:start -->
 ```bash
+set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
 export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
@@ -169,6 +177,7 @@ export DETECTRON2_WEIGHTS="${DETECTRON2_WEIGHTS:-/absolute/path/to/model_final.p
 test -d "$BYOP_DATASET"
 test -f "$DETECTRON2_CONFIG"
 test -f "$DETECTRON2_WEIGHTS"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 
 python3 tools/export_predictions_detectron2.py \
@@ -214,7 +223,9 @@ Failure route:
 
 <!-- byop-smoke:detectron2:start -->
 ```bash
+set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/detectron2}"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 python3 tools/export_predictions_detectron2.py \
   --dataset data/smoke \
@@ -250,6 +261,7 @@ version-specific runtime dependencies.
 
 <!-- byop-real:mmdetection:start -->
 ```bash
+set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
 export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
@@ -260,6 +272,7 @@ export MMDET_CHECKPOINT="${MMDET_CHECKPOINT:-/absolute/path/to/checkpoint.pth}"
 test -d "$BYOP_DATASET"
 test -f "$MMDET_CONFIG"
 test -f "$MMDET_CHECKPOINT"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 
 python3 tools/export_predictions_mmdet.py \
@@ -306,7 +319,9 @@ Failure route:
 
 <!-- byop-smoke:mmdetection:start -->
 ```bash
+set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/mmdetection}"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 python3 tools/export_predictions_mmdet.py \
   --dataset data/smoke \
@@ -342,6 +357,7 @@ parameters before it runs inference and records their provenance.
 
 <!-- byop-real:yolox:start -->
 ```bash
+set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
 export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
@@ -352,6 +368,7 @@ export YOLOX_WEIGHTS="${YOLOX_WEIGHTS:-/absolute/path/to/yolox_checkpoint.pth}"
 test -d "$BYOP_DATASET"
 test -f "$YOLOX_EXP"
 test -f "$YOLOX_WEIGHTS"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 
 python3 tools/export_predictions_yolox.py \
@@ -399,7 +416,9 @@ Failure route:
 
 <!-- byop-smoke:yolox:start -->
 ```bash
+set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/yolox}"
+test ! -e "$BYOP_RUN_DIR"
 mkdir -p "$BYOP_RUN_DIR"
 python3 tools/export_predictions_yolox.py \
   --dataset data/smoke \
@@ -438,9 +457,31 @@ equal evaluation conditions. Before comparing metrics:
 2. inspect each result's `export_settings` in `eval_report.json`;
 3. align image size, score threshold, NMS/IoU policy, maximum detections,
    preprocessing, and bounding-box representation;
-4. use the same named evaluation protocol only when the exporter settings
-   satisfy that protocol's fixed conditions;
-5. do not compare reports with different protocol hashes.
+4. note that the default quickstarts do not select a named evaluation protocol,
+   because their dataset and framework-owned preprocessing are user supplied;
+   their `protocol_id` and `protocol_hash` are therefore `null`;
+5. treat a `null` protocol hash as no comparable protocol evidence, not as a
+   shared hash;
+6. for a canonical comparison, use the same dataset and split, pass the same
+   named `--protocol` to every `eval_suite.py` run, let its fixed-condition
+   checks pass without `--allow-protocol-mismatches`, and compare only reports
+   with the same non-null protocol hash.
+
+For example, only when the dataset is COCO `val2017` and the recorded exporter
+settings satisfy every fixed `nms_applied` condition, rerun evaluation with:
+
+```bash
+python3 tools/eval_suite.py \
+  --protocol nms_applied \
+  --dataset "$BYOP_DATASET" \
+  --predictions-glob "$BYOP_RUN_DIR/predictions.json" \
+  --max-images "$BYOP_MAX_IMAGES" \
+  --strict \
+  --output "$BYOP_RUN_DIR/eval_report.protocol.json"
+```
+
+This command fails closed on a fixed-condition mismatch by default. Do not use
+`--allow-protocol-mismatches` to turn a mismatched run into parity evidence.
 
 Detectron2 and MMDetection preprocessing is config-owned. The exporter records
 the declared pipeline metadata but does not rewrite the framework config.
