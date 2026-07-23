@@ -11,10 +11,15 @@ on:
         options:
           - check
           - write
-      baseline_path:
-        description: "Baseline JSON path"
+      baseline_root:
+        description: "Matrix baseline root"
         required: false
-        default: "baselines/reference_adapter/rtdetr_pose_smoke_val.json"
+        default: "baselines/reference_adapter"
+        type: string
+      baseline_version:
+        description: "Matrix baseline version"
+        required: false
+        default: "v1"
         type: string
       max_images:
         description: "Number of images"
@@ -28,7 +33,7 @@ permissions:
 jobs:
   full_regression:
     name: reference adapter full profile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
 
@@ -42,37 +47,57 @@ jobs:
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-ci.lock
 
       - name: Run reference adapter full profile
+        shell: bash
         run: |
+          set -euo pipefail
           MODE="${{ github.event.inputs.mode || 'check' }}"
-          BASELINE="${{ github.event.inputs.baseline_path || 'baselines/reference_adapter/rtdetr_pose_smoke_val.json' }}"
+          BASELINE_ROOT="${{ github.event.inputs.baseline_root || 'baselines/reference_adapter' }}"
+          BASELINE_VERSION="${{ github.event.inputs.baseline_version || 'v1' }}"
           MAX_IMAGES="${{ github.event.inputs.max_images || '2' }}"
-          EXTRA=""
+
+          COMMON_ARGS=(
+            --dataset data/smoke
+            --split val
+            --max-images "$MAX_IMAGES"
+            --profile full
+            --baseline-layout matrix
+            --baseline-root "$BASELINE_ROOT"
+            --adapter-id rtdetr_pose
+            --backend-id torch
+            --device cpu
+            --baseline-version "$BASELINE_VERSION"
+            --image-size 160
+            --score-threshold 0.05
+            --max-detections 20
+            --init-seed 2026
+            --repro-policy strict
+            --capture-provenance full
+            --score-gate-mode hard
+            --perf-gate-mode warn
+            --runtime-lock requirements-locks/requirements-ci.lock
+            --enforce-runtime-lock
+          )
+
           if [ "$MODE" = "write" ]; then
-            EXTRA="--write-baseline"
+            python tools/run_reference_adapter_regression.py \
+              "${COMMON_ARGS[@]}" \
+              --write-baseline \
+              --output reports/reference_adapter_regression_full_baseline_write.json
           fi
+
           python tools/run_reference_adapter_regression.py \
-            --dataset data/smoke \
-            --split val \
-            --max-images "$MAX_IMAGES" \
-            --profile full \
-            --device cpu \
-            --image-size 160 \
-            --score-threshold 0.05 \
-            --max-detections 20 \
-            --init-seed 2026 \
-            --repro-policy strict \
-            --capture-provenance full \
-            --score-gate-mode hard \
-            --perf-gate-mode warn \
-            --runtime-lock requirements-locks/requirements-ci.lock \
-            --enforce-runtime-lock \
-            --baseline "$BASELINE" \
-            --output reports/reference_adapter_regression_full_ci.json \
-            $EXTRA
+            "${COMMON_ARGS[@]}" \
+            --diff-summary-out reports/reference_adapter_regression_full_ci.diff_summary.json \
+            --topk-examples-dir reports/reference_adapter_regression_full_ci_topk_examples \
+            --output reports/reference_adapter_regression_full_ci.json
 
       - name: Upload regression artifacts
+        if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: reference-adapter-full
           path: |
-            reports/reference_adapter_regression_full_ci.json
+            reports/reference_adapter_regression_full*.json
+            reports/reference_adapter_regression_full_ci_topk_examples/
+            ${{ inputs.baseline_root || 'baselines/reference_adapter' }}/rtdetr_pose/torch/cpu/${{ inputs.baseline_version || 'v1' }}/full.json
+          if-no-files-found: warn

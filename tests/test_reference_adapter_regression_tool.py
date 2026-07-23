@@ -129,6 +129,49 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
         self.assertTrue(any("map50" in item for item in hard_failures))
         self.assertEqual(soft_failures, [])
 
+    def test_consistency_gate_rejects_profile_mismatch(self):
+        mod = self._load_tool_module()
+        baseline_payload = {
+            "profile": "micro",
+            "baseline": {
+                "summary": {},
+                "robust_metrics": {},
+                "speed": {},
+                "contract": {},
+            },
+            "thresholds": {},
+            "baseline_meta": {},
+        }
+        failure_records: list[dict[str, object]] = []
+        gates, hard_failures, soft_failures = mod._compare_against_baseline(
+            baseline_payload=baseline_payload,
+            summary={},
+            robust_metrics={},
+            speed={},
+            contract={},
+            run_meta={"profile": "full"},
+            schema_warnings=[],
+            schema_errors=[],
+            consistency_errors=[],
+            contract_errors=[],
+            gate_policy={
+                mod.GATE_SCHEMA: "off",
+                mod.GATE_CONSISTENCY: "hard",
+                mod.GATE_METRIC: "off",
+                mod.GATE_SPEED: "off",
+            },
+            predictions=[],
+            enforce_runtime_lock=False,
+            enforce_weights_hash=False,
+            peer_robust_metrics=None,
+            backend_parity={"mode": "off"},
+            failure_records=failure_records,
+        )
+        consistency = gates[mod.GATE_CONSISTENCY]
+        self.assertFalse(bool(consistency["ok"]))
+        self.assertTrue(any("profile mismatch: baseline=micro current=full" in item for item in hard_failures))
+        self.assertEqual(soft_failures, [])
+
     def test_record_preflight_classifies_missing_image_as_e_io(self):
         mod = self._load_tool_module()
         records = [{"image": "data/does_not_exist_for_preflight.jpg", "labels": []}]
@@ -214,6 +257,98 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
             self.assertIn("baseline_meta", report)
             self.assertIn("gate_policy", report)
             self.assertIn("protocol", report)
+
+    def test_full_matrix_baseline_write_then_check(self):
+        if importlib.util.find_spec("torch") is None:
+            self.skipTest("torch is not installed")
+
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_reference_adapter_regression.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            baseline_root = root / "baselines"
+            write_report = root / "write_report.json"
+            check_report = root / "check_report.json"
+            common = [
+                "--dataset",
+                "data/smoke",
+                "--split",
+                "val",
+                "--max-images",
+                "1",
+                "--profile",
+                "full",
+                "--baseline-layout",
+                "matrix",
+                "--baseline-root",
+                str(baseline_root.relative_to(repo_root)),
+                "--adapter-id",
+                "rtdetr_pose",
+                "--backend-id",
+                "torch",
+                "--device",
+                "cpu",
+                "--baseline-version",
+                "v1",
+                "--image-size",
+                "96",
+                "--score-threshold",
+                "0.05",
+                "--max-detections",
+                "10",
+                "--init-seed",
+                "2026",
+                "--repro-policy",
+                "strict",
+                "--capture-provenance",
+                "minimal",
+                "--score-gate-mode",
+                "hard",
+                "--perf-gate-mode",
+                "off",
+            ]
+
+            write_proc = self._run(
+                [
+                    sys.executable,
+                    str(script),
+                    *common,
+                    "--write-baseline",
+                    "--output",
+                    str(write_report.relative_to(repo_root)),
+                ],
+                cwd=repo_root,
+            )
+            if write_proc.returncode != 0:
+                self.fail(
+                    "full matrix baseline write failed:\n"
+                    f"STDOUT:\n{write_proc.stdout}\nSTDERR:\n{write_proc.stderr}"
+                )
+
+            check_proc = self._run(
+                [
+                    sys.executable,
+                    str(script),
+                    *common,
+                    "--output",
+                    str(check_report.relative_to(repo_root)),
+                ],
+                cwd=repo_root,
+            )
+            if check_proc.returncode != 0:
+                self.fail(
+                    "full matrix baseline check failed:\n"
+                    f"STDOUT:\n{check_proc.stdout}\nSTDERR:\n{check_proc.stderr}"
+                )
+
+            baseline_path = baseline_root / "rtdetr_pose" / "torch" / "cpu" / "v1" / "full.json"
+            baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+            self.assertEqual(baseline.get("profile"), "full")
+            self.assertEqual(baseline.get("baseline_layout"), "matrix")
+            self.assertEqual((baseline.get("baseline_meta") or {}).get("profile"), "full")
+            self.assertEqual((baseline.get("baseline_meta") or {}).get("repro_policy"), "strict")
+            self.assertTrue(json.loads(check_report.read_text(encoding="utf-8")).get("ok"))
 
     def test_behavior_gate_warn_then_hard(self):
         if importlib.util.find_spec("torch") is None:

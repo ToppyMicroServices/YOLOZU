@@ -1,0 +1,355 @@
+{
+  "adapter": {
+    "checkpoint": null,
+    "config": "rtdetr_pose/configs/base.json",
+    "device": "cpu",
+    "image_size": [
+      160,
+      160
+    ],
+    "init_seed": 2026,
+    "max_detections": 20,
+    "repro_policy": "strict",
+    "score_threshold": 0.05
+  },
+  "baseline": {
+    "contract": {
+      "entries": 2,
+      "prediction_images": [
+        "images/val/000000000009.jpg",
+        "images/val/000000000025.jpg"
+      ],
+      "prediction_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c",
+      "record_images": [
+        "images/val/000000000009.jpg",
+        "images/val/000000000025.jpg"
+      ],
+      "record_images_sha256": "c78f15f0857b591354e2411f98dcc18da05823a24db047d4cc99f9c56413bf4c",
+      "records": 2
+    },
+    "predictions_sha256": "208f87b8060585e26e593e2d89ae94392b8509495fe559d84e6a4cc7f849de6b",
+    "robust_metrics": {
+      "class_count": 10,
+      "class_mismatch_count": 15,
+      "extra_count": 40,
+      "gt_count": 10,
+      "iou_p10": 0.0,
+      "iou_p50": 0.0,
+      "iou_p90": 0.0,
+      "map50": 0.0,
+      "map50_95": 0.0,
+      "matched_count": 0,
+      "median_class_map50": 0.0,
+      "missing_count": 10,
+      "per_class_map50": {
+        "18": 0.0,
+        "2": 0.0,
+        "20": 0.0,
+        "23": 0.0,
+        "45": 0.0,
+        "49": 0.0,
+        "50": 0.0,
+        "52": 0.0,
+        "62": 0.0,
+        "69": 0.0
+      },
+      "pred_count": 40,
+      "recall_at_k": 0.0,
+      "recall_k": 20,
+      "worst_k": 3,
+      "worst_k_map50": 0.0
+    },
+    "speed": {
+      "fps": 9.740046,
+      "images": 2,
+      "seconds": 0.205338
+    },
+    "summary": {
+      "bbox_checksum": 94.824458,
+      "class_hist": {
+        "18": 2,
+        "2": 2,
+        "20": 8,
+        "52": 6,
+        "62": 20,
+        "69": 2
+      },
+      "detections_per_image": [
+        20,
+        20
+      ],
+      "images": 2,
+      "images_with_detections": 2,
+      "score_mean": 0.061821,
+      "score_sum": 2.472845,
+      "total_detections": 40
+    }
+  },
+  "baseline_layout": "matrix",
+  "baseline_meta": {
+    "backend": "torch",
+    "baseline_layout": "matrix",
+    "bbox_format": "cxcywh_norm",
+    "canonical_decimals": 6,
+    "checkpoint_hash": null,
+    "config_hash": "4a02c59ad6f4f803c925b623ee41f545ffc9542a5c381ab57a6b1bc95c4be06a",
+    "dataset_count": 2,
+    "dataset_hash": "93b97b4f2412d0310c63fbc23afd168adbc2692827cf1e82702c621f3acf91df",
+    "dataset_missing": [],
+    "determinism_knobs": {
+      "color_order": "RGB",
+      "cublas_workspace_config": ":4096:8",
+      "exif_orientation": "normalized",
+      "image_decode_library": "Pillow",
+      "input_resolution_policy": "fixed_resize",
+      "preprocess_dtype": "float32",
+      "pythonhashseed": "2026",
+      "resize_algorithm": "bilinear"
+    },
+    "deterministic_algorithms_enabled": true,
+    "device": "cpu",
+    "dtype": "torch.float32",
+    "generated_utc": "2026-07-23T09:58:17Z",
+    "git_sha": "db6af49243e5c5f8fdaa753555c1d7f1eaeba427",
+    "profile": "full",
+    "provenance": {
+      "capture_mode": "full",
+      "ci": {
+        "ci": false,
+        "job": null,
+        "provider": null,
+        "run_attempt": null,
+        "run_id": null,
+        "run_url": null,
+        "workflow": null
+      },
+      "generator": {
+        "generated_utc": "2026-07-23T09:58:16Z",
+        "tool": "tools/run_reference_adapter_regression.py",
+        "user": "runner"
+      },
+      "git": {
+        "ref": null,
+        "ref_name": null,
+        "sha": "db6af49243e5c5f8fdaa753555c1d7f1eaeba427",
+        "tag": null
+      },
+      "snapshot": {
+        "cpu_flags": [],
+        "cpu_flags_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "enabled": true,
+        "pip_freeze": [
+          "filelock==3.32.0",
+          "flatbuffers==25.12.19",
+          "fsspec==2026.6.0",
+          "Jinja2==3.1.6",
+          "MarkupSafe==3.0.3",
+          "mpmath==1.3.0",
+          "networkx==3.6.1",
+          "numpy==2.4.2",
+          "onnxruntime==1.24.2",
+          "packaging==26.2",
+          "pillow==12.2.0",
+          "protobuf==7.35.1",
+          "PyYAML==6.0.3",
+          "setuptools==83.0.0",
+          "sympy==1.14.0",
+          "torch==2.10.0",
+          "typing_extensions==4.16.0"
+        ],
+        "pip_freeze_sha256": "e97f39b201e7f15b0d5531e5f1347058f28015e1bf9ab5354b4c6bfb1a29bf3c",
+        "pip_package_count": 17,
+        "platform": {
+          "machine": "arm64",
+          "processor": "arm",
+          "release": "25.5.0",
+          "system": "Darwin",
+          "version": "Darwin Kernel Version 25.5.0: Tue Jun  9 22:26:46 PDT 2026; root:xnu-12377.121.10~1/RELEASE_ARM64_T8103"
+        },
+        "python_vv": "Python 3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+        "python_vv_sha256": "998e71ad6da4f3661807f14136c644bb07d95aacd59dd1ac24400100b03f812f",
+        "runtime_lock_path": "requirements-locks/requirements-ci.lock",
+        "runtime_lock_sha256": "9b9d1084c1b7e71e3429595f7564a0a63bcaaec97133819b740391682e3f5a33",
+        "torch_build": {
+          "available": true,
+          "config": "PyTorch built with:\n  - GCC 4.2\n  - C++ Version: 201703\n  - clang 15.0.0\n  - OpenMP 201811\n  - LAPACK is enabled (usually provided by MKL)\n  - NNPACK is enabled\n  - CPU capability usage: DEFAULT\n  - Build settings: BLAS_INFO=accelerate, BUILD_TYPE=Release, COMMIT_SHA=449b1768410104d3ed79d3bcfe4ba1d65c7f22c0, CXX_COMPILER=/usr/bin/c++, CXX_FLAGS= -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOCUPTI -DLIBKINETO_NOROCTRACER -DLIBKINETO_NOXPUPTI=ON -DUSE_PYTORCH_QNNPACK -DAT_BUILD_ARM_VEC256_WITH_SLEEF -DUSE_XNNPACK -DUSE_PYTORCH_METAL_EXPORT -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DUSE_COREML_DELEGATE -O2 -fPIC -DC10_NODEPRECATED -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=braced-scalar-init -Werror=range-loop-construct -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-unknown-pragmas -Wno-unused-parameter -Wno-strict-overflow -Wno-strict-aliasing -Wvla-extension -Wsuggest-override -Wnewline-eof -Winconsistent-missing-override -Winconsistent-missing-destructor-override -Wno-pass-failed -Wno-error=old-style-cast -Wconstant-conversion -Qunused-arguments -faligned-new -fno-math-errno -fno-trapping-math -Werror=format -DUSE_MPS -Wno-missing-braces, LAPACK_INFO=accelerate, TORCH_VERSION=2.10.0, USE_CUDA=OFF, USE_CUDNN=OFF, USE_CUSPARSELT=OFF, USE_EIGEN_FOR_BLAS=ON, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_GLOO=ON, USE_MKL=OFF, USE_MKLDNN=OFF, USE_MPI=OFF, USE_NCCL=OFF, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, USE_ROCM_KERNEL_ASSERT=OFF, USE_XCCL=OFF, USE_XPU=OFF, \n",
+          "config_sha256": "ae49aeb898c01a3cd7bdb6311dce7ccea64c05a02c023ba09c707938191c6fea",
+          "cuda": "None",
+          "cuda_available": false,
+          "cudnn_version": null,
+          "git_version": "449b1768410104d3ed79d3bcfe4ba1d65c7f22c0",
+          "version": "2.10.0"
+        }
+      }
+    },
+    "record_io_boundary": {
+      "checked_records": 2,
+      "error_codes": [
+        "E_IO",
+        "E_DECODE",
+        "E_PREPROC"
+      ],
+      "input_requirements": {
+        "color_order": "RGB",
+        "decode_success": true,
+        "dtype": "float32",
+        "exif_orientation_normalized": true,
+        "image_exists": true,
+        "model_input_size": [
+          160,
+          160
+        ]
+      },
+      "record_preflight_count": 2
+    },
+    "repro_actions": [
+      "torch.manual_seed",
+      "env:PYTHONHASHSEED",
+      "env:CUBLAS_WORKSPACE_CONFIG",
+      "torch.use_deterministic_algorithms(True)",
+      "torch.backends.cudnn.deterministic=True",
+      "torch.backends.cudnn.benchmark=False"
+    ],
+    "repro_policy": "strict",
+    "runtime_lock_path": "requirements-locks/requirements-ci.lock",
+    "runtime_lock_sha256": "9b9d1084c1b7e71e3429595f7564a0a63bcaaec97133819b740391682e3f5a33",
+    "runtime_lock_versions": {
+      "onnxruntime": "1.24.2",
+      "torch": "2.10.0+cpu"
+    },
+    "seed": 2026,
+    "versions": {
+      "numpy": "2.4.2",
+      "onnxruntime": "1.24.2",
+      "pillow": "12.2.0",
+      "python": "3.14.6",
+      "torch": "2.10.0",
+      "ultralytics": null,
+      "yolozu": null
+    },
+    "weights_hash": "d0ccef5815cf3d001c03f60187c2cea487e03323feb0980cef2138de5917056d",
+    "weights_source": "model_state_dict"
+  },
+  "baseline_path": "baselines/reference_adapter/rtdetr_pose/torch/cpu/v1/full.json",
+  "canonicalization": {
+    "bbox_format": "cxcywh_norm",
+    "canonical_decimals": 6,
+    "stable_sort": [
+      "score_desc",
+      "class_id_asc",
+      "bbox_lexicographic"
+    ]
+  },
+  "dataset": {
+    "hash": "93b97b4f2412d0310c63fbc23afd168adbc2692827cf1e82702c621f3acf91df",
+    "max_images": 2,
+    "path": "data/smoke",
+    "split": "val"
+  },
+  "gate_policy": {
+    "consistency_drift": "hard",
+    "metric_drift": "hard",
+    "schema_drift": "hard",
+    "speed_drift": "warn"
+  },
+  "generated_utc": "2026-07-23T09:58:17Z",
+  "profile": "full",
+  "protocol": {
+    "behavior": {
+      "gate_adoption": "warn_then_hard",
+      "soft_invariants": [
+        "metric drift (total_detections, score_sum, score_mean, bbox_checksum)",
+        "robust metric drift (map50/map50_95, worst-k, quantiles, recall@K, count diagnostics)",
+        "backend parity drift against peer backend report",
+        "performance drift (fps ratio and absolute floor)"
+      ]
+    },
+    "canonicalization": {
+      "bbox_format": "cxcywh_norm",
+      "bbox_range": [
+        0.0,
+        1.0
+      ],
+      "empty_detections": "[]",
+      "round_decimals": 6,
+      "stable_sort": [
+        "score_desc",
+        "class_id_asc",
+        "bbox_lexicographic"
+      ]
+    },
+    "interface_contract": {
+      "forbidden_values": [
+        "NaN",
+        "+inf",
+        "-inf"
+      ],
+      "hard_invariants": [
+        "records preflight requires readable image files with successful decode and positive dimensions",
+        "entries schema validation with strict mode",
+        "record/prediction image mapping and ordering",
+        "image identifier canonicalization to dataset-relative keys",
+        "bbox coordinate system is cxcywh_norm and values must be finite",
+        "duplicate image IDs and duplicate detections are rejected",
+        "empty detections are normalized to []",
+        "stable detection sort key is fixed",
+        "reference-adapter entries must include image_w/h, orig_w/h, model_input_w/h, and preproc metadata"
+      ]
+    },
+    "name": "reference_adapter_regression"
+  },
+  "reference_adapter": "rtdetr_pose",
+  "schema_version": 2,
+  "thresholds": {
+    "backend_parity": {
+      "map50_95_abs": 0.03,
+      "map50_abs": 0.03,
+      "mode": "off"
+    },
+    "backend_parity_by_backend": {
+      "torch": {
+        "map50_95_abs": 0.03,
+        "map50_abs": 0.03,
+        "mode": "off"
+      }
+    },
+    "metric": {
+      "bbox_checksum_abs": 0.1,
+      "class_mismatch_count_abs": 2.0,
+      "extra_count_abs": 2.0,
+      "iou_p10_abs": 0.1,
+      "iou_p50_abs": 0.1,
+      "map50_95_abs": 0.03,
+      "map50_abs": 0.03,
+      "median_class_map50_abs": 0.05,
+      "missing_count_abs": 2.0,
+      "recall_at_k_abs": 0.05,
+      "score_mean_abs": 0.001,
+      "score_sum_abs": 0.01,
+      "total_detections_abs": 0.0,
+      "worst_k_map50_abs": 0.05
+    },
+    "metric_by_backend": {
+      "torch": {
+        "bbox_checksum_abs": 0.1,
+        "class_mismatch_count_abs": 2.0,
+        "extra_count_abs": 2.0,
+        "iou_p10_abs": 0.1,
+        "iou_p50_abs": 0.1,
+        "map50_95_abs": 0.03,
+        "map50_abs": 0.03,
+        "median_class_map50_abs": 0.05,
+        "missing_count_abs": 2.0,
+        "recall_at_k_abs": 0.05,
+        "score_mean_abs": 0.001,
+        "score_sum_abs": 0.01,
+        "total_detections_abs": 0.0,
+        "worst_k_map50_abs": 0.05
+      }
+    },
+    "speed": {
+      "absolute_floor_fps": 0.2,
+      "min_fps_ratio": 0.25
+    }
+  }
+}
