@@ -690,8 +690,9 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
         raise ValueError(
             "--task detect does not support --latency-source artifact_eval: "
             "no prepared detection-artifact evaluation path is implemented. "
-            "Use --latency-source auto or dataset_pass_wall_time for backend execution, "
-            "or synthetic_step for explicitly synthetic timing."
+            "Use --latency-source auto or --latency-source dataset_pass_wall_time "
+            "for backend execution, or --latency-source synthetic_step for explicitly "
+            "synthetic timing."
         )
 
     nondefault = _nondefault_flag_values(args)

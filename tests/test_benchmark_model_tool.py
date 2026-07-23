@@ -1285,6 +1285,8 @@ class TestBenchmarkModelTool(TestCase):
                                 output,
                             )
                             self.assertIn("no prepared detection-artifact evaluation path", output)
+                            self.assertIn("--latency-source dataset_pass_wall_time", output)
+                            self.assertIn("--latency-source synthetic_step", output)
                             self.assertFalse(run_root.exists(), "source validation must fail before any output write")
 
     def test_artifact_tasks_reject_dataset_pass_through_both_cli_surfaces(self):
