@@ -42,6 +42,7 @@ from yolozu.eval.benchmark_flags import (
     HALF_HELP,
     LATENCY_SOURCE_HELP,
     NMS_HELP,
+    OPENVINO_MODEL_HELP,
     PARITY_REFERENCE_HELP,
     STRICT_HELP,
 )
@@ -391,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--onnx-model", default=None, help="Optional ONNX backend model/depth-artifact override.")
     bench.add_argument("--engine-model", default=None, help="Optional TensorRT engine/depth-artifact override.")
     bench.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model/artifact override.")
-    bench.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model/artifact override.")
+    bench.add_argument("--openvino-model", default=None, help=OPENVINO_MODEL_HELP)
     bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     bench.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     bench.add_argument(

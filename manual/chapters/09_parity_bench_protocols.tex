@@ -237,6 +237,15 @@ attaches real parity reports over matched detections plus pose fields such as
 rotation, translation, and depth. Formats without shipped benchmark wiring are
 reported as unsupported/skipped rather than as synthetic benchmark successes.
 
+Each per-format report keeps the existing boolean \texttt{runtime.available}
+field and adds \texttt{runtime.required} plus \texttt{runtime.checked}. Read
+\texttt{available} as runtime evidence only when \texttt{checked} is true.
+Detect lanes that probe an external runtime set both fields to true.
+Artifact-backed lanes set \texttt{required=false}, \texttt{checked=false}, and
+\texttt{available=false}, with
+\texttt{reason=} \path{not_required_for_artifact_eval}; they do not claim that
+a framework runtime was inspected.
+
 \subsection{Backend flag applicability}
 Benchmark flags are validated against the task, effective latency source, and
 format before output artifacts are written. For \cmd{classification},

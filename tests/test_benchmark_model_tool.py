@@ -94,6 +94,59 @@ class TestBenchmarkModelTool(TestCase):
                         self.assertTrue(supported)
                         self.assertIsNone(reason)
 
+    def test_runtime_observation_does_not_claim_artifact_backend_runtime_check(self):
+        for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+            for fmt in benchmark_mode.REAL_BACKEND_FORMATS:
+                with self.subTest(task=task_label, fmt=fmt):
+                    observation = benchmark_mode._runtime_observation(
+                        fmt=fmt,
+                        task_label=task_label,
+                        supported=True,
+                        support_reason=None,
+                    )
+                    self.assertEqual(
+                        observation,
+                        {
+                            "required": False,
+                            "checked": False,
+                            "available": False,
+                            "reason": "not_required_for_artifact_eval",
+                        },
+                    )
+
+    def test_runtime_observation_records_detect_runtime_probe(self):
+        available = benchmark_mode._runtime_observation(
+            fmt="openvino",
+            task_label="detect",
+            supported=True,
+            support_reason=None,
+        )
+        missing = benchmark_mode._runtime_observation(
+            fmt="openvino",
+            task_label="detect",
+            supported=False,
+            support_reason="missing_runtime_dependency",
+        )
+
+        self.assertEqual(
+            available,
+            {
+                "required": True,
+                "checked": True,
+                "available": True,
+                "reason": None,
+            },
+        )
+        self.assertEqual(
+            missing,
+            {
+                "required": True,
+                "checked": True,
+                "available": False,
+                "reason": "missing_runtime_dependency",
+            },
+        )
+
     def test_task_alias_pose_canonicalizes_to_keypoints(self):
         args = self._args(format="torchscript", model="runs/foo/model.torchscript", task="pose", dry_run=True)
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "torch"):
@@ -232,6 +285,8 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["format"], "openvino")
         self.assertEqual(result["status"], "skipped")
         self.assertEqual(result["skip_reason"], "missing_runtime_dependency")
+        self.assertEqual(result["runtime"]["required"], True)
+        self.assertEqual(result["runtime"]["checked"], True)
         self.assertEqual(result["runtime"]["available"], False)
         self.assertEqual(result["runtime"]["reason"], "missing_runtime_dependency")
 
@@ -456,6 +511,18 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["opencv_dnn"]["skip_reason"], "benchmark_format_not_wired")
             self.assertEqual(results["torch"]["support_status"], "artifact-backed")
             self.assertEqual(results["onnx"]["support_status"], "artifact-backed")
+            for fmt in ("torch", "onnx"):
+                self.assertEqual(
+                    results[fmt]["runtime"],
+                    {
+                        "required": False,
+                        "checked": False,
+                        "available": False,
+                        "reason": "not_required_for_artifact_eval",
+                        "latency_source": "artifact_eval",
+                        "runtime_lock": "none",
+                    },
+                )
             self.assertEqual(payload["support_summary"]["counts"]["artifact-backed"], 2)
             self.assertEqual(payload["support_summary"]["counts"]["skipped"], 1)
             self.assertEqual(results["torch"]["eval_metrics"]["top1"], 1.0)
@@ -1585,6 +1652,14 @@ class TestBenchmarkModelTool(TestCase):
                         " ".join(proc.stdout.split()),
                     )
                     self.assertIn(
+                        "artifact-backed tasks accept prepared task artifacts without checking or invoking the OpenVINO runtime",
+                        " ".join(proc.stdout.split()),
+                    )
+                    self.assertIn(
+                        "Non-dry-run artifact-backed tasks cannot use dataset_pass_wall_time",
+                        " ".join(proc.stdout.split()),
+                    )
+                    self.assertIn(
                         "Return exit code 2 if any requested format is skipped, fails, or is partial",
                         " ".join(proc.stdout.split()),
                     )
@@ -1910,6 +1985,8 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["format"], "openvino")
             self.assertEqual(result["status"], "ok")
             self.assertEqual(result["support_status"], "real")
+            self.assertEqual(result["runtime"]["required"], True)
+            self.assertEqual(result["runtime"]["checked"], True)
             self.assertEqual(result["runtime"]["available"], True)
             self.assertEqual(result["latency_source"], "dataset_pass_wall_time")
             self.assertEqual(result["execution_semantics"]["execution_mode"], "real_backend_eval")

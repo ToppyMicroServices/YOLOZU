@@ -10,15 +10,15 @@
     },
     {
       "term": "artifact-real",
-      "description": "Benchmark consumes a backend-specific artifact and writes real eval/parity artifacts without claiming YOLOZU ran backend inference."
+      "description": "Benchmark consumes a backend-specific artifact and writes the real outputs identified by the eval and parity columns without claiming YOLOZU ran backend inference."
     },
     {
       "term": "placeholder",
-      "description": "Benchmark writes an explicit placeholder artifact for dry-run planning only."
+      "description": "Benchmark writes an explicit non-real artifact for dry-run planning, a skipped or failed prerequisite, or a component that is not yet attached."
     },
     {
       "term": "skipped",
-      "description": "Benchmark records a missing runtime, missing model artifact, platform, or GPU requirement."
+      "description": "Benchmark records a component that is not real because a prerequisite is missing or the comparison is not implemented; see the row notes and report reason."
     },
     {
       "term": "unsupported/skipped",
@@ -88,6 +88,25 @@
           "nms"
         ],
         "behavior": "artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts."
+      },
+      {
+        "task_scope": "non-dry-run classification, obb, segmentation, keypoints, depth, pose6d",
+        "requested_latency_sources": [
+          "dataset_pass_wall_time"
+        ],
+        "effective_latency_source": "invalid for artifact-backed tasks",
+        "formats": [
+          "torch",
+          "onnx",
+          "engine",
+          "torchscript",
+          "openvino",
+          "executorch",
+          "opencv_dnn"
+        ],
+        "accepted_nondefault_flags": [],
+        "rejected_nondefault_flags": [],
+        "behavior": "Reject before report or backend writes; use --latency-source auto or artifact_eval."
       },
       {
         "task_scope": "any task with an otherwise valid non-artifact_eval source",

@@ -89,6 +89,16 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
             set(explicit_artifact_row["rejected_nondefault_flags"]),
             benchmark_mode.ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
         )
+        invalid_dataset_pass_row = next(
+            item
+            for item in flag_applicability["matrix"]
+            if item["requested_latency_sources"] == ["dataset_pass_wall_time"]
+            and item["effective_latency_source"] == "invalid for artifact-backed tasks"
+        )
+        self.assertEqual(invalid_dataset_pass_row["formats"], list(benchmark_mode.PHASE1_FORMATS))
+        self.assertEqual(invalid_dataset_pass_row["accepted_nondefault_flags"], [])
+        self.assertEqual(invalid_dataset_pass_row["rejected_nondefault_flags"], [])
+        self.assertIn("Reject before report or backend writes", invalid_dataset_pass_row["behavior"])
         self.assertEqual(len(support_pairs), len(formats) * len(tasks))
         for fmt in benchmark_mode.PHASE1_FORMATS:
             for task in benchmark_mode.TASK_SEMANTICS:
@@ -142,9 +152,23 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         rendered = generator.render_markdown(meta, metadata_path=self.metadata)
 
         self.assertIn(
-            "Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.",
+            "Within a valid task/source lane, default backend flag values are always accepted: "
+            "`--batch 1`, `--no-half`, `--no-nms`.",
             rendered,
         )
+        self.assertIn(
+            "| non-dry-run classification, obb, segmentation, keypoints, depth, pose6d "
+            "| `dataset_pass_wall_time` | `invalid for artifact-backed tasks` |",
+            rendered,
+        )
+
+    def test_legend_does_not_overclaim_artifact_parity_or_dry_run_only_placeholders(self) -> None:
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        legend = {item["term"]: item["description"] for item in meta["legend"]}
+
+        self.assertIn("identified by the eval and parity columns", legend["artifact-real"])
+        self.assertIn("component that is not yet attached", legend["placeholder"])
+        self.assertIn("comparison is not implemented", legend["skipped"])
 
     def test_runtime_boundary_keeps_unwired_formats_unsupported(self) -> None:
         meta = json.loads(self.metadata.read_text(encoding="utf-8"))

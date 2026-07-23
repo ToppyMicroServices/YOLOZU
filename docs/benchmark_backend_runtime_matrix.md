@@ -43,6 +43,9 @@ benchmark users and maintainers.
   interface contract, but benchmark orchestration does not invoke that runtime
   and writes explicit skipped records.
 - `planned` means the format is not part of the current benchmark CLI surface.
+- `runtime.available` is evidence of a runtime probe only when
+  `runtime.checked` is `true`. Artifact-backed lanes set `runtime.required` and
+  `runtime.checked` to `false` because they consume prepared files.
 - `bundled with YOLOZU = No` is intentional. This repo provides adapter/wrapper
   logic and interface-contract-safe orchestration, not vendor runtime
   redistribution.

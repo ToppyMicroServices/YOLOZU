@@ -235,9 +235,10 @@ Typical outputs:
 `torchscript` is now a real detect benchmark lane when a local PyTorch runtime
 and compatible TorchScript artifact are present. The declared decode path
 expects `[x1,y1,x2,y2,score,class_id]` combined output rows.
-OpenVINO is accepted by the same canonical command through `--openvino-model`;
+For the detect command above, OpenVINO is accepted through `--openvino-model`;
 its runtime and IR remain external, and missing prerequisites produce an
-explicit skipped result.
+explicit skipped result. Artifact-backed OpenVINO task lanes consume prepared
+files without checking or invoking that runtime.
 
 The benchmark report now records:
 - canonical task label

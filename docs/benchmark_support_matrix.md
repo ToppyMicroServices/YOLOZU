@@ -9,9 +9,9 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 ## Legend
 
 - `real`: Benchmark runs the backend/export/eval path and writes real predictions/eval artifacts when the required model artifact and runtime are present; otherwise the report is skipped.
-- `artifact-real`: Benchmark consumes a backend-specific artifact and writes real eval/parity artifacts without claiming YOLOZU ran backend inference.
-- `placeholder`: Benchmark writes an explicit placeholder artifact for dry-run planning only.
-- `skipped`: Benchmark records a missing runtime, missing model artifact, platform, or GPU requirement.
+- `artifact-real`: Benchmark consumes a backend-specific artifact and writes the real outputs identified by the eval and parity columns without claiming YOLOZU ran backend inference.
+- `placeholder`: Benchmark writes an explicit non-real artifact for dry-run planning, a skipped or failed prerequisite, or a component that is not yet attached.
+- `skipped`: Benchmark records a component that is not real because a prerequisite is missing or the comparison is not implemented; see the row notes and report reason.
 - `unsupported/skipped`: Task or format is visible in the interface contract but real benchmark wiring is not shipped; benchmark runs report skipped.
 
 ## Runtime Requirements
@@ -40,13 +40,14 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 
 ## Backend Flag Applicability
 
-Applicability is evaluated after `auto` resolves to an effective latency source.
-Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.
+Task/source validation is applied before per-format flag applicability, after `auto` resolves to an effective latency source.
+Within a valid task/source lane, default backend flag values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.
 
 | Task scope | Requested latency source | Effective latency source | Formats | Accepted non-default flags | Rejected non-default flags | Behavior |
 | --- | --- | --- | --- | --- | --- | --- |
 | classification, obb, segmentation, keypoints, depth, pose6d | `auto` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino` | none | `--half`, `--batch`, `--nms` | auto resolves to artifact_eval; reject non-default backend execution flags before writing benchmark artifacts. |
 | any task | `artifact_eval` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts. |
+| non-dry-run classification, obb, segmentation, keypoints, depth, pose6d | `dataset_pass_wall_time` | `invalid for artifact-backed tasks` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | none | Reject before report or backend writes; use --latency-source auto or artifact_eval. |
 | any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `torch` | `--half`, `--batch`, `--nms` | none | Accepted values are forwarded by torch detect execution or recorded in the benchmark report for planning-only execution. |
 | any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | Current format paths do not consume these backend execution flags, so non-default values fail early. |
 

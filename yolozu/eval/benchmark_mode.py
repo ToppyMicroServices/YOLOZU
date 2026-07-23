@@ -46,6 +46,7 @@ from yolozu.eval.benchmark_flags import (
     HALF_HELP,
     LATENCY_SOURCE_HELP,
     NMS_HELP,
+    OPENVINO_MODEL_HELP,
     PARITY_REFERENCE_HELP,
     STRICT_HELP,
 )
@@ -509,7 +510,43 @@ def _support_reason_from_result(
     return mode
 
 
-def _annotate_result_support(result: dict[str, Any], *, runtime_available: bool, runtime_reason: str | None) -> None:
+def _runtime_observation(
+    *,
+    fmt: str,
+    task_label: str,
+    supported: bool,
+    support_reason: str | None,
+) -> dict[str, Any]:
+    if fmt in BENCHMARK_UNWIRED_FORMATS or task_label in BENCHMARK_UNWIRED_TASKS:
+        return {
+            "required": False,
+            "checked": False,
+            "available": False,
+            "reason": support_reason,
+        }
+    if task_label in ARTIFACT_EVAL_TASKS and fmt in REAL_BACKEND_FORMATS:
+        return {
+            "required": False,
+            "checked": False,
+            "available": False,
+            "reason": "not_required_for_artifact_eval",
+        }
+    return {
+        "required": True,
+        "checked": True,
+        "available": bool(supported),
+        "reason": support_reason,
+    }
+
+
+def _annotate_result_support(
+    result: dict[str, Any],
+    *,
+    runtime_required: bool,
+    runtime_checked: bool,
+    runtime_available: bool,
+    runtime_reason: str | None,
+) -> None:
     execution_semantics = result.get("execution_semantics") or {}
     status = str(result.get("status") or "")
     skip_reason = result.get("skip_reason")
@@ -525,6 +562,8 @@ def _annotate_result_support(result: dict[str, Any], *, runtime_available: bool,
     runtime = result.get("runtime") if isinstance(result.get("runtime"), dict) else {}
     runtime.update(
         {
+            "required": bool(runtime_required),
+            "checked": bool(runtime_checked),
             "available": bool(runtime_available),
             "reason": runtime_reason,
             "latency_source": result.get("latency_source"),
@@ -2550,8 +2589,12 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             device=str(getattr(args, "device", "cpu")),
             task_label=task_label,
         )
-        runtime_available = bool(supported)
-        runtime_reason = skip_reason
+        runtime_observation = _runtime_observation(
+            fmt=fmt,
+            task_label=task_label,
+            supported=supported,
+            support_reason=skip_reason,
+        )
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         execution_semantics = _task_execution_semantics(
             task_label,
@@ -3484,7 +3527,13 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "error": error,
             "run_meta": format_run_meta,
         }
-        _annotate_result_support(result, runtime_available=runtime_available, runtime_reason=runtime_reason)
+        _annotate_result_support(
+            result,
+            runtime_required=bool(runtime_observation["required"]),
+            runtime_checked=bool(runtime_observation["checked"]),
+            runtime_available=bool(runtime_observation["available"]),
+            runtime_reason=runtime_observation["reason"],
+        )
         results.append(result)
 
     _attach_real_parity(results, args=args)
@@ -3492,6 +3541,8 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         runtime = item.get("runtime") if isinstance(item.get("runtime"), dict) else {}
         _annotate_result_support(
             item,
+            runtime_required=bool(runtime.get("required", False)),
+            runtime_checked=bool(runtime.get("checked", False)),
             runtime_available=bool(runtime.get("available", False)),
             runtime_reason=runtime.get("reason"),
         )
@@ -3573,7 +3624,7 @@ def build_parser() -> Any:
     parser.add_argument("--onnx-model", default=None, help="Optional ONNX backend model override (typically .onnx).")
     parser.add_argument("--engine-model", default=None, help="Optional TensorRT engine override (typically .engine or .plan).")
     parser.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).")
-    parser.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model override (typically .xml).")
+    parser.add_argument("--openvino-model", default=None, help=OPENVINO_MODEL_HELP)
     parser.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     parser.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     parser.add_argument(

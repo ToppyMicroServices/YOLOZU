@@ -455,7 +455,7 @@ The top-level benchmark report records, per format:
 - `support_reason`
 - `skip_reason` when skipped
 - `latency_source`
-- `runtime.available` / `runtime.reason` / `runtime.latency_source`
+- `runtime.required` / `runtime.checked` / `runtime.available` / `runtime.reason` / `runtime.latency_source`
 - `execution_semantics.execution_mode`
 - `execution_semantics.artifact_expectation`
 - `execution_semantics.eval_expectation`
@@ -475,6 +475,13 @@ OpenVINO detect reference eligibility requires a compatible IR and runtime.
 Artifact-backed OpenVINO tasks consume prepared files and do not check or invoke
 the OpenVINO runtime.
 
+Interpret `runtime.available` only together with `runtime.checked`. Detect lanes
+that probe an external runtime record `required: true` and `checked: true`.
+Artifact-backed lanes record `required: false`, `checked: false`,
+`available: false`, and `reason: not_required_for_artifact_eval`; this preserves
+the boolean `available` field without falsely claiming that an external runtime
+was inspected.
+
 ## Status model
 
 Per-format result statuses are:
@@ -490,7 +497,9 @@ For P1 benchmark DoD checks, read `support_status` instead of guessing from
 
 - `real`: YOLOZU ran a real backend/eval path for that requested format.
 - `artifact-backed`: YOLOZU consumed backend-specific artifacts and ran real
-  eval/parity without claiming it executed backend inference.
+  evaluation without claiming it executed backend inference. Comparable
+  segmentation, keypoints, depth, and pose6d lanes can also attach real parity;
+  classification and OBB currently mark parity as skipped.
 - `skipped`: the path was dry-run-only, unsupported, missing a runtime, missing
   an artifact, or otherwise did not produce real benchmark evidence.
 
@@ -573,9 +582,12 @@ The per-format `execution_semantics` block now complements that task matrix:
 - `artifact_expectation`: whether predictions/eval/parity are expected to be real, skipped, or dry-run placeholders
 - `eval_expectation`: metric family + expected metric keys for that task/backend combination
 
-For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`, this is especially important: the benchmark report now
-records explicit metric expectations and artifact-backed real eval/parity semantics instead of leaving those tasks as vague
-future work.
+For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`,
+this is especially important: the benchmark report records explicit metric
+expectations and artifact-backed real evaluation semantics instead of leaving
+those tasks as vague future work. Segmentation, keypoints, depth, and pose6d
+also attach parity when comparable; classification and OBB explicitly mark
+parity as skipped.
 
 ## Current format coverage
 

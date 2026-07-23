@@ -50,7 +50,9 @@ documentation agree on these boundaries:
 - `openvino` detect is conditional real support. Its runtime and IR artifact
   remain external; missing prerequisites produce a skipped result.
   Artifact-backed OpenVINO tasks consume prepared files without checking or
-  invoking the OpenVINO runtime.
+  invoking the OpenVINO runtime. Their report fields therefore record
+  `runtime.required=false`, `runtime.checked=false`, and
+  `runtime.available=false` instead of claiming a runtime probe.
 - `executorch` and `opencv_dnn` are accepted format labels but benchmark
   orchestration is not wired, so their benchmark results are
   `unsupported/skipped`, not synthetic successes.

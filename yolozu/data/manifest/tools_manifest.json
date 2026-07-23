@@ -1557,7 +1557,7 @@
         },
         {
           "default": "auto",
-          "description": "Benchmark source selection. auto resolves artifact-backed tasks to artifact_eval on real formats; artifact_eval rejects non-default --half, --batch, and --nms.",
+          "description": "Benchmark source selection. auto resolves artifact-backed tasks to artifact_eval on real formats; artifact_eval rejects non-default --half, --batch, and --nms. Non-dry-run artifact-backed tasks reject dataset_pass_wall_time and require auto or artifact_eval.",
           "flag": "--latency-source",
           "kind": "string",
           "name": "latency_source",
@@ -1625,7 +1625,7 @@
           "required": false
         },
         {
-          "description": "Optional OpenVINO IR model/artifact override; OpenVINO remains an environment-provided conditional backend.",
+          "description": "OpenVINO-lane artifact override. Detect expects a compatible IR and external runtime; artifact-backed tasks accept prepared task artifacts without checking or invoking the OpenVINO runtime.",
           "flag": "--openvino-model",
           "kind": "file",
           "name": "openvino_model",
@@ -1730,7 +1730,7 @@
       "outputs": [
         {
           "default": "reports/benchmark_report.json",
-          "description": "Top-level benchmark report including task_requested/task/task_semantics, execution_semantics, support_summary, parity_summary, and per-format results.",
+          "description": "Top-level benchmark report including task_requested/task/task_semantics, execution_semantics, support_summary, parity_summary, and per-format results. Per-format runtime.required/runtime.checked distinguish a real runtime probe from artifact-backed lanes that do not require or check the external runtime; runtime.available remains false when checked is false.",
           "kind": "file",
           "name": "benchmark_report_json"
         },
@@ -16841,7 +16841,7 @@
           "required": false
         },
         {
-          "description": "Optional OpenVINO IR model/artifact override for the experimental benchmark subcommand; detect runtime support remains conditional, while artifact-backed tasks consume prepared files without an OpenVINO runtime check.",
+          "description": "OpenVINO-lane artifact override for the experimental benchmark subcommand. Detect expects a compatible IR and external runtime; artifact-backed tasks accept prepared task artifacts without checking or invoking the OpenVINO runtime.",
           "flag": "--openvino-model",
           "kind": "file",
           "name": "openvino_model",

@@ -63,7 +63,7 @@ Contact: develop@toppymicros.com
 --torchscript-model TORCHSCRIPT_MODEL
   Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).
 --openvino-model OPENVINO_MODEL
-  Optional OpenVINO IR model override (typically .xml).
+  OpenVINO-lane artifact override. Detect expects a compatible IR; artifact-backed tasks accept prepared task artifacts without checking or invoking the OpenVINO runtime.
 -d, --data DATA [required]
   Dataset root or data.yaml path recorded in the benchmark report.
 --depth-mask DEPTH_MASK
@@ -146,7 +146,7 @@ Contact: develop@toppymicros.com
 --fraction FRACTION
   Record dataset fraction knob (default: 1.0).
 --latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}
-  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected.
+  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected. Non-dry-run artifact-backed tasks cannot use dataset_pass_wall_time; use auto or artifact_eval.
 --iterations ITERATIONS
   Synthetic latency iterations (default: 50).
 --warmup WARMUP
