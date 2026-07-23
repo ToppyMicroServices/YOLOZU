@@ -114,6 +114,12 @@ These are valid targets but may remain conditional on external runtimes:
 - `openvino`
 - `coreml`
 
+`openvino` now has a conditional real detect lane and artifact-backed task
+lanes. The canonical and standalone benchmark surfaces both expose
+`--openvino-model` and allow `openvino` as an explicit parity reference, while
+missing external runtime or IR prerequisites remain skipped rather than
+implicitly supported.
+
 ### 4.3 Phase 3: external / adapter-led formats
 
 These formats should be explicitly tracked as planned, not implied:
@@ -309,8 +315,8 @@ Recommended behavior:
 Task-specific behavior should also be explicit:
 
 - real backend execution is detect-first for inference-backed runs
-- `classification` and `obb` are allowed as artifact-backed real eval paths for `torch` / `onnx` / `engine` / `torchscript`, with parity artifacts still explicit placeholders
-- `segmentation`, `keypoints`, `depth`, and `pose6d` are allowed as artifact-backed real eval/parity paths for `torch` / `onnx` / `engine` / `torchscript`
+- `classification` and `obb` are allowed as artifact-backed real eval paths for `torch` / `onnx` / `engine` / `torchscript` / `openvino`, with parity artifacts still explicit placeholders
+- `segmentation`, `keypoints`, `depth`, and `pose6d` are allowed as artifact-backed real eval/parity paths for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions
 
 ## 10. Mapping to Existing YOLOZU Tools

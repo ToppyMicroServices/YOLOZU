@@ -38,8 +38,8 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Keep `openvino` as a conditional runtime target after the current
-   `torchscript` detect lane.
+1. Keep `openvino` as a conditional real runtime target on the same canonical
+   CLI surface as the other implemented detect lanes.
 2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
 3. Expand parity artifacts beyond today's `torch`-anchored backend comparisons,
@@ -59,12 +59,12 @@ documents or partially wires only:
 - `onnx`
 - `engine`
 - `torchscript`
+- `openvino`
 - `executorch`
 - `opencv_dnn`
 
 Missing or only planned relative to that public surface:
 
-- `openvino`
 - `coreml`
 - `saved_model`
 - `pb`
@@ -80,8 +80,8 @@ Missing or only planned relative to that public surface:
 
 Improvement priority:
 
-1. Keep the current `torchscript` detect orchestration synced with docs/manifest
-2. Keep `openvino` in the conditional implementation set
+1. Keep the current `torchscript` and conditional `openvino` detect orchestration synced with docs/manifest
+2. Keep canonical and standalone benchmark flags and backend choices identical
 3. Promote `ncnn` and `rknn` from planned to explicit adapter targets
 4. Keep `implemented`, `conditional`, and `planned` formats aligned with the runtime/license matrix
 
@@ -148,13 +148,15 @@ docs should make the distinction sharper than they do today.
 
 Current behavior:
 
-- `torch` / `onnx` / `engine` / `torchscript` can orchestrate real detect runs
-- `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript`
-- `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript`
-- `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript`
-- `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript`
+- `torch` / `onnx` / `engine` / `torchscript` / `openvino` can orchestrate real detect runs when their external runtimes and artifacts are available
+- `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
+- `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
+- `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
+- `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `executorch` / `opencv_dnn` remain synthetic or skipped
-- parity artifacts are real for successful `torch`-anchored backend comparisons, and remain placeholders for dry-run / skipped / synthetic-only formats
+- parity artifacts are real for successful comparisons against the selected
+  reference backend (with `auto` preferring `torch`), and remain placeholders
+  for dry-run / skipped / synthetic-only formats
 
 Improvement priority:
 
@@ -199,7 +201,7 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Keep `openvino` conditional support honest when the runtime path is unavailable
+1. Keep `openvino` conditional support honest when its external runtime or IR artifact is unavailable
 2. Expand parity artifacts for artifact-backed classification and OBB reports
 3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change

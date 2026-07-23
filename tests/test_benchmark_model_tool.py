@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, main, mock
 
+from yolozu import cli_entry
 from yolozu.eval import benchmark_mode
 
 
@@ -1146,10 +1147,146 @@ class TestBenchmarkModelTool(TestCase):
         if proc.returncode != 0:
             self.fail(f"python -m yolozu benchmark --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--torchscript-model", proc.stdout)
+        self.assertIn("--openvino-model", proc.stdout)
         self.assertIn("--segmentation-parity-mismatch-atol", proc.stdout)
         self.assertIn("--parity-reference-backend", proc.stdout)
         self.assertIn("--protocol", proc.stdout)
         self.assertIn("torchscript", proc.stdout)
+        self.assertIn("openvino", proc.stdout)
+
+    def test_short_and_long_help_work_on_both_benchmark_surfaces(self):
+        commands = (
+            [sys.executable, "-m", "yolozu", "benchmark"],
+            [sys.executable, str(self.repo_root / "tools" / "benchmark_model.py")],
+        )
+        for command in commands:
+            for help_flag in ("-h", "--help"):
+                with self.subTest(command=command, help_flag=help_flag):
+                    proc = subprocess.run(
+                        [*command, help_flag],
+                        cwd=str(self.repo_root),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        check=False,
+                        text=True,
+                        timeout=30,
+                    )
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    self.assertIn("--openvino-model", proc.stdout)
+                    self.assertIn("openvino", proc.stdout)
+                    self.assertIn(
+                        "OpenVINO requires supplied artifacts and an available runtime",
+                        " ".join(proc.stdout.split()),
+                    )
+
+    def test_canonical_openvino_parser_surface_matches_standalone(self):
+        required = ["--model", "runs/example/model.pt", "--data", "data/smoke"]
+        standalone_parser = benchmark_mode.build_parser()
+        self.assertEqual(
+            cli_entry.BENCHMARK_PARITY_REFERENCE_BACKENDS,
+            benchmark_mode.PARITY_REFERENCE_BACKENDS,
+        )
+        standalone_defaults = standalone_parser.parse_args(required)
+        captured: list[object] = []
+
+        with mock.patch.object(cli_entry, "_cmd_benchmark", side_effect=lambda args: captured.append(args) or 0):
+            code = cli_entry.main(["benchmark", *required])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(captured), 1)
+        canonical_defaults = captured.pop()
+        self.assertEqual(canonical_defaults.openvino_model, standalone_defaults.openvino_model)
+        self.assertIsNone(canonical_defaults.openvino_model)
+        self.assertEqual(
+            canonical_defaults.parity_reference_backend,
+            standalone_defaults.parity_reference_backend,
+        )
+        self.assertEqual(canonical_defaults.parity_reference_backend, "auto")
+
+        openvino_args = [
+            *required,
+            "--format",
+            "torch,openvino",
+            "--openvino-model",
+            "exports/example.xml",
+            "--parity-reference-backend",
+            "openvino",
+            "--dry-run",
+        ]
+        standalone_openvino = standalone_parser.parse_args(openvino_args)
+        with mock.patch.object(cli_entry, "_cmd_benchmark", side_effect=lambda args: captured.append(args) or 0):
+            code = cli_entry.main(["benchmark", *openvino_args])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(captured), 1)
+        canonical_openvino = captured.pop()
+        for attribute in (
+            "format",
+            "openvino_model",
+            "parity_reference_backend",
+            "dry_run",
+        ):
+            self.assertEqual(
+                getattr(canonical_openvino, attribute),
+                getattr(standalone_openvino, attribute),
+            )
+        self.assertEqual(canonical_openvino.openvino_model, "exports/example.xml")
+        self.assertEqual(canonical_openvino.parity_reference_backend, "openvino")
+
+        standalone_help = standalone_parser.format_help()
+        for token in ("--openvino-model", "--parity-reference-backend", "openvino"):
+            self.assertIn(token, standalone_help)
+
+    def test_module_cli_routes_openvino_override_in_dry_run(self):
+        repo_root = self.repo_root
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            report = root / "benchmark_report.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--model",
+                    "runs/example/model.pt",
+                    "--openvino-model",
+                    "exports/example.xml",
+                    "--data",
+                    "data/smoke",
+                    "--format",
+                    "torch,openvino",
+                    "--parity-reference-backend",
+                    "openvino",
+                    "--dry-run",
+                    "--predictions-output",
+                    str(root / "predictions_{format}.json"),
+                    "--eval-output",
+                    str(root / "eval_{format}.json"),
+                    "--parity-output",
+                    str(root / "parity_{format}.json"),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"canonical OpenVINO dry-run failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(payload["format"], ["torch", "openvino"])
+            openvino_result = next(item for item in payload["results"] if item["format"] == "openvino")
+            self.assertIn(openvino_result["status"], {"dry_run", "skipped"})
+            if openvino_result["status"] == "skipped":
+                self.assertIn(
+                    openvino_result["skip_reason"],
+                    {"missing_runtime_dependency", "model_artifact_required"},
+                )
+            self.assertTrue(Path(openvino_result["artifacts"]["export_settings"]).is_file())
 
     def _args(self, **overrides):
         root = Path(__file__).resolve().parents[1]

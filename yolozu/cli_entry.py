@@ -46,6 +46,7 @@ import sys
 
 _PACKAGE = sys.modules.get(__package__)
 __version__ = str(getattr(_PACKAGE, "__version__", "unknown"))
+BENCHMARK_PARITY_REFERENCE_BACKENDS = ("auto", "torch", "onnx", "engine", "torchscript", "openvino")
 
 
 GUIDE_ROUTES: dict[str, dict[str, object]] = {
@@ -375,13 +376,14 @@ def main(argv: list[str] | None = None) -> int:
 
     bench = sub.add_parser(
         "benchmark",
-        help="Ultralytics-parity benchmark entrypoint (Phase 1: honest synthetic probe + explicit skipped formats).",
+        help="Ultralytics-parity benchmark entrypoint with real, artifact-backed, and explicit skipped results.",
     )
     bench.add_argument("-m", "--model", required=True, help="Model/weights path recorded in the benchmark report.")
     bench.add_argument("--torch-model", default=None, help="Optional torch backend model/depth-artifact override.")
     bench.add_argument("--onnx-model", default=None, help="Optional ONNX backend model/depth-artifact override.")
     bench.add_argument("--engine-model", default=None, help="Optional TensorRT engine/depth-artifact override.")
     bench.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model/artifact override.")
+    bench.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model/artifact override.")
     bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     bench.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     bench.add_argument(
@@ -400,9 +402,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument(
         "--parity-reference-backend",
-        choices=("auto", "torch", "onnx", "engine", "torchscript"),
+        choices=BENCHMARK_PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
+        help=(
+            "Reference backend used when writing parity artifacts "
+            "(default: auto prefers torch, then first eligible backend; "
+            "OpenVINO requires supplied artifacts and an available runtime)."
+        ),
     )
     bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
