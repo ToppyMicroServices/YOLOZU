@@ -1305,7 +1305,7 @@
         },
         {
           "command": "python3 tools/benchmark_model.py --task obb --model reports/obb_torch.json --onnx-model reports/obb_onnx.json --data data/obb_labels.json --format torch,onnx --latency-source artifact_eval --output reports/benchmark_obb_report.json",
-          "description": "Run the artifact-backed OBB benchmark lane; its input interface contract rejects invalid top-level shapes, duplicate image ids, non-finite or out-of-range geometry/scores, invalid class ids or vocabularies, and inconsistent ordered class lists while allowing empty detection lists."
+          "description": "Run the artifact-backed OBB benchmark lane; its input interface contract rejects invalid top-level shapes, duplicate image ids, non-finite or out-of-range geometry/scores, invalid class ids or vocabularies, and inconsistent ordered class lists while allowing empty detection lists. Metrics use confidence-ranked per-class rotated-IoU AP and separately averaged recall."
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task depth --format torchscript --dry-run --output reports/benchmark_report.json",
@@ -1749,7 +1749,7 @@
         },
         {
           "default": null,
-          "description": "Per-format evaluation artifact (real output when evaluation runs, including strict-JSON artifact_eval reports for validated classification or OBB inputs and reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
+          "description": "Per-format evaluation artifact (real output when evaluation runs, including strict-JSON artifact_eval reports for validated classification inputs, OBB reports with metric provenance for confidence-ranked per-class rotated-IoU AP and separately averaged recall, and reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for segmentation/keypoints/depth/pose6d; non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },

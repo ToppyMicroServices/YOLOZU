@@ -668,6 +668,243 @@ class TestBenchmarkModelTool(TestCase):
                 "benchmark_obb_eval_report",
             )
 
+    def test_obb_public_benchmark_ap_penalizes_early_false_positive(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            labels = root / "obb_labels.json"
+            predictions = root / "obb_predictions.json"
+            box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 30.0}
+            labels.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "samples": [
+                            {
+                                "id": "img0",
+                                "objects": [{"class_id": 0, "obb": box}],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            predictions.write_text(
+                json.dumps(
+                    {
+                        "classes": ["ship"],
+                        "predictions": [
+                            {
+                                "id": "img0",
+                                "detections": [
+                                    {
+                                        "class_id": 0,
+                                        "score": 0.99,
+                                        "obb": {
+                                            "cx": 0.1,
+                                            "cy": 0.1,
+                                            "w": 0.1,
+                                            "h": 0.1,
+                                            "angle_deg": 0.0,
+                                        },
+                                    },
+                                    {"class_id": 0, "score": 0.5, "obb": box},
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = root / "benchmark_obb_report.json"
+            artifact_dir = root / "artifacts"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "benchmark",
+                    "--task",
+                    "obb",
+                    "--model",
+                    str(predictions),
+                    "--data",
+                    str(labels),
+                    "--format",
+                    "torch",
+                    "--latency-source",
+                    "artifact_eval",
+                    "--predictions-output",
+                    str(artifact_dir),
+                    "--eval-output",
+                    str(artifact_dir),
+                    "--parity-output",
+                    str(artifact_dir),
+                    "--output",
+                    str(report),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+            )
+            if proc.returncode != 0:
+                self.fail(f"yolozu benchmark OBB AP regression failed:\n{proc.stdout}\n{proc.stderr}")
+
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            result = payload["results"][0]
+            metrics = result["eval_metrics"]
+            self.assertEqual(metrics["obb_mAP50"], 0.5)
+            self.assertEqual(metrics["obb_mAP50-95"], 0.5)
+            self.assertEqual(metrics["obb_AR"], 1.0)
+            eval_payload = json.loads(
+                Path(result["artifacts"]["eval"]).read_text(encoding="utf-8")
+            )
+            provenance = eval_payload["metrics"]["metric_provenance"]
+            self.assertEqual(
+                provenance["matching"]["method"],
+                "per_class_confidence_ranked_greedy_rotated_iou",
+            )
+            self.assertEqual(
+                provenance["interpolation"]["method"],
+                "101_point_interpolated_precision_envelope",
+            )
+            self.assertNotEqual(metrics["obb_mAP50"], metrics["obb_AR"])
+
+    def test_obb_metrics_handle_duplicates_empty_predictions_and_no_gt_classes(self):
+        box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
+        labels = {"img0": [{"class_id": 0, "obb": box}]}
+        predictions = {
+            "img0": [
+                {"class_id": 0, "score": 0.9, "obb": box},
+                {"class_id": 0, "score": 0.8, "obb": box},
+            ],
+            "img1": [
+                {
+                    "class_id": 1,
+                    "score": 0.7,
+                    "obb": {"cx": 0.2, "cy": 0.2, "w": 0.1, "h": 0.1, "angle_deg": 0.0},
+                }
+            ],
+        }
+
+        metrics = benchmark_mode._evaluate_obb(labels, predictions, ["ship", "plane"])
+        self.assertEqual(metrics["obb_mAP50"], 1.0)
+        self.assertEqual(metrics["obb_AR"], 1.0)
+        self.assertEqual(metrics["thresholds"]["0.50"]["false_positives"], 2)
+        self.assertEqual(metrics["per_class"]["0"]["thresholds"]["0.50"]["true_positives"], 1)
+        self.assertEqual(metrics["per_class"]["0"]["thresholds"]["0.50"]["false_positives"], 1)
+        self.assertFalse(metrics["per_class"]["1"]["included_in_mean"])
+        self.assertIsNone(metrics["per_class"]["1"]["obb_AP50"])
+        self.assertEqual(metrics["per_class"]["1"]["thresholds"]["0.50"]["false_positives"], 1)
+        self.assertEqual(metrics["thresholds"]["0.50"]["classes_excluded_no_ground_truth"], [1])
+
+        empty_metrics = benchmark_mode._evaluate_obb(labels, {"img0": []}, ["ship"])
+        self.assertEqual(empty_metrics["predictions"], 0)
+        self.assertEqual(empty_metrics["obb_mAP50"], 0.0)
+        self.assertEqual(empty_metrics["obb_mAP50-95"], 0.0)
+        self.assertEqual(empty_metrics["obb_AR"], 0.0)
+
+    def test_obb_metrics_use_rotated_iou_for_matching(self):
+        labels = {
+            "img0": [
+                {
+                    "class_id": 0,
+                    "obb": {"cx": 0.5, "cy": 0.5, "w": 0.6, "h": 0.2, "angle_deg": 0.0},
+                }
+            ]
+        }
+        predictions = {
+            "img0": [
+                {
+                    "class_id": 0,
+                    "score": 0.9,
+                    "obb": {"cx": 0.5, "cy": 0.5, "w": 0.6, "h": 0.2, "angle_deg": 90.0},
+                }
+            ]
+        }
+
+        metrics = benchmark_mode._evaluate_obb(labels, predictions, ["ship"])
+        match = metrics["per_class"]["0"]["ranked_matches_iou50"][0]
+        self.assertLess(match["iou"], 0.5)
+        self.assertFalse(match["matched"])
+        self.assertEqual(metrics["obb_mAP50"], 0.0)
+        self.assertEqual(metrics["obb_AR"], 0.0)
+
+    def test_obb_metrics_macro_average_ground_truth_classes(self):
+        box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
+        labels = {
+            "img0": [
+                {"class_id": 0, "obb": box},
+                {"class_id": 1, "obb": box},
+            ]
+        }
+        predictions = {
+            "img0": [
+                {"class_id": 0, "score": 0.9, "obb": box},
+            ]
+        }
+
+        metrics = benchmark_mode._evaluate_obb(labels, predictions, ["ship", "plane"])
+        self.assertEqual(metrics["per_class"]["0"]["obb_AP50"], 1.0)
+        self.assertEqual(metrics["per_class"]["1"]["obb_AP50"], 0.0)
+        self.assertEqual(metrics["obb_mAP50"], 0.5)
+        self.assertEqual(metrics["obb_mAP50-95"], 0.5)
+        self.assertEqual(metrics["obb_AR"], 0.5)
+
+    def test_obb_metric_tie_breaks_are_deterministic(self):
+        box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
+        labels = {"img0": [{"class_id": 0, "obb": box}]}
+        true_positive = {"class_id": 0, "score": 0.5, "obb": box}
+        false_positive = {
+            "class_id": 0,
+            "score": 0.5,
+            "obb": {"cx": 0.1, "cy": 0.1, "w": 0.1, "h": 0.1, "angle_deg": 0.0},
+        }
+
+        first = benchmark_mode._evaluate_obb(
+            labels,
+            {"img1": [false_positive], "img0": [true_positive]},
+            ["ship"],
+        )
+        second = benchmark_mode._evaluate_obb(
+            labels,
+            {"img0": [true_positive], "img1": [false_positive]},
+            ["ship"],
+        )
+        self.assertEqual(first["obb_mAP50"], second["obb_mAP50"])
+        self.assertEqual(
+            [item["sample_id"] for item in first["per_class"]["0"]["ranked_matches_iou50"]],
+            ["img0", "img1"],
+        )
+        self.assertEqual(
+            first["per_class"]["0"]["ranked_matches_iou50"],
+            second["per_class"]["0"]["ranked_matches_iou50"],
+        )
+
+    def test_obb_metrics_use_101_recall_points_and_lowest_gt_tie_break(self):
+        box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
+        labels = {
+            "img0": [
+                {"class_id": 0, "obb": box},
+                {"class_id": 0, "obb": box},
+            ]
+        }
+        predictions = {
+            "img0": [
+                {"class_id": 0, "score": 0.9, "obb": box},
+            ]
+        }
+
+        metrics = benchmark_mode._evaluate_obb(labels, predictions, ["ship"])
+        match = metrics["per_class"]["0"]["ranked_matches_iou50"][0]
+        self.assertEqual(match["ground_truth_index"], 0)
+        self.assertAlmostEqual(metrics["obb_mAP50"], 51.0 / 101.0)
+        self.assertAlmostEqual(metrics["obb_mAP50-95"], 51.0 / 101.0)
+        self.assertEqual(metrics["obb_AR"], 0.5)
+
     def test_obb_task_rejects_invalid_angle_artifact(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
