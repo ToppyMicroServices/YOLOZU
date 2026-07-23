@@ -494,7 +494,19 @@ equal evaluation conditions. Before comparing metrics:
 For example, only when the dataset is COCO `val2017` and the recorded exporter
 settings satisfy every fixed `nms_applied` condition, rerun evaluation with:
 
+<!-- byop-protocol:nms-applied:start -->
 ```bash
+(
+set -euo pipefail
+export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/coco-yolo-dataset}"
+export BYOP_RUN_DIR="${BYOP_RUN_DIR:-/absolute/path/to/existing/byop-run}"
+export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
+test "$BYOP_MAX_IMAGES" -ge 1
+test "$BYOP_MAX_IMAGES" -le 10
+test -d "$BYOP_DATASET"
+test -f "$BYOP_RUN_DIR/predictions.json"
+test ! -e "$BYOP_RUN_DIR/eval_report.protocol.json"
+
 python3 tools/eval_suite.py \
   --protocol nms_applied \
   --dataset "$BYOP_DATASET" \
@@ -502,7 +514,9 @@ python3 tools/eval_suite.py \
   --max-images "$BYOP_MAX_IMAGES" \
   --strict \
   --output "$BYOP_RUN_DIR/eval_report.protocol.json"
+)
 ```
+<!-- byop-protocol:nms-applied:end -->
 
 This command fails closed on a fixed-condition mismatch by default. Do not use
 `--allow-protocol-mismatches` to turn a mismatched run into parity evidence.

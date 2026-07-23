@@ -201,6 +201,20 @@ class TestByopQuickstarts(unittest.TestCase):
         )
         self.assertIn("same non-null protocol hash", self.text)
 
+    def test_named_protocol_example_is_self_contained(self):
+        blocks = _extract_blocks(self.text, "protocol")
+        self.assertEqual(tuple(blocks), ("nms-applied",))
+        block = blocks["nms-applied"]
+        self.assertTrue(block.strip().startswith("("))
+        self.assertTrue(block.strip().endswith(")"))
+        self.assertIn("set -euo pipefail", block)
+        self.assertIn('export BYOP_DATASET="${BYOP_DATASET:-', block)
+        self.assertIn('export BYOP_RUN_DIR="${BYOP_RUN_DIR:-', block)
+        self.assertIn('export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"', block)
+        self.assertIn('test -d "$BYOP_DATASET"', block)
+        self.assertIn('test -f "$BYOP_RUN_DIR/predictions.json"', block)
+        self.assertIn('test ! -e "$BYOP_RUN_DIR/eval_report.protocol.json"', block)
+
 
 if __name__ == "__main__":
     unittest.main()
