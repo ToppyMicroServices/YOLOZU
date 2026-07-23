@@ -103,6 +103,27 @@ The manifest is not merely a list of scripts; it is a declarative governance too
   \item \textbf{Data Contracts}: The \texttt{contracts} object defines what standard JSON schemas a tool consumes or produces (e.g., \texttt{predictions\_json}, \texttt{metrics\_report\_json}), enabling automated pipeline construction.
 \end{itemize}
 
+\subsection{Entrypoint maturity is not transitive}
+The manifest \texttt{maturity} field classifies one entrypoint. It does not
+promote every subcommand or flag reachable from that entrypoint. Apply the
+narrowest declared capability boundary:
+\begin{itemize}
+  \item \cmd{yolozu} is a Stable parent entrypoint. Benchmark and
+  external-training sub-lanes retain their separately declared capability or
+  backend maturity, while research workflows remain Research.
+  \item \path{tools/export_predictions.py} has a Stable baseline export path;
+  optional acceleration flags require backend/device qualification, opt-in TTA
+  is Experimental, and opt-in TTT is Research. TTA postprocess mode transforms
+  exported predictions, while \texttt{rtdetr\_pose} model mode reruns one
+  augmented inference branch without updating model parameters.\par
+  \item Implementation presence and passing tests establish availability, not
+  maturity promotion. Record any promotion separately with qualification
+  evidence.
+\end{itemize}
+The prose source of truth is \path{docs/production_readiness.md}; generated
+registry tables repeat entrypoint metadata but do not override a narrower
+capability boundary.
+
 \section{Quick Audit Commands}
 To list all registered tools and their entrypoints:
 \begin{lstlisting}[language=bash]

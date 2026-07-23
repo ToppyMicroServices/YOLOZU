@@ -1,6 +1,7 @@
 # EATA design spec for YOLOZU (phase 1)
 
-This document defines a production-safe phase-1 EATA scope for detection and pose in YOLOZU.
+This document defines a safety-bounded phase-1 Research scope for EATA on detection
+and pose in YOLOZU. It does not establish production readiness.
 
 ## Goal
 

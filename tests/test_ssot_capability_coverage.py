@@ -95,6 +95,123 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
         self.assertIn("entrypoint-level `maturity`", readiness)
         self.assertIn("do not infer the maturity of every subcommand or flag", readiness)
 
+    def test_every_spec_capability_has_an_explicit_maturity_boundary(self) -> None:
+        spec = (self.repo_root / "docs" / "yolozu_spec.md").read_text(encoding="utf-8")
+        table = spec.partition("### Capability maturity boundaries")[2].partition("### 1) Dataset I/O")[0]
+        expected_rows = (
+            "| Dataset I/O | Deferred as a standalone capability;",
+            "| Mask-only label derivation | Deferred as a standalone capability;",
+            "| Reference trainer | Stable reference lane;",
+            "| Backbone/neck swap boundary | Stable only within the reference trainer interface boundary;",
+            "| Inference constraints | Deferred as a standalone capability;",
+            "| Template verification and gating | Deferred as a standalone capability;",
+            "| Predictions JSON interface contract | Stable |",
+            "| Evaluation harness | Stable for validation/evaluation of existing wrapped predictions;",
+            "| TTA | Experimental and opt-in |",
+            "| TTT | Research and opt-in |",
+            "| CLI convenience | Mixed by capability;",
+        )
+        for row in expected_rows:
+            with self.subTest(row=row):
+                self.assertIn(row, table)
+
+    def test_stable_parent_entrypoints_do_not_promote_opt_in_lanes(self) -> None:
+        for rel in ("tools/manifest.json", "yolozu/data/manifest/tools_manifest.json"):
+            manifest = json.loads((self.repo_root / rel).read_text(encoding="utf-8"))
+            tools = {tool["id"]: tool for tool in manifest["tools"]}
+
+            self.assertEqual(tools["yolozu"]["maturity"], "stable")
+            self.assertIn("does not promote Experimental or Research", tools["yolozu"]["summary"])
+            self.assertEqual(tools["export_predictions"]["maturity"], "stable")
+            self.assertIn(
+                "acceleration flags require backend/device qualification",
+                tools["export_predictions"]["summary"],
+            )
+            self.assertIn("TTA remains Experimental", tools["export_predictions"]["summary"])
+            self.assertIn("TTT remains Research", tools["export_predictions"]["summary"])
+            self.assertIn("parent maturity does not promote", tools["export_predictions"]["summary"])
+
+        readiness = (self.repo_root / "docs" / "production_readiness.md").read_text(encoding="utf-8")
+        generated = (self.repo_root / "docs" / "generated" / "cli_reference.md").read_text(encoding="utf-8")
+        tools_index = (self.repo_root / "docs" / "tools_index.md").read_text(encoding="utf-8")
+        support_matrix = (self.repo_root / "docs" / "tta_support_matrix.md").read_text(encoding="utf-8")
+        adapter = (self.repo_root / "docs" / "adapter_contract.md").read_text(encoding="utf-8")
+        training = (self.repo_root / "docs" / "training_inference_export.md").read_text(encoding="utf-8")
+        manual_cli = (self.repo_root / "manual" / "chapters" / "04_cli_reference.tex").read_text(
+            encoding="utf-8"
+        )
+        manual_manifest = (
+            self.repo_root / "manual" / "chapters" / "18_manifest_driven_docs.tex"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Maturity applies at the narrowest declared surface", readiness)
+        self.assertIn("Manifest `maturity` is entrypoint-level metadata, not a transitive guarantee", readiness)
+        self.assertIn(
+            "segmentation, keypoints, depth, and pose6d have artifact-backed real eval/parity lanes",
+            readiness,
+        )
+        self.assertIn("TTA remains Experimental", generated)
+        self.assertIn("TTT remains Research", generated)
+        self.assertIn("Maturity is entrypoint-level and is not", tools_index)
+        self.assertIn("Experimental opt-in TTA extensions", tools_index)
+        self.assertIn("enable with `--tta`", tools_index)
+        self.assertIn("`--tta-mode model` reruns one augmented branch for `rtdetr_pose`", tools_index)
+        self.assertIn("Non-parameter-updating TTA is **Experimental** and opt-in", support_matrix)
+        self.assertIn("Parameter-updating TTT is **Research** and opt-in", support_matrix)
+        self.assertIn("**Interface-contract-first**", support_matrix)
+        self.assertNotIn("**Contract-first**", support_matrix)
+        self.assertIn("`--tta` uses `postprocess` by default", support_matrix)
+        self.assertIn(
+            "`--tta --tta-mode model` reruns one horizontally flipped inference branch",
+            support_matrix,
+        )
+        self.assertIn(
+            "`rtdetr_pose`-only `model` mode reruns one horizontally flipped inference",
+            training,
+        )
+        self.assertIn("parameter-updating TTT remains a separate Research lane", training)
+        self.assertNotIn("It does not rerun the model on augmented inputs.", training)
+        self.assertIn("retain their separately declared capability or backend", manual_cli)
+        self.assertIn("retain their separately declared capability or", manual_manifest)
+        self.assertIn("does not promote the Research TTT", adapter)
+
+        audit = (self.repo_root / "docs" / "ssot_capability_coverage_audit.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Corrected under `YOLOZU-ll2.12`", audit)
+        self.assertIn("Corrected under `YOLOZU-ll2.28`", audit)
+        self.assertIn("reject the combination before report, artifact, or backend writes", audit)
+
+        readme_markers = {
+            "README.md": "TTA Experimental, and TTT Research.",
+            "Readme_jp.md": "TTA は Experimental、TTT は Research",
+            "Readme_zh.md": "TTA 为 Experimental，TTT 为 Research。",
+        }
+        for rel, marker in readme_markers.items():
+            with self.subTest(readme=rel):
+                readme = (self.repo_root / rel).read_text(encoding="utf-8")
+                self.assertIn(marker, readme)
+                self.assertIn("manifest entry", readme)
+
+    def test_research_ttt_design_docs_do_not_claim_production_readiness(self) -> None:
+        for rel in (
+            "docs/cotta_design_spec.md",
+            "docs/eata_design_spec.md",
+            "docs/sar_design_spec.md",
+        ):
+            with self.subTest(doc=rel):
+                text = (self.repo_root / rel).read_text(encoding="utf-8")
+                self.assertIn("Research", text)
+                self.assertIn("does not establish", text)
+                self.assertIn("production readiness", text)
+                self.assertNotIn("production-safe", text)
+
+        manual = (self.repo_root / "manual" / "chapters" / "15_ttt_tent_mim.tex").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("safety-bounded phase-1 Research scope for EATA", manual)
+        self.assertIn("safety-bounded phase-1 Research rollout scope for SAR", manual)
+        self.assertNotIn("production-safe", manual)
+
     def test_reference_adapter_baseline_tracks_the_config_fingerprint(self) -> None:
         baseline = json.loads(
             (self.repo_root / "baselines" / "reference_adapter" / "rtdetr_pose_smoke_val.json").read_text(

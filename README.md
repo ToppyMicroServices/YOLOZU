@@ -63,8 +63,12 @@ flowchart LR
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
-- Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths
+- Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths, TTA
 - Research: continual learning, self-distillation, TTT, Hessian refinement
+
+These are capability-level boundaries. A Stable parent CLI or manifest entry does not
+promote opt-in subcommands or flags: `export_predictions` keeps baseline export Stable,
+TTA Experimental, and TTT Research.
 
 ## Production Readiness
 

@@ -1,6 +1,8 @@
 # CoTTA Design Specification for YOLOZU (Phase 1)
 
-This document outlines the initial, production-safe integration scope for Continual Test-Time Domain Adaptation (CoTTA) within the YOLOZU framework.
+This document outlines the initial safety-bounded Research integration scope for
+Continual Test-Time Domain Adaptation (CoTTA) within YOLOZU. It does not establish
+production readiness.
 
 ## Objective
 

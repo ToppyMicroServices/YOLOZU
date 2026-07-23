@@ -115,7 +115,9 @@ See [docs/ttt_integration_plan.md](ttt_integration_plan.md) for more details.
 ## Stability
 - `predict` signature and output schema are **stable**.
 - New optional fields may be added without breaking old clients.
-- TTT hooks are **stable** as of v1.
+- The optional TTT hook signatures are backward-compatible as of v1. This
+  adapter interface contract stability does not promote the Research TTT
+  workflow.
 
 ## Versioning
 Adapters should be compatible with predictions schema `v1`.

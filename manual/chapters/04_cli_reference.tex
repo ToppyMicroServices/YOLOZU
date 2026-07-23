@@ -19,6 +19,18 @@ The CLI surface now has one supported top-level entrypoint plus a compatibility 
 
 This chapter documents the \textit{high-traffic commands} on the supported surface and points directly to repo-only helper scripts when a workflow does not belong on the top-level CLI.
 
+\paragraph{Stable parent entrypoints do not promote opt-in lanes.}
+The \texttt{stable} manifest label on \cmd{yolozu} describes the parent
+entrypoint and its core validation/evaluation lane. Benchmark and training
+sub-lanes retain their separately declared capability or backend maturity, and
+research adaptation flags remain Research.
+Likewise, \path{tools/export_predictions.py} has a Stable baseline export path,
+while optional acceleration flags require backend/device qualification,
+opt-in TTA is Experimental, and opt-in TTT is Research. The default TTA mode
+transforms exported predictions; \texttt{rtdetr\_pose} model mode reruns one
+augmented inference branch and merges it without updating model parameters. Use
+\path{docs/production_readiness.md} for the capability-level source of truth.
+
 \section{Discoverability}
 As a best practice, always initiate discovery with:\\
 \cmd{yolozu --help} and \cmd{yolozu <command> --help}.\\

@@ -5624,7 +5624,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips.",
+      "summary": "Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes.",
       "tags": [
         "predictions",
         "adapter"
@@ -17554,7 +17554,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Top-level YOLOZU CLI for validation, migration, train-ready dataset preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes.",
+      "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
       "tags": [
         "cli",
         "predictions",

@@ -21,13 +21,36 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Area | Maturity | Production posture | Primary references |
 |---|---|---|---|
 | Predictions validation/evaluation | Stable | Default production lane | [`predictions_schema.md`](predictions_schema.md), [`external_inference.md`](external_inference.md), [`../README.md`](../README.md) |
+| Dataset I/O and mask-only label derivation | Deferred as standalone capabilities | Implemented and tested inside dataset workflows, but implementation presence and a Stable parent CLI are not standalone production-readiness evidence | [`yolozu_spec.md`](yolozu_spec.md), [`dataset_contract.md`](dataset_contract.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
+| Inference constraints and template gating | Deferred as standalone capabilities | Adapter-internal utilities with no independent public production lane; qualify them with the consuming model and protocol | [`yolozu_spec.md`](yolozu_spec.md), [`gate_weight_tuning.md`](gate_weight_tuning.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Backend parity / benchmark orchestration | Experimental | Useful after environment-specific qualification; segmentation, keypoints, depth, and pose6d have artifact-backed real eval/parity lanes, while classification and OBB have artifact-backed real eval with parity still skipped | [`backend_parity_matrix.md`](backend_parity_matrix.md), [`benchmark_mode.md`](benchmark_mode.md), `manual/chapters/09_parity_bench_protocols.tex` |
 | YOLOZU-synthgen handoff | Experimental | Intake/eval path is reproducible, but external generator handoff still needs qualification | [`synthgen_repo_integration.md`](synthgen_repo_integration.md), [`synthgen_contract.md`](synthgen_contract.md), `manual/chapters/21_synthgen_repo_integration.tex` |
 | macOS / MPS paths | Experimental | Supported only when `torch.backends.mps.is_available()` is true; treat as qualification, not blanket readiness | [`install.md`](install.md), [`doctor_diagnostics.md`](doctor_diagnostics.md), [`continual_learning.md`](continual_learning.md) |
+| TTA | Experimental | Opt-in and non-parameter-updating: the default postprocess mode transforms exported predictions, while the `rtdetr_pose` model mode reruns one augmented branch and merges predictions; qualify each mode against the Stable baseline | [`tta_support_matrix.md`](tta_support_matrix.md), [`learning_features.md`](learning_features.md) |
 | Continual learning / self-distillation | Research | Use for governed experiments and promotion-gated workflows over evaluated artifacts, not as the first production lane | [`research_lanes.md`](research_lanes.md), [`continual_learning.md`](continual_learning.md), `manual/chapters/14_continual_learning.tex` |
 | TTT | Research | Short-horizon inference adaptation over evaluated artifacts; do not treat as an automatic checkpoint-promotion path | [`research_lanes.md`](research_lanes.md), [`ttt_protocol.md`](ttt_protocol.md), `manual/chapters/15_ttt_tent_mim.tex` |
 | Hessian refinement | Research | Offline/local post-inference correction path over evaluated artifacts | [`research_lanes.md`](research_lanes.md), [`hessian_solver.md`](hessian_solver.md), `manual/chapters/10_ttt_hessian.tex` |
 | Training platform | Stable reference lane + qualified external lanes | RT-DETR pose reference trainer is the richest in-repo path and supports depth / pose6d training; external lanes now share a standardized external run bundle even when the backend-native trainer remains outside YOLOZU | [`training_backend_interface.md`](training_backend_interface.md), [`training_capability_matrix.md`](training_capability_matrix.md), [`training_orchestration.md`](training_orchestration.md) |
+| Installed CLI and mixed-lane entrypoints | Mixed by capability | A parent entrypoint may be Stable while opt-in subcommands or flags remain Experimental or Research | [`generated/cli_reference.md`](generated/cli_reference.md), [`tools_index.md`](tools_index.md), [`research_lanes.md`](research_lanes.md) |
+
+## Maturity applies at the narrowest declared surface
+
+Manifest `maturity` is entrypoint-level metadata, not a transitive guarantee for every
+subcommand or flag exposed by that entrypoint. When an entrypoint and a narrower
+capability have different labels, use the narrower capability label:
+
+- `yolozu` is a Stable parent entrypoint for the core validation/evaluation surface.
+  Benchmark and external-training sub-lanes retain their separately declared
+  capability or backend maturity, and research workflows remain Research.
+- `export_predictions` has a Stable baseline export path. Optional acceleration flags
+  require backend/device qualification. Opt-in TTA is Experimental, and opt-in TTT
+  flags are Research; both are disabled by default.
+- A backend-specific Stable label does not promote an Experimental orchestration
+  entrypoint, and an Experimental parent does not demote separately documented Stable
+  artifacts or interface contracts.
+
+Implementation presence, passing unit tests, and discoverability from a Stable parent
+are evidence of availability, not sufficient evidence for maturity promotion.
 
 ## Version Compatibility Matrix
 
@@ -63,6 +86,7 @@ These are the areas to rely on first for production adoption.
 - backend parity and benchmark orchestration
 - YOLOZU-synthgen intake and handoff
 - macOS / MPS evaluation paths
+- TTA
 
 These can be useful in production-oriented work, but they still need environment-specific qualification and should be treated as capability-dependent.
 
@@ -86,7 +110,7 @@ Start from [`research_lanes.md`](research_lanes.md) so the stable evaluation res
 
 ## How this maps to the manifest
 
-Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries an entrypoint-level `maturity` field. A stable entrypoint can expose opt-in experimental or research sub-lanes, so do not infer the maturity of every subcommand or flag from the parent entry alone. Capability-specific matrices and research-lane docs provide the narrower boundary.
+Every tool entry in `tools/manifest.json` and the packaged `yolozu/data/manifest/tools_manifest.json` carries an entrypoint-level `maturity` field. A Stable entrypoint can expose opt-in Experimental or Research sub-lanes, so do not infer the maturity of every subcommand or flag from the parent entry alone. Capability-specific matrices and research-lane docs provide the narrower boundary.
 
 The dated mapping from capability claims to implementation, CLI, manifest, packaged copy, docs, tests, and evidence is in [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md).
 
