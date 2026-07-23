@@ -37,7 +37,15 @@ from .cli_commands import (
 )
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
-from yolozu.eval.benchmark_flags import BATCH_HELP, HALF_HELP, LATENCY_SOURCE_HELP, NMS_HELP
+from yolozu.eval.benchmark_flags import (
+    BATCH_HELP,
+    HALF_HELP,
+    LATENCY_SOURCE_HELP,
+    NMS_HELP,
+    OPENVINO_MODEL_HELP,
+    PARITY_REFERENCE_HELP,
+    STRICT_HELP,
+)
 from yolozu.inference.export_orchestrator import parse_common_export_args
 from yolozu.predictions.bbox_formats import SUPPORTED_PREDICTION_BBOX_FORMATS
 import argparse
@@ -384,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--onnx-model", default=None, help="Optional ONNX backend model/depth-artifact override.")
     bench.add_argument("--engine-model", default=None, help="Optional TensorRT engine/depth-artifact override.")
     bench.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model/artifact override.")
-    bench.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model/artifact override.")
+    bench.add_argument("--openvino-model", default=None, help=OPENVINO_MODEL_HELP)
     bench.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     bench.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     bench.add_argument(
@@ -405,11 +413,7 @@ def main(argv: list[str] | None = None) -> int:
         "--parity-reference-backend",
         choices=BENCHMARK_PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help=(
-            "Reference backend used when writing parity artifacts "
-            "(default: auto prefers torch, then first eligible backend; "
-            "OpenVINO requires supplied artifacts and an available runtime)."
-        ),
+        help=PARITY_REFERENCE_HELP,
     )
     bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
@@ -455,7 +459,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
     bench.add_argument("--dry-run", action="store_true", help="Validate wiring and planned artifacts without timing runs.")
-    bench.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped.")
+    bench.add_argument(
+        "--strict",
+        action="store_true",
+        help=STRICT_HELP,
+    )
     bench.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
     bench.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
     bench.add_argument("--run-id", default=None, help="Optional run id (default: UTC timestamp).")

@@ -25,6 +25,7 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         self.repo_root = Path(__file__).resolve().parents[1]
         self.metadata = self.repo_root / "yolozu" / "data" / "manifest" / "benchmark_support.json"
         self.output = self.repo_root / "docs" / "benchmark_support_matrix.md"
+        self.runtime_boundary = self.repo_root / "docs" / "benchmark_backend_runtime_matrix.md"
 
     def test_generated_matrix_is_current(self) -> None:
         proc = subprocess.run(
@@ -88,10 +89,26 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
             set(explicit_artifact_row["rejected_nondefault_flags"]),
             benchmark_mode.ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
         )
+        invalid_dataset_pass_row = next(
+            item
+            for item in flag_applicability["matrix"]
+            if item["requested_latency_sources"] == ["dataset_pass_wall_time"]
+            and item["effective_latency_source"] == "invalid for artifact-backed tasks"
+        )
+        self.assertEqual(invalid_dataset_pass_row["formats"], list(benchmark_mode.PHASE1_FORMATS))
+        self.assertEqual(invalid_dataset_pass_row["accepted_nondefault_flags"], [])
+        self.assertEqual(invalid_dataset_pass_row["rejected_nondefault_flags"], [])
+        self.assertIn("Reject before report or backend writes", invalid_dataset_pass_row["behavior"])
         self.assertEqual(len(support_pairs), len(formats) * len(tasks))
         for fmt in benchmark_mode.PHASE1_FORMATS:
             for task in benchmark_mode.TASK_SEMANTICS:
                 self.assertIn((fmt, task), support_pairs)
+
+        openvino = next(item for item in meta["formats"] if item["id"] == "openvino")
+        self.assertIn("for detect", openvino["runtime_requirements"])
+        self.assertIn("artifact-backed tasks consume supplied files", openvino["runtime_requirements"])
+        self.assertIn("detect reports skipped", openvino["license_runtime_notes"])
+        self.assertIn("artifact-backed tasks do not invoke", openvino["license_runtime_notes"])
 
     def test_check_mode_fails_on_stale_output(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -135,9 +152,36 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         rendered = generator.render_markdown(meta, metadata_path=self.metadata)
 
         self.assertIn(
-            "Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.",
+            "Within a valid task/source lane, default backend flag values are always accepted: "
+            "`--batch 1`, `--no-half`, `--no-nms`.",
             rendered,
         )
+        self.assertIn(
+            "| non-dry-run classification, obb, segmentation, keypoints, depth, pose6d "
+            "| `dataset_pass_wall_time` | `invalid for artifact-backed tasks` |",
+            rendered,
+        )
+
+    def test_legend_does_not_overclaim_artifact_parity_or_dry_run_only_placeholders(self) -> None:
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        legend = {item["term"]: item["description"] for item in meta["legend"]}
+
+        self.assertIn("identified by the eval and parity columns", legend["artifact-real"])
+        self.assertIn("component that is not yet attached", legend["placeholder"])
+        self.assertIn("comparison is not implemented", legend["skipped"])
+
+    def test_runtime_boundary_keeps_unwired_formats_unsupported(self) -> None:
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        runtime_boundary = self.runtime_boundary.read_text(encoding="utf-8")
+
+        unwired = [item for item in meta["formats"] if item["support_state"] == "unsupported/skipped"]
+        self.assertGreater(len(unwired), 0)
+        for item in unwired:
+            with self.subTest(format=item["id"]):
+                self.assertIn(
+                    f"| `{item['id']}` | unsupported/skipped",
+                    runtime_boundary,
+                )
 
 
 if __name__ == "__main__":

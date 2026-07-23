@@ -1,6 +1,8 @@
 import hashlib
+import importlib.util
 import json
 import unittest
+from collections import Counter
 from pathlib import Path
 
 
@@ -54,6 +56,35 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
         ):
             with self.subTest(issue_id=issue_id):
                 self.assertIn(issue_id, audit)
+
+    def test_audit_registry_and_example_counts_match_current_sources(self) -> None:
+        audit = (self.repo_root / "docs" / "ssot_capability_coverage_audit.md").read_text(
+            encoding="utf-8"
+        )
+        manifest = json.loads((self.repo_root / "tools" / "manifest.json").read_text(encoding="utf-8"))
+        tools = manifest["tools"]
+        maturity = Counter(str(item["maturity"]) for item in tools)
+        self.assertIn(
+            f"{len(tools)} entries: {maturity['stable']} stable, "
+            f"{maturity['experimental']} experimental, {maturity['research']} research",
+            audit,
+        )
+        self.assertIn(f"Strict manifest validation passes for all {len(tools)} entries.", audit)
+
+        script = self.repo_root / "tools" / "audit_docs_examples_drift.py"
+        spec = importlib.util.spec_from_file_location("audit_docs_examples_drift", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader if spec is not None else None)
+        module = importlib.util.module_from_spec(spec)
+        assert spec is not None and spec.loader is not None
+        spec.loader.exec_module(module)
+        checked_examples = sum(
+            1
+            for path_text in module.DEFAULT_DOCS
+            for line in module._shell_lines_from_markdown(self.repo_root / path_text)
+            if module._interesting_command(line)
+        )
+        self.assertIn(f"Public docs example audit passes {checked_examples} shell examples.", audit)
 
     def test_spec_and_readiness_keep_schema_and_mixed_lane_boundaries_explicit(self) -> None:
         spec = (self.repo_root / "docs" / "yolozu_spec.md").read_text(encoding="utf-8")

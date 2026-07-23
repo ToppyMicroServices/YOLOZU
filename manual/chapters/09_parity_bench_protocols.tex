@@ -119,8 +119,8 @@ python3 -m yolozu benchmark \
   --latency-source auto \
   --output reports/benchmark_report.json
 \end{lstlisting}
-The OpenVINO runtime and IR remain external to YOLOZU. Missing prerequisites
-produce an explicit skipped result.
+For this detect invocation, the OpenVINO runtime and IR remain external to
+YOLOZU. Missing prerequisites produce an explicit skipped result.
 
 The primary artifact set is:
 \begin{itemize}
@@ -131,12 +131,13 @@ The primary artifact set is:
   \item \path{reports/parity_<format>.json}
 \end{itemize}
 
-When at least two comparable real backend results complete successfully,
-\path{parity_<format>.json} is now a real backend-diff artifact rather than a
-synthetic placeholder record. The chosen reference backend is recorded
-explicitly (\cmd{auto} prefers \cmd{torch} when available).
-Synthetic/skipped parity artifacts remain only for dry-run, skipped, or
-synthetic-only formats.
+When at least two comparable real results complete successfully for
+\cmd{detect}, \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, or
+\cmd{pose6d}, \path{parity_<format>.json} is a real backend-diff artifact. The
+chosen reference backend is recorded explicitly (\cmd{auto} prefers
+\cmd{torch} when available). Classification and OBB currently write explicit
+parity placeholders. Dry-run, skipped, and synthetic-only lanes also keep
+parity non-real.
 
 If a detect benchmark should anchor parity on a non-\cmd{torch} backend, set it
 explicitly:
@@ -151,8 +152,10 @@ python3 tools/benchmark_model.py \
   --output reports/benchmark_report.json
 \end{lstlisting}
 The explicit reference choices are \cmd{torch}, \cmd{onnx}, \cmd{engine},
-\cmd{torchscript}, and \cmd{openvino}; OpenVINO selection remains conditional
-on a successful comparable result.
+\cmd{torchscript}, and \cmd{openvino}. OpenVINO detect reference eligibility
+requires a compatible IR and runtime. Artifact-backed OpenVINO tasks consume
+prepared files without checking or invoking the OpenVINO runtime; reference
+selection still requires a successful comparable result.
 
 \subsection{Benchmark task semantics}
 The benchmark surface now records explicit task semantics instead of treating
@@ -234,6 +237,15 @@ attaches real parity reports over matched detections plus pose fields such as
 rotation, translation, and depth. Formats without shipped benchmark wiring are
 reported as unsupported/skipped rather than as synthetic benchmark successes.
 
+Each per-format report keeps the existing boolean \texttt{runtime.available}
+field and adds \texttt{runtime.required} plus \texttt{runtime.checked}. Read
+\texttt{available} as runtime evidence only when \texttt{checked} is true.
+Detect lanes that probe an external runtime set both fields to true.
+Artifact-backed lanes set \texttt{required=false}, \texttt{checked=false}, and
+\texttt{available=false}, with
+\texttt{reason=} \path{not_required_for_artifact_eval}; they do not claim that
+a framework runtime was inspected.
+
 \subsection{Backend flag applicability}
 Benchmark flags are validated against the task, effective latency source, and
 format before output artifacts are written. For \cmd{classification},
@@ -245,6 +257,13 @@ running backend inference, \cmd{--half}, \cmd{--batch} values other than
 \cmd{--no-half --batch 1 --no-nms} remain valid.
 
 The same rejection applies when \cmd{artifact_eval} is requested explicitly.
+Conversely, \path{dataset_pass_wall_time} is the inference-backed source for
+\cmd{detect}. A non-dry-run artifact-backed task forced to that source fails
+before writing artifacts and directs the user to \cmd{auto} or
+\cmd{artifact_eval}.
+With \cmd{--strict}, any requested format that is skipped, fails, or finishes
+\cmd{partial} because evaluation/parity failed or drifted makes the command
+exit with code \cmd{2}.
 For non-artifact evaluation, format rules still apply: the current
 \cmd{torch} lane can accept these non-default flags, while other current
 formats reject them. The complete matrix is generated in
@@ -281,9 +300,11 @@ Use these categories instead of reading backend names as license promises:
   consume supplied files. YOLOZU does not bundle the runtime or model artifact.
 
   \item[Adapter target only]
-  \cmd{executorch} and \cmd{opencv_dnn} are adapter targets. YOLOZU can describe
-  or prepare the lane, but users must supply and validate the external runtime.
-  For OpenCV, optional contrib/nonfree modules are not bundled.
+  \cmd{executorch} and \cmd{opencv_dnn} are visible adapter targets, but their
+  benchmark orchestration is not wired. Benchmark mode reports them as
+  unsupported/skipped; standalone exporter utilities may still require
+  user-supplied external runtimes. For OpenCV, optional contrib/nonfree modules
+  are not bundled.
 
   \item[Conditional adapter targets]
   \cmd{coreml}, \cmd{ncnn}, \cmd{rknn}, \cmd{tflite}, and
@@ -308,16 +329,17 @@ The most important remaining gaps are:
   and execution paths are added
 \end{itemize}
 
-\subsection{Highest-leverage parity-closing work}
+\subsection{Highest-leverage parity maintenance and remaining work}
 If the goal is to close the practical gap against the broader benchmark/export
-surface quickly, the most effective implementation order is:
+surface, preserve the shipped boundaries and implement the remaining parity
+attachment in this order:
 \begin{enumerate}
   \item keep conditional \cmd{openvino} honest on the same canonical CLI surface as the other real backend lanes
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
   from dry-run placeholders and unsupported/skipped paths
-  \item expand real parity artifacts beyond the current
-  selected-reference backend comparisons, including the artifact-backed
-  \cmd{classification} and \cmd{obb} placeholder parity reports
+  \item add real parity to the artifact-backed \cmd{classification} and
+  \cmd{obb} lanes after their validation and metric semantics are
+  evidence-backed
   \item keep format-specific flag validation strict so inert combinations fail
   early rather than appearing supported
 \end{enumerate}

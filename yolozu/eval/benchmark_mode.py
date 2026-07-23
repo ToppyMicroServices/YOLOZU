@@ -46,6 +46,9 @@ from yolozu.eval.benchmark_flags import (
     HALF_HELP,
     LATENCY_SOURCE_HELP,
     NMS_HELP,
+    OPENVINO_MODEL_HELP,
+    PARITY_REFERENCE_HELP,
+    STRICT_HELP,
 )
 from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
 from yolozu.eval.keypoints_parity import compare_keypoints_predictions
@@ -94,10 +97,13 @@ TASK_SEMANTICS = {
         "display_name": "Segmentation",
         "metric_family": "mask_map",
         "expected_metric_keys": ["mask_mAP50-95", "mask_mAP50", "mask_AR"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Segmentation uses artifact-backed real evaluation and parity for torch/onnx/engine backend predictions artifacts.",
+        "notes": (
+            "Segmentation uses artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino backend predictions artifacts."
+        ),
     },
     "classification": {
         "display_name": "Classification",
@@ -121,28 +127,38 @@ TASK_SEMANTICS = {
         "display_name": "Keypoints / Pose",
         "metric_family": "oks_map",
         "expected_metric_keys": ["OKS_mAP", "PCK", "keypoint_AR"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "The CLI accepts both --task keypoints and --task pose and records a canonical keypoints task with pose alias metadata. Current benchmark execution uses backend-specific predictions artifacts for eval/parity rather than pretending YOLOZU executed the backend inference itself.",
+        "notes": (
+            "The CLI accepts both --task keypoints and --task pose and records a canonical keypoints task with "
+            "pose alias metadata. Current benchmark execution uses torch/onnx/engine/torchscript/openvino "
+            "predictions artifacts for eval/parity rather than pretending YOLOZU executed backend inference."
+        ),
     },
     "depth": {
         "display_name": "Monocular Depth",
         "metric_family": "depth_error",
         "expected_metric_keys": ["abs_rel", "rmse", "delta1"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "Depth is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine depth outputs.",
+        "notes": (
+            "Depth is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino depth outputs."
+        ),
     },
     "pose6d": {
         "display_name": "6DoF Pose",
         "metric_family": "pose6d_error",
         "expected_metric_keys": ["ADD", "ADDS", "reprojection_error"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "6DoF pose is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine prediction artifacts.",
+        "notes": (
+            "6DoF pose is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino prediction artifacts."
+        ),
     },
 }
 FLAG_DEFAULTS = {
@@ -180,11 +196,17 @@ FORMAT_FLAG_RULES = {
     },
     "executorch": {
         "supported_nondefault_flags": set(),
-        "notes": "ExecuTorch is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+        "notes": (
+            "ExecuTorch benchmark orchestration is not wired and reports unsupported/skipped; "
+            "export-oriented flags remain unsupported."
+        ),
     },
     "opencv_dnn": {
         "supported_nondefault_flags": set(),
-        "notes": "OpenCV DNN is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+        "notes": (
+            "OpenCV DNN benchmark orchestration is not wired and reports unsupported/skipped; "
+            "export-oriented flags remain unsupported."
+        ),
     },
 }
 
@@ -377,10 +399,15 @@ def _task_execution_semantics(
 
     artifact_expectation: dict[str, str]
     if execution_mode in {"real_backend_eval", "real_artifact_eval"}:
+        parity_expectation = (
+            "skipped"
+            if execution_mode == "real_artifact_eval" and task_label in {"classification", "obb"}
+            else "real_when_comparable"
+        )
         artifact_expectation = {
             "predictions": "real",
             "eval": "real",
-            "parity": "real_when_comparable",
+            "parity": parity_expectation,
         }
     elif execution_mode == "dry_run_planning":
         artifact_expectation = {
@@ -402,7 +429,12 @@ def _task_execution_semantics(
         }
 
     note = task_meta["notes"]
-    if task_label == "classification" and execution_mode == "real_artifact_eval":
+    if execution_mode == "unsupported_skipped":
+        note = (
+            f"{note} Benchmark orchestration for {fmt} is not wired; "
+            "this requested format is reported as unsupported/skipped without execution."
+        )
+    elif task_label == "classification" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current classification benchmarking is artifact-backed: backend-specific score vectors are "
             "evaluated against class labels directly, without pretending YOLOZU performed the underlying backend "
@@ -478,7 +510,43 @@ def _support_reason_from_result(
     return mode
 
 
-def _annotate_result_support(result: dict[str, Any], *, runtime_available: bool, runtime_reason: str | None) -> None:
+def _runtime_observation(
+    *,
+    fmt: str,
+    task_label: str,
+    supported: bool,
+    support_reason: str | None,
+) -> dict[str, Any]:
+    if fmt in BENCHMARK_UNWIRED_FORMATS or task_label in BENCHMARK_UNWIRED_TASKS:
+        return {
+            "required": False,
+            "checked": False,
+            "available": False,
+            "reason": support_reason,
+        }
+    if task_label in ARTIFACT_EVAL_TASKS and fmt in REAL_BACKEND_FORMATS:
+        return {
+            "required": False,
+            "checked": False,
+            "available": False,
+            "reason": "not_required_for_artifact_eval",
+        }
+    return {
+        "required": True,
+        "checked": True,
+        "available": bool(supported),
+        "reason": support_reason,
+    }
+
+
+def _annotate_result_support(
+    result: dict[str, Any],
+    *,
+    runtime_required: bool,
+    runtime_checked: bool,
+    runtime_available: bool,
+    runtime_reason: str | None,
+) -> None:
     execution_semantics = result.get("execution_semantics") or {}
     status = str(result.get("status") or "")
     skip_reason = result.get("skip_reason")
@@ -494,6 +562,8 @@ def _annotate_result_support(result: dict[str, Any], *, runtime_available: bool,
     runtime = result.get("runtime") if isinstance(result.get("runtime"), dict) else {}
     runtime.update(
         {
+            "required": bool(runtime_required),
+            "checked": bool(runtime_checked),
             "available": bool(runtime_available),
             "reason": runtime_reason,
             "latency_source": result.get("latency_source"),
@@ -2513,16 +2583,18 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     }
 
     results: list[dict[str, Any]] = []
-    strict_failure = False
-
     for fmt in requested_formats:
         supported, skip_reason = _support_status_for_format(
             fmt,
             device=str(getattr(args, "device", "cpu")),
             task_label=task_label,
         )
-        runtime_available = bool(supported)
-        runtime_reason = skip_reason
+        runtime_observation = _runtime_observation(
+            fmt=fmt,
+            task_label=task_label,
+            supported=supported,
+            support_reason=skip_reason,
+        )
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         execution_semantics = _task_execution_semantics(
             task_label,
@@ -3405,9 +3477,6 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                                 run_meta=format_run_meta,
                             )
 
-        if bool(getattr(args, "strict", False)) and status in {"skipped", "failed"}:
-            strict_failure = True
-
         export_settings = _export_settings_payload(
             args,
             fmt=fmt,
@@ -3458,7 +3527,13 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "error": error,
             "run_meta": format_run_meta,
         }
-        _annotate_result_support(result, runtime_available=runtime_available, runtime_reason=runtime_reason)
+        _annotate_result_support(
+            result,
+            runtime_required=bool(runtime_observation["required"]),
+            runtime_checked=bool(runtime_observation["checked"]),
+            runtime_available=bool(runtime_observation["available"]),
+            runtime_reason=runtime_observation["reason"],
+        )
         results.append(result)
 
     _attach_real_parity(results, args=args)
@@ -3466,9 +3541,15 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
         runtime = item.get("runtime") if isinstance(item.get("runtime"), dict) else {}
         _annotate_result_support(
             item,
+            runtime_required=bool(runtime.get("required", False)),
+            runtime_checked=bool(runtime.get("checked", False)),
             runtime_available=bool(runtime.get("available", False)),
             runtime_reason=runtime.get("reason"),
         )
+
+    strict_failure = bool(getattr(args, "strict", False)) and any(
+        str(item.get("status")) in {"skipped", "failed", "partial"} for item in results
+    )
 
     statuses = {item["status"] for item in results}
     if statuses == {"ok"}:
@@ -3543,7 +3624,7 @@ def build_parser() -> Any:
     parser.add_argument("--onnx-model", default=None, help="Optional ONNX backend model override (typically .onnx).")
     parser.add_argument("--engine-model", default=None, help="Optional TensorRT engine override (typically .engine or .plan).")
     parser.add_argument("--torchscript-model", default=None, help="Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).")
-    parser.add_argument("--openvino-model", default=None, help="Optional OpenVINO IR model override (typically .xml).")
+    parser.add_argument("--openvino-model", default=None, help=OPENVINO_MODEL_HELP)
     parser.add_argument("-d", "--data", required=True, help="Dataset root or data.yaml path recorded in the benchmark report.")
     parser.add_argument("--depth-mask", default=None, help="Optional valid-pixel mask used for task=depth artifact evaluation.")
     parser.add_argument(
@@ -3564,11 +3645,7 @@ def build_parser() -> Any:
         "--parity-reference-backend",
         choices=PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help=(
-            "Reference backend used when writing parity artifacts "
-            "(default: auto prefers torch, then first eligible backend; "
-            "OpenVINO requires supplied artifacts and an available runtime)."
-        ),
+        help=PARITY_REFERENCE_HELP,
     )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
@@ -3598,7 +3675,7 @@ def build_parser() -> Any:
     )
     parser.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
     parser.add_argument("--dry-run", action="store_true", help="Validate wiring and dry-run artifacts without backend runs.")
-    parser.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped or fails.")
+    parser.add_argument("--strict", action="store_true", help=STRICT_HELP)
     parser.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
     parser.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
     parser.add_argument("--run-id", default=None, help="Optional run id (default: UTC timestamp).")

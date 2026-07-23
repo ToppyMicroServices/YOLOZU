@@ -31,6 +31,37 @@ It is already stronger than a plain benchmark wrapper in a few areas:
 
 The remaining gap is mainly breadth, not the core interface shape.
 
+## Reconciled current semantics
+
+The current CLI behavior, report metadata, support metadata, and maintained
+documentation agree on these boundaries:
+
+- For `detect`, `--latency-source auto` resolves to
+  `dataset_pass_wall_time` on real backend formats. An explicit
+  `dataset_pass_wall_time` request follows the same backend path; missing
+  runtimes or model artifacts are reported as `skipped`.
+- For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and
+  `pose6d`, `auto` resolves to `artifact_eval` before flag validation.
+  `--no-half --batch 1 --no-nms` remains valid, while non-default values fail
+  before report or backend writes.
+- A non-dry-run artifact-backed task forced to
+  `dataset_pass_wall_time` fails early and directs the user to `auto` or
+  `artifact_eval`.
+- `openvino` detect is conditional real support. Its runtime and IR artifact
+  remain external; missing prerequisites produce a skipped result.
+  Artifact-backed OpenVINO tasks consume prepared files without checking or
+  invoking the OpenVINO runtime. Their report fields therefore record
+  `runtime.required=false`, `runtime.checked=false`, and
+  `runtime.available=false` instead of claiming a runtime probe.
+- `executorch` and `opencv_dnn` are accepted format labels but benchmark
+  orchestration is not wired, so their benchmark results are
+  `unsupported/skipped`, not synthetic successes.
+
+One residual source-selection defect remains: explicit
+`--task detect --latency-source artifact_eval` can launch the regular backend
+prediction path while the report describes `synthetic_planning_only`.
+`YOLOZU-ll2.28` tracks the fail-closed correction separately.
+
 ## Highest-leverage gap closers
 
 If the goal is to close the practical gap against the current benchmark/export
@@ -38,13 +69,13 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Keep `openvino` as a conditional real runtime target on the same canonical
-   CLI surface as the other implemented detect lanes.
+1. Keep `openvino` as a conditional real detect runtime target on the same
+   canonical CLI surface as the other implemented detect lanes.
 2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
-3. Expand parity artifacts beyond today's `torch`-anchored backend comparisons,
-   including the artifact-backed classification and OBB lanes.
-5. Keep format-specific flag validation strict so inert combinations fail early
+3. Add parity artifacts to the artifact-backed classification and OBB lanes;
+   other comparable lanes already support an explicit selected reference.
+4. Keep format-specific flag validation strict so inert combinations fail early
    instead of looking supported.
 
 ## Current gap by area
@@ -149,31 +180,34 @@ generated in `docs/benchmark_support_matrix.md`.
 
 ### 4. Real benchmark semantics vs placeholders
 
-YOLOZU is intentionally honest about placeholder outputs. This is good, but the
-docs should make the distinction sharper than they do today.
+YOLOZU distinguishes execution evidence through the per-format
+`support_status`, `execution_semantics`, and `artifact_status` fields. The
+canonical support matrix mirrors those report fields.
 
 Current behavior:
 
 - `torch` / `onnx` / `engine` / `torchscript` / `openvino` can orchestrate real detect runs when their external runtimes and artifacts are available
+- `classification` and `obb` can use artifact-backed real eval lanes for `torch` / `onnx` / `engine` / `torchscript` / `openvino`; parity remains skipped
 - `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `pose6d` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
-- `executorch` / `opencv_dnn` remain synthetic or skipped
+- `executorch` / `opencv_dnn` report unsupported/skipped in benchmark orchestration
 - parity artifacts are real for successful comparisons against the selected
-  reference backend (with `auto` preferring `torch`), and remain placeholders
-  for dry-run / skipped / synthetic-only formats
+  reference backend (with `auto` preferring `torch`); they remain placeholders
+  for dry-run or skipped lanes and for classification/OBB artifact evaluation
 
-Improvement priority:
+Maintained boundary:
 
-1. Mark per-format artifact status as `real`, `placeholder`, or `skipped`
-2. Add backend matrix examples with actual artifact expectations
-3. Distinguish latency benchmarking from export success more clearly
-4. Expand real parity beyond the current `torch`-anchored backend comparisons
+1. Keep `support_status` limited to `real`, `artifact-backed`, or `skipped`
+2. Keep the support matrix aligned with actual artifact expectations
+3. Keep `latency_source` separate from export/evaluation success
+4. Add real parity to classification and OBB only after their artifact
+   validation and metric semantics are evidence-backed
 
 ### 4.1 Runtime / license boundary
 
-YOLOZU now needs a stable backend matrix that distinguishes:
+YOLOZU uses a stable backend matrix that distinguishes:
 
 - Apache-2.0 repository code
 - external runtimes/SDKs
@@ -184,7 +218,7 @@ The benchmark source of truth for that is:
 
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)
 
-### 5. Docs/readability gap
+### 5. Docs/readability invariant
 
 The canonical support-status table now lives in
 [Benchmark support matrix](benchmark_support_matrix.md). Keep summaries in this
@@ -207,7 +241,7 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Keep `openvino` conditional support honest when its external runtime or IR artifact is unavailable
+1. Keep `openvino` detect support honest when its external runtime or IR artifact is unavailable
 2. Expand parity artifacts for artifact-backed classification and OBB reports
 3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change

@@ -63,7 +63,7 @@ Contact: develop@toppymicros.com
 --torchscript-model TORCHSCRIPT_MODEL
   Optional TorchScript backend model override (typically .torchscript, .ts, or .pt).
 --openvino-model OPENVINO_MODEL
-  Optional OpenVINO IR model override (typically .xml).
+  OpenVINO-lane artifact override. Detect expects a compatible IR; artifact-backed tasks accept prepared task artifacts without checking or invoking the OpenVINO runtime.
 -d, --data DATA [required]
   Dataset root or data.yaml path recorded in the benchmark report.
 --depth-mask DEPTH_MASK
@@ -77,7 +77,7 @@ Contact: develop@toppymicros.com
 --segmentation-parity-mismatch-atol SEGMENTATION_PARITY_MISMATCH_ATOL
   Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).
 --parity-reference-backend {auto,torch,onnx,engine,torchscript,openvino}
-  Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend; OpenVINO requires supplied artifacts and an available runtime).
+  Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend). OpenVINO detect requires a supplied IR and runtime; artifact-backed OpenVINO tasks use prepared artifacts without a runtime check.
 --keypoints-parity-iou-thresh KEYPOINTS_PARITY_IOU_THRESH
   Keypoints parity IoU threshold (default: 0.99).
 --keypoints-parity-score-atol KEYPOINTS_PARITY_SCORE_ATOL
@@ -115,7 +115,7 @@ Contact: develop@toppymicros.com
 --dry-run
   Validate wiring and dry-run artifacts without backend runs.
 --strict
-  Return exit code 2 if any requested format is skipped or fails.
+  Return exit code 2 if any requested format is skipped, fails, or is partial.
 --repro-policy {strict,relaxed,off}
 --runtime-lock RUNTIME_LOCK
   Runtime lock label recorded in run_meta.
@@ -146,7 +146,7 @@ Contact: develop@toppymicros.com
 --fraction FRACTION
   Record dataset fraction knob (default: 1.0).
 --latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}
-  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected.
+  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected. Non-dry-run artifact-backed tasks cannot use dataset_pass_wall_time; use auto or artifact_eval.
 --iterations ITERATIONS
   Synthetic latency iterations (default: 50).
 --warmup WARMUP

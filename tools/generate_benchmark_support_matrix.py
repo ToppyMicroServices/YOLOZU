@@ -242,8 +242,8 @@ def render_markdown(meta: dict[str, Any], *, metadata_path: Path) -> str:
             "",
             "## Backend Flag Applicability",
             "",
-            "Applicability is evaluated after `auto` resolves to an effective latency source.",
-            "Default values are always accepted: "
+            "Task/source validation is applied before per-format flag applicability, after `auto` resolves to an effective latency source.",
+            "Within a valid task/source lane, default backend flag values are always accepted: "
             + ", ".join(
                 _default_flag(name, flag_defaults[name])
                 for name in sorted(flag_defaults)

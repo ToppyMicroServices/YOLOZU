@@ -23,7 +23,7 @@ Today the command provides:
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
-- real backend orchestration for `torch`, `onnx`, `engine`, `torchscript`, and conditional `openvino` when artifacts and runtimes are available.
+- real detect orchestration for `torch`, `onnx`, `engine`, `torchscript`, and conditional `openvino` when artifacts and runtimes are available.
 - artifact-backed segmentation evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific mask-prediction artifacts are available.
 - artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
 - artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific depth-map artifacts are available.
@@ -41,8 +41,8 @@ The broader public benchmark/export surface still exposes more formats and task
 paths than YOLOZU does. Today the most important remaining gaps are:
 
 - missing benchmark/export formats such as `coreml`, `saved_model`, `tflite`,
-  `ncnn`, `rknn`, and `paddle`; `openvino` is conditional and reports skipped
-  when the runtime or IR artifact is unavailable
+  `ncnn`, `rknn`, and `paddle`; `openvino` detect is conditional and reports
+  skipped when the runtime or IR artifact is unavailable
 - incomplete parity attachment for artifact-backed classification and OBB lanes
 - additional task/source/format rules will be needed as new backend-specific
   knobs are implemented
@@ -125,8 +125,8 @@ yolozu benchmark \
   --output reports/benchmark_openvino_report.json
 ```
 
-OpenVINO is not bundled. Without a compatible external runtime and IR artifact,
-the report records a skipped lane rather than claiming execution.
+OpenVINO is not bundled. For this detect run, a missing external runtime or IR
+artifact produces a skipped lane rather than a claim of execution.
 
 Detect run with an explicit parity reference backend:
 
@@ -292,14 +292,19 @@ YOLOZU additions for reproducibility and CI:
 - `--torch-model`
 - `--onnx-model`
 - `--engine-model`
+- `--torchscript-model`
+- `--openvino-model`
 - `--task`
 - `--split`
 - `--protocol`
 - `--max-images`
+- `--latency-source`
+- `--parity-reference-backend`
 - `--depth-mask`
 - `--depth-align`
 - `--depth-parity-mae-atol`
 - `--depth-parity-rmse-atol`
+- `--segmentation-parity-mismatch-atol`
 - `--keypoints-parity-iou-thresh`
 - `--keypoints-parity-score-atol`
 - `--keypoints-parity-bbox-atol`
@@ -318,6 +323,8 @@ YOLOZU additions for reproducibility and CI:
 - `--eval-output`
 - `--parity-output`
 
+Use `yolozu benchmark --help` for the complete parser-owned option list.
+
 ## Early validation rules
 
 Both `yolozu benchmark` and `tools/benchmark_model.py` fail before writing
@@ -327,6 +334,10 @@ latency source, and format all participate in validation.
 
 The backend-execution flag defaults are `--no-half`, `--batch 1`, and
 `--no-nms`. Those defaults remain accepted in every lane.
+
+`dataset_pass_wall_time` is the real inference-backed detect source. A
+non-dry-run artifact-backed task forced to that source fails before writing
+artifacts and directs the user to `auto` or `artifact_eval`.
 
 | Task scope | Requested source | Effective source | Formats | Non-default `--half`, `--batch`, `--nms` |
 | --- | --- | --- | --- | --- |
@@ -368,12 +379,22 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
-When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino` can run for real, the benchmark writes actual
-predictions and eval artifacts and attaches real parity artifacts for candidate
-backends against the chosen reference backend (preferring `torch` when
-available). When a backend is unavailable or the command is invoked with
-`--dry-run`, the command writes placeholders instead of pretending that
-inference ran.
+When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino`
+completes a shipped real lane, the benchmark writes real predictions/eval
+artifacts or consumes real backend artifacts. Comparable detect,
+segmentation, keypoints, depth, and pose6d results can attach real parity
+artifacts against the chosen reference backend (preferring `torch` when
+available). Classification and OBB currently write explicit parity
+placeholders. Missing backends/artifacts and `--dry-run` also write non-real
+artifacts instead of pretending inference or comparison ran.
+
+For `--task classification` and `--task obb`, the real lane is artifact-backed:
+
+- the backend-specific score or rotated-box artifact is normalized under
+  `predictions_<format>.json`
+- `eval_<format>.json` contains real task metrics
+- `parity_<format>.json` remains an explicit placeholder until those two task
+  lanes gain shipped parity attachment
 
 For `--task segmentation`, the real lane is artifact-backed rather than inference-backed:
 
@@ -434,7 +455,7 @@ The top-level benchmark report records, per format:
 - `support_reason`
 - `skip_reason` when skipped
 - `latency_source`
-- `runtime.available` / `runtime.reason` / `runtime.latency_source`
+- `runtime.required` / `runtime.checked` / `runtime.available` / `runtime.reason` / `runtime.latency_source`
 - `execution_semantics.execution_mode`
 - `execution_semantics.artifact_expectation`
 - `execution_semantics.eval_expectation`
@@ -450,6 +471,16 @@ By default the benchmark chooses `torch` as the parity reference backend when
 `torch` succeeded. If `torch` is unavailable, it falls back to the first
 eligible real backend. Use `--parity-reference-backend torch|onnx|engine|torchscript|openvino` when
 you want a specific backend to act as the reference for detect/parity reports.
+OpenVINO detect reference eligibility requires a compatible IR and runtime.
+Artifact-backed OpenVINO tasks consume prepared files and do not check or invoke
+the OpenVINO runtime.
+
+Interpret `runtime.available` only together with `runtime.checked`. Detect lanes
+that probe an external runtime record `required: true` and `checked: true`.
+Artifact-backed lanes record `required: false`, `checked: false`,
+`available: false`, and `reason: not_required_for_artifact_eval`; this preserves
+the boolean `available` field without falsely claiming that an external runtime
+was inspected.
 
 ## Status model
 
@@ -466,7 +497,9 @@ For P1 benchmark DoD checks, read `support_status` instead of guessing from
 
 - `real`: YOLOZU ran a real backend/eval path for that requested format.
 - `artifact-backed`: YOLOZU consumed backend-specific artifacts and ran real
-  eval/parity without claiming it executed backend inference.
+  evaluation without claiming it executed backend inference. Comparable
+  segmentation, keypoints, depth, and pose6d lanes can also attach real parity;
+  classification and OBB currently mark parity as skipped.
 - `skipped`: the path was dry-run-only, unsupported, missing a runtime, missing
   an artifact, or otherwise did not produce real benchmark evidence.
 
@@ -484,8 +517,10 @@ validation policy that was applied before execution:
 - `missing_artifact_policy: report_skipped`
 
 `openvino_applicable` is `true` once OpenVINO is present in the benchmark format
-surface. OpenVINO remains optional: missing runtime or missing IR artifacts are
-reported as skipped instead of becoming an install requirement.
+surface. OpenVINO detect remains optional: missing runtime or missing IR
+artifacts are reported as skipped instead of becoming an install requirement.
+Artifact-backed OpenVINO tasks bypass runtime availability and report missing
+prepared artifacts separately.
 
 Typical skip reasons:
 
@@ -496,8 +531,9 @@ Typical skip reasons:
 - `model_artifact_required`
 - `model_artifact_mismatch`
 
-If `--strict` is set and any requested format is skipped, the command exits
-with code `2`.
+If `--strict` is set and any requested format is skipped, fails, or finishes
+`partial` because evaluation/parity failed or drifted, the command exits with
+code `2`.
 
 ## Why the latency source is explicit
 
@@ -546,9 +582,12 @@ The per-format `execution_semantics` block now complements that task matrix:
 - `artifact_expectation`: whether predictions/eval/parity are expected to be real, skipped, or dry-run placeholders
 - `eval_expectation`: metric family + expected metric keys for that task/backend combination
 
-For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`, this is especially important: the benchmark report now
-records explicit metric expectations and artifact-backed real eval/parity semantics instead of leaving those tasks as vague
-future work.
+For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`,
+this is especially important: the benchmark report records explicit metric
+expectations and artifact-backed real evaluation semantics instead of leaving
+those tasks as vague future work. Segmentation, keypoints, depth, and pose6d
+also attach parity when comparable; classification and OBB explicitly mark
+parity as skipped.
 
 ## Current format coverage
 

@@ -35,8 +35,19 @@ LATENCY_SOURCE_HELP = (
     "Benchmark source selection. auto prefers real orchestration for detect and "
     "artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. "
     "artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, "
-    "and --nms are rejected."
+    "and --nms are rejected. Non-dry-run artifact-backed tasks cannot use "
+    "dataset_pass_wall_time; use auto or artifact_eval."
 )
+OPENVINO_MODEL_HELP = (
+    "OpenVINO-lane artifact override. Detect expects a compatible IR; artifact-backed tasks "
+    "accept prepared task artifacts without checking or invoking the OpenVINO runtime."
+)
+PARITY_REFERENCE_HELP = (
+    "Reference backend used when writing parity artifacts (default: auto prefers torch, "
+    "then first eligible backend). OpenVINO detect requires a supplied IR and runtime; "
+    "artifact-backed OpenVINO tasks use prepared artifacts without a runtime check."
+)
+STRICT_HELP = "Return exit code 2 if any requested format is skipped, fails, or is partial."
 
 
 __all__ = [
@@ -47,4 +58,7 @@ __all__ = [
     "HALF_HELP",
     "LATENCY_SOURCE_HELP",
     "NMS_HELP",
+    "OPENVINO_MODEL_HELP",
+    "PARITY_REFERENCE_HELP",
+    "STRICT_HELP",
 ]
