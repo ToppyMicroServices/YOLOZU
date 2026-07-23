@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Audit adapter/export support across external detection backends.
 
-Runs dry-run exporters for:
+Runs exporters for:
 - YOLOX
 - YOLOv8 (Ultralytics)
 - Detectron2
 - MMDetection
 
-The goal is to validate the interface contract path (CLI + schema-valid
-predictions artifact) without requiring heavyweight framework installs.
+The default dry-run validates the interface contract path (CLI + schema-valid
+predictions artifact) without heavyweight framework installs. Selected
+backends can instead be required to provide verified runtime execution
+evidence.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ REQUIRED_TASKS = ("bbox", "segmentation", "keypoints", "depth", "pose6d")
 
 
 def _parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Run dry-run backend support audit for YOLOX/YOLOv8/Detectron2/MMDetection.")
+    p = argparse.ArgumentParser(description="Audit YOLOX/YOLOv8/Detectron2/MMDetection export support.")
     p.add_argument("--dataset-root", default="data/real_multitask_fewshot", help="YOLO-format dataset root.")
     p.add_argument("--split", default="val", help="Dataset split to use (default: val).")
     p.add_argument("--max-images", type=int, default=2, help="Cap images per backend run (default: 2).")
@@ -43,12 +45,43 @@ def _parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         choices=("yolox", "yolov8_ultralytics", "detectron2", "mmdetection"),
-        help="Backend to run without --dry-run (repeatable).",
+        help="Backend to attempt without --dry-run (repeatable).",
     )
     p.add_argument(
         "--require-non-dry",
         action="store_true",
-        help="Fail if no backend is configured for non-dry execution.",
+        help="Fail unless at least one backend supplies verified non-dry execution evidence.",
+    )
+    p.add_argument("--yolox-exp", default=None, help="YOLOX exp file required for a non-dry YOLOX audit.")
+    p.add_argument(
+        "--yolox-weights",
+        default=None,
+        help="YOLOX checkpoint required for a non-dry YOLOX audit.",
+    )
+    p.add_argument(
+        "--ultralytics-model",
+        default="yolov8n.pt",
+        help="Ultralytics model path or name (default: yolov8n.pt).",
+    )
+    p.add_argument(
+        "--detectron2-config",
+        default=None,
+        help="Detectron2 config required for a non-dry Detectron2 audit.",
+    )
+    p.add_argument(
+        "--detectron2-weights",
+        default=None,
+        help="Detectron2 weights required for a non-dry Detectron2 audit.",
+    )
+    p.add_argument(
+        "--mmdet-config",
+        default=None,
+        help="MMDetection config required for a non-dry MMDetection audit.",
+    )
+    p.add_argument(
+        "--mmdet-checkpoint",
+        default=None,
+        help="MMDetection checkpoint required for a non-dry MMDetection audit.",
     )
     return p
 
@@ -57,19 +90,55 @@ def _run(cmd: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, cwd=str(cwd), text=True, capture_output=True, check=False)
 
 
-def _load_predictions_count(path: Path) -> tuple[int, str | None]:
+def _load_predictions_artifact(path: Path) -> tuple[int, dict[str, Any] | None, str | None]:
     if not path.exists():
-        return 0, "output_missing"
+        return 0, None, "output_missing"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
-        return 0, f"invalid_json:{exc}"
+        return 0, None, f"invalid_json:{exc}"
 
     if isinstance(payload, dict) and isinstance(payload.get("predictions"), list):
-        return int(len(payload["predictions"])), None
+        meta = payload.get("meta")
+        return int(len(payload["predictions"])), (meta if isinstance(meta, dict) else None), None
     if isinstance(payload, list):
-        return int(len(payload)), None
-    return 0, "unsupported_payload_shape"
+        return int(len(payload)), None, None
+    return 0, None, "unsupported_payload_shape"
+
+
+def _validate_execution_evidence(*, meta: dict[str, Any] | None, dry_run: bool) -> str | None:
+    if not isinstance(meta, dict):
+        return "execution_evidence_missing"
+    extra = meta.get("extra")
+    if not isinstance(extra, dict):
+        return "execution_evidence_missing"
+
+    if not isinstance(extra.get("dry_run"), bool) or extra["dry_run"] is not dry_run:
+        return "dry_run_metadata_mismatch"
+    expected_status = "dry_run" if dry_run else "completed"
+    if str(extra.get("execution_status") or "") != expected_status:
+        return f"execution_status_mismatch:{extra.get('execution_status')!r}"
+    runtime_executed = extra.get("runtime_executed")
+    if not isinstance(runtime_executed, bool) or runtime_executed is dry_run:
+        return "runtime_execution_metadata_mismatch"
+
+    try:
+        inference_calls = int(extra.get("inference_calls") or 0)
+    except (TypeError, ValueError):
+        return "inference_calls_invalid"
+    if dry_run:
+        if inference_calls != 0:
+            return "dry_run_recorded_inference_calls"
+        return None
+
+    if inference_calls <= 0:
+        return "non_dry_inference_calls_missing"
+    if extra.get("runtime_error") not in (None, ""):
+        return "non_dry_runtime_error_present"
+    provenance = extra.get("model_provenance")
+    if not isinstance(provenance, dict) or not any(value not in (None, "") for value in provenance.values()):
+        return "model_provenance_missing"
+    return None
 
 
 def _read_text(path: Path) -> str:
@@ -207,6 +276,8 @@ def main(argv: list[str] | None = None) -> int:
                 str(int(args.max_images)),
                 "--output",
                 str(work_dir / "predictions_yolox.json"),
+                *(["--exp", str(args.yolox_exp)] if args.yolox_exp else []),
+                *(["--weights", str(args.yolox_weights)] if args.yolox_weights else []),
                 *strict_flags,
             ],
         },
@@ -216,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
                 str(args.python),
                 "tools/export_predictions_ultralytics.py",
                 "--model",
-                "yolov8n.pt",
+                str(args.ultralytics_model),
                 "--dataset",
                 str(dataset_root),
                 "--split",
@@ -225,6 +296,7 @@ def main(argv: list[str] | None = None) -> int:
                 str(int(args.max_images)),
                 "--output",
                 str(work_dir / "predictions_yolov8.json"),
+                "--wrap",
                 *strict_flags,
             ],
         },
@@ -238,9 +310,9 @@ def main(argv: list[str] | None = None) -> int:
                 "--split",
                 str(args.split),
                 "--config",
-                "configs/detectron2_stub.yaml",
+                str(args.detectron2_config or "configs/detectron2_stub.yaml"),
                 "--weights",
-                "weights/detectron2_stub.pth",
+                str(args.detectron2_weights or "weights/detectron2_stub.pth"),
                 "--max-images",
                 str(int(args.max_images)),
                 "--output",
@@ -258,9 +330,9 @@ def main(argv: list[str] | None = None) -> int:
                 "--split",
                 str(args.split),
                 "--config",
-                "configs/mmdet_stub.py",
+                str(args.mmdet_config or "configs/mmdet_stub.py"),
                 "--checkpoint",
-                "weights/mmdet_stub.pth",
+                str(args.mmdet_checkpoint or "weights/mmdet_stub.pth"),
                 "--max-images",
                 str(int(args.max_images)),
                 "--output",
@@ -277,7 +349,6 @@ def main(argv: list[str] | None = None) -> int:
         dry_run = backend not in non_dry
         if dry_run:
             cmd.append("--dry-run")
-        proc = _run(cmd, cwd=repo_root)
 
         out_file = None
         if "--output" in cmd:
@@ -285,20 +356,33 @@ def main(argv: list[str] | None = None) -> int:
                 out_file = Path(cmd[cmd.index("--output") + 1]).resolve()
             except Exception:
                 out_file = None
+        if out_file is not None and out_file.exists():
+            out_file.unlink()
+
+        proc = _run(cmd, cwd=repo_root)
 
         preds_count = None
+        artifact_meta = None
         output_error = None
+        execution_evidence_error = None
         if out_file is not None:
-            preds_count, output_error = _load_predictions_count(out_file)
+            preds_count, artifact_meta, output_error = _load_predictions_artifact(out_file)
+            if output_error is None:
+                execution_evidence_error = _validate_execution_evidence(meta=artifact_meta, dry_run=bool(dry_run))
 
         results.append(
             {
                 "backend": backend,
-                "ok": bool(proc.returncode == 0 and output_error is None),
+                "ok": bool(
+                    proc.returncode == 0
+                    and output_error is None
+                    and execution_evidence_error is None
+                ),
                 "returncode": int(proc.returncode),
                 "predictions_file": (str(out_file) if out_file is not None else None),
                 "predictions_count": preds_count,
                 "output_error": output_error,
+                "execution_evidence_error": execution_evidence_error,
                 "stdout_tail": (proc.stdout or "").splitlines()[-10:],
                 "stderr_tail": (proc.stderr or "").splitlines()[-10:],
                 "command": cmd,
@@ -307,6 +391,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     non_dry_count = sum(1 for item in results if not bool(item.get("dry_run", True)))
+    verified_non_dry = sorted(
+        str(item.get("backend"))
+        for item in results
+        if not bool(item.get("dry_run", True)) and bool(item.get("ok"))
+    )
     multitask_coverage = _build_multitask_coverage(repo_root)
     warnings: list[str] = []
     if non_dry_count <= 0:
@@ -315,9 +404,9 @@ def main(argv: list[str] | None = None) -> int:
     if not bool(multitask_coverage.get("ok", False)):
         ok = False
         warnings.append("multitask coverage audit found missing hard requirements")
-    if bool(args.require_non_dry) and non_dry_count <= 0:
+    if bool(args.require_non_dry) and not verified_non_dry:
         ok = False
-        warnings.append("--require-non-dry is set but no --non-dry-backend was configured")
+        warnings.append("--require-non-dry is set but no backend supplied verified runtime execution evidence")
     report = {
         "task": "backend_support_audit",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -327,6 +416,7 @@ def main(argv: list[str] | None = None) -> int:
         "max_images": int(args.max_images),
         "warnings": warnings,
         "non_dry_backends": sorted(non_dry),
+        "verified_non_dry_backends": verified_non_dry,
         "results": results,
         "multitask_coverage": multitask_coverage,
     }

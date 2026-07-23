@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import platform
 import sys
@@ -85,6 +86,21 @@ def _default_wrap_meta(*, adapter: str, config: str, images: int) -> dict[str, A
     }
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    return path
+
+
 def _tensor_to_list(value: Any) -> list[Any]:
     if value is None:
         return []
@@ -132,8 +148,19 @@ def main(argv=None) -> int:
     if args.max_images is not None:
         records = records[: max(0, int(args.max_images))]
 
+    config_path = _resolve_path(str(args.config))
+    weights_path = _resolve_path(str(args.weights))
+    if not args.dry_run:
+        for label, path in (("config", config_path), ("weights", weights_path)):
+            if not path.is_file():
+                print(f"error: Detectron2 {label} file not found: {path}", file=sys.stderr)
+                return 2
+        if not records:
+            print("error: Detectron2 non-dry export selected no images", file=sys.stderr)
+            return 2
+
     outputs: list[dict[str, Any]] = []
-    runtime_error: str | None = None
+    inference_calls = 0
 
     predictor = None
     cv2 = None
@@ -144,66 +171,94 @@ def main(argv=None) -> int:
             from detectron2.engine import DefaultPredictor  # type: ignore
 
             cfg = get_cfg()
-            cfg.merge_from_file(str(Path(args.config).expanduser()))
-            cfg.MODEL.WEIGHTS = str(Path(args.weights).expanduser())
+            cfg.merge_from_file(str(config_path))
+            cfg.MODEL.WEIGHTS = str(weights_path)
             cfg.MODEL.DEVICE = str(args.device)
             _set_optional_score_threshold(cfg.MODEL, "ROI_HEADS", float(args.score_thr))
             _set_optional_score_threshold(cfg.MODEL, "RETINANET", float(args.score_thr))
             predictor = DefaultPredictor(cfg)
             cv2 = _cv2
         except (ImportError, OSError, RuntimeError, ValueError) as exc:
-            runtime_error = str(exc)
+            print(f"error: Detectron2 runtime initialization failed: {exc}", file=sys.stderr)
+            return 1
 
-    for record in records:
-        image_rel = str(record.get("image") or "")
-        image_abs = dataset_root / image_rel
-        detections: list[dict[str, Any]] = []
-        width = int(record.get("width") or 0)
-        height = int(record.get("height") or 0)
+    try:
+        for record in records:
+            image_rel = str(record.get("image") or "")
+            image_abs = dataset_root / image_rel
+            detections: list[dict[str, Any]] = []
+            width = int(record.get("width") or 0)
+            height = int(record.get("height") or 0)
 
-        if predictor is not None and cv2 is not None:
-            image = cv2.imread(str(image_abs))
-            if image is None:
-                outputs.append({"image": image_rel, "detections": []})
-                continue
-            result = predictor(image)
-            instances = result.get("instances") if isinstance(result, dict) else None
-            if instances is not None:
-                instances = _maybe_move_instances_to_cpu(instances)
-                boxes_tensor = None
-                if hasattr(instances, "pred_boxes") and getattr(instances, "pred_boxes") is not None:
-                    boxes_tensor = getattr(instances.pred_boxes, "tensor", None)
-                boxes = _tensor_to_list(boxes_tensor)
-                scores = _tensor_to_list(getattr(instances, "scores", None))
-                classes = _tensor_to_list(getattr(instances, "pred_classes", None))
+            if predictor is not None and cv2 is not None:
+                image = cv2.imread(str(image_abs))
+                if image is None:
+                    raise RuntimeError(f"failed to read input image: {image_abs}")
+                result = predictor(image)
+                inference_calls += 1
+                instances = result.get("instances") if isinstance(result, dict) else None
+                if instances is not None:
+                    instances = _maybe_move_instances_to_cpu(instances)
+                    boxes_tensor = None
+                    if hasattr(instances, "pred_boxes") and getattr(instances, "pred_boxes") is not None:
+                        boxes_tensor = getattr(instances.pred_boxes, "tensor", None)
+                    boxes = _tensor_to_list(boxes_tensor)
+                    scores = _tensor_to_list(getattr(instances, "scores", None))
+                    classes = _tensor_to_list(getattr(instances, "pred_classes", None))
 
-                for box, score, class_id in zip(boxes, scores, classes):
-                    if len(box) != 4:
-                        continue
-                    score_v = float(score)
-                    if score_v < float(args.score_thr):
-                        continue
-                    bbox = _xyxy_to_cxcywh_norm(float(box[0]), float(box[1]), float(box[2]), float(box[3]), width, height)
-                    if bbox is None:
-                        continue
-                    detections.append({"class_id": int(class_id), "score": score_v, "bbox": bbox})
+                    for box, score, class_id in zip(boxes, scores, classes):
+                        if len(box) != 4:
+                            continue
+                        score_v = float(score)
+                        if score_v < float(args.score_thr):
+                            continue
+                        bbox = _xyxy_to_cxcywh_norm(
+                            float(box[0]),
+                            float(box[1]),
+                            float(box[2]),
+                            float(box[3]),
+                            width,
+                            height,
+                        )
+                        if bbox is None:
+                            continue
+                        detections.append({"class_id": int(class_id), "score": score_v, "bbox": bbox})
 
-                detections = sorted(detections, key=lambda d: float(d["score"]), reverse=True)[: int(args.topk)]
+                    detections = sorted(detections, key=lambda d: float(d["score"]), reverse=True)[
+                        : int(args.topk)
+                    ]
 
-        outputs.append({"image": image_rel, "detections": detections})
+            outputs.append({"image": image_rel, "detections": detections})
+    except Exception as exc:
+        print(f"error: Detectron2 inference failed: {exc}", file=sys.stderr)
+        return 1
+
+    runtime_executed = bool(not args.dry_run and inference_calls == len(records))
+    if not args.dry_run and not runtime_executed:
+        print("error: Detectron2 inference did not execute for every selected image", file=sys.stderr)
+        return 1
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
-    meta = _default_wrap_meta(adapter="detectron2", config=str(args.config), images=len(outputs))
+    meta = _default_wrap_meta(adapter="detectron2", config=str(config_path), images=len(outputs))
     meta["extra"] = {
         "exporter": "detectron2",
         "protocol_id": str(args.protocol),
         "dataset": str(dataset_root),
         "split": manifest["split"],
-        "weights": str(args.weights),
+        "weights": str(weights_path),
         "device": str(args.device),
-        "runtime_error": runtime_error,
+        "runtime_error": None,
         "dry_run": bool(args.dry_run),
+        "runtime_executed": runtime_executed,
+        "execution_status": "dry_run" if args.dry_run else "completed",
+        "inference_calls": int(inference_calls),
+        "model_provenance": {
+            "config": str(config_path),
+            "config_sha256": (_sha256(config_path) if config_path.is_file() else None),
+            "weights": str(weights_path),
+            "weights_sha256": (_sha256(weights_path) if weights_path.is_file() else None),
+        },
         "export_settings": {
             "imgsz": int(args.imgsz),
             "score_threshold": float(args.score_thr),
@@ -232,8 +287,6 @@ def main(argv=None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"predictions": outputs, "meta": meta}, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(out)
-    if runtime_error and not args.dry_run:
-        print(f"[warn] detectron2 runtime unavailable: {runtime_error}")
     return 0
 
 

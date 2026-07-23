@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 import tempfile
@@ -53,6 +54,10 @@ class TestExportPredictionsDetectron2MMDetTools(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+            extra = json.loads(out.read_text(encoding="utf-8"))["meta"]["extra"]
+            self.assertEqual(extra.get("execution_status"), "dry_run")
+            self.assertFalse(bool(extra.get("runtime_executed")))
+            self.assertEqual(extra.get("inference_calls"), 0)
 
     def test_mmdet_dry_run_exports_strict_predictions(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -101,6 +106,74 @@ class TestExportPredictionsDetectron2MMDetTools(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+            extra = json.loads(out.read_text(encoding="utf-8"))["meta"]["extra"]
+            self.assertEqual(extra.get("execution_status"), "dry_run")
+            self.assertFalse(bool(extra.get("runtime_executed")))
+            self.assertEqual(extra.get("inference_calls"), 0)
+
+    def test_detectron2_non_dry_missing_runtime_inputs_fails_without_output(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "export_predictions_detectron2.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out = root / "pred_detectron2.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset",
+                    str(repo_root / "data" / "smoke"),
+                    "--split",
+                    "val",
+                    "--config",
+                    str(root / "missing.yaml"),
+                    "--weights",
+                    str(root / "missing.pth"),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("file not found", proc.stderr)
+            self.assertFalse(out.exists())
+
+    def test_mmdet_non_dry_missing_runtime_inputs_fails_without_output(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "export_predictions_mmdet.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out = root / "pred_mmdet.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset",
+                    str(repo_root / "data" / "smoke"),
+                    "--split",
+                    "val",
+                    "--config",
+                    str(root / "missing.py"),
+                    "--checkpoint",
+                    str(root / "missing.pth"),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("file not found", proc.stderr)
+            self.assertFalse(out.exists())
 
 
 if __name__ == "__main__":

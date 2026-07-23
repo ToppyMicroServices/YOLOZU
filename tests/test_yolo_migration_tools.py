@@ -179,7 +179,11 @@ class TestYoloMigrationTools(unittest.TestCase):
             self.assertIn("predictions", payload)
             self.assertIn("meta", payload)
             self.assertEqual(payload["meta"].get("adapter"), "ultralytics")
-            self.assertTrue(bool((payload.get("meta", {}).get("extra", {}) or {}).get("dry_run")))
+            extra = payload.get("meta", {}).get("extra", {}) or {}
+            self.assertTrue(bool(extra.get("dry_run")))
+            self.assertEqual(extra.get("execution_status"), "dry_run")
+            self.assertFalse(bool(extra.get("runtime_executed")))
+            self.assertEqual(extra.get("inference_calls"), 0)
 
 
 if __name__ == "__main__":

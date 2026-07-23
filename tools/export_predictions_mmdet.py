@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import platform
 import sys
@@ -85,6 +86,21 @@ def _default_wrap_meta(*, adapter: str, config: str, images: int) -> dict[str, A
     }
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    return path
+
+
 def _tensor_to_list(value: Any) -> list[Any]:
     if value is None:
         return []
@@ -115,8 +131,19 @@ def main(argv=None) -> int:
     if args.max_images is not None:
         records = records[: max(0, int(args.max_images))]
 
+    config_path = _resolve_path(str(args.config))
+    checkpoint_path = _resolve_path(str(args.checkpoint))
+    if not args.dry_run:
+        for label, path in (("config", config_path), ("checkpoint", checkpoint_path)):
+            if not path.is_file():
+                print(f"error: MMDetection {label} file not found: {path}", file=sys.stderr)
+                return 2
+        if not records:
+            print("error: MMDetection non-dry export selected no images", file=sys.stderr)
+            return 2
+
     outputs: list[dict[str, Any]] = []
-    runtime_error: str | None = None
+    inference_calls = 0
 
     model = None
     infer_fn = None
@@ -124,53 +151,82 @@ def main(argv=None) -> int:
         try:
             from mmdet.apis import inference_detector, init_detector  # type: ignore
 
-            model = init_detector(str(Path(args.config).expanduser()), str(Path(args.checkpoint).expanduser()), device=str(args.device))
+            model = init_detector(str(config_path), str(checkpoint_path), device=str(args.device))
             infer_fn = inference_detector
         except Exception as exc:
-            runtime_error = str(exc)
+            print(f"error: MMDetection runtime initialization failed: {exc}", file=sys.stderr)
+            return 1
 
-    for record in records:
-        image_rel = str(record.get("image") or "")
-        image_abs = dataset_root / image_rel
-        detections: list[dict[str, Any]] = []
-        width = int(record.get("width") or 0)
-        height = int(record.get("height") or 0)
+    try:
+        for record in records:
+            image_rel = str(record.get("image") or "")
+            image_abs = dataset_root / image_rel
+            detections: list[dict[str, Any]] = []
+            width = int(record.get("width") or 0)
+            height = int(record.get("height") or 0)
 
-        if model is not None and infer_fn is not None:
-            sample = infer_fn(model, str(image_abs))
-            pred_instances = getattr(sample, "pred_instances", None)
-            if pred_instances is None and isinstance(sample, dict):
-                pred_instances = sample.get("pred_instances")
-            if pred_instances is not None:
-                boxes = _tensor_to_list(getattr(pred_instances, "bboxes", None))
-                scores = _tensor_to_list(getattr(pred_instances, "scores", None))
-                labels = _tensor_to_list(getattr(pred_instances, "labels", None))
-                for box, score, class_id in zip(boxes, scores, labels):
-                    if len(box) != 4:
-                        continue
-                    score_v = float(score)
-                    if score_v < float(args.score_thr):
-                        continue
-                    bbox = _xyxy_to_cxcywh_norm(float(box[0]), float(box[1]), float(box[2]), float(box[3]), width, height)
-                    if bbox is None:
-                        continue
-                    detections.append({"class_id": int(class_id), "score": score_v, "bbox": bbox})
-                detections = sorted(detections, key=lambda d: float(d["score"]), reverse=True)[: int(args.topk)]
+            if model is not None and infer_fn is not None:
+                sample = infer_fn(model, str(image_abs))
+                inference_calls += 1
+                pred_instances = getattr(sample, "pred_instances", None)
+                if pred_instances is None and isinstance(sample, dict):
+                    pred_instances = sample.get("pred_instances")
+                if pred_instances is not None:
+                    boxes = _tensor_to_list(getattr(pred_instances, "bboxes", None))
+                    scores = _tensor_to_list(getattr(pred_instances, "scores", None))
+                    labels = _tensor_to_list(getattr(pred_instances, "labels", None))
+                    for box, score, class_id in zip(boxes, scores, labels):
+                        if len(box) != 4:
+                            continue
+                        score_v = float(score)
+                        if score_v < float(args.score_thr):
+                            continue
+                        bbox = _xyxy_to_cxcywh_norm(
+                            float(box[0]),
+                            float(box[1]),
+                            float(box[2]),
+                            float(box[3]),
+                            width,
+                            height,
+                        )
+                        if bbox is None:
+                            continue
+                        detections.append({"class_id": int(class_id), "score": score_v, "bbox": bbox})
+                    detections = sorted(detections, key=lambda d: float(d["score"]), reverse=True)[
+                        : int(args.topk)
+                    ]
 
-        outputs.append({"image": image_rel, "detections": detections})
+            outputs.append({"image": image_rel, "detections": detections})
+    except Exception as exc:
+        print(f"error: MMDetection inference failed: {exc}", file=sys.stderr)
+        return 1
+
+    runtime_executed = bool(not args.dry_run and inference_calls == len(records))
+    if not args.dry_run and not runtime_executed:
+        print("error: MMDetection inference did not execute for every selected image", file=sys.stderr)
+        return 1
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
-    meta = _default_wrap_meta(adapter="mmdetection", config=str(args.config), images=len(outputs))
+    meta = _default_wrap_meta(adapter="mmdetection", config=str(config_path), images=len(outputs))
     meta["extra"] = {
         "exporter": "mmdetection",
         "protocol_id": str(args.protocol),
         "dataset": str(dataset_root),
         "split": manifest["split"],
-        "checkpoint": str(args.checkpoint),
+        "checkpoint": str(checkpoint_path),
         "device": str(args.device),
-        "runtime_error": runtime_error,
+        "runtime_error": None,
         "dry_run": bool(args.dry_run),
+        "runtime_executed": runtime_executed,
+        "execution_status": "dry_run" if args.dry_run else "completed",
+        "inference_calls": int(inference_calls),
+        "model_provenance": {
+            "config": str(config_path),
+            "config_sha256": (_sha256(config_path) if config_path.is_file() else None),
+            "checkpoint": str(checkpoint_path),
+            "checkpoint_sha256": (_sha256(checkpoint_path) if checkpoint_path.is_file() else None),
+        },
         "export_settings": {
             "imgsz": int(args.imgsz),
             "score_threshold": float(args.score_thr),
@@ -199,8 +255,6 @@ def main(argv=None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"predictions": outputs, "meta": meta}, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(out)
-    if runtime_error and not args.dry_run:
-        print(f"[warn] mmdetection runtime unavailable: {runtime_error}")
     return 0
 
 

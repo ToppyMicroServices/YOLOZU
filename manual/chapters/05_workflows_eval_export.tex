@@ -212,7 +212,19 @@ python3 tools/validate_predictions.py reports/pred_yolox.json --strict
 python3 tools/eval_coco.py --dataset /path/to/coco-yolo --split val2017 --predictions reports/pred_yolox.json --protocol nms_applied --classes /path/to/coco-yolo/labels/val2017/classes.json --output reports/eval_yolox.json
 \end{lstlisting}
 
-The exporter records \path{weights_sha256}, projected exp parameters, preprocessing assumptions, and protocol metadata under \path{meta.extra.export_settings}.
+Non-dry YOLOX export is fail-closed: \cmd{--exp} and \cmd{--weights} must
+both identify existing files, the runtime must initialize, and inference must
+run for every selected image. Otherwise the command returns nonzero without
+writing a new predictions artifact. Use \cmd{--dry-run} only for a schema-valid
+placeholder that intentionally skips inference.
+
+The exporter records \path{meta.extra.execution_status},
+\path{runtime_executed}, and \path{inference_calls} to distinguish
+\cmd{dry_run} from \cmd{completed} execution. Exp/checkpoint paths and hashes
+are stored under \path{meta.extra.model_provenance}; projected exp parameters,
+preprocessing assumptions, and protocol metadata remain under
+\path{meta.extra.export_settings}. A completed inference can validly contain
+an empty detections list.
 
 \subsection{YOLO-style external training lane}
 When the goal is training rather than export-only interop, the recommended
@@ -470,7 +482,22 @@ python3 tools/validate_predictions.py reports/pred_detectron2.json --strict
 python3 tools/eval_coco.py   --dataset data/coco_yolo_like   --split val2017   --predictions reports/pred_detectron2.json   --protocol nms_applied   --classes data/coco_yolo_like/labels/val2017/classes.json   --output reports/coco_eval_detectron2.json
 \end{lstlisting}
 
-The exporters preserve raw framework box convention (\cmd{xyxy_abs}) in \path{export_settings.raw_output_bbox_format}, while normalizing contract output to \cmd{cxcywh_norm} for strict schema validation.
+These commands are non-dry by default. Detectron2 requires existing
+\cmd{--config} and \cmd{--weights} files; MMDetection requires existing
+\cmd{--config} and \cmd{--checkpoint} files. Runtime initialization and
+inference for every selected image must complete before a new artifact is
+written. Missing prerequisites, unreadable inputs, or runtime/inference errors
+return nonzero. Use \cmd{--dry-run} only for schema-valid output that
+intentionally skips framework inference.
+
+The exporters record \path{meta.extra.execution_status},
+\path{runtime_executed}, and \path{inference_calls}; successful non-dry
+artifacts also include config/checkpoint provenance and SHA-256 values in
+\path{meta.extra.model_provenance}. Empty detections remain valid after
+completed inference. The exporters preserve raw framework box convention
+(\cmd{xyxy_abs}) in \path{export_settings.raw_output_bbox_format}, while
+normalizing the predictions interface contract output to \cmd{cxcywh_norm} for
+strict schema validation.
 
 \subsection{COCO results (inference outputs) \texorpdfstring{$\rightarrow$}{->} predictions.json}
 To convert COCO-style detection results into the standardized YOLOZU predictions contract:

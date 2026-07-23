@@ -53,7 +53,7 @@ Contact: develop@toppymicros.com
 |---|---|---|---|
 | adapter_parity_suite | experimental | tools/adapter_parity_suite.py | Run parity checks for multiple adapter outputs against a reference adapter predictions file. |
 | announce_release | stable | tools/announce_release.py | Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. |
-| audit_backend_support | experimental | tools/audit_backend_support.py | Dry-run interface contract audit for YOLOX/YOLOv8/Detectron2/MMDetection export backends. |
+| audit_backend_support | experimental | tools/audit_backend_support.py | Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends. |
 | audit_docs_examples_drift | stable | tools/audit_docs_examples_drift.py | Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates. |
 | audit_manual_cli_drift | stable | tools/audit_manual_cli_drift.py | Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface. |
 | backend_parity_matrix | experimental | tools/backend_parity_matrix.py | Run one-command backend parity matrix checks across torch/onnxrt/trt/opencv_dnn/custom_cpp and export JSON+HTML reports. |
@@ -91,9 +91,9 @@ Contact: develop@toppymicros.com
 | export_actions_openapi | stable | tools/export_actions_openapi.py | Export a static OpenAPI JSON schema for YOLOZU Actions API registration. |
 | export_predictions | stable | tools/export_predictions.py | Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips. |
 | export_predictions_coco_keypoints | experimental | tools/export_predictions_coco_keypoints.py | Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity. |
-| export_predictions_detectron2 | experimental | tools/export_predictions_detectron2.py | Run Detectron2 inference and export YOLOZU predictions.json with protocol/export_settings metadata. |
+| export_predictions_detectron2 | experimental | tools/export_predictions_detectron2.py | Run fail-closed Detectron2 inference and export predictions.json with protocol, execution-evidence, and provenance metadata. |
 | export_predictions_executorch | experimental | tools/export_predictions_executorch.py | Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation). |
-| export_predictions_mmdet | experimental | tools/export_predictions_mmdet.py | Run MMDetection inference and export YOLOZU predictions.json with protocol/export_settings metadata. |
+| export_predictions_mmdet | experimental | tools/export_predictions_mmdet.py | Run fail-closed MMDetection inference and export predictions.json with protocol, execution-evidence, and provenance metadata. |
 | export_predictions_onnxrt | experimental | tools/export_predictions_onnxrt.py | Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv; see Rust ONNXRuntime template notes in external inference docs). |
 | export_predictions_opencv_dnn | experimental | tools/export_predictions_opencv_dnn.py | Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8 84 or YOLOv5 85+obj raw heads supported). |
 | export_predictions_opencv_dnn_rtdetr | experimental | tools/export_predictions_opencv_dnn_rtdetr.py | Run OpenCV-DNN inference on an RT-DETR ONNX model and export YOLOZU predictions JSON (no NMS), recording fixed preprocess/export_settings. |
@@ -101,9 +101,9 @@ Contact: develop@toppymicros.com
 | export_predictions_openvino | experimental | tools/export_predictions_openvino.py | Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
 | export_predictions_torchscript | experimental | tools/export_predictions_torchscript.py | Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
 | export_predictions_trt | experimental | tools/export_predictions_trt.py | Run TensorRT engine inference and export YOLOZU predictions JSON (requires tensorrt + CUDA bindings). |
-| export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run external YOLO-runtime inference and export YOLOZU predictions.json with protocol and export_settings metadata. |
+| export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run external YOLO-runtime inference and export predictions.json with protocol, execution-evidence, and model-provenance metadata. |
 | export_predictions_yolov5 | experimental | tools/export_predictions_yolov5.py | Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings. |
-| export_predictions_yolox | experimental | tools/export_predictions_yolox.py | Run YOLOX inference (or dry-run) and export YOLOZU predictions.json with exp parameter capture. |
+| export_predictions_yolox | experimental | tools/export_predictions_yolox.py | Run fail-closed YOLOX inference (or dry-run) and export predictions.json with execution evidence and exp/checkpoint provenance. |
 | export_trt | experimental | tools/export_trt.py | Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. |
 | fetch_coco128 | stable | tools/fetch_coco128.sh | Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting). |
 | fetch_model | stable | yolozu/cli.py | Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates. |
