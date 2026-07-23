@@ -273,6 +273,29 @@ For non-artifact evaluation, format rules still apply: the current
 \cmd{torch} lane can accept these non-default flags, while other current
 formats reject them. The complete matrix is generated in
 \path{docs/benchmark_support_matrix.md}.
+The \cmd{--sleep-s} value must also be finite and non-negative; invalid values
+fail before report or artifact writes.
+
+\paragraph{Classification and OBB artifact input interface contracts.}
+Each labels or predictions JSON top level must be an object or an array.
+An omitted \cmd{classes} field, \cmd{classes: null}, and
+\cmd{classes: []} all mean that the vocabulary is unspecified. A non-empty
+\cmd{classes} array must contain unique, non-empty strings.
+Classification label and prediction artifacts require unique sample ids.
+Every classification score vector must be non-empty and finite; its length must
+match the ordered \cmd{classes} list and remain consistent across samples and
+compared backend artifacts. When both sides declare \cmd{classes}, the ordered
+lists must match exactly. Label indices must fit the resolved score vector and
+class vocabulary. OBB label and prediction artifacts require unique image ids.
+Once either side supplies a class vocabulary, every label and prediction
+\cmd{class_id} must be an integer within its range; booleans are rejected.
+Normalized geometry must be finite with \cmd{cx}/\cmd{cy} in \cmd{[0,1]},
+\cmd{w}/\cmd{h} in \cmd{(0,1]}, and \cmd{angle_deg} in
+\cmd{[-180,180]}; prediction confidence scores must be finite and in
+\cmd{[0,1]}. Empty per-image \cmd{detections} lists remain valid. Violations
+produce an explicit failed result, and \cmd{--strict} returns exit code 2.
+Classification/OBB benchmark JSON, JSONL, and export-settings outputs never
+emit non-standard \cmd{NaN} or infinity numeric tokens.
 
 \subsection{Canonical benchmark support matrix}
 The source of truth for per-format, per-task artifact status is

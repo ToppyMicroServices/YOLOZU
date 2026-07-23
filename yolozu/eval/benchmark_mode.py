@@ -112,7 +112,7 @@ TASK_SEMANTICS = {
         "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino prediction artifacts. Its input interface contract requires unique sample ids, finite score vectors, matching vector lengths, and consistent class lists; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "obb": {
         "display_name": "Oriented Bounding Boxes",
@@ -121,7 +121,7 @@ TASK_SEMANTICS = {
         "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box prediction artifacts; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box prediction artifacts. Its input interface contract requires unique image ids, finite normalized geometry, and confidence scores in [0,1], while allowing empty detection lists; benchmark reports do not claim YOLOZU ran backend inference.",
     },
     "keypoints": {
         "display_name": "Keypoints / Pose",
@@ -685,6 +685,14 @@ def _latency_source_context(args: Any, *, effective_source: str) -> str:
 
 
 def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_label: str) -> None:
+    raw_sleep_s = getattr(args, "sleep_s", 0.0)
+    try:
+        sleep_s = float(raw_sleep_s)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("--sleep-s must be a finite, non-negative number") from exc
+    if not math.isfinite(sleep_s) or sleep_s < 0.0:
+        raise ValueError("--sleep-s must be a finite, non-negative number")
+
     requested_source = str(getattr(args, "latency_source", "auto") or "auto")
     if task_label == "detect" and requested_source == "artifact_eval":
         raise ValueError(
@@ -920,6 +928,23 @@ def _load_json_payload(path: Path) -> dict[str, Any] | list[Any] | None:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+def _write_strict_json(path: Path, payload: dict[str, Any]) -> None:
+    """Write standards-compliant JSON without NaN or Infinity tokens."""
+
+    text = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _append_strict_jsonl(path: Path, payload: dict[str, Any]) -> None:
+    """Append one standards-compliant JSON object to a JSONL file."""
+
+    text = json.dumps(payload, sort_keys=True, allow_nan=False)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(text + "\n")
 
 
 def _prediction_entry_count(path: Path) -> int:
@@ -1370,6 +1395,11 @@ def _write_segmentation_predictions_artifact(
 def _classification_payload_entries(payload: dict[str, Any] | list[Any], key: str) -> list[Any]:
     if isinstance(payload, list):
         return payload
+    if not isinstance(payload, dict):
+        artifact_kind = "labels" if key == "samples" else "predictions"
+        raise ValueError(
+            f"classification {artifact_kind} JSON top level must be an object or array"
+        )
     entries = payload.get(key)
     if isinstance(entries, list):
         return entries
@@ -1380,13 +1410,37 @@ def _classification_payload_entries(payload: dict[str, Any] | list[Any], key: st
     return []
 
 
-def _classification_classes(*payloads: dict[str, Any] | list[Any]) -> list[str]:
-    for payload in payloads:
-        if isinstance(payload, dict):
-            classes = payload.get("classes")
-            if isinstance(classes, list) and classes:
-                return [str(item) for item in classes]
-    return []
+def _artifact_classes(payload: dict[str, Any] | list[Any], *, where: str) -> list[str]:
+    if not isinstance(payload, dict) or "classes" not in payload:
+        return []
+    raw_classes = payload.get("classes")
+    if raw_classes is None or raw_classes == []:
+        return []
+    if not isinstance(raw_classes, list):
+        raise ValueError(f"{where}: classes must be null or an array")
+    if any(not isinstance(item, str) for item in raw_classes):
+        raise ValueError(f"{where}: class names must be strings")
+    classes = list(raw_classes)
+    if any(not item for item in classes):
+        raise ValueError(f"{where}: class names must be non-empty")
+    seen: set[str] = set()
+    for class_name in classes:
+        if class_name in seen:
+            raise ValueError(f"{where}: duplicate class name: {class_name}")
+        seen.add(class_name)
+    return classes
+
+
+def _validate_artifact_classes(
+    declared: list[str],
+    expected: list[str],
+    *,
+    where: str,
+    expected_source: str,
+) -> list[str]:
+    if declared and expected and declared != expected:
+        raise ValueError(f"{where}: classes must exactly match {expected_source}")
+    return list(expected or declared)
 
 
 def _classification_label_index(value: Any, classes: list[str]) -> int:
@@ -1406,7 +1460,7 @@ def _load_classification_labels(path: Path) -> tuple[dict[str, int], list[str]]:
     payload = _load_json_payload(path)
     if payload is None:
         raise ValueError("classification labels JSON could not be read")
-    classes = _classification_classes(payload)
+    classes = _artifact_classes(payload, where="classification labels")
     labels: dict[str, int] = {}
     for entry in _classification_payload_entries(payload, "samples"):
         if not isinstance(entry, dict):
@@ -1414,21 +1468,46 @@ def _load_classification_labels(path: Path) -> tuple[dict[str, int], list[str]]:
         sample_id = entry.get("id", entry.get("sample_id"))
         if sample_id is None:
             raise ValueError("classification label entry missing id")
+        normalized_id = str(sample_id)
+        if normalized_id in labels:
+            raise ValueError(f"classification labels contain duplicate sample id: {normalized_id}")
         raw_label = entry.get("label", entry.get("class_id", entry.get("class")))
         if raw_label is None:
             raise ValueError(f"classification label entry missing label for id={sample_id}")
-        labels[str(sample_id)] = _classification_label_index(raw_label, classes)
+        label = _classification_label_index(raw_label, classes)
+        if classes and label >= len(classes):
+            raise ValueError(f"classification label index out of range for id={normalized_id}")
+        labels[normalized_id] = label
     if not labels:
         raise ValueError("classification labels JSON has no samples")
     return labels, classes
 
 
-def _load_classification_predictions(path: Path, classes: list[str]) -> dict[str, list[float]]:
+def _load_classification_predictions(
+    path: Path,
+    classes: list[str],
+    *,
+    expected_classes: list[str] | None = None,
+    expected_score_count: int | None = None,
+) -> tuple[dict[str, list[float]], list[str], int]:
     payload = _load_json_payload(path)
     if payload is None:
         raise ValueError("classification predictions JSON could not be read")
-    if not classes:
-        classes = _classification_classes(payload)
+    declared_classes = _artifact_classes(payload, where="classification predictions")
+    resolved_classes = _validate_artifact_classes(
+        declared_classes,
+        classes,
+        where="classification predictions",
+        expected_source="the labels artifact",
+    )
+    if expected_classes:
+        resolved_classes = _validate_artifact_classes(
+            resolved_classes,
+            expected_classes,
+            where="classification predictions compared across backends",
+            expected_source="the first successfully evaluated backend artifact",
+        )
+    score_count = len(resolved_classes) or expected_score_count
     predictions: dict[str, list[float]] = {}
     for entry in _classification_payload_entries(payload, "predictions"):
         if not isinstance(entry, dict):
@@ -1436,19 +1515,33 @@ def _load_classification_predictions(path: Path, classes: list[str]) -> dict[str
         sample_id = entry.get("id", entry.get("sample_id"))
         if sample_id is None:
             raise ValueError("classification prediction entry missing id")
+        normalized_id = str(sample_id)
+        if normalized_id in predictions:
+            raise ValueError(f"classification predictions contain duplicate sample id: {normalized_id}")
         scores = entry.get("scores", entry.get("probabilities", entry.get("logits")))
         if not isinstance(scores, list) or not scores:
             raise ValueError(f"classification prediction entry missing scores for id={sample_id}")
+        if any(isinstance(value, bool) for value in scores):
+            raise ValueError(f"classification prediction scores must be numeric for id={normalized_id}")
         try:
             parsed = [float(value) for value in scores]
         except (TypeError, ValueError) as exc:
             raise ValueError(f"classification prediction scores must be numeric for id={sample_id}") from exc
-        if classes and len(parsed) != len(classes):
-            raise ValueError(f"classification prediction score count does not match classes for id={sample_id}")
-        predictions[str(sample_id)] = parsed
+        if any(not math.isfinite(value) for value in parsed):
+            raise ValueError(f"classification prediction scores must be finite for id={normalized_id}")
+        if score_count is None:
+            score_count = len(parsed)
+        if len(parsed) != score_count:
+            raise ValueError(
+                "classification prediction score count must match classes and other compared "
+                f"artifacts for id={normalized_id}: expected {score_count}, got {len(parsed)}"
+            )
+        predictions[normalized_id] = parsed
     if not predictions:
         raise ValueError("classification predictions JSON has no predictions")
-    return predictions
+    if score_count is None:
+        raise ValueError("classification predictions JSON has no score vectors")
+    return predictions, resolved_classes, score_count
 
 
 def _write_classification_predictions_artifact(
@@ -1458,8 +1551,15 @@ def _write_classification_predictions_artifact(
     source_path: Path,
     run_meta: dict[str, Any],
     classes: list[str],
-) -> dict[str, Any]:
-    predictions = _load_classification_predictions(source_path, classes)
+    expected_classes: list[str] | None = None,
+    expected_score_count: int | None = None,
+) -> tuple[dict[str, Any], dict[str, list[float]], list[str], int]:
+    predictions, resolved_classes, score_count = _load_classification_predictions(
+        source_path,
+        classes,
+        expected_classes=expected_classes,
+        expected_score_count=expected_score_count,
+    )
     normalized = [
         {"id": sample_id, "scores": scores}
         for sample_id, scores in sorted(predictions.items())
@@ -1469,7 +1569,7 @@ def _write_classification_predictions_artifact(
         "kind": "benchmark_classification_predictions_artifact",
         "format": fmt,
         "status": "reference_artifact",
-        "classes": list(classes),
+        "classes": list(resolved_classes),
         "predictions": normalized,
         "meta": {
             "source_path": str(source_path),
@@ -1478,8 +1578,8 @@ def _write_classification_predictions_artifact(
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
     }
-    write_json(path, payload)
-    return payload
+    _write_strict_json(path, payload)
+    return payload, predictions, resolved_classes, score_count
 
 
 def _evaluate_classification(
@@ -1558,13 +1658,16 @@ def _write_classification_eval_report(
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
     }
-    write_json(path, payload)
+    _write_strict_json(path, payload)
     return payload
 
 
 def _obb_payload_entries(payload: dict[str, Any] | list[Any], key: str) -> list[Any]:
     if isinstance(payload, list):
         return payload
+    if not isinstance(payload, dict):
+        artifact_kind = "labels" if key == "samples" else "predictions"
+        raise ValueError(f"OBB {artifact_kind} JSON top level must be an object or array")
     entries = payload.get(key)
     if isinstance(entries, list):
         return entries
@@ -1575,21 +1678,14 @@ def _obb_payload_entries(payload: dict[str, Any] | list[Any], key: str) -> list[
     return []
 
 
-def _obb_classes(*payloads: dict[str, Any] | list[Any]) -> list[str]:
-    for payload in payloads:
-        if isinstance(payload, dict):
-            classes = payload.get("classes")
-            if isinstance(classes, list) and classes:
-                return [str(item) for item in classes]
-    return []
-
-
 def _obb_class_id(value: Any, classes: list[str], *, where: str) -> int:
     if isinstance(value, bool):
         raise ValueError(f"{where}: class_id must be an int index or class name")
     if isinstance(value, int):
         if value < 0:
             raise ValueError(f"{where}: class_id must be non-negative")
+        if classes and value >= len(classes):
+            raise ValueError(f"{where}: class_id must be smaller than the classes list length")
         return int(value)
     text = str(value)
     if text in classes:
@@ -1604,6 +1700,8 @@ def _obb_box(value: Any, *, where: str) -> dict[str, float]:
     for key in ("cx", "cy", "w", "h"):
         if key not in value:
             raise ValueError(f"{where}: obb missing {key}")
+        if isinstance(value[key], bool):
+            raise ValueError(f"{where}: obb.{key} must be numeric")
         try:
             parsed = float(value[key])
         except (TypeError, ValueError) as exc:
@@ -1614,6 +1712,8 @@ def _obb_box(value: Any, *, where: str) -> dict[str, float]:
     angle_key = "angle_deg" if "angle_deg" in value else "angle"
     if angle_key not in value:
         raise ValueError(f"{where}: obb missing angle_deg")
+    if isinstance(value[angle_key], bool):
+        raise ValueError(f"{where}: obb.angle_deg must be numeric")
     try:
         angle = float(value[angle_key])
     except (TypeError, ValueError) as exc:
@@ -1638,7 +1738,7 @@ def _load_obb_labels(path: Path) -> tuple[dict[str, list[dict[str, Any]]], list[
     payload = _load_json_payload(path)
     if payload is None:
         raise ValueError("OBB labels JSON could not be read")
-    classes = _obb_classes(payload)
+    classes = _artifact_classes(payload, where="OBB labels")
     labels: dict[str, list[dict[str, Any]]] = {}
     for sample_idx, sample in enumerate(_obb_payload_entries(payload, "samples")):
         if not isinstance(sample, dict):
@@ -1646,6 +1746,9 @@ def _load_obb_labels(path: Path) -> tuple[dict[str, list[dict[str, Any]]], list[
         sample_id = sample.get("id", sample.get("sample_id"))
         if sample_id is None:
             raise ValueError("OBB label sample missing id")
+        normalized_id = str(sample_id)
+        if normalized_id in labels:
+            raise ValueError(f"OBB labels contain duplicate image id: {normalized_id}")
         objects = sample.get("objects", sample.get("annotations"))
         if not isinstance(objects, list):
             raise ValueError(f"OBB label sample missing objects for id={sample_id}")
@@ -1663,18 +1766,35 @@ def _load_obb_labels(path: Path) -> tuple[dict[str, list[dict[str, Any]]], list[
                     "obb": _obb_box(box, where=f"labels[{sample_idx}].objects[{obj_idx}]"),
                 }
             )
-        labels[str(sample_id)] = parsed_objects
+        labels[normalized_id] = parsed_objects
     if not labels:
         raise ValueError("OBB labels JSON has no samples")
     return labels, classes
 
 
-def _load_obb_predictions(path: Path, classes: list[str]) -> dict[str, list[dict[str, Any]]]:
+def _load_obb_predictions(
+    path: Path,
+    classes: list[str],
+    *,
+    expected_classes: list[str] | None = None,
+) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
     payload = _load_json_payload(path)
     if payload is None:
         raise ValueError("OBB predictions JSON could not be read")
-    if not classes:
-        classes = _obb_classes(payload)
+    declared_classes = _artifact_classes(payload, where="OBB predictions")
+    resolved_classes = _validate_artifact_classes(
+        declared_classes,
+        classes,
+        where="OBB predictions",
+        expected_source="the labels artifact",
+    )
+    if expected_classes:
+        resolved_classes = _validate_artifact_classes(
+            resolved_classes,
+            expected_classes,
+            where="OBB predictions compared across backends",
+            expected_source="the first successfully evaluated backend artifact",
+        )
     predictions: dict[str, list[dict[str, Any]]] = {}
     for sample_idx, sample in enumerate(_obb_payload_entries(payload, "predictions")):
         if not isinstance(sample, dict):
@@ -1682,6 +1802,9 @@ def _load_obb_predictions(path: Path, classes: list[str]) -> dict[str, list[dict
         sample_id = sample.get("id", sample.get("sample_id"))
         if sample_id is None:
             raise ValueError("OBB prediction sample missing id")
+        normalized_id = str(sample_id)
+        if normalized_id in predictions:
+            raise ValueError(f"OBB predictions contain duplicate image id: {normalized_id}")
         detections = sample.get("detections", sample.get("objects"))
         if not isinstance(detections, list):
             raise ValueError(f"OBB prediction sample missing detections for id={sample_id}")
@@ -1692,24 +1815,32 @@ def _load_obb_predictions(path: Path, classes: list[str]) -> dict[str, list[dict
             raw_class = det.get("class_id", det.get("class"))
             if raw_class is None:
                 raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: missing class_id")
+            if isinstance(det.get("score"), bool):
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be numeric")
             try:
                 score = float(det.get("score"))
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be numeric") from exc
             if not math.isfinite(score):
                 raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be finite")
+            if not (0.0 <= score <= 1.0):
+                raise ValueError(f"predictions[{sample_idx}].detections[{det_idx}]: score must be in [0,1]")
             box = det.get("obb", det.get("bbox"))
             parsed_detections.append(
                 {
-                    "class_id": _obb_class_id(raw_class, classes, where=f"predictions[{sample_idx}].detections[{det_idx}]"),
+                    "class_id": _obb_class_id(
+                        raw_class,
+                        resolved_classes,
+                        where=f"predictions[{sample_idx}].detections[{det_idx}]",
+                    ),
                     "score": score,
                     "obb": _obb_box(box, where=f"predictions[{sample_idx}].detections[{det_idx}]"),
                 }
             )
-        predictions[str(sample_id)] = sorted(parsed_detections, key=lambda item: float(item["score"]), reverse=True)
+        predictions[normalized_id] = sorted(parsed_detections, key=lambda item: float(item["score"]), reverse=True)
     if not predictions:
         raise ValueError("OBB predictions JSON has no predictions")
-    return predictions
+    return predictions, resolved_classes
 
 
 def _write_obb_predictions_artifact(
@@ -1719,8 +1850,13 @@ def _write_obb_predictions_artifact(
     source_path: Path,
     run_meta: dict[str, Any],
     classes: list[str],
-) -> dict[str, Any]:
-    predictions = _load_obb_predictions(source_path, classes)
+    expected_classes: list[str] | None = None,
+) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]]], list[str]]:
+    predictions, resolved_classes = _load_obb_predictions(
+        source_path,
+        classes,
+        expected_classes=expected_classes,
+    )
     normalized = [
         {"id": sample_id, "detections": detections}
         for sample_id, detections in sorted(predictions.items())
@@ -1730,7 +1866,7 @@ def _write_obb_predictions_artifact(
         "kind": "benchmark_obb_predictions_artifact",
         "format": fmt,
         "status": "reference_artifact",
-        "classes": list(classes),
+        "classes": list(resolved_classes),
         "predictions": normalized,
         "meta": {
             "source_path": str(source_path),
@@ -1740,8 +1876,8 @@ def _write_obb_predictions_artifact(
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
     }
-    write_json(path, payload)
-    return payload
+    _write_strict_json(path, payload)
+    return payload, predictions, resolved_classes
 
 
 def _obb_corners(box: dict[str, float]) -> list[tuple[float, float]]:
@@ -1875,11 +2011,35 @@ def _obb_match_count(
     return matched, per_sample
 
 
+def _validate_obb_class_id_range(
+    entries: dict[str, list[dict[str, Any]]],
+    classes: list[str],
+    *,
+    where: str,
+) -> None:
+    if not classes:
+        return
+    for sample_id, items in sorted(entries.items()):
+        for item_idx, item in enumerate(items):
+            class_id = item.get("class_id")
+            if isinstance(class_id, bool) or not isinstance(class_id, int):
+                raise ValueError(
+                    f"{where}: class_id must be an int for id={sample_id}, item={item_idx}"
+                )
+            if not (0 <= class_id < len(classes)):
+                raise ValueError(
+                    f"{where}: class_id out of range for id={sample_id}, item={item_idx}: "
+                    f"expected [0,{len(classes) - 1}], got {class_id}"
+                )
+
+
 def _evaluate_obb(
     labels: dict[str, list[dict[str, Any]]],
     predictions: dict[str, list[dict[str, Any]]],
     classes: list[str],
 ) -> dict[str, Any]:
+    _validate_obb_class_id_range(labels, classes, where="OBB labels")
+    _validate_obb_class_id_range(predictions, classes, where="OBB predictions")
     total_gt = sum(len(items) for items in labels.values())
     total_pred = sum(len(items) for items in predictions.values())
     if total_gt <= 0:
@@ -1935,7 +2095,7 @@ def _write_obb_eval_report(
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
     }
-    write_json(path, payload)
+    _write_strict_json(path, payload)
     return payload
 
 
@@ -2593,6 +2753,10 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     }
 
     results: list[dict[str, Any]] = []
+    classification_artifact_classes: list[str] | None = None
+    classification_score_count: int | None = None
+    obb_artifact_classes: list[str] | None = None
+
     for fmt in requested_formats:
         supported, skip_reason = _support_status_for_format(
             fmt,
@@ -2800,15 +2964,21 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                     else:
                         try:
                             labels, classes = _load_classification_labels(label_source)
-                            _write_classification_predictions_artifact(
+                            (
+                                _,
+                                predictions,
+                                resolved_classes,
+                                score_count,
+                            ) = _write_classification_predictions_artifact(
                                 predictions_path,
                                 fmt=fmt,
                                 source_path=pred_source,
                                 run_meta=format_run_meta,
                                 classes=classes,
+                                expected_classes=classification_artifact_classes,
+                                expected_score_count=classification_score_count,
                             )
-                            predictions = _load_classification_predictions(predictions_path, classes)
-                            metrics = _evaluate_classification(labels, predictions, classes)
+                            metrics = _evaluate_classification(labels, predictions, resolved_classes)
                             _write_classification_eval_report(
                                 eval_path,
                                 fmt=fmt,
@@ -2817,6 +2987,10 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                                 metrics=metrics,
                                 run_meta=format_run_meta,
                             )
+                            if classification_artifact_classes is None and resolved_classes:
+                                classification_artifact_classes = list(resolved_classes)
+                            if classification_score_count is None:
+                                classification_score_count = score_count
                         except ValueError as exc:
                             status = "failed"
                             skip_reason = "classification_artifact_invalid"
@@ -2922,15 +3096,19 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                     else:
                         try:
                             labels, classes = _load_obb_labels(label_source)
-                            _write_obb_predictions_artifact(
+                            (
+                                _,
+                                predictions,
+                                resolved_classes,
+                            ) = _write_obb_predictions_artifact(
                                 predictions_path,
                                 fmt=fmt,
                                 source_path=pred_source,
                                 run_meta=format_run_meta,
                                 classes=classes,
+                                expected_classes=obb_artifact_classes,
                             )
-                            predictions = _load_obb_predictions(predictions_path, classes)
-                            metrics = _evaluate_obb(labels, predictions, classes)
+                            metrics = _evaluate_obb(labels, predictions, resolved_classes)
                             _write_obb_eval_report(
                                 eval_path,
                                 fmt=fmt,
@@ -2939,6 +3117,8 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                                 metrics=metrics,
                                 run_meta=format_run_meta,
                             )
+                            if obb_artifact_classes is None and resolved_classes:
+                                obb_artifact_classes = list(resolved_classes)
                         except ValueError as exc:
                             status = "failed"
                             skip_reason = "obb_artifact_invalid"
@@ -3499,7 +3679,10 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             execution_semantics=execution_semantics,
             model_artifact=model_artifact,
         )
-        write_json(export_settings_path, export_settings)
+        if task_label in {"classification", "obb"}:
+            _write_strict_json(export_settings_path, export_settings)
+        else:
+            write_json(export_settings_path, export_settings)
 
         result = {
             "schema_version": 1,
@@ -3619,9 +3802,15 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             "formats": list(requested_formats),
         },
     }
-    write_json(report_path, report)
+    if task_label in {"classification", "obb"}:
+        _write_strict_json(report_path, report)
+    else:
+        write_json(report_path, report)
     if history_path:
-        append_jsonl(history_path, report)
+        if task_label in {"classification", "obb"}:
+            _append_strict_jsonl(history_path, report)
+        else:
+            append_jsonl(history_path, report)
     return report, 2 if strict_failure else 0
 
 
@@ -3709,7 +3898,12 @@ def build_parser() -> Any:
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
-    parser.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
+    parser.add_argument(
+        "--sleep-s",
+        type=float,
+        default=0.0,
+        help="Finite, non-negative synthetic latency sleep per step (default: 0).",
+    )
     return parser
 
 

@@ -233,13 +233,13 @@
       "id": "classification",
       "metric_family": "topk_accuracy",
       "surface": "mainstream",
-      "semantics": "artifact-backed real eval for real backend formats"
+      "semantics": "artifact-backed real eval with unique sample ids, finite class-aligned score vectors, and validated optional ordered class vocabularies"
     },
     {
       "id": "obb",
       "metric_family": "obb_map",
       "surface": "mainstream",
-      "semantics": "artifact-backed real eval for real backend formats"
+      "semantics": "artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, and valid empty detection lists"
     },
     {
       "id": "keypoints",

@@ -327,6 +327,17 @@ Task-specific behavior should also be explicit:
 - `segmentation`, `keypoints`, `depth`, and `pose6d` are allowed as artifact-backed real eval/parity paths for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions
 
+The shipped classification/OBB artifact input interface contracts fail closed
+before metric computation. Classification requires unique sample ids, finite
+score vectors with consistent class-aligned lengths, and matching ordered class
+lists when declared. Omitted, null, or empty class lists remain compatible as
+an unspecified vocabulary; non-empty vocabularies contain unique strings. OBB
+requires unique image ids, in-range integer class ids once a vocabulary is
+resolved, finite normalized geometry, and finite confidence scores in `[0,1]`;
+empty per-image detection lists remain valid. Classification/OBB report,
+artifact, and export-settings writers emit strict JSON without non-standard
+non-finite numeric tokens.
+
 ## 10. Mapping to Existing YOLOZU Tools
 
 Current repo pieces that should be reused rather than rewritten:
