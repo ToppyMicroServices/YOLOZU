@@ -194,7 +194,7 @@ Contact: develop@toppymicros.com
 | eval_keypoints | stable | tools/eval_keypoints.py | Evaluate keypoint predictions using PCK (bbox-normalized distance) with optional COCO OKS mAP, HTML, and overlays. |
 | eval_pose | experimental | tools/eval_pose.py | Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics. |
 | eval_segmentation | stable | tools/eval_segmentation.py | Evaluate semantic segmentation predictions (mIoU / per-class IoU) with ignore_index support and optional HTML/overlays. |
-| eval_suite | stable | tools/eval_suite.py | Evaluate a set of bucketed prediction JSONs (glob) and write a single suite report JSON. |
+| eval_suite | stable | tools/eval_suite.py | Evaluate prediction JSONs and preserve declared exporter settings in a single suite report. |
 | eval_synthgen | experimental | tools/eval_synthgen.py | Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth. |
 | export_actions_openapi | stable | tools/export_actions_openapi.py | Export a static OpenAPI JSON schema for YOLOZU Actions API registration. |
 | export_predictions | stable | tools/export_predictions.py | Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips. |
