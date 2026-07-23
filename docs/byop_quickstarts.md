@@ -64,6 +64,7 @@ end-to-end NMS-free model.
 
 <!-- byop-real:ultralytics:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
@@ -71,6 +72,8 @@ export BYOP_MAX_IMAGES="${BYOP_MAX_IMAGES:-10}"
 export BYOP_DEVICE="${BYOP_DEVICE:-cpu}"
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop/ultralytics}"
 export ULTRALYTICS_MODEL="${ULTRALYTICS_MODEL:-/absolute/path/to/model.pt}"
+test "$BYOP_MAX_IMAGES" -ge 1
+test "$BYOP_MAX_IMAGES" -le 10
 test -d "$BYOP_DATASET"
 test -f "$ULTRALYTICS_MODEL"
 test ! -e "$BYOP_RUN_DIR"
@@ -101,6 +104,7 @@ python3 tools/eval_suite.py \
   --bbox-format cxcywh_norm \
   --strict \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-real:ultralytics:end -->
 
@@ -125,6 +129,7 @@ this exact block with a per-source 120-second timeout.
 
 <!-- byop-smoke:ultralytics:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/ultralytics}"
 test ! -e "$BYOP_RUN_DIR"
@@ -155,6 +160,7 @@ python3 tools/eval_suite.py \
   --strict \
   --dry-run \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-smoke:ultralytics:end -->
 
@@ -166,6 +172,7 @@ either file is missing.
 
 <!-- byop-real:detectron2:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
@@ -174,6 +181,8 @@ export BYOP_DEVICE="${BYOP_DEVICE:-cpu}"
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop/detectron2}"
 export DETECTRON2_CONFIG="${DETECTRON2_CONFIG:-/absolute/path/to/detectron2_config.yaml}"
 export DETECTRON2_WEIGHTS="${DETECTRON2_WEIGHTS:-/absolute/path/to/model_final.pth}"
+test "$BYOP_MAX_IMAGES" -ge 1
+test "$BYOP_MAX_IMAGES" -le 10
 test -d "$BYOP_DATASET"
 test -f "$DETECTRON2_CONFIG"
 test -f "$DETECTRON2_WEIGHTS"
@@ -202,6 +211,7 @@ python3 tools/eval_suite.py \
   --bbox-format cxcywh_norm \
   --strict \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-real:detectron2:end -->
 
@@ -223,6 +233,7 @@ Failure route:
 
 <!-- byop-smoke:detectron2:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/detectron2}"
 test ! -e "$BYOP_RUN_DIR"
@@ -250,6 +261,7 @@ python3 tools/eval_suite.py \
   --strict \
   --dry-run \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-smoke:detectron2:end -->
 
@@ -261,6 +273,7 @@ version-specific runtime dependencies.
 
 <!-- byop-real:mmdetection:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
@@ -269,6 +282,8 @@ export BYOP_DEVICE="${BYOP_DEVICE:-cpu}"
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop/mmdetection}"
 export MMDET_CONFIG="${MMDET_CONFIG:-/absolute/path/to/mmdet_config.py}"
 export MMDET_CHECKPOINT="${MMDET_CHECKPOINT:-/absolute/path/to/checkpoint.pth}"
+test "$BYOP_MAX_IMAGES" -ge 1
+test "$BYOP_MAX_IMAGES" -le 10
 test -d "$BYOP_DATASET"
 test -f "$MMDET_CONFIG"
 test -f "$MMDET_CHECKPOINT"
@@ -297,6 +312,7 @@ python3 tools/eval_suite.py \
   --bbox-format cxcywh_norm \
   --strict \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-real:mmdetection:end -->
 
@@ -319,6 +335,7 @@ Failure route:
 
 <!-- byop-smoke:mmdetection:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/mmdetection}"
 test ! -e "$BYOP_RUN_DIR"
@@ -346,6 +363,7 @@ python3 tools/eval_suite.py \
   --strict \
   --dry-run \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-smoke:mmdetection:end -->
 
@@ -357,6 +375,7 @@ parameters before it runs inference and records their provenance.
 
 <!-- byop-real:yolox:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_DATASET="${BYOP_DATASET:-/absolute/path/to/yolo-dataset}"
 export BYOP_SPLIT="${BYOP_SPLIT:-val}"
@@ -365,6 +384,8 @@ export BYOP_DEVICE="${BYOP_DEVICE:-cpu}"
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop/yolox}"
 export YOLOX_EXP="${YOLOX_EXP:-/absolute/path/to/yolox_exp.py}"
 export YOLOX_WEIGHTS="${YOLOX_WEIGHTS:-/absolute/path/to/yolox_checkpoint.pth}"
+test "$BYOP_MAX_IMAGES" -ge 1
+test "$BYOP_MAX_IMAGES" -le 10
 test -d "$BYOP_DATASET"
 test -f "$YOLOX_EXP"
 test -f "$YOLOX_WEIGHTS"
@@ -395,6 +416,7 @@ python3 tools/eval_suite.py \
   --bbox-format cxcywh_norm \
   --strict \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-real:yolox:end -->
 
@@ -416,6 +438,7 @@ Failure route:
 
 <!-- byop-smoke:yolox:start -->
 ```bash
+(
 set -euo pipefail
 export BYOP_RUN_DIR="${BYOP_RUN_DIR:-reports/byop-smoke/yolox}"
 test ! -e "$BYOP_RUN_DIR"
@@ -445,6 +468,7 @@ python3 tools/eval_suite.py \
   --strict \
   --dry-run \
   --output "$BYOP_RUN_DIR/eval_report.json"
+)
 ```
 <!-- byop-smoke:yolox:end -->
 

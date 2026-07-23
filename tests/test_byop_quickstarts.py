@@ -35,6 +35,8 @@ class TestByopQuickstarts(unittest.TestCase):
 
         for source, block in real.items():
             with self.subTest(source=source):
+                self.assertTrue(block.strip().startswith("("))
+                self.assertTrue(block.strip().endswith(")"))
                 self.assertNotIn("--dry-run", block)
                 self.assertIn("tools/validate_predictions.py", block)
                 self.assertIn("tools/eval_suite.py", block)
@@ -42,8 +44,51 @@ class TestByopQuickstarts(unittest.TestCase):
                 self.assertIn("--strict", block)
                 self.assertIn("set -euo pipefail", block)
                 self.assertIn('test ! -e "$BYOP_RUN_DIR"', block)
+                self.assertIn('test "$BYOP_MAX_IMAGES" -ge 1', block)
+                self.assertIn('test "$BYOP_MAX_IMAGES" -le 10', block)
                 self.assertIn('"$BYOP_RUN_DIR/predictions.json"', block)
                 self.assertIn('"$BYOP_RUN_DIR/eval_report.json"', block)
+
+    def test_real_blocks_reject_image_budget_above_ten_before_output(self):
+        blocks = _extract_blocks(self.text, "real")
+        source_paths = {
+            "ultralytics": ("ULTRALYTICS_MODEL",),
+            "detectron2": ("DETECTRON2_CONFIG", "DETECTRON2_WEIGHTS"),
+            "mmdetection": ("MMDET_CONFIG", "MMDET_CHECKPOINT"),
+            "yolox": ("YOLOX_EXP", "YOLOX_WEIGHTS"),
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            dataset = root / "dataset"
+            dataset.mkdir()
+            for source in SOURCES:
+                with self.subTest(source=source):
+                    env = dict(os.environ)
+                    env.update(
+                        {
+                            "BYOP_DATASET": str(dataset),
+                            "BYOP_SPLIT": "val",
+                            "BYOP_MAX_IMAGES": "11",
+                            "BYOP_DEVICE": "cpu",
+                            "BYOP_RUN_DIR": str(root / f"run-{source}"),
+                        }
+                    )
+                    for variable in source_paths[source]:
+                        path = root / f"{variable.lower()}.fixture"
+                        path.touch()
+                        env[variable] = str(path)
+                    proc = subprocess.run(
+                        ["bash", "-c", blocks[source]],
+                        cwd=str(self.repo_root),
+                        env=env,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        check=False,
+                        timeout=30,
+                    )
+                    self.assertNotEqual(proc.returncode, 0)
+                    self.assertFalse((root / f"run-{source}").exists())
 
     def test_documented_commands_match_declared_cli_surfaces(self):
         proc = subprocess.run(
