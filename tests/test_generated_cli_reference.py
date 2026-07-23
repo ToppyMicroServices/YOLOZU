@@ -12,6 +12,33 @@ def _cell(value: object) -> str:
     return text.replace("|", "\\|")
 
 
+def _render_benchmark_option_reference() -> str:
+    from yolozu.eval import benchmark_mode
+
+    parser = benchmark_mode.build_parser()
+    lines: list[str] = []
+    for action in parser._actions:
+        option_strings = list(action.option_strings or [])
+        if not option_strings:
+            continue
+        option_label = ", ".join(option_strings)
+        if action.nargs != 0:
+            if action.choices is not None:
+                metavar = "{" + ",".join(str(choice) for choice in action.choices) + "}"
+            elif action.metavar is not None:
+                metavar = str(action.metavar)
+            else:
+                metavar = str(action.dest).upper()
+            option_label += f" {metavar}"
+        if bool(action.required):
+            option_label += " [required]"
+        lines.append(option_label)
+        help_text = " ".join(str(action.help or "").split())
+        if help_text:
+            lines.append(f"  {help_text}")
+    return "\n".join(lines)
+
+
 def render_cli_reference(repo_root: Path) -> str:
     manifest = json.loads((repo_root / "tools" / "manifest.json").read_text(encoding="utf-8"))
     env = os.environ.copy()
@@ -28,27 +55,13 @@ def render_cli_reference(repo_root: Path) -> str:
     )
     if proc.returncode != 0:
         raise AssertionError(f"{sys.executable} -m yolozu --help failed:\n{proc.stdout}\n{proc.stderr}")
-    benchmark_proc = subprocess.run(
-        [sys.executable, "-m", "yolozu", "benchmark", "--help"],
-        cwd=str(repo_root),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=False,
-        timeout=30,
-    )
-    if benchmark_proc.returncode != 0:
-        raise AssertionError(
-            f"{sys.executable} -m yolozu benchmark --help failed:\n"
-            f"{benchmark_proc.stdout}\n{benchmark_proc.stderr}"
-        )
+    benchmark_options = _render_benchmark_option_reference()
 
     lines = [
         "# Generated CLI Reference",
         "",
         "This file is generated from `python3 -m yolozu --help`, "
-        "`python3 -m yolozu benchmark --help`, and `tools/manifest.json`.",
+        "the benchmark parser, and `tools/manifest.json`.",
         "Keep narrative docs short and link here for the full command surface.",
         "",
         "## Top-level `yolozu --help`",
@@ -57,10 +70,10 @@ def render_cli_reference(repo_root: Path) -> str:
         proc.stdout.rstrip(),
         "```",
         "",
-        "## `yolozu benchmark --help`",
+        "## `yolozu benchmark` option reference",
         "",
         "```text",
-        benchmark_proc.stdout.rstrip(),
+        benchmark_options,
         "```",
         "",
         "## Manifest Tool Registry",
