@@ -111,6 +111,84 @@ class TestEvalSuiteExportSettings(unittest.TestCase):
             self.assertEqual(pp.get("method"), "letterbox")
             self.assertEqual(pp.get("input_color"), "RGB")
 
+    def test_eval_suite_propagates_bundled_exporter_extra_settings(self):
+        tool = _load_module(self.repo_root / "tools" / "eval_suite.py", "eval_suite_nested_extra")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            dataset = tmp / "coco-yolo"
+            images = dataset / "images" / "val"
+            labels = dataset / "labels" / "val"
+            images.mkdir(parents=True, exist_ok=True)
+            labels.mkdir(parents=True, exist_ok=True)
+
+            image = images / "000001.jpg"
+            image.write_bytes(_MIN_JPEG_1X1)
+            (labels / "000001.txt").write_text("0 0.5 0.5 0.2 0.2\n")
+
+            payload = {
+                "predictions": [
+                    {
+                        "image": "images/val/000001.jpg",
+                        "detections": [
+                            {
+                                "class_id": 0,
+                                "score": 0.9,
+                                "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2},
+                            }
+                        ],
+                    }
+                ],
+                "meta": {
+                    "adapter": "yolox",
+                    "config": "/models/yolox_exp.py",
+                    "extra": {
+                        "exporter": "yolox",
+                        "protocol_id": "nms_applied",
+                        "export_settings": {
+                            "imgsz": 640,
+                            "score_threshold": 0.25,
+                            "iou_threshold": 0.45,
+                            "max_detections": 300,
+                            "bbox_format": "cxcywh_norm",
+                            "protocol": "nms_applied",
+                            "preprocessing": {
+                                "method": "letterbox",
+                                "input_color": "BGR",
+                                "normalize": "0_1",
+                            },
+                        },
+                    },
+                },
+            }
+            pred_path = tmp / "predictions.json"
+            pred_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            out_path = tmp / "eval_suite.json"
+            with redirect_stdout(io.StringIO()):
+                tool.main(
+                    [
+                        "--dataset",
+                        str(dataset),
+                        "--split",
+                        "val",
+                        "--predictions-glob",
+                        str(pred_path),
+                        "--dry-run",
+                        "--strict",
+                        "--output",
+                        str(out_path),
+                    ]
+                )
+
+            result = json.loads(out_path.read_text(encoding="utf-8"))["results"][0]
+            self.assertEqual(result["predictions_meta_ref"]["exporter"], "yolox")
+            self.assertEqual(result["predictions_meta_ref"]["protocol_id"], "nms_applied")
+            settings = result["export_settings"]
+            self.assertEqual(settings["imgsz"], 640)
+            self.assertEqual(settings["score_threshold"], 0.25)
+            self.assertEqual(settings["preprocess"], settings["preprocessing"])
+
     def test_eval_suite_protocol_hash_and_version_in_report(self):
         tool = _load_module(self.repo_root / "tools" / "eval_suite.py", "eval_suite")
 
@@ -237,4 +315,3 @@ class TestEvalSuiteExportSettings(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -4736,6 +4736,7 @@
         ]
       },
       "docs": [
+        "docs/byop_quickstarts.md",
         "docs/yolo26_eval_protocol.md"
       ],
       "effects": {
@@ -4836,7 +4837,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Evaluate a set of bucketed prediction JSONs (glob) and write a single suite report JSON.",
+      "summary": "Evaluate prediction JSONs and preserve declared exporter settings in a single suite report.",
       "tags": [
         "eval",
         "suite",
@@ -5728,6 +5729,7 @@
       "docs": [
         "README.md",
         "docs/README.md",
+        "docs/byop_quickstarts.md",
         "docs/external_inference.md",
         "docs/interop_detectron2_mmdet.md",
         "docs/predictions_schema.md",
@@ -6059,6 +6061,7 @@
       "docs": [
         "README.md",
         "docs/README.md",
+        "docs/byop_quickstarts.md",
         "docs/external_inference.md",
         "docs/interop_detectron2_mmdet.md",
         "docs/predictions_schema.md",
@@ -7736,6 +7739,7 @@
         ]
       },
       "docs": [
+        "docs/byop_quickstarts.md",
         "docs/external_inference.md",
         "docs/predictions_schema.md",
         "manual/chapters/05_workflows_eval_export.tex"
@@ -8102,6 +8106,7 @@
       "docs": [
         "README.md",
         "docs/README.md",
+        "docs/byop_quickstarts.md",
         "docs/interop_yolox.md",
         "docs/external_inference.md",
         "docs/predictions_schema.md",
@@ -15557,6 +15562,7 @@
         ]
       },
       "docs": [
+        "docs/byop_quickstarts.md",
         "docs/predictions_schema.md",
         "docs/production_readiness.md"
       ],

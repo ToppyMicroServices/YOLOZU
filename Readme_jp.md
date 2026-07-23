@@ -51,6 +51,7 @@ flowchart LR
 - [`docs/README.md`](docs/README.md): docs 全体の入口と最短の使い方
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): predictions interface contract
 - [`docs/install.md`](docs/install.md): install、`doctor`、環境確認
+- [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): Ultralytics、Detectron2、MMDetection、YOLOX から共通 report までの検査済み手順
 
 ## Primary Focus
 
@@ -90,6 +91,7 @@ flowchart LR
 ## 次に見る場所
 
 - 既存 predictions を評価する: [`docs/external_inference.md`](docs/external_inference.md)
+- 既存 model project から持ち込む: [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md)
 - train → export → eval を試す: [`docs/training_inference_export.md`](docs/training_inference_export.md)
 - YOLO-style / Detectron2 external training lane（`yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...`）: [`docs/training_inference_export.md`](docs/training_inference_export.md)
 - 現在の training support matrix と scope 境界: [`docs/training_inference_export.md#current-training-support`](docs/training_inference_export.md#current-training-support)

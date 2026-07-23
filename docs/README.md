@@ -22,12 +22,13 @@ yolozu guide --goal first-run
 yolozu doctor --proof
 ```
 
-## Read These 3 First
+## Read These First
 
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`install.md`](install.md): install, `doctor`, and environment setup
 - [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
+- [`byop_quickstarts.md`](byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX paths
 
 ## Next 3 Routes
 
@@ -58,6 +59,7 @@ yolozu doctor --proof
 ## Quick route map
 
 - If you already have predictions: go to [A) Evaluate from precomputed predictions](#a-evaluate-from-precomputed-predictions-no-inference-deps)
+- If your model stays in another framework: use [Bring your own predictions quickstarts](byop_quickstarts.md)
 - If you need the in-repo reference trainer: go to [B) Train → Export → Eval](#b-train--export--eval-rt-detr-reference-trainer)
 - If you need an external training lane: use `yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-optional-bridges-second)
 - If you need the current training scope boundary first: read [Current training support](training_inference_export.md#current-training-support)

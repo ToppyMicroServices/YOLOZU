@@ -120,6 +120,35 @@ Depending on your deployment environment, several backends are available:
 For production-oriented external inference, see \path{docs/external_inference.md} and the submodule-ready templates:
 \path{examples/infer_cpp/} (CMake) and \path{examples/infer_rust/} (Rust).
 
+\subsection{Checked bring-your-own-project quickstarts}
+
+\path{docs/byop_quickstarts.md} provides self-contained paths for
+Ultralytics, Detectron2, MMDetection, and YOLOX. Each real path starts from a
+user-owned model/config/checkpoint, emits a wrapped
+\path{predictions.json}, runs strict predictions interface contract
+validation, and writes the common \path{eval_report.json} through
+\path{tools/eval_suite.py}.
+
+The document keeps two evidence classes separate:
+\begin{itemize}
+  \item a real command omits \cmd{--dry-run} and is accepted only when
+  \path{execution_status=completed}, \path{runtime_executed=true}, and a
+  positive \path{inference_calls} value are recorded;
+  \item the CI schema smoke uses \cmd{--dry-run} and a 120-second timeout per
+  source to check command syntax, wrapping, strict validation, and report
+  generation without claiming third-party inference.
+\end{itemize}
+
+The first real run is capped at ten images with a ten-minute operator stop
+condition. This is a troubleshooting budget, not a performance guarantee.
+Framework, model, hardware, and input sizes determine actual runtime.
+
+\path{tools/eval_suite.py} preserves bundled exporter settings from
+\path{meta.extra.export_settings} in each report result. Equal report schemas
+alone do not make metrics scientifically comparable: dataset identity, class
+order, preprocessing, score/NMS settings, bounding-box representation, and
+protocol hash must also match.
+
 \subsection{Rust template: optional ONNXRuntime mode}
 The Rust template defaults to a minimal no-dependency interface-contract example, and can optionally enable ONNXRuntime via Cargo feature flags:
 \begin{lstlisting}[language=bash]

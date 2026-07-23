@@ -4,6 +4,10 @@ Use this path if you want an Apache-2.0-friendly YOLO-style training/export lane
 YOLOZU does not vendor YOLOX itself. Instead, it standardizes dataset resolution,
 reporting, and the predictions interface contract around an external YOLOX launcher.
 
+For a self-contained exporter → strict validation → common report command
+block, expected files, time budget, and fail-closed troubleshooting, see
+[`byop_quickstarts.md`](byop_quickstarts.md).
+
 ## License boundary
 
 - YOLOZU repository code stays Apache-2.0.
