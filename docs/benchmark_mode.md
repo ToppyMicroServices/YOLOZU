@@ -18,18 +18,18 @@ Related docs:
 Today the command provides:
 
 - a benchmark-style CLI surface,
-- explicit format planning for `torch`, `onnx`, `engine`, `torchscript`, `executorch`, and `opencv_dnn`,
+- explicit format planning for `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, and `opencv_dnn`,
 - explicit task semantics for `detect`, `segmentation`, `classification`, `obb`, `keypoints` / `pose`, `depth`, and `pose6d`,
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
-- real backend orchestration for `torch`, `onnx`, `engine`, and `torchscript` when artifacts and runtimes are available.
-- artifact-backed segmentation evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific mask-prediction artifacts are available.
-- artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
-- artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific depth-map artifacts are available.
-- artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific predictions artifacts are available.
-- artifact-backed classification evaluation for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific score artifacts are available.
-- artifact-backed OBB evaluation for `torch`, `onnx`, `engine`, and `torchscript` when backend-specific rotated-box artifacts are available.
+- real backend orchestration for `torch`, `onnx`, `engine`, `torchscript`, and conditional `openvino` when artifacts and runtimes are available.
+- artifact-backed segmentation evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific mask-prediction artifacts are available.
+- artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
+- artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific depth-map artifacts are available.
+- artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
+- artifact-backed classification evaluation for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific score artifacts are available.
+- artifact-backed OBB evaluation for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific rotated-box artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` are explicit unsupported/skipped benchmark
@@ -63,8 +63,8 @@ best next steps are:
 - keep the pose6d lane artifact-backed and explicit instead of pretending YOLOZU ran the underlying backend inference
 - keep the canonical [Benchmark support matrix](benchmark_support_matrix.md)
   synced whenever format/task semantics change
-- keep conditional `openvino` reporting honest after the current `torchscript`
-  detect lane
+- keep conditional `openvino` reporting honest through the same canonical CLI
+  used for the other real backend lanes
 - expand real parity artifacts beyond the current `torch`-anchored comparisons
 - keep format-specific flag validation strict so unsupported combinations fail
   early
@@ -110,6 +110,22 @@ yolozu benchmark \
   --latency-source auto \
   --output reports/benchmark_report.json
 ```
+
+Conditional OpenVINO run through the canonical installed CLI:
+
+```bash
+yolozu benchmark \
+  --model runs/foo/model.pt \
+  --openvino-model exports/foo.xml \
+  --data data/coco8.yaml \
+  --format torch,openvino \
+  --latency-source auto \
+  --parity-reference-backend openvino \
+  --output reports/benchmark_openvino_report.json
+```
+
+OpenVINO is not bundled. Without a compatible external runtime and IR artifact,
+the report records a skipped lane rather than claiming execution.
 
 Detect run with an explicit parity reference backend:
 
@@ -315,12 +331,13 @@ Current rules:
 | `onnx` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
 | `engine` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
 | `torchscript` | none | all export-oriented non-default flags |
+| `openvino` | none | all export-oriented non-default flags |
 | `executorch` | none | all export-oriented non-default flags |
 | `opencv_dnn` | none | all export-oriented non-default flags |
 
 In addition, real backend execution is intentionally split between backend orchestration and artifact-backed evaluation:
 
-- `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` orchestration
+- `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` / `openvino` orchestration
 - `--task classification` can use `--latency-source artifact_eval` to evaluate backend-specific class-score artifacts and report top-k metrics
 - `--task obb` can use `--latency-source artifact_eval` to evaluate backend-specific rotated-box artifacts and report OBB metrics
 - `--task segmentation` can use `--latency-source artifact_eval` to evaluate backend-specific mask-prediction artifacts with `tools/eval_segmentation.py` and attach real parity reports
@@ -338,7 +355,7 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
-When `torch`, `onnx`, `engine`, or `torchscript` can run for real, the benchmark writes actual
+When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino` can run for real, the benchmark writes actual
 predictions and eval artifacts and attaches real parity artifacts for candidate
 backends against the chosen reference backend (preferring `torch` when
 available). When a backend is unavailable or the command is invoked with
@@ -347,7 +364,7 @@ inference ran.
 
 For `--task segmentation`, the real lane is artifact-backed rather than inference-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific segmentation predictions artifacts
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` / `--openvino-model` point to backend-specific segmentation predictions artifacts
 - `--data` points to the dataset root or `dataset.json` used by `tools/eval_segmentation.py`
 - `predictions_<format>.json` is a normalized benchmark-local copy whose relative mask paths have been rewritten under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_segmentation.py`
@@ -355,7 +372,7 @@ For `--task segmentation`, the real lane is artifact-backed rather than inferenc
 
 For `--task depth`, the real lane is artifact-backed rather than inference-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific depth artifacts such as `.npy`, `.npz`, or single-channel image files
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` / `--openvino-model` point to backend-specific depth artifacts such as `.npy`, `.npz`, or single-channel image files
 - `--data` points to the ground-truth depth artifact
 - `predictions_<format>.json` records the source depth artifact metadata rather than fabricating a `predictions.json`
 - `eval_<format>.json` is produced by `tools/eval_depth.py`
@@ -363,7 +380,7 @@ For `--task depth`, the real lane is artifact-backed rather than inference-backe
 
 For `--task keypoints`, the real lane is also artifact-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific `predictions.json` artifacts with keypoints
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` / `--openvino-model` point to backend-specific `predictions.json` artifacts with keypoints
 - `--data` points to the dataset root used by `tools/eval_keypoints.py`
 - `predictions_<format>.json` is a copied backend predictions artifact kept under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_keypoints.py`
@@ -371,7 +388,7 @@ For `--task keypoints`, the real lane is also artifact-backed:
 
 For `--task pose6d`, the real lane is also artifact-backed:
 
-- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` point to backend-specific `predictions.json` artifacts with pose fields
+- `--model` / `--torch-model` / `--onnx-model` / `--engine-model` / `--torchscript-model` / `--openvino-model` point to backend-specific `predictions.json` artifacts with pose fields
 - `--data` points to the dataset root used by `tools/eval_pose.py`
 - `predictions_<format>.json` is a copied backend predictions artifact kept under the benchmark artifact layout
 - `eval_<format>.json` is produced by `tools/eval_pose.py`
@@ -418,7 +435,7 @@ The top-level benchmark report records, per format:
 
 By default the benchmark chooses `torch` as the parity reference backend when
 `torch` succeeded. If `torch` is unavailable, it falls back to the first
-eligible real backend. Use `--parity-reference-backend torch|onnx|engine|torchscript` when
+eligible real backend. Use `--parity-reference-backend torch|onnx|engine|torchscript|openvino` when
 you want a specific backend to act as the reference for detect/parity reports.
 
 ## Status model
@@ -476,7 +493,7 @@ The CLI now defaults to:
 - `--latency-source auto`
 
 `auto` prefers a real dataset-pass wall-clock measurement for `torch`, `onnx`,
-`engine`, and `torchscript`, prefers `artifact_eval` for `--task classification`, `--task obb`,
+`engine`, `torchscript`, and `openvino`, prefers `artifact_eval` for `--task classification`, `--task obb`,
 `--task segmentation`, `--task keypoints`, `--task depth`, and `--task pose6d`, and falls back to `synthetic_step` for the remaining
 formats.
 The report records the per-format `latency_source` so CI and readers do not
@@ -489,13 +506,13 @@ following canonical tasks and aliases:
 
 | Canonical task | Accepted labels | Metric family | Current benchmark state | Notes |
 | --- | --- | --- | --- | --- |
-| `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` | Default benchmark path. |
-| `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
-| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend class-score artifacts directly and reports top1/top5/accuracy without claiming YOLOZU ran backend inference. |
-| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` | Benchmark mode evaluates backend rotated-box artifacts directly and reports OBB metrics without claiming YOLOZU ran backend inference. |
-| `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
-| `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
-| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
+| `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Default benchmark path; OpenVINO remains conditional on external runtime and IR availability. |
+| `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
+| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend class-score artifacts directly and reports top1/top5/accuracy without claiming YOLOZU ran backend inference. |
+| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend rotated-box artifacts directly and reports OBB metrics without claiming YOLOZU ran backend inference. |
+| `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
+| `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
+| `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 
 The top-level `task_semantics` block and each per-format result include:
 
@@ -525,6 +542,7 @@ future work.
 | `onnx` | real orchestration when runtime + model are available | Requires an explicit ONNX artifact when the primary model is not `.onnx`. |
 | `engine` | real orchestration when runtime + model are available | Requires TensorRT-capable runtime and an engine/plan artifact. |
 | `torchscript` | real detect orchestration when runtime + model are available | Depends on local PyTorch and a compatible combined-output decode path. |
+| `openvino` | conditional real detect orchestration when runtime + IR are available | Depends on an external OpenVINO runtime and compatible `.xml` IR artifact; missing prerequisites are reported as skipped. |
 | `executorch` | unsupported/skipped in benchmark orchestration | Standalone exporter supports declared runtime-output decode, but `yolozu benchmark` does not claim this lane as real yet. |
 | `opencv_dnn` | unsupported/skipped in benchmark orchestration | Standalone OpenCV-DNN exporters exist, but `yolozu benchmark` does not claim this lane as real yet. |
 

@@ -10,8 +10,9 @@ Phase 1 established:
 - a clearly labeled synthetic latency probe.
 
 Phase 2 adds real backend orchestration for ``torch``, ``onnx``, ``engine``,
-and ``torchscript`` by delegating to existing exporter/eval tools when the
-requested artifacts and runtime dependencies are present.
+``torchscript``, and conditional ``openvino`` by delegating to existing
+exporter/eval tools when the requested artifacts and runtime dependencies are
+present.
 
 Phase 2.1 promotes ``torchscript`` from accepted planning surface to a real
 detect-task orchestration lane backed by a declared combined-output decode
@@ -49,6 +50,7 @@ repo_root = Path(__file__).resolve().parents[2]
 
 PHASE1_FORMATS = ("torch", "onnx", "engine", "torchscript", "openvino", "executorch", "opencv_dnn")
 REAL_BACKEND_FORMATS = ("torch", "onnx", "engine", "torchscript", "openvino")
+PARITY_REFERENCE_BACKENDS = ("auto", *REAL_BACKEND_FORMATS)
 BENCHMARK_UNWIRED_FORMATS = {"executorch", "opencv_dnn"}
 BENCHMARK_UNWIRED_TASKS: set[str] = set()
 TASK_ALIASES = {
@@ -3470,7 +3472,7 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     return report, 2 if strict_failure else 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> Any:
     import argparse
 
     parser = argparse.ArgumentParser(description="Ultralytics-parity benchmark entrypoint.")
@@ -3498,7 +3500,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--parity-reference-backend",
-        choices=("auto", "torch", "onnx", "engine", "torchscript", "openvino"),
+        choices=PARITY_REFERENCE_BACKENDS,
         default="auto",
         help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
     )
@@ -3555,6 +3557,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
     parser.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     report: dict[str, Any] = {}
@@ -3574,8 +3581,10 @@ def main(argv: list[str] | None = None) -> int:
 __all__ = [
     "PHASE1_FORMATS",
     "REAL_BACKEND_FORMATS",
+    "PARITY_REFERENCE_BACKENDS",
     "TASK_CHOICES",
     "TASK_SEMANTICS",
+    "build_parser",
     "run_benchmark_mode",
     "main",
 ]

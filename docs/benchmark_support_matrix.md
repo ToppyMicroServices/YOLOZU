@@ -97,8 +97,14 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 When CLI behavior changes, update the metadata source above and regenerate this page.
 Keep these files synchronized in the same PR:
 
+- `yolozu/cli_entry.py`
 - `docs/benchmark_mode.md`
+- `docs/benchmark_mode_spec_parity_target.md`
+- `docs/benchmark_mode_gap_audit.md`
 - `docs/benchmark_backend_runtime_matrix.md`
+- `docs/generated/cli_reference.md`
+- `docs/README.md`
+- `docs/tools_index.md`
 - `manual/chapters/09_parity_bench_protocols.tex`
 - `tools/manifest.json`
 - `yolozu/data/manifest/tools_manifest.json`

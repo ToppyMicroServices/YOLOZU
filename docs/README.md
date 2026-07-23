@@ -194,7 +194,7 @@ python3 -m yolozu parity \
 	--reference data/smoke/predictions/predictions_dummy.json \
 	--candidate data/smoke/predictions/predictions_dummy.json \
 	--bbox-format auto
-python3 tools/benchmark_model.py \
+python3 -m yolozu benchmark \
 	--model runs/example/model.pt \
 	--data data/coco8.yaml \
 	--format all \
@@ -204,15 +204,17 @@ python3 tools/benchmark_latency.py --help
 ```
 
 When backend artifacts are available, the benchmark entry can orchestrate real
-`torch` / `onnx` / `engine` / `torchscript` runs:
+`torch` / `onnx` / `engine` / `torchscript` runs and a conditional OpenVINO
+run:
 
 ```bash
-python3 tools/benchmark_model.py \
+python3 -m yolozu benchmark \
 	--model runs/example/model.pt \
 	--onnx-model exports/example.onnx \
 	--engine-model exports/example.plan \
+	--openvino-model exports/example.xml \
 	--data data/coco8.yaml \
-	--format torch,onnx,engine \
+	--format torch,onnx,engine,openvino \
 	--protocol nms_applied \
 	--latency-source auto \
 	--output reports/benchmark_report.json
@@ -228,6 +230,9 @@ Typical outputs:
 `torchscript` is now a real detect benchmark lane when a local PyTorch runtime
 and compatible TorchScript artifact are present. The declared decode path
 expects `[x1,y1,x2,y2,score,class_id]` combined output rows.
+OpenVINO is accepted by the same canonical command through `--openvino-model`;
+its runtime and IR remain external, and missing prerequisites produce an
+explicit skipped result.
 
 The benchmark report now records:
 - canonical task label

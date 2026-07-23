@@ -101,23 +101,26 @@ Latency and FPS benchmarks are part of the regression testing surface.
 The recommended user-facing entrypoint is now \cmd{yolozu benchmark}. The
 current implementation remains artifact-first and additionally wires real
 backend orchestration for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
-\cmd{torchscript}. TorchScript uses a declared combined-output decode path
+\cmd{torchscript}, plus a conditional real \cmd{openvino} lane. TorchScript uses a declared combined-output decode path
 with rows \cmd{[x1,y1,x2,y2,score,class_id]}. When the real backends can execute, the command records a real
 dataset-pass wall-clock measurement. When they cannot, it still records
 skipped formats honestly rather than fabricating success.
 
-A representative repository-wrapper invocation is:
+A representative canonical invocation is:
 \begin{lstlisting}[language=bash]
-python3 tools/benchmark_model.py \
+python3 -m yolozu benchmark \
   --model runs/example/model.pt \
   --onnx-model exports/example.onnx \
   --engine-model exports/example.plan \
+  --openvino-model exports/example.xml \
   --data data/coco8.yaml \
-  --format torch,onnx,engine \
+  --format torch,onnx,engine,openvino \
   --protocol nms_applied \
   --latency-source auto \
   --output reports/benchmark_report.json
 \end{lstlisting}
+The OpenVINO runtime and IR remain external to YOLOZU. Missing prerequisites
+produce an explicit skipped result.
 
 The primary artifact set is:
 \begin{itemize}
@@ -128,10 +131,10 @@ The primary artifact set is:
   \item \path{reports/parity_<format>.json}
 \end{itemize}
 
-When \cmd{torch} plus at least one additional real backend (\cmd{onnx} or
-\cmd{engine}) complete successfully, \path{parity_<format>.json} is now a real
-backend-diff artifact rather than a synthetic placeholder record. The chosen reference
-backend is recorded explicitly (preferring \cmd{torch} when available).
+When at least two comparable real backend results complete successfully,
+\path{parity_<format>.json} is now a real backend-diff artifact rather than a
+synthetic placeholder record. The chosen reference backend is recorded
+explicitly (\cmd{auto} prefers \cmd{torch} when available).
 Synthetic/skipped parity artifacts remain only for dry-run, skipped, or
 synthetic-only formats.
 
@@ -147,6 +150,9 @@ python3 tools/benchmark_model.py \
   --parity-reference-backend onnx \
   --output reports/benchmark_report.json
 \end{lstlisting}
+The explicit reference choices are \cmd{torch}, \cmd{onnx}, \cmd{engine},
+\cmd{torchscript}, and \cmd{openvino}; OpenVINO selection remains conditional
+on a successful comparable result.
 
 \subsection{Benchmark task semantics}
 The benchmark surface now records explicit task semantics instead of treating
@@ -161,19 +167,19 @@ PDF stays readable:
   \item[\cmd{detect}]
   Aliases: \cmd{detect}, \cmd{detection}. Metric family: \cmd{bbox_map}.
   Execution support: real for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
-  \cmd{torchscript}. This is the default benchmark path.
+  \cmd{torchscript}, plus conditional \cmd{openvino}. This is the default benchmark path.
 
   \item[\cmd{segmentation}]
   Aliases: \cmd{segmentation}, \cmd{seg}. Metric family: \cmd{mask_map}.
   Execution support: artifact-backed real eval/parity for \cmd{torch},
-  \cmd{onnx}, \cmd{engine}, and \cmd{torchscript}. Benchmark mode evaluates
+  \cmd{onnx}, \cmd{engine}, \cmd{torchscript}, and \cmd{openvino}. Benchmark mode evaluates
   backend mask-prediction artifacts with \path{tools/eval_segmentation.py} and
   compares matched masks directly.
 
   \item[\cmd{classification}]
   Aliases: \cmd{classification}, \cmd{classify}, \cmd{cls}. Metric family:
   \cmd{topk_accuracy}. Execution support: artifact-backed real eval for
-  \cmd{torch}, \cmd{onnx}, \cmd{engine}, and \cmd{torchscript}. Benchmark mode
+  \cmd{torch}, \cmd{onnx}, \cmd{engine}, \cmd{torchscript}, and \cmd{openvino}. Benchmark mode
   evaluates backend class-score artifacts directly and reports
   \cmd{top1}/\cmd{top5}/\cmd{accuracy} without claiming YOLOZU ran backend
   inference.
@@ -181,14 +187,14 @@ PDF stays readable:
   \item[\cmd{obb}]
   Alias: \cmd{obb}. Metric family: \cmd{obb_map}. Execution support:
   artifact-backed real eval for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
-  \cmd{torchscript}. Benchmark mode evaluates backend rotated-box artifacts
+  \cmd{torchscript}, plus \cmd{openvino}. Benchmark mode evaluates backend rotated-box artifacts
   directly and reports OBB metrics without claiming YOLOZU ran backend
   inference.
 
   \item[\cmd{keypoints}]
   Aliases: \cmd{keypoints}, \cmd{pose}. Metric family: \cmd{oks_map}.
   Execution support: artifact-backed real eval/parity for \cmd{torch},
-  \cmd{onnx}, \cmd{engine}, and \cmd{torchscript}. \cmd{pose} is normalized to
+  \cmd{onnx}, \cmd{engine}, \cmd{torchscript}, and \cmd{openvino}. \cmd{pose} is normalized to
   canonical \cmd{keypoints}; benchmark mode evaluates backend
   \path{predictions.json} artifacts with \path{tools/eval_keypoints.py} and
   compares normalized keypoints directly.
@@ -196,7 +202,7 @@ PDF stays readable:
   \item[\cmd{depth}]
   Alias: \cmd{depth}. Metric family: \cmd{depth_error}. Execution support:
   artifact-backed real eval/parity for \cmd{torch}, \cmd{onnx}, \cmd{engine},
-  and \cmd{torchscript}. This is a YOLOZU-native extension that compares backend
+  \cmd{torchscript}, and \cmd{openvino}. This is a YOLOZU-native extension that compares backend
   depth artifacts honestly instead of claiming end-to-end benchmark-surface
   parity.
 
@@ -204,7 +210,7 @@ PDF stays readable:
   Aliases: \cmd{pose6d}, \cmd{6dof}, \cmd{pose_6d}, \cmd{pose-6d}. Metric
   family: \cmd{pose6d_error}. Execution support: artifact-backed real
   eval/parity for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
-  \cmd{torchscript}. This is a YOLOZU-native extension that compares backend
+  \cmd{torchscript}, plus \cmd{openvino}. This is a YOLOZU-native extension that compares backend
   prediction artifacts honestly instead of claiming end-to-end
   benchmark-surface parity.
 \end{description}
@@ -253,13 +259,18 @@ Use these categories instead of reading backend names as license promises:
   are still external to this repository. For \cmd{engine}, verify the Linux,
   NVIDIA GPU, CUDA, TensorRT, and NGC redistribution terms separately.
 
+  \item[Conditional real runtime path]
+  \cmd{openvino} has a real detect orchestration path when an external OpenVINO
+  runtime and compatible IR artifact are available. Artifact-backed task lanes
+  consume supplied files. YOLOZU does not bundle the runtime or model artifact.
+
   \item[Adapter target only]
   \cmd{executorch} and \cmd{opencv_dnn} are adapter targets. YOLOZU can describe
   or prepare the lane, but users must supply and validate the external runtime.
   For OpenCV, optional contrib/nonfree modules are not bundled.
 
   \item[Conditional adapter targets]
-  \cmd{openvino}, \cmd{coreml}, \cmd{ncnn}, \cmd{rknn}, \cmd{tflite}, and
+  \cmd{coreml}, \cmd{ncnn}, \cmd{rknn}, \cmd{tflite}, and
   \cmd{paddle} are not bundled runtimes. Treat them as conditional
   adapter targets unless the support matrix explicitly says a real lane exists
   for the selected task and format.
@@ -285,11 +296,11 @@ The most important remaining gaps are:
 If the goal is to close the practical gap against the broader benchmark/export
 surface quickly, the most effective implementation order is:
 \begin{enumerate}
-  \item keep conditional \cmd{openvino} honest after the current \cmd{torchscript} detect path
+  \item keep conditional \cmd{openvino} honest on the same canonical CLI surface as the other real backend lanes
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
   from dry-run placeholders and unsupported/skipped paths
   \item expand real parity artifacts beyond the current
-  \cmd{torch}-anchored backend comparisons, including the artifact-backed
+  selected-reference backend comparisons, including the artifact-backed
   \cmd{classification} and \cmd{obb} placeholder parity reports
   \item keep format-specific flag validation strict so inert combinations fail
   early rather than appearing supported

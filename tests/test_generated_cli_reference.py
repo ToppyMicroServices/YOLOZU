@@ -28,17 +28,39 @@ def render_cli_reference(repo_root: Path) -> str:
     )
     if proc.returncode != 0:
         raise AssertionError(f"{sys.executable} -m yolozu --help failed:\n{proc.stdout}\n{proc.stderr}")
+    benchmark_proc = subprocess.run(
+        [sys.executable, "-m", "yolozu", "benchmark", "--help"],
+        cwd=str(repo_root),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    if benchmark_proc.returncode != 0:
+        raise AssertionError(
+            f"{sys.executable} -m yolozu benchmark --help failed:\n"
+            f"{benchmark_proc.stdout}\n{benchmark_proc.stderr}"
+        )
 
     lines = [
         "# Generated CLI Reference",
         "",
-        "This file is generated from `python3 -m yolozu --help` and `tools/manifest.json`.",
+        "This file is generated from `python3 -m yolozu --help`, "
+        "`python3 -m yolozu benchmark --help`, and `tools/manifest.json`.",
         "Keep narrative docs short and link here for the full command surface.",
         "",
         "## Top-level `yolozu --help`",
         "",
         "```text",
         proc.stdout.rstrip(),
+        "```",
+        "",
+        "## `yolozu benchmark --help`",
+        "",
+        "```text",
+        benchmark_proc.stdout.rstrip(),
         "```",
         "",
         "## Manifest Tool Registry",
@@ -83,6 +105,11 @@ class TestGeneratedCliReference(unittest.TestCase):
             actual,
             expected,
             "generated CLI reference drifted; regenerate from tests.test_generated_cli_reference.render_cli_reference",
+        )
+        self.assertIn("--openvino-model", actual)
+        self.assertIn(
+            "--parity-reference-backend {auto,torch,onnx,engine,torchscript,openvino}",
+            actual,
         )
 
 

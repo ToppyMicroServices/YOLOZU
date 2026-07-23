@@ -1557,8 +1557,16 @@
           "required": false
         },
         {
+          "choices": [
+            "auto",
+            "torch",
+            "onnx",
+            "engine",
+            "torchscript",
+            "openvino"
+          ],
           "default": "auto",
-          "description": "Parity reference backend (auto prefers torch, then the first eligible real backend).",
+          "description": "Parity reference backend (auto prefers torch, then the first eligible real backend; OpenVINO is conditional on supplied artifacts and runtime availability).",
           "flag": "--parity-reference-backend",
           "kind": "string",
           "name": "parity_reference_backend",
@@ -1610,6 +1618,7 @@
           "required": false
         },
         {
+          "description": "Optional OpenVINO IR model/artifact override; OpenVINO remains an environment-provided conditional backend.",
           "flag": "--openvino-model",
           "kind": "file",
           "name": "openvino_model",
@@ -1756,7 +1765,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript/openvino, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",
@@ -15929,7 +15938,13 @@
         "docs/run_contract.md",
         "manual/chapters/07_training_run_contract.tex",
         "docs/interop_detectron2_mmdet.md",
-        "docs/migrate.md"
+        "docs/migrate.md",
+        "docs/benchmark_mode.md",
+        "docs/benchmark_support_matrix.md",
+        "docs/benchmark_mode_spec_parity_target.md",
+        "docs/benchmark_mode_gap_audit.md",
+        "docs/benchmark_backend_runtime_matrix.md",
+        "manual/chapters/09_parity_bench_protocols.tex"
       ],
       "effects": {
         "fixed_writes": [],
@@ -16075,6 +16090,10 @@
         {
           "command": "python3 -m yolozu eval-instance-seg --dataset examples/instance_seg_demo/dataset --split val2017 --predictions examples/instance_seg_demo/predictions/instance_seg_predictions.json --pred-root examples/instance_seg_demo/predictions --classes examples/instance_seg_demo/classes.txt --html reports/instance_seg_demo_eval.html --overlays-dir reports/instance_seg_demo_overlays --max-overlays 10",
           "description": "Evaluate instance-seg demo predictions (mask mAP) with HTML overlays."
+        },
+        {
+          "command": "python3 -m yolozu benchmark --model runs/example/model.pt --openvino-model exports/example.xml --data data/coco8.yaml --format torch,openvino --parity-reference-backend openvino --dry-run --output reports/benchmark_openvino_report.json",
+          "description": "Validate the canonical conditional OpenVINO benchmark and explicit parity-reference wiring without requiring the external runtime."
         },
         {
           "command": "python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json --dry-run",
@@ -16788,6 +16807,29 @@
           "flag": "--overlays-dir",
           "kind": "dir",
           "name": "overlays_dir",
+          "required": false
+        },
+        {
+          "description": "Optional OpenVINO IR model/artifact override for the experimental benchmark subcommand; runtime support remains conditional and environment-provided.",
+          "flag": "--openvino-model",
+          "kind": "file",
+          "name": "openvino_model",
+          "required": false
+        },
+        {
+          "choices": [
+            "auto",
+            "torch",
+            "onnx",
+            "engine",
+            "torchscript",
+            "openvino"
+          ],
+          "default": "auto",
+          "description": "Reference backend for benchmark parity artifacts; OpenVINO is accepted only as a conditional backend.",
+          "flag": "--parity-reference-backend",
+          "kind": "string",
+          "name": "parity_reference_backend",
           "required": false
         },
         {

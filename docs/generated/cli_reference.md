@@ -1,6 +1,6 @@
 # Generated CLI Reference
 
-This file is generated from `python3 -m yolozu --help` and `tools/manifest.json`.
+This file is generated from `python3 -m yolozu --help`, `python3 -m yolozu benchmark --help`, and `tools/manifest.json`.
 Keep narrative docs short and link here for the full command surface.
 
 ## Top-level `yolozu --help`
@@ -21,7 +21,7 @@ positional arguments:
     calibrate           Apply post-hoc FRACAL calibration to bbox or instance-seg predictions JSON.
     eval-long-tail      Evaluate long-tail detection metrics in one standardized report.
     long-tail-recipe    Generate a decoupled long-tail training recipe with plugin-style rebalance config.
-    benchmark           Ultralytics-parity benchmark entrypoint (Phase 1: honest synthetic probe + explicit skipped formats).
+    benchmark           Ultralytics-parity benchmark entrypoint with real, artifact-backed, and explicit skipped results.
     parity              Compare two predictions JSON artifacts for backend parity.
     predictions         Predictions artifact utilities.
     validate            Validate artifacts (predictions JSON, instance-seg predictions).
@@ -47,6 +47,97 @@ Registry code: 16551297
 Contact: develop@toppymicros.com
 ```
 
+## `yolozu benchmark --help`
+
+```text
+usage: yolozu benchmark [-h] -m MODEL [--torch-model TORCH_MODEL] [--onnx-model ONNX_MODEL] [--engine-model ENGINE_MODEL] [--torchscript-model TORCHSCRIPT_MODEL] [--openvino-model OPENVINO_MODEL] -d DATA [--depth-mask DEPTH_MASK] [--depth-align {none,median_scale}] [--depth-parity-mae-atol DEPTH_PARITY_MAE_ATOL] [--depth-parity-rmse-atol DEPTH_PARITY_RMSE_ATOL] [--segmentation-parity-mismatch-atol SEGMENTATION_PARITY_MISMATCH_ATOL] [--parity-reference-backend {auto,torch,onnx,engine,torchscript,openvino}] [--keypoints-parity-iou-thresh KEYPOINTS_PARITY_IOU_THRESH] [--keypoints-parity-score-atol KEYPOINTS_PARITY_SCORE_ATOL] [--keypoints-parity-bbox-atol KEYPOINTS_PARITY_BBOX_ATOL] [--keypoints-parity-kp-atol KEYPOINTS_PARITY_KP_ATOL] [--pose-parity-rot-deg-atol POSE_PARITY_ROT_DEG_ATOL] [--pose-parity-trans-atol POSE_PARITY_TRANS_ATOL] [--pose-parity-depth-atol POSE_PARITY_DEPTH_ATOL] [-i IMGSZ] [--half | --no-half] [--int8 | --no-int8] [--device DEVICE] [--verbose] [-f FORMAT]
+                        [--task {6dof,classification,classify,cls,depth,detect,detection,keypoints,obb,pose,pose-6d,pose6d,pose_6d,seg,segmentation}] [--split SPLIT] [--protocol {yolo26,nms_applied,e2e_nms_free}] [--max-images MAX_IMAGES] [--dry-run] [--strict] [--repro-policy {strict,relaxed,off}] [--runtime-lock RUNTIME_LOCK] [--run-id RUN_ID] [-o OUTPUT] [--history HISTORY] [--predictions-output PREDICTIONS_OUTPUT] [--eval-output EVAL_OUTPUT] [--parity-output PARITY_OUTPUT] [--batch BATCH] [--dynamic | --no-dynamic] [--nms | --no-nms] [--simplify | --no-simplify] [--opset OPSET] [--workspace WORKSPACE] [--fraction FRACTION] [--latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}] [--iterations ITERATIONS] [--warmup WARMUP] [--sleep-s SLEEP_S]
+
+options:
+  -h, --help            show this help message and exit
+  -m, --model MODEL     Model/weights path recorded in the benchmark report.
+  --torch-model TORCH_MODEL
+                        Optional torch backend model/depth-artifact override.
+  --onnx-model ONNX_MODEL
+                        Optional ONNX backend model/depth-artifact override.
+  --engine-model ENGINE_MODEL
+                        Optional TensorRT engine/depth-artifact override.
+  --torchscript-model TORCHSCRIPT_MODEL
+                        Optional TorchScript backend model/artifact override.
+  --openvino-model OPENVINO_MODEL
+                        Optional OpenVINO IR model/artifact override.
+  -d, --data DATA       Dataset root or data.yaml path recorded in the benchmark report.
+  --depth-mask DEPTH_MASK
+                        Optional valid-pixel mask used for task=depth artifact evaluation.
+  --depth-align {none,median_scale}
+                        Depth artifact alignment mode for task=depth benchmark eval/parity (default: median_scale).
+  --depth-parity-mae-atol DEPTH_PARITY_MAE_ATOL
+                        Depth parity MAE threshold (default: 0.02).
+  --depth-parity-rmse-atol DEPTH_PARITY_RMSE_ATOL
+                        Depth parity RMSE threshold (default: 0.03).
+  --segmentation-parity-mismatch-atol SEGMENTATION_PARITY_MISMATCH_ATOL
+                        Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).
+  --parity-reference-backend {auto,torch,onnx,engine,torchscript,openvino}
+                        Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).
+  --keypoints-parity-iou-thresh KEYPOINTS_PARITY_IOU_THRESH
+                        Keypoints parity IoU threshold (default: 0.99).
+  --keypoints-parity-score-atol KEYPOINTS_PARITY_SCORE_ATOL
+                        Keypoints parity score tolerance (default: 1e-4).
+  --keypoints-parity-bbox-atol KEYPOINTS_PARITY_BBOX_ATOL
+                        Keypoints parity bbox tolerance (default: 1e-4).
+  --keypoints-parity-kp-atol KEYPOINTS_PARITY_KP_ATOL
+                        Keypoints parity keypoint tolerance in normalized coords (default: 1e-4).
+  --pose-parity-rot-deg-atol POSE_PARITY_ROT_DEG_ATOL
+                        6DoF parity rotation threshold in degrees (default: 1e-3).
+  --pose-parity-trans-atol POSE_PARITY_TRANS_ATOL
+                        6DoF parity translation L2 threshold in meters (default: 1e-4).
+  --pose-parity-depth-atol POSE_PARITY_DEPTH_ATOL
+                        6DoF parity depth threshold in meters (default: 1e-4).
+  -i, --imgsz IMGSZ     Input image size (default: 640).
+  --half, --no-half     Record FP16 intent.
+  --int8, --no-int8     Record INT8 intent.
+  --device DEVICE       Target device string (default: cpu).
+  --verbose             Print per-format status lines.
+  -f, --format FORMAT   Comma-separated Phase-1 formats or all.
+  --task {6dof,classification,classify,cls,depth,detect,detection,keypoints,obb,pose,pose-6d,pose6d,pose_6d,seg,segmentation}
+                        Benchmark task label. Canonical tasks: detect, segmentation, classification, obb, keypoints, depth, pose6d.
+  --split SPLIT         Dataset split label.
+  --protocol {yolo26,nms_applied,e2e_nms_free}
+                        Optional eval protocol passed through to eval_suite and torch exporter.
+  --max-images MAX_IMAGES
+                        Optional max image count recorded in the report.
+  --dry-run             Validate wiring and planned artifacts without timing runs.
+  --strict              Return exit code 2 if any requested format is skipped.
+  --repro-policy {strict,relaxed,off}
+  --runtime-lock RUNTIME_LOCK
+                        Runtime lock label recorded in run_meta.
+  --run-id RUN_ID       Optional run id (default: UTC timestamp).
+  -o, --output OUTPUT   Benchmark report JSON path.
+  --history HISTORY     Optional JSONL history file path.
+  --predictions-output PREDICTIONS_OUTPUT
+                        Optional file/dir/template for predictions artifacts.
+  --eval-output EVAL_OUTPUT
+                        Optional file/dir/template for eval artifacts.
+  --parity-output PARITY_OUTPUT
+                        Optional file/dir/template for parity artifacts.
+  --batch BATCH         Common batch knob (default: 1).
+  --dynamic, --no-dynamic
+                        Record dynamic-shape intent.
+  --nms, --no-nms       Record export-time NMS intent.
+  --simplify, --no-simplify
+                        Record ONNX simplify intent.
+  --opset OPSET         Record ONNX opset (default: 17).
+  --workspace WORKSPACE
+                        Record TensorRT workspace in GiB (default: 4).
+  --fraction FRACTION   Record dataset fraction knob (default: 1.0).
+  --latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}
+                        Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.
+  --iterations ITERATIONS
+                        Synthetic latency iterations (default: 50).
+  --warmup WARMUP       Synthetic latency warmup iterations (default: 5).
+  --sleep-s SLEEP_S     Synthetic latency sleep per step (default: 0).
+```
+
 ## Manifest Tool Registry
 
 | Tool ID | Maturity | Entry point | Summary |
@@ -60,7 +151,7 @@ Contact: develop@toppymicros.com
 | benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. |
 | benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
 | benchmark_latency | experimental | tools/benchmark_latency.py | Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. |
-| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
+| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript/openvino, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
 | benchmark_sar_robustness | research | tools/benchmark_sar_robustness.py | Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. |
 | build_manifest | stable | tools/build_manifest.py | Build a dataset manifest for data/coco128 (writes reports/manifest.json). |
 | build_trt_engine | experimental | tools/build_trt_engine.py | Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. |
