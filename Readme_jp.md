@@ -125,9 +125,9 @@ bash scripts/smoke.sh
 - install 詳細: [`docs/install.md`](docs/install.md)
 - manual source: [`manual/README.md`](manual/README.md)
 
-## Support と License
+## サポート、フィードバック、ライセンス
 
-- Support: [`docs/support.md`](docs/support.md)
+- 構造化された support / feedback: [`docs/support.md`](docs/support.md)
 - License policy: [`docs/license_policy.md`](docs/license_policy.md)
 - External training boundary: YOLOX first, optional Ultralytics / HF DETR bridges second
 - Apache-2.0 license: [`LICENSE`](LICENSE)

@@ -125,9 +125,9 @@ More repo-first guidance:
 - Install details: [`docs/install.md`](docs/install.md)
 - Manual sources: [`manual/README.md`](manual/README.md)
 
-## Support And Legal
+## Support, Feedback, And Legal
 
-- Support: [`docs/support.md`](docs/support.md)
+- Structured support and feedback: [`docs/support.md`](docs/support.md)
 - License policy: [`docs/license_policy.md`](docs/license_policy.md)
 - External training boundary: YOLOX first, optional Ultralytics and HF DETR bridges second
 - Apache-2.0 license: [`LICENSE`](LICENSE)

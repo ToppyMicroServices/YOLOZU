@@ -381,12 +381,12 @@ python3 tools/support_yolo_detr.py export-onnx --preset smoke --output models/yo
 
 可打印的 manual 源码：[`manual/`](manual/README.md)
 
-## 支持 / 法务
+## 支持 / 反馈 / 法务
 
 - Contact: develop@toppymicros.com
 - © 2026 ToppyMicroServices OÜ
 
-完整支持与法务说明：[`docs/support.md`](docs/support.md)
+结构化支持、反馈与法务说明：[`docs/support.md`](docs/support.md)
 
 ## License
 

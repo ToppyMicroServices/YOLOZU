@@ -1,0 +1,95 @@
+name: First-run failure
+description: Report an install, doctor, demo, validation, or first-evaluation failure
+title: "[First run] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a first-run failure. GitHub Issues are public.
+        Remove personal, customer, dataset, model, and credential data before posting.
+        For a possible vulnerability, stop here and use the private path in SECURITY.md.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What were you trying to complete, and what would success look like?
+      placeholder: Validate exported predictions and create the first evaluation report.
+    validations:
+      required: true
+  - type: dropdown
+    id: source_framework
+    attributes:
+      label: Source framework
+      description: Select the framework that produced the model or predictions.
+      options:
+        - Ultralytics
+        - Detectron2
+        - MMDetection
+        - YOLOX
+        - Hugging Face
+        - YOLOZU RT-DETR
+        - Other or custom
+        - Not applicable
+    validations:
+      required: true
+  - type: input
+    id: source_framework_version
+    attributes:
+      label: Source framework version
+      description: Use "Not applicable" if no source framework is involved.
+      placeholder: ultralytics 8.x, commit SHA, or Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Paste sanitized `yolozu doctor --output -` output, or list OS, Python, YOLOZU, install method, and CPU/GPU/runtime details.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands and observed output
+      description: Provide the smallest sanitized command sequence and the exact error. Replace private paths and names.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Non-security impact and workaround
+      description: State what is blocked, whether the stable validation/evaluation lane is affected, and any safe workaround. Do not include vulnerability details.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Sanitized artifacts
+      description: Link only public, minimal reproductions or paste a sanitized report excerpt/checksum. Do not upload proprietary predictions, images, datasets, weights, or logs. Enter "None" when unavailable.
+      placeholder: Public reproduction URL, sanitized excerpt, checksum, or None
+    validations:
+      required: true
+  - type: dropdown
+    id: aggregate_consent
+    attributes:
+      label: Aggregate-use and public-citation consent
+      description: Monthly reviews do not copy issue text or identity fields. If you allow citation, the review may link this already-public Issue URL, which exposes its public author and content.
+      options:
+        - "Yes — count this item and allow its public Issue URL to be cited"
+        - "Count only — include it in totals without an individual Issue link"
+        - "No — exclude this item from aggregate totals"
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Public-data and follow-up consent
+      options:
+        - label: I confirm that this public report contains no confidential, personal, credential, or security-sensitive data.
+          required: true
+        - label: I consent to maintainers asking follow-up questions in this public issue.
+          required: true
