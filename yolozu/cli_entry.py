@@ -37,6 +37,7 @@ from .cli_commands import (
 )
 from .cli_demo import handle_demo_command
 from .cli_completion import write_completion
+from yolozu.eval.benchmark_flags import BATCH_HELP, HALF_HELP, LATENCY_SOURCE_HELP, NMS_HELP
 from yolozu.inference.export_orchestrator import parse_common_export_args
 from yolozu.predictions.bbox_formats import SUPPORTED_PREDICTION_BBOX_FORMATS
 import argparse
@@ -418,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--pose-parity-trans-atol", type=float, default=1e-4, help="6DoF parity translation L2 threshold in meters (default: 1e-4).")
     bench.add_argument("--pose-parity-depth-atol", type=float, default=1e-4, help="6DoF parity depth threshold in meters (default: 1e-4).")
     bench.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
-    bench.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
+    bench.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help=HALF_HELP)
     bench.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
     bench.add_argument("--device", default="cpu", help="Target device string (default: cpu).")
     bench.add_argument("--verbose", action="store_true", help="Print per-format status lines.")
@@ -463,9 +464,9 @@ def main(argv: list[str] | None = None) -> int:
     bench.add_argument("--predictions-output", default=None, help="Optional file/dir/template for predictions artifacts.")
     bench.add_argument("--eval-output", default=None, help="Optional file/dir/template for eval artifacts.")
     bench.add_argument("--parity-output", default=None, help="Optional file/dir/template for parity artifacts.")
-    bench.add_argument("--batch", type=int, default=1, help="Common batch knob (default: 1).")
+    bench.add_argument("--batch", type=int, default=1, help=BATCH_HELP)
     bench.add_argument("--dynamic", action=argparse.BooleanOptionalAction, default=False, help="Record dynamic-shape intent.")
-    bench.add_argument("--nms", action=argparse.BooleanOptionalAction, default=False, help="Record export-time NMS intent.")
+    bench.add_argument("--nms", action=argparse.BooleanOptionalAction, default=False, help=NMS_HELP)
     bench.add_argument("--simplify", action=argparse.BooleanOptionalAction, default=False, help="Record ONNX simplify intent.")
     bench.add_argument("--opset", type=int, default=17, help="Record ONNX opset (default: 17).")
     bench.add_argument("--workspace", type=float, default=4.0, help="Record TensorRT workspace in GiB (default: 4).")
@@ -474,7 +475,7 @@ def main(argv: list[str] | None = None) -> int:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.",
+        help=LATENCY_SOURCE_HELP,
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")

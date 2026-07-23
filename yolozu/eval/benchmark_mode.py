@@ -38,6 +38,15 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.eval.benchmark import measure_latency
+from yolozu.eval.benchmark_flags import (
+    ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
+    ARTIFACT_EVAL_TASKS,
+    BACKEND_EXECUTION_FLAG_DEFAULTS,
+    BATCH_HELP,
+    HALF_HELP,
+    LATENCY_SOURCE_HELP,
+    NMS_HELP,
+)
 from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
 from yolozu.eval.keypoints_parity import compare_keypoints_predictions
 from yolozu.eval.pose_parity import compare_pose_predictions
@@ -137,11 +146,9 @@ TASK_SEMANTICS = {
     },
 }
 FLAG_DEFAULTS = {
-    "half": False,
+    **BACKEND_EXECUTION_FLAG_DEFAULTS,
     "int8": False,
-    "batch": 1,
     "dynamic": False,
-    "nms": False,
     "simplify": False,
     "opset": 17,
     "workspace": 4.0,
@@ -150,7 +157,10 @@ FLAG_DEFAULTS = {
 FORMAT_FLAG_RULES = {
     "torch": {
         "supported_nondefault_flags": {"half", "batch", "nms"},
-        "notes": "Torch benchmark orchestration currently forwards --half, --batch, and --nms.",
+        "notes": (
+            "Torch detect orchestration forwards --half, --batch, and --nms outside artifact_eval. "
+            "artifact_eval consumes prepared artifacts and rejects those non-default flags."
+        ),
     },
     "onnx": {
         "supported_nondefault_flags": set(),
@@ -255,7 +265,7 @@ def _support_status_for_format(fmt: str, *, device: str, task_label: str = "dete
         return False, "benchmark_task_not_wired"
     if fmt in BENCHMARK_UNWIRED_FORMATS:
         return False, "benchmark_format_not_wired"
-    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in ARTIFACT_EVAL_TASKS and fmt in REAL_BACKEND_FORMATS:
         return True, None
     device_l = str(device or "").strip().lower()
     wants_gpu = any(tok in device_l for tok in ("cuda", "gpu", "trt", "tensorrt"))
@@ -360,7 +370,7 @@ def _task_execution_semantics(
         execution_mode = "dry_run_planning"
     elif task_label == "detect" and fmt in REAL_BACKEND_FORMATS and benchmark_source == "dataset_pass_wall_time":
         execution_mode = "real_backend_eval"
-    elif task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
+    elif task_label in ARTIFACT_EVAL_TASKS and fmt in REAL_BACKEND_FORMATS and benchmark_source == "artifact_eval":
         execution_mode = "real_artifact_eval"
     else:
         execution_mode = "synthetic_planning_only"
@@ -578,6 +588,32 @@ def _nondefault_flag_values(args: Any) -> dict[str, Any]:
     return out
 
 
+def _effective_flag_applicability(
+    *,
+    fmt: str,
+    benchmark_source: str,
+) -> tuple[set[str], str]:
+    format_rule = FORMAT_FLAG_RULES.get(
+        fmt,
+        {"supported_nondefault_flags": set(), "notes": None},
+    )
+    format_flags = set(format_rule.get("supported_nondefault_flags", set()))
+    if benchmark_source == "artifact_eval":
+        applicable = format_flags - set(ARTIFACT_EVAL_INERT_BACKEND_FLAGS)
+        return (
+            applicable,
+            "artifact_eval consumes prepared artifacts and does not execute backend precision, batching, or NMS",
+        )
+    return format_flags, str(format_rule.get("notes") or "")
+
+
+def _latency_source_context(args: Any, *, effective_source: str) -> str:
+    requested = str(getattr(args, "latency_source", "auto") or "auto")
+    if requested == effective_source:
+        return f"--latency-source {effective_source}"
+    return f"--latency-source {requested} (effective: {effective_source})"
+
+
 def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_label: str) -> None:
     nondefault = _nondefault_flag_values(args)
     if not nondefault:
@@ -585,15 +621,33 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
     dry_run = bool(getattr(args, "dry_run", False))
 
     for fmt in requested_formats:
+        benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
         rule = FORMAT_FLAG_RULES.get(fmt, {"supported_nondefault_flags": set(), "notes": None})
-        unsupported = sorted(name for name in nondefault if name not in rule["supported_nondefault_flags"])
+        applicable_flags, applicability_reason = _effective_flag_applicability(
+            fmt=fmt,
+            benchmark_source=benchmark_source,
+        )
+        artifact_eval_inert = sorted(
+            name
+            for name in nondefault
+            if benchmark_source == "artifact_eval" and name in ARTIFACT_EVAL_INERT_BACKEND_FLAGS
+        )
+        if artifact_eval_inert:
+            joined = ", ".join(f"--{name.replace('_', '-')}" for name in artifact_eval_inert)
+            source_context = _latency_source_context(args, effective_source=benchmark_source)
+            raise ValueError(
+                f"{joined} not applicable to --task {task_label} with {source_context} "
+                f"for --format {fmt}: {applicability_reason}. "
+                "Keep --half and --nms disabled and use --batch 1, or select a backend-execution lane."
+            )
+
+        unsupported = sorted(name for name in nondefault if name not in applicable_flags)
         if unsupported:
             joined = ", ".join(f"--{name.replace('_', '-')}" for name in unsupported)
             note = f" {rule['notes']}" if rule.get("notes") else ""
             raise ValueError(f"{joined} not supported for --format {fmt}.{note}")
 
-        benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
-        if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and not dry_run and benchmark_source == "dataset_pass_wall_time":
+        if task_label in ARTIFACT_EVAL_TASKS and not dry_run and benchmark_source == "dataset_pass_wall_time":
             raise ValueError(
                 f"--task {task_label} uses artifact-backed evaluation; use --latency-source auto or artifact_eval"
             )
@@ -604,9 +658,14 @@ def _validation_summary(args: Any, requested_formats: list[str], *, task_label: 
     by_format: dict[str, Any] = {}
     for fmt in requested_formats:
         rule = FORMAT_FLAG_RULES.get(fmt, {"supported_nondefault_flags": set(), "notes": None})
-        supported_flags = sorted(str(name) for name in rule.get("supported_nondefault_flags", set()))
-        unsupported = sorted(name for name in nondefault if name not in supported_flags)
         benchmark_source = _selected_benchmark_source(args, fmt=fmt, task_label=task_label)
+        applicable_flags, applicability_reason = _effective_flag_applicability(
+            fmt=fmt,
+            benchmark_source=benchmark_source,
+        )
+        format_supported_flags = sorted(str(name) for name in rule.get("supported_nondefault_flags", set()))
+        supported_flags = sorted(str(name) for name in applicable_flags)
+        unsupported = sorted(name for name in nondefault if name not in applicable_flags)
         execution = _task_execution_semantics(
             task_label,
             fmt=fmt,
@@ -615,8 +674,11 @@ def _validation_summary(args: Any, requested_formats: list[str], *, task_label: 
         )
         by_format[fmt] = {
             "supported_nondefault_flags": supported_flags,
+            "format_supported_nondefault_flags": format_supported_flags,
             "unsupported_nondefault_flags": unsupported,
+            "flag_applicability_reason": applicability_reason,
             "format_notes": rule.get("notes"),
+            "requested_benchmark_source": str(getattr(args, "latency_source", "auto") or "auto"),
             "benchmark_source": benchmark_source,
             "execution_mode": execution["execution_mode"],
             "missing_runtime_policy": "report_skipped",
@@ -683,7 +745,7 @@ def _selected_benchmark_source(args: Any, *, fmt: str, task_label: str) -> str:
     requested = str(getattr(args, "latency_source", "auto") or "auto")
     if requested != "auto":
         return requested
-    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"} and fmt in REAL_BACKEND_FORMATS:
+    if task_label in ARTIFACT_EVAL_TASKS and fmt in REAL_BACKEND_FORMATS:
         return "artifact_eval"
     if fmt in REAL_BACKEND_FORMATS:
         return "dataset_pass_wall_time"
@@ -704,7 +766,7 @@ def _resolve_model_artifact(args: Any, *, fmt: str, task_label: str) -> tuple[st
     text = str(candidate)
     suffix = Path(text).suffix.lower()
 
-    if task_label in {"classification", "obb", "segmentation", "keypoints", "depth", "pose6d"}:
+    if task_label in ARTIFACT_EVAL_TASKS:
         return text, None
 
     if fmt == "torch":
@@ -3516,7 +3578,7 @@ def build_parser() -> Any:
     parser.add_argument("--pose-parity-trans-atol", type=float, default=1e-4, help="6DoF parity translation L2 threshold in meters (default: 1e-4).")
     parser.add_argument("--pose-parity-depth-atol", type=float, default=1e-4, help="6DoF parity depth threshold in meters (default: 1e-4).")
     parser.add_argument("-i", "--imgsz", type=int, default=640, help="Input image size (default: 640).")
-    parser.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help="Record FP16 intent.")
+    parser.add_argument("--half", action=argparse.BooleanOptionalAction, default=False, help=HALF_HELP)
     parser.add_argument("--int8", action=argparse.BooleanOptionalAction, default=False, help="Record INT8 intent.")
     parser.add_argument("--device", default="cpu", help="Target device string (default: cpu).")
     parser.add_argument("--verbose", action="store_true", help="Print per-format status lines.")
@@ -3545,9 +3607,9 @@ def build_parser() -> Any:
     parser.add_argument("--predictions-output", default=None, help="Optional file/dir/template for predictions artifacts.")
     parser.add_argument("--eval-output", default=None, help="Optional file/dir/template for eval artifacts.")
     parser.add_argument("--parity-output", default=None, help="Optional file/dir/template for parity artifacts.")
-    parser.add_argument("--batch", type=int, default=1, help="Common batch knob (default: 1).")
+    parser.add_argument("--batch", type=int, default=1, help=BATCH_HELP)
     parser.add_argument("--dynamic", action=argparse.BooleanOptionalAction, default=False, help="Record dynamic-shape intent.")
-    parser.add_argument("--nms", action=argparse.BooleanOptionalAction, default=False, help="Record export-time NMS intent.")
+    parser.add_argument("--nms", action=argparse.BooleanOptionalAction, default=False, help=NMS_HELP)
     parser.add_argument("--simplify", action=argparse.BooleanOptionalAction, default=False, help="Record ONNX simplify intent.")
     parser.add_argument("--opset", type=int, default=17, help="Record ONNX opset (default: 17).")
     parser.add_argument("--workspace", type=float, default=4.0, help="Record TensorRT workspace in GiB (default: 4).")
@@ -3556,7 +3618,7 @@ def build_parser() -> Any:
         "--latency-source",
         choices=("auto", "synthetic_step", "dataset_pass_wall_time", "artifact_eval"),
         default="auto",
-        help="Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.",
+        help=LATENCY_SOURCE_HELP,
     )
     parser.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     parser.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
@@ -3583,6 +3645,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 __all__ = [
+    "ARTIFACT_EVAL_INERT_BACKEND_FLAGS",
+    "ARTIFACT_EVAL_TASKS",
+    "BACKEND_EXECUTION_FLAG_DEFAULTS",
     "PHASE1_FORMATS",
     "REAL_BACKEND_FORMATS",
     "PARITY_REFERENCE_BACKENDS",

@@ -51,9 +51,43 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         formats = [item["id"] for item in meta["formats"]]
         tasks = [item["id"] for item in meta["tasks"]]
         support_pairs = {(item["format"], item["task"]) for item in meta["support"]}
+        flag_applicability = meta["flag_applicability"]
 
         self.assertEqual(formats, list(benchmark_mode.PHASE1_FORMATS))
         self.assertEqual(tasks, list(benchmark_mode.TASK_SEMANTICS))
+        self.assertEqual(
+            flag_applicability["defaults"],
+            benchmark_mode.BACKEND_EXECUTION_FLAG_DEFAULTS,
+        )
+        self.assertEqual(
+            set(flag_applicability["artifact_eval_tasks"]),
+            benchmark_mode.ARTIFACT_EVAL_TASKS,
+        )
+        self.assertEqual(
+            set(flag_applicability["artifact_eval_rejected_nondefault_flags"]),
+            benchmark_mode.ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
+        )
+        auto_artifact_row = next(
+            item
+            for item in flag_applicability["matrix"]
+            if item["requested_latency_sources"] == ["auto"]
+            and item["effective_latency_source"] == "artifact_eval"
+        )
+        self.assertEqual(auto_artifact_row["formats"], list(benchmark_mode.REAL_BACKEND_FORMATS))
+        self.assertEqual(
+            set(auto_artifact_row["rejected_nondefault_flags"]),
+            benchmark_mode.ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
+        )
+        explicit_artifact_row = next(
+            item
+            for item in flag_applicability["matrix"]
+            if item["requested_latency_sources"] == ["artifact_eval"]
+        )
+        self.assertEqual(explicit_artifact_row["formats"], list(benchmark_mode.PHASE1_FORMATS))
+        self.assertEqual(
+            set(explicit_artifact_row["rejected_nondefault_flags"]),
+            benchmark_mode.ARTIFACT_EVAL_INERT_BACKEND_FLAGS,
+        )
         self.assertEqual(len(support_pairs), len(formats) * len(tasks))
         for fmt in benchmark_mode.PHASE1_FORMATS:
             for task in benchmark_mode.TASK_SEMANTICS:

@@ -1347,6 +1347,7 @@
         },
         {
           "default": false,
+          "description": "Use FP16 in the torch detect backend; effective artifact_eval lanes require the false default.",
           "flag": "--half",
           "kind": "string",
           "name": "half",
@@ -1354,6 +1355,7 @@
         },
         {
           "default": false,
+          "description": "Explicitly keep FP16 disabled; this is the accepted artifact_eval default.",
           "flag": "--no-half",
           "kind": "string",
           "name": "half",
@@ -1481,6 +1483,7 @@
         },
         {
           "default": 1,
+          "description": "Torch detect backend batch size; effective artifact_eval lanes require the default value 1.",
           "flag": "--batch",
           "kind": "number",
           "name": "batch",
@@ -1502,6 +1505,7 @@
         },
         {
           "default": false,
+          "description": "Request NMS in the torch detect backend; effective artifact_eval lanes require the false default.",
           "flag": "--nms",
           "kind": "string",
           "name": "nms",
@@ -1509,6 +1513,7 @@
         },
         {
           "default": false,
+          "description": "Explicitly keep backend NMS disabled; this is the accepted artifact_eval default.",
           "flag": "--no-nms",
           "kind": "string",
           "name": "nms",
@@ -1551,6 +1556,7 @@
         },
         {
           "default": "auto",
+          "description": "Benchmark source selection. auto resolves artifact-backed tasks to artifact_eval on real formats; artifact_eval rejects non-default --half, --batch, and --nms.",
           "flag": "--latency-source",
           "kind": "string",
           "name": "latency_source",
@@ -1765,7 +1771,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript/openvino, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",

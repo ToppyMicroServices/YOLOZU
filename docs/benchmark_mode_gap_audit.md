@@ -132,14 +132,20 @@ Still missing or not yet surfaced in the benchmark entrypoint:
 - `--keras`
 - `--name`
 - `--data` semantics tied to INT8 calibration per backend
-- format-specific validation around unsupported knob combinations
+- additional validation for future backend-specific knob combinations beyond
+  the current task/source/format rules
 
 Improvement priority:
 
-1. Validate format/flag compatibility instead of accepting inert flags
-2. Add `--name` for user-friendly artifact grouping
-3. Add `--keras` only when there is a real backend path for it
-4. Record backend-specific calibration intent explicitly when `--int8` is set
+1. Add `--name` for user-friendly artifact grouping
+2. Add `--keras` only when there is a real backend path for it
+3. Record backend-specific calibration intent explicitly when `--int8` is set
+4. Extend task/source/format validation alongside each new backend flag
+
+Current validation resolves `--latency-source auto` before checking flags.
+Effective `artifact_eval` lanes reject non-default `--half`, `--batch`, and
+`--nms`, while preserving their defaults. The canonical applicability table is
+generated in `docs/benchmark_support_matrix.md`.
 
 ### 4. Real benchmark semantics vs placeholders
 
