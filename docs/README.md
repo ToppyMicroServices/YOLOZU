@@ -96,13 +96,13 @@ Deep walkthrough report:
 Supporting docs:
 
 - Install: [`install.md`](install.md)
-- Support/legal: [`support.md`](support.md)
+- Structured support and feedback: [`support.md`](support.md)
 - Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
 - Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
 - Production readiness: [`production_readiness.md`](production_readiness.md)
 - SSOT capability coverage audit: [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
-- Adoption measurement and dated baseline: [`adoption/README.md`](adoption/README.md)
+- Adoption measurement, feedback cadence, and dated baseline: [`adoption/README.md`](adoption/README.md)
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
 - Web docs plan: [`web_docs_plan.md`](web_docs_plan.md)
 - Generated CLI reference: [`generated/cli_reference.md`](generated/cli_reference.md)

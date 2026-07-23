@@ -1,0 +1,94 @@
+name: Integration request
+description: Request a framework, exporter, runtime, or predictions interface contract integration
+title: "[Integration] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the smallest useful integration, not private deployment details.
+        GitHub Issues are public. For a possible vulnerability, use SECURITY.md.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What evaluation decision or repeatable workflow should this integration enable?
+      placeholder: Convert framework outputs into the YOLOZU predictions interface and run a comparable evaluation.
+    validations:
+      required: true
+  - type: dropdown
+    id: source_framework
+    attributes:
+      label: Source framework
+      options:
+        - Ultralytics
+        - Detectron2
+        - MMDetection
+        - YOLOX
+        - Hugging Face
+        - YOLOZU RT-DETR
+        - Other or custom
+        - Not applicable
+    validations:
+      required: true
+  - type: input
+    id: source_framework_version
+    attributes:
+      label: Source framework version
+      description: Include the public release, version range, or commit. Use "Not applicable" when appropriate.
+      placeholder: detectron2 0.6, commit SHA, or Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: List sanitized OS, Python, YOLOZU, accelerator, runtime, and install details.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands or current workflow
+      description: Show the public or sanitized commands used today. Enter "Not applicable" if no command exists yet.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Sanitized artifact shape
+      description: Link a public schema/sample or describe keys, shapes, and task type. Do not upload proprietary artifacts. Enter "None" when unavailable.
+      placeholder: Public sample URL, sanitized key/shape summary, or None
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Frequency and impact
+      description: How often does this block a workflow? Do not identify customers, employers, or datasets.
+      placeholder: One recurring workflow; blocks evaluation; no safe workaround.
+    validations:
+      required: true
+  - type: dropdown
+    id: aggregate_consent
+    attributes:
+      label: Aggregate-use and public-citation consent
+      description: Monthly reviews do not copy issue text or identity fields. If you allow citation, the review may link this already-public Issue URL, which exposes its public author and content.
+      options:
+        - "Yes — count this item and allow its public Issue URL to be cited"
+        - "Count only — include it in totals without an individual Issue link"
+        - "No — exclude this item from aggregate totals"
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Public-data and follow-up consent
+      options:
+        - label: I confirm that this public request contains no confidential, personal, credential, or security-sensitive data.
+          required: true
+        - label: I consent to maintainers asking follow-up questions in this public issue.
+          required: true

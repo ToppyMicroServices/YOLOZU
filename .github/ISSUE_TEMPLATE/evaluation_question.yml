@@ -1,0 +1,93 @@
+name: Evaluation question
+description: Ask about protocols, metrics, comparability, or report interpretation
+title: "[Evaluation] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when the answer may clarify a reproducible evaluation path.
+        GitHub Issues are public. For a possible vulnerability, use SECURITY.md.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Evaluation goal and question
+      description: State the decision you are trying to make and the specific protocol, metric, or report ambiguity.
+      placeholder: Compare two exported prediction sets under the same protocol; clarify which report field establishes comparability.
+    validations:
+      required: true
+  - type: dropdown
+    id: source_framework
+    attributes:
+      label: Source framework
+      options:
+        - Ultralytics
+        - Detectron2
+        - MMDetection
+        - YOLOX
+        - Hugging Face
+        - YOLOZU RT-DETR
+        - Other or custom
+        - Not applicable
+    validations:
+      required: true
+  - type: input
+    id: source_framework_version
+    attributes:
+      label: Source framework version
+      description: Include the public release, version range, or commit. Use "Not applicable" when appropriate.
+      placeholder: mmdet 3.x, commit SHA, or Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: List sanitized OS, Python, YOLOZU, accelerator, runtime, and install details.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands and protocol settings
+      description: Include the smallest sanitized command and relevant task, split, thresholds, protocol, and flags. Enter "Not applicable" if conceptual.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Non-security decision impact and workaround
+      description: State which decision is blocked or ambiguous and whether a safe interpretation or workaround exists.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Sanitized report or artifact evidence
+      description: Link only public examples or paste minimal sanitized metadata. Do not upload proprietary predictions, images, datasets, or weights. Enter "None" when unavailable.
+      placeholder: Public report URL, sanitized metadata, checksum, or None
+    validations:
+      required: true
+  - type: dropdown
+    id: aggregate_consent
+    attributes:
+      label: Aggregate-use and public-citation consent
+      description: Monthly reviews do not copy issue text or identity fields. If you allow citation, the review may link this already-public Issue URL, which exposes its public author and content.
+      options:
+        - "Yes — count this item and allow its public Issue URL to be cited"
+        - "Count only — include it in totals without an individual Issue link"
+        - "No — exclude this item from aggregate totals"
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Public-data and follow-up consent
+      options:
+        - label: I confirm that this public question contains no confidential, personal, credential, or security-sensitive data.
+          required: true
+        - label: I consent to maintainers asking follow-up questions in this public issue.
+          required: true

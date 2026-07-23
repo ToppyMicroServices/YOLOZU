@@ -14,6 +14,22 @@ feedback, not from individual usage tracking.
 The first dated baseline is
 [`2026-07-23-baseline.md`](2026-07-23-baseline.md).
 
+## Monthly feedback review
+
+- Owner: YOLOZU maintainers (`develop@toppymicros.com`)
+- Review time: after each calendar month closes
+- Template:
+  [`monthly_feedback_review_template.md`](monthly_feedback_review_template.md)
+- Output path: `docs/adoption/YYYY-MM-feedback-review.md`
+- Beads record: one monthly review item plus separate scoped work items for
+  actionable recurring blockers
+
+The monthly review records category frequency, highest non-security impact,
+response-target results, public evidence, unknowns, and linked Beads actions.
+It includes only public reports and support feedback with anonymous
+aggregate-use consent. Security reports remain on the private path in
+[`SECURITY.md`](../../SECURITY.md) and are excluded from the review.
+
 ## Funnel definitions
 
 | Stage | Aggregate signal | Interpretation |

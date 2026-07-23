@@ -1,0 +1,92 @@
+name: Feature demand
+description: Describe an evidence-backed capability or workflow improvement
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the recurring problem and decision impact before proposing implementation.
+        GitHub Issues are public. For a possible vulnerability, use SECURITY.md.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome or evaluation decision should become possible?
+    validations:
+      required: true
+  - type: dropdown
+    id: source_framework
+    attributes:
+      label: Source framework
+      options:
+        - Ultralytics
+        - Detectron2
+        - MMDetection
+        - YOLOX
+        - Hugging Face
+        - YOLOZU RT-DETR
+        - Other or custom
+        - Not applicable
+    validations:
+      required: true
+  - type: input
+    id: source_framework_version
+    attributes:
+      label: Source framework version
+      description: Include the public release, version range, or commit. Use "Not applicable" when appropriate.
+      placeholder: yolox 0.3, commit SHA, or Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: List sanitized OS, Python, YOLOZU, accelerator, runtime, and install details. Enter "Not applicable" if environment-independent.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Current commands or workaround
+      description: Show the current sanitized workflow or enter "None" if no workaround exists.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Sanitized artifacts or examples
+      description: Link only public examples or describe the minimal interface shape. Do not upload proprietary artifacts. Enter "None" when unavailable.
+      placeholder: Public example URL, sanitized shape summary, or None
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Frequency and impact
+      description: How often does the need occur, what does it block, and what safe workaround exists? Do not identify customers, employers, or datasets.
+    validations:
+      required: true
+  - type: dropdown
+    id: aggregate_consent
+    attributes:
+      label: Aggregate-use and public-citation consent
+      description: Monthly reviews do not copy issue text or identity fields. If you allow citation, the review may link this already-public Issue URL, which exposes its public author and content.
+      options:
+        - "Yes — count this item and allow its public Issue URL to be cited"
+        - "Count only — include it in totals without an individual Issue link"
+        - "No — exclude this item from aggregate totals"
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Public-data and follow-up consent
+      options:
+        - label: I confirm that this public request contains no confidential, personal, credential, or security-sensitive data.
+          required: true
+        - label: I consent to maintainers asking follow-up questions in this public issue.
+          required: true
