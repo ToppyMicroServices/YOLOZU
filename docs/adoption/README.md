@@ -57,7 +57,7 @@ Retrieve aggregate PyPI Stats data at most once per day:
 
 ```bash
 curl -L --compressed --fail --silent --show-error \
-  -A 'YOLOZU adoption baseline contact=info@toppymicros.com' \
+  -A 'YOLOZU adoption baseline contact=develop@toppymicros.com' \
   https://pypistats.org/api/packages/yolozu/recent
 ```
 
@@ -92,4 +92,3 @@ Keep only consented, minimal records. An internal ledger may use:
 
 Use pseudonymous session IDs. Link only to public GitHub discussions/issues or
 non-sensitive evidence. Do not commit private contact details or user artifacts.
-
