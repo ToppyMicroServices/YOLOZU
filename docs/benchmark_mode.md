@@ -338,11 +338,16 @@ The backend-execution flag defaults are `--no-half`, `--batch 1`, and
 `dataset_pass_wall_time` is the real inference-backed detect source. A
 non-dry-run artifact-backed task forced to that source fails before writing
 artifacts and directs the user to `auto` or `artifact_eval`.
+`detect` has no prepared detection-artifact evaluation path, so an explicit
+`--task detect --latency-source artifact_eval` request fails before report,
+artifact, or backend writes. Use `auto` or `dataset_pass_wall_time` for detect
+backend execution, or `synthetic_step` for explicitly synthetic timing.
 
 | Task scope | Requested source | Effective source | Formats | Non-default `--half`, `--batch`, `--nms` |
 | --- | --- | --- | --- | --- |
 | `classification`, `obb`, `segmentation`, `keypoints`, `depth`, `pose6d` | `auto` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino` | rejected before work starts |
-| any task | `artifact_eval` | `artifact_eval` | every accepted format | rejected before work starts |
+| `detect` | `artifact_eval` | rejected before execution | every accepted format | the source/task combination is rejected before work starts |
+| `classification`, `obb`, `segmentation`, `keypoints`, `depth`, `pose6d` | `artifact_eval` | `artifact_eval` | every accepted format | rejected before work starts |
 | any otherwise-valid non-`artifact_eval` lane | `auto`, `synthetic_step`, or `dataset_pass_wall_time` | not `artifact_eval` | `torch` | accepted; forwarded by torch detect execution or recorded in the planning report |
 | any otherwise-valid non-`artifact_eval` lane | `auto`, `synthetic_step`, or `dataset_pass_wall_time` | not `artifact_eval` | all other formats | rejected by the format rule |
 
@@ -361,7 +366,7 @@ is the canonical task/source/format applicability table.
 
 In addition, real backend execution is intentionally split between backend orchestration and artifact-backed evaluation:
 
-- `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` / `openvino` orchestration
+- `--task detect` can use real `torch` / `onnx` / `engine` / `torchscript` / `openvino` orchestration through `auto` or `dataset_pass_wall_time`; explicit `artifact_eval` is rejected
 - `--task classification` can use `--latency-source artifact_eval` to evaluate backend-specific class-score artifacts and report top-k metrics
 - `--task obb` can use `--latency-source artifact_eval` to evaluate backend-specific rotated-box artifacts and report OBB metrics
 - `--task segmentation` can use `--latency-source artifact_eval` to evaluate backend-specific mask-prediction artifacts with `tools/eval_segmentation.py` and attach real parity reports
@@ -545,6 +550,9 @@ The CLI now defaults to:
 `engine`, `torchscript`, and `openvino`, prefers `artifact_eval` for `--task classification`, `--task obb`,
 `--task segmentation`, `--task keypoints`, `--task depth`, and `--task pose6d`, and falls back to `synthetic_step` for the remaining
 formats.
+An explicit `artifact_eval` request is not a detect fallback: detect rejects it
+before output or backend work because no prepared detection-artifact evaluator
+is implemented.
 This resolution happens before flag applicability is checked, so those six
 tasks inherit the `artifact_eval` requirement to keep `--half` and `--nms`
 disabled and `--batch` at `1`.

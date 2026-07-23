@@ -1347,7 +1347,7 @@
         },
         {
           "default": false,
-          "description": "Use FP16 in the torch detect backend; effective artifact_eval lanes require the false default.",
+          "description": "Use FP16 in the torch detect backend; supported artifact_eval lanes require the false default.",
           "flag": "--half",
           "kind": "string",
           "name": "half",
@@ -1355,7 +1355,7 @@
         },
         {
           "default": false,
-          "description": "Explicitly keep FP16 disabled; this is the accepted artifact_eval default.",
+          "description": "Explicitly keep FP16 disabled; this is the accepted default within supported artifact_eval lanes.",
           "flag": "--no-half",
           "kind": "string",
           "name": "half",
@@ -1484,7 +1484,7 @@
         },
         {
           "default": 1,
-          "description": "Torch detect backend batch size; effective artifact_eval lanes require the default value 1.",
+          "description": "Torch detect backend batch size; supported artifact_eval lanes require the default value 1.",
           "flag": "--batch",
           "kind": "number",
           "name": "batch",
@@ -1506,7 +1506,7 @@
         },
         {
           "default": false,
-          "description": "Request NMS in the torch detect backend; effective artifact_eval lanes require the false default.",
+          "description": "Request NMS in the torch detect backend; supported artifact_eval lanes require the false default.",
           "flag": "--nms",
           "kind": "string",
           "name": "nms",
@@ -1514,7 +1514,7 @@
         },
         {
           "default": false,
-          "description": "Explicitly keep backend NMS disabled; this is the accepted artifact_eval default.",
+          "description": "Explicitly keep backend NMS disabled; this is the accepted default within supported artifact_eval lanes.",
           "flag": "--no-nms",
           "kind": "string",
           "name": "nms",
@@ -1557,7 +1557,7 @@
         },
         {
           "default": "auto",
-          "description": "Benchmark source selection. auto resolves artifact-backed tasks to artifact_eval on real formats; artifact_eval rejects non-default --half, --batch, and --nms. Non-dry-run artifact-backed tasks reject dataset_pass_wall_time and require auto or artifact_eval.",
+          "description": "Benchmark source selection. auto uses dataset_pass_wall_time for detect and artifact_eval for artifact-backed tasks on real formats. Detect rejects explicit artifact_eval before report, artifact, or backend writes because no prepared detection-artifact evaluation path is implemented; supported artifact_eval tasks reject non-default --half, --batch, and --nms. Non-dry-run artifact-backed tasks reject dataset_pass_wall_time and require auto or artifact_eval.",
           "flag": "--latency-source",
           "kind": "string",
           "name": "latency_source",
@@ -1772,7 +1772,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, fail-closed rejection of detect artifact_eval, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",

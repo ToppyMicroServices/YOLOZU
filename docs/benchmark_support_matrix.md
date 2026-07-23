@@ -30,7 +30,7 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 
 | Task | Metric family | Surface | Semantics |
 | --- | --- | --- | --- |
-| `detect` | bbox_map | mainstream | real backend eval when a supported runtime and artifact are available |
+| `detect` | bbox_map | mainstream | real backend eval with auto or dataset_pass_wall_time when a supported runtime and artifact are available; explicit artifact_eval is rejected before writes |
 | `segmentation` | mask_map | mainstream | artifact-backed real eval/parity for real backend formats |
 | `classification` | topk_accuracy | mainstream | artifact-backed real eval for real backend formats |
 | `obb` | obb_map | mainstream | artifact-backed real eval for real backend formats |
@@ -46,7 +46,8 @@ Within a valid task/source lane, default backend flag values are always accepted
 | Task scope | Requested latency source | Effective latency source | Formats | Accepted non-default flags | Rejected non-default flags | Behavior |
 | --- | --- | --- | --- | --- | --- | --- |
 | classification, obb, segmentation, keypoints, depth, pose6d | `auto` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino` | none | `--half`, `--batch`, `--nms` | auto resolves to artifact_eval; reject non-default backend execution flags before writing benchmark artifacts. |
-| any task | `artifact_eval` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts. |
+| detect | `artifact_eval` | `rejected before execution` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | none | No prepared detection-artifact evaluation path is implemented; reject before report, artifact, or backend writes and direct users to auto or dataset_pass_wall_time for backend execution. |
+| classification, obb, segmentation, keypoints, depth, pose6d | `artifact_eval` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | Supported artifact_eval tasks consume prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts. |
 | non-dry-run classification, obb, segmentation, keypoints, depth, pose6d | `dataset_pass_wall_time` | `invalid for artifact-backed tasks` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | none | Reject before report or backend writes; use --latency-source auto or artifact_eval. |
 | any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `torch` | `--half`, `--batch`, `--nms` | none | Accepted values are forwarded by torch detect execution or recorded in the benchmark report for planning-only execution. |
 | any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | Current format paths do not consume these backend execution flags, so non-default values fail early. |

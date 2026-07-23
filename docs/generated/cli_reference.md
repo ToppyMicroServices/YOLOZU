@@ -146,7 +146,7 @@ Contact: develop@toppymicros.com
 --fraction FRACTION
   Record dataset fraction knob (default: 1.0).
 --latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}
-  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected. Non-dry-run artifact-backed tasks cannot use dataset_pass_wall_time; use auto or artifact_eval.
+  Benchmark source selection. auto uses dataset_pass_wall_time for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. Detect rejects explicit artifact_eval before writes because no prepared detection-artifact evaluation path is implemented. Supported artifact_eval tasks consume prepared artifacts, so --half, --batch values other than 1, and --nms are rejected. Non-dry-run artifact-backed tasks cannot use dataset_pass_wall_time; use auto or artifact_eval.
 --iterations ITERATIONS
   Synthetic latency iterations (default: 50).
 --warmup WARMUP
@@ -168,7 +168,7 @@ Contact: develop@toppymicros.com
 | benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. |
 | benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
 | benchmark_latency | experimental | tools/benchmark_latency.py | Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. |
-| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
+| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, fail-closed rejection of detect artifact_eval, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
 | benchmark_sar_robustness | research | tools/benchmark_sar_robustness.py | Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. |
 | build_manifest | stable | tools/build_manifest.py | Build a dataset manifest for data/coco128 (writes reports/manifest.json). |
 | build_trt_engine | experimental | tools/build_trt_engine.py | Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. |

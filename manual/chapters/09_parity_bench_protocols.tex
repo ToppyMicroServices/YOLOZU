@@ -256,11 +256,16 @@ running backend inference, \cmd{--half}, \cmd{--batch} values other than
 \cmd{1}, and \cmd{--nms} fail early. The defaults
 \cmd{--no-half --batch 1 --no-nms} remain valid.
 
-The same rejection applies when \cmd{artifact_eval} is requested explicitly.
-Conversely, \path{dataset_pass_wall_time} is the inference-backed source for
-\cmd{detect}. A non-dry-run artifact-backed task forced to that source fails
-before writing artifacts and directs the user to \cmd{auto} or
-\cmd{artifact_eval}.
+The same backend-flag rejection applies when \cmd{artifact_eval} is requested
+explicitly for one of those supported artifact-backed tasks. Conversely,
+\path{dataset_pass_wall_time} is the inference-backed source for \cmd{detect}.
+Detect has no prepared detection-artifact evaluation path, so
+\cmd{--task detect --latency-source artifact_eval} fails before report,
+artifact, or backend writes. Use \cmd{auto} or
+\cmd{dataset_pass_wall_time} for detect backend execution, or
+\cmd{synthetic_step} for explicitly synthetic timing. A non-dry-run
+artifact-backed task forced to \cmd{dataset_pass_wall_time} fails before
+writing artifacts and directs the user to \cmd{auto} or \cmd{artifact_eval}.
 With \cmd{--strict}, any requested format that is skipped, fails, or finishes
 \cmd{partial} because evaluation/parity failed or drifted makes the command
 exit with code \cmd{2}.

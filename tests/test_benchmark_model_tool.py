@@ -67,6 +67,11 @@ class TestBenchmarkModelTool(TestCase):
         normalized_help = " ".join(proc.stdout.split())
         self.assertIn("Must remain disabled when the effective latency source is artifact_eval", normalized_help)
         self.assertIn("Must remain 1 when the effective latency source is artifact_eval", normalized_help)
+        self.assertIn(
+            "Detect rejects explicit artifact_eval before writes because no prepared "
+            "detection-artifact evaluation path is implemented",
+            normalized_help,
+        )
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
@@ -1202,6 +1207,88 @@ class TestBenchmarkModelTool(TestCase):
                 self.assertIn("--latency-source auto (effective: artifact_eval)", message)
                 self.assertFalse(Path(args.output).exists())
 
+    def test_detect_artifact_eval_fails_before_backend_or_artifact_writes(self):
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            args = self._args(
+                format="torch",
+                task="detect",
+                latency_source="artifact_eval",
+                output=str(root / "report.json"),
+                predictions_output=str(root / "predictions.json"),
+                eval_output=str(root / "eval.json"),
+                parity_output=str(root / "parity.json"),
+            )
+            with mock.patch.object(benchmark_mode, "_support_status_for_format", return_value=(True, None)):
+                with mock.patch.object(benchmark_mode, "_run_command") as run_command:
+                    with mock.patch.object(benchmark_mode, "write_json") as write_json:
+                        with self.assertRaisesRegex(
+                            ValueError,
+                            r"--task detect does not support --latency-source artifact_eval",
+                        ):
+                            benchmark_mode.run_benchmark_mode(args)
+
+            run_command.assert_not_called()
+            write_json.assert_not_called()
+            self.assertEqual(list(root.iterdir()), [])
+
+    def test_detect_artifact_eval_rejected_through_both_cli_surfaces(self):
+        surfaces = {
+            "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
+            "standalone": [sys.executable, str(self.repo_root / "tools" / "benchmark_model.py")],
+        }
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for surface, prefix in surfaces.items():
+                for requested_task in ("detect", "detection"):
+                    for dry_run in (False, True):
+                        with self.subTest(surface=surface, task=requested_task, dry_run=dry_run):
+                            run_root = root / f"{surface}_{requested_task}_{'dry' if dry_run else 'real'}"
+                            report = run_root / "report.json"
+                            artifacts = run_root / "artifacts"
+                            command = [
+                                *prefix,
+                                "--model",
+                                "runs/example/model.pt",
+                                "--data",
+                                "data/smoke",
+                                "--format",
+                                "torch",
+                                "--task",
+                                requested_task,
+                                "--latency-source",
+                                "artifact_eval",
+                                "--predictions-output",
+                                str(artifacts),
+                                "--eval-output",
+                                str(artifacts),
+                                "--parity-output",
+                                str(artifacts),
+                                "--output",
+                                str(report),
+                            ]
+                            if dry_run:
+                                command.append("--dry-run")
+                            proc = subprocess.run(
+                                command,
+                                cwd=str(self.repo_root),
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                check=False,
+                                text=True,
+                            )
+
+                            self.assertNotEqual(proc.returncode, 0)
+                            output = f"{proc.stdout}\n{proc.stderr}"
+                            self.assertIn(
+                                "--task detect does not support --latency-source artifact_eval",
+                                output,
+                            )
+                            self.assertIn("no prepared detection-artifact evaluation path", output)
+                            self.assertIn("--latency-source dataset_pass_wall_time", output)
+                            self.assertIn("--latency-source synthetic_step", output)
+                            self.assertFalse(run_root.exists(), "source validation must fail before any output write")
+
     def test_artifact_tasks_reject_dataset_pass_through_both_cli_surfaces(self):
         surfaces = {
             "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
@@ -1622,6 +1709,11 @@ class TestBenchmarkModelTool(TestCase):
         normalized_help = " ".join(proc.stdout.split())
         self.assertIn("Must remain disabled when the effective latency source is artifact_eval", normalized_help)
         self.assertIn("Must remain 1 when the effective latency source is artifact_eval", normalized_help)
+        self.assertIn(
+            "Detect rejects explicit artifact_eval before writes because no prepared "
+            "detection-artifact evaluation path is implemented",
+            normalized_help,
+        )
 
     def test_short_and_long_help_work_on_both_benchmark_surfaces(self):
         commands = (
@@ -1661,6 +1753,11 @@ class TestBenchmarkModelTool(TestCase):
                     )
                     self.assertIn(
                         "Return exit code 2 if any requested format is skipped, fails, or is partial",
+                        " ".join(proc.stdout.split()),
+                    )
+                    self.assertIn(
+                        "Detect rejects explicit artifact_eval before writes because no prepared "
+                        "detection-artifact evaluation path is implemented",
                         " ".join(proc.stdout.split()),
                     )
 

@@ -67,7 +67,26 @@
         "behavior": "auto resolves to artifact_eval; reject non-default backend execution flags before writing benchmark artifacts."
       },
       {
-        "task_scope": "any task",
+        "task_scope": "detect",
+        "requested_latency_sources": [
+          "artifact_eval"
+        ],
+        "effective_latency_source": "rejected before execution",
+        "formats": [
+          "torch",
+          "onnx",
+          "engine",
+          "torchscript",
+          "openvino",
+          "executorch",
+          "opencv_dnn"
+        ],
+        "accepted_nondefault_flags": [],
+        "rejected_nondefault_flags": [],
+        "behavior": "No prepared detection-artifact evaluation path is implemented; reject before report, artifact, or backend writes and direct users to auto or dataset_pass_wall_time for backend execution."
+      },
+      {
+        "task_scope": "classification, obb, segmentation, keypoints, depth, pose6d",
         "requested_latency_sources": [
           "artifact_eval"
         ],
@@ -87,7 +106,7 @@
           "batch",
           "nms"
         ],
-        "behavior": "artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts."
+        "behavior": "Supported artifact_eval tasks consume prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts."
       },
       {
         "task_scope": "non-dry-run classification, obb, segmentation, keypoints, depth, pose6d",
@@ -202,7 +221,7 @@
       "id": "detect",
       "metric_family": "bbox_map",
       "surface": "mainstream",
-      "semantics": "real backend eval when a supported runtime and artifact are available"
+      "semantics": "real backend eval with auto or dataset_pass_wall_time when a supported runtime and artifact are available; explicit artifact_eval is rejected before writes"
     },
     {
       "id": "segmentation",

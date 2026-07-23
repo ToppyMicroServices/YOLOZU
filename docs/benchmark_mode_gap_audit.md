@@ -40,6 +40,11 @@ documentation agree on these boundaries:
   `dataset_pass_wall_time` on real backend formats. An explicit
   `dataset_pass_wall_time` request follows the same backend path; missing
   runtimes or model artifacts are reported as `skipped`.
+- Explicit `--task detect --latency-source artifact_eval` fails before report,
+  artifact, or backend writes because no prepared detection-artifact
+  evaluation path is implemented. The error directs users to `auto` or
+  `dataset_pass_wall_time` for backend execution, or `synthetic_step` for
+  explicitly synthetic timing.
 - For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and
   `pose6d`, `auto` resolves to `artifact_eval` before flag validation.
   `--no-half --batch 1 --no-nms` remains valid, while non-default values fail
@@ -57,10 +62,10 @@ documentation agree on these boundaries:
   orchestration is not wired, so their benchmark results are
   `unsupported/skipped`, not synthetic successes.
 
-One residual source-selection defect remains: explicit
-`--task detect --latency-source artifact_eval` can launch the regular backend
-prediction path while the report describes `synthetic_planning_only`.
-`YOLOZU-ll2.28` tracks the fail-closed correction separately.
+The earlier explicit detect `artifact_eval` mismatch is corrected under
+`YOLOZU-ll2.28`. Regression coverage patches both the backend command runner
+and artifact writer and proves that neither can be reached for this rejected
+combination; subprocess coverage checks both public CLI surfaces.
 
 ## Highest-leverage gap closers
 
@@ -174,8 +179,10 @@ Improvement priority:
 4. Extend task/source/format validation alongside each new backend flag
 
 Current validation resolves `--latency-source auto` before checking flags.
-Effective `artifact_eval` lanes reject non-default `--half`, `--batch`, and
-`--nms`, while preserving their defaults. The canonical applicability table is
+Detect rejects explicit `artifact_eval` before flag applicability because no
+prepared detection-artifact evaluation path exists. Supported effective
+`artifact_eval` lanes reject non-default `--half`, `--batch`, and `--nms`,
+while preserving their defaults. The canonical applicability table is
 generated in `docs/benchmark_support_matrix.md`.
 
 ### 4. Real benchmark semantics vs placeholders

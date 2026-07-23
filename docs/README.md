@@ -191,6 +191,8 @@ The canonical support-status table is
 It also records which backend flags apply after `--latency-source auto`
 resolves. Artifact-backed evaluation consumes prepared files, so it accepts
 only the defaults `--no-half --batch 1 --no-nms`.
+Detect uses `auto` or `dataset_pass_wall_time` for backend execution and rejects
+explicit `artifact_eval` before any output or backend write.
 
 Shortest 3 commands:
 

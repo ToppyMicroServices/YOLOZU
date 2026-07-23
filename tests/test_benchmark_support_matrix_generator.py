@@ -83,6 +83,7 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
             item
             for item in flag_applicability["matrix"]
             if item["requested_latency_sources"] == ["artifact_eval"]
+            and item["effective_latency_source"] == "artifact_eval"
         )
         self.assertEqual(explicit_artifact_row["formats"], list(benchmark_mode.PHASE1_FORMATS))
         self.assertEqual(
@@ -99,6 +100,22 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         self.assertEqual(invalid_dataset_pass_row["accepted_nondefault_flags"], [])
         self.assertEqual(invalid_dataset_pass_row["rejected_nondefault_flags"], [])
         self.assertIn("Reject before report or backend writes", invalid_dataset_pass_row["behavior"])
+        detect_rejection_row = next(
+            item
+            for item in flag_applicability["matrix"]
+            if item["task_scope"] == "detect"
+            and item["requested_latency_sources"] == ["artifact_eval"]
+        )
+        self.assertEqual(detect_rejection_row["formats"], list(benchmark_mode.PHASE1_FORMATS))
+        self.assertEqual(
+            detect_rejection_row["effective_latency_source"],
+            "rejected before execution",
+        )
+        self.assertEqual(detect_rejection_row["accepted_nondefault_flags"], [])
+        self.assertEqual(detect_rejection_row["rejected_nondefault_flags"], [])
+        self.assertIn("before report, artifact, or backend writes", detect_rejection_row["behavior"])
+        detect_task = next(item for item in meta["tasks"] if item["id"] == "detect")
+        self.assertIn("explicit artifact_eval is rejected before writes", detect_task["semantics"])
         self.assertEqual(len(support_pairs), len(formats) * len(tasks))
         for fmt in benchmark_mode.PHASE1_FORMATS:
             for task in benchmark_mode.TASK_SEMANTICS:
