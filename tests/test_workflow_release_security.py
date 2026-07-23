@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -75,6 +76,41 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
                 self.assertNotIn("pull_request:", workflow)
                 self.assertNotIn("\n  push:", workflow)
                 self.assertNotIn("\n  schedule:", workflow)
+
+    def test_reference_adapter_full_workflow_uses_matching_full_baseline(self):
+        workflow = (
+            self.repo_root / ".github" / "workflows" / "reference_adapter_full.yml"
+        ).read_text(encoding="utf-8")
+        baseline_path = (
+            self.repo_root
+            / "baselines"
+            / "reference_adapter"
+            / "rtdetr_pose"
+            / "torch"
+            / "cpu"
+            / "v1"
+            / "full.json"
+        )
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        self.assertIn("runs-on: ubuntu-24.04", workflow)
+        self.assertIn('default: "baselines/reference_adapter"', workflow)
+        self.assertIn('default: "v1"', workflow)
+        self.assertIn("--baseline-layout", workflow)
+        self.assertIn("matrix", workflow)
+        self.assertIn("--profile", workflow)
+        self.assertIn("full", workflow)
+        self.assertIn("--repro-policy", workflow)
+        self.assertIn("strict", workflow)
+        self.assertIn("COMMON_ARGS=(", workflow)
+        self.assertIn('"${COMMON_ARGS[@]}"', workflow)
+        self.assertIn("--write-baseline", workflow)
+        self.assertIn("reference_adapter_regression_full_baseline_write.json", workflow)
+        self.assertIn("reference_adapter_regression_full_ci.json", workflow)
+        self.assertIn("if: ${{ always() }}", workflow)
+        self.assertIn("rtdetr_pose/torch/cpu/${{ inputs.baseline_version || 'v1' }}/full.json", workflow)
+        self.assertEqual(baseline.get("profile"), "full")
+        self.assertEqual(baseline.get("baseline_layout"), "matrix")
+        self.assertEqual((baseline.get("baseline_meta") or {}).get("repro_policy"), "strict")
 
     def test_workflow_only_changes_still_run_release_and_security_regressions(self):
         ci = (self.repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(encoding="utf-8")

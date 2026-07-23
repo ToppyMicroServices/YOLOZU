@@ -25,6 +25,7 @@ This document defines the test philosophy for `tools/run_reference_adapter_regre
   - `preprocess|preproc` metadata (`method`, `resize`, `pad`, `letterbox`, `color_order`, `dtype`, `normalize`)
 - Runtime lock + optional expected hash checks (`dataset_hash`, `weights_hash`, `checkpoint_hash`) are consistency checks.
 - `weights_hash` is hard when enforced, or when both baseline/current runs are checkpoint-backed.
+- A recorded baseline `profile` must match the current invocation.
 
 ### Soft invariants (behavior)
 
@@ -73,6 +74,13 @@ Two baseline layouts are supported:
 - `matrix`: `baselines/<adapter>/<backend>/<device>/<version>/<profile>.json`
 
 Thresholds support backend-first configuration (`metric_by_backend`, `backend_parity_by_backend`) with fallback to common thresholds.
+
+The fast CI lane keeps the legacy
+`baselines/reference_adapter/rtdetr_pose_smoke_val.json` micro/relaxed
+baseline. The manual full lane uses the separate
+`baselines/reference_adapter/rtdetr_pose/torch/cpu/v1/full.json` full/strict
+baseline. Full baseline refreshes must be followed immediately by a check with
+the same arguments.
 
 ## Two-stage regression policy
 

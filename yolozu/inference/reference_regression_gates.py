@@ -413,10 +413,13 @@ def _compare_against_baseline(
             "config_hash",
             "checkpoint_hash",
             "repro_policy",
+            "profile",
             "canonical_decimals",
             "backend",
         ):
             ref = baseline_meta.get(key)
+            if key == "profile" and ref is None:
+                ref = baseline_payload.get("profile")
             cur = run_meta.get(key)
             if ref is None:
                 continue
@@ -718,4 +721,3 @@ def _compare_against_baseline(
             )
 
     return gates, hard_failures, soft_failures
-
