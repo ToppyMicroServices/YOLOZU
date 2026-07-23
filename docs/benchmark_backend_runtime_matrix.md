@@ -27,8 +27,8 @@ benchmark users and maintainers.
 | `engine` / TensorRT | real orchestration for `detect`; artifact-backed real lanes for classification/OBB/segmentation/keypoints/depth/pose6d | Linux + NVIDIA GPU + TensorRT runtime/engine for detect; artifact-backed tasks consume supplied files | Requires external NVIDIA runtime/SDK; verify redistribution terms for CUDA/TensorRT/NGC artifacts | No |
 | `torchscript` | real orchestration for `detect`; artifact-backed real lanes for classification/OBB/segmentation/keypoints/depth/pose6d | Local PyTorch runtime for detect; artifact-backed tasks consume supplied files | No vendor GPU runtime is implied; still external to this repo | No |
 | `openvino` | conditional real orchestration for `detect`; artifact-backed real lanes for classification/OBB/segmentation/keypoints/depth/pose6d | External Intel OpenVINO runtime and compatible IR artifact for detect; artifact-backed tasks consume supplied files | OpenVINO is external to this repo; do not assume runtime or model redistribution from YOLOZU | No |
-| `executorch` | synthetic / planning-only | External ExecuTorch runtime if used | ExecuTorch runtime is external; verify platform packaging constraints separately | No |
-| `opencv_dnn` | synthetic / planning-only | Local OpenCV runtime | OpenCV is external to this repo; optional contrib/nonfree modules are not bundled here | No |
+| `executorch` | unsupported/skipped | Benchmark runtime is not invoked; standalone exporter utilities may use an external ExecuTorch runtime | ExecuTorch runtime is external; verify platform packaging constraints separately | No |
+| `opencv_dnn` | unsupported/skipped | Benchmark runtime is not invoked; standalone exporter utilities may use local OpenCV | OpenCV is external to this repo; optional contrib/nonfree modules are not bundled here | No |
 | `coreml` | planned / conditional | Apple platform runtime/tooling | Apple platform/runtime terms apply; not bundled here | No |
 | `tflite` | planned | TensorFlow Lite runtime | External runtime terms apply; not bundled here | No |
 | `ncnn` | planned | External NCNN runtime | External runtime/build terms apply; not bundled here | No |
@@ -39,9 +39,10 @@ benchmark users and maintainers.
 
 - `real orchestration` means the benchmark can run repository-side prediction
   and evaluation paths when the external runtime and artifacts are present.
-- `planning-only` means the benchmark report is still useful for artifact
-  planning, task semantics, and CI/report stability, but it does not imply a
-  real backend pass happened.
+- `unsupported/skipped` means the format label is visible in the benchmark
+  interface contract, but benchmark orchestration does not invoke that runtime
+  and writes explicit skipped records.
+- `planned` means the format is not part of the current benchmark CLI surface.
 - `bundled with YOLOZU = No` is intentional. This repo provides adapter/wrapper
   logic and interface-contract-safe orchestration, not vendor runtime
   redistribution.

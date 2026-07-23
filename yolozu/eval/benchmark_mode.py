@@ -94,10 +94,13 @@ TASK_SEMANTICS = {
         "display_name": "Segmentation",
         "metric_family": "mask_map",
         "expected_metric_keys": ["mask_mAP50-95", "mask_mAP50", "mask_AR"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Segmentation uses artifact-backed real evaluation and parity for torch/onnx/engine backend predictions artifacts.",
+        "notes": (
+            "Segmentation uses artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino backend predictions artifacts."
+        ),
     },
     "classification": {
         "display_name": "Classification",
@@ -121,28 +124,38 @@ TASK_SEMANTICS = {
         "display_name": "Keypoints / Pose",
         "metric_family": "oks_map",
         "expected_metric_keys": ["OKS_mAP", "PCK", "keypoint_AR"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "The CLI accepts both --task keypoints and --task pose and records a canonical keypoints task with pose alias metadata. Current benchmark execution uses backend-specific predictions artifacts for eval/parity rather than pretending YOLOZU executed the backend inference itself.",
+        "notes": (
+            "The CLI accepts both --task keypoints and --task pose and records a canonical keypoints task with "
+            "pose alias metadata. Current benchmark execution uses torch/onnx/engine/torchscript/openvino "
+            "predictions artifacts for eval/parity rather than pretending YOLOZU executed backend inference."
+        ),
     },
     "depth": {
         "display_name": "Monocular Depth",
         "metric_family": "depth_error",
         "expected_metric_keys": ["abs_rel", "rmse", "delta1"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "Depth is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine depth outputs.",
+        "notes": (
+            "Depth is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino depth outputs."
+        ),
     },
     "pose6d": {
         "display_name": "6DoF Pose",
         "metric_family": "pose6d_error",
         "expected_metric_keys": ["ADD", "ADDS", "reprojection_error"],
-        "support_level": "artifact_backed_real_for_torch_onnx_engine",
+        "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": False,
         "yolozu_native_extension": True,
-        "notes": "6DoF pose is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for torch/onnx/engine prediction artifacts.",
+        "notes": (
+            "6DoF pose is a YOLOZU-native benchmark extension with artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino prediction artifacts."
+        ),
     },
 }
 FLAG_DEFAULTS = {
@@ -180,11 +193,17 @@ FORMAT_FLAG_RULES = {
     },
     "executorch": {
         "supported_nondefault_flags": set(),
-        "notes": "ExecuTorch is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+        "notes": (
+            "ExecuTorch benchmark orchestration is not wired and reports unsupported/skipped; "
+            "export-oriented flags remain unsupported."
+        ),
     },
     "opencv_dnn": {
         "supported_nondefault_flags": set(),
-        "notes": "OpenCV DNN is planning/synthetic-only in the current phase; export-oriented flags remain unsupported.",
+        "notes": (
+            "OpenCV DNN benchmark orchestration is not wired and reports unsupported/skipped; "
+            "export-oriented flags remain unsupported."
+        ),
     },
 }
 
@@ -377,10 +396,15 @@ def _task_execution_semantics(
 
     artifact_expectation: dict[str, str]
     if execution_mode in {"real_backend_eval", "real_artifact_eval"}:
+        parity_expectation = (
+            "skipped"
+            if execution_mode == "real_artifact_eval" and task_label in {"classification", "obb"}
+            else "real_when_comparable"
+        )
         artifact_expectation = {
             "predictions": "real",
             "eval": "real",
-            "parity": "real_when_comparable",
+            "parity": parity_expectation,
         }
     elif execution_mode == "dry_run_planning":
         artifact_expectation = {

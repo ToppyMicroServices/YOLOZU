@@ -77,8 +77,13 @@ class TestBenchmarkModelTool(TestCase):
 
     def test_artifact_eval_tasks_do_not_require_backend_runtimes(self):
         artifact_tasks = ("classification", "obb", "segmentation", "keypoints", "depth", "pose6d")
+        expected_support_level = "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino"
         with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
             for task_label in artifact_tasks:
+                self.assertEqual(
+                    benchmark_mode._task_semantics(task_label)["support_level"],
+                    expected_support_level,
+                )
                 for fmt in benchmark_mode.REAL_BACKEND_FORMATS:
                     with self.subTest(task=task_label, fmt=fmt):
                         supported, reason = benchmark_mode._support_status_for_format(
@@ -144,11 +149,32 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["support_reason"], "model_artifact_required")
             self.assertEqual(result["artifact_status"]["predictions"], "real")
             self.assertEqual(result["artifact_status"]["eval"], "real")
-            self.assertEqual(result["artifact_status"]["parity"], "real_when_comparable")
+            self.assertEqual(result["artifact_status"]["parity"], "skipped")
             self.assertIn("available", result["runtime"])
             self.assertIn("predictions", result["artifacts"])
             self.assertIn("eval", result["artifacts"])
             self.assertIn("parity", result["artifacts"])
+
+    def test_artifact_parity_expectations_match_shipped_task_support(self):
+        for task_label in ("classification", "obb"):
+            with self.subTest(task=task_label):
+                semantics = benchmark_mode._task_execution_semantics(
+                    task_label,
+                    fmt="torch",
+                    benchmark_source="artifact_eval",
+                    dry_run=False,
+                )
+                self.assertEqual(semantics["artifact_expectation"]["parity"], "skipped")
+
+        for task_label in ("segmentation", "keypoints", "depth", "pose6d"):
+            with self.subTest(task=task_label):
+                semantics = benchmark_mode._task_execution_semantics(
+                    task_label,
+                    fmt="torch",
+                    benchmark_source="artifact_eval",
+                    dry_run=False,
+                )
+                self.assertEqual(semantics["artifact_expectation"]["parity"], "real_when_comparable")
 
     def test_dod_semantics_keep_requested_detect_formats_when_runtimes_missing(self):
         args = self._args(format="torch,onnx,engine,torchscript", task="detect", dry_run=False)
@@ -252,6 +278,10 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(result["skip_reason"], "benchmark_format_not_wired")
         self.assertEqual(result["execution_semantics"]["execution_mode"], "unsupported_skipped")
         self.assertEqual(result["execution_semantics"]["artifact_expectation"]["predictions"], "skipped")
+        format_notes = report["validation_summary"]["by_format"]["opencv_dnn"]["format_notes"]
+        self.assertIn("not wired", format_notes)
+        self.assertIn("unsupported/skipped", format_notes)
+        self.assertNotIn("synthetic", format_notes)
         skipped_artifact = json.loads(Path(result["artifacts"]["predictions"]).read_text(encoding="utf-8"))
         self.assertEqual(skipped_artifact["kind"], "benchmark_predictions_skipped")
 
@@ -1033,6 +1063,49 @@ class TestBenchmarkModelTool(TestCase):
                 self.assertIn("--latency-source auto (effective: artifact_eval)", message)
                 self.assertFalse(Path(args.output).exists())
 
+    def test_artifact_tasks_reject_dataset_pass_through_both_cli_surfaces(self):
+        surfaces = {
+            "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
+            "standalone": [sys.executable, str(self.repo_root / "tools" / "benchmark_model.py")],
+        }
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for surface, prefix in surfaces.items():
+                for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+                    with self.subTest(surface=surface, task=task_label):
+                        report = root / f"{surface}_{task_label}_dataset_pass.json"
+                        proc = subprocess.run(
+                            [
+                                *prefix,
+                                "--model",
+                                "reports/prepared_artifact.json",
+                                "--data",
+                                "data/smoke",
+                                "--format",
+                                "torch",
+                                "--task",
+                                task_label,
+                                "--latency-source",
+                                "dataset_pass_wall_time",
+                                "--no-half",
+                                "--batch",
+                                "1",
+                                "--no-nms",
+                                "--output",
+                                str(report),
+                            ],
+                            cwd=str(self.repo_root),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            check=False,
+                            text=True,
+                        )
+                        self.assertNotEqual(proc.returncode, 0)
+                        output = f"{proc.stdout}\n{proc.stderr}"
+                        self.assertIn(f"--task {task_label} uses artifact-backed evaluation", output)
+                        self.assertIn("use --latency-source auto or artifact_eval", output)
+                        self.assertFalse(report.exists(), "source validation must fail before writing the report")
+
     def test_artifact_eval_rejects_inert_flags_through_both_cli_surfaces(self):
         surfaces = {
             "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
@@ -1326,6 +1399,10 @@ class TestBenchmarkModelTool(TestCase):
                         "OpenVINO requires supplied artifacts and an available runtime",
                         " ".join(proc.stdout.split()),
                     )
+                    self.assertIn(
+                        "Return exit code 2 if any requested format is skipped or fails",
+                        " ".join(proc.stdout.split()),
+                    )
 
     def test_canonical_openvino_parser_surface_matches_standalone(self):
         required = ["--model", "runs/example/model.pt", "--data", "data/smoke"]
@@ -1343,6 +1420,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(len(captured), 1)
         canonical_defaults = captured.pop()
+        canonical_default_values = vars(canonical_defaults).copy()
+        canonical_default_values.pop("command", None)
+        self.assertEqual(canonical_default_values, vars(standalone_defaults))
         self.assertEqual(canonical_defaults.openvino_model, standalone_defaults.openvino_model)
         self.assertIsNone(canonical_defaults.openvino_model)
         self.assertEqual(

@@ -292,14 +292,19 @@ YOLOZU additions for reproducibility and CI:
 - `--torch-model`
 - `--onnx-model`
 - `--engine-model`
+- `--torchscript-model`
+- `--openvino-model`
 - `--task`
 - `--split`
 - `--protocol`
 - `--max-images`
+- `--latency-source`
+- `--parity-reference-backend`
 - `--depth-mask`
 - `--depth-align`
 - `--depth-parity-mae-atol`
 - `--depth-parity-rmse-atol`
+- `--segmentation-parity-mismatch-atol`
 - `--keypoints-parity-iou-thresh`
 - `--keypoints-parity-score-atol`
 - `--keypoints-parity-bbox-atol`
@@ -318,6 +323,8 @@ YOLOZU additions for reproducibility and CI:
 - `--eval-output`
 - `--parity-output`
 
+Use `yolozu benchmark --help` for the complete parser-owned option list.
+
 ## Early validation rules
 
 Both `yolozu benchmark` and `tools/benchmark_model.py` fail before writing
@@ -327,6 +334,10 @@ latency source, and format all participate in validation.
 
 The backend-execution flag defaults are `--no-half`, `--batch 1`, and
 `--no-nms`. Those defaults remain accepted in every lane.
+
+`dataset_pass_wall_time` is the real inference-backed detect source. A
+non-dry-run artifact-backed task forced to that source fails before writing
+artifacts and directs the user to `auto` or `artifact_eval`.
 
 | Task scope | Requested source | Effective source | Formats | Non-default `--half`, `--batch`, `--nms` |
 | --- | --- | --- | --- | --- |
@@ -368,12 +379,22 @@ Each run writes:
 - `eval_<format>.json`
 - `parity_<format>.json`
 
-When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino` can run for real, the benchmark writes actual
-predictions and eval artifacts and attaches real parity artifacts for candidate
-backends against the chosen reference backend (preferring `torch` when
-available). When a backend is unavailable or the command is invoked with
-`--dry-run`, the command writes placeholders instead of pretending that
-inference ran.
+When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino`
+completes a shipped real lane, the benchmark writes real predictions/eval
+artifacts or consumes real backend artifacts. Comparable detect,
+segmentation, keypoints, depth, and pose6d results can attach real parity
+artifacts against the chosen reference backend (preferring `torch` when
+available). Classification and OBB currently write explicit parity
+placeholders. Missing backends/artifacts and `--dry-run` also write non-real
+artifacts instead of pretending inference or comparison ran.
+
+For `--task classification` and `--task obb`, the real lane is artifact-backed:
+
+- the backend-specific score or rotated-box artifact is normalized under
+  `predictions_<format>.json`
+- `eval_<format>.json` contains real task metrics
+- `parity_<format>.json` remains an explicit placeholder until those two task
+  lanes gain shipped parity attachment
 
 For `--task segmentation`, the real lane is artifact-backed rather than inference-backed:
 
@@ -496,8 +517,8 @@ Typical skip reasons:
 - `model_artifact_required`
 - `model_artifact_mismatch`
 
-If `--strict` is set and any requested format is skipped, the command exits
-with code `2`.
+If `--strict` is set and any requested format is skipped or fails, the command
+exits with code `2`.
 
 ## Why the latency source is explicit
 

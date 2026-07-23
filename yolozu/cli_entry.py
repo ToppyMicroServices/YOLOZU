@@ -455,7 +455,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
     bench.add_argument("--dry-run", action="store_true", help="Validate wiring and planned artifacts without timing runs.")
-    bench.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped.")
+    bench.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return exit code 2 if any requested format is skipped or fails.",
+    )
     bench.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
     bench.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
     bench.add_argument("--run-id", default=None, help="Optional run id (default: UTC timestamp).")

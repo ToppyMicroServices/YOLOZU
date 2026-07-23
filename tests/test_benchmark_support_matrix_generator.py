@@ -25,6 +25,7 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
         self.repo_root = Path(__file__).resolve().parents[1]
         self.metadata = self.repo_root / "yolozu" / "data" / "manifest" / "benchmark_support.json"
         self.output = self.repo_root / "docs" / "benchmark_support_matrix.md"
+        self.runtime_boundary = self.repo_root / "docs" / "benchmark_backend_runtime_matrix.md"
 
     def test_generated_matrix_is_current(self) -> None:
         proc = subprocess.run(
@@ -138,6 +139,19 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
             "Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.",
             rendered,
         )
+
+    def test_runtime_boundary_keeps_unwired_formats_unsupported(self) -> None:
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        runtime_boundary = self.runtime_boundary.read_text(encoding="utf-8")
+
+        unwired = [item for item in meta["formats"] if item["support_state"] == "unsupported/skipped"]
+        self.assertGreater(len(unwired), 0)
+        for item in unwired:
+            with self.subTest(format=item["id"]):
+                self.assertIn(
+                    f"| `{item['id']}` | unsupported/skipped",
+                    runtime_boundary,
+                )
 
 
 if __name__ == "__main__":
