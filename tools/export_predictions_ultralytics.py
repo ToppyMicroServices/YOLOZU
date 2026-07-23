@@ -174,7 +174,7 @@ def _expand_explicit_source(value: str) -> list[Path]:
             for path in source_path.rglob("*")
             if path.is_file() and path.suffix.lower() in _IMAGE_SUFFIXES
         },
-        key=lambda path: str(path),
+        key=str,
     )
     if not images:
         raise SystemExit(f"--source directory contains no supported images: {source_path}")
@@ -266,13 +266,17 @@ def main(argv=None):
                     )
 
                 reported_path = _result_path(result)
-                if reported_path:
-                    resolved_result = _resolve_local_path(reported_path)
-                    if resolved_result != selected_paths[inference_calls]:
-                        raise RuntimeError(
-                            "Ultralytics result order/path does not match the selected input list: "
-                            f"expected {selected_paths[inference_calls]}, got {resolved_result}"
-                        )
+                if not reported_path:
+                    raise RuntimeError(
+                        "Ultralytics result is missing path/orig_path for the selected input: "
+                        f"expected {selected_paths[inference_calls]}"
+                    )
+                resolved_result = _resolve_local_path(reported_path)
+                if resolved_result != selected_paths[inference_calls]:
+                    raise RuntimeError(
+                        "Ultralytics result order/path does not match the selected input list: "
+                        f"expected {selected_paths[inference_calls]}, got {resolved_result}"
+                    )
 
                 dets = []
                 boxes = getattr(result, "boxes", None)

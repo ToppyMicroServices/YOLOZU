@@ -3,18 +3,17 @@ import json
 import sys
 import tempfile
 import types
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 
 class _FakeResult:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str | None) -> None:
         self.path = path
         self.boxes = None
 
 
-class TestExportPredictionsUltralyticsTool(unittest.TestCase):
+class TestExportPredictionsUltralyticsTool(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.repo_root = Path(__file__).resolve().parents[1]
@@ -43,7 +42,7 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
         capture: dict[str, object],
         *,
         result_limit: int | None = None,
-        result_paths: list[str] | None = None,
+        result_paths: list[str | None] | None = None,
     ) -> types.ModuleType:
         fake_module = types.ModuleType("ultralytics")
         fake_module.__version__ = "test"
@@ -175,6 +174,24 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
             self.assertEqual(len(capture.get("sources") or []), 2)
             self.assertFalse(output.exists())
 
+    def test_missing_result_path_removes_stale_output(self) -> None:
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            dataset = self._write_dataset(root, image_count=1)
+            output = root / "predictions.json"
+            output.write_text("stale-success", encoding="utf-8")
+            capture: dict[str, object] = {}
+
+            with self.assertRaisesRegex(SystemExit, "result is missing path/orig_path"):
+                self._run(
+                    dataset=dataset,
+                    output=output,
+                    fake_module=self._fake_ultralytics(capture, result_paths=[None]),
+                    extra_args=["--max-images", "1"],
+                )
+
+            self.assertFalse(output.exists())
+
     def test_excess_result_count_removes_stale_output(self) -> None:
         with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
             root = Path(td)
@@ -289,4 +306,4 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
