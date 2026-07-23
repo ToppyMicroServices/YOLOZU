@@ -77,7 +77,7 @@ YOLOZU 的核心价值，在于让不同模型栈基于 **同一数据集** 和�
 | --- | --- | --- | --- | --- |
 | Ultralytics YOLO (YOLOv8/YOLO11) | `tools/run_external_finetune_smoke.py` (framework=`yolov`) | `tools/export_predictions_ultralytics.py` | `tools/eval_coco.py` | Typical exports are post-NMS; use `protocol=nms_applied`. |
 | RT-DETR (in-repo `rtdetr_pose`) | `tools/run_external_finetune_smoke.py` (framework=`rtdetr`) | `tools/run_reference_adapter_regression.py` (predict→canonicalize) | `tools/run_reference_adapter_regression.py` (gates) | Reference adapter regression is the “real model baseline” path. |
-| Hugging Face DETR / RT-DETR | `tools/support_ultralytics_detr.py th` (dry/non-dry) | `tools/support_ultralytics_detr.py pn` (normalize) | `tools/eval_coco.py` | Keeps framework specifics outside the stable interface contract. |
+| Hugging Face DETR / RT-DETR | `tools/support_yolo_detr.py train-hf-detr` (dry/non-dry) | `tools/support_yolo_detr.py predict-normalize` | `tools/eval_coco.py` | Keeps framework specifics outside the stable interface contract. |
 | Detectron2 | `tools/run_external_finetune_smoke.py` (framework=`detectron2`) | `tools/export_predictions_detectron2.py` | `tools/eval_coco.py` | 非 dry-run 推理需要已有的 `--config` 和 `--weights`；执行证据与模型来源写入 metadata。 |
 | MMDetection | `tools/run_external_finetune_smoke.py` (framework=`mmdetection`) | `tools/export_predictions_mmdet.py` | `tools/eval_coco.py` | 非 dry-run 推理需要已有的 `--config` 和 `--checkpoint`；执行证据与模型来源写入 metadata。 |
 | YOLOX | (interop smoke) | `python3 -m yolozu export --backend yolox` | `tools/eval_coco.py` | 非 dry-run 推理需要同时提供已有的 `--exp` 和 `--weights`。 |
@@ -166,8 +166,7 @@ Hessian refinement 指南（用更直观的方式说明它为什么常用于 pos
 CLI 说明：
 
 - `yolozu ...` 是 pip 安装后的 package CLI
-- `python3 tools/yolozu.py ...` 是 repo wrapper CLI
-- 两者等价时，通常只需替换可执行入口（`yolozu` ↔ `python3 tools/yolozu.py`）
+- `python3 -m yolozu ...` 是等价的 Python 模块入口，也适用于源码 checkout
 
 模块路径说明：
 
@@ -323,7 +322,7 @@ python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split v
 python3 -m pip install -r requirements-test.txt
 python3 -m pip install -r requirements-locks/requirements-ci.lock
 python3 -m pip install -e .
-python3 tools/yolozu.py --help
+python3 -m yolozu --help
 python3 -m unittest -q
 ```
 
@@ -360,13 +359,13 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 Ultralytics / DETR 支持层：
 
 ```bash
-python3 tools/support_ultralytics_detr.py ls -j
-python3 tools/support_ultralytics_detr.py tu -P smoke -n -o reports/support_ultralytics_detr.train_ultralytics.json
-python3 tools/support_ultralytics_detr.py th -P smoke -n -o reports/support_ultralytics_detr.train_hf_detr.json
-python3 tools/support_ultralytics_detr.py eo -P smoke -o models/yolo11n.onnx -n -r reports/support_ultralytics_detr.export_onnx.json
+python3 tools/support_yolo_detr.py layers
+python3 tools/support_yolo_detr.py train-ultralytics --preset smoke --dry-run --output reports/support_yolo_detr.train_ultralytics.json
+python3 tools/support_yolo_detr.py train-hf-detr --preset smoke --dry-run --output reports/support_yolo_detr.train_hf_detr.json
+python3 tools/support_yolo_detr.py export-onnx --preset smoke --output models/yolo11n.onnx --dry-run --report reports/support_yolo_detr.export_onnx.json
 ```
 
-详见：[`docs/ultralytics_detr_support.md`](docs/ultralytics_detr_support.md)
+详见：[`docs/yolo_detr_support.md`](docs/yolo_detr_support.md)
 
 ## Manual（PDF）
 
