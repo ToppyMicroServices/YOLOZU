@@ -111,12 +111,16 @@ def _normalize_image_size(value: Any) -> dict[str, int] | None:
 def _resolve_meta_config(meta: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(meta, dict):
         return None
+    resolved = dict(meta)
+    extra = meta.get("extra")
+    if isinstance(extra, dict):
+        resolved.update(extra)
     run = meta.get("run")
     if isinstance(run, dict):
         cfg = run.get("config_fingerprint")
         if isinstance(cfg, dict):
-            return cfg
-    return meta
+            resolved.update(cfg)
+    return resolved
 
 
 def _extract_preprocess(entries: list[dict[str, Any]], meta_cfg: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -169,6 +173,13 @@ def _extract_export_settings(
     entries: list[dict[str, Any]], meta: dict[str, Any] | None
 ) -> dict[str, Any] | None:
     meta_cfg = _resolve_meta_config(meta)
+    if isinstance(meta_cfg, dict):
+        declared = meta_cfg.get("export_settings")
+        if isinstance(declared, dict):
+            settings = dict(declared)
+            if "preprocess" not in settings and isinstance(settings.get("preprocessing"), dict):
+                settings["preprocess"] = dict(settings["preprocessing"])
+            return settings
 
     imgsz = None
     if isinstance(meta_cfg, dict):

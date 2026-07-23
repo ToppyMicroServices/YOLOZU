@@ -5,6 +5,11 @@ or you can run inference **elsewhere** (C++/Rust/mobile/edge) and bring results 
 
 The key design is: **bring your own inference**, but keep a stable **predictions interface contract** for outputs.
 
+For copy-paste repo-checkout paths from Ultralytics, Detectron2, MMDetection,
+and YOLOX through strict validation and a common evaluation report, use
+[`byop_quickstarts.md`](byop_quickstarts.md). Its schema-only smoke commands
+are CI-checked and explicitly separated from real third-party runtime evidence.
+
 ## Predictions-interface-contract-first workflow (recommended)
 
 1) Produce a YOLOZU predictions JSON artifact:

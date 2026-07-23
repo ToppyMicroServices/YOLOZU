@@ -155,6 +155,7 @@ jobs:
           python tools/audit_docs_examples_drift.py --json
           python tools/generate_benchmark_support_matrix.py --check --json
           python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
+          python -m unittest tests.test_byop_quickstarts -v
 
       - name: MCP/actions smoke
         run: |
@@ -232,6 +233,7 @@ jobs:
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \
+            tests/test_byop_quickstarts.py \
             tests/test_support_external_training_tool.py \
             tests/test_ai_first_mcp_surface.py
 

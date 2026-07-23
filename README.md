@@ -51,6 +51,7 @@ flowchart LR
 - [`docs/README.md`](docs/README.md): top-level docs map and shortest working paths
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
+- [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 
 ## Primary Focus
 
@@ -90,6 +91,7 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 ## Where To Go Next
 
 - Evaluate precomputed predictions: [`docs/external_inference.md`](docs/external_inference.md)
+- Bring your own model project: [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md)
 - Train, export, then evaluate: [`docs/training_inference_export.md`](docs/training_inference_export.md)
 - YOLO-style and Detectron2 external training lanes (`yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...`): [`docs/training_inference_export.md`](docs/training_inference_export.md)
 - Current training support matrix and scope boundary: [`docs/training_inference_export.md#current-training-support`](docs/training_inference_export.md#current-training-support)

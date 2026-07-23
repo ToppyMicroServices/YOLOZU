@@ -2,6 +2,10 @@
 
 This page is the shortest path for users who keep training/inference in Detectron2 or the OpenMMLab family and only use YOLOZU for interface contract validation and apples-to-apples evaluation.
 
+For self-contained exporter → strict validation → common report commands,
+expected files, time budgets, and fail-closed troubleshooting, see
+[`byop_quickstarts.md`](byop_quickstarts.md).
+
 ## Scope (what YOLOZU guarantees)
 
 - Level 1: dataset entry via COCO JSON → YOLO-style wrapper (`dataset.json` + labels).
