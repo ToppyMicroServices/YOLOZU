@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 class TestDocsExamplesDrift(unittest.TestCase):
@@ -69,14 +70,20 @@ class TestDocsExamplesDrift(unittest.TestCase):
     def test_dynamic_and_delegated_help_keep_unknown_flags_strict(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "audit_docs_examples_drift.py"
-        commands = (
-            "python3 -m yolozu train --external-backend yolox "
-            "configs/examples/finetune_external/yolox_s_finetune_smoke.py "
-            "--dataset data/smoke --not-a-backend-flag",
-            "bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke "
-            "--checkpoint /path/to.ckpt --not-a-wrapper-flag",
+        cases = (
+            (
+                "python3 -m yolozu train --external-backend yolox "
+                "configs/examples/finetune_external/yolox_s_finetune_smoke.py "
+                "--dataset data/smoke --not-a-backend-flag",
+                "external",
+            ),
+            (
+                "bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke "
+                "--checkpoint /path/to.ckpt --not-a-wrapper-flag",
+                "delegated",
+            ),
         )
-        for command in commands:
+        for command, kind in cases:
             with self.subTest(command=command), tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
                 doc = Path(td) / "stale.md"
                 doc.write_text(f"```bash\n{command}\n```\n", encoding="utf-8")
@@ -100,6 +107,41 @@ class TestDocsExamplesDrift(unittest.TestCase):
             payload = json.loads(proc.stdout)
             self.assertFalse(payload.get("ok"))
             self.assertIn("--not-", json.dumps(payload))
+            failure = payload["failures"][0]
+            if kind == "external":
+                self.assertEqual(
+                    failure["help_probe"][1:],
+                    ["tools/support_external_training.py", "train-yolox", "--help"],
+                )
+                self.assertNotIn("delegated_help_probe", failure)
+            else:
+                self.assertEqual(
+                    failure["help_probe"],
+                    ["bash", "scripts/ttt_compare.sh", "--help"],
+                )
+                self.assertEqual(
+                    failure["delegated_help_probe"][1:],
+                    ["tools/run_ttt_compare.py", "--help"],
+                )
+
+    def test_external_help_failure_reports_the_actual_probe(self):
+        from tools import audit_docs_examples_drift as audit
+
+        failure = subprocess.CompletedProcess(
+            args=["parent"],
+            returncode=2,
+            stdout="",
+            stderr="parent help failed",
+        )
+        with mock.patch.object(audit, "_run", return_value=failure):
+            probe, help_text, error = audit._external_train_help(
+                ["train", "--external-backend", "yolox"],
+                python=sys.executable,
+            )
+
+        self.assertEqual(probe, [sys.executable, "-m", "yolozu", "train", "--help"])
+        self.assertEqual(help_text, "")
+        self.assertIn("parent help failed", error)
 
 
 if __name__ == "__main__":

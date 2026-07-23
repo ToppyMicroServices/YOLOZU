@@ -154,7 +154,7 @@ def _external_train_help(
         proc = _run(probe)
         help_text = (proc.stdout or "") + "\n" + (proc.stderr or "")
         if proc.returncode != 0:
-            return delegated_probe, "", help_text[-1000:] or "external train help probe failed"
+            return probe, "", help_text[-1000:] or "external train help probe failed"
         help_parts.append(help_text)
     return delegated_probe, "\n".join(help_parts), None
 
