@@ -29,6 +29,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 ## Fast paths already in this repo
 
 - PyTorch adapter (research reference adapter): `python3 tools/export_predictions.py --adapter rtdetr_pose ...`
+- YOLO runtime (manifest-bounded inputs): `python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --max-images 8 --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json`
 - YOLOX backend wrapper: `python3 -m yolozu export --backend yolox --dataset data/coco-yolo --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json --force`
 - ONNXRuntime (exported `.onnx`): `python3 tools/export_predictions_onnxrt.py ...`
 - TorchScript (exported `.torchscript` / `.ts`): `python3 tools/export_predictions_torchscript.py --dataset data/smoke --split val --model /abs/path/model.torchscript --output reports/pred_torchscript.json --wrap`
@@ -90,6 +91,20 @@ schema-only dry runs from completed runtime inference in wrapped
 - `runtime_error`: absent or empty for a successful non-dry run
 - `model_provenance`: model/config/checkpoint paths or names, with SHA-256 values for local files
 
+For the YOLO runtime exporter, the default source is the exact ordered list of
+images selected from the dataset manifest. `--max-images N` truncates that list
+before it is passed to the runtime, so it bounds actual inference rather than
+only the output metadata. Zero selected inputs fail before model
+initialization.
+
+An explicit `--source` accepts one local image file or a directory. Directory
+images are expanded recursively in sorted order. `--source` cannot be combined
+with `--max-images`; use one selection policy per invocation. In wrapped output,
+`source_mode`, `selected_inputs`, `selected_input_count`, and `result_count`
+record the policy and cardinality. A non-dry run succeeds only when the runtime
+returns exactly one ordered result for every selected input; mismatches return
+nonzero without writing a new predictions artifact.
+
 Non-dry YOLOX requires both an existing `--exp` file and an existing `--weights`
 file. Detectron2 requires existing `--config` and `--weights` files, while
 MMDetection requires existing `--config` and `--checkpoint` files. If a
@@ -105,7 +120,9 @@ case from a dry-run placeholder.
 `tools/audit_backend_support.py --require-non-dry` succeeds only when at least
 one backend selected with `--non-dry-backend` produces verified execution
 evidence. The report records per-backend `execution_evidence_error` and the
-accepted backend names in `verified_non_dry_backends`.
+accepted backend names in `verified_non_dry_backends`. For the YOLO runtime,
+the audit also rejects missing or inconsistent selected-input/result
+cardinality evidence.
 
 Schema validation:
 

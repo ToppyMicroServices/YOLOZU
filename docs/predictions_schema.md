@@ -71,6 +71,13 @@ and MMDetection exporters place the following fields in `meta.extra`, and
 - `model_provenance`: a nonempty object identifying the model, exp, config,
   weights, or checkpoint; local files include SHA-256 values.
 
+The YOLO-runtime exporter additionally records `source_mode`,
+`selected_inputs`, `selected_input_count`, and `result_count`. A completed
+non-dry artifact requires
+`selected_input_count == result_count == inference_calls == len(predictions)`.
+For a dry run, `result_count` and `inference_calls` are zero while
+`selected_input_count == len(predictions)` describes the planned inputs.
+
 These fields distinguish schema-valid dry-run placeholders from completed
 runtime inference. A completed artifact may still contain an empty
 `detections` list when the model found no detections.

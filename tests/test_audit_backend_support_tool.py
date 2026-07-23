@@ -209,6 +209,64 @@ class TestAuditBackendSupportTool(unittest.TestCase):
         )
         self.assertEqual(error, "inference_calls_invalid")
 
+    def test_execution_evidence_rejects_ultralytics_cardinality_mismatch(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "audit_backend_support.py"
+        spec = importlib.util.spec_from_file_location("audit_backend_support_tool_cardinality", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        error = module._validate_execution_evidence(
+            meta={
+                "extra": {
+                    "exporter": "ultralytics",
+                    "dry_run": False,
+                    "execution_status": "completed",
+                    "runtime_executed": True,
+                    "inference_calls": 1,
+                    "selected_input_count": 2,
+                    "selected_inputs": ["one.jpg", "two.jpg"],
+                    "result_count": 1,
+                    "runtime_error": None,
+                    "model_provenance": {"model": "fake.pt"},
+                }
+            },
+            dry_run=False,
+            predictions_count=2,
+        )
+        self.assertEqual(error, "runtime_cardinality_mismatch")
+
+    def test_execution_evidence_rejects_missing_or_wrong_ultralytics_exporter(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "audit_backend_support.py"
+        spec = importlib.util.spec_from_file_location("audit_backend_support_tool_exporter", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for exporter in (None, "other"):
+            with self.subTest(exporter=exporter):
+                extra = {
+                    "dry_run": False,
+                    "execution_status": "completed",
+                    "runtime_executed": True,
+                    "inference_calls": 1,
+                    "runtime_error": None,
+                    "model_provenance": {"model": "fake.pt"},
+                }
+                if exporter is not None:
+                    extra["exporter"] = exporter
+                error = module._validate_execution_evidence(
+                    meta={"extra": extra},
+                    dry_run=False,
+                    predictions_count=1,
+                    expected_exporter="ultralytics",
+                )
+                self.assertEqual(error, f"exporter_mismatch:{str(exporter or '')!r}")
+
     def test_require_non_dry_accepts_verified_runtime_evidence(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "audit_backend_support.py"
@@ -227,21 +285,31 @@ class TestAuditBackendSupportTool(unittest.TestCase):
                 del cwd
                 output_path = Path(cmd[cmd.index("--output") + 1])
                 dry_run = "--dry-run" in cmd
+                is_ultralytics = cmd[1].endswith("export_predictions_ultralytics.py")
+                predictions = [{"image": "one.jpg", "detections": []}] if is_ultralytics else []
+                extra = {
+                    "dry_run": dry_run,
+                    "execution_status": "dry_run" if dry_run else "completed",
+                    "runtime_executed": not dry_run,
+                    "inference_calls": 0 if dry_run else 1,
+                    "runtime_error": None if not dry_run else "dry_run",
+                    "model_provenance": {"weights_sha256": "abc123"},
+                }
+                if is_ultralytics:
+                    extra.update(
+                        {
+                            "exporter": "ultralytics",
+                            "selected_input_count": 1,
+                            "selected_inputs": ["one.jpg"],
+                            "result_count": 0 if dry_run else 1,
+                        }
+                    )
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 output_path.write_text(
                     json.dumps(
                         {
-                            "predictions": [],
-                            "meta": {
-                                "extra": {
-                                    "dry_run": dry_run,
-                                    "execution_status": "dry_run" if dry_run else "completed",
-                                    "runtime_executed": not dry_run,
-                                    "inference_calls": 0 if dry_run else 1,
-                                    "runtime_error": None if not dry_run else "dry_run",
-                                    "model_provenance": {"weights_sha256": "abc123"},
-                                }
-                            },
+                            "predictions": predictions,
+                            "meta": {"extra": extra},
                         }
                     ),
                     encoding="utf-8",

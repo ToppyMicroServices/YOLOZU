@@ -7754,8 +7754,8 @@
       "entrypoint": "tools/export_predictions_yolo_runtime.py",
       "examples": [
         {
-          "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --conf 0.25 --iou 0.45 --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json",
-          "description": "YOLO-runtime export with NMS-applied protocol metadata."
+          "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/coco-yolo --split val2017 --max-images 8 --conf 0.25 --iou 0.45 --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json",
+          "description": "YOLO-runtime export bounded to the first eight selected manifest images."
         },
         {
           "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/smoke --split val --max-images 1 --protocol nms_applied --dry-run --wrap --strict --output reports/pred_yolo_runtime_dry_run.json",
@@ -7783,6 +7783,7 @@
           "required": false
         },
         {
+          "description": "Explicit local image file or directory, expanded deterministically; cannot be combined with --max-images.",
           "flag": "--source",
           "kind": "string",
           "name": "source",
@@ -7830,6 +7831,7 @@
           "required": false
         },
         {
+          "description": "Caps both selected manifest records and actual runtime inference inputs; cannot be combined with --source.",
           "flag": "--max-images",
           "kind": "number",
           "name": "max_images",
@@ -7909,7 +7911,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Predictions JSON with execution status, inference-call evidence, and model provenance.",
+          "description": "Predictions JSON with selected-input/result cardinality, execution status, and model provenance.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -7928,7 +7930,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run external YOLO-runtime inference and export predictions.json with protocol, execution-evidence, and model-provenance metadata.",
+      "summary": "Run bounded external YOLO-runtime inference and export predictions.json with cardinality-checked execution evidence.",
       "tags": [
         "export",
         "yolo_runtime",

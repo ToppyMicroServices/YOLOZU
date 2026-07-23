@@ -13,6 +13,8 @@ sys.path.insert(0, str(repo_root))
 from yolozu.dataset import build_manifest
 from yolozu.predictions import validate_predictions_entries
 
+_IMAGE_SUFFIXES = frozenset((".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".gif"))
+
 
 def _parse_args(argv):
     parser = argparse.ArgumentParser()
@@ -22,7 +24,10 @@ def _parse_args(argv):
     parser.add_argument(
         "--source",
         default=None,
-        help="Optional source override (directory or file). Defaults to dataset images/<split>.",
+        help=(
+            "Explicit local image file or directory. Directory images are expanded in sorted order; "
+            "cannot be combined with --max-images. Defaults to selected dataset manifest images."
+        ),
     )
     parser.add_argument("--output", required=True, help="Where to write predictions JSON")
     parser.add_argument("--image-size", type=int, default=640, help="Inference image size (default: 640)")
@@ -36,7 +41,12 @@ def _parse_args(argv):
         help="Record whether letterbox preprocessing was applied (default: true).",
     )
     parser.add_argument("--max-det", type=int, default=300, help="Max detections per image (default: 300)")
-    parser.add_argument("--max-images", type=int, default=None, help="Optional cap for quick runs.")
+    parser.add_argument(
+        "--max-images",
+        type=int,
+        default=None,
+        help="Cap selected manifest images and actual inference inputs; cannot be combined with --source.",
+    )
     parser.add_argument("--batch", type=int, default=1, help="Batch size for inference (default: 1)")
     parser.add_argument("--device", default="cuda", help="Device for inference (default: cuda)")
     parser.add_argument("--half", action="store_true", help="Use FP16 inference where supported")
@@ -110,27 +120,113 @@ def _sha256_if_file(value: str) -> str | None:
     return digest.hexdigest()
 
 
+def _resolve_local_path(value: str | Path) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    return path.resolve()
+
+
+def _manifest_image_path(*, dataset: str, image: str) -> Path:
+    image_path = Path(image).expanduser()
+    if image_path.is_absolute():
+        return image_path.resolve()
+
+    dataset_path = _resolve_local_path(dataset)
+    base = dataset_path if dataset_path.is_dir() else dataset_path.parent
+    # build_manifest() can return a relative path that already includes the
+    # dataset's relative prefix (for example, data/smoke/images/val/a.jpg).
+    # Accept that resolved form only when it still identifies a manifest-derived
+    # location, rather than treating an unrelated same-named CWD file as input.
+    cwd_candidate = _resolve_local_path(image_path)
+    dataset_arg = Path(dataset).expanduser()
+    manifest_base = dataset_arg if dataset_path.is_dir() else dataset_arg.parent
+    if not manifest_base.is_absolute() and manifest_base.parts:
+        prefix = manifest_base.parts
+        if image_path.parts[: len(prefix)] == prefix:
+            return cwd_candidate
+
+    dataset_candidate = (base / image_path).resolve()
+    if dataset_candidate.is_file():
+        return dataset_candidate
+
+    try:
+        cwd_candidate.relative_to(base)
+        return cwd_candidate
+    except ValueError:
+        pass
+
+    return dataset_candidate
+
+
+def _expand_explicit_source(value: str) -> list[Path]:
+    source_path = _resolve_local_path(value)
+    if source_path.is_file():
+        if source_path.suffix.lower() not in _IMAGE_SUFFIXES:
+            raise SystemExit(f"--source must be an image file or image directory: {source_path}")
+        return [source_path]
+    if not source_path.is_dir():
+        raise SystemExit(f"source not found: {source_path}")
+
+    images = sorted(
+        {
+            path.resolve()
+            for path in source_path.rglob("*")
+            if path.is_file() and path.suffix.lower() in _IMAGE_SUFFIXES
+        },
+        key=str,
+    )
+    if not images:
+        raise SystemExit(f"--source directory contains no supported images: {source_path}")
+    return images
+
+
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
+    if args.source is not None and args.max_images is not None:
+        raise SystemExit("--source cannot be combined with --max-images")
+
+    output_path = Path(args.output).expanduser()
+    if output_path.exists() or output_path.is_symlink():
+        if output_path.is_dir():
+            raise SystemExit(f"--output must be a file path: {output_path}")
+        output_path.unlink()
 
     manifest = build_manifest(args.dataset, split=args.split)
-    records = manifest["images"]
-    if args.max_images is not None:
-        records = records[: max(0, int(args.max_images))]
-    image_paths = [record["image"] for record in records]
+    manifest_records = list(manifest["images"])
     path_to_manifest: dict[str, str] = {}
-    base_to_manifest: dict[str, str] = {}
-    for rec in records:
+    for rec in manifest_records:
         key = str(rec.get("image") or "")
         if not key:
             continue
-        full = str((Path(args.dataset) / key).resolve())
+        full = str(_manifest_image_path(dataset=str(args.dataset), image=key))
         path_to_manifest[full] = key
-        base_to_manifest.setdefault(Path(key).name, key)
-    images_dir = Path(args.dataset) / "images" / manifest["split"]
-    source = args.source or str(images_dir)
-    if not Path(source).exists():
-        raise SystemExit(f"source not found: {source}")
+
+    if args.source is not None:
+        source_mode = "explicit_source"
+        selected_paths = _expand_explicit_source(str(args.source))
+        selected_inputs = [path_to_manifest.get(str(path), str(path)) for path in selected_paths]
+    else:
+        source_mode = "dataset_manifest"
+        records = manifest_records
+        if args.max_images is not None:
+            records = records[: max(0, int(args.max_images))]
+        selected_inputs = [str(record.get("image") or "") for record in records]
+        if any(not image for image in selected_inputs):
+            raise SystemExit("selected dataset manifest record is missing its image identifier")
+        selected_paths = [
+            _manifest_image_path(dataset=str(args.dataset), image=image)
+            for image in selected_inputs
+        ]
+
+    if not selected_paths:
+        raise SystemExit("no input images selected")
+    missing_inputs = [str(path) for path in selected_paths if not path.is_file()]
+    if missing_inputs:
+        raise SystemExit(f"selected input image not found: {missing_inputs[0]}")
+
+    selected_input_count = len(selected_paths)
+    runtime_sources = [str(path) for path in selected_paths]
 
     results = None
     runtime_error = None
@@ -141,7 +237,7 @@ def main(argv=None):
             raise SystemExit("ultralytics package is required (pip install ultralytics) unless --dry-run is set") from exc
         model = YOLO(args.model)
         results = model.predict(
-            source=source,
+            source=runtime_sources,
             imgsz=int(args.image_size),
             conf=float(args.conf),
             iou=float(args.iou),
@@ -159,51 +255,72 @@ def main(argv=None):
     outputs = []
     inference_calls = 0
     if args.dry_run:
-        outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
+        outputs = [{"image": image, "detections": []} for image in selected_inputs]
     else:
-        for result in results or []:
-            inference_calls += 1
-            image_path = _result_path(result)
-            if image_path is None:
-                if image_paths:
-                    image_path = image_paths[len(outputs)]
-                else:
-                    image_path = ""
-            else:
-                resolved = str(Path(image_path).resolve())
-                image_path = path_to_manifest.get(resolved) or base_to_manifest.get(Path(image_path).name) or image_path
+        try:
+            for result in results or []:
+                if inference_calls >= selected_input_count:
+                    raise RuntimeError(
+                        "Ultralytics returned more results than selected input images "
+                        f"({inference_calls + 1} > {selected_input_count})"
+                    )
 
-            dets = []
-            boxes = getattr(result, "boxes", None)
-            if boxes is not None and len(boxes) > 0:
-                xywhn = boxes.xywhn
-                conf = boxes.conf
-                cls = boxes.cls
-                if xywhn is not None and conf is not None and cls is not None:
-                    xywhn_list = xywhn.detach().cpu().tolist()
-                    conf_list = conf.detach().cpu().tolist()
-                    cls_list = cls.detach().cpu().tolist()
-                    for bbox, score, class_id in zip(xywhn_list, conf_list, cls_list):
-                        if len(bbox) != 4:
-                            continue
-                        dets.append(
-                            {
-                                "class_id": int(class_id),
-                                "score": float(score),
-                                "bbox": {
-                                    "cx": float(bbox[0]),
-                                    "cy": float(bbox[1]),
-                                    "w": float(bbox[2]),
-                                    "h": float(bbox[3]),
-                                },
-                            }
-                        )
+                reported_path = _result_path(result)
+                if not reported_path:
+                    raise RuntimeError(
+                        "Ultralytics result is missing path/orig_path for the selected input: "
+                        f"expected {selected_paths[inference_calls]}"
+                    )
+                resolved_result = _resolve_local_path(reported_path)
+                if resolved_result != selected_paths[inference_calls]:
+                    raise RuntimeError(
+                        "Ultralytics result order/path does not match the selected input list: "
+                        f"expected {selected_paths[inference_calls]}, got {resolved_result}"
+                    )
 
-            outputs.append({"image": image_path, "detections": dets})
+                dets = []
+                boxes = getattr(result, "boxes", None)
+                if boxes is not None and len(boxes) > 0:
+                    xywhn = boxes.xywhn
+                    conf = boxes.conf
+                    cls = boxes.cls
+                    if xywhn is not None and conf is not None and cls is not None:
+                        xywhn_list = xywhn.detach().cpu().tolist()
+                        conf_list = conf.detach().cpu().tolist()
+                        cls_list = cls.detach().cpu().tolist()
+                        for bbox, score, class_id in zip(xywhn_list, conf_list, cls_list):
+                            if len(bbox) != 4:
+                                continue
+                            dets.append(
+                                {
+                                    "class_id": int(class_id),
+                                    "score": float(score),
+                                    "bbox": {
+                                        "cx": float(bbox[0]),
+                                        "cy": float(bbox[1]),
+                                        "w": float(bbox[2]),
+                                        "h": float(bbox[3]),
+                                    },
+                                }
+                            )
 
-    runtime_executed = bool(not args.dry_run and inference_calls > 0)
-    if not args.dry_run and not runtime_executed:
-        raise SystemExit("Ultralytics inference did not execute for any input image")
+                outputs.append({"image": selected_inputs[inference_calls], "detections": dets})
+                inference_calls += 1
+        except Exception as exc:
+            raise SystemExit(f"Ultralytics inference failed: {exc}") from exc
+
+        if inference_calls != selected_input_count or len(outputs) != selected_input_count:
+            raise SystemExit(
+                "Ultralytics result count does not match selected input count: "
+                f"results={inference_calls}, selected={selected_input_count}"
+            )
+
+    result_count = int(inference_calls)
+    runtime_executed = bool(
+        not args.dry_run
+        and inference_calls == selected_input_count
+        and len(outputs) == selected_input_count
+    )
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
@@ -217,6 +334,8 @@ def main(argv=None):
             "imgsz": int(args.image_size),
             "dataset": str(args.dataset),
             "split": manifest["split"],
+            "source": str(args.source) if args.source is not None else None,
+            "source_mode": source_mode,
             "max_images": args.max_images,
             "model": str(args.model),
             "conf": float(args.conf),
@@ -255,6 +374,9 @@ def main(argv=None):
             "runtime_executed": runtime_executed,
             "execution_status": "dry_run" if args.dry_run else "completed",
             "inference_calls": int(inference_calls),
+            "selected_input_count": int(selected_input_count),
+            "selected_inputs": list(selected_inputs),
+            "result_count": result_count,
             "model_provenance": {
                 "model": str(args.model),
                 "model_sha256": _sha256_if_file(str(args.model)),
@@ -277,7 +399,6 @@ def main(argv=None):
     else:
         payload = outputs
 
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
     print(output_path)
