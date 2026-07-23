@@ -6,6 +6,8 @@ import types
 from pathlib import Path
 from unittest import TestCase, main, mock
 
+from yolozu.predictions import validate_predictions_payload
+
 
 class _FakeResult:
     def __init__(self, path: str | None) -> None:
@@ -110,6 +112,15 @@ class TestExportPredictionsUltralyticsTool(TestCase):
             payload = json.loads(output.read_text(encoding="utf-8"))
             predictions = payload["predictions"]
             extra = payload["meta"]["extra"]
+            self.assertEqual(payload["schema_version"], 1)
+            self.assertEqual(
+                [prediction["schema_version"] for prediction in predictions],
+                [2, 2],
+            )
+            self.assertEqual(
+                validate_predictions_payload(payload, strict=True).warnings,
+                [],
+            )
             self.assertEqual(len(predictions), 2)
             self.assertEqual([item["image"] for item in predictions], extra["selected_inputs"])
             self.assertEqual(extra["selected_input_count"], 2)

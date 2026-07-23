@@ -12,6 +12,12 @@ The goal is simple: run inference anywhere, then compare results fairly in one p
 - Lifecycle/migration policy: `docs/schema_governance.md`
 - Hard/Soft boundary: `docs/predictions_interface_contract_policy.md`
 
+Bundled YOLO-runtime, Detectron2, MMDetection, and YOLOX exporters declare
+entry `schema_version: 2` in both real and dry-run output. When output is
+wrapped, they also declare wrapper `schema_version: 1`. Missing versions remain
+accepted for older artifacts, but strict validation reports
+legacy-compatibility migration warnings.
+
 ## Allowed top-level shapes
 
 ### Shape A: array of entries
@@ -19,6 +25,7 @@ The goal is simple: run inference anywhere, then compare results fairly in one p
 ```json
 [
   {
+    "schema_version": 2,
     "image": "path/or/name.jpg",
     "detections": [
       {

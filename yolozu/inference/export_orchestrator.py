@@ -15,6 +15,7 @@ from yolozu.core.cli_args import (
 )
 from yolozu.predictions import normalize_predictions_payload
 from yolozu.predictions.predictions_transform import apply_ttt_lite, summarize_task_coverage
+from yolozu.predictions.schema_governance import CURRENT_SCHEMA_VERSION
 from yolozu.tta.cli_options import add_ttt_arguments, build_ttt_cli_args
 from yolozu.tta.presets import apply_ttt_preset_args
 
@@ -52,7 +53,13 @@ def write_json(path: Path, obj: Any) -> None:
 
 def ensure_wrapper(payload: Any) -> dict[str, Any]:
     entries, meta = normalize_predictions_payload(payload)
+    schema_version = (
+        payload.get("schema_version", CURRENT_SCHEMA_VERSION)
+        if isinstance(payload, dict)
+        else CURRENT_SCHEMA_VERSION
+    )
     return {
+        "schema_version": schema_version,
         "predictions": entries,
         "meta": dict(meta or {}),
     }

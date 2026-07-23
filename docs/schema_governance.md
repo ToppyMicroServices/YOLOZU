@@ -33,6 +33,11 @@ Current version:
 3. Validators reject unknown future versions.
    - If a payload declares `schema_version > current_schema_version`, validation fails until YOLOZU is upgraded.
 4. Legacy wrapped payloads without `schema_version` are accepted with warning in compatibility mode.
+5. The bundled YOLO-runtime, Detectron2, MMDetection, and YOLOX prediction
+   exporters declare the current wrapper version on generated wrapped artifacts
+   and the current version on every generated entry. Version omission is a
+   compatibility path for older input artifacts, not the format for new output
+   from these four exporters.
 
 ## Compatibility policy
 
@@ -87,6 +92,8 @@ CI includes a schema compatibility gate that asserts:
 - v1 wrapped payloads pass validation
 - v2 wrapped payloads fail while current is v1
 - entry v1 payloads are migrated to entry v2 during canonicalization/load paths
+- YOLO-runtime, Detectron2, MMDetection, and YOLOX dry runs declare wrapper v1
+  and entry v2 and pass strict validation without legacy-migration warnings
 
 This prevents silent schema drift and guarantees interface-contract-first behavior.
 

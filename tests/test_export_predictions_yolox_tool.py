@@ -51,8 +51,14 @@ class TestExportPredictionsYoloXTool(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+            self.assertNotIn("WARN:", proc_validate.stdout)
 
             payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("schema_version"), 1)
+            self.assertTrue(payload["predictions"])
+            self.assertTrue(
+                all(entry.get("schema_version") == 2 for entry in payload["predictions"])
+            )
             self.assertEqual(payload.get("meta", {}).get("adapter"), "yolox")
             extra = payload.get("meta", {}).get("extra", {})
             self.assertEqual(extra.get("execution_status"), "dry_run")
@@ -119,8 +125,13 @@ class TestExportPredictionsYoloXTool(unittest.TestCase):
             if proc.returncode != 0:
                 self.fail(f"tools/yolozu.py export --backend yolox failed:\n{proc.stdout}\n{proc.stderr}")
             payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("schema_version"), 1)
             self.assertIn("predictions", payload)
             self.assertIsInstance(payload.get("predictions"), list)
+            self.assertTrue(payload["predictions"])
+            self.assertTrue(
+                all(entry.get("schema_version") == 2 for entry in payload["predictions"])
+            )
 
 
 if __name__ == "__main__":

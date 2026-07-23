@@ -58,6 +58,11 @@ YOLOX. The wrapped artifact records `meta.extra.execution_status`,
 `completed`, `true`, and a positive call count. An empty `detections` list can
 still be a valid completed inference result.
 
+Both execution modes declare wrapper `schema_version: 1` and entry
+`schema_version: 2`. Versionless older artifacts remain readable through the
+documented compatibility path, but new exporter output should validate without
+legacy-version warnings.
+
 ## Important compatibility points
 
 - Exp parameters are captured in `meta.extra.export_settings.exp_params` when exp projection succeeds.

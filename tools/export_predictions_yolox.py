@@ -16,6 +16,8 @@ sys.path.insert(0, str(repo_root))
 from yolozu.dataset import build_manifest
 from yolozu.imports import project_yolox_exp
 from yolozu.predictions import validate_predictions_entries
+from yolozu.predictions.predictions import CURRENT_ENTRY_SCHEMA_VERSION
+from yolozu.predictions.schema_governance import CURRENT_SCHEMA_VERSION
 
 
 def _parse_args(argv):
@@ -216,6 +218,8 @@ def main(argv=None) -> int:
         print("error: YOLOX inference did not execute for every selected image", file=sys.stderr)
         return 1
 
+    for output in outputs:
+        output["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
     meta = _default_wrap_meta(adapter="yolox", config=str(exp_path or "yolox"), images=len(outputs))
@@ -268,7 +272,15 @@ def main(argv=None) -> int:
     if not out.is_absolute():
         out = (Path.cwd() / out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"predictions": outputs, "meta": meta}, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    payload = {
+        "schema_version": CURRENT_SCHEMA_VERSION,
+        "predictions": outputs,
+        "meta": meta,
+    }
+    out.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
     print(out)
     return 0
 
