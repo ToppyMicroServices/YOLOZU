@@ -196,6 +196,7 @@ Use these examples as shape checks, not as good predictions. They show the small
 \paragraph{Detection}
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
+  "schema_version": 1,
   "predictions": [
     {
       "schema_version": 2,
@@ -219,6 +220,7 @@ Use these examples as shape checks, not as good predictions. They show the small
 \end{lstlisting}
 
 \begin{itemize}
+  \item Current generated form: wrapper \cmd{schema_version=1} and per-entry \cmd{schema_version=2}.
   \item Required: \cmd{predictions}, per-entry \cmd{image}, and each detection's \cmd{score} plus \cmd{bbox}.
   \item Usually required for evaluation: \cmd{class_id}, \cmd{image_w}, and \cmd{image_h}.
   \item Protocol metadata should pin \cmd{meta.export_settings}.

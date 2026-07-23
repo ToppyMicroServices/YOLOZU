@@ -89,6 +89,9 @@ The bundled YOLOX, YOLO-runtime, Detectron2, and MMDetection exporters distingui
 schema-only dry runs from completed runtime inference in wrapped
 `meta.extra` metadata:
 
+- Both real and dry-run artifacts declare entry `schema_version: 2`; wrapped
+  output also declares wrapper `schema_version: 1`. Strict validation should
+  not emit legacy-version migration warnings for newly generated output.
 - `dry_run`: whether runtime execution was intentionally skipped
 - `execution_status`: `dry_run` or `completed`
 - `runtime_executed`: `false` for a dry run and `true` after successful non-dry inference

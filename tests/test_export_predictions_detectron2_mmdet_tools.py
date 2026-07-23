@@ -54,7 +54,14 @@ class TestExportPredictionsDetectron2MMDetTools(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
-            extra = json.loads(out.read_text(encoding="utf-8"))["meta"]["extra"]
+            self.assertNotIn("WARN:", proc_validate.stdout)
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("schema_version"), 1)
+            self.assertTrue(payload["predictions"])
+            self.assertTrue(
+                all(entry.get("schema_version") == 2 for entry in payload["predictions"])
+            )
+            extra = payload["meta"]["extra"]
             self.assertEqual(extra.get("execution_status"), "dry_run")
             self.assertFalse(bool(extra.get("runtime_executed")))
             self.assertEqual(extra.get("inference_calls"), 0)
@@ -106,7 +113,14 @@ class TestExportPredictionsDetectron2MMDetTools(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
-            extra = json.loads(out.read_text(encoding="utf-8"))["meta"]["extra"]
+            self.assertNotIn("WARN:", proc_validate.stdout)
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("schema_version"), 1)
+            self.assertTrue(payload["predictions"])
+            self.assertTrue(
+                all(entry.get("schema_version") == 2 for entry in payload["predictions"])
+            )
+            extra = payload["meta"]["extra"]
             self.assertEqual(extra.get("execution_status"), "dry_run")
             self.assertFalse(bool(extra.get("runtime_executed")))
             self.assertEqual(extra.get("inference_calls"), 0)

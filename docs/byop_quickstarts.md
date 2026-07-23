@@ -12,6 +12,12 @@ The shared validation and evaluation lane is stable. The four inference
 exporters remain external-runtime bridges: YOLOZU does not bundle their
 frameworks, checkpoints, or framework-specific licenses.
 
+New artifacts from these four quickstarts declare wrapper
+`schema_version: 1` and per-entry `schema_version: 2`. The strict validator
+should print `OK` without a legacy-version `WARN:` for both real and smoke
+artifacts. Older versionless artifacts remain accepted through the
+compatibility path.
+
 ## Confirmed boundary
 
 - A real exporter command does not use `--dry-run`. It must execute inference

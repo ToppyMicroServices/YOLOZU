@@ -129,6 +129,12 @@ user-owned model/config/checkpoint, emits a wrapped
 validation, and writes the common \path{eval_report.json} through
 \path{tools/eval_suite.py}.
 
+New artifacts from these four quickstarts declare wrapper
+\cmd{schema_version=1} and per-entry \cmd{schema_version=2} for both real and
+dry-run artifacts. Strict validation therefore produces no legacy-version
+migration warning. Older versionless artifacts remain accepted through the
+compatibility path.
+
 The document keeps two evidence classes separate:
 \begin{itemize}
   \item a real command omits \cmd{--dry-run} and is accepted only when

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "YOLOZU Predictions JSON",
-  "description": "Predictions artifact consumed/produced by tools/*.py. Canonical form is {predictions:[...], meta:{...}}, but other legacy shapes are supported.",
+  "description": "Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.",
   "oneOf": [
     { "$ref": "#/$defs/predictions_wrapper" },
     { "$ref": "#/$defs/predictions_list" },
@@ -92,6 +92,12 @@
       "type": "object",
       "required": ["predictions"],
       "properties": {
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1,
+          "description": "Wrapper schema version. Missing value remains accepted for legacy compatibility."
+        },
         "predictions": { "$ref": "#/$defs/predictions_list" },
         "meta": { "type": "object", "additionalProperties": true }
       },

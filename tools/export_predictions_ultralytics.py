@@ -12,6 +12,8 @@ sys.path.insert(0, str(repo_root))
 
 from yolozu.dataset import build_manifest
 from yolozu.predictions import validate_predictions_entries
+from yolozu.predictions.predictions import CURRENT_ENTRY_SCHEMA_VERSION
+from yolozu.predictions.schema_governance import CURRENT_SCHEMA_VERSION
 
 _IMAGE_SUFFIXES = frozenset((".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".gif"))
 
@@ -62,7 +64,11 @@ def _parse_args(argv):
         default=None,
         help="Evaluation protocol annotation. Default resolves from --end2end.",
     )
-    parser.add_argument("--wrap", action="store_true", help="Wrap as {predictions:[...], meta:{...}}.")
+    parser.add_argument(
+        "--wrap",
+        action="store_true",
+        help="Wrap as {schema_version, predictions:[...], meta:{...}}.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Write schema-valid output without the external YOLO runtime.")
     parser.add_argument("--strict", action="store_true", help="Strict prediction schema validation.")
     return parser.parse_args(argv)
@@ -322,6 +328,8 @@ def main(argv=None):
         and len(outputs) == selected_input_count
     )
 
+    for output in outputs:
+        output["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
     protocol_id = str(args.protocol) if args.protocol else ("e2e_nms_free" if bool(args.end2end) else "nms_applied")
@@ -395,7 +403,11 @@ def main(argv=None):
         except Exception:
             meta["extra"]["ultralytics"] = None
 
-        payload = {"predictions": outputs, "meta": meta}
+        payload = {
+            "schema_version": CURRENT_SCHEMA_VERSION,
+            "predictions": outputs,
+            "meta": meta,
+        }
     else:
         payload = outputs
 

@@ -174,10 +174,16 @@ class TestYoloMigrationTools(unittest.TestCase):
             )
             if proc_validate.returncode != 0:
                 self.fail(f"validate_predictions.py failed:\n{proc_validate.stdout}\n{proc_validate.stderr}")
+            self.assertNotIn("WARN:", proc_validate.stdout)
 
             payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload.get("schema_version"), 1)
             self.assertIn("predictions", payload)
             self.assertIn("meta", payload)
+            self.assertTrue(payload["predictions"])
+            self.assertTrue(
+                all(entry.get("schema_version") == 2 for entry in payload["predictions"])
+            )
             self.assertEqual(payload["meta"].get("adapter"), "ultralytics")
             extra = payload.get("meta", {}).get("extra", {}) or {}
             self.assertTrue(bool(extra.get("dry_run")))

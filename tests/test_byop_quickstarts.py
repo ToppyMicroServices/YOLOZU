@@ -199,6 +199,8 @@ class TestByopQuickstarts(unittest.TestCase):
                         0,
                         msg=f"{source} schema smoke failed:\n{proc.stdout}\n{proc.stderr}",
                     )
+                    self.assertNotIn("WARN:", proc.stdout)
+                    self.assertNotIn("WARN:", proc.stderr)
 
                     predictions_path = run_dir / "predictions.json"
                     report_path = run_dir / "eval_report.json"
@@ -206,7 +208,14 @@ class TestByopQuickstarts(unittest.TestCase):
                     self.assertTrue(report_path.is_file())
 
                     payload = json.loads(predictions_path.read_text(encoding="utf-8"))
+                    self.assertEqual(payload["schema_version"], 1)
                     self.assertEqual(len(payload["predictions"]), 2)
+                    self.assertTrue(
+                        all(
+                            prediction["schema_version"] == 2
+                            for prediction in payload["predictions"]
+                        )
+                    )
                     extra = payload["meta"]["extra"]
                     self.assertEqual(extra["exporter"], source)
                     self.assertEqual(extra["execution_status"], "dry_run")

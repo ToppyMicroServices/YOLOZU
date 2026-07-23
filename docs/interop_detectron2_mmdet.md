@@ -166,6 +166,11 @@ A successful non-dry artifact also records config and checkpoint/weights paths
 and SHA-256 values in `meta.extra.model_provenance`. A completed inference may
 legitimately contain an empty `detections` list.
 
+Both execution modes declare wrapper `schema_version: 1` and entry
+`schema_version: 2`. Versionless older artifacts remain readable through the
+documented compatibility path, but new exporter output should validate without
+legacy-version warnings.
+
 ## 4) Validate and evaluate
 
 ```bash
