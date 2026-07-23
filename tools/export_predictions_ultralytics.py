@@ -186,6 +186,12 @@ def main(argv=None):
     if args.source is not None and args.max_images is not None:
         raise SystemExit("--source cannot be combined with --max-images")
 
+    output_path = Path(args.output).expanduser()
+    if output_path.exists() or output_path.is_symlink():
+        if output_path.is_dir():
+            raise SystemExit(f"--output must be a file path: {output_path}")
+        output_path.unlink()
+
     manifest = build_manifest(args.dataset, split=args.split)
     manifest_records = list(manifest["images"])
     path_to_manifest: dict[str, str] = {}
@@ -389,7 +395,6 @@ def main(argv=None):
     else:
         payload = outputs
 
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
     print(output_path)

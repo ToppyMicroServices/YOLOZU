@@ -43,6 +43,7 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
         capture: dict[str, object],
         *,
         result_limit: int | None = None,
+        result_paths: list[str] | None = None,
     ) -> types.ModuleType:
         fake_module = types.ModuleType("ultralytics")
         fake_module.__version__ = "test"
@@ -55,7 +56,9 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
                 sources = list(kwargs["source"])
                 capture["sources"] = sources
                 capture["predict_kwargs"] = kwargs
-                selected = sources if result_limit is None else sources[:result_limit]
+                selected = result_paths
+                if selected is None:
+                    selected = sources if result_limit is None else sources[:result_limit]
                 return [_FakeResult(path) for path in selected]
 
         fake_module.YOLO = FakeYOLO
@@ -89,6 +92,7 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
             root = Path(td)
             dataset = self._write_dataset(root, image_count=3)
             output = root / "predictions.json"
+            output.write_text("stale-success", encoding="utf-8")
             capture: dict[str, object] = {}
 
             self._run(
@@ -169,6 +173,50 @@ class TestExportPredictionsUltralyticsTool(unittest.TestCase):
                 )
 
             self.assertEqual(len(capture.get("sources") or []), 2)
+            self.assertFalse(output.exists())
+
+    def test_excess_result_count_removes_stale_output(self) -> None:
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            dataset = self._write_dataset(root, image_count=3)
+            output = root / "predictions.json"
+            output.write_text("stale-success", encoding="utf-8")
+            capture: dict[str, object] = {}
+            result_paths = [
+                str((dataset / "images" / "val" / f"{index:06d}.jpg").resolve())
+                for index in (1, 2, 3)
+            ]
+
+            with self.assertRaisesRegex(SystemExit, "returned more results than selected input images"):
+                self._run(
+                    dataset=dataset,
+                    output=output,
+                    fake_module=self._fake_ultralytics(capture, result_paths=result_paths),
+                    extra_args=["--max-images", "2"],
+                )
+
+            self.assertFalse(output.exists())
+
+    def test_result_path_order_mismatch_removes_stale_output(self) -> None:
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            dataset = self._write_dataset(root, image_count=2)
+            output = root / "predictions.json"
+            output.write_text("stale-success", encoding="utf-8")
+            capture: dict[str, object] = {}
+            result_paths = [
+                str((dataset / "images" / "val" / f"{index:06d}.jpg").resolve())
+                for index in (2, 1)
+            ]
+
+            with self.assertRaisesRegex(SystemExit, "result order/path does not match"):
+                self._run(
+                    dataset=dataset,
+                    output=output,
+                    fake_module=self._fake_ultralytics(capture, result_paths=result_paths),
+                    extra_args=["--max-images", "2"],
+                )
+
             self.assertFalse(output.exists())
 
     def test_zero_selected_inputs_fails_before_runtime(self) -> None:
