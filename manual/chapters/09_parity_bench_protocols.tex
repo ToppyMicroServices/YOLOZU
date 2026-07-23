@@ -119,8 +119,8 @@ python3 -m yolozu benchmark \
   --latency-source auto \
   --output reports/benchmark_report.json
 \end{lstlisting}
-The OpenVINO runtime and IR remain external to YOLOZU. Missing prerequisites
-produce an explicit skipped result.
+For this detect invocation, the OpenVINO runtime and IR remain external to
+YOLOZU. Missing prerequisites produce an explicit skipped result.
 
 The primary artifact set is:
 \begin{itemize}
@@ -152,8 +152,10 @@ python3 tools/benchmark_model.py \
   --output reports/benchmark_report.json
 \end{lstlisting}
 The explicit reference choices are \cmd{torch}, \cmd{onnx}, \cmd{engine},
-\cmd{torchscript}, and \cmd{openvino}; OpenVINO selection remains conditional
-on a successful comparable result.
+\cmd{torchscript}, and \cmd{openvino}. OpenVINO detect reference eligibility
+requires a compatible IR and runtime. Artifact-backed OpenVINO tasks consume
+prepared files without checking or invoking the OpenVINO runtime; reference
+selection still requires a successful comparable result.
 
 \subsection{Benchmark task semantics}
 The benchmark surface now records explicit task semantics instead of treating
@@ -250,8 +252,9 @@ Conversely, \path{dataset_pass_wall_time} is the inference-backed source for
 \cmd{detect}. A non-dry-run artifact-backed task forced to that source fails
 before writing artifacts and directs the user to \cmd{auto} or
 \cmd{artifact_eval}.
-With \cmd{--strict}, any requested format that is skipped or fails makes the
-command exit with code \cmd{2}.
+With \cmd{--strict}, any requested format that is skipped, fails, or finishes
+\cmd{partial} because evaluation/parity failed or drifted makes the command
+exit with code \cmd{2}.
 For non-artifact evaluation, format rules still apply: the current
 \cmd{torch} lane can accept these non-default flags, while other current
 formats reject them. The complete matrix is generated in

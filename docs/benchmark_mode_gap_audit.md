@@ -47,8 +47,10 @@ documentation agree on these boundaries:
 - A non-dry-run artifact-backed task forced to
   `dataset_pass_wall_time` fails early and directs the user to `auto` or
   `artifact_eval`.
-- `openvino` is conditional real support. Its runtime and IR artifact remain
-  external; missing prerequisites produce a skipped result.
+- `openvino` detect is conditional real support. Its runtime and IR artifact
+  remain external; missing prerequisites produce a skipped result.
+  Artifact-backed OpenVINO tasks consume prepared files without checking or
+  invoking the OpenVINO runtime.
 - `executorch` and `opencv_dnn` are accepted format labels but benchmark
   orchestration is not wired, so their benchmark results are
   `unsupported/skipped`, not synthetic successes.
@@ -65,8 +67,8 @@ surface users expect
 without giving up YOLOZU's Apache-2.0 and artifact-first strengths, the most
 effective next steps are:
 
-1. Keep `openvino` as a conditional real runtime target on the same canonical
-   CLI surface as the other implemented detect lanes.
+1. Keep `openvino` as a conditional real detect runtime target on the same
+   canonical CLI surface as the other implemented detect lanes.
 2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
 3. Add parity artifacts to the artifact-backed classification and OBB lanes;
@@ -237,7 +239,7 @@ Improvement priority:
 
 The highest-value next steps are:
 
-1. Keep `openvino` conditional support honest when its external runtime or IR artifact is unavailable
+1. Keep `openvino` detect support honest when its external runtime or IR artifact is unavailable
 2. Expand parity artifacts for artifact-backed classification and OBB reports
 3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change

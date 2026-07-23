@@ -37,6 +37,12 @@ LATENCY_SOURCE_HELP = (
     "artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, "
     "and --nms are rejected."
 )
+PARITY_REFERENCE_HELP = (
+    "Reference backend used when writing parity artifacts (default: auto prefers torch, "
+    "then first eligible backend). OpenVINO detect requires a supplied IR and runtime; "
+    "artifact-backed OpenVINO tasks use prepared artifacts without a runtime check."
+)
+STRICT_HELP = "Return exit code 2 if any requested format is skipped, fails, or is partial."
 
 
 __all__ = [
@@ -47,4 +53,6 @@ __all__ = [
     "HALF_HELP",
     "LATENCY_SOURCE_HELP",
     "NMS_HELP",
+    "PARITY_REFERENCE_HELP",
+    "STRICT_HELP",
 ]

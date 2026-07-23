@@ -1425,7 +1425,7 @@
         },
         {
           "default": false,
-          "description": "Return exit code 2 if any requested benchmark format is skipped or fails.",
+          "description": "Return exit code 2 if any requested benchmark format is skipped, fails, or is partial.",
           "flag": "--strict",
           "kind": "string",
           "name": "strict",
@@ -1573,7 +1573,7 @@
             "openvino"
           ],
           "default": "auto",
-          "description": "Parity reference backend (auto prefers torch, then the first eligible real backend; OpenVINO is conditional on supplied artifacts and runtime availability).",
+          "description": "Parity reference backend (auto prefers torch, then the first eligible real backend). OpenVINO detect requires a supplied IR and runtime; artifact-backed OpenVINO tasks use prepared artifacts without a runtime check.",
           "flag": "--parity-reference-backend",
           "kind": "string",
           "name": "parity_reference_backend",
@@ -16841,7 +16841,7 @@
           "required": false
         },
         {
-          "description": "Optional OpenVINO IR model/artifact override for the experimental benchmark subcommand; runtime support remains conditional and environment-provided.",
+          "description": "Optional OpenVINO IR model/artifact override for the experimental benchmark subcommand; detect runtime support remains conditional, while artifact-backed tasks consume prepared files without an OpenVINO runtime check.",
           "flag": "--openvino-model",
           "kind": "file",
           "name": "openvino_model",
@@ -16857,7 +16857,7 @@
             "openvino"
           ],
           "default": "auto",
-          "description": "Reference backend for benchmark parity artifacts; OpenVINO is accepted only as a conditional backend.",
+          "description": "Reference backend for benchmark parity artifacts; OpenVINO detect requires a supplied IR and runtime, while artifact-backed OpenVINO tasks use prepared artifacts without a runtime check.",
           "flag": "--parity-reference-backend",
           "kind": "string",
           "name": "parity_reference_backend",

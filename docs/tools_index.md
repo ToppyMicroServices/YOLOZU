@@ -107,7 +107,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
   - canonical per-format/per-task status for real, artifact-real, dry-run placeholder, and unsupported/skipped benchmark artifacts
   - canonical task/requested-source/effective-source/format applicability for `--half`, `--batch`, and `--nms`
 - Conditional OpenVINO benchmark: `python3 -m yolozu benchmark --model runs/example/model.pt --openvino-model exports/example.xml --data data/coco8.yaml --format torch,openvino --parity-reference-backend openvino --dry-run --output reports/benchmark_openvino_report.json`
-  - canonical and standalone benchmark surfaces accept the same OpenVINO override/reference choices; runtime execution still requires an external OpenVINO install and compatible IR
+  - canonical and standalone benchmark surfaces accept the same OpenVINO override/reference choices; detect execution requires an external OpenVINO install and compatible IR, while artifact-backed tasks consume prepared files without an OpenVINO runtime check
 - Manual CLI drift audit: `python3 tools/audit_manual_cli_drift.py --json`
   - checks manual chapter 04 against `python3 -m yolozu --help` and the legacy wrapper help surface
 - SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval.json`

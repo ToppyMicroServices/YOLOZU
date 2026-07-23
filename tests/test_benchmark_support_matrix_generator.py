@@ -94,6 +94,12 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
             for task in benchmark_mode.TASK_SEMANTICS:
                 self.assertIn((fmt, task), support_pairs)
 
+        openvino = next(item for item in meta["formats"] if item["id"] == "openvino")
+        self.assertIn("for detect", openvino["runtime_requirements"])
+        self.assertIn("artifact-backed tasks consume supplied files", openvino["runtime_requirements"])
+        self.assertIn("detect reports skipped", openvino["license_runtime_notes"])
+        self.assertIn("artifact-backed tasks do not invoke", openvino["license_runtime_notes"])
+
     def test_check_mode_fails_on_stale_output(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             stale = Path(td) / "benchmark_support_matrix.md"

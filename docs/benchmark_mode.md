@@ -23,7 +23,7 @@ Today the command provides:
 - a stable benchmark report JSON,
 - explicit `skipped` statuses when a format is unavailable,
 - a clearly labeled synthetic latency probe,
-- real backend orchestration for `torch`, `onnx`, `engine`, `torchscript`, and conditional `openvino` when artifacts and runtimes are available.
+- real detect orchestration for `torch`, `onnx`, `engine`, `torchscript`, and conditional `openvino` when artifacts and runtimes are available.
 - artifact-backed segmentation evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific mask-prediction artifacts are available.
 - artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
 - artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific depth-map artifacts are available.
@@ -41,8 +41,8 @@ The broader public benchmark/export surface still exposes more formats and task
 paths than YOLOZU does. Today the most important remaining gaps are:
 
 - missing benchmark/export formats such as `coreml`, `saved_model`, `tflite`,
-  `ncnn`, `rknn`, and `paddle`; `openvino` is conditional and reports skipped
-  when the runtime or IR artifact is unavailable
+  `ncnn`, `rknn`, and `paddle`; `openvino` detect is conditional and reports
+  skipped when the runtime or IR artifact is unavailable
 - incomplete parity attachment for artifact-backed classification and OBB lanes
 - additional task/source/format rules will be needed as new backend-specific
   knobs are implemented
@@ -125,8 +125,8 @@ yolozu benchmark \
   --output reports/benchmark_openvino_report.json
 ```
 
-OpenVINO is not bundled. Without a compatible external runtime and IR artifact,
-the report records a skipped lane rather than claiming execution.
+OpenVINO is not bundled. For this detect run, a missing external runtime or IR
+artifact produces a skipped lane rather than a claim of execution.
 
 Detect run with an explicit parity reference backend:
 
@@ -471,6 +471,9 @@ By default the benchmark chooses `torch` as the parity reference backend when
 `torch` succeeded. If `torch` is unavailable, it falls back to the first
 eligible real backend. Use `--parity-reference-backend torch|onnx|engine|torchscript|openvino` when
 you want a specific backend to act as the reference for detect/parity reports.
+OpenVINO detect reference eligibility requires a compatible IR and runtime.
+Artifact-backed OpenVINO tasks consume prepared files and do not check or invoke
+the OpenVINO runtime.
 
 ## Status model
 
@@ -505,8 +508,10 @@ validation policy that was applied before execution:
 - `missing_artifact_policy: report_skipped`
 
 `openvino_applicable` is `true` once OpenVINO is present in the benchmark format
-surface. OpenVINO remains optional: missing runtime or missing IR artifacts are
-reported as skipped instead of becoming an install requirement.
+surface. OpenVINO detect remains optional: missing runtime or missing IR
+artifacts are reported as skipped instead of becoming an install requirement.
+Artifact-backed OpenVINO tasks bypass runtime availability and report missing
+prepared artifacts separately.
 
 Typical skip reasons:
 
@@ -517,8 +522,9 @@ Typical skip reasons:
 - `model_artifact_required`
 - `model_artifact_mismatch`
 
-If `--strict` is set and any requested format is skipped or fails, the command
-exits with code `2`.
+If `--strict` is set and any requested format is skipped, fails, or finishes
+`partial` because evaluation/parity failed or drifted, the command exits with
+code `2`.
 
 ## Why the latency source is explicit
 

@@ -46,6 +46,8 @@ from yolozu.eval.benchmark_flags import (
     HALF_HELP,
     LATENCY_SOURCE_HELP,
     NMS_HELP,
+    PARITY_REFERENCE_HELP,
+    STRICT_HELP,
 )
 from yolozu.eval.depth_eval import compare_depth_arrays, load_depth_array, load_mask_array
 from yolozu.eval.keypoints_parity import compare_keypoints_predictions
@@ -426,7 +428,12 @@ def _task_execution_semantics(
         }
 
     note = task_meta["notes"]
-    if task_label == "classification" and execution_mode == "real_artifact_eval":
+    if execution_mode == "unsupported_skipped":
+        note = (
+            f"{note} Benchmark orchestration for {fmt} is not wired; "
+            "this requested format is reported as unsupported/skipped without execution."
+        )
+    elif task_label == "classification" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current classification benchmarking is artifact-backed: backend-specific score vectors are "
             "evaluated against class labels directly, without pretending YOLOZU performed the underlying backend "
@@ -2537,8 +2544,6 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
     }
 
     results: list[dict[str, Any]] = []
-    strict_failure = False
-
     for fmt in requested_formats:
         supported, skip_reason = _support_status_for_format(
             fmt,
@@ -3429,9 +3434,6 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
                                 run_meta=format_run_meta,
                             )
 
-        if bool(getattr(args, "strict", False)) and status in {"skipped", "failed"}:
-            strict_failure = True
-
         export_settings = _export_settings_payload(
             args,
             fmt=fmt,
@@ -3493,6 +3495,10 @@ def run_benchmark_mode(args: Any) -> tuple[dict[str, Any], int]:
             runtime_available=bool(runtime.get("available", False)),
             runtime_reason=runtime.get("reason"),
         )
+
+    strict_failure = bool(getattr(args, "strict", False)) and any(
+        str(item.get("status")) in {"skipped", "failed", "partial"} for item in results
+    )
 
     statuses = {item["status"] for item in results}
     if statuses == {"ok"}:
@@ -3588,11 +3594,7 @@ def build_parser() -> Any:
         "--parity-reference-backend",
         choices=PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help=(
-            "Reference backend used when writing parity artifacts "
-            "(default: auto prefers torch, then first eligible backend; "
-            "OpenVINO requires supplied artifacts and an available runtime)."
-        ),
+        help=PARITY_REFERENCE_HELP,
     )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
@@ -3622,7 +3624,7 @@ def build_parser() -> Any:
     )
     parser.add_argument("--max-images", type=int, default=None, help="Optional max image count recorded in the report.")
     parser.add_argument("--dry-run", action="store_true", help="Validate wiring and dry-run artifacts without backend runs.")
-    parser.add_argument("--strict", action="store_true", help="Return exit code 2 if any requested format is skipped or fails.")
+    parser.add_argument("--strict", action="store_true", help=STRICT_HELP)
     parser.add_argument("--repro-policy", choices=("strict", "relaxed", "off"), default="relaxed")
     parser.add_argument("--runtime-lock", default="none", help="Runtime lock label recorded in run_meta.")
     parser.add_argument("--run-id", default=None, help="Optional run id (default: UTC timestamp).")

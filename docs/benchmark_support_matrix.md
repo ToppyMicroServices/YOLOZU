@@ -22,7 +22,7 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | `onnx` | conditional real | ONNX Runtime and an .onnx artifact for detect; artifact-backed tasks consume supplied files. | ONNX Runtime is optional and environment-provided. |
 | `engine` | conditional real | Linux, GPU, TensorRT/CUDA bindings, and an .engine or .plan artifact for detect; artifact-backed tasks consume supplied files. | TensorRT/CUDA are optional external runtimes; benchmark reports skipped when unavailable. |
 | `torchscript` | conditional real | Local PyTorch and a TorchScript artifact for detect; artifact-backed tasks consume supplied files. | PyTorch is optional for this lane and supplied by the runtime environment. |
-| `openvino` | conditional real | OpenVINO runtime and an OpenVINO IR .xml artifact for detect; artifact-backed tasks consume supplied files. | OpenVINO is optional and environment-provided; benchmark reports skipped when unavailable. |
+| `openvino` | conditional real | OpenVINO runtime and an OpenVINO IR .xml artifact for detect; artifact-backed tasks consume supplied files. | OpenVINO is optional and environment-provided; detect reports skipped when the runtime is unavailable, while artifact-backed tasks do not invoke the OpenVINO runtime. |
 | `executorch` | unsupported/skipped | Standalone exporter utilities may exist, but benchmark orchestration is not wired. | Visible for planning; benchmark reports benchmark_format_not_wired. |
 | `opencv_dnn` | unsupported/skipped | Standalone OpenCV-DNN exporters may exist, but benchmark orchestration is not wired. | Visible for planning; benchmark reports benchmark_format_not_wired. |
 

@@ -77,7 +77,7 @@ Contact: develop@toppymicros.com
 --segmentation-parity-mismatch-atol SEGMENTATION_PARITY_MISMATCH_ATOL
   Segmentation parity mismatch-rate tolerance (default: 0.0, exact mask match).
 --parity-reference-backend {auto,torch,onnx,engine,torchscript,openvino}
-  Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend; OpenVINO requires supplied artifacts and an available runtime).
+  Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend). OpenVINO detect requires a supplied IR and runtime; artifact-backed OpenVINO tasks use prepared artifacts without a runtime check.
 --keypoints-parity-iou-thresh KEYPOINTS_PARITY_IOU_THRESH
   Keypoints parity IoU threshold (default: 0.99).
 --keypoints-parity-score-atol KEYPOINTS_PARITY_SCORE_ATOL
@@ -115,7 +115,7 @@ Contact: develop@toppymicros.com
 --dry-run
   Validate wiring and dry-run artifacts without backend runs.
 --strict
-  Return exit code 2 if any requested format is skipped or fails.
+  Return exit code 2 if any requested format is skipped, fails, or is partial.
 --repro-policy {strict,relaxed,off}
 --runtime-lock RUNTIME_LOCK
   Runtime lock label recorded in run_meta.

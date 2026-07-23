@@ -176,6 +176,33 @@ class TestBenchmarkModelTool(TestCase):
                 )
                 self.assertEqual(semantics["artifact_expectation"]["parity"], "real_when_comparable")
 
+    def test_unwired_artifact_task_report_notes_are_unsupported_not_synthetic(self):
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+                for fmt in sorted(benchmark_mode.BENCHMARK_UNWIRED_FORMATS):
+                    with self.subTest(task=task_label, fmt=fmt):
+                        run_root = root / task_label / fmt
+                        args = self._args(
+                            format=fmt,
+                            task=task_label,
+                            output=str(run_root / "report.json"),
+                            predictions_output=str(run_root / "artifacts"),
+                            eval_output=str(run_root / "artifacts"),
+                            parity_output=str(run_root / "artifacts"),
+                        )
+                        with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                            report, code = benchmark_mode.run_benchmark_mode(args)
+
+                        self.assertEqual(code, 0)
+                        result = report["results"][0]
+                        semantics = result["execution_semantics"]
+                        self.assertEqual(result["status"], "skipped")
+                        self.assertEqual(result["skip_reason"], "benchmark_format_not_wired")
+                        self.assertEqual(semantics["execution_mode"], "unsupported_skipped")
+                        self.assertIn("unsupported/skipped", semantics["notes"])
+                        self.assertNotIn("planning/synthetic-only", semantics["notes"])
+
     def test_dod_semantics_keep_requested_detect_formats_when_runtimes_missing(self):
         args = self._args(format="torch,onnx,engine,torchscript", task="detect", dry_run=False)
         with mock.patch.object(benchmark_mode, "_module_available", return_value=False):
@@ -737,6 +764,51 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["torch"]["eval_metrics"]["miou"], 1.0)
             self.assertIn("max_mismatch_rate", results["onnx"]["parity"])
 
+            strict_surfaces = {
+                "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
+                "standalone": [sys.executable, str(repo_root / "tools" / "benchmark_model.py")],
+            }
+            for surface, prefix in strict_surfaces.items():
+                with self.subTest(surface=surface, outcome="parity_drift"):
+                    strict_report = root / f"benchmark_segmentation_strict_{surface}.json"
+                    strict_artifacts = root / f"artifacts_strict_{surface}"
+                    strict_proc = subprocess.run(
+                        [
+                            *prefix,
+                            "--task",
+                            "segmentation",
+                            "--model",
+                            str(ref_pred),
+                            "--onnx-model",
+                            str(cand_pred),
+                            "--data",
+                            str(dataset_root),
+                            "--format",
+                            "torch,onnx",
+                            "--latency-source",
+                            "artifact_eval",
+                            "--strict",
+                            "--predictions-output",
+                            str(strict_artifacts),
+                            "--eval-output",
+                            str(strict_artifacts),
+                            "--parity-output",
+                            str(strict_artifacts),
+                            "--output",
+                            str(strict_report),
+                        ],
+                        cwd=str(repo_root),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        check=False,
+                        text=True,
+                    )
+                    self.assertEqual(strict_proc.returncode, 2, strict_proc.stderr)
+                    strict_payload = json.loads(strict_report.read_text(encoding="utf-8"))
+                    strict_results = {item["format"]: item for item in strict_payload["results"]}
+                    self.assertEqual(strict_results["onnx"]["status"], "partial")
+                    self.assertEqual(strict_results["onnx"]["skip_reason"], "parity_drift")
+
     def test_auto_uses_real_sources_for_torchscript_detect_and_artifact_tasks(self):
         args = self._args(latency_source="auto")
         self.assertEqual(
@@ -1238,6 +1310,115 @@ class TestBenchmarkModelTool(TestCase):
             ["batch", "half", "nms"],
         )
 
+    def test_strict_rejects_partial_eval_command_failure(self):
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            args = self._args(
+                format="torch",
+                strict=True,
+                output=str(root / "report.json"),
+                predictions_output=str(root / "artifacts"),
+                eval_output=str(root / "artifacts"),
+                parity_output=str(root / "artifacts"),
+            )
+
+            def fake_run(cmd):
+                command = [str(item) for item in cmd]
+                output = Path(command[command.index("--output") + 1])
+                if Path(command[1]).name == "export_predictions_ultralytics.py":
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    output.write_text(
+                        json.dumps({"predictions": [{"image": "sample.jpg", "detections": []}]}),
+                        encoding="utf-8",
+                    )
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr=""), 0.01
+                if Path(command[1]).name == "eval_suite.py":
+                    return subprocess.CompletedProcess(command, 1, stdout="", stderr="eval failed"), 0.01
+                raise AssertionError(f"unexpected command: {command}")
+
+            with mock.patch.object(benchmark_mode, "_support_status_for_format", return_value=(True, None)):
+                with mock.patch.object(
+                    benchmark_mode,
+                    "_resolve_model_artifact",
+                    return_value=("runs/foo/model.pt", None),
+                ):
+                    with mock.patch.object(benchmark_mode, "_run_command", side_effect=fake_run):
+                        with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                            report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 2)
+            self.assertEqual(report["status"], "partial")
+            self.assertEqual(report["results"][0]["status"], "partial")
+            self.assertEqual(report["results"][0]["skip_reason"], "eval_command_failed")
+
+    def test_strict_rejects_parity_generation_failure_after_execution(self):
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            args = self._args(
+                format="torch,onnx",
+                onnx_model="exports/foo.onnx",
+                strict=True,
+                output=str(root / "report.json"),
+                predictions_output=str(root / "artifacts"),
+                eval_output=str(root / "artifacts"),
+                parity_output=str(root / "artifacts"),
+            )
+
+            def fake_resolve(_args, *, fmt, task_label):
+                self.assertEqual(task_label, "detect")
+                return f"runs/foo/model.{fmt}", None
+
+            def fake_run(cmd):
+                command = [str(item) for item in cmd]
+                output = Path(command[command.index("--output") + 1])
+                output.parent.mkdir(parents=True, exist_ok=True)
+                if Path(command[1]).name.startswith("export_predictions_"):
+                    output.write_text(
+                        json.dumps({"predictions": [{"image": "sample.jpg", "detections": []}]}),
+                        encoding="utf-8",
+                    )
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr=""), 0.01
+                if Path(command[1]).name == "eval_suite.py":
+                    output.write_text(json.dumps({"metrics": {"bbox_mAP50": 1.0}}), encoding="utf-8")
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr=""), 0.01
+                raise AssertionError(f"unexpected command: {command}")
+
+            with mock.patch.object(benchmark_mode, "_support_status_for_format", return_value=(True, None)):
+                with mock.patch.object(benchmark_mode, "_resolve_model_artifact", side_effect=fake_resolve):
+                    with mock.patch.object(benchmark_mode, "_run_command", side_effect=fake_run):
+                        with mock.patch.object(
+                            benchmark_mode,
+                            "compare_predictions",
+                            side_effect=RuntimeError("parity generation failed"),
+                        ):
+                            with mock.patch.object(benchmark_mode, "_git_head", return_value="deadbeef"):
+                                report, code = benchmark_mode.run_benchmark_mode(args)
+
+            self.assertEqual(code, 2)
+            results = {item["format"]: item for item in report["results"]}
+            self.assertEqual(results["onnx"]["status"], "partial")
+            self.assertEqual(results["onnx"]["skip_reason"], "parity_generation_failed")
+            self.assertIn("parity generation failed", results["onnx"]["error"])
+
+    def test_strict_exit_code_is_propagated_by_both_cli_surfaces(self):
+        argv = ["--model", "runs/foo/model.pt", "--data", "data/smoke", "--strict"]
+        partial_report = {
+            "results": [
+                {
+                    "format": "torch",
+                    "status": "partial",
+                    "skip_reason": "eval_command_failed",
+                }
+            ]
+        }
+        with mock.patch.object(benchmark_mode, "run_benchmark_mode", return_value=(partial_report, 2)):
+            with mock.patch("builtins.print"):
+                standalone_code = benchmark_mode.main(argv)
+                canonical_code = cli_entry.main(["benchmark", *argv])
+
+        self.assertEqual(standalone_code, 2)
+        self.assertEqual(canonical_code, 2)
+
     def test_validation_summary_records_missing_artifact_skip_policy(self):
         args = self._args(format="onnx", model="runs/foo/model.pt", latency_source="dataset_pass_wall_time")
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name == "onnxruntime"):
@@ -1396,11 +1577,15 @@ class TestBenchmarkModelTool(TestCase):
                     self.assertIn("--openvino-model", proc.stdout)
                     self.assertIn("openvino", proc.stdout)
                     self.assertIn(
-                        "OpenVINO requires supplied artifacts and an available runtime",
+                        "OpenVINO detect requires a supplied IR and runtime",
                         " ".join(proc.stdout.split()),
                     )
                     self.assertIn(
-                        "Return exit code 2 if any requested format is skipped or fails",
+                        "artifact-backed OpenVINO tasks use prepared artifacts without a runtime check",
+                        " ".join(proc.stdout.split()),
+                    )
+                    self.assertIn(
+                        "Return exit code 2 if any requested format is skipped, fails, or is partial",
                         " ".join(proc.stdout.split()),
                     )
 

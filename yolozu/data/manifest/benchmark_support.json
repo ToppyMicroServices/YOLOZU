@@ -163,7 +163,7 @@
       "id": "openvino",
       "support_state": "conditional real",
       "runtime_requirements": "OpenVINO runtime and an OpenVINO IR .xml artifact for detect; artifact-backed tasks consume supplied files.",
-      "license_runtime_notes": "OpenVINO is optional and environment-provided; benchmark reports skipped when unavailable."
+      "license_runtime_notes": "OpenVINO is optional and environment-provided; detect reports skipped when the runtime is unavailable, while artifact-backed tasks do not invoke the OpenVINO runtime."
     },
     {
       "id": "executorch",
