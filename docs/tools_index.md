@@ -89,6 +89,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - External backend support audit (YOLOX/YOLO runtime/Detectron2/MMDetection; dry-run by default): `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json`
   - verified YOLOX non-dry example: `python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox --yolox-exp /path/to/yolox_exp.py --yolox-weights /path/to/yolox_ckpt.pth`
   - non-dry prerequisites are backend-specific: YOLOX uses `--yolox-exp` + `--yolox-weights`; Detectron2 uses `--detectron2-config` + `--detectron2-weights`; MMDetection uses `--mmdet-config` + `--mmdet-checkpoint`; the YOLO runtime uses `--ultralytics-model`.
+  - for the YOLO runtime, `--max-images` bounds the actual ordered inference input list; the audit rejects selected-input/result cardinality mismatches.
   - report includes per-backend `execution_evidence_error`, top-level `verified_non_dry_backends`, `multitask_coverage` (training/inference/prediction/eval coverage for `bbox/segmentation/keypoints/depth/pose6d`), and enumerated `gaps`.
 - External bridge dry-run DoD gate: `python3 -m unittest tests.test_support_external_training_tool`
   - covers YOLOX dry-run artifact plan, runtime/license boundary, next commands, expected outputs, and handoff files without executing external training.

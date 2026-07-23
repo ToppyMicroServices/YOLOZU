@@ -106,12 +106,22 @@ def _load_predictions_artifact(path: Path) -> tuple[int, dict[str, Any] | None, 
     return 0, None, "unsupported_payload_shape"
 
 
-def _validate_execution_evidence(*, meta: dict[str, Any] | None, dry_run: bool) -> str | None:
+def _validate_execution_evidence(
+    *,
+    meta: dict[str, Any] | None,
+    dry_run: bool,
+    predictions_count: int | None = None,
+    expected_exporter: str | None = None,
+) -> str | None:
     if not isinstance(meta, dict):
         return "execution_evidence_missing"
     extra = meta.get("extra")
     if not isinstance(extra, dict):
         return "execution_evidence_missing"
+
+    artifact_exporter = str(extra.get("exporter") or "")
+    if expected_exporter is not None and artifact_exporter != expected_exporter:
+        return f"exporter_mismatch:{artifact_exporter!r}"
 
     if not isinstance(extra.get("dry_run"), bool) or extra["dry_run"] is not dry_run:
         return "dry_run_metadata_mismatch"
@@ -122,10 +132,38 @@ def _validate_execution_evidence(*, meta: dict[str, Any] | None, dry_run: bool) 
     if not isinstance(runtime_executed, bool) or runtime_executed is dry_run:
         return "runtime_execution_metadata_mismatch"
 
+    raw_inference_calls = extra.get("inference_calls")
     try:
-        inference_calls = int(extra.get("inference_calls") or 0)
+        inference_calls = int(raw_inference_calls or 0)
     except (TypeError, ValueError):
         return "inference_calls_invalid"
+
+    if artifact_exporter == "ultralytics":
+        if isinstance(raw_inference_calls, bool) or not isinstance(raw_inference_calls, int):
+            return "inference_calls_invalid"
+        selected_input_count = extra.get("selected_input_count")
+        result_count = extra.get("result_count")
+        if (
+            isinstance(selected_input_count, bool)
+            or not isinstance(selected_input_count, int)
+            or selected_input_count <= 0
+        ):
+            return "selected_input_count_invalid"
+        selected_inputs = extra.get("selected_inputs")
+        if not isinstance(selected_inputs, list) or len(selected_inputs) != selected_input_count:
+            return "selected_inputs_mismatch"
+        if any(not isinstance(value, str) or not value for value in selected_inputs):
+            return "selected_inputs_invalid"
+        if predictions_count is None or predictions_count != selected_input_count:
+            return "prediction_count_mismatch"
+        if isinstance(result_count, bool) or not isinstance(result_count, int) or result_count < 0:
+            return "result_count_invalid"
+        if dry_run:
+            if result_count != 0:
+                return "dry_run_recorded_results"
+        elif result_count != selected_input_count or inference_calls != selected_input_count:
+            return "runtime_cardinality_mismatch"
+
     if dry_run:
         if inference_calls != 0:
             return "dry_run_recorded_inference_calls"
@@ -368,7 +406,12 @@ def main(argv: list[str] | None = None) -> int:
         if out_file is not None:
             preds_count, artifact_meta, output_error = _load_predictions_artifact(out_file)
             if output_error is None:
-                execution_evidence_error = _validate_execution_evidence(meta=artifact_meta, dry_run=bool(dry_run))
+                execution_evidence_error = _validate_execution_evidence(
+                    meta=artifact_meta,
+                    dry_run=bool(dry_run),
+                    predictions_count=preds_count,
+                    expected_exporter=("ultralytics" if backend == "yolov8_ultralytics" else None),
+                )
 
         results.append(
             {

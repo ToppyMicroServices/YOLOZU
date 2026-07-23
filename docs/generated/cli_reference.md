@@ -209,7 +209,7 @@ Contact: develop@toppymicros.com
 | export_predictions_openvino | experimental | tools/export_predictions_openvino.py | Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
 | export_predictions_torchscript | experimental | tools/export_predictions_torchscript.py | Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. |
 | export_predictions_trt | experimental | tools/export_predictions_trt.py | Run TensorRT engine inference and export YOLOZU predictions JSON (requires tensorrt + CUDA bindings). |
-| export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run external YOLO-runtime inference and export predictions.json with protocol, execution-evidence, and model-provenance metadata. |
+| export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run bounded external YOLO-runtime inference and export predictions.json with cardinality-checked execution evidence. |
 | export_predictions_yolov5 | experimental | tools/export_predictions_yolov5.py | Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings. |
 | export_predictions_yolox | experimental | tools/export_predictions_yolox.py | Run fail-closed YOLOX inference (or dry-run) and export predictions.json with execution evidence and exp/checkpoint provenance. |
 | export_trt | experimental | tools/export_trt.py | Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. |

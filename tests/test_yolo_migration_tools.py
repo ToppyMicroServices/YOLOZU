@@ -184,6 +184,10 @@ class TestYoloMigrationTools(unittest.TestCase):
             self.assertEqual(extra.get("execution_status"), "dry_run")
             self.assertFalse(bool(extra.get("runtime_executed")))
             self.assertEqual(extra.get("inference_calls"), 0)
+            self.assertEqual(extra.get("selected_input_count"), 1)
+            self.assertEqual(extra.get("result_count"), 0)
+            self.assertEqual(extra.get("selected_inputs"), [payload["predictions"][0]["image"]])
+            self.assertEqual(extra.get("source_mode"), "dataset_manifest")
 
 
 if __name__ == "__main__":

@@ -189,9 +189,21 @@ The generated \path{models/<id>/meta.json} always includes \path{source}, \path{
 For users already operating within YOLO-family pipelines, \yolozu{} provides a direct interface-contract-first migration path:
 \begin{lstlisting}[language=bash]
 python3 tools/import_yolo_data_yaml.py --data-yaml /path/to/data.yaml --split val --output data/yolo_wrapper --force
-python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
+python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/yolo_wrapper --split val --max-images 8 --protocol nms_applied --wrap --output reports/pred_yolo_runtime.json
 python3 tools/export_predictions_yolov5.py --dataset data/yolo_wrapper --split val --labels-dir runs/detect/exp/labels --protocol nms_applied --output reports/pred_yolov5.json
 \end{lstlisting}
+
+Without \cmd{--source}, \cmd{--max-images} truncates the ordered manifest
+selection before those image paths are passed to the YOLO runtime. Zero
+selected inputs and result-count mismatches fail before a new predictions
+artifact is written. An explicit \cmd{--source} accepts one local image or a
+directory expanded in sorted order, and cannot be combined with
+\cmd{--max-images}.
+
+Wrapped metadata records \path{source_mode}, \path{selected_inputs},
+\path{selected_input_count}, and \path{result_count}. Completed non-dry
+execution requires selected-input, result, inference-call, and predictions
+cardinality to agree.
 
 Protocol policy for fair comparisons:
 \begin{itemize}
