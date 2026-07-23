@@ -64,6 +64,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--keypoints-parity-kp-atol", proc.stdout)
         self.assertIn("--pose-parity-rot-deg-atol", proc.stdout)
         self.assertIn("--pose-parity-trans-atol", proc.stdout)
+        normalized_help = " ".join(proc.stdout.split())
+        self.assertIn("Must remain disabled when the effective latency source is artifact_eval", normalized_help)
+        self.assertIn("Must remain 1 when the effective latency source is artifact_eval", normalized_help)
 
     def test_torchscript_is_accepted_as_benchmark_format(self):
         self.assertIn("torchscript", benchmark_mode.PHASE1_FORMATS)
@@ -988,6 +991,142 @@ class TestBenchmarkModelTool(TestCase):
             with self.assertRaisesRegex(ValueError, r"--half not supported for --format onnx"):
                 benchmark_mode.run_benchmark_mode(args)
 
+    def test_artifact_eval_rejects_each_inert_backend_flag_for_all_tasks(self):
+        cases = (
+            ("--half", {"half": True}),
+            ("--batch", {"batch": 2}),
+            ("--nms", {"nms": True}),
+        )
+        for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+            for flag, overrides in cases:
+                with self.subTest(task=task_label, flag=flag):
+                    args = self._args(
+                        format="torch",
+                        task=task_label,
+                        latency_source="artifact_eval",
+                        **overrides,
+                    )
+                    with self.assertRaises(ValueError) as raised:
+                        benchmark_mode.run_benchmark_mode(args)
+                    message = str(raised.exception)
+                    self.assertIn(flag, message)
+                    self.assertIn(f"--task {task_label}", message)
+                    self.assertIn("--latency-source artifact_eval", message)
+                    self.assertIn("--format torch", message)
+                    self.assertIn("consumes prepared artifacts", message)
+                    self.assertFalse(Path(args.output).exists())
+
+    def test_auto_resolves_artifact_tasks_before_flag_validation(self):
+        for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+            with self.subTest(task=task_label):
+                args = self._args(
+                    format="torch",
+                    task=task_label,
+                    latency_source="auto",
+                    half=True,
+                )
+                with self.assertRaises(ValueError) as raised:
+                    benchmark_mode.run_benchmark_mode(args)
+                message = str(raised.exception)
+                self.assertIn("--half", message)
+                self.assertIn(f"--task {task_label}", message)
+                self.assertIn("--latency-source auto (effective: artifact_eval)", message)
+                self.assertFalse(Path(args.output).exists())
+
+    def test_artifact_eval_rejects_inert_flags_through_both_cli_surfaces(self):
+        surfaces = {
+            "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
+            "standalone": [sys.executable, str(self.repo_root / "tools" / "benchmark_model.py")],
+        }
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for surface, prefix in surfaces.items():
+                for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+                    with self.subTest(surface=surface, task=task_label):
+                        report = root / f"{surface}_{task_label}_rejected.json"
+                        proc = subprocess.run(
+                            [
+                                *prefix,
+                                "--model",
+                                "reports/prepared_artifact.json",
+                                "--data",
+                                "data/smoke",
+                                "--format",
+                                "torch",
+                                "--task",
+                                task_label,
+                                "--latency-source",
+                                "artifact_eval",
+                                "--half",
+                                "--batch",
+                                "2",
+                                "--nms",
+                                "--output",
+                                str(report),
+                            ],
+                            cwd=str(self.repo_root),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            check=False,
+                            text=True,
+                        )
+                        self.assertNotEqual(proc.returncode, 0)
+                        output = f"{proc.stdout}\n{proc.stderr}"
+                        for flag in ("--half", "--batch", "--nms"):
+                            self.assertIn(flag, output)
+                        self.assertIn(f"--task {task_label}", output)
+                        self.assertIn("--latency-source artifact_eval", output)
+                        self.assertIn("--format torch", output)
+                        self.assertIn("consumes prepared artifacts", output)
+                        self.assertFalse(report.exists(), "validation must fail before writing the report")
+
+    def test_artifact_eval_accepts_explicit_defaults_through_both_cli_surfaces(self):
+        surfaces = {
+            "canonical": [sys.executable, "-m", "yolozu", "benchmark"],
+            "standalone": [sys.executable, str(self.repo_root / "tools" / "benchmark_model.py")],
+        }
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for surface, prefix in surfaces.items():
+                for task_label in sorted(benchmark_mode.ARTIFACT_EVAL_TASKS):
+                    with self.subTest(surface=surface, task=task_label):
+                        report = root / f"{surface}_{task_label}_defaults.json"
+                        proc = subprocess.run(
+                            [
+                                *prefix,
+                                "--model",
+                                "reports/prepared_artifact.json",
+                                "--data",
+                                "data/smoke",
+                                "--format",
+                                "torch",
+                                "--task",
+                                task_label,
+                                "--latency-source",
+                                "artifact_eval",
+                                "--no-half",
+                                "--batch",
+                                "1",
+                                "--no-nms",
+                                "--dry-run",
+                                "--output",
+                                str(report),
+                            ],
+                            cwd=str(self.repo_root),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            check=False,
+                            text=True,
+                        )
+                        if proc.returncode != 0:
+                            self.fail(
+                                f"{surface} rejected artifact_eval defaults for {task_label}:\n"
+                                f"STDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
+                            )
+                        payload = json.loads(report.read_text(encoding="utf-8"))
+                        self.assertEqual(payload["task"], task_label)
+                        self.assertEqual(payload["validation_summary"]["nondefault_flags"], {})
+
     def test_engine_rejects_workspace_flag_early(self):
         args = self._args(format="engine", engine_model="exports/example.plan", workspace=8.0, device="cuda:0")
         with mock.patch.object(benchmark_mode, "_module_available", side_effect=lambda name: name in {"tensorrt", "cuda"}):
@@ -1019,6 +1158,12 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(item["missing_runtime_policy"], "report_skipped")
             self.assertEqual(item["missing_artifact_policy"], "report_skipped")
             self.assertEqual(item["unsupported_nondefault_flags"], [])
+            self.assertEqual(item["supported_nondefault_flags"], [])
+            self.assertIn("consumes prepared artifacts", item["flag_applicability_reason"])
+        self.assertEqual(
+            summary["by_format"]["torch"]["format_supported_nondefault_flags"],
+            ["batch", "half", "nms"],
+        )
 
     def test_validation_summary_records_missing_artifact_skip_policy(self):
         args = self._args(format="onnx", model="runs/foo/model.pt", latency_source="dataset_pass_wall_time")
@@ -1153,6 +1298,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--protocol", proc.stdout)
         self.assertIn("torchscript", proc.stdout)
         self.assertIn("openvino", proc.stdout)
+        normalized_help = " ".join(proc.stdout.split())
+        self.assertIn("Must remain disabled when the effective latency source is artifact_eval", normalized_help)
+        self.assertIn("Must remain 1 when the effective latency source is artifact_eval", normalized_help)
 
     def test_short_and_long_help_work_on_both_benchmark_surfaces(self):
         commands = (

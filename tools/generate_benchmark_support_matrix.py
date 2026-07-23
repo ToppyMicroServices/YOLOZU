@@ -49,6 +49,22 @@ def _required_str(item: dict[str, Any], key: str, *, where: str) -> str:
     return value
 
 
+def _required_str_list(
+    item: dict[str, Any],
+    key: str,
+    *,
+    where: str,
+    allow_empty: bool = False,
+) -> list[str]:
+    value = item.get(key)
+    if not isinstance(value, list) or (not value and not allow_empty):
+        qualifier = "" if allow_empty else " non-empty"
+        raise SystemExit(f"{where} requires{qualifier} string-list field {key!r}")
+    if any(not isinstance(entry, str) or not entry for entry in value):
+        raise SystemExit(f"{where} field {key!r} must contain non-empty strings")
+    return value
+
+
 def _validate_metadata(meta: dict[str, Any]) -> None:
     formats = meta.get("formats")
     tasks = meta.get("tasks")
@@ -90,6 +106,59 @@ def _validate_metadata(meta: dict[str, Any]) -> None:
     if missing or extra:
         raise SystemExit(f"support matrix coverage mismatch: missing={missing} extra={extra}")
 
+    flag_applicability = meta.get("flag_applicability")
+    if not isinstance(flag_applicability, dict):
+        raise SystemExit("metadata field 'flag_applicability' must be an object")
+    defaults = flag_applicability.get("defaults")
+    if not isinstance(defaults, dict) or not defaults:
+        raise SystemExit("flag_applicability.defaults must be a non-empty object")
+    artifact_tasks = _required_str_list(
+        flag_applicability,
+        "artifact_eval_tasks",
+        where="flag_applicability",
+    )
+    if any(task not in task_ids for task in artifact_tasks):
+        raise SystemExit("flag_applicability.artifact_eval_tasks references an unknown task")
+    rejected_flags = _required_str_list(
+        flag_applicability,
+        "artifact_eval_rejected_nondefault_flags",
+        where="flag_applicability",
+    )
+    if set(defaults) != set(rejected_flags):
+        raise SystemExit(
+            "flag_applicability.defaults and artifact_eval_rejected_nondefault_flags must name the same flags"
+        )
+    matrix = flag_applicability.get("matrix")
+    if not isinstance(matrix, list) or not matrix:
+        raise SystemExit("flag_applicability.matrix must be a non-empty list")
+    for index, item in enumerate(matrix):
+        where = f"flag_applicability.matrix[{index}]"
+        if not isinstance(item, dict):
+            raise SystemExit(f"{where} must be an object")
+        _required_str(item, "task_scope", where=where)
+        _required_str_list(item, "requested_latency_sources", where=where)
+        _required_str(item, "effective_latency_source", where=where)
+        row_formats = _required_str_list(item, "formats", where=where)
+        if any(fmt not in format_ids for fmt in row_formats):
+            raise SystemExit(f"{where} references an unknown format")
+        accepted = _required_str_list(
+            item,
+            "accepted_nondefault_flags",
+            where=where,
+            allow_empty=True,
+        )
+        rejected = _required_str_list(
+            item,
+            "rejected_nondefault_flags",
+            where=where,
+            allow_empty=True,
+        )
+        if set(accepted) & set(rejected):
+            raise SystemExit(f"{where} accepts and rejects the same flag")
+        if any(flag not in defaults for flag in accepted + rejected):
+            raise SystemExit(f"{where} references a flag without a declared default")
+        _required_str(item, "behavior", where=where)
+
 
 def _md_escape(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
@@ -102,8 +171,24 @@ def _table(headers: list[str], rows: list[list[str]]) -> list[str]:
     return out
 
 
+def _code_list(values: list[str], *, flag_prefix: bool = False) -> str:
+    if not values:
+        return "none"
+    prefix = "--" if flag_prefix else ""
+    return ", ".join(f"`{prefix}{value}`" for value in values)
+
+
+def _default_flag(name: str, value: Any) -> str:
+    if value is False:
+        return f"`--no-{name}`"
+    if value is True:
+        return f"`--{name}`"
+    return f"`--{name} {value}`"
+
+
 def render_markdown(meta: dict[str, Any], *, metadata_path: Path) -> str:
     _validate_metadata(meta)
+    flag_defaults = meta["flag_applicability"]["defaults"]
     lines: list[str] = [
         "# Benchmark Support Matrix",
         "",
@@ -152,6 +237,40 @@ def render_markdown(meta: dict[str, Any], *, metadata_path: Path) -> str:
                         item["semantics"],
                     ]
                     for item in meta["tasks"]
+                ],
+            ),
+            "",
+            "## Backend Flag Applicability",
+            "",
+            "Applicability is evaluated after `auto` resolves to an effective latency source.",
+            "Default values are always accepted: "
+            + ", ".join(
+                _default_flag(name, flag_defaults[name])
+                for name in sorted(flag_defaults)
+            )
+            + ".",
+            "",
+            *_table(
+                [
+                    "Task scope",
+                    "Requested latency source",
+                    "Effective latency source",
+                    "Formats",
+                    "Accepted non-default flags",
+                    "Rejected non-default flags",
+                    "Behavior",
+                ],
+                [
+                    [
+                        item["task_scope"],
+                        _code_list(item["requested_latency_sources"]),
+                        f"`{item['effective_latency_source']}`",
+                        _code_list(item["formats"]),
+                        _code_list(item["accepted_nondefault_flags"], flag_prefix=True),
+                        _code_list(item["rejected_nondefault_flags"], flag_prefix=True),
+                        item["behavior"],
+                    ]
+                    for item in meta["flag_applicability"]["matrix"]
                 ],
             ),
             "",

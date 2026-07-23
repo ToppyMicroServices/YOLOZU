@@ -175,8 +175,12 @@ Until a backend really honors them, benchmark mode should fail early on
 non-default inert flags instead of silently recording them. In the current
 implementation that means:
 
-- `--half`, `--batch`, and `--nms` are meaningful only for the current `torch`
-  benchmark path
+- `--half`, `--batch`, and `--nms` are meaningful only for non-`artifact_eval`
+  `torch` paths that forward them to backend execution or record them in a
+  planning report
+- effective `artifact_eval` lanes consume prepared artifacts, so they reject
+  non-default `--half`, `--batch`, and `--nms` before writing artifacts;
+  `--no-half --batch 1 --no-nms` remains valid
 - `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, and
   `--fraction` should be rejected when a selected format cannot honor them
 

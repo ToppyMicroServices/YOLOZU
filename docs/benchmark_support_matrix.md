@@ -38,6 +38,18 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | `depth` | depth_error | yolozu-native | artifact-backed real eval/parity for real backend formats |
 | `pose6d` | pose6d_error | yolozu-native | artifact-backed real eval/parity for real backend formats |
 
+## Backend Flag Applicability
+
+Applicability is evaluated after `auto` resolves to an effective latency source.
+Default values are always accepted: `--batch 1`, `--no-half`, `--no-nms`.
+
+| Task scope | Requested latency source | Effective latency source | Formats | Accepted non-default flags | Rejected non-default flags | Behavior |
+| --- | --- | --- | --- | --- | --- | --- |
+| classification, obb, segmentation, keypoints, depth, pose6d | `auto` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino` | none | `--half`, `--batch`, `--nms` | auto resolves to artifact_eval; reject non-default backend execution flags before writing benchmark artifacts. |
+| any task | `artifact_eval` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts. |
+| any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `torch` | `--half`, `--batch`, `--nms` | none | Accepted values are forwarded by torch detect execution or recorded in the benchmark report for planning-only execution. |
+| any task with an otherwise valid non-artifact_eval source | `auto`, `synthetic_step`, `dataset_pass_wall_time` | `not artifact_eval` | `onnx`, `engine`, `torchscript`, `openvino`, `executorch`, `opencv_dnn` | none | `--half`, `--batch`, `--nms` | Current format paths do not consume these backend execution flags, so non-default values fail early. |
+
 ## Artifact Support
 
 | Format | Task | Inference artifact | Eval artifact | Parity artifact | Notes |

@@ -95,7 +95,7 @@ Contact: develop@toppymicros.com
 -i, --imgsz IMGSZ
   Input image size (default: 640).
 --half, --no-half
-  Record FP16 intent.
+  Use FP16 in the torch detect backend. Must remain disabled when the effective latency source is artifact_eval.
 --int8, --no-int8
   Record INT8 intent.
 --device DEVICE
@@ -132,11 +132,11 @@ Contact: develop@toppymicros.com
 --parity-output PARITY_OUTPUT
   Optional file/dir/template for parity artifacts.
 --batch BATCH
-  Common batch knob (default: 1).
+  Torch detect backend batch size (default: 1). Must remain 1 when the effective latency source is artifact_eval.
 --dynamic, --no-dynamic
   Record dynamic-shape intent.
 --nms, --no-nms
-  Record export-time NMS intent.
+  Request NMS in the torch detect backend. Must remain disabled when the effective latency source is artifact_eval.
 --simplify, --no-simplify
   Record ONNX simplify intent.
 --opset OPSET
@@ -146,7 +146,7 @@ Contact: develop@toppymicros.com
 --fraction FRACTION
   Record dataset fraction knob (default: 1.0).
 --latency-source {auto,synthetic_step,dataset_pass_wall_time,artifact_eval}
-  Benchmark source selection: auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d.
+  Benchmark source selection. auto prefers real orchestration for detect and artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, and --nms are rejected.
 --iterations ITERATIONS
   Synthetic latency iterations (default: 50).
 --warmup WARMUP
@@ -168,7 +168,7 @@ Contact: develop@toppymicros.com
 | benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. |
 | benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
 | benchmark_latency | experimental | tools/benchmark_latency.py | Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. |
-| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed classification and OBB eval, artifact-backed real eval/parity lanes for task=segmentation, task=keypoints, task=depth, and task=pose6d on torch/onnx/engine/torchscript/openvino, explicit task semantics for detect/segmentation/classification/obb/keypoints/depth/pose6d, early format/flag validation, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
+| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
 | benchmark_sar_robustness | research | tools/benchmark_sar_robustness.py | Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. |
 | build_manifest | stable | tools/build_manifest.py | Build a dataset manifest for data/coco128 (writes reports/manifest.json). |
 | build_trt_engine | experimental | tools/build_trt_engine.py | Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. |

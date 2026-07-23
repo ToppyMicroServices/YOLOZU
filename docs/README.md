@@ -186,6 +186,9 @@ artifact-backed real eval/parity lanes; others still report explicit
 unsupported/skipped semantics rather than pretending to be fully implemented.
 The canonical support-status table is
 [Benchmark support matrix](benchmark_support_matrix.md).
+It also records which backend flags apply after `--latency-source auto`
+resolves. Artifact-backed evaluation consumes prepared files, so it accepts
+only the defaults `--no-half --batch 1 --no-nms`.
 
 Shortest 3 commands:
 

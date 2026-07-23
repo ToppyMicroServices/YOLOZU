@@ -234,6 +234,22 @@ attaches real parity reports over matched detections plus pose fields such as
 rotation, translation, and depth. Formats without shipped benchmark wiring are
 reported as unsupported/skipped rather than as synthetic benchmark successes.
 
+\subsection{Backend flag applicability}
+Benchmark flags are validated against the task, effective latency source, and
+format before output artifacts are written. For \cmd{classification},
+\cmd{obb}, \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, and
+\cmd{pose6d}, \cmd{--latency-source auto} resolves to \cmd{artifact_eval} on
+real backend formats. Because this lane consumes prepared artifacts rather than
+running backend inference, \cmd{--half}, \cmd{--batch} values other than
+\cmd{1}, and \cmd{--nms} fail early. The defaults
+\cmd{--no-half --batch 1 --no-nms} remain valid.
+
+The same rejection applies when \cmd{artifact_eval} is requested explicitly.
+For non-artifact evaluation, format rules still apply: the current
+\cmd{torch} lane can accept these non-default flags, while other current
+formats reject them. The complete matrix is generated in
+\path{docs/benchmark_support_matrix.md}.
+
 \subsection{Canonical benchmark support matrix}
 The source of truth for per-format, per-task artifact status is
 \path{docs/benchmark_support_matrix.md}. Use that matrix when deciding whether
@@ -288,8 +304,8 @@ The most important remaining gaps are:
   \cmd{paddle}
   \item broader parity attachment for artifact-backed \cmd{classification} and
   \cmd{obb} lanes
-  \item stronger validation of format-specific knobs so unsupported
-  combinations fail early rather than acting like inert flags
+  \item additional task/source/format validation as new backend-specific knobs
+  and execution paths are added
 \end{itemize}
 
 \subsection{Highest-leverage parity-closing work}

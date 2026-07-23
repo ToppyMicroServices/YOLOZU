@@ -25,6 +25,115 @@
       "description": "Task or format is visible in the interface contract but real benchmark wiring is not shipped; benchmark runs report skipped."
     }
   ],
+  "flag_applicability": {
+    "defaults": {
+      "half": false,
+      "batch": 1,
+      "nms": false
+    },
+    "artifact_eval_tasks": [
+      "classification",
+      "obb",
+      "segmentation",
+      "keypoints",
+      "depth",
+      "pose6d"
+    ],
+    "artifact_eval_rejected_nondefault_flags": [
+      "half",
+      "batch",
+      "nms"
+    ],
+    "matrix": [
+      {
+        "task_scope": "classification, obb, segmentation, keypoints, depth, pose6d",
+        "requested_latency_sources": [
+          "auto"
+        ],
+        "effective_latency_source": "artifact_eval",
+        "formats": [
+          "torch",
+          "onnx",
+          "engine",
+          "torchscript",
+          "openvino"
+        ],
+        "accepted_nondefault_flags": [],
+        "rejected_nondefault_flags": [
+          "half",
+          "batch",
+          "nms"
+        ],
+        "behavior": "auto resolves to artifact_eval; reject non-default backend execution flags before writing benchmark artifacts."
+      },
+      {
+        "task_scope": "any task",
+        "requested_latency_sources": [
+          "artifact_eval"
+        ],
+        "effective_latency_source": "artifact_eval",
+        "formats": [
+          "torch",
+          "onnx",
+          "engine",
+          "torchscript",
+          "openvino",
+          "executorch",
+          "opencv_dnn"
+        ],
+        "accepted_nondefault_flags": [],
+        "rejected_nondefault_flags": [
+          "half",
+          "batch",
+          "nms"
+        ],
+        "behavior": "artifact_eval consumes prepared artifacts; reject backend precision, batching, and NMS options before writing benchmark artifacts."
+      },
+      {
+        "task_scope": "any task with an otherwise valid non-artifact_eval source",
+        "requested_latency_sources": [
+          "auto",
+          "synthetic_step",
+          "dataset_pass_wall_time"
+        ],
+        "effective_latency_source": "not artifact_eval",
+        "formats": [
+          "torch"
+        ],
+        "accepted_nondefault_flags": [
+          "half",
+          "batch",
+          "nms"
+        ],
+        "rejected_nondefault_flags": [],
+        "behavior": "Accepted values are forwarded by torch detect execution or recorded in the benchmark report for planning-only execution."
+      },
+      {
+        "task_scope": "any task with an otherwise valid non-artifact_eval source",
+        "requested_latency_sources": [
+          "auto",
+          "synthetic_step",
+          "dataset_pass_wall_time"
+        ],
+        "effective_latency_source": "not artifact_eval",
+        "formats": [
+          "onnx",
+          "engine",
+          "torchscript",
+          "openvino",
+          "executorch",
+          "opencv_dnn"
+        ],
+        "accepted_nondefault_flags": [],
+        "rejected_nondefault_flags": [
+          "half",
+          "batch",
+          "nms"
+        ],
+        "behavior": "Current format paths do not consume these backend execution flags, so non-default values fail early."
+      }
+    ]
+  },
   "formats": [
     {
       "id": "torch",

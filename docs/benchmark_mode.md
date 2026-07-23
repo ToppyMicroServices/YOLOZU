@@ -44,7 +44,8 @@ paths than YOLOZU does. Today the most important remaining gaps are:
   `ncnn`, `rknn`, and `paddle`; `openvino` is conditional and reports skipped
   when the runtime or IR artifact is unavailable
 - incomplete parity attachment for artifact-backed classification and OBB lanes
-- incomplete flag validation for format-specific knobs
+- additional task/source/format rules will be needed as new backend-specific
+  knobs are implemented
 
 The detailed audit and recommended implementation order live in:
 
@@ -319,21 +320,33 @@ YOLOZU additions for reproducibility and CI:
 
 ## Early validation rules
 
-`yolozu benchmark` now fails early when a non-default flag would be inert for a
-selected format. The goal is to avoid quietly accepting options that the
-current benchmark implementation cannot honor.
+Both `yolozu benchmark` and `tools/benchmark_model.py` fail before writing
+benchmark artifacts when a non-default flag would be inert. Applicability is
+evaluated after `--latency-source auto` resolves, so the task, effective
+latency source, and format all participate in validation.
 
-Current rules:
+The backend-execution flag defaults are `--no-half`, `--batch 1`, and
+`--no-nms`. Those defaults remain accepted in every lane.
 
-| Format | Supported non-default flags today | Early-rejected examples |
-| --- | --- | --- |
-| `torch` | `--half`, `--batch`, `--nms` | `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
-| `onnx` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
-| `engine` | none | `--half`, `--batch`, `--nms`, `--int8`, `--dynamic`, `--simplify`, `--opset`, `--workspace`, `--fraction` |
-| `torchscript` | none | all export-oriented non-default flags |
-| `openvino` | none | all export-oriented non-default flags |
-| `executorch` | none | all export-oriented non-default flags |
-| `opencv_dnn` | none | all export-oriented non-default flags |
+| Task scope | Requested source | Effective source | Formats | Non-default `--half`, `--batch`, `--nms` |
+| --- | --- | --- | --- | --- |
+| `classification`, `obb`, `segmentation`, `keypoints`, `depth`, `pose6d` | `auto` | `artifact_eval` | `torch`, `onnx`, `engine`, `torchscript`, `openvino` | rejected before work starts |
+| any task | `artifact_eval` | `artifact_eval` | every accepted format | rejected before work starts |
+| any otherwise-valid non-`artifact_eval` lane | `auto`, `synthetic_step`, or `dataset_pass_wall_time` | not `artifact_eval` | `torch` | accepted; forwarded by torch detect execution or recorded in the planning report |
+| any otherwise-valid non-`artifact_eval` lane | `auto`, `synthetic_step`, or `dataset_pass_wall_time` | not `artifact_eval` | all other formats | rejected by the format rule |
+
+For example, `--task classification --format torch --latency-source auto
+--half` fails because `auto` resolves to `artifact_eval`; the error identifies
+the flag, task, requested/effective source, and format. Use `--no-half
+--batch 1 --no-nms`, or select a backend-execution lane that consumes the
+requested setting.
+
+Other export-oriented flags remain governed by the format rules.
+`--int8`, `--dynamic`, `--simplify`, non-default `--opset`, non-default
+`--workspace`, and non-default `--fraction` are rejected when the selected
+format cannot honor them. The generated
+[benchmark support matrix](benchmark_support_matrix.md#backend-flag-applicability)
+is the canonical task/source/format applicability table.
 
 In addition, real backend execution is intentionally split between backend orchestration and artifact-backed evaluation:
 
@@ -496,6 +509,9 @@ The CLI now defaults to:
 `engine`, `torchscript`, and `openvino`, prefers `artifact_eval` for `--task classification`, `--task obb`,
 `--task segmentation`, `--task keypoints`, `--task depth`, and `--task pose6d`, and falls back to `synthetic_step` for the remaining
 formats.
+This resolution happens before flag applicability is checked, so those six
+tasks inherit the `artifact_eval` requirement to keep `--half` and `--nms`
+disabled and `--batch` at `1`.
 The report records the per-format `latency_source` so CI and readers do not
 confuse placeholder timing with a real backend pass.
 
