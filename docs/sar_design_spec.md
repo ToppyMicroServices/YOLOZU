@@ -1,6 +1,7 @@
 # SAR design spec for YOLOZU (phase 1)
 
-This document defines a production-safe SAR rollout scope for YOLOZU test-time adaptation.
+This document defines a safety-bounded Research rollout scope for YOLOZU test-time
+adaptation. It does not establish production readiness.
 
 ## Goal
 

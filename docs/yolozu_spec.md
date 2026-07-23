@@ -27,6 +27,25 @@ This section is an implementation summary, not a production-maturity declaration
 [`production_readiness.md`](production_readiness.md) for current maturity boundaries and
 [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) for evidence coverage.
 
+### Capability maturity boundaries
+
+The maturity label applies to the narrowest capability below. A Stable parent CLI or
+manifest entry does not promote opt-in subcommands or flags.
+
+| Spec capability | Maturity boundary |
+|---|---|
+| Dataset I/O | Deferred as a standalone capability; Stable dataset commands are not evidence that every dataset shape or loader path is production-qualified |
+| Mask-only label derivation | Deferred as a standalone capability; implemented and tested, but not independently qualified |
+| Reference trainer | Stable reference lane; device and runtime qualification remains environment-specific |
+| Backbone/neck swap boundary | Stable only within the reference trainer interface boundary; this is not a repository-wide model-family claim |
+| Inference constraints | Deferred as a standalone capability; qualify with the consuming adapter, model, and protocol |
+| Template verification and gating | Deferred as a standalone capability; research gate tuning does not promote the runtime utility |
+| Predictions JSON interface contract | Stable |
+| Evaluation harness | Stable for validation/evaluation of existing wrapped predictions; task-specific tools retain their manifest maturity |
+| TTA | Experimental and opt-in |
+| TTT | Research and opt-in |
+| CLI convenience | Mixed by capability; entrypoint-level maturity is not transitive to subcommands or flags |
+
 ### 1) Dataset I/O (YOLO format)
 
 - Image layout: `images/<split>/*.{jpg,jpeg,png,bmp,tif,tiff,webp,gif}`
@@ -103,7 +122,10 @@ Current in-repo `rtdetr_pose` backbone choices:
 
 ### 8) Test-time adaptation (TTA / TTT)
 
-- TTA transforms (flip-based) with logging (prediction-space post-transform)
+- Experimental, non-parameter-updating TTA via `--tta`
+  - default `postprocess` mode applies flip-based transforms to exported predictions
+  - `rtdetr_pose` `model` mode reruns one horizontally flipped inference branch and
+    merges it with the baseline predictions
 - TTT (Tent/MIM) integrated into `tools/export_predictions.py` via `--ttt`
   - runs strictly pre-prediction to keep output schema unchanged
   - with `--wrap`, writes `meta.ttt` including config + report (losses, updated params,

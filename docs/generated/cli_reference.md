@@ -197,7 +197,7 @@ Contact: develop@toppymicros.com
 | eval_suite | stable | tools/eval_suite.py | Evaluate prediction JSONs and preserve declared exporter settings in a single suite report. |
 | eval_synthgen | experimental | tools/eval_synthgen.py | Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth. |
 | export_actions_openapi | stable | tools/export_actions_openapi.py | Export a static OpenAPI JSON schema for YOLOZU Actions API registration. |
-| export_predictions | stable | tools/export_predictions.py | Run an in-repo adapter to export YOLOZU predictions JSON (dummy or rtdetr_pose reference adapter), with optional torch acceleration knobs (compile/AMP/channels-last) and multi-task-aware TTA flips. |
+| export_predictions | stable | tools/export_predictions.py | Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes. |
 | export_predictions_coco_keypoints | experimental | tools/export_predictions_coco_keypoints.py | Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity. |
 | export_predictions_detectron2 | experimental | tools/export_predictions_detectron2.py | Run fail-closed Detectron2 inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata. |
 | export_predictions_executorch | experimental | tools/export_predictions_executorch.py | Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation). |
@@ -272,7 +272,7 @@ Contact: develop@toppymicros.com
 | validate_tool_manifest | stable | tools/validate_tool_manifest.py | Validate tools/manifest.json structure, references, and declarative metadata. |
 | yolo26_pre_pr_quality | stable | scripts/pre_pr_quality.sh | Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests). |
 | yolo26_quality_gate | stable | tools/yolo26_quality_gate.sh | Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks. |
-| yolozu | stable | yolozu/cli.py | Top-level YOLOZU CLI for validation, migration, train-ready dataset preflights/normalization, dataset layout export, training orchestration, and predictions/eval workflows across bbox, keypoints, and segmentation lanes. |
+| yolozu | stable | yolozu/cli.py | Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. |
 
 ## Smoke Coverage
 

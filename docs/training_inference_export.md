@@ -831,10 +831,15 @@ Torch推論の軽量拡張（PyTorch 2.x）:
 
 - python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-amp bf16 --torch-channels-last --torch-inference-mode --max-images 50 --wrap --output reports/predictions_torch_compiled.json
 
-Optional TTA:
-- python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-seed 0 --tta-flip-prob 0.5 --tta-flip-keypoints --tta-flip-pose-offsets --wrap --output reports/predictions_tta.json
+Optional TTA (Experimental):
+- Default postprocess mode: python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-mode postprocess --tta-seed 0 --tta-flip-prob 0.5 --tta-flip-keypoints --tta-flip-pose-offsets --wrap --output reports/predictions_tta.json
+- `rtdetr_pose` model mode: python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-mode model --tta-model-merge-iou 0.55 --wrap --output reports/predictions_tta_model.json
 
-Note: TTA here is a lightweight **prediction-space transform** (post-transform on exported outputs). It does not rerun the model on augmented inputs.
+The default `postprocess` mode transforms exported predictions without rerunning the
+model. The `rtdetr_pose`-only `model` mode reruns one horizontally flipped inference
+branch, maps it back to the original coordinate space, and merges it with the baseline
+predictions. Other adapters warn and fall back to `postprocess`. Neither TTA mode
+updates model parameters; parameter-updating TTT remains a separate Research lane.
 
 Optional TTT (test-time training, pre-prediction):
 - Tent (recommended safe preset + guard rails):

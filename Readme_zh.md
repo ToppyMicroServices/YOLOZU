@@ -69,6 +69,16 @@ yolozu demo pose --backend aruco
 - **具备面向部署的导出路径**：支持 PyTorch、ONNX Runtime、TensorRT、ExecuTorch，并提供 C++ / Rust 参考推理模板。
 - **AI-first / interface-contract-first 工作流**：每次实验都产出带版本的 artifact，便于 CI 自动比较与回归检测。
 
+## 能力成熟度
+
+- Stable：prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo、install/doctor
+- Experimental：backend parity、benchmark orchestration、external training handoff、macOS/MPS evaluation、TTA
+- Research：continual learning、self-distillation、TTT、Hessian refinement
+
+这些标签描述 capability-level 边界。Stable 的父级 CLI 或 manifest entry 不会提升
+opt-in subcommand/flag 的成熟度：`export_predictions` 的 baseline export 为 Stable，
+TTA 为 Experimental，TTT 为 Research。
+
 ## 框架比较（同一数据集 + predictions interface contract）
 
 YOLOZU 的核心价值，在于让不同模型栈基于 **同一数据集** 和稳定的 **predictions interface contract**（`predictions.json` + `export_settings`）进行可复现、可比较的评估。
@@ -179,7 +189,7 @@ CLI 说明：
 - validator 会尽早发现 schema drift
 - protocol-pinned `export_settings` 使比较结果具备可复现性
 - parity / benchmark 用于量化 backend drift 与性能差异
-- `yolozu benchmark` 提供了更接近 Ultralytics 的 benchmark 入口；在条件满足时，`detect` 可实际编排 `torch` / `onnx` / `engine` / `torchscript` 以及条件性的 `openvino`；`classification` / `obb` / `segmentation` / `keypoints` / `depth` / `pose6d` 可在这五种 format 下消费已准备的 backend artifact 并执行真实评估，其中 `segmentation` / `keypoints` / `depth` / `pose6d` 可生成可比的真实 parity，`classification` / `obb` 仍写入明确的 parity placeholder；`executorch` / `opencv_dnn` 在 benchmark orchestration 中明确报告为 unsupported/skipped
+- `yolozu benchmark` 提供了更接近 Ultralytics 的 benchmark 入口；在条件满足时，`detect` 可实际编排 `torch` / `onnx` / `engine` / `torchscript` 以及条件性的 `openvino`；`classification` / `obb` / `segmentation` / `keypoints` / `depth` / `pose6d` 可在这五种 format 下消费已准备的 backend artifact 并执行真实评估，其中 `segmentation` / `keypoints` / `depth` / `pose6d` 可生成可比的真实 parity，`classification` / `obb` 则明确报告非真实 parity 状态；`executorch` / `opencv_dnn` 在 benchmark orchestration 中明确报告为 unsupported/skipped
 - 默认对 CPU 友好，GPU 为可选增强
 - repo 工具链遵循 Apache-2.0-only 的运维策略
 

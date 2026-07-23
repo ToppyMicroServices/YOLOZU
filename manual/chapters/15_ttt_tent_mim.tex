@@ -1175,7 +1175,8 @@ To keep comparisons consistent, phase-1 CoTTA should record at least:
 \end{itemize}
 
 \section{EATA: operational design for YOLOZU (phase 1)}
-This section defines a production-safe phase-1 EATA scope for detection and pose in \yolozu{}.
+This section defines a safety-bounded phase-1 Research scope for EATA on detection
+and pose in \yolozu{}. It does not establish production readiness.
 The goal is to reduce unstable updates by (1) adapting only on informative samples,
 (2) limiting update scope to safe parameter subsets, and (3) adding anti-forgetting regularization.
 
@@ -1259,7 +1260,8 @@ Phase-1 EATA should record at least:
 \end{itemize}
 
 \section{SAR: operational design for YOLOZU (phase 1)}
-This section defines a production-safe phase-1 SAR rollout scope for \yolozu{}.
+This section defines a safety-bounded phase-1 Research rollout scope for SAR in
+\yolozu{}. It does not establish production readiness.
 The goal is to improve robustness under challenging distribution shifts by introducing sharpness-aware entropy minimization
 with controlled update scope.
 

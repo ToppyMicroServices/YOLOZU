@@ -5,7 +5,22 @@ This page summarizes what YOLOZU supports today for **test-time training / test-
 Principles:
 - **Safe by default**: clear reset policies and guard rails.
 - **Explicit scope**: we prefer “supported / partial / not supported” over vague claims.
-- **Contract-first**: evaluation remains comparable via `predictions.json`.
+- **Interface-contract-first**: evaluation remains comparable via `predictions.json`.
+
+## Maturity boundary
+
+- Non-parameter-updating TTA is **Experimental** and opt-in.
+- Parameter-updating TTT is **Research** and opt-in.
+- `Supported` below means the implementation path exists; it does not mean Stable
+  production maturity.
+
+### TTA execution modes
+
+- `--tta` uses `postprocess` by default: it transforms exported predictions and does
+  not rerun the model.
+- `--tta --tta-mode model` reruns one horizontally flipped inference branch for
+  `rtdetr_pose`, maps it back, and merges it with the baseline predictions.
+- Other adapters warn and fall back to `postprocess` when `model` mode is requested.
 
 ## Algorithms
 
