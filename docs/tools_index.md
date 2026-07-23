@@ -106,6 +106,7 @@ python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_confi
 - Benchmark support matrix: `docs/benchmark_support_matrix.md`
   - canonical per-format/per-task status for real, artifact-real, dry-run placeholder, and unsupported/skipped benchmark artifacts
   - canonical task/requested-source/effective-source/format applicability for `--half`, `--batch`, and `--nms`
+  - detect uses `auto` or `dataset_pass_wall_time`; explicit detect `artifact_eval` fails before output or backend writes
 - Conditional OpenVINO benchmark: `python3 -m yolozu benchmark --model runs/example/model.pt --openvino-model exports/example.xml --data data/coco8.yaml --format torch,openvino --parity-reference-backend openvino --dry-run --output reports/benchmark_openvino_report.json`
   - canonical and standalone benchmark surfaces accept the same OpenVINO override/reference choices; detect execution requires an external OpenVINO install and compatible IR, while artifact-backed tasks consume prepared files without an OpenVINO runtime check
 - Manual CLI drift audit: `python3 tools/audit_manual_cli_drift.py --json`

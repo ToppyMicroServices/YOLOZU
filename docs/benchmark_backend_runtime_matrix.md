@@ -4,8 +4,11 @@ This page is the benchmark-side source of truth for runtime and redistribution
 boundaries. For per-task artifact status, use the canonical
 [Benchmark support matrix](benchmark_support_matrix.md).
 That matrix also defines backend-flag applicability by task, requested/effective
-latency source, and format. In particular, `artifact_eval` consumes prepared
-artifacts and therefore requires `--no-half --batch 1 --no-nms`.
+latency source, and format. Supported `artifact_eval` tasks consume prepared
+artifacts and therefore require `--no-half --batch 1 --no-nms`. Detect has no
+prepared detection-artifact evaluation path: explicit detect `artifact_eval`
+fails before report, artifact, or backend writes, while `auto` and
+`dataset_pass_wall_time` retain the conditional real backend path.
 
 YOLOZU itself remains an **Apache-2.0** repository. Several benchmark/export
 backends rely on **external runtimes or vendor SDKs** with their own license

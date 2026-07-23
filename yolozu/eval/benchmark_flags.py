@@ -32,11 +32,12 @@ NMS_HELP = (
     "Must remain disabled when the effective latency source is artifact_eval."
 )
 LATENCY_SOURCE_HELP = (
-    "Benchmark source selection. auto prefers real orchestration for detect and "
+    "Benchmark source selection. auto uses dataset_pass_wall_time for detect and "
     "artifact_eval for classification, obb, segmentation, keypoints, depth, and pose6d. "
-    "artifact_eval consumes prepared artifacts, so --half, --batch values other than 1, "
-    "and --nms are rejected. Non-dry-run artifact-backed tasks cannot use "
-    "dataset_pass_wall_time; use auto or artifact_eval."
+    "Detect rejects explicit artifact_eval before writes because no prepared detection-artifact "
+    "evaluation path is implemented. Supported artifact_eval tasks consume prepared artifacts, "
+    "so --half, --batch values other than 1, and --nms are rejected. Non-dry-run "
+    "artifact-backed tasks cannot use dataset_pass_wall_time; use auto or artifact_eval."
 )
 OPENVINO_MODEL_HELP = (
     "OpenVINO-lane artifact override. Detect expects a compatible IR; artifact-backed tasks "
