@@ -18,6 +18,17 @@ def _bash_block_containing(text: str, marker: str) -> str:
     return matches[0]
 
 
+def _section_between(text: str, start: str, end: str | None = None) -> str:
+    if start not in text:
+        raise AssertionError(f"missing section heading {start!r}")
+    section = text.split(start, 1)[1]
+    if end is None:
+        return section
+    if end not in section:
+        raise AssertionError(f"missing section heading {end!r} after {start!r}")
+    return section.split(end, 1)[0]
+
+
 class AdoptionDocsTests(unittest.TestCase):
     def test_baseline_preserves_privacy_and_automation_boundaries(self) -> None:
         guide = (ROOT / "docs/adoption/README.md").read_text(encoding="utf-8")
@@ -135,9 +146,11 @@ class AdoptionDocsTests(unittest.TestCase):
         kit = (
             ROOT / "docs/adoption/design_partner_observation_kit.md"
         ).read_text(encoding="utf-8")
-        boundary = kit.split("## Consent and recording boundary", 1)[1].split(
-            "## Pre-session checklist", 1
-        )[0]
+        boundary = _section_between(
+            kit,
+            "## Consent and recording boundary",
+            "## Pre-session checklist",
+        )
 
         self.assertIn("14-day correction or deletion window", boundary)
         self.assertIn("at most 90 days", boundary)
@@ -148,10 +161,12 @@ class AdoptionDocsTests(unittest.TestCase):
         kit = (
             ROOT / "docs/adoption/design_partner_observation_kit.md"
         ).read_text(encoding="utf-8")
-        invitation = kit.split("## Invitation", 1)[1].split(
-            "## Consent and recording boundary", 1
-        )[0]
-        follow_up = kit.split("## Post-session follow-up", 1)[1]
+        invitation = _section_between(
+            kit,
+            "## Invitation",
+            "## Consent and recording boundary",
+        )
+        follow_up = _section_between(kit, "## Post-session follow-up")
 
         for message in (invitation, follow_up):
             self.assertIn("security@toppymicros.com", message)
