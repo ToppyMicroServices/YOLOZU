@@ -100,6 +100,7 @@ Supporting docs:
 - Production readiness: [`production_readiness.md`](production_readiness.md)
 - SSOT capability coverage audit: [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
+- Adoption measurement and dated baseline: [`adoption/README.md`](adoption/README.md)
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
 - Web docs plan: [`web_docs_plan.md`](web_docs_plan.md)
 - Generated CLI reference: [`generated/cli_reference.md`](generated/cli_reference.md)
