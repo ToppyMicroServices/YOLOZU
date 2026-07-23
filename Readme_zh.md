@@ -2,6 +2,26 @@
 
 English README: [`README.md`](README.md) | 日本語README: [`Readme_jp.md`](Readme_jp.md)
 
+Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
+
+## 评估已有 predictions
+
+YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓库代码采用 Apache-2.0 许可证。
+
+其 stable product lane 通过 stable predictions interface contract，验证并公平评估已有 vision predictions。
+
+传入 wrapped `predictions.json`，验证 predictions interface contract，即可生成可比较的 report。
+
+## 特别适合的三个场景
+
+- 在同一 dataset 和固定的 evaluation protocol 下，比较多个 framework 或 runtime 生成的 predictions
+- 先验证并 wrap 自有或 third-party vision stack 的 predictions，再通过同一条 evaluation path 完成评估
+- 在 CI 中生成 regression report，暴露 metric、preprocessing 或 backend drift
+
+## 不太适合的场景
+
+如果你需要 managed training platform、hosted inference service、有保证的 support / SLA，或 one-click production deployment，YOLOZU 并非最佳选择。如果只在一个 framework 内评估，而且不需要 stable cross-stack boundary，那么该 framework-native evaluator 可能更简单。training、benchmark、adapter 和 research capability 是需要单独验证的 secondary lane，不属于 stable product promise。
+
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
 [![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
 [![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
@@ -37,7 +57,7 @@ yolozu guide --goal evaluate
 
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
-## 面向企业使用的定位
+## 使用与许可边界
 
 - **Apache-2.0 repository policy**：仓库中交付的代码保持 Apache-2.0，本仓库不提供内置的 relicensing path。
 - **No built-in telemetry**：YOLOZU 的工具默认不做 usage analytics 或 phone-home 式数据收集；质量控制依赖显式 checks、tests、manifest、provenance reports 与文档化 workflow。
@@ -61,13 +81,11 @@ yolozu demo pose --backend aruco
 
 ## YOLOZU 概览
 
-- **框架无关的视觉模型评估工具包**：面向域偏移（domain shift）场景下的持续学习与 test-time adaptation，强调可复现、可审计、可比较。
-- **支持缓解灾难性遗忘的训练工作流**：提供 self-distillation、replay、PEFT 等训练/评估路径，用于量化并缓解遗忘，但不承诺彻底消除。
-- **支持推理时适配（TTT）**：允许在推理阶段执行受控参数更新，以应对部署环境中的域偏移。
-- **以 predictions 作为稳定的 interface contract**：核心不是具体模型对象，而是 `predictions.json` 及其协议化元数据，因此训练、持续学习、TTT、导出和 CI 回归都能对齐。
+- **稳定的评估主线**：通过同一 predictions interface contract 验证和公平评估已有 predictions。
 - **支持多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、6DoF pose。
-- **具备面向部署的导出路径**：支持 PyTorch、ONNX Runtime、TensorRT、ExecuTorch，并提供 C++ / Rust 参考推理模板。
-- **AI-first / interface-contract-first 工作流**：每次实验都产出带版本的 artifact，便于 CI 自动比较与回归检测。
+- **可审计的结果**：protocol-pinned metadata 和带版本的 artifact 支持可复现比较与 CI regression。
+- **需要验证的桥接能力**：export、external training、benchmark、backend parity 和 deployment template 属于 Experimental 或其他 qualified lane。
+- **次要研究能力**：continual learning、self-distillation、TTT 和 Hessian refinement 是 opt-in Research lane，不会改变 stable evaluation 主线。
 
 ## 能力成熟度
 

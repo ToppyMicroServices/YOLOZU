@@ -2,11 +2,13 @@
 
 English: [`README.md`](README.md) | 中文: [`Readme_zh.md`](Readme_zh.md)
 
-Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
+Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
 
 ## Evaluate existing predictions
 
-YOLOZU は、既存の vision stack が出した predictions を評価するための Apache-2.0 evaluation layer です。
+YOLOZU は ToppyMicroServices OÜ が開発する商用プロダクトで、無料で提供しています。リポジトリのコードは Apache-2.0 でライセンスされています。
+
+stable product lane では、stable predictions interface contract を通じて既存の vision predictions を検証し、公平に評価します。
 
 wrapped `predictions.json` を渡し、predictions interface contract を検証し、比較可能な report を作ります。
 
@@ -77,16 +79,15 @@ export は Stable、TTA は Experimental、TTT は Research のままです。
 - research-oriented なもの: continual learning、self-distillation、TTT、Hessian refinement
 - 詳細: [`docs/production_readiness.md`](docs/production_readiness.md)
 
-## 向いているケース
+## 特に向いている3つのケース
 
-- 既に predictions があり、framework をまたいで公平比較したい
-- training stack はそのままに、Apache-2.0 の evaluation layer だけ導入したい
-- framework-native evaluation の差を、そのまま比較結果に持ち込みたくない
+- 同じ dataset と固定した evaluation protocol で、複数の framework / runtime の predictions を比較する
+- 自社または third-party の vision stack が出した predictions を検証・wrap し、1つの evaluation path で評価する
+- metric、preprocessing、backend の drift を検出する CI / regression report を追加する
 
 ## あまり向いていないケース
 
-- one-click default の end-to-end training framework が欲しい
-- cross-framework comparison や stable な predictions interface contract が不要
+managed training platform、hosted inference service、保証付き support / SLA、または one-click production deployment が必要な場合、YOLOZU は最適ではありません。1つの framework 内だけで評価し、stable cross-stack boundary が不要なら、その framework-native evaluator の方が簡単です。training、benchmark、adapter、research capability は、stable product promise ではなく、検証条件付きの secondary lane です。
 
 ## Why not framework-native evaluation?
 

@@ -5,13 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "yolozu"
 dynamic = ["version"]
-description = "Lane-based evaluation and workflow toolkit centered on a stable predictions interface contract, with qualified experimental and research paths."
+description = "Commercial ToppyMicroServices product, provided free of charge, for validating and fairly evaluating existing vision predictions through a stable predictions interface contract."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "YOLOZU contributors" }]
 keywords = [
   "computer-vision",
+  "model-evaluation",
+  "predictions",
+  "reproducibility",
   "object-detection",
   "segmentation",
   "pose-estimation",
@@ -40,6 +43,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://www.toppymicros.com/yolozu/"
+Company = "https://www.toppymicros.com/"
 Repository = "https://github.com/ToppyMicroServices/YOLOZU"
 Issues = "https://github.com/ToppyMicroServices/YOLOZU/issues"
 Changelog = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/CHANGELOG.md"
