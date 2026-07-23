@@ -30,6 +30,14 @@ It includes only public reports and support feedback with anonymous
 aggregate-use consent. Security reports remain on the private path in
 [`SECURITY.md`](../../SECURITY.md) and are excluded from the review.
 
+## Consented onboarding observations
+
+For consented onboarding observations, use the
+[`design_partner_observation_kit.md`](design_partner_observation_kit.md).
+Its maintainer-only procedural rehearsal is recorded in
+[`2026-07-23-maintainer-kit-dry-run.md`](2026-07-23-maintainer-kit-dry-run.md);
+the rehearsal is not an external design-partner session or adoption evidence.
+
 ## Funnel definitions
 
 | Stage | Aggregate signal | Interpretation |

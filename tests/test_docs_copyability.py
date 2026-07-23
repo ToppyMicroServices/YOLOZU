@@ -11,6 +11,7 @@ PUBLIC_COPYABILITY_PATHS = [
     "docs/cpu_only_dod.md",
     "docs/production_readiness.md",
     "docs/evaluation_protocol_template.md",
+    "docs/adoption/design_partner_observation_kit.md",
     "docs/schema_governance.md",
     "docs/web_docs_plan.md",
     "manual/chapters/01_overview.tex",
