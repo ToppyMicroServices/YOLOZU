@@ -56,6 +56,25 @@ The goal is simple: run inference anywhere, then compare results fairly in one p
 }
 ```
 
+### Optional runtime-execution evidence in Shape B
+
+Runtime-execution evidence is optional wrapper metadata, not a hard invariant
+for every predictions artifact. The bundled YOLOX, YOLO-runtime, Detectron2,
+and MMDetection exporters place the following fields in `meta.extra`, and
+`tools/audit_backend_support.py` verifies them:
+
+- Dry run: `dry_run=true`, `execution_status="dry_run"`,
+  `runtime_executed=false`, and `inference_calls=0`.
+- Successful non-dry run: `dry_run=false`,
+  `execution_status="completed"`, `runtime_executed=true`,
+  `inference_calls>0`, and no `runtime_error`.
+- `model_provenance`: a nonempty object identifying the model, exp, config,
+  weights, or checkpoint; local files include SHA-256 values.
+
+These fields distinguish schema-valid dry-run placeholders from completed
+runtime inference. A completed artifact may still contain an empty
+`detections` list when the model found no detections.
+
 ### Shape C: map (`image -> detections`)
 
 ```json

@@ -307,7 +307,9 @@
     {
       "docs": [
         "docs/tools_index.md",
-        "docs/interop_detectron2_mmdet.md"
+        "docs/external_inference.md",
+        "docs/interop_detectron2_mmdet.md",
+        "docs/interop_yolox.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -329,8 +331,12 @@
       "entrypoint": "tools/audit_backend_support.py",
       "examples": [
         {
-          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox",
+          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json",
           "description": "Dry-run audit for YOLOX/YOLOv8/Detectron2/MMDetection exporter interface contract support."
+        },
+        {
+          "command": "python3 tools/audit_backend_support.py --dataset-root data/real_multitask_fewshot --split val --max-images 2 --output reports/backend_support_audit.json --require-non-dry --non-dry-backend yolox --yolox-exp /path/to/yolox_exp.py --yolox-weights /path/to/yolox_ckpt.pth",
+          "description": "Require verified non-dry YOLOX execution with explicit exp and checkpoint inputs."
         }
       ],
       "id": "audit_backend_support",
@@ -389,10 +395,60 @@
           "required": false
         },
         {
-          "description": "Fail when no non-dry backend is configured.",
+          "description": "Fail unless at least one selected non-dry backend supplies verified runtime execution evidence.",
           "flag": "--require-non-dry",
           "kind": "string",
           "name": "require_non_dry",
+          "required": false
+        },
+        {
+          "description": "YOLOX exp file required when YOLOX is selected for a non-dry audit.",
+          "flag": "--yolox-exp",
+          "kind": "file",
+          "name": "yolox_exp",
+          "required": false
+        },
+        {
+          "description": "YOLOX checkpoint required when YOLOX is selected for a non-dry audit.",
+          "flag": "--yolox-weights",
+          "kind": "file",
+          "name": "yolox_weights",
+          "required": false
+        },
+        {
+          "default": "yolov8n.pt",
+          "description": "Ultralytics model path or name used for a non-dry YOLO runtime audit.",
+          "flag": "--ultralytics-model",
+          "kind": "string",
+          "name": "ultralytics_model",
+          "required": false
+        },
+        {
+          "description": "Detectron2 config file required when Detectron2 is selected for a non-dry audit.",
+          "flag": "--detectron2-config",
+          "kind": "file",
+          "name": "detectron2_config",
+          "required": false
+        },
+        {
+          "description": "Detectron2 weights file required when Detectron2 is selected for a non-dry audit.",
+          "flag": "--detectron2-weights",
+          "kind": "file",
+          "name": "detectron2_weights",
+          "required": false
+        },
+        {
+          "description": "MMDetection config file required when MMDetection is selected for a non-dry audit.",
+          "flag": "--mmdet-config",
+          "kind": "file",
+          "name": "mmdet_config",
+          "required": false
+        },
+        {
+          "description": "MMDetection checkpoint required when MMDetection is selected for a non-dry audit.",
+          "flag": "--mmdet-checkpoint",
+          "kind": "file",
+          "name": "mmdet_checkpoint",
           "required": false
         }
       ],
@@ -400,7 +456,7 @@
       "outputs": [
         {
           "default": "reports/backend_support_audit.json",
-          "description": "Audit report with backend status, command, and artifact checks.",
+          "description": "Audit report with per-backend artifact and execution-evidence checks plus verified_non_dry_backends.",
           "kind": "file",
           "name": "backend_support_audit_json"
         }
@@ -412,7 +468,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Dry-run interface contract audit for YOLOX/YOLOv8/Detectron2/MMDetection export backends.",
+      "summary": "Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends.",
       "tags": [
         "audit",
         "backend",
@@ -5657,7 +5713,9 @@
       "docs": [
         "README.md",
         "docs/README.md",
+        "docs/external_inference.md",
         "docs/interop_detectron2_mmdet.md",
+        "docs/predictions_schema.md",
         "manual/chapters/05_workflows_eval_export.tex"
       ],
       "effects": {
@@ -5693,12 +5751,14 @@
           "required": false
         },
         {
+          "description": "Existing Detectron2 config file; required for non-dry inference.",
           "flag": "--config",
           "kind": "file",
           "name": "config",
           "required": true
         },
         {
+          "description": "Existing Detectron2 checkpoint file; required for non-dry inference.",
           "flag": "--weights",
           "kind": "file",
           "name": "weights",
@@ -5810,7 +5870,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Predictions JSON at --output.",
+          "description": "Predictions JSON with execution status, inference-call evidence, and config/checkpoint provenance; written only after successful non-dry inference.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -5830,7 +5890,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run Detectron2 inference and export YOLOZU predictions.json with protocol/export_settings metadata.",
+      "summary": "Run fail-closed Detectron2 inference and export predictions.json with protocol, execution-evidence, and provenance metadata.",
       "tags": [
         "export",
         "detectron2",
@@ -5984,7 +6044,9 @@
       "docs": [
         "README.md",
         "docs/README.md",
+        "docs/external_inference.md",
         "docs/interop_detectron2_mmdet.md",
+        "docs/predictions_schema.md",
         "manual/chapters/05_workflows_eval_export.tex"
       ],
       "effects": {
@@ -6020,12 +6082,14 @@
           "required": false
         },
         {
+          "description": "Existing MMDetection config file; required for non-dry inference.",
           "flag": "--config",
           "kind": "file",
           "name": "config",
           "required": true
         },
         {
+          "description": "Existing MMDetection checkpoint file; required for non-dry inference.",
           "flag": "--checkpoint",
           "kind": "file",
           "name": "checkpoint",
@@ -6137,7 +6201,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Predictions JSON at --output.",
+          "description": "Predictions JSON with execution status, inference-call evidence, and config/checkpoint provenance; written only after successful non-dry inference.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -6158,7 +6222,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run MMDetection inference and export YOLOZU predictions.json with protocol/export_settings metadata.",
+      "summary": "Run fail-closed MMDetection inference and export predictions.json with protocol, execution-evidence, and provenance metadata.",
       "tags": [
         "export",
         "mmdetection",
@@ -7656,6 +7720,11 @@
           "predictions_json"
         ]
       },
+      "docs": [
+        "docs/external_inference.md",
+        "docs/predictions_schema.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": [
@@ -7825,7 +7894,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Predictions JSON at --output.",
+          "description": "Predictions JSON with execution status, inference-call evidence, and model provenance.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -7844,7 +7913,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run external YOLO-runtime inference and export YOLOZU predictions.json with protocol and export_settings metadata.",
+      "summary": "Run external YOLO-runtime inference and export predictions.json with protocol, execution-evidence, and model-provenance metadata.",
       "tags": [
         "export",
         "yolo_runtime",
@@ -8018,6 +8087,7 @@
         "docs/README.md",
         "docs/interop_yolox.md",
         "docs/external_inference.md",
+        "docs/predictions_schema.md",
         "manual/chapters/05_workflows_eval_export.tex"
       ],
       "effects": {
@@ -8065,12 +8135,14 @@
           "required": false
         },
         {
+          "description": "Existing YOLOX exp file; required together with --weights for non-dry inference.",
           "flag": "--exp",
           "kind": "file",
           "name": "exp",
           "required": false
         },
         {
+          "description": "Existing YOLOX checkpoint; required together with --exp for non-dry inference.",
           "flag": "--weights",
           "kind": "file",
           "name": "weights",
@@ -8135,7 +8207,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Predictions JSON at --output.",
+          "description": "Predictions JSON with execution status, inference-call evidence, and exp/checkpoint provenance; written only after successful non-dry inference.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -8155,7 +8227,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run YOLOX inference (or dry-run) and export YOLOZU predictions.json with exp parameter capture.",
+      "summary": "Run fail-closed YOLOX inference (or dry-run) and export predictions.json with execution evidence and exp/checkpoint provenance.",
       "tags": [
         "export",
         "yolox",

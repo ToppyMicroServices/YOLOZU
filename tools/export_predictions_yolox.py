@@ -52,6 +52,16 @@ def _sha256(path: Path | None) -> str | None:
     return h.hexdigest()
 
 
+def _require_non_dry_file(*, label: str, path: Path | None) -> bool:
+    if path is None:
+        print(f"error: YOLOX non-dry export requires --{label}", file=sys.stderr)
+        return False
+    if not path.is_file():
+        print(f"error: YOLOX {label} file not found: {path}", file=sys.stderr)
+        return False
+    return True
+
+
 def _default_wrap_meta(*, adapter: str, config: str, images: int) -> dict[str, Any]:
     return {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -113,6 +123,15 @@ def main(argv=None) -> int:
     if weights_path is not None and not weights_path.is_absolute():
         weights_path = (Path.cwd() / weights_path).resolve()
 
+    if not args.dry_run:
+        prerequisites_ok = _require_non_dry_file(label="exp", path=exp_path)
+        prerequisites_ok = _require_non_dry_file(label="weights", path=weights_path) and prerequisites_ok
+        if not prerequisites_ok:
+            return 2
+        if not records:
+            print("error: YOLOX non-dry export selected no images", file=sys.stderr)
+            return 2
+
     exp_params: dict[str, Any] | None = None
     exp_error: str | None = None
     if exp_path is not None:
@@ -121,13 +140,14 @@ def main(argv=None) -> int:
             exp_params = exp_cfg.to_dict()
         except Exception as exc:  # pragma: no cover
             exp_error = str(exc)
+    if not args.dry_run and exp_error:
+        print(f"error: YOLOX experiment configuration failed: {exp_error}", file=sys.stderr)
+        return 2
 
     outputs: list[dict[str, Any]] = []
-    runtime_error: str | None = None
+    inference_calls = 0
 
-    run_native = (not bool(args.dry_run)) and exp_path is not None and weights_path is not None
-
-    if run_native:
+    if not args.dry_run:
         try:
             import cv2  # type: ignore
             import torch  # type: ignore
@@ -153,13 +173,13 @@ def main(argv=None) -> int:
 
                 img = cv2.imread(str(image_abs))
                 if img is None:
-                    outputs.append({"image": image_rel, "detections": []})
-                    continue
+                    raise RuntimeError(f"failed to read input image: {image_abs}")
 
                 padded, ratio = preproc(img, (int(args.imgsz), int(args.imgsz)))
                 tensor = torch.from_numpy(padded).unsqueeze(0).float().to(args.device)
                 with torch.no_grad():
                     pred = model(tensor)
+                    inference_calls += 1
                     dets = postprocess(
                         pred,
                         num_classes=num_classes,
@@ -186,10 +206,15 @@ def main(argv=None) -> int:
                         detections.append({"class_id": int(cls_id), "score": score, "bbox": bbox})
                 outputs.append({"image": image_rel, "detections": detections})
         except Exception as exc:  # pragma: no cover
-            runtime_error = str(exc)
-            outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
+            print(f"error: YOLOX inference failed: {exc}", file=sys.stderr)
+            return 1
     else:
         outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
+
+    runtime_executed = bool(not args.dry_run and inference_calls == len(records))
+    if not args.dry_run and not runtime_executed:
+        print("error: YOLOX inference did not execute for every selected image", file=sys.stderr)
+        return 1
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
@@ -203,8 +228,17 @@ def main(argv=None) -> int:
         "weights": str(weights_path) if weights_path else None,
         "weights_sha256": _sha256(weights_path),
         "exp_error": exp_error,
-        "runtime_error": runtime_error,
+        "runtime_error": None,
         "dry_run": bool(args.dry_run),
+        "runtime_executed": runtime_executed,
+        "execution_status": "dry_run" if args.dry_run else "completed",
+        "inference_calls": int(inference_calls),
+        "model_provenance": {
+            "exp": str(exp_path) if exp_path else None,
+            "exp_sha256": _sha256(exp_path),
+            "weights": str(weights_path) if weights_path else None,
+            "weights_sha256": _sha256(weights_path),
+        },
         "export_settings": {
             "imgsz": int(args.imgsz),
             "score_threshold": float(args.score_thr),

@@ -54,6 +54,38 @@ class TestExportPredictionsYoloXTool(unittest.TestCase):
 
             payload = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(payload.get("meta", {}).get("adapter"), "yolox")
+            extra = payload.get("meta", {}).get("extra", {})
+            self.assertEqual(extra.get("execution_status"), "dry_run")
+            self.assertFalse(bool(extra.get("runtime_executed")))
+            self.assertEqual(extra.get("inference_calls"), 0)
+
+    def test_yolox_non_dry_requires_exp_and_weights(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "export_predictions_yolox.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "pred_yolox.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset",
+                    str(repo_root / "data" / "smoke"),
+                    "--split",
+                    "val",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("requires --exp", proc.stderr)
+            self.assertIn("requires --weights", proc.stderr)
+            self.assertFalse(out.exists())
 
     def test_yolozu_export_backend_yolox_dry_run(self):
         repo_root = Path(__file__).resolve().parents[1]

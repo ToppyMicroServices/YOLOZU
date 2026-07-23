@@ -41,12 +41,26 @@ python3 tools/eval_coco.py \
   --output reports/eval_yolox.json
 ```
 
+YOLOX export is non-dry by default and requires both an existing `--exp` file
+and an existing `--weights` file. The exporter must initialize the YOLOX
+runtime and invoke inference for every selected image before it writes a new
+artifact. A missing prerequisite, unavailable runtime, unreadable image, exp
+projection error, or inference error returns nonzero instead of producing a
+placeholder `predictions.json`.
+
+Use `--dry-run` only to write schema-valid empty detections without executing
+YOLOX. The wrapped artifact records `meta.extra.execution_status`,
+`runtime_executed`, and `inference_calls`; a successful non-dry run reports
+`completed`, `true`, and a positive call count. An empty `detections` list can
+still be a valid completed inference result.
+
 ## Important compatibility points
 
 - Exp parameters are captured in `meta.extra.export_settings.exp_params` when exp projection succeeds.
+- Exp/checkpoint paths and SHA-256 values are captured in `meta.extra.model_provenance`.
 - YOLOX decode is treated as anchor-free grid decode with NMS; use `protocol=nms_applied` by default.
 - Preprocess assumptions are stored in `export_settings.preprocessing` (letterbox/normalize/input color).
-- `weights_sha256` is stored for reproducibility.
+- `weights_sha256` remains available in `meta.extra` for compatibility.
 
 YOLO-family training/export defaults should stay separate from the RT-DETR reference lane:
 

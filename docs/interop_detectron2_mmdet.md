@@ -145,6 +145,23 @@ python3 tools/export_predictions_mmdet.py \
   --output reports/pred_mmdet.json
 ```
 
+These commands are non-dry by default. Detectron2 requires existing
+`--config` and `--weights` files; MMDetection requires existing `--config` and
+`--checkpoint` files. Each exporter must initialize its framework runtime and
+invoke inference for every selected image before it writes a new artifact.
+Missing files, missing runtimes, unreadable images, initialization errors, or
+inference errors produce a nonzero exit instead of a placeholder
+`predictions.json`.
+
+Use `--dry-run` only for a predictions interface contract check that
+intentionally skips framework inference. Wrapped metadata makes the distinction
+explicit:
+`meta.extra.execution_status` is `dry_run` or `completed`,
+`runtime_executed` is false or true, and `inference_calls` is zero or positive.
+A successful non-dry artifact also records config and checkpoint/weights paths
+and SHA-256 values in `meta.extra.model_provenance`. A completed inference may
+legitimately contain an empty `detections` list.
+
 ## 4) Validate and evaluate
 
 ```bash

@@ -77,6 +77,36 @@ Error behavior:
 - do not report success after writing a partial or schema-invalid `predictions.json`
 - report optional runtime gaps as skipped/missing-runtime in the wrapper or benchmark report instead of silently passing
 
+### Bundled exporter execution evidence
+
+The bundled YOLOX, YOLO-runtime, Detectron2, and MMDetection exporters distinguish
+schema-only dry runs from completed runtime inference in wrapped
+`meta.extra` metadata:
+
+- `dry_run`: whether runtime execution was intentionally skipped
+- `execution_status`: `dry_run` or `completed`
+- `runtime_executed`: `false` for a dry run and `true` after successful non-dry inference
+- `inference_calls`: `0` for a dry run and greater than zero after successful non-dry inference
+- `runtime_error`: absent or empty for a successful non-dry run
+- `model_provenance`: model/config/checkpoint paths or names, with SHA-256 values for local files
+
+Non-dry YOLOX requires both an existing `--exp` file and an existing `--weights`
+file. Detectron2 requires existing `--config` and `--weights` files, while
+MMDetection requires existing `--config` and `--checkpoint` files. If a
+prerequisite is missing, the runtime cannot initialize, an input image cannot
+be read, or inference fails, the exporter exits nonzero without writing a new
+predictions artifact.
+
+An empty `detections` list is not by itself evidence of a skipped runtime. It is
+a valid result when inference ran and found no detections; use
+`runtime_executed`, `inference_calls`, and `execution_status` to distinguish that
+case from a dry-run placeholder.
+
+`tools/audit_backend_support.py --require-non-dry` succeeds only when at least
+one backend selected with `--non-dry-backend` produces verified execution
+evidence. The report records per-backend `execution_evidence_error` and the
+accepted backend names in `verified_non_dry_backends`.
+
 Schema validation:
 
 ```bash

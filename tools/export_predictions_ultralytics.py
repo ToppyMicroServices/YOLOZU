@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import platform
 import sys
@@ -96,6 +97,19 @@ def _default_wrap_meta(*, adapter: str, config: str, images: int) -> dict[str, A
     }
 
 
+def _sha256_if_file(value: str) -> str | None:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
@@ -143,10 +157,12 @@ def main(argv=None):
         runtime_error = "dry_run"
 
     outputs = []
+    inference_calls = 0
     if args.dry_run:
         outputs = [{"image": str(rec.get("image") or ""), "detections": []} for rec in records]
     else:
         for result in results or []:
+            inference_calls += 1
             image_path = _result_path(result)
             if image_path is None:
                 if image_paths:
@@ -184,6 +200,10 @@ def main(argv=None):
                         )
 
             outputs.append({"image": image_path, "detections": dets})
+
+    runtime_executed = bool(not args.dry_run and inference_calls > 0)
+    if not args.dry_run and not runtime_executed:
+        raise SystemExit("Ultralytics inference did not execute for any input image")
 
     validate_predictions_entries(outputs, strict=bool(args.strict))
 
@@ -232,6 +252,13 @@ def main(argv=None):
             },
             "dry_run": bool(args.dry_run),
             "runtime_error": runtime_error,
+            "runtime_executed": runtime_executed,
+            "execution_status": "dry_run" if args.dry_run else "completed",
+            "inference_calls": int(inference_calls),
+            "model_provenance": {
+                "model": str(args.model),
+                "model_sha256": _sha256_if_file(str(args.model)),
+            },
         }
         try:
             import torch  # type: ignore
