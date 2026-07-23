@@ -14744,6 +14744,13 @@
           "required": false
         },
         {
+          "description": "Global batch size for train-yolox.",
+          "flag": "--batch",
+          "kind": "number",
+          "name": "batch",
+          "required": false
+        },
+        {
           "description": "YOLOX exp file for train-yolox.",
           "flag": "--exp",
           "kind": "file",
@@ -14866,6 +14873,7 @@
       "docs": [
         "README.md",
         "Readme_jp.md",
+        "Readme_zh.md",
         "docs/tools_index.md",
         "docs/yolo_detr_support.md",
         "manual/chapters/04_cli_reference.tex"
@@ -14946,6 +14954,13 @@
           "flag": "--split",
           "kind": "string",
           "name": "split",
+          "required": false
+        },
+        {
+          "description": "Global batch size for train-yolox.",
+          "flag": "--batch",
+          "kind": "number",
+          "name": "batch",
           "required": false
         },
         {
@@ -16139,8 +16154,8 @@
           "description": "Validate the canonical tool manifest through the top-level CLI."
         },
         {
-          "command": "python3 tools/yolozu.py eval-coco --help",
-          "description": "Check that the repo-local legacy wrapper forwards canonical package CLI commands and help output."
+          "command": "python3 -m yolozu eval-coco --help",
+          "description": "Check the canonical package CLI evaluation help output."
         },
         {
           "command": "python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json",

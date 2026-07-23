@@ -188,8 +188,8 @@
     },
     {
       "path": "tools/support_ultralytics_detr.py",
-      "disposition": "optional_bridge_helper",
-      "rationale": "Optional Ultralytics/DETR support helper with third-party runtime boundaries."
+      "disposition": "internal_helper",
+      "rationale": "Internal implementation loaded by the manifest-owned support_external_training.py and support_yolo_detr.py entrypoints; not a direct user-facing CLI."
     },
     {
       "path": "tools/sync_tools_manifest.py",

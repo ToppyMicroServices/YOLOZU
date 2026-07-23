@@ -30,8 +30,8 @@ Schema validation and report handoff:
 
 ```bash
 python3 tools/validate_predictions.py /path/to/predictions.json --strict
-python3 tools/eval_suite.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
-python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json --output reports/external_parity.json
+python3 tools/eval_coco.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json > reports/external_parity.json
 ```
 
 ## Build

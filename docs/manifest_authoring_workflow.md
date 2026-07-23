@@ -3,6 +3,10 @@
 This page documents the contributor workflow for adding or updating `tools/manifest.json` entries.
 Use this together with `docs/manifest_declarative_spec.md`.
 
+The default docs example gate covers the English, Japanese, and Chinese READMEs,
+the docs index and CPU-only DoD, and the external-inference, Detectron2/MM, and
+YOLOX interop guides, plus the C++ and Rust production-template READMEs.
+
 ## Goal
 
 - keep manifest entries complete and machine-readable,
