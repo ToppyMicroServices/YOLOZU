@@ -152,7 +152,7 @@ Contact: develop@toppymicros.com
 --warmup WARMUP
   Synthetic latency warmup iterations (default: 5).
 --sleep-s SLEEP_S
-  Synthetic latency sleep per step (default: 0).
+  Finite, non-negative synthetic latency sleep per step (default: 0).
 ```
 
 ## Manifest Tool Registry
@@ -168,7 +168,7 @@ Contact: develop@toppymicros.com
 | benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. |
 | benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
 | benchmark_latency | experimental | tools/benchmark_latency.py | Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. |
-| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, fail-closed rejection of detect artifact_eval, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
+| benchmark_model | experimental | tools/benchmark_model.py | Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. |
 | benchmark_sar_robustness | research | tools/benchmark_sar_robustness.py | Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. |
 | build_manifest | stable | tools/build_manifest.py | Build a dataset manifest for data/coco128 (writes reports/manifest.json). |
 | build_trt_engine | experimental | tools/build_trt_engine.py | Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. |

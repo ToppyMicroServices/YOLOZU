@@ -32,8 +32,8 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | --- | --- | --- | --- |
 | `detect` | bbox_map | mainstream | real backend eval with auto or dataset_pass_wall_time when a supported runtime and artifact are available; explicit artifact_eval is rejected before writes |
 | `segmentation` | mask_map | mainstream | artifact-backed real eval/parity for real backend formats |
-| `classification` | topk_accuracy | mainstream | artifact-backed real eval for real backend formats |
-| `obb` | obb_map | mainstream | artifact-backed real eval for real backend formats |
+| `classification` | topk_accuracy | mainstream | artifact-backed real eval with unique sample ids, finite class-aligned score vectors, and validated optional ordered class vocabularies |
+| `obb` | obb_map | mainstream | artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, and valid empty detection lists |
 | `keypoints` | oks_map | mainstream | artifact-backed real eval/parity for real backend formats |
 | `depth` | depth_error | yolozu-native | artifact-backed real eval/parity for real backend formats |
 | `pose6d` | pose6d_error | yolozu-native | artifact-backed real eval/parity for real backend formats |

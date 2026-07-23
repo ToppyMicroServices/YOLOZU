@@ -1301,11 +1301,11 @@
         },
         {
           "command": "python3 tools/benchmark_model.py --task classification --model reports/classification_torch.json --onnx-model reports/classification_onnx.json --data data/classification_labels.json --format torch,onnx --latency-source artifact_eval --output reports/benchmark_classification_report.json",
-          "description": "Run the artifact-backed classification benchmark lane for backend-specific score artifacts."
+          "description": "Run the artifact-backed classification benchmark lane; its input interface contract rejects invalid top-level shapes, duplicate sample ids, non-finite or class-misaligned score vectors, invalid class vocabularies, and inconsistent ordered class lists."
         },
         {
           "command": "python3 tools/benchmark_model.py --task obb --model reports/obb_torch.json --onnx-model reports/obb_onnx.json --data data/obb_labels.json --format torch,onnx --latency-source artifact_eval --output reports/benchmark_obb_report.json",
-          "description": "Run the artifact-backed OBB benchmark lane for backend-specific rotated-box artifacts."
+          "description": "Run the artifact-backed OBB benchmark lane; its input interface contract rejects invalid top-level shapes, duplicate image ids, non-finite or out-of-range geometry/scores, invalid class ids or vocabularies, and inconsistent ordered class lists while allowing empty detection lists."
         },
         {
           "command": "python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8.yaml --task depth --format torchscript --dry-run --output reports/benchmark_report.json",
@@ -1595,6 +1595,7 @@
         },
         {
           "default": 0.0,
+          "description": "Finite, non-negative synthetic latency sleep per step.",
           "flag": "--sleep-s",
           "kind": "number",
           "name": "sleep_s",
@@ -1742,13 +1743,13 @@
         },
         {
           "default": null,
-          "description": "Per-format predictions artifact (real output when the backend runs, normalized backend classification score artifact for task=classification artifact_eval, normalized backend rotated-box artifact for task=obb artifact_eval, rewritten backend mask-prediction artifact for task=segmentation artifact_eval, copied backend predictions metadata for task=keypoints or task=pose6d artifact_eval, backend-depth artifact metadata for task=depth artifact_eval, non-real fallback artifact otherwise).",
+          "description": "Per-format predictions artifact (real output when the backend runs; for classification artifact_eval, a strict-JSON normalized score artifact after unique-id, finite-value, class-list, and vector-length validation; for OBB artifact_eval, a strict-JSON normalized rotated-box artifact after unique-id, finite-geometry, class-list, and [0,1] score validation with empty detections allowed; rewritten/copy metadata for other artifact-backed tasks; non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "predictions_json"
         },
         {
           "default": null,
-          "description": "Per-format evaluation artifact (real output when evaluation runs, including artifact_eval reports for task=classification or task=obb and reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for task=segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
+          "description": "Per-format evaluation artifact (real output when evaluation runs, including strict-JSON artifact_eval reports for validated classification or OBB inputs and reports from tools/eval_segmentation.py, tools/eval_keypoints.py, tools/eval_depth.py, or tools/eval_pose.py for segmentation/keypoints/depth/pose6d, non-real fallback artifact otherwise).",
           "kind": "file",
           "name": "eval_report_json"
         },
@@ -1760,7 +1761,7 @@
         },
         {
           "default": null,
-          "description": "Per-format export settings artifact.",
+          "description": "Per-format export settings artifact; classification and OBB artifact_eval lanes emit strict JSON.",
           "kind": "file",
           "name": "export_settings_json"
         }
@@ -1772,7 +1773,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available, fail-closed rejection of detect artifact_eval, artifact-backed evaluation for classification/OBB/segmentation/keypoints/depth/pose6d, task/source/format-aware backend-flag validation, explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+      "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
       "tags": [
         "benchmark",
         "parity",

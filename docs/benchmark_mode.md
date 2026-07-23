@@ -247,6 +247,49 @@ yolozu benchmark \
   --output reports/benchmark_obb_report.json
 ```
 
+### Classification and OBB artifact input interface contracts
+
+Artifact-backed classification and OBB runs validate their inputs before
+evaluation. Invalid inputs produce a per-format `failed` result with
+`classification_artifact_invalid` or `obb_artifact_invalid`; adding `--strict`
+also makes the command return exit code `2`.
+
+Each labels or predictions JSON top level must be an object or an array.
+Omitted `classes`, `classes: null`, and `classes: []` all mean that the class
+vocabulary is unspecified. A non-empty `classes` array must contain unique,
+non-empty strings. When either side supplies that vocabulary, it becomes the
+range boundary for every label or prediction class index.
+
+The classification input interface contract is:
+
+- sample `id` values are unique within the labels artifact and within each
+  predictions artifact;
+- every score vector is non-empty, numeric, and finite;
+- score-vector lengths match the declared `classes` list and remain consistent
+  across samples and compared backend artifacts;
+- when both labels and predictions declare `classes`, their ordered lists match
+  exactly;
+- label indices fall within the resolved score-vector and class-vocabulary
+  range.
+
+The OBB input interface contract is:
+
+- image `id` values are unique within the labels artifact and within each
+  predictions artifact;
+- ordered `classes` lists match when declared by both artifacts;
+- when a class vocabulary is resolved, every label and prediction `class_id`
+  is an integer within its range; booleans are not class indices;
+- `cx` and `cy` are finite values in `[0,1]`, `w` and `h` are finite values in
+  `(0,1]`, and `angle_deg` is finite and in `[-180,180]`;
+- every prediction confidence `score` is finite and in `[0,1]`;
+- an image may contain an empty `detections` list, and multi-image artifacts
+  remain valid.
+
+The normalized predictions artifacts, eval reports, export settings, top-level
+benchmark report, optional history JSONL, and placeholder parity artifacts are
+standards-compliant JSON; they never emit `NaN`, `Infinity`, or `-Infinity`
+numeric tokens.
+
 Artifact-backed 6DoF benchmark/parity:
 
 ```bash
@@ -334,6 +377,8 @@ latency source, and format all participate in validation.
 
 The backend-execution flag defaults are `--no-half`, `--batch 1`, and
 `--no-nms`. Those defaults remain accepted in every lane.
+`--sleep-s` must be finite and non-negative; invalid values fail before report
+or artifact writes.
 
 `dataset_pass_wall_time` is the real inference-backed detect source. A
 non-dry-run artifact-backed task forced to that source fails before writing
@@ -568,8 +613,8 @@ following canonical tasks and aliases:
 | --- | --- | --- | --- | --- |
 | `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Default benchmark path; OpenVINO remains conditional on external runtime and IR availability. |
 | `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
-| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend class-score artifacts directly and reports top1/top5/accuracy without claiming YOLOZU ran backend inference. |
-| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend rotated-box artifacts directly and reports OBB metrics without claiming YOLOZU ran backend inference. |
+| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique sample ids, finite equal-length score vectors, and ordered class-list consistency before reporting top1/top5/accuracy. |
+| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique image ids, finite normalized geometry, and `[0,1]` scores; empty detection lists remain valid. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |

@@ -140,7 +140,9 @@ The benchmark entrypoint now records explicit task semantics in the benchmark
 report, and artifact-backed real eval coverage now exists for `classification`
 and `obb`; artifact-backed real eval/parity coverage exists for `segmentation`,
 `keypoints`, `depth`, and `pose6d`. The remaining lag is parity attachment for
-the classification and OBB artifact lanes.
+the classification and OBB artifact lanes. Their input interface contracts now
+fail closed on duplicate ids, class/score shape drift, non-finite values, and
+out-of-range OBB confidence scores while preserving empty OBB detection lists.
 
 Improvement priority:
 

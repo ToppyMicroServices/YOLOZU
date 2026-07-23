@@ -487,7 +487,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench.add_argument("--iterations", type=int, default=50, help="Synthetic latency iterations (default: 50).")
     bench.add_argument("--warmup", type=int, default=5, help="Synthetic latency warmup iterations (default: 5).")
-    bench.add_argument("--sleep-s", type=float, default=0.0, help="Synthetic latency sleep per step (default: 0).")
+    bench.add_argument(
+        "--sleep-s",
+        type=float,
+        default=0.0,
+        help="Finite, non-negative synthetic latency sleep per step (default: 0).",
+    )
 
     parity = sub.add_parser("parity", help="Compare two predictions JSON artifacts for backend parity.")
     parity.add_argument("--reference", required=True, help="Reference predictions JSON (e.g. PyTorch).")
