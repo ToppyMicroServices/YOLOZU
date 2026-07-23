@@ -55,7 +55,7 @@ def ensure_wrapper(payload: Any) -> dict[str, Any]:
     entries, meta = normalize_predictions_payload(payload)
     schema_version = (
         payload.get("schema_version", CURRENT_SCHEMA_VERSION)
-        if isinstance(payload, dict)
+        if isinstance(payload, dict) and "predictions" in payload
         else CURRENT_SCHEMA_VERSION
     )
     return {
