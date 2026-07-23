@@ -196,7 +196,14 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
                 self.assertIn("predictions interface contract", text)
                 self.assertIn("Error behavior:", text)
                 self.assertIn("python3 tools/validate_predictions.py /path/to/predictions.json --strict", text)
-                self.assertIn("python3 tools/eval_suite.py --dataset /path/to/coco-yolo", text)
+                self.assertIn("python3 tools/eval_coco.py --dataset /path/to/coco-yolo", text)
+                self.assertIn(
+                    "python3 tools/check_predictions_parity.py "
+                    "--reference reports/pred_torch.json "
+                    "--candidate /path/to/predictions.json "
+                    "> reports/external_parity.json",
+                    text,
+                )
                 self.assertIn("reports/external_parity.json", text)
 
     def test_rust_onnxruntime_mode_declares_decode_contract(self):

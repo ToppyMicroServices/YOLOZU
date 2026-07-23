@@ -34,6 +34,8 @@ class TestDocsExamplesDrift(unittest.TestCase):
                 "docs/external_inference.md",
                 "docs/interop_detectron2_mmdet.md",
                 "docs/interop_yolox.md",
+                "examples/infer_cpp/README.md",
+                "examples/infer_rust/README.md",
             ],
         )
 

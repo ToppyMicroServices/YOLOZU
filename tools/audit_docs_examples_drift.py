@@ -21,6 +21,8 @@ DEFAULT_DOCS = [
     "docs/external_inference.md",
     "docs/interop_detectron2_mmdet.md",
     "docs/interop_yolox.md",
+    "examples/infer_cpp/README.md",
+    "examples/infer_rust/README.md",
 ]
 
 _FENCE_RE = re.compile(r"```(?:bash|sh|shell)?\n(.*?)```", re.DOTALL)
