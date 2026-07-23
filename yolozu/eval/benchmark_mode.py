@@ -3502,7 +3502,11 @@ def build_parser() -> Any:
         "--parity-reference-backend",
         choices=PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
+        help=(
+            "Reference backend used when writing parity artifacts "
+            "(default: auto prefers torch, then first eligible backend; "
+            "OpenVINO requires supplied artifacts and an available runtime)."
+        ),
     )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")

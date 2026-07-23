@@ -1169,10 +1169,15 @@ class TestBenchmarkModelTool(TestCase):
                         stderr=subprocess.PIPE,
                         check=False,
                         text=True,
+                        timeout=30,
                     )
                     self.assertEqual(proc.returncode, 0, proc.stderr)
                     self.assertIn("--openvino-model", proc.stdout)
                     self.assertIn("openvino", proc.stdout)
+                    self.assertIn(
+                        "OpenVINO requires supplied artifacts and an available runtime",
+                        " ".join(proc.stdout.split()),
+                    )
 
     def test_canonical_openvino_parser_surface_matches_standalone(self):
         required = ["--model", "runs/example/model.pt", "--data", "data/smoke"]

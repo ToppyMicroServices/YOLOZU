@@ -404,7 +404,11 @@ def main(argv: list[str] | None = None) -> int:
         "--parity-reference-backend",
         choices=BENCHMARK_PARITY_REFERENCE_BACKENDS,
         default="auto",
-        help="Reference backend used when writing parity artifacts (default: auto prefers torch, then first eligible backend).",
+        help=(
+            "Reference backend used when writing parity artifacts "
+            "(default: auto prefers torch, then first eligible backend; "
+            "OpenVINO requires supplied artifacts and an available runtime)."
+        ),
     )
     bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")

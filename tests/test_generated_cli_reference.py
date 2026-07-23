@@ -60,8 +60,7 @@ def render_cli_reference(repo_root: Path) -> str:
     lines = [
         "# Generated CLI Reference",
         "",
-        "This file is generated from `python3 -m yolozu --help`, "
-        "the benchmark parser, and `tools/manifest.json`.",
+        "This file is generated from `python3 -m yolozu --help`, the benchmark parser, and `tools/manifest.json`.",
         "Keep narrative docs short and link here for the full command surface.",
         "",
         "## Top-level `yolozu --help`",
