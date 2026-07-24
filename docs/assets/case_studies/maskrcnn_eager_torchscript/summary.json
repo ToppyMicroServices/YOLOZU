@@ -1,0 +1,111 @@
+{
+  "artifacts": {
+    "checksums": "checksums.sha256",
+    "commands": "commands.json",
+    "comparison": "comparison.svg",
+    "environment": "environment.json",
+    "eval_eager": "eval_eager.json",
+    "eval_torchscript": "eval_torchscript.json",
+    "parity": "parity.json",
+    "predictions_eager": "predictions_eager.json",
+    "predictions_torchscript": "predictions_torchscript.json",
+    "protocol": "protocol.json"
+  },
+  "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
+  "execution_evidence": {
+    "eval_eager_exit_code": 0,
+    "eval_torchscript_exit_code": 0,
+    "parity_exit_code": 0
+  },
+  "inputs": {
+    "class_mapping": {
+      "path": "data/smoke/labels/val/classes.json",
+      "semantic_sha256": "f2f6203ec47488aaabd9b68d419483ea68175dac45e3f18b5e3a29907188401d",
+      "sha256": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b"
+    },
+    "count": 2,
+    "dataset": "data/smoke",
+    "input_set_sha256": "2fe2ecf9e5d9986e22390e729cb7fd5f2b44159de65103326bfbb8539d815220",
+    "records": [
+      {
+        "image": "data/smoke/images/val/000000000009.jpg",
+        "image_sha256": "3b0bb6bebad60a3329f1e3484434872e86998aeb7750d779b308e4a064868c2c",
+        "label": "data/smoke/labels/val/000000000009.txt",
+        "label_sha256": "852a4ce55e52beffedafcacbcbbf1ffac672db0a9e8b30b92bc01ebdcc663b0a"
+      },
+      {
+        "image": "data/smoke/images/val/000000000025.jpg",
+        "image_sha256": "9f016b98f31e4fe826910e56ee39fa0c2889f48d38cc5f4f6b6421c8c5fc7214",
+        "label": "data/smoke/labels/val/000000000025.txt",
+        "label_sha256": "73e4d0a58416a5814ad3e9d58b6927b3a4898c5a4fa18341d333261ddb215b86"
+      }
+    ],
+    "records_sha256": "7f0c2c68f9d0b03463b0aa96c308a6b83720396e1c1aa88d87dd401dd9f01b6e",
+    "split": "val"
+  },
+  "interpretation": "The two real runtime paths produced parity-equivalent exported detections under the pinned case-study conditions.",
+  "metric_deltas_torchscript_minus_eager": {
+    "ar100": 0.0,
+    "map50": 0.0,
+    "map50_95": 0.0,
+    "map75": 0.0
+  },
+  "parity": {
+    "exit_code": 0,
+    "images": 2,
+    "ok": true
+  },
+  "performance_claim": "Inference times are single-run environment observations and are not used as a runtime ranking.",
+  "results": {
+    "eager": {
+      "detections": 12,
+      "inference_seconds": 10.899643374999869,
+      "metrics": {
+        "ar100": 0.8104166666666668,
+        "map50": 0.9381188118811881,
+        "map50_95": 0.8111386138613862,
+        "map75": 0.9381188118811881
+      }
+    },
+    "torchscript": {
+      "compile_seconds": 0.4426602500025183,
+      "detections": 12,
+      "inference_seconds": 10.022887499995704,
+      "metrics": {
+        "ar100": 0.8104166666666668,
+        "map50": 0.9381188118811881,
+        "map50_95": 0.8111386138613862,
+        "map75": 0.9381188118811881
+      }
+    }
+  },
+  "runtime_execution": {
+    "eager": true,
+    "torchscript": true
+  },
+  "schema_version": 1,
+  "source": {
+    "available": true,
+    "clean_before_run": false,
+    "file_sha256": {
+      "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
+      "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
+      "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
+      "tools/generate_runtime_parity_case_study.py": "920629e3979a3953d7fdccc2446fb731e5e8bffc30912cf9a5580b00d8489883",
+      "tools/generate_smoke_assets.py": "d243ce3572eeb3d1a20b8a2c8a0ce4b6f3fa3b26401b61e7a7f759a0840515ec",
+      "yolozu/datasets/coco.py": "dabc588588671e1fa6a1e8ef8077824cd36856fa97d976f2949632e4be30d506",
+      "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
+      "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
+    },
+    "head": "36ad829f90276c7bd91ed9c52b78db732dd42f25"
+  },
+  "status": "completed",
+  "timestamp": "2026-07-24T07:13:39Z",
+  "weights": {
+    "enum": "MaskRCNN_ResNet50_FPN_V2_Weights.COCO_V1",
+    "filename": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
+    "sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+    "source": "torch_hub_cache",
+    "url": "https://download.pytorch.org/models/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth"
+  }
+}

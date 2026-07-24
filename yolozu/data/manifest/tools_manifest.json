@@ -9232,10 +9232,175 @@
       ]
     },
     {
+      "docs": [
+        "docs/case_studies/maskrcnn_eager_torchscript.md",
+        "docs/tools_index.md",
+        "manual/chapters/09_parity_bench_protocols.tex"
+      ],
       "effects": {
         "fixed_writes": [
           {
-            "description": "Creates/updates bundled smoke assets (images/val, labels/val, predictions).",
+            "description": "Writes the committed default case-study evidence bundle after treating an existing bundle as an implicit baseline.",
+            "kind": "dir",
+            "path": "docs/assets/case_studies/maskrcnn_eager_torchscript",
+            "scope": "tree"
+          }
+        ],
+        "writes": [
+          {
+            "description": "Publishes staged wrapped predictions, evaluation/parity reports, protocol/environment/source evidence, reproduction identity when a baseline exists, SVG, and checksums after all checks pass.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/generate_runtime_parity_case_study.py",
+      "examples": [
+        {
+          "command": "python3 tools/generate_runtime_parity_case_study.py --dataset data/smoke --split val --max-images 2 --score-threshold 0.5 --max-detections 20 --seed 2026 --threads 1 --allow-download --expected-weights-sha256 73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e --output-dir docs/assets/case_studies/maskrcnn_eager_torchscript",
+          "description": "Regenerate the committed eager/TorchScript comparison; an existing output bundle is verified as an implicit baseline before replacement."
+        },
+        {
+          "command": "python3 tools/generate_runtime_parity_case_study.py --dataset data/smoke --split val --max-images 2 --weights /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --expected-weights-sha256 73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e --output-dir /tmp/yolozu-runtime-reproduction --baseline-dir docs/assets/case_studies/maskrcnn_eager_torchscript",
+          "description": "Run offline with a local official checkpoint and verify the result against the committed baseline."
+        }
+      ],
+      "id": "generate_runtime_parity_case_study",
+      "inputs": [
+        {
+          "default": "data/smoke",
+          "description": "YOLO-format dataset whose labels/<split>/classes.json declares the standard COCO80 order and sparse category-id mapping.",
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "default": "val",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": 0.5,
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "default": 20,
+          "flag": "--max-detections",
+          "kind": "number",
+          "name": "max_detections",
+          "required": false
+        },
+        {
+          "default": 2026,
+          "flag": "--seed",
+          "kind": "number",
+          "name": "seed",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--threads",
+          "kind": "number",
+          "name": "threads",
+          "required": false
+        },
+        {
+          "description": "Optional local state_dict; the tool always verifies the pinned official COCO_V1 full SHA-256.",
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "description": "Optional explicit assertion of the pinned official COCO_V1 full SHA-256.",
+          "flag": "--expected-weights-sha256",
+          "kind": "string",
+          "name": "expected_weights_sha256",
+          "required": false
+        },
+        {
+          "flag": "--allow-download",
+          "kind": "string",
+          "name": "allow_download",
+          "required": false
+        },
+        {
+          "default": "docs/assets/case_studies/maskrcnn_eager_torchscript",
+          "description": "Artifact directory. An existing case-study bundle is used as an implicit baseline and preserved if reproduction checks fail.",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "description": "Optional prior bundle for strict reproduction comparison; may equal --output-dir because generation is staged.",
+          "flag": "--baseline-dir",
+          "kind": "dir",
+          "name": "baseline_dir",
+          "required": false
+        },
+        {
+          "default": 1e-08,
+          "flag": "--metric-atol",
+          "kind": "number",
+          "name": "metric_atol",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "docs/assets/case_studies/maskrcnn_eager_torchscript",
+          "description": "Case-study bundle containing wrapped predictions, reports, protocol/environment/source evidence, SVG, reproduction identity when a baseline exists, and checksums.",
+          "kind": "dir",
+          "name": "case_study_artifacts"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true,
+        "notes": "The pinned case study runs on CPU. Network is used only when --allow-download is explicit and the official checkpoint cache is empty."
+      },
+      "requires": {
+        "network": true,
+        "python_packages": [
+          "torch",
+          "torchvision",
+          "Pillow",
+          "pycocotools"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane.",
+      "tags": [
+        "adoption",
+        "case-study",
+        "evaluation",
+        "parity",
+        "torchscript"
+      ]
+    },
+    {
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "Creates/updates bundled smoke assets (images/val, labels/val, standard COCO80 classes mapping, predictions).",
             "kind": "dir",
             "path": "data/smoke",
             "scope": "tree"
@@ -9248,10 +9413,21 @@
         {
           "command": "python3 tools/generate_smoke_assets.py",
           "description": "Rebuild bundled smoke assets deterministically."
+        },
+        {
+          "command": "python3 tools/generate_smoke_assets.py --help",
+          "description": "Show the smoke asset generator usage without modifying files."
         }
       ],
       "id": "generate_smoke_assets",
-      "inputs": [],
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        }
+      ],
       "maturity": "stable",
       "outputs": [
         {
@@ -9265,6 +9441,12 @@
           "description": "Fixed dummy predictions (schema v1).",
           "kind": "file",
           "name": "predictions"
+        },
+        {
+          "default": "data/smoke/labels/val/classes.json",
+          "description": "Standard COCO80 class names and sparse category-id mapping.",
+          "kind": "file",
+          "name": "classes_json"
         }
       ],
       "platform": {

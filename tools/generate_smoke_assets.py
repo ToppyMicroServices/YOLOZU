@@ -1,8 +1,21 @@
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
+
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from yolozu.datasets.coco import COCO_80_CLASSES, _COCO_CAT_ID_TO_CLASS
+
+
+COCO_80_CATEGORY_IDS = tuple(
+    category_id for category_id, _ in sorted(_COCO_CAT_ID_TO_CLASS.items(), key=lambda item: item[1])
+)
 
 
 def _sanitize_bbox(cx: float, cy: float, w: float, h: float) -> tuple[float, float, float, float] | None:
@@ -21,8 +34,18 @@ def _sanitize_bbox(cx: float, cy: float, w: float, h: float) -> tuple[float, flo
     return cx, cy, w, h
 
 
-def main() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
+def _parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Regenerate the bundled smoke images, YOLO labels, standard COCO80 classes "
+            "mapping, and deterministic predictions from local data/coco128."
+        )
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    _parse_args(sys.argv[1:] if argv is None else argv)
     source_root = repo_root / "data" / "coco128"
     source_images = source_root / "images" / "train2017"
     source_labels = source_root / "labels" / "train2017"
@@ -80,9 +103,13 @@ def main() -> None:
 
     classes_payload = {
         "schema_version": 1,
-        "names": [f"class_{index}" for index in range(80)],
-        "class_to_category_id": {str(index): index + 1 for index in range(80)},
-        "category_id_to_class_id": {str(index + 1): index for index in range(80)},
+        "names": list(COCO_80_CLASSES),
+        "class_to_category_id": {
+            str(class_id): category_id for class_id, category_id in enumerate(COCO_80_CATEGORY_IDS)
+        },
+        "category_id_to_class_id": {
+            str(category_id): class_id for class_id, category_id in enumerate(COCO_80_CATEGORY_IDS)
+        },
     }
     (smoke_labels / "classes.json").write_text(
         json.dumps(classes_payload, indent=2, sort_keys=True) + "\n",

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="500" viewBox="0 0 880 500">
+<rect width="100%" height="100%" fill="#0b1220"/>
+<text x="44" y="48" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="24" font-weight="700">Mask R-CNN: eager and TorchScript</text>
+<text x="44" y="76" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="14">Same checkpoint, images, preprocessing, filtering, and YOLOZU evaluation lane</text>
+<line x1="90" y1="385.0" x2="810" y2="385.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="390.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.0</text>
+<line x1="90" y1="329.0" x2="810" y2="329.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="334.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.2</text>
+<line x1="90" y1="273.0" x2="810" y2="273.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="278.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.4</text>
+<line x1="90" y1="217.0" x2="810" y2="217.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="222.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.6</text>
+<line x1="90" y1="161.0" x2="810" y2="161.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="166.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.8</text>
+<line x1="90" y1="105.0" x2="810" y2="105.0" stroke="#263449" stroke-width="1"/>
+<text x="76" y="110.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">1.0</text>
+<rect x="138.0" y="157.9" width="42" height="227.1" rx="5" fill="#38bdf8"/>
+<text x="159.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
+<rect x="180.0" y="157.9" width="42" height="227.1" rx="5" fill="#a78bfa"/>
+<text x="201.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
+<text x="180.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 50-95</text>
+<rect x="318.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
+<text x="339.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="360.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
+<text x="381.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<text x="360.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 50</text>
+<rect x="498.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
+<text x="519.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="540.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
+<text x="561.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<text x="540.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 75</text>
+<rect x="678.0" y="158.1" width="42" height="226.9" rx="5" fill="#38bdf8"/>
+<text x="699.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
+<rect x="720.0" y="158.1" width="42" height="226.9" rx="5" fill="#a78bfa"/>
+<text x="741.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
+<text x="720.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">AR 100</text>
+<rect x="246" y="450" width="14" height="14" rx="3" fill="#38bdf8"/>
+<text x="268" y="462" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">PyTorch eager</text>
+<rect x="442" y="450" width="14" height="14" rx="3" fill="#a78bfa"/>
+<text x="464" y="462" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">TorchScript</text>
+<text x="836" y="488" text-anchor="end" fill="#64748b" font-family="system-ui,sans-serif" font-size="11">Descriptive two-image case study; not a performance ranking.</text>
+</svg>
