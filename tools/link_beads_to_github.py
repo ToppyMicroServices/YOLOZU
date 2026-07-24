@@ -10,13 +10,13 @@ This script is intentionally conservative:
 - Otherwise it creates a new GitHub issue and links to it.
 
 Usage:
-  python3 tools/link_beads_to_github.py --dry-run
-  python3 tools/link_beads_to_github.py
+  python3 tools/link_beads_to_github.py --snapshot <issues.jsonl> --dry-run
+  python3 tools/link_beads_to_github.py --snapshot <issues.jsonl>
 
 Optional:
-  --repo owner/name     # override target repo
-  --only YOLOZU-xxm.2   # only link specific bead IDs (repeatable)
-    --sync-close          # if Beads issue is closed/done, close linked GitHub issue
+  --repo owner/name       # override target repo
+  --only YOLOZU-xxm.2     # only link specific bead IDs (repeatable)
+  --sync-close            # close linked GitHub issue for closed/done Beads issue
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ def gh_get_state(repo: str, number: int) -> str:
     ).strip()
 
 
-def gh_close_issue(repo: str, number: int, *, dry_run: bool) -> None:
+def gh_close_issue(repo: str, number: int) -> None:
     cmd = [
         "gh",
         "api",
@@ -130,19 +130,13 @@ def gh_close_issue(repo: str, number: int, *, dry_run: bool) -> None:
         "-f",
         "state=closed",
     ]
-    if dry_run:
-        print("DRY:", " ".join(cmd))
-        return
     run(cmd)
 
 
-def bd_link_external_ref(bead_id: str, number: int, *, dry_run: bool) -> None:
+def bd_link_external_ref(bead_id: str, number: int) -> None:
     ext = f"gh-{number}"
     note = f"Linked GitHub issue #{number} ({ext})"
     cmd = ["bd", "update", bead_id, "--external-ref", ext, "--notes", note, "--quiet"]
-    if dry_run:
-        print("DRY:", " ".join(cmd))
-        return
     run(cmd)
 
 
@@ -171,6 +165,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--repo", default=None, help="GitHub repo as owner/name")
+    p.add_argument(
+        "--snapshot",
+        type=Path,
+        required=True,
+        help="Pulled and compatibility-exported Beads issues JSONL snapshot",
+    )
     p.add_argument("--only", action="append", default=[], help="Only link specified Beads IDs (repeatable)")
     p.add_argument(
         "--sync-close",
@@ -189,16 +189,16 @@ def parse_gh_external_ref(value: str | None) -> int | None:
     return int(m.group(1))
 
 
-def main() -> int:
-    args = parse_args()
-    repo = args.repo or detect_repo()
-
-    beads_path = Path(".beads/issues.jsonl")
+def main(argv: Iterable[str] | None = None) -> int:
+    args = parse_args(argv)
+    beads_path = args.snapshot
     if not beads_path.exists():
         raise RuntimeError(
-            ".beads/issues.jsonl not found; run "
-            "'bd export -o .beads/issues.jsonl' first"
+            f"{beads_path} not found; pull the beads-sync worktree and run "
+            "'bash export_beads_snapshot.sh <beads-sync-worktree>/.beads/issues.jsonl' "
+            "first"
         )
+    repo = args.repo or detect_repo()
 
     allow = set(args.only)
     issues = load_beads_jsonl(beads_path)
@@ -221,12 +221,18 @@ def main() -> int:
             if existing is not None:
                 number = existing
                 action = "link"
+            elif args.dry_run:
+                print(f"DRY: CREATE+LINK {bead_id} -> new GitHub issue")
+                linked += 1
+                continue
             else:
                 number = gh_create_issue(repo, title, format_body(bead))
                 action = "create+link"
 
-            print(f"{action.upper()} {bead_id} -> #{number}")
-            bd_link_external_ref(bead_id, number, dry_run=args.dry_run)
+            prefix = "DRY: " if args.dry_run else ""
+            print(f"{prefix}{action.upper()} {bead_id} -> #{number}")
+            if not args.dry_run:
+                bd_link_external_ref(bead_id, number)
             linked += 1
 
         # Close-sync mode: if Beads is closed/done and external_ref exists, close GH issue.
@@ -235,8 +241,10 @@ def main() -> int:
             if status in {"closed", "done"}:
                 state = gh_get_state(repo, number)
                 if state != "closed":
-                    print(f"CLOSE {bead_id} -> #{number}")
-                    gh_close_issue(repo, number, dry_run=args.dry_run)
+                    prefix = "DRY: " if args.dry_run else ""
+                    print(f"{prefix}CLOSE {bead_id} -> #{number}")
+                    if not args.dry_run:
+                        gh_close_issue(repo, number)
                     closed += 1
 
     print(f"Done. Linked {linked} Beads issues.")

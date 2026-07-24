@@ -154,8 +154,10 @@ bash deploy/runpod/refresh_beads_sync.sh
 The wrapper explicitly refreshes the remote-tracking ref and imports the
 exported `.beads/issues.jsonl` snapshot through the repository-level helper. It
 does not require a `beads-sync` worktree, so a fresh or single-branch RunPod
-checkout follows the same path. It exits nonzero if fetch, snapshot extraction,
-import, or the final `bd list` fails.
+checkout follows the same path. Historical tombstones are represented locally
+as marked closed compatibility rows, and the helper restores its temporary
+database backup if import fails. It exits nonzero if fetch, snapshot extraction,
+backup, import, or the final `bd list` fails.
 
 Show the supported options without changing state:
 
@@ -171,8 +173,9 @@ git remote set-branches --add origin beads-sync
 git fetch origin
 ```
 
-Publishing updated issue state still requires `bd export` plus a git commit and
-push from the `beads-sync` worktree. Follow
+Publishing updated issue state still requires
+`bash export_beads_snapshot.sh <beads-sync-worktree>/.beads/issues.jsonl` plus
+a git commit and push from the `beads-sync` worktree. Follow
 `docs/beads_github_workflow.md`; do not treat the refresh helper as a publish
 command.
 

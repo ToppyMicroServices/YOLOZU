@@ -15,7 +15,8 @@
 `.beads/issues.jsonl` はissue単位の交換用snapshotであり、database全体の
 backupではありません。Dolt history、working-set state、issue以外のtableは
 含まれません。`.beads/interactions.jsonl` は別のappend-only audit logで、
-`bd export` の対象外です。
+`bd export` の対象外です。公開snapshotにはhistorical tombstoneがあるため、
+共有時はraw `bd export` ではなくrepository helperを使います。
 
 ## 各環境で作業を始める
 
@@ -31,7 +32,10 @@ helperは
 `refs/heads/beads-sync:refs/remotes/origin/beads-sync` を明示的にfetchするため、
 `--single-branch` cloneでも動作します。一時ファイルからimportし、現在の
 branchを切り替えたり、そのbranchの `.beads/issues.jsonl` を直接上書き
-したりしません。
+したりしません。`bd 1.1.0` がhierarchical tombstoneをskipして、
+non-tombstoned retained descendantのcounter作成に失敗する場合に備え、元の
+JSONをmetadataへ保持したclosed placeholderとしてlocal operational viewへ
+importします。import直前に一時DB backupを作り、失敗時はrestoreします。
 
 remote名、branch名、`bd` のpathが異なる場合だけ、`REMOTE`、
 `SYNC_BRANCH`、`BD_BIN` を指定します。
@@ -61,13 +65,19 @@ if [[ ! -e "${BEADS_WT}/.git" ]]; then
 fi
 
 git -C "${BEADS_WT}" pull --rebase origin beads-sync
-bd export -o "${BEADS_WT}/.beads/issues.jsonl"
+bash export_beads_snapshot.sh "${BEADS_WT}/.beads/issues.jsonl"
 git -C "${BEADS_WT}" diff --check
 git -C "${BEADS_WT}" add .beads/issues.jsonl
 git -C "${BEADS_WT}" diff --cached --quiet ||
   git -C "${BEADS_WT}" commit -m "chore(beads): sync YOLOZU task state"
 git -C "${BEADS_WT}" push origin beads-sync
 ```
+
+`export_beads_snapshot.sh` はpull済みのsnapshotをbaselineとして使います。
+remoteにだけあるissue IDがlocal exportに無ければ出力前にfailし、legacy
+placeholderは元のtombstone JSONへlosslessに戻します。remoteのdependency
+edgeを保持し、新しいlocal issue/dependencyだけを追加します。出力は同じ
+directoryでatomic replaceされます。
 
 `.beads/interactions.jsonl` に変更がある場合は、そのfileもstageする前に
 localとremoteのappend-only logをstable `id` でmergeします。remote側の
@@ -112,13 +122,19 @@ bd update <id> --external-ref gh-123
 ```
 
 repo operatorは、title完全一致によるlinkまたはGitHub Issueの作成ができます。
+前節でpullした `beads-sync` worktreeのsnapshotを明示的に渡します。
 
 ```bash
-bd export -o .beads/issues.jsonl
-python3 tools/link_beads_to_github.py --dry-run
-python3 tools/link_beads_to_github.py
+bash export_beads_snapshot.sh "${BEADS_WT}/.beads/issues.jsonl"
+python3 tools/link_beads_to_github.py \
+  --snapshot "${BEADS_WT}/.beads/issues.jsonl" --dry-run
+python3 tools/link_beads_to_github.py \
+  --snapshot "${BEADS_WT}/.beads/issues.jsonl"
+bash export_beads_snapshot.sh "${BEADS_WT}/.beads/issues.jsonl"
 ```
 
-明示的にexportすることでoperatorの入力snapshotを最新にします。既に
-`external_ref` があるrecordはskipされます。非dry-runの前に
-`gh auth status` でGitHub CLIの認証を確認してください。
+最初の互換exportでoperatorの入力snapshotを最新にし、最後の互換exportで
+新しい `external_ref` をpublication対象へ反映します。`--dry-run` はGitHubの
+検索とstate参照だけを許可し、GitHub Issueの作成/closeと `bd update` は
+行いません。既に `external_ref` があるrecordはlink対象からskipされます。
+非dry-runの前に `gh auth status` でGitHub CLIの認証を確認してください。
