@@ -29,7 +29,14 @@ It is already stronger than a plain benchmark wrapper in a few areas:
 - protocol-pinned eval output intended for CI regression
 - explicit runtime/license boundary documentation for benchmark backends
 
-The remaining gap is mainly breadth, not the core interface shape.
+The remaining difference is mainly breadth, not the core interface shape.
+Breadth alone does not set implementation priority. Broader formats and
+additional flag-parity candidates stay deferred until all three change-trigger
+conditions hold:
+
+1. repeated qualified adopter demand identifies the concrete need,
+2. a maintainable test artifact or reproducible workflow exists, and
+3. the runtime and license boundary is feasible for sustained support.
 
 ## Reconciled current semantics
 
@@ -114,11 +121,12 @@ Missing or only planned relative to that public surface:
 - `imx`
 - `axelera`
 
-Improvement priority:
+Maintained boundary:
 
 1. Keep the current `torchscript` and conditional `openvino` detect orchestration synced with docs/manifest
 2. Keep canonical and standalone benchmark flags and backend choices identical
-3. Promote `ncnn` and `rknn` from planned to explicit adapter targets
+3. Keep `ncnn`, `rknn`, and the other broader formats planned rather than
+   selecting a new adapter without the documented change trigger
 4. Keep `implemented`, `conditional`, and `planned` formats aligned with the runtime/license matrix
 
 ### 2. Task exposure parity
@@ -173,12 +181,16 @@ Still missing or not yet surfaced in the benchmark entrypoint:
 - additional validation for future backend-specific knob combinations beyond
   the current task/source/format rules
 
-Improvement priority:
+Current run grouping does not depend on `--name`: `--run-id` identifies the
+run, while `--output`, `--history`, `--predictions-output`, `--eval-output`,
+and `--parity-output` select the report, history, and per-artifact paths.
 
-1. Add `--name` for user-friendly artifact grouping
-2. Add `--keras` only when there is a real backend path for it
-3. Record backend-specific calibration intent explicitly when `--int8` is set
-4. Extend task/source/format validation alongside each new backend flag
+`--name`, `--keras`, and backend-specific INT8 calibration semantics are
+deferred candidates, not committed CLI work. Apply the same three-part change
+trigger above before selecting one: repeated qualified demand, a maintainable
+test artifact or reproducible workflow, and runtime/license feasibility. If a
+candidate passes that gate, extend task/source/format validation with the
+backend path so the flag cannot be accepted inertly.
 
 Current validation resolves `--latency-source auto` before checking flags.
 Detect rejects explicit `artifact_eval` before flag applicability because no
