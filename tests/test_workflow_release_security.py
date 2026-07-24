@@ -33,6 +33,8 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn("types: [published]", workflow)
         self.assertIn("concurrency:", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn("collect_record_search_pages(", workflow)
+        self.assertIn("&page={page}", workflow)
         self.assertIn("find_matching_record(records, version)", workflow)
         self.assertIn('state = "already_published"', workflow)
         self.assertIn("create_first_deposition:", workflow)
@@ -45,6 +47,7 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
 
     def test_manual_doi_version_guard_matches_normalized_versions(self):
         from tools.manual_doi_guard import (
+            collect_record_search_pages,
             find_matching_record,
             latest_record_id,
             normalize_manual_version,
@@ -59,6 +62,47 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertEqual(find_matching_record(records, "v1.9.0"), records[1])
         self.assertIsNone(find_matching_record(records, "1.8.0"))
         self.assertEqual(latest_record_id(records), "22")
+
+        pages = {
+            1: {
+                "hits": {
+                    "hits": [{"id": number, "metadata": {"version": f"1.0.{number}"}} for number in range(1, 101)],
+                    "total": 101,
+                }
+            },
+            2: {
+                "hits": {
+                    "hits": [{"id": 101, "metadata": {"version": "2.0.0"}}],
+                    "total": 101,
+                }
+            },
+        }
+        calls = []
+
+        def fetch_page(page, size):
+            calls.append((page, size))
+            return pages[page]
+
+        paginated = collect_record_search_pages(fetch_page)
+        self.assertEqual(len(paginated), 101)
+        self.assertEqual(find_matching_record(paginated, "2.0.0"), pages[2]["hits"]["hits"][0])
+        self.assertEqual(calls, [(1, 100), (2, 100)])
+
+    def test_manual_doi_version_guard_fails_closed_on_incomplete_pagination(self):
+        from tools.manual_doi_guard import collect_record_search_pages
+
+        def fetch_page(page, _size):
+            if page == 1:
+                return {
+                    "hits": {
+                        "hits": [{"id": number} for number in range(1, 101)],
+                        "total": {"value": 101},
+                    }
+                }
+            return {"hits": {"hits": [], "total": {"value": 101}}}
+
+        with self.assertRaisesRegex(ValueError, "before every published record"):
+            collect_record_search_pages(fetch_page)
 
     def test_container_workflow_runs_on_tag_or_manual_only(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")

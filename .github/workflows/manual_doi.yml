@@ -206,7 +206,11 @@ jobs:
           import urllib.request
           from pathlib import Path
 
-          from tools.manual_doi_guard import find_matching_record, latest_record_id
+          from tools.manual_doi_guard import (
+            collect_record_search_pages,
+            find_matching_record,
+            latest_record_id,
+          )
 
           zenodo_url = os.environ["ZENODO_URL"].rstrip("/")
           token = os.environ["ZENODO_ACCESS_TOKEN"]
@@ -260,8 +264,15 @@ jobs:
 
           def resolve_records_for_conceptrecid(conceptrecid_value: str) -> list[dict]:
             q = urllib.parse.quote_plus(f"conceptrecid:{conceptrecid_value}")
-            records = request_json("GET", f"/api/records/?q={q}&sort=mostrecent&size=100")
-            hits = (records.get("hits") or {}).get("hits") or []
+            try:
+              hits = collect_record_search_pages(
+                lambda page, size: request_json(
+                  "GET",
+                  f"/api/records/?q={q}&sort=mostrecent&size={size}&page={page}",
+                )
+              )
+            except ValueError as exc:
+              raise SystemExit(str(exc)) from exc
             if not hits:
               raise SystemExit(
                 "Zenodo records lookup returned no hits for conceptrecid="
