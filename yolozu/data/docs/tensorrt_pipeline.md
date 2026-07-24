@@ -27,11 +27,35 @@ Artifacts:
 
 Engine metadata includes best-effort `nvidia-smi` (GPU/driver/CUDA) and `trtexec --version` (TensorRT) for reproducibility.
 
+Checkpoint loading is fail closed. The exporter requires a full name-and-shape
+match after the documented uniform `module.` / `_orig_mod.` prefix
+normalization and records the detailed compatibility report in ONNX metadata.
+Use `--allow-partial-checkpoint` only for intentional transfer/diagnostic work;
+the metadata then records `status=partial` and must not be cited as
+full-checkpoint export evidence. Failed loads remove stale requested ONNX,
+engine, and metadata targets. See
+[`checkpoint_compatibility.md`](checkpoint_compatibility.md).
+When `--skip-onnx` consumes an existing ONNX artifact, do not pass
+`--checkpoint`; use that ONNX artifact's export metadata as checkpoint
+provenance.
+The backend suite likewise requires `torch` in `--backends` whenever
+`--checkpoint` is supplied, so it cannot record an unchecked checkpoint.
+
+The command above deliberately pins ONNX opset 17 for this recorded protocol.
+`tools/export_trt.py` itself defaults to opset 18. Do not treat either number as
+a universal TensorRT requirement: record the chosen opset in ONNX metadata and
+compare only artifacts built under the same protocol. The repository's
+self-hosted GPU workflow is configured with
+`nvcr.io/nvidia/tensorrt:24.08-py3`, but a current qualification claim still
+requires the run-specific container identity, `nvidia-smi`,
+`trtexec --version`, engine metadata, and parity report.
+
 ## RTDETRPose parity + benchmark (torch/onnxrt/trt)
 
 Once you have a checkpoint + ONNX (and optionally a TensorRT engine), you can run a single report that:
 - compares derived `score` and `bbox` stats across backends
 - benchmarks latency/FPS per backend (best-effort VRAM snapshots via `nvidia-smi`)
+- records the shared checkpoint compatibility/provenance report for the Torch reference
 
 ```bash
 python3 tools/rtdetr_pose_backend_suite.py \

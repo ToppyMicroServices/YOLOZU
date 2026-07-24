@@ -41,6 +41,15 @@ provenance.
 The backend suite likewise requires `torch` in `--backends` whenever
 `--checkpoint` is supplied, so it cannot record an unchecked checkpoint.
 
+The command above deliberately pins ONNX opset 17 for this recorded protocol.
+`tools/export_trt.py` itself defaults to opset 18. Do not treat either number as
+a universal TensorRT requirement: record the chosen opset in ONNX metadata and
+compare only artifacts built under the same protocol. The repository's
+self-hosted GPU workflow is configured with
+`nvcr.io/nvidia/tensorrt:24.08-py3`, but a current qualification claim still
+requires the run-specific container identity, `nvidia-smi`,
+`trtexec --version`, engine metadata, and parity report.
+
 ## RTDETRPose parity + benchmark (torch/onnxrt/trt)
 
 Once you have a checkpoint + ONNX (and optionally a TensorRT engine), you can run a single report that:
