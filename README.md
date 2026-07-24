@@ -2,11 +2,13 @@
 
 Japanese: [`Readme_jp.md`](Readme_jp.md) | Chinese: [`Readme_zh.md`](Readme_zh.md)
 
-Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
+Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page: <https://www.toppymicros.com/yolozu/> | PyPI: <https://pypi.org/project/yolozu/> | Manual DOI: <https://doi.org/10.5281/zenodo.18744926>
 
 ## Evaluate existing predictions
 
-YOLOZU is an Apache-2.0 evaluation layer for predictions produced by your existing vision stack.
+YOLOZU is a commercial product developed by ToppyMicroServices OÜ and provided free of charge. The repository code is licensed under Apache-2.0.
+
+Its stable product lane validates and fairly evaluates existing vision predictions through a stable predictions interface contract.
 
 Give it a wrapped `predictions.json`, validate the predictions interface contract, and produce a comparable report.
 
@@ -77,16 +79,15 @@ TTA Experimental, and TTT Research.
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Full details: [`docs/production_readiness.md`](docs/production_readiness.md)
 
-## Who This Is For
+## Best Fit
 
-- You already have predictions and want fair cross-framework evaluation.
-- You want an Apache-2.0 evaluation layer without rewriting your training stack.
-- You do not want framework-native evaluation differences to become silent metric drift.
+- Compare predictions from multiple frameworks or runtimes on the same dataset and pinned evaluation protocol.
+- Validate and wrap predictions from your own or a third-party vision stack before running one evaluation path.
+- Add CI or regression reports that expose metric, preprocessing, or backend drift.
 
 ## Not The Best Fit
 
-- You want one end-to-end training framework with one-click defaults.
-- You do not need cross-framework comparison or a stable predictions interface contract.
+YOLOZU is not the best fit when you need a managed training platform, hosted inference service, guaranteed support or SLA, or one-click production deployment. If you evaluate only within one framework and do not need a stable cross-stack boundary, that framework's native evaluator may be simpler. Training, benchmark, adapter, and research capabilities are secondary qualified lanes, not the stable product promise.
 
 ## Why Not Just Use Framework-Native Evaluation?
 
