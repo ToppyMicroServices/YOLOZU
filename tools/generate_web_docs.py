@@ -98,6 +98,20 @@ def _as_list(value: Any, *, where: str) -> list[Any]:
     return value
 
 
+def _as_object_list(value: Any, *, where: str) -> list[dict[str, Any]]:
+    entries = _as_list(value, where=where)
+    if any(not isinstance(entry, dict) for entry in entries):
+        raise SystemExit(f"{where} entries must be objects")
+    return entries
+
+
+def _as_string_list(value: Any, *, where: str) -> list[str]:
+    return [
+        _as_nonempty_string(entry, where=f"{where}[]")
+        for entry in _as_list(value, where=where)
+    ]
+
+
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return slug or "entry"
@@ -828,32 +842,127 @@ def _validate_content(content: Any) -> dict[str, Any]:
     for key in ("title", "description", "canonical_base", "repository_base"):
         _as_nonempty_string(site.get(key), where=f"site.{key}")
 
-    lanes = _as_list(content.get("lanes"), where="lanes")
+    lanes = _as_object_list(content.get("lanes"), where="lanes")
     lane_ids = [
         _as_nonempty_string(item.get("id"), where="lanes[].id")
         for item in lanes
-        if isinstance(item, dict)
     ]
     if lane_ids != list(LANE_IDS):
         raise SystemExit(f"lanes must be ordered exactly as {LANE_IDS!r}")
+    for lane in lanes:
+        lane_id = _as_nonempty_string(lane.get("id"), where="lanes[].id")
+        for key in ("title", "summary", "start_page", "source"):
+            _as_nonempty_string(lane.get(key), where=f"lanes[{lane_id}].{key}")
+        if lane_id == "research":
+            _as_nonempty_string(
+                lane.get("stable_return"),
+                where="lanes[research].stable_return",
+            )
 
     tutorial = content.get("tutorial")
     if not isinstance(tutorial, dict):
         raise SystemExit("web docs content requires tutorial object")
-    if not _as_list(tutorial.get("thirty_minute"), where="tutorial.thirty_minute"):
+    thirty_minute = _as_object_list(
+        tutorial.get("thirty_minute"),
+        where="tutorial.thirty_minute",
+    )
+    if not thirty_minute:
         raise SystemExit("tutorial.thirty_minute must not be empty")
-    if not _as_list(tutorial.get("two_hour"), where="tutorial.two_hour"):
+    for step in thirty_minute:
+        title = _as_nonempty_string(
+            step.get("title"),
+            where="tutorial.thirty_minute[].title",
+        )
+        for key in ("minutes", "expected"):
+            _as_nonempty_string(
+                step.get(key),
+                where=f"tutorial.thirty_minute[{title}].{key}",
+            )
+        _as_string_list(
+            step.get("commands"),
+            where=f"tutorial.thirty_minute[{title}].commands",
+        )
+    two_hour = _as_string_list(
+        tutorial.get("two_hour"),
+        where="tutorial.two_hour",
+    )
+    if not two_hour:
         raise SystemExit("tutorial.two_hour must not be empty")
 
-    for key in ("examples", "glossary", "failures", "report_checklist"):
-        if not _as_list(content.get(key), where=key):
+    object_groups = {}
+    for key in ("examples", "glossary", "failures"):
+        object_groups[key] = _as_object_list(content.get(key), where=key)
+        if not object_groups[key]:
             raise SystemExit(f"{key} must not be empty")
+    report_checklist = _as_string_list(
+        content.get("report_checklist"),
+        where="report_checklist",
+    )
+    if not report_checklist:
+        raise SystemExit("report_checklist must not be empty")
+
+    examples = object_groups["examples"]
+    for example in examples:
+        example_id = _as_nonempty_string(
+            example.get("id"),
+            where="examples[].id",
+        )
+        for key in ("title", "description", "source"):
+            _as_nonempty_string(
+                example.get(key),
+                where=f"examples[{example_id}].{key}",
+            )
+        lane = _as_nonempty_string(
+            example.get("lane"),
+            where=f"examples[{example_id}].lane",
+        )
+        if lane not in LANE_IDS:
+            raise SystemExit(
+                f"examples[{example_id}].lane must be one of {LANE_IDS!r}"
+            )
+        expected_files = _as_string_list(
+            example.get("expected_files"),
+            where=f"examples[{example_id}].expected_files",
+        )
+        if not expected_files:
+            raise SystemExit(
+                f"examples[{example_id}].expected_files must not be empty"
+            )
+        for key in ("stable_artifact", "image_source", "image_output"):
+            value = example.get(key)
+            if value is not None:
+                _as_nonempty_string(value, where=f"examples[{example_id}].{key}")
+        if bool(example.get("image_source")) != bool(example.get("image_output")):
+            raise SystemExit(
+                f"example {example_id} must set both image_source and image_output"
+            )
+
+    glossary = object_groups["glossary"]
+    for entry in glossary:
+        term = _as_nonempty_string(entry.get("term"), where="glossary[].term")
+        for key in ("definition", "source"):
+            _as_nonempty_string(
+                entry.get(key),
+                where=f"glossary[{term}].{key}",
+            )
+
+    failures = object_groups["failures"]
+    for failure in failures:
+        symptom = _as_nonempty_string(
+            failure.get("symptom"),
+            where="failures[].symptom",
+        )
+        for key in ("check", "next", "source"):
+            _as_nonempty_string(
+                failure.get(key),
+                where=f"failures[{symptom}].{key}",
+            )
 
     source_paths = []
     for lane in lanes:
         source_paths.append(lane.get("source"))
-    for group in ("examples", "glossary", "failures"):
-        for item in content[group]:
+    for group in (examples, glossary, failures):
+        for item in group:
             source_paths.append(item.get("source"))
             if item.get("stable_artifact"):
                 source_paths.append(item["stable_artifact"])

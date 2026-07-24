@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,6 +16,61 @@ class TestWebDocsGeneration(unittest.TestCase):
 
     def _read(self, relative: str) -> str:
         return (self.output / relative).read_text(encoding="utf-8")
+
+    def _run_with_content(self, content: dict[str, object]) -> subprocess.CompletedProcess[str]:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            content_path = root / "content.json"
+            content_path.write_text(
+                json.dumps(content),
+                encoding="utf-8",
+            )
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "tools/generate_web_docs.py",
+                    "--content",
+                    str(content_path),
+                    "--output",
+                    str(root / "output"),
+                ],
+                cwd=self.repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+
+    def test_content_object_lists_fail_with_explanatory_errors(self) -> None:
+        source = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for group in (
+            "lanes",
+            "examples",
+            "glossary",
+            "failures",
+        ):
+            with self.subTest(group=group):
+                content = json.loads(json.dumps(source))
+                content[group][0] = "not-an-object"
+                proc = self._run_with_content(content)
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn(
+                    f"{group} entries must be objects",
+                    proc.stdout + proc.stderr,
+                )
+
+        content = json.loads(json.dumps(source))
+        content["tutorial"]["thirty_minute"][0] = "not-an-object"
+        proc = self._run_with_content(content)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "tutorial.thirty_minute entries must be objects",
+            proc.stdout + proc.stderr,
+        )
 
     def test_generated_bundle_is_current(self) -> None:
         proc = subprocess.run(
