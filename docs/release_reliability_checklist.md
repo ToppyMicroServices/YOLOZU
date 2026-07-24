@@ -4,6 +4,7 @@ Use this checklist before publishing a GitHub Release. The goal is deterministic
 
 Release trigger note:
 - PyPI publish is triggered by `.github/workflows/publish.yml` on `release: published`.
+- Manual DOI publication is triggered by `.github/workflows/manual_doi.yml` on the same event; `release.sh` must not dispatch it separately.
 - Tag push alone is insufficient for PyPI publish.
 - After upload, the workflow polls the version-specific PyPI JSON endpoint and requires both wheel and sdist metadata before it succeeds.
 - Recommended operator helper: `bash release.sh`
@@ -102,7 +103,7 @@ DoD:
 - ClusterFuzzLite project files under `.clusterfuzzlite/` and fuzz harnesses under `fuzz/` stay in sync with predictions normalization code.
 - Residual governance-style Scorecard findings that cannot be solved by code alone are tracked in `docs/security_scorecard_governance.md`.
 - Repository-settings evidence can be snapshotted and checked locally with `tools/check_repo_governance.py`; see `docs/repo_governance_audit.md`.
-- Manual DOI workflow produces `reports/manual_doi_publish.json` and a published (or explicit draft) Zenodo record.
+- Manual DOI workflow produces `reports/manual_doi_publish.json` and a published, explicit draft, or idempotent `already_published` result. Manual dispatch is only for first-time setup or recovery; a first deposition requires `create_first_deposition=true`, and later automatic runs require the stored manual conceptrecid.
 - `gpu-ngc` produces `ci_logs/ci_gpu_ngc/dod_summary.json` and `dod_summary.md`.
 - `gpu-zisn-pipeline` (when executed) produces `ci_logs/ci_gpu_zisn/dod_summary.json` and stage artifacts under `ci_logs/ci_gpu_zisn/zisn1|zisn2|zisn3/`.
 - When `CI_LOGS_PUSH_TOKEN` is not configured, the workflows still upload artifacts but skip force-pushing the `ci-logs/*` branches.

@@ -11439,6 +11439,7 @@
           "required": false
         },
         {
+          "description": "Deprecated fail-closed compatibility option. A published GitHub Release automatically triggers manual_doi.yml; use --skip-gh to avoid publishing the release.",
           "flag": "--skip-zenodo",
           "kind": "string",
           "name": "skip_zenodo",
@@ -11464,7 +11465,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and PyPI/Zenodo workflow handoff. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",

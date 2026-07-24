@@ -171,6 +171,8 @@ Operational helper script (no required options):
 \begin{lstlisting}[language=bash]
 bash release.sh
 \end{lstlisting}
+Publishing the GitHub Release is the single automatic trigger for both the PyPI and
+manual DOI workflows. The helper does not dispatch the manual DOI workflow again.
 
 Versioning policy is automatic:
 \begin{itemize}
@@ -196,6 +198,10 @@ The manual DOI workflow builds \path{manual/build/yolozu_manual.pdf} and publish
   \item a new version (\texttt{actions/newversion}) when a manual \texttt{conceptrecid} is configured, or
   \item a first deposition when no prior concept record exists.
 \end{itemize}
+Manual \cmd{workflow_dispatch} is limited to first-time setup, recovery, sandbox, or
+draft use. Runs for the same version are serialized, and a version already present
+under the configured concept record returns \texttt{already\_published} before a new
+deposition is created.
 
 To preserve machine-readable linkage between records, manual metadata sets:
 \begin{itemize}
@@ -207,8 +213,11 @@ To preserve machine-readable linkage between records, manual metadata sets:
 Operationally, configure repository variables:
 \begin{itemize}
   \item \texttt{YOLOZU\_SOFTWARE\_CONCEPT\_DOI} (required)
-  \item \texttt{YOLOZU\_MANUAL\_CONCEPTRECID} (recommended for versioned manual updates)
+  \item \texttt{YOLOZU\_MANUAL\_CONCEPTRECID} (required for automatic updates after the first manual record)
 \end{itemize}
+The first manual deposition is a recovery-style manual run with
+\texttt{create\_first\_deposition=true}; release-triggered runs never create it
+implicitly.
 
 \section{Path Resolution Behavior (Critical for Automation)}
 Many tools adhere to consistent path resolution rules (summarized in \path{docs/tools_index.md} and \path{docs/ai_first.md}):

@@ -30,9 +30,18 @@ on:
         required: true
         type: boolean
         default: true
+      create_first_deposition:
+        description: "Explicitly allow a first deposition when no manual conceptrecid exists"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+
+concurrency:
+  group: manual-doi-publication
+  cancel-in-progress: false
 
 jobs:
   publish_manual_doi:
@@ -50,6 +59,7 @@ jobs:
       INPUT_MANUAL_CONCEPTRECID: ${{ github.event.inputs.manual_conceptrecid || '' }}
       INPUT_SOFTWARE_CONCEPT_DOI: ${{ github.event.inputs.software_concept_doi || '' }}
       INPUT_PUBLISH_RECORD: ${{ github.event.inputs.publish_record || 'true' }}
+      INPUT_CREATE_FIRST_DEPOSITION: ${{ github.event.inputs.create_first_deposition || 'false' }}
     steps:
       - name: Preflight (release-trigger safety)
         id: preflight
@@ -62,6 +72,11 @@ jobs:
           if [[ "${EVENT_NAME}" != "workflow_dispatch" && -z "${DEFAULT_SOFTWARE_CONCEPT_DOI}" ]]; then
             echo "SKIP_MANUAL_DOI=true" >> "$GITHUB_ENV"
             echo "skip_reason=Missing vars.YOLOZU_SOFTWARE_CONCEPT_DOI" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "${EVENT_NAME}" != "workflow_dispatch" && -z "${DEFAULT_MANUAL_CONCEPTRECID}" ]]; then
+            echo "SKIP_MANUAL_DOI=true" >> "$GITHUB_ENV"
+            echo "skip_reason=Missing vars.YOLOZU_MANUAL_CONCEPTRECID" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -143,12 +158,17 @@ jobs:
           fi
 
           publish_record="${INPUT_PUBLISH_RECORD}"
+          create_first_deposition="${INPUT_CREATE_FIRST_DEPOSITION}"
           if [[ "${EVENT_NAME}" != "workflow_dispatch" ]]; then
             publish_record="true"
           fi
 
           if [[ -z "${software_concept_doi}" ]]; then
             echo "Missing software concept DOI. Set repo variable YOLOZU_SOFTWARE_CONCEPT_DOI or provide workflow input software_concept_doi."
+            exit 1
+          fi
+          if [[ -z "${manual_conceptrecid}" && "${create_first_deposition}" != "true" ]]; then
+            echo "No manual conceptrecid is configured. A first deposition requires workflow_dispatch with create_first_deposition=true."
             exit 1
           fi
 
@@ -159,6 +179,7 @@ jobs:
             echo "MANUAL_CONCEPTRECID_ACTIVE=${manual_conceptrecid}"
             echo "SOFTWARE_CONCEPT_DOI_ACTIVE=${software_concept_doi}"
             echo "MANUAL_PUBLISH_RECORD=${publish_record}"
+            echo "MANUAL_CREATE_FIRST_DEPOSITION=${create_first_deposition}"
           } >> "$GITHUB_ENV"
 
           {
@@ -167,6 +188,7 @@ jobs:
             echo "manual_conceptrecid=${manual_conceptrecid}"
             echo "software_concept_doi=${software_concept_doi}"
             echo "publish_record=${publish_record}"
+            echo "create_first_deposition=${create_first_deposition}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Create/newversion deposition, upload PDF, publish
@@ -183,6 +205,12 @@ jobs:
           import urllib.parse
           import urllib.request
           from pathlib import Path
+
+          from tools.manual_doi_guard import (
+            collect_record_search_pages,
+            find_matching_record,
+            latest_record_id,
+          )
 
           zenodo_url = os.environ["ZENODO_URL"].rstrip("/")
           token = os.environ["ZENODO_ACCESS_TOKEN"]
@@ -234,33 +262,39 @@ jobs:
             text = text.strip()
             return json.loads(text) if text else {}
 
-          def resolve_latest_record_id_for_conceptrecid(conceptrecid_value: str) -> str:
+          def resolve_records_for_conceptrecid(conceptrecid_value: str) -> list[dict]:
             q = urllib.parse.quote_plus(f"conceptrecid:{conceptrecid_value}")
-            records = request_json("GET", f"/api/records/?q={q}&sort=mostrecent&size=1")
-            hits = (records.get("hits") or {}).get("hits") or []
+            try:
+              hits = collect_record_search_pages(
+                lambda page, size: request_json(
+                  "GET",
+                  f"/api/records/?q={q}&sort=mostrecent&size={size}&page={page}",
+                )
+              )
+            except ValueError as exc:
+              raise SystemExit(str(exc)) from exc
             if not hits:
               raise SystemExit(
                 "Zenodo records lookup returned no hits for conceptrecid="
                 f"{conceptrecid_value}. Check the Zenodo environment (production vs sandbox) and the conceptrecid value."
               )
-            record_id = str(hits[0].get("id") or "").strip()
-            if not record_id:
-              raise SystemExit("Zenodo records lookup hit is missing id")
-            return record_id
+            return hits
 
-          def is_http_error(exc: SystemExit, code: int) -> bool:
-            return f"[{code}]" in str(exc)
-
+          existing_record = None
           if conceptrecid:
             # Zenodo depositions API expects a deposition (record) id for newversion.
-            # Historically, we stored a conceptrecid in repo vars/inputs; resolve it via the public records API.
+            # The repository stores a conceptrecid, so resolve published records first.
+            # A matching published version is an idempotent success and must not create another draft.
+            records = resolve_records_for_conceptrecid(conceptrecid)
+            existing_record = find_matching_record(records, version)
+          if existing_record is not None:
+            draft = dict(existing_record)
+          elif conceptrecid:
             try:
-              newversion = request_json("POST", f"/api/deposit/depositions/{conceptrecid}/actions/newversion", payload={})
-            except SystemExit as exc:
-              if not is_http_error(exc, 404):
-                raise
-              resolved_id = resolve_latest_record_id_for_conceptrecid(conceptrecid)
-              newversion = request_json("POST", f"/api/deposit/depositions/{resolved_id}/actions/newversion", payload={})
+              resolved_id = latest_record_id(records)
+            except ValueError as exc:
+              raise SystemExit(str(exc)) from exc
+            newversion = request_json("POST", f"/api/deposit/depositions/{resolved_id}/actions/newversion", payload={})
 
             latest_draft = ((newversion.get("links") or {}).get("latest_draft") or "").strip()
             if not latest_draft:
@@ -272,42 +306,46 @@ jobs:
           draft_id = draft.get("id")
           if not draft_id:
             raise SystemExit("Zenodo draft response missing id")
-          bucket = ((draft.get("links") or {}).get("bucket") or "").strip()
-          if not bucket:
-            raise SystemExit("Zenodo draft response missing links.bucket")
+          if existing_record is not None:
+            final_doc = dict(existing_record)
+            state = "already_published"
+          else:
+            bucket = ((draft.get("links") or {}).get("bucket") or "").strip()
+            if not bucket:
+              raise SystemExit("Zenodo draft response missing links.bucket")
 
-          upload_target = f"{bucket.rstrip('/')}/{urllib.parse.quote(pdf_path.name)}"
-          request_json("PUT", upload_target, data=pdf_path.read_bytes(), content_type="application/octet-stream")
+            upload_target = f"{bucket.rstrip('/')}/{urllib.parse.quote(pdf_path.name)}"
+            request_json("PUT", upload_target, data=pdf_path.read_bytes(), content_type="application/octet-stream")
 
-          metadata = {
-            "title": f"YOLOZU Manual {version}",
-            "upload_type": "publication",
-            "publication_type": "other",
-            "description": (
-              "YOLOZU manual PDF for release "
-              f"{version}. This record is versioned independently and links to the YOLOZU software concept DOI."
-            ),
-            "creators": [{"name": "YOLOZU contributors"}],
-            "version": version,
-            "language": "eng",
-            "license": "Apache-2.0",
-            "prereserve_doi": True,
-            "related_identifiers": [
-              {
-                "identifier": software_concept_doi,
-                "relation": "isSupplementTo",
-                "scheme": "doi",
-                "resource_type": "software",
-              }
-            ],
-          }
+            metadata = {
+              "title": f"YOLOZU Manual {version}",
+              "upload_type": "publication",
+              "publication_type": "other",
+              "description": (
+                "YOLOZU manual PDF for release "
+                f"{version}. This record is versioned independently and links to the YOLOZU software concept DOI."
+              ),
+              "creators": [{"name": "YOLOZU contributors"}],
+              "version": version,
+              "language": "eng",
+              "license": "Apache-2.0",
+              "prereserve_doi": True,
+              "related_identifiers": [
+                {
+                  "identifier": software_concept_doi,
+                  "relation": "isSupplementTo",
+                  "scheme": "doi",
+                  "resource_type": "software",
+                }
+              ],
+            }
 
-          updated = request_json("PUT", f"/api/deposit/depositions/{draft_id}", payload={"metadata": metadata})
-          final_doc = updated
-          state = "draft"
-          if publish_record:
-            final_doc = request_json("POST", f"/api/deposit/depositions/{draft_id}/actions/publish", payload={})
-            state = "published"
+            updated = request_json("PUT", f"/api/deposit/depositions/{draft_id}", payload={"metadata": metadata})
+            final_doc = updated
+            state = "draft"
+            if publish_record:
+              final_doc = request_json("POST", f"/api/deposit/depositions/{draft_id}/actions/publish", payload={})
+              state = "published"
 
           meta = final_doc.get("metadata") or {}
           reserved = meta.get("prereserve_doi") or {}
@@ -351,11 +389,14 @@ jobs:
             {
               echo "## Manual DOI publish skipped"
               echo ""
-              echo "This run was triggered by a GitHub Release, but \`vars.YOLOZU_SOFTWARE_CONCEPT_DOI\` is not set."
+              echo "This run was triggered by a GitHub Release, but required repository context is missing."
+              echo ""
+              echo "- reason: ${{ steps.preflight.outputs.skip_reason }}"
               echo ""
               echo "To publish the manual DOI:"
               echo "1) Obtain the **software concept DOI** (e.g., from Zenodo GitHub integration for the release)."
-              echo "2) Set repo variable \`YOLOZU_SOFTWARE_CONCEPT_DOI\`, or re-run this workflow via \`workflow_dispatch\` and provide \`software_concept_doi\`."
+              echo "2) Set \`YOLOZU_SOFTWARE_CONCEPT_DOI\` and, after the first manual record exists, \`YOLOZU_MANUAL_CONCEPTRECID\`."
+              echo "3) For the first manual record only, use \`workflow_dispatch\` with \`create_first_deposition=true\`; later recovery runs must use the conceptrecid."
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi

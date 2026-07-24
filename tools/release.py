@@ -7,8 +7,7 @@ Default behavior (`python3 tools/release.py`):
 3) Bump semantic version automatically, using explicit breaking-change signals for major releases.
 4) Run release quality checks.
 5) Update package version, commit, create/push git tag.
-6) Create published GitHub release (which triggers PyPI workflow).
-7) Trigger manual DOI workflow for Zenodo manual record update.
+6) Create published GitHub release (which triggers PyPI and manual DOI workflows).
 """
 
 from __future__ import annotations
@@ -35,7 +34,8 @@ def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
             "Run full release flow with zero required options: auto-bump version, tag, "
-            "GitHub Release publish, and Zenodo manual DOI workflow dispatch."
+            "and GitHub Release publish. The release event is the single automatic "
+            "trigger for PyPI and the Zenodo manual DOI workflow."
         )
     )
     p.add_argument("--dry-run", action="store_true", help="Print plan/report only; do not mutate git/GitHub.")
@@ -53,7 +53,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--skip-checks", action="store_true", help="Skip local quality checks.")
     p.add_argument("--skip-gh", action="store_true", help="Skip GitHub release + workflow steps.")
-    p.add_argument("--skip-zenodo", action="store_true", help="Skip manual_doi workflow dispatch.")
+    p.add_argument(
+        "--skip-zenodo",
+        action="store_true",
+        help=(
+            "Deprecated fail-closed option. A published GitHub Release automatically "
+            "triggers manual_doi.yml; use --skip-gh to avoid publishing the release."
+        ),
+    )
     p.add_argument(
         "--versioning",
         choices=("auto", "semver", "calver"),
@@ -369,6 +376,12 @@ def main(argv: list[str] | None = None) -> int:
     errors: list[str] = []
     steps: list[dict[str, Any]] = []
 
+    if bool(args.skip_zenodo):
+        errors.append(
+            "--skip-zenodo cannot suppress the release-triggered manual DOI workflow; "
+            "use --skip-gh to avoid publishing the GitHub Release"
+        )
+
     try:
         current_version = _parse_version_from_init()
     except Exception as exc:
@@ -595,35 +608,6 @@ def main(argv: list[str] | None = None) -> int:
         if not bool(pypi_step.get("ok")):
             warnings.append("could not probe publish.yml run status via gh")
 
-    if (
-        not errors
-        and not bool(args.skip_gh)
-        and not bool(args.skip_zenodo)
-    ):
-        zenodo_step = _run(
-            [
-                "gh",
-                "workflow",
-                "run",
-                "manual_doi.yml",
-                "--ref",
-                "main",
-                "-f",
-                "zenodo_environment=production",
-                "-f",
-                f"manual_version={next_version}",
-                "-f",
-                "publish_record=true",
-            ],
-            dry_run=bool(args.dry_run),
-        )
-        zenodo_step["type"] = "zenodo_workflow_dispatch"
-        steps.append(zenodo_step)
-        if not bool(zenodo_step.get("ok")):
-            warnings.append("failed to dispatch manual_doi.yml via gh workflow run")
-    elif not bool(args.skip_zenodo):
-        warnings.append("Zenodo dispatch skipped because GitHub flow was skipped or failed")
-
     report = {
         "task": "release",
         "timestamp": _now_utc(),
@@ -650,13 +634,14 @@ def main(argv: list[str] | None = None) -> int:
         "release_actions": {
             "github_release_publish": not bool(args.skip_gh),
             "pypi_update_via_publish_workflow": not bool(args.skip_gh),
-            "zenodo_manual_doi_dispatch": (not bool(args.skip_gh)) and (not bool(args.skip_zenodo)),
+            "zenodo_manual_doi_via_release_event": not bool(args.skip_gh),
+            "zenodo_manual_doi_dispatch": False,
         },
         "warnings": warnings,
         "errors": errors,
         "steps": steps,
         "next_steps": [
-            "Confirm publish.yml and manual_doi.yml runs in GitHub Actions.",
+            "Confirm the release-triggered publish.yml and manual_doi.yml runs in GitHub Actions.",
             "Verify PyPI package visibility and Zenodo record metadata after workflows complete.",
             "Share release notes and artifact links in announcement channels.",
         ],

@@ -22,6 +22,88 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn('https://pypi.org/pypi/yolozu/{version}/json', publish)
         self.assertIn('required_types = {"bdist_wheel", "sdist"}', publish)
 
+    def test_manual_doi_uses_one_automatic_trigger_and_idempotency_guard(self):
+        release_tool = (self.repo_root / "tools" / "release.py").read_text(encoding="utf-8")
+        workflow = (self.repo_root / ".github" / "workflows" / "manual_doi.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertNotIn("zenodo_workflow_dispatch", release_tool)
+        self.assertIn("zenodo_manual_doi_via_release_event", release_tool)
+        self.assertIn("types: [published]", workflow)
+        self.assertIn("concurrency:", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn("collect_record_search_pages(", workflow)
+        self.assertIn("&page={page}", workflow)
+        self.assertIn("find_matching_record(records, version)", workflow)
+        self.assertIn('state = "already_published"', workflow)
+        self.assertIn("create_first_deposition:", workflow)
+        self.assertIn('create_first_deposition}" != "true"', workflow)
+        self.assertIn("Missing vars.YOLOZU_MANUAL_CONCEPTRECID", workflow)
+        self.assertLess(
+            workflow.index("find_matching_record(records, version)"),
+            workflow.index("actions/newversion"),
+        )
+
+    def test_manual_doi_version_guard_matches_normalized_versions(self):
+        from tools.manual_doi_guard import (
+            collect_record_search_pages,
+            find_matching_record,
+            latest_record_id,
+            normalize_manual_version,
+        )
+
+        records = [
+            {"id": 22, "metadata": {"version": "v2.0.0"}},
+            {"id": 21, "metadata": {"version": "1.9.0"}},
+        ]
+        self.assertEqual(normalize_manual_version("v2.0.0"), "2.0.0")
+        self.assertEqual(find_matching_record(records, "2.0.0"), records[0])
+        self.assertEqual(find_matching_record(records, "v1.9.0"), records[1])
+        self.assertIsNone(find_matching_record(records, "1.8.0"))
+        self.assertEqual(latest_record_id(records), "22")
+
+        pages = {
+            1: {
+                "hits": {
+                    "hits": [{"id": number, "metadata": {"version": f"1.0.{number}"}} for number in range(1, 101)],
+                    "total": 101,
+                }
+            },
+            2: {
+                "hits": {
+                    "hits": [{"id": 101, "metadata": {"version": "2.0.0"}}],
+                    "total": 101,
+                }
+            },
+        }
+        calls = []
+
+        def fetch_page(page, size):
+            calls.append((page, size))
+            return pages[page]
+
+        paginated = collect_record_search_pages(fetch_page)
+        self.assertEqual(len(paginated), 101)
+        self.assertEqual(find_matching_record(paginated, "2.0.0"), pages[2]["hits"]["hits"][0])
+        self.assertEqual(calls, [(1, 100), (2, 100)])
+
+    def test_manual_doi_version_guard_fails_closed_on_incomplete_pagination(self):
+        from tools.manual_doi_guard import collect_record_search_pages
+
+        def fetch_page(page, _size):
+            if page == 1:
+                return {
+                    "hits": {
+                        "hits": [{"id": number} for number in range(1, 101)],
+                        "total": {"value": 101},
+                    }
+                }
+            return {"hits": {"hits": [], "total": {"value": 101}}}
+
+        with self.assertRaisesRegex(ValueError, "before every published record"):
+            collect_record_search_pages(fetch_page)
+
     def test_container_workflow_runs_on_tag_or_manual_only(self):
         container = (self.repo_root / ".github" / "workflows" / "container.yml").read_text(encoding="utf-8")
         self.assertNotIn("pull_request:", container)
