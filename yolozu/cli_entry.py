@@ -293,9 +293,9 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     eval_coco = sub.add_parser("eval-coco", help="Evaluate detections with COCOeval (optional extra: yolozu[coco]).")
-    eval_coco.add_argument("--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
-    eval_coco.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
-    eval_coco.add_argument("--predictions", required=True, help="Predictions JSON path.")
+    eval_coco.add_argument("-d", "--dataset", required=True, help="YOLO-format dataset root (images/ + labels/).")
+    eval_coco.add_argument("-s", "--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
+    eval_coco.add_argument("-p", "--predictions", required=True, help="Predictions JSON path.")
     eval_coco.add_argument(
         "--bbox-format",
         choices=("cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"),
@@ -304,11 +304,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     eval_coco.add_argument("--dry-run", action="store_true", help="Skip COCOeval; only validate/convert predictions.")
     eval_coco.add_argument(
+        "-r",
         "--repair",
         action="store_true",
         help="Explicitly repair/clamp legacy prediction values and record every repair (default: strict rejection).",
     )
     eval_coco.add_argument(
+        "-n",
         "--max-images",
         type=int,
         default=None,
@@ -320,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Treat class_id in predictions as COCO category_id when --classes is set.",
     )
-    eval_coco.add_argument("--output", default="reports/coco_eval.json", help="Output report path.")
+    eval_coco.add_argument("-o", "--output", default="reports/coco_eval.json", help="Output report path.")
 
     calibrate = sub.add_parser("calibrate", help="Apply post-hoc FRACAL calibration to bbox or instance-seg predictions JSON.")
     calibrate.add_argument("--method", choices=("fracal", "la", "norcal", "temperature"), default="fracal", help="Calibration method (default: fracal).")

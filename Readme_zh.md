@@ -15,7 +15,7 @@ YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓�
 标准安装下的最短路径，是一条内置 strict validation 的 dry-run 命令：
 
 ```bash
-yolozu eval-coco --dataset /path/to/dataset --predictions /path/to/predictions.json --dry-run --output reports/coco_eval.json
+yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
 ```
 
 如需真实 COCO metrics，请安装 `yolozu[coco]` 并去掉 `--dry-run`。

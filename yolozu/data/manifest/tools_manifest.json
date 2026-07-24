@@ -3602,11 +3602,11 @@
       "entrypoint": "tools/eval_coco.py",
       "examples": [
         {
-          "command": "python3 tools/eval_coco.py --dataset data/coco128 --predictions reports/predictions.json --dry-run --output reports/coco_eval_dry.json",
+          "command": "python3 tools/eval_coco.py -d data/coco128 -p reports/predictions.json --dry-run -o reports/coco_eval_dry.json",
           "description": "Strict dry-run validation and conversion without pycocotools."
         },
         {
-          "command": "python3 tools/eval_coco.py --dataset data/coco128 --predictions reports/legacy_predictions.json --dry-run --repair --output reports/coco_eval_repaired.json",
+          "command": "python3 tools/eval_coco.py -d data/coco128 -p reports/legacy_predictions.json --dry-run -r -o reports/coco_eval_repaired.json",
           "description": "Explicitly repair legacy ranges and record every repair in warnings."
         }
       ],
@@ -3702,7 +3702,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with explicit repair and bounded-subset accounting; --dry-run does not require pycocotools.",
+      "summary": "Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with concise path aliases, explicit repair, and bounded-subset accounting; --dry-run does not require pycocotools.",
       "tags": [
         "coco",
         "data.yaml",

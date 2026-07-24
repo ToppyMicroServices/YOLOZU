@@ -15,7 +15,7 @@ Give it a wrapped `predictions.json`, validate the predictions interface contrac
 The shortest core-install path is one strict dry-run command:
 
 ```bash
-yolozu eval-coco --dataset /path/to/dataset --predictions /path/to/predictions.json --dry-run --output reports/coco_eval.json
+yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
 ```
 
 For real COCO metrics, install `yolozu[coco]` and omit `--dry-run`.

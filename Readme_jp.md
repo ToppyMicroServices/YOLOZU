@@ -15,7 +15,7 @@ wrapped `predictions.json` を渡し、predictions interface contract を検証�
 標準 install での最短経路は、strict validation を内包する dry-run 1コマンドです。
 
 ```bash
-yolozu eval-coco --dataset /path/to/dataset --predictions /path/to/predictions.json --dry-run --output reports/coco_eval.json
+yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
 ```
 
 実際の COCO metrics には `yolozu[coco]` を install し、`--dry-run` を外します。

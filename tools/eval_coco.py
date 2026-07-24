@@ -18,13 +18,14 @@ def _parse_args(argv):
         default=None,
         help="Apply canonical evaluation protocol presets (pins split/bbox_format).",
     )
-    parser.add_argument("--dataset", default="data/coco128", help="YOLO-format dataset root (images/ + labels/).")
+    parser.add_argument("-d", "--dataset", default="data/coco128", help="YOLO-format dataset root (images/ + labels/).")
     parser.add_argument(
+        "-s",
         "--split",
         default=None,
         help="Dataset split under images/ and labels/ (e.g. val2017, train2017). Default: auto (val2017 if present else train2017).",
     )
-    parser.add_argument("--predictions", required=True, help="Predictions JSON path (YOLOZU format).")
+    parser.add_argument("-p", "--predictions", required=True, help="Predictions JSON path (YOLOZU format).")
     parser.add_argument(
         "--bbox-format",
         choices=("cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"),
@@ -37,11 +38,13 @@ def _parse_args(argv):
         help="Skip COCOeval and only validate/convert predictions (no pycocotools required).",
     )
     parser.add_argument(
+        "-r",
         "--repair",
         action="store_true",
         help="Explicitly repair/clamp legacy prediction values and record every repair (default: strict rejection).",
     )
     parser.add_argument(
+        "-n",
         "--max-images",
         type=int,
         default=None,
@@ -57,7 +60,7 @@ def _parse_args(argv):
         action="store_true",
         help="Treat class_id in predictions as COCO category_id when --classes is provided.",
     )
-    parser.add_argument("--output", default="reports/coco_eval.json", help="Where to write evaluation JSON.")
+    parser.add_argument("-o", "--output", default="reports/coco_eval.json", help="Where to write evaluation JSON.")
     return parser.parse_args(argv)
 
 

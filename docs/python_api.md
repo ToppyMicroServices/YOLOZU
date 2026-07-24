@@ -12,10 +12,10 @@ the returned result.
 
 ```bash
 yolozu eval-coco \
-  --dataset /absolute/path/to/dataset \
-  --predictions /absolute/path/to/predictions.json \
+  -d /absolute/path/to/dataset \
+  -p /absolute/path/to/predictions.json \
   --dry-run \
-  --output reports/coco_eval.json
+  -o reports/coco_eval.json
 ```
 
 This validates, converts, and reports subset counts without installing
@@ -27,9 +27,9 @@ For real COCO metrics:
 ```bash
 python3 -m pip install 'yolozu[coco]'
 yolozu eval-coco \
-  --dataset /absolute/path/to/dataset \
-  --predictions /absolute/path/to/predictions.json \
-  --output reports/coco_eval.json
+  -d /absolute/path/to/dataset \
+  -p /absolute/path/to/predictions.json \
+  -o reports/coco_eval.json
 ```
 
 Evaluation is fail-closed by default. Legacy range coercion is available only
@@ -37,11 +37,11 @@ through `--repair`, and every clamp or migration is listed in `warnings`:
 
 ```bash
 yolozu eval-coco \
-  --dataset /absolute/path/to/dataset \
-  --predictions /absolute/path/to/legacy_predictions.json \
+  -d /absolute/path/to/dataset \
+  -p /absolute/path/to/legacy_predictions.json \
   --dry-run \
-  --repair \
-  --output reports/repaired_dry_run.json
+  -r \
+  -o reports/repaired_dry_run.json
 ```
 
 ## In-process evaluation

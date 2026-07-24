@@ -141,7 +141,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 Report handoff:
 
 ```bash
-yolozu eval-coco --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+yolozu eval-coco -d /path/to/coco-yolo -p /path/to/predictions.json -o reports/external_eval.json
 python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json > reports/external_parity.json
 ```
 

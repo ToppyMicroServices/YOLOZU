@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the typed `yolozu.api` in-process validation and COCO evaluation surface with packaged `py.typed` metadata.
 
 ### Changed
-- Make `eval-coco` fail closed by default, with explicit `--repair` warnings and structured success/failure reports.
+- Make `eval-coco` fail closed by default, add concise path/repair aliases, and emit structured success/failure reports.
 
 ### Fixed
 - Evaluate bounded dataset subsets without misclassifying known unselected prediction images as unknown.

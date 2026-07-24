@@ -56,7 +56,7 @@ or repo-only helpers, not for real \cmd{yolozu} commands.
 \cmd{yolozu demo pose} & Produce a 6DoF pose overlay. & \cmd{yolozu demo pose --backend aruco} & \path{demo_output/pose/} & No \\
 \cmd{yolozu demo depth} & Produce a monocular depth visualization. & \cmd{yolozu demo depth} & \path{demo_output/depth/} & No \\
 \cmd{yolozu validate predictions} & Validate a predictions artifact before scoring. & \cmd{yolozu validate predictions --help} & validation result & No \\
-\cmd{yolozu eval-coco} & Strictly validate and score detection predictions. & \cmd{yolozu eval-coco --help} & status and metrics JSON & No \\
+\cmd{yolozu eval-coco} & Strictly validate and score detection predictions. & \cmd{yolozu eval-coco -d <dataset> -p <predictions> --dry-run} & status and metrics JSON & No \\
 \cmd{yolozu benchmark} & Compare benchmark/parity lanes under pinned settings. & \cmd{yolozu benchmark --help} & benchmark report JSON & No \\
 \cmd{yolozu parity} & Compare two predictions artifacts for drift. & \cmd{yolozu parity --help} & parity JSON & No \\
 \cmd{yolozu train} & Run config-driven training or external training wrappers. & \cmd{yolozu train <train_contract.yaml> --help} & run bundle under \path{runs/} & No \\
