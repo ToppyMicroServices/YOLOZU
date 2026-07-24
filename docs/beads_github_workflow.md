@@ -5,9 +5,11 @@
 
 ## 確認済みのcommand surface
 
-このrepoでサポートする Beads 1.1.0 CLI は `bd export` と `bd import` を
-提供します。そのため、共有にはexportしたJSONL snapshotと
-`beads-sync` branch上の通常のgit操作を使います。
+このrepoでサポートする Beads 1.1.0 CLI のうち、issue stateの共有には
+`bd export` と `bd import` を使います。issueの作成、更新、参照には
+`bd create`、`bd update`、`bd list` などの通常のsubcommandも使います。
+共有にはexportしたJSONL snapshotと `beads-sync` branch上の通常のgit操作を
+使います。
 
 ローカルのBeads databaseが作業中のlive storeです。git管理する
 `.beads/issues.jsonl` はissue単位の交換用snapshotであり、database全体の

@@ -59,6 +59,121 @@ class BeadsHelperContractTests(unittest.TestCase):
                 for command in unsupported:
                     self.assertNotIn(command, text)
 
+    def test_runpod_refresh_imports_remote_snapshot_with_stub_bd(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            base = Path(tempdir)
+            remote = base / "remote.git"
+            publisher = base / "publisher"
+            client = base / "client"
+
+            run(["git", "init", "--bare", str(remote)], cwd=base)
+            run(["git", "init", "-b", "main", str(publisher)], cwd=base)
+            self._configure_git(publisher)
+
+            shutil.copy2(ROOT_HELPER, publisher / "refresh_beads_sync.sh")
+            (publisher / "deploy" / "runpod").mkdir(parents=True)
+            shutil.copy2(
+                RUNPOD_HELPER,
+                publisher / "deploy" / "runpod" / "refresh_beads_sync.sh",
+            )
+            (publisher / "README.md").write_text(
+                "temporary workflow fixture\n",
+                encoding="utf-8",
+            )
+            run(["git", "add", "."], cwd=publisher)
+            run(["git", "commit", "-m", "initial fixture"], cwd=publisher)
+            run(["git", "remote", "add", "origin", str(remote)], cwd=publisher)
+            run(["git", "push", "-u", "origin", "main"], cwd=publisher)
+
+            expected_snapshot = '{"id":"T37-stub","title":"stub issue"}\n'
+            run(["git", "switch", "-c", "beads-sync"], cwd=publisher)
+            (publisher / ".beads").mkdir()
+            (publisher / ".beads" / "issues.jsonl").write_text(
+                expected_snapshot,
+                encoding="utf-8",
+            )
+            run(["git", "add", ".beads/issues.jsonl"], cwd=publisher)
+            run(["git", "commit", "-m", "add snapshot fixture"], cwd=publisher)
+            run(["git", "push", "-u", "origin", "beads-sync"], cwd=publisher)
+
+            run(
+                [
+                    "git",
+                    "clone",
+                    "--single-branch",
+                    "--branch",
+                    "main",
+                    str(remote),
+                    str(client),
+                ],
+                cwd=base,
+            )
+            self._configure_git(client)
+
+            capture = base / "imported.jsonl"
+            stub_bd = base / "bd-stub"
+            stub_bd.write_text(
+                """#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  import)
+    if [[ "$#" -ne 3 || "$3" != "--json" ]]; then
+      echo "unexpected bd import arguments: $*" >&2
+      exit 64
+    fi
+    cp "$2" "${BD_IMPORT_CAPTURE}"
+    printf '{"created":1}\\n'
+    ;;
+  list)
+    [[ "$#" -eq 1 ]] || exit 64
+    printf 'T37-stub stub issue\\n'
+    ;;
+  *)
+    echo "unexpected bd arguments: $*" >&2
+    exit 64
+    ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            stub_bd.chmod(0o755)
+            env = dict(os.environ)
+            env["BD_BIN"] = str(stub_bd)
+            env["BD_IMPORT_CAPTURE"] = str(capture)
+
+            proc = run(
+                [
+                    "bash",
+                    str(client / "deploy" / "runpod" / "refresh_beads_sync.sh"),
+                ],
+                cwd=base,
+                env=env,
+            )
+
+            self.assertEqual(capture.read_text(encoding="utf-8"), expected_snapshot)
+            self.assertIn('{"created":1}', proc.stdout)
+            self.assertIn("refreshed local bd database", proc.stdout)
+            self.assertFalse((client / ".beads" / "issues.jsonl").exists())
+            branch = run(
+                ["git", "branch", "--show-current"],
+                cwd=client,
+            ).stdout.strip()
+            self.assertEqual(branch, "main")
+            run(
+                [
+                    "git",
+                    "show-ref",
+                    "--verify",
+                    "refs/remotes/origin/beads-sync",
+                ],
+                cwd=client,
+            )
+
+    @staticmethod
+    def _configure_git(repo: Path) -> None:
+        run(["git", "config", "user.email", "test@example.com"], cwd=repo)
+        run(["git", "config", "user.name", "Workflow Test"], cwd=repo)
+
 
 @unittest.skipUnless(shutil.which("bd"), "bd is required for the integration test")
 class BeadsExportImportIntegrationTests(unittest.TestCase):
