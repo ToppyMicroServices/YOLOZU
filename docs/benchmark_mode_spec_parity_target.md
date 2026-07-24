@@ -330,8 +330,9 @@ Recommended behavior:
 Task-specific behavior should also be explicit:
 
 - real backend execution is detect-first for inference-backed runs
-- `classification` and `obb` are allowed as artifact-backed real eval paths for `torch` / `onnx` / `engine` / `torchscript` / `openvino`, with parity artifacts still explicit placeholders
-- `segmentation`, `keypoints`, `depth`, and `pose6d` are allowed as artifact-backed real eval/parity paths for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
+- `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`
+  are allowed as artifact-backed real eval/parity paths for `torch`, `onnx`,
+  `engine`, `torchscript`, and `openvino`
 - `depth` and `pose6d` should stay clearly marked as YOLOZU-native extensions
 
 The shipped classification/OBB artifact input interface contracts fail closed
@@ -343,7 +344,10 @@ requires unique image ids, in-range integer class ids once a vocabulary is
 resolved, finite normalized geometry, and finite confidence scores in `[0,1]`;
 empty per-image detection lists remain valid. Classification/OBB report,
 artifact, and export-settings writers emit strict JSON without non-standard
-non-finite numeric tokens.
+non-finite numeric tokens. Their parity artifacts compare normalized backend
+artifacts directly, expose task-specific difference metrics and thresholds,
+and retain source SHA-256 plus run provenance without claiming backend
+execution.
 
 ## 10. Mapping to Existing YOLOZU Tools
 

@@ -32,8 +32,8 @@ This matrix describes benchmark artifacts, not every standalone exporter utility
 | --- | --- | --- | --- |
 | `detect` | bbox_map | mainstream | real backend eval with auto or dataset_pass_wall_time when a supported runtime and artifact are available; explicit artifact_eval is rejected before writes |
 | `segmentation` | mask_map | mainstream | artifact-backed real eval/parity for real backend formats |
-| `classification` | topk_accuracy | mainstream | artifact-backed real eval with unique sample ids, finite class-aligned score vectors, and validated optional ordered class vocabularies |
-| `obb` | obb_map | mainstream | artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, valid empty detection lists, confidence-ranked per-class rotated-IoU AP, and separately averaged recall |
+| `classification` | topk_accuracy | mainstream | artifact-backed real eval/parity with unique sample ids, finite class-aligned score vectors, validated optional ordered class vocabularies, score-difference thresholds, and top-k agreement diagnostics |
+| `obb` | obb_map | mainstream | artifact-backed real eval/parity with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, valid empty detection lists, confidence-ranked per-class rotated-IoU AP, separately averaged recall, and rotated-IoU/score parity diagnostics |
 | `keypoints` | oks_map | mainstream | artifact-backed real eval/parity for real backend formats |
 | `depth` | depth_error | yolozu-native | artifact-backed real eval/parity for real backend formats |
 | `pose6d` | pose6d_error | yolozu-native | artifact-backed real eval/parity for real backend formats |
@@ -58,36 +58,36 @@ Within a valid task/source lane, default backend flag values are always accepted
 | --- | --- | --- | --- | --- | --- |
 | `torch` | `detect` | real or skipped | real or skipped | real when comparable | Uses export_predictions_ultralytics.py plus eval_suite.py. |
 | `torch` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
-| `torch` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
-| `torch` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference. |
+| `torch` | `classification` | artifact-real | real | real when comparable | Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference. |
+| `torch` | `obb` | artifact-real | real | real when comparable | Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference. |
 | `torch` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `torch` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `torch` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
 | `onnx` | `detect` | real or skipped | real or skipped | real when comparable | Requires ONNX Runtime and an .onnx artifact or --onnx-model. |
 | `onnx` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
-| `onnx` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
-| `onnx` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference. |
+| `onnx` | `classification` | artifact-real | real | real when comparable | Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference. |
+| `onnx` | `obb` | artifact-real | real | real when comparable | Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference. |
 | `onnx` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `onnx` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `onnx` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
 | `engine` | `detect` | real or skipped | real or skipped | real when comparable | Requires Linux, GPU, TensorRT/CUDA bindings, and .engine/.plan. |
 | `engine` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
-| `engine` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
-| `engine` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference. |
+| `engine` | `classification` | artifact-real | real | real when comparable | Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference. |
+| `engine` | `obb` | artifact-real | real | real when comparable | Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference. |
 | `engine` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `engine` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `engine` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
 | `torchscript` | `detect` | real or skipped | real or skipped | real when comparable | Uses local PyTorch and the declared combined-output decode path in export_predictions_torchscript.py. |
 | `torchscript` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
-| `torchscript` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
-| `torchscript` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference. |
+| `torchscript` | `classification` | artifact-real | real | real when comparable | Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference. |
+| `torchscript` | `obb` | artifact-real | real | real when comparable | Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference. |
 | `torchscript` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `torchscript` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `torchscript` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |
 | `openvino` | `detect` | real or skipped | real or skipped | real when comparable | Requires OpenVINO runtime and an OpenVINO IR .xml artifact; reports missing runtime/artifact as skipped. |
 | `openvino` | `segmentation` | artifact-real | real | real when comparable | Consumes backend mask-prediction artifacts. |
-| `openvino` | `classification` | artifact-real | real | skipped | Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference. |
-| `openvino` | `obb` | artifact-real | real | skipped | Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference. |
+| `openvino` | `classification` | artifact-real | real | real when comparable | Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference. |
+| `openvino` | `obb` | artifact-real | real | real when comparable | Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference. |
 | `openvino` | `keypoints` | artifact-real | real | real when comparable | Consumes backend predictions artifacts. |
 | `openvino` | `depth` | artifact-real | real | real when comparable | Consumes backend depth artifacts. |
 | `openvino` | `pose6d` | artifact-real | real | real when comparable | Consumes backend pose predictions artifacts. |

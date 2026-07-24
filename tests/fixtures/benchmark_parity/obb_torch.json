@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "ship"
+  ],
+  "predictions": [
+    {
+      "id": "image-001",
+      "detections": [
+        {
+          "class_id": 0,
+          "score": 0.99,
+          "obb": {
+            "cx": 0.5,
+            "cy": 0.5,
+            "w": 0.4,
+            "h": 0.2,
+            "angle_deg": 30.0
+          }
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "fixture_kind": "deterministic_artifact_interface_contract",
+    "backend_slot": "torch",
+    "backend_inference_executed": false
+  }
+}

@@ -28,8 +28,8 @@ Today the command provides:
 - artifact-backed keypoints evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
 - artifact-backed depth evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific depth-map artifacts are available.
 - artifact-backed pose6d evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific predictions artifacts are available.
-- artifact-backed classification evaluation for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific score artifacts are available.
-- artifact-backed OBB evaluation for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific rotated-box artifacts are available.
+- artifact-backed classification evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific score artifacts are available.
+- artifact-backed OBB evaluation/parity for `torch`, `onnx`, `engine`, `torchscript`, and `openvino` when backend-specific rotated-box artifacts are available.
 
 It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` are explicit unsupported/skipped benchmark
@@ -45,8 +45,8 @@ not current implementation priorities:
   `paddle` remain planned rather than supported; `openvino` detect remains
   conditional and reports skipped when the runtime or IR artifact is
   unavailable
-- parity attachment remains incomplete for artifact-backed classification and
-  OBB lanes
+- broader runtime-backed format coverage while preserving the shipped
+  artifact parity provenance
 - additional task/source/format rules would be needed with any future
   backend-specific knobs
 
@@ -80,7 +80,8 @@ best next steps are:
   synced whenever format/task semantics change
 - keep conditional `openvino` reporting honest through the same canonical CLI
   used for the other real backend lanes
-- expand real parity artifacts beyond the current `torch`-anchored comparisons
+- preserve input checksums and comparison thresholds when expanding
+  artifact-backed parity protocols
 - keep format-specific flag validation strict so unsupported combinations fail
   early
 
@@ -245,6 +246,7 @@ yolozu benchmark \
   --data data/classification_labels.json \
   --format torch,onnx \
   --latency-source artifact_eval \
+  --classification-parity-score-atol 1e-4 \
   --output reports/benchmark_classification_report.json
 ```
 
@@ -258,6 +260,8 @@ yolozu benchmark \
   --data data/obb_labels.json \
   --format torch,onnx \
   --latency-source artifact_eval \
+  --obb-parity-iou-thresh 0.99 \
+  --obb-parity-score-atol 1e-4 \
   --output reports/benchmark_obb_report.json
 ```
 
@@ -300,9 +304,32 @@ The OBB input interface contract is:
   remain valid.
 
 The normalized predictions artifacts, eval reports, export settings, top-level
-benchmark report, optional history JSONL, and placeholder parity artifacts are
+benchmark report, optional history JSONL, and parity artifacts are
 standards-compliant JSON; they never emit `NaN`, `Infinity`, or `-Infinity`
 numeric tokens.
+
+Classification eval reports expose `top1`, `top5`, and `accuracy` together
+with `metrics.metric_provenance`. Classification parity aligns exact sample
+ids and ordered class-score vectors, then records `score_abs_max`,
+`score_abs_mean`, `top1_agreement`, and `top5_set_agreement`. The verdict
+requires identical sample-id sets, identical top-1 predictions and top-5 sets,
+and `score_abs_max <= --classification-parity-score-atol`. A near-tied score
+change that flips top-1 therefore remains visible as drift even when every
+numeric difference is within tolerance.
+
+OBB parity aligns image ids, canonicalizes detections by class, geometry, and
+score, then greedily selects all same-class candidate pairs in descending
+rotated-IoU order. The verdict is invariant to detection input order. It
+records matched/missing/extra counts,
+`rotated_iou_min`, `rotated_iou_mean`, score differences, and center/size/angle
+diagnostics. The default verdict requires no missing or extra detections,
+rotated IoU at least `--obb-parity-iou-thresh`, and matched confidence
+differences no larger than `--obb-parity-score-atol`.
+
+Both task-specific parity artifacts record the reference/candidate normalized
+artifact SHA-256 values, original source paths and SHA-256 values, thresholds,
+comparison semantics, and run metadata. This is artifact-comparison evidence;
+it is not evidence that YOLOZU executed the named backend runtimes.
 
 ### OBB metric definitions
 
@@ -381,6 +408,9 @@ YOLOZU additions for reproducibility and CI:
 - `--max-images`
 - `--latency-source`
 - `--parity-reference-backend`
+- `--classification-parity-score-atol`
+- `--obb-parity-iou-thresh`
+- `--obb-parity-score-atol`
 - `--depth-mask`
 - `--depth-align`
 - `--depth-parity-mae-atol`
@@ -469,20 +499,22 @@ Each run writes:
 
 When `torch`, `onnx`, `engine`, `torchscript`, or conditional `openvino`
 completes a shipped real lane, the benchmark writes real predictions/eval
-artifacts or consumes real backend artifacts. Comparable detect,
-segmentation, keypoints, depth, and pose6d results can attach real parity
-artifacts against the chosen reference backend (preferring `torch` when
-available). Classification and OBB currently write explicit parity
-placeholders. Missing backends/artifacts and `--dry-run` also write non-real
-artifacts instead of pretending inference or comparison ran.
+artifacts or consumes real backend artifacts. Comparable detect and
+artifact-backed classification, OBB, segmentation, keypoints, depth, and
+pose6d results can attach real parity artifacts against the chosen reference
+backend (preferring `torch` when available). Missing backends/artifacts and
+`--dry-run` also write non-real artifacts instead of pretending inference or
+comparison ran.
 
 For `--task classification` and `--task obb`, the real lane is artifact-backed:
 
 - the backend-specific score or rotated-box artifact is normalized under
   `predictions_<format>.json`
-- `eval_<format>.json` contains real task metrics
-- `parity_<format>.json` remains an explicit placeholder until those two task
-  lanes gain shipped parity attachment
+- `eval_<format>.json` contains real task metrics plus source checksums and
+  metric provenance
+- `parity_<format>.json` is a real task-specific artifact comparison when at
+  least two eligible format artifacts are present; the selected reference
+  artifact records the compared candidate list
 
 For `--task segmentation`, the real lane is artifact-backed rather than inference-backed:
 
@@ -586,8 +618,8 @@ For P1 benchmark DoD checks, read `support_status` instead of guessing from
 - `real`: YOLOZU ran a real backend/eval path for that requested format.
 - `artifact-backed`: YOLOZU consumed backend-specific artifacts and ran real
   evaluation without claiming it executed backend inference. Comparable
-  segmentation, keypoints, depth, and pose6d lanes can also attach real parity;
-  classification and OBB currently mark parity as skipped.
+  classification, OBB, segmentation, keypoints, depth, and pose6d lanes can
+  also attach real parity.
 - `skipped`: the path was dry-run-only, unsupported, missing a runtime, missing
   an artifact, or otherwise did not produce real benchmark evidence.
 
@@ -651,8 +683,8 @@ following canonical tasks and aliases:
 | --- | --- | --- | --- | --- |
 | `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Default benchmark path; OpenVINO remains conditional on external runtime and IR availability. |
 | `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
-| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique sample ids, finite equal-length score vectors, and ordered class-list consistency before reporting top1/top5/accuracy. |
-| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique image ids, finite normalized geometry, and `[0,1]` scores; empty detection lists remain valid. It reports confidence-ranked per-class rotated-IoU AP with 101-point interpolation and separately averaged recall. |
+| `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique sample ids, finite equal-length score vectors, and ordered class-list consistency before reporting top1/top5/accuracy and aligned-score parity diagnostics. |
+| `obb` | `obb` | `obb_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique image ids, finite normalized geometry, and `[0,1]` scores; empty detection lists remain valid. It reports confidence-ranked per-class rotated-IoU AP with 101-point interpolation, separately averaged recall, and rotated-IoU/score parity diagnostics. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
@@ -676,9 +708,8 @@ The per-format `execution_semantics` block now complements that task matrix:
 For `classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`,
 this is especially important: the benchmark report records explicit metric
 expectations and artifact-backed real evaluation semantics instead of leaving
-those tasks as vague future work. Segmentation, keypoints, depth, and pose6d
-also attach parity when comparable; classification and OBB explicitly mark
-parity as skipped.
+those tasks as vague future work. All six artifact-backed tasks attach parity
+when comparable.
 
 ## Current format coverage
 

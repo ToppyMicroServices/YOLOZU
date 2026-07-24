@@ -59,6 +59,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--depth-align", proc.stdout)
         self.assertIn("--segmentation-parity-mismatch-atol", proc.stdout)
         self.assertIn("--parity-reference-backend", proc.stdout)
+        self.assertIn("--classification-parity-score-atol", proc.stdout)
+        self.assertIn("--obb-parity-iou-thresh", proc.stdout)
+        self.assertIn("--obb-parity-score-atol", proc.stdout)
         self.assertIn("artifact_eval", proc.stdout)
         self.assertIn("--keypoints-parity-iou-thresh", proc.stdout)
         self.assertIn("--keypoints-parity-kp-atol", proc.stdout)
@@ -207,24 +210,21 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(result["support_reason"], "model_artifact_required")
             self.assertEqual(result["artifact_status"]["predictions"], "real")
             self.assertEqual(result["artifact_status"]["eval"], "real")
-            self.assertEqual(result["artifact_status"]["parity"], "skipped")
+            self.assertEqual(result["artifact_status"]["parity"], "real_when_comparable")
             self.assertIn("available", result["runtime"])
             self.assertIn("predictions", result["artifacts"])
             self.assertIn("eval", result["artifacts"])
             self.assertIn("parity", result["artifacts"])
 
     def test_artifact_parity_expectations_match_shipped_task_support(self):
-        for task_label in ("classification", "obb"):
-            with self.subTest(task=task_label):
-                semantics = benchmark_mode._task_execution_semantics(
-                    task_label,
-                    fmt="torch",
-                    benchmark_source="artifact_eval",
-                    dry_run=False,
-                )
-                self.assertEqual(semantics["artifact_expectation"]["parity"], "skipped")
-
-        for task_label in ("segmentation", "keypoints", "depth", "pose6d"):
+        for task_label in (
+            "classification",
+            "obb",
+            "segmentation",
+            "keypoints",
+            "depth",
+            "pose6d",
+        ):
             with self.subTest(task=task_label):
                 semantics = benchmark_mode._task_execution_semantics(
                     task_label,
@@ -233,6 +233,38 @@ class TestBenchmarkModelTool(TestCase):
                     dry_run=False,
                 )
                 self.assertEqual(semantics["artifact_expectation"]["parity"], "real_when_comparable")
+
+    def test_classification_and_obb_parity_thresholds_fail_before_writes(self):
+        cases = (
+            (
+                "classification",
+                {"classification_parity_score_atol": -1.0},
+                "--classification-parity-score-atol",
+            ),
+            (
+                "obb",
+                {"obb_parity_iou_thresh": 1.01},
+                "--obb-parity-iou-thresh",
+            ),
+            (
+                "obb",
+                {"obb_parity_score_atol": float("inf")},
+                "--obb-parity-score-atol",
+            ),
+        )
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for index, (task, overrides, expected) in enumerate(cases):
+                report_path = root / f"report_{index}.json"
+                args = self._args(
+                    task=task,
+                    output=str(report_path),
+                    **overrides,
+                )
+                with self.subTest(task=task, override=overrides):
+                    with self.assertRaisesRegex(ValueError, expected):
+                        benchmark_mode.run_benchmark_mode(args)
+                    self.assertFalse(report_path.exists())
 
     def test_unwired_artifact_task_report_notes_are_unsupported_not_synthetic(self):
         with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
@@ -511,7 +543,8 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(by_format["opencv_dnn"]["execution_mode"], "unsupported_skipped")
             results = {item["format"]: item for item in payload.get("results") or []}
             self.assertEqual(results["torch"]["status"], "ok")
-            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "partial")
+            self.assertEqual(results["onnx"]["skip_reason"], "parity_drift")
             self.assertEqual(results["opencv_dnn"]["status"], "skipped")
             self.assertEqual(results["opencv_dnn"]["skip_reason"], "benchmark_format_not_wired")
             self.assertEqual(results["torch"]["support_status"], "artifact-backed")
@@ -533,10 +566,40 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(results["torch"]["eval_metrics"]["top1"], 1.0)
             self.assertEqual(results["onnx"]["eval_metrics"]["top1"], 2 / 3)
             self.assertEqual(results["onnx"]["eval_metrics"]["top5"], 1.0)
+            self.assertEqual(results["torch"]["artifact_status"]["parity"], "real_when_comparable")
+            self.assertEqual(results["onnx"]["artifact_status"]["parity"], "real_when_comparable")
+            self.assertEqual(payload["parity_summary"]["reference_backend"], "torch")
+            self.assertEqual(payload["parity_summary"]["comparisons"], 1)
+            self.assertEqual(payload["parity_summary"]["drift"], 1)
+            torch_parity = json.loads(
+                Path(results["torch"]["artifacts"]["parity"]).read_text(encoding="utf-8")
+            )
+            onnx_parity = json.loads(
+                Path(results["onnx"]["artifacts"]["parity"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(torch_parity["kind"], "benchmark_classification_parity_reference")
+            self.assertEqual(onnx_parity["kind"], "benchmark_classification_parity_report")
+            self.assertEqual(onnx_parity["status"], "drift")
+            self.assertGreater(onnx_parity["summary"]["score_abs_max"], 0.0)
+            self.assertEqual(
+                onnx_parity["provenance"]["execution_scope"],
+                "artifact_comparison_only_no_backend_inference",
+            )
+            self.assertIsNotNone(onnx_parity["provenance"]["reference"]["source_sha256"])
+            self.assertIsNotNone(onnx_parity["provenance"]["candidate"]["source_sha256"])
             self.assertEqual(
                 json.loads(Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8"))["kind"],
                 "benchmark_classification_eval_report",
             )
+            classification_eval = json.loads(
+                Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                classification_eval["metrics"]["metric_provenance"]["accuracy"],
+                "alias_of_top1",
+            )
+            self.assertIsNotNone(classification_eval["provenance"]["labels"]["sha256"])
+            self.assertIsNotNone(classification_eval["provenance"]["predictions"]["sha256"])
 
     def test_obb_task_supports_real_artifact_eval(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -654,7 +717,8 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(by_format["opencv_dnn"]["execution_mode"], "unsupported_skipped")
             results = {item["format"]: item for item in payload.get("results") or []}
             self.assertEqual(results["torch"]["status"], "ok")
-            self.assertEqual(results["onnx"]["status"], "ok")
+            self.assertEqual(results["onnx"]["status"], "partial")
+            self.assertEqual(results["onnx"]["skip_reason"], "parity_drift")
             self.assertEqual(results["opencv_dnn"]["status"], "skipped")
             self.assertEqual(results["opencv_dnn"]["skip_reason"], "benchmark_format_not_wired")
             self.assertEqual(results["torch"]["support_status"], "artifact-backed")
@@ -663,10 +727,268 @@ class TestBenchmarkModelTool(TestCase):
             self.assertEqual(payload["support_summary"]["counts"]["skipped"], 1)
             self.assertEqual(results["torch"]["eval_metrics"]["obb_mAP50"], 1.0)
             self.assertGreater(results["onnx"]["eval_metrics"]["obb_mAP50"], 0.0)
+            self.assertEqual(results["torch"]["artifact_status"]["parity"], "real_when_comparable")
+            self.assertEqual(results["onnx"]["artifact_status"]["parity"], "real_when_comparable")
+            self.assertEqual(payload["parity_summary"]["reference_backend"], "torch")
+            self.assertEqual(payload["parity_summary"]["comparisons"], 1)
+            self.assertEqual(payload["parity_summary"]["drift"], 1)
+            torch_parity = json.loads(
+                Path(results["torch"]["artifacts"]["parity"]).read_text(encoding="utf-8")
+            )
+            onnx_parity = json.loads(
+                Path(results["onnx"]["artifacts"]["parity"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(torch_parity["kind"], "benchmark_obb_parity_reference")
+            self.assertEqual(onnx_parity["kind"], "benchmark_obb_parity_report")
+            self.assertEqual(onnx_parity["status"], "drift")
+            self.assertGreater(onnx_parity["summary"]["missing_candidate"], 0)
+            self.assertEqual(
+                onnx_parity["report"]["comparison_provenance"]["rotated_iou"],
+                "convex_polygon_clipping_intersection_over_union",
+            )
+            self.assertIsNotNone(onnx_parity["provenance"]["reference"]["source_sha256"])
+            self.assertIsNotNone(onnx_parity["provenance"]["candidate"]["source_sha256"])
             self.assertEqual(
                 json.loads(Path(results["torch"]["artifacts"]["eval"]).read_text(encoding="utf-8"))["kind"],
                 "benchmark_obb_eval_report",
             )
+
+    def test_repo_fixtures_produce_ok_classification_and_obb_parity(self):
+        fixture_root = self.repo_root / "tests" / "fixtures" / "benchmark_parity"
+        cases = {
+            "classification": {
+                "labels": fixture_root / "classification_labels.json",
+                "torch": fixture_root / "classification_torch.json",
+                "onnx": fixture_root / "classification_onnx.json",
+                "candidate_kind": "benchmark_classification_parity_report",
+                "metric_key": "score_abs_max",
+            },
+            "obb": {
+                "labels": fixture_root / "obb_labels.json",
+                "torch": fixture_root / "obb_torch.json",
+                "onnx": fixture_root / "obb_onnx.json",
+                "candidate_kind": "benchmark_obb_parity_report",
+                "metric_key": "rotated_iou_min",
+            },
+        }
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            output_root = Path(td)
+            for task, case in cases.items():
+                with self.subTest(task=task):
+                    task_root = output_root / task
+                    report_path = task_root / "benchmark_report.json"
+                    proc = subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "yolozu",
+                            "benchmark",
+                            "--task",
+                            task,
+                            "--model",
+                            str(case["torch"]),
+                            "--onnx-model",
+                            str(case["onnx"]),
+                            "--data",
+                            str(case["labels"]),
+                            "--format",
+                            "torch,onnx",
+                            "--latency-source",
+                            "artifact_eval",
+                            "--predictions-output",
+                            str(task_root / "artifacts"),
+                            "--eval-output",
+                            str(task_root / "artifacts"),
+                            "--parity-output",
+                            str(task_root / "artifacts"),
+                            "--output",
+                            str(report_path),
+                            "--strict",
+                        ],
+                        cwd=str(self.repo_root),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        check=False,
+                        text=True,
+                    )
+                    if proc.returncode != 0:
+                        self.fail(
+                            f"{task} fixture parity failed:\n{proc.stdout}\n{proc.stderr}"
+                        )
+
+                    report = json.loads(report_path.read_text(encoding="utf-8"))
+                    results = {item["format"]: item for item in report["results"]}
+                    self.assertEqual(report["status"], "ok")
+                    self.assertEqual(report["parity_summary"]["reference_backend"], "torch")
+                    self.assertEqual(report["parity_summary"]["comparisons"], 1)
+                    self.assertEqual(report["parity_summary"]["ok"], 1)
+                    self.assertEqual(report["parity_summary"]["drift"], 0)
+                    self.assertEqual(results["torch"]["status"], "ok")
+                    self.assertEqual(results["onnx"]["status"], "ok")
+                    reference = json.loads(
+                        Path(results["torch"]["artifacts"]["parity"]).read_text(
+                            encoding="utf-8"
+                        )
+                    )
+                    candidate = json.loads(
+                        Path(results["onnx"]["artifacts"]["parity"]).read_text(
+                            encoding="utf-8"
+                        )
+                    )
+                    self.assertEqual(
+                        reference["kind"],
+                        f"benchmark_{task}_parity_reference",
+                    )
+                    self.assertEqual(candidate["kind"], case["candidate_kind"])
+                    self.assertEqual(candidate["status"], "ok")
+                    self.assertTrue(candidate["summary"]["ok"])
+                    self.assertIn(case["metric_key"], candidate["summary"])
+                    self.assertIn("thresholds", candidate["summary"])
+                    export_settings = json.loads(
+                        Path(results["torch"]["artifacts"]["export_settings"]).read_text(
+                            encoding="utf-8"
+                        )
+                    )
+                    self.assertEqual(
+                        export_settings["parity_settings"]["reference_backend"],
+                        "auto",
+                    )
+                    if task == "classification":
+                        self.assertTrue(
+                            export_settings["parity_settings"]["ranking_must_match"]
+                        )
+                        self.assertEqual(
+                            export_settings["parity_settings"]["score_atol"],
+                            1e-4,
+                        )
+                    else:
+                        self.assertEqual(
+                            export_settings["parity_settings"]["rotated_iou_thresh"],
+                            0.99,
+                        )
+                        self.assertEqual(
+                            export_settings["parity_settings"]["score_atol"],
+                            1e-4,
+                        )
+                    self.assertIsNotNone(
+                        candidate["provenance"]["reference"]["source_sha256"]
+                    )
+                    self.assertIsNotNone(
+                        candidate["provenance"]["candidate"]["source_sha256"]
+                    )
+
+    def test_classification_parity_rejects_top1_flip_within_score_tolerance(self):
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            reference = root / "reference.json"
+            candidate = root / "candidate.json"
+            reference.write_text(
+                json.dumps(
+                    {
+                        "classes": ["a", "b"],
+                        "predictions": [
+                            {"id": "sample", "scores": [0.50002, 0.49998]}
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            candidate.write_text(
+                json.dumps(
+                    {
+                        "classes": ["a", "b"],
+                        "predictions": [
+                            {"id": "sample", "scores": [0.49998, 0.50002]}
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = benchmark_mode._classification_parity_report(
+                reference_path=reference,
+                candidate_path=candidate,
+                score_atol=1e-4,
+            )
+
+        self.assertLessEqual(report["metrics"]["score_abs_max"], 1e-4)
+        self.assertEqual(report["metrics"]["top1_mismatches"], 1)
+        self.assertFalse(report["results"][0]["top1_agree"])
+        self.assertFalse(report["ok"])
+
+    def test_obb_parity_is_invariant_to_detection_input_order(self):
+        box_left = {
+            "cx": 0.45,
+            "cy": 0.5,
+            "w": 0.3,
+            "h": 0.2,
+            "angle_deg": 15.0,
+        }
+        box_right = {
+            "cx": 0.55,
+            "cy": 0.5,
+            "w": 0.3,
+            "h": 0.2,
+            "angle_deg": 15.0,
+        }
+        detections = [
+            {"class_id": 0, "score": 0.9, "obb": box_left},
+            {"class_id": 0, "score": 0.9, "obb": box_right},
+        ]
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            paths = {
+                "reference_forward": root / "reference_forward.json",
+                "reference_reverse": root / "reference_reverse.json",
+                "candidate_forward": root / "candidate_forward.json",
+                "candidate_reverse": root / "candidate_reverse.json",
+            }
+            for name, path in paths.items():
+                ordered = (
+                    list(reversed(detections))
+                    if name.endswith("reverse")
+                    else detections
+                )
+                path.write_text(
+                    json.dumps(
+                        {
+                            "classes": ["ship"],
+                            "predictions": [
+                                {"id": "image", "detections": ordered}
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+
+            forward = benchmark_mode._obb_parity_report(
+                reference_path=paths["reference_forward"],
+                candidate_path=paths["candidate_forward"],
+                iou_thresh=0.5,
+                score_atol=1e-4,
+            )
+            reordered_reports = [
+                benchmark_mode._obb_parity_report(
+                    reference_path=paths[reference_order],
+                    candidate_path=paths[candidate_order],
+                    iou_thresh=0.5,
+                    score_atol=1e-4,
+                )
+                for reference_order, candidate_order in (
+                    ("reference_reverse", "candidate_forward"),
+                    ("reference_forward", "candidate_reverse"),
+                    ("reference_reverse", "candidate_reverse"),
+                )
+            ]
+
+        self.assertTrue(forward["ok"])
+        for reordered in reordered_reports:
+            self.assertEqual(forward["metrics"], reordered["metrics"])
+            self.assertEqual(forward["results"], reordered["results"])
+        self.assertEqual(
+            forward["comparison_provenance"]["artifact_order"],
+            "detections_canonicalized_by_class_geometry_and_score",
+        )
 
     def test_obb_public_benchmark_ap_penalizes_early_false_positive(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -1971,6 +2293,9 @@ class TestBenchmarkModelTool(TestCase):
         self.assertIn("--openvino-model", proc.stdout)
         self.assertIn("--segmentation-parity-mismatch-atol", proc.stdout)
         self.assertIn("--parity-reference-backend", proc.stdout)
+        self.assertIn("--classification-parity-score-atol", proc.stdout)
+        self.assertIn("--obb-parity-iou-thresh", proc.stdout)
+        self.assertIn("--obb-parity-score-atol", proc.stdout)
         self.assertIn("--protocol", proc.stdout)
         self.assertIn("torchscript", proc.stdout)
         self.assertIn("openvino", proc.stdout)

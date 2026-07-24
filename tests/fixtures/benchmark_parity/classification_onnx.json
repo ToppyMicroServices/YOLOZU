@@ -1,0 +1,38 @@
+{
+  "classes": [
+    "cat",
+    "dog",
+    "bird"
+  ],
+  "predictions": [
+    {
+      "id": "image-001",
+      "scores": [
+        0.89995,
+        0.05003,
+        0.05002
+      ]
+    },
+    {
+      "id": "image-002",
+      "scores": [
+        0.10002,
+        0.79995,
+        0.10003
+      ]
+    },
+    {
+      "id": "image-003",
+      "scores": [
+        0.10001,
+        0.20002,
+        0.69997
+      ]
+    }
+  ],
+  "meta": {
+    "fixture_kind": "deterministic_artifact_interface_contract",
+    "backend_slot": "onnx",
+    "backend_inference_executed": false
+  }
+}
