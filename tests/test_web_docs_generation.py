@@ -185,6 +185,13 @@ class TestWebDocsGeneration(unittest.TestCase):
         self.assertNotIn("searchInput.value", plausible_block)
         self.assertNotIn("query:", plausible_block)
 
+    def test_search_normalization_and_links_are_deterministic_and_safe(self) -> None:
+        script = self._read("assets/docs.js")
+        self.assertIn(".toLowerCase()", script)
+        self.assertNotIn(".toLocaleLowerCase()", script)
+        self.assertIn('url.protocol !== "http:" && url.protocol !== "https:"', script)
+        self.assertIn("safeSearchHref(item.href)", script)
+
     def test_provenance_covers_all_generated_files_and_sources(self) -> None:
         provenance = json.loads(self._read("provenance.json"))
         generated = set(provenance["generated_files"])

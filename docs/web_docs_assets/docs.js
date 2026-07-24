@@ -7,7 +7,19 @@
   let searchIndex = [];
 
   function normalize(value) {
-    return String(value || "").toLocaleLowerCase().replace(/\s+/g, " ").trim();
+    return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  function safeSearchHref(value) {
+    const href = String(value || "").trim();
+    if (!href) return null;
+    try {
+      const url = new URL(href, window.location.href);
+      if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+      return href;
+    } catch {
+      return null;
+    }
   }
 
   function renderGlobalResults(query) {
@@ -16,12 +28,18 @@
     if (!query || searchIndex.length === 0) return;
 
     const matches = searchIndex
-      .filter((item) => normalize(item.search_text).includes(query))
+      .filter(
+        (item) =>
+          item &&
+          typeof item === "object" &&
+          normalize(item.search_text).includes(query) &&
+          safeSearchHref(item.href)
+      )
       .slice(0, 12);
     for (const item of matches) {
       const link = document.createElement("a");
       link.className = "search-result";
-      link.href = item.href;
+      link.href = safeSearchHref(item.href);
       link.textContent = item.title;
       const detail = document.createElement("small");
       detail.textContent = `${item.kind} · ${item.summary}`;
