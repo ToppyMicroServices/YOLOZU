@@ -30,7 +30,14 @@ _FLAG_RE = re.compile(r"--[A-Za-z0-9][A-Za-z0-9\-]*")
 _SHELL_PYTHON_DELEGATE_RE = re.compile(
     r'exec\s+python3\s+"\$\{REPO_ROOT\}/(?P<entrypoint>tools/[A-Za-z0-9_.\-/]+\.py)"\s+"\$@"'
 )
-_COMMAND_PREFIXES = ("yolozu", "python3 -m yolozu", "python -m yolozu", "bash scripts/", "python3 tools/")
+_COMMAND_PREFIXES = (
+    "yolozu-mcp",
+    "yolozu",
+    "python3 -m yolozu",
+    "python -m yolozu",
+    "bash scripts/",
+    "python3 tools/",
+)
 _EXTERNAL_TRAIN_SUBCOMMANDS = {
     "yolox": "train-yolox",
     "detectron2": "train-detectron2",
@@ -67,7 +74,7 @@ def _resolve(path_text: str) -> Path:
     return (repo_root / p).resolve()
 
 
-def _run(cmd: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProcess[str]:
+def _run(cmd: list[str], *, timeout: float = 30.0) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         cmd,
         cwd=str(repo_root),
@@ -210,6 +217,29 @@ def _audit_yolozu_command(line: str, *, python: str) -> dict[str, Any]:
     }
 
 
+def _audit_mcp_command(line: str, *, python: str) -> dict[str, Any]:
+    tokens = shlex.split(line)
+    probe = [
+        python,
+        "-m",
+        "yolozu.integrations.mcp_cli",
+        "--help",
+    ]
+    proc = _run(probe)
+    help_text = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    flags = _extract_flags(tokens)
+    help_flags = _extract_help_flags(help_text)
+    missing_flags = sorted(flag for flag in flags if flag not in help_flags)
+    return {
+        "line": line,
+        "kind": "yolozu-mcp",
+        "help_probe": probe,
+        "ok": proc.returncode == 0 and not missing_flags,
+        "error": None if proc.returncode == 0 else help_text[-1000:],
+        "missing_flags": missing_flags,
+    }
+
+
 def _shell_python_delegate(path: Path) -> Path | None:
     try:
         source = path.read_text(encoding="utf-8")
@@ -295,7 +325,10 @@ def _scan_docs(doc_paths: list[Path], *, python: str, manifest: dict[str, Any]) 
         for line in _shell_lines_from_markdown(path):
             if not _interesting_command(line):
                 continue
-            if line.startswith(("yolozu", "python3 -m yolozu", "python -m yolozu")):
+            tokens = shlex.split(line)
+            if tokens and tokens[0] == "yolozu-mcp":
+                item = _audit_mcp_command(line, python=python)
+            elif line.startswith(("yolozu", "python3 -m yolozu", "python -m yolozu")):
                 item = _audit_yolozu_command(line, python=python)
             elif line.startswith("bash scripts/"):
                 item = _audit_script_command(line, python=python)

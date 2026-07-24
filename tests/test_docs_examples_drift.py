@@ -67,6 +67,41 @@ class TestDocsExamplesDrift(unittest.TestCase):
         self.assertFalse(payload.get("ok"))
         self.assertIn("--not-a-real-flag", json.dumps(payload))
 
+    def test_installed_mcp_commands_use_mcp_help(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "audit_docs_examples_drift.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            doc = Path(td) / "mcp.md"
+            doc.write_text(
+                "```bash\n"
+                "yolozu-mcp --print-tools --guaranteed --ids-only\n"
+                "yolozu-mcp --not-a-real-flag\n"
+                "```\n",
+                encoding="utf-8",
+            )
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--docs",
+                    str(doc),
+                    "--skip-manual",
+                    "--skip-manifest",
+                    "--json",
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(proc.returncode, 2)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["checked_examples"], 2)
+        self.assertEqual(len(payload["failures"]), 1)
+        self.assertEqual(payload["failures"][0]["kind"], "yolozu-mcp")
+        self.assertIn("--not-a-real-flag", payload["failures"][0]["missing_flags"])
+
     def test_dynamic_and_delegated_help_keep_unknown_flags_strict(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "audit_docs_examples_drift.py"
