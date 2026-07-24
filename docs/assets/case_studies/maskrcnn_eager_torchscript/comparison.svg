@@ -14,25 +14,25 @@
 <text x="76" y="166.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">0.8</text>
 <line x1="90" y1="105.0" x2="810" y2="105.0" stroke="#263449" stroke-width="1"/>
 <text x="76" y="110.0" text-anchor="end" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">1.0</text>
-<rect x="138.0" y="157.9" width="42" height="227.1" rx="5" fill="#38bdf8"/>
-<text x="159.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
-<rect x="180.0" y="157.9" width="42" height="227.1" rx="5" fill="#a78bfa"/>
-<text x="201.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
+<rect x="127.0" y="157.9" width="42" height="227.1" rx="5" fill="#38bdf8"/>
+<text x="136.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
+<rect x="191.0" y="157.9" width="42" height="227.1" rx="5" fill="#a78bfa"/>
+<text x="224.0" y="150.9" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.811139</text>
 <text x="180.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 50-95</text>
-<rect x="318.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
-<text x="339.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
-<rect x="360.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
-<text x="381.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="307.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
+<text x="316.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="371.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
+<text x="404.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
 <text x="360.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 50</text>
-<rect x="498.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
-<text x="519.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
-<rect x="540.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
-<text x="561.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="487.0" y="122.3" width="42" height="262.7" rx="5" fill="#38bdf8"/>
+<text x="496.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
+<rect x="551.0" y="122.3" width="42" height="262.7" rx="5" fill="#a78bfa"/>
+<text x="584.0" y="119.0" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.938119</text>
 <text x="540.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">mAP 75</text>
-<rect x="678.0" y="158.1" width="42" height="226.9" rx="5" fill="#38bdf8"/>
-<text x="699.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
-<rect x="720.0" y="158.1" width="42" height="226.9" rx="5" fill="#a78bfa"/>
-<text x="741.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
+<rect x="667.0" y="158.1" width="42" height="226.9" rx="5" fill="#38bdf8"/>
+<text x="676.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
+<rect x="731.0" y="158.1" width="42" height="226.9" rx="5" fill="#a78bfa"/>
+<text x="764.0" y="151.1" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="11">0.810417</text>
 <text x="720.0" y="413" text-anchor="middle" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">AR 100</text>
 <rect x="246" y="450" width="14" height="14" rx="3" fill="#38bdf8"/>
 <text x="268" y="462" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">PyTorch eager</text>

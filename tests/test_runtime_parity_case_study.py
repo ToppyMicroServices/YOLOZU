@@ -341,6 +341,45 @@ class TestRuntimeParityCaseStudy(unittest.TestCase):
         self.assertAlmostEqual(detection["bbox"]["w"], 0.4)
         self.assertAlmostEqual(detection["bbox"]["h"], 0.5)
 
+    def test_comparison_svg_keeps_equal_value_labels_separated(self):
+        metrics = {
+            "map50_95": 0.111111,
+            "map50": 0.222222,
+            "map75": 0.333333,
+            "ar100": 0.444444,
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "comparison.svg"
+            self.tool._comparison_svg(eager=metrics, scripted=metrics, output=output)
+            root = ET.fromstring(output.read_text(encoding="utf-8"))
+
+        texts = [element for element in root.iter() if element.tag.endswith("text")]
+        for value in metrics.values():
+            rendered = f"{value:.6f}"
+            centers = sorted(
+                float(element.attrib["x"])
+                for element in texts
+                if element.text == rendered
+            )
+            self.assertEqual(len(centers), 2, rendered)
+            self.assertGreaterEqual(centers[1] - centers[0], 88.0, rendered)
+
+        bars = [
+            element
+            for element in root.iter()
+            if element.tag.endswith("rect")
+            and element.attrib.get("fill") in {"#38bdf8", "#a78bfa"}
+            and element.attrib.get("y") != "450"
+        ]
+        self.assertEqual(len(bars), 8)
+        self.assertTrue(all(float(element.attrib["width"]) == 42.0 for element in bars))
+        for index in range(0, len(bars), 2):
+            centers = [
+                float(element.attrib["x"]) + float(element.attrib["width"]) / 2
+                for element in bars[index : index + 2]
+            ]
+            self.assertEqual(centers[1] - centers[0], 64.0)
+
     def test_failed_generation_preserves_existing_output_bundle(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "bundle"

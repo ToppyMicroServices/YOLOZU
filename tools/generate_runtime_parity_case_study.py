@@ -706,6 +706,8 @@ def _comparison_svg(*, eager: dict[str, float], scripted: dict[str, float], outp
     plot_left, plot_top, plot_width, plot_height = 90, 105, 720, 280
     group_width = plot_width / len(labels)
     bar_width = 42
+    bar_center_offset = 32
+    label_center_offset = 44
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#0b1220"/>',
@@ -727,17 +729,20 @@ def _comparison_svg(*, eager: dict[str, float], scripted: dict[str, float], outp
         )
     for index, (key, label) in enumerate(labels):
         center = plot_left + group_width * (index + 0.5)
-        for offset, values, color in ((-bar_width / 2, eager, "#38bdf8"), (bar_width / 2, scripted, "#a78bfa")):
+        for bar_offset, label_offset, values, color in (
+            (-bar_center_offset, -label_center_offset, eager, "#38bdf8"),
+            (bar_center_offset, label_center_offset, scripted, "#a78bfa"),
+        ):
             value = max(0.0, min(1.0, float(values[key])))
             bar_height = value * plot_height
-            x = center + offset - bar_width / 2
+            x = center + bar_offset - bar_width / 2
             y = plot_top + plot_height - bar_height
             lines.append(
                 f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_width}" height="{bar_height:.1f}" '
                 f'rx="5" fill="{color}"/>'
             )
             lines.append(
-                f'<text x="{x + bar_width / 2:.1f}" y="{max(plot_top + 14, y - 7):.1f}" '
+                f'<text x="{center + label_offset:.1f}" y="{max(plot_top + 14, y - 7):.1f}" '
                 f'text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" '
                 f'font-size="11">{value:.6f}</text>'
             )

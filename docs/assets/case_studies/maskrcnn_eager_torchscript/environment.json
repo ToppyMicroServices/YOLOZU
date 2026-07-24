@@ -18,20 +18,20 @@
   "schema_version": 1,
   "source": {
     "available": true,
-    "clean_before_run": true,
+    "clean_before_run": false,
     "file_sha256": {
       "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
       "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
       "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
-      "tools/generate_runtime_parity_case_study.py": "920629e3979a3953d7fdccc2446fb731e5e8bffc30912cf9a5580b00d8489883",
+      "tools/generate_runtime_parity_case_study.py": "c8c43d4308d3b4d8f39ece2cecac6d551755bff1d650d0439fb414049fd943cc",
       "tools/generate_smoke_assets.py": "d243ce3572eeb3d1a20b8a2c8a0ce4b6f3fa3b26401b61e7a7f759a0840515ec",
       "yolozu/datasets/coco.py": "dabc588588671e1fa6a1e8ef8077824cd36856fa97d976f2949632e4be30d506",
       "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "d8be95e616d63176d87e1ecd6f632d2bf84d1793"
+    "head": "8bbda52b349074608c193c692d8a0dd484887bff"
   },
-  "timestamp": "2026-07-24T07:16:09Z",
+  "timestamp": "2026-07-24T07:24:22Z",
   "torch": {
     "deterministic_algorithms": true,
     "device": "cpu",
