@@ -22,7 +22,7 @@
     "file_sha256": {
       "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
       "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
-      "tools/eval_coco.py": "9dd8da377ee5e10fa8cc2599b1c8dfdb04135277ffd0c0c55966b5f705444b78",
+      "tools/eval_coco.py": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
       "tools/generate_runtime_parity_case_study.py": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
       "tools/generate_smoke_assets.py": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
       "yolozu/api.py": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
@@ -30,9 +30,9 @@
       "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "a32fc80ba4e864fc3e4e508d8f1b72316180fd22"
+    "head": "1eb3a7d1d7a7da291f6f9310a5d1707c867bc280"
   },
-  "timestamp": "2026-07-24T09:34:53Z",
+  "timestamp": "2026-07-24T16:49:07Z",
   "torch": {
     "deterministic_algorithms": true,
     "device": "cpu",

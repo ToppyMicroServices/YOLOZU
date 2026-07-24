@@ -29,7 +29,7 @@
       "file_sha256": {
         "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
         "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
-        "tools/eval_coco.py": "9dd8da377ee5e10fa8cc2599b1c8dfdb04135277ffd0c0c55966b5f705444b78",
+        "tools/eval_coco.py": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
         "tools/generate_runtime_parity_case_study.py": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
         "tools/generate_smoke_assets.py": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
         "yolozu/api.py": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
@@ -37,32 +37,31 @@
         "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
         "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
       },
-      "head": "0a80bccd58e08233aa47d1404928eca44e92eb5f"
+      "head": "1eb3a7d1d7a7da291f6f9310a5d1707c867bc280"
     },
     "source_clean_before_run": true,
-    "source_sha256": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
-    "summary_sha256": "9e1195ee12ffc4d0e1f3d51b79d23467327403ca9ae10ca57aa65668ee19b1be",
+    "source_sha256": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+    "summary_sha256": "918b0febea93e18c0b803db0b8474151d49ca1008ac1089cccef117b156eb4f9",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "baseline_checksums": {
     "entries": {
-      "commands.json": "ee1a0cf8568470edf7162eb1f912feef9a9821103f51cc2b4b0daf6655b23409",
+      "commands.json": "fbf59a39c2d59b82351514cce9b2d75bcc40fb53406d827ac386fd772720e61b",
       "comparison.svg": "4589e45427ef2822bb78580e36097bf94994e7b12fe496176805fa858bc69ebb",
-      "environment.json": "8ed288bb34f26aa15b30e4bf6ead0cf6b8720066b8cd0744bba381eeefe1fcb5",
-      "eval_eager.json": "f6e57f9cbf35627a0002a1f35d60853b35dc0405948326b113b115700ffc6ed3",
-      "eval_torchscript.json": "20bfdf8a9329167d096d7fb3f54fc288642ec7f7c4cfb4b6a653b91ac8942c51",
-      "parity.json": "91a651c0dce7e132a27a38728da9440a7ce13a409cafcedc2e7aa751d3878b04",
-      "predictions_eager.json": "a21e3103cf65c4a04b83790a48b4219cf46e9172f01e4b7aaf131c43154b3afe",
-      "predictions_torchscript.json": "693ba1c156512fedca168efe036e218fc2f7b5e3231063396fa5e4dd33834fca",
+      "environment.json": "c3a421a29bacdb8793c1d60bb11e76d4cd470eb84a6d08e210b575bbba4acf44",
+      "eval_eager.json": "aa417e49006328f4233e4025298a1e9c1a893fde440d7d8e654e4c65b7a2e8c3",
+      "eval_torchscript.json": "435063d097eee587f0ae83c227ad5c259c1ebf6cdc15f452877515747c9e581a",
+      "parity.json": "101869ba6848f78ce38e77fc0fea22d9f0c67e62b1457cea41358ac3d0307eef",
+      "predictions_eager.json": "8ed6508e17c1254a0e6d62c75cd586e1bc472ce4e2ca565f67a10f9a846ea623",
+      "predictions_torchscript.json": "1b186ad54da47de211890194ce34032900230f74d1bf18c1b3d8f6ac145460e5",
       "protocol.json": "ae0a93a22221a5b62726a26a9575b8342a7740ee5dd417922dda60bbeb263e3f",
-      "reproduction_check.json": "ece8823f0a34c742d7e1f478f4dea0d668331570c29dc41564ea267657183abb",
-      "summary.json": "9e1195ee12ffc4d0e1f3d51b79d23467327403ca9ae10ca57aa65668ee19b1be"
+      "summary.json": "918b0febea93e18c0b803db0b8474151d49ca1008ac1089cccef117b156eb4f9"
     },
     "errors": [],
-    "manifest_sha256": "0974726b2d7fd81016ad134084074bd195442efb02575801d102d86c92984643",
+    "manifest_sha256": "f2432dc70214b9379bafe27d8eda65d4ac4a439e52dfd6e28e9669d660c0bdff",
     "ok": true
   },
-  "baseline_mode": "implicit_existing_output",
+  "baseline_mode": "explicit",
   "candidate": {
     "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
     "environment": {
@@ -93,7 +92,7 @@
       "file_sha256": {
         "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
         "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
-        "tools/eval_coco.py": "9dd8da377ee5e10fa8cc2599b1c8dfdb04135277ffd0c0c55966b5f705444b78",
+        "tools/eval_coco.py": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
         "tools/generate_runtime_parity_case_study.py": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
         "tools/generate_smoke_assets.py": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
         "yolozu/api.py": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
@@ -101,11 +100,11 @@
         "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
         "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
       },
-      "head": "a32fc80ba4e864fc3e4e508d8f1b72316180fd22"
+      "head": "1eb3a7d1d7a7da291f6f9310a5d1707c867bc280"
     },
     "source_clean_before_run": true,
-    "source_sha256": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
-    "summary_sha256": "b4ad9cd74f250087aa3aa241a3ffa9726452e17129a7f0d070426d8e37edf72a",
+    "source_sha256": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+    "summary_sha256": "b2c716880ed7caea88c4305662dc585ab7bf0cba800788beced9e34e98d37208",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "checks": [
@@ -152,8 +151,8 @@
       "ok": true
     },
     {
-      "actual": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
-      "expected": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
+      "actual": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+      "expected": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
       "name": "source_sha256",
       "ok": true
     },
