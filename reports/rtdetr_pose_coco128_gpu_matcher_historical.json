@@ -1,0 +1,51 @@
+{
+  "format": "yolozu_historical_checkpoint_provenance_v1",
+  "status": "historical",
+  "usable_as_current_full_checkpoint_evidence": false,
+  "source": {
+    "commit": "72f0862f2487c7a23267820cc2dfc4818e46118b",
+    "commit_subject": "Complete GPU coco128 run for recipe",
+    "recorded_date": "2026-02-02"
+  },
+  "original_recipe": {
+    "claimed_config_path": "reports/rtdetr_pose_minimal_config.json",
+    "config_present_in_source_commit": false,
+    "limitation": "The claimed config was not committed, so the checkpoint architecture and original command cannot be reconstructed from the repository alone."
+  },
+  "artifacts": [
+    {
+      "path": "reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt",
+      "bytes": 7490303,
+      "sha256": "4f8842dbcc4c8a0bd23dbaa71ba12b74538a14855eb33e8f387e83ab316def2b"
+    },
+    {
+      "path": "reports/pred_coco128_rtdetr_pose_gpu_matcher.json",
+      "bytes": 970625,
+      "sha256": "325b46b96c4aaff00616e14b72942e586161d4ba978f0466a428ee6e678024b2"
+    },
+    {
+      "path": "reports/coco_eval_rtdetr_pose_gpu_matcher.json",
+      "bytes": 808,
+      "sha256": "8810cff62306d6a82aaa8a8da4d9ac18a8d53503f69bc3093f344913fb1acae3"
+    }
+  ],
+  "current_compatibility_audit": {
+    "audited_model_source_commit": "735e71d3123e278180836cd89767690c5f426248",
+    "config_path": "rtdetr_pose/configs/base.json",
+    "config_sha256": "4a02c59ad6f4f803c925b623ee41f545ffc9542a5c381ab57a6b1bc95c4be06a",
+    "model_state_signature_sha256": "eb15d0e2304e9e87bbd529bdf5ef221af8e0c6957b757495a7ea590ceb2bc6b4",
+    "strict_status": "incompatible",
+    "checkpoint_tensor_count": 283,
+    "model_state_tensor_count": 308,
+    "matched_tensor_count": 20,
+    "missing_model_keys": 182,
+    "unexpected_checkpoint_keys": 157,
+    "shape_mismatch_keys": 106,
+    "effective_unloaded_model_keys": 288,
+    "skipped_checkpoint_keys": 263,
+    "model_tensor_count_coverage": 0.06493506493506493,
+    "model_state_numel_coverage": 0.036095564039103134,
+    "model_parameter_numel_coverage": 0.03613405415670097,
+    "loader": "yolozu.inference.checkpoint_compatibility.load_checkpoint_compatible"
+  }
+}

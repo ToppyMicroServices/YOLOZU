@@ -351,7 +351,7 @@ bash scripts/ttt_compare.sh \
   --boilerplate mim \
   --dataset data/smoke \
   --split val \
-  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --checkpoint /path/to/current-compatible.ckpt \
   --run-dir reports/ttt_compare/mim_smoke_cpu \
   --device cpu \
   --max-images 2 \
@@ -394,7 +394,9 @@ Read it like this:
 - when `pycocotools` is missing, YOLOZU falls back to `simple_map_proxy` so the before/after compare still yields a deterministic quality delta instead of silently dropping eval
 
 Concrete repo results:
-- repo-backed smoke compare: `steps_run=2`, `mean_final_loss=0.461853`, `changed_images=0 / 2`
+- historical smoke compare: `steps_run=2`, `mean_final_loss=0.461853`,
+  `changed_images=0 / 2` (preserved as a source-commit record, not current
+  full-checkpoint evidence)
 - fixed real probe compare: `steps_run=10`, `mean_final_loss=0.0791513`, `changed_images=10 / 10`
 - fixed real probe metrics: `map50 0.00326797 -> 0.00392157`, `map50_95 0.000326797 -> 0.000392157`
 

@@ -821,6 +821,16 @@ Use the adapter tools to run inference and produce predictions JSON.
 
 - python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --checkpoint /path/to.ckpt --max-images 50 --wrap --output reports/predictions.json
 
+RT-DETR checkpoint loading is fail closed by default. A current checkpoint must
+match every model-state name and shape after the documented uniform
+`module.` / `_orig_mod.` prefix normalization. Wrapped output records the
+detailed compatibility/provenance report. Use
+`--allow-partial-checkpoint --wrap` only for explicit transfer/diagnostic work;
+the result is labeled `status=partial` and is not full-checkpoint evidence.
+The prediction target is removed before loading so a failed load cannot leave
+an older success artifact at the requested path. See
+[`checkpoint_compatibility.md`](checkpoint_compatibility.md).
+
 Torch推論の軽量拡張（PyTorch 2.x）:
 - `--infer-batch-size N`: 推論バッチサイズ（既定 `1`）
 - `--torch-compile`: `torch.compile` を要求（`--wrap` 必須）

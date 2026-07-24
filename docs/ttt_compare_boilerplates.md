@@ -51,7 +51,9 @@ Recommended reading order for every method:
 4. only then reach for method-specific follow-up tools.
 
 Notes:
-- The shipped `mim` and `sar` boilerplates expand the safe defaults directly and force `--ttt-update-filter norm_only` so they work with the repo-shipped checkpoint without requiring LoRA-specific weights.
+- The shipped `mim` and `sar` boilerplates expand the safe defaults directly
+  and force `--ttt-update-filter norm_only`; provide a current-compatible
+  checkpoint unless the selected workflow documents a different fixture.
 - The `mim` boilerplate also injects the repo-backed config `configs/examples/ttt_compare/rtdetr_pose_mim_compare.json` into both the baseline and adapted export so the MIM branch is enabled without a long operator command.
 - The `mim_probe` boilerplate injects `configs/examples/ttt_compare/yolo26n_mim_real_probe.json` so the fixed yolo26n probe checkpoint can demonstrate a real before/after metric change with MIM enabled.
 - If you have a checkpoint with dedicated adapter/LoRA parameters, copy the JSON boilerplate and switch the update filter there instead of expanding the raw CLI.
@@ -111,15 +113,18 @@ Fixed real-probe result:
 - `map50_95 0.000326797 -> 0.000392157`
 - metric backend: `simple_map_proxy` (used automatically here because `pycocotools` is absent in the local runtime)
 
-### Smoke compare snapshot (repo-shipped checkpoint)
+### Historical smoke compare snapshot
 
-We also ran the boilerplates against the repo-shipped checkpoint
+The historical source commit
+`72f0862f2487c7a23267820cc2dfc4818e46118b` ran the boilerplates against
 `reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt` on `data/smoke`, `split=val`,
 `max-images=2`, `device=cpu`, with `--skip-eval`.
 
-These are workflow-validation results, not performance claims. The tiny smoke
-subset produced zero detections in both baseline and adapted runs, so the useful
-signal here is whether the method completed and what the TTT log reported.
+The checkpoint's claimed config was not committed, and it is not fully
+compatible with the current model. These rows are preserved only as historical
+workflow records; they are neither current execution evidence nor performance
+claims. Pinned hashes and the current compatibility audit are in
+`reports/rtdetr_pose_coco128_gpu_matcher_historical.json`.
 
 | Method | Run dir | Real compare status | Steps run | Mean final loss |
 | --- | --- | --- | ---: | ---: |
@@ -192,14 +197,14 @@ bash scripts/ttt_compare.sh \
   --force
 ```
 
-Repo-backed smoke example:
+Current-compatible smoke example:
 
 ```bash
 bash scripts/ttt_compare.sh \
   --boilerplate mim \
   --dataset data/smoke \
   --split val \
-  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --checkpoint /path/to/current-compatible.ckpt \
   --run-dir reports/ttt_compare/mim_smoke_cpu \
   --device cpu \
   --max-images 2 \

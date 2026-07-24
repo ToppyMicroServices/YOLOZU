@@ -5026,6 +5026,7 @@
         ]
       },
       "docs": [
+        "docs/checkpoint_compatibility.md",
         "docs/real_model_interface.md",
         "docs/training_inference_export.md",
         "docs/ttt_protocol.md"
@@ -5034,19 +5035,19 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes predictions JSON. A requested torch.compile run removes a prior target before inference and writes only after compiled execution or explicit fallback is evidenced.",
+            "description": "Removes any prior target before inference, then writes predictions JSON only after checkpoint compatibility and requested torch.compile execution/fallback are evidenced.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional TTA log JSON output.",
+            "description": "Optional TTA log JSON output; a requested prior log is removed before inference.",
             "flag": "--tta-log-out",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional TTT log JSON output.",
+            "description": "Optional TTT log JSON output; a requested prior log is removed before inference.",
             "flag": "--ttt-log-out",
             "kind": "file",
             "scope": "path"
@@ -5134,6 +5135,13 @@
           "flag": "--checkpoint",
           "kind": "file",
           "name": "checkpoint",
+          "required": false
+        },
+        {
+          "description": "Explicit transfer/diagnostic opt-in for name-and-shape partial loading; requires --checkpoint and --wrap and records status=partial.",
+          "flag": "--allow-partial-checkpoint",
+          "kind": "string",
+          "name": "allow_partial_checkpoint",
           "required": false
         },
         {
@@ -5645,7 +5653,7 @@
       "outputs": [
         {
           "default": "reports/predictions.json",
-          "description": "Predictions JSON (wrapped meta includes task_coverage, extended TTA settings, and separate requested/actual torch.compile evidence).",
+          "description": "Predictions JSON; wrapped metadata includes checkpoint compatibility/provenance, task coverage, extended TTA settings, and separate requested/actual torch.compile evidence.",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -5657,7 +5665,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes.",
+      "summary": "Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes.",
       "tags": [
         "predictions",
         "adapter"
@@ -8300,31 +8308,32 @@
     },
     {
       "docs": [
+        "docs/checkpoint_compatibility.md",
         "docs/tensorrt_pipeline.md"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes ONNX model.",
+            "description": "Removes any prior requested target, then writes the ONNX model only after checkpoint compatibility succeeds.",
             "flag": "--onnx",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional ONNX export metadata JSON output.",
+            "description": "ONNX export metadata with checkpoint compatibility/provenance; prior target is removed before a real export.",
             "flag": "--onnx-meta",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Writes TensorRT engine plan.",
+            "description": "Removes any prior requested target, then writes the TensorRT engine plan after successful ONNX export/build.",
             "flag": "--engine",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional engine build metadata JSON output.",
+            "description": "Engine build metadata; prior target is removed before a real build.",
             "flag": "--engine-meta",
             "kind": "file",
             "scope": "path"
@@ -8354,9 +8363,17 @@
           "required": false
         },
         {
+          "description": "Optional checkpoint path; full compatibility is required and --skip-onnx is not allowed.",
           "flag": "--checkpoint",
           "kind": "file",
           "name": "checkpoint",
+          "required": false
+        },
+        {
+          "description": "Explicit transfer/diagnostic opt-in for name-and-shape partial loading; records status=partial in ONNX metadata.",
+          "flag": "--allow-partial-checkpoint",
+          "kind": "string",
+          "name": "allow_partial_checkpoint",
           "required": false
         },
         {
@@ -8487,7 +8504,7 @@
       "outputs": [
         {
           "default": "models/model.onnx",
-          "description": "ONNX model artifact.",
+          "description": "ONNX model artifact written only after compatible or explicitly partial checkpoint loading.",
           "kind": "file",
           "name": "onnx_model"
         },
@@ -8521,7 +8538,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models.",
+      "summary": "Fail-closed PyTorch → ONNX → TensorRT export route with shared RT-DETR checkpoint compatibility evidence.",
       "tags": [
         "export",
         "onnx",
@@ -11938,6 +11955,7 @@
     },
     {
       "docs": [
+        "docs/checkpoint_compatibility.md",
         "docs/real_model_interface.md",
         "docs/tensorrt_pipeline.md"
       ],
@@ -11945,7 +11963,7 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes backend suite JSON report.",
+            "description": "Removes any prior target, then writes the backend suite report only after checkpoint compatibility and parity/benchmark execution succeed.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -11968,9 +11986,17 @@
           "required": true
         },
         {
+          "description": "Optional checkpoint path; requires torch in --backends so compatibility is verified.",
           "flag": "--checkpoint",
           "kind": "file",
           "name": "checkpoint",
+          "required": false
+        },
+        {
+          "description": "Explicit transfer/diagnostic opt-in for name-and-shape partial loading; records status=partial in the report.",
+          "flag": "--allow-partial-checkpoint",
+          "kind": "string",
+          "name": "allow_partial_checkpoint",
           "required": false
         },
         {
@@ -12099,7 +12125,7 @@
       "outputs": [
         {
           "default": "reports/rtdetr_pose_backend_suite.json",
-          "description": "JSON report artifact.",
+          "description": "JSON report with checkpoint compatibility/provenance, parity, and benchmark evidence.",
           "kind": "file",
           "name": "report_json"
         }
@@ -12118,7 +12144,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt).",
+      "summary": "Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence.",
       "tags": [
         "rtdetr_pose",
         "parity",

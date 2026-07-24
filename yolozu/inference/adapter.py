@@ -146,6 +146,7 @@ class RTDETRPoseAdapter(ModelAdapter):
         max_detections=50,
         infer_batch_size: int = 1,
         *,
+        allow_partial_checkpoint: bool = False,
         lora_r: int = 0,
         lora_alpha: float | None = None,
         lora_dropout: float = 0.0,
@@ -166,6 +167,12 @@ class RTDETRPoseAdapter(ModelAdapter):
     ):
         self.config_path = str(config_path)
         self.checkpoint_path = checkpoint_path
+        self.allow_partial_checkpoint = bool(allow_partial_checkpoint)
+        if self.allow_partial_checkpoint and not self.checkpoint_path:
+            raise ValueError(
+                "allow_partial_checkpoint requires checkpoint_path"
+            )
+        self._checkpoint_report: dict | None = None
         self.device = device
         self.image_size = tuple(image_size)
         self.score_threshold = float(score_threshold)
@@ -325,19 +332,21 @@ class RTDETRPoseAdapter(ModelAdapter):
             lora_report = {"enabled": False}
 
         if self.checkpoint_path:
-            state = torch.load(self.checkpoint_path, map_location="cpu", weights_only=False)
-            if isinstance(state, dict) and "state_dict" in state:
-                state = state["state_dict"]
-            if isinstance(state, dict):
-                model_state = model.state_dict()
-                filtered = {
-                    k: v
-                    for k, v in state.items()
-                    if k in model_state and hasattr(v, "shape") and v.shape == model_state[k].shape
-                }
-                model.load_state_dict(filtered, strict=False)
-            else:
-                model.load_state_dict(state, strict=False)
+            from yolozu.inference.checkpoint_compatibility import (
+                CheckpointCompatibilityError,
+                load_checkpoint_compatible,
+            )
+
+            try:
+                self._checkpoint_report = load_checkpoint_compatible(
+                    model,
+                    self.checkpoint_path,
+                    config_identity=self.config_path,
+                    allow_partial=self.allow_partial_checkpoint,
+                )
+            except CheckpointCompatibilityError as exc:
+                self._checkpoint_report = exc.report
+                raise
 
         model.to(self.device)
 
@@ -428,6 +437,11 @@ class RTDETRPoseAdapter(ModelAdapter):
             if isinstance(current, dict):
                 self._compile_evidence = current
         return copy.deepcopy(self._compile_evidence)
+
+    def get_checkpoint_report(self) -> dict | None:
+        import copy
+
+        return copy.deepcopy(self._checkpoint_report)
 
     def require_compile_established(self) -> dict:
         report = self.get_compile_evidence()
