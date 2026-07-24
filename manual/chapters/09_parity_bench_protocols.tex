@@ -78,6 +78,35 @@ yolozu parity \
 Pin \cmd{cxcywh_norm}, \cmd{cxcywh_abs}, \cmd{xywh_abs}, or \cmd{xyxy_abs} when
 both artifacts use one known format.
 
+\subsection{Committed eager/TorchScript case study}
+\yolozu{} ships one small, reproducible comparison that runs the same
+Torchvision Mask R-CNN checkpoint and two-image smoke subset through PyTorch
+eager and TorchScript. The generator writes wrapped predictions, evaluates
+both through the stable \cmd{eval-coco} lane, performs detection-level parity,
+verifies the official full checkpoint hash and standard COCO80 class mapping,
+and records protocol, environment, source, checksum, and SVG evidence:
+\begin{lstlisting}[language=bash]
+python3 tools/generate_runtime_parity_case_study.py \
+  --dataset data/smoke --split val --max-images 2 \
+  --score-threshold 0.5 --max-detections 20 \
+  --seed 2026 --threads 1 --allow-download \
+  --expected-weights-sha256 \
+    73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e \
+  --output-dir \
+    docs/assets/case_studies/maskrcnn_eager_torchscript
+\end{lstlisting}
+When the output directory already contains a case-study bundle, the generator
+uses it as an implicit baseline and publishes the staged candidate only after
+the reproduction checks pass. A mismatching run exits non-zero and preserves
+the existing evidence.
+The recorded run retained 12 detections in each path and produced identical
+metrics plus a passing strict parity report. This is evidence for the pinned
+checkpoint, inputs, preprocessing, filtering, environment, and evaluator only;
+the two-image result is not a model-quality benchmark or a runtime performance
+ranking. See
+\path{docs/case_studies/maskrcnn_eager_torchscript.md} for the separate
+clean-run recipe and evidence links.
+
 \section{Protocols (pinning evaluation settings)}
 Protocols pin evaluation settings such as dataset splits, image dimensions, and metric keys. This keeps long-running comparisons stable.
 

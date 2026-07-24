@@ -1,0 +1,20 @@
+{
+  "evaluate": [
+    "python3 tools/eval_coco.py --dataset data/smoke --split val --predictions docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json --bbox-format cxcywh_norm --max-images 2 --output docs/assets/case_studies/maskrcnn_eager_torchscript/eval_eager.json",
+    "python3 tools/eval_coco.py --dataset data/smoke --split val --predictions docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json --bbox-format cxcywh_norm --max-images 2 --output docs/assets/case_studies/maskrcnn_eager_torchscript/eval_torchscript.json"
+  ],
+  "executed_by_generator": {
+    "eval_eager": "tools/eval_coco.py --dataset data/smoke --split val --predictions docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json --bbox-format cxcywh_norm --max-images 2 --output docs/assets/case_studies/maskrcnn_eager_torchscript/eval_eager.json",
+    "eval_torchscript": "tools/eval_coco.py --dataset data/smoke --split val --predictions docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json --bbox-format cxcywh_norm --max-images 2 --output docs/assets/case_studies/maskrcnn_eager_torchscript/eval_torchscript.json",
+    "parity": "tools/check_predictions_parity.py --reference docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json --candidate docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json --bbox-format cxcywh_norm --iou-thresh 0.999999 --score-atol 1e-7 --bbox-atol 1e-7 --max-images 2"
+  },
+  "execution_path_note": "Commands use the final logical artifact paths; files were generated in a sibling staging directory and published only after all checks passed.",
+  "generate": "python3 tools/generate_runtime_parity_case_study.py --dataset data/smoke --split val --max-images 2 --score-threshold 0.5 --max-detections 20 --seed 2026 --threads 1 --output-dir docs/assets/case_studies/maskrcnn_eager_torchscript --allow-download --expected-weights-sha256 73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+  "note": "Run from the YOLOZU repository root in an environment with the documented demo and coco extras.",
+  "parity": "python3 tools/check_predictions_parity.py --reference docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json --candidate docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json --bbox-format cxcywh_norm --iou-thresh 0.999999 --score-atol 1e-7 --bbox-atol 1e-7 --max-images 2",
+  "schema_version": 1,
+  "validate": [
+    "python3 tools/validate_predictions.py docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json --strict",
+    "python3 tools/validate_predictions.py docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json --strict"
+  ]
+}

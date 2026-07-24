@@ -26,6 +26,7 @@ from .registry import DatasetInfo, DatasetSample, register_adapter
 
 __all__ = [
     "COCO_80_CLASSES",
+    "COCO_80_CATEGORY_IDS",
     "COCOPaths",
     "resolve_coco_paths",
     "iter_coco_detection_samples",
@@ -54,17 +55,19 @@ COCO_80_CLASSES: list[str] = [
     "vase", "scissors", "teddy bear", "hair drier", "toothbrush",
 ]
 
-# COCO uses non-contiguous category IDs (1-90). Map to 0-79.
-_COCO_CAT_ID_TO_CLASS: dict[int, int] = {}
-_COCO_CAT_IDS: list[int] = [
+# COCO uses non-contiguous category IDs (1-90). Keep the public tuple aligned
+# with COCO_80_CLASSES, then derive the internal lookup from it.
+COCO_80_CATEGORY_IDS: tuple[int, ...] = (
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21,
     22, 23, 24, 25, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,
     43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
     62, 63, 64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84,
     85, 86, 87, 88, 89, 90,
-]
-for _idx, _cat_id in enumerate(_COCO_CAT_IDS):
-    _COCO_CAT_ID_TO_CLASS[_cat_id] = _idx
+)
+_COCO_CAT_ID_TO_CLASS: dict[int, int] = {
+    category_id: class_id
+    for class_id, category_id in enumerate(COCO_80_CATEGORY_IDS)
+}
 
 
 # ---------------------------------------------------------------------------

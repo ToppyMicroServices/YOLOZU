@@ -6,7 +6,7 @@ This directory is a **network-free minimal dataset** used by the project smoke f
 
 - `images/val/*.jpg` — 10 sample images
 - `labels/val/*.txt` — YOLO bbox labels (`class cx cy w h`, normalized)
-- `labels/val/classes.json` — class/category mapping helper
+- `labels/val/classes.json` — standard contiguous COCO80 names and sparse COCO category-id mapping
 - `predictions/predictions_dummy.json` — fixed predictions artifact (`schema_version: 1`)
 - `synthgen_minishard/` — tiny SynthGen shard fixture (animal/mechanical) for interface-contract smoke
 

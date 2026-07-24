@@ -29,6 +29,7 @@ yolozu doctor --proof
 - [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 - [`byop_quickstarts.md`](byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX paths
+- [`case_studies/maskrcnn_eager_torchscript.md`](case_studies/maskrcnn_eager_torchscript.md): real eager and TorchScript outputs through one pinned evaluation lane
 
 ## Next 3 Routes
 
@@ -103,6 +104,7 @@ Supporting docs:
 - Runtime version and qualification boundaries: [`versions.md`](versions.md)
 - SSOT capability coverage audit: [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
+- Reproducible runtime comparison: [`case_studies/maskrcnn_eager_torchscript.md`](case_studies/maskrcnn_eager_torchscript.md)
 - Adoption measurement, feedback cadence, and dated baseline: [`adoption/README.md`](adoption/README.md)
 - Consented design-partner observation kit: [`adoption/design_partner_observation_kit.md`](adoption/design_partner_observation_kit.md)
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)

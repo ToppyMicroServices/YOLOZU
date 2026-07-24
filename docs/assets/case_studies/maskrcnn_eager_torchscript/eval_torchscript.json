@@ -1,0 +1,37 @@
+{
+  "bbox_format": "cxcywh_norm",
+  "dataset": "data/smoke",
+  "max_images": 2,
+  "metrics": {
+    "ar100": 0.8104166666666668,
+    "map50": 0.9381188118811881,
+    "map50_95": 0.8111386138613862,
+    "map75": 0.9381188118811881
+  },
+  "normalization": {
+    "assume_class_id_is_category_id": false,
+    "classes": null
+  },
+  "predictions": "docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json",
+  "protocol": null,
+  "protocol_id": null,
+  "report_schema_version": 1,
+  "split": "val",
+  "split_requested": "val",
+  "stats": [
+    0.8111386138613862,
+    0.9381188118811881,
+    0.9381188118811881,
+    -1.0,
+    0.7138613861386138,
+    0.8887788778877888,
+    0.46875,
+    0.8104166666666668,
+    0.8104166666666668,
+    -1.0,
+    0.7125,
+    0.888888888888889
+  ],
+  "timestamp": "2026-07-24T08:52:00Z",
+  "warnings": []
+}

@@ -226,6 +226,7 @@ Contact: develop@toppymicros.com
 | gen_ci_smoke_dataset | stable | tools/ci/gen_smoke_dataset.py | Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. |
 | generate_benchmark_support_matrix | stable | tools/generate_benchmark_support_matrix.py | Generate the canonical benchmark support matrix from support metadata. |
 | generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode. |
+| generate_runtime_parity_case_study | experimental | tools/generate_runtime_parity_case_study.py | Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane. |
 | generate_smoke_assets | stable | tools/generate_smoke_assets.py | Generate deterministic offline smoke assets under data/smoke from local data/coco128. |
 | gpu_validation_preflight | experimental | tools/gpu_validation_preflight.py | Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. |
 | hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
