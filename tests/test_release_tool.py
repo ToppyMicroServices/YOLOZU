@@ -71,7 +71,6 @@ class TestReleaseTool(unittest.TestCase):
                     "--allow-non-main",
                     "--skip-checks",
                     "--skip-gh",
-                    "--skip-zenodo",
                     "--output",
                     str(out),
                 ],
@@ -94,6 +93,7 @@ class TestReleaseTool(unittest.TestCase):
             release_actions = payload.get("release_actions") or {}
             self.assertFalse(bool(release_actions.get("github_release_publish")))
             self.assertFalse(bool(release_actions.get("pypi_update_via_publish_workflow")))
+            self.assertFalse(bool(release_actions.get("zenodo_manual_doi_via_release_event")))
             self.assertFalse(bool(release_actions.get("zenodo_manual_doi_dispatch")))
 
     def test_shell_wrapper_dry_run_writes_report(self) -> None:
@@ -112,7 +112,6 @@ class TestReleaseTool(unittest.TestCase):
                     "--allow-non-main",
                     "--skip-checks",
                     "--skip-gh",
-                    "--skip-zenodo",
                     "--output",
                     str(out),
                 ],
@@ -130,6 +129,44 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("current_version")), version)
             self.assertEqual(str(payload.get("versioning_scheme")), "semver")
+
+    def test_skip_zenodo_fails_closed_before_release(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "release.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "release_report.skip_zenodo.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dry-run",
+                    "--allow-dirty",
+                    "--allow-non-main",
+                    "--skip-checks",
+                    "--skip-gh",
+                    "--skip-zenodo",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertFalse(bool(payload.get("ok")))
+            self.assertTrue(
+                any(
+                    "--skip-zenodo cannot suppress" in str(error)
+                    for error in payload.get("errors") or []
+                )
+            )
+            step_types = {str(step.get("type") or "") for step in payload.get("steps") or []}
+            self.assertNotIn("gh_release_publish", step_types)
+            self.assertNotIn("zenodo_workflow_dispatch", step_types)
 
     def test_calver_helpers(self) -> None:
         from tools import release as release_tool

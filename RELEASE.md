@@ -40,7 +40,7 @@ This avoids long-lived PyPI API tokens.
 bash release.sh
 ```
 
-The helper bumps `yolozu/__init__.py`, inserts a matching `CHANGELOG.md` release section, runs release checks, commits, tags, pushes, creates the GitHub Release, and dispatches the manual DOI workflow.
+The helper bumps `yolozu/__init__.py`, inserts a matching `CHANGELOG.md` release section, runs release checks, commits, tags, pushes, and creates the GitHub Release. The `release: published` event is the single automatic trigger for both PyPI publication and the manual DOI workflow; the helper does not dispatch `manual_doi.yml` a second time.
 
 For a preview:
 
@@ -84,11 +84,13 @@ Manual runs now fail fast if `__version__`, the optional tag, and `CHANGELOG.md`
 YOLOZU publishes software artifacts via GitHub Release/PyPI and can publish the manual PDF as a separate Zenodo record:
 
 - Workflow: `.github/workflows/manual_doi.yml`
-- Trigger: GitHub Release `published` (or manual `workflow_dispatch`)
+- Automatic trigger: GitHub Release `published` exactly once
+- Recovery/first-time trigger: manual `workflow_dispatch`; do not use it after a normal successful release
 - Build: `manual/build/yolozu_manual.pdf`
 - Zenodo flow:
   - If `YOLOZU_MANUAL_CONCEPTRECID` exists: resolve latest record id via Zenodo Records API, then call `actions/newversion`
   - Else: create a new deposition
+  - Before `actions/newversion`, search the configured concept record for the requested manual version; an existing published version exits idempotently with `state=already_published`
   - Upload PDF to bucket, set metadata, and publish (or keep draft on manual runs)
 - Linkage:
   - `related_identifiers` is written with relation `isSupplementTo`
@@ -103,14 +105,17 @@ Required repository variables:
 
 - `YOLOZU_SOFTWARE_CONCEPT_DOI` (software concept DOI; stable cross-version reference)
 
-Recommended repository variable:
+Repository variable required for automatic manual-version updates after the first manual record:
 
-- `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid; workflow resolves this to the latest record id before calling `actions/newversion`)
+- `YOLOZU_MANUAL_CONCEPTRECID` (manual conceptrecid; workflow resolves this to published records before calling `actions/newversion`)
 
 First-time release note:
 
 - If you do not yet have a software concept DOI (no prior Zenodo record), the release-triggered `manual-doi` workflow will skip automatically.
-  After the software DOI exists, re-run `manual-doi` via `workflow_dispatch` with `software_concept_doi`, then set `YOLOZU_SOFTWARE_CONCEPT_DOI` for future releases.
+  After the software DOI exists, run `manual-doi` via `workflow_dispatch` with `software_concept_doi` and `create_first_deposition=true`. Then set both `YOLOZU_SOFTWARE_CONCEPT_DOI` and the returned `YOLOZU_MANUAL_CONCEPTRECID` for future automatic releases.
+- A release-triggered run also skips when `YOLOZU_MANUAL_CONCEPTRECID` is missing. It never creates a first manual deposition implicitly.
+
+The legacy `release.sh --skip-zenodo` option is retained only to fail closed with an explanation: publishing a GitHub Release necessarily emits the automatic manual DOI event. Use `--skip-gh` when previewing or when no GitHub Release should be published.
 
 Workflow artifact:
 

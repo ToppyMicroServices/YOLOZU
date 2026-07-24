@@ -18,12 +18,13 @@ Secrets:
 Variables:
 
 - `YOLOZU_SOFTWARE_CONCEPT_DOI` (required): stable software concept DOI, e.g. `10.5281/zenodo.xxxxxxx`
-- `YOLOZU_MANUAL_CONCEPTRECID` (recommended): manual conceptrecid for newversion publishing
+- `YOLOZU_MANUAL_CONCEPTRECID`: required for release-triggered automatic updates after the first manual deposition
 
 ## Trigger model
 
-- `release: published`: builds and publishes manual record in production Zenodo.
-- `workflow_dispatch`: supports production/sandbox, overrides, and draft mode.
+- `release: published` is the single automatic trigger. It builds and publishes the manual record in production Zenodo.
+- `workflow_dispatch` is reserved for first-time setup, recovery, sandbox checks, overrides, and draft mode. Do not dispatch it in addition to a normal successful release.
+- Runs for the same manual version are serialized. When the configured concept record already contains that published version, the workflow exits idempotently with `state=already_published` before creating a deposition.
 
 Recommended pre-step for release operations:
 
@@ -38,14 +39,16 @@ Workflow inputs:
 - `manual_conceptrecid`: optional override (otherwise uses `YOLOZU_MANUAL_CONCEPTRECID`)
 - `software_concept_doi`: optional override (otherwise uses `YOLOZU_SOFTWARE_CONCEPT_DOI`)
 - `publish_record`: `true` publishes, `false` keeps a draft
+- `create_first_deposition`: explicit `true` is required only when creating the first manual record without a conceptrecid
 
 ## Zenodo behavior
 
 1. Build manual PDF.
-2. If conceptrecid exists, resolve the latest **record id** via Zenodo Records API:
-  - `GET /api/records/?q=conceptrecid:<conceptrecid>&sort=mostrecent&size=1`
-  - Then call `POST /api/deposit/depositions/<record id>/actions/newversion`.
-3. Else create a new deposition.
+2. If conceptrecid exists, resolve its published records via Zenodo Records API:
+  - `GET /api/records/?q=conceptrecid:<conceptrecid>&sort=mostrecent&size=100`
+  - If a record already has the requested version, report `already_published` and stop without writes.
+  - Otherwise call `POST /api/deposit/depositions/<latest record id>/actions/newversion`.
+3. Without a conceptrecid, fail closed unless a manual `workflow_dispatch` explicitly sets `create_first_deposition=true`; release-triggered runs skip rather than create an implicit first deposition.
 4. Upload PDF to deposition bucket.
 5. Set metadata with:
    - `version` = release version
@@ -68,4 +71,4 @@ Workflow inputs:
 - `conceptrecid`
 - `deposition_id`
 - `record_url`
-- `state` (`published` or `draft`)
+- `state` (`published`, `draft`, or idempotent `already_published`)
