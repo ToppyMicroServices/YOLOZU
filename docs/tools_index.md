@@ -176,7 +176,10 @@ The manifest is intended for:
 ## Release helpers
 
 - single-command release automation: `bash release.sh`
+- current metadata consistency check: `bash release.sh --check --output reports/release_metadata_check.json`
 - dry-run preview: `bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json`
+- release metadata scope: package version, dated `CHANGELOG.md`, `CITATION.cff` version/date, and explicitly current-release-coupled examples in byte-identical source/packaged manifests; evidence-marked historical pins remain unchanged
+- tag helper guard: `tools/release_tag.py` validates the same metadata and requested tag before any tag or GitHub Release action
 - manual publish recovery: `.github/workflows/publish.yml` `workflow_dispatch` with `expected_version=X.Y.Z` and optional `release_tag=vX.Y.Z`
 - manual DOI automatic path: GitHub Release `published` event only; use `.github/workflows/manual_doi.yml` `workflow_dispatch` only for first-time setup or recovery
 - Release checklist: `docs/release_reliability_checklist.md`

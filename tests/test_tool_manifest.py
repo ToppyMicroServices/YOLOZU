@@ -289,6 +289,91 @@ class TestToolManifest(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn(".maturity: must be one of", proc.stderr)
 
+    def test_validate_tool_manifest_requires_policy_for_exact_release_pin(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "unclassified_release_pin",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                    "maturity": "stable",
+                    "examples": [
+                        {
+                            "command": (
+                                "python3 -m pip install yolozu==1.2.3"
+                            )
+                        }
+                    ],
+                }
+            ],
+        }
+        proc = self._run_validator(manifest)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("release_version_policy", proc.stderr)
+
+    def test_validate_tool_manifest_requires_evidence_for_historical_pin(self):
+        manifest = {
+            "manifest_version": 1,
+            "tools": [
+                {
+                    "id": "historical_release_pin",
+                    "entrypoint": "tools/validate_tool_manifest.py",
+                    "runner": "python3",
+                    "summary": "x",
+                    "maturity": "stable",
+                    "examples": [
+                        {
+                            "command": "python3 -m pip install yolozu==1.2.3",
+                            "release_version_policy": "historical",
+                        }
+                    ],
+                }
+            ],
+        }
+        proc = self._run_validator(manifest)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("release_version_evidence", proc.stderr)
+
+    def test_validate_tool_manifest_rejects_external_evidence_symlink(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as external_dir:
+            external_evidence = Path(external_dir) / "evidence.md"
+            external_evidence.write_text("# External evidence\n", encoding="utf-8")
+            with tempfile.TemporaryDirectory(
+                dir=repo_root,
+                prefix=".manifest-evidence-test-",
+            ) as repo_dir:
+                evidence_link = Path(repo_dir) / "evidence.md"
+                evidence_link.symlink_to(external_evidence)
+                evidence_path = evidence_link.relative_to(repo_root).as_posix()
+                manifest = {
+                    "manifest_version": 1,
+                    "tools": [
+                        {
+                            "id": "external_evidence_symlink",
+                            "entrypoint": "tools/validate_tool_manifest.py",
+                            "runner": "python3",
+                            "summary": "x",
+                            "maturity": "stable",
+                            "examples": [
+                                {
+                                    "command": (
+                                        "python3 -m pip install yolozu==1.2.3"
+                                    ),
+                                    "release_version_policy": "historical",
+                                    "release_version_evidence": evidence_path,
+                                }
+                            ],
+                        }
+                    ],
+                }
+                proc = self._run_validator(manifest)
+
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("must be an existing repo-relative file", proc.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

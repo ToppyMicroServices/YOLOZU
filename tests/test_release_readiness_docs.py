@@ -12,8 +12,10 @@ class TestReleaseReadinessDocs(unittest.TestCase):
 
         self.assertIn("release:", publish)
         self.assertIn("published", publish)
-        self.assertIn("Validate version and changelog alignment", publish)
+        self.assertIn("Validate synchronized release metadata", publish)
         self.assertIn("expected_version:", publish)
+        self.assertIn("CITATION.cff", publish)
+        self.assertIn("validate_release_metadata", publish)
         self.assertIn("Validate built wheel version matches package version", publish)
         self.assertIn("Verify published release on PyPI", publish)
         self.assertIn("GitHub Release", release_md)

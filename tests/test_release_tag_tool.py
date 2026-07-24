@@ -72,6 +72,7 @@ class TestReleaseTagTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("tag")), f"{prefix}{version}")
             self.assertEqual(str(payload.get("release_state")), "none")
+            self.assertTrue((payload.get("metadata_validation") or {}).get("ok"))
             steps = payload.get("steps") or []
             self.assertGreaterEqual(len(steps), 1)
             self.assertEqual(str((steps[0] or {}).get("status")), "dry_run")

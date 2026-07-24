@@ -14,6 +14,8 @@ _MATURITY = {"stable", "experimental", "research"}
 _IO_KINDS = {"file", "dir", "string", "number", "json", "stdout"}
 _EFFECT_KINDS = {"file", "dir"}
 _EFFECT_SCOPES = {"path", "tree"}
+_PINNED_PACKAGE_RE = re.compile(r"\byolozu==([0-9]+(?:\.[0-9]+){2,3})\b")
+_RELEASE_VERSION_POLICIES = {"current", "historical"}
 
 
 def _resolve(path_str: str) -> Path:
@@ -257,6 +259,43 @@ def _validate_tool(tool: Any, *, index: int, require_declarative: bool = False) 
                 cmd = ex.get("command")
                 if not isinstance(cmd, str) or not cmd.strip():
                     errors.append(f"{where}.examples[{j}].command: required string")
+                    continue
+                pinned_versions = sorted(set(_PINNED_PACKAGE_RE.findall(cmd)))
+                if not pinned_versions:
+                    continue
+                policy = ex.get("release_version_policy")
+                if (
+                    not isinstance(policy, str)
+                    or policy not in _RELEASE_VERSION_POLICIES
+                ):
+                    errors.append(
+                        f"{where}.examples[{j}].release_version_policy: exact "
+                        f"yolozu version pins require one of "
+                        f"{sorted(_RELEASE_VERSION_POLICIES)}"
+                    )
+                    continue
+                if policy == "historical":
+                    evidence = ex.get("release_version_evidence")
+                    if not isinstance(evidence, str) or not evidence.strip():
+                        errors.append(
+                            f"{where}.examples[{j}].release_version_evidence: "
+                            "required for historical version pins"
+                        )
+                        continue
+                    evidence_path = evidence.split("#", 1)[0]
+                    evidence_relative = Path(evidence_path)
+                    evidence_file = _resolve(evidence_path).resolve()
+                    if (
+                        not evidence_path
+                        or evidence_relative.is_absolute()
+                        or ".." in evidence_relative.parts
+                        or not evidence_file.is_relative_to(repo_root)
+                        or not evidence_file.is_file()
+                    ):
+                        errors.append(
+                            f"{where}.examples[{j}].release_version_evidence: "
+                            f"must be an existing repo-relative file: {evidence_path}"
+                        )
     elif require_declarative:
         errors.append(f"{where}.examples: required in declarative mode")
 

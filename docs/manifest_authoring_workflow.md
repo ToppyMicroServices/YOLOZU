@@ -23,6 +23,7 @@ Every tool entry should include:
 - `effects` with `writes` and `fixed_writes`
 - `outputs` (empty list allowed)
 - `examples` with at least one runnable `command`
+- exact `yolozu==VERSION_NUMBER` examples classified with `release_version_policy: current`, or `historical` plus a repo-relative `release_version_evidence`
 
 Optional but recommended when applicable:
 

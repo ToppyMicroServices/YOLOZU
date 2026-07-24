@@ -34,6 +34,7 @@ class TestReleaseTool(unittest.TestCase):
         self.assertIn("Usage:", proc.stdout)
         self.assertIn("Delegated tool help:", proc.stdout)
         self.assertIn("--dry-run", proc.stdout)
+        self.assertIn("--check", proc.stdout)
 
     def test_help(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -51,6 +52,7 @@ class TestReleaseTool(unittest.TestCase):
         if proc.returncode != 0:
             self.fail(f"release --help failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("--dry-run", proc.stdout)
+        self.assertIn("--check", proc.stdout)
         self.assertIn("--skip-gh", proc.stdout)
         self.assertIn("--versioning", proc.stdout)
         self.assertIn("--allow-major", proc.stdout)
@@ -90,6 +92,13 @@ class TestReleaseTool(unittest.TestCase):
             self.assertEqual(str(payload.get("versioning_scheme")), "semver")
             self.assertRegex(str(payload.get("next_version")), r"^\d+\.\d+\.\d+$")
             self.assertIn(str(payload.get("bump_scale")), {"small", "medium", "large"})
+            self.assertTrue((payload.get("metadata_validation") or {}).get("ok"))
+            metadata_plan = payload.get("metadata_plan") or {}
+            self.assertTrue((metadata_plan.get("validation_after") or {}).get("ok"))
+            self.assertIn(
+                "CITATION.cff",
+                metadata_plan.get("changed_paths") or [],
+            )
             release_actions = payload.get("release_actions") or {}
             self.assertFalse(bool(release_actions.get("github_release_publish")))
             self.assertFalse(bool(release_actions.get("pypi_update_via_publish_workflow")))
@@ -129,6 +138,35 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("current_version")), version)
             self.assertEqual(str(payload.get("versioning_scheme")), "semver")
+
+    def test_check_reports_current_metadata_without_release_steps(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "release.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            out = Path(td) / "release_metadata_check.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--check",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(f"release --check failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertTrue(payload["ok"])
+            self.assertTrue(payload["check"])
+            self.assertTrue(payload["non_writing"])
+            self.assertTrue(payload["metadata_validation"]["ok"])
+            self.assertEqual(payload["steps"], [])
 
     def test_skip_zenodo_fails_closed_before_release(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

@@ -6,8 +6,9 @@ Default behavior (`python3 tools/release.py`):
 2) Classify change scale (small/medium/large) from git diff stats since the latest tag that matches the active versioning scheme.
 3) Bump semantic version automatically, using explicit breaking-change signals for major releases.
 4) Run release quality checks.
-5) Update package version, commit, create/push git tag.
-6) Create published GitHub release (which triggers PyPI and manual DOI workflows).
+5) Atomically synchronize package, changelog, citation, and current manifest-example metadata.
+6) Commit and create/push the git tag.
+7) Create the published GitHub release (which triggers PyPI and manual DOI workflows).
 """
 
 from __future__ import annotations
@@ -22,9 +23,23 @@ import time
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from .release_metadata import (
+        ReleaseMetadataPlan,
+        prepare_release_metadata,
+        validate_release_metadata,
+        write_release_metadata_atomic,
+    )
+else:
+    from release_metadata import (
+        ReleaseMetadataPlan,
+        prepare_release_metadata,
+        validate_release_metadata,
+        write_release_metadata_atomic,
+    )
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INIT_PATH = REPO_ROOT / "yolozu" / "__init__.py"
-CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
 PYTHON = sys.executable  # Use the same interpreter as release.sh selected.
 SEMVER_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 CALVER_RE = re.compile(r"(\d{4})\.(\d{2})\.(\d{2})\.(\d+)")
@@ -39,6 +54,14 @@ def _parser() -> argparse.ArgumentParser:
         )
     )
     p.add_argument("--dry-run", action="store_true", help="Print plan/report only; do not mutate git/GitHub.")
+    p.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Validate current package, CHANGELOG, CITATION, tag-form, and manifest "
+            "metadata without preparing or publishing a release."
+        ),
+    )
     p.add_argument(
         "--output",
         default="reports/release_report.json",
@@ -147,19 +170,6 @@ def _parse_version_from_init() -> str:
     return str(m.group(1))
 
 
-def _set_version_in_init(next_version: str) -> None:
-    text = INIT_PATH.read_text(encoding="utf-8")
-    nxt = re.sub(
-        r'(__version__\s*=\s*["\'])([^"\']+)(["\'])',
-        rf"\g<1>{next_version}\g<3>",
-        text,
-        count=1,
-    )
-    if nxt == text:
-        raise RuntimeError("failed to update __version__ in yolozu/__init__.py")
-    INIT_PATH.write_text(nxt, encoding="utf-8")
-
-
 def _release_subjects_since(ref: str | None) -> list[str]:
     if ref:
         out = _git_stdout("log", "--format=%s", f"{ref}..HEAD")
@@ -194,18 +204,6 @@ def _changelog_section(next_version: str, *, date: str, ref: str | None) -> str:
     if not entries:
         entries = [f"- Prepare release metadata for v{next_version}."]
     return f"## [{next_version}] - {date}\n\n### Changed\n" + "\n".join(entries) + "\n"
-
-
-def _set_changelog_release(next_version: str, *, ref: str | None, date: str | None = None) -> None:
-    text = CHANGELOG_PATH.read_text(encoding="utf-8")
-    heading = f"## [{next_version}] - "
-    if heading in text:
-        return
-    marker = "## [Unreleased]"
-    if marker not in text:
-        raise RuntimeError("CHANGELOG.md missing ## [Unreleased] marker")
-    section = _changelog_section(next_version, date=date or _today_utc(), ref=ref)
-    CHANGELOG_PATH.write_text(text.replace(marker, f"{marker}\n\n{section}", 1), encoding="utf-8")
 
 
 def _detect_versioning_scheme(version: str) -> str:
@@ -388,6 +386,45 @@ def main(argv: list[str] | None = None) -> int:
         current_version = ""
         errors.append(str(exc))
 
+    metadata_validation = validate_release_metadata(
+        REPO_ROOT,
+        expected_version=current_version or None,
+        expected_tag=f"v{current_version}" if current_version else None,
+    )
+    errors.extend(str(error) for error in metadata_validation.get("errors") or [])
+
+    try:
+        branch = _git_stdout("rev-parse", "--abbrev-ref", "HEAD").strip()
+    except Exception as exc:
+        branch = ""
+        errors.append(str(exc))
+    try:
+        dirty = bool(_git_stdout("status", "--porcelain").strip())
+    except Exception as exc:
+        dirty = False
+        errors.append(str(exc))
+
+    if bool(args.check):
+        report = {
+            "task": "release",
+            "timestamp": _now_utc(),
+            "ok": len(errors) == 0,
+            "check": True,
+            "dry_run": bool(args.dry_run),
+            "non_writing": True,
+            "branch": branch,
+            "dirty": dirty,
+            "current_version": current_version,
+            "tag": f"v{current_version}" if current_version else "",
+            "metadata_validation": metadata_validation,
+            "warnings": warnings,
+            "errors": errors,
+            "steps": steps,
+        }
+        _write_report(out, report)
+        print(str(out))
+        return 0 if report["ok"] else 1
+
     try:
         detected_versioning = _detect_versioning_scheme(current_version) if current_version else ""
     except Exception as exc:
@@ -455,19 +492,9 @@ def main(argv: list[str] | None = None) -> int:
         errors.append(str(exc))
     tag = f"v{next_version}" if next_version else ""
 
-    try:
-        branch = _git_stdout("rev-parse", "--abbrev-ref", "HEAD").strip()
-    except Exception as exc:
-        branch = ""
-        errors.append(str(exc))
     if branch and branch != "main" and not bool(args.allow_non_main):
         errors.append(f"current branch is '{branch}' (expected 'main'); use --allow-non-main to bypass")
 
-    try:
-        dirty = bool(_git_stdout("status", "--porcelain").strip())
-    except Exception as exc:
-        dirty = False
-        errors.append(str(exc))
     if dirty and not bool(args.allow_dirty):
         errors.append("git working tree is dirty; commit/stash or use --allow-dirty")
 
@@ -484,6 +511,25 @@ def main(argv: list[str] | None = None) -> int:
         if not bool(gh_probe.get("ok")):
             errors.append("GitHub CLI `gh` is required for release/PyPI/Zenodo update steps")
 
+    release_date = _today_utc()
+    metadata_plan: ReleaseMetadataPlan | None = None
+    if not errors:
+        try:
+            changelog_section = _changelog_section(
+                next_version,
+                date=release_date,
+                ref=latest_tag,
+            )
+            metadata_plan = prepare_release_metadata(
+                REPO_ROOT,
+                current_version=current_version,
+                next_version=next_version,
+                release_date=release_date,
+                changelog_section=changelog_section,
+            )
+        except Exception as exc:
+            errors.append(f"failed to prepare synchronized release metadata: {exc}")
+
     if not errors and not bool(args.skip_checks):
         for cmd in _quality_check_cmds():
             step = _run(cmd, dry_run=bool(args.dry_run))
@@ -493,69 +539,62 @@ def main(argv: list[str] | None = None) -> int:
                 errors.append(f"quality check failed: {' '.join(cmd)}")
                 break
 
-    if not errors:
+    if not errors and metadata_plan is not None:
         if bool(args.dry_run):
-            step = _run([PYTHON, "tools/release.py", "(set-version)", next_version], dry_run=True)
+            step = _run(
+                [
+                    PYTHON,
+                    "tools/release.py",
+                    "(sync-release-metadata)",
+                    *metadata_plan.changed_paths,
+                ],
+                dry_run=True,
+            )
         else:
             try:
-                _set_version_in_init(next_version)
+                write_release_metadata_atomic(REPO_ROOT, metadata_plan)
                 step = {
-                    "type": "set_version",
+                    "type": "sync_release_metadata",
                     "ok": True,
                     "returncode": 0,
-                    "stdout": f"updated yolozu/__init__.py to {next_version}\n",
+                    "stdout": (
+                        "updated synchronized release metadata: "
+                        + ", ".join(metadata_plan.changed_paths)
+                        + "\n"
+                    ),
                     "stderr": "",
-                    "cmd": [PYTHON, "tools/release.py", "(set-version)", next_version],
+                    "cmd": [
+                        PYTHON,
+                        "tools/release.py",
+                        "(sync-release-metadata)",
+                        *metadata_plan.changed_paths,
+                    ],
                     "cwd": str(REPO_ROOT),
                 }
             except Exception as exc:
                 step = {
-                    "type": "set_version",
+                    "type": "sync_release_metadata",
                     "ok": False,
                     "returncode": 1,
                     "stdout": "",
                     "stderr": str(exc),
-                    "cmd": [PYTHON, "tools/release.py", "(set-version)", next_version],
+                    "cmd": [
+                        PYTHON,
+                        "tools/release.py",
+                        "(sync-release-metadata)",
+                        *metadata_plan.changed_paths,
+                    ],
                     "cwd": str(REPO_ROOT),
                 }
-        step["type"] = "set_version"
+        step["type"] = "sync_release_metadata"
         steps.append(step)
         if not bool(step.get("ok")):
-            errors.append("failed to update package version")
+            errors.append("failed to atomically synchronize release metadata")
 
-    if not errors:
-        if bool(args.dry_run):
-            step = _run([PYTHON, "tools/release.py", "(set-changelog)", next_version], dry_run=True)
-        else:
-            try:
-                _set_changelog_release(next_version, ref=latest_tag)
-                step = {
-                    "type": "set_changelog",
-                    "ok": True,
-                    "returncode": 0,
-                    "stdout": f"updated CHANGELOG.md for {next_version}\n",
-                    "stderr": "",
-                    "cmd": [PYTHON, "tools/release.py", "(set-changelog)", next_version],
-                    "cwd": str(REPO_ROOT),
-                }
-            except Exception as exc:
-                step = {
-                    "type": "set_changelog",
-                    "ok": False,
-                    "returncode": 1,
-                    "stdout": "",
-                    "stderr": str(exc),
-                    "cmd": [PYTHON, "tools/release.py", "(set-changelog)", next_version],
-                    "cwd": str(REPO_ROOT),
-                }
-        step["type"] = "set_changelog"
-        steps.append(step)
-        if not bool(step.get("ok")):
-            errors.append("failed to update changelog")
-
-    if not errors:
+    if not errors and metadata_plan is not None:
+        stage_paths = list(metadata_plan.changed_paths)
         for cmd, step_type, err in [
-            (["git", "add", "yolozu/__init__.py", "CHANGELOG.md"], "git_add_version", "failed to stage release files"),
+            (["git", "add", *stage_paths], "git_add_version", "failed to stage release files"),
             (["git", "commit", "-m", f"chore: release {tag}"], "git_commit", "failed to create release commit"),
             (["git", "tag", "-a", tag, "-m", f"YOLOZU {next_version}"], "git_tag", "failed to create release tag"),
             (["git", "push", "origin", "main"], "git_push_main", "failed to push main branch"),
@@ -612,7 +651,9 @@ def main(argv: list[str] | None = None) -> int:
         "task": "release",
         "timestamp": _now_utc(),
         "ok": len(errors) == 0,
+        "check": False,
         "dry_run": bool(args.dry_run),
+        "non_writing": bool(args.dry_run),
         "branch": branch,
         "dirty": dirty,
         "latest_tag": latest_tag,
@@ -621,6 +662,9 @@ def main(argv: list[str] | None = None) -> int:
         "versioning_scheme": versioning,
         "next_version": next_version,
         "tag": tag,
+        "release_date": release_date,
+        "metadata_validation": metadata_validation,
+        "metadata_plan": metadata_plan.report() if metadata_plan is not None else {},
         "bump_scale": bump_scale,
         "breaking_change_detected": breaking_change_detected,
         "semver_bump": semver_bump if versioning == "semver" else "",

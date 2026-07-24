@@ -11,12 +11,20 @@ import time
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from .release_metadata import validate_release_metadata
+else:
+    from release_metadata import validate_release_metadata
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Create/push release tags and optionally create GitHub Releases (draft/publish)."
+        description=(
+            "Validate synchronized release metadata, then create/push a release tag "
+            "and optionally create a GitHub Release (draft/publish)."
+        )
     )
     p.add_argument("--version", default=None, help="Release version (default: parse from yolozu/__init__.py).")
     p.add_argument("--tag-prefix", default="v", help="Tag prefix (default: v).")
@@ -122,6 +130,13 @@ def main(argv: list[str] | None = None) -> int:
             f"version mismatch: yolozu/__init__.py has {parsed_version}, but --version requested {version}"
         )
     tag = f"{str(args.tag_prefix)}{version}"
+    metadata_validation = validate_release_metadata(
+        REPO_ROOT,
+        expected_version=version or None,
+        expected_tag=tag if version else None,
+        tag_prefix=str(args.tag_prefix),
+    )
+    errors.extend(str(error) for error in metadata_validation.get("errors") or [])
 
     try:
         branch = _git_stdout("rev-parse", "--abbrev-ref", "HEAD").strip()
@@ -157,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
             "branch": branch,
             "dirty": dirty,
             "dry_run": bool(args.dry_run),
+            "metadata_validation": metadata_validation,
             "warnings": warnings,
             "errors": errors,
             "steps": steps,
@@ -219,6 +235,7 @@ def main(argv: list[str] | None = None) -> int:
         "branch": branch,
         "dirty": dirty,
         "dry_run": bool(args.dry_run),
+        "metadata_validation": metadata_validation,
         "release_state": str(args.release_state),
         "push_tag": bool(args.push_tag),
         "run_checks": bool(args.run_checks),
