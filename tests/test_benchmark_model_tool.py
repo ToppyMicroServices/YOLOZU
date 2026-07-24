@@ -990,6 +990,135 @@ class TestBenchmarkModelTool(TestCase):
             "detections_canonicalized_by_class_geometry_and_score",
         )
 
+    def test_artifact_parity_provenance_is_snapshotted_once_per_artifact(self):
+        fixture_root = self.repo_root / "tests" / "fixtures" / "benchmark_parity"
+        cases = {
+            "classification": {
+                "attach": benchmark_mode._attach_classification_parity,
+                "reference": fixture_root / "classification_torch.json",
+                "candidate": fixture_root / "classification_onnx.json",
+                "invalid_classes": ["dog", "cat", "bird"],
+            },
+            "obb": {
+                "attach": benchmark_mode._attach_obb_parity,
+                "reference": fixture_root / "obb_torch.json",
+                "candidate": fixture_root / "obb_onnx.json",
+                "invalid_classes": ["boat"],
+            },
+        }
+        args = SimpleNamespace(
+            parity_reference_backend="auto",
+            classification_parity_score_atol=1e-4,
+            obb_parity_iou_thresh=0.99,
+            obb_parity_score_atol=1e-4,
+        )
+        with tempfile.TemporaryDirectory(dir=str(self.repo_root)) as td:
+            root = Path(td)
+            for task, case in cases.items():
+                valid_copy = root / f"{task}_engine.json"
+                valid_copy.write_text(
+                    case["candidate"].read_text(encoding="utf-8"),
+                    encoding="utf-8",
+                )
+                invalid_payload = json.loads(
+                    case["candidate"].read_text(encoding="utf-8")
+                )
+                invalid_payload["classes"] = case["invalid_classes"]
+                invalid_candidate = root / f"{task}_invalid.json"
+                invalid_candidate.write_text(
+                    json.dumps(invalid_payload),
+                    encoding="utf-8",
+                )
+
+                for scenario, candidates in (
+                    (
+                        "success",
+                        [
+                            ("onnx", case["candidate"]),
+                            ("engine", valid_copy),
+                        ],
+                    ),
+                    ("failure", [("onnx", invalid_candidate)]),
+                ):
+                    with self.subTest(task=task, scenario=scenario):
+                        scenario_root = root / f"{task}_{scenario}"
+                        reference_parity = scenario_root / "parity_torch.json"
+                        results = [
+                            {
+                                "format": "torch",
+                                "status": "ok",
+                                "task": task,
+                                "artifacts": {
+                                    "predictions": str(case["reference"]),
+                                    "parity": str(reference_parity),
+                                },
+                                "run_meta": {},
+                            }
+                        ]
+                        for candidate_format, candidate_path in candidates:
+                            results.append(
+                                {
+                                    "format": candidate_format,
+                                    "status": "ok",
+                                    "task": task,
+                                    "artifacts": {
+                                        "predictions": str(candidate_path),
+                                        "parity": str(
+                                            scenario_root
+                                            / f"parity_{candidate_format}.json"
+                                        ),
+                                    },
+                                    "run_meta": {},
+                                }
+                            )
+
+                        with mock.patch.object(
+                            benchmark_mode,
+                            "_normalized_artifact_provenance",
+                            wraps=benchmark_mode._normalized_artifact_provenance,
+                        ) as provenance:
+                            case["attach"](results, args=args)
+
+                        expected_paths = [
+                            case["reference"],
+                            *(candidate_path for _, candidate_path in candidates),
+                        ]
+                        self.assertEqual(
+                            [call.args[0] for call in provenance.call_args_list],
+                            expected_paths,
+                        )
+                        reference_payload = json.loads(
+                            reference_parity.read_text(encoding="utf-8")
+                        )
+                        for index, result in enumerate(results[1:]):
+                            candidate_payload = json.loads(
+                                Path(result["artifacts"]["parity"]).read_text(
+                                    encoding="utf-8"
+                                )
+                            )
+                            self.assertEqual(
+                                candidate_payload["provenance"]["reference"],
+                                reference_payload["provenance"]["reference"],
+                            )
+                            candidate_snapshot = candidate_payload["provenance"][
+                                "candidate"
+                            ]
+                            reference_record = reference_payload["provenance"][
+                                "candidates"
+                            ][index]
+                            for key in (
+                                "path",
+                                "sha256",
+                                "kind",
+                                "format",
+                                "source_path",
+                                "source_sha256",
+                            ):
+                                self.assertEqual(
+                                    candidate_snapshot[key],
+                                    reference_record[key],
+                                )
+
     def test_obb_public_benchmark_ap_penalizes_early_false_positive(self):
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:

@@ -2748,8 +2748,8 @@ def _write_artifact_parity_reference(
     fmt: str,
     candidate_records: list[dict[str, Any]],
     comparison_provenance: dict[str, Any],
+    reference_provenance: dict[str, Any],
     run_meta: dict[str, Any],
-    predictions_path: Path,
 ) -> dict[str, Any]:
     candidate_backends = [str(item["backend"]) for item in candidate_records]
     payload = {
@@ -2768,7 +2768,7 @@ def _write_artifact_parity_reference(
             "thresholds": dict(comparison_provenance.get("thresholds") or {}),
         },
         "provenance": {
-            "reference": _normalized_artifact_provenance(predictions_path),
+            "reference": reference_provenance,
             "candidates": candidate_records,
             "execution_scope": "artifact_comparison_only_no_backend_inference",
         },
@@ -2877,6 +2877,7 @@ def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -
     reference_predictions = Path(
         str((reference.get("artifacts") or {}).get("predictions"))
     )
+    reference_provenance = _normalized_artifact_provenance(reference_predictions)
     score_atol = float(getattr(args, "classification_parity_score_atol", 1e-4))
     candidate_records: list[dict[str, Any]] = []
     comparison_provenance = {
@@ -2893,9 +2894,10 @@ def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -
             str((item.get("artifacts") or {}).get("predictions"))
         )
         parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        candidate_provenance = _normalized_artifact_provenance(candidate_predictions)
         candidate_record = {
             "backend": candidate_backend,
-            **_normalized_artifact_provenance(candidate_predictions),
+            **candidate_provenance,
         }
         try:
             report = _classification_parity_report(
@@ -2921,8 +2923,8 @@ def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -
                 "summary": summary,
                 "report": report,
                 "provenance": {
-                    "reference": _normalized_artifact_provenance(reference_predictions),
-                    "candidate": _normalized_artifact_provenance(candidate_predictions),
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
                     "execution_scope": "artifact_comparison_only_no_backend_inference",
                 },
                 "timestamp": now_utc_iso(),
@@ -2946,8 +2948,8 @@ def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -
                 "candidate_backend": candidate_backend,
                 "error": str(exc),
                 "provenance": {
-                    "reference": _normalized_artifact_provenance(reference_predictions),
-                    "candidate": _normalized_artifact_provenance(candidate_predictions),
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
                     "execution_scope": "artifact_comparison_only_no_backend_inference",
                 },
                 "timestamp": now_utc_iso(),
@@ -2976,8 +2978,8 @@ def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -
         fmt=reference_backend,
         candidate_records=candidate_records,
         comparison_provenance=comparison_provenance,
+        reference_provenance=reference_provenance,
         run_meta=reference.get("run_meta") or {},
-        predictions_path=reference_predictions,
     )
     reference["parity"] = reference_payload["summary"]
 
@@ -2999,6 +3001,7 @@ def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
     reference_predictions = Path(
         str((reference.get("artifacts") or {}).get("predictions"))
     )
+    reference_provenance = _normalized_artifact_provenance(reference_predictions)
     iou_thresh = float(getattr(args, "obb_parity_iou_thresh", 0.99))
     score_atol = float(getattr(args, "obb_parity_score_atol", 1e-4))
     candidate_records: list[dict[str, Any]] = []
@@ -3021,9 +3024,10 @@ def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
             str((item.get("artifacts") or {}).get("predictions"))
         )
         parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        candidate_provenance = _normalized_artifact_provenance(candidate_predictions)
         candidate_record = {
             "backend": candidate_backend,
-            **_normalized_artifact_provenance(candidate_predictions),
+            **candidate_provenance,
         }
         try:
             report = _obb_parity_report(
@@ -3050,8 +3054,8 @@ def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
                 "summary": summary,
                 "report": report,
                 "provenance": {
-                    "reference": _normalized_artifact_provenance(reference_predictions),
-                    "candidate": _normalized_artifact_provenance(candidate_predictions),
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
                     "execution_scope": "artifact_comparison_only_no_backend_inference",
                 },
                 "timestamp": now_utc_iso(),
@@ -3075,8 +3079,8 @@ def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
                 "candidate_backend": candidate_backend,
                 "error": str(exc),
                 "provenance": {
-                    "reference": _normalized_artifact_provenance(reference_predictions),
-                    "candidate": _normalized_artifact_provenance(candidate_predictions),
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
                     "execution_scope": "artifact_comparison_only_no_backend_inference",
                 },
                 "timestamp": now_utc_iso(),
@@ -3105,8 +3109,8 @@ def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
         fmt=reference_backend,
         candidate_records=candidate_records,
         comparison_provenance=comparison_provenance,
+        reference_provenance=reference_provenance,
         run_meta=reference.get("run_meta") or {},
-        predictions_path=reference_predictions,
     )
     reference["parity"] = reference_payload["summary"]
 
