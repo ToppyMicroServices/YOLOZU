@@ -1,6 +1,8 @@
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 def _write_stub_png(path: Path, *, width: int, height: int) -> None:
@@ -130,8 +132,14 @@ class TestCocoKeypointsEval(unittest.TestCase):
     def test_oks_requires_pycocotools(self) -> None:
         from yolozu.coco_keypoints_eval import evaluate_coco_oks_map
 
-        with self.assertRaises(RuntimeError):
-            evaluate_coco_oks_map({"images": [], "annotations": [], "categories": []}, [])
+        missing_modules = {
+            "pycocotools": None,
+            "pycocotools.coco": None,
+            "pycocotools.cocoeval": None,
+        }
+        with mock.patch.dict(sys.modules, missing_modules):
+            with self.assertRaises(RuntimeError):
+                evaluate_coco_oks_map({"images": [], "annotations": [], "categories": []}, [])
 
 
 if __name__ == "__main__":
