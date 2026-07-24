@@ -884,6 +884,37 @@ class TestBenchmarkModelTool(TestCase):
             second["per_class"]["0"]["ranked_matches_iou50"],
         )
 
+    def test_obb_metrics_group_inputs_once_before_threshold_matching(self):
+        box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
+        labels = {
+            "img0": [
+                {"class_id": 0, "obb": box},
+                {"class_id": 1, "obb": box},
+            ]
+        }
+        predictions = {
+            "img0": [
+                {"class_id": 0, "score": 0.9, "obb": box},
+                {"class_id": 1, "score": 0.8, "obb": box},
+            ]
+        }
+
+        with mock.patch.object(
+            benchmark_mode,
+            "_group_obb_inputs_by_class",
+            wraps=benchmark_mode._group_obb_inputs_by_class,
+        ) as group_inputs:
+            metrics = benchmark_mode._evaluate_obb(
+                labels,
+                predictions,
+                ["ship", "plane", "harbor"],
+            )
+
+        group_inputs.assert_called_once()
+        self.assertEqual(metrics["obb_mAP50"], 1.0)
+        self.assertFalse(metrics["per_class"]["2"]["included_in_mean"])
+        self.assertEqual(metrics["per_class"]["2"]["predictions"], 0)
+
     def test_obb_metrics_use_101_recall_points_and_lowest_gt_tie_break(self):
         box = {"cx": 0.5, "cy": 0.5, "w": 0.4, "h": 0.2, "angle_deg": 0.0}
         labels = {

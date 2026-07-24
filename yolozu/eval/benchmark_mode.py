@@ -1988,28 +1988,46 @@ def _obb_interpolated_ap(recalls: list[float], precisions: list[float]) -> float
     return sum(interpolated) / len(interpolated)
 
 
-def _obb_ranked_class_metrics(
+def _group_obb_inputs_by_class(
     labels: dict[str, list[dict[str, Any]]],
     predictions: dict[str, list[dict[str, Any]]],
-    *,
-    class_id: int,
-    threshold: float,
-) -> dict[str, Any]:
-    ground_truth: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+    class_ids: list[int],
+) -> tuple[
+    dict[int, dict[str, list[tuple[int, dict[str, Any]]]]],
+    dict[int, list[tuple[float, str, int, dict[str, Any]]]],
+]:
+    ground_truth_by_class: dict[int, dict[str, list[tuple[int, dict[str, Any]]]]] = {
+        class_id: {} for class_id in class_ids
+    }
     for sample_id, objects in labels.items():
-        selected = [(idx, obj) for idx, obj in enumerate(objects) if int(obj["class_id"]) == class_id]
-        if selected:
-            ground_truth[sample_id] = selected
+        for ground_truth_idx, ground_truth in enumerate(objects):
+            class_id = int(ground_truth["class_id"])
+            ground_truth_by_class[class_id].setdefault(sample_id, []).append(
+                (ground_truth_idx, ground_truth)
+            )
 
-    ranked_predictions: list[tuple[float, str, int, dict[str, Any]]] = []
+    ranked_predictions_by_class: dict[
+        int,
+        list[tuple[float, str, int, dict[str, Any]]],
+    ] = {class_id: [] for class_id in class_ids}
     for sample_id, detections in predictions.items():
         for prediction_idx, detection in enumerate(detections):
-            if int(detection["class_id"]) == class_id:
-                ranked_predictions.append(
-                    (float(detection["score"]), str(sample_id), prediction_idx, detection)
-                )
-    ranked_predictions.sort(key=lambda item: (-item[0], item[1], item[2]))
+            class_id = int(detection["class_id"])
+            ranked_predictions_by_class[class_id].append(
+                (float(detection["score"]), str(sample_id), prediction_idx, detection)
+            )
+    for ranked_predictions in ranked_predictions_by_class.values():
+        ranked_predictions.sort(key=lambda item: (-item[0], item[1], item[2]))
 
+    return ground_truth_by_class, ranked_predictions_by_class
+
+
+def _obb_ranked_class_metrics(
+    ground_truth: dict[str, list[tuple[int, dict[str, Any]]]],
+    ranked_predictions: list[tuple[float, str, int, dict[str, Any]]],
+    *,
+    threshold: float,
+) -> dict[str, Any]:
     total_gt = sum(len(items) for items in ground_truth.values())
     matched_ground_truth: set[tuple[str, int]] = set()
     true_positives = 0
@@ -2165,6 +2183,11 @@ def _evaluate_obb(
         for objects in labels.values()
         for item in objects
     }
+    ground_truth_by_class, ranked_predictions_by_class = _group_obb_inputs_by_class(
+        labels,
+        predictions,
+        class_ids,
+    )
     by_threshold: dict[str, dict[str, Any]] = {}
     per_class_thresholds: dict[int, dict[str, dict[str, Any]]] = {class_id: {} for class_id in class_ids}
     class_results_at_50: dict[int, dict[str, Any]] = {}
@@ -2172,9 +2195,8 @@ def _evaluate_obb(
         threshold_key = f"{threshold:.2f}"
         class_results = {
             class_id: _obb_ranked_class_metrics(
-                labels,
-                predictions,
-                class_id=class_id,
+                ground_truth_by_class[class_id],
+                ranked_predictions_by_class[class_id],
                 threshold=threshold,
             )
             for class_id in class_ids
