@@ -52,7 +52,9 @@ benchmark users and maintainers.
 - classification and OBB artifact-backed lanes validate their input interface
 interface contracts independently of the selected backend: duplicate ids, non-finite
   task values, class/score shape drift, and OBB scores outside `[0,1]` fail
-  before metric computation.
+  before metric computation. Comparable artifacts then produce task-specific
+  parity reports with thresholds and source checksums, without claiming the
+  named backend runtime was executed.
 - `bundled with YOLOZU = No` is intentional. This repo provides adapter/wrapper
   logic and interface-contract-safe orchestration, not vendor runtime
   redistribution.

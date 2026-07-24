@@ -85,8 +85,8 @@ effective next steps are:
    canonical CLI surface as the other implemented detect lanes.
 2. Keep the canonical support matrix that shows whether each format has real inference,
    real eval, real parity artifacts, or only placeholder/skipped semantics.
-3. Add parity artifacts to the artifact-backed classification and OBB lanes;
-   other comparable lanes already support an explicit selected reference.
+3. Keep the shipped classification and OBB artifact parity reports synchronized
+   with their task-specific metrics, thresholds, and provenance.
 4. Keep format-specific flag validation strict so inert combinations fail early
    instead of looking supported.
 
@@ -145,20 +145,20 @@ YOLOZU already has extra task value beyond that baseline:
 - 6DoF pose
 
 The benchmark entrypoint now records explicit task semantics in the benchmark
-report, and artifact-backed real eval coverage now exists for `classification`
-and `obb`; artifact-backed real eval/parity coverage exists for `segmentation`,
-`keypoints`, `depth`, and `pose6d`. The remaining lag is parity attachment for
-the classification and OBB artifact lanes. Their input interface contracts now
-fail closed on duplicate ids, class/score shape drift, non-finite values, and
-out-of-range OBB confidence scores while preserving empty OBB detection lists.
+report, and artifact-backed real eval/parity coverage exists for
+`classification`, `obb`, `segmentation`, `keypoints`, `depth`, and `pose6d`.
+Classification and OBB input interface contracts fail closed on duplicate ids,
+class/score shape drift, non-finite values, and out-of-range OBB confidence
+scores while preserving empty OBB detection lists. Their parity reports record
+task-specific difference metrics, thresholds, source checksums, and run
+metadata without claiming backend execution.
 
 Improvement priority:
 
-1. Expand parity artifacts for artifact-backed classification and OBB reports
-2. Keep task-specific eval metric keys visible in the report examples
-3. Keep explicit `classification` and `obb` support-status lines in docs/manual
-4. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
-5. Keep the depth and pose6d lanes clearly documented as artifact-backed real eval/parity rather than inference-backed parity
+1. Keep task-specific eval/parity metric keys visible in the report examples
+2. Keep explicit `classification` and `obb` support-status lines in docs/manual
+3. Keep `depth` and `pose6d` as YOLOZU-native extensions, not fake benchmark-surface parity
+4. Keep all artifact-backed lanes clearly documented as artifact comparison rather than inference-backed parity
 
 ### 3. Argument-surface gaps
 
@@ -208,7 +208,7 @@ canonical support matrix mirrors those report fields.
 Current behavior:
 
 - `torch` / `onnx` / `engine` / `torchscript` / `openvino` can orchestrate real detect runs when their external runtimes and artifacts are available
-- `classification` and `obb` can use artifact-backed real eval lanes for `torch` / `onnx` / `engine` / `torchscript` / `openvino`; parity remains skipped
+- `classification` and `obb` can use artifact-backed real eval/parity lanes for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `segmentation` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `keypoints` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
 - `depth` can use an artifact-backed real eval/parity lane for `torch` / `onnx` / `engine` / `torchscript` / `openvino`
@@ -216,15 +216,15 @@ Current behavior:
 - `executorch` / `opencv_dnn` report unsupported/skipped in benchmark orchestration
 - parity artifacts are real for successful comparisons against the selected
   reference backend (with `auto` preferring `torch`); they remain placeholders
-  for dry-run or skipped lanes and for classification/OBB artifact evaluation
+  for dry-run or skipped lanes
 
 Maintained boundary:
 
 1. Keep `support_status` limited to `real`, `artifact-backed`, or `skipped`
 2. Keep the support matrix aligned with actual artifact expectations
 3. Keep `latency_source` separate from export/evaluation success
-4. Add real parity to classification and OBB only after their artifact
-   validation and metric semantics are evidence-backed
+4. Keep classification and OBB parity tied to their validated artifact
+   interface contracts and documented metric semantics
 
 ### 4.1 Runtime / license boundary
 
@@ -263,7 +263,7 @@ Improvement priority:
 The highest-value next steps are:
 
 1. Keep `openvino` detect support honest when its external runtime or IR artifact is unavailable
-2. Expand parity artifacts for artifact-backed classification and OBB reports
+2. Preserve task-specific parity provenance and threshold semantics
 3. Keep per-format flag validation strict so unsupported knobs fail early
 4. Expand the support matrix when benchmark semantics change
 

@@ -112,7 +112,12 @@ TASK_SEMANTICS = {
         "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "Classification uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino prediction artifacts. Its input interface contract requires unique sample ids, finite score vectors, matching vector lengths, and consistent class lists; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": (
+            "Classification uses artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino prediction artifacts. Its input interface contract "
+            "requires unique sample ids, finite score vectors, matching vector lengths, and consistent class "
+            "lists; benchmark reports do not claim YOLOZU ran backend inference."
+        ),
     },
     "obb": {
         "display_name": "Oriented Bounding Boxes",
@@ -122,7 +127,8 @@ TASK_SEMANTICS = {
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
         "notes": (
-            "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box "
+            "OBB uses artifact-backed real evaluation and parity for "
+            "torch/onnx/engine/torchscript/openvino rotated-box "
             "prediction artifacts. Its input interface contract requires unique image ids, finite normalized "
             "geometry, and confidence scores in [0,1], while allowing empty detection lists. Metrics use "
             "confidence-ranked per-class rotated-IoU matching, 101-point interpolated AP, and separately averaged "
@@ -405,15 +411,10 @@ def _task_execution_semantics(
 
     artifact_expectation: dict[str, str]
     if execution_mode in {"real_backend_eval", "real_artifact_eval"}:
-        parity_expectation = (
-            "skipped"
-            if execution_mode == "real_artifact_eval" and task_label in {"classification", "obb"}
-            else "real_when_comparable"
-        )
         artifact_expectation = {
             "predictions": "real",
             "eval": "real",
-            "parity": parity_expectation,
+            "parity": "real_when_comparable",
         }
     elif execution_mode == "dry_run_planning":
         artifact_expectation = {
@@ -443,14 +444,14 @@ def _task_execution_semantics(
     elif task_label == "classification" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current classification benchmarking is artifact-backed: backend-specific score vectors are "
-            "evaluated against class labels directly, without pretending YOLOZU performed the underlying backend "
-            "inference itself."
+            "evaluated against class labels and compared directly across eligible artifacts, without pretending "
+            "YOLOZU performed the underlying backend inference itself."
         )
     elif task_label == "obb" and execution_mode == "real_artifact_eval":
         note = (
             f"{note} Current OBB benchmarking is artifact-backed: backend-specific rotated-box predictions are "
-            "evaluated against oriented labels directly, without pretending YOLOZU performed the underlying backend "
-            "inference itself."
+            "evaluated against oriented labels and compared directly across eligible artifacts, without pretending "
+            "YOLOZU performed the underlying backend inference itself."
         )
     elif task_label == "segmentation" and execution_mode == "real_artifact_eval":
         note = (
@@ -698,6 +699,20 @@ def _validate_benchmark_args(args: Any, requested_formats: list[str], *, task_la
         raise ValueError("--sleep-s must be a finite, non-negative number") from exc
     if not math.isfinite(sleep_s) or sleep_s < 0.0:
         raise ValueError("--sleep-s must be a finite, non-negative number")
+
+    nonnegative_thresholds = {
+        "classification_parity_score_atol": 1e-4,
+        "obb_parity_score_atol": 1e-4,
+    }
+    for name, default in nonnegative_thresholds.items():
+        value = float(getattr(args, name, default))
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(
+                f"--{name.replace('_', '-')} must be a finite, non-negative number"
+            )
+    obb_iou_thresh = float(getattr(args, "obb_parity_iou_thresh", 0.99))
+    if not math.isfinite(obb_iou_thresh) or not (0.0 <= obb_iou_thresh <= 1.0):
+        raise ValueError("--obb-parity-iou-thresh must be a finite number in [0,1]")
 
     requested_source = str(getattr(args, "latency_source", "auto") or "auto")
     if task_label == "detect" and requested_source == "artifact_eval":
@@ -1640,6 +1655,20 @@ def _evaluate_classification(
         "accuracy": top1_value,
         "classes": list(classes),
         "per_sample": per_sample,
+        "metric_provenance": {
+            "ranking": {
+                "method": "score_descending_then_class_index",
+                "tie_break": "lowest_class_index",
+            },
+            "top1": "fraction_of_labeled_samples_with_highest_score_class_equal_to_label",
+            "top5": "fraction_of_labeled_samples_with_label_in_top_min_5_num_classes",
+            "accuracy": "alias_of_top1",
+            "sample_policy": {
+                "labels": "all_unique_label_sample_ids",
+                "missing_prediction": "evaluation_error",
+                "extra_prediction": "excluded_from_accuracy_denominator",
+            },
+        },
     }
 
 
@@ -1660,6 +1689,17 @@ def _write_classification_eval_report(
         "status": "ok",
         "labels_path": str(labels_path),
         "predictions_path": str(predictions_path),
+        "provenance": {
+            "labels": {
+                "path": str(labels_path),
+                "sha256": _sha256_file(labels_path),
+            },
+            "predictions": {
+                "path": str(predictions_path),
+                "sha256": _sha256_file(predictions_path),
+            },
+            "execution_scope": "artifact_eval_only_no_backend_inference",
+        },
         "metrics": metrics,
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
@@ -2314,7 +2354,425 @@ def _write_obb_eval_report(
         "status": "ok",
         "labels_path": str(labels_path),
         "predictions_path": str(predictions_path),
+        "provenance": {
+            "labels": {
+                "path": str(labels_path),
+                "sha256": _sha256_file(labels_path),
+            },
+            "predictions": {
+                "path": str(predictions_path),
+                "sha256": _sha256_file(predictions_path),
+            },
+            "execution_scope": "artifact_eval_only_no_backend_inference",
+        },
         "metrics": metrics,
+        "timestamp": now_utc_iso(),
+        "run_meta": run_meta,
+    }
+    _write_strict_json(path, payload)
+    return payload
+
+
+def _normalized_artifact_provenance(path: Path) -> dict[str, Any]:
+    payload = _load_json_payload(path)
+    meta = payload.get("meta") if isinstance(payload, dict) and isinstance(payload.get("meta"), dict) else {}
+    return {
+        "path": str(path),
+        "sha256": _sha256_file(path),
+        "kind": payload.get("kind") if isinstance(payload, dict) else None,
+        "format": payload.get("format") if isinstance(payload, dict) else None,
+        "source_path": meta.get("source_path"),
+        "source_sha256": meta.get("source_sha256"),
+    }
+
+
+def _classification_parity_report(
+    *,
+    reference_path: Path,
+    candidate_path: Path,
+    score_atol: float,
+) -> dict[str, Any]:
+    reference_payload = _load_json_payload(reference_path)
+    candidate_payload = _load_json_payload(candidate_path)
+    if reference_payload is None or candidate_payload is None:
+        raise ValueError("classification parity requires readable predictions artifacts")
+
+    reference_classes = _artifact_classes(
+        reference_payload,
+        where="classification parity reference",
+    )
+    reference_predictions, resolved_classes, score_count = _load_classification_predictions(
+        reference_path,
+        reference_classes,
+    )
+    candidate_predictions, candidate_classes, _ = _load_classification_predictions(
+        candidate_path,
+        resolved_classes,
+        expected_classes=resolved_classes or None,
+        expected_score_count=score_count,
+    )
+    if resolved_classes and candidate_classes != resolved_classes:
+        raise ValueError("classification parity artifacts must use the same ordered classes")
+
+    reference_ids = set(reference_predictions)
+    candidate_ids = set(candidate_predictions)
+    missing_candidate_ids = sorted(reference_ids - candidate_ids)
+    extra_candidate_ids = sorted(candidate_ids - reference_ids)
+    common_ids = sorted(reference_ids & candidate_ids)
+    score_abs_sum = 0.0
+    score_values = 0
+    score_abs_max = 0.0
+    top1_matches = 0
+    top5_matches = 0
+    per_sample: list[dict[str, Any]] = []
+    for sample_id in common_ids:
+        reference_scores = reference_predictions[sample_id]
+        candidate_scores = candidate_predictions[sample_id]
+        differences = [
+            abs(float(reference_score) - float(candidate_score))
+            for reference_score, candidate_score in zip(
+                reference_scores,
+                candidate_scores,
+                strict=True,
+            )
+        ]
+        sample_score_abs_max = max(differences, default=0.0)
+        score_abs_max = max(score_abs_max, sample_score_abs_max)
+        score_abs_sum += sum(differences)
+        score_values += len(differences)
+        reference_ranked = sorted(
+            range(len(reference_scores)),
+            key=lambda index: (-float(reference_scores[index]), index),
+        )
+        candidate_ranked = sorted(
+            range(len(candidate_scores)),
+            key=lambda index: (-float(candidate_scores[index]), index),
+        )
+        reference_top1 = reference_ranked[0]
+        candidate_top1 = candidate_ranked[0]
+        top1_ok = reference_top1 == candidate_top1
+        top5_ok = set(reference_ranked[:5]) == set(candidate_ranked[:5])
+        top1_matches += int(top1_ok)
+        top5_matches += int(top5_ok)
+        per_sample.append(
+            {
+                "id": sample_id,
+                "ok": bool(
+                    sample_score_abs_max <= score_atol
+                    and top1_ok
+                    and top5_ok
+                ),
+                "score_abs_max": float(sample_score_abs_max),
+                "reference_top1": int(reference_top1),
+                "candidate_top1": int(candidate_top1),
+                "top1_agree": bool(top1_ok),
+                "top5_set_agree": bool(top5_ok),
+            }
+        )
+
+    compared = len(common_ids)
+    score_abs_mean = score_abs_sum / score_values if score_values else 0.0
+    top1_agreement = top1_matches / compared if compared else 0.0
+    top5_set_agreement = top5_matches / compared if compared else 0.0
+    ok = (
+        not missing_candidate_ids
+        and not extra_candidate_ids
+        and compared > 0
+        and score_abs_max <= score_atol
+        and top1_matches == compared
+        and top5_matches == compared
+    )
+    return {
+        "schema_version": 1,
+        "task": "classification",
+        "ok": bool(ok),
+        "metrics": {
+            "reference_samples": len(reference_ids),
+            "candidate_samples": len(candidate_ids),
+            "samples_compared": compared,
+            "score_values_compared": int(score_values),
+            "score_abs_max": float(score_abs_max),
+            "score_abs_mean": float(score_abs_mean),
+            "top1_agreement": float(top1_agreement),
+            "top5_set_agreement": float(top5_set_agreement),
+            "top1_mismatches": int(compared - top1_matches),
+            "top5_set_mismatches": int(compared - top5_matches),
+            "missing_candidate_ids": missing_candidate_ids,
+            "extra_candidate_ids": extra_candidate_ids,
+        },
+        "thresholds": {"score_atol": float(score_atol)},
+        "results": per_sample,
+        "comparison_provenance": {
+            "matching": "exact_unique_sample_id",
+            "score_difference": "elementwise_absolute_difference_on_ordered_class_scores",
+            "top1_tie_break": "lowest_class_index",
+            "top5": "set_of_top_min_5_num_classes",
+            "verdict": (
+                "identical_sample_ids_and_top1_top5_sets_with_all_score_differences_within_atol"
+            ),
+            "class_order": list(resolved_classes),
+            "execution_scope": "artifact_comparison_only_no_backend_inference",
+        },
+    }
+
+
+def _obb_angle_abs_diff(left: float, right: float) -> float:
+    difference = abs(float(left) - float(right)) % 360.0
+    return min(difference, 360.0 - difference)
+
+
+def _obb_detection_sort_key(detection: dict[str, Any]) -> tuple[float | int, ...]:
+    box = detection["obb"]
+    return (
+        int(detection["class_id"]),
+        float(box["cx"]),
+        float(box["cy"]),
+        float(box["w"]),
+        float(box["h"]),
+        float(box["angle_deg"]),
+        float(detection["score"]),
+    )
+
+
+def _obb_parity_report(
+    *,
+    reference_path: Path,
+    candidate_path: Path,
+    iou_thresh: float,
+    score_atol: float,
+) -> dict[str, Any]:
+    reference_payload = _load_json_payload(reference_path)
+    candidate_payload = _load_json_payload(candidate_path)
+    if reference_payload is None or candidate_payload is None:
+        raise ValueError("OBB parity requires readable predictions artifacts")
+
+    reference_classes = _artifact_classes(reference_payload, where="OBB parity reference")
+    reference_predictions, resolved_classes = _load_obb_predictions(
+        reference_path,
+        reference_classes,
+    )
+    candidate_predictions, candidate_classes = _load_obb_predictions(
+        candidate_path,
+        resolved_classes,
+        expected_classes=resolved_classes or None,
+    )
+    if resolved_classes and candidate_classes != resolved_classes:
+        raise ValueError("OBB parity artifacts must use the same ordered classes")
+
+    reference_ids = set(reference_predictions)
+    candidate_ids = set(candidate_predictions)
+    missing_candidate_ids = sorted(reference_ids - candidate_ids)
+    extra_candidate_ids = sorted(candidate_ids - reference_ids)
+    common_ids = sorted(reference_ids & candidate_ids)
+    matched = 0
+    missing_candidate = 0
+    extra_candidate = 0
+    score_failures = 0
+    score_abs_sum = 0.0
+    score_abs_max = 0.0
+    rotated_iou_sum = 0.0
+    rotated_iou_min: float | None = None
+    center_abs_max = 0.0
+    size_abs_max = 0.0
+    angle_abs_max = 0.0
+    failure_images = len(missing_candidate_ids) + len(extra_candidate_ids)
+    results: list[dict[str, Any]] = []
+    for sample_id in common_ids:
+        reference_detections = sorted(
+            reference_predictions[sample_id],
+            key=_obb_detection_sort_key,
+        )
+        candidate_detections = sorted(
+            candidate_predictions[sample_id],
+            key=_obb_detection_sort_key,
+        )
+        candidate_pairs: list[tuple[float, int, int]] = []
+        for reference_rank, reference_detection in enumerate(reference_detections):
+            for candidate_rank, candidate_detection in enumerate(candidate_detections):
+                if int(candidate_detection["class_id"]) != int(reference_detection["class_id"]):
+                    continue
+                iou = _obb_iou(reference_detection["obb"], candidate_detection["obb"])
+                if iou >= iou_thresh:
+                    candidate_pairs.append((float(iou), reference_rank, candidate_rank))
+        candidate_pairs.sort(
+            key=lambda item: (
+                -item[0],
+                _obb_detection_sort_key(reference_detections[item[1]]),
+                _obb_detection_sort_key(candidate_detections[item[2]]),
+            )
+        )
+        matched_reference: set[int] = set()
+        matched_candidate: set[int] = set()
+        selected_pairs: list[tuple[float, int, int]] = []
+        for pair in candidate_pairs:
+            _, reference_rank, candidate_rank = pair
+            if reference_rank in matched_reference or candidate_rank in matched_candidate:
+                continue
+            matched_reference.add(reference_rank)
+            matched_candidate.add(candidate_rank)
+            selected_pairs.append(pair)
+        selected_pairs.sort(
+            key=lambda item: (
+                _obb_detection_sort_key(reference_detections[item[1]]),
+                _obb_detection_sort_key(candidate_detections[item[2]]),
+            )
+        )
+
+        sample_matches: list[dict[str, Any]] = []
+        sample_score_failures = 0
+        for best_iou, reference_rank, candidate_rank in selected_pairs:
+            reference_detection = reference_detections[reference_rank]
+            candidate_detection = candidate_detections[candidate_rank]
+            score_abs_diff = abs(
+                float(reference_detection["score"]) - float(candidate_detection["score"])
+            )
+            reference_box = reference_detection["obb"]
+            candidate_box = candidate_detection["obb"]
+            center_diff = max(
+                abs(float(reference_box[key]) - float(candidate_box[key]))
+                for key in ("cx", "cy")
+            )
+            size_diff = max(
+                abs(float(reference_box[key]) - float(candidate_box[key]))
+                for key in ("w", "h")
+            )
+            angle_diff = _obb_angle_abs_diff(
+                float(reference_box["angle_deg"]),
+                float(candidate_box["angle_deg"]),
+            )
+            matched += 1
+            score_abs_sum += score_abs_diff
+            score_abs_max = max(score_abs_max, score_abs_diff)
+            rotated_iou_sum += best_iou
+            rotated_iou_min = (
+                best_iou if rotated_iou_min is None else min(rotated_iou_min, best_iou)
+            )
+            center_abs_max = max(center_abs_max, center_diff)
+            size_abs_max = max(size_abs_max, size_diff)
+            angle_abs_max = max(angle_abs_max, angle_diff)
+            score_ok = score_abs_diff <= score_atol
+            sample_score_failures += int(not score_ok)
+            sample_matches.append(
+                {
+                    "reference_rank": reference_rank,
+                    "candidate_rank": candidate_rank,
+                    "class_id": int(reference_detection["class_id"]),
+                    "rotated_iou": float(best_iou),
+                    "score_abs_diff": float(score_abs_diff),
+                    "center_abs_max": float(center_diff),
+                    "size_abs_max": float(size_diff),
+                    "angle_abs_diff": float(angle_diff),
+                    "ok": bool(score_ok),
+                }
+            )
+
+        sample_missing = sorted(set(range(len(reference_detections))) - matched_reference)
+        sample_extra = sorted(set(range(len(candidate_detections))) - matched_candidate)
+        missing_candidate += len(sample_missing)
+        extra_candidate += len(sample_extra)
+        score_failures += sample_score_failures
+        sample_ok = not sample_missing and not sample_extra and sample_score_failures == 0
+        failure_images += int(not sample_ok)
+        results.append(
+            {
+                "id": sample_id,
+                "ok": bool(sample_ok),
+                "reference_detections": len(reference_detections),
+                "candidate_detections": len(candidate_detections),
+                "matched": len(sample_matches),
+                "missing_candidate_ranks": sample_missing,
+                "extra_candidate_ranks": sample_extra,
+                "score_failures": sample_score_failures,
+                "matches": sample_matches,
+            }
+        )
+
+    ok = (
+        not missing_candidate_ids
+        and not extra_candidate_ids
+        and bool(common_ids)
+        and missing_candidate == 0
+        and extra_candidate == 0
+        and score_failures == 0
+    )
+    return {
+        "schema_version": 1,
+        "task": "obb",
+        "ok": bool(ok),
+        "metrics": {
+            "reference_images": len(reference_ids),
+            "candidate_images": len(candidate_ids),
+            "images_compared": len(common_ids),
+            "failure_images": int(failure_images),
+            "reference_detections": sum(len(items) for items in reference_predictions.values()),
+            "candidate_detections": sum(len(items) for items in candidate_predictions.values()),
+            "matched": int(matched),
+            "missing_candidate": int(missing_candidate),
+            "extra_candidate": int(extra_candidate),
+            "score_failures": int(score_failures),
+            "score_abs_max": float(score_abs_max),
+            "score_abs_mean": float(score_abs_sum / matched) if matched else 0.0,
+            "rotated_iou_min": float(rotated_iou_min) if rotated_iou_min is not None else None,
+            "rotated_iou_mean": float(rotated_iou_sum / matched) if matched else None,
+            "center_abs_max": float(center_abs_max),
+            "size_abs_max": float(size_abs_max),
+            "angle_abs_max_deg": float(angle_abs_max),
+            "missing_candidate_ids": missing_candidate_ids,
+            "extra_candidate_ids": extra_candidate_ids,
+        },
+        "thresholds": {
+            "rotated_iou_thresh": float(iou_thresh),
+            "score_atol": float(score_atol),
+        },
+        "results": results,
+        "comparison_provenance": {
+            "matching": (
+                "global_rotated_iou_descending_greedy_within_same_sample_and_class"
+            ),
+            "artifact_order": "detections_canonicalized_by_class_geometry_and_score",
+            "pair_tie_break": "canonical_reference_then_candidate_detection_key",
+            "geometry": "cxcywh_norm_angle_deg",
+            "rotated_iou": "convex_polygon_clipping_intersection_over_union",
+            "score_difference": "absolute_difference",
+            "angle_difference": "shortest_circular_difference_degrees",
+            "class_order": list(resolved_classes),
+            "execution_scope": "artifact_comparison_only_no_backend_inference",
+        },
+    }
+
+
+def _write_artifact_parity_reference(
+    path: Path,
+    *,
+    task: str,
+    fmt: str,
+    candidate_records: list[dict[str, Any]],
+    comparison_provenance: dict[str, Any],
+    reference_provenance: dict[str, Any],
+    run_meta: dict[str, Any],
+) -> dict[str, Any]:
+    candidate_backends = [str(item["backend"]) for item in candidate_records]
+    payload = {
+        "schema_version": 1,
+        "kind": f"benchmark_{task}_parity_reference",
+        "task": task,
+        "format": fmt,
+        "status": "reference",
+        "reference_backend": fmt,
+        "candidate_backends": candidate_backends,
+        "summary": {
+            "task": task,
+            "reference_backend": fmt,
+            "candidate_backends": candidate_backends,
+            "comparisons": len(candidate_records),
+            "thresholds": dict(comparison_provenance.get("thresholds") or {}),
+        },
+        "provenance": {
+            "reference": reference_provenance,
+            "candidates": candidate_records,
+            "execution_scope": "artifact_comparison_only_no_backend_inference",
+        },
+        "comparison_provenance": comparison_provenance,
         "timestamp": now_utc_iso(),
         "run_meta": run_meta,
     }
@@ -2335,6 +2793,23 @@ def _export_settings_payload(
     execution_semantics: dict[str, Any],
     model_artifact: str | None = None,
 ) -> dict[str, Any]:
+    parity_settings: dict[str, Any] = {
+        "reference_backend": str(
+            getattr(args, "parity_reference_backend", "auto") or "auto"
+        )
+    }
+    if task_label == "classification":
+        parity_settings["score_atol"] = float(
+            getattr(args, "classification_parity_score_atol", 1e-4)
+        )
+        parity_settings["ranking_must_match"] = True
+    elif task_label == "obb":
+        parity_settings["rotated_iou_thresh"] = float(
+            getattr(args, "obb_parity_iou_thresh", 0.99)
+        )
+        parity_settings["score_atol"] = float(
+            getattr(args, "obb_parity_score_atol", 1e-4)
+        )
     return {
         "schema_version": 1,
         "kind": "benchmark_export_settings",
@@ -2364,6 +2839,7 @@ def _export_settings_payload(
         "workspace": float(getattr(args, "workspace", 4.0)),
         "fraction": float(getattr(args, "fraction", 1.0)),
         "benchmark_source": benchmark_source,
+        "parity_settings": parity_settings,
         "latency_probe": {
             "source": benchmark_source,
             "iterations": int(getattr(args, "iterations", 50)),
@@ -2384,8 +2860,267 @@ def _synthetic_result(args: Any, *, fmt: str) -> tuple[str, Any, Any, Any]:
     return "ok", latency, throughput, {"mode": "synthetic_step"}
 
 
+def _attach_classification_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        if str(item.get("status")) not in {"ok", "partial"}:
+            return False
+        predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
+        return predictions.exists()
+
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
+    if reference is None:
+        return
+
+    reference_backend = str(reference.get("format"))
+    reference_predictions = Path(
+        str((reference.get("artifacts") or {}).get("predictions"))
+    )
+    reference_provenance = _normalized_artifact_provenance(reference_predictions)
+    score_atol = float(getattr(args, "classification_parity_score_atol", 1e-4))
+    candidate_records: list[dict[str, Any]] = []
+    comparison_provenance = {
+        "matching": "exact_unique_sample_id",
+        "score_difference": "elementwise_absolute_difference_on_ordered_class_scores",
+        "thresholds": {"score_atol": score_atol},
+    }
+
+    for item in results:
+        if item is reference or not _eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_predictions = Path(
+            str((item.get("artifacts") or {}).get("predictions"))
+        )
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        candidate_provenance = _normalized_artifact_provenance(candidate_predictions)
+        candidate_record = {
+            "backend": candidate_backend,
+            **candidate_provenance,
+        }
+        try:
+            report = _classification_parity_report(
+                reference_path=reference_predictions,
+                candidate_path=candidate_predictions,
+                score_atol=score_atol,
+            )
+            summary = {
+                "ok": bool(report["ok"]),
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "thresholds": dict(report["thresholds"]),
+                **dict(report["metrics"]),
+            }
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_classification_parity_report",
+                "task": "classification",
+                "format": candidate_backend,
+                "status": "ok" if bool(report["ok"]) else "drift",
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "summary": summary,
+                "report": report,
+                "provenance": {
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
+                    "execution_scope": "artifact_comparison_only_no_backend_inference",
+                },
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            _write_strict_json(parity_path, payload)
+            item["parity"] = summary
+            candidate_record["status"] = payload["status"]
+            candidate_records.append(candidate_record)
+            if not bool(report["ok"]) and str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_drift"
+        except Exception as exc:
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_classification_parity_report",
+                "task": "classification",
+                "format": candidate_backend,
+                "status": "failed",
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "error": str(exc),
+                "provenance": {
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
+                    "execution_scope": "artifact_comparison_only_no_backend_inference",
+                },
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            _write_strict_json(parity_path, payload)
+            item["parity"] = {
+                "ok": False,
+                "error": str(exc),
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+            }
+            candidate_record["status"] = "failed"
+            candidate_record["error"] = str(exc)
+            candidate_records.append(candidate_record)
+            if str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_generation_failed"
+            item["error"] = (
+                f"{item['error']}\n{exc}" if item.get("error") else str(exc)
+            )
+
+    reference_payload = _write_artifact_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        task="classification",
+        fmt=reference_backend,
+        candidate_records=candidate_records,
+        comparison_provenance=comparison_provenance,
+        reference_provenance=reference_provenance,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
+
+
+def _attach_obb_parity(results: list[dict[str, Any]], *, args: Any) -> None:
+    def _eligible(item: dict[str, Any]) -> bool:
+        if str(item.get("format")) not in REAL_BACKEND_FORMATS:
+            return False
+        if str(item.get("status")) not in {"ok", "partial"}:
+            return False
+        predictions = Path(str((item.get("artifacts") or {}).get("predictions") or ""))
+        return predictions.exists()
+
+    reference = _select_parity_reference(results, args=args, eligible=_eligible)
+    if reference is None:
+        return
+
+    reference_backend = str(reference.get("format"))
+    reference_predictions = Path(
+        str((reference.get("artifacts") or {}).get("predictions"))
+    )
+    reference_provenance = _normalized_artifact_provenance(reference_predictions)
+    iou_thresh = float(getattr(args, "obb_parity_iou_thresh", 0.99))
+    score_atol = float(getattr(args, "obb_parity_score_atol", 1e-4))
+    candidate_records: list[dict[str, Any]] = []
+    comparison_provenance = {
+        "matching": (
+            "global_rotated_iou_descending_greedy_within_same_sample_and_class"
+        ),
+        "artifact_order": "detections_canonicalized_by_class_geometry_and_score",
+        "thresholds": {
+            "rotated_iou_thresh": iou_thresh,
+            "score_atol": score_atol,
+        },
+    }
+
+    for item in results:
+        if item is reference or not _eligible(item):
+            continue
+        candidate_backend = str(item.get("format"))
+        candidate_predictions = Path(
+            str((item.get("artifacts") or {}).get("predictions"))
+        )
+        parity_path = Path(str((item.get("artifacts") or {}).get("parity")))
+        candidate_provenance = _normalized_artifact_provenance(candidate_predictions)
+        candidate_record = {
+            "backend": candidate_backend,
+            **candidate_provenance,
+        }
+        try:
+            report = _obb_parity_report(
+                reference_path=reference_predictions,
+                candidate_path=candidate_predictions,
+                iou_thresh=iou_thresh,
+                score_atol=score_atol,
+            )
+            summary = {
+                "ok": bool(report["ok"]),
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "thresholds": dict(report["thresholds"]),
+                **dict(report["metrics"]),
+            }
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_obb_parity_report",
+                "task": "obb",
+                "format": candidate_backend,
+                "status": "ok" if bool(report["ok"]) else "drift",
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "summary": summary,
+                "report": report,
+                "provenance": {
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
+                    "execution_scope": "artifact_comparison_only_no_backend_inference",
+                },
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            _write_strict_json(parity_path, payload)
+            item["parity"] = summary
+            candidate_record["status"] = payload["status"]
+            candidate_records.append(candidate_record)
+            if not bool(report["ok"]) and str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_drift"
+        except Exception as exc:
+            payload = {
+                "schema_version": 1,
+                "kind": "benchmark_obb_parity_report",
+                "task": "obb",
+                "format": candidate_backend,
+                "status": "failed",
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+                "error": str(exc),
+                "provenance": {
+                    "reference": reference_provenance,
+                    "candidate": candidate_provenance,
+                    "execution_scope": "artifact_comparison_only_no_backend_inference",
+                },
+                "timestamp": now_utc_iso(),
+                "run_meta": item.get("run_meta") or {},
+            }
+            _write_strict_json(parity_path, payload)
+            item["parity"] = {
+                "ok": False,
+                "error": str(exc),
+                "reference_backend": reference_backend,
+                "candidate_backend": candidate_backend,
+            }
+            candidate_record["status"] = "failed"
+            candidate_record["error"] = str(exc)
+            candidate_records.append(candidate_record)
+            if str(item.get("status")) == "ok":
+                item["status"] = "partial"
+                item["skip_reason"] = "parity_generation_failed"
+            item["error"] = (
+                f"{item['error']}\n{exc}" if item.get("error") else str(exc)
+            )
+
+    reference_payload = _write_artifact_parity_reference(
+        Path(str((reference.get("artifacts") or {}).get("parity"))),
+        task="obb",
+        fmt=reference_backend,
+        candidate_records=candidate_records,
+        comparison_provenance=comparison_provenance,
+        reference_provenance=reference_provenance,
+        run_meta=reference.get("run_meta") or {},
+    )
+    reference["parity"] = reference_payload["summary"]
+
+
 def _attach_real_parity(results: list[dict[str, Any]], *, args: Any) -> None:
-    if results and str(results[0].get("task")) in {"classification", "obb"}:
+    if results and str(results[0].get("task")) == "classification":
+        _attach_classification_parity(results, args=args)
+        return
+    if results and str(results[0].get("task")) == "obb":
+        _attach_obb_parity(results, args=args)
         return
     if results and str(results[0].get("task")) == "segmentation":
         _attach_segmentation_parity(results, args=args)
@@ -4068,6 +4803,24 @@ def build_parser() -> Any:
         choices=PARITY_REFERENCE_BACKENDS,
         default="auto",
         help=PARITY_REFERENCE_HELP,
+    )
+    parser.add_argument(
+        "--classification-parity-score-atol",
+        type=float,
+        default=1e-4,
+        help="Classification parity class-score tolerance (default: 1e-4).",
+    )
+    parser.add_argument(
+        "--obb-parity-iou-thresh",
+        type=float,
+        default=0.99,
+        help="OBB parity rotated-IoU match threshold (default: 0.99).",
+    )
+    parser.add_argument(
+        "--obb-parity-score-atol",
+        type=float,
+        default=1e-4,
+        help="OBB parity confidence-score tolerance (default: 1e-4).",
     )
     parser.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     parser.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")

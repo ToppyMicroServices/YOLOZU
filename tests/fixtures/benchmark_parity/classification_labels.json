@@ -1,0 +1,25 @@
+{
+  "classes": [
+    "cat",
+    "dog",
+    "bird"
+  ],
+  "samples": [
+    {
+      "id": "image-001",
+      "label": "cat"
+    },
+    {
+      "id": "image-002",
+      "label": "dog"
+    },
+    {
+      "id": "image-003",
+      "label": "bird"
+    }
+  ],
+  "meta": {
+    "fixture_kind": "deterministic_artifact_interface_contract",
+    "backend_inference_executed": false
+  }
+}

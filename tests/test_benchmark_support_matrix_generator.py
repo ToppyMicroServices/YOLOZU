@@ -200,6 +200,27 @@ class TestBenchmarkSupportMatrixGenerator(unittest.TestCase):
                     runtime_boundary,
                 )
 
+    def test_classification_and_obb_parity_matches_runtime_support(self) -> None:
+        meta = json.loads(self.metadata.read_text(encoding="utf-8"))
+        support = {
+            (item["format"], item["task"]): item
+            for item in meta["support"]
+        }
+        for fmt in benchmark_mode.REAL_BACKEND_FORMATS:
+            for task in ("classification", "obb"):
+                with self.subTest(fmt=fmt, task=task):
+                    self.assertEqual(
+                        support[(fmt, task)]["parity_artifact"],
+                        "real when comparable",
+                    )
+        for fmt in benchmark_mode.BENCHMARK_UNWIRED_FORMATS:
+            for task in ("classification", "obb"):
+                with self.subTest(fmt=fmt, task=task):
+                    self.assertEqual(
+                        support[(fmt, task)]["parity_artifact"],
+                        "skipped",
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

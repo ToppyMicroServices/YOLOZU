@@ -132,11 +132,11 @@ The primary artifact set is:
 \end{itemize}
 
 When at least two comparable real results complete successfully for
-\cmd{detect}, \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, or
-\cmd{pose6d}, \path{parity_<format>.json} is a real backend-diff artifact. The
+\cmd{detect}, \cmd{classification}, \cmd{obb}, \cmd{segmentation},
+\cmd{keypoints}, \cmd{depth}, or \cmd{pose6d},
+\path{parity_<format>.json} is a real backend-diff or artifact-diff artifact. The
 chosen reference backend is recorded explicitly (\cmd{auto} prefers
-\cmd{torch} when available). Classification and OBB currently write explicit
-parity placeholders. Dry-run, skipped, and synthetic-only lanes also keep
+\cmd{torch} when available). Dry-run, skipped, and synthetic-only lanes keep
 parity non-real.
 
 If a detect benchmark should anchor parity on a non-\cmd{torch} backend, set it
@@ -181,15 +181,19 @@ PDF stays readable:
 
   \item[\cmd{classification}]
   Aliases: \cmd{classification}, \cmd{classify}, \cmd{cls}. Metric family:
-  \cmd{topk_accuracy}. Execution support: artifact-backed real eval for
+  \cmd{topk_accuracy}. Execution support: artifact-backed real eval/parity for
   \cmd{torch}, \cmd{onnx}, \cmd{engine}, \cmd{torchscript}, and \cmd{openvino}. Benchmark mode
   evaluates backend class-score artifacts directly and reports
-  \cmd{top1}/\cmd{top5}/\cmd{accuracy} without claiming YOLOZU ran backend
-  inference.
+  \cmd{top1}/\cmd{top5}/\cmd{accuracy}. Parity aligns sample ids and ordered
+  class scores, then reports maximum/mean score difference and top-1/top-5
+  agreement. A pass requires unchanged top-1 predictions and top-5 sets in
+  addition to the score threshold controlled by
+  \cmd{--classification-parity-score-atol}; a near-tie rank flip is therefore
+  drift. This does not claim YOLOZU ran backend inference.
 
   \item[\cmd{obb}]
   Alias: \cmd{obb}. Metric family: \cmd{obb_map}. Execution support:
-  artifact-backed real eval for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
+  artifact-backed real eval/parity for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
   \cmd{torchscript}, plus \cmd{openvino}. Benchmark mode evaluates backend
   rotated-box artifacts directly. \cmd{obb_mAP50} is the macro mean of
   confidence-ranked per-class AP at rotated IoU 0.50 using a 101-point
@@ -199,8 +203,13 @@ PDF stays readable:
   are false positives after a ground truth is matched. Classes without ground
   truth are excluded from the macro means but retained in per-class false
   positive diagnostics. The eval artifact records these policies under
-  \path{metrics.metric_provenance}, without claiming YOLOZU ran backend
-  inference.
+  \path{metrics.metric_provenance}. Parity canonicalizes detection order and
+  selects same-sample, same-class pairs by descending rotated IoU, so the
+  verdict does not depend on artifact input order. It reports
+  matched/missing/extra counts, IoU, score, center, size, and angle diagnostics.
+  Verdict thresholds are controlled
+  by \cmd{--obb-parity-iou-thresh} and \cmd{--obb-parity-score-atol}, without
+  claiming YOLOZU ran backend inference.
 
   \item[\cmd{keypoints}]
   Aliases: \cmd{keypoints}, \cmd{pose}. Metric family: \cmd{oks_map}.
@@ -230,8 +239,11 @@ For the current implementation, inference-backed real backend execution remains
 \cmd{detect}-first. The exceptions are \cmd{classification}, \cmd{obb},
 \cmd{segmentation}, \cmd{keypoints}, \cmd{depth}, and \cmd{pose6d}: all may
 use \cmd{--latency-source artifact_eval}. For \cmd{classification} and
-\cmd{obb}, YOLOZU evaluates backend score or rotated-box artifacts and writes
-explicit parity placeholders. For \cmd{segmentation}, YOLOZU evaluates
+\cmd{obb}, YOLOZU evaluates backend score or rotated-box artifacts and attaches
+strict-JSON parity reports when comparable artifacts are available. The reports
+record source and normalized-artifact SHA-256 values, thresholds, comparison
+semantics, and run metadata; deterministic regression fixtures explicitly state
+that backend inference was not executed. For \cmd{segmentation}, YOLOZU evaluates
 backend-specific mask-prediction artifacts with \path{tools/eval_segmentation.py}
 and then attaches real parity reports over matched sample ids plus per-mask mismatch summaries.
 For \cmd{keypoints}, YOLOZU evaluates
@@ -359,8 +371,8 @@ The documented breadth differences are:
   \item planned formats beyond conditional \cmd{openvino}, such as
   \cmd{coreml}, \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and
   \cmd{paddle}
-  \item broader parity attachment for artifact-backed \cmd{classification} and
-  \cmd{obb} lanes
+  \item broader runtime-backed format coverage while preserving the shipped
+  artifact parity provenance
   \item additional task/source/format validation that would be required with
   any future backend-specific knobs and execution paths
 \end{itemize}
@@ -378,15 +390,13 @@ exists, and the runtime and license boundary is feasible for sustained support.
 
 \subsection{Highest-leverage parity maintenance and remaining work}
 If the goal is to close the practical gap against the broader benchmark/export
-surface, preserve the shipped boundaries and implement the remaining parity
-attachment in this order:
+surface, preserve the shipped boundaries in this order:
 \begin{enumerate}
   \item keep conditional \cmd{openvino} honest on the same canonical CLI surface as the other real backend lanes
   \item keep \path{docs/benchmark_support_matrix.md} as the single support matrix that distinguishes real inference/eval/parity
   from dry-run placeholders and unsupported/skipped paths
-  \item add real parity to the artifact-backed \cmd{classification} and
-  \cmd{obb} lanes after their validation and metric semantics are
-  evidence-backed
+  \item keep artifact-backed classification and OBB parity synchronized with
+  their validation, metric semantics, thresholds, and source checksums
   \item keep format-specific flag validation strict so inert combinations fail
   early rather than appearing supported
 \end{enumerate}

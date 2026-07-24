@@ -233,13 +233,13 @@
       "id": "classification",
       "metric_family": "topk_accuracy",
       "surface": "mainstream",
-      "semantics": "artifact-backed real eval with unique sample ids, finite class-aligned score vectors, and validated optional ordered class vocabularies"
+      "semantics": "artifact-backed real eval/parity with unique sample ids, finite class-aligned score vectors, validated optional ordered class vocabularies, score-difference thresholds, and top-k agreement diagnostics"
     },
     {
       "id": "obb",
       "metric_family": "obb_map",
       "surface": "mainstream",
-      "semantics": "artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, valid empty detection lists, confidence-ranked per-class rotated-IoU AP, and separately averaged recall"
+      "semantics": "artifact-backed real eval/parity with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, valid empty detection lists, confidence-ranked per-class rotated-IoU AP, separately averaged recall, and rotated-IoU/score parity diagnostics"
     },
     {
       "id": "keypoints",
@@ -282,16 +282,16 @@
       "task": "classification",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torch",
       "task": "obb",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torch",
@@ -338,16 +338,16 @@
       "task": "classification",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference."
     },
     {
       "format": "onnx",
       "task": "obb",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference."
     },
     {
       "format": "onnx",
@@ -394,16 +394,16 @@
       "task": "classification",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference."
     },
     {
       "format": "engine",
       "task": "obb",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference."
     },
     {
       "format": "engine",
@@ -450,16 +450,16 @@
       "task": "classification",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torchscript",
       "task": "obb",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torchscript",
@@ -506,16 +506,16 @@
       "task": "classification",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend classification score artifacts and evaluates top-k metrics without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend classification score artifacts, evaluates top-k metrics, and compares aligned class scores without claiming YOLOZU ran backend inference."
     },
     {
       "format": "openvino",
       "task": "obb",
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
-      "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
+      "parity_artifact": "real when comparable",
+      "notes": "Consumes backend rotated-box artifacts, reports 101-point interpolated per-class AP plus separately averaged recall, and compares matched rotated boxes without claiming YOLOZU ran backend inference."
     },
     {
       "format": "openvino",

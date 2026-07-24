@@ -415,6 +415,24 @@ def main(argv: list[str] | None = None) -> int:
         default="auto",
         help=PARITY_REFERENCE_HELP,
     )
+    bench.add_argument(
+        "--classification-parity-score-atol",
+        type=float,
+        default=1e-4,
+        help="Classification parity class-score tolerance (default: 1e-4).",
+    )
+    bench.add_argument(
+        "--obb-parity-iou-thresh",
+        type=float,
+        default=0.99,
+        help="OBB parity rotated-IoU match threshold (default: 0.99).",
+    )
+    bench.add_argument(
+        "--obb-parity-score-atol",
+        type=float,
+        default=1e-4,
+        help="OBB parity confidence-score tolerance (default: 1e-4).",
+    )
     bench.add_argument("--keypoints-parity-iou-thresh", type=float, default=0.99, help="Keypoints parity IoU threshold (default: 0.99).")
     bench.add_argument("--keypoints-parity-score-atol", type=float, default=1e-4, help="Keypoints parity score tolerance (default: 1e-4).")
     bench.add_argument("--keypoints-parity-bbox-atol", type=float, default=1e-4, help="Keypoints parity bbox tolerance (default: 1e-4).")
