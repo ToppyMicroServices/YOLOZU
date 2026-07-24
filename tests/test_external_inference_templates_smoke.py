@@ -196,7 +196,7 @@ class TestExternalInferenceTemplatesSmoke(unittest.TestCase):
                 self.assertIn("predictions interface contract", text)
                 self.assertIn("Error behavior:", text)
                 self.assertIn("python3 tools/validate_predictions.py /path/to/predictions.json --strict", text)
-                self.assertIn("python3 tools/eval_coco.py --dataset /path/to/coco-yolo", text)
+                self.assertIn("yolozu eval-coco", text)
                 self.assertIn(
                     "python3 tools/check_predictions_parity.py "
                     "--reference reports/pred_torch.json "

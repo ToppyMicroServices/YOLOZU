@@ -27,7 +27,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 ```
 
 3) Run evaluation / reports:
-- COCO-style: `python3 tools/eval_coco.py ...`
+- COCO-style: `yolozu eval-coco ...`
 - Suite: `python3 tools/eval_suite.py ...`
 - Parity checks (ONNX vs TRT, etc.): `python3 tools/check_predictions_parity.py ...`
 
@@ -141,7 +141,7 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 Report handoff:
 
 ```bash
-python3 tools/eval_coco.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+yolozu eval-coco --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
 python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json > reports/external_parity.json
 ```
 
