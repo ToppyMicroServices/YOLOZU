@@ -160,14 +160,6 @@ class TestCompileForInference(unittest.TestCase):
             get_compile_evidence,
         )
 
-        class EagerModel:
-            def __init__(self):
-                self.calls = 0
-
-            def __call__(self, value):
-                self.calls += 1
-                return f"eager:{value}"
-
         class LazyFailure:
             def __init__(self):
                 self.calls = 0
@@ -179,7 +171,7 @@ class TestCompileForInference(unittest.TestCase):
             def __call__(self, *args, **kwargs):
                 return self.forward(*args, **kwargs)
 
-        model = EagerModel()
+        model = MagicMock(side_effect=lambda value: f"eager:{value}")
         compiled = LazyFailure()
         fake_torch = SimpleNamespace(compile=MagicMock(return_value=compiled))
         with (
@@ -193,7 +185,7 @@ class TestCompileForInference(unittest.TestCase):
             self.assertEqual(tracked("one"), "eager:one")
             self.assertEqual(tracked("two"), "eager:two")
         self.assertEqual(compiled.calls, 1)
-        self.assertEqual(model.calls, 2)
+        self.assertEqual(model.call_count, 2)
         evidence = get_compile_evidence(tracked)
         self.assertEqual(evidence["actual"]["status"], "fallback")
         self.assertEqual(evidence["actual"]["backend"], "eager")

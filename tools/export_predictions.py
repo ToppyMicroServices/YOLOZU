@@ -10,7 +10,10 @@ sys.path.insert(0, str(repo_root))
 
 from yolozu.adapter import DummyAdapter, RTDETRPoseAdapter
 from yolozu.dataset import build_manifest
-from yolozu.inference.export_orchestrator import validate_compile_report
+from yolozu.inference.export_orchestrator import (
+    compile_dynamic_value,
+    validate_compile_report,
+)
 from yolozu.predictions_transform import apply_tta, summarize_task_coverage
 from yolozu.tta.cli_options import (
     add_ttt_arguments,
@@ -229,13 +232,6 @@ def _parse_args(argv):
 
     add_ttt_arguments(parser, include_enable_flag=True)
     return parser.parse_args(argv)
-
-
-def _compile_dynamic_value(value):
-    normalized = str(value).strip().lower()
-    if normalized == "auto":
-        return None
-    return normalized == "true"
 
 
 def _compile_not_requested_report():
@@ -567,7 +563,7 @@ def main(argv=None):
             compile_backend=str(args.torch_compile_backend),
             compile_mode=str(args.torch_compile_mode),
             compile_fullgraph=bool(args.torch_compile_fullgraph),
-            compile_dynamic=_compile_dynamic_value(args.torch_compile_dynamic),
+            compile_dynamic=compile_dynamic_value(args.torch_compile_dynamic),
             allow_compile_fallback=bool(args.allow_compile_fallback),
             amp=str(args.torch_amp),
             channels_last=bool(args.torch_channels_last),
@@ -749,7 +745,7 @@ def main(argv=None):
             backend=str(args.torch_compile_backend),
             mode=str(args.torch_compile_mode),
             fullgraph=bool(args.torch_compile_fullgraph),
-            dynamic=_compile_dynamic_value(args.torch_compile_dynamic),
+            dynamic=compile_dynamic_value(args.torch_compile_dynamic),
             allow_fallback=bool(args.allow_compile_fallback),
         )
     except ValueError as exc:
