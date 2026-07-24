@@ -37,6 +37,16 @@ PLACEHOLDER_VOLATILE_FIELDS = frozenset(
         "updated_at",
     }
 )
+ISSUE_COMPARISON_IGNORED_FIELDS = frozenset(
+    {
+        "_type",
+        "comment_count",
+        "dependencies",
+        "dependency_count",
+        "dependent_count",
+    }
+)
+ISSUE_TIMESTAMP_FIELDS = ("created_at", "updated_at", "closed_at")
 
 
 class SnapshotError(ValueError):
@@ -423,6 +433,22 @@ def _strictly_newer(candidate: SnapshotRecord, baseline: SnapshotRecord) -> bool
     return candidate_time > baseline_time
 
 
+def _issue_semantic_view(record: dict[str, Any]) -> dict[str, Any]:
+    view = {
+        key: copy.deepcopy(value)
+        for key, value in record.items()
+        if key not in ISSUE_COMPARISON_IGNORED_FIELDS
+    }
+    labels = view.get("labels")
+    if isinstance(labels, list) and all(isinstance(label, str) for label in labels):
+        view["labels"] = sorted(set(labels))
+    for field in ISSUE_TIMESTAMP_FIELDS:
+        parsed = _parse_timestamp(view.get(field))
+        if parsed is not None:
+            view[field] = parsed.astimezone(timezone.utc).isoformat()
+    return view
+
+
 def _require_local_not_older(
     local_item: SnapshotRecord,
     baseline_item: SnapshotRecord,
@@ -441,6 +467,14 @@ def _require_local_not_older(
         raise SnapshotError(
             f"record {local_item.issue_id}: remote baseline is newer than the "
             "local export; rerun refresh_beads_sync.sh before exporting"
+        )
+    if baseline_time == local_time and _issue_semantic_view(
+        baseline_item.record
+    ) != _issue_semantic_view(local_item.record):
+        raise SnapshotError(
+            f"record {local_item.issue_id}: remote baseline and local export have "
+            "the same updated_at but divergent issue fields; resolve the tie with "
+            "bd update before exporting"
         )
 
 

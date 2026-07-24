@@ -243,6 +243,24 @@ class BeadsSnapshotCompatTests(unittest.TestCase):
             "unchanged\n",
         )
 
+    def test_restore_export_rejects_divergent_equal_timestamp_row(self) -> None:
+        local_records = _read_jsonl(self.baseline)
+        local_records[2]["title"] = "unresolved local title"
+        local = self.base / "local.jsonl"
+        _write_jsonl(local, local_records)
+        self.restored.write_text("unchanged\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(
+            COMPAT.SnapshotError,
+            "same updated_at but divergent issue fields",
+        ):
+            COMPAT.restore_export(local, self.baseline, self.restored)
+
+        self.assertEqual(
+            self.restored.read_text(encoding="utf-8"),
+            "unchanged\n",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

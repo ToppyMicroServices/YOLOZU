@@ -81,7 +81,9 @@ edgeを保持し、新しいlocal issue/dependencyだけを追加します。出
 directoryでatomic replaceされます。baselineにlocal exportより新しい
 non-tombstone rowがあれば、古いlocal stateによる上書きを避けるためfailします。
 その場合は `bash refresh_beads_sync.sh` を再実行してからexportします。既存の
-snapshot fileのpermission modeも維持します。
+snapshotとlocal rowの `updated_at` が同じでもissue fieldが異なる場合は、
+未解決のtieとしてfailします。採用する値を `bd update` で明示してから
+再exportしてください。snapshot fileのpermission modeも維持します。
 
 `.beads/interactions.jsonl` に変更がある場合は、そのfileもstageする前に
 localとremoteのappend-only logをstable `id` でmergeします。remote側の
