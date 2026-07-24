@@ -86,6 +86,18 @@ class TestSsotCapabilityCoverage(unittest.TestCase):
         )
         self.assertIn(f"Public docs example audit passes {checked_examples} shell examples.", audit)
 
+    def test_audit_records_completed_public_pypi_fresh_install_matrix(self) -> None:
+        audit = (self.repo_root / "docs" / "ssot_capability_coverage_audit.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("10/10 public-PyPI jobs on Linux/macOS", audit)
+        self.assertIn("workflow run 29421807474", audit)
+        self.assertIn("Resolved under `YOLOZU-ll2.3`", audit)
+        self.assertNotIn(
+            "Public fresh-install proof is incomplete across the supported OS/Python matrix",
+            audit,
+        )
+
     def test_spec_and_readiness_keep_schema_and_mixed_lane_boundaries_explicit(self) -> None:
         spec = (self.repo_root / "docs" / "yolozu_spec.md").read_text(encoding="utf-8")
         readiness = (self.repo_root / "docs" / "production_readiness.md").read_text(encoding="utf-8")

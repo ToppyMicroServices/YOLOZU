@@ -35,6 +35,12 @@ instead of promoting it by inference.
 - Manual CLI drift audit passes for the current 28-command/alias top-level surface.
 - Public docs example audit passes 153 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
+- Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10
+  Linux/macOS jobs for Python 3.10 through 3.14 in
+  [workflow run 29421807474](https://github.com/ToppyMicroServices/YOLOZU/actions/runs/29421807474).
+  This records only the tested matrix and does not establish evidence for other
+  Python versions or platforms; package metadata separately declares
+  `Python >=3.10`.
 - Targeted manifest, training, benchmark, predictions, evaluation, research, SynthGen, and MPS tests pass; the only skip is the hardware-dependent MPS probe when MPS is unavailable.
 
 ## Confirmed gaps and disposition
@@ -46,7 +52,7 @@ instead of promoting it by inference.
 | Explicit detect `artifact_eval` previously disagreed with executed work | A patched-runtime reproduction recorded `execution_mode=synthetic_planning_only` while invoking the normal backend prediction command | Corrected under `YOLOZU-ll2.28`: both CLI surfaces reject the combination before report, artifact, or backend writes. |
 | Classification and OBB artifact lanes lack parity artifacts | Canonical benchmark support matrix reports parity as skipped | Implement evidence-backed parity under `YOLOZU-ll2.11`. |
 | Spec-only and mixed-entrypoint maturity boundaries were ambiguous | Dataset/mask/constraint/template/TTA claims lacked standalone rows; stable export exposes research TTT flags | Resolved under `YOLOZU-ll2.15`: standalone maturity is deferred for dataset/mask/constraint/template, TTA is Experimental, TTT is Research, and parent maturity is non-transitive. |
-| Public fresh-install proof is incomplete across the supported OS/Python matrix | Current checks cover source checkout and one clean local install, not the full macOS/Linux acceptance matrix | Execute and record under `YOLOZU-ll2.3`. |
+| Public fresh-install proof was incomplete across the supported OS/Python matrix | Closed `YOLOZU-ll2.3` records 10/10 public-PyPI jobs on Linux/macOS for Python 3.10 through 3.14 in workflow run 29421807474 | Resolved under `YOLOZU-ll2.3`; keep future release verification scoped to the package's declared Python boundary. |
 | Public value proposition still needs cross-surface verification | Repository, PyPI metadata, and company page require one evidence-bounded message | Align only after this audit under `YOLOZU-ll2.5`. |
 
 ## Non-gaps and boundaries
