@@ -30,9 +30,9 @@
       "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "1eb3a7d1d7a7da291f6f9310a5d1707c867bc280"
+    "head": "2218b465fe2c6f8a0d2a541df293f198a9fe76c6"
   },
-  "timestamp": "2026-07-24T16:49:07Z",
+  "timestamp": "2026-07-24T16:50:06Z",
   "torch": {
     "deterministic_algorithms": true,
     "device": "cpu",
