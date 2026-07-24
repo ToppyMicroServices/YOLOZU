@@ -9,7 +9,8 @@
     "parity": "parity.json",
     "predictions_eager": "predictions_eager.json",
     "predictions_torchscript": "predictions_torchscript.json",
-    "protocol": "protocol.json"
+    "protocol": "protocol.json",
+    "reproduction_check": "reproduction_check.json"
   },
   "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
   "execution_evidence": {
@@ -59,7 +60,7 @@
   "results": {
     "eager": {
       "detections": 12,
-      "inference_seconds": 14.228535499998543,
+      "inference_seconds": 10.959259333998489,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -68,9 +69,9 @@
       }
     },
     "torchscript": {
-      "compile_seconds": 0.6335100840005907,
+      "compile_seconds": 0.6228722500018193,
       "detections": 12,
-      "inference_seconds": 13.423243417004414,
+      "inference_seconds": 11.302093874997809,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -97,10 +98,10 @@
       "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "489d04f22d0e8240d6ff8d51b5e4860fb25afc29"
+    "head": "2f2ff70dfdae80e5811b565dc59f9676870c65b6"
   },
   "status": "completed",
-  "timestamp": "2026-07-24T08:43:12Z",
+  "timestamp": "2026-07-24T08:45:07Z",
   "weights": {
     "enum": "MaskRCNN_ResNet50_FPN_V2_Weights.COCO_V1",
     "filename": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
