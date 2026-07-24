@@ -13,6 +13,7 @@ Environment:
   REMOTE       Git remote to fetch (default: origin)
   SYNC_BRANCH  Snapshot branch to fetch (default: beads-sync)
   BD_BIN       bd executable to use (default: bd)
+  PYTHON_BIN   Python executable to use (default: python3)
 EOF
 }
 
