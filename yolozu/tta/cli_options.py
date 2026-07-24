@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from .config import TTTConfig
+from .config import SUPPORTED_TTT_METHODS, TTTConfig
 from .presets import PRESETS
 
-TTT_METHOD_CHOICES = ("tent", "mim", "cotta", "eata", "sar")
+TTT_METHOD_CHOICES = SUPPORTED_TTT_METHODS
 TTT_RESET_CHOICES = ("stream", "sample")
 TTT_UPDATE_FILTER_CHOICES = ("all", "norm_only", "adapter_only", "lora_only", "lora_norm_only")
 TTT_COTTA_AGGREGATION_CHOICES = ("confidence_weighted_mean", "mean")

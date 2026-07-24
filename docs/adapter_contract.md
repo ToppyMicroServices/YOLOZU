@@ -52,7 +52,8 @@ Each detection must include:
   as long as required keys remain stable.
 
 ## TTT (Test-Time Training) hooks
-Adapters may optionally support test-time training (Tent, MIM) by implementing:
+Adapters may optionally support the Research TTT methods (`tent`, `mim`, `cotta`,
+`eata`, and `sar`) by implementing:
 
 - `supports_ttt() -> bool`
   - Returns `True` if the adapter supports TTT, `False` otherwise
@@ -107,7 +108,7 @@ class MyAdapter(ModelAdapter):
 When TTT is enabled (`--ttt`), the integration:
 1. Calls `adapter.get_model()` to access the model
 2. Calls `adapter.build_loader(records)` to create adaptation batches
-3. Runs TTT adaptation (Tent entropy minimization or MIM)
+3. Runs the selected TTT adaptation method (`tent`, `mim`, `cotta`, `eata`, or `sar`)
 4. Calls `adapter.predict(records)` on the adapted model
 
 See [docs/ttt_integration_plan.md](ttt_integration_plan.md) for more details.
