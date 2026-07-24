@@ -121,7 +121,13 @@ TASK_SEMANTICS = {
         "support_level": "artifact_backed_real_for_torch_onnx_engine_torchscript_openvino",
         "ultralytics_surface": True,
         "yolozu_native_extension": False,
-        "notes": "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box prediction artifacts. Its input interface contract requires unique image ids, finite normalized geometry, and confidence scores in [0,1], while allowing empty detection lists; benchmark reports do not claim YOLOZU ran backend inference.",
+        "notes": (
+            "OBB uses artifact-backed real evaluation for torch/onnx/engine/torchscript/openvino rotated-box "
+            "prediction artifacts. Its input interface contract requires unique image ids, finite normalized "
+            "geometry, and confidence scores in [0,1], while allowing empty detection lists. Metrics use "
+            "confidence-ranked per-class rotated-IoU matching, 101-point interpolated AP, and separately averaged "
+            "recall; benchmark reports do not claim YOLOZU ran backend inference."
+        ),
     },
     "keypoints": {
         "display_name": "Keypoints / Pose",
@@ -1965,50 +1971,172 @@ def _obb_iou(box_a: dict[str, float], box_b: dict[str, float]) -> float:
     return max(0.0, min(1.0, inter / union))
 
 
-def _obb_match_count(
+def _obb_interpolated_ap(recalls: list[float], precisions: list[float]) -> float:
+    if not recalls:
+        return 0.0
+    precision_envelope = list(precisions)
+    for idx in range(len(precision_envelope) - 2, -1, -1):
+        precision_envelope[idx] = max(precision_envelope[idx], precision_envelope[idx + 1])
+    recall_points = [idx / 100.0 for idx in range(101)]
+    interpolated = [
+        max(
+            (precision for recall, precision in zip(recalls, precision_envelope, strict=True) if recall >= point),
+            default=0.0,
+        )
+        for point in recall_points
+    ]
+    return sum(interpolated) / len(interpolated)
+
+
+def _group_obb_inputs_by_class(
     labels: dict[str, list[dict[str, Any]]],
     predictions: dict[str, list[dict[str, Any]]],
+    class_ids: list[int],
+) -> tuple[
+    dict[int, dict[str, list[tuple[int, dict[str, Any]]]]],
+    dict[int, list[tuple[float, str, int, dict[str, Any]]]],
+]:
+    ground_truth_by_class: dict[int, dict[str, list[tuple[int, dict[str, Any]]]]] = {
+        class_id: {} for class_id in class_ids
+    }
+    for sample_id, objects in labels.items():
+        for ground_truth_idx, ground_truth in enumerate(objects):
+            class_id = int(ground_truth["class_id"])
+            ground_truth_by_class[class_id].setdefault(sample_id, []).append(
+                (ground_truth_idx, ground_truth)
+            )
+
+    ranked_predictions_by_class: dict[
+        int,
+        list[tuple[float, str, int, dict[str, Any]]],
+    ] = {class_id: [] for class_id in class_ids}
+    for sample_id, detections in predictions.items():
+        for prediction_idx, detection in enumerate(detections):
+            class_id = int(detection["class_id"])
+            ranked_predictions_by_class[class_id].append(
+                (float(detection["score"]), str(sample_id), prediction_idx, detection)
+            )
+    for ranked_predictions in ranked_predictions_by_class.values():
+        ranked_predictions.sort(key=lambda item: (-item[0], item[1], item[2]))
+
+    return ground_truth_by_class, ranked_predictions_by_class
+
+
+def _obb_ranked_class_metrics(
+    ground_truth: dict[str, list[tuple[int, dict[str, Any]]]],
+    ranked_predictions: list[tuple[float, str, int, dict[str, Any]]],
     *,
     threshold: float,
-) -> tuple[int, list[dict[str, Any]]]:
-    matched = 0
-    per_sample: list[dict[str, Any]] = []
-    for sample_id, gt_objects in sorted(labels.items()):
-        detections = list(predictions.get(sample_id, []))
-        used: set[int] = set()
-        sample_matches: list[dict[str, Any]] = []
-        for gt_idx, gt in enumerate(gt_objects):
-            best_idx = None
-            best_iou = 0.0
-            for det_idx, det in enumerate(detections):
-                if det_idx in used or int(det["class_id"]) != int(gt["class_id"]):
-                    continue
-                iou = _obb_iou(gt["obb"], det["obb"])
-                if iou > best_iou:
-                    best_iou = iou
-                    best_idx = det_idx
-            ok = best_idx is not None and best_iou >= threshold
-            if ok and best_idx is not None:
-                used.add(best_idx)
-                matched += 1
-            sample_matches.append(
-                {
-                    "gt_index": gt_idx,
-                    "matched": bool(ok),
-                    "iou": float(best_iou),
-                    "prediction_index": best_idx,
-                }
-            )
-        per_sample.append(
+) -> dict[str, Any]:
+    total_gt = sum(len(items) for items in ground_truth.values())
+    matched_ground_truth: set[tuple[str, int]] = set()
+    true_positives = 0
+    false_positives = 0
+    cumulative_true_positives: list[int] = []
+    cumulative_false_positives: list[int] = []
+    ranked_matches: list[dict[str, Any]] = []
+
+    for rank, (score, sample_id, prediction_idx, detection) in enumerate(ranked_predictions, start=1):
+        best_gt_idx: int | None = None
+        best_iou = 0.0
+        for gt_idx, gt in ground_truth.get(sample_id, []):
+            if (sample_id, gt_idx) in matched_ground_truth:
+                continue
+            iou = _obb_iou(gt["obb"], detection["obb"])
+            if iou > best_iou or (
+                math.isclose(iou, best_iou, rel_tol=0.0, abs_tol=1e-12)
+                and best_gt_idx is not None
+                and gt_idx < best_gt_idx
+            ):
+                best_iou = iou
+                best_gt_idx = gt_idx
+        matched = best_gt_idx is not None and best_iou >= threshold
+        if matched and best_gt_idx is not None:
+            matched_ground_truth.add((sample_id, best_gt_idx))
+            true_positives += 1
+        else:
+            false_positives += 1
+        cumulative_true_positives.append(true_positives)
+        cumulative_false_positives.append(false_positives)
+        ranked_matches.append(
             {
-                "id": sample_id,
-                "ground_truth": len(gt_objects),
-                "predictions": len(detections),
-                "matched": sum(1 for item in sample_matches if item["matched"]),
-                "matches": sample_matches,
+                "rank": rank,
+                "sample_id": sample_id,
+                "prediction_index": prediction_idx,
+                "score": score,
+                "matched": bool(matched),
+                "iou": float(best_iou),
+                "ground_truth_index": best_gt_idx if matched else None,
             }
         )
-    return matched, per_sample
+
+    if total_gt > 0:
+        recalls = [value / total_gt for value in cumulative_true_positives]
+        precisions = [
+            tp / (tp + fp)
+            for tp, fp in zip(cumulative_true_positives, cumulative_false_positives, strict=True)
+        ]
+        average_precision: float | None = _obb_interpolated_ap(recalls, precisions)
+        recall: float | None = true_positives / total_gt
+    else:
+        recalls = []
+        precisions = []
+        average_precision = None
+        recall = None
+
+    return {
+        "ground_truth": total_gt,
+        "predictions": len(ranked_predictions),
+        "true_positives": true_positives,
+        "false_positives": false_positives,
+        "average_precision": average_precision,
+        "recall": recall,
+        "precision_curve": precisions,
+        "recall_curve": recalls,
+        "ranked_matches": ranked_matches,
+    }
+
+
+def _obb_per_sample_at_iou50(
+    labels: dict[str, list[dict[str, Any]]],
+    predictions: dict[str, list[dict[str, Any]]],
+    class_results: dict[int, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    sample_matches: dict[str, list[dict[str, Any]]] = {
+        sample_id: [
+            {
+                "gt_index": gt_idx,
+                "matched": False,
+                "iou": 0.0,
+                "prediction_index": None,
+            }
+            for gt_idx, _gt in enumerate(objects)
+        ]
+        for sample_id, objects in labels.items()
+    }
+    for result in class_results.values():
+        for match in result["ranked_matches"]:
+            sample_id = str(match["sample_id"])
+            gt_idx = match["ground_truth_index"]
+            if not match["matched"] or gt_idx is None or sample_id not in sample_matches:
+                continue
+            sample_matches[sample_id][int(gt_idx)] = {
+                "gt_index": int(gt_idx),
+                "matched": True,
+                "iou": float(match["iou"]),
+                "prediction_index": int(match["prediction_index"]),
+            }
+
+    return [
+        {
+            "id": sample_id,
+            "ground_truth": len(labels[sample_id]),
+            "predictions": len(predictions.get(sample_id, [])),
+            "matched": sum(1 for item in matches if item["matched"]),
+            "matches": matches,
+        }
+        for sample_id, matches in sorted(sample_matches.items())
+    ]
 
 
 def _validate_obb_class_id_range(
@@ -2045,32 +2173,127 @@ def _evaluate_obb(
     if total_gt <= 0:
         raise ValueError("OBB evaluation requires at least one ground-truth object")
     thresholds = [round(0.5 + 0.05 * idx, 2) for idx in range(10)]
+    class_ids = sorted(
+        set(range(len(classes)))
+        | {int(item["class_id"]) for objects in labels.values() for item in objects}
+        | {int(item["class_id"]) for detections in predictions.values() for item in detections}
+    )
+    gt_class_ids = {
+        int(item["class_id"])
+        for objects in labels.values()
+        for item in objects
+    }
+    ground_truth_by_class, ranked_predictions_by_class = _group_obb_inputs_by_class(
+        labels,
+        predictions,
+        class_ids,
+    )
     by_threshold: dict[str, dict[str, Any]] = {}
-    recalls: list[float] = []
-    per_sample_at_50: list[dict[str, Any]] = []
+    per_class_thresholds: dict[int, dict[str, dict[str, Any]]] = {class_id: {} for class_id in class_ids}
+    class_results_at_50: dict[int, dict[str, Any]] = {}
     for threshold in thresholds:
-        matched, per_sample = _obb_match_count(labels, predictions, threshold=threshold)
-        recall = matched / total_gt
-        recalls.append(recall)
-        if threshold == 0.5:
-            per_sample_at_50 = per_sample
-        by_threshold[f"{threshold:.2f}"] = {
-            "matched": int(matched),
-            "recall": recall,
+        threshold_key = f"{threshold:.2f}"
+        class_results = {
+            class_id: _obb_ranked_class_metrics(
+                ground_truth_by_class[class_id],
+                ranked_predictions_by_class[class_id],
+                threshold=threshold,
+            )
+            for class_id in class_ids
         }
-    map_50_95 = sum(recalls) / len(recalls)
+        if threshold == 0.5:
+            class_results_at_50 = class_results
+        for class_id, class_result in class_results.items():
+            per_class_thresholds[class_id][threshold_key] = {
+                "average_precision": class_result["average_precision"],
+                "recall": class_result["recall"],
+                "true_positives": class_result["true_positives"],
+                "false_positives": class_result["false_positives"],
+            }
+        eligible = [class_results[class_id] for class_id in class_ids if class_id in gt_class_ids]
+        average_precision = sum(float(item["average_precision"]) for item in eligible) / len(eligible)
+        average_recall = sum(float(item["recall"]) for item in eligible) / len(eligible)
+        by_threshold[threshold_key] = {
+            "matched": sum(int(item["true_positives"]) for item in class_results.values()),
+            "true_positives": sum(int(item["true_positives"]) for item in class_results.values()),
+            "false_positives": sum(int(item["false_positives"]) for item in class_results.values()),
+            "average_precision": average_precision,
+            "recall": average_recall,
+            "classes_evaluated": len(eligible),
+            "classes_excluded_no_ground_truth": [
+                class_id for class_id in class_ids if class_id not in gt_class_ids
+            ],
+        }
+
+    map_50_95 = sum(float(item["average_precision"]) for item in by_threshold.values()) / len(thresholds)
+    average_recall = sum(float(item["recall"]) for item in by_threshold.values()) / len(thresholds)
     matched_50 = int(by_threshold["0.50"]["matched"])
+    per_class: dict[str, dict[str, Any]] = {}
+    for class_id in class_ids:
+        threshold_metrics = per_class_thresholds[class_id]
+        eligible = class_id in gt_class_ids
+        per_class[str(class_id)] = {
+            "class_id": class_id,
+            "class_name": classes[class_id] if class_id < len(classes) else f"class_{class_id}",
+            "included_in_mean": eligible,
+            "ground_truth": class_results_at_50[class_id]["ground_truth"],
+            "predictions": class_results_at_50[class_id]["predictions"],
+            "obb_AP50": threshold_metrics["0.50"]["average_precision"],
+            "obb_AP50-95": (
+                sum(float(item["average_precision"]) for item in threshold_metrics.values()) / len(thresholds)
+                if eligible
+                else None
+            ),
+            "obb_AR": (
+                sum(float(item["recall"]) for item in threshold_metrics.values()) / len(thresholds)
+                if eligible
+                else None
+            ),
+            "thresholds": threshold_metrics,
+            "ranked_matches_iou50": class_results_at_50[class_id]["ranked_matches"],
+        }
+
     return {
         "samples": len(labels),
         "ground_truth": int(total_gt),
         "predictions": int(total_pred),
         "matched_iou50": matched_50,
-        "obb_mAP50": matched_50 / total_gt,
+        "obb_mAP50": float(by_threshold["0.50"]["average_precision"]),
         "obb_mAP50-95": map_50_95,
-        "obb_AR": map_50_95,
+        "obb_AR": average_recall,
         "thresholds": by_threshold,
         "classes": list(classes),
-        "per_sample": per_sample_at_50,
+        "per_class": per_class,
+        "per_sample": _obb_per_sample_at_iou50(labels, predictions, class_results_at_50),
+        "metric_provenance": {
+            "matching": {
+                "method": "per_class_confidence_ranked_greedy_rotated_iou",
+                "prediction_order": "score_desc_then_sample_id_then_input_index",
+                "assignment": "highest_iou_unmatched_ground_truth_in_same_sample_and_class",
+                "iou_tie_break": "lowest_ground_truth_input_index",
+                "duplicate_policy": "only_one_prediction_may_match_each_ground_truth; remaining_duplicates_are_false_positives",
+            },
+            "interpolation": {
+                "method": "101_point_interpolated_precision_envelope",
+                "recall_points": 101,
+                "recall_range": [0.0, 1.0],
+            },
+            "averaging": {
+                "obb_mAP50": "macro_mean_per_class_AP_at_iou_0.50",
+                "obb_mAP50-95": "mean_of_macro_per_class_AP_across_iou_0.50_to_0.95_step_0.05",
+                "obb_AR": "mean_of_macro_per_class_recall_across_iou_0.50_to_0.95_step_0.05",
+                "iou_thresholds": thresholds,
+                "max_detections": None,
+            },
+            "empty_class_policy": {
+                "classes_with_ground_truth": "included_in_macro_means",
+                "classes_without_ground_truth": (
+                    "excluded_from_macro_means; predictions_remain_false_positives_in_per_class_diagnostics"
+                ),
+                "ground_truth_class_with_no_predictions": "AP_and_recall_are_zero",
+                "dataset_with_no_ground_truth": "evaluation_error",
+            },
+        },
     }
 
 

@@ -239,7 +239,7 @@
       "id": "obb",
       "metric_family": "obb_map",
       "surface": "mainstream",
-      "semantics": "artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, and valid empty detection lists"
+      "semantics": "artifact-backed real eval with unique image ids, resolved class-id range checks, finite normalized geometry, [0,1] scores, valid empty detection lists, confidence-ranked per-class rotated-IoU AP, and separately averaged recall"
     },
     {
       "id": "keypoints",
@@ -291,7 +291,7 @@
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torch",
@@ -347,7 +347,7 @@
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
     },
     {
       "format": "onnx",
@@ -403,7 +403,7 @@
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
     },
     {
       "format": "engine",
@@ -459,7 +459,7 @@
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
     },
     {
       "format": "torchscript",
@@ -515,7 +515,7 @@
       "inference_artifact": "artifact-real",
       "eval_artifact": "real",
       "parity_artifact": "skipped",
-      "notes": "Consumes backend rotated-box artifacts and evaluates OBB metrics without claiming YOLOZU ran backend inference."
+      "notes": "Consumes backend rotated-box artifacts and reports 101-point interpolated per-class AP plus separately averaged recall without claiming YOLOZU ran backend inference."
     },
     {
       "format": "openvino",

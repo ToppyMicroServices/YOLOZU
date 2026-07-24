@@ -290,6 +290,30 @@ benchmark report, optional history JSONL, and placeholder parity artifacts are
 standards-compliant JSON; they never emit `NaN`, `Infinity`, or `-Infinity`
 numeric tokens.
 
+### OBB metric definitions
+
+The OBB artifact evaluator reports the following implemented definitions:
+
+- `obb_mAP50`: the macro mean of per-class AP at rotated IoU 0.50. Predictions
+  are ranked by confidence within each class, matched one-to-one to the
+  highest-IoU unmatched ground truth in the same sample, and integrated with a
+  101-point interpolated precision envelope.
+- `obb_mAP50-95`: the mean of the same macro per-class AP over rotated IoU
+  thresholds 0.50 through 0.95 in steps of 0.05.
+- `obb_AR`: the mean of per-class recall over those IoU thresholds, computed
+  separately from AP using all supplied predictions and no maximum-detection
+  cap.
+
+Confidence ties are resolved by sample id and input order; equal-IoU ground
+truth candidates are resolved by input order. A ground-truth object can match
+only once, so remaining duplicate predictions are false positives. Classes
+with ground truth participate in the macro means. Classes without ground truth
+are excluded from the means, while their predictions remain false positives in
+the per-class diagnostics. A ground-truth class with no predictions receives
+zero AP and recall; a dataset with no ground-truth objects is rejected. Each
+OBB eval artifact records these matching, interpolation, averaging, and
+empty-class policies under `metrics.metric_provenance`.
+
 Artifact-backed 6DoF benchmark/parity:
 
 ```bash
@@ -614,7 +638,7 @@ following canonical tasks and aliases:
 | `detect` | `detect`, `detection` | `bbox_map` | real for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Default benchmark path; OpenVINO remains conditional on external runtime and IR availability. |
 | `segmentation` | `segmentation`, `seg` | `mask_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode evaluates backend mask-prediction artifacts with `tools/eval_segmentation.py` and compares matched masks directly. |
 | `classification` | `classification`, `classify`, `cls` | `topk_accuracy` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique sample ids, finite equal-length score vectors, and ordered class-list consistency before reporting top1/top5/accuracy. |
-| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique image ids, finite normalized geometry, and `[0,1]` scores; empty detection lists remain valid. |
+| `obb` | `obb` | `obb_map` | artifact-backed real eval for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | Benchmark mode validates unique image ids, finite normalized geometry, and `[0,1]` scores; empty detection lists remain valid. It reports confidence-ranked per-class rotated-IoU AP with 101-point interpolation and separately averaged recall. |
 | `keypoints` | `keypoints`, `pose` | `oks_map` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | `pose` is accepted as an alias and normalized to `keypoints`; benchmark mode evaluates backend predictions artifacts with `tools/eval_keypoints.py` and compares keypoints directly. |
 | `depth` | `depth` | `depth_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend depth artifacts honestly instead of claiming end-to-end benchmark-surface parity. |
 | `pose6d` | `pose6d`, `6dof`, `pose_6d`, `pose-6d` | `pose6d_error` | artifact-backed real eval/parity for `torch` / `onnx` / `engine` / `torchscript` / `openvino` | YOLOZU-native extension; compares backend predictions artifacts honestly instead of claiming end-to-end benchmark-surface parity. |

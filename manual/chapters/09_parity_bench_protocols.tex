@@ -190,8 +190,16 @@ PDF stays readable:
   \item[\cmd{obb}]
   Alias: \cmd{obb}. Metric family: \cmd{obb_map}. Execution support:
   artifact-backed real eval for \cmd{torch}, \cmd{onnx}, \cmd{engine}, and
-  \cmd{torchscript}, plus \cmd{openvino}. Benchmark mode evaluates backend rotated-box artifacts
-  directly and reports OBB metrics without claiming YOLOZU ran backend
+  \cmd{torchscript}, plus \cmd{openvino}. Benchmark mode evaluates backend
+  rotated-box artifacts directly. \cmd{obb_mAP50} is the macro mean of
+  confidence-ranked per-class AP at rotated IoU 0.50 using a 101-point
+  interpolated precision envelope. \cmd{obb_mAP50-95} averages the same AP over
+  IoU 0.50 through 0.95, while \cmd{obb_AR} separately averages per-class
+  recall over those thresholds. Matching is one-to-one; duplicate predictions
+  are false positives after a ground truth is matched. Classes without ground
+  truth are excluded from the macro means but retained in per-class false
+  positive diagnostics. The eval artifact records these policies under
+  \path{metrics.metric_provenance}, without claiming YOLOZU ran backend
   inference.
 
   \item[\cmd{keypoints}]
