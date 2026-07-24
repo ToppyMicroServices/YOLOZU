@@ -5027,13 +5027,14 @@
       },
       "docs": [
         "docs/real_model_interface.md",
+        "docs/training_inference_export.md",
         "docs/ttt_protocol.md"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes predictions JSON.",
+            "description": "Writes predictions JSON. A requested torch.compile run removes a prior target before inference and writes only after compiled execution or explicit fallback is evidenced.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -5057,6 +5058,10 @@
         {
           "command": "python3 tools/export_predictions.py --adapter dummy --dataset data/coco128 --wrap --output reports/predictions_dummy.json",
           "description": "Export dummy predictions (schema smoke)."
+        },
+        {
+          "command": "python3 tools/export_predictions.py --adapter rtdetr_pose --dataset data/coco128 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-compile-dynamic auto --wrap --output reports/predictions_compiled.json",
+          "description": "Export predictions only after the requested torch.compile path completes its first model execution and records requested, actual, and available counter evidence."
         }
       ],
       "id": "export_predictions",
@@ -5557,6 +5562,33 @@
           "required": false
         },
         {
+          "flag": "--torch-compile-fullgraph",
+          "kind": "string",
+          "name": "torch_compile_fullgraph",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-compile-fullgraph",
+          "kind": "string",
+          "name": "no_torch_compile_fullgraph",
+          "required": false
+        },
+        {
+          "default": "auto",
+          "description": "torch.compile dynamic-shape policy: auto, true, or false.",
+          "flag": "--torch-compile-dynamic",
+          "kind": "string",
+          "name": "torch_compile_dynamic",
+          "required": false
+        },
+        {
+          "description": "Explicitly permit eager fallback when requested torch.compile setup or first execution fails; wrapped metadata records actual.status=fallback.",
+          "flag": "--allow-compile-fallback",
+          "kind": "string",
+          "name": "allow_compile_fallback",
+          "required": false
+        },
+        {
           "default": "off",
           "flag": "--torch-amp",
           "kind": "string",
@@ -5613,7 +5645,7 @@
       "outputs": [
         {
           "default": "reports/predictions.json",
-          "description": "Predictions JSON (wrapped meta includes task_coverage and extended TTA settings).",
+          "description": "Predictions JSON (wrapped meta includes task_coverage, extended TTA settings, and separate requested/actual torch.compile evidence).",
           "kind": "file",
           "name": "predictions_json"
         }
@@ -15988,7 +16020,7 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes JSON output (predictions / reports depending on subcommand).",
+            "description": "Writes JSON output (predictions / reports depending on subcommand). Torch compile export validates requested/actual execution evidence; a forced replacement removes the prior target before inference.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -16244,10 +16276,21 @@
         {
           "command": "python3 -m yolozu export --backend executorch --dataset data/smoke --split val --model exports/model.pte --runtime-output-json reports/executorch_runtime_outputs.json --boxes-scale norm --output reports/pred_executorch.json --force",
           "description": "Decode ExecuTorch runtime output JSON through the canonical export surface."
+        },
+        {
+          "command": "python3 -m yolozu export --backend torch --dataset data/coco128 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-compile-dynamic auto --output reports/predictions_compiled.json --force",
+          "description": "Export Torch predictions only after the requested compile path records compiled execution or an explicitly allowed eager fallback."
         }
       ],
       "id": "yolozu",
       "inputs": [
+        {
+          "description": "Explicitly permit eager fallback when requested torch.compile setup or first execution fails; export metadata records actual.status=fallback.",
+          "flag": "--allow-compile-fallback",
+          "kind": "string",
+          "name": "allow_compile_fallback",
+          "required": false
+        },
         {
           "flag": "--allow-gpu",
           "kind": "string",
@@ -16554,6 +16597,14 @@
           "required": false
         },
         {
+          "default": 1,
+          "description": "Torch inference batch size for export.",
+          "flag": "--infer-batch-size",
+          "kind": "number",
+          "name": "infer_batch_size",
+          "required": false
+        },
+        {
           "flag": "--input-dir",
           "kind": "dir",
           "name": "input_dir",
@@ -16744,6 +16795,24 @@
           "flag": "--no-lora-freeze-base",
           "kind": "string",
           "name": "no_lora_freeze_base",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-channels-last",
+          "kind": "string",
+          "name": "no_torch_channels_last",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-compile-fullgraph",
+          "kind": "string",
+          "name": "no_torch_compile_fullgraph",
+          "required": false
+        },
+        {
+          "flag": "--no-torch-inference-mode",
+          "kind": "string",
+          "name": "no_torch_inference_mode",
           "required": false
         },
         {
@@ -17060,6 +17129,60 @@
           "flag": "--temperature-grid",
           "kind": "string",
           "name": "temperature_grid",
+          "required": false
+        },
+        {
+          "default": "off",
+          "flag": "--torch-amp",
+          "kind": "string",
+          "name": "torch_amp",
+          "required": false
+        },
+        {
+          "flag": "--torch-channels-last",
+          "kind": "string",
+          "name": "torch_channels_last",
+          "required": false
+        },
+        {
+          "description": "Request evidenced torch.compile execution for the Torch export backend.",
+          "flag": "--torch-compile",
+          "kind": "string",
+          "name": "torch_compile",
+          "required": false
+        },
+        {
+          "default": "inductor",
+          "flag": "--torch-compile-backend",
+          "kind": "string",
+          "name": "torch_compile_backend",
+          "required": false
+        },
+        {
+          "flag": "--torch-compile-fullgraph",
+          "kind": "string",
+          "name": "torch_compile_fullgraph",
+          "required": false
+        },
+        {
+          "default": "auto",
+          "description": "torch.compile dynamic-shape policy: auto, true, or false.",
+          "flag": "--torch-compile-dynamic",
+          "kind": "string",
+          "name": "torch_compile_dynamic",
+          "required": false
+        },
+        {
+          "default": "reduce-overhead",
+          "flag": "--torch-compile-mode",
+          "kind": "string",
+          "name": "torch_compile_mode",
+          "required": false
+        },
+        {
+          "flag": "--torch-inference-mode",
+          "kind": "string",
+          "name": "torch_inference_mode",
           "required": false
         },
         {

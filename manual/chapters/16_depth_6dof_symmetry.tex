@@ -271,7 +271,8 @@ Practical entry points (``real model'' path):
 \begin{itemize}
   \item Reference trainer: \cmd{python3 rtdetr_pose/tools/train_minimal.py ...} (writes metrics and optional run artifacts).
   \item Export predictions: \cmd{python3 tools/export_predictions.py --adapter rtdetr_pose ... --wrap}
-  \item Torch acceleration knobs on export: \cmd{--infer-batch-size}, \cmd{--torch-compile*}, \cmd{--torch-amp}, \cmd{--torch-channels-last}, \cmd{--torch-inference-mode}
+  \item Torch acceleration knobs on export: \cmd{--infer-batch-size}, \cmd{--torch-compile*}, \cmd{--torch-amp}, \cmd{--torch-channels-last}, and \cmd{--torch-inference-mode}.
+  \item Compile evidence: fallback requires explicit \cmd{--allow-compile-fallback}; compiled comparisons require \cmd{actual.status=compiled}.
   \item No-torch path: use the \cmd{precomputed} adapter with a schema-valid \path{predictions.json}.
 \end{itemize}
 

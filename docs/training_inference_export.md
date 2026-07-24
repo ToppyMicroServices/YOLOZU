@@ -823,13 +823,40 @@ Use the adapter tools to run inference and produce predictions JSON.
 
 Torch推論の軽量拡張（PyTorch 2.x）:
 - `--infer-batch-size N`: 推論バッチサイズ（既定 `1`）
-- `--torch-compile`: `torch.compile` 有効化
+- `--torch-compile`: `torch.compile` を要求（`--wrap` 必須）
 - `--torch-compile-backend` / `--torch-compile-mode`: compile backend/mode 指定
+- `--torch-compile-fullgraph`: 単一graph captureを要求
+- `--torch-compile-dynamic {auto,true,false}`: dynamic shape方針（既定 `auto`）
+- `--allow-compile-fallback`: setupまたは最初の実行時のcompile失敗時だけ、明示的にeager実行を許可
 - `--torch-amp {off,fp16,bf16}`: autocast dtype
 - `--torch-channels-last`: channels-last memory format
 - `--torch-inference-mode` / `--no-torch-inference-mode`: forward context 切替
 
-- python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-amp bf16 --torch-channels-last --torch-inference-mode --max-images 50 --wrap --output reports/predictions_torch_compiled.json
+- python3 tools/export_predictions.py --adapter rtdetr_pose --config rtdetr_pose/configs/base.json --device cuda --infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-compile-dynamic auto --torch-amp bf16 --torch-channels-last --torch-inference-mode --max-images 50 --wrap --output reports/predictions_torch_compiled.json
+
+`torch.compile` は最初のmodel callで遅延compileされる場合があります。YOLOZUは
+compile APIの存在やsetup完了だけを成功とはせず、最初の実行が完了した後にだけ
+`meta.inference.torch_compile.actual.status=compiled` を記録します。API未提供、
+不正backend、setup失敗、または遅延実行失敗は既定で停止します。既存の出力先は
+compile試行前に削除されるため、以前の成功JSONが今回の証跡として残りません。
+`torch._dynamo.config.suppress_errors=True` もsilent eager fallbackを区別できないため、
+compiled証跡ではfail-closedになります。
+
+明示的な `--allow-compile-fallback` を指定した場合だけeager実行を許可し、
+`actual.status=fallback`、失敗phase/type/message、eager実行完了を記録します。
+fallback結果をcompiled比較の証拠として扱ってはいけません。wrapped metadataは
+次を分離します。
+
+- `requested`: enabled/backend/mode/fullgraph/dynamic/allow_fallback
+- `actual`: statusと、実際に成立したbackend/mode/fullgraph/dynamic
+- `evidence`: API/setup/first-execution状態と、取得可能な
+  `torch._dynamo` process-counter delta（graph count、graph break、captured call）
+- `failure`: setupまたは最初の実行失敗の情報（成功時は `null`）
+
+counterは取得可能な場合の補助証跡であり、速度向上そのものの証明ではありません。
+eager対compiledのcase studyでは `actual.status=compiled` の出力だけをcompiled側に
+採用し、hardware、PyTorch version、backend/mode/fullgraph/dynamic、counter evidence、
+warm-upと計測方法を併記してください。
 
 Optional TTA (Experimental):
 - Default postprocess mode: python3 tools/export_predictions.py --adapter rtdetr_pose --tta --tta-mode postprocess --tta-seed 0 --tta-flip-prob 0.5 --tta-flip-keypoints --tta-flip-pose-offsets --wrap --output reports/predictions_tta.json

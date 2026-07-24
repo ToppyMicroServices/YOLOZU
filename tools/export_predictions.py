@@ -10,6 +10,10 @@ sys.path.insert(0, str(repo_root))
 
 from yolozu.adapter import DummyAdapter, RTDETRPoseAdapter
 from yolozu.dataset import build_manifest
+from yolozu.inference.export_orchestrator import (
+    compile_dynamic_value,
+    validate_compile_report,
+)
 from yolozu.predictions_transform import apply_tta, summarize_task_coverage
 from yolozu.tta.cli_options import (
     add_ttt_arguments,
@@ -112,7 +116,10 @@ def _parse_args(argv):
     parser.add_argument(
         "--torch-compile",
         action="store_true",
-        help="Enable torch.compile for rtdetr_pose inference (PyTorch 2.x).",
+        help=(
+            "Request evidenced torch.compile execution for rtdetr_pose inference "
+            "(PyTorch 2.x; requires --wrap)."
+        ),
     )
     parser.add_argument(
         "--torch-compile-backend",
@@ -123,6 +130,26 @@ def _parse_args(argv):
         "--torch-compile-mode",
         default="reduce-overhead",
         help="torch.compile mode (default: reduce-overhead).",
+    )
+    parser.add_argument(
+        "--torch-compile-fullgraph",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require a single torch.compile graph (default: false).",
+    )
+    parser.add_argument(
+        "--torch-compile-dynamic",
+        choices=("auto", "true", "false"),
+        default="auto",
+        help="torch.compile dynamic-shape policy: auto, true, or false (default: auto).",
+    )
+    parser.add_argument(
+        "--allow-compile-fallback",
+        action="store_true",
+        help=(
+            "Allow explicit eager fallback when requested torch.compile setup or "
+            "first execution fails; records actual.status=fallback."
+        ),
     )
     parser.add_argument(
         "--torch-amp",
@@ -205,6 +232,38 @@ def _parse_args(argv):
 
     add_ttt_arguments(parser, include_enable_flag=True)
     return parser.parse_args(argv)
+
+
+def _compile_not_requested_report():
+    return {
+        "requested": {
+            "enabled": False,
+            "backend": None,
+            "mode": None,
+            "fullgraph": None,
+            "dynamic": None,
+            "allow_fallback": False,
+        },
+        "actual": {
+            "status": "not_requested",
+            "backend": "eager",
+            "mode": None,
+            "fullgraph": False,
+            "dynamic": None,
+        },
+        "evidence": {
+            "compile_api_available": None,
+            "setup_completed": False,
+            "first_execution_completed": False,
+            "fallback_execution_completed": False,
+            "counter_source": None,
+            "counter_delta": None,
+            "graph_count": None,
+            "graph_break_count": None,
+            "captured_call_count": None,
+        },
+        "failure": None,
+    }
 
 
 def _sha256_file(path: Path) -> str:
@@ -431,6 +490,17 @@ def main(argv=None):
 
     if int(args.infer_batch_size) <= 0:
         raise SystemExit("--infer-batch-size must be >= 1")
+    if bool(args.allow_compile_fallback) and not bool(args.torch_compile):
+        raise SystemExit("--allow-compile-fallback requires --torch-compile")
+    if (
+        str(args.torch_compile_backend) != "inductor"
+        or str(args.torch_compile_mode) != "reduce-overhead"
+        or bool(args.torch_compile_fullgraph)
+        or str(args.torch_compile_dynamic) != "auto"
+    ) and not bool(args.torch_compile):
+        raise SystemExit(
+            "--torch-compile-* options require --torch-compile"
+        )
 
     if args.adapter == "dummy" and int(args.lora_r) > 0:
         raise SystemExit("--lora-* flags are only supported with --adapter rtdetr_pose")
@@ -441,6 +511,9 @@ def main(argv=None):
             bool(args.torch_compile)
             or str(args.torch_compile_backend) != "inductor"
             or str(args.torch_compile_mode) != "reduce-overhead"
+            or bool(args.torch_compile_fullgraph)
+            or str(args.torch_compile_dynamic) != "auto"
+            or bool(args.allow_compile_fallback)
             or str(args.torch_amp) != "off"
             or bool(args.torch_channels_last)
             or not bool(args.torch_inference_mode)
@@ -450,6 +523,10 @@ def main(argv=None):
                 "--torch-compile*/--torch-amp/--torch-channels-last/--[no-]torch-inference-mode "
                 "and --infer-batch-size are only supported with --adapter rtdetr_pose"
             )
+    if bool(args.torch_compile) and not bool(args.wrap):
+        raise SystemExit(
+            "--torch-compile requires --wrap so requested and actual compile evidence is recorded"
+        )
 
     dataset_root = Path(args.dataset) if args.dataset else (repo_root / "data" / "coco128")
     manifest = build_manifest(dataset_root, split=args.split)
@@ -485,10 +562,18 @@ def main(argv=None):
             compile_model=bool(args.torch_compile),
             compile_backend=str(args.torch_compile_backend),
             compile_mode=str(args.torch_compile_mode),
+            compile_fullgraph=bool(args.torch_compile_fullgraph),
+            compile_dynamic=compile_dynamic_value(args.torch_compile_dynamic),
+            allow_compile_fallback=bool(args.allow_compile_fallback),
             amp=str(args.torch_amp),
             channels_last=bool(args.torch_channels_last),
             use_inference_mode=bool(args.torch_inference_mode),
         )
+
+    output_path = repo_root / args.output
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if bool(args.torch_compile) and output_path.exists():
+        output_path.unlink()
 
     def _ttt_or_die(_records):
         try:
@@ -648,8 +733,23 @@ def main(argv=None):
             tta_summary = _summarize_tta(predictions, warnings=tta_warnings)
             tta_summary["mode"] = "postprocess"
 
-    output_path = repo_root / args.output
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    compile_report = _compile_not_requested_report()
+    if hasattr(adapter, "require_compile_established"):
+        compile_report = adapter.require_compile_established()
+    elif hasattr(adapter, "get_compile_evidence"):
+        compile_report = adapter.get_compile_evidence()
+    try:
+        validate_compile_report(
+            compile_report,
+            enabled=bool(args.torch_compile),
+            backend=str(args.torch_compile_backend),
+            mode=str(args.torch_compile_mode),
+            fullgraph=bool(args.torch_compile_fullgraph),
+            dynamic=compile_dynamic_value(args.torch_compile_dynamic),
+            allow_fallback=bool(args.allow_compile_fallback),
+        )
+    except ValueError as exc:
+        raise SystemExit(f"invalid torch.compile evidence: {exc}") from exc
 
     lora_report = None
     if hasattr(adapter, "get_lora_report"):
@@ -682,11 +782,7 @@ def main(argv=None):
                 },
                 "inference": {
                     "infer_batch_size": int(args.infer_batch_size),
-                    "torch_compile": {
-                        "enabled": bool(args.torch_compile),
-                        "backend": (str(args.torch_compile_backend) if bool(args.torch_compile) else None),
-                        "mode": (str(args.torch_compile_mode) if bool(args.torch_compile) else None),
-                    },
+                    "torch_compile": compile_report,
                     "torch_amp": str(args.torch_amp),
                     "torch_channels_last": bool(args.torch_channels_last),
                     "torch_inference_mode": bool(args.torch_inference_mode),

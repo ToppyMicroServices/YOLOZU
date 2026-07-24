@@ -58,6 +58,131 @@ class TestExportOrchestratorTTTLite(unittest.TestCase):
         with self.assertRaises(SystemExit):
             export_orchestrator.validate_torch_only_flags(args=args, backend="onnxrt")
 
+    def test_validate_compile_report_accepts_proven_first_execution(self):
+        report = {
+            "requested": {
+                "enabled": True,
+                "backend": "eager",
+                "mode": "default",
+                "fullgraph": False,
+                "dynamic": False,
+                "allow_fallback": False,
+            },
+            "actual": {
+                "status": "compiled",
+                "backend": "eager",
+                "mode": "default",
+                "fullgraph": False,
+                "dynamic": False,
+            },
+            "evidence": {
+                "compile_api_available": True,
+                "setup_completed": True,
+                "first_execution_completed": True,
+                "fallback_execution_completed": False,
+                "counter_source": "torch._dynamo.utils.counters",
+                "counter_delta": {"stats.unique_graphs": 1},
+                "graph_count": 1,
+                "graph_break_count": None,
+                "captured_call_count": 1,
+            },
+            "failure": None,
+        }
+        export_orchestrator.validate_compile_report(
+            report,
+            enabled=True,
+            backend="eager",
+            mode="default",
+            fullgraph=False,
+            dynamic=False,
+            allow_fallback=False,
+        )
+
+    def test_validate_compile_report_rejects_pending_lazy_compile(self):
+        report = {
+            "requested": {
+                "enabled": True,
+                "backend": "inductor",
+                "mode": "reduce-overhead",
+                "fullgraph": False,
+                "dynamic": None,
+                "allow_fallback": False,
+            },
+            "actual": {
+                "status": "pending_first_execution",
+                "backend": None,
+                "mode": None,
+                "fullgraph": None,
+                "dynamic": None,
+            },
+            "evidence": {
+                "compile_api_available": True,
+                "setup_completed": True,
+                "first_execution_completed": False,
+                "fallback_execution_completed": False,
+                "counter_source": None,
+                "counter_delta": None,
+                "graph_count": None,
+                "graph_break_count": None,
+                "captured_call_count": None,
+            },
+            "failure": None,
+        }
+        with self.assertRaisesRegex(ValueError, "not established"):
+            export_orchestrator.validate_compile_report(
+                report,
+                enabled=True,
+                backend="inductor",
+                mode="reduce-overhead",
+                fullgraph=False,
+                dynamic=None,
+                allow_fallback=False,
+            )
+
+    def test_validate_compile_report_accepts_explicit_fallback(self):
+        report = {
+            "requested": {
+                "enabled": True,
+                "backend": "missing",
+                "mode": "default",
+                "fullgraph": True,
+                "dynamic": None,
+                "allow_fallback": True,
+            },
+            "actual": {
+                "status": "fallback",
+                "backend": "eager",
+                "mode": None,
+                "fullgraph": False,
+                "dynamic": None,
+            },
+            "evidence": {
+                "compile_api_available": True,
+                "setup_completed": False,
+                "first_execution_completed": False,
+                "fallback_execution_completed": True,
+                "counter_source": None,
+                "counter_delta": None,
+                "graph_count": None,
+                "graph_break_count": None,
+                "captured_call_count": None,
+            },
+            "failure": {
+                "phase": "setup",
+                "type": "ValueError",
+                "message": "invalid backend",
+            },
+        }
+        export_orchestrator.validate_compile_report(
+            report,
+            enabled=True,
+            backend="missing",
+            mode="default",
+            fullgraph=True,
+            dynamic=None,
+            allow_fallback=True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

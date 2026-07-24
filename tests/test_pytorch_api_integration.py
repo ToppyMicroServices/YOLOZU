@@ -4,9 +4,11 @@ Tests torch.compile wrapper, AMP utilities, ONNX export bridge,
 torchvision transforms bridge, and profiler integration.
 """
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
@@ -17,13 +19,271 @@ from unittest.mock import MagicMock, patch
 class TestCompileForInference(unittest.TestCase):
     """Tests for yolozu.inference.torch_export.compile_for_inference."""
 
-    def test_returns_model_when_torch_unavailable(self):
-        from yolozu.inference.torch_export import compile_for_inference
+    def test_fails_closed_when_torch_compile_unavailable(self):
+        from yolozu.inference.torch_export import (
+            TorchCompileError,
+            compile_for_inference,
+        )
 
         dummy = MagicMock()
-        with patch("yolozu.inference.torch_export.torch_compile_available", return_value=False):
-            result = compile_for_inference(dummy)
+        with patch(
+            "yolozu.inference.torch_export.torch_compile_available",
+            return_value=False,
+        ):
+            with self.assertRaises(TorchCompileError) as ctx:
+                compile_for_inference(dummy)
+        self.assertEqual(ctx.exception.evidence["actual"]["status"], "failed")
+        self.assertEqual(ctx.exception.evidence["failure"]["phase"], "setup")
+
+    def test_explicit_fallback_when_torch_compile_unavailable(self):
+        from yolozu.inference.torch_export import (
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        dummy = MagicMock()
+        with patch(
+            "yolozu.inference.torch_export.torch_compile_available",
+            return_value=False,
+        ):
+            result = compile_for_inference(dummy, allow_fallback=True)
         self.assertIs(result, dummy)
+        evidence = get_compile_evidence(result)
+        self.assertEqual(evidence["actual"]["status"], "fallback")
+        self.assertFalse(evidence["evidence"]["compile_api_available"])
+
+    def test_invalid_backend_setup_failure_is_fail_closed(self):
+        from yolozu.inference.torch_export import (
+            TorchCompileError,
+            compile_for_inference,
+        )
+
+        fake_torch = SimpleNamespace(
+            compile=MagicMock(side_effect=ValueError("invalid backend"))
+        )
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+            self.assertRaises(TorchCompileError) as ctx,
+        ):
+            compile_for_inference(MagicMock(), backend="definitely-not-a-backend")
+        self.assertEqual(ctx.exception.evidence["actual"]["status"], "failed")
+        self.assertEqual(ctx.exception.evidence["failure"]["phase"], "setup")
+
+    def test_dynamo_suppress_errors_cannot_claim_compiled_execution(self):
+        from yolozu.inference.torch_export import (
+            TorchCompileError,
+            compile_for_inference,
+        )
+
+        fake_torch = SimpleNamespace(
+            compile=MagicMock(),
+            _dynamo=SimpleNamespace(
+                config=SimpleNamespace(suppress_errors=True),
+            ),
+        )
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+            self.assertRaises(TorchCompileError) as ctx,
+        ):
+            compile_for_inference(MagicMock())
+        fake_torch.compile.assert_not_called()
+        self.assertIn("silently run eager", str(ctx.exception))
+
+    def test_invalid_backend_can_use_explicit_fallback(self):
+        from yolozu.inference.torch_export import (
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        model = MagicMock()
+        fake_torch = SimpleNamespace(
+            compile=MagicMock(side_effect=ValueError("invalid backend"))
+        )
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+        ):
+            result = compile_for_inference(
+                model,
+                backend="definitely-not-a-backend",
+                allow_fallback=True,
+            )
+        self.assertIs(result, model)
+        evidence = get_compile_evidence(result)
+        self.assertEqual(evidence["actual"]["status"], "fallback")
+        self.assertEqual(evidence["failure"]["phase"], "setup")
+
+    def test_lazy_first_execution_failure_is_fail_closed(self):
+        from yolozu.inference.torch_export import (
+            TorchCompileError,
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        class LazyFailure:
+            def forward(self, *_args, **_kwargs):
+                raise RuntimeError("lazy compile failure")
+
+            def __call__(self, *args, **kwargs):
+                return self.forward(*args, **kwargs)
+
+        fake_torch = SimpleNamespace(compile=MagicMock(return_value=LazyFailure()))
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+        ):
+            tracked = compile_for_inference(MagicMock())
+            with self.assertRaises(TorchCompileError):
+                tracked("input")
+        evidence = get_compile_evidence(tracked)
+        self.assertEqual(evidence["actual"]["status"], "failed")
+        self.assertEqual(evidence["failure"]["phase"], "first_execution")
+        self.assertFalse(evidence["evidence"]["first_execution_completed"])
+
+    def test_lazy_failure_fallback_records_eager_execution(self):
+        from yolozu.inference.torch_export import (
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        class LazyFailure:
+            def __init__(self):
+                self.calls = 0
+
+            def forward(self, *_args, **_kwargs):
+                self.calls += 1
+                raise RuntimeError("lazy compile failure")
+
+            def __call__(self, *args, **kwargs):
+                return self.forward(*args, **kwargs)
+
+        model = MagicMock(side_effect=lambda value: f"eager:{value}")
+        compiled = LazyFailure()
+        fake_torch = SimpleNamespace(compile=MagicMock(return_value=compiled))
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+        ):
+            tracked = compile_for_inference(model, allow_fallback=True)
+            self.assertEqual(tracked("one"), "eager:one")
+            self.assertEqual(tracked("two"), "eager:two")
+        self.assertEqual(compiled.calls, 1)
+        self.assertEqual(model.call_count, 2)
+        evidence = get_compile_evidence(tracked)
+        self.assertEqual(evidence["actual"]["status"], "fallback")
+        self.assertEqual(evidence["actual"]["backend"], "eager")
+        self.assertTrue(evidence["evidence"]["fallback_execution_completed"])
+
+    def test_success_records_requested_and_actual_settings(self):
+        from yolozu.inference.torch_export import (
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        counters = {
+            "stats": {"unique_graphs": 0, "calls_captured": 0},
+            "graph_break": {},
+        }
+
+        class SuccessfulCompiled:
+            def forward(self, value):
+                counters["stats"]["unique_graphs"] += 1
+                counters["stats"]["calls_captured"] += 1
+                return f"compiled:{value}"
+
+            def __call__(self, *args, **kwargs):
+                return self.forward(*args, **kwargs)
+
+        fake_torch = SimpleNamespace(
+            compile=MagicMock(return_value=SuccessfulCompiled()),
+            _dynamo=SimpleNamespace(
+                config=SimpleNamespace(suppress_errors=False),
+                utils=SimpleNamespace(counters=counters),
+            ),
+        )
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+        ):
+            tracked = compile_for_inference(
+                MagicMock(),
+                backend="test_backend",
+                mode="test_mode",
+                fullgraph=True,
+                dynamic=False,
+            )
+            self.assertEqual(tracked("input"), "compiled:input")
+        evidence = get_compile_evidence(tracked)
+        self.assertEqual(evidence["actual"]["status"], "compiled")
+        self.assertEqual(evidence["actual"]["backend"], "test_backend")
+        self.assertEqual(evidence["actual"]["mode"], "test_mode")
+        self.assertTrue(evidence["actual"]["fullgraph"])
+        self.assertFalse(evidence["actual"]["dynamic"])
+        self.assertTrue(evidence["evidence"]["first_execution_completed"])
+        self.assertEqual(evidence["evidence"]["graph_count"], 1)
+        self.assertEqual(evidence["evidence"]["captured_call_count"], 1)
+        self.assertEqual(
+            evidence["evidence"]["counter_source"],
+            "torch._dynamo.utils.counters",
+        )
+
+    def test_later_model_error_does_not_reclassify_compile_or_run_eager(self):
+        from yolozu.inference.torch_export import (
+            compile_for_inference,
+            get_compile_evidence,
+        )
+
+        class LaterFailure:
+            def __init__(self):
+                self.calls = 0
+
+            def forward(self, value):
+                self.calls += 1
+                if self.calls > 1:
+                    raise RuntimeError("model execution failed")
+                return f"compiled:{value}"
+
+            def __call__(self, *args, **kwargs):
+                return self.forward(*args, **kwargs)
+
+        eager_model = MagicMock()
+        fake_torch = SimpleNamespace(compile=MagicMock(return_value=LaterFailure()))
+        with (
+            patch(
+                "yolozu.inference.torch_export.torch_compile_available",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"torch": fake_torch}),
+        ):
+            tracked = compile_for_inference(eager_model, allow_fallback=True)
+            self.assertEqual(tracked("first"), "compiled:first")
+            with self.assertRaisesRegex(RuntimeError, "model execution failed"):
+                tracked("second")
+
+        eager_model.assert_not_called()
+        evidence = get_compile_evidence(tracked)
+        self.assertEqual(evidence["actual"]["status"], "compiled")
+        self.assertIsNone(evidence["failure"])
 
     def test_compile_available_returns_bool(self):
         from yolozu.inference.torch_export import torch_compile_available
@@ -53,7 +313,9 @@ class TestCompileForInference(unittest.TestCase):
         with torch.no_grad():
             out = compiled(x)
         self.assertEqual(out.shape, (2, 5))
+        from yolozu.inference.torch_export import get_compile_evidence
 
+        self.assertEqual(get_compile_evidence(compiled)["actual"]["status"], "compiled")
 
 # ---------------------------------------------------------------------------
 # ONNX export tests
@@ -289,14 +551,29 @@ class TestRTDETRPoseAdapterCompileFlag(unittest.TestCase):
 
         adapter = RTDETRPoseAdapter()
         self.assertFalse(adapter.compile_model)
+        report = adapter.get_compile_evidence()
+        self.assertFalse(report["requested"]["enabled"])
+        self.assertEqual(report["actual"]["status"], "not_requested")
 
     def test_compile_model_accepts_true(self):
         from yolozu.inference.adapter import RTDETRPoseAdapter
 
-        adapter = RTDETRPoseAdapter(compile_model=True, compile_backend="inductor")
+        adapter = RTDETRPoseAdapter(
+            compile_model=True,
+            compile_backend="inductor",
+            compile_fullgraph=True,
+            compile_dynamic=False,
+            allow_compile_fallback=True,
+        )
         self.assertTrue(adapter.compile_model)
         self.assertEqual(adapter.compile_backend, "inductor")
         self.assertEqual(adapter.compile_mode, "reduce-overhead")
+        report = adapter.get_compile_evidence()
+        self.assertTrue(report["requested"]["enabled"])
+        self.assertTrue(report["requested"]["fullgraph"])
+        self.assertFalse(report["requested"]["dynamic"])
+        self.assertTrue(report["requested"]["allow_fallback"])
+        self.assertEqual(report["actual"]["status"], "pending_first_execution")
 
 
 if __name__ == "__main__":

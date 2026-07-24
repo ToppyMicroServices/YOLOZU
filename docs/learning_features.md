@@ -197,9 +197,16 @@ Value: Export and compile PyTorch models for production inference, with kernel-l
 
 | Module | PyTorch API | Purpose |
 |--------|------------|---------|
-| `torch_export.compile_for_inference()` | `torch.compile` | JIT-compile any model for faster inference |
+| `torch_export.compile_for_inference()` | `torch.compile` | Track requested versus actual compilation and fail closed through the first execution unless eager fallback is explicit |
 | `torch_export.export_model_onnx()` | `torch.onnx.export` | Export model to ONNX with dynamic axes |
 | `profiler.profile_inference()` | `torch.profiler` | Profile adapter inference with Chrome trace output |
+
+`compile_for_inference()` attaches JSON-safe evidence retrievable with
+`get_compile_evidence()`. A successful setup remains
+`pending_first_execution` until the returned model completes a call. API,
+setup, or lazy execution failure raises `TorchCompileError` by default.
+`allow_fallback=True` permits eager execution and records `status=fallback`;
+it does not count as compiled evidence.
 
 ## 9) Training AMP + transforms bridge (`yolozu.training.amp_utils`, `yolozu.training.transforms_bridge`)
 

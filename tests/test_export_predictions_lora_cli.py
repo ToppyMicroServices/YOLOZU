@@ -58,6 +58,9 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             "--torch-compile",
             "--torch-compile-backend",
             "--torch-compile-mode",
+            "--torch-compile-fullgraph",
+            "--torch-compile-dynamic",
+            "--allow-compile-fallback",
             "--torch-amp",
             "--torch-channels-last",
             "--torch-inference-mode",
@@ -65,6 +68,44 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             "--tta-flip-pose-offsets",
         ):
             self.assertIn(flag, out)
+
+    def test_unified_export_help_includes_compile_evidence_flags(self):
+        script = repo_root / "tools" / "yolozu.py"
+        proc = subprocess.run(
+            [sys.executable, str(script), "export", "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 0)
+        out = proc.stdout + proc.stderr
+        for flag in (
+            "--torch-compile",
+            "--torch-compile-fullgraph",
+            "--torch-compile-dynamic",
+            "--allow-compile-fallback",
+        ):
+            self.assertIn(flag, out)
+
+    def test_manifest_declares_compile_evidence_flags_on_both_export_surfaces(self):
+        manifest = json.loads((repo_root / "tools" / "manifest.json").read_text())
+        tools_by_id = {entry["id"]: entry for entry in manifest["tools"]}
+        expected = {
+            "--torch-compile",
+            "--torch-compile-fullgraph",
+            "--no-torch-compile-fullgraph",
+            "--torch-compile-dynamic",
+            "--allow-compile-fallback",
+        }
+        for tool_id in ("export_predictions", "yolozu"):
+            declared = {
+                item["flag"]
+                for item in tools_by_id[tool_id]["inputs"]
+                if isinstance(item, dict) and isinstance(item.get("flag"), str)
+            }
+            self.assertTrue(expected <= declared, f"{tool_id}: {expected - declared}")
 
     def test_dummy_adapter_rejects_lora_flags(self):
         script = repo_root / "tools" / "export_predictions.py"
@@ -111,6 +152,75 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         msg = proc.stdout + proc.stderr
         self.assertIn("--torch-compile*/--torch-amp/--torch-channels-last", msg)
+
+    def test_compile_requires_wrapped_evidence_output(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "rtdetr_pose",
+                "--torch-compile",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "--torch-compile requires --wrap",
+            proc.stdout + proc.stderr,
+        )
+
+    def test_compile_fallback_requires_compile_request(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "rtdetr_pose",
+                "--allow-compile-fallback",
+                "--wrap",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "--allow-compile-fallback requires --torch-compile",
+            proc.stdout + proc.stderr,
+        )
+
+    def test_compile_settings_require_compile_request(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "rtdetr_pose",
+                "--torch-compile-backend",
+                "eager",
+                "--wrap",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "--torch-compile-* options require --torch-compile",
+            proc.stdout + proc.stderr,
+        )
 
     def test_rtdetr_pose_export_smoke_with_lora(self):
         if torch is None:
@@ -163,6 +273,8 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
                     "inductor",
                     "--torch-compile-mode",
                     "reduce-overhead",
+                    "--torch-compile-dynamic",
+                    "false",
                     "--torch-amp",
                     "bf16",
                     "--no-torch-channels-last",
@@ -190,7 +302,15 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             self.assertTrue(meta.get("lora", {}).get("enabled"))
             self.assertTrue(meta.get("lora", {}).get("freeze_base"))
             self.assertEqual(int((meta.get("inference") or {}).get("infer_batch_size", 0)), 1)
-            self.assertTrue(((meta.get("inference") or {}).get("torch_compile") or {}).get("enabled"))
+            compile_report = (meta.get("inference") or {}).get("torch_compile") or {}
+            self.assertTrue((compile_report.get("requested") or {}).get("enabled"))
+            self.assertFalse((compile_report.get("requested") or {}).get("dynamic"))
+            self.assertEqual((compile_report.get("actual") or {}).get("status"), "compiled")
+            self.assertTrue(
+                (compile_report.get("evidence") or {}).get(
+                    "first_execution_completed"
+                )
+            )
             self.assertEqual(str((meta.get("inference") or {}).get("torch_amp")), "bf16")
             self.assertFalse(bool((meta.get("inference") or {}).get("torch_channels_last")))
             self.assertTrue(bool((meta.get("inference") or {}).get("torch_inference_mode")))
