@@ -140,23 +140,41 @@ This writes:
 - `reports/doctor.json`
 - `reports/dependency_licenses.json`
 
-## Beads (bd) sync on RunPod (fix for stale `bd list`)
+## Beads (bd) refresh on RunPod
 
 If the RunPod repo was cloned with `git clone --single-branch`, `git fetch origin beads-sync` may update only
 `FETCH_HEAD` and *not* update `refs/remotes/origin/beads-sync`, leaving `bd list` stale.
 
-Use the helper (recommended):
+Use the helper:
 
 ```bash
 bash deploy/runpod/refresh_beads_sync.sh
 ```
 
-One-time alternative: teach `origin` to track `beads-sync`, then `git fetch origin` will keep it fresh:
+The wrapper explicitly refreshes the remote-tracking ref and imports the
+exported `.beads/issues.jsonl` snapshot through the repository-level helper. It
+does not require a `beads-sync` worktree, so a fresh or single-branch RunPod
+checkout follows the same path. It exits nonzero if fetch, snapshot extraction,
+import, or the final `bd list` fails.
+
+Show the supported options without changing state:
+
+```bash
+bash deploy/runpod/refresh_beads_sync.sh --help
+```
+
+Optional one-time setup: teach `origin` to track `beads-sync`, then a normal
+`git fetch origin` also keeps its remote-tracking ref fresh:
 
 ```bash
 git remote set-branches --add origin beads-sync
 git fetch origin
 ```
+
+Publishing updated issue state still requires `bd export` plus a git commit and
+push from the `beads-sync` worktree. Follow
+`docs/beads_github_workflow.md`; do not treat the refresh helper as a publish
+command.
 
 ## COCO val2017 bootstrap (optional)
 

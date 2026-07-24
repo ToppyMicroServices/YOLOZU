@@ -34,11 +34,9 @@ issue-prefix: "YOLOZU"
 # Debounce interval for auto-flush (can also use BEADS_FLUSH_DEBOUNCE)
 # flush-debounce: "5s"
 
-# Git branch for beads commits (bd sync will commit to this branch)
-# IMPORTANT: Set this for team projects so all clones use the same sync branch.
-# This setting persists across clones (unlike database config which is gitignored).
-# Can also use BEADS_SYNC_BRANCH env var for local override.
-# If not set, bd sync will require you to run 'bd config set sync.branch <branch>'.
+# Git branch used by this repository for exported issue snapshots.
+# The repository helpers use normal git fetch/push plus bd export/import.
+# Keep this value aligned with refresh_beads_sync.sh and the workflow docs.
 sync-branch: "beads-sync"
 repos:
   primary: "."

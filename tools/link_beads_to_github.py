@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create/link GitHub Issues for Beads issues via --external-ref.
 
-- Source of truth: .beads/issues.jsonl (Beads)
+- Input: .beads/issues.jsonl (exported from the current Beads database)
 - Target: GitHub Issues in the current repo (via gh CLI)
 
 This script is intentionally conservative:
@@ -195,7 +195,10 @@ def main() -> int:
 
     beads_path = Path(".beads/issues.jsonl")
     if not beads_path.exists():
-        raise RuntimeError(".beads/issues.jsonl not found; run bd init/bd sync first")
+        raise RuntimeError(
+            ".beads/issues.jsonl not found; run "
+            "'bd export -o .beads/issues.jsonl' first"
+        )
 
     allow = set(args.only)
     issues = load_beads_jsonl(beads_path)
