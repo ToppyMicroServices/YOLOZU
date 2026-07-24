@@ -1,0 +1,269 @@
+{
+  "site": {
+    "title": "YOLOZU Docs",
+    "description": "Searchable onboarding for validating and fairly evaluating existing vision predictions.",
+    "canonical_base": "https://www.toppymicros.com/yolozu/docs/",
+    "repository_base": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/"
+  },
+  "lanes": [
+    {
+      "id": "stable",
+      "title": "Stable evaluation",
+      "summary": "Validate wrapped predictions, pin the protocol, and produce a comparable report.",
+      "start_page": "start.html",
+      "source": "docs/production_readiness.md"
+    },
+    {
+      "id": "bridge",
+      "title": "Bridge",
+      "summary": "Export from an external framework into the same predictions interface contract.",
+      "start_page": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/byop_quickstarts.md",
+      "source": "docs/byop_quickstarts.md"
+    },
+    {
+      "id": "benchmark",
+      "title": "Benchmark",
+      "summary": "Qualify runtime parity only after the stable evaluation artifact is working.",
+      "start_page": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_support_matrix.md",
+      "source": "docs/benchmark_support_matrix.md"
+    },
+    {
+      "id": "research",
+      "title": "Research",
+      "summary": "Run opt-in experiments over an already evaluated stable artifact and keep the maturity boundary visible.",
+      "start_page": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md",
+      "source": "docs/research_lanes.md",
+      "stable_return": "start.html"
+    }
+  ],
+  "tutorial": {
+    "thirty_minute": [
+      {
+        "minutes": "0–5",
+        "title": "Install and prove the stable lane",
+        "commands": [
+          "python3 -m pip install -U yolozu",
+          "yolozu doctor --proof --output reports/dod_cpu_smoke/doctor.json --proof-dir reports/dod_cpu_smoke/doctor_proof"
+        ],
+        "expected": "A CPU-only proof report, known predictions, toy dataset, and pinned mAP result under reports/dod_cpu_smoke/doctor_proof/."
+      },
+      {
+        "minutes": "5–10",
+        "title": "Create visible evaluation evidence",
+        "commands": [
+          "yolozu demo instance-seg --inference none --run-dir reports/dod_cpu_smoke/demo_instance_seg --progress"
+        ],
+        "expected": "instance_seg_demo_report.json and PNG overlays under reports/dod_cpu_smoke/demo_instance_seg/."
+      },
+      {
+        "minutes": "10–18",
+        "title": "Resolve the proof artifacts",
+        "commands": [
+          "PROOF=reports/dod_cpu_smoke/doctor_proof/proof_report.json",
+          "DATASET=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"artifacts\"][\"dataset\"])' \"$PROOF\")",
+          "PREDICTIONS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"artifacts\"][\"predictions\"])' \"$PROOF\")"
+        ],
+        "expected": "DATASET and PREDICTIONS point to the files recorded by the proof report; no path is guessed."
+      },
+      {
+        "minutes": "18–23",
+        "title": "Validate both sides of the interface",
+        "commands": [
+          "yolozu validate dataset \"$DATASET\" --split val2017 --strict",
+          "yolozu validate predictions \"$PREDICTIONS\" --strict"
+        ],
+        "expected": "Both strict validators exit successfully before evaluation."
+      },
+      {
+        "minutes": "23–27",
+        "title": "Run the pinned evaluation",
+        "commands": [
+          "yolozu eval-coco --dataset \"$DATASET\" --split val2017 --predictions \"$PREDICTIONS\" --dry-run --output reports/dod_cpu_smoke/eval_coco_dry_run.json"
+        ],
+        "expected": "A checked detection evaluation report at reports/dod_cpu_smoke/eval_coco_dry_run.json."
+      },
+      {
+        "minutes": "27–30",
+        "title": "Read before comparing",
+        "commands": [],
+        "expected": "Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports."
+      }
+    ],
+    "two_hour": [
+      "Complete the 30-minute stable path.",
+      "Export or import predictions from an external stack through a checked bridge.",
+      "Run a CPU-only evaluation with the same dataset, split, and fixed protocol.",
+      "Compare two wrapped prediction artifacts and their reports.",
+      "Fill out docs/evaluation_protocol_template.md for the run.",
+      "Choose stable evaluation, backend parity, or a Research lane from evidence—not from a missing feature assumption."
+    ]
+  },
+  "examples": [
+    {
+      "id": "instance-seg-visible-demo",
+      "title": "Instance-segmentation report and overlays",
+      "lane": "stable",
+      "description": "A checked demo that pairs a JSON metric report with visible mask overlays.",
+      "image_source": "docs/assets/instance_seg_coco_instances_demo.png",
+      "image_output": "instance-seg-demo.png",
+      "source": "docs/cpu_only_dod.md",
+      "expected_files": [
+        "instance_seg_demo_report.json",
+        "overlays/*.png",
+        "demo_config.json"
+      ]
+    },
+    {
+      "id": "external-predictions-bridge",
+      "title": "External framework prediction artifacts",
+      "lane": "bridge",
+      "description": "Detectron2, MMDetection, YOLOv8, and YOLOX examples converge on the same wrapped predictions interface contract before scoring.",
+      "source": "docs/byop_quickstarts.md",
+      "expected_files": [
+        "wrapped predictions JSON",
+        "meta.export_settings",
+        "adapter/source identity"
+      ]
+    },
+    {
+      "id": "backend-support-audit",
+      "title": "Backend support and skip semantics",
+      "lane": "benchmark",
+      "description": "The generated support matrix records implemented, conditional, and unsupported backend paths without presenting a missing lane as a passing result.",
+      "source": "yolozu/data/manifest/benchmark_support.json",
+      "expected_files": [
+        "benchmark support metadata",
+        "explicit support status",
+        "skip or failure reason where applicable"
+      ]
+    },
+    {
+      "id": "ttt-before-after",
+      "title": "TTT before/after Research evidence",
+      "lane": "research",
+      "description": "Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity.",
+      "image_source": "docs/assets/ttt_method_results_summary.png",
+      "image_output": "ttt-method-results.png",
+      "source": "docs/assets/ttt_method_results_source.json",
+      "stable_artifact": "data/smoke/predictions/predictions_dummy.json",
+      "expected_files": [
+        "baseline_predictions.json",
+        "method_predictions.json",
+        "before_after_compare.json",
+        "TTT log and plan"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Predictions interface contract",
+      "definition": "The stable wrapped predictions boundary that lets validation and evaluation stay independent of the training or inference framework.",
+      "source": "docs/predictions_schema.md"
+    },
+    {
+      "term": "Wrapped predictions",
+      "definition": "A predictions payload with schema version, prediction entries, and metadata needed to interpret how the artifact was produced.",
+      "source": "docs/predictions_schema.md"
+    },
+    {
+      "term": "Protocol identity",
+      "definition": "The recorded dataset, split, metric settings, thresholds, and other evaluation choices that determine whether reports are comparable.",
+      "source": "docs/evaluation_protocol_template.md"
+    },
+    {
+      "term": "Export settings",
+      "definition": "Producer-side preprocessing and output settings recorded in meta.export_settings so prediction artifacts can be interpreted and compared.",
+      "source": "docs/predictions_schema.md"
+    },
+    {
+      "term": "Stable lane",
+      "definition": "Prediction validation and evaluation capabilities that form the product's supported core boundary.",
+      "source": "docs/production_readiness.md"
+    },
+    {
+      "term": "Bridge lane",
+      "definition": "An adapter, exporter, or external training handoff that emits the stable predictions interface contract without replacing it.",
+      "source": "docs/byop_quickstarts.md"
+    },
+    {
+      "term": "Benchmark lane",
+      "definition": "A qualification path for runtime or backend parity used after stable prediction evaluation is already working.",
+      "source": "docs/benchmark_support_matrix.md"
+    },
+    {
+      "term": "Research lane",
+      "definition": "An opt-in experiment over a stable artifact whose output does not establish production readiness.",
+      "source": "docs/research_lanes.md"
+    },
+    {
+      "term": "Skipped lane",
+      "definition": "A path that did not execute because a capability, artifact, runtime, or prerequisite was unavailable; it is not a passing result.",
+      "source": "docs/benchmark_support_matrix.md"
+    },
+    {
+      "term": "Comparable report",
+      "definition": "A report whose task, data, protocol, predictions provenance, and metric semantics align with the report it is compared against.",
+      "source": "docs/evaluation_protocol_template.md"
+    }
+  ],
+  "failures": [
+    {
+      "symptom": "The yolozu command is not found",
+      "check": "Confirm which Python environment received the package, then run python3 -m yolozu --help from that same interpreter.",
+      "next": "Reinstall into the intended environment; do not switch runtimes silently.",
+      "source": "docs/install.md"
+    },
+    {
+      "symptom": "doctor --proof fails",
+      "check": "Read the errors and drift_hints in the doctor report. The proof is CPU-only and does not require a model download.",
+      "next": "Resolve the reported package, path, or write-permission problem, then rerun into a fresh proof directory.",
+      "source": "docs/doctor_diagnostics.md"
+    },
+    {
+      "symptom": "Predictions validation reports missing or migrated fields",
+      "check": "Run strict validation on the wrapped artifact and compare its schema version with the predictions schema.",
+      "next": "Fix the producer or use the documented migration path before scoring.",
+      "source": "docs/predictions_schema.md"
+    },
+    {
+      "symptom": "Dataset validation cannot resolve the split",
+      "check": "Use the split recorded in the dataset/proof artifact instead of assuming train, val, or val2017.",
+      "next": "Correct the dataset manifest or command so image IDs and split identity agree.",
+      "source": "docs/cpu_only_dod.md"
+    },
+    {
+      "symptom": "Two reports have different metrics",
+      "check": "Compare task, dataset/split, prediction source, export settings, protocol identity, class mapping, thresholds, and skip reasons.",
+      "next": "Align the differing input or protocol field before attributing the difference to a model or runtime.",
+      "source": "docs/evaluation_protocol_template.md"
+    },
+    {
+      "symptom": "A backend row is skipped or conditional",
+      "check": "Read the canonical support matrix and the report's explicit status/reason.",
+      "next": "Provide the required artifact/runtime or keep the lane skipped; never reinterpret it as successful parity.",
+      "source": "docs/benchmark_support_matrix.md"
+    },
+    {
+      "symptom": "A Research run changes the result",
+      "check": "Verify that the stable baseline predictions and evaluation report are preserved and linked.",
+      "next": "Treat the delta as Research evidence until a fixed protocol, rollback review, and environment qualification support a stronger conclusion.",
+      "source": "docs/research_lanes.md"
+    },
+    {
+      "symptom": "The visible demo has no overlays",
+      "check": "Confirm the demo report and overlays directory under the exact run directory printed by the command.",
+      "next": "Rerun the instance-seg demo into a new run directory and inspect the reported output paths.",
+      "source": "docs/cpu_only_dod.md"
+    }
+  ],
+  "report_checklist": [
+    "Same task and metric family",
+    "Same dataset identity and split",
+    "Validated predictions interface contract",
+    "Recorded producer and export settings",
+    "Pinned protocol settings",
+    "Class and coordinate semantics aligned",
+    "Skipped, conditional, or unsupported lanes kept explicit",
+    "Visible evidence linked where the task provides it"
+  ]
+}

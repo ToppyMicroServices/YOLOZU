@@ -3,6 +3,8 @@
 YOLOZU's web docs should be the searchable learning surface. The PDF manual can
 remain the complete reference, while web docs guide users through shorter paths.
 
+Published surface: <https://www.toppymicros.com/yolozu/docs/>
+
 ## Information Architecture
 
 | Section | Purpose | Source of truth |
@@ -53,11 +55,48 @@ remain the complete reference, while web docs guide users through shorter paths.
 - Generated pages must fail CI when their source manifest/schema entries drift.
 - No web page should be the only source for CLI flags or schema fields.
 
-## First Implementation Slice
+## Implemented Surface
 
-1. Generate a static command reference from `tools/manifest.json`.
-2. Generate a static schema browser from `docs/schema_governance.md` and
-   `docs/schemas/`.
-3. Add the 30-minute tutorial as a short web page.
-4. Add a glossary page covering core report and artifact terms.
-5. Add a docs drift check for generated pages.
+`tools/generate_web_docs.py` builds the checked-in static bundle at
+`docs/generated/web_docs/`.
+
+The bundle includes:
+
+1. a searchable hub that leads with "Evaluate existing predictions";
+2. the 30-minute and two-hour tutorial paths;
+3. a command reference generated from every `tools/manifest.json` entry;
+4. a schema browser generated from every `docs/schemas/*.json` file;
+5. a repository-backed example gallery and report-reading checklist;
+6. a curated glossary;
+7. an evidence-first failure guide; and
+8. a search index spanning commands, schemas, lanes, examples, terms, and
+   troubleshooting entries.
+
+Stable, Bridge, Benchmark, and Research cards use separate visual states.
+Research examples link back to a Stable artifact or the Stable tutorial.
+
+The entry and completion links emit aggregate Plausible events containing only
+the fixed page and target labels. Search text is not sent to analytics.
+
+## Generation And Publication
+
+Regenerate after changing the manifest, schemas, curated content, or source
+assets:
+
+```bash
+python3 tools/generate_web_docs.py
+```
+
+CI uses a non-writing drift gate:
+
+```bash
+python3 tools/generate_web_docs.py --check --json
+python3 -m unittest tests.test_web_docs_generation
+```
+
+`provenance.json` records SHA-256 hashes for every manifest, schema, curated
+content file, and copied example image used by the bundle. The generated bundle
+is published unchanged under `/yolozu/docs/` on the ToppyMicroServices site.
+Repository Markdown, JSON Schemas, manifests, and report artifacts remain the
+source of truth; the web pages link back to them and do not define new flags or
+fields.

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What can go wrong — YOLOZU Docs</title>
+  <meta name="description" content="Evidence-first troubleshooting for YOLOZU installation, validation, evaluation, and lane status." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/troubleshooting.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="What can go wrong — YOLOZU Docs" />
+  <meta property="og:description" content="Evidence-first troubleshooting for YOLOZU installation, validation, evaluation, and lane status." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/troubleshooting.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="troubleshooting">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html" aria-current="page">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+    
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Fail visibly</span>
+  <h1 id="page-title">What can go wrong</h1>
+  <p class="lead">Start from observed output, verify the relevant artifact, and
+  change only the condition supported by evidence. A skipped or unavailable lane
+  is not a successful result.</p>
+  
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter symptoms, checks, and next actions</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="failures-title">
+  <h2 id="failures-title">Symptom → verification → next action</h2>
+  <div class="grid two">
+<article class="card" id="failure-1" data-search-card
+  data-search-text="The yolozu command is not found Confirm which Python environment received the package, then run python3 -m yolozu --help from that same interpreter. Reinstall into the intended environment; do not switch runtimes silently.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>The yolozu command is not found</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Confirm which Python environment received the package, then run python3 -m yolozu --help from that same interpreter.</dd>
+    <dt>Next action</dt><dd>Reinstall into the intended environment; do not switch runtimes silently.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/install.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-2" data-search-card
+  data-search-text="doctor --proof fails Read the errors and drift_hints in the doctor report. The proof is CPU-only and does not require a model download. Resolve the reported package, path, or write-permission problem, then rerun into a fresh proof directory.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>doctor --proof fails</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Read the errors and drift_hints in the doctor report. The proof is CPU-only and does not require a model download.</dd>
+    <dt>Next action</dt><dd>Resolve the reported package, path, or write-permission problem, then rerun into a fresh proof directory.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/doctor_diagnostics.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-3" data-search-card
+  data-search-text="Predictions validation reports missing or migrated fields Run strict validation on the wrapped artifact and compare its schema version with the predictions schema. Fix the producer or use the documented migration path before scoring.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>Predictions validation reports missing or migrated fields</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Run strict validation on the wrapped artifact and compare its schema version with the predictions schema.</dd>
+    <dt>Next action</dt><dd>Fix the producer or use the documented migration path before scoring.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/predictions_schema.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-4" data-search-card
+  data-search-text="Dataset validation cannot resolve the split Use the split recorded in the dataset/proof artifact instead of assuming train, val, or val2017. Correct the dataset manifest or command so image IDs and split identity agree.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>Dataset validation cannot resolve the split</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Use the split recorded in the dataset/proof artifact instead of assuming train, val, or val2017.</dd>
+    <dt>Next action</dt><dd>Correct the dataset manifest or command so image IDs and split identity agree.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-5" data-search-card
+  data-search-text="Two reports have different metrics Compare task, dataset/split, prediction source, export settings, protocol identity, class mapping, thresholds, and skip reasons. Align the differing input or protocol field before attributing the difference to a model or runtime.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>Two reports have different metrics</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Compare task, dataset/split, prediction source, export settings, protocol identity, class mapping, thresholds, and skip reasons.</dd>
+    <dt>Next action</dt><dd>Align the differing input or protocol field before attributing the difference to a model or runtime.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/evaluation_protocol_template.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-6" data-search-card
+  data-search-text="A backend row is skipped or conditional Read the canonical support matrix and the report&#x27;s explicit status/reason. Provide the required artifact/runtime or keep the lane skipped; never reinterpret it as successful parity.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>A backend row is skipped or conditional</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Read the canonical support matrix and the report&#x27;s explicit status/reason.</dd>
+    <dt>Next action</dt><dd>Provide the required artifact/runtime or keep the lane skipped; never reinterpret it as successful parity.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_support_matrix.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-7" data-search-card
+  data-search-text="A Research run changes the result Verify that the stable baseline predictions and evaluation report are preserved and linked. Treat the delta as Research evidence until a fixed protocol, rollback review, and environment qualification support a stronger conclusion.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>A Research run changes the result</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Verify that the stable baseline predictions and evaluation report are preserved and linked.</dd>
+    <dt>Next action</dt><dd>Treat the delta as Research evidence until a fixed protocol, rollback review, and environment qualification support a stronger conclusion.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+
+<article class="card" id="failure-8" data-search-card
+  data-search-text="The visible demo has no overlays Confirm the demo report and overlays directory under the exact run directory printed by the command. Rerun the instance-seg demo into a new run directory and inspect the reported output paths.">
+  <span class="badge badge-danger">Observed symptom</span>
+  <h3>The visible demo has no overlays</h3>
+  <dl class="kv">
+    <dt>Verify</dt><dd>Confirm the demo report and overlays directory under the exact run directory printed by the command.</dd>
+    <dt>Next action</dt><dd>Rerun the instance-seg demo into a new run directory and inspect the reported output paths.</dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">Detailed guidance</a></p>
+</article>
+</div>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>

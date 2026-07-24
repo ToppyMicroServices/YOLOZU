@@ -35,6 +35,7 @@ instead of promoting it by inference.
 - Manual CLI drift audit passes for the current 28-command/alias top-level surface.
 - Public docs example audit passes 153 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
+- The generated web-docs bundle is current for 115 tools and 21 JSON Schemas.
 - Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10
   Linux/macOS jobs for Python 3.10 through 3.14 in
   [workflow run 29421807474](https://github.com/ToppyMicroServices/YOLOZU/actions/runs/29421807474).
@@ -70,6 +71,7 @@ python3 tools/audit_manifest_inputs_vs_help.py --timeout 5
 python3 tools/audit_manual_cli_drift.py --json
 python3 tools/audit_docs_examples_drift.py --json
 python3 tools/generate_benchmark_support_matrix.py --check --json
+python3 tools/generate_web_docs.py --check --json
 python3 -m unittest \
   tests.test_ssot_capability_coverage \
   tests.test_generated_cli_reference \

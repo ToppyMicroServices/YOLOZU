@@ -1,0 +1,1150 @@
+[
+  {
+    "href": "index.html",
+    "kind": "page",
+    "search_text": "evaluate existing predictions stable validation report",
+    "summary": "Start with the stable predictions evaluation lane.",
+    "title": "Evaluate existing predictions"
+  },
+  {
+    "href": "start.html",
+    "kind": "tutorial",
+    "search_text": "install doctor proof demo validate eval tutorial",
+    "summary": "CPU proof, visible demo, strict validation, and evaluation.",
+    "title": "30-minute path"
+  },
+  {
+    "href": "start.html",
+    "kind": "lane",
+    "search_text": "stable Stable evaluation Validate wrapped predictions, pin the protocol, and produce a comparable report.",
+    "summary": "Validate wrapped predictions, pin the protocol, and produce a comparable report.",
+    "title": "Stable evaluation"
+  },
+  {
+    "href": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/byop_quickstarts.md",
+    "kind": "lane",
+    "search_text": "bridge Bridge Export from an external framework into the same predictions interface contract.",
+    "summary": "Export from an external framework into the same predictions interface contract.",
+    "title": "Bridge"
+  },
+  {
+    "href": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_support_matrix.md",
+    "kind": "lane",
+    "search_text": "benchmark Benchmark Qualify runtime parity only after the stable evaluation artifact is working.",
+    "summary": "Qualify runtime parity only after the stable evaluation artifact is working.",
+    "title": "Benchmark"
+  },
+  {
+    "href": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md",
+    "kind": "lane",
+    "search_text": "research Research Run opt-in experiments over an already evaluated stable artifact and keep the maturity boundary visible.",
+    "summary": "Run opt-in experiments over an already evaluated stable artifact and keep the maturity boundary visible.",
+    "title": "Research"
+  },
+  {
+    "href": "commands.html#tool-adapter-parity-suite",
+    "kind": "command",
+    "search_text": "adapter_parity_suite Run parity checks for multiple adapter outputs against a reference adapter predictions file. experimental tools/adapter_parity_suite.py --adapter-predictions --reference-adapter --image-size --iou-thresh --score-atol --bbox-atol --output",
+    "summary": "Run parity checks for multiple adapter outputs against a reference adapter predictions file.",
+    "title": "adapter_parity_suite"
+  },
+  {
+    "href": "commands.html#tool-announce-release",
+    "kind": "command",
+    "search_text": "announce_release Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. stable tools/announce_release.py --event-json --out-dir --post --platform --strict-post --reddit-subreddit --reddit-kind --x-max-len",
+    "summary": "Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload.",
+    "title": "announce_release"
+  },
+  {
+    "href": "commands.html#tool-audit-backend-support",
+    "kind": "command",
+    "search_text": "audit_backend_support Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends. experimental tools/audit_backend_support.py --dataset-root --split --max-images --output --work-dir --python --strict --non-dry-backend --require-non-dry --yolox-exp --yolox-weights --ultralytics-model --detectron2-config --detectron2-weights --mmdet-config --mmdet-checkpoint",
+    "summary": "Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends.",
+    "title": "audit_backend_support"
+  },
+  {
+    "href": "commands.html#tool-audit-docs-examples-drift",
+    "kind": "command",
+    "search_text": "audit_docs_examples_drift Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates. stable tools/audit_docs_examples_drift.py --docs --python --json --skip-manual --skip-manifest",
+    "summary": "Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates.",
+    "title": "audit_docs_examples_drift"
+  },
+  {
+    "href": "commands.html#tool-audit-manual-cli-drift",
+    "kind": "command",
+    "search_text": "audit_manual_cli_drift Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface. stable tools/audit_manual_cli_drift.py --manual --allowlist --python --skip-wrapper --json",
+    "summary": "Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface.",
+    "title": "audit_manual_cli_drift"
+  },
+  {
+    "href": "commands.html#tool-backend-parity-matrix",
+    "kind": "command",
+    "search_text": "backend_parity_matrix Run one-command backend parity matrix checks across torch/onnxrt/trt/opencv_dnn/custom_cpp and export JSON+HTML reports. experimental tools/backend_parity_matrix.py --backend-predictions --reference-backend --image-size --max-images --iou-thresh --score-atol --bbox-atol --run-id --runs-dir --run-dir --output-json --output-html",
+    "summary": "Run one-command backend parity matrix checks across torch/onnxrt/trt/opencv_dnn/custom_cpp and export JSON+HTML reports.",
+    "title": "backend_parity_matrix"
+  },
+  {
+    "href": "commands.html#tool-benchmark-eata-stability",
+    "kind": "command",
+    "search_text": "benchmark_eata_stability Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. research tools/benchmark_eata_stability.py --baseline --eata --output-json --output-md --max-overhead-ratio --max-loss-ratio --min-selected-ratio",
+    "summary": "Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults.",
+    "title": "benchmark_eata_stability"
+  },
+  {
+    "href": "commands.html#tool-benchmark-keypoints-eval",
+    "kind": "command",
+    "search_text": "benchmark_keypoints_eval Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. experimental tools/benchmark_keypoints_eval.py --dataset --split --predictions --max-images --warmup --iterations --iou-threshold --min-score --pck-threshold --oks --oks-sigmas --oks-sigmas-file --oks-max-dets --output",
+    "summary": "Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report.",
+    "title": "benchmark_keypoints_eval"
+  },
+  {
+    "href": "commands.html#tool-benchmark-latency",
+    "kind": "command",
+    "search_text": "benchmark_latency Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history. experimental tools/benchmark_latency.py --config --model-template --engine-template --buckets --run-id --notes --notes-file --iterations --warmup --sleep-s --target-fps --target-latency-ms --output --history",
+    "summary": "Latency/FPS benchmark harness producing stable JSON reports and optional JSONL history.",
+    "title": "benchmark_latency"
+  },
+  {
+    "href": "commands.html#tool-benchmark-model",
+    "kind": "command",
+    "search_text": "benchmark_model Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. experimental tools/benchmark_model.py --model --data --imgsz --half --no-half --int8 --no-int8 --device --verbose --format --task --split --max-images --dry-run --strict --repro-policy --runtime-lock --run-id --output --history --predictions-output --eval-output --parity-output --batch --dynamic --no-dynamic --nms --no-nms --simplify --no-simplify --opset --workspace --fraction --latency-source --parity-reference-backend --iterations --warmup --sleep-s --torch-model --onnx-model --engine-model --torchscript-model --openvino-model --depth-mask --depth-align --depth-parity-mae-atol --depth-parity-rmse-atol --segmentation-parity-mismatch-atol --keypoints-parity-iou-thresh --keypoints-parity-score-atol --keypoints-parity-bbox-atol --keypoints-parity-kp-atol --pose-parity-rot-deg-atol --pose-parity-trans-atol --pose-parity-depth-atol --protocol",
+    "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+    "title": "benchmark_model"
+  },
+  {
+    "href": "commands.html#tool-benchmark-sar-robustness",
+    "kind": "command",
+    "search_text": "benchmark_sar_robustness Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. research tools/benchmark_sar_robustness.py --cotta --eata --sar --output-json --output-md --max-overhead-ratio --max-loss-ratio --max-variance-ratio",
+    "summary": "Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report.",
+    "title": "benchmark_sar_robustness"
+  },
+  {
+    "href": "commands.html#tool-build-manifest",
+    "kind": "command",
+    "search_text": "build_manifest Build a dataset manifest for data/coco128 (writes reports/manifest.json). stable tools/build_manifest.py ",
+    "summary": "Build a dataset manifest for data/coco128 (writes reports/manifest.json).",
+    "title": "build_manifest"
+  },
+  {
+    "href": "commands.html#tool-build-trt-engine",
+    "kind": "command",
+    "search_text": "build_trt_engine Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON. experimental tools/build_trt_engine.py --onnx --engine --timing-cache --meta-output --precision --input-name --min-shape --opt-shape --max-shape --workspace --trtexec --builder --calib-cache --calib-dataset --calib-split --calib-images --calib-list-output --extra-args --dry-run",
+    "summary": "Build a TensorRT engine from ONNX using trtexec and write a reproducible meta JSON.",
+    "title": "build_trt_engine"
+  },
+  {
+    "href": "commands.html#tool-calibrate-scores",
+    "kind": "command",
+    "search_text": "calibrate_scores Temperature-scale detection scores to improve mAP proxy on a fixed subset (no NMS). stable tools/calibrate_scores.py --dataset --predictions --output --output-report --output-artifact --split --temperatures --min-score --max-score",
+    "summary": "Temperature-scale detection scores to improve mAP proxy on a fixed subset (no NMS).",
+    "title": "calibrate_scores"
+  },
+  {
+    "href": "commands.html#tool-check-golden-compatibility",
+    "kind": "command",
+    "search_text": "check_golden_compatibility Validate versioned golden compatibility assets and hash-pinned eval protocol snapshots. experimental tools/check_golden_compatibility.py --manifest",
+    "summary": "Validate versioned golden compatibility assets and hash-pinned eval protocol snapshots.",
+    "title": "check_golden_compatibility"
+  },
+  {
+    "href": "commands.html#tool-check-keypoints-parity",
+    "kind": "command",
+    "search_text": "check_keypoints_parity Compare two keypoints prediction JSONs and report mismatches (IoU/tolerance-based). experimental tools/check_keypoints_parity.py --reference --candidate --max-images --iou-thresh --score-atol --bbox-atol --kp-atol",
+    "summary": "Compare two keypoints prediction JSONs and report mismatches (IoU/tolerance-based).",
+    "title": "check_keypoints_parity"
+  },
+  {
+    "href": "commands.html#tool-check-license-policy",
+    "kind": "command",
+    "search_text": "check_license_policy Enforce Apache-2.0-only constraints (denylist + no vendored GPL/AGPL license texts). stable tools/check_license_policy.py ",
+    "summary": "Enforce Apache-2.0-only constraints (denylist + no vendored GPL/AGPL license texts).",
+    "title": "check_license_policy"
+  },
+  {
+    "href": "commands.html#tool-check-map-targets",
+    "kind": "command",
+    "search_text": "check_map_targets Compare eval_suite results against a target table and exit non-zero on failure. stable tools/check_map_targets.py --suite --targets --key --min-delta",
+    "summary": "Compare eval_suite results against a target table and exit non-zero on failure.",
+    "title": "check_map_targets"
+  },
+  {
+    "href": "commands.html#tool-check-mcp-settings",
+    "kind": "command",
+    "search_text": "check_mcp_settings Audit MCP settings by checking manifest alignment and generated MCP/Actions reference freshness. stable tools/check_mcp_settings.py --manifest --json-ref --md-ref --output --strict",
+    "summary": "Audit MCP settings by checking manifest alignment and generated MCP/Actions reference freshness.",
+    "title": "check_mcp_settings"
+  },
+  {
+    "href": "commands.html#tool-check-predictions-parity",
+    "kind": "command",
+    "search_text": "check_predictions_parity Compare two prediction JSONs and report mismatches (IoU/tolerance-based). experimental tools/check_predictions_parity.py --reference --candidate --bbox-format --image-size --max-images --iou-thresh --score-atol --bbox-atol",
+    "summary": "Compare two prediction JSONs and report mismatches (IoU/tolerance-based).",
+    "title": "check_predictions_parity"
+  },
+  {
+    "href": "commands.html#tool-check-repo-governance",
+    "kind": "command",
+    "search_text": "check_repo_governance Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. stable tools/check_repo_governance.py --repo-root --repo-json --branch-protection-json --require-reviews --allow-missing-evidence --output",
+    "summary": "Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
+    "title": "check_repo_governance"
+  },
+  {
+    "href": "commands.html#tool-check-segmentation-parity",
+    "kind": "command",
+    "search_text": "check_segmentation_parity Compare two segmentation predictions artifacts and report mask-level parity mismatches. experimental tools/check_segmentation_parity.py --reference --candidate --mismatch-atol --max-samples --output",
+    "summary": "Compare two segmentation predictions artifacts and report mask-level parity mismatches.",
+    "title": "check_segmentation_parity"
+  },
+  {
+    "href": "commands.html#tool-continual-decide",
+    "kind": "command",
+    "search_text": "continual_decide Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. research tools/continual_decide.py --eval-json --curation-json --run-json --max-forgetting --min-avg-acc --min-new-task-score --min-old-task-final --min-reviewed-labels --min-highconf-pseudo-labels --min-total-curated-examples --max-candidate-share --ttt-active --allow-ttt-active-promotion --output",
+    "summary": "Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary.",
+    "title": "continual_decide"
+  },
+  {
+    "href": "commands.html#tool-convert-coco-instance-seg-predictions",
+    "kind": "command",
+    "search_text": "convert_coco_instance_seg_predictions Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract. stable tools/convert_coco_instance_seg_predictions.py --predictions --instances-json --output --masks-dir --min-score --max-preds",
+    "summary": "Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract.",
+    "title": "convert_coco_instance_seg_predictions"
+  },
+  {
+    "href": "commands.html#tool-distill-predictions",
+    "kind": "command",
+    "search_text": "distill_predictions Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT. research tools/distill_predictions.py --student --teacher --config --dataset --split --alpha --iou-threshold --add-missing --add-score-scale --teacher-min-score --max-added-per-image --add-duplicate-iou-threshold --output --output-report",
+    "summary": "Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT.",
+    "title": "distill_predictions"
+  },
+  {
+    "href": "commands.html#tool-dod-cpu-smoke",
+    "kind": "command",
+    "search_text": "dod_cpu_smoke Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. stable scripts/dod_cpu_smoke.sh --run-dir --split --installed-package",
+    "summary": "Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run.",
+    "title": "dod_cpu_smoke"
+  },
+  {
+    "href": "commands.html#tool-download-coco-instances-tiny",
+    "kind": "command",
+    "search_text": "download_coco_instances_tiny Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. stable scripts/download_coco_instances_tiny.py --out-root --split --num-images --seed --timeout --force --keep-zip",
+    "summary": "Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git.",
+    "title": "download_coco_instances_tiny"
+  },
+  {
+    "href": "commands.html#tool-eval-coco",
+    "kind": "command",
+    "search_text": "eval_coco Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate). stable tools/eval_coco.py --dataset --predictions --output --protocol --split --max-images --bbox-format --dry-run --classes --assume-class-id-is-category-id",
+    "summary": "Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate).",
+    "title": "eval_coco"
+  },
+  {
+    "href": "commands.html#tool-eval-continual",
+    "kind": "command",
+    "search_text": "eval_continual Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. research tools/eval_continual.py --run-json --device --metric --metric-key --image-size --max-images --iou-threshold --min-score --keep-per-image --success-trans --success-rot-deg --force --output --html",
+    "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.",
+    "title": "eval_continual"
+  },
+  {
+    "href": "commands.html#tool-eval-cotta-drift",
+    "kind": "command",
+    "search_text": "eval_cotta_drift Compare baseline-vs-CoTTA TTT reports and generate reproducible drift/stability evidence artifacts (JSON+Markdown). research tools/eval_cotta_drift.py --baseline --cotta --output-json --output-md --stability-loss-ratio-threshold --max-safe-total-update-norm",
+    "summary": "Compare baseline-vs-CoTTA TTT reports and generate reproducible drift/stability evidence artifacts (JSON+Markdown).",
+    "title": "eval_cotta_drift"
+  },
+  {
+    "href": "commands.html#tool-eval-depth",
+    "kind": "command",
+    "search_text": "eval_depth Evaluate one predicted depth map against one ground-truth map and report depth_error metrics. experimental tools/eval_depth.py --pred-depth --gt-depth --mask --align --pred-scale --gt-scale --min-depth --max-depth --output",
+    "summary": "Evaluate one predicted depth map against one ground-truth map and report depth_error metrics.",
+    "title": "eval_depth"
+  },
+  {
+    "href": "commands.html#tool-eval-instance-segmentation",
+    "kind": "command",
+    "search_text": "eval_instance_segmentation Evaluate instance segmentation predictions (mask mAP) from binary PNG masks with optional HTML/overlays. stable tools/eval_instance_segmentation.py --dataset --predictions --output --html --overlays-dir --split --title --pred-root --classes --allow-rgb-masks --diag-iou --max-images --min-score --per-image-limit --max-overlays --overlay-alpha --overlay-max-size --overlay-sort",
+    "summary": "Evaluate instance segmentation predictions (mask mAP) from binary PNG masks with optional HTML/overlays.",
+    "title": "eval_instance_segmentation"
+  },
+  {
+    "href": "commands.html#tool-eval-keypoints",
+    "kind": "command",
+    "search_text": "eval_keypoints Evaluate keypoint predictions using PCK (bbox-normalized distance) with optional COCO OKS mAP, HTML, and overlays. stable tools/eval_keypoints.py --dataset --predictions --output --html --overlays-dir --split --title --max-images --min-score --per-image-limit --pck-threshold --iou-threshold --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --kp-line --kp-radius --max-overlays --overlay-max-size --overlay-sort",
+    "summary": "Evaluate keypoint predictions using PCK (bbox-normalized distance) with optional COCO OKS mAP, HTML, and overlays.",
+    "title": "eval_keypoints"
+  },
+  {
+    "href": "commands.html#tool-eval-pose",
+    "kind": "command",
+    "search_text": "eval_pose Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics. experimental tools/eval_pose.py --dataset --predictions --split --output --iou-threshold --min-score --success-rot-deg --success-trans --keep-per-image --max-images",
+    "summary": "Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics.",
+    "title": "eval_pose"
+  },
+  {
+    "href": "commands.html#tool-eval-segmentation",
+    "kind": "command",
+    "search_text": "eval_segmentation Evaluate semantic segmentation predictions (mIoU / per-class IoU) with ignore_index support and optional HTML/overlays. stable tools/eval_segmentation.py --dataset-json --predictions --output --html --overlays-dir --overlay-alpha --overlay-max-size --max-overlays --pred-root --ignore-index --num-classes --max-samples --allow-gt-out-of-range --allow-rgb-masks --miou-ignore-background --skip-missing-pred",
+    "summary": "Evaluate semantic segmentation predictions (mIoU / per-class IoU) with ignore_index support and optional HTML/overlays.",
+    "title": "eval_segmentation"
+  },
+  {
+    "href": "commands.html#tool-eval-suite",
+    "kind": "command",
+    "search_text": "eval_suite Evaluate prediction JSONs and preserve declared exporter settings in a single suite report. stable tools/eval_suite.py --predictions-glob --output --protocol --allow-protocol-mismatches --dataset --split --max-images --bbox-format --strict --dry-run",
+    "summary": "Evaluate prediction JSONs and preserve declared exporter settings in a single suite report.",
+    "title": "eval_suite"
+  },
+  {
+    "href": "commands.html#tool-eval-synthgen",
+    "kind": "command",
+    "search_text": "eval_synthgen Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth. experimental tools/eval_synthgen.py --dataset-root --predictions --schema-id --max-samples --num-classes --output",
+    "summary": "Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth.",
+    "title": "eval_synthgen"
+  },
+  {
+    "href": "commands.html#tool-export-actions-openapi",
+    "kind": "command",
+    "search_text": "export_actions_openapi Export a static OpenAPI JSON schema for YOLOZU Actions API registration. stable tools/export_actions_openapi.py --output --indent",
+    "summary": "Export a static OpenAPI JSON schema for YOLOZU Actions API registration.",
+    "title": "export_actions_openapi"
+  },
+  {
+    "href": "commands.html#tool-export-predictions",
+    "kind": "command",
+    "search_text": "export_predictions Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
+    "summary": "Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes.",
+    "title": "export_predictions"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-coco-keypoints",
+    "kind": "command",
+    "search_text": "export_predictions_coco_keypoints Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity. experimental tools/export_predictions_coco_keypoints.py --results-json --instances-json --output --score-threshold --force",
+    "summary": "Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity.",
+    "title": "export_predictions_coco_keypoints"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-detectron2",
+    "kind": "command",
+    "search_text": "export_predictions_detectron2 Run fail-closed Detectron2 inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata. experimental tools/export_predictions_detectron2.py --dataset --split --config --weights --output --max-images --score-thr --topk --device --imgsz --protocol --input-color --normalize-scale --normalize-mean --normalize-std --resize-policy --pad-policy --dry-run --strict",
+    "summary": "Run fail-closed Detectron2 inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata.",
+    "title": "export_predictions_detectron2"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-executorch",
+    "kind": "command",
+    "search_text": "export_predictions_executorch Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation). experimental tools/export_predictions_executorch.py --dataset --split --max-images --model --boxes-scale --runtime-output-json --min-score --topk --output --wrap --strict --dry-run",
+    "summary": "Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation).",
+    "title": "export_predictions_executorch"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-mmdet",
+    "kind": "command",
+    "search_text": "export_predictions_mmdet Run fail-closed MMDetection inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata. experimental tools/export_predictions_mmdet.py --dataset --split --config --checkpoint --output --max-images --score-thr --topk --device --imgsz --protocol --input-color --normalize-scale --normalize-mean --normalize-std --resize-policy --pad-policy --dry-run --strict",
+    "summary": "Run fail-closed MMDetection inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata.",
+    "title": "export_predictions_mmdet"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-onnxrt",
+    "kind": "command",
+    "search_text": "export_predictions_onnxrt Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv; see Rust ONNXRuntime template notes in external inference docs). experimental tools/export_predictions_onnxrt.py --onnx --output --dataset --split --max-images --input-name --combined-output --combined-format --boxes-output --boxes-format --boxes-scale --class-output --scores-output --raw-output --raw-format --raw-postprocess --nms-iou --agnostic-nms --topk --min-score --wrap --strict --dry-run",
+    "summary": "Run ONNXRuntime inference and export YOLOZU predictions JSON (requires onnxruntime + numpy + opencv; see Rust ONNXRuntime template notes in external inference docs).",
+    "title": "export_predictions_onnxrt"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-opencv-dnn",
+    "kind": "command",
+    "search_text": "export_predictions_opencv_dnn Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8 84 or YOLOv5 85+obj raw heads supported). experimental tools/export_predictions_opencv_dnn.py --dataset --split --max-images --onnx --input-size --output-names --output-index --raw-format --boxes-scale --min-score --nms-iou --max-det --agnostic-nms --swap-rb --dnn-backend --dnn-target --strict --output --meta-output --dry-run --dump-io",
+    "summary": "Run OpenCV-DNN inference on an ONNX model and export YOLOZU predictions JSON (YOLOv8 84 or YOLOv5 85+obj raw heads supported).",
+    "title": "export_predictions_opencv_dnn"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-opencv-dnn-rtdetr",
+    "kind": "command",
+    "search_text": "export_predictions_opencv_dnn_rtdetr Run OpenCV-DNN inference on an RT-DETR ONNX model and export YOLOZU predictions JSON (no NMS), recording fixed preprocess/export_settings. experimental tools/export_predictions_opencv_dnn_rtdetr.py --dataset --split --max-images --onnx --imgsz --keep-aspect --letterbox-fill --input-color --scale --mean --std --outputs --boxes-output --logits-output --labels-output --scores-output --print-outputs --boxes-format --boxes-scale --scores-activation --background-class --score-thr --topk --dnn-backend --dnn-target --strict --output --meta-output --dry-run --dump-io",
+    "summary": "Run OpenCV-DNN inference on an RT-DETR ONNX model and export YOLOZU predictions JSON (no NMS), recording fixed preprocess/export_settings.",
+    "title": "export_predictions_opencv_dnn_rtdetr"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-opencv-dnn-unified",
+    "kind": "command",
+    "search_text": "export_predictions_opencv_dnn_unified Unified OpenCV-DNN exporter with preprocess/decode presets, IO dump, and backend/target controls. experimental tools/export_predictions_opencv_dnn_unified.py --dataset --split --max-images --onnx --imgsz --preprocess --decode --score-thr --nms-iou --topk --dnn-backend --dnn-target --dump-io --meta-output --dry-run --strict --output",
+    "summary": "Unified OpenCV-DNN exporter with preprocess/decode presets, IO dump, and backend/target controls.",
+    "title": "export_predictions_opencv_dnn_unified"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-openvino",
+    "kind": "command",
+    "search_text": "export_predictions_openvino Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. experimental tools/export_predictions_openvino.py --dataset --split --max-images --model --device --imgsz --input-size --input-name --combined-output --combined-format --boxes-scale --min-score --topk --output --wrap --strict --dry-run",
+    "summary": "Run OpenVINO detection inference and export YOLOZU predictions JSON via the declared combined-output decode path.",
+    "title": "export_predictions_openvino"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-torchscript",
+    "kind": "command",
+    "search_text": "export_predictions_torchscript Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path. experimental tools/export_predictions_torchscript.py --dataset --split --max-images --model --device --imgsz --input-size --combined-output --combined-format --boxes-scale --min-score --topk --output --wrap --strict --dry-run",
+    "summary": "Run TorchScript detection inference and export YOLOZU predictions JSON via the declared combined-output decode path.",
+    "title": "export_predictions_torchscript"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-trt",
+    "kind": "command",
+    "search_text": "export_predictions_trt Run TensorRT engine inference and export YOLOZU predictions JSON (requires tensorrt + CUDA bindings). experimental tools/export_predictions_trt.py --engine --imgsz --output --dataset --split --max-images --input-name --combined-output --combined-format --boxes-output --boxes-format --boxes-scale --class-output --scores-output --raw-output --raw-format --raw-postprocess --nms-iou --agnostic-nms --topk --min-score --wrap --strict --dry-run",
+    "summary": "Run TensorRT engine inference and export YOLOZU predictions JSON (requires tensorrt + CUDA bindings).",
+    "title": "export_predictions_trt"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-yolo-runtime",
+    "kind": "command",
+    "search_text": "export_predictions_yolo_runtime Run bounded external YOLO-runtime inference and export explicitly versioned predictions.json with cardinality-checked execution evidence. stable tools/export_predictions_yolo_runtime.py --model --dataset --split --source --output --image-size --conf --iou --stride --max-det --max-images --batch --device --half --letterbox --no-letterbox --protocol --end2end --no-end2end --wrap --strict --dry-run",
+    "summary": "Run bounded external YOLO-runtime inference and export explicitly versioned predictions.json with cardinality-checked execution evidence.",
+    "title": "export_predictions_yolo_runtime"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-yolov5",
+    "kind": "command",
+    "search_text": "export_predictions_yolov5 Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings. experimental tools/export_predictions_yolov5.py --dataset --split --labels-dir --json --output --max-images --conf-default --protocol --imgsz --conf --iou --stride --letterbox --no-letterbox --strict",
+    "summary": "Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings.",
+    "title": "export_predictions_yolov5"
+  },
+  {
+    "href": "commands.html#tool-export-predictions-yolox",
+    "kind": "command",
+    "search_text": "export_predictions_yolox Run fail-closed YOLOX inference (or dry-run) and export explicitly versioned predictions.json with execution evidence and exp/checkpoint provenance. experimental tools/export_predictions_yolox.py --dataset --split --output --max-images --exp --weights --device --imgsz --score-thr --nms-thr --topk --protocol --dry-run --strict",
+    "summary": "Run fail-closed YOLOX inference (or dry-run) and export explicitly versioned predictions.json with execution evidence and exp/checkpoint provenance.",
+    "title": "export_predictions_yolox"
+  },
+  {
+    "href": "commands.html#tool-export-trt",
+    "kind": "command",
+    "search_text": "export_trt Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. experimental tools/export_trt.py --config --checkpoint --device --image-size --onnx --onnx-meta --opset --input-name --dynamic-hw --engine --engine-meta --precision --min-shape --opt-shape --max-shape --workspace --timing-cache --trtexec --extra-args --skip-onnx --skip-engine --dry-run",
+    "summary": "Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models.",
+    "title": "export_trt"
+  },
+  {
+    "href": "commands.html#tool-fetch-coco128",
+    "kind": "command",
+    "search_text": "fetch_coco128 Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting). stable tools/fetch_coco128.sh ",
+    "summary": "Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting).",
+    "title": "fetch_coco128"
+  },
+  {
+    "href": "commands.html#tool-fetch-model",
+    "kind": "command",
+    "search_text": "fetch_model Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates. stable yolozu/cli.py  --out --cache-dir --registry --accept-license --allow-unsafe --allow-non-apache --retries --timeout --force",
+    "summary": "Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates.",
+    "title": "fetch_model"
+  },
+  {
+    "href": "commands.html#tool-fresh-install-journey",
+    "kind": "command",
+    "search_text": "fresh_install_journey Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey. stable scripts/fresh_install_journey.sh --python --package --run-dir",
+    "summary": "Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey.",
+    "title": "fresh_install_journey"
+  },
+  {
+    "href": "commands.html#tool-gen-ci-dummy-dets-onnx",
+    "kind": "command",
+    "search_text": "gen_ci_dummy_dets_onnx Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks. stable tools/ci/gen_dummy_dets_onnx.py --out --input-name --output-name --shape --opset --ir-version --alpha",
+    "summary": "Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks.",
+    "title": "gen_ci_dummy_dets_onnx"
+  },
+  {
+    "href": "commands.html#tool-gen-ci-smoke-dataset",
+    "kind": "command",
+    "search_text": "gen_ci_smoke_dataset Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. stable tools/ci/gen_smoke_dataset.py --out --split --image-stem --hw",
+    "summary": "Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests.",
+    "title": "gen_ci_smoke_dataset"
+  },
+  {
+    "href": "commands.html#tool-generate-benchmark-support-matrix",
+    "kind": "command",
+    "search_text": "generate_benchmark_support_matrix Generate the canonical benchmark support matrix from support metadata. stable tools/generate_benchmark_support_matrix.py --metadata --output --check --json",
+    "summary": "Generate the canonical benchmark support matrix from support metadata.",
+    "title": "generate_benchmark_support_matrix"
+  },
+  {
+    "href": "commands.html#tool-generate-integration-tool-reference",
+    "kind": "command",
+    "search_text": "generate_integration_tool_reference Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode. stable tools/generate_integration_tool_reference.py --json-out --md-out --check",
+    "summary": "Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode.",
+    "title": "generate_integration_tool_reference"
+  },
+  {
+    "href": "commands.html#tool-generate-smoke-assets",
+    "kind": "command",
+    "search_text": "generate_smoke_assets Generate deterministic offline smoke assets under data/smoke from local data/coco128. stable tools/generate_smoke_assets.py ",
+    "summary": "Generate deterministic offline smoke assets under data/smoke from local data/coco128.",
+    "title": "generate_smoke_assets"
+  },
+  {
+    "href": "commands.html#tool-generate-web-docs",
+    "kind": "command",
+    "search_text": "generate_web_docs Generate searchable onboarding web docs from the tool manifest, JSON Schemas, and curated repository sources. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json",
+    "summary": "Generate searchable onboarding web docs from the tool manifest, JSON Schemas, and curated repository sources.",
+    "title": "generate_web_docs"
+  },
+  {
+    "href": "commands.html#tool-gpu-validation-preflight",
+    "kind": "command",
+    "search_text": "gpu_validation_preflight Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. experimental tools/gpu_validation_preflight.py --output --strict",
+    "summary": "Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks.",
+    "title": "gpu_validation_preflight"
+  },
+  {
+    "href": "commands.html#tool-hpo-sweep",
+    "kind": "command",
+    "search_text": "hpo_sweep Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. stable tools/hpo_sweep.py --config --dry-run --max-runs --resume",
+    "summary": "Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results.",
+    "title": "hpo_sweep"
+  },
+  {
+    "href": "commands.html#tool-import-yolo-data-yaml",
+    "kind": "command",
+    "search_text": "import_yolo_data_yaml Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). stable tools/import_yolo_data_yaml.py --data-yaml --split --output --force",
+    "summary": "Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt).",
+    "title": "import_yolo_data_yaml"
+  },
+  {
+    "href": "commands.html#tool-list-models",
+    "kind": "command",
+    "search_text": "list_models List fetchable model IDs from the built-in (or custom) model registry. stable yolozu/cli.py --registry --json",
+    "summary": "List fetchable model IDs from the built-in (or custom) model registry.",
+    "title": "list_models"
+  },
+  {
+    "href": "commands.html#tool-make-subset-dataset",
+    "kind": "command",
+    "search_text": "make_subset_dataset Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs. stable tools/make_subset_dataset.py --dataset --split --n --seed --out --copy --overwrite --strategy",
+    "summary": "Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs.",
+    "title": "make_subset_dataset"
+  },
+  {
+    "href": "commands.html#tool-measure-trt-latency",
+    "kind": "command",
+    "search_text": "measure_trt_latency Measure a TensorRT engine's latency/FPS and write a metrics report JSON. experimental tools/measure_trt_latency.py --engine --shape --input-name --iterations --warmup --dry-run --notes --output",
+    "summary": "Measure a TensorRT engine's latency/FPS and write a metrics report JSON.",
+    "title": "measure_trt_latency"
+  },
+  {
+    "href": "commands.html#tool-normalize-predictions",
+    "kind": "command",
+    "search_text": "normalize_predictions Normalize prediction class ids (category_id↔class_id) and optionally wrap with meta. stable tools/normalize_predictions.py --input --output --classes --assume-class-id-is-category-id --wrap",
+    "summary": "Normalize prediction class ids (category_id↔class_id) and optionally wrap with meta.",
+    "title": "normalize_predictions"
+  },
+  {
+    "href": "commands.html#tool-orchestrate-train",
+    "kind": "command",
+    "search_text": "orchestrate_train Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary. experimental tools/orchestrate_train.py --spec --output --execute --dry-run --stop-on-failure --registry-out",
+    "summary": "Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary.",
+    "title": "orchestrate_train"
+  },
+  {
+    "href": "commands.html#tool-package-segmentation-predictions",
+    "kind": "command",
+    "search_text": "package_segmentation_predictions Package a class-id mask directory into the YOLOZU segmentation predictions interface contract. experimental tools/package_segmentation_predictions.py --dataset-json --masks-dir --output --suffix --relative-to-output --force",
+    "summary": "Package a class-id mask directory into the YOLOZU segmentation predictions interface contract.",
+    "title": "package_segmentation_predictions"
+  },
+  {
+    "href": "commands.html#tool-pre-push",
+    "kind": "command",
+    "search_text": "pre_push Run local pre-push gates (ruff, focused unit tests including manifest/generated-reference/SSOT coverage and external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing. stable scripts/pre_push.sh --skip-ruff --skip-tests --skip-smoke --skip-real-preflight --prepare-real-data",
+    "summary": "Run local pre-push gates (ruff, focused unit tests including manifest/generated-reference/SSOT coverage and external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing.",
+    "title": "pre_push"
+  },
+  {
+    "href": "commands.html#tool-prepare-ade20k-seg",
+    "kind": "command",
+    "search_text": "prepare_ade20k_seg Prepare ADE20K semantic segmentation layout + dataset.json manifest. stable tools/prepare_ade20k_seg.py --ade20k-root --out --split --ignore-index --mode --force",
+    "summary": "Prepare ADE20K semantic segmentation layout + dataset.json manifest.",
+    "title": "prepare_ade20k_seg"
+  },
+  {
+    "href": "commands.html#tool-prepare-cityscapes-seg",
+    "kind": "command",
+    "search_text": "prepare_cityscapes_seg Prepare Cityscapes semantic segmentation layout + dataset.json manifest. stable tools/prepare_cityscapes_seg.py --cityscapes-root --out --split --label-type --mode --force",
+    "summary": "Prepare Cityscapes semantic segmentation layout + dataset.json manifest.",
+    "title": "prepare_cityscapes_seg"
+  },
+  {
+    "href": "commands.html#tool-prepare-coco-instance-seg",
+    "kind": "command",
+    "search_text": "prepare_coco_instance_seg Convert official COCO instances JSON into YOLO-format labels + per-instance PNG masks + sidecar metadata for instance-seg eval. stable tools/prepare_coco_instance_seg.py --coco-root --out --split --include-crowd --instances-json --copy-images --max-instances-per-image --max-images",
+    "summary": "Convert official COCO instances JSON into YOLO-format labels + per-instance PNG masks + sidecar metadata for instance-seg eval.",
+    "title": "prepare_coco_instance_seg"
+  },
+  {
+    "href": "commands.html#tool-prepare-coco-yolo",
+    "kind": "command",
+    "search_text": "prepare_coco_yolo Convert official COCO instances JSON into YOLO-format labels + (optional) copy images. stable tools/prepare_coco_yolo.py --coco-root --out --split --include-crowd --instances-json --copy-images",
+    "summary": "Convert official COCO instances JSON into YOLO-format labels + (optional) copy images.",
+    "title": "prepare_coco_yolo"
+  },
+  {
+    "href": "commands.html#tool-prepare-keypoints-dataset",
+    "kind": "command",
+    "search_text": "prepare_keypoints_dataset Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. stable tools/prepare_keypoints_dataset.py --source --out --list-formats --format --split --num-keypoints --keypoint-names --annotations --images-dir --out-split --min-kps --max-images --link-images --category-id --category-name --class-id --cvat-images-dir",
+    "summary": "Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper.",
+    "title": "prepare_keypoints_dataset"
+  },
+  {
+    "href": "commands.html#tool-prepare-real-multitask-fewshot",
+    "kind": "command",
+    "search_text": "prepare_real_multitask_fewshot Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata. stable tools/prepare_real_multitask_fewshot.py --instances-json --images-dir --out --train-images --val-images --num-keypoints --download-if-missing --download-num-images --download-seed --download-timeout --force --allow-auto-download --accept-dataset-license --strict-provenance --strict-realism",
+    "summary": "Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata.",
+    "title": "prepare_real_multitask_fewshot"
+  },
+  {
+    "href": "commands.html#tool-prepare-ttt-domain-shift-target",
+    "kind": "command",
+    "search_text": "prepare_ttt_domain_shift_target Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence. research scripts/prepare_ttt_domain_shift_target.py --dataset-root --split --out --corruption --severity --seed --max-images --copy-labels --no-copy-labels --force --recipe-out",
+    "summary": "Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence.",
+    "title": "prepare_ttt_domain_shift_target"
+  },
+  {
+    "href": "commands.html#tool-prepare-voc-seg",
+    "kind": "command",
+    "search_text": "prepare_voc_seg Prepare Pascal VOC semantic segmentation layout + dataset.json manifest. stable tools/prepare_voc_seg.py --voc-root --out --split --mode --masks-dirname --force --year",
+    "summary": "Prepare Pascal VOC semantic segmentation layout + dataset.json manifest.",
+    "title": "prepare_voc_seg"
+  },
+  {
+    "href": "commands.html#tool-publish-benchmark-table",
+    "kind": "command",
+    "search_text": "publish_benchmark_table Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. stable tools/publish_benchmark_table.py --report --output-json --output-md --title --cadence --protocol-id --source-command --publication-run-id",
+    "summary": "Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability.",
+    "title": "publish_benchmark_table"
+  },
+  {
+    "href": "commands.html#tool-refine-predictions-hessian",
+    "kind": "command",
+    "search_text": "refine_predictions_hessian Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. research tools/refine_predictions_hessian.py --predictions --output --config --enable --disable --wrap --refine-offsets --dataset --split --device --steps --damping --fd-eps --line-search --line-search-decay --w-reg --w-depth --w-mask --max-step-px --max-total-update-px --tol-delta --tol-loss --log-output --log-steps --dry-run",
+    "summary": "Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in.",
+    "title": "refine_predictions_hessian"
+  },
+  {
+    "href": "commands.html#tool-release",
+    "kind": "command",
+    "search_text": "release Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable release.sh --dry-run --versioning --output --allow-dirty --allow-non-main --skip-checks --skip-gh --skip-zenodo",
+    "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+    "title": "release"
+  },
+  {
+    "href": "commands.html#tool-release-tag",
+    "kind": "command",
+    "search_text": "release_tag Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable tools/release_tag.py --version --tag-prefix --title --notes-file --release-state --push-tag --run-checks --allow-dirty --allow-non-main --dry-run --output",
+    "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+    "title": "release_tag"
+  },
+  {
+    "href": "commands.html#tool-render-synthgen-overlay",
+    "kind": "command",
+    "search_text": "render_synthgen_overlay Render semantic + instance + keypoint overlays from SynthGen shard samples. experimental tools/render_synthgen_overlay.py --dataset-root --schema-id --sample-index --alpha --output",
+    "summary": "Render semantic + instance + keypoint overlays from SynthGen shard samples.",
+    "title": "render_synthgen_overlay"
+  },
+  {
+    "href": "commands.html#tool-render-ttt-manual-figures",
+    "kind": "command",
+    "search_text": "render_ttt_manual_figures Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use. research tools/render_ttt_manual_figures.py --source-json --docs-assets-dir --manual-figures-dir",
+    "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
+    "title": "render_ttt_manual_figures"
+  },
+  {
+    "href": "commands.html#tool-report-dependency-licenses",
+    "kind": "command",
+    "search_text": "report_dependency_licenses Generate a best-effort dependency license report from installed Python packages (not legal advice). stable tools/report_dependency_licenses.py --output --requirements --only-direct --fail-on-copyleft",
+    "summary": "Generate a best-effort dependency license report from installed Python packages (not legal advice).",
+    "title": "report_dependency_licenses"
+  },
+  {
+    "href": "commands.html#tool-rtdetr-pose-backend-suite",
+    "kind": "command",
+    "search_text": "rtdetr_pose_backend_suite Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt). experimental tools/rtdetr_pose_backend_suite.py --config --checkpoint --device --image-size --batch --samples --seed --onnx --engine --input-name --onnx-meta --engine-meta --embed-meta --trtexec --backends --reference --score-atol --bbox-atol --warmup --iterations --output --dry-run",
+    "summary": "Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt).",
+    "title": "rtdetr_pose_backend_suite"
+  },
+  {
+    "href": "commands.html#tool-rtdetr-pose-train-continual",
+    "kind": "command",
+    "search_text": "rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract). research rtdetr_pose/tools/train_continual.py --config --run-dir --replay-size --replay-fraction --replay-per-task-cap",
+    "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
+    "title": "rtdetr_pose_train_continual"
+  },
+  {
+    "href": "commands.html#tool-run-actions-api",
+    "kind": "command",
+    "search_text": "run_actions_api Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend. stable tools/run_actions_api.py --host --port --workers --reload",
+    "summary": "Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend.",
+    "title": "run_actions_api"
+  },
+  {
+    "href": "commands.html#tool-run-external-finetune-smoke",
+    "kind": "command",
+    "search_text": "run_external_finetune_smoke Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary. experimental tools/run_external_finetune_smoke.py --dataset-root --split --output --work-dir --python --epochs --max-steps --batch-size --image-size --device --framework --non-dry-framework --require-non-dry --require-training-execution --mmdet-train-script --detectron2-train-script --yolox-train-script",
+    "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary.",
+    "title": "run_external_finetune_smoke"
+  },
+  {
+    "href": "commands.html#tool-run-mcp-server",
+    "kind": "command",
+    "search_text": "run_mcp_server Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config). stable tools/run_mcp_server.py --transport --manifest --print-tools --sample-generate-config --sample-review-config --workspace-root",
+    "summary": "Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config).",
+    "title": "run_mcp_server"
+  },
+  {
+    "href": "commands.html#tool-run-real-multitask-finetune-demo",
+    "kind": "command",
+    "search_text": "run_real_multitask_finetune_demo Run staged real-image multitask finetune demo across bbox/segmentation/keypoints/depth/pose6d with strict task-data checks. experimental tools/run_real_multitask_finetune_demo.py --dataset-root --prepare --download-if-missing --download-num-images --prepare-args --out --device --epochs --max-steps --batch-size --image-size --num-keypoints --python --backbone-name --backbone-norm --backbone-args --skip-imbalance --force --allow-auto-download --accept-dataset-license --strict-provenance --strict-realism",
+    "summary": "Run staged real-image multitask finetune demo across bbox/segmentation/keypoints/depth/pose6d with strict task-data checks.",
+    "title": "run_real_multitask_finetune_demo"
+  },
+  {
+    "href": "commands.html#tool-run-reference-adapter-regression",
+    "kind": "command",
+    "search_text": "run_reference_adapter_regression Run RT-DETR reference-adapter regression with hardened record I/O+preprocess interface contract checks, profile-aware micro/full flows, backend-aware behavior gates, optional parity checks, provenance/SBOM capture, and automatic diff-summary/top-k failure artifacts. experimental tools/run_reference_adapter_regression.py --dataset --split --max-images --baseline --output --diff-summary-out --topk-examples-dir --topk-examples --write-baseline --runtime-lock --enforce-runtime-lock --enforce-weights-hash --config --checkpoint --device --image-size --score-threshold --max-detections --init-seed --metric-total-detections-abs --metric-score-sum-abs --metric-score-mean-abs --metric-bbox-checksum-abs --min-fps-ratio --absolute-floor-fps --repro-policy --schema-gate-mode --consistency-gate-mode --score-gate-mode --perf-gate-mode --canonical-decimals --profile --baseline-layout --baseline-root --adapter-id --backend-id --matrix-device --baseline-version --expected-dataset-hash --expected-weights-hash --expected-checkpoint-hash --capture-provenance --metric-map50-abs --metric-map50-95-abs --metric-worst-k-map50-abs --metric-median-class-map50-abs --metric-recall-at-k-abs --metric-iou-p10-abs --metric-iou-p50-abs --metric-missing-count-abs --metric-extra-count-abs --metric-class-mismatch-abs --metric-worst-k --metric-recall-k --peer-report --backend-parity-mode --backend-parity-map50-abs --backend-parity-map50-95-abs",
+    "summary": "Run RT-DETR reference-adapter regression with hardened record I/O+preprocess interface contract checks, profile-aware micro/full flows, backend-aware behavior gates, optional parity checks, provenance/SBOM capture, and automatic diff-summary/top-k failure artifacts.",
+    "title": "run_reference_adapter_regression"
+  },
+  {
+    "href": "commands.html#tool-run-rtdetr-pose-backend-suite",
+    "kind": "command",
+    "search_text": "run_rtdetr_pose_backend_suite End-to-end runner for rtdetr_pose: export (PyTorch→ONNX→TRT) + backend parity/benchmark suite. experimental tools/run_rtdetr_pose_backend_suite.py --config --checkpoint --device --export-device --precision --input-name --opset --dynamic-hw --no-dynamic-hw --export-image-size --suite-image-size --max-image-size --min-shape --opt-shape --max-shape --workspace --trtexec --extra-args --batch --samples --seed --score-atol --bbox-atol --warmup --iterations --backends --embed-meta --run-id --run-dir --onnx --engine --timing-cache --output --skip-onnx --skip-engine --force --dry-run",
+    "summary": "End-to-end runner for rtdetr_pose: export (PyTorch→ONNX→TRT) + backend parity/benchmark suite.",
+    "title": "run_rtdetr_pose_backend_suite"
+  },
+  {
+    "href": "commands.html#tool-run-scenarios",
+    "kind": "command",
+    "search_text": "run_scenarios Run the scenario suite pipeline (adapter + constraints utilities) and write a report JSON. stable tools/run_scenarios.py --config --adapter --dataset --split --predictions --checkpoint --device --image-size --max-images --max-detections --score-threshold --output",
+    "summary": "Run the scenario suite pipeline (adapter + constraints utilities) and write a report JSON.",
+    "title": "run_scenarios"
+  },
+  {
+    "href": "commands.html#tool-run-trt-pipeline",
+    "kind": "command",
+    "search_text": "run_trt_pipeline Orchestrate the YOLO26 TensorRT pipeline (engine build → predictions export → parity → eval_suite → latency report). experimental tools/run_trt_pipeline.py --dataset --onnx-template --run-dir --benchmark-config --benchmark-history --benchmark-output --boxes-scale --buckets --calib-cache-template --calib-dataset --calib-images --calib-list-template --calib-split --combined-output --dry-run --engine-meta-template --engine-template --eval-suite-output --force --help --image-size --input-name --latency-iterations --latency-template --latency-warmup --max-images --max-shape --min-score --min-shape --notes --opt-shape --parity-bbox-atol --parity-iou --parity-report-template --parity-score-atol --precision --pred-onnxrt-template --pred-trt-template --run-id --shape --skip-benchmark --skip-build --skip-eval --skip-latency --skip-onnxrt --skip-parity --skip-trt --timing-cache --topk --trtexec --workspace-mib",
+    "summary": "Orchestrate the YOLO26 TensorRT pipeline (engine build → predictions export → parity → eval_suite → latency report).",
+    "title": "run_trt_pipeline"
+  },
+  {
+    "href": "commands.html#tool-run-ttt-compare",
+    "kind": "command",
+    "search_text": "run_ttt_compare Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory. research tools/run_ttt_compare.py --boilerplate --dataset --split --checkpoint --run-dir --backend --device --max-images --protocol --image-size --skip-eval --dry-run --force",
+    "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory.",
+    "title": "run_ttt_compare"
+  },
+  {
+    "href": "commands.html#tool-smoke",
+    "kind": "command",
+    "search_text": "smoke Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks. stable scripts/smoke.sh --dataset --predictions --report --synthgen-root --synthgen-predictions --output-dir --demo-run-dir --skip-demo --torch-device --profile --walkthrough-report",
+    "summary": "Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks.",
+    "title": "smoke"
+  },
+  {
+    "href": "commands.html#tool-smoke-synthgen",
+    "kind": "command",
+    "search_text": "smoke_synthgen Run deterministic SynthGen smoke (interface-contract validate + one overlay + eval) using local mini-shard fixtures. experimental tools/smoke_synthgen.py --dataset-root --schema-id --predictions --max-samples --output-dir",
+    "summary": "Run deterministic SynthGen smoke (interface-contract validate + one overlay + eval) using local mini-shard fixtures.",
+    "title": "smoke_synthgen"
+  },
+  {
+    "href": "commands.html#tool-support-external-training",
+    "kind": "command",
+    "search_text": "support_external_training External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends. experimental tools/support_external_training.py --subcommand --dataset --split --batch --exp --train-script --weights --output --work-dir --dry-run --config --task-family --resume-from --tao-task --train-opt --registry-out",
+    "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+    "title": "support_external_training"
+  },
+  {
+    "href": "commands.html#tool-support-yolo-detr",
+    "kind": "command",
+    "search_text": "support_yolo_detr YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization. experimental tools/support_yolo_detr.py --preset --from --dataset --split --batch --instances-json --images-dir --model --model-id --provider --input --output --report --train-script --trt-engine --work-dir --dry-run --strict",
+    "summary": "YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization.",
+    "title": "support_yolo_detr"
+  },
+  {
+    "href": "commands.html#tool-ttt-compare",
+    "kind": "command",
+    "search_text": "ttt_compare Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare. research scripts/ttt_compare.sh --boilerplate --dataset --split --checkpoint --run-dir --backend --device --max-images --protocol --image-size --skip-eval --dry-run --force",
+    "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
+    "title": "ttt_compare"
+  },
+  {
+    "href": "commands.html#tool-tune-gate-weights",
+    "kind": "command",
+    "search_text": "tune_gate_weights Offline grid-search for inference-time score-fusion weights (CPU-only, simple mAP proxy). research tools/tune_gate_weights.py --config --dataset --split --max-images --predictions --output-report --output-predictions --metric --det-score-key --template-score-key --sigma-z-key --sigma-rot-key --preserve-det-score-key --grid-det --grid-tmp --grid-unc --grid-tau --template-gate --no-template-gate --tau --min-score --topk-per-image --wrap-output --no-wrap-output",
+    "summary": "Offline grid-search for inference-time score-fusion weights (CPU-only, simple mAP proxy).",
+    "title": "tune_gate_weights"
+  },
+  {
+    "href": "commands.html#tool-validate-instance-segmentation-predictions",
+    "kind": "command",
+    "search_text": "validate_instance_segmentation_predictions Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks). stable tools/validate_instance_segmentation_predictions.py ",
+    "summary": "Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks).",
+    "title": "validate_instance_segmentation_predictions"
+  },
+  {
+    "href": "commands.html#tool-validate-map-targets",
+    "kind": "command",
+    "search_text": "validate_map_targets Validate the mAP target table file (baselines/yolo26_targets.json). stable tools/validate_map_targets.py --targets",
+    "summary": "Validate the mAP target table file (baselines/yolo26_targets.json).",
+    "title": "validate_map_targets"
+  },
+  {
+    "href": "commands.html#tool-validate-predictions",
+    "kind": "command",
+    "search_text": "validate_predictions Validate YOLOZU predictions JSON schema (permissive by default; strict optional). stable tools/validate_predictions.py  --strict",
+    "summary": "Validate YOLOZU predictions JSON schema (permissive by default; strict optional).",
+    "title": "validate_predictions"
+  },
+  {
+    "href": "commands.html#tool-validate-run-meta",
+    "kind": "command",
+    "search_text": "validate_run_meta Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command). stable tools/validate_run_meta.py  --allow-missing-git-sha",
+    "summary": "Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command).",
+    "title": "validate_run_meta"
+  },
+  {
+    "href": "commands.html#tool-validate-segmentation-predictions",
+    "kind": "command",
+    "search_text": "validate_segmentation_predictions Validate YOLOZU segmentation predictions JSON (id→mask path mapping; meta optional). stable tools/validate_segmentation_predictions.py ",
+    "summary": "Validate YOLOZU segmentation predictions JSON (id→mask path mapping; meta optional).",
+    "title": "validate_segmentation_predictions"
+  },
+  {
+    "href": "commands.html#tool-validate-synthgen-contract",
+    "kind": "command",
+    "search_text": "validate_synthgen_contract Validate SynthGen sample/shard interface-contract fields, dtypes, shapes, and ranges before training/eval. experimental tools/validate_synthgen_contract.py --input --max-samples",
+    "summary": "Validate SynthGen sample/shard interface-contract fields, dtypes, shapes, and ranges before training/eval.",
+    "title": "validate_synthgen_contract"
+  },
+  {
+    "href": "commands.html#tool-validate-tool-manifest",
+    "kind": "command",
+    "search_text": "validate_tool_manifest Validate tools/manifest.json structure, references, and declarative metadata. stable tools/validate_tool_manifest.py --manifest --require-declarative",
+    "summary": "Validate tools/manifest.json structure, references, and declarative metadata.",
+    "title": "validate_tool_manifest"
+  },
+  {
+    "href": "commands.html#tool-yolo26-pre-pr-quality",
+    "kind": "command",
+    "search_text": "yolo26_pre_pr_quality Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests). stable scripts/pre_pr_quality.sh ",
+    "summary": "Run pre-PR quality checklist for YOLO26 flow (smoke + lint + focused tests).",
+    "title": "yolo26_pre_pr_quality"
+  },
+  {
+    "href": "commands.html#tool-yolo26-quality-gate",
+    "kind": "command",
+    "search_text": "yolo26_quality_gate Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks. stable tools/yolo26_quality_gate.sh ",
+    "summary": "Run YOLO26-focused quality gate (lint + focused tests) before eval/target checks.",
+    "title": "yolo26_quality_gate"
+  },
+  {
+    "href": "commands.html#tool-yolozu",
+    "kind": "command",
+    "search_text": "yolozu Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. stable yolozu/cli.py --allow-gpu --allow-network --allow-rgb-masks --allow-undeclared-effects --allow-unknown-flags --allow-unsafe-paths --allow-write-root --alpha --backend --batch --boxes-scale --cache --cache-dir --calibration-bins --calibration-iou --checkpoint --class-balanced-beta --classes --combined-output --config --contract --dataset --dataset-root --dataset-from --device --devices --diag-iou --dry-run --extra-records-json --external-backend --explain --resume-from --tao-task --fit-iou --fit-max-detections --fit-temperature --focal-gamma --force --force-import-overwrite --from --gamma --glob --goal --head-fraction --help --html --image-size --images-dir --input-dir --input-name --instances-json --iou-threshold --json --keep-per-image --kp-line --kp-radius --ldam-margin --logit-adjustment-tau --lora-alpha --lora-dropout --lora-freeze-base --lora-r --lora-target --lora-train-bias --lort-tau --loss-plugin --lr-scheduler --max-detections --max-images --max-overlays --max-runs --max-score --medium-fraction --method --metric --metric-key --metric-plugin --min-score --model --no-lora-freeze-base --no-ttt-rollback-on-stop --no-ttt-sar-adaptive --no-ttt-stop-on-non-finite --notes --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --output --output-report --proof --proof-dir --overlay-alpha --overlay-max-size --overlay-sort --overlays-dir --openvino-model --parity-reference-backend --pck-threshold --per-image-limit --pred-root --predictions --progress --python --rebalance-sampler --records-json --replay-fraction --replay-per-task-cap --replay-size --resolved-config-out --resume --run-dir --runtime-output-json --run-json --score-threshold --seed --split --stage1-epochs --stage2-epochs --stats-in --stats-out --strength --success-rot-deg --success-trans --tag --task --tau --temperature --temperature-grid --title --topk --train-script --tta --val-records-json --tta-flip-prob --tta-keypoint-swap-pairs --tta-log-out --tta-mode --tta-model-merge-iou --tta-norm-only --tta-seed --ttt --ttt-aux-depth-weight --ttt-aux-keypoints-weight --ttt-aux-pose-weight --ttt-aux-seg-weight --ttt-aux-temperature --ttt-batch-size --ttt-cotta-aggregation --ttt-cotta-augmentations --ttt-cotta-ema-momentum --ttt-cotta-restore-interval --ttt-cotta-restore-prob --ttt-eata-anchor-lambda --ttt-eata-conf-min --ttt-eata-entropy-max --ttt-eata-entropy-min --ttt-eata-max-skip-streak --ttt-eata-min-valid-dets --ttt-eata-selected-ratio-min --ttt-exclude --ttt-include --ttt-lite-entropy-weight --ttt-lite-minmax --ttt-lite-non-torch --ttt-lite-temperature --ttt-log-out --ttt-lr --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-max-loss-increase --ttt-max-loss-ratio --ttt-max-total-update-norm --ttt-max-update-norm --ttt-method --ttt-patch-size --ttt-preset --ttt-reset --ttt-rollback-on-stop --ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sar-rho --ttt-sdft-task --ttt-seed --ttt-steps --ttt-stop-on-non-finite --ttt-update-filter --weights --preset --spec --registry-out --execute --stop-on-failure --task-family --train-opt --out-dir --image-mode",
+    "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
+    "title": "yolozu"
+  },
+  {
+    "href": "schemas.html#schema-ai-generate-config-schema",
+    "kind": "schema",
+    "search_text": "AI Generate Config Checked-in YOLOZU JSON Schema. arguments goal recommended_sequence safety schema_version tool docs/schemas/ai_generate_config.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "AI Generate Config"
+  },
+  {
+    "href": "schemas.html#schema-ai-review-config-schema",
+    "kind": "schema",
+    "search_text": "AI Review Config Checked-in YOLOZU JSON Schema. issues ok schema_version summary warnings docs/schemas/ai_review_config.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "AI Review Config"
+  },
+  {
+    "href": "schemas.html#schema-coco-eval-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU COCO Eval Report Report payload emitted by tools/eval_coco.py (supports dry-run mode). bbox_format counts dataset dry_run max_images metrics predictions protocol protocol_id report_schema_version split split_requested stats timestamp warnings docs/schemas/coco_eval_report.schema.json",
+    "summary": "Report payload emitted by tools/eval_coco.py (supports dry-run mode).",
+    "title": "YOLOZU COCO Eval Report"
+  },
+  {
+    "href": "schemas.html#schema-continual-promotion-decision-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Continual Promotion Decision Checked-in YOLOZU JSON Schema. decision hard_gates inputs kind observed recommended_next research_report run_record schema_version soft_gates thresholds timestamp_utc docs/schemas/continual_promotion_decision.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Continual Promotion Decision"
+  },
+  {
+    "href": "schemas.html#schema-eval-suite-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Eval Suite Report Report payload emitted by tools/eval_suite.py (supports dry-run mode). bbox_format dataset images protocol protocol_hash protocol_id protocol_schema_version report_schema_version results split split_requested timestamp docs/schemas/eval_suite_report.schema.json",
+    "summary": "Report payload emitted by tools/eval_suite.py (supports dry-run mode).",
+    "title": "YOLOZU Eval Suite Report"
+  },
+  {
+    "href": "schemas.html#schema-instance-seg-eval-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Instance Segmentation Eval Report Report payload emitted by tools/eval_instance_segmentation.py. losses meta metrics schema_version timestamp docs/schemas/instance_seg_eval_report.schema.json",
+    "summary": "Report payload emitted by tools/eval_instance_segmentation.py.",
+    "title": "YOLOZU Instance Segmentation Eval Report"
+  },
+  {
+    "href": "schemas.html#schema-instance-segmentation-predictions-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Instance Segmentation Predictions JSON Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.  docs/schemas/instance_segmentation_predictions.schema.json",
+    "summary": "Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.",
+    "title": "YOLOZU Instance Segmentation Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-metrics-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Metrics Report Stable report schema emitted by yolozu.metrics_report.build_report(). losses meta metrics schema_version timestamp docs/schemas/metrics_report.schema.json",
+    "summary": "Stable report schema emitted by yolozu.metrics_report.build_report().",
+    "title": "YOLOZU Metrics Report"
+  },
+  {
+    "href": "schemas.html#schema-predictions-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Predictions JSON Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.  docs/schemas/predictions.schema.json",
+    "summary": "Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.",
+    "title": "YOLOZU Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-reference-adapter-regression-report-schema",
+    "kind": "schema",
+    "search_text": "Reference Adapter Regression Report Checked-in YOLOZU JSON Schema. baseline_meta baseline_path contract diff_summary_path failures gate_policy gates hard_failures ok predictions_sha256 protocol run run_meta schema_version soft_failures speed summary topk_examples topk_examples_dir warnings docs/schemas/reference_adapter_regression_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "Reference Adapter Regression Report"
+  },
+  {
+    "href": "schemas.html#schema-research-lane-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Research Lane Report Checked-in YOLOZU JSON Schema. kind lane latency_overhead promotion_gate report_artifact research_output_artifact rollback stable_baseline_artifact docs/schemas/research_lane_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Research Lane Report"
+  },
+  {
+    "href": "schemas.html#schema-research-note-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Research Note Checked-in YOLOZU JSON Schema. environment kind lane latency_overhead limitations method metrics promotion_gate research_output_artifact research_report_artifact rollback schema_version stable_baseline_artifact status title docs/schemas/research_note.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Research Note"
+  },
+  {
+    "href": "schemas.html#schema-run-meta-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Run Meta Contract Reproducibility metadata emitted at runs/<run_id>/reports/run_meta.json. command dependency_lock git hardware preprocess runtime schema_version docs/schemas/run_meta.schema.json",
+    "summary": "Reproducibility metadata emitted at runs/<run_id>/reports/run_meta.json.",
+    "title": "YOLOZU Run Meta Contract"
+  },
+  {
+    "href": "schemas.html#schema-seg-dataset-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Segmentation Dataset Descriptor Dataset descriptor produced by tools/prepare_*_seg.py scripts. Intended for semantic segmentation evaluation tools. classes dataset ignore_index mode path_type samples split task docs/schemas/seg_dataset.schema.json",
+    "summary": "Dataset descriptor produced by tools/prepare_*_seg.py scripts. Intended for semantic segmentation evaluation tools.",
+    "title": "YOLOZU Segmentation Dataset Descriptor"
+  },
+  {
+    "href": "schemas.html#schema-seg-eval-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Segmentation Eval Report Report payload emitted by tools/eval_segmentation.py. losses meta metrics schema_version timestamp docs/schemas/seg_eval_report.schema.json",
+    "summary": "Report payload emitted by tools/eval_segmentation.py.",
+    "title": "YOLOZU Segmentation Eval Report"
+  },
+  {
+    "href": "schemas.html#schema-segmentation-predictions-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Segmentation Predictions JSON Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.  docs/schemas/segmentation_predictions.schema.json",
+    "summary": "Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.",
+    "title": "YOLOZU Segmentation Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-tools-manifest-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Tools Manifest Checked-in YOLOZU JSON Schema. contracts generated_at_utc manifest_version repo tools docs/schemas/tools_manifest.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Tools Manifest"
+  },
+  {
+    "href": "schemas.html#schema-training-handoff-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU training handoff Checked-in YOLOZU JSON Schema. backend_id command description format input_contract output_contract stage supported task_family docs/schemas/training_handoff.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU training handoff"
+  },
+  {
+    "href": "schemas.html#schema-training-orchestration-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU training orchestration report Checked-in YOLOZU JSON Schema. counts execute forced_dry_run format ok registry_out results schema_version spec timestamp docs/schemas/training_orchestration_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU training orchestration report"
+  },
+  {
+    "href": "schemas.html#schema-training-registry-entry-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU training registry entry Checked-in YOLOZU JSON Schema. backend_display_name backend_id dataset_root dry_run format maturity next_steps ok orchestration run_output_contract_kind split steps summary_json task timestamp training_executed work_dir docs/schemas/training_registry_entry.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU training registry entry"
+  },
+  {
+    "href": "schemas.html#schema-training-run-summary-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU training run summary Checked-in YOLOZU JSON Schema. backend canonical_train_config dataset dry_run format handoff_contracts license_boundary next_steps notes ok process registry_entry run_output_contract runtime_error schema_version steps timestamp training_data_flow training_executed work_dir docs/schemas/training_run_summary.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU training run summary"
+  },
+  {
+    "href": "examples.html#example-instance-seg-visible-demo",
+    "kind": "example",
+    "search_text": "Instance-segmentation report and overlays stable A checked demo that pairs a JSON metric report with visible mask overlays. instance_seg_demo_report.json overlays/*.png demo_config.json",
+    "summary": "A checked demo that pairs a JSON metric report with visible mask overlays.",
+    "title": "Instance-segmentation report and overlays"
+  },
+  {
+    "href": "examples.html#example-external-predictions-bridge",
+    "kind": "example",
+    "search_text": "External framework prediction artifacts bridge Detectron2, MMDetection, YOLOv8, and YOLOX examples converge on the same wrapped predictions interface contract before scoring. wrapped predictions JSON meta.export_settings adapter/source identity",
+    "summary": "Detectron2, MMDetection, YOLOv8, and YOLOX examples converge on the same wrapped predictions interface contract before scoring.",
+    "title": "External framework prediction artifacts"
+  },
+  {
+    "href": "examples.html#example-backend-support-audit",
+    "kind": "example",
+    "search_text": "Backend support and skip semantics benchmark The generated support matrix records implemented, conditional, and unsupported backend paths without presenting a missing lane as a passing result. benchmark support metadata explicit support status skip or failure reason where applicable",
+    "summary": "The generated support matrix records implemented, conditional, and unsupported backend paths without presenting a missing lane as a passing result.",
+    "title": "Backend support and skip semantics"
+  },
+  {
+    "href": "examples.html#example-ttt-before-after",
+    "kind": "example",
+    "search_text": "TTT before/after Research evidence research Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity. baseline_predictions.json method_predictions.json before_after_compare.json TTT log and plan",
+    "summary": "Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity.",
+    "title": "TTT before/after Research evidence"
+  },
+  {
+    "href": "glossary.html#term-predictions-interface-contract",
+    "kind": "glossary",
+    "search_text": "Predictions interface contract The stable wrapped predictions boundary that lets validation and evaluation stay independent of the training or inference framework.",
+    "summary": "The stable wrapped predictions boundary that lets validation and evaluation stay independent of the training or inference framework.",
+    "title": "Predictions interface contract"
+  },
+  {
+    "href": "glossary.html#term-wrapped-predictions",
+    "kind": "glossary",
+    "search_text": "Wrapped predictions A predictions payload with schema version, prediction entries, and metadata needed to interpret how the artifact was produced.",
+    "summary": "A predictions payload with schema version, prediction entries, and metadata needed to interpret how the artifact was produced.",
+    "title": "Wrapped predictions"
+  },
+  {
+    "href": "glossary.html#term-protocol-identity",
+    "kind": "glossary",
+    "search_text": "Protocol identity The recorded dataset, split, metric settings, thresholds, and other evaluation choices that determine whether reports are comparable.",
+    "summary": "The recorded dataset, split, metric settings, thresholds, and other evaluation choices that determine whether reports are comparable.",
+    "title": "Protocol identity"
+  },
+  {
+    "href": "glossary.html#term-export-settings",
+    "kind": "glossary",
+    "search_text": "Export settings Producer-side preprocessing and output settings recorded in meta.export_settings so prediction artifacts can be interpreted and compared.",
+    "summary": "Producer-side preprocessing and output settings recorded in meta.export_settings so prediction artifacts can be interpreted and compared.",
+    "title": "Export settings"
+  },
+  {
+    "href": "glossary.html#term-stable-lane",
+    "kind": "glossary",
+    "search_text": "Stable lane Prediction validation and evaluation capabilities that form the product's supported core boundary.",
+    "summary": "Prediction validation and evaluation capabilities that form the product's supported core boundary.",
+    "title": "Stable lane"
+  },
+  {
+    "href": "glossary.html#term-bridge-lane",
+    "kind": "glossary",
+    "search_text": "Bridge lane An adapter, exporter, or external training handoff that emits the stable predictions interface contract without replacing it.",
+    "summary": "An adapter, exporter, or external training handoff that emits the stable predictions interface contract without replacing it.",
+    "title": "Bridge lane"
+  },
+  {
+    "href": "glossary.html#term-benchmark-lane",
+    "kind": "glossary",
+    "search_text": "Benchmark lane A qualification path for runtime or backend parity used after stable prediction evaluation is already working.",
+    "summary": "A qualification path for runtime or backend parity used after stable prediction evaluation is already working.",
+    "title": "Benchmark lane"
+  },
+  {
+    "href": "glossary.html#term-research-lane",
+    "kind": "glossary",
+    "search_text": "Research lane An opt-in experiment over a stable artifact whose output does not establish production readiness.",
+    "summary": "An opt-in experiment over a stable artifact whose output does not establish production readiness.",
+    "title": "Research lane"
+  },
+  {
+    "href": "glossary.html#term-skipped-lane",
+    "kind": "glossary",
+    "search_text": "Skipped lane A path that did not execute because a capability, artifact, runtime, or prerequisite was unavailable; it is not a passing result.",
+    "summary": "A path that did not execute because a capability, artifact, runtime, or prerequisite was unavailable; it is not a passing result.",
+    "title": "Skipped lane"
+  },
+  {
+    "href": "glossary.html#term-comparable-report",
+    "kind": "glossary",
+    "search_text": "Comparable report A report whose task, data, protocol, predictions provenance, and metric semantics align with the report it is compared against.",
+    "summary": "A report whose task, data, protocol, predictions provenance, and metric semantics align with the report it is compared against.",
+    "title": "Comparable report"
+  },
+  {
+    "href": "troubleshooting.html#failure-1",
+    "kind": "troubleshooting",
+    "search_text": "The yolozu command is not found Confirm which Python environment received the package, then run python3 -m yolozu --help from that same interpreter. Reinstall into the intended environment; do not switch runtimes silently.",
+    "summary": "Confirm which Python environment received the package, then run python3 -m yolozu --help from that same interpreter.",
+    "title": "The yolozu command is not found"
+  },
+  {
+    "href": "troubleshooting.html#failure-2",
+    "kind": "troubleshooting",
+    "search_text": "doctor --proof fails Read the errors and drift_hints in the doctor report. The proof is CPU-only and does not require a model download. Resolve the reported package, path, or write-permission problem, then rerun into a fresh proof directory.",
+    "summary": "Read the errors and drift_hints in the doctor report. The proof is CPU-only and does not require a model download.",
+    "title": "doctor --proof fails"
+  },
+  {
+    "href": "troubleshooting.html#failure-3",
+    "kind": "troubleshooting",
+    "search_text": "Predictions validation reports missing or migrated fields Run strict validation on the wrapped artifact and compare its schema version with the predictions schema. Fix the producer or use the documented migration path before scoring.",
+    "summary": "Run strict validation on the wrapped artifact and compare its schema version with the predictions schema.",
+    "title": "Predictions validation reports missing or migrated fields"
+  },
+  {
+    "href": "troubleshooting.html#failure-4",
+    "kind": "troubleshooting",
+    "search_text": "Dataset validation cannot resolve the split Use the split recorded in the dataset/proof artifact instead of assuming train, val, or val2017. Correct the dataset manifest or command so image IDs and split identity agree.",
+    "summary": "Use the split recorded in the dataset/proof artifact instead of assuming train, val, or val2017.",
+    "title": "Dataset validation cannot resolve the split"
+  },
+  {
+    "href": "troubleshooting.html#failure-5",
+    "kind": "troubleshooting",
+    "search_text": "Two reports have different metrics Compare task, dataset/split, prediction source, export settings, protocol identity, class mapping, thresholds, and skip reasons. Align the differing input or protocol field before attributing the difference to a model or runtime.",
+    "summary": "Compare task, dataset/split, prediction source, export settings, protocol identity, class mapping, thresholds, and skip reasons.",
+    "title": "Two reports have different metrics"
+  },
+  {
+    "href": "troubleshooting.html#failure-6",
+    "kind": "troubleshooting",
+    "search_text": "A backend row is skipped or conditional Read the canonical support matrix and the report's explicit status/reason. Provide the required artifact/runtime or keep the lane skipped; never reinterpret it as successful parity.",
+    "summary": "Read the canonical support matrix and the report's explicit status/reason.",
+    "title": "A backend row is skipped or conditional"
+  },
+  {
+    "href": "troubleshooting.html#failure-7",
+    "kind": "troubleshooting",
+    "search_text": "A Research run changes the result Verify that the stable baseline predictions and evaluation report are preserved and linked. Treat the delta as Research evidence until a fixed protocol, rollback review, and environment qualification support a stronger conclusion.",
+    "summary": "Verify that the stable baseline predictions and evaluation report are preserved and linked.",
+    "title": "A Research run changes the result"
+  },
+  {
+    "href": "troubleshooting.html#failure-8",
+    "kind": "troubleshooting",
+    "search_text": "The visible demo has no overlays Confirm the demo report and overlays directory under the exact run directory printed by the command. Rerun the instance-seg demo into a new run directory and inspect the reported output paths.",
+    "summary": "Confirm the demo report and overlays directory under the exact run directory printed by the command.",
+    "title": "The visible demo has no overlays"
+  }
+]

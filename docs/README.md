@@ -110,7 +110,8 @@ Supporting docs:
 - Adoption measurement, feedback cadence, and dated baseline: [`adoption/README.md`](adoption/README.md)
 - Consented design-partner observation kit: [`adoption/design_partner_observation_kit.md`](adoption/design_partner_observation_kit.md)
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
-- Web docs plan: [`web_docs_plan.md`](web_docs_plan.md)
+- Searchable web docs: <https://www.toppymicros.com/yolozu/docs/>
+- Web docs generation and publication plan: [`web_docs_plan.md`](web_docs_plan.md)
 - Generated CLI reference: [`generated/cli_reference.md`](generated/cli_reference.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
 - Research note template: [`research_note_template.md`](research_note_template.md)

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>30-minute path — YOLOZU Docs</title>
+  <meta name="description" content="CPU-only proof, visible demo, strict validation, and pinned evaluation." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/start.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="30-minute path — YOLOZU Docs" />
+  <meta property="og:description" content="CPU-only proof, visible demo, strict validation, and pinned evaluation." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/start.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="start">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html" aria-current="page">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+    
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Stable lane</span>
+  <h1 id="page-title">A 30-minute path to a checked report</h1>
+  <p class="lead">This path is CPU-only and begins with generated proof artifacts,
+  so the dataset and prediction paths come from evidence rather than memory.</p>
+  
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter steps or search all docs</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="steps-title">
+  <h2 id="steps-title">Proof → visible demo → validate → evaluate</h2>
+  <div class="steps">
+    
+<article class="step" data-search-card
+  data-search-text="0–5 Install and prove the stable lane A CPU-only proof report, known predictions, toy dataset, and pinned mAP result under reports/dod_cpu_smoke/doctor_proof/. python3 -m pip install -U yolozu yolozu doctor --proof --output reports/dod_cpu_smoke/doctor.json --proof-dir reports/dod_cpu_smoke/doctor_proof">
+  <div class="meta"><span>0–5 minutes</span></div>
+  <h3>Install and prove the stable lane</h3>
+  <pre><code>python3 -m pip install -U yolozu
+yolozu doctor --proof --output reports/dod_cpu_smoke/doctor.json --proof-dir reports/dod_cpu_smoke/doctor_proof</code></pre>
+  <p><strong>Expected:</strong> A CPU-only proof report, known predictions, toy dataset, and pinned mAP result under reports/dod_cpu_smoke/doctor_proof/.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="5–10 Create visible evaluation evidence instance_seg_demo_report.json and PNG overlays under reports/dod_cpu_smoke/demo_instance_seg/. yolozu demo instance-seg --inference none --run-dir reports/dod_cpu_smoke/demo_instance_seg --progress">
+  <div class="meta"><span>5–10 minutes</span></div>
+  <h3>Create visible evaluation evidence</h3>
+  <pre><code>yolozu demo instance-seg --inference none --run-dir reports/dod_cpu_smoke/demo_instance_seg --progress</code></pre>
+  <p><strong>Expected:</strong> instance_seg_demo_report.json and PNG overlays under reports/dod_cpu_smoke/demo_instance_seg/.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="10–18 Resolve the proof artifacts DATASET and PREDICTIONS point to the files recorded by the proof report; no path is guessed. PROOF=reports/dod_cpu_smoke/doctor_proof/proof_report.json DATASET=$(python3 -c &#x27;import json,sys; print(json.load(open(sys.argv[1]))[&quot;artifacts&quot;][&quot;dataset&quot;])&#x27; &quot;$PROOF&quot;) PREDICTIONS=$(python3 -c &#x27;import json,sys; print(json.load(open(sys.argv[1]))[&quot;artifacts&quot;][&quot;predictions&quot;])&#x27; &quot;$PROOF&quot;)">
+  <div class="meta"><span>10–18 minutes</span></div>
+  <h3>Resolve the proof artifacts</h3>
+  <pre><code>PROOF=reports/dod_cpu_smoke/doctor_proof/proof_report.json
+DATASET=$(python3 -c &#x27;import json,sys; print(json.load(open(sys.argv[1]))[&quot;artifacts&quot;][&quot;dataset&quot;])&#x27; &quot;$PROOF&quot;)
+PREDICTIONS=$(python3 -c &#x27;import json,sys; print(json.load(open(sys.argv[1]))[&quot;artifacts&quot;][&quot;predictions&quot;])&#x27; &quot;$PROOF&quot;)</code></pre>
+  <p><strong>Expected:</strong> DATASET and PREDICTIONS point to the files recorded by the proof report; no path is guessed.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="18–23 Validate both sides of the interface Both strict validators exit successfully before evaluation. yolozu validate dataset &quot;$DATASET&quot; --split val2017 --strict yolozu validate predictions &quot;$PREDICTIONS&quot; --strict">
+  <div class="meta"><span>18–23 minutes</span></div>
+  <h3>Validate both sides of the interface</h3>
+  <pre><code>yolozu validate dataset &quot;$DATASET&quot; --split val2017 --strict
+yolozu validate predictions &quot;$PREDICTIONS&quot; --strict</code></pre>
+  <p><strong>Expected:</strong> Both strict validators exit successfully before evaluation.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="23–27 Run the pinned evaluation A checked detection evaluation report at reports/dod_cpu_smoke/eval_coco_dry_run.json. yolozu eval-coco --dataset &quot;$DATASET&quot; --split val2017 --predictions &quot;$PREDICTIONS&quot; --dry-run --output reports/dod_cpu_smoke/eval_coco_dry_run.json">
+  <div class="meta"><span>23–27 minutes</span></div>
+  <h3>Run the pinned evaluation</h3>
+  <pre><code>yolozu eval-coco --dataset &quot;$DATASET&quot; --split val2017 --predictions &quot;$PREDICTIONS&quot; --dry-run --output reports/dod_cpu_smoke/eval_coco_dry_run.json</code></pre>
+  <p><strong>Expected:</strong> A checked detection evaluation report at reports/dod_cpu_smoke/eval_coco_dry_run.json.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="27–30 Read before comparing Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports. ">
+  <div class="meta"><span>27–30 minutes</span></div>
+  <h3>Read before comparing</h3>
+  
+  <p><strong>Expected:</strong> Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports.</p>
+</article>
+
+  </div>
+  <div class="hero-actions">
+    <a class="button primary" href="examples.html"
+      data-docs-event="YOLOZU docs completion"
+      data-event-target="checked-report">I have a checked report</a>
+    <a class="button" href="troubleshooting.html">Something failed</a>
+  </div>
+  <p class="source-note">Canonical procedure:
+    <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">CPU-only DoD</a>.
+  </p>
+</section>
+<section class="section" aria-labelledby="two-hour-title">
+  <h2 id="two-hour-title">Continue to the two-hour path</h2>
+  <ol class="check-list"><li>Complete the 30-minute stable path.</li>
+<li>Export or import predictions from an external stack through a checked bridge.</li>
+<li>Run a CPU-only evaluation with the same dataset, split, and fixed protocol.</li>
+<li>Compare two wrapped prediction artifacts and their reports.</li>
+<li>Fill out docs/evaluation_protocol_template.md for the run.</li>
+<li>Choose stable evaluation, backend parity, or a Research lane from evidence—not from a missing feature assumption.</li></ol>
+  <p class="source-note">Use
+    <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/evaluation_protocol_template.md" target="_blank" rel="noopener noreferrer">the evaluation protocol template</a>
+    before comparing artifacts.</p>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>
