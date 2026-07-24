@@ -8709,7 +8709,9 @@
         },
         {
           "command": "bash scripts/fresh_install_journey.sh --python python3.12 --package yolozu==4.5.1 --run-dir /tmp/yolozu_4_5_1_py312",
-          "description": "Pin the interpreter and published release for reproducible evidence."
+          "description": "Reproduce the verified 4.5.1 public-PyPI matrix evidence; this historical pin is not advanced by release automation.",
+          "release_version_evidence": "docs/ssot_capability_coverage_audit.md#confirmed-checks",
+          "release_version_policy": "historical"
         },
         {
           "command": "bash scripts/fresh_install_journey.sh --help",
@@ -11356,9 +11358,33 @@
       "effects": {
         "fixed_writes": [
           {
-            "description": "Updates package version for the release commit.",
+            "description": "Updates package version in the synchronized release metadata transaction.",
             "kind": "file",
             "path": "yolozu/__init__.py",
+            "scope": "path"
+          },
+          {
+            "description": "Inserts the dated release heading in the synchronized release metadata transaction.",
+            "kind": "file",
+            "path": "CHANGELOG.md",
+            "scope": "path"
+          },
+          {
+            "description": "Updates version and date-released in the synchronized release metadata transaction.",
+            "kind": "file",
+            "path": "CITATION.cff",
+            "scope": "path"
+          },
+          {
+            "description": "Advances examples explicitly marked as current-release-coupled.",
+            "kind": "file",
+            "path": "tools/manifest.json",
+            "scope": "path"
+          },
+          {
+            "description": "Keeps the packaged manifest byte-identical to the source manifest.",
+            "kind": "file",
+            "path": "yolozu/data/manifest/tools_manifest.json",
             "scope": "path"
           }
         ],
@@ -11392,6 +11418,13 @@
           "flag": "--dry-run",
           "kind": "string",
           "name": "dry_run",
+          "required": false
+        },
+        {
+          "description": "Validate current package, CHANGELOG, CITATION, tag-form, and manifest metadata without preparing or publishing a release.",
+          "flag": "--check",
+          "kind": "string",
+          "name": "check",
           "required": false
         },
         {
@@ -11450,7 +11483,7 @@
       "outputs": [
         {
           "default": "reports/release_report.json",
-          "description": "Release decision report with bump policy, actions, and workflow handoff status.",
+          "description": "Release decision report with metadata validation/plan, bump policy, actions, and workflow handoff status.",
           "kind": "file",
           "name": "release_report_json"
         }
@@ -11465,7 +11498,7 @@
         "network": true
       },
       "runner": "bash",
-      "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+      "summary": "Single-command release automation: validate current metadata, atomically synchronize package version, dated CHANGELOG and CITATION metadata, and explicitly current-release-coupled source/packaged manifest examples; then auto-version, tag, publish a GitHub release, and hand off once to the PyPI and Zenodo workflows. Historical manifest examples require explicit evidence and are not auto-bumped. The publish workflow revalidates synchronized metadata before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",
@@ -11582,7 +11615,7 @@
       "outputs": [
         {
           "default": "reports/release_tag_report.json",
-          "description": "Release/tag operation report with step outcomes and next steps.",
+          "description": "Release/tag operation report with synchronized metadata validation, step outcomes, and next steps.",
           "kind": "file",
           "name": "release_tag_report_json"
         }
@@ -11594,7 +11627,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+      "summary": "Release/tag operation helper that fails closed unless package version, requested tag, dated CHANGELOG heading, CITATION version/date, and source/packaged manifests agree; after validation it can create/push tags and create GitHub draft/published releases with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
       "tags": [
         "release",
         "tag",

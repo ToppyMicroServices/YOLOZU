@@ -19,6 +19,7 @@ All options are forwarded to tools/release.py.
 
 Examples:
   bash release.sh
+  bash release.sh --check --output reports/release_metadata_check.json
   bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 EOF
 }

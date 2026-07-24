@@ -112,6 +112,11 @@
       "rationale": "Small dataset split helper for repo-local experiments."
     },
     {
+      "path": "tools/manual_doi_guard.py",
+      "disposition": "internal_helper",
+      "rationale": "Import-only idempotency helper used by the manual DOI workflow; it is not a direct CLI."
+    },
+    {
       "path": "tools/manual_redundancy_check.py",
       "disposition": "manual_audit",
       "rationale": "Manual maintenance check, not a product workflow."
@@ -150,6 +155,11 @@
       "path": "tools/release.py",
       "disposition": "release_operator",
       "rationale": "Release operator helper, not part of the user-facing evaluation toolkit."
+    },
+    {
+      "path": "tools/release_metadata.py",
+      "disposition": "internal_helper",
+      "rationale": "Import-only release metadata transaction and validation helper used by release operators and the publish workflow."
     },
     {
       "path": "tools/run_baseline.py",

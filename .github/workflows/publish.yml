@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       expected_version:
-        description: Version expected in yolozu/__init__.py and CHANGELOG.md (for recovery/manual publish).
+        description: Version expected across package, CHANGELOG.md, CITATION.cff, and current manifest examples (for recovery/manual publish).
         required: true
         type: string
       release_tag:
@@ -110,43 +110,34 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
 
-      - name: Validate version and changelog alignment
+      - name: Validate synchronized release metadata
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
           EXPECTED_VERSION_INPUT: ${{ github.event.inputs.expected_version }}
         run: |
           python - <<'PY'
           import os
-          import pathlib
-          import re
+          from pathlib import Path
 
-          source = pathlib.Path("yolozu/__init__.py").read_text(encoding="utf-8")
-          match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', source)
-          if not match:
-            raise SystemExit("Could not parse __version__ from yolozu/__init__.py")
-          package_version = match.group(1)
+          from tools.release_metadata import validate_release_metadata
 
+          root = Path.cwd()
           tag = (os.environ.get("RELEASE_TAG") or "").strip()
           expected_input = (os.environ.get("EXPECTED_VERSION_INPUT") or "").strip()
-
-          if expected_input and package_version != expected_input:
+          result = validate_release_metadata(
+            root,
+            expected_version=expected_input or None,
+            expected_tag=tag or None,
+          )
+          if not result["ok"]:
             raise SystemExit(
-              f"Manual publish/version mismatch: expected={expected_input} package={package_version}"
+              "release metadata validation failed:\n- "
+              + "\n- ".join(result["errors"])
             )
-
-          if tag:
-            expected = tag[1:] if tag.startswith("v") else tag
-            if package_version != expected:
-              raise SystemExit(
-                f"Release tag/version mismatch: tag={tag} expected={expected} package={package_version}"
-              )
-
-          changelog = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
-          heading = f"## [{package_version}] - "
-          if heading not in changelog:
-            raise SystemExit(f"CHANGELOG.md missing release heading: {heading}YYYY-MM-DD")
-
-          print(f"package version + changelog OK: {package_version}")
+          print(
+            "package + CHANGELOG.md + CITATION.cff + manifest metadata OK: "
+            + result["package_version"]
+          )
           PY
 
       - name: Set up Python

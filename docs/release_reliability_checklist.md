@@ -27,7 +27,10 @@ Operational summary:
 - the default release path is **not** "always minor"
 - default SemVer behavior is `small -> patch`, `medium/large -> minor`
 - `major` is intentionally gated so it cannot be published accidentally during routine tagging
-- the release helper updates `yolozu/__init__.py` and inserts the matching `CHANGELOG.md` release heading in the same release commit
+- before planning a release, the helper requires the current package version, dated `CHANGELOG.md` heading, `CITATION.cff` version/date, and source/packaged manifests to agree
+- the helper validates the complete next-version update before writing, then synchronizes package version, changelog heading/date, citation version/date, and examples marked `release_version_policy: current` with rollback on a write failure
+- exact-version manifest examples marked `release_version_policy: historical` require an evidence path and are intentionally not auto-bumped
+- `tools/release_tag.py` repeats the metadata check and fails closed before tag or GitHub Release creation
 
 For CalVer mode:
 
@@ -37,9 +40,12 @@ For CalVer mode:
 Dry-run preview:
 
 ```bash
+bash release.sh --check --output reports/release_metadata_check.json
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 python3 tools/announce_release.py --event-json "$GITHUB_EVENT_PATH" --out-dir reports/announce_preview --x-max-len 280
 ```
+
+The check and dry-run reports list metadata mismatches without changing release metadata. The dry-run also records the next-version file plan.
 
 ## 1) Required local checks (must pass)
 
@@ -55,6 +61,7 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
 python3 tools/audit_manual_cli_drift.py
 python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
+python3 tools/release.py --check --output reports/release_metadata_check.json
 python3 -m unittest tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
 python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
@@ -72,6 +79,7 @@ DoD:
 - Manifest validator returns `OK`.
 - Schema compatibility gate passes.
 - Golden compatibility check returns `ok=true`.
+- Release metadata check reports `ok=true` for package, tag form, dated changelog/citation metadata, and byte-identical manifests.
 - Unit tests pass without unexpected failures.
 - Generated CLI reference and SSOT capability coverage tests pass before manifest or capability-claim changes merge.
 - MCP settings check report shows `ok=true`.

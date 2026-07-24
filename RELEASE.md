@@ -9,7 +9,7 @@ This avoids long-lived PyPI API tokens.
 - Actual trigger: **GitHub Release → published** (plus manual `workflow_dispatch`)
 - **Tag push alone does not publish to PyPI**
 - Container images are separate: `.github/workflows/container.yml` can publish on tag/manual runs to GHCR and mirror to `nvcr.io/yolozu/...` when `NGC_API_KEY` is configured
-- `publish.yml` validates release tag/manual inputs against `yolozu/__init__.py::__version__`, requires a matching `CHANGELOG.md` section, and confirms that PyPI exposes both the wheel and sdist after upload.
+- `publish.yml` validates release tag/manual inputs against `yolozu/__init__.py::__version__`, requires matching dated `CHANGELOG.md` and `CITATION.cff` metadata, requires byte-identical source/packaged manifests, and confirms that PyPI exposes both the wheel and sdist after upload.
 
 ## One-time setup (PyPI)
 
@@ -40,13 +40,16 @@ This avoids long-lived PyPI API tokens.
 bash release.sh
 ```
 
-The helper bumps `yolozu/__init__.py`, inserts a matching `CHANGELOG.md` release section, runs release checks, commits, tags, pushes, and creates the GitHub Release. The `release: published` event is the single automatic trigger for both PyPI publication and the manual DOI workflow; the helper does not dispatch `manual_doi.yml` a second time.
+The helper first checks that the current package, dated changelog entry, citation metadata, and source/packaged manifests agree. It then prepares the next package version, `CHANGELOG.md` heading/date, `CITATION.cff` version/date, and any manifest examples explicitly marked `release_version_policy: current` as one validated update with rollback on write failure. Examples marked `historical` require an evidence path and are preserved. After the synchronized metadata update, the helper runs release checks, commits, tags, pushes, and creates the GitHub Release. The `release: published` event is the single automatic trigger for both PyPI publication and the manual DOI workflow; the helper does not dispatch `manual_doi.yml` a second time.
 
-For a preview:
+For a non-writing consistency check or a full dry-run preview:
 
 ```bash
+bash release.sh --check --output reports/release_metadata_check.json
 bash release.sh --dry-run --output reports/release_report.dry_run.json
 ```
+
+Both reports include every mismatch and the classified manifest examples. `--dry-run` also reports the complete next-release metadata plan without changing release metadata, git, or GitHub state.
 
 2) Verify publish result:
    - GitHub Actions `publish` job is green; its final gate confirms that PyPI exposes the new version with both wheel and sdist
@@ -54,7 +57,9 @@ bash release.sh --dry-run --output reports/release_report.dry_run.json
    - manual DOI workflow either published a record or produced an explicit skip reason
 
 Manual fallback:
-- If you bypass `release.sh`, bump `yolozu/__init__.py`, add `## [X.Y.Z] - YYYY-MM-DD` to `CHANGELOG.md`, push to `main`, create an annotated tag, then publish a GitHub Release.
+- If you bypass `release.sh`, align `yolozu/__init__.py`, `## [X.Y.Z] - YYYY-MM-DD` in `CHANGELOG.md`, `version` and `date-released` in `CITATION.cff`, and any manifest examples marked `release_version_policy: current`. Keep `tools/manifest.json` and `yolozu/data/manifest/tools_manifest.json` byte-identical.
+- Run `python3 tools/release_tag.py --dry-run ...` before creating a tag. The helper fails closed when the package version, requested tag, dated changelog entry, citation metadata, or manifests disagree.
+- Push the prepared metadata to `main`, create an annotated tag, then publish a GitHub Release.
 - Tag push alone prepares release metadata but does **not** trigger PyPI publish.
 
 Use `.github/release_notes_template.md` as the minimal release note template.
@@ -77,7 +82,7 @@ Container notes:
 - RunPod/TensorRT images: `nvcr.io/yolozu/yolozu-trt`, `nvcr.io/yolozu/yolozu-rtdetr-pose`
 - NGC publication requires repository secret `NGC_API_KEY`
 
-Manual runs now fail fast if `__version__`, the optional tag, and `CHANGELOG.md` do not agree.
+Manual runs now fail fast if `__version__`, the optional tag, dated `CHANGELOG.md` and `CITATION.cff` metadata, or the source/packaged manifests do not agree.
 
 ## Manual PDF DOI (separate from software DOI)
 

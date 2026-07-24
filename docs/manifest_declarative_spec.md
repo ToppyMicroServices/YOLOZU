@@ -73,6 +73,15 @@ When applicable:
 - `docs[]` should point to repo-relative documentation files describing protocol/usage.
 - `contract_outputs` should map produced contract ids to matching `outputs[].name`.
 
+## Exact release-version examples
+
+An `examples[].command` that pins `yolozu==VERSION` must declare how release automation treats it:
+
+- `release_version_policy: current`: the version and matching underscore-form path token advance with the next release.
+- `release_version_policy: historical`: the exact version remains fixed and `release_version_evidence` must identify a repo-relative evidence file (an optional `#anchor` is allowed).
+
+Unclassified exact-version pins fail manifest and release metadata validation. Generic examples such as `yolozu==VERSION` are not exact pins and do not need a policy.
+
 ## Identifier and path constraints
 
 - `id` matches `^[a-z0-9][a-z0-9_\-]*$`
@@ -107,5 +116,6 @@ For any new or modified tool entry:
 2. Declare all write side effects in `effects.writes[]` / `effects.fixed_writes[]`.
 3. Declare publishable artifacts in `outputs[]`.
 4. Add at least one runnable command in `examples[]`.
-5. Add `contracts`/`contract_outputs` mappings where contracts exist.
-6. Run `python3 tools/validate_tool_manifest.py --manifest tools/manifest.json`.
+5. Classify exact `yolozu==VERSION_NUMBER` examples as current or evidence-backed historical pins.
+6. Add `contracts`/`contract_outputs` mappings where contracts exist.
+7. Run `python3 tools/validate_tool_manifest.py --manifest tools/manifest.json`.

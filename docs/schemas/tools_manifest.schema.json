@@ -194,10 +194,18 @@
       "required": ["command"],
       "properties": {
         "description": { "type": "string" },
-        "command": { "type": "string" }
+        "command": { "type": "string" },
+        "release_version_policy": {
+          "type": "string",
+          "enum": ["current", "historical"],
+          "description": "Required when command pins yolozu==VERSION. Current examples advance during a release; historical examples remain fixed."
+        },
+        "release_version_evidence": {
+          "type": "string",
+          "description": "Repo-relative evidence path (optional #anchor) required for historical exact-version pins."
+        }
       },
       "additionalProperties": true
     }
   }
 }
-

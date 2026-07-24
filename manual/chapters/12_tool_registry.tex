@@ -164,7 +164,9 @@ The software publish workflow now enforces release metadata consistency before P
   \item release-triggered runs validate that tag \cmd{vX.Y.Z} matches \path{yolozu/__init__.py}
   \item manual \cmd{workflow_dispatch} runs require \cmd{expected_version}
   \item optional manual input \cmd{release_tag} can re-check tag/version alignment during recovery
-  \item \path{CHANGELOG.md} must contain a matching \cmd{## [X.Y.Z] - YYYY-MM-DD} section
+  \item \path{CHANGELOG.md} must contain a matching \texttt{\#\# [X.Y.Z] - YYYY-MM-DD} section
+  \item \path{CITATION.cff} must carry the same version and release date
+  \item \path{tools/manifest.json} and its packaged copy must be byte-identical, with exact-version examples classified as current or evidence-backed historical pins
 \end{itemize}
 
 Operational helper script (no required options):
@@ -173,6 +175,12 @@ bash release.sh
 \end{lstlisting}
 Publishing the GitHub Release is the single automatic trigger for both the PyPI and
 manual DOI workflows. The helper does not dispatch the manual DOI workflow again.
+Before writing, it validates the current metadata and the complete next-release
+plan. It then synchronizes the package version, changelog heading/date, citation
+version/date, and examples explicitly marked as current-release-coupled in one
+rollback-protected operation. Evidence-backed historical manifest examples are
+kept unchanged. The tag helper repeats this validation and stops before tag or
+GitHub Release creation if any surface disagrees.
 
 Versioning policy is automatic:
 \begin{itemize}
@@ -182,8 +190,11 @@ Versioning policy is automatic:
 
 Dry-run preview:
 \begin{lstlisting}[language=bash]
+bash release.sh --check --output reports/release_metadata_check.json
 bash release.sh --dry-run --allow-dirty --allow-non-main --output reports/release_report.dry_run.json
 \end{lstlisting}
+The check and dry-run reports list mismatches without changing release metadata;
+the dry-run also records the full next-version file plan.
 
 When operators need to recover a failed publish without cutting a new tag, the supported path is the
 \path{publish.yml} manual trigger with:
