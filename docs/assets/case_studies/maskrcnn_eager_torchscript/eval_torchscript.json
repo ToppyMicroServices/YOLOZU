@@ -1,6 +1,18 @@
 {
   "bbox_format": "cxcywh_norm",
+  "counts": {
+    "dataset_images_total": 10,
+    "detections": 12,
+    "detections_excluded": 0,
+    "detections_input": 12,
+    "images": 2,
+    "prediction_images_evaluated": 2,
+    "prediction_images_excluded": 0,
+    "prediction_images_total": 2,
+    "selected_images_without_predictions": 0
+  },
   "dataset": "data/smoke",
+  "dry_run": false,
   "max_images": 2,
   "metrics": {
     "ar100": 0.8104166666666668,
@@ -12,6 +24,7 @@
     "assume_class_id_is_category_id": false,
     "classes": null
   },
+  "ok": true,
   "predictions": "docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json",
   "protocol": null,
   "protocol_id": null,
@@ -32,6 +45,11 @@
     0.7125,
     0.888888888888889
   ],
-  "timestamp": "2026-07-24T08:52:00Z",
+  "status": "ok",
+  "timestamp": "2026-07-24T16:50:27Z",
+  "validation": {
+    "mode": "strict",
+    "repair_enabled": false
+  },
   "warnings": []
 }

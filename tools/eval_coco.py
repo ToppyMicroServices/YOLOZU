@@ -1,18 +1,13 @@
 import argparse
-import json
 import sys
-import time
 from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
-from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
-from yolozu.dataset import build_manifest
+from yolozu.api import APIError, _failure_report, _write_json_atomic, evaluate_coco
 from yolozu.eval_protocol import apply_eval_protocol_args, load_eval_protocol
 from yolozu.core.diagnostics import format_cli_error
-from yolozu.predictions import load_predictions_entries
-from yolozu.predictions_transform import load_classes_json, normalize_class_ids
 
 
 def _parse_args(argv):
@@ -23,13 +18,14 @@ def _parse_args(argv):
         default=None,
         help="Apply canonical evaluation protocol presets (pins split/bbox_format).",
     )
-    parser.add_argument("--dataset", default="data/coco128", help="YOLO-format dataset root (images/ + labels/).")
+    parser.add_argument("-d", "--dataset", default="data/coco128", help="YOLO-format dataset root (images/ + labels/).")
     parser.add_argument(
+        "-s",
         "--split",
         default=None,
         help="Dataset split under images/ and labels/ (e.g. val2017, train2017). Default: auto (val2017 if present else train2017).",
     )
-    parser.add_argument("--predictions", required=True, help="Predictions JSON path (YOLOZU format).")
+    parser.add_argument("-p", "--predictions", required=True, help="Predictions JSON path (YOLOZU format).")
     parser.add_argument(
         "--bbox-format",
         choices=("cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"),
@@ -42,10 +38,17 @@ def _parse_args(argv):
         help="Skip COCOeval and only validate/convert predictions (no pycocotools required).",
     )
     parser.add_argument(
+        "-r",
+        "--repair",
+        action="store_true",
+        help="Explicitly repair/clamp legacy prediction values and record every repair (default: strict rejection).",
+    )
+    parser.add_argument(
+        "-n",
         "--max-images",
         type=int,
         default=None,
-        help="Optional cap for number of images (for quick smoke runs).",
+        help="Evaluate the first N dataset images; known predictions outside the subset are counted and excluded.",
     )
     parser.add_argument(
         "--classes",
@@ -57,7 +60,7 @@ def _parse_args(argv):
         action="store_true",
         help="Treat class_id in predictions as COCO category_id when --classes is provided.",
     )
-    parser.add_argument("--output", default="reports/coco_eval.json", help="Where to write evaluation JSON.")
+    parser.add_argument("-o", "--output", default="reports/coco_eval.json", help="Where to write evaluation JSON.")
     return parser.parse_args(argv)
 
 
@@ -73,89 +76,57 @@ def main(argv=None):
     args, protocol = _resolve_args(sys.argv[1:] if argv is None else argv)
 
     dataset_root = repo_root / args.dataset
-    manifest = build_manifest(dataset_root, split=args.split)
-    records = manifest["images"]
-    split_effective = manifest["split"]
-    if args.max_images is not None:
-        records = records[: args.max_images]
-    if not records:
-        raise SystemExit(
-            format_cli_error(
-                code="E_DATASET_EMPTY",
-                message=f"no dataset images resolved for split={split_effective!r} under {dataset_root}",
-                hint="check --dataset/--split or remove overly restrictive --max-images",
-            )
-        )
-
-    gt, index = build_coco_ground_truth(records)
-    image_sizes = {img["id"]: (int(img["width"]), int(img["height"])) for img in gt["images"]}
-
-    preds = load_predictions_entries(repo_root / args.predictions)
-    if not preds:
-        raise SystemExit(
-            format_cli_error(
-                code="E_PREDICTIONS_EMPTY",
-                message=f"no prediction entries found in {args.predictions}",
-                hint="provide at least one image entry in predictions interface contract format",
-            )
-        )
-    normalization_warnings: list[str] = []
-    if args.classes or args.assume_class_id_is_category_id:
-        if not args.classes:
-            raise SystemExit("--classes is required when --assume-class-id-is-category-id is enabled")
-        classes = load_classes_json(repo_root / args.classes)
-        transformed = normalize_class_ids(
-            preds,
-            classes_json=classes,
+    output_path = repo_root / args.output
+    predictions_path = repo_root / args.predictions
+    classes_path = (repo_root / args.classes) if args.classes else None
+    try:
+        result = evaluate_coco(
+            dataset_root,
+            predictions_path,
+            split=args.split,
+            bbox_format=args.bbox_format,
+            max_images=args.max_images,
+            dry_run=bool(args.dry_run),
+            repair=bool(args.repair),
+            classes=classes_path,
             assume_class_id_is_category_id=bool(args.assume_class_id_is_category_id),
         )
-        preds = transformed.entries
-        normalization_warnings = list(transformed.warnings)
-    # Validate shape early; useful even in dry-run mode.
-    # (Strict mode is optional; keep default permissive for external baselines.)
-    from yolozu.predictions import validate_predictions_entries
-
-    validation = validate_predictions_entries(preds, strict=False)
-    dt = predictions_to_coco_detections(preds, coco_index=index, image_sizes=image_sizes, bbox_format=args.bbox_format)
-
-    if args.dry_run:
-        result = {
-            "metrics": {
-                "map50_95": None,
-                "map50": None,
-                "map75": None,
-                "ar100": None,
-            },
-            "stats": [],
-            "dry_run": True,
-            "counts": {"images": len(records), "detections": len(dt)},
-            "warnings": [*validation.warnings, *normalization_warnings],
-        }
-    else:
-        result = evaluate_coco_map(gt, dt)
-        result["warnings"] = [*validation.warnings, *normalization_warnings]
-
-    payload = {
-        "report_schema_version": 1,
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "protocol_id": args.protocol,
-        "protocol": protocol,
-        "dataset": str(args.dataset),
-        "split": split_effective,
-        "split_requested": args.split,
-        "predictions": str(args.predictions),
-        "bbox_format": args.bbox_format,
-        "max_images": args.max_images,
-        "normalization": {
+    except APIError as exc:
+        failure = _failure_report(
+            exc,
+            dataset=str(args.dataset),
+            predictions=str(args.predictions),
+            split=args.split,
+            bbox_format=args.bbox_format,
+            max_images=args.max_images,
+            dry_run=bool(args.dry_run),
+            repair=bool(args.repair),
+        )
+        failure["protocol_id"] = args.protocol
+        failure["protocol"] = protocol
+        failure["normalization"] = {
             "classes": str(args.classes) if args.classes else None,
             "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
-        },
-        **result,
-    }
+        }
+        _write_json_atomic(output_path, failure)
+        raise SystemExit(
+            format_cli_error(
+                code=exc.code,
+                message=exc.message,
+                hint=f"failure report written to {output_path}",
+            )
+        ) from exc
 
-    output_path = repo_root / args.output
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+    payload = result.to_dict()
+    payload["protocol_id"] = args.protocol
+    payload["protocol"] = protocol
+    payload["dataset"] = str(args.dataset)
+    payload["predictions"] = str(args.predictions)
+    payload["normalization"] = {
+        "classes": str(args.classes) if args.classes else None,
+        "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
+    }
+    _write_json_atomic(output_path, payload)
     print(output_path)
 
 

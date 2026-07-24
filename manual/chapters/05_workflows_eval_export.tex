@@ -225,6 +225,34 @@ cat models/yolox-s-coco/meta.json
 
 The generated \path{models/<id>/meta.json} always includes \path{source}, \path{version}, \path{license}, \path{sha256}, and \path{created_at}.
 
+\subsection{Typed in-process validation and evaluation}
+
+The stable Python surface is \path{yolozu.api}. It accepts path-backed or
+in-memory predictions, returns typed results with \cmd{to_dict()}, and raises
+machine-readable \cmd{APIError} subclasses instead of terminating the process.
+Path resolution does not change the process working directory: callers use
+absolute paths or provide an explicit absolute \cmd{base_dir}.
+
+\begin{lstlisting}[language=Python]
+from pathlib import Path
+from yolozu.api import evaluate_coco
+
+result = evaluate_coco(
+    dataset=Path("/absolute/path/to/dataset"),
+    predictions=Path("/absolute/path/to/predictions.json"),
+    split="val",
+    max_images=50,
+    dry_run=True,
+)
+report = result.to_dict()
+\end{lstlisting}
+
+After deterministic dataset subsetting, predictions for known but unselected
+images are excluded and counted. An image unknown to the full dataset still
+fails. Strict validation is the default; \cmd{repair=True} is the explicit
+in-process equivalent of CLI \cmd{--repair}. The canonical symbol list and
+compatibility policy live in \path{docs/python_api.md}.
+
 \subsection{YOLO user migration entrypoint (v5/v8/11/26)}
 For users already operating within YOLO-family pipelines, \yolozu{} provides a direct interface-contract-first migration path:
 \begin{lstlisting}[language=bash]

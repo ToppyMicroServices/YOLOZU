@@ -12,6 +12,14 @@ Its stable product lane validates and fairly evaluates existing vision predictio
 
 Give it a wrapped `predictions.json`, validate the predictions interface contract, and produce a comparable report.
 
+The shortest core-install path is one strict dry-run command:
+
+```bash
+yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
+```
+
+For real COCO metrics, install `yolozu[coco]` and omit `--dry-run`.
+
 ## 1-Minute Demo
 
 ```bash
@@ -52,6 +60,7 @@ flowchart LR
 
 - [`docs/README.md`](docs/README.md): top-level docs map and shortest working paths
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
+- [`docs/python_api.md`](docs/python_api.md): typed in-process validation/evaluation API and error policy
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): real eager/TorchScript outputs evaluated through one pinned lane

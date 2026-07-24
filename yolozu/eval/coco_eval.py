@@ -6,7 +6,9 @@ detections, then delegates to ``pycocotools.COCOeval`` for metric computation.
 
 from __future__ import annotations
 
+from contextlib import nullcontext, redirect_stdout
 from dataclasses import dataclass
+import io
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -148,8 +150,17 @@ def predictions_to_coco_detections(
     return out
 
 
-def evaluate_coco_map(gt: dict[str, Any], dt: list[dict[str, Any]]) -> dict[str, Any]:
-    """Compute COCO-style mAP using pycocotools if available."""
+def evaluate_coco_map(
+    gt: dict[str, Any],
+    dt: list[dict[str, Any]],
+    *,
+    quiet: bool = False,
+) -> dict[str, Any]:
+    """Compute COCO-style mAP using pycocotools if available.
+
+    ``quiet=True`` suppresses pycocotools' console summaries for in-process
+    callers. The compatibility default remains ``False``.
+    """
 
     try:
         from pycocotools.coco import COCO  # type: ignore
@@ -159,26 +170,28 @@ def evaluate_coco_map(gt: dict[str, Any], dt: list[dict[str, Any]]) -> dict[str,
             "pycocotools is required for COCO mAP evaluation. Install it (e.g. `python3 -m pip install pycocotools`)."
         ) from exc
 
-    coco_gt = COCO()
-    coco_gt.dataset = gt
-    coco_gt.createIndex()
+    output_context = redirect_stdout(io.StringIO()) if quiet else nullcontext()
+    with output_context:
+        coco_gt = COCO()
+        coco_gt.dataset = gt
+        coco_gt.createIndex()
 
-    if not dt:
-        return {
-            "metrics": {
-                "map50_95": 0.0,
-                "map50": 0.0,
-                "map75": 0.0,
-                "ar100": 0.0,
-            },
-            "stats": [],
-        }
+        if not dt:
+            return {
+                "metrics": {
+                    "map50_95": 0.0,
+                    "map50": 0.0,
+                    "map75": 0.0,
+                    "ar100": 0.0,
+                },
+                "stats": [],
+            }
 
-    coco_dt = coco_gt.loadRes(dt)
-    coco_eval = COCOeval(coco_gt, coco_dt, iouType="bbox")
-    coco_eval.evaluate()
-    coco_eval.accumulate()
-    coco_eval.summarize()
+        coco_dt = coco_gt.loadRes(dt)
+        coco_eval = COCOeval(coco_gt, coco_dt, iouType="bbox")
+        coco_eval.evaluate()
+        coco_eval.accumulate()
+        coco_eval.summarize()
 
     stats = list(getattr(coco_eval, "stats", []))
     # COCOeval.stats:

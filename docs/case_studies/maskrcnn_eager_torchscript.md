@@ -20,7 +20,8 @@ and does not claim that one runtime is faster or better.
 - Device: CPU, one thread
 - Export filter: score at least `0.5`, at most `20` detections per image
 - Evaluation: YOLOZU's stable `eval-coco` lane with `cxcywh_norm` boxes,
-  split `val`, and the same two-image bound
+  strict validation, split `val`, and the same two-image bound with explicit
+  full-dataset/subset counts
 
 The exact embedded model transform, model-side NMS settings, input hashes, and
 export settings are recorded in

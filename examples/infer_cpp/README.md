@@ -20,7 +20,7 @@ All runners aim to produce YOLOZU predictions JSON so you can:
 
 ```bash
 python3 tools/validate_predictions.py /path/to/predictions.json --strict
-python3 tools/eval_coco.py --predictions /path/to/predictions.json --dataset /path/to/coco-yolo --output reports/external_eval.json
+yolozu eval-coco --predictions /path/to/predictions.json --dataset /path/to/coco-yolo --output reports/external_eval.json
 ```
 
 ## Production lane interface contract
@@ -47,7 +47,7 @@ Schema validation and report handoff:
 
 ```bash
 python3 tools/validate_predictions.py /path/to/predictions.json --strict
-python3 tools/eval_coco.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+yolozu eval-coco --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
 python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json > reports/external_parity.json
 ```
 
@@ -63,7 +63,7 @@ For a “sanity mAP” run without any inference backend, use:
 
 ```bash
 yolozu export --backend labels --dataset /path/to/coco-yolo --output /tmp/predictions_labels.json --force
-python3 tools/eval_coco.py --predictions /tmp/predictions_labels.json --dataset /path/to/coco-yolo --output reports/labels_eval.json
+yolozu eval-coco --predictions /tmp/predictions_labels.json --dataset /path/to/coco-yolo --output reports/labels_eval.json
 ```
 
 ## Build (stub)

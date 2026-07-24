@@ -4,7 +4,7 @@
     "config": "maskrcnn_resnet50_fpn_v2",
     "extra": {
       "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
-      "elapsed_seconds": 14.032547750000958,
+      "elapsed_seconds": 10.551094832990202,
       "execution_status": "completed",
       "export_settings": {
         "checkpoint": "MaskRCNN_ResNet50_FPN_V2_Weights.COCO_V1",
@@ -228,7 +228,7 @@
       }
     },
     "images": 2,
-    "timestamp": "2026-07-24T08:51:34Z",
+    "timestamp": "2026-07-24T16:50:06Z",
     "tta": {
       "enabled": false,
       "flip_prob": 0.0,

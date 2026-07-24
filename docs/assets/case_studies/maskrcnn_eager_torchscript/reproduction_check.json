@@ -29,35 +29,37 @@
       "file_sha256": {
         "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
         "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
-        "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
-        "tools/generate_runtime_parity_case_study.py": "48f8e30225deea6d773d3976c8dec1d38d011f218c095b168590da4aa3b02d05",
+        "tools/eval_coco.py": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
+        "tools/generate_runtime_parity_case_study.py": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
         "tools/generate_smoke_assets.py": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
+        "yolozu/api.py": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
         "yolozu/datasets/coco.py": "ed7651246e27518fdbf7d4a4fd377a3a254b5638fd23a12c31390c11f4d314ad",
-        "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
+        "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
         "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
       },
-      "head": "ed5fab924d51416b676cd7595ab54d1b7e2fcd41"
+      "head": "1eb3a7d1d7a7da291f6f9310a5d1707c867bc280"
     },
     "source_clean_before_run": true,
-    "source_sha256": "26f3df126493dff7499b320149e1519ce51b20207066306d81160b0bfb55d0ef",
-    "summary_sha256": "e0fca66a263e039f8441a8d45f44e964adc7c0f92e584d4e252226a8f5d1e312",
+    "source_sha256": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+    "summary_sha256": "b2c716880ed7caea88c4305662dc585ab7bf0cba800788beced9e34e98d37208",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "baseline_checksums": {
     "entries": {
-      "commands.json": "03bfd45c8d4920b4d8605ecb086836940a52b3dfac3e94ccad2542cdb8c9dc2e",
+      "commands.json": "f10b9ee797fffd23b9d095af5d729e515e13baa9b553b9228374306e3b7d4f74",
       "comparison.svg": "4589e45427ef2822bb78580e36097bf94994e7b12fe496176805fa858bc69ebb",
-      "environment.json": "da534fb8517a7688f50308ad0801499510a51a78bff00f1ca25b09a15ccf2c1c",
-      "eval_eager.json": "be84a129e3470bef93de23c7ed32233ce0a0ad368208f2e0471d0a85bc03a13a",
-      "eval_torchscript.json": "ab0db58951a8d5761d77779f90d2f6b7712c12c755e4efac80f512ebb8d2da9c",
-      "parity.json": "f3a66f90581dd6a7a8b62c8e5caf49f477fa465a47365a632f07cfb3613259bd",
-      "predictions_eager.json": "2d1203fdc8e8609b52874c06867677a4342bcdf2245b7d3edccd9f5f79dcbbd0",
-      "predictions_torchscript.json": "072328f8bad07807c009467e2695eb32b77ef787ffd55e55784e9ec04d3b74e8",
+      "environment.json": "d7bcbc0532edf99eabc5441353bf26e58d8565f0be96ed8477a66ff035c16e05",
+      "eval_eager.json": "357353cd579a17445d514441f6a640d18f8f332c9da325f4b282967c109da692",
+      "eval_torchscript.json": "3374251469cde273bed9f45856681920125e31bca1eac603b8ae7f3bcdb3316a",
+      "parity.json": "91a651c0dce7e132a27a38728da9440a7ce13a409cafcedc2e7aa751d3878b04",
+      "predictions_eager.json": "a1c554f56f2e1bd990bfecd2fb16daa8063555040fc457165b7aaaffc346a778",
+      "predictions_torchscript.json": "8915dff19e283dbdbabb6ff7e0296d3fabd01ba0d12c4ea459dcc44a5f702e32",
       "protocol.json": "ae0a93a22221a5b62726a26a9575b8342a7740ee5dd417922dda60bbeb263e3f",
-      "summary.json": "e0fca66a263e039f8441a8d45f44e964adc7c0f92e584d4e252226a8f5d1e312"
+      "reproduction_check.json": "741166acbb5137f12d1d1a51a5772f64c44bd9833f0e3407a3986e89c728f629",
+      "summary.json": "b2c716880ed7caea88c4305662dc585ab7bf0cba800788beced9e34e98d37208"
     },
     "errors": [],
-    "manifest_sha256": "79012a7b31ffba455f94b5d6e1bdafba55ac9ffc635b9951eddb769c78dccf75",
+    "manifest_sha256": "70300bf8f22a69b9ace30ba3f44305b7344c4c91edea07a5632e42b722862b54",
     "ok": true
   },
   "baseline_mode": "implicit_existing_output",
@@ -91,18 +93,19 @@
       "file_sha256": {
         "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
         "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
-        "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
-        "tools/generate_runtime_parity_case_study.py": "48f8e30225deea6d773d3976c8dec1d38d011f218c095b168590da4aa3b02d05",
+        "tools/eval_coco.py": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
+        "tools/generate_runtime_parity_case_study.py": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
         "tools/generate_smoke_assets.py": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
+        "yolozu/api.py": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
         "yolozu/datasets/coco.py": "ed7651246e27518fdbf7d4a4fd377a3a254b5638fd23a12c31390c11f4d314ad",
-        "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
+        "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
         "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
       },
-      "head": "ff5ce7c8eecbe141bca3c5f1edf30a823da3f022"
+      "head": "2218b465fe2c6f8a0d2a541df293f198a9fe76c6"
     },
     "source_clean_before_run": true,
-    "source_sha256": "26f3df126493dff7499b320149e1519ce51b20207066306d81160b0bfb55d0ef",
-    "summary_sha256": "961d60b8e0b7a51af0e441ce161e521ff1485a5f10a6546cdb31ef37862186c4",
+    "source_sha256": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+    "summary_sha256": "e79685be9b7783da7ace3d4d35475af2a6f57e4e81d999e102a9963d3ddbebd3",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "checks": [
@@ -149,8 +152,8 @@
       "ok": true
     },
     {
-      "actual": "26f3df126493dff7499b320149e1519ce51b20207066306d81160b0bfb55d0ef",
-      "expected": "26f3df126493dff7499b320149e1519ce51b20207066306d81160b0bfb55d0ef",
+      "actual": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
+      "expected": "7b2c3b36ef9d134c2b20d7d111bdf0240bda8dd63a4588e15822b95a668068fa",
       "name": "source_sha256",
       "ok": true
     },

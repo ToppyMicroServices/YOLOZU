@@ -25,14 +25,16 @@ it.
 ## Commands
 
 ```bash
-python3 -m yolozu validate dataset <dataset> --strict
-python3 -m yolozu validate predictions <predictions.json> --strict
 python3 -m yolozu eval-coco \
   --dataset <dataset> \
   --split <split> \
   --predictions <predictions.json> \
   --output <report.json>
 ```
+
+`eval-coco` includes strict predictions validation. Run the standalone
+`validate dataset` or `validate predictions` commands only when a separate
+preflight artifact is useful.
 
 ## Expected Artifacts
 

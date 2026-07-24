@@ -1156,6 +1156,7 @@ def _git_source_state() -> dict[str, Any]:
         "tools/generate_smoke_assets.py",
         "tools/eval_coco.py",
         "tools/check_predictions_parity.py",
+        "yolozu/api.py",
         "yolozu/datasets/coco.py",
         "yolozu/eval/coco_eval.py",
         "yolozu/predictions/predictions_parity.py",

@@ -102,8 +102,6 @@ class AdoptionDocsTests(unittest.TestCase):
 
         self.assertEqual(kit_block, docs_block)
         for required in (
-            "validate dataset data/smoke --strict",
-            "validate predictions",
             "--dataset data/smoke",
             "--split val",
             "--predictions data/smoke/predictions/predictions_dummy.json",
@@ -111,6 +109,8 @@ class AdoptionDocsTests(unittest.TestCase):
             marker,
         ):
             self.assertIn(required, kit_block)
+        self.assertNotIn("validate dataset", kit_block)
+        self.assertNotIn("validate predictions", kit_block)
 
     def test_real_evaluation_preflight_is_explicit(self) -> None:
         kit = (

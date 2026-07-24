@@ -105,9 +105,6 @@ note-taking. Read this boundary aloud:
 Start with the repository-owned smoke fixture:
 
 ```bash
-python3 -m yolozu validate dataset data/smoke --strict
-python3 -m yolozu validate predictions \
-	data/smoke/predictions/predictions_dummy.json --strict
 python3 -m yolozu eval-coco \
 	--dataset data/smoke \
 	--split val \

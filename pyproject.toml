@@ -176,6 +176,7 @@ where = ["."]
 include = ["yolozu*", "rtdetr_pose*"]
 
 [tool.setuptools.package-data]
+"yolozu" = ["py.typed"]
 "yolozu.data" = [
   "configs/*.json",
   "configs/*.yaml",
