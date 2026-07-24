@@ -247,9 +247,11 @@ def main(argv: Iterable[str] | None = None) -> int:
                         gh_close_issue(repo, number)
                     closed += 1
 
-    print(f"Done. Linked {linked} Beads issues.")
+    linked_verb = "Would link" if args.dry_run else "Linked"
+    print(f"Done. {linked_verb} {linked} Beads issues.")
     if args.sync_close:
-        print(f"Done. Closed {closed} GitHub issues.")
+        closed_verb = "Would close" if args.dry_run else "Closed"
+        print(f"Done. {closed_verb} {closed} GitHub issues.")
     if args.dry_run:
         print("(dry-run: no changes written)")
     return 0

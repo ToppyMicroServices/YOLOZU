@@ -55,6 +55,11 @@ class BeadsHelperContractTests(unittest.TestCase):
                 self.assertIn("Usage:", proc.stdout)
                 self.assertIn("bd", proc.stdout)
 
+    def test_export_helper_uses_portable_copy_and_move_commands(self) -> None:
+        text = EXPORT_HELPER.read_text(encoding="utf-8")
+        self.assertNotIn("cp --", text)
+        self.assertNotIn("mv --", text)
+
     def test_active_workflow_uses_current_bd_commands(self) -> None:
         paths = (
             ROOT / "AGENTS.md",

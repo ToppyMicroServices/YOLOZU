@@ -4,11 +4,10 @@ import importlib.util
 import json
 import sys
 import tempfile
-import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +27,7 @@ def _write_snapshot(path: Path, record: dict[str, object]) -> None:
     )
 
 
-class LinkBeadsToGitHubTests(unittest.TestCase):
+class LinkBeadsToGitHubTests(TestCase):
     def test_snapshot_argument_is_required(self) -> None:
         with redirect_stderr(StringIO()):
             with self.assertRaises(SystemExit) as raised:
@@ -78,6 +77,7 @@ class LinkBeadsToGitHubTests(unittest.TestCase):
                 "DRY: CREATE+LINK T44-open -> new GitHub issue",
                 output.getvalue(),
             )
+            self.assertIn("Done. Would link 1 Beads issues.", output.getvalue())
 
     def test_dry_run_exact_match_may_read_state_but_never_mutates(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -126,6 +126,7 @@ class LinkBeadsToGitHubTests(unittest.TestCase):
             close.assert_not_called()
             self.assertIn("DRY: LINK T44-closed -> #17", output.getvalue())
             self.assertIn("DRY: CLOSE T44-closed -> #17", output.getvalue())
+            self.assertIn("Done. Would close 1 GitHub issues.", output.getvalue())
 
     def test_non_dry_run_keeps_create_and_link_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -175,4 +176,4 @@ class LinkBeadsToGitHubTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()

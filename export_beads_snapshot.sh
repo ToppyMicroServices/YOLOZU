@@ -67,16 +67,16 @@ baseline="$(mktemp "${TMPDIR:-/tmp}/beads-export-baseline.XXXXXX")"
 local_snapshot="$(mktemp "${TMPDIR:-/tmp}/beads-export-local.XXXXXX")"
 merged_snapshot="$(mktemp "${destination_dir}/.beads-export-merged.XXXXXX")"
 cleanup() {
-  rm -f -- "${baseline}" "${local_snapshot}" "${merged_snapshot}"
+  rm -f "${baseline}" "${local_snapshot}" "${merged_snapshot}"
 }
 trap cleanup EXIT
 
-cp -- "${destination}" "${baseline}"
+cp "${destination}" "${baseline}"
 "${BD_BIN}" export -o "${local_snapshot}"
 "${PYTHON_BIN}" "${SNAPSHOT_COMPAT}" restore-export \
   --local "${local_snapshot}" \
   --baseline "${baseline}" \
   --output "${merged_snapshot}"
-mv -- "${merged_snapshot}" "${destination}"
+mv "${merged_snapshot}" "${destination}"
 
 echo "exported compatible Beads snapshot to ${destination}"
