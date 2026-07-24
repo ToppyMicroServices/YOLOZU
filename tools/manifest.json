@@ -3696,10 +3696,10 @@
         "macos_ok": true
       },
       "requires": {
+        "notes": "Required for real COCOeval only; --dry-run performs strict validation/conversion without pycocotools.",
         "python_packages": [
           "pycocotools"
-        ],
-        "notes": "Required for real COCOeval only; --dry-run performs strict validation/conversion without pycocotools."
+        ]
       },
       "runner": "python3",
       "summary": "Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with explicit repair and bounded-subset accounting; --dry-run does not require pycocotools.",
