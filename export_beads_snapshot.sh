@@ -77,6 +77,9 @@ cp "${destination}" "${baseline}"
   --local "${local_snapshot}" \
   --baseline "${baseline}" \
   --output "${merged_snapshot}"
+"${PYTHON_BIN}" -c \
+  'import os, stat, sys; os.chmod(sys.argv[2], stat.S_IMODE(os.stat(sys.argv[1]).st_mode))' \
+  "${destination}" "${merged_snapshot}"
 mv "${merged_snapshot}" "${destination}"
 
 echo "exported compatible Beads snapshot to ${destination}"

@@ -10,7 +10,7 @@ import json
 import os
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -18,6 +18,25 @@ from typing import Any, Iterable
 LEGACY_TOMBSTONE_LABEL = "beads-sync-legacy-tombstone"
 LEGACY_TOMBSTONE_METADATA_KEY = "beads_sync_legacy_tombstone"
 MARKER_SCHEMA_VERSION = 1
+PLACEHOLDER_VOLATILE_FIELDS = frozenset(
+    {
+        "_type",
+        "closed_at",
+        "comment_count",
+        "created_at",
+        "deleted_at",
+        "deleted_by",
+        "delete_reason",
+        "dependencies",
+        "dependency_count",
+        "dependent_count",
+        "labels",
+        "original_type",
+        "parent",
+        "status",
+        "updated_at",
+    }
+)
 
 
 class SnapshotError(ValueError):
@@ -203,6 +222,40 @@ def _legacy_marker(item: SnapshotRecord) -> dict[str, Any] | None:
     return marker
 
 
+def _placeholder_stable_view(
+    record: dict[str, Any],
+    *,
+    remove_marker: bool,
+) -> dict[str, Any]:
+    view = {
+        key: copy.deepcopy(value)
+        for key, value in record.items()
+        if key not in PLACEHOLDER_VOLATILE_FIELDS
+    }
+    metadata = view.get("metadata")
+    if metadata is None:
+        metadata = {}
+    if not isinstance(metadata, dict):
+        raise SnapshotError("placeholder metadata must be an object")
+    if remove_marker:
+        metadata.pop(LEGACY_TOMBSTONE_METADATA_KEY, None)
+    if metadata:
+        view["metadata"] = metadata
+    else:
+        view.pop("metadata", None)
+    return view
+
+
+def _timestamp_matches_imported_value(original: Any, current: Any) -> bool:
+    original_time = _parse_timestamp(original)
+    if original_time is None:
+        return True
+    current_time = _parse_timestamp(current)
+    if current_time is None:
+        return False
+    return abs((current_time - original_time).total_seconds()) <= 1
+
+
 def normalize_import(source: Path, output: Path) -> dict[str, Any]:
     source_records = _read_snapshot(source)
     normalized_lines: list[str] = []
@@ -293,16 +346,60 @@ def _parse_marker_original(item: SnapshotRecord) -> SnapshotRecord:
             f"record {item.issue_id}: marker is not an original tombstone"
         )
     labels = item.record.get("labels") or []
-    if LEGACY_TOMBSTONE_LABEL not in labels or item.record.get("status") != "closed":
+    if not isinstance(labels, list) or not all(
+        isinstance(label, str) for label in labels
+    ):
+        raise SnapshotError(f"record {item.issue_id}: labels must be a string array")
+
+    expected_record = copy.deepcopy(original_record)
+    expected_labels = expected_record.get("labels") or []
+    if not isinstance(expected_labels, list) or not all(
+        isinstance(label, str) for label in expected_labels
+    ):
         raise SnapshotError(
-            f"record {item.issue_id}: legacy tombstone placeholder was modified; "
-            "remove the marker explicitly before intentional resurrection"
+            f"record {item.issue_id}: original labels must be a string array"
         )
-    return SnapshotRecord(
+    expected_labels = list(dict.fromkeys([*expected_labels, LEGACY_TOMBSTONE_LABEL]))
+    expected_record["status"] = "closed"
+    expected_record["labels"] = expected_labels
+    if not expected_record.get("close_reason"):
+        expected_record["close_reason"] = (
+            expected_record.get("delete_reason")
+            or "Legacy tombstone retained for snapshot compatibility"
+        )
+
+    local_dependency_keys = {
+        _dependency_key(dependency) for dependency in _dependency_values(item)
+    }
+    original_item = SnapshotRecord(
         record=original_record,
         raw=original_raw,
         line_number=item.line_number,
     )
+    original_dependency_keys = {
+        _dependency_key(dependency) for dependency in _dependency_values(original_item)
+    }
+    placeholder_changed = (
+        item.record.get("status") != "closed"
+        or set(labels) != set(expected_labels)
+        or not local_dependency_keys.issubset(original_dependency_keys)
+        or _placeholder_stable_view(item.record, remove_marker=True)
+        != _placeholder_stable_view(expected_record, remove_marker=False)
+        or not _timestamp_matches_imported_value(
+            original_record.get("created_at"),
+            item.record.get("created_at"),
+        )
+        or not _timestamp_matches_imported_value(
+            original_record.get("updated_at"),
+            item.record.get("updated_at"),
+        )
+    )
+    if placeholder_changed:
+        raise SnapshotError(
+            f"record {item.issue_id}: legacy tombstone placeholder was modified; "
+            "remove the marker explicitly before intentional resurrection"
+        )
+    return original_item
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -310,9 +407,12 @@ def _parse_timestamp(value: Any) -> datetime | None:
         return None
     normalized = f"{value[:-1]}+00:00" if value.endswith("Z") else value
     try:
-        return datetime.fromisoformat(normalized)
+        parsed = datetime.fromisoformat(normalized)
     except ValueError:
         return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 def _strictly_newer(candidate: SnapshotRecord, baseline: SnapshotRecord) -> bool:
@@ -321,6 +421,27 @@ def _strictly_newer(candidate: SnapshotRecord, baseline: SnapshotRecord) -> bool
     if candidate_time is None or baseline_time is None:
         return False
     return candidate_time > baseline_time
+
+
+def _require_local_not_older(
+    local_item: SnapshotRecord,
+    baseline_item: SnapshotRecord,
+) -> None:
+    local_time = _parse_timestamp(local_item.record.get("updated_at"))
+    baseline_time = _parse_timestamp(baseline_item.record.get("updated_at"))
+    if baseline_time is None:
+        return
+    if local_time is None:
+        raise SnapshotError(
+            f"record {local_item.issue_id}: local updated_at is missing or invalid "
+            "while the remote baseline has a timestamp; rerun "
+            "refresh_beads_sync.sh before exporting"
+        )
+    if baseline_time > local_time:
+        raise SnapshotError(
+            f"record {local_item.issue_id}: remote baseline is newer than the "
+            "local export; rerun refresh_beads_sync.sh before exporting"
+        )
 
 
 def _merge_baseline_dependencies(
@@ -403,6 +524,7 @@ def restore_export(local: Path, baseline: Path, output: Path) -> dict[str, Any]:
                     "silently resurrected by a non-newer local row"
                 )
         else:
+            _require_local_not_older(local_item, baseline_item)
             output_lines.append(_merge_baseline_dependencies(local_item, baseline_item))
 
         emitted_ids.add(local_item.issue_id)

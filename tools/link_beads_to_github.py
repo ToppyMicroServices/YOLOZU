@@ -46,7 +46,9 @@ def run(cmd: list[str], *, input_text: str | None = None) -> str:
 
 def detect_repo() -> str:
     # Prefer gh's view of the current repo (respects forks/remotes)
-    out = run(["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]).strip()
+    out = run(
+        ["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]
+    ).strip()
     if not out:
         raise RuntimeError("Failed to detect repo via gh repo view")
     return out
@@ -171,7 +173,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         required=True,
         help="Pulled and compatibility-exported Beads issues JSONL snapshot",
     )
-    p.add_argument("--only", action="append", default=[], help="Only link specified Beads IDs (repeatable)")
+    p.add_argument(
+        "--only",
+        action="append",
+        default=[],
+        help="Only link specified Beads IDs (repeatable)",
+    )
     p.add_argument(
         "--sync-close",
         action="store_true",
@@ -202,7 +209,12 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     allow = set(args.only)
     issues = load_beads_jsonl(beads_path)
-    targets = [i for i in issues if (not allow or i.get("id") in allow)]
+    targets = [
+        issue
+        for issue in issues
+        if str(issue.get("status") or "").lower() != "tombstone"
+        and (not allow or issue.get("id") in allow)
+    ]
 
     linked = 0
     closed = 0
@@ -214,6 +226,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             continue
 
         number = parse_gh_external_ref(bead.get("external_ref"))
+        status = str(bead.get("status") or "").lower()
+        should_sync_close = args.sync_close and status in {"closed", "done"}
 
         # Linking mode: create/link external_ref if missing.
         if number is None:
@@ -224,6 +238,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             elif args.dry_run:
                 print(f"DRY: CREATE+LINK {bead_id} -> new GitHub issue")
                 linked += 1
+                if should_sync_close:
+                    print(f"DRY: CLOSE {bead_id} -> new GitHub issue after creation")
+                    closed += 1
                 continue
             else:
                 number = gh_create_issue(repo, title, format_body(bead))
@@ -236,16 +253,14 @@ def main(argv: Iterable[str] | None = None) -> int:
             linked += 1
 
         # Close-sync mode: if Beads is closed/done and external_ref exists, close GH issue.
-        if args.sync_close and number is not None:
-            status = str(bead.get("status") or "").lower()
-            if status in {"closed", "done"}:
-                state = gh_get_state(repo, number)
-                if state != "closed":
-                    prefix = "DRY: " if args.dry_run else ""
-                    print(f"{prefix}CLOSE {bead_id} -> #{number}")
-                    if not args.dry_run:
-                        gh_close_issue(repo, number)
-                    closed += 1
+        if should_sync_close and number is not None:
+            state = gh_get_state(repo, number)
+            if state != "closed":
+                prefix = "DRY: " if args.dry_run else ""
+                print(f"{prefix}CLOSE {bead_id} -> #{number}")
+                if not args.dry_run:
+                    gh_close_issue(repo, number)
+                closed += 1
 
     linked_verb = "Would link" if args.dry_run else "Linked"
     print(f"Done. {linked_verb} {linked} Beads issues.")

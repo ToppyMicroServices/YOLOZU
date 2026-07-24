@@ -46,11 +46,11 @@ REMOTE=upstream SYNC_BRANCH=beads-sync bash refresh_beads_sync.sh
 
 ## Beads stateを共有する
 
-export前にもう一度refreshします。JSON形式のimport結果、特に
-`updated_issues`、`stale_skipped_ids`、`tie_kept_local_ids` を確認します。
+export前に最新のbaselineをpullし、その後でもう一度refreshします。JSON形式の
+import結果、特に `updated_issues`、`stale_skipped_ids`、
+`tie_kept_local_ids` を確認します。
 
 ```bash
-bash refresh_beads_sync.sh
 git fetch origin +refs/heads/beads-sync:refs/remotes/origin/beads-sync
 
 COMMON_DIR="$(git rev-parse --path-format=absolute --git-common-dir)"
@@ -65,6 +65,7 @@ if [[ ! -e "${BEADS_WT}/.git" ]]; then
 fi
 
 git -C "${BEADS_WT}" pull --rebase origin beads-sync
+bash refresh_beads_sync.sh
 bash export_beads_snapshot.sh "${BEADS_WT}/.beads/issues.jsonl"
 git -C "${BEADS_WT}" diff --check
 git -C "${BEADS_WT}" add .beads/issues.jsonl
@@ -77,7 +78,10 @@ git -C "${BEADS_WT}" push origin beads-sync
 remoteにだけあるissue IDがlocal exportに無ければ出力前にfailし、legacy
 placeholderは元のtombstone JSONへlosslessに戻します。remoteのdependency
 edgeを保持し、新しいlocal issue/dependencyだけを追加します。出力は同じ
-directoryでatomic replaceされます。
+directoryでatomic replaceされます。baselineにlocal exportより新しい
+non-tombstone rowがあれば、古いlocal stateによる上書きを避けるためfailします。
+その場合は `bash refresh_beads_sync.sh` を再実行してからexportします。既存の
+snapshot fileのpermission modeも維持します。
 
 `.beads/interactions.jsonl` に変更がある場合は、そのfileもstageする前に
 localとremoteのappend-only logをstable `id` でmergeします。remote側の
@@ -136,5 +140,6 @@ bash export_beads_snapshot.sh "${BEADS_WT}/.beads/issues.jsonl"
 最初の互換exportでoperatorの入力snapshotを最新にし、最後の互換exportで
 新しい `external_ref` をpublication対象へ反映します。`--dry-run` はGitHubの
 検索とstate参照だけを許可し、GitHub Issueの作成/closeと `bd update` は
-行いません。既に `external_ref` があるrecordはlink対象からskipされます。
+行いません。historical tombstoneは対象外です。既に `external_ref` がある
+recordはlink対象からskipされます。
 非dry-runの前に `gh auth status` でGitHub CLIの認証を確認してください。

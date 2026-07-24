@@ -195,6 +195,54 @@ class BeadsSnapshotCompatTests(unittest.TestCase):
         ):
             COMPAT.restore_export(local, self.baseline, self.restored)
 
+    def test_restore_export_rejects_placeholder_field_edits(self) -> None:
+        mutations = {
+            "title": lambda record: record.__setitem__("title", "edited title"),
+            "notes": lambda record: record.__setitem__("notes", "edited notes"),
+            "external_ref": lambda record: record.__setitem__(
+                "external_ref",
+                "gh-99",
+            ),
+            "updated_at": lambda record: record.__setitem__(
+                "updated_at",
+                "2026-01-10T00:00:00Z",
+            ),
+        }
+
+        for field, mutate in mutations.items():
+            with self.subTest(field=field):
+                COMPAT.normalize_import(self.baseline, self.normalized)
+                local_records = _read_jsonl(self.normalized)
+                mutate(local_records[0])
+                local = self.base / f"local-{field}.jsonl"
+                _write_jsonl(local, local_records)
+
+                with self.assertRaisesRegex(
+                    COMPAT.SnapshotError,
+                    "placeholder was modified",
+                ):
+                    COMPAT.restore_export(local, self.baseline, self.restored)
+
+    def test_restore_export_rejects_newer_non_tombstone_baseline(self) -> None:
+        local_records = _read_jsonl(self.baseline)
+        local_records[2]["title"] = "stale local title"
+        local_records[2]["status"] = "open"
+        local_records[2]["updated_at"] = "2026-01-03T23:59:59Z"
+        local = self.base / "local.jsonl"
+        _write_jsonl(local, local_records)
+        self.restored.write_text("unchanged\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(
+            COMPAT.SnapshotError,
+            "remote baseline is newer than the local export",
+        ):
+            COMPAT.restore_export(local, self.baseline, self.restored)
+
+        self.assertEqual(
+            self.restored.read_text(encoding="utf-8"),
+            "unchanged\n",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

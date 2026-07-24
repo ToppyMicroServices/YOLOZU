@@ -57,7 +57,10 @@ These placeholders are not publishable state.
 `export_beads_snapshot.sh` requires the pulled remote snapshot as its baseline,
 refuses to drop any remote issue ID, restores the exact tombstone lines, and
 atomically replaces only `.beads/issues.jsonl`. It does not touch
-`.beads/interactions.jsonl`.
+`.beads/interactions.jsonl`. Treat compatibility placeholders as immutable:
+export fails instead of silently discarding edits to their issue fields,
+labels, metadata, or timestamps. Remove the compatibility marker only when
+intentionally resurrecting a deleted issue.
 
 Do not use `bd import --allow-stale` for normal sharing. It intentionally permits
 an older snapshot to overwrite newer local issue fields and is reserved for an

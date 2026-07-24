@@ -516,6 +516,8 @@ class BeadsExportImportIntegrationTests(unittest.TestCase):
         publish_dir.mkdir(parents=True)
         destination = publish_dir / "issues.jsonl"
         destination.write_text(self.snapshot_text, encoding="utf-8")
+        destination.chmod(0o640)
+        destination_mode = destination.stat().st_mode & 0o777
         interactions = publish_dir / "interactions.jsonl"
         interactions.write_bytes(b'{"id":"interaction-1","kind":"comment"}\n')
         interactions_before = interactions.read_bytes()
@@ -562,6 +564,7 @@ class BeadsExportImportIntegrationTests(unittest.TestCase):
             hashlib.sha256(interactions.read_bytes()).hexdigest(),
             interactions_sha256,
         )
+        self.assertEqual(destination.stat().st_mode & 0o777, destination_mode)
 
     def test_failed_import_restores_exact_pre_import_database(self) -> None:
         run(

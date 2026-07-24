@@ -79,6 +79,93 @@ class LinkBeadsToGitHubTests(TestCase):
             )
             self.assertIn("Done. Would link 1 Beads issues.", output.getvalue())
 
+    def test_dry_run_previews_close_after_planned_issue_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            snapshot = Path(tempdir) / "pulled.jsonl"
+            _write_snapshot(
+                snapshot,
+                {
+                    "id": "T44-closed",
+                    "title": "new closed issue",
+                    "status": "closed",
+                },
+            )
+
+            output = StringIO()
+            with (
+                mock.patch.object(
+                    LINKER,
+                    "find_exact_title_match",
+                    return_value=None,
+                ),
+                mock.patch.object(LINKER, "gh_get_state") as get_state,
+                mock.patch.object(LINKER, "gh_create_issue") as create,
+                mock.patch.object(LINKER, "bd_link_external_ref") as update,
+                mock.patch.object(LINKER, "gh_close_issue") as close,
+                redirect_stdout(output),
+            ):
+                result = LINKER.main(
+                    [
+                        "--repo",
+                        "example/repo",
+                        "--snapshot",
+                        str(snapshot),
+                        "--sync-close",
+                        "--dry-run",
+                    ]
+                )
+
+            self.assertEqual(result, 0)
+            get_state.assert_not_called()
+            create.assert_not_called()
+            update.assert_not_called()
+            close.assert_not_called()
+            self.assertIn(
+                "DRY: CREATE+LINK T44-closed -> new GitHub issue",
+                output.getvalue(),
+            )
+            self.assertIn(
+                "DRY: CLOSE T44-closed -> new GitHub issue after creation",
+                output.getvalue(),
+            )
+            self.assertIn("Done. Would close 1 GitHub issues.", output.getvalue())
+
+    def test_tombstones_are_not_link_targets(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            snapshot = Path(tempdir) / "pulled.jsonl"
+            _write_snapshot(
+                snapshot,
+                {
+                    "id": "T44-deleted",
+                    "title": "deleted issue",
+                    "status": "tombstone",
+                },
+            )
+
+            output = StringIO()
+            with (
+                mock.patch.object(LINKER, "find_exact_title_match") as search,
+                mock.patch.object(LINKER, "gh_create_issue") as create,
+                mock.patch.object(LINKER, "bd_link_external_ref") as update,
+                mock.patch.object(LINKER, "gh_close_issue") as close,
+                redirect_stdout(output),
+            ):
+                result = LINKER.main(
+                    [
+                        "--repo",
+                        "example/repo",
+                        "--snapshot",
+                        str(snapshot),
+                    ]
+                )
+
+            self.assertEqual(result, 0)
+            search.assert_not_called()
+            create.assert_not_called()
+            update.assert_not_called()
+            close.assert_not_called()
+            self.assertIn("Done. Linked 0 Beads issues.", output.getvalue())
+
     def test_dry_run_exact_match_may_read_state_but_never_mutates(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             snapshot = Path(tempdir) / "pulled.jsonl"
