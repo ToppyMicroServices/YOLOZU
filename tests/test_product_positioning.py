@@ -6,10 +6,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _section(text: str, heading: str) -> str:
-    start_marker = f"## {heading}\n"
-    start = text.index(start_marker) + len(start_marker)
-    end = text.find("\n## ", start)
-    return text[start:] if end == -1 else text[start:end]
+    lines = text.splitlines()
+    start_marker = f"## {heading}"
+    try:
+        start = lines.index(start_marker) + 1
+    except ValueError as exc:
+        raise AssertionError(f"missing README section: {start_marker}") from exc
+    end = next(
+        (index for index in range(start, len(lines)) if lines[index].startswith("## ")),
+        len(lines),
+    )
+    return "\n".join(lines[start:end])
 
 
 class TestProductPositioning(unittest.TestCase):
