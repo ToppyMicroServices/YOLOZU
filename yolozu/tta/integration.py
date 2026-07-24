@@ -6,7 +6,7 @@ import time
 from dataclasses import asdict, dataclass
 from typing import Any, Iterable
 
-from .config import TTTConfig
+from .config import SUPPORTED_TTT_METHODS, TTTConfig
 from .tent import TentConfig, TentRunner
 
 try:
@@ -420,8 +420,8 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         raise RuntimeError("TTT requires at least one batch from adapter.build_loader()")
 
     method = (config.method or "tent").lower()
-    if method not in ("tent", "mim", "cotta", "eata", "sar"):
-        raise ValueError("TTT method must be one of: tent, mim, cotta, eata, sar")
+    if method not in SUPPORTED_TTT_METHODS:
+        raise ValueError(f"TTT method must be one of: {', '.join(SUPPORTED_TTT_METHODS)}")
 
     steps = int(config.steps)
     if steps <= 0:

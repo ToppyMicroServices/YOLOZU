@@ -32,7 +32,7 @@ Legend:
 | Method | Status | Notes |
 |---|---:|---|
 | Tent | Supported | Entropy minimization style updates with guard rails.
-| MIM | Supported | Mutual-information based objective; safe presets.
+| MIM | Supported | Masked image modeling with masked reconstruction; safe presets.
 | CoTTA | Supported | Teacher-student style adaptation with reset/EMA policies.
 | EATA | Supported | Reliable sample selection + adaptation under constraints.
 | SAR | Supported | Sharpness-aware / robustness-style adaptation under safe policies.

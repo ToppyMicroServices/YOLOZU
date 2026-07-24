@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from typing import Iterable
 
 
+SUPPORTED_TTT_METHODS = ("tent", "mim", "cotta", "eata", "sar")
+
+
 @dataclass(frozen=True)
 class TTTConfig:
     enabled: bool = False

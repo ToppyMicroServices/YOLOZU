@@ -126,7 +126,8 @@ Current in-repo `rtdetr_pose` backbone choices:
   - default `postprocess` mode applies flip-based transforms to exported predictions
   - `rtdetr_pose` `model` mode reruns one horizontally flipped inference branch and
     merges it with the baseline predictions
-- TTT (Tent/MIM) integrated into `tools/export_predictions.py` via `--ttt`
+- Research TTT methods (`tent`, `mim`, `cotta`, `eata`, `sar`) integrated into
+  `tools/export_predictions.py` via `--ttt`
   - runs strictly pre-prediction to keep output schema unchanged
   - with `--wrap`, writes `meta.ttt` including config + report (losses, updated params,
     MIM mask ratio)
