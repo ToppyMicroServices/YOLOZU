@@ -35,7 +35,7 @@ bd update <id> --claim               # Claim work (assignee + in_progress)
 bd update <id> --status in_progress  # Alternative (no auto-claim)
 bd close <id>         # Complete work
 bash refresh_beads_sync.sh            # Import the remote exported snapshot
-bd export -o <path>/issues.jsonl      # Export the local issue snapshot
+bash export_beads_snapshot.sh <path>/issues.jsonl  # Preserve remote tombstones
 ```
 
 ## GitHub Issues Linking
@@ -55,8 +55,9 @@ bd update <id> --external-ref gh-123
   `tie_kept_local_ids` を確認する
 - 同一時刻の競合はremote snapshotと `bd show <id>` を比較し、採用する値を
   `bd update` で明示してから再exportする
-- Beadsの共有は `bd export` と `beads-sync` worktreeへのgit pushで行う
-  （全clone共通）。実行手順は `docs/beads_github_workflow.md` を参照する
+- Beadsの共有は `bash export_beads_snapshot.sh` と `beads-sync`
+  worktreeへのgit pushで行う（全clone共通）。raw `bd export` でremote
+  snapshotを上書きしない。実行手順は `docs/beads_github_workflow.md` を参照する
 - 通常の統合で `bd import --allow-stale` は使わない。これは古いsnapshotへ
   意図的に復元する場合だけの上書きオプション
 

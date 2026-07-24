@@ -22,6 +22,11 @@
       "rationale": "Repository maintenance check for top-level CLI flag drift."
     },
     {
+      "path": "tools/beads_snapshot_compat.py",
+      "disposition": "repository_operator",
+      "rationale": "Internal compatibility helper used by the repository Beads refresh/export transaction; not part of the packaged product CLI."
+    },
+    {
       "path": "tools/benchmark.py",
       "disposition": "compatibility_wrapper",
       "rationale": "Compatibility wrapper retained for older repo-local workflows; canonical benchmark entrypoints are manifest-declared elsewhere."
