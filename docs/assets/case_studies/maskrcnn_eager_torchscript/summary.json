@@ -60,7 +60,7 @@
   "results": {
     "eager": {
       "detections": 12,
-      "inference_seconds": 11.321321708994219,
+      "inference_seconds": 12.615153375001682,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -69,9 +69,9 @@
       }
     },
     "torchscript": {
-      "compile_seconds": 0.576045374997193,
+      "compile_seconds": 0.4990729579949402,
       "detections": 12,
-      "inference_seconds": 12.573523541999748,
+      "inference_seconds": 12.784884291999333,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -98,10 +98,10 @@
       "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "7bf06013eddf0796ede9fe3d3bca64a5bad67437"
+    "head": "f2bdc1fb12b910e88f404554ba19a14e2fffb7cc"
   },
   "status": "completed",
-  "timestamp": "2026-07-24T07:27:15Z",
+  "timestamp": "2026-07-24T07:38:42Z",
   "weights": {
     "enum": "MaskRCNN_ResNet50_FPN_V2_Weights.COCO_V1",
     "filename": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
