@@ -12,7 +12,8 @@ Training (CPU reference lane, metrics output):
 
 Inference / predictions export:
 - `python3 tools/export_predictions.py --adapter rtdetr_pose --dataset data/coco128 --checkpoint /path/to/checkpoint.pt --max-images 50 --wrap`
-- Torch acceleration knobs: add `--infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-amp bf16 --torch-channels-last --torch-inference-mode`
+- Torch acceleration knobs: add `--infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-compile-dynamic auto --torch-amp bf16 --torch-channels-last --torch-inference-mode` to the wrapped command above.
+- Requested compile runs fail closed until the first compiled model execution succeeds. Use `--allow-compile-fallback` only when eager fallback is acceptable; the wrapped output then records `actual.status=fallback` and must not be cited as compiled evidence.
 
 Scenario runner (metrics pipeline):
 - `yolozu test configs/examples/test_setting.yaml --adapter rtdetr_pose --dataset data/coco128 --checkpoint /path/to/checkpoint.pt --max-images 50`

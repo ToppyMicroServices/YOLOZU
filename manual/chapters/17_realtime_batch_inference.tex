@@ -235,15 +235,20 @@ if profiler_available():
 \end{lstlisting}
 
 \section{torch.compile and ONNX export helpers}
-The \texttt{yolozu.inference.torch\_export} module provides two orthogonal utilities:
+The \texttt{yolozu.inference.torch\_export} module provides related compile-tracking and ONNX export utilities:
 
 \begin{itemize}
-  \item \texttt{compile\_for\_inference(model, backend, mode)} --- wraps \texttt{torch.compile} with configurable backend (\texttt{inductor}, \texttt{aot\_eager}, etc.) and mode (\texttt{reduce-overhead}, \texttt{max-autotune}). Falls back gracefully when compilation is unavailable.
+  \item \texttt{compile\_for\_inference(model, ...)} --- wraps \texttt{torch.compile}, tracks backend, mode, fullgraph, and dynamic requests separately from actual execution, and fails closed through the first model call.
+  \item \texttt{get\_compile\_evidence(model)} --- returns the attached JSON-safe requested, actual, runtime-counter, and failure evidence.
   \item \texttt{export\_model\_onnx(model, sample\_input, output\_path, opset\_version, ...)} --- exports a \texttt{torch.nn.Module} to ONNX format with configurable opset, dynamic axes, and named I/O.
   \item \texttt{torch\_compile\_available()}, \texttt{torch\_export\_available()} --- feature-detection guards.
 \end{itemize}
 
-The \texttt{RTDETRPoseAdapter} integrates \texttt{compile\_for\_inference} via its \texttt{compile\_model}, \texttt{compile\_backend}, and \texttt{compile\_mode} constructor kwargs; when enabled, the model is automatically compiled at first \texttt{predict()} call.
+The \texttt{RTDETRPoseAdapter} integrates \texttt{compile\_for\_inference} via its \texttt{compile\_model}, backend, mode, fullgraph, dynamic, and explicit fallback constructor settings. A returned compile wrapper is only \texttt{pending\_first\_execution} after setup. It becomes \texttt{compiled} only after a model call completes. An unavailable API, invalid backend, setup error, lazy execution error, or \texttt{torch.\_dynamo.config.suppress\_errors=True} raises \texttt{TorchCompileError} by default because silent eager fallback cannot establish compiled evidence.
+
+The export CLI requires \cmd{--wrap} with \cmd{--torch-compile}. In wrapped metadata, \cmd{inference} then \cmd{torch_compile} records the request under \cmd{requested}, the established state under \cmd{actual}, and available \cmd{torch._dynamo} process-counter deltas under \cmd{evidence}.
+
+Eager fallback is opt-in through \cmd{--allow-compile-fallback}. It permits eager execution after a compile failure and records \cmd{actual.status=fallback}. Such an output is eager fallback evidence, not compiled evidence. A requested compile attempt removes an existing target before inference so an older successful JSON cannot survive a failed replacement attempt.
 
 \begin{lstlisting}[language=Python]
 from yolozu.inference.torch_export import (
@@ -251,6 +256,7 @@ from yolozu.inference.torch_export import (
 )
 
 fast = compile_for_inference(model, mode="reduce-overhead")
+fast(sample_input)  # establishes first-execution evidence
 export_model_onnx(model, sample_input, "model.onnx", opset_version=17)
 \end{lstlisting}
 
@@ -259,5 +265,5 @@ For real-time or deployment-relevant results, always report:
 \begin{itemize}
   \item hardware (GPU, driver, CUDA/TensorRT) and engine build settings
   \item end-to-end latency / FPS and measurement method
-  \item whether TTT/refinement/gates were enabled and their bounds
+  \item compile request/actual status and settings, graph/counter evidence, any fallback, and enabled TTT/refinement/gates with bounds
 \end{itemize}

@@ -25,7 +25,7 @@ For most day-to-day flows, start with:
 - `python3 -m yolozu demo overview --output reports/demo_overview_report.json` (full demo map: bbox/segmentation/keypoints/depth/pose6d coverage + dependency checks + visible quickstart command)
 - `python3 -m yolozu completion --shell bash` (or `--shell zsh`) to print shell completion script for `yolozu`.
 - `python3 -m yolozu export --backend {dummy,torch,onnxrt,trt,executorch} ...`
-  - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration; qualify these optional flags for the target backend and device.
+  - Torch backend can use `--infer-batch-size`, `--torch-compile*`, `--allow-compile-fallback`, `--torch-amp`, `--torch-channels-last`, `--torch-inference-mode` for lightweight inference acceleration. Requested compile runs require wrapped requested/actual evidence and fail closed through first execution unless fallback is explicit; qualify all optional flags for the target backend and device.
   - Experimental opt-in TTA extensions: enable with `--tta`; `postprocess` is the default prediction-transform mode, while `--tta-mode model` reruns one augmented branch for `rtdetr_pose` before merging predictions. Related controls include `--tta-keypoint-swap-pairs` and `--tta-model-merge-iou`.
   - Research-only opt-in TTT extensions: `--ttt --ttt-lite-non-torch` (+ `--ttt-lite-*` knobs); stable export/eval defaults do not enable these flags.
 - `python3 -m yolozu predict-images --input-dir /path/to/images ... --progress` (writes predictions JSON, PNG overlays, and optional HTML; checklist: `configs/quickstart/predict_images_dummy.yaml`)

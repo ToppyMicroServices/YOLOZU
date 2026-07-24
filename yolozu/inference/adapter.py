@@ -155,6 +155,9 @@ class RTDETRPoseAdapter(ModelAdapter):
         compile_model: bool = False,
         compile_backend: str = "inductor",
         compile_mode: str = "reduce-overhead",
+        compile_fullgraph: bool = False,
+        compile_dynamic: bool | None = None,
+        allow_compile_fallback: bool = False,
         amp: str = "off",
         channels_last: bool = False,
         use_inference_mode: bool = True,
@@ -173,6 +176,44 @@ class RTDETRPoseAdapter(ModelAdapter):
         self.compile_model = bool(compile_model)
         self.compile_backend = str(compile_backend)
         self.compile_mode = str(compile_mode)
+        self.compile_fullgraph = bool(compile_fullgraph)
+        self.compile_dynamic = compile_dynamic
+        self.allow_compile_fallback = bool(allow_compile_fallback)
+        self._compile_evidence: dict = {
+            "requested": {
+                "enabled": bool(self.compile_model),
+                "backend": self.compile_backend if self.compile_model else None,
+                "mode": self.compile_mode if self.compile_model else None,
+                "fullgraph": self.compile_fullgraph if self.compile_model else None,
+                "dynamic": self.compile_dynamic if self.compile_model else None,
+                "allow_fallback": (
+                    self.allow_compile_fallback if self.compile_model else False
+                ),
+            },
+            "actual": {
+                "status": (
+                    "pending_first_execution"
+                    if self.compile_model
+                    else "not_requested"
+                ),
+                "backend": None if self.compile_model else "eager",
+                "mode": None,
+                "fullgraph": None if self.compile_model else False,
+                "dynamic": None,
+            },
+            "evidence": {
+                "compile_api_available": None,
+                "setup_completed": False,
+                "first_execution_completed": False,
+                "fallback_execution_completed": False,
+                "counter_source": None,
+                "counter_delta": None,
+                "graph_count": None,
+                "graph_break_count": None,
+                "captured_call_count": None,
+            },
+            "failure": None,
+        }
         self.amp = str(amp).strip().lower()
         self.channels_last = bool(channels_last)
         self.use_inference_mode = bool(use_inference_mode)
@@ -302,13 +343,22 @@ class RTDETRPoseAdapter(ModelAdapter):
 
         # Optional torch.compile for inference speedup (PyTorch 2.x).
         if self.compile_model:
-            from yolozu.inference.torch_export import compile_for_inference
+            from yolozu.inference.torch_export import (
+                compile_for_inference,
+                get_compile_evidence,
+            )
 
             model = compile_for_inference(
                 model,
                 backend=self.compile_backend,
                 mode=self.compile_mode,
+                fullgraph=self.compile_fullgraph,
+                dynamic=self.compile_dynamic,
+                allow_fallback=self.allow_compile_fallback,
             )
+            compile_evidence = get_compile_evidence(model)
+            if isinstance(compile_evidence, dict):
+                self._compile_evidence = compile_evidence
 
         from yolozu.geometry.intrinsics import parse_intrinsics as _parse_intrinsics
 
@@ -367,6 +417,42 @@ class RTDETRPoseAdapter(ModelAdapter):
 
         self._backend = {"torch": torch, "model": model, "preprocess": preprocess, "num_classes_fg": num_classes_fg}
         self._lora_report = lora_report
+
+    def get_compile_evidence(self) -> dict:
+        import copy
+
+        if self._backend is not None:
+            from yolozu.inference.torch_export import get_compile_evidence
+
+            current = get_compile_evidence(self._backend["model"])
+            if isinstance(current, dict):
+                self._compile_evidence = current
+        return copy.deepcopy(self._compile_evidence)
+
+    def require_compile_established(self) -> dict:
+        report = self.get_compile_evidence()
+        if not self.compile_model:
+            return report
+        status = ((report.get("actual") or {}).get("status"))
+        if status == "compiled":
+            return report
+        if status == "fallback" and self.allow_compile_fallback:
+            completed = bool(
+                ((report.get("evidence") or {}).get("fallback_execution_completed"))
+            )
+            if completed:
+                return report
+            raise RuntimeError(
+                "torch.compile fallback was selected but no eager model input completed"
+            )
+        if status == "pending_first_execution":
+            raise RuntimeError(
+                "torch.compile was requested but no model input completed; "
+                "compiled execution cannot be established"
+            )
+        raise RuntimeError(
+            f"torch.compile was requested but actual status is {status!r}"
+        )
 
     def get_lora_report(self) -> dict | None:
         if self._backend is None and int(self.lora_r) > 0:
@@ -438,7 +524,16 @@ class RTDETRPoseAdapter(ModelAdapter):
             grad_ctx = torch.inference_mode if bool(self.use_inference_mode) else torch.no_grad
             with grad_ctx():
                 with _autocast_context(x_tensor):
-                    return model(x_tensor)
+                    result = model(x_tensor)
+            evidence = getattr(model, "_yolozu_compile_evidence", None)
+            if (
+                isinstance(evidence, dict)
+                and (evidence.get("actual") or {}).get("status") == "fallback"
+            ):
+                runtime = evidence.get("evidence")
+                if isinstance(runtime, dict):
+                    runtime["fallback_execution_completed"] = True
+            return result
 
         def _decode_single(
             *,

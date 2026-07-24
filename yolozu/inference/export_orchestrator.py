@@ -65,6 +65,151 @@ def ensure_wrapper(payload: Any) -> dict[str, Any]:
     }
 
 
+def validate_compile_report(
+    report: Any,
+    *,
+    enabled: bool,
+    backend: str,
+    mode: str,
+    fullgraph: bool,
+    dynamic: bool | None,
+    allow_fallback: bool,
+) -> None:
+    if not isinstance(report, dict):
+        raise ValueError("missing meta.inference.torch_compile evidence")
+    requested = report.get("requested")
+    actual = report.get("actual")
+    runtime = report.get("evidence")
+    if not isinstance(requested, dict) or not isinstance(actual, dict):
+        raise ValueError("compile evidence must separate requested and actual states")
+    if not isinstance(runtime, dict):
+        raise ValueError("compile evidence is missing runtime evidence")
+
+    expected_request = {
+        "enabled": bool(enabled),
+        "backend": str(backend) if enabled else None,
+        "mode": str(mode) if enabled else None,
+        "fullgraph": bool(fullgraph) if enabled else None,
+        "dynamic": dynamic if enabled else None,
+        "allow_fallback": bool(allow_fallback) if enabled else False,
+    }
+    if requested != expected_request:
+        raise ValueError(
+            f"compile request evidence mismatch: expected {expected_request}, got {requested}"
+        )
+
+    status = actual.get("status")
+    required_runtime_keys = {
+        "compile_api_available",
+        "setup_completed",
+        "first_execution_completed",
+        "fallback_execution_completed",
+        "counter_source",
+        "counter_delta",
+        "graph_count",
+        "graph_break_count",
+        "captured_call_count",
+    }
+    missing = sorted(required_runtime_keys - set(runtime))
+    if missing:
+        raise ValueError(f"compile runtime evidence missing keys: {missing}")
+
+    if not enabled:
+        expected_actual = {
+            "status": "not_requested",
+            "backend": "eager",
+            "mode": None,
+            "fullgraph": False,
+            "dynamic": None,
+        }
+        if actual != expected_actual:
+            raise ValueError(
+                "compile was not requested but actual state does not match "
+                f"eager execution: {actual}"
+            )
+        expected_runtime = {
+            "compile_api_available": None,
+            "setup_completed": False,
+            "first_execution_completed": False,
+            "fallback_execution_completed": False,
+            "counter_source": None,
+            "counter_delta": None,
+            "graph_count": None,
+            "graph_break_count": None,
+            "captured_call_count": None,
+        }
+        for key, value in expected_runtime.items():
+            if runtime.get(key) != value:
+                raise ValueError(
+                    f"compile was not requested but evidence.{key}={runtime.get(key)!r}"
+                )
+        if report.get("failure") is not None:
+            raise ValueError("compile was not requested but failure evidence is present")
+        return
+
+    if status == "compiled":
+        expected_actual = {
+            "status": "compiled",
+            "backend": str(backend),
+            "mode": str(mode),
+            "fullgraph": bool(fullgraph),
+            "dynamic": dynamic,
+        }
+        if actual != expected_actual:
+            raise ValueError(
+                f"actual compile settings mismatch: expected {expected_actual}, got {actual}"
+            )
+        if runtime.get("compile_api_available") is not True:
+            raise ValueError("compiled status requires an available torch.compile API")
+        if runtime.get("setup_completed") is not True:
+            raise ValueError("compiled status requires completed compile setup")
+        if runtime.get("first_execution_completed") is not True:
+            raise ValueError("compiled status requires a completed first execution")
+        if runtime.get("fallback_execution_completed") is not False:
+            raise ValueError("compiled status cannot include eager fallback execution")
+        if report.get("failure") is not None:
+            raise ValueError("compiled status cannot include compile failure evidence")
+        return
+
+    if status == "fallback" and allow_fallback:
+        expected_actual = {
+            "status": "fallback",
+            "backend": "eager",
+            "mode": None,
+            "fullgraph": False,
+            "dynamic": None,
+        }
+        if actual != expected_actual:
+            raise ValueError(
+                f"fallback actual state mismatch: expected {expected_actual}, got {actual}"
+            )
+        if runtime.get("first_execution_completed") is not False:
+            raise ValueError("fallback status cannot claim compiled first execution")
+        if runtime.get("fallback_execution_completed") is not True:
+            raise ValueError("fallback status requires completed eager execution")
+        failure = report.get("failure")
+        if not isinstance(failure, dict):
+            raise ValueError("fallback status requires compile failure evidence")
+        failure_phase = failure.get("phase")
+        if failure_phase not in {"setup", "first_execution"}:
+            raise ValueError("fallback compile failure phase is invalid")
+        if not isinstance(runtime.get("compile_api_available"), bool):
+            raise ValueError("fallback status requires compile API availability evidence")
+        if runtime.get("setup_completed") is not (
+            failure_phase == "first_execution"
+        ):
+            raise ValueError("fallback setup evidence does not match its failure phase")
+        if not isinstance(failure.get("type"), str) or not isinstance(
+            failure.get("message"), str
+        ):
+            raise ValueError("fallback compile failure evidence is incomplete")
+        return
+
+    raise ValueError(
+        f"requested compile execution was not established (actual status: {status!r})"
+    )
+
+
 def validate_export_numeric_args(args: argparse.Namespace) -> None:
     try:
         require_non_negative_int(args.max_images, flag_name="--max-images")
@@ -102,6 +247,13 @@ def resolve_path(path: str | Path) -> Path:
     if p.is_absolute():
         return p
     return REPO_ROOT / p
+
+
+def compile_dynamic_value(value: Any) -> bool | None:
+    normalized = str(value).strip().lower()
+    if normalized == "auto":
+        return None
+    return normalized == "true"
 
 
 def output_config_hash(path: Path) -> str | None:
@@ -170,6 +322,9 @@ def validate_torch_only_flags(*, args: argparse.Namespace, backend: str) -> None
         bool(args.torch_compile)
         or str(args.torch_compile_backend) != "inductor"
         or str(args.torch_compile_mode) != "reduce-overhead"
+        or bool(getattr(args, "torch_compile_fullgraph", False))
+        or str(getattr(args, "torch_compile_dynamic", "auto")) != "auto"
+        or bool(getattr(args, "allow_compile_fallback", False))
     )
     accel_opts_changed = bool(
         compile_opts_changed
@@ -341,12 +496,38 @@ def parse_common_export_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--image-size", type=int, nargs="+", default=None, help="Torch image size (one or two ints).")
     p.add_argument("--score-threshold", type=float, default=0.3, help="Torch score threshold (default: 0.3).")
     p.add_argument("--max-detections", type=int, default=50, help="Torch max detections (default: 50).")
-    p.add_argument("--torch-compile", action="store_true", help="Enable torch.compile for torch backend inference.")
+    p.add_argument(
+        "--torch-compile",
+        action="store_true",
+        help=(
+            "Request evidenced torch.compile execution for torch backend inference."
+        ),
+    )
     p.add_argument("--torch-compile-backend", default="inductor", help="torch.compile backend (default: inductor).")
     p.add_argument(
         "--torch-compile-mode",
         default="reduce-overhead",
         help="torch.compile mode (default: reduce-overhead).",
+    )
+    p.add_argument(
+        "--torch-compile-fullgraph",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require a single torch.compile graph (default: false).",
+    )
+    p.add_argument(
+        "--torch-compile-dynamic",
+        choices=("auto", "true", "false"),
+        default="auto",
+        help="torch.compile dynamic-shape policy: auto, true, or false (default: auto).",
+    )
+    p.add_argument(
+        "--allow-compile-fallback",
+        action="store_true",
+        help=(
+            "Allow explicit eager fallback when requested torch.compile setup or "
+            "first execution fails; records actual.status=fallback."
+        ),
     )
     p.add_argument(
         "--torch-amp",
@@ -535,6 +716,18 @@ def export_with_backend(
     dataset_fp = dataset_meta or dataset
 
     backend = str(args.backend)
+    compile_fullgraph = bool(getattr(args, "torch_compile_fullgraph", False))
+    compile_dynamic = str(getattr(args, "torch_compile_dynamic", "auto"))
+    allow_compile_fallback = bool(getattr(args, "allow_compile_fallback", False))
+    if allow_compile_fallback and not bool(args.torch_compile):
+        raise SystemExit("--allow-compile-fallback requires --torch-compile")
+    if (
+        str(args.torch_compile_backend) != "inductor"
+        or str(args.torch_compile_mode) != "reduce-overhead"
+        or compile_fullgraph
+        or compile_dynamic != "auto"
+    ) and not bool(args.torch_compile):
+        raise SystemExit("--torch-compile-* options require --torch-compile")
 
     adapter = None
     config_fp: dict[str, Any]
@@ -545,6 +738,9 @@ def export_with_backend(
                 bool(args.torch_compile)
                 or str(args.torch_compile_backend) != "inductor"
                 or str(args.torch_compile_mode) != "reduce-overhead"
+                or compile_fullgraph
+                or compile_dynamic != "auto"
+                or allow_compile_fallback
                 or str(args.torch_amp) != "off"
                 or bool(args.torch_channels_last)
                 or not bool(args.torch_inference_mode)
@@ -577,9 +773,28 @@ def export_with_backend(
             "max_detections": int(args.max_detections) if backend == "torch" else None,
             "infer_batch_size": int(args.infer_batch_size) if backend == "torch" else None,
             "torch_compile": {
-                "enabled": torch_compile_enabled,
-                "backend": (str(args.torch_compile_backend) if backend == "torch" else None),
-                "mode": (str(args.torch_compile_mode) if backend == "torch" else None),
+                "requested": {
+                    "enabled": torch_compile_enabled,
+                    "backend": (
+                        str(args.torch_compile_backend)
+                        if torch_compile_enabled
+                        else None
+                    ),
+                    "mode": (
+                        str(args.torch_compile_mode)
+                        if torch_compile_enabled
+                        else None
+                    ),
+                    "fullgraph": compile_fullgraph if torch_compile_enabled else None,
+                    "dynamic": (
+                        compile_dynamic_value(compile_dynamic)
+                        if torch_compile_enabled
+                        else None
+                    ),
+                    "allow_fallback": (
+                        allow_compile_fallback if torch_compile_enabled else False
+                    ),
+                },
             },
             "torch_amp": (str(args.torch_amp) if backend == "torch" else None),
             "torch_channels_last": (bool(args.torch_channels_last) if backend == "torch" else None),
@@ -771,15 +986,53 @@ def export_with_backend(
         if args.output == DEFAULT_PREDICTIONS_PATH and not args.run_dir:
             out_path = cache_out
 
+    def _validate_existing_compile_evidence(path: Path) -> None:
+        if backend != "torch":
+            return
+        try:
+            existing = ensure_wrapper(load_json(path))
+            existing_meta = existing.get("meta")
+            existing_inference = (
+                existing_meta.get("inference")
+                if isinstance(existing_meta, dict)
+                else None
+            )
+            existing_report = (
+                existing_inference.get("torch_compile")
+                if isinstance(existing_inference, dict)
+                else None
+            )
+            validate_compile_report(
+                existing_report,
+                enabled=bool(args.torch_compile),
+                backend=str(args.torch_compile_backend),
+                mode=str(args.torch_compile_mode),
+                fullgraph=compile_fullgraph,
+                dynamic=compile_dynamic_value(compile_dynamic),
+                allow_fallback=allow_compile_fallback,
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise SystemExit(
+                f"existing output has invalid torch.compile evidence: {path}: {exc} "
+                "(use --force to replace it)"
+            ) from exc
+
     if out_path.exists() and not args.force:
         ensure_output_matches(out_path, expected_config_hash=config_hash)
+        _validate_existing_compile_evidence(out_path)
         return out_path
 
     if cache_out is not None and cache_out.exists() and not args.force:
         ensure_output_matches(cache_out, expected_config_hash=config_hash)
+        _validate_existing_compile_evidence(cache_out)
         if cache_out != out_path:
             copy_file(cache_out, out_path)
         return out_path
+
+    if args.force:
+        for stale_path in {out_path, cache_out}:
+            if stale_path is not None and stale_path.exists():
+                stale_path.unlink()
 
     if backend in ("dummy", "torch"):
         if adapter is None:
@@ -836,6 +1089,8 @@ def export_with_backend(
                     str(args.torch_compile_backend),
                     "--torch-compile-mode",
                     str(args.torch_compile_mode),
+                    "--torch-compile-dynamic",
+                    compile_dynamic,
                     "--torch-amp",
                     str(args.torch_amp),
                     "--lora-r",
@@ -856,6 +1111,10 @@ def export_with_backend(
                 cmd.extend(["--lora-alpha", str(float(args.lora_alpha))])
             if bool(args.torch_compile):
                 cmd.append("--torch-compile")
+            if compile_fullgraph:
+                cmd.append("--torch-compile-fullgraph")
+            if allow_compile_fallback:
+                cmd.append("--allow-compile-fallback")
             cmd.append("--torch-channels-last" if bool(args.torch_channels_last) else "--no-torch-channels-last")
             cmd.append("--torch-inference-mode" if bool(args.torch_inference_mode) else "--no-torch-inference-mode")
             cmd.append("--lora-freeze-base" if bool(args.lora_freeze_base) else "--no-lora-freeze-base")
@@ -1026,6 +1285,27 @@ def export_with_backend(
     if not isinstance(meta, dict):
         meta = {}
         payload["meta"] = meta
+    if backend == "torch":
+        inference = meta.get("inference")
+        report = (
+            inference.get("torch_compile")
+            if isinstance(inference, dict)
+            else None
+        )
+        try:
+            validate_compile_report(
+                report,
+                enabled=bool(args.torch_compile),
+                backend=str(args.torch_compile_backend),
+                mode=str(args.torch_compile_mode),
+                fullgraph=compile_fullgraph,
+                dynamic=compile_dynamic_value(compile_dynamic),
+                allow_fallback=allow_compile_fallback,
+            )
+        except ValueError as exc:
+            if out_path.exists():
+                out_path.unlink()
+            raise SystemExit(f"invalid torch.compile evidence: {exc}") from exc
 
     if backend not in ("dummy", "torch") and bool(args.ttt) and bool(args.ttt_lite_non_torch):
         before_scores: list[float] = []
