@@ -107,6 +107,15 @@ Canonical pattern (artifacts-first):
   \item Export \path{predictions.json} from TensorRT and run parity vs ONNXRuntime predictions.
 \end{itemize}
 
+The exporter default and a protocol pin are different facts:
+\cmd{tools/export_trt.py} defaults to ONNX opset 18, while the current
+TensorRT/YOLO examples and self-hosted GPU smoke explicitly pin opset 17.
+Record the selected opset in export metadata and compare only artifacts from
+the same protocol. YOLOZU does not claim one universal TensorRT/CUDA version
+pair. A qualification record must retain the exact environment or container,
+GPU/driver context, TensorRT version, engine metadata, and parity report; see
+\path{docs/versions.md}.
+
 The main rule for parity is to keep preprocessing and output formats identical (letterbox/RGB, box format, score scaling), and keep NMS disabled in exported graphs when comparing raw outputs.
 
 \noindent\textbf{Input shape note:} Unlike PyTorch eager mode, ONNXRuntime and TensorRT are typically \textbf{shape-pinned} unless you explicitly export with dynamic axes / optimization profiles. If an ONNX or engine expects (for example) $64\times64$, feeding $640\times640$ will fail. The TensorRT exporter defaults to inferring \cmd{imgsz} from the engine input when possible (and accepts an explicit \cmd{--imgsz} override for dynamic engines).

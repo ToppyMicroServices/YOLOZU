@@ -58,8 +58,9 @@ are evidence of availability, not sufficient evidence for maturity promotion.
 |---|---|---|---|
 | Predictions schema | `schema_version=1`, entry `schema_version=2` | Stable validation/evaluation path; breaking changes require schema governance | [`schema_governance.md`](schema_governance.md), [`predictions_schema.md`](predictions_schema.md) |
 | Python package | `pyproject.toml` package metadata | Release gates must keep package version, changelog, and release trigger aligned | [`release_reliability_checklist.md`](release_reliability_checklist.md) |
-| ONNX export | Opset 17 target unless a protocol overrides it | Regenerate artifacts when runtime compatibility changes | [`versions.md`](versions.md), [`onnx_export_parity.md`](onnx_export_parity.md) |
-| TensorRT / CUDA | TensorRT 8.6.1, CUDA 12.1 target envelope | Treat as environment-qualified, not CPU default | [`versions.md`](versions.md), [`tensorrt_pipeline.md`](tensorrt_pipeline.md) |
+| PyTorch / ONNX Runtime | Package floors and the current CPU/test pins are separate: Torch-backed extras require `torch>=2.10.0`; CI pins `torch==2.10.0+cpu`, `onnx==1.21.0`, and `onnxruntime==1.24.2` | Treat the pins as evidence for their named repository environments, not every device or wheel variant | [`versions.md`](versions.md), `requirements-locks/requirements-ci.lock` |
+| ONNX export | `tools/export_trt.py` defaults to opset 18; current TensorRT/YOLO examples and GPU smoke explicitly pin opset 17 | Record the chosen opset and regenerate artifacts when the exporter/runtime protocol changes | [`versions.md`](versions.md), [`onnx_export_parity.md`](onnx_export_parity.md), [`tensorrt_pipeline.md`](tensorrt_pipeline.md) |
+| TensorRT / CUDA | No universal static version pair; the self-hosted workflow is configured with `nvcr.io/nvidia/tensorrt:24.08-py3` | Require run-specific container, driver/GPU, CUDA context, TensorRT version, engine metadata, and parity evidence | [`versions.md`](versions.md), [`tensorrt_pipeline.md`](tensorrt_pipeline.md) |
 | Training handoff | `training_run_summary` / `training_handoff` schemas | Machine-readable handoff must validate before external promotion | [`training_orchestration.md`](training_orchestration.md), [`schema_governance.md`](schema_governance.md) |
 
 ## Production Readiness Matrix

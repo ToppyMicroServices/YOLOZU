@@ -100,6 +100,7 @@ Supporting docs:
 - Security / cryptography scope: [`security_crypto_scope.md`](security_crypto_scope.md)
 - Repository governance / Scorecard posture: [`security_scorecard_governance.md`](security_scorecard_governance.md), [`repo_governance_audit.md`](repo_governance_audit.md)
 - Production readiness: [`production_readiness.md`](production_readiness.md)
+- Runtime version and qualification boundaries: [`versions.md`](versions.md)
 - SSOT capability coverage audit: [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
 - Adoption measurement, feedback cadence, and dated baseline: [`adoption/README.md`](adoption/README.md)
