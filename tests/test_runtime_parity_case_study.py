@@ -9,10 +9,9 @@ import subprocess
 import sys
 import tempfile
 import types
-import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from yolozu.datasets.coco import COCO_80_CLASSES
 from yolozu.predictions import validate_predictions_payload
@@ -41,7 +40,7 @@ def _load_tool(repo_root: Path):
     return module
 
 
-class TestRuntimeParityCaseStudy(unittest.TestCase):
+class TestRuntimeParityCaseStudy(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.repo_root = Path(__file__).resolve().parents[1]
@@ -727,4 +726,4 @@ class TestRuntimeParityCaseStudy(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()

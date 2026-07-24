@@ -712,9 +712,9 @@ def _comparison_svg(*, eager: dict[str, float], scripted: dict[str, float], outp
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#0b1220"/>',
         '<text x="44" y="48" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="24" font-weight="700">'
-        "Mask R-CNN: eager and TorchScript</text>",
+        + "Mask R-CNN: eager and TorchScript</text>",
         '<text x="44" y="76" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="14">'
-        "Same checkpoint, images, preprocessing, filtering, and YOLOZU evaluation lane</text>",
+        + "Same checkpoint, images, preprocessing, filtering, and YOLOZU evaluation lane</text>",
     ]
     for tick in range(6):
         value = tick / 5
@@ -757,7 +757,7 @@ def _comparison_svg(*, eager: dict[str, float], scripted: dict[str, float], outp
             '<rect x="442" y="450" width="14" height="14" rx="3" fill="#a78bfa"/>',
             '<text x="464" y="462" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">TorchScript</text>',
             '<text x="836" y="488" text-anchor="end" fill="#64748b" font-family="system-ui,sans-serif" font-size="11">'
-            "Descriptive two-image case study; not a performance ranking.</text>",
+            + "Descriptive two-image case study; not a performance ranking.</text>",
             "</svg>",
         ]
     )
