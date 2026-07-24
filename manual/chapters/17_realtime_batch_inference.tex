@@ -75,10 +75,26 @@ References:
 \begin{itemize}
   \item \path{docs/real_model_interface.md}
   \item \path{docs/tensorrt_pipeline.md}
+  \item \path{docs/checkpoint_compatibility.md}
 \end{itemize}
 
 \section{TensorRT pipeline (canonical)}
 The typical export route is PyTorch $\rightarrow$ ONNX $\rightarrow$ TensorRT (engine build), with parity checks.
+
+The public adapter, exporter, and backend suite use one fail-closed checkpoint
+loader. Full compatibility requires every current model-state name and shape
+to match after the documented uniform \cmd{module.} or \cmd{_orig_mod.} prefix
+normalization. Reports include key differences, tensor-count and parameter
+numel coverage, checkpoint/config SHA-256 values, and model identity. The
+default deserializer uses \cmd{weights_only=True}; paths are descriptive, while
+the hashes and model-state signature provide content identity. Use
+\cmd{--allow-partial-checkpoint} only for intentional transfer or diagnostic
+work; such results are labeled \cmd{status=partial} and are not
+full-checkpoint evidence. Each tool removes its requested success artifact
+before a real load, so an incompatible checkpoint cannot leave an older
+prediction, export, or parity report at that path. An existing-ONNX
+\cmd{--skip-onnx} run rejects \cmd{--checkpoint}, and the backend suite requires
+\cmd{torch} in \cmd{--backends} whenever a checkpoint is supplied.
 
 Canonical pattern (artifacts-first):
 \begin{itemize}

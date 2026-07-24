@@ -151,11 +151,15 @@ predictions_json: /path/to/predictions.json
 hardware: <gpu> | framework: <version>
 ```
 
-## Coco128 GPU run (2026-02-02)
+## Historical Coco128 GPU run (2026-02-02)
 
-This run uses the minimal RTDETRPose config with Hungarian matching enabled.
+This section preserves a historical run recorded in source commit
+`72f0862f2487c7a23267820cc2dfc4818e46118b`. The recorded command named
+`reports/rtdetr_pose_minimal_config.json`, but that config was not committed.
+The command is therefore incomplete and must not be presented as a
+reproducible current recipe.
 
-Command lines:
+Historical command record (not a current copy-paste recipe):
 
 ```bash
 python3 rtdetr_pose/tools/train_minimal.py \
@@ -181,9 +185,22 @@ python3 tools/eval_coco.py \
 
 Results:
 
-- Baseline mAP50-95 (reports/coco_eval_rtdetr_pose.json): 1.829e-06
-- New mAP50-95 (reports/coco_eval_rtdetr_pose_gpu_matcher.json): 0.000622
-- $\Delta$ mAP50-95: +0.000620
+- Recorded comparison baseline mAP50-95: 1.829e-06. The named baseline file
+  `reports/coco_eval_rtdetr_pose.json` is not tracked, so this value and the
+  recorded delta cannot be independently recomputed from the repository.
+- Historical mAP50-95
+  (`reports/coco_eval_rtdetr_pose_gpu_matcher.json`): 0.000622
+- Recorded historical delta: +0.000620
 - Predictions JSON: reports/pred_coco128_rtdetr_pose_gpu_matcher.json
 - Checkpoint: reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt
 - Hardware: NVIDIA RTX A4500
+
+The checkpoint is not fully compatible with the current
+`rtdetr_pose/configs/base.json`: only 20 of 308 current model-state tensors
+match by name and shape, and current model-parameter numel coverage is about
+3.61%. It now fails closed in public inference/export/parity paths. Treat the
+checkpoint, predictions, and evaluation as a historical provenance set, not
+current full-checkpoint evidence. Pinned hashes, source commit, missing-config
+status, and the compatibility summary are recorded in
+[`../reports/rtdetr_pose_coco128_gpu_matcher_historical.json`](../reports/rtdetr_pose_coco128_gpu_matcher_historical.json).
+Use a checkpoint produced from a checked-in current config for new runs.

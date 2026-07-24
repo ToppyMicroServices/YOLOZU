@@ -43,7 +43,22 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         description="Canonical PyTorch → ONNX → TensorRT export route (rtdetr_pose model).",
     )
     p.add_argument("--config", default="rtdetr_pose/configs/base.json", help="rtdetr_pose config path.")
-    p.add_argument("--checkpoint", default=None, help="Optional checkpoint path.")
+    p.add_argument(
+        "--checkpoint",
+        default=None,
+        help=(
+            "Optional checkpoint path; full compatibility is required by default "
+            "and --skip-onnx is not allowed."
+        ),
+    )
+    p.add_argument(
+        "--allow-partial-checkpoint",
+        action="store_true",
+        help=(
+            "Explicitly allow transfer/diagnostic loading of only name-and-shape "
+            "matches and record status=partial in ONNX metadata."
+        ),
+    )
     p.add_argument("--device", default="cpu", help="Torch device for ONNX export (default: cpu).")
     p.add_argument("--image-size", type=int, default=320, help="Dummy square input size for ONNX export.")
     p.add_argument("--onnx", default="models/model.onnx", help="Where to write the ONNX model.")
@@ -82,41 +97,15 @@ def _default_shape(image_size: int) -> str:
     return f"1x3x{s}x{s}"
 
 
-def _load_checkpoint_into_model(model: Any, checkpoint_path: Path) -> dict[str, Any]:
-    try:
-        import torch
-    except Exception as exc:  # pragma: no cover
-        raise RuntimeError("torch is required to load checkpoints") from exc
-
-    state = torch.load(str(checkpoint_path), map_location="cpu", weights_only=False)
-    if isinstance(state, dict) and "state_dict" in state:
-        state = state["state_dict"]
-
-    report: dict[str, Any] = {"path": str(checkpoint_path), "loaded": False, "matched_keys": 0, "skipped_keys": 0}
-    if not isinstance(state, dict):
-        model.load_state_dict(state, strict=False)
-        report["loaded"] = True
-        report["mode"] = "raw"
-        return report
-
-    model_state = model.state_dict()
-    filtered = {}
-    skipped = 0
-    for k, v in state.items():
-        if k in model_state and hasattr(v, "shape") and v.shape == model_state[k].shape:
-            filtered[k] = v
-        else:
-            skipped += 1
-    model.load_state_dict(filtered, strict=False)
-    report["loaded"] = True
-    report["mode"] = "filtered_shape_match"
-    report["matched_keys"] = int(len(filtered))
-    report["skipped_keys"] = int(skipped)
-    return report
-
-
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
+    if bool(args.skip_onnx) and args.checkpoint:
+        raise SystemExit(
+            "--checkpoint cannot be used with --skip-onnx because the existing ONNX artifact is not rebuilt"
+        )
+    if bool(args.allow_partial_checkpoint):
+        if not args.checkpoint:
+            raise SystemExit("--allow-partial-checkpoint requires --checkpoint")
 
     onnx_path = _resolve(str(args.onnx))
     onnx_path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +124,14 @@ def main(argv: list[str] | None = None) -> int:
         else engine_path.with_suffix(engine_path.suffix + ".meta.json")
     )
     engine_meta_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not bool(args.dry_run):
+        if not bool(args.skip_onnx):
+            onnx_path.unlink(missing_ok=True)
+            onnx_meta_path.unlink(missing_ok=True)
+        if not bool(args.skip_engine):
+            engine_path.unlink(missing_ok=True)
+            engine_meta_path.unlink(missing_ok=True)
 
     min_shape = str(args.min_shape) if args.min_shape else _default_shape(int(args.image_size))
     opt_shape = str(args.opt_shape) if args.opt_shape else _default_shape(int(args.image_size))
@@ -171,7 +168,16 @@ def main(argv: list[str] | None = None) -> int:
             ckpt_path = _resolve(str(args.checkpoint))
             if not ckpt_path.exists():
                 raise SystemExit(f"checkpoint not found: {ckpt_path}")
-            onnx_export_report["checkpoint_report"] = _load_checkpoint_into_model(model, ckpt_path)
+            from yolozu.inference.checkpoint_compatibility import (
+                load_checkpoint_compatible,
+            )
+
+            onnx_export_report["checkpoint_report"] = load_checkpoint_compatible(
+                model,
+                ckpt_path,
+                config_identity=_resolve(str(args.config)),
+                allow_partial=bool(args.allow_partial_checkpoint),
+            )
 
         device = str(args.device)
         model.to(device)
@@ -249,4 +255,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -240,7 +240,22 @@ def _parse_backends(value: str) -> list[str]:
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="RTDETRPose backend parity + benchmark suite (torch/onnxrt/trt).")
     p.add_argument("--config", required=True, help="rtdetr_pose JSON config.")
-    p.add_argument("--checkpoint", default=None, help="Optional checkpoint path.")
+    p.add_argument(
+        "--checkpoint",
+        default=None,
+        help=(
+            "Optional checkpoint path; requires torch in --backends and full "
+            "compatibility by default."
+        ),
+    )
+    p.add_argument(
+        "--allow-partial-checkpoint",
+        action="store_true",
+        help=(
+            "Explicitly allow transfer/diagnostic loading of only name-and-shape "
+            "matches and record status=partial in the suite report."
+        ),
+    )
     p.add_argument("--device", default="cpu", help="Torch device (default: cpu).")
     p.add_argument("--image-size", type=int, default=320, help="Square input size (default: 320).")
     p.add_argument("--batch", type=int, default=1, help="Batch size (default: 1).")
@@ -269,31 +284,32 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def _load_model(*, config_path: Path, checkpoint_path: Path | None, device: str):
-    try:
-        import torch
-    except Exception as exc:  # pragma: no cover
-        raise RuntimeError("torch is required for RTDETRPose torch backend") from exc
-
+def _load_model(
+    *,
+    config_path: Path,
+    checkpoint_path: Path | None,
+    device: str,
+    allow_partial_checkpoint: bool = False,
+):
     from rtdetr_pose.config import load_config
     from rtdetr_pose.factory import build_model
 
     cfg = load_config(str(config_path))
     model = build_model(cfg.model).eval()
+    checkpoint_report = None
     if checkpoint_path is not None:
-        state = torch.load(str(checkpoint_path), map_location="cpu", weights_only=False)
-        if isinstance(state, dict) and "state_dict" in state:
-            state = state["state_dict"]
-        if isinstance(state, dict):
-            model_state = model.state_dict()
-            filtered = {
-                k: v for k, v in state.items() if k in model_state and hasattr(v, "shape") and v.shape == model_state[k].shape
-            }
-            model.load_state_dict(filtered, strict=False)
-        else:
-            model.load_state_dict(state, strict=False)
+        from yolozu.inference.checkpoint_compatibility import (
+            load_checkpoint_compatible,
+        )
+
+        checkpoint_report = load_checkpoint_compatible(
+            model,
+            checkpoint_path,
+            config_identity=config_path,
+            allow_partial=bool(allow_partial_checkpoint),
+        )
     model.to(str(device))
-    return model
+    return model, checkpoint_report
 
 
 def _infer_torch(model, *, x: np.ndarray, device: str) -> dict[str, np.ndarray]:
@@ -630,6 +646,10 @@ def main(argv: list[str] | None = None) -> int:
     if out_path is None:
         raise SystemExit("--output is required")
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.unlink(missing_ok=True)
+
+    if bool(args.allow_partial_checkpoint) and not args.checkpoint:
+        raise SystemExit("--allow-partial-checkpoint requires --checkpoint")
 
     backends = _parse_backends(str(args.backends))
     config_path = _resolve(str(args.config))
@@ -639,6 +659,10 @@ def main(argv: list[str] | None = None) -> int:
     checkpoint_path = _resolve(str(args.checkpoint)) if args.checkpoint else None
     if checkpoint_path is not None and not checkpoint_path.exists():
         raise SystemExit(f"checkpoint not found: {checkpoint_path}")
+    if checkpoint_path is not None and "torch" not in backends:
+        raise SystemExit(
+            "--checkpoint requires torch in --backends so compatibility is verified"
+        )
 
     onnx_path = _resolve(str(args.onnx)) if args.onnx else None
     engine_path = _resolve(str(args.engine)) if args.engine else None
@@ -661,6 +685,7 @@ def main(argv: list[str] | None = None) -> int:
             },
             "config": str(config_path),
             "checkpoint": None if checkpoint_path is None else str(checkpoint_path),
+            "checkpoint_compatibility": None,
             "onnx": None if onnx_path is None else str(onnx_path),
             "engine": None if engine_path is None else str(engine_path),
             "onnx_meta": _json_file_record(onnx_meta_path, embed=bool(args.embed_meta)),
@@ -703,7 +728,13 @@ def main(argv: list[str] | None = None) -> int:
 
     model = None
     if "torch" in backends:
-        model = _load_model(config_path=config_path, checkpoint_path=checkpoint_path, device=str(args.device))
+        model, checkpoint_report = _load_model(
+            config_path=config_path,
+            checkpoint_path=checkpoint_path,
+            device=str(args.device),
+            allow_partial_checkpoint=bool(args.allow_partial_checkpoint),
+        )
+        report["meta"]["checkpoint_compatibility"] = checkpoint_report
 
     onnxrt = None
     if "onnxrt" in backends:

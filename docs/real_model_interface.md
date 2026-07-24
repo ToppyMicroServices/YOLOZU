@@ -12,6 +12,11 @@ Training (CPU reference lane, metrics output):
 
 Inference / predictions export:
 - `python3 tools/export_predictions.py --adapter rtdetr_pose --dataset data/coco128 --checkpoint /path/to/checkpoint.pt --max-images 50 --wrap`
+- Checkpoints fail closed unless all current model-state names and shapes match.
+  The wrapped output records tensor/parameter coverage, key differences,
+  checkpoint/config hashes, and model identity. Intentional transfer loading
+  requires `--allow-partial-checkpoint --wrap` and records `status=partial`;
+  see [`checkpoint_compatibility.md`](checkpoint_compatibility.md).
 - Torch acceleration knobs: add `--infer-batch-size 8 --torch-compile --torch-compile-backend inductor --torch-compile-mode reduce-overhead --torch-compile-dynamic auto --torch-amp bf16 --torch-channels-last --torch-inference-mode` to the wrapped command above.
 - Requested compile runs fail closed until the first compiled model execution succeeds. Use `--allow-compile-fallback` only when eager fallback is acceptable; the wrapped output then records `actual.status=fallback` and must not be cited as compiled evidence.
 
@@ -40,6 +45,9 @@ Backend parity + benchmark (torch vs ONNXRuntime vs TensorRT):
 - Export ONNX (and optional engine): `python3 tools/export_trt.py --skip-engine ...`
 - Run the suite: `python3 tools/rtdetr_pose_backend_suite.py --config ... --checkpoint ... --onnx ... [--engine ...] --backends torch,onnxrt,trt --output reports/rtdetr_pose_backend_suite.json`
 - Notes:
+  - The exporter and suite use the same fail-closed checkpoint loader as the
+    public adapter. Existing output targets are removed before a real load so
+    an incompatible checkpoint cannot leave a stale success artifact.
   - ONNXRuntime path needs `onnxruntime` (CPU is fine for CI).
   - TensorRT path needs `tensorrt` + CUDA bindings (`pycuda` or `cuda-python`) and a built engine plan.
 
@@ -97,4 +105,4 @@ Output per image (from `RTDETRPoseAdapter`):
 ## Gaps / follow-ups
 
 - `train_minimal.py` is the repository's reference trainer and not a claim of a universal state-of-the-art training stack.
-- For competitive results, plug in a full training repo and keep the adapter contract identical.
+- For competitive results, plug in a full training repo and keep the adapter interface contract identical.

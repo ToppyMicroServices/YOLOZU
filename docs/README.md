@@ -158,6 +158,7 @@ python3 -m yolozu eval-coco \
 
 Reference docs:
 - [Training / inference / export](training_inference_export.md)
+- [RT-DETR checkpoint compatibility](checkpoint_compatibility.md)
 - [Run contract](run_contract.md)
 
 ## C) Interface Contracts (predictions / adapter / TTT protocol)
@@ -177,7 +178,7 @@ python3 tools/validate_tool_manifest.py \
 
 Reference docs:
 - [Predictions schema](predictions_schema.md)
-- [Adapter contract](adapter_contract.md)
+- [Adapter interface contract](adapter_contract.md)
 - [TTT protocol](ttt_protocol.md)
 - [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
 
@@ -251,6 +252,7 @@ The benchmark report now records:
 
 Reference docs:
 - [TensorRT pipeline](tensorrt_pipeline.md)
+- [RT-DETR checkpoint compatibility](checkpoint_compatibility.md)
 - [Benchmark mode](benchmark_mode.md)
 - [Benchmark support matrix](benchmark_support_matrix.md)
 - [Backend runtime / license boundary matrix](benchmark_backend_runtime_matrix.md)

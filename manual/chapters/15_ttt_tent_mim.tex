@@ -216,7 +216,7 @@ python3 scripts/prepare_ttt_domain_shift_target.py \
 python3 -m yolozu predict-images \
   --backend torch --device cpu \
   --config rtdetr_pose/configs/base.json \
-  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --checkpoint /path/to/current-compatible.ckpt \
   --image-size 320 --score-threshold 0.05 --max-detections 20 \
   --input-dir reports/domain_shift/smoke_gaussian_blur_s3_1img/images/val \
   --max-images 1 \
@@ -228,7 +228,7 @@ python3 -m yolozu predict-images \
 python3 -m yolozu predict-images \
   --backend torch --device cpu \
   --config rtdetr_pose/configs/base.json \
-  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --checkpoint /path/to/current-compatible.ckpt \
   --image-size 320 --score-threshold 0.05 --max-detections 20 \
   --input-dir reports/domain_shift/smoke_gaussian_blur_s3_1img/images/val \
   --max-images 1 \
@@ -242,7 +242,7 @@ python3 -m yolozu predict-images \
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/ttt_method_results_summary.png}
-  \caption{Primary TTT result figure. Real fixed-subset result summary from the ten-image shifted probe in \texttt{reports/ttt\_improvement\_probe}. Tent, CoTTA, EATA, and SAR all improve from \texttt{map50=0.00326797} to \texttt{0.00392157} and from \texttt{map50\_95=0.000326797} to \texttt{0.000392157} under the same checkpoint, subset, and seed. MIM is shown separately as execution evidence because the current repo-backed MIM smoke fixture proves the masked-reconstruction path runs (\texttt{steps\_run=2}, \texttt{mean\_final\_loss=0.461853}) but does not change exported detections on its tiny two-image smoke subset.}
+  \caption{Primary TTT result figure. Real fixed-subset result summary from the ten-image shifted probe in \texttt{reports/ttt\_improvement\_probe}. Tent, CoTTA, EATA, and SAR all improve from \texttt{map50=0.00326797} to \texttt{0.00392157} and from \texttt{map50\_95=0.000326797} to \texttt{0.000392157} under the same checkpoint, subset, and seed. MIM is shown separately as a historical execution record: the older smoke run recorded \texttt{steps\_run=2} and \texttt{mean\_final\_loss=0.461853}, but its checkpoint is not current full-checkpoint evidence.}
   \label{fig:ttt-real-summary}
 \end{figure}
 
@@ -378,8 +378,8 @@ Recommended reading order:
 \textbf{Important note.}
 The shipped \cmd{mim} and \cmd{sar} boilerplates expand the safe defaults
 directly and force
-\cmd{--ttt-update-filter norm_only} so they run against the repo-shipped
-checkpoint without requiring LoRA-specific weights. If a team owns a dedicated
+\cmd{--ttt-update-filter norm_only}. Provide a current-compatible checkpoint
+unless the selected workflow documents a different fixture. If a team owns a dedicated
 adapter/LoRA checkpoint, it is better to copy the JSON boilerplate and switch
 the update filter there than to fall back to a long raw CLI invocation.
 The \cmd{mim} boilerplate also injects the repo-backed config
@@ -387,14 +387,17 @@ The \cmd{mim} boilerplate also injects the repo-backed config
 baseline and adapted export commands so the MIM branch is enabled without a
 manual config override.
 
-\subsection{Smoke compare snapshot (repo-shipped checkpoint)}
-We also validated the boilerplates against the repo-shipped checkpoint
+\subsection{Historical smoke compare snapshot}
+Source commit
+\path{72f0862f2487c7a23267820cc2dfc4818e46118b} recorded boilerplate runs against
 \path{reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt} on \path{data/smoke},
 \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}.
 
-This is a workflow validation snapshot, not a quality claim. The tiny smoke
-subset produced zero detections in both baseline and adapted runs, so the
-useful signal here is method completion and the TTT log behavior.
+The claimed checkpoint config was not committed, and the checkpoint is not
+fully compatible with the current model. These rows are preserved only as
+historical workflow records; they are neither current execution evidence nor a
+quality claim. Pinned hashes and the compatibility summary are in
+\path{reports/rtdetr_pose_coco128_gpu_matcher_historical.json}.
 
 \begin{table}[htbp]
 \centering
@@ -409,7 +412,7 @@ EATA & \path{reports/ttt_compare/eata_smoke_cpu} & completed & 0 & null \\
 SAR & \path{reports/ttt_compare/sar_smoke_cpu} & completed & 2 & 4.211009 \\
 \bottomrule
 \end{tabular}
-\caption{Smoke compare snapshot for the repo-shipped checkpoint on \texttt{data/smoke}, \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}. This is a workflow-validation table, not a quality leaderboard. Warning notes are intentionally moved out of the table for readability: MIM uses the repo-backed compare config \texttt{configs/examples/ttt\_compare/rtdetr\_pose\_mim\_compare.json}; EATA reports \cmd{eata_empty_selected_set} on both smoke images; Tent, CoTTA, and SAR complete without warnings on this smoke subset.}
+\caption{Historical smoke compare snapshot from source commit \texttt{72f0862} on \texttt{data/smoke}, \cmd{split=val}, \cmd{max-images=2}, \cmd{device=cpu}, with \cmd{--skip-eval}. This table preserves the recorded workflow outcome and is not current full-checkpoint evidence or a quality leaderboard.}
 \end{table}
 
 For the completed runs, the compact summaries are:
@@ -422,7 +425,9 @@ For the completed runs, the compact summaries are:
 \end{itemize}
 
 \subsection{How to read the smoke compare table}
-The smoke table above is a \textbf{workflow validation table}. It tells you whether the method ran safely and emitted reproducible artifacts. It does \emph{not} claim that one method is globally better than another.
+The smoke table above is a \textbf{historical workflow record}. It tells you
+what the source commit recorded; it does not prove current execution,
+reproducibility, or that one method is globally better than another.
 
 Read the columns in this order:
 \begin{enumerate}
@@ -673,7 +678,7 @@ bash scripts/ttt_compare.sh \
   --boilerplate mim \
   --dataset data/smoke \
   --split val \
-  --checkpoint reports/rtdetr_pose_ckpt_coco128_gpu_matcher.pt \
+  --checkpoint /path/to/current-compatible.ckpt \
   --run-dir reports/ttt_compare/mim_smoke_cpu \
   --device cpu \
   --max-images 2 \
@@ -697,16 +702,21 @@ bash scripts/ttt_compare.sh \
 \begin{itemize}
   \item Open \path{mim_before_after_compare.md} first.
   \item Then inspect \path{mim_ttt_log.json}; the MIM loss trace is more informative than Tent's entropy-only loss.
-  \item The repo-backed smoke example proves execution: \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, and \cmd{changed_images=0 / 2}.
-  \item The fixed real probe proves operator-visible impact: \cmd{steps_run=10}, \cmd{mean_final_loss=0.0791513}, \cmd{changed_images=10 / 10}, \cmd{map50 0.00326797 \rightarrow 0.00392157}, and \cmd{map50_95 0.000326797 \rightarrow 0.000392157}.
+  \item The historical smoke record reports \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, and \cmd{changed_images=0 / 2}; it is not current full-checkpoint evidence.
+  \item The fixed real probe proves operator-visible impact:
+  \cmd{steps_run=10}, \cmd{mean_final_loss=0.0791513}, and
+  \cmd{changed_images=10 / 10}. The metrics move from
+  \cmd{map50=0.00326797} to \cmd{0.00392157} and from
+  \cmd{map50_95=0.000326797} to \cmd{0.000392157}.
   \item When \cmd{pycocotools} is not installed in the current runtime, the compare falls back to \cmd{simple_map_proxy} instead of silently skipping evaluation.
 \end{itemize}
 
 \textbf{Concrete repo results.}
 \begin{itemize}
-  \item repo-backed smoke compare: \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, \cmd{changed_images=0 / 2}
+  \item historical smoke record: \cmd{steps_run=2}, \cmd{mean_final_loss=0.461853}, \cmd{changed_images=0 / 2}
   \item fixed real probe compare: \cmd{steps_run=10}, \cmd{mean_final_loss=0.0791513}, \cmd{changed_images=10 / 10}
-  \item fixed real probe metrics: \cmd{map50 0.00326797 \rightarrow 0.00392157}, \cmd{map50_95 0.000326797 \rightarrow 0.000392157}
+  \item fixed real probe metrics: \cmd{map50=0.00326797} to
+  \cmd{0.00392157}; \cmd{map50_95=0.000326797} to \cmd{0.000392157}
 \end{itemize}
 
 \textbf{Pros.}

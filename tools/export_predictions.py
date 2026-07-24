@@ -75,7 +75,15 @@ def _parse_args(argv):
     parser.add_argument(
         "--checkpoint",
         default=None,
-        help="Optional checkpoint for rtdetr_pose adapter.",
+        help="Optional checkpoint for rtdetr_pose adapter; full compatibility is required by default.",
+    )
+    parser.add_argument(
+        "--allow-partial-checkpoint",
+        action="store_true",
+        help=(
+            "Explicitly allow transfer/diagnostic loading of only name-and-shape "
+            "matches; requires --checkpoint and --wrap and records status=partial."
+        ),
     )
     parser.add_argument(
         "--lora-r",
@@ -527,6 +535,17 @@ def main(argv=None):
         raise SystemExit(
             "--torch-compile requires --wrap so requested and actual compile evidence is recorded"
         )
+    if bool(args.allow_partial_checkpoint):
+        if args.adapter != "rtdetr_pose":
+            raise SystemExit(
+                "--allow-partial-checkpoint is only supported with --adapter rtdetr_pose"
+            )
+        if not args.checkpoint:
+            raise SystemExit("--allow-partial-checkpoint requires --checkpoint")
+        if not bool(args.wrap):
+            raise SystemExit(
+                "--allow-partial-checkpoint requires --wrap so status=partial is recorded"
+            )
 
     dataset_root = Path(args.dataset) if args.dataset else (repo_root / "data" / "coco128")
     manifest = build_manifest(dataset_root, split=args.split)
@@ -548,6 +567,7 @@ def main(argv=None):
         adapter = RTDETRPoseAdapter(
             config_path=args.config,
             checkpoint_path=args.checkpoint,
+            allow_partial_checkpoint=bool(args.allow_partial_checkpoint),
             device=args.device,
             image_size=image_size or (320, 320),
             score_threshold=args.score_threshold,
@@ -572,8 +592,16 @@ def main(argv=None):
 
     output_path = repo_root / args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    if bool(args.torch_compile) and output_path.exists():
-        output_path.unlink()
+    output_path.unlink(missing_ok=True)
+    for enabled, requested_path in (
+        (bool(args.tta), args.tta_log_out),
+        (bool(args.ttt), args.ttt_log_out),
+    ):
+        if enabled and requested_path:
+            log_path = Path(requested_path)
+            if not log_path.is_absolute():
+                log_path = repo_root / log_path
+            log_path.unlink(missing_ok=True)
 
     def _ttt_or_die(_records):
         try:
@@ -758,6 +786,10 @@ def main(argv=None):
         except Exception:
             lora_report = None
 
+    checkpoint_report = None
+    if hasattr(adapter, "get_checkpoint_report"):
+        checkpoint_report = adapter.get_checkpoint_report()
+
     if args.wrap:
         ttt_meta = build_ttt_settings_from_args(args)
         ttt_meta["report"] = ttt_report
@@ -782,6 +814,7 @@ def main(argv=None):
                 },
                 "inference": {
                     "infer_batch_size": int(args.infer_batch_size),
+                    "checkpoint_compatibility": checkpoint_report,
                     "torch_compile": compile_report,
                     "torch_amp": str(args.torch_amp),
                     "torch_channels_last": bool(args.torch_channels_last),

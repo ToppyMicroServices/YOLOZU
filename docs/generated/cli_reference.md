@@ -197,7 +197,7 @@ Contact: develop@toppymicros.com
 | eval_suite | stable | tools/eval_suite.py | Evaluate prediction JSONs and preserve declared exporter settings in a single suite report. |
 | eval_synthgen | experimental | tools/eval_synthgen.py | Evaluate SynthGen predictions (keypoints + segmentation + depth) against shard ground truth. |
 | export_actions_openapi | stable | tools/export_actions_openapi.py | Export a static OpenAPI JSON schema for YOLOZU Actions API registration. |
-| export_predictions | stable | tools/export_predictions.py | Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes. |
+| export_predictions | stable | tools/export_predictions.py | Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes. |
 | export_predictions_coco_keypoints | experimental | tools/export_predictions_coco_keypoints.py | Convert COCO-style keypoints results JSON into the YOLOZU predictions interface contract for downstream eval and parity. |
 | export_predictions_detectron2 | experimental | tools/export_predictions_detectron2.py | Run fail-closed Detectron2 inference and export explicitly versioned predictions.json with protocol, execution-evidence, and provenance metadata. |
 | export_predictions_executorch | experimental | tools/export_predictions_executorch.py | Decode declared ExecuTorch runtime output JSON into YOLOZU predictions JSON (dry-run supported for interface contract validation). |
@@ -212,7 +212,7 @@ Contact: develop@toppymicros.com
 | export_predictions_yolo_runtime | stable | tools/export_predictions_yolo_runtime.py | Run bounded external YOLO-runtime inference and export explicitly versioned predictions.json with cardinality-checked execution evidence. |
 | export_predictions_yolov5 | experimental | tools/export_predictions_yolov5.py | Convert YOLOv5 outputs (save-txt or xyxy JSON) into YOLOZU predictions.json with recorded export_settings. |
 | export_predictions_yolox | experimental | tools/export_predictions_yolox.py | Run fail-closed YOLOX inference (or dry-run) and export explicitly versioned predictions.json with execution evidence and exp/checkpoint provenance. |
-| export_trt | experimental | tools/export_trt.py | Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. |
+| export_trt | experimental | tools/export_trt.py | Fail-closed PyTorch → ONNX → TensorRT export route with shared RT-DETR checkpoint compatibility evidence. |
 | fetch_coco128 | stable | tools/fetch_coco128.sh | Fetch tiny COCO subset (YOLO-format) into data/coco128 (official COCO hosting). |
 | fetch_model | stable | yolozu/cli.py | Download a model artifact with cache reuse, sha256 pinning, and explicit license/integrity gates. |
 | fresh_install_journey | stable | scripts/fresh_install_journey.sh | Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey. |
@@ -246,7 +246,7 @@ Contact: develop@toppymicros.com
 | render_synthgen_overlay | experimental | tools/render_synthgen_overlay.py | Render semantic + instance + keypoint overlays from SynthGen shard samples. |
 | render_ttt_manual_figures | research | tools/render_ttt_manual_figures.py | Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use. |
 | report_dependency_licenses | stable | tools/report_dependency_licenses.py | Generate a best-effort dependency license report from installed Python packages (not legal advice). |
-| rtdetr_pose_backend_suite | experimental | tools/rtdetr_pose_backend_suite.py | Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt). |
+| rtdetr_pose_backend_suite | experimental | tools/rtdetr_pose_backend_suite.py | Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence. |
 | rtdetr_pose_train_continual | research | rtdetr_pose/tools/train_continual.py | Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract). |
 | run_actions_api | stable | tools/run_actions_api.py | Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend. |
 | run_external_finetune_smoke | experimental | tools/run_external_finetune_smoke.py | Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary. |
