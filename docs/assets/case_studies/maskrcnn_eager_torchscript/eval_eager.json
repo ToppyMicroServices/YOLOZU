@@ -12,7 +12,7 @@
     "assume_class_id_is_category_id": false,
     "classes": null
   },
-  "predictions": "docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json",
+  "predictions": "/private/tmp/yolozu-case-codeql-baseline.Pr4ITs/predictions_eager.json",
   "protocol": null,
   "protocol_id": null,
   "report_schema_version": 1,
@@ -32,6 +32,6 @@
     0.7125,
     0.888888888888889
   ],
-  "timestamp": "2026-07-24T07:39:08Z",
+  "timestamp": "2026-07-24T08:43:40Z",
   "warnings": []
 }

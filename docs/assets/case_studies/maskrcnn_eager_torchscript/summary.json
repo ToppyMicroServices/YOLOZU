@@ -9,8 +9,7 @@
     "parity": "parity.json",
     "predictions_eager": "predictions_eager.json",
     "predictions_torchscript": "predictions_torchscript.json",
-    "protocol": "protocol.json",
-    "reproduction_check": "reproduction_check.json"
+    "protocol": "protocol.json"
   },
   "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
   "execution_evidence": {
@@ -60,7 +59,7 @@
   "results": {
     "eager": {
       "detections": 12,
-      "inference_seconds": 12.615153375001682,
+      "inference_seconds": 14.228535499998543,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -69,9 +68,9 @@
       }
     },
     "torchscript": {
-      "compile_seconds": 0.4990729579949402,
+      "compile_seconds": 0.6335100840005907,
       "detections": 12,
-      "inference_seconds": 12.784884291999333,
+      "inference_seconds": 13.423243417004414,
       "metrics": {
         "ar100": 0.8104166666666668,
         "map50": 0.9381188118811881,
@@ -92,16 +91,16 @@
       "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
       "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
       "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
-      "tools/generate_runtime_parity_case_study.py": "c8c43d4308d3b4d8f39ece2cecac6d551755bff1d650d0439fb414049fd943cc",
+      "tools/generate_runtime_parity_case_study.py": "958629416b468c69ac6c5644a5e3bfe3dcdd39bcfd89f5c7128ca3809e041065",
       "tools/generate_smoke_assets.py": "d243ce3572eeb3d1a20b8a2c8a0ce4b6f3fa3b26401b61e7a7f759a0840515ec",
       "yolozu/datasets/coco.py": "dabc588588671e1fa6a1e8ef8077824cd36856fa97d976f2949632e4be30d506",
       "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
       "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
     },
-    "head": "f2bdc1fb12b910e88f404554ba19a14e2fffb7cc"
+    "head": "489d04f22d0e8240d6ff8d51b5e4860fb25afc29"
   },
   "status": "completed",
-  "timestamp": "2026-07-24T07:38:42Z",
+  "timestamp": "2026-07-24T08:43:12Z",
   "weights": {
     "enum": "MaskRCNN_ResNet50_FPN_V2_Weights.COCO_V1",
     "filename": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",

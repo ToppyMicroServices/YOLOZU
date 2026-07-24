@@ -1,11 +1,11 @@
 {
   "bbox_atol": 1e-07,
   "bbox_format": "cxcywh_norm",
-  "candidate": "docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_torchscript.json",
+  "candidate": "/private/tmp/yolozu-case-codeql-baseline.Pr4ITs/predictions_torchscript.json",
   "images": 2,
   "iou_thresh": 0.999999,
   "ok": true,
-  "reference": "docs/assets/case_studies/maskrcnn_eager_torchscript/predictions_eager.json",
+  "reference": "/private/tmp/yolozu-case-codeql-baseline.Pr4ITs/predictions_eager.json",
   "results": [
     {
       "counts": {
