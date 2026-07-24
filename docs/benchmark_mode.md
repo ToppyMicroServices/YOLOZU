@@ -35,19 +35,33 @@ It still does **not** claim end-to-end backend inference benchmarking for every
 format. `executorch` and `opencv_dnn` are explicit unsupported/skipped benchmark
 orchestration lanes for now, and missing runtime/model artifacts are reported honestly.
 
-## Where YOLOZU still trails the broader benchmark/export surface
+## Where YOLOZU differs from the broader benchmark/export surface
 
-The broader public benchmark/export surface still exposes more formats and task
-paths than YOLOZU does. Today the most important remaining gaps are:
+The broader public benchmark/export surface exposes more formats and task
+paths than YOLOZU does. These breadth differences are documented candidates,
+not current implementation priorities:
 
-- missing benchmark/export formats such as `coreml`, `saved_model`, `tflite`,
-  `ncnn`, `rknn`, and `paddle`; `openvino` detect is conditional and reports
-  skipped when the runtime or IR artifact is unavailable
-- incomplete parity attachment for artifact-backed classification and OBB lanes
-- additional task/source/format rules will be needed as new backend-specific
-  knobs are implemented
+- formats such as `coreml`, `saved_model`, `tflite`, `ncnn`, `rknn`, and
+  `paddle` remain planned rather than supported; `openvino` detect remains
+  conditional and reports skipped when the runtime or IR artifact is
+  unavailable
+- parity attachment remains incomplete for artifact-backed classification and
+  OBB lanes
+- additional task/source/format rules would be needed with any future
+  backend-specific knobs
 
-The detailed audit and recommended implementation order live in:
+The current grouping surface already provides `--run-id`, `--output`,
+`--history`, `--predictions-output`, `--eval-output`, and `--parity-output`.
+An additional grouping alias such as `--name`, the `--keras` flag,
+backend-specific INT8 calibration semantics, and broader format adapters are
+deferred candidates.
+Reconsider one only after all three conditions hold:
+
+1. repeated qualified adopter demand identifies the concrete need,
+2. a maintainable test artifact or reproducible workflow exists, and
+3. the runtime and license boundary is feasible for sustained support.
+
+The detailed audit and evidence gate live in:
 
 - [Benchmark gap audit](benchmark_mode_gap_audit.md)
 

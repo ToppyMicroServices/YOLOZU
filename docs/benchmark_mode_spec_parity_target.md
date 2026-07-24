@@ -190,10 +190,17 @@ implementation that means:
 
 ### 5.3 Deferred knobs
 
-The following may be accepted later once their backend path exists:
+The following remain evidence-gated candidates rather than committed CLI work:
 
 - `--keras`
 - `--name`
+
+The current grouping surface already uses `--run-id` plus explicit `--output`,
+`--history`, `--predictions-output`, `--eval-output`, and `--parity-output`
+paths. Backend-specific INT8 calibration semantics beyond the current recorded
+intent are deferred under the same gate. Reconsider any of these only after
+repeated qualified adopter demand, a maintainable test artifact or reproducible
+workflow, and runtime/license feasibility are all established.
 
 ## 6. Artifact Interface Contract
 
@@ -370,10 +377,12 @@ behind one benchmark-oriented CLI instead of duplicating backend logic.
 - add history/baseline tracking
 - add explicit skip reporting for partially supported formats
 
-### P3
+### Evidence-gated candidate work
 
-- extend toward external/export formats beyond current in-repo backends
-- add platform-specific backends such as OpenVINO/CoreML when available
+- consider external/export formats beyond current in-repo backends only after
+  the documented demand, testability, and runtime/license change trigger is met
+- preserve conditional OpenVINO behavior unless evidence justifies a broader
+  platform-specific backend
 - keep a backend runtime/license matrix so `supported` never implies `bundled`
 
 ## 12. Non-goals

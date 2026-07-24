@@ -344,9 +344,9 @@ Use these categories instead of reading backend names as license promises:
 
   \item[Conditional adapter targets]
   \cmd{coreml}, \cmd{ncnn}, \cmd{rknn}, \cmd{tflite}, and
-  \cmd{paddle} are not bundled runtimes. Treat them as conditional
-  adapter targets unless the support matrix explicitly says a real lane exists
-  for the selected task and format.
+  \cmd{paddle} are not bundled runtimes. They remain planned,
+  evidence-gated adapter candidates unless the support matrix explicitly says
+  a real lane exists for the selected task and format.
 \end{description}
 
 \subsection{Gap against the benchmark/export surface}
@@ -354,16 +354,27 @@ Relative to the broader benchmark/export surface users now expect, YOLOZU has
 already matched the core benchmark entrypoint shape, but it still trails in
 surface breadth.
 
-The most important remaining gaps are:
+The documented breadth differences are:
 \begin{itemize}
-  \item broader format coverage beyond conditional \cmd{openvino}, such as
+  \item planned formats beyond conditional \cmd{openvino}, such as
   \cmd{coreml}, \cmd{saved_model}, \cmd{tflite}, \cmd{ncnn}, \cmd{rknn}, and
   \cmd{paddle}
   \item broader parity attachment for artifact-backed \cmd{classification} and
   \cmd{obb} lanes
-  \item additional task/source/format validation as new backend-specific knobs
-  and execution paths are added
+  \item additional task/source/format validation that would be required with
+  any future backend-specific knobs and execution paths
 \end{itemize}
+
+These differences do not make runtime or flag breadth an implementation
+priority. The current grouping surface uses \cmd{--run-id} together with
+\cmd{--output}, \cmd{--history}, \cmd{--predictions-output},
+\cmd{--eval-output}, and \cmd{--parity-output}. Additional candidates such as
+\cmd{--name}, \cmd{--keras}, backend-specific INT8 calibration semantics, and
+broader format adapters remain deferred.
+
+Reconsider one of those candidates only when repeated qualified adopter demand
+identifies the need, a maintainable test artifact or reproducible workflow
+exists, and the runtime and license boundary is feasible for sustained support.
 
 \subsection{Highest-leverage parity maintenance and remaining work}
 If the goal is to close the practical gap against the broader benchmark/export
