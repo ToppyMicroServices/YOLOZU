@@ -14,7 +14,15 @@ This `docs/` folder keeps longer-form planning notes for context:
 - `docs/roadmaps/symmetry_commonsense_realtime.md` — Symmetry/commonsense constraint plan (historical)
 - `docs/yolo26_size_buckets.md` — YOLO26 n/s/m/l/x size bucket envelopes (params/FLOPs)
 
-If you are working on RunPod and `bd list` looks stale, see:
+If `bd list` looks stale, refresh the local database from the exported
+`beads-sync` snapshot:
 
-- `deploy/runpod/README.md` (“Beads (bd) sync on RunPod”)
+```bash
+bash refresh_beads_sync.sh
+```
+
+For RunPod and two-machine details, see:
+
+- `docs/beads_github_workflow.md`
+- `deploy/runpod/README.md` (“Beads (bd) refresh on RunPod”)
 - `deploy/runpod/refresh_beads_sync.sh`

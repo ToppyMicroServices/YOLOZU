@@ -1,81 +1,51 @@
-# Beads - AI-Native Issue Tracking
+# Beads issue tracking in YOLOZU
 
-Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
+YOLOZU uses `bd` for issue tracking. The supported local CLI is Beads 1.1.0.
 
-## What is Beads?
+## Data boundary
 
-Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
+- The local Beads database is the live working store used by `bd`.
+- `.beads/issues.jsonl` is an exported issue-level exchange snapshot. It is
+  versioned on the `beads-sync` branch, but it is not a full database backup and
+  does not contain Dolt history or non-issue tables.
+- `.beads/interactions.jsonl` is a separate append-only audit log. It is not
+  produced by `bd export`; reconcile entries by their stable `id` before
+  publishing it from more than one machine.
 
-**Learn more:** [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
-
-## Quick Start
-
-### Essential Commands
+## Essential commands
 
 ```bash
-# Create new issues
-bd create "Add user authentication"
-
-# View all issues
-bd list
-
-# View issue details
+bd list --all --limit 0
+bd ready --limit 0
 bd show <issue-id>
-
-# Update issue status
-bd update <issue-id> --status in_progress
-bd update <issue-id> --status done
-
-# Sync with git remote
-bd sync
+bd update <issue-id> --claim
+bd close <issue-id>
 ```
 
-### Working with Issues
-
-Issues in Beads are:
-- **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
-- **AI-friendly**: CLI-first design works perfectly with AI coding agents
-- **Branch-aware**: Issues can follow your branch workflow
-- **Always in sync**: Auto-syncs with your commits
-
-## Why Beads?
-
-✨ **AI-Native Design**
-- Built specifically for AI-assisted development workflows
-- CLI-first interface works seamlessly with AI coding agents
-- No context switching to web UIs
-
-🚀 **Developer Focused**
-- Issues live in your repo, right next to your code
-- Works offline, syncs when you push
-- Fast, lightweight, and stays out of your way
-
-🔧 **Git Integration**
-- Automatic sync with git commits
-- Branch-aware issue tracking
-- Intelligent JSONL merge resolution
-
-## Get Started with Beads
-
-Try Beads in your own projects:
+Refresh the local database from the exported remote snapshot:
 
 ```bash
-# Install Beads
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-
-# Initialize in your repo
-bd init
-
-# Create your first issue
-bd create "Try out Beads"
+bash refresh_beads_sync.sh
 ```
 
-## Learn More
+Export the current issue state:
 
-- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
-- **Quick Start Guide**: Run `bd quickstart`
-- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+```bash
+bd export -o /path/to/beads-sync/.beads/issues.jsonl
+```
 
----
+The complete two-machine and missing-worktree procedure is documented in
+`docs/beads_github_workflow.md`.
 
-*Beads: Issue tracking that moves at the speed of thought* ⚡
+## Import safety
+
+Normal `bd import` uses timestamp-aware upsert behavior: newer remote rows can
+update local rows, older rows are skipped, and same-timestamp local fields are
+kept while labels, comments, and dependencies are merged. Inspect the JSON
+summary printed by `refresh_beads_sync.sh`.
+
+Do not use `bd import --allow-stale` for normal sharing. It intentionally permits
+an older snapshot to overwrite newer local issue fields and is reserved for an
+explicit restore.
+
+For Beads CLI documentation, run `bd quickstart` or `bd <command> --help`.

@@ -34,7 +34,8 @@ bd show <id>          # View issue details
 bd update <id> --claim               # Claim work (assignee + in_progress)
 bd update <id> --status in_progress  # Alternative (no auto-claim)
 bd close <id>         # Complete work
-bd sync               # Sync with git
+bash refresh_beads_sync.sh            # Import the remote exported snapshot
+bd export -o <path>/issues.jsonl      # Export the local issue snapshot
 ```
 
 ## GitHub Issues Linking
@@ -47,10 +48,17 @@ bd update <id> --external-ref gh-123
 
 ## Multi-environment / Team Workflow (2台開発)
 
-- まず `git pull --rebase`（`.beads/*.jsonl` もここで更新される）
+- まず `git pull --rebase` でコードを更新し、`bash refresh_beads_sync.sh` で
+  `beads-sync` の issue snapshot をローカルDBへimportする
 - 着手するissueは `bd update <id> --claim`（同時編集を避ける）
-- 競合したら `bd resolve-conflicts` → `bd sync`
-- Beadsの共有は `bd sync` の `beads-sync` ブランチで行う（全clone共通）
+- 共有前にもう一度refreshし、import結果の `updated_issues` /
+  `tie_kept_local_ids` を確認する
+- 同一時刻の競合はremote snapshotと `bd show <id>` を比較し、採用する値を
+  `bd update` で明示してから再exportする
+- Beadsの共有は `bd export` と `beads-sync` worktreeへのgit pushで行う
+  （全clone共通）。実行手順は `docs/beads_github_workflow.md` を参照する
+- 通常の統合で `bd import --allow-stale` は使わない。これは古いsnapshotへ
+  意図的に復元する場合だけの上書きオプション
 
 ## Landing the Plane (Session Completion)
 
@@ -61,16 +69,18 @@ bd update <id> --external-ref gh-123
 1. **File issues for remaining work** - Create issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+4. **PUBLISH BEADS STATE** - Refresh, inspect the import result, then export and
+   push the `beads-sync` worktree by following `docs/beads_github_workflow.md`
+5. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
+   bash refresh_beads_sync.sh
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+6. **Clean up** - Clear stashes, prune remote branches
+7. **Verify** - Code and exported Beads state are committed AND pushed
+8. **Hand off** - Provide context for next session
 
 ## Required Quality Gates (when code/docs/manifest changed)
 
