@@ -41,27 +41,28 @@
     },
     "source_clean_before_run": true,
     "source_sha256": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
-    "summary_sha256": "418d5defc05233e72e2e929094eb798533ad957710705e5f3ed995963885d36a",
+    "summary_sha256": "9e1195ee12ffc4d0e1f3d51b79d23467327403ca9ae10ca57aa65668ee19b1be",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "baseline_checksums": {
     "entries": {
-      "commands.json": "4548bf83365ce36e7845232d52da7f5933cbe5c1fb3cf61db0125a1e724a7ba0",
+      "commands.json": "ee1a0cf8568470edf7162eb1f912feef9a9821103f51cc2b4b0daf6655b23409",
       "comparison.svg": "4589e45427ef2822bb78580e36097bf94994e7b12fe496176805fa858bc69ebb",
-      "environment.json": "c8d2bb474a4c4b9fddc5a6e88e4cfab89a29730c62ab0587e059d7504fa6735e",
-      "eval_eager.json": "4420efc5b9ddff98f0c1c8ed63a44383a8f10fea3ecd52577d616a008bb915fa",
-      "eval_torchscript.json": "451d9e1127ae70cb66d0207a55d77f1712e32876fc0a1efa6f02b82cdcb124f1",
-      "parity.json": "b8ca83df9bf85743d535bfed5acb39d7b2a44a7a7d49190bc1ce18219814c9b9",
-      "predictions_eager.json": "0f92745e32732a5e98549eec511b4381efc8f705873de6f713f1e287dc5db245",
-      "predictions_torchscript.json": "ed55061484bbeaee12c6d848c49732f333508672d2b02403ab062a05bb5c470c",
+      "environment.json": "8ed288bb34f26aa15b30e4bf6ead0cf6b8720066b8cd0744bba381eeefe1fcb5",
+      "eval_eager.json": "f6e57f9cbf35627a0002a1f35d60853b35dc0405948326b113b115700ffc6ed3",
+      "eval_torchscript.json": "20bfdf8a9329167d096d7fb3f54fc288642ec7f7c4cfb4b6a653b91ac8942c51",
+      "parity.json": "91a651c0dce7e132a27a38728da9440a7ce13a409cafcedc2e7aa751d3878b04",
+      "predictions_eager.json": "a21e3103cf65c4a04b83790a48b4219cf46e9172f01e4b7aaf131c43154b3afe",
+      "predictions_torchscript.json": "693ba1c156512fedca168efe036e218fc2f7b5e3231063396fa5e4dd33834fca",
       "protocol.json": "ae0a93a22221a5b62726a26a9575b8342a7740ee5dd417922dda60bbeb263e3f",
-      "summary.json": "418d5defc05233e72e2e929094eb798533ad957710705e5f3ed995963885d36a"
+      "reproduction_check.json": "ece8823f0a34c742d7e1f478f4dea0d668331570c29dc41564ea267657183abb",
+      "summary.json": "9e1195ee12ffc4d0e1f3d51b79d23467327403ca9ae10ca57aa65668ee19b1be"
     },
     "errors": [],
-    "manifest_sha256": "8a717e8f924bb5318770d797e94a76fffadebc89d98e88459265b37a2d20d70e",
+    "manifest_sha256": "0974726b2d7fd81016ad134084074bd195442efb02575801d102d86c92984643",
     "ok": true
   },
-  "baseline_mode": "explicit",
+  "baseline_mode": "implicit_existing_output",
   "candidate": {
     "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
     "environment": {
@@ -100,11 +101,11 @@
         "yolozu/eval/coco_eval.py": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
         "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
       },
-      "head": "0a80bccd58e08233aa47d1404928eca44e92eb5f"
+      "head": "a32fc80ba4e864fc3e4e508d8f1b72316180fd22"
     },
     "source_clean_before_run": true,
     "source_sha256": "9caf1fa2c222a64c711b0469dffa1dc638e3e9a7ff194de348bd1a896185daeb",
-    "summary_sha256": "9e1195ee12ffc4d0e1f3d51b79d23467327403ca9ae10ca57aa65668ee19b1be",
+    "summary_sha256": "b4ad9cd74f250087aa3aa241a3ffa9726452e17129a7f0d070426d8e37edf72a",
     "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
   },
   "checks": [
