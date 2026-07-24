@@ -128,4 +128,4 @@ The CI gate should verify:
 
 - `python3 tools/run_mcp_server.py --help`
 - manifest validation (`tools/validate_tool_manifest.py --require-declarative`)
-- deterministic sample contracts (`generate_config` / `review_config`) via tests
+- deterministic sample interface contracts (`generate_config` / `review_config`) via tests

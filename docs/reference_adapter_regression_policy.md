@@ -10,7 +10,7 @@ This document defines the test philosophy for `tools/run_reference_adapter_regre
 - Record preflight succeeds for all inputs:
   - image file exists/readable (`E_IO`)
   - decode succeeds and positive dimensions are available (`E_DECODE`)
-  - preprocessing contract is satisfiable (`E_PREPROC`)
+- preprocessing interface contract is satisfiable (`E_PREPROC`)
 - Image keys are canonicalized and record/prediction mapping is preserved.
 - `bbox` uses `cxcywh_norm` with finite values.
 - `bbox` constraints: `0<=cx,cy<=1`, `0<w,h<=1`.
@@ -118,7 +118,7 @@ Use:
 - `--diff-summary-out` to control output file
 - `--topk-examples-dir` and `--topk-examples` to control overlays
 
-## Baseline lifecycle and contract-change procedure
+## Baseline lifecycle and interface-contract-change procedure
 
 Baseline updates must be intentional and reviewed in PR.
 

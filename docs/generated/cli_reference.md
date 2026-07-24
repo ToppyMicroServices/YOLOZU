@@ -182,7 +182,7 @@ Contact: develop@toppymicros.com
 | check_repo_governance | stable | tools/check_repo_governance.py | Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. |
 | check_segmentation_parity | experimental | tools/check_segmentation_parity.py | Compare two segmentation predictions artifacts and report mask-level parity mismatches. |
 | continual_decide | research | tools/continual_decide.py | Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. |
-| convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract. |
+| convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract. |
 | distill_predictions | research | tools/distill_predictions.py | Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT. |
 | dod_cpu_smoke | stable | scripts/dod_cpu_smoke.sh | Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. |
 | download_coco_instances_tiny | stable | scripts/download_coco_instances_tiny.py | Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. |
@@ -219,7 +219,7 @@ Contact: develop@toppymicros.com
 | gen_ci_dummy_dets_onnx | stable | tools/ci/gen_dummy_dets_onnx.py | Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks. |
 | gen_ci_smoke_dataset | stable | tools/ci/gen_smoke_dataset.py | Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. |
 | generate_benchmark_support_matrix | stable | tools/generate_benchmark_support_matrix.py | Generate the canonical benchmark support matrix from support metadata. |
-| generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode. |
+| generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode. |
 | generate_smoke_assets | stable | tools/generate_smoke_assets.py | Generate deterministic offline smoke assets under data/smoke from local data/coco128. |
 | gpu_validation_preflight | experimental | tools/gpu_validation_preflight.py | Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. |
 | hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
@@ -247,7 +247,7 @@ Contact: develop@toppymicros.com
 | render_ttt_manual_figures | research | tools/render_ttt_manual_figures.py | Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use. |
 | report_dependency_licenses | stable | tools/report_dependency_licenses.py | Generate a best-effort dependency license report from installed Python packages (not legal advice). |
 | rtdetr_pose_backend_suite | experimental | tools/rtdetr_pose_backend_suite.py | Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt). |
-| rtdetr_pose_train_continual | research | rtdetr_pose/tools/train_continual.py | Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract). |
+| rtdetr_pose_train_continual | research | rtdetr_pose/tools/train_continual.py | Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract). |
 | run_actions_api | stable | tools/run_actions_api.py | Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend. |
 | run_external_finetune_smoke | experimental | tools/run_external_finetune_smoke.py | Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary. |
 | run_mcp_server | stable | tools/run_mcp_server.py | Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config). |
@@ -266,7 +266,7 @@ Contact: develop@toppymicros.com
 | validate_instance_segmentation_predictions | stable | tools/validate_instance_segmentation_predictions.py | Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks). |
 | validate_map_targets | stable | tools/validate_map_targets.py | Validate the mAP target table file (baselines/yolo26_targets.json). |
 | validate_predictions | stable | tools/validate_predictions.py | Validate YOLOZU predictions JSON schema (permissive by default; strict optional). |
-| validate_run_meta | stable | tools/validate_run_meta.py | Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command). |
+| validate_run_meta | stable | tools/validate_run_meta.py | Validate the run_meta.json interface contract (git SHA, dependency lock, preprocess, hardware/runtime, command). |
 | validate_segmentation_predictions | stable | tools/validate_segmentation_predictions.py | Validate YOLOZU segmentation predictions JSON (id→mask path mapping; meta optional). |
 | validate_synthgen_contract | experimental | tools/validate_synthgen_contract.py | Validate SynthGen sample/shard interface-contract fields, dtypes, shapes, and ranges before training/eval. |
 | validate_tool_manifest | stable | tools/validate_tool_manifest.py | Validate tools/manifest.json structure, references, and declarative metadata. |

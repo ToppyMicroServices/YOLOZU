@@ -79,7 +79,7 @@ Optional post-render background generation happens only through label-safe appea
 - `bg_only_inpaint`: edit only background pixels/masks outside labeled objects
 - `appearance_only_conditioned`: object-interior appearance edits while preserving object count and silhouette
 
-For `bg_only_inpaint`, the contract is explicit:
+For `bg_only_inpaint`, the interface contract is explicit:
 
 - `mask_scope = background_only`
 - controls may include renderer-derived guides such as `depth_ndc`, `inst_boundary`, and `foreground_union_mask`
@@ -192,7 +192,7 @@ PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen export-yolozu-synthgen \
 
 ## Handoff checks to run in YOLOZU
 
-1. Validate contract rows:
+1. Validate interface contract rows:
 
 ```bash
 python3 tools/validate_synthgen_contract.py \
@@ -254,4 +254,4 @@ Integration is ready when all of the following are true:
 - add optional fields freely
 - add new `schema_id` values freely
 - do not change required dtype / shape / range semantics inside `schema_version = "1"`
-- if the generator needs breaking changes, version the contract first in YOLOZU, then enable the new version in adapters and docs
+- if the generator needs breaking changes, version the interface contract first in YOLOZU, then enable the new version in adapters and docs

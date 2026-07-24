@@ -61,7 +61,7 @@ The manifest functions as a declarative interface contract. At a practical minim
 
 For comprehensive field-level policies and boundaries, consult \path{docs/manifest_declarative_spec.md}.
 
-\section{Contracts Referenced by the Manifest}
+\section{Interface Contracts Referenced by the Manifest}
 The manifest references stable JSON schemas located under \path{docs/schemas/}. Prominent schemas include:
 \begin{itemize}
   \item \textbf{Predictions}: \path{docs/schemas/predictions.schema.json}
@@ -97,7 +97,7 @@ for tool in manifest.get("tools", []):
     print(f"{tool.get('id')}\t{tool.get('entrypoint')}")
 PY
 
-# Identify tools that consume the 'predictions_json' contract
+# Identify tools that consume the 'predictions_json' interface contract
 python3 - <<'PY'
 import json
 with open("tools/manifest.json", "r", encoding="utf-8") as f:
@@ -114,7 +114,7 @@ For autonomous or semi-autonomous operations, the recommended stable entrypoints
 \begin{itemize}
   \item \textbf{Canonical CLI}: \cmd{yolozu --help} (or \cmd{python3 -m yolozu --help})
   \item \textbf{Tool Registry}: \path{tools/manifest.json}
-  \item \textbf{Contracts and Schemas}: \path{docs/schemas/*.schema.json}
+  \item \textbf{Interface Contracts and Schemas}: \path{docs/schemas/*.schema.json}
   \item \textbf{Usage Guide}: \path{docs/ai_first.md}
 \end{itemize}
 

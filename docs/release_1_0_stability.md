@@ -1,23 +1,23 @@
-# 1.0.0 stability boundary (contract-first)
+# 1.0.0 stability boundary (interface-contract-first)
 
 This document defines what YOLOZU 1.0.0 treats as a stable compatibility surface.
 
 ## Scope
 
-YOLOZU 1.0.0 stabilizes **contracts**, not every internal implementation detail.
+YOLOZU 1.0.0 stabilizes **interface contracts**, not every internal implementation detail.
 
 Stable for 1.x:
 - Predictions schema v1 (`schemas/predictions.schema.json`)
-- Adapter contract v1 (`docs/adapter_contract.md`)
+- Adapter interface contract v1 (`docs/adapter_contract.md`)
 - Run contract artifact layout (`docs/run_contract.md`)
 - Core CLI compatibility surface listed below
 
 Not guaranteed stable:
 - Internal model architectures/backbone internals
-- Experimental scripts outside documented CLI contract
+- Experimental scripts outside the documented CLI interface contract
 - GPU environment-specific runtime behavior (driver/container constraints)
 
-## Contract guarantees
+## Interface contract guarantees
 
 ### 1) Predictions schema v1
 
@@ -28,7 +28,7 @@ Guarantee:
 - Backward-compatible additions are allowed (new optional fields).
 - Breaking changes require schema version bump and migration notes.
 
-### 2) Adapter contract v1
+### 2) Adapter interface contract v1
 
 Reference: `docs/adapter_contract.md`
 
@@ -38,7 +38,7 @@ Guarantee:
   - `detections[]`
   - detection required keys: `class_id`, `score`, `bbox`
 - `bbox` semantic interpretation remains explicit via evaluator/export settings (`bbox_format`).
-- `export_settings` provenance in generated reports is preserved as contract metadata.
+- `export_settings` provenance in generated reports is preserved as interface contract metadata.
 
 ### 3) Run contract
 
@@ -73,7 +73,7 @@ Policy:
 2. Manifest declarative validation gate (`tools/validate_tool_manifest.py --require-declarative`)
 3. Golden compatibility gate (`python3 tools/check_golden_compatibility.py`)
 4. Wheel/sdist contents gates (required packaged artifacts)
-5. Contract-oriented unit tests:
+5. Interface-contract-oriented unit tests:
    - `tests/test_backend_shape_format_contracts.py`
    - `tests/test_manifest_docs_references.py`
    - `tests/test_run_record.py`
@@ -81,8 +81,8 @@ Policy:
 
 ## Compatibility change policy
 
-When contract behavior must change:
+When interface contract behavior must change:
 1. Open RFC (`docs/rfc_workflow.md`)
 2. Update golden assets (`baselines/golden/v1/*`) or versioned successor set
-3. Update schema/contract docs + changelog migration note
+3. Update schema/interface-contract docs + changelog migration note
 4. Keep backward-compatible path where feasible (aliases/adapters) within 1.x

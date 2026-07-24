@@ -42,7 +42,7 @@ install dependency, and that runtime/model license review remains required befor
 
 - Use consistent product/repo naming in release artifacts: `YOLOZU` (`ToppyMicroServices/YOLOZU`).
 - Keep `LICENSE`, `NOTICE`, `COPYRIGHT`, and `SECURITY.md` at repository root and included in distribution artifacts.
-- Release notes should state the contract boundary (`docs/release_1_0_stability.md`) and any non-contract experimental areas.
+- Release notes should state the interface contract boundary (`docs/release_1_0_stability.md`) and any experimental areas outside it.
 
 ## COCO / coco128
 

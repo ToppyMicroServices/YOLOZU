@@ -1,6 +1,6 @@
 # Dataset Contract v1
 
-YOLOZU dataset records use a backend-neutral bbox contract.
+YOLOZU dataset records use a backend-neutral bbox interface contract.
 
 Preferred stored bbox representation:
 

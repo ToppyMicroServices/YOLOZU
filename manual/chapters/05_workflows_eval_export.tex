@@ -163,7 +163,7 @@ non-null protocol hash.
 \subsection{Rust template: optional ONNXRuntime mode}
 The Rust template defaults to a minimal no-dependency interface-contract example, and can optionally enable ONNXRuntime via Cargo feature flags:
 \begin{lstlisting}[language=bash]
-# Minimal contract example (always available)
+# Minimal interface-contract example (always available)
 cargo build --release --manifest-path examples/infer_rust/Cargo.toml
 examples/infer_rust/target/release/yolozu_infer_rust --out reports/pred_rust_stub.json
 
@@ -206,7 +206,7 @@ python3 -m yolozu export --backend opencv-dnn-yolo --onnx /path/to/yolo.onnx --d
 
 For further details, consult:\\
 \path{docs/training_inference_export.md}, \path{docs/external_inference.md}, and \path{docs/opencv_dnn_inference.md}.
-For CI command-surface checks, prefer each exporter's \cmd{--dry-run} mode so schema and metadata contracts are validated without heavyweight runtime dependencies.
+For CI command-surface checks, prefer each exporter's \cmd{--dry-run} mode so schema and metadata interface contracts are validated without heavyweight runtime dependencies.
 
 ExecuTorch non-dry mode intentionally does not pretend to execute a generic
 mobile runtime inside YOLOZU. The declared path is: execute the \path{.pte}
@@ -257,7 +257,7 @@ yolozu eval-coco --dataset data/yolo_wrapper --split val --predictions reports/p
 \end{lstlisting}
 
 \subsection{YOLOX interoperability path}
-For teams already operating YOLOX experiments (\path{exp.py} + checkpoints), keep native inference and export directly to the YOLOZU contract:
+For teams already operating YOLOX experiments (\path{exp.py} + checkpoints), keep native inference and export directly to the YOLOZU predictions interface contract:
 \begin{lstlisting}[language=bash]
 python3 -m yolozu export --backend yolox --dataset /path/to/coco-yolo --split val2017 --exp /path/to/yolox_exp.py --weights /path/to/yolox_ckpt.pth --imgsz 640 --score-thr 0.01 --nms-iou 0.65 --output reports/pred_yolox.json
 python3 tools/validate_predictions.py reports/pred_yolox.json --strict
@@ -358,7 +358,7 @@ python3 -m yolozu train \
 \end{lstlisting}
 
 \subsection{SynthGen intake workflow (external generator)}
-When synthetic shards are generated externally (for example in \path{YOLOZU-synthgen}), \yolozu{} provides the contract/eval side:
+When synthetic shards are generated externally (for example in \path{YOLOZU-synthgen}), \yolozu{} provides the interface-contract/eval side:
 \begin{lstlisting}[language=bash]
 python3 tools/validate_synthgen_contract.py \
   --input /path/to/synthgen_dataset/shards/train_000.jsonl \
@@ -495,7 +495,7 @@ yolozu export-dataset coco   --dataset data/coco_yolo_like   --split val2017   -
 yolozu export-dataset kitti   --dataset data/coco_yolo_like   --split val2017   --out-dir data/coco_kitti_export   --force
 \end{lstlisting}
 
-For semantic-segmentation descriptors, export keeps the \path{dataset.json} contract while materializing \path{images/} and \path{masks/} into a lightweight external layout:
+For semantic-segmentation descriptors, export keeps the \path{dataset.json} interface contract while materializing \path{images/} and \path{masks/} into a lightweight external layout:
 \begin{lstlisting}[language=bash]
 yolozu doctor import --dataset-from auto --dataset /path/to/VOCdevkit/VOC2012 --split val --output -
 yolozu import dataset   --from auto   --dataset /path/to/VOCdevkit/VOC2012   --split val   --output reports/voc_seg_wrapper   --force
@@ -552,7 +552,7 @@ normalizing the predictions interface contract output to \cmd{cxcywh_norm} for
 strict schema validation.
 
 \subsection{COCO results (inference outputs) \texorpdfstring{$\rightarrow$}{->} predictions.json}
-To convert COCO-style detection results into the standardized YOLOZU predictions contract:
+To convert COCO-style detection results into the standardized YOLOZU predictions interface contract:
 \begin{lstlisting}[language=bash]
 yolozu migrate predictions   --from coco-results   --results /path/to/coco_results.json   --instances /path/to/instances_val2017.json   --output reports/predictions.json   --force
 

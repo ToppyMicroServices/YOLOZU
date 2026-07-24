@@ -73,7 +73,7 @@ Current API surface:
 - Keep tool names and underlying CLI behavior semantically aligned (avoid name/behavior drift).
 - Keep MCP tool signatures aligned with Actions API request models for the same operation.
 - Prefer explicit parameter passing (`split`, `dry_run`, `strict`, `force`) over implicit defaults.
-- Keep response contracts stable (`ok`, `tool`, `summary`, `exit_code`) and add fields compatibly.
+- Keep response interface contracts stable (`ok`, `tool`, `summary`, `exit_code`) and add fields compatibly.
 - Include actionable error categories for common failures: allowlist, path guard, timeout, command failure.
 
 Generated parity reference:

@@ -4,7 +4,7 @@ YOLOZU’s fastest path to “use other platform datasets/configs as-is” is:
 
 1) Fix **one internal canonical schema** (YOLOZU meaning is stable)
 2) Add platform-specific **Import adapters** (read-only projection into the canonical schema)
-3) Keep evaluation apples-to-apples via the `predictions.json` contract
+3) Keep evaluation apples-to-apples via the `predictions.json` interface contract
 
 This doc describes the **canonical schema** and the current import entry points.
 
@@ -182,7 +182,7 @@ source families plus explicit `--from coco-keypoints`, `--from classification`,
 `--from obb`, `--from depth`, and `--from pose6d`, validates direct
 reference-trainer readiness or records JSON shape, and prints the next command
 without launching training. Classification and OBB are recognized intake
-contracts for external training lanes. Depth and pose6d are direct for the
+interface contracts for external training lanes. Depth and pose6d are direct for the
 reference trainer only when the normalized bbox records include the required
 sidecars.
 

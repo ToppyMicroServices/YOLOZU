@@ -167,7 +167,7 @@ Legacy compatibility wrapper (source checkout only):
 
 - `python3 tools/yolozu.py ...`
 
-## Contracts
+## Interface Contracts
 
 - Predictions schema: `docs/predictions_schema.md`
 - Adapter interface contract: `docs/adapter_contract.md`

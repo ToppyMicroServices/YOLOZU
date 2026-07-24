@@ -195,7 +195,7 @@ The following may be accepted later once their backend path exists:
 - `--keras`
 - `--name`
 
-## 6. Artifact Contract
+## 6. Artifact Interface Contract
 
 Each benchmark run should produce stable, versioned artifacts.
 

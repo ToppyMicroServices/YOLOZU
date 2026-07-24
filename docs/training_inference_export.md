@@ -181,7 +181,7 @@ For train-specific preflight, use `yolozu doctor train-dataset`; it checks the
 same boundary and prints the next command without launching training. The
 train preflight also recognizes explicit `classification`, `obb`, `depth`, and
 `pose6d` source families. Classification folders/manifests and OBB labels are
-reported as recognized training intake contracts for external lanes, not as
+reported as recognized training intake interface contracts for external lanes, not as
 direct RT-DETR reference-trainer inputs. Depth and pose6d are direct only when
 the normalized bbox records also include the required sidecars: existing
 `depth_path`/`depth`/`D_obj` for depth, and `R_gt`/`t_gt` or `pose` plus
@@ -271,7 +271,7 @@ python3 -m yolozu import dataset \
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher
 
-### Backbone swap (P3/P4/P5 contract)
+### Backbone swap (P3/P4/P5 interface contract)
 
 Backbone is now configurable via `model.backbone.*` and projected to transformer `d_model` via `model.projector.d_model`.
 
@@ -291,7 +291,7 @@ model:
 
 Other supported names: `resnet50`, `convnext_tiny`, `cspresnet`, `tiny_cnn`.
 
-Contract details and extension guide: [backbones.md](backbones.md)
+Interface contract details and extension guide: [backbones.md](backbones.md)
 
 Common options:
 - --device auto

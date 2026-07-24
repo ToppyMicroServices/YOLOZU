@@ -172,7 +172,7 @@ Ollama note (local LLM):
 
 All four routes should share the same backend implementation in `yolozu.integrations.tool_runner`.
 
-Generated contract reference:
+Generated interface contract reference:
 - `docs/generated/mcp_actions_tool_reference.json`
 - `docs/generated/mcp_actions_tool_reference.md`
 

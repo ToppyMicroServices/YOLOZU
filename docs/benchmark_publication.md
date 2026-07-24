@@ -1,4 +1,4 @@
-# Contract-first benchmark publication loop
+# Interface-contract-first benchmark publication loop
 
 This document defines the official benchmark publication loop under fixed protocol.
 

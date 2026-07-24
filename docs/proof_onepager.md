@@ -26,7 +26,7 @@ yolozu eval-coco --dataset /path/to/coco --split val2017 --predictions predictio
 | Step | Input | Output | What it proves |
 |---|---|---|---|
 | `doctor` | none | stdout JSON/text | pip install is usable; packaged resources are visible |
-| `validate predictions` | `predictions.json` | exit code + warnings | schema/contract is enforced |
+| `validate predictions` | `predictions.json` | exit code + warnings | schema/interface contract is enforced |
 | `eval-coco` | dataset + predictions | `reports/coco_eval.json` | metrics pipeline runs deterministically |
 
 ## Report example (shape)
@@ -46,4 +46,4 @@ A typical `reports/coco_eval.json` is a JSON object containing at least:
 }
 ```
 
-Exact fields can vary by task/evaluator, but the contract is: **machine-readable metrics + metadata**.
+Exact fields can vary by task/evaluator, but the interface contract is: **machine-readable metrics + metadata**.
