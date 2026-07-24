@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "YOLOZU Tools Manifest",
   "type": "object",
-  "required": ["manifest_version", "tools"],
+  "required": ["manifest_version", "ai_surfaces", "tools"],
   "properties": {
     "manifest_version": {
       "type": "integer",
@@ -23,8 +23,25 @@
     },
     "contracts": {
       "type": "object",
-      "description": "Optional contract registry used by tools (e.g., predictions_json).",
+      "description": "Optional interface contract registry used by tools (e.g., predictions_json).",
       "additionalProperties": true
+    },
+    "ai_surfaces": {
+      "type": "object",
+      "description": "Machine-readable public AI/MCP/Actions surface classifications.",
+      "required": [
+        "mcp_live",
+        "guaranteed_ai_safe",
+        "config_review",
+        "actions_public"
+      ],
+      "properties": {
+        "mcp_live": { "$ref": "#/$defs/ai_surface" },
+        "guaranteed_ai_safe": { "$ref": "#/$defs/ai_surface" },
+        "config_review": { "$ref": "#/$defs/ai_surface" },
+        "actions_public": { "$ref": "#/$defs/ai_surface" }
+      },
+      "additionalProperties": false
     },
     "tools": {
       "type": "array",
@@ -34,6 +51,22 @@
   },
   "additionalProperties": true,
   "$defs": {
+    "ai_surface": {
+      "type": "object",
+      "required": ["availability", "tool_ids"],
+      "properties": {
+        "availability": { "type": "string" },
+        "tool_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_\\-]*$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
     "tool": {
       "type": "object",
       "required": ["id", "entrypoint", "runner", "summary"],
@@ -67,7 +100,7 @@
         "contracts": { "$ref": "#/$defs/contracts_ref" },
         "contract_outputs": {
           "type": "object",
-          "description": "Optional mapping from contract id to an output item name (in tool.outputs) that contains the primary artifact for that contract. Used by automation to locate outputs for post-run validation.",
+          "description": "Optional mapping from interface contract id to an output item name (in tool.outputs) that contains the primary artifact for that interface contract. Used by automation to locate outputs for post-run validation.",
           "additionalProperties": { "type": "string" }
         },
         "effects": { "$ref": "#/$defs/effects" },

@@ -7,7 +7,7 @@ Use the same backend as other LLM clients to avoid duplicated logic.
 Preferred backend:
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 ```
 
 Fallback API backend:
@@ -36,4 +36,4 @@ Recommended skill intents:
 
 ## Parity policy
 
-Copilot, OpenAI, Claude, and Gemini should all consume the same tool contract and response shape from `yolozu.integrations.tool_runner`.
+Copilot, OpenAI, Claude, and Gemini should all consume the same tool interface contract and response shape from `yolozu.integrations.tool_runner`.

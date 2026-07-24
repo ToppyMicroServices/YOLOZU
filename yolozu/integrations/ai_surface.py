@@ -1,64 +1,124 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
+from .manifest_resources import load_tool_manifest
 
-_SUPPORTED_MCP_TOOL_IDS = (
-    "doctor",
-    "generate_config",
-    "review_config",
-    "validate_predictions",
+_AI_SURFACE_NAMES = (
+    "mcp_live",
+    "guaranteed_ai_safe",
+    "config_review",
+    "actions_public",
 )
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+def _surface_sets_from_manifest(
+    doc: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    raw = doc.get("ai_surfaces")
+    if not isinstance(raw, dict):
+        raise ValueError("manifest is missing ai_surfaces")
+
+    surfaces: dict[str, dict[str, Any]] = {}
+    for name in _AI_SURFACE_NAMES:
+        item = raw.get(name)
+        if not isinstance(item, dict):
+            raise ValueError(f"manifest ai_surfaces is missing {name}")
+        tool_ids = item.get("tool_ids")
+        if not isinstance(tool_ids, list) or not all(
+            isinstance(tool_id, str) and tool_id
+            for tool_id in tool_ids
+        ):
+            raise ValueError(
+                f"manifest ai_surfaces.{name}.tool_ids must be strings"
+            )
+        if len(tool_ids) != len(set(tool_ids)):
+            raise ValueError(
+                f"manifest ai_surfaces.{name}.tool_ids contains duplicates"
+            )
+        surfaces[name] = {
+            "tool_ids": list(tool_ids),
+            "availability": str(item.get("availability") or ""),
+        }
+    return surfaces
 
 
-def _resolve_manifest_path(manifest_path: str | None = None) -> Path:
-    if manifest_path:
-        p = Path(manifest_path).expanduser()
-        if not p.is_absolute():
-            p = (_repo_root() / p).resolve()
-        return p
-    return _repo_root() / "tools" / "manifest.json"
+def ai_surface_sets(
+    manifest_path: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Return public AI surface sets from one machine-readable manifest."""
+    return _surface_sets_from_manifest(load_tool_manifest(manifest_path))
 
 
-def load_tool_manifest(manifest_path: str | None = None) -> dict[str, Any]:
-    path = _resolve_manifest_path(manifest_path)
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(doc, dict):
-        raise ValueError("manifest must be a JSON object")
-    return doc
+def _as_filter_set(value: str | Iterable[str] | None) -> set[str]:
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        return {part.strip() for part in value.split(",") if part.strip()}
+    return {str(part).strip() for part in value if str(part).strip()}
 
 
 def list_manifest_tools(
     *,
     manifest_path: str | None = None,
     only_supported: bool = False,
-) -> list[dict[str, Any]]:
+    guaranteed: bool = False,
+    supported: bool = False,
+    maturity: str | Iterable[str] | None = None,
+    tag: str | Iterable[str] | None = None,
+    ids_only: bool = False,
+) -> list[dict[str, Any]] | list[str]:
     doc = load_tool_manifest(manifest_path)
-    tools = list(doc.get("tools") or [])
+    raw_tools = list(doc.get("tools") or [])
+    tools_by_id = {
+        str(tool.get("id")): tool
+        for tool in raw_tools
+        if isinstance(tool, dict) and str(tool.get("id") or "")
+    }
     items: list[dict[str, Any]] = []
-    for tool in tools:
-        tool_id = str(tool.get("id") or "")
-        if not tool_id:
+    maturity_filter = _as_filter_set(maturity)
+    tag_filter = _as_filter_set(tag)
+    surfaces = _surface_sets_from_manifest(doc)
+    guaranteed_ids = set(surfaces["guaranteed_ai_safe"]["tool_ids"])
+    supported_ids = set(surfaces["mcp_live"]["tool_ids"])
+    selected_ids = set(tools_by_id)
+    if only_supported or guaranteed:
+        selected_ids = guaranteed_ids
+    if supported:
+        selected_ids = (
+            selected_ids & supported_ids
+            if only_supported or guaranteed
+            else supported_ids
+        )
+
+    for tool_id in sorted(selected_ids):
+        tool = tools_by_id.get(tool_id, {})
+        tool_maturity = str(tool.get("maturity") or "")
+        if maturity_filter and tool_maturity not in maturity_filter:
             continue
-        if only_supported and tool_id not in _SUPPORTED_MCP_TOOL_IDS:
+        tool_tags = [str(value) for value in (tool.get("tags") or [])]
+        if tag_filter and not tag_filter.issubset(set(tool_tags)):
             continue
         items.append(
             {
                 "id": tool_id,
                 "summary": str(tool.get("summary") or ""),
+                "maturity": tool_maturity,
+                "tags": tool_tags,
                 "inputs": list(tool.get("inputs") or []),
                 "examples": list(tool.get("examples") or []),
                 "effects": dict(tool.get("effects") or {}),
                 "requires": dict(tool.get("requires") or {}),
+                "metadata_source": (
+                    "tools"
+                    if tool_id in tools_by_id
+                    else "ai_surfaces"
+                ),
             }
         )
-    items.sort(key=lambda row: row["id"])
+    if ids_only:
+        return [row["id"] for row in items]
     return items
 
 
@@ -134,17 +194,18 @@ def review_config(
         except (TypeError, ValueError):
             issues.append({"code": "invalid_max_images", "message": "max_images must be an integer"})
 
-    workspace = Path(workspace_root).resolve()
+    workspace = Path(workspace_root).expanduser()
+    if not workspace.is_absolute():
+        workspace = Path.cwd() / workspace
+    workspace = workspace.resolve()
     output = args.get("output")
     if isinstance(output, str) and output:
         out_path = Path(output).expanduser()
-        if out_path.is_absolute():
-            try:
-                out_path.relative_to(workspace)
-            except ValueError:
-                issues.append({"code": "unsafe_output_path", "message": f"output path escapes workspace: {output}"})
-        elif output.startswith("../"):
-            issues.append({"code": "unsafe_output_path", "message": f"relative output escapes workspace: {output}"})
+        candidate = out_path if out_path.is_absolute() else workspace / out_path
+        try:
+            candidate.resolve().relative_to(workspace)
+        except ValueError:
+            issues.append({"code": "unsafe_output_path", "message": f"output path escapes workspace: {output}"})
 
     ok = len(issues) == 0
     return {
@@ -156,5 +217,10 @@ def review_config(
     }
 
 
-def supported_mcp_tool_ids() -> list[str]:
-    return list(_SUPPORTED_MCP_TOOL_IDS)
+def supported_mcp_tool_ids(
+    manifest_path: str | None = None,
+) -> list[str]:
+    """Compatibility helper for the guaranteed AI-safe MCP subset."""
+    return list(
+        ai_surface_sets(manifest_path)["guaranteed_ai_safe"]["tool_ids"]
+    )

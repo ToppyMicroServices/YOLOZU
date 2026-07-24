@@ -7,11 +7,22 @@ This document provides a practical setup path for OpenAI clients.
 Run the shared MCP backend:
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 ```
+
+Inspect the compact registry and exact public surface sets:
+
+```bash
+yolozu-mcp --print-tools --guaranteed --ids-only
+```
+
+Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 25
+registered MCP operations.
 
 Use these tools:
 - `doctor`
+- `generate_config`
+- `review_config`
 - `validate_predictions`
 - `validate_dataset`
 - `eval_coco`
@@ -22,6 +33,11 @@ Why MCP first:
 - one implementation reused across clients
 - same JSON response shape as other integrations
 - minimal glue code
+
+The generated machine-readable reference separates the 25 live MCP tool ids,
+the four guaranteed AI-safe ids, the two config-review ids, and the 21
+canonical Actions operations. A live registration is not by itself a
+deterministic or dependency-free guarantee.
 
 ## Route B: GPT Actions (OpenAPI)
 
@@ -82,3 +98,8 @@ curl -sS -X POST http://127.0.0.1:8080/eval/coco \
 - Keep payload handling interface-contract-first: check `ok/tool/summary/exit_code` first, then parse optional artifact JSON fields.
 - For heavy work, submit async jobs and poll status instead of relying on long request timeouts.
 - Keep MCP/Actions signatures in sync using the generated reference at `docs/generated/mcp_actions_tool_reference.md`.
+- Relative paths are resolved from the server process's current working
+  directory. Absolute paths must remain within that workspace; `..` and path
+  escapes fail closed.
+- Use `yolozu validate predictions <path> --strict --json` when an agent needs
+  a bounded success/failure payload instead of human-readable output.

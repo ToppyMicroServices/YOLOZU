@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from ..manifest_resources import workspace_root
+
 
 _JOB_FAILURE_ERRORS = (
     OSError,
@@ -40,7 +42,7 @@ class JobManager:
         self._lock = threading.Lock()
         self._jobs: dict[str, _JobState] = {}
         if storage_dir is None:
-            storage_dir = Path(__file__).resolve().parents[3] / "runs" / "mcp_jobs"
+            storage_dir = workspace_root() / "runs" / "mcp_jobs"
         self._storage_dir = Path(storage_dir)
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._load_from_disk()

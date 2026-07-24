@@ -9,7 +9,8 @@
 All clients should share the same implementation backend:
 
 \begin{lstlisting}[language=bash]
-python3 tools/run_mcp_server.py
+python3 -m pip install 'yolozu[mcp]'
+yolozu-mcp
 \end{lstlisting}
 
 Core exposed tools:
@@ -45,23 +46,34 @@ Return payload policy (for all clients):
 
 \subsection{MCP server}
 \begin{lstlisting}[language=bash]
-python3 tools/run_mcp_server.py
+yolozu-mcp
 \end{lstlisting}
 
-Official MCP Lite surface (deterministic, intended for AI-safe clients):
+Guaranteed AI-safe surface (deterministic/lightweight):
 \begin{itemize}
   \item \cmd{doctor}
   \item \cmd{generate_config}
   \item \cmd{review_config}
+  \item \cmd{validate_predictions}
 \end{itemize}
+
+The live MCP server registers a broader 25-tool surface. The generated JSON
+reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
+\cmd{config_review}, and \cmd{actions_public}; registration alone does not
+promote environment-dependent operations into the guaranteed set.
+Read-only discovery and \cmd{--help} do not create job-storage artifacts;
+\cmd{runs/mcp_jobs} is initialized only when a job operation needs it.
 
 Copy-paste sanity checks:
 \begin{lstlisting}[language=bash]
-python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
-python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
-python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
+yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
+yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
+yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 \end{lstlisting}
+The review command exits with status 1 for a rejected config and status 2 when
+the config cannot be read safely.
 
 \subsection{Actions API (optional route)}
 \begin{lstlisting}[language=bash]
@@ -127,7 +139,7 @@ curl -sS http://127.0.0.1:11434/v1/models
 
 Notes:
 \begin{itemize}
-  \item MCP tool execution still routes to \cmd{python3 tools/run_mcp_server.py}; only the LLM provider/model changes.
+  \item MCP tool execution still routes to \cmd{yolozu-mcp}; only the LLM provider/model changes.
   \item Environment variable names are client-specific; some clients use \cmd{OPENAI_API_BASE} instead of \cmd{OPENAI_BASE_URL}.
   \item Model capability varies by local weights; if tool selection is unstable, prefer a stronger local model and keep prompts/tool wrappers thin.
   \item Verify the endpoint is reachable via \cmd{http://127.0.0.1:11434/v1/models} (OpenAI-compatible) in environments that support it.
@@ -139,8 +151,9 @@ Maintain feature parity by implementing behavior once in backend runner and expo
 
 Operational guards in v2 layer implementation:
 \begin{itemize}
-  \item Allowlist is manifest-first (\path{tools/manifest.json}) with conservative fallback defaults.
-  \item Path tokens are guarded (\cmd{..} rejected; absolute paths outside workspace rejected).
+  \item Allowlist is manifest-first (the manifest packaged with \yolozu{}) with conservative fallback defaults.
+  \item The process current working directory is the default workspace.
+  \item Path tokens are guarded (\cmd{..}, home-directory shortcuts, symlink escapes, and absolute paths outside the workspace are rejected).
   \item Job state persistence to \cmd{runs/mcp_jobs/*.json} for restart-safe status retrieval.
   \item Stale in-flight states (queued/running after restart) are surfaced as \cmd{unknown}.
   \item CLI execution timeout and output-size caps with explicit truncation metadata.
@@ -148,11 +161,21 @@ Operational guards in v2 layer implementation:
 
 \section{Tool map (actual MCP/Actions surface)}
 
-\subsection{Official support boundary (1.0.x)}
+\subsection{Official support boundary}
 \begin{itemize}
   \item Guaranteed (deterministic/lightweight): \cmd{doctor}, \cmd{generate_config}, \cmd{review_config}, \cmd{validate_predictions}
   \item Best-effort (environment dependent): long training jobs, TensorRT build/export, OpenCV CUDA/OpenVINO backends
 \end{itemize}
+
+\subsection{Machine-readable prediction validation}
+
+Human output remains the default. Agents can request a bounded result with
+\cmd{schema_version}, \cmd{ok}, \cmd{warnings}, and \cmd{errors}:
+\begin{lstlisting}[language=bash]
+yolozu validate predictions reports/predictions.json --strict --json
+\end{lstlisting}
+The schema is
+\path{docs/schemas/predictions_validation_result.schema.json}.
 
 \subsection{Synchronous tools}
 \begin{itemize}

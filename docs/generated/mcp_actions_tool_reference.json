@@ -1,6 +1,2534 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "source": "yolozu.integrations",
+  "surfaces": {
+    "mcp_live": {
+      "tool_ids": [
+        "ai_tools",
+        "generate_config",
+        "review_config",
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "export_onnx_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ],
+      "availability": "requires optional mcp dependency"
+    },
+    "guaranteed_ai_safe": {
+      "tool_ids": [
+        "doctor",
+        "generate_config",
+        "review_config",
+        "validate_predictions"
+      ],
+      "availability": "deterministic lightweight guarantee"
+    },
+    "config_review": {
+      "tool_ids": [
+        "generate_config",
+        "review_config"
+      ],
+      "availability": "in-process config generation and review"
+    },
+    "actions_public": {
+      "tool_ids": [
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ],
+      "availability": "requires optional actions dependencies"
+    }
+  },
+  "mcp_live_tools": [
+    {
+      "name": "ai_tools",
+      "function": "ai_tools_tool",
+      "params": [
+        {
+          "name": "manifest_path",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "guaranteed",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "supported",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "maturity",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "tag",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "ids_only",
+          "required": false,
+          "default": false
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "manifest_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Path",
+            "default": null
+          },
+          "guaranteed": {
+            "type": "boolean",
+            "title": "Guaranteed",
+            "default": false
+          },
+          "supported": {
+            "type": "boolean",
+            "title": "Supported",
+            "default": false
+          },
+          "maturity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maturity",
+            "default": null
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag",
+            "default": null
+          },
+          "ids_only": {
+            "type": "boolean",
+            "title": "Ids Only",
+            "default": false
+          }
+        },
+        "title": "ai_tools_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {
+          "manifest_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "guaranteed": {
+            "type": "boolean",
+            "default": false
+          },
+          "supported": {
+            "type": "boolean",
+            "default": false
+          },
+          "maturity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "ids_only": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "generate_config",
+      "function": "generate_config_tool",
+      "params": [
+        {
+          "name": "goal",
+          "required": false,
+          "default": "evaluate_predictions"
+        },
+        {
+          "name": "dataset",
+          "required": false,
+          "default": "data/smoke"
+        },
+        {
+          "name": "predictions",
+          "required": false,
+          "default": "data/smoke/predictions/predictions_dummy.json"
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": "val"
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/ai_eval.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": 50
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "title": "Goal",
+            "default": "evaluate_predictions"
+          },
+          "dataset": {
+            "type": "string",
+            "title": "Dataset",
+            "default": "data/smoke"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions",
+            "default": "data/smoke/predictions/predictions_dummy.json"
+          },
+          "split": {
+            "type": "string",
+            "title": "Split",
+            "default": "val"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/ai_eval.json"
+          },
+          "max_images": {
+            "type": "integer",
+            "title": "Max Images",
+            "default": 50
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          }
+        },
+        "title": "generate_config_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "default": "evaluate_predictions"
+          },
+          "dataset": {
+            "type": "string",
+            "default": "data/smoke"
+          },
+          "predictions": {
+            "type": "string",
+            "default": "data/smoke/predictions/predictions_dummy.json"
+          },
+          "split": {
+            "type": "string",
+            "default": "val"
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/ai_eval.json"
+          },
+          "max_images": {
+            "type": "integer",
+            "default": 50
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "review_config",
+      "function": "review_config_tool",
+      "params": [
+        {
+          "name": "config_json",
+          "required": true
+        },
+        {
+          "name": "workspace_root",
+          "required": false,
+          "default": "."
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "config_json": {
+            "type": "string",
+            "title": "Config Json"
+          },
+          "workspace_root": {
+            "type": "string",
+            "title": "Workspace Root",
+            "default": "."
+          }
+        },
+        "title": "review_config_toolArguments",
+        "type": "object",
+        "required": [
+          "config_json"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "config_json": {
+            "type": "string"
+          },
+          "workspace_root": {
+            "type": "string",
+            "default": "."
+          }
+        },
+        "required": [
+          "config_json"
+        ]
+      }
+    },
+    {
+      "name": "doctor",
+      "function": "doctor_tool",
+      "params": [
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/doctor.json"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/doctor.json"
+          }
+        },
+        "title": "doctor_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {
+          "output": {
+            "type": "string",
+            "default": "reports/doctor.json"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "validate_predictions",
+      "function": "validate_predictions_tool",
+      "params": [
+        {
+          "name": "path",
+          "required": true
+        },
+        {
+          "name": "strict",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "strict": {
+            "type": "boolean",
+            "title": "Strict",
+            "default": true
+          }
+        },
+        "title": "validate_predictions_toolArguments",
+        "type": "object",
+        "required": [
+          "path"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "validate_dataset",
+      "function": "validate_dataset_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "strict",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "mode",
+          "required": false,
+          "default": "fail"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "strict": {
+            "type": "boolean",
+            "title": "Strict",
+            "default": true
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "fail"
+          }
+        },
+        "title": "validate_dataset_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true
+          },
+          "mode": {
+            "type": "string",
+            "default": "fail"
+          }
+        },
+        "required": [
+          "dataset"
+        ]
+      }
+    },
+    {
+      "name": "eval_coco",
+      "function": "eval_coco_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/mcp_coco_eval.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/mcp_coco_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          }
+        },
+        "title": "eval_coco_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "predictions": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/mcp_coco_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      }
+    },
+    {
+      "name": "predict_images",
+      "function": "predict_images_tool",
+      "params": [
+        {
+          "name": "input_dir",
+          "required": true
+        },
+        {
+          "name": "backend",
+          "required": false,
+          "default": "dummy"
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/mcp_predict_images.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "strict",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "input_dir": {
+            "type": "string",
+            "title": "Input Dir"
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "default": "dummy"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/mcp_predict_images.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          },
+          "strict": {
+            "type": "boolean",
+            "title": "Strict",
+            "default": true
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
+          }
+        },
+        "title": "predict_images_toolArguments",
+        "type": "object",
+        "required": [
+          "input_dir"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "input_dir": {
+            "type": "string"
+          },
+          "backend": {
+            "type": "string",
+            "default": "dummy"
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/mcp_predict_images.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "input_dir"
+        ]
+      }
+    },
+    {
+      "name": "parity_check",
+      "function": "parity_check_tool",
+      "params": [
+        {
+          "name": "reference",
+          "required": true
+        },
+        {
+          "name": "candidate",
+          "required": true
+        },
+        {
+          "name": "iou_thresh",
+          "required": false,
+          "default": 0.5
+        },
+        {
+          "name": "score_atol",
+          "required": false,
+          "default": 1e-06
+        },
+        {
+          "name": "bbox_atol",
+          "required": false,
+          "default": 0.0001
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "image_size",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "candidate": {
+            "type": "string",
+            "title": "Candidate"
+          },
+          "iou_thresh": {
+            "type": "number",
+            "title": "Iou Thresh",
+            "default": 0.5
+          },
+          "score_atol": {
+            "type": "number",
+            "title": "Score Atol",
+            "default": 1e-06
+          },
+          "bbox_atol": {
+            "type": "number",
+            "title": "Bbox Atol",
+            "default": 0.0001
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "image_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Size",
+            "default": null
+          }
+        },
+        "title": "parity_check_toolArguments",
+        "type": "object",
+        "required": [
+          "reference",
+          "candidate"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "candidate": {
+            "type": "string"
+          },
+          "iou_thresh": {
+            "type": "number",
+            "default": 0.5
+          },
+          "score_atol": {
+            "type": "number",
+            "default": 1e-06
+          },
+          "bbox_atol": {
+            "type": "number",
+            "default": 0.0001
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "image_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "reference",
+          "candidate"
+        ]
+      }
+    },
+    {
+      "name": "calibrate_predictions",
+      "function": "calibrate_predictions_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "name": "method",
+          "required": false,
+          "default": "fracal"
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "task",
+          "required": false,
+          "default": "auto"
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/mcp_calibrated_predictions.json"
+        },
+        {
+          "name": "output_report",
+          "required": false,
+          "default": "reports/mcp_calibration_report.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "fracal"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "task": {
+            "type": "string",
+            "title": "Task",
+            "default": "auto"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/mcp_calibrated_predictions.json"
+          },
+          "output_report": {
+            "type": "string",
+            "title": "Output Report",
+            "default": "reports/mcp_calibration_report.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
+          }
+        },
+        "title": "calibrate_predictions_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "predictions": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "default": "fracal"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "task": {
+            "type": "string",
+            "default": "auto"
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/mcp_calibrated_predictions.json"
+          },
+          "output_report": {
+            "type": "string",
+            "default": "reports/mcp_calibration_report.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      }
+    },
+    {
+      "name": "eval_instance_seg",
+      "function": "eval_instance_seg_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/mcp_instance_seg_eval.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "min_score",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "allow_rgb_masks",
+          "required": false,
+          "default": false
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/mcp_instance_seg_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Score",
+            "default": null
+          },
+          "allow_rgb_masks": {
+            "type": "boolean",
+            "title": "Allow Rgb Masks",
+            "default": false
+          }
+        },
+        "title": "eval_instance_seg_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "predictions": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/mcp_instance_seg_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "allow_rgb_masks": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      }
+    },
+    {
+      "name": "eval_long_tail",
+      "function": "eval_long_tail_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": "reports/mcp_long_tail_eval.json"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_detections",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "reports/mcp_long_tail_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "max_detections": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Detections",
+            "default": null
+          }
+        },
+        "title": "eval_long_tail_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "predictions": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "output": {
+            "type": "string",
+            "default": "reports/mcp_long_tail_eval.json"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "max_detections": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      }
+    },
+    {
+      "name": "run_scenarios",
+      "function": "run_scenarios_tool",
+      "params": [
+        {
+          "name": "config",
+          "required": true
+        },
+        {
+          "name": "extra_args",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "config": {
+            "type": "string",
+            "title": "Config"
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Args",
+            "default": null
+          }
+        },
+        "title": "run_scenarios_toolArguments",
+        "type": "object",
+        "required": [
+          "config"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "config": {
+            "type": "string"
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "config"
+        ]
+      }
+    },
+    {
+      "name": "convert_dataset",
+      "function": "convert_dataset_tool",
+      "params": [
+        {
+          "name": "from_format",
+          "required": true
+        },
+        {
+          "name": "output",
+          "required": true
+        },
+        {
+          "name": "data",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "args_yaml",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "task",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "coco_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "instances_json",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "mode",
+          "required": false,
+          "default": "manifest"
+        },
+        {
+          "name": "include_crowd",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "from_format": {
+            "type": "string",
+            "title": "From Format"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "default": null
+          },
+          "args_yaml": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Args Yaml",
+            "default": null
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task",
+            "default": null
+          },
+          "coco_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coco Root",
+            "default": null
+          },
+          "instances_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instances Json",
+            "default": null
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "manifest"
+          },
+          "include_crowd": {
+            "type": "boolean",
+            "title": "Include Crowd",
+            "default": false
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
+          }
+        },
+        "title": "convert_dataset_toolArguments",
+        "type": "object",
+        "required": [
+          "from_format",
+          "output"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "from_format": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "args_yaml": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "coco_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "instances_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "mode": {
+            "type": "string",
+            "default": "manifest"
+          },
+          "include_crowd": {
+            "type": "boolean",
+            "default": false
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "from_format",
+          "output"
+        ]
+      }
+    },
+    {
+      "name": "train_job",
+      "function": "train_job_tool",
+      "params": [
+        {
+          "name": "train_config",
+          "required": true
+        },
+        {
+          "name": "run_id",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "resume",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "train_config": {
+            "type": "string",
+            "title": "Train Config"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id",
+            "default": null
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resume",
+            "default": null
+          }
+        },
+        "title": "train_job_toolArguments",
+        "type": "object",
+        "required": [
+          "train_config"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "train_config": {
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "train_config"
+        ]
+      }
+    },
+    {
+      "name": "export_predictions_job",
+      "function": "export_predictions_job_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "output",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
+          }
+        },
+        "title": "export_predictions_job_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "output"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "dataset",
+          "output"
+        ]
+      }
+    },
+    {
+      "name": "export_onnx_job",
+      "function": "export_onnx_job_tool",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "output",
+          "required": true
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
+          }
+        },
+        "title": "export_onnx_job_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "output"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "dataset",
+          "output"
+        ]
+      }
+    },
+    {
+      "name": "test_job",
+      "function": "test_job_tool",
+      "params": [
+        {
+          "name": "test_config",
+          "required": true
+        },
+        {
+          "name": "extra_args",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string",
+            "title": "Test Config"
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Args",
+            "default": null
+          }
+        },
+        "title": "test_job_toolArguments",
+        "type": "object",
+        "required": [
+          "test_config"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string"
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "test_config"
+        ]
+      }
+    },
+    {
+      "name": "ttt_job",
+      "function": "ttt_job_tool",
+      "params": [
+        {
+          "name": "test_config",
+          "required": true
+        },
+        {
+          "name": "method",
+          "required": false,
+          "default": "tent"
+        },
+        {
+          "name": "preset",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "steps",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "reset",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "extra_args",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string",
+            "title": "Test Config"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "tent"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset",
+            "default": null
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps",
+            "default": null
+          },
+          "reset": {
+            "type": "boolean",
+            "title": "Reset",
+            "default": false
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Args",
+            "default": null
+          }
+        },
+        "title": "ttt_job_toolArguments",
+        "type": "object",
+        "required": [
+          "test_config"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "default": "tent"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "reset": {
+            "type": "boolean",
+            "default": false
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "test_config"
+        ]
+      }
+    },
+    {
+      "name": "ctta_job",
+      "function": "ctta_job_tool",
+      "params": [
+        {
+          "name": "test_config",
+          "required": true
+        },
+        {
+          "name": "method",
+          "required": false,
+          "default": "cotta"
+        },
+        {
+          "name": "preset",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "steps",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "reset",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "extra_args",
+          "required": false,
+          "default": null
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string",
+            "title": "Test Config"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "cotta"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset",
+            "default": null
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps",
+            "default": null
+          },
+          "reset": {
+            "type": "boolean",
+            "title": "Reset",
+            "default": false
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Args",
+            "default": null
+          }
+        },
+        "title": "ctta_job_toolArguments",
+        "type": "object",
+        "required": [
+          "test_config"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "test_config": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "default": "cotta"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "reset": {
+            "type": "boolean",
+            "default": false
+          },
+          "extra_args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "test_config"
+        ]
+      }
+    },
+    {
+      "name": "jobs_list",
+      "function": "jobs_list_tool",
+      "params": [],
+      "input_schema": {
+        "properties": {},
+        "title": "jobs_list_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "jobs_status",
+      "function": "jobs_status_tool",
+      "params": [
+        {
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        },
+        "title": "jobs_status_toolArguments",
+        "type": "object",
+        "required": [
+          "job_id"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      }
+    },
+    {
+      "name": "jobs_cancel",
+      "function": "jobs_cancel_tool",
+      "params": [
+        {
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        },
+        "title": "jobs_cancel_toolArguments",
+        "type": "object",
+        "required": [
+          "job_id"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      }
+    },
+    {
+      "name": "runs_list",
+      "function": "runs_list_tool",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "default": 20
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 20
+          }
+        },
+        "title": "runs_list_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "default": 20
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "runs_describe",
+      "function": "runs_describe_tool",
+      "params": [
+        {
+          "name": "run_id",
+          "required": true
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          }
+        },
+        "title": "runs_describe_toolArguments",
+        "type": "object",
+        "required": [
+          "run_id"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "run_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ]
+      }
+    }
+  ],
   "tools": [
     {
       "canonical_name": "doctor",
@@ -32,6 +2560,26 @@
             "default": "reports/doctor.json"
           }
         ],
+        "input_schema": {
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/doctor.json"
+            }
+          },
+          "title": "doctor_toolArguments",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {
+            "output": {
+              "type": "string",
+              "default": "reports/doctor.json"
+            }
+          },
+          "required": []
+        },
         "aliases": []
       },
       "actions": {
@@ -46,11 +2594,32 @@
             "default": "reports/doctor.json"
           }
         ],
+        "input_schema": {
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/doctor.json"
+            }
+          },
+          "title": "DoctorRequest",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {
+            "output": {
+              "type": "string",
+              "default": "reports/doctor.json"
+            }
+          },
+          "required": []
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -94,6 +2663,38 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "path": {
+              "type": "string",
+              "title": "Path"
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            }
+          },
+          "title": "validate_predictions_toolArguments",
+          "type": "object",
+          "required": [
+            "path"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -112,11 +2713,44 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "path": {
+              "type": "string",
+              "title": "Path"
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            }
+          },
+          "title": "ValidatePredictionsRequest",
+          "type": "object",
+          "required": [
+            "path"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -180,6 +2814,70 @@
             "default": "fail"
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            },
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "default": "fail"
+            }
+          },
+          "title": "validate_dataset_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            },
+            "mode": {
+              "type": "string",
+              "default": "fail"
+            }
+          },
+          "required": [
+            "dataset"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -208,11 +2906,76 @@
             "default": "fail"
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            },
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "default": "fail"
+            }
+          },
+          "title": "ValidateDatasetRequest",
+          "type": "object",
+          "required": [
+            "dataset"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            },
+            "mode": {
+              "type": "string",
+              "default": "fail"
+            }
+          },
+          "required": [
+            "dataset"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -294,6 +3057,102 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "title": "Dry Run",
+              "default": true
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_coco_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            }
+          },
+          "title": "eval_coco_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "default": true
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_coco_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -331,11 +3190,108 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "title": "Dry Run",
+              "default": true
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_coco_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            }
+          },
+          "title": "EvalCocoRequest",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "default": true
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_coco_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -429,6 +3385,97 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "input_dir": {
+              "type": "string",
+              "title": "Input Dir"
+            },
+            "backend": {
+              "type": "string",
+              "title": "Backend",
+              "default": "dummy"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_predict_images.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "title": "Dry Run",
+              "default": true
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "predict_images_toolArguments",
+          "type": "object",
+          "required": [
+            "input_dir"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "input_dir": {
+              "type": "string"
+            },
+            "backend": {
+              "type": "string",
+              "default": "dummy"
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_predict_images.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "default": true
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "input_dir"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -472,11 +3519,103 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "input_dir": {
+              "type": "string",
+              "title": "Input Dir"
+            },
+            "backend": {
+              "type": "string",
+              "title": "Backend",
+              "default": "dummy"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_predict_images.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "title": "Dry Run",
+              "default": true
+            },
+            "strict": {
+              "type": "boolean",
+              "title": "Strict",
+              "default": true
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "PredictImagesRequest",
+          "type": "object",
+          "required": [
+            "input_dir"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "input_dir": {
+              "type": "string"
+            },
+            "backend": {
+              "type": "string",
+              "default": "dummy"
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_predict_images.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "dry_run": {
+              "type": "boolean",
+              "default": true
+            },
+            "strict": {
+              "type": "boolean",
+              "default": true
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "input_dir"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -568,6 +3707,111 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "reference": {
+              "type": "string",
+              "title": "Reference"
+            },
+            "candidate": {
+              "type": "string",
+              "title": "Candidate"
+            },
+            "iou_thresh": {
+              "type": "number",
+              "title": "Iou Thresh",
+              "default": 0.5
+            },
+            "score_atol": {
+              "type": "number",
+              "title": "Score Atol",
+              "default": 1e-06
+            },
+            "bbox_atol": {
+              "type": "number",
+              "title": "Bbox Atol",
+              "default": 0.0001
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "image_size": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Image Size",
+              "default": null
+            }
+          },
+          "title": "parity_check_toolArguments",
+          "type": "object",
+          "required": [
+            "reference",
+            "candidate"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "reference": {
+              "type": "string"
+            },
+            "candidate": {
+              "type": "string"
+            },
+            "iou_thresh": {
+              "type": "number",
+              "default": 0.5
+            },
+            "score_atol": {
+              "type": "number",
+              "default": 1e-06
+            },
+            "bbox_atol": {
+              "type": "number",
+              "default": 0.0001
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "image_size": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "reference",
+            "candidate"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -610,11 +3854,117 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "reference": {
+              "type": "string",
+              "title": "Reference"
+            },
+            "candidate": {
+              "type": "string",
+              "title": "Candidate"
+            },
+            "iou_thresh": {
+              "type": "number",
+              "title": "Iou Thresh",
+              "default": 0.5
+            },
+            "score_atol": {
+              "type": "number",
+              "title": "Score Atol",
+              "default": 1e-06
+            },
+            "bbox_atol": {
+              "type": "number",
+              "title": "Bbox Atol",
+              "default": 0.0001
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "image_size": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Image Size",
+              "default": null
+            }
+          },
+          "title": "ParityCheckRequest",
+          "type": "object",
+          "required": [
+            "reference",
+            "candidate"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "reference": {
+              "type": "string"
+            },
+            "candidate": {
+              "type": "string"
+            },
+            "iou_thresh": {
+              "type": "number",
+              "default": 0.5
+            },
+            "score_atol": {
+              "type": "number",
+              "default": 1e-06
+            },
+            "bbox_atol": {
+              "type": "number",
+              "default": 0.0001
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "image_size": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "reference",
+            "candidate"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -726,6 +4076,129 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "fracal"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "task": {
+              "type": "string",
+              "title": "Task",
+              "default": "auto"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_calibrated_predictions.json"
+            },
+            "output_report": {
+              "type": "string",
+              "title": "Output Report",
+              "default": "reports/mcp_calibration_report.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "calibrate_predictions_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "fracal"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "task": {
+              "type": "string",
+              "default": "auto"
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_calibrated_predictions.json"
+            },
+            "output_report": {
+              "type": "string",
+              "default": "reports/mcp_calibration_report.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -778,11 +4251,135 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "fracal"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "task": {
+              "type": "string",
+              "title": "Task",
+              "default": "auto"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_calibrated_predictions.json"
+            },
+            "output_report": {
+              "type": "string",
+              "title": "Output Report",
+              "default": "reports/mcp_calibration_report.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "CalibratePredictionsRequest",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "fracal"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "task": {
+              "type": "string",
+              "default": "auto"
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_calibrated_predictions.json"
+            },
+            "output_report": {
+              "type": "string",
+              "default": "reports/mcp_calibration_report.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -874,6 +4471,125 @@
             "default": false
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_instance_seg_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "min_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Score",
+              "default": null
+            },
+            "allow_rgb_masks": {
+              "type": "boolean",
+              "title": "Allow Rgb Masks",
+              "default": false
+            }
+          },
+          "title": "eval_instance_seg_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_instance_seg_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "min_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "allow_rgb_masks": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -916,11 +4632,131 @@
             "default": false
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_instance_seg_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "min_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Score",
+              "default": null
+            },
+            "allow_rgb_masks": {
+              "type": "boolean",
+              "title": "Allow Rgb Masks",
+              "default": false
+            }
+          },
+          "title": "EvalInstanceSegRequest",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_instance_seg_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "min_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "allow_rgb_masks": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1002,6 +4838,116 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_long_tail_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "max_detections": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Detections",
+              "default": null
+            }
+          },
+          "title": "eval_long_tail_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_long_tail_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "max_detections": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1039,11 +4985,122 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "predictions": {
+              "type": "string",
+              "title": "Predictions"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "default": "reports/mcp_long_tail_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Images",
+              "default": null
+            },
+            "max_detections": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Detections",
+              "default": null
+            }
+          },
+          "title": "EvalLongTailRequest",
+          "type": "object",
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "predictions": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "output": {
+              "type": "string",
+              "default": "reports/mcp_long_tail_eval.json"
+            },
+            "max_images": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "max_detections": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "dataset",
+            "predictions"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1087,6 +5144,58 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "config": {
+              "type": "string",
+              "title": "Config"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "run_scenarios_toolArguments",
+          "type": "object",
+          "required": [
+            "config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "config": {
+              "type": "string"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "config"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1105,11 +5214,64 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "config": {
+              "type": "string",
+              "title": "Config"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "RunScenariosRequest",
+          "type": "object",
+          "required": [
+            "config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "config": {
+              "type": "string"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "config"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1241,6 +5403,203 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "from_format": {
+              "type": "string",
+              "title": "From Format"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output"
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data",
+              "default": null
+            },
+            "args_yaml": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Args Yaml",
+              "default": null
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task",
+              "default": null
+            },
+            "coco_root": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Coco Root",
+              "default": null
+            },
+            "instances_json": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instances Json",
+              "default": null
+            },
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "default": "manifest"
+            },
+            "include_crowd": {
+              "type": "boolean",
+              "title": "Include Crowd",
+              "default": false
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "convert_dataset_toolArguments",
+          "type": "object",
+          "required": [
+            "from_format",
+            "output"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "from_format": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "args_yaml": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "coco_root": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "instances_json": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "mode": {
+              "type": "string",
+              "default": "manifest"
+            },
+            "include_crowd": {
+              "type": "boolean",
+              "default": false
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "from_format",
+            "output"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1303,11 +5662,209 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "from_format": {
+              "type": "string",
+              "title": "From Format"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output"
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data",
+              "default": null
+            },
+            "args_yaml": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Args Yaml",
+              "default": null
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task",
+              "default": null
+            },
+            "coco_root": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Coco Root",
+              "default": null
+            },
+            "instances_json": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instances Json",
+              "default": null
+            },
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "default": "manifest"
+            },
+            "include_crowd": {
+              "type": "boolean",
+              "title": "Include Crowd",
+              "default": false
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "ConvertDatasetRequest",
+          "type": "object",
+          "required": [
+            "from_format",
+            "output"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "from_format": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "args_yaml": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "coco_root": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "instances_json": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "mode": {
+              "type": "string",
+              "default": "manifest"
+            },
+            "include_crowd": {
+              "type": "boolean",
+              "default": false
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "from_format",
+            "output"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1361,6 +5918,75 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "train_config": {
+              "type": "string",
+              "title": "Train Config"
+            },
+            "run_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id",
+              "default": null
+            },
+            "resume": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resume",
+              "default": null
+            }
+          },
+          "title": "train_job_toolArguments",
+          "type": "object",
+          "required": [
+            "train_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "train_config": {
+              "type": "string"
+            },
+            "run_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "resume": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "train_config"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1384,11 +6010,81 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "train_config": {
+              "type": "string",
+              "title": "Train Config"
+            },
+            "run_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id",
+              "default": null
+            },
+            "resume": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resume",
+              "default": null
+            }
+          },
+          "title": "TrainJobRequest",
+          "type": "object",
+          "required": [
+            "train_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "train_config": {
+              "type": "string"
+            },
+            "run_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "resume": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "train_config"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1475,6 +6171,70 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "export_predictions_job_toolArguments",
+          "type": "object",
+          "required": [
+            "dataset",
+            "output"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "dataset",
+            "output"
+          ]
+        },
         "aliases": [
           {
             "name": "export_onnx_job",
@@ -1499,6 +6259,70 @@
                 "default": true
               }
             ],
+            "input_schema": {
+              "properties": {
+                "dataset": {
+                  "type": "string",
+                  "title": "Dataset"
+                },
+                "output": {
+                  "type": "string",
+                  "title": "Output"
+                },
+                "split": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Split",
+                  "default": null
+                },
+                "force": {
+                  "type": "boolean",
+                  "title": "Force",
+                  "default": true
+                }
+              },
+              "title": "export_onnx_job_toolArguments",
+              "type": "object",
+              "required": [
+                "dataset",
+                "output"
+              ]
+            },
+            "parameter_schema": {
+              "properties": {
+                "dataset": {
+                  "type": "string"
+                },
+                "output": {
+                  "type": "string"
+                },
+                "split": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "force": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "dataset",
+                "output"
+              ]
+            },
             "parity_with_tool_runner": true
           }
         ]
@@ -1528,6 +6352,70 @@
             "default": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "title": "Dataset"
+            },
+            "output": {
+              "type": "string",
+              "title": "Output"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split",
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
+            }
+          },
+          "title": "ExportPredictionsJobRequest",
+          "type": "object",
+          "required": [
+            "dataset",
+            "output"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "dataset": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "split": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "dataset",
+            "output"
+          ]
+        },
         "aliases": [
           {
             "method": "POST",
@@ -1554,6 +6442,70 @@
                 "default": true
               }
             ],
+            "input_schema": {
+              "properties": {
+                "dataset": {
+                  "type": "string",
+                  "title": "Dataset"
+                },
+                "output": {
+                  "type": "string",
+                  "title": "Output"
+                },
+                "split": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Split",
+                  "default": null
+                },
+                "force": {
+                  "type": "boolean",
+                  "title": "Force",
+                  "default": true
+                }
+              },
+              "title": "ExportOnnxJobRequest",
+              "type": "object",
+              "required": [
+                "dataset",
+                "output"
+              ]
+            },
+            "parameter_schema": {
+              "properties": {
+                "dataset": {
+                  "type": "string"
+                },
+                "output": {
+                  "type": "string"
+                },
+                "split": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "force": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "dataset",
+                "output"
+              ]
+            },
             "parity_with_tool_runner": true
           }
         ]
@@ -1561,6 +6513,7 @@
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1604,6 +6557,58 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "test_job_toolArguments",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1622,11 +6627,64 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "TestJobRequest",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1710,6 +6768,122 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "tent"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preset",
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Steps",
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "title": "Reset",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "ttt_job_toolArguments",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "tent"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1748,11 +6922,128 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "tent"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preset",
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Steps",
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "title": "Reset",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "TTTJobRequest",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "tent"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1836,6 +7127,122 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "cotta"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preset",
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Steps",
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "title": "Reset",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "ctta_job_toolArguments",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "cotta"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1874,11 +7281,128 @@
             "default": null
           }
         ],
+        "input_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string",
+              "title": "Test Config"
+            },
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "default": "cotta"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preset",
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Steps",
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "title": "Reset",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extra Args",
+              "default": null
+            }
+          },
+          "title": "CTTAJobRequest",
+          "type": "object",
+          "required": [
+            "test_config"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "test_config": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "default": "cotta"
+            },
+            "preset": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "steps": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "reset": {
+              "type": "boolean",
+              "default": false
+            },
+            "extra_args": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "test_config"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1902,6 +7426,15 @@
         "tool": "jobs_list",
         "function": "jobs_list_tool",
         "params": [],
+        "input_schema": {
+          "properties": {},
+          "title": "jobs_list_toolArguments",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {},
+          "required": []
+        },
         "aliases": []
       },
       "actions": {
@@ -1910,11 +7443,21 @@
         "route_fn": "jobs_list_route",
         "request_model": null,
         "params": [],
+        "input_schema": {
+          "properties": {},
+          "title": "jobs_list_routeArguments",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {},
+          "required": []
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1948,6 +7491,29 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          "title": "jobs_status_toolArguments",
+          "type": "object",
+          "required": [
+            "job_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -1961,11 +7527,35 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          "title": "jobs_status_routeArguments",
+          "type": "object",
+          "required": [
+            "job_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -1999,6 +7589,29 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          "title": "jobs_cancel_toolArguments",
+          "type": "object",
+          "required": [
+            "job_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -2012,11 +7625,35 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          "title": "jobs_cancel_routeArguments",
+          "type": "object",
+          "required": [
+            "job_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "job_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -2052,6 +7689,26 @@
             "default": 20
           }
         ],
+        "input_schema": {
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "title": "Limit",
+              "default": 20
+            }
+          },
+          "title": "runs_list_toolArguments",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          "required": []
+        },
         "aliases": []
       },
       "actions": {
@@ -2066,11 +7723,32 @@
             "default": 20
           }
         ],
+        "input_schema": {
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "title": "Limit",
+              "default": 20
+            }
+          },
+          "title": "runs_list_routeArguments",
+          "type": "object"
+        },
+        "parameter_schema": {
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          "required": []
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true
@@ -2104,6 +7782,29 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          "title": "runs_describe_toolArguments",
+          "type": "object",
+          "required": [
+            "run_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "run_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ]
+        },
         "aliases": []
       },
       "actions": {
@@ -2117,11 +7818,35 @@
             "required": true
           }
         ],
+        "input_schema": {
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          "title": "runs_describe_routeArguments",
+          "type": "object",
+          "required": [
+            "run_id"
+          ]
+        },
+        "parameter_schema": {
+          "properties": {
+            "run_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ]
+        },
         "aliases": []
       },
       "parity": {
         "mcp_vs_tool_runner": true,
         "actions_vs_tool_runner": true,
+        "mcp_vs_actions_schema": true,
         "tool_runner_aliases": true,
         "mcp_aliases": true,
         "actions_aliases": true

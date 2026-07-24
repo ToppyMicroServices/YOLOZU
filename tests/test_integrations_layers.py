@@ -30,6 +30,35 @@ class TestIntegrationLayers(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertIn("path traversal", out.get("error", ""))
 
+    def test_api_layer_allows_absolute_path_inside_explicit_workspace(self):
+        completed = subprocess.CompletedProcess(args=["x"], returncode=0, stdout="{}", stderr="")
+        with tempfile.TemporaryDirectory() as td:
+            inside = Path(td) / "predictions.json"
+            with patch(
+                "yolozu.integrations.layers.api.subprocess.run",
+                return_value=completed,
+            ) as run:
+                out = run_cli_tool(
+                    "validate_predictions",
+                    ["validate", "predictions", str(inside)],
+                    workspace=td,
+                )
+        self.assertTrue(out["ok"])
+        self.assertEqual(
+            run.call_args.kwargs["cwd"],
+            str(Path(td).resolve()),
+        )
+
+    def test_api_layer_rejects_absolute_path_outside_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            out = run_cli_tool(
+                "validate_predictions",
+                ["validate", "predictions", "/tmp/outside.json"],
+                workspace=td,
+            )
+        self.assertFalse(out["ok"])
+        self.assertIn("path escapes workspace", out.get("error", ""))
+
     def test_api_layer_rejects_non_allowlisted_command(self):
         out = run_cli_tool("bad", ["rm", "-rf", "/tmp/x"])
         self.assertFalse(out["ok"])

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/predictions_validation_result.schema.json",
+  "title": "YOLOZU predictions validation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tool",
+    "ok",
+    "path",
+    "strict",
+    "entry_count",
+    "warnings",
+    "errors",
+    "limits"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "tool": {
+      "const": "validate_predictions"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "path": {
+      "type": "string"
+    },
+    "strict": {
+      "type": "boolean"
+    },
+    "entry_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100
+    },
+    "errors": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "file_not_found",
+              "invalid_json",
+              "read_error",
+              "invalid_predictions"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warnings_max",
+        "warnings_truncated"
+      ],
+      "properties": {
+        "warnings_max": {
+          "const": 100
+        },
+        "warnings_truncated": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

@@ -1,12 +1,12 @@
 # AI-first usage guide
 
-This page defines the stable AI/agent surface for YOLOZU 1.0.x.
+This page defines the current stable AI/agent surface for YOLOZU.
 
 ## 1) Purpose
 
 Use YOLOZU as an interface-contract-first execution layer where agents:
 
-- discover tools from `tools/manifest.json`
+- discover tools from the manifest packaged with `yolozu`
 - generate deterministic run configs
 - review configs against safety constraints
 - execute only allowlisted operations
@@ -20,14 +20,14 @@ Use YOLOZU as an interface-contract-first execution layer where agents:
 
 ## 3) Official MCP support boundary
 
-Guaranteed (1.0.x, deterministic/lightweight MCP tool ids):
+Guaranteed (deterministic/lightweight MCP tool ids):
 
 - `doctor`
 - `generate_config`
 - `review_config`
 - `validate_predictions`
 
-AI-safe tool scripts (CLI; not exposed as MCP tool ids in 1.0.x):
+AI-safe tool scripts (CLI; not exposed as guaranteed MCP tool ids):
 
 - `validate_synthgen_contract`
 - `render_synthgen_overlay`
@@ -40,12 +40,36 @@ Best-effort (environment dependent, not in stable AI-safe guarantee):
 - TensorRT build/export
 - OpenCV CUDA/OpenVINO backend execution
 
+The live MCP server registers 25 canonical tool ids. The Actions API shares 21
+canonical operations. `generate_config` and `review_config` are in-process
+config-review tools and are not Actions endpoints. These sets are intentionally
+different and are machine-readable in
+`docs/generated/mcp_actions_tool_reference.json` under `surfaces`.
+Discovery responses expose the same boundaries as `guaranteed_mcp_tools` and
+`live_mcp_tools`; the older `supported_mcp_tools` field remains a compatibility
+alias for the guaranteed set.
+With `--ids-only`, `manifest_tools` and `selected_tool_ids` contain only the
+filtered selection, while `surface_counts` keeps the response compact. Omit
+`--ids-only` when full records and the expanded `surfaces` object are needed.
+
 ## 4) Fast path (3 commands)
 
 ```bash
-python3 tools/run_mcp_server.py --print-tools
-python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
-python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json
+yolozu-mcp --print-tools --guaranteed --ids-only
+yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
+yolozu-mcp --sample-review-config reports/ai_generate_config.json
+```
+
+`--sample-review-config` exits `1` when the parsed config is rejected and `2`
+when the config cannot be read safely, so agents can use the process status
+without parsing human text.
+
+Inspect all 25 registered MCP operations, or filter the broader manifest
+registry without returning full records:
+
+```bash
+yolozu-mcp --print-tools --supported --ids-only
+yolozu-mcp --print-tools --ids-only --maturity stable --tag validation
 ```
 
 SynthGen-safe fast path (interface-contract-only, CPU):
@@ -59,10 +83,35 @@ python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --o
 Start MCP stdio server:
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 ```
 
+Installed-wheel Python fast path (run from the consumer workspace):
+
+```python
+from yolozu.integrations.ai_surface import list_manifest_tools
+from yolozu.integrations.tool_runner import validate_predictions
+
+tool_ids = list_manifest_tools(guaranteed=True, ids_only=True)
+result = validate_predictions("reports/predictions.json", strict=True)
+if not result["ok"]:
+    raise RuntimeError(result.get("validation") or result["summary"])
+```
+
+`result["validation"]` follows the validation-result schema described below.
+
 ## 5) JSON interface contracts for AI surface
+
+### 5.0 Predictions validation result
+
+Human output remains the default. Add `--json` for a bounded result with
+`schema_version`, `ok`, `warnings`, and `errors`:
+
+```bash
+yolozu validate predictions reports/predictions.json --strict --json
+```
+
+Schema file: `docs/schemas/predictions_validation_result.schema.json`
 
 ### 5.1 `doctor` response
 
@@ -122,10 +171,17 @@ Safe defaults for AI execution:
 - outputs under `reports/`
 - no network unless explicitly needed
 
+Installed Python helpers resolve relative input and output paths against the
+caller's current working directory. Absolute paths are accepted only when they
+remain inside that workspace; `..`, home-directory shortcuts, and paths that
+resolve outside it are rejected. Manifest discovery uses the packaged resource
+by default, so it does not require a repository checkout. An explicit
+`--manifest` override is resolved against the same caller workspace.
+
 ## 7) CI gate for AI/MCP surface
 
 The CI gate should verify:
 
-- `python3 tools/run_mcp_server.py --help`
+- `yolozu-mcp --help`
 - manifest validation (`tools/validate_tool_manifest.py --require-declarative`)
 - deterministic sample interface contracts (`generate_config` / `review_config`) via tests

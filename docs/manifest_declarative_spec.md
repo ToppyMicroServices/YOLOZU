@@ -23,6 +23,25 @@ Each `tools[]` item MUST include:
 - `outputs` array (can be empty, but field must exist)
 - `examples` with at least one runnable command
 
+## Top-level AI surface sets
+
+`ai_surfaces` is the machine-readable SSOT for public integration boundaries:
+
+- `mcp_live`: exact canonical ids registered by the live MCP server
+- `guaranteed_ai_safe`: deterministic lightweight guarantee
+- `config_review`: in-process config generation/review subset
+- `actions_public`: canonical operations shared with the Actions API
+
+Each set declares ordered, unique `tool_ids` and a short `availability`
+boundary. Generated MCP/Actions references and compact discovery must derive
+these classifications from the source and packaged manifests.
+Compact discovery exposes explicit `guaranteed_mcp_tools` and
+`live_mcp_tools` fields. The compatibility field `supported_mcp_tools` retains
+its historical meaning as the guaranteed subset.
+In `ids_only` mode, `manifest_tools` is the filtered selection rather than the
+entire registry, and expanded surface lists are replaced by bounded
+`surface_counts`.
+
 ## Input declaration rules
 
 For each `inputs[]` item:

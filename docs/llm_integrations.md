@@ -9,7 +9,8 @@ Architecture reference: [MCP extension architecture](mcp_extension_architecture.
 Start server:
 
 ```bash
-python3 tools/run_mcp_server.py
+python3 -m pip install 'yolozu[mcp]'
+yolozu-mcp
 ```
 
 Exposed tools (minimum):
@@ -29,21 +30,29 @@ Also available in the same backend surface:
 - compatibility alias: `export_onnx_job` (same behavior as `export_predictions_job`)
 - job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
 
-Official AI-safe support (1.0.x guarantee, MCP Lite):
-- `doctor`, `generate_config`, `review_config`
+Guaranteed AI-safe support:
+- `doctor`, `generate_config`, `review_config`, `validate_predictions`
 
-MCP Lite quickstart (copy-paste):
+The server also registers a broader 25-tool live MCP surface. The generated
+reference distinguishes that live set from the four guaranteed tools, the two
+config-review tools, and the 21 canonical Actions operations. Registration does
+not promote environment-dependent tools into the guaranteed set.
+
+Installed MCP quickstart (copy-paste):
 
 ```bash
 # Start MCP server (stdio)
-python3 tools/run_mcp_server.py
+yolozu-mcp
 
-# Inspect exposed tools as JSON
-python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
+# Inspect the four guaranteed AI-safe tools as JSON
+yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
+
+# Inspect all 25 registered MCP operations
+yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
 
 # Deterministic sample I/O (useful for client wiring tests)
-python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
-python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
+yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
 
 # MCP settings check (manifest + generated reference sync)
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
@@ -66,7 +75,9 @@ This format is designed so Claude/Copilot/other MCP-capable clients can summariz
 
 ## 1.1) AI-facing guardrails (important)
 
-- Path policy: `..` is rejected; absolute paths outside workspace are rejected by integration layer guards.
+- Path policy: caller-relative paths use the process current working directory;
+  `..`, home-directory shortcuts, symlink escapes, and absolute paths outside
+  that workspace are rejected by integration layer guards.
 - Use workspace-relative paths whenever possible.
 - For long-running tasks, use `job_id` + `jobs_status` instead of waiting on one synchronous call.
 - Treat `ok/tool/summary/exit_code` as canonical status and `meta` as optional provenance.
@@ -109,10 +120,10 @@ Recommendation: ship MCP first, add Actions only when ChatGPT Actions integratio
 Claude integration should also use the same MCP server.
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 ```
 
-- Expose the same tool contract and JSON shape used by other clients.
+- Expose the same tool interface contract and JSON shape used by other clients.
 - Keep Claude-side prompt/tool wrappers thin (no duplicated business logic).
 
 ## 4) Copilot routes
@@ -140,7 +151,7 @@ Gemini can use the same backend in two ways:
 Connect Gemini-capable MCP client/runtime to YOLOZU MCP server:
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 ```
 
 Use the same core tools (`doctor`, `validate_predictions`, `validate_dataset`, `eval_coco`, `run_scenarios`, `convert_dataset`) with identical JSON outputs.
@@ -175,6 +186,9 @@ All four routes should share the same backend implementation in `yolozu.integrat
 Generated interface contract reference:
 - `docs/generated/mcp_actions_tool_reference.json`
 - `docs/generated/mcp_actions_tool_reference.md`
+
+The JSON reference's `surfaces` object is the machine-readable source for
+`mcp_live`, `guaranteed_ai_safe`, `config_review`, and `actions_public`.
 
 ## 7) Connection templates (examples)
 

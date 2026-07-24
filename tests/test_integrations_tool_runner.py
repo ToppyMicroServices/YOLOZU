@@ -13,7 +13,14 @@ class TestIntegrationToolRunner(unittest.TestCase):
         self.assertTrue(out["ok"])
         run_cli.assert_called_once_with(
             "validate_predictions",
-            ["validate", "predictions", "data/smoke/predictions/predictions_dummy.json", "--strict"],
+            [
+                "validate",
+                "predictions",
+                "data/smoke/predictions/predictions_dummy.json",
+                "--json",
+                "--strict",
+            ],
+            json_result_key="validation",
         )
 
     def test_a2_validate_dataset_builds_expected_args(self):

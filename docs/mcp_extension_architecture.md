@@ -50,6 +50,8 @@ TTT/CTTA tools (E13-E14) are implemented as async jobs in the same shared backen
 Long tools should return quickly with `job_id`.
 Job states are persisted under `runs/mcp_jobs/*.json` and restored on restart.
 States restored as `queued`/`running` are converted to `unknown` to avoid false in-flight claims.
+Job storage is initialized lazily; importing the AI surface, requesting
+`--help`, or running read-only discovery does not create `runs/mcp_jobs`.
 
 Current API surface:
 - `jobs.list`
@@ -61,9 +63,11 @@ Current API surface:
 ## Security policy
 
 - Only allowlisted `yolozu` top-level subcommands are executable.
-   - Allowlist is manifest-first (`tools/manifest.json` examples), with conservative fallback defaults.
+   - Allowlist is manifest-first (the manifest packaged in `yolozu`), with conservative fallback defaults.
 - Path traversal (`..`) is rejected.
-- Absolute paths outside workspace are rejected.
+- The caller process's current working directory is the default workspace.
+- Absolute paths are allowed only within that workspace; home-directory
+  shortcuts, symlink escapes, and absolute paths outside it are rejected.
 - CLI execution has a timeout guard (default 600s).
 - MCP route: `stdout`/`stderr` are capped and marked with truncation metadata in response payloads.
 - Actions API route: CLI `stdout`/`stderr` are redacted by default (`limits.stdio_redacted=true`) and errors are genericized to avoid leaking exception details.
@@ -80,6 +84,11 @@ Generated parity reference:
 - `docs/generated/mcp_actions_tool_reference.json`
 - `docs/generated/mcp_actions_tool_reference.md`
 - regenerate/check: `python3 tools/generate_integration_tool_reference.py --check`
+
+Its `surfaces` object separates live MCP registration from the guaranteed
+AI-safe subset, config-review helpers, and Actions endpoints. CI also calls the
+supported MCP SDK's live `app.list_tools()` API and compares canonical names and
+input schemas with this reference.
 
 ## CI no-abandon rule
 

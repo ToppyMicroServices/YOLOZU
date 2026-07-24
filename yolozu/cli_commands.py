@@ -1788,6 +1788,19 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             return 1
         return 0
 
+    if (
+        args.validate_command == "predictions"
+        and bool(getattr(args, "json", False))
+    ):
+        from yolozu.predictions import validate_predictions_path
+
+        result, exit_code = validate_predictions_path(
+            str(args.path),
+            strict=bool(args.strict),
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return exit_code
+
     path = Path(str(args.path))
     if not path.exists():
         raise SystemExit(f"file not found: {path}")

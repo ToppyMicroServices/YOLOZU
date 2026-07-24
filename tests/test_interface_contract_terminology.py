@@ -55,6 +55,10 @@ DISALLOWED_PATTERNS = {
         r"\b(?:tooling|harness) and contracts\b",
         re.IGNORECASE,
     ),
+    "bare named software interface contract": re.compile(
+        r"\b(?:MCP/Actions|same tool|backbone) contract\b",
+        re.IGNORECASE,
+    ),
 }
 
 # These are intentionally not rewritten by this terminology audit.
@@ -81,6 +85,7 @@ class TestInterfaceContractTerminology(unittest.TestCase):
             self.repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json",
         ]
         files.extend((self.repo_root / "docs").rglob("*.md"))
+        files.extend((self.repo_root / "docs").rglob("*.json"))
         files.extend((self.repo_root / "manual" / "chapters").rglob("*.tex"))
         return sorted(set(files))
 

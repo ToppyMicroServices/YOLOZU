@@ -3,9 +3,9 @@
   "description": "Template MCP connection profile for Claude-compatible clients.",
   "transport": {
     "type": "stdio",
-    "command": "python3",
-    "args": ["tools/run_mcp_server.py"],
-    "cwd": "/absolute/path/to/YOLOZU"
+    "command": "yolozu-mcp",
+    "args": [],
+    "cwd": "/absolute/path/to/consumer-workspace"
   },
   "env": {
     "PYTHONUNBUFFERED": "1"

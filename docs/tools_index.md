@@ -40,28 +40,38 @@ Compatibility note:
 
 ## AI/MCP entrypoints
 
-- MCP server (stdio): `python3 tools/run_mcp_server.py`
-- MCP surface inspection: `python3 tools/run_mcp_server.py --print-tools`
+- MCP server (stdio): `yolozu-mcp` (install with `python3 -m pip install 'yolozu[mcp]'`)
+- Guaranteed AI-safe ids: `yolozu-mcp --print-tools --guaranteed --ids-only`
+- All registered MCP ids: `yolozu-mcp --print-tools --supported --ids-only`
 - MCP settings check (manifest + generated reference parity): `python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json`
 - Actions/OpenAPI server: `python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1`
 
-### MCP Lite (official) quickstart (copy-paste)
+### Guaranteed AI-safe quickstart (copy-paste)
 
-YOLOZU's official MCP surface is intentionally small and deterministic:
-`doctor`, `generate_config`, `review_config`.
+YOLOZU guarantees a small deterministic subset:
+`doctor`, `generate_config`, `review_config`, `validate_predictions`.
+The live MCP server registers a broader environment-dependent surface; inspect
+the exact `mcp_live`, `guaranteed_ai_safe`, `config_review`, and
+`actions_public` sets in the JSON output.
 
 ```bash
 # 1) Start MCP server (stdio)
-python3 tools/run_mcp_server.py
+yolozu-mcp
 
-# 2) Inspect exposed tools as JSON (sanity check)
-python3 tools/run_mcp_server.py --print-tools > reports/mcp_tools.json
+# 2) Inspect the four guaranteed AI-safe ids
+yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
 
 # 3) Generate a deterministic sample config payload
-python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json
+yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
 
 # 4) Review that config payload (deterministic output)
-python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+```
+
+Machine-readable prediction validation:
+
+```bash
+yolozu validate predictions reports/predictions.json --strict --json
 ```
 
 ## Dataset helpers

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from . import tool_runner
+from .ai_surface import ai_surface_sets
 
 
 @dataclass(frozen=True)
@@ -217,6 +218,184 @@ def _ast_literal(node: ast.AST) -> Any:
             return "<expr>"
 
 
+def _annotation_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        parent = _annotation_name(node.value)
+        return f"{parent}.{node.attr}" if parent else node.attr
+    return None
+
+
+def _annotation_schema(node: ast.AST | None) -> dict[str, Any]:
+    if node is None:
+        return {}
+    name = _annotation_name(node)
+    primitive = {
+        "str": {"type": "string"},
+        "int": {"type": "integer"},
+        "float": {"type": "number"},
+        "bool": {"type": "boolean"},
+        "None": {"type": "null"},
+        "NoneType": {"type": "null"},
+        "dict": {"type": "object"},
+        "list": {"type": "array", "items": {}},
+    }
+    if name in primitive:
+        return dict(primitive[name])
+    if name in {"Any", "typing.Any"}:
+        return {}
+    if isinstance(node, ast.Constant) and node.value is None:
+        return {"type": "null"}
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        variants: list[dict[str, Any]] = []
+        for side in (node.left, node.right):
+            schema = _annotation_schema(side)
+            nested = schema.get("anyOf")
+            if isinstance(nested, list) and len(schema) == 1:
+                variants.extend(dict(item) for item in nested)
+            else:
+                variants.append(schema)
+        return {"anyOf": variants}
+    if not isinstance(node, ast.Subscript):
+        return {}
+
+    base = (_annotation_name(node.value) or "").removeprefix("typing.")
+    slice_node = node.slice
+    if base in {"list", "List", "set", "Set", "tuple", "Tuple"}:
+        item_node = slice_node
+        if isinstance(slice_node, ast.Tuple) and slice_node.elts:
+            item_node = slice_node.elts[0]
+        return {"items": _annotation_schema(item_node), "type": "array"}
+    if base in {"dict", "Dict", "Mapping"}:
+        value_node: ast.AST | None = None
+        if isinstance(slice_node, ast.Tuple) and len(slice_node.elts) >= 2:
+            value_node = slice_node.elts[1]
+        schema: dict[str, Any] = {"type": "object"}
+        value_schema = _annotation_schema(value_node)
+        if value_schema:
+            schema["additionalProperties"] = value_schema
+        return schema
+    if base in {"Optional"}:
+        return {"anyOf": [_annotation_schema(slice_node), {"type": "null"}]}
+    if base in {"Union"}:
+        variants = (
+            list(slice_node.elts)
+            if isinstance(slice_node, ast.Tuple)
+            else [slice_node]
+        )
+        return {"anyOf": [_annotation_schema(item) for item in variants]}
+    if base in {"Literal"}:
+        values = (
+            [_ast_literal(item) for item in slice_node.elts]
+            if isinstance(slice_node, ast.Tuple)
+            else [_ast_literal(slice_node)]
+        )
+        schema = {"enum": values}
+        value_types = {type(value) for value in values}
+        if value_types == {str}:
+            schema["type"] = "string"
+        elif value_types == {int}:
+            schema["type"] = "integer"
+        return schema
+    if base in {"Annotated"}:
+        parts = (
+            list(slice_node.elts)
+            if isinstance(slice_node, ast.Tuple)
+            else [slice_node]
+        )
+        schema = _annotation_schema(parts[0] if parts else None)
+        for metadata in parts[1:]:
+            if not isinstance(metadata, ast.Call):
+                continue
+            if (_annotation_name(metadata.func) or "").split(".")[-1] != "Field":
+                continue
+            constraint_names = {
+                "ge": "minimum",
+                "gt": "exclusiveMinimum",
+                "le": "maximum",
+                "lt": "exclusiveMaximum",
+                "min_length": "minLength",
+                "max_length": "maxLength",
+                "pattern": "pattern",
+            }
+            for keyword in metadata.keywords:
+                json_name = constraint_names.get(str(keyword.arg))
+                if json_name:
+                    schema[json_name] = _ast_literal(keyword.value)
+        return schema
+    return {}
+
+
+def _field_schema(
+    name: str,
+    annotation: ast.AST | None,
+    *,
+    default_node: ast.AST | None,
+) -> dict[str, Any]:
+    schema = _annotation_schema(annotation)
+    schema["title"] = name.replace("_", " ").title()
+    if default_node is not None:
+        schema["default"] = _ast_literal(default_node)
+    return schema
+
+
+def _arguments_input_schema(
+    function_name: str,
+    arguments: ast.arguments,
+) -> dict[str, Any]:
+    properties: dict[str, dict[str, Any]] = {}
+    required: list[str] = []
+    positional = list(arguments.posonlyargs) + list(arguments.args)
+    defaults = list(arguments.defaults)
+    required_count = len(positional) - len(defaults)
+    for idx, arg in enumerate(positional):
+        default_node = None if idx < required_count else defaults[idx - required_count]
+        properties[arg.arg] = _field_schema(
+            arg.arg,
+            arg.annotation,
+            default_node=default_node,
+        )
+        if default_node is None:
+            required.append(arg.arg)
+    for idx, arg in enumerate(arguments.kwonlyargs):
+        default_node = arguments.kw_defaults[idx]
+        properties[arg.arg] = _field_schema(
+            arg.arg,
+            arg.annotation,
+            default_node=default_node,
+        )
+        if default_node is None:
+            required.append(arg.arg)
+    schema: dict[str, Any] = {
+        "properties": properties,
+        "title": f"{function_name}Arguments",
+        "type": "object",
+    }
+    if required:
+        schema["required"] = required
+    return schema
+
+
+def _normalize_parameter_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    def without_titles(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {
+                key: without_titles(item)
+                for key, item in value.items()
+                if key != "title"
+            }
+        if isinstance(value, list):
+            return [without_titles(item) for item in value]
+        return value
+
+    normalized = without_titles(schema)
+    return {
+        "properties": dict(normalized.get("properties") or {}),
+        "required": list(normalized.get("required") or []),
+    }
+
+
 def _extract_ast_params(arguments: ast.arguments) -> list[dict[str, Any]]:
     params: list[dict[str, Any]] = []
     positional = list(arguments.posonlyargs) + list(arguments.args)
@@ -243,7 +422,10 @@ def _parse_functions_with_route_metadata(path: Path) -> dict[str, dict[str, Any]
     for node in tree.body:
         if not isinstance(node, ast.FunctionDef):
             continue
-        entry: dict[str, Any] = {"params": _extract_ast_params(node.args)}
+        entry: dict[str, Any] = {
+            "params": _extract_ast_params(node.args),
+            "input_schema": _arguments_input_schema(node.name, node.args),
+        }
         for decorator in node.decorator_list:
             if not isinstance(decorator, ast.Call):
                 continue
@@ -260,11 +442,19 @@ def _parse_functions_with_route_metadata(path: Path) -> dict[str, dict[str, Any]
                 break
             if func.attr == "tool":
                 entry["tool"] = True
+                tool_name = None
+                if decorator.args:
+                    tool_name = _ast_literal(decorator.args[0])
+                for keyword in decorator.keywords:
+                    if keyword.arg == "name":
+                        tool_name = _ast_literal(keyword.value)
+                        break
+                entry["tool_name"] = tool_name
         out[node.name] = entry
     return out
 
 
-def _parse_actions_models(path: Path) -> dict[str, list[dict[str, Any]]]:
+def _parse_actions_models(path: Path) -> dict[str, dict[str, Any]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     class_info: dict[str, dict[str, Any]] = {}
     for node in tree.body:
@@ -289,42 +479,95 @@ def _parse_actions_models(path: Path) -> dict[str, list[dict[str, Any]]]:
             if not isinstance(stmt.target, ast.Name):
                 continue
             if stmt.value is None:
-                fields.append(_normalize_param(stmt.target.id, required=True))
+                fields.append(
+                    {
+                        "param": _normalize_param(stmt.target.id, required=True),
+                        "schema": _field_schema(
+                            stmt.target.id,
+                            stmt.annotation,
+                            default_node=None,
+                        ),
+                    }
+                )
                 continue
-            fields.append(_normalize_param(stmt.target.id, required=False, default=_ast_literal(stmt.value)))
+            fields.append(
+                {
+                    "param": _normalize_param(
+                        stmt.target.id,
+                        required=False,
+                        default=_ast_literal(stmt.value),
+                    ),
+                    "schema": _field_schema(
+                        stmt.target.id,
+                        stmt.annotation,
+                        default_node=stmt.value,
+                    ),
+                }
+            )
         class_info[node.name] = {
             "bases": base_names,
             "is_base_model": has_base_model,
             "fields": fields,
         }
 
-    out: dict[str, list[dict[str, Any]]] = {}
+    resolved_fields: dict[str, list[dict[str, Any]]] = {}
     changed = True
     while changed:
         changed = False
         for name, info in class_info.items():
-            if name in out:
+            if name in resolved_fields:
                 continue
             if info["is_base_model"]:
-                out[name] = list(info["fields"])
+                resolved_fields[name] = list(info["fields"])
                 changed = True
                 continue
             for base_name in info["bases"]:
-                inherited = out.get(base_name)
+                inherited = resolved_fields.get(base_name)
                 if inherited is None:
                     continue
                 fields = list(inherited)
                 if info["fields"]:
-                    by_name = {field["name"]: field for field in fields}
+                    by_name = {
+                        field["param"]["name"]: field
+                        for field in fields
+                    }
                     for field in info["fields"]:
-                        by_name[field["name"]] = field
-                    fields = [by_name[field["name"]] for field in inherited if field["name"] in by_name]
+                        by_name[field["param"]["name"]] = field
+                    fields = [
+                        by_name[field["param"]["name"]]
+                        for field in inherited
+                        if field["param"]["name"] in by_name
+                    ]
                     for field in info["fields"]:
-                        if field["name"] not in {f["name"] for f in inherited}:
+                        if field["param"]["name"] not in {
+                            inherited_field["param"]["name"]
+                            for inherited_field in inherited
+                        }:
                             fields.append(field)
-                out[name] = fields
+                resolved_fields[name] = fields
                 changed = True
                 break
+    out: dict[str, dict[str, Any]] = {}
+    for name, fields in resolved_fields.items():
+        required = [
+            field["param"]["name"]
+            for field in fields
+            if field["param"]["required"]
+        ]
+        schema: dict[str, Any] = {
+            "properties": {
+                field["param"]["name"]: field["schema"]
+                for field in fields
+            },
+            "title": name,
+            "type": "object",
+        }
+        if required:
+            schema["required"] = required
+        out[name] = {
+            "params": [field["param"] for field in fields],
+            "input_schema": schema,
+        }
     return out
 
 
@@ -356,8 +599,8 @@ def _binding_params(
     binding: ActionsBinding,
     *,
     routes: dict[str, dict[str, Any]],
-    models: dict[str, list[dict[str, Any]]],
-) -> list[dict[str, Any]]:
+    models: dict[str, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     route = routes.get(binding.route_fn)
     if route is None:
         raise ValueError(f"missing Actions route function: {binding.route_fn}")
@@ -369,17 +612,64 @@ def _binding_params(
             f"expected {binding.method} {binding.path}, got {method} {path}"
         )
     if binding.request_model is None:
-        return list(route["params"])
-    params = models.get(binding.request_model)
-    if params is None:
+        return list(route["params"]), dict(route["input_schema"])
+    model = models.get(binding.request_model)
+    if model is None:
         raise ValueError(f"missing Actions request model: {binding.request_model}")
-    return list(params)
+    return list(model["params"]), dict(model["input_schema"])
 
 
 def build_tool_surface_reference() -> dict[str, Any]:
     mcp_functions = _parse_functions_with_route_metadata(_integrations_path("mcp_server.py"))
     actions_functions = _parse_functions_with_route_metadata(_integrations_path("actions_api.py"))
     actions_models = _parse_actions_models(_integrations_path("actions_api.py"))
+
+    mcp_live_tools: list[dict[str, Any]] = []
+    for function_name, metadata in mcp_functions.items():
+        if not metadata.get("tool"):
+            continue
+        tool_name = metadata.get("tool_name")
+        if not isinstance(tool_name, str) or not tool_name:
+            raise ValueError(
+                f"MCP tool must declare an explicit canonical name: {function_name}"
+            )
+        mcp_live_tools.append(
+            {
+                "name": tool_name,
+                "function": function_name,
+                "params": list(metadata["params"]),
+                "input_schema": dict(metadata["input_schema"]),
+                "parameter_schema": _normalize_parameter_schema(
+                    metadata["input_schema"]
+                ),
+            }
+        )
+    live_names = [item["name"] for item in mcp_live_tools]
+    if len(live_names) != len(set(live_names)):
+        raise ValueError("duplicate canonical MCP tool names")
+
+    surfaces = ai_surface_sets()
+    declared_live_names = list(surfaces["mcp_live"]["tool_ids"])
+    if live_names != declared_live_names:
+        raise ValueError(
+            "MCP live surface does not match the declared AI surface: "
+            f"registered={live_names}, declared={declared_live_names}"
+        )
+
+    actions_public_names = [spec.canonical_name for spec in TOOL_SURFACE_SPECS]
+    declared_actions_names = list(surfaces["actions_public"]["tool_ids"])
+    if actions_public_names != declared_actions_names:
+        raise ValueError(
+            "Actions public surface does not match the declared AI surface: "
+            f"registered={actions_public_names}, declared={declared_actions_names}"
+        )
+
+    for subset_name in ("guaranteed_ai_safe", "config_review"):
+        unknown = set(surfaces[subset_name]["tool_ids"]) - set(live_names)
+        if unknown:
+            raise ValueError(
+                f"{subset_name} contains tools outside the live MCP surface: {sorted(unknown)}"
+            )
 
     tools: list[dict[str, Any]] = []
     for spec in TOOL_SURFACE_SPECS:
@@ -389,7 +679,13 @@ def build_tool_surface_reference() -> dict[str, Any]:
             raise ValueError(f"missing MCP tool function: {spec.mcp_tool_fn}")
         if not mcp_primary.get("tool"):
             raise ValueError(f"MCP function is not decorated with @app.tool(): {spec.mcp_tool_fn}")
+        if mcp_primary.get("tool_name") != spec.canonical_name:
+            raise ValueError(
+                f"MCP canonical name mismatch for {spec.mcp_tool_fn}: "
+                f"expected {spec.canonical_name}, got {mcp_primary.get('tool_name')}"
+            )
         mcp_params = list(mcp_primary["params"])
+        mcp_input_schema = dict(mcp_primary["input_schema"])
 
         mcp_aliases: list[dict[str, Any]] = []
         for alias_name in spec.mcp_aliases:
@@ -398,20 +694,39 @@ def build_tool_surface_reference() -> dict[str, Any]:
                 raise ValueError(f"missing MCP alias function: {alias_name}")
             if not alias.get("tool"):
                 raise ValueError(f"MCP alias function is not decorated with @app.tool(): {alias_name}")
+            expected_alias_name = alias_name.removesuffix("_tool")
+            if alias.get("tool_name") != expected_alias_name:
+                raise ValueError(
+                    f"MCP alias canonical name mismatch for {alias_name}: "
+                    f"expected {expected_alias_name}, got {alias.get('tool_name')}"
+                )
             alias_params = list(alias["params"])
+            alias_input_schema = dict(alias["input_schema"])
             mcp_aliases.append(
                 {
-                    "name": alias_name.removesuffix("_tool"),
+                    "name": expected_alias_name,
                     "function": alias_name,
                     "params": alias_params,
+                    "input_schema": alias_input_schema,
+                    "parameter_schema": _normalize_parameter_schema(
+                        alias_input_schema
+                    ),
                     "parity_with_tool_runner": _params_equal(alias_params, tool_params),
                 }
             )
 
-        actions_params = _binding_params(spec.actions, routes=actions_functions, models=actions_models)
+        actions_params, actions_input_schema = _binding_params(
+            spec.actions,
+            routes=actions_functions,
+            models=actions_models,
+        )
         actions_aliases: list[dict[str, Any]] = []
         for alias in spec.actions_aliases:
-            alias_params = _binding_params(alias, routes=actions_functions, models=actions_models)
+            alias_params, alias_input_schema = _binding_params(
+                alias,
+                routes=actions_functions,
+                models=actions_models,
+            )
             actions_aliases.append(
                 {
                     "method": alias.method,
@@ -419,6 +734,10 @@ def build_tool_surface_reference() -> dict[str, Any]:
                     "route_fn": alias.route_fn,
                     "request_model": alias.request_model,
                     "params": alias_params,
+                    "input_schema": alias_input_schema,
+                    "parameter_schema": _normalize_parameter_schema(
+                        alias_input_schema
+                    ),
                     "parity_with_tool_runner": _params_equal(alias_params, tool_params),
                 }
             )
@@ -445,9 +764,13 @@ def build_tool_surface_reference() -> dict[str, Any]:
                     "aliases": tool_aliases,
                 },
                 "mcp": {
-                    "tool": spec.mcp_tool_fn.removesuffix("_tool"),
+                    "tool": mcp_primary["tool_name"],
                     "function": spec.mcp_tool_fn,
                     "params": mcp_params,
+                    "input_schema": mcp_input_schema,
+                    "parameter_schema": _normalize_parameter_schema(
+                        mcp_input_schema
+                    ),
                     "aliases": mcp_aliases,
                 },
                 "actions": {
@@ -456,11 +779,19 @@ def build_tool_surface_reference() -> dict[str, Any]:
                     "route_fn": spec.actions.route_fn,
                     "request_model": spec.actions.request_model,
                     "params": actions_params,
+                    "input_schema": actions_input_schema,
+                    "parameter_schema": _normalize_parameter_schema(
+                        actions_input_schema
+                    ),
                     "aliases": actions_aliases,
                 },
                 "parity": {
                     "mcp_vs_tool_runner": _params_equal(mcp_params, tool_params),
                     "actions_vs_tool_runner": _params_equal(actions_params, tool_params),
+                    "mcp_vs_actions_schema": _normalize_parameter_schema(
+                        mcp_input_schema
+                    )
+                    == _normalize_parameter_schema(actions_input_schema),
                     "tool_runner_aliases": all(item["parity_with_tool_runner"] for item in tool_aliases) if tool_aliases else True,
                     "mcp_aliases": all(item["parity_with_tool_runner"] for item in mcp_aliases) if mcp_aliases else True,
                     "actions_aliases": all(item["parity_with_tool_runner"] for item in actions_aliases) if actions_aliases else True,
@@ -468,8 +799,10 @@ def build_tool_surface_reference() -> dict[str, Any]:
             }
         )
     return {
-        "schema_version": 1,
+        "schema_version": 3,
         "source": "yolozu.integrations",
+        "surfaces": surfaces,
+        "mcp_live_tools": mcp_live_tools,
         "tools": tools,
     }
 
@@ -479,7 +812,14 @@ def collect_surface_parity_errors(reference: dict[str, Any]) -> list[str]:
     for tool in reference.get("tools", []):
         name = tool.get("canonical_name")
         parity = tool.get("parity", {})
-        for key in ("mcp_vs_tool_runner", "actions_vs_tool_runner", "tool_runner_aliases", "mcp_aliases", "actions_aliases"):
+        for key in (
+            "mcp_vs_tool_runner",
+            "actions_vs_tool_runner",
+            "mcp_vs_actions_schema",
+            "tool_runner_aliases",
+            "mcp_aliases",
+            "actions_aliases",
+        ):
             if not parity.get(key, False):
                 errors.append(f"{name}: parity check failed for {key}")
         keys = set(tool.get("response_keys") or [])
@@ -495,14 +835,41 @@ def render_tool_surface_markdown(reference: dict[str, Any]) -> str:
         "",
         "Source of truth: `yolozu.integrations.tool_runner`, `yolozu.integrations.mcp_server`, `yolozu.integrations.actions_api`.",
         "",
+        "## Public surface sets",
+        "",
+        "| Surface | Tool ids | Availability |",
+        "|---|---|---|",
+    ]
+    for name, surface in reference.get("surfaces", {}).items():
+        tool_ids = ", ".join(f"`{tool_id}`" for tool_id in surface.get("tool_ids", []))
+        lines.append(
+            f"| `{name}` | {tool_ids} | {surface.get('availability', '')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "The `mcp_live` set is the exact list returned by the supported MCP SDK's live tool-list API. "
+            "Only `guaranteed_ai_safe` carries the deterministic lightweight guarantee; "
+            "`actions_public` lists canonical operations shared with the Actions API.",
+            "",
+            "## MCP/Actions parity",
+            "",
         "| Canonical | Category | MCP tool | Actions endpoint | Request model | Parity |",
         "|---|---|---|---|---|---|",
-    ]
+        ]
+    )
     for tool in reference.get("tools", []):
         parity = tool.get("parity", {})
         parity_ok = all(
             bool(parity.get(key, False))
-            for key in ("mcp_vs_tool_runner", "actions_vs_tool_runner", "tool_runner_aliases", "mcp_aliases", "actions_aliases")
+            for key in (
+                "mcp_vs_tool_runner",
+                "actions_vs_tool_runner",
+                "mcp_vs_actions_schema",
+                "tool_runner_aliases",
+                "mcp_aliases",
+                "actions_aliases",
+            )
         )
         actions = tool.get("actions", {})
         lines.append(

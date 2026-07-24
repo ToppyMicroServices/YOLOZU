@@ -70,7 +70,14 @@ jobs:
               - 'tools/check_mcp_settings.py'
               - 'yolozu/integrations/mcp_server.py'
               - 'yolozu/integrations/actions_api.py'
+              - 'yolozu/integrations/ai_surface.py'
+              - 'yolozu/integrations/manifest_resources.py'
+              - 'yolozu/integrations/mcp_cli.py'
+              - 'yolozu/integrations/tool_reference.py'
               - 'tests/test_ai_first_mcp_surface.py'
+              - 'tests/test_installed_ai_surface.py'
+              - 'tests/test_mcp_live_surface.py'
+              - 'tests/test_predictions_validation_json.py'
               - 'tests/test_integrations_mcp_actions_parity.py'
               - 'tests/test_check_mcp_settings_tool.py'
               - 'tests/test_generated_integration_tool_reference.py'
@@ -135,7 +142,7 @@ jobs:
     name: "ci tier: docs+mcp (lightweight)"
     needs:
       - changes
-    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci == 'true' }}
+    if: ${{ needs.changes.outputs.docs_mcp_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
@@ -169,6 +176,9 @@ jobs:
         run: |
           python -m unittest \
             tests.test_ai_first_mcp_surface \
+            tests.test_installed_ai_surface \
+            tests.test_mcp_live_surface \
+            tests.test_predictions_validation_json \
             tests.test_integrations_mcp_actions_parity \
             tests.test_check_mcp_settings_tool \
             tests.test_generated_integration_tool_reference -v

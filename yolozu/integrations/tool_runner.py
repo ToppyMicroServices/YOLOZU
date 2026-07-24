@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 from .layers.api import run_cli_tool, run_cli_tool_redacted
 from .layers.artifacts import collect_artifact_metadata, describe_run, list_runs
 from .layers.jobs import JobManager
 
-_JOBS = JobManager()
+
+@lru_cache(maxsize=1)
+def _job_manager() -> JobManager:
+    """Create persistent job storage only when a job operation is requested."""
+    return JobManager()
 
 
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
@@ -23,17 +28,29 @@ def doctor_public(*, output: str = "reports/doctor.json") -> dict[str, Any]:
 
 
 def validate_predictions(path: str, *, strict: bool = True) -> dict[str, Any]:
-    args = ["validate", "predictions", path]
+    args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
-    return _with_meta(run_cli_tool("validate_predictions", args))
+    return _with_meta(
+        run_cli_tool(
+            "validate_predictions",
+            args,
+            json_result_key="validation",
+        )
+    )
 
 
 def validate_predictions_public(path: str, *, strict: bool = True) -> dict[str, Any]:
-    args = ["validate", "predictions", path]
+    args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
-    return _with_meta(run_cli_tool_redacted("validate_predictions", args))
+    return _with_meta(
+        run_cli_tool_redacted(
+            "validate_predictions",
+            args,
+            json_result_key="validation",
+        )
+    )
 
 
 def validate_dataset(
@@ -517,7 +534,12 @@ def convert_dataset_public(
 
 
 def submit_job(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
-    job_id = _JOBS.submit(name, lambda: _with_meta(run_cli_tool(name, args, artifacts=artifacts)))
+    job_id = _job_manager().submit(
+        name,
+        lambda: _with_meta(
+            run_cli_tool(name, args, artifacts=artifacts)
+        ),
+    )
     return {
         "ok": True,
         "tool": "jobs.submit",
@@ -530,7 +552,12 @@ def submit_job(name: str, args: list[str], *, artifacts: dict[str, str] | None =
 
 
 def submit_job_public(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
-    job_id = _JOBS.submit(name, lambda: _with_meta(run_cli_tool_redacted(name, args, artifacts=artifacts)))
+    job_id = _job_manager().submit(
+        name,
+        lambda: _with_meta(
+            run_cli_tool_redacted(name, args, artifacts=artifacts)
+        ),
+    )
     return {
         "ok": True,
         "tool": "jobs.submit",
@@ -548,13 +575,13 @@ def jobs_list() -> dict[str, Any]:
         "tool": "jobs.list",
         "summary": "listed jobs",
         "exit_code": 0,
-        "jobs": _JOBS.list(),
+        "jobs": _job_manager().list(),
         "meta": collect_artifact_metadata(),
     }
 
 
 def jobs_status(job_id: str) -> dict[str, Any]:
-    status = _JOBS.status(job_id)
+    status = _job_manager().status(job_id)
     if status is None:
         return {
             "ok": False,
@@ -575,7 +602,7 @@ def jobs_status(job_id: str) -> dict[str, Any]:
 
 
 def jobs_cancel(job_id: str) -> dict[str, Any]:
-    out = _JOBS.cancel(job_id)
+    out = _job_manager().cancel(job_id)
     if out is None:
         return {
             "ok": False,
