@@ -22,7 +22,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.dataset import build_manifest
-from yolozu.datasets.coco import COCO_80_CLASSES, _COCO_CAT_ID_TO_CLASS
+from yolozu.datasets.coco import COCO_80_CATEGORY_IDS, COCO_80_CLASSES
 from yolozu.predictions import validate_predictions_payload
 from yolozu.predictions.predictions import CURRENT_ENTRY_SCHEMA_VERSION
 from yolozu.predictions.schema_governance import CURRENT_SCHEMA_VERSION
@@ -31,9 +31,6 @@ from yolozu.predictions.schema_governance import CURRENT_SCHEMA_VERSION
 CASE_STUDY_ID = "torchvision-maskrcnn-eager-torchscript-v1"
 DEFAULT_OUTPUT_DIR = "docs/assets/case_studies/maskrcnn_eager_torchscript"
 OFFICIAL_WEIGHTS_SHA256 = "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
-COCO_80_CATEGORY_IDS = tuple(
-    category_id for category_id, _ in sorted(_COCO_CAT_ID_TO_CLASS.items(), key=lambda item: item[1])
-)
 ARTIFACT_NAMES = (
     "checksums.sha256",
     "commands.json",

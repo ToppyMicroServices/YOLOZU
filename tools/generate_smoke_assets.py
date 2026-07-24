@@ -10,12 +10,7 @@ from pathlib import Path
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
-from yolozu.datasets.coco import COCO_80_CLASSES, _COCO_CAT_ID_TO_CLASS
-
-
-COCO_80_CATEGORY_IDS = tuple(
-    category_id for category_id, _ in sorted(_COCO_CAT_ID_TO_CLASS.items(), key=lambda item: item[1])
-)
+from yolozu.datasets.coco import COCO_80_CATEGORY_IDS, COCO_80_CLASSES
 
 
 def _sanitize_bbox(cx: float, cy: float, w: float, h: float) -> tuple[float, float, float, float] | None:

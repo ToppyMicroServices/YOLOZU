@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest import TestCase, main, mock
 
-from yolozu.datasets.coco import COCO_80_CLASSES
+from yolozu.datasets.coco import COCO_80_CATEGORY_IDS, COCO_80_CLASSES
 from yolozu.predictions import validate_predictions_payload
 
 
@@ -164,6 +164,13 @@ class TestRuntimeParityCaseStudy(TestCase):
         classes_path = self.repo_root / "data" / "smoke" / "labels" / "val" / "classes.json"
         payload = json.loads(classes_path.read_text(encoding="utf-8"))
         self.assertEqual(payload["names"], list(COCO_80_CLASSES))
+        self.assertEqual(
+            [
+                payload["class_to_category_id"][str(class_id)]
+                for class_id in range(len(COCO_80_CATEGORY_IDS))
+            ],
+            list(COCO_80_CATEGORY_IDS),
+        )
         self.assertEqual(payload["category_id_to_class_id"]["13"], 11)
         self.assertEqual(payload["class_to_category_id"]["11"], 13)
         self.assertEqual(payload["category_id_to_class_id"]["90"], 79)
