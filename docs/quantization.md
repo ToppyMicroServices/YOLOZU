@@ -1,6 +1,6 @@
 # Quantization (ONNXRuntime / torchao)
 
-YOLOZU keeps quantization **opt-in**. The default evaluation contract (`predictions.json`) does not assume a specific backend.
+YOLOZU keeps quantization **opt-in**. The default predictions interface contract (`predictions.json`) does not assume a specific backend.
 
 ## 1) ONNXRuntime dynamic quantization (recommended for CPU)
 

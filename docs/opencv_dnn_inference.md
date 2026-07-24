@@ -77,9 +77,9 @@ python3 tools/export_predictions_opencv_dnn_rtdetr.py \
 
 Notes:
 - The exporter writes a separate `*.meta.json` file containing `export_settings.preprocess` and decode settings.
-- `predictions.json` remains schema-valid under `--strict` (no wrapped `meta` contract required).
+- `predictions.json` remains schema-valid under `--strict` (no wrapped `meta` interface contract required).
 
-### Dry-run (contract wiring)
+### Dry-run (interface-contract wiring)
 
 Dry-run does **not** import OpenCV, and writes schema-valid output with empty detections:
 

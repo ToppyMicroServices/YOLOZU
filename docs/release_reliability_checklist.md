@@ -132,7 +132,7 @@ DoD:
 - Every run has a clear `dod_status` and guidance text in summary artifacts.
 - No ambiguous “missing artifacts” state when `gpu_job_result=success`.
 
-## 4) Contract and artifact sanity
+## 4) Interface contract and artifact sanity
 
 - Validate representative predictions:
   ```bash
@@ -142,7 +142,7 @@ DoD:
   ```bash
   python3 -m unittest tests.test_manifest_docs_references
   ```
-- Confirm backend contract guardrails:
+- Confirm backend interface contract guardrails:
   ```bash
   python3 -m unittest tests.test_backend_shape_format_contracts
   ```

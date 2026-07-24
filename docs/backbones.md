@@ -1,9 +1,9 @@
 # Backbones (`rtdetr_pose` adapter)
 
-YOLOZU core contracts are model-family agnostic. This page documents the
+YOLOZU core interface contracts are model-family agnostic. This page documents the
 adapter-scoped backbone contract for the in-repo `rtdetr_pose` training path.
 
-## Output contract (required)
+## Output interface contract (required)
 
 All backbones used by `rtdetr_pose` must return exactly:
 
@@ -14,7 +14,7 @@ All backbones used by `rtdetr_pose` must return exactly:
 
 Strides other than `[8,16,32]` are not supported directly.
 
-## Projection contract
+## Projection interface contract
 
 `BackboneProjector` applies independent `1x1 conv` per level:
 
@@ -88,11 +88,11 @@ model:
 3. Define `out_channels = [C3,C4,C5]`.
 4. Register with `@register_backbone("your_name")` in `rtdetr_pose/rtdetr_pose/models/backbones/`.
 5. Add/update tests:
-   - shape/stride contract
+- shape/stride interface contract
    - projector channel alignment
    - NaN-free forward
    - ONNX smoke export
-   - neck/encoder contract (`tests/test_rtdetr_backbone_neck_parity.py`)
+- neck/encoder interface contract (`tests/test_rtdetr_backbone_neck_parity.py`)
 
 ## Norm notes (DDP)
 

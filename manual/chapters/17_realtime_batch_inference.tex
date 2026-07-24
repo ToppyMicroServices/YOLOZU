@@ -3,7 +3,7 @@
 \ChapterMeta{
 This chapter compares batch and real-time operating modes and outlines the canonical TensorRT pipeline with parity and benchmark safeguards.
 }{
-It guides you to high-throughput deployment paths while keeping artifact contracts and drift detection in place.
+It guides you to high-throughput deployment paths while keeping artifact interface contracts and drift detection in place.
 }{
 Real-time TensorRT paths are typically Linux with an NVIDIA GPU; parity requires consistent preprocessing and output formats, and expensive extras like TTT and refinement should be explicitly budgeted.
 }
@@ -97,7 +97,7 @@ The main rule for parity is to keep preprocessing and output formats identical (
 
 \section{Stage 7: Performance + deployment safeguards (implemented tooling)}
 Stage 7 is about keeping the real-time path fast and predictable.
-In this repo, the main safeguards are implemented as \textbf{tooling and contracts} rather than as model-internal graph logic.
+In this repo, the main safeguards are implemented as \textbf{tooling and interface contracts} rather than as model-internal graph logic.
 
 \subsection{Keep symmetry/commonsense logic out of TensorRT graphs}
 The TensorRT export/build pipeline is designed to focus on the model forward pass.
@@ -161,7 +161,7 @@ The repo includes a lightweight gate-check script that compares a current scenar
 \end{itemize}
 
 The current Stage 7 check is a simple \cmd{fps >= 30} threshold in the gate output.
-Note that real FPS validation is inherently \textbf{hardware-dependent}; CI runs can validate the harness and contracts,
+Note that real FPS validation is inherently \textbf{hardware-dependent}; CI runs can validate the harness and interface contracts,
 while deployment-relevant benchmarks should be run on reference Linux+NVIDIA hardware.
 
 \section{Real-time constraints and optional features}

@@ -50,7 +50,7 @@ benchmark users and maintainers.
   `runtime.checked` is `true`. Artifact-backed lanes set `runtime.required` and
   `runtime.checked` to `false` because they consume prepared files.
 - classification and OBB artifact-backed lanes validate their input interface
-  contracts independently of the selected backend: duplicate ids, non-finite
+interface contracts independently of the selected backend: duplicate ids, non-finite
   task values, class/score shape drift, and OBB scores outside `[0,1]` fail
   before metric computation.
 - `bundled with YOLOZU = No` is intentional. This repo provides adapter/wrapper

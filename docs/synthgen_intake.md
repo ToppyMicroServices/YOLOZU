@@ -3,7 +3,7 @@
 YOLOZU does **not** generate synthetic data.  
 `YOLOZU-synthgen` (external repo) produces shards; YOLOZU consumes them through a stable interface contract.
 
-## Contract boundary
+## Interface contract boundary
 
 - Interface contract spec: `docs/synthgen_contract.md` (compat alias: `docs/contracts/synthgen.md`)
 - Integration checklist: `docs/synthgen_repo_integration.md`

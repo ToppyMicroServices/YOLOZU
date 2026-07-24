@@ -42,7 +42,7 @@
     },
     "run_meta_json": {
       "schema": "docs/schemas/run_meta.schema.json",
-      "summary": "Run provenance metadata contract emitted at runs/<run_id>/reports/run_meta.json.",
+      "summary": "Run provenance metadata interface contract emitted at runs/<run_id>/reports/run_meta.json.",
       "validator": "python3 tools/validate_run_meta.py <path>"
     },
     "seg_dataset_json": {
@@ -3139,7 +3139,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract.",
+      "summary": "Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract.",
       "tags": [
         "coco",
         "instance_segmentation",
@@ -7800,7 +7800,7 @@
         },
         {
           "command": "python3 tools/export_predictions_yolo_runtime.py --model yolo11n.pt --dataset data/smoke --split val --max-images 1 --protocol nms_applied --dry-run --wrap --strict --output reports/pred_yolo_runtime_dry_run.json",
-          "description": "CI-friendly contract smoke without external YOLO runtime."
+          "description": "CI-friendly interface-contract smoke without external YOLO runtime."
         }
       ],
       "id": "export_predictions_yolo_runtime",
@@ -9181,7 +9181,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode.",
+      "summary": "Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode.",
       "tags": [
         "mcp",
         "actions",
@@ -12218,7 +12218,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
+      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract).",
       "tags": [
         "rtdetr_pose",
         "continual",
@@ -15746,7 +15746,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command).",
+      "summary": "Validate the run_meta.json interface contract (git SHA, dependency lock, preprocess, hardware/runtime, command).",
       "tags": [
         "run_meta",
         "validation",

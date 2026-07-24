@@ -5,7 +5,7 @@ This workflow is required for schema/protocol changes that can affect comparabil
 ## Approval flow
 
 1. Open an RFC issue (title prefix: `RFC:`) with:
-   - affected contract(s)/protocol(s)
+   - affected interface contract(s)/protocol(s)
    - before/after examples
    - migration and rollback plan
    - risk assessment for parity/eval drift

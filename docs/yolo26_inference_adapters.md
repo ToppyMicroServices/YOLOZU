@@ -7,7 +7,7 @@ so evaluation is apples-to-apples.
 
 Protocol reference: `docs/yolo26_eval_protocol.md`
 
-## Contract (what you must export)
+## Interface contract (what you must export)
 
 Each bucket produces a YOLOZU predictions JSON file:
 
@@ -114,4 +114,3 @@ python3 tools/eval_suite.py \
   --predictions-glob 'reports/pred_*_yolo26*.json' \
   --output reports/eval_suite.json
 ```
-

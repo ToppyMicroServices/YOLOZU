@@ -1,6 +1,6 @@
 # Repo Map
 
-This workspace contains a **contract-first evaluation harness** plus an **in-repo reference trainer** (RT-DETR pose).
+This workspace contains an **interface-contract-first evaluation harness** plus an **in-repo reference trainer** (RT-DETR pose).
 It also provides an **external training lane** for Apache-2.0-friendly YOLOX-style training, with optional copyleft-sensitive bridges kept explicit.
 
 Two usage modes:

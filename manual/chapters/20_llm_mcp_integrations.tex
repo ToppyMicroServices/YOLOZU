@@ -173,7 +173,7 @@ Operational guards in v2 layer implementation:
 \begin{enumerate}
   \item Always pass \cmd{dataset} as a YOLO root and specify \cmd{split} explicitly.
   \item Prefer workspace-relative paths to avoid API-layer path guard rejections.
-  \item Treat \cmd{ok/tool/summary/exit_code} as the canonical status contract.
+  \item Treat \cmd{ok/tool/summary/exit_code} as the canonical status interface contract.
   \item For long tasks, do not poll stdout; use \cmd{job_id} with \cmd{jobs.status}.
   \item Assume post-restart in-flight jobs become \cmd{unknown}; requeue deterministically if needed.
   \item Set \cmd{dry_run}/\cmd{strict}/\cmd{force} explicitly to avoid client-default drift.

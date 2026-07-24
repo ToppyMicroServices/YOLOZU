@@ -12,7 +12,7 @@ This documentation assumes adherence to the specified schemas and treats generat
 \ChapterAudience{Read this chapter if you need to understand the predictions interface contract, dataset wrappers, and why YOLOZU treats artifacts as first-class.}
 
 
-\section{Contract-First Evaluation}
+\section{Interface-Contract-First Evaluation}
 The interface contracts (schemas) are the foundational product of this repository. They empower you to:
 \begin{itemize}
   \item Conduct equitable comparisons across disparate inference backends.
@@ -171,7 +171,7 @@ yolozu migrate predictions \
 
 Following conversion, proceed with standard validation and evaluation.
 
-\subsection{External SynthGen intake contract}
+\subsection{External SynthGen intake interface contract}
 For synthetic data pipelines, \yolozu{} intentionally limits scope to \textbf{intake and evaluation}; generation remains in an external repository.
 The intake boundary is fixed by \path{docs/synthgen_contract.md} and \path{schemas/synthgen_sample.schema.json}, with required fields such as \cmd{image}, \cmd{depth_ndc}, \cmd{inst_id}, \cmd{sem_id}, and \cmd{kpts2d}.
 

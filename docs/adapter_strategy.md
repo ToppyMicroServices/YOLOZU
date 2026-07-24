@@ -59,12 +59,12 @@ Reference adapter entry metadata is also checked as hard interface contract:
 - `preprocess|preproc` parameters (`resize`, `pad`, `letterbox`, `dtype`, `color_order`)
 
 Adoption policy:
-- contract gates (`schema_drift`, `consistency_drift`) are hard
+- interface contract gates (`schema_drift`, `consistency_drift`) are hard
 - behavior gates (`metric_drift`, `speed_drift`) start as warn and can be promoted to hard
 
 Details: [reference_adapter_regression_policy.md](reference_adapter_regression_policy.md)
 
-## Contract: what adapters must produce
+## Interface contract: what adapters must produce
 
 Adapters should emit the canonical schema:
 - `predictions.json` compliant with: [predictions_schema.md](predictions_schema.md)

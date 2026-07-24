@@ -1,7 +1,7 @@
 \chapter{Manifest-Driven Operations and Manual Synchronization}
 
 \ChapterMeta{
-This chapter establishes \path{tools/manifest.json} as the canonical operational source for commands, input/output (I/O) contracts, and write-side effects.
+This chapter establishes \path{tools/manifest.json} as the canonical operational source for commands, input/output (I/O) interface contracts, and write-side effects.
 }{
 It mitigates documentation drift by ensuring that manual updates remain strictly traceable to machine-readable tool metadata.
 }{
@@ -20,7 +20,7 @@ land together in the same pull request.
 As the repository's tool surface expands, command examples embedded within narrative chapters are prone to becoming obsolete. A dedicated, manifest-driven workflow guarantees that:
 \begin{itemize}
   \item Command discovery originates from a single, authoritative source.
-  \item I/O contracts and side effects undergo consistent, systematic review.
+  \item I/O interface contracts and side effects undergo consistent, systematic review.
   \item Manual chapter revisions are executed synchronously with codebase modifications.
 \end{itemize}
 
@@ -92,7 +92,7 @@ For each affected command family, rigorously verify the following:
   \item The referenced command exists within the manifest under \texttt{id} and \texttt{entrypoint}.
   \item All required input flags accurately reflect the manifest's \texttt{inputs[]} array.
   \item Output declarations and write-path statements align with the \texttt{outputs[]} and \texttt{effects} definitions.
-  \item Contract claims strictly match the \texttt{contracts.consumes} and \texttt{contracts.produces} specifications.
+  \item Interface contract claims strictly match the \texttt{contracts.consumes} and \texttt{contracts.produces} specifications.
 \end{itemize}
 
 \section{Understanding Manifest Capabilities}
@@ -100,7 +100,7 @@ The manifest is not merely a list of scripts; it is a declarative governance too
 \begin{itemize}
   \item \textbf{Platform Compatibility}: The \texttt{platform} object indicates whether a tool requires a GPU (\texttt{gpu\_required}) or supports macOS/Linux.
   \item \textbf{Dependencies}: The \texttt{requires} object lists necessary Python packages and system-level dependencies (e.g., TensorRT).
-  \item \textbf{Data Contracts}: The \texttt{contracts} object defines what standard JSON schemas a tool consumes or produces (e.g., \texttt{predictions\_json}, \texttt{metrics\_report\_json}), enabling automated pipeline construction.
+  \item \textbf{Data Interface Contracts}: The \texttt{contracts} object defines what standard JSON schemas a tool consumes or produces (e.g., \texttt{predictions\_json}, \texttt{metrics\_report\_json}), enabling automated pipeline construction.
 \end{itemize}
 
 \subsection{Entrypoint maturity is not transitive}
@@ -136,7 +136,7 @@ for tool in manifest.get("tools", []):
 PY
 \end{lstlisting}
 
-To identify tools that produce a specific contract (e.g., \texttt{eval\_suite\_report\_json}):
+To identify tools that produce a specific interface contract (e.g., \texttt{eval\_suite\_report\_json}):
 \begin{lstlisting}[language=bash]
 python3 - <<'PY'
 import json
@@ -156,7 +156,7 @@ Utilize this heuristic mapping to determine which chapters require updates follo
   \item Training, backbone, or run-contract modifications: Chapter 7
   \item Evaluation protocols and benchmark adjustments: Chapter 9
   \item Test-Time Training (TTT) methods and benchmarks: Chapter 15
-  \item Registry, contract metadata, and governance changes: Chapter 12 and this chapter
+  \item Registry, interface contract metadata, and governance changes: Chapter 12 and this chapter
 \end{itemize}
 
 This mapping is intentionally lightweight. If a tool modification spans multiple domains, update all affected chapters within the same pull request to maintain documentation coherence.
