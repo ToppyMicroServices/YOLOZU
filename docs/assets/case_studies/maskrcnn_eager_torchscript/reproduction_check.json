@@ -1,0 +1,261 @@
+{
+  "baseline": {
+    "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
+    "environment": {
+      "packages": {
+        "Pillow": "12.2.0",
+        "numpy": "2.4.4",
+        "pycocotools": "2.0.11",
+        "torch": "2.10.0",
+        "torchvision": "0.25.0"
+      },
+      "python_major_minor": "3.12",
+      "torch": {
+        "deterministic_algorithms": true,
+        "device": "cpu",
+        "threads": 1
+      }
+    },
+    "environment_sha256": "3b254677650a3fb1eb15732bbd4343be68b32802be7bd597d0e62bd29a3866c5",
+    "input_set_sha256": "2fe2ecf9e5d9986e22390e729cb7fd5f2b44159de65103326bfbb8539d815220",
+    "parity_sha256": "7eef54f26f5f5db8c6e469990162729979fb321c863399cb9e607892f4b13005",
+    "predictions": {
+      "eager_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69",
+      "torchscript_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69"
+    },
+    "protocol_sha256": "5397f927913bd0bcb06c073f285379603c8087ad8e8ad2792008a1f6b3fbbb34",
+    "source": {
+      "available": true,
+      "file_sha256": {
+        "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
+        "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
+        "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
+        "tools/generate_runtime_parity_case_study.py": "c8c43d4308d3b4d8f39ece2cecac6d551755bff1d650d0439fb414049fd943cc",
+        "tools/generate_smoke_assets.py": "d243ce3572eeb3d1a20b8a2c8a0ce4b6f3fa3b26401b61e7a7f759a0840515ec",
+        "yolozu/datasets/coco.py": "dabc588588671e1fa6a1e8ef8077824cd36856fa97d976f2949632e4be30d506",
+        "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
+        "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
+      },
+      "head": "8bbda52b349074608c193c692d8a0dd484887bff"
+    },
+    "source_clean_before_run": false,
+    "source_sha256": "2d72c5e4f41c4d87952a3b99c07e5b8a1cdcee6d8738b2dbea846433b76a949c",
+    "summary_sha256": "22cf040d4444675661d276e8e4b4f6340abadc01407bd8b5c353ee0e8e91870f",
+    "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
+  },
+  "baseline_checksums": {
+    "entries": {
+      "commands.json": "0e44b6b65cc81d5d3db9fb6fc0aa50185b616deb667fbc3f9167d5fc73da527c",
+      "comparison.svg": "4589e45427ef2822bb78580e36097bf94994e7b12fe496176805fa858bc69ebb",
+      "environment.json": "2ab05def438afb3fa675f2857e93a1324eccea303710e367349a49d5a34d3d0a",
+      "eval_eager.json": "4eeb393f6e6d75db05e14ca2cc9c4e49563cbd9331649ce851912158e4719c77",
+      "eval_torchscript.json": "39c7b67373752294ee0a060199a14d11f445f513b957174fbe636fafb57151ea",
+      "parity.json": "91a651c0dce7e132a27a38728da9440a7ce13a409cafcedc2e7aa751d3878b04",
+      "predictions_eager.json": "d3989c676bb2c86e7751e9ce2f2646aad188b8862bbd71c63f9780fd2ba69a2c",
+      "predictions_torchscript.json": "112a03703ed69f8d4177b66f53e65bd356c35a9beeca5b1154017bdb20b45188",
+      "protocol.json": "ae0a93a22221a5b62726a26a9575b8342a7740ee5dd417922dda60bbeb263e3f",
+      "summary.json": "22cf040d4444675661d276e8e4b4f6340abadc01407bd8b5c353ee0e8e91870f"
+    },
+    "errors": [],
+    "manifest_sha256": "3724ca4e92dd3a76a708009be3d939abb7b76e5b232d5fce4cd94d4cdbde65b8",
+    "ok": true
+  },
+  "baseline_mode": "implicit_existing_output",
+  "candidate": {
+    "case_study_id": "torchvision-maskrcnn-eager-torchscript-v1",
+    "environment": {
+      "packages": {
+        "Pillow": "12.2.0",
+        "numpy": "2.4.4",
+        "pycocotools": "2.0.11",
+        "torch": "2.10.0",
+        "torchvision": "0.25.0"
+      },
+      "python_major_minor": "3.12",
+      "torch": {
+        "deterministic_algorithms": true,
+        "device": "cpu",
+        "threads": 1
+      }
+    },
+    "environment_sha256": "3b254677650a3fb1eb15732bbd4343be68b32802be7bd597d0e62bd29a3866c5",
+    "input_set_sha256": "2fe2ecf9e5d9986e22390e729cb7fd5f2b44159de65103326bfbb8539d815220",
+    "parity_sha256": "7eef54f26f5f5db8c6e469990162729979fb321c863399cb9e607892f4b13005",
+    "predictions": {
+      "eager_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69",
+      "torchscript_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69"
+    },
+    "protocol_sha256": "5397f927913bd0bcb06c073f285379603c8087ad8e8ad2792008a1f6b3fbbb34",
+    "source": {
+      "available": true,
+      "file_sha256": {
+        "data/smoke/labels/val/classes.json": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
+        "tools/check_predictions_parity.py": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
+        "tools/eval_coco.py": "e7c8d8ef369267eb16d94dfdcea5ee51775c1fe349dc3c3f64523fcff58bbb77",
+        "tools/generate_runtime_parity_case_study.py": "c8c43d4308d3b4d8f39ece2cecac6d551755bff1d650d0439fb414049fd943cc",
+        "tools/generate_smoke_assets.py": "d243ce3572eeb3d1a20b8a2c8a0ce4b6f3fa3b26401b61e7a7f759a0840515ec",
+        "yolozu/datasets/coco.py": "dabc588588671e1fa6a1e8ef8077824cd36856fa97d976f2949632e4be30d506",
+        "yolozu/eval/coco_eval.py": "3a8ea50c062ffd95e851e47c1e7d8e5a54ceb154b4f2e003e0164c03bad04715",
+        "yolozu/predictions/predictions_parity.py": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e"
+      },
+      "head": "7bf06013eddf0796ede9fe3d3bca64a5bad67437"
+    },
+    "source_clean_before_run": true,
+    "source_sha256": "2d72c5e4f41c4d87952a3b99c07e5b8a1cdcee6d8738b2dbea846433b76a949c",
+    "summary_sha256": "5dd4f78acdcb6520639f9a8444aad97b051d6c1ee25d4fff5ad93b7301e67c93",
+    "weights_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
+  },
+  "checks": [
+    {
+      "actual": true,
+      "expected": true,
+      "name": "baseline_checksums_valid",
+      "ok": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "candidate_source_clean_before_run",
+      "ok": true
+    },
+    {
+      "actual": "torchvision-maskrcnn-eager-torchscript-v1",
+      "expected": "torchvision-maskrcnn-eager-torchscript-v1",
+      "name": "case_study_id",
+      "ok": true
+    },
+    {
+      "actual": "2fe2ecf9e5d9986e22390e729cb7fd5f2b44159de65103326bfbb8539d815220",
+      "expected": "2fe2ecf9e5d9986e22390e729cb7fd5f2b44159de65103326bfbb8539d815220",
+      "name": "input_set_sha256",
+      "ok": true
+    },
+    {
+      "actual": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+      "expected": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+      "name": "weights_sha256",
+      "ok": true
+    },
+    {
+      "actual": "5397f927913bd0bcb06c073f285379603c8087ad8e8ad2792008a1f6b3fbbb34",
+      "expected": "5397f927913bd0bcb06c073f285379603c8087ad8e8ad2792008a1f6b3fbbb34",
+      "name": "protocol_sha256",
+      "ok": true
+    },
+    {
+      "actual": "3b254677650a3fb1eb15732bbd4343be68b32802be7bd597d0e62bd29a3866c5",
+      "expected": "3b254677650a3fb1eb15732bbd4343be68b32802be7bd597d0e62bd29a3866c5",
+      "name": "environment_sha256",
+      "ok": true
+    },
+    {
+      "actual": "2d72c5e4f41c4d87952a3b99c07e5b8a1cdcee6d8738b2dbea846433b76a949c",
+      "expected": "2d72c5e4f41c4d87952a3b99c07e5b8a1cdcee6d8738b2dbea846433b76a949c",
+      "name": "source_sha256",
+      "ok": true
+    },
+    {
+      "actual": "7eef54f26f5f5db8c6e469990162729979fb321c863399cb9e607892f4b13005",
+      "expected": "7eef54f26f5f5db8c6e469990162729979fb321c863399cb9e607892f4b13005",
+      "name": "parity_sha256",
+      "ok": true
+    },
+    {
+      "actual": {
+        "eager_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69",
+        "torchscript_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69"
+      },
+      "expected": {
+        "eager_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69",
+        "torchscript_sha256": "f73fd57a7407042f94659373d002ed988718efae3251321f0fb4b8d47b79bd69"
+      },
+      "name": "predictions",
+      "ok": true
+    },
+    {
+      "actual": 12,
+      "expected": 12,
+      "name": "eager_detection_count",
+      "ok": true
+    },
+    {
+      "actual": 12,
+      "expected": 12,
+      "name": "torchscript_detection_count",
+      "ok": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "parity_ok",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.8111386138613862,
+      "atol": 1e-08,
+      "expected": 0.8111386138613862,
+      "name": "eager_map50_95",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.9381188118811881,
+      "atol": 1e-08,
+      "expected": 0.9381188118811881,
+      "name": "eager_map50",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.9381188118811881,
+      "atol": 1e-08,
+      "expected": 0.9381188118811881,
+      "name": "eager_map75",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.8104166666666668,
+      "atol": 1e-08,
+      "expected": 0.8104166666666668,
+      "name": "eager_ar100",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.8111386138613862,
+      "atol": 1e-08,
+      "expected": 0.8111386138613862,
+      "name": "torchscript_map50_95",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.9381188118811881,
+      "atol": 1e-08,
+      "expected": 0.9381188118811881,
+      "name": "torchscript_map50",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.9381188118811881,
+      "atol": 1e-08,
+      "expected": 0.9381188118811881,
+      "name": "torchscript_map75",
+      "ok": true
+    },
+    {
+      "absolute_delta": 0.0,
+      "actual": 0.8104166666666668,
+      "atol": 1e-08,
+      "expected": 0.8104166666666668,
+      "name": "torchscript_ar100",
+      "ok": true
+    }
+  ],
+  "metric_atol": 1e-08,
+  "ok": true,
+  "schema_version": 2
+}
