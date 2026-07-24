@@ -117,6 +117,9 @@ Current in-repo `rtdetr_pose` backbone choices:
 ### 7) Evaluation harness
 
 - COCO eval conversion from YOLO labels and predictions JSON
+- Strict-by-default `eval-coco`; explicit `--repair` records every coercion
+- Deterministic `max_images` subsetting with excluded/missing prediction counts
+- Typed in-process validation/evaluation through `yolozu.api`
 - NMS-free e2e mAP evaluation
 - Scenario suite report (fps/recall/depth/pose/rejection)
 
@@ -140,6 +143,7 @@ Core installed CLI examples (not an exhaustive command list):
 - `yolozu doctor`
 - `yolozu export`
 - `yolozu validate`
+- `yolozu eval-coco`
 - `yolozu eval-instance-seg`
 - `yolozu resources`
 - `yolozu demo`
@@ -171,6 +175,7 @@ Legacy compatibility wrapper (source checkout only):
 
 - Predictions schema: `docs/predictions_schema.md`
 - Adapter interface contract: `docs/adapter_contract.md`
+- Stable Python surface and compatibility policy: `docs/python_api.md`
 
 ## Non-goals
 

@@ -11,6 +11,7 @@ Stable for 1.x:
 - Adapter interface contract v1 (`docs/adapter_contract.md`)
 - Run contract artifact layout (`docs/run_contract.md`)
 - Core CLI compatibility surface listed below
+- Typed validation/evaluation surface listed in `docs/python_api.md`
 
 Not guaranteed stable:
 - Internal model architectures/backbone internals
@@ -66,6 +67,13 @@ Policy:
 - Existing flags/behavior are kept backward-compatible across 1.x where practical.
 - Deprecated aliases remain for at least one minor release window before removal.
 - MCP/Actions aliases are explicitly documented in generated tool reference docs.
+
+## Python API compatibility surface
+
+The supported in-process surface is `yolozu.api`. Its public symbols,
+machine-readable exception categories/codes, and serialized result keys are
+listed in `docs/python_api.md`. Internal helpers and other modules are not part
+of this guarantee. Additive result fields remain permitted.
 
 ## CI gates that enforce this boundary
 

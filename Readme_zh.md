@@ -12,6 +12,14 @@ YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓�
 
 传入 wrapped `predictions.json`，验证 predictions interface contract，即可生成可比较的 report。
 
+标准安装下的最短路径，是一条内置 strict validation 的 dry-run 命令：
+
+```bash
+yolozu eval-coco --dataset /path/to/dataset --predictions /path/to/predictions.json --dry-run --output reports/coco_eval.json
+```
+
+如需真实 COCO metrics，请安装 `yolozu[coco]` 并去掉 `--dry-run`。
+
 ## 特别适合的三个场景
 
 - 在同一 dataset 和固定的 evaluation protocol 下，比较多个 framework 或 runtime 生成的 predictions

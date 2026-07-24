@@ -25,6 +25,7 @@ yolozu doctor --proof
 ## Read These First
 
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
+- [`python_api.md`](python_api.md): typed in-process validation/evaluation API and stable error policy
 - [`install.md`](install.md): install, `doctor`, and environment setup
 - [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
@@ -120,12 +121,9 @@ Supporting docs:
 
 Use this path when predictions are exported elsewhere and you only need validation/evaluation here.
 
-Shortest 3 commands:
+Shortest command (strict predictions validation is included):
 
 ```bash
-python3 -m yolozu validate dataset data/smoke --strict
-python3 -m yolozu validate predictions \
-	data/smoke/predictions/predictions_dummy.json --strict
 python3 -m yolozu eval-coco \
 	--dataset data/smoke \
 	--split val \
@@ -137,6 +135,7 @@ python3 -m yolozu eval-coco \
 Reference docs:
 - [External inference backends](external_inference.md)
 - [Predictions schema](predictions_schema.md)
+- [Stable Python API](python_api.md)
 
 ## B) Train → Export → Eval (RT-DETR reference trainer)
 

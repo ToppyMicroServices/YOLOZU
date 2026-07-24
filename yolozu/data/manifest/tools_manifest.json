@@ -3,7 +3,7 @@
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
       "schema": "docs/schemas/coco_eval_report.schema.json",
-      "summary": "Report payload emitted by tools/eval_coco.py (COCOeval or dry-run conversion)."
+      "summary": "Strict success/failure report emitted by yolozu eval-coco or tools/eval_coco.py (COCOeval or dry-run conversion)."
     },
     "continual_promotion_decision_json": {
       "producer": "python3 tools/continual_decide.py",
@@ -3584,6 +3584,7 @@
       },
       "docs": [
         "docs/external_inference.md",
+        "docs/python_api.md",
         "docs/predictions_schema.md",
         "docs/production_readiness.md"
       ],
@@ -3591,7 +3592,7 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes COCO evaluation JSON report.",
+            "description": "Atomically writes a status=ok COCO report or replaces stale success evidence with a status=failed report.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -3602,7 +3603,11 @@
       "examples": [
         {
           "command": "python3 tools/eval_coco.py --dataset data/coco128 --predictions reports/predictions.json --dry-run --output reports/coco_eval_dry.json",
-          "description": "Dry-run conversion/validation without pycocotools."
+          "description": "Strict dry-run validation and conversion without pycocotools."
+        },
+        {
+          "command": "python3 tools/eval_coco.py --dataset data/coco128 --predictions reports/legacy_predictions.json --dry-run --repair --output reports/coco_eval_repaired.json",
+          "description": "Explicitly repair legacy ranges and record every repair in warnings."
         }
       ],
       "id": "eval_coco",
@@ -3657,6 +3662,12 @@
           "required": false
         },
         {
+          "flag": "--repair",
+          "kind": "string",
+          "name": "repair",
+          "required": false
+        },
+        {
           "flag": "--classes",
           "kind": "file",
           "name": "classes",
@@ -3673,7 +3684,7 @@
       "outputs": [
         {
           "default": "reports/coco_eval.json",
-          "description": "COCO evaluation JSON artifact.",
+          "description": "Strict COCO evaluation JSON artifact with status, validation mode, subset counts, warnings, and structured failure details.",
           "kind": "file",
           "name": "coco_eval_json"
         }
@@ -3684,8 +3695,14 @@
         "linux_ok": true,
         "macos_ok": true
       },
+      "requires": {
+        "notes": "Required for real COCOeval only; --dry-run performs strict validation/conversion without pycocotools.",
+        "python_packages": [
+          "pycocotools"
+        ]
+      },
       "runner": "python3",
-      "summary": "Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate).",
+      "summary": "Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with explicit repair and bounded-subset accounting; --dry-run does not require pycocotools.",
       "tags": [
         "coco",
         "data.yaml",

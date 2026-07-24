@@ -1960,82 +1960,64 @@ def _cmd_predict_images(args: argparse.Namespace) -> int:
 
 
 def _cmd_eval_coco(args: argparse.Namespace) -> int:
-    import time
-
-    from yolozu.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
-    from yolozu.dataset import build_manifest
-    from yolozu.predictions import load_predictions_entries, validate_predictions_entries
-    from yolozu.predictions.predictions_transform import load_classes_json, normalize_class_ids
+    from yolozu.api import APIError, _failure_report, _write_json_atomic, evaluate_coco
+    from yolozu.core.diagnostics import format_cli_error
 
     dataset_root = Path(str(args.dataset)).expanduser()
     if not dataset_root.is_absolute():
         dataset_root = Path.cwd() / dataset_root
 
-    manifest = build_manifest(dataset_root, split=str(args.split) if args.split else None)
-    records = list(manifest.get("images") or [])
-    if args.max_images is not None:
-        records = records[: int(args.max_images)]
-
-    gt, index = build_coco_ground_truth(records)
-    image_sizes = {image["id"]: (int(image["width"]), int(image["height"])) for image in gt["images"]}
-
     predictions_path = Path(str(args.predictions)).expanduser()
     if not predictions_path.is_absolute():
         predictions_path = Path.cwd() / predictions_path
-    predictions = load_predictions_entries(predictions_path)
-    normalization_warnings: list[str] = []
-    if args.classes or args.assume_class_id_is_category_id:
-        if not args.classes:
-            raise SystemExit("--classes is required when --assume-class-id-is-category-id is enabled")
-        classes = load_classes_json(Path(str(args.classes)).expanduser())
-        transformed = normalize_class_ids(
-            predictions,
-            classes_json=classes,
-            assume_class_id_is_category_id=bool(args.assume_class_id_is_category_id),
-        )
-        predictions = transformed.entries
-        normalization_warnings = list(transformed.warnings)
-    validation = validate_predictions_entries(predictions, strict=False)
-    detections = predictions_to_coco_detections(
-        predictions,
-        coco_index=index,
-        image_sizes=image_sizes,
-        bbox_format=str(args.bbox_format),
-    )
-
-    if bool(args.dry_run):
-        result: dict[str, object] = {
-            "metrics": {"map50_95": None, "map50": None, "map75": None, "ar100": None},
-            "stats": [],
-            "dry_run": True,
-            "counts": {"images": int(len(records)), "detections": int(len(detections))},
-            "warnings": [*validation.warnings, *normalization_warnings],
-        }
-    else:
-        result = evaluate_coco_map(gt, detections)
-        result["warnings"] = [*validation.warnings, *normalization_warnings]
-
-    payload: dict[str, object] = {
-        "report_schema_version": 1,
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "dataset": str(dataset_root),
-        "split": manifest.get("split"),
-        "split_requested": str(args.split) if args.split else None,
-        "predictions": str(predictions_path),
-        "bbox_format": str(args.bbox_format),
-        "max_images": int(args.max_images) if args.max_images is not None else None,
-        "normalization": {
-            "classes": str(args.classes) if args.classes else None,
-            "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
-        },
-        **result,
-    }
 
     output_path = Path(str(args.output)).expanduser()
     if not output_path.is_absolute():
         output_path = Path.cwd() / output_path
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    classes_path: Path | None = None
+    if args.classes:
+        classes_path = Path(str(args.classes)).expanduser()
+        if not classes_path.is_absolute():
+            classes_path = Path.cwd() / classes_path
+
+    try:
+        result = evaluate_coco(
+            dataset_root,
+            predictions_path,
+            split=str(args.split) if args.split else None,
+            bbox_format=str(args.bbox_format),
+            max_images=int(args.max_images) if args.max_images is not None else None,
+            dry_run=bool(args.dry_run),
+            repair=bool(args.repair),
+            classes=classes_path,
+            assume_class_id_is_category_id=bool(args.assume_class_id_is_category_id),
+        )
+    except APIError as exc:
+        failure = _failure_report(
+            exc,
+            dataset=str(dataset_root),
+            predictions=str(predictions_path),
+            split=str(args.split) if args.split else None,
+            bbox_format=str(args.bbox_format),
+            max_images=int(args.max_images) if args.max_images is not None else None,
+            dry_run=bool(args.dry_run),
+            repair=bool(args.repair),
+        )
+        failure["normalization"] = {
+            "classes": str(classes_path) if classes_path else None,
+            "assume_class_id_is_category_id": bool(args.assume_class_id_is_category_id),
+        }
+        _write_json_atomic(output_path, failure)
+        raise SystemExit(
+            format_cli_error(
+                code=exc.code,
+                message=exc.message,
+                hint=f"failure report written to {output_path}",
+            )
+        ) from exc
+
+    _write_json_atomic(output_path, result.to_dict())
     print(str(output_path))
     return 0
 

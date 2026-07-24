@@ -56,7 +56,7 @@ or repo-only helpers, not for real \cmd{yolozu} commands.
 \cmd{yolozu demo pose} & Produce a 6DoF pose overlay. & \cmd{yolozu demo pose --backend aruco} & \path{demo_output/pose/} & No \\
 \cmd{yolozu demo depth} & Produce a monocular depth visualization. & \cmd{yolozu demo depth} & \path{demo_output/depth/} & No \\
 \cmd{yolozu validate predictions} & Validate a predictions artifact before scoring. & \cmd{yolozu validate predictions --help} & validation result & No \\
-\cmd{yolozu eval-coco} & Score detection predictions with COCO-style metrics. & \cmd{yolozu eval-coco --help} & metrics JSON & No \\
+\cmd{yolozu eval-coco} & Strictly validate and score detection predictions. & \cmd{yolozu eval-coco --help} & status and metrics JSON & No \\
 \cmd{yolozu benchmark} & Compare benchmark/parity lanes under pinned settings. & \cmd{yolozu benchmark --help} & benchmark report JSON & No \\
 \cmd{yolozu parity} & Compare two predictions artifacts for drift. & \cmd{yolozu parity --help} & parity JSON & No \\
 \cmd{yolozu train} & Run config-driven training or external training wrappers. & \cmd{yolozu train <train_contract.yaml> --help} & run bundle under \path{runs/} & No \\
@@ -79,6 +79,14 @@ For complete option lists, use \cmd{--help}. For repository helper metadata,
 use \path{tools/manifest.json}. When this chapter changes, run
 \cmd{python3 tools/audit_manual_cli_drift.py} so the manual stays aligned with
 the implemented CLI surface.
+
+\paragraph{Shortest strict evaluation.}
+\cmd{yolozu eval-coco} performs strict predictions validation before
+conversion or scoring, so a separate validation command is optional. Use
+\cmd{--dry-run} when COCO metrics are not required. Legacy coercion is available
+only through explicit \cmd{--repair}; each repair is recorded in report
+\path{warnings}. A failed run writes \path{status=failed} at the requested
+output path instead of leaving stale success evidence.
 
 \section{Demo Output Examples (Images)}
 The \cmd{yolozu demo *} commands are designed to produce concrete artifacts (JSON reports and overlay images)

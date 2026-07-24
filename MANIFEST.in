@@ -9,6 +9,7 @@ include CODE_OF_CONDUCT.md
 include CONTRIBUTING.md
 include CITATION.cff
 include tools/manifest.json
+include yolozu/py.typed
 
 recursive-include yolozu/data *.json *.yaml *.yml
 recursive-include docs *.md *.json

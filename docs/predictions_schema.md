@@ -169,6 +169,9 @@ Supported formats:
 Tool expectations:
 
 - `tools/eval_coco.py` / `tools/eval_suite.py` default to `cxcywh_norm`
+- `yolozu eval-coco` and `tools/eval_coco.py` reject schema/range-invalid
+  predictions by default; `--repair` is the explicit legacy-coercion path and
+  records every repair in report warnings
 - `tools/check_predictions_parity.py` defaults to `auto` and accepts
   `bbox.format` when present
 - YOLO26 protocol requires `cxcywh_norm` (`docs/yolo26_eval_protocol.md`)

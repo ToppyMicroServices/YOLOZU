@@ -1,6 +1,6 @@
 # SSOT Capability Coverage Audit
 
-Audit date: 2026-07-23
+Audit date: 2026-07-24
 Benchmark reconciliation update: 2026-07-23
 
 This audit maps the capability claims in [Production Readiness](production_readiness.md) and
@@ -13,7 +13,7 @@ instead of promoting it by inference.
 
 | Capability | Maturity | Implementation | CLI | Manifest / packaged copy | Docs | Tests / evidence | Result / follow-up |
 |---|---|---|---|---|---|---|---|
-| Predictions validation/evaluation | Stable | `yolozu/predictions/`, `yolozu/eval/` | `yolozu validate`, `eval-coco`, `eval-instance-seg`, `parity` | `validate_predictions`, `eval_coco`, `eval_instance_segmentation`, and `yolozu`; source and packaged manifests match | `predictions_schema.md`, `external_inference.md` | `tests/test_predictions.py`, `tests/test_eval_suite_determinism.py`, `data/smoke/predictions/predictions_dummy.json` | Aligned. Wrapper schema is v1 and entry schema is v2. |
+| Predictions validation/evaluation | Stable | `yolozu/api.py`, `yolozu/predictions/`, `yolozu/eval/` | `yolozu validate`, `eval-coco`, `eval-instance-seg`, `parity` | `validate_predictions`, `eval_coco`, `eval_instance_segmentation`, and `yolozu`; source and packaged manifests/schemas match | `python_api.md`, `predictions_schema.md`, `external_inference.md` | `tests/test_public_api.py`, `tests/test_eval_cli_guardrails.py`, `tests/test_predictions.py`, `data/smoke/predictions/predictions_dummy.json` | Aligned. `eval-coco` is strict by default, explicit repair records warnings, bounded subsets count/exclude known unselected predictions, and the typed in-process API ships `py.typed`. |
 | Dataset I/O and mask-only label derivation | Explicitly deferred as standalone capabilities | `yolozu/datasets/dataset.py`, `dataset_contract.py`, `dataset_validator.py` | `yolozu validate dataset`, `export-dataset`, `import` | Covered by stable `yolozu` and dataset preparation entries; no separate mask-derivation command | `yolozu_spec.md`, `dataset_contract.md` | `tests/test_dataset_contract.py`, `tests/test_dataset_mask_labels.py`, `data/smoke/` | Implemented and tested; availability through a Stable parent is not treated as standalone maturity evidence. |
 | RT-DETR pose reference trainer | Stable reference lane | `rtdetr_pose/rtdetr_pose/`, `rtdetr_pose/tools/train_minimal.py` | `yolozu train` | Stable `yolozu` entry; packaged copy matches | `training_backend_interface.md`, `training_capability_matrix.md`, `run_contract.md` | `tests/test_rtdetr_pose_adapter.py`, `rtdetr_pose/tests/test_train_minimal_integration.py` | Aligned. Runtime/GPU qualification remains environment-specific. |
 | Reference backbone and neck boundary | Stable within the reference trainer | `rtdetr_pose/rtdetr_pose/backbone_interface.py`, `models/backbones/` | `yolozu train --config ...` | Covered by stable `yolozu`; no independent public command | `yolozu_spec.md`, `training_backend_interface.md` | `tests/test_backbone_shapes.py`, `tests/test_rtdetr_backbone_neck_parity.py` | Aligned at the adapter boundary; no repository-wide model-family claim. |

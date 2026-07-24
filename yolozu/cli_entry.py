@@ -303,7 +303,17 @@ def main(argv: list[str] | None = None) -> int:
         help="How to interpret detection bbox fields (default: cxcywh_norm).",
     )
     eval_coco.add_argument("--dry-run", action="store_true", help="Skip COCOeval; only validate/convert predictions.")
-    eval_coco.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images.")
+    eval_coco.add_argument(
+        "--repair",
+        action="store_true",
+        help="Explicitly repair/clamp legacy prediction values and record every repair (default: strict rejection).",
+    )
+    eval_coco.add_argument(
+        "--max-images",
+        type=int,
+        default=None,
+        help="Evaluate the first N dataset images; known predictions outside the subset are counted and excluded.",
+    )
     eval_coco.add_argument("--classes", default=None, help="Optional labels/<split>/classes.json for class-id normalization.")
     eval_coco.add_argument(
         "--assume-class-id-is-category-id",

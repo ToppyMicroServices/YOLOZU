@@ -141,9 +141,17 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 Report handoff:
 
 ```bash
-python3 tools/eval_coco.py --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
+yolozu eval-coco --dataset /path/to/coco-yolo --predictions /path/to/predictions.json --output reports/external_eval.json
 python3 tools/check_predictions_parity.py --reference reports/pred_torch.json --candidate /path/to/predictions.json > reports/external_parity.json
 ```
+
+`eval-coco` validates predictions strictly before scoring. Use `--dry-run` for
+validation/conversion without `pycocotools`. Use `--repair` only when you
+intentionally accept legacy coercion; every repair is recorded in report
+`warnings`. With `--max-images N`, known predictions outside the deterministic
+dataset subset are counted and excluded, while images unknown to the full
+dataset still fail. The typed in-process equivalent is documented in
+[`python_api.md`](python_api.md).
 
 ### C++ template (submodule-ready)
 

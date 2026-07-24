@@ -82,7 +82,8 @@ both artifacts use one known format.
 \yolozu{} ships one small, reproducible comparison that runs the same
 Torchvision Mask R-CNN checkpoint and two-image smoke subset through PyTorch
 eager and TorchScript. The generator writes wrapped predictions, evaluates
-both through the stable \cmd{eval-coco} lane, performs detection-level parity,
+both through the strict stable \cmd{eval-coco} lane with explicit
+full-dataset/subset counts, performs detection-level parity,
 verifies the official full checkpoint hash and standard COCO80 class mapping,
 and records protocol, environment, source, checksum, and SVG evidence:
 \begin{lstlisting}[language=bash]
