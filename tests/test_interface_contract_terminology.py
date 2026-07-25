@@ -87,6 +87,12 @@ class TestInterfaceContractTerminology(unittest.TestCase):
         files.extend((self.repo_root / "docs").rglob("*.md"))
         files.extend((self.repo_root / "docs").rglob("*.json"))
         files.extend((self.repo_root / "manual" / "chapters").rglob("*.tex"))
+        files.extend(
+            (self.repo_root / "yolozu" / "data" / "docs").rglob("*.md")
+        )
+        files.extend(
+            (self.repo_root / "yolozu" / "data" / "schemas").rglob("*.json")
+        )
         return sorted(set(files))
 
     def test_ambiguous_software_contract_wording_is_absent(self) -> None:

@@ -15,7 +15,10 @@ def _parse_args(argv):
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Require numeric types and full per-detection schema checks.",
+        help=(
+            "Fail closed on interface-contract violations. Without this flag, "
+            "compatibility repair is enabled and reported in warnings."
+        ),
     )
     parser.add_argument(
         "-j",

@@ -1788,18 +1788,30 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             return 1
         return 0
 
-    if (
-        args.validate_command == "predictions"
-        and bool(getattr(args, "json", False))
-    ):
+    if args.validate_command == "predictions":
         from yolozu.predictions import validate_predictions_path
 
         result, exit_code = validate_predictions_path(
             str(args.path),
             strict=bool(args.strict),
+            max_warnings=(
+                100 if bool(getattr(args, "json", False)) else None
+            ),
         )
-        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-        return exit_code
+        if bool(getattr(args, "json", False)):
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return exit_code
+        if not result["ok"]:
+            errors = list(result.get("errors") or [])
+            message = (
+                str(errors[0].get("message"))
+                if errors
+                else "validation failed"
+            )
+            raise SystemExit(message)
+        for warning in result["warnings"]:
+            print(warning, file=sys.stderr)
+        return 0
 
     path = Path(str(args.path))
     if not path.exists():
@@ -1808,17 +1820,6 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
         raise SystemExit(f"failed to parse json: {path} ({exc})") from exc
-
-    if args.validate_command == "predictions":
-        from yolozu.predictions import validate_predictions_payload
-
-        try:
-            res = validate_predictions_payload(payload, strict=bool(args.strict))
-        except Exception as exc:
-            raise SystemExit(str(exc)) from exc
-        for w in res.warnings:
-            print(w, file=sys.stderr)
-        return 0
 
     if args.validate_command == "seg":
         from yolozu.segmentation_predictions import validate_segmentation_predictions_payload

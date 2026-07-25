@@ -10,6 +10,8 @@
     "ok",
     "path",
     "strict",
+    "mode",
+    "repair_enabled",
     "entry_count",
     "warnings",
     "errors",
@@ -29,6 +31,15 @@
       "type": "string"
     },
     "strict": {
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "strict",
+        "repair"
+      ]
+    },
+    "repair_enabled": {
       "type": "boolean"
     },
     "entry_count": {

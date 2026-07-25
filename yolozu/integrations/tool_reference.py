@@ -8,6 +8,7 @@ from typing import Any
 
 from . import tool_runner
 from .ai_surface import ai_surface_sets
+from .manifest_resources import load_tool_manifest
 
 
 @dataclass(frozen=True)
@@ -422,9 +423,11 @@ def _parse_functions_with_route_metadata(path: Path) -> dict[str, dict[str, Any]
     for node in tree.body:
         if not isinstance(node, ast.FunctionDef):
             continue
+        docstring = (ast.get_docstring(node) or "").strip()
         entry: dict[str, Any] = {
             "params": _extract_ast_params(node.args),
             "input_schema": _arguments_input_schema(node.name, node.args),
+            "summary": docstring.splitlines()[0] if docstring else "",
         }
         for decorator in node.decorator_list:
             if not isinstance(decorator, ast.Call):
@@ -623,6 +626,27 @@ def build_tool_surface_reference() -> dict[str, Any]:
     mcp_functions = _parse_functions_with_route_metadata(_integrations_path("mcp_server.py"))
     actions_functions = _parse_functions_with_route_metadata(_integrations_path("actions_api.py"))
     actions_models = _parse_actions_models(_integrations_path("actions_api.py"))
+    surfaces = ai_surface_sets()
+    manifest = load_tool_manifest()
+    manifest_tools = {
+        str(item.get("id")): item
+        for item in list(manifest.get("tools") or [])
+        if isinstance(item, dict) and str(item.get("id") or "")
+    }
+    categories = {
+        spec.canonical_name: spec.category
+        for spec in TOOL_SURFACE_SPECS
+    }
+    for spec in TOOL_SURFACE_SPECS:
+        for alias in spec.mcp_aliases:
+            categories[alias.removesuffix("_tool")] = spec.category
+    categories.update(
+        {
+            "ai_tools": "discovery",
+            "generate_config": "config",
+            "review_config": "config",
+        }
+    )
 
     mcp_live_tools: list[dict[str, Any]] = []
     for function_name, metadata in mcp_functions.items():
@@ -633,14 +657,83 @@ def build_tool_surface_reference() -> dict[str, Any]:
             raise ValueError(
                 f"MCP tool must declare an explicit canonical name: {function_name}"
             )
+        manifest_tool = manifest_tools.get(tool_name)
+        explicit_maturity = (
+            str(manifest_tool.get("maturity"))
+            if isinstance(manifest_tool, dict)
+            and str(manifest_tool.get("maturity") or "")
+            else None
+        )
+        explicit_tags = (
+            [
+                str(tag)
+                for tag in list(manifest_tool.get("tags") or [])
+                if str(tag)
+            ]
+            if isinstance(manifest_tool, dict)
+            else []
+        )
+        input_schema = dict(metadata["input_schema"])
+        required = set(input_schema.get("required") or [])
+        inputs = [
+            {
+                "name": name,
+                "required": name in required,
+                "schema": dict(schema),
+            }
+            for name, schema in dict(
+                input_schema.get("properties") or {}
+            ).items()
+        ]
+        surface_tiers = [
+            name
+            for name, surface in surfaces.items()
+            if tool_name in set(surface["tool_ids"])
+        ]
         mcp_live_tools.append(
             {
                 "name": tool_name,
                 "function": function_name,
+                "summary": str(metadata.get("summary") or ""),
+                "category": categories.get(tool_name, "mcp"),
+                "surface_tiers": surface_tiers,
+                "maturity": explicit_maturity,
+                "maturity_source": (
+                    "tools_manifest"
+                    if explicit_maturity is not None
+                    else "unclassified"
+                ),
+                "tags": explicit_tags,
+                "tags_source": (
+                    "tools_manifest"
+                    if explicit_tags
+                    else "unclassified"
+                ),
                 "params": list(metadata["params"]),
-                "input_schema": dict(metadata["input_schema"]),
+                "inputs": inputs,
+                "input_schema": input_schema,
                 "parameter_schema": _normalize_parameter_schema(
-                    metadata["input_schema"]
+                    input_schema
+                ),
+                "examples": (
+                    list(manifest_tool.get("examples") or [])
+                    if isinstance(manifest_tool, dict)
+                    else []
+                ),
+                "effects": (
+                    dict(manifest_tool.get("effects") or {})
+                    if isinstance(manifest_tool, dict)
+                    else None
+                ),
+                "requires": (
+                    dict(manifest_tool.get("requires") or {})
+                    if isinstance(manifest_tool, dict)
+                    else None
+                ),
+                "metadata_source": (
+                    "tools_manifest+mcp_ast"
+                    if isinstance(manifest_tool, dict)
+                    else "mcp_ast"
                 ),
             }
         )
@@ -648,7 +741,6 @@ def build_tool_surface_reference() -> dict[str, Any]:
     if len(live_names) != len(set(live_names)):
         raise ValueError("duplicate canonical MCP tool names")
 
-    surfaces = ai_surface_sets()
     declared_live_names = list(surfaces["mcp_live"]["tool_ids"])
     if live_names != declared_live_names:
         raise ValueError(

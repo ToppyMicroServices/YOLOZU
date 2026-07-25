@@ -8,6 +8,7 @@ from pathlib import Path
 
 from yolozu.integrations.ai_surface import (
     ai_surface_sets,
+    discover_manifest_tools,
     generate_config,
     list_manifest_tools,
     review_config,
@@ -32,6 +33,20 @@ class TestAiFirstMcpSurface(unittest.TestCase):
         self.assertEqual(len(supported), 25)
         self.assertIn("eval_coco", supported)
         self.assertIn("validate_predictions", supported)
+        supported_records = list_manifest_tools(supported=True)
+        self.assertEqual(
+            {item["id"] for item in supported_records},
+            set(supported),
+        )
+        for item in supported_records:
+            with self.subTest(tool=item["id"]):
+                self.assertTrue(item["summary"].strip())
+                self.assertIsInstance(item["input_schema"], dict)
+                self.assertEqual(item["input_schema"].get("type"), "object")
+                self.assertIn("properties", item["input_schema"])
+                self.assertIn("maturity_source", item)
+                self.assertIn("tags_source", item)
+                self.assertIn("mcp_live", item["surface_tiers"])
         filtered = list_manifest_tools(
             maturity="stable",
             tag="validation",
@@ -43,6 +58,39 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                 and "validation" in item["tags"]
                 for item in filtered
             )
+        )
+
+    def test_maturity_filter_reports_unclassified_live_tools(self):
+        discovery = discover_manifest_tools(
+            supported=True,
+            maturity="stable",
+        )
+        rows = discovery["tools"]
+        diagnostics = discovery["filter_diagnostics"]
+
+        self.assertGreater(len(rows), 0)
+        self.assertTrue(
+            all(item["maturity"] == "stable" for item in rows)
+        )
+        self.assertGreater(
+            diagnostics["excluded_unclassified_maturity"],
+            0,
+        )
+        self.assertIn("explicit metadata only", diagnostics["semantics"])
+
+        all_live = {
+            item["id"]: item
+            for item in list_manifest_tools(supported=True)
+        }
+        self.assertIsNone(all_live["doctor"]["maturity"])
+        self.assertEqual(
+            all_live["doctor"]["maturity_source"],
+            "unclassified",
+        )
+        self.assertNotEqual(
+            all_live["doctor"]["maturity"],
+            "stable",
+            "guaranteed_ai_safe must not be inferred as maturity=stable",
         )
 
     def test_ai_surface_sets_distinguish_public_guarantees(self):

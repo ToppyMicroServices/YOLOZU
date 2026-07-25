@@ -6,8 +6,8 @@ import sys
 
 from .ai_surface import (
     ai_surface_sets,
+    discover_manifest_tools,
     generate_config,
-    list_manifest_tools,
     review_config,
 )
 from .manifest_resources import resolve_workspace_path
@@ -87,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_tools:
         try:
             surfaces = ai_surface_sets(args.manifest)
-            tools = list_manifest_tools(
+            discovery = discover_manifest_tools(
                 manifest_path=args.manifest,
                 guaranteed=bool(args.guaranteed),
                 supported=bool(args.supported),
@@ -95,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
                 tag=args.tag,
                 ids_only=bool(args.ids_only),
             )
+            tools = discovery["tools"]
         except (OSError, UnicodeDecodeError, ValueError) as exc:
             print(
                 json.dumps(
@@ -143,6 +144,10 @@ def main(argv: list[str] | None = None) -> int:
                 surfaces["mcp_live"]["tool_ids"]
             )
             payload["surfaces"] = surfaces
+        if args.maturity or args.tag:
+            payload["filter_diagnostics"] = discovery[
+                "filter_diagnostics"
+            ]
         print(
             json.dumps(
                 payload,

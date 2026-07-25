@@ -28,6 +28,7 @@ def doctor_public(*, output: str = "reports/doctor.json") -> dict[str, Any]:
 
 
 def validate_predictions(path: str, *, strict: bool = True) -> dict[str, Any]:
+    """Validate strictly, or explicitly request repair with ``strict=False``."""
     args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
@@ -41,6 +42,7 @@ def validate_predictions(path: str, *, strict: bool = True) -> dict[str, Any]:
 
 
 def validate_predictions_public(path: str, *, strict: bool = True) -> dict[str, Any]:
+    """Public response variant with the same strict/repair semantics."""
     args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
@@ -91,6 +93,7 @@ def eval_coco(
     dry_run: bool = True,
     output: str = "reports/mcp_coco_eval.json",
     max_images: int | None = None,
+    repair: bool = False,
 ) -> dict[str, Any]:
     args = [
         "eval-coco",
@@ -107,6 +110,8 @@ def eval_coco(
         args.append("--dry-run")
     if max_images is not None:
         args.extend(["--max-images", str(max_images)])
+    if repair:
+        args.append("--repair")
     return _with_meta(run_cli_tool("eval_coco", args, artifacts={"report": output}))
 
 
@@ -118,6 +123,7 @@ def eval_coco_public(
     dry_run: bool = True,
     output: str = "reports/mcp_coco_eval.json",
     max_images: int | None = None,
+    repair: bool = False,
 ) -> dict[str, Any]:
     args = [
         "eval-coco",
@@ -134,6 +140,8 @@ def eval_coco_public(
         args.append("--dry-run")
     if max_images is not None:
         args.extend(["--max-images", str(max_images)])
+    if repair:
+        args.append("--repair")
     return _with_meta(run_cli_tool_redacted("eval_coco", args, artifacts={"report": output}))
 
 

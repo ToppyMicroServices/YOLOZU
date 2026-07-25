@@ -69,6 +69,7 @@ The `mcp_live` set is the exact list returned by the supported MCP SDK's live to
 - `dry_run` (default: `True`)
 - `output` (default: `reports/mcp_coco_eval.json`)
 - `max_images` (default: `None`)
+- `repair` (default: `False`)
 
 ### `predict_images`
 

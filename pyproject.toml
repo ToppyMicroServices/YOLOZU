@@ -187,6 +187,7 @@ include = ["yolozu*", "rtdetr_pose*"]
   "configs/continual/*.yml",
   "manifest/*.json",
   "manifest/*.md",
+  "integrations/*.json",
   "protocols/*.json",
   "schemas/*.json",
   "docs/*.md",

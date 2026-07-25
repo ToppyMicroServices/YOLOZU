@@ -82,6 +82,9 @@ This format is designed so Claude/Copilot/other MCP-capable clients can summariz
 - For long-running tasks, use `job_id` + `jobs_status` instead of waiting on one synchronous call.
 - Treat `ok/tool/summary/exit_code` as canonical status and `meta` as optional provenance.
 - Set `dry_run`, `strict`, and `force` explicitly to avoid client-specific default drift.
+- `validate_predictions(strict=true)` is fail-closed. Use `strict=false` only
+  when compatibility repair is intended; the response identifies repair mode
+  and lists each repair. `eval_coco` is also strict unless `repair=true`.
 
 ## 2) OpenAI (ChatGPT) routes
 

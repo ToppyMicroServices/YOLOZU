@@ -66,3 +66,17 @@ def packaged_manifest_bytes() -> bytes:
         .joinpath("tools_manifest.json")
         .read_bytes()
     )
+
+
+def load_packaged_tool_reference() -> dict[str, Any]:
+    """Load the generated MCP reference shipped inside the wheel."""
+    text = (
+        files("yolozu.data")
+        .joinpath("integrations")
+        .joinpath("mcp_actions_tool_reference.json")
+        .read_text(encoding="utf-8")
+    )
+    doc = json.loads(text)
+    if not isinstance(doc, dict):
+        raise ValueError("packaged MCP reference must be a JSON object")
+    return doc

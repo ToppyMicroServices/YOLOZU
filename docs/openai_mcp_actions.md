@@ -88,6 +88,7 @@ curl -sS -X POST http://127.0.0.1:8080/eval/coco \
     "split": "val",
     "predictions": "data/smoke/predictions/predictions_dummy.json",
     "dry_run": true,
+    "repair": false,
     "output": "reports/actions_eval_coco_dry_run.json"
   }'
 ```
@@ -103,3 +104,5 @@ curl -sS -X POST http://127.0.0.1:8080/eval/coco \
   escapes fail closed.
 - Use `yolozu validate predictions <path> --strict --json` when an agent needs
   a bounded success/failure payload instead of human-readable output.
+- The validation endpoint defaults to `strict: true`; `strict: false` explicitly
+  selects compatibility repair. COCO evaluation defaults to `repair: false`.

@@ -23,6 +23,30 @@ class TestIntegrationToolRunner(unittest.TestCase):
             json_result_key="validation",
         )
 
+    def test_a1b_validate_predictions_non_strict_requests_repair_mode(self):
+        with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
+            run_cli.return_value = {
+                "ok": True,
+                "tool": "validate_predictions",
+                "summary": "ok",
+            }
+            out = tool_runner.validate_predictions(
+                "reports/legacy_predictions.json",
+                strict=False,
+            )
+
+        self.assertTrue(out["ok"])
+        run_cli.assert_called_once_with(
+            "validate_predictions",
+            [
+                "validate",
+                "predictions",
+                "reports/legacy_predictions.json",
+                "--json",
+            ],
+            json_result_key="validation",
+        )
+
     def test_a2_validate_dataset_builds_expected_args(self):
         with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
             run_cli.return_value = {"ok": True, "tool": "validate_dataset", "summary": "ok"}
@@ -154,6 +178,36 @@ class TestIntegrationToolRunner(unittest.TestCase):
                 "--output",
                 "reports/mcp_coco_eval.json",
                 "--dry-run",
+            ],
+            artifacts={"report": "reports/mcp_coco_eval.json"},
+        )
+
+    def test_c7b_eval_coco_repair_is_explicit(self):
+        with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
+            run_cli.return_value = {
+                "ok": True,
+                "tool": "eval_coco",
+                "summary": "ok",
+            }
+            out = tool_runner.eval_coco(
+                "data/smoke",
+                "reports/legacy_predictions.json",
+                repair=True,
+            )
+
+        self.assertTrue(out["ok"])
+        run_cli.assert_called_once_with(
+            "eval_coco",
+            [
+                "eval-coco",
+                "--dataset",
+                "data/smoke",
+                "--predictions",
+                "reports/legacy_predictions.json",
+                "--output",
+                "reports/mcp_coco_eval.json",
+                "--dry-run",
+                "--repair",
             ],
             artifacts={"report": "reports/mcp_coco_eval.json"},
         )

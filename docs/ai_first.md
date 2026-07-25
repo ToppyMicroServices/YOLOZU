@@ -99,13 +99,16 @@ if not result["ok"]:
 ```
 
 `result["validation"]` follows the validation-result schema described below.
+The MCP/tool-runner default is fail-closed (`strict=True`). Passing
+`strict=False` is the explicit compatibility-repair mode; the result then
+contains `mode: "repair"`, `repair_enabled: true`, and every repair warning.
 
 ## 5) JSON interface contracts for AI surface
 
 ### 5.0 Predictions validation result
 
 Human output remains the default. Add `--json` for a bounded result with
-`schema_version`, `ok`, `warnings`, and `errors`:
+`schema_version`, `ok`, `mode`, `repair_enabled`, `warnings`, and `errors`:
 
 ```bash
 yolozu validate predictions reports/predictions.json --strict --json

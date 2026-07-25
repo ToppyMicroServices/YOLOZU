@@ -59,6 +59,23 @@ class TestIntegrationLayers(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertIn("path escapes workspace", out.get("error", ""))
 
+    def test_api_layer_rejects_symlink_escape_from_workspace(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside:
+            workspace = Path(td)
+            outside_file = Path(outside) / "predictions.json"
+            outside_file.write_text("[]", encoding="utf-8")
+            link = workspace / "linked_predictions.json"
+            link.symlink_to(outside_file)
+
+            out = run_cli_tool(
+                "validate_predictions",
+                ["validate", "predictions", link.name],
+                workspace=workspace,
+            )
+
+        self.assertFalse(out["ok"])
+        self.assertIn("path escapes workspace", out.get("error", ""))
+
     def test_api_layer_rejects_non_allowlisted_command(self):
         out = run_cli_tool("bad", ["rm", "-rf", "/tmp/x"])
         self.assertFalse(out["ok"])

@@ -9,10 +9,21 @@ class TestGeneratedIntegrationToolReference(unittest.TestCase):
     def test_generated_reference_files_are_up_to_date(self):
         repo_root = Path(__file__).resolve().parents[1]
         json_path = repo_root / "docs" / "generated" / "mcp_actions_tool_reference.json"
+        packaged_json_path = (
+            repo_root
+            / "yolozu"
+            / "data"
+            / "integrations"
+            / "mcp_actions_tool_reference.json"
+        )
         md_path = repo_root / "docs" / "generated" / "mcp_actions_tool_reference.md"
 
         self.assertTrue(json_path.exists(), f"missing generated JSON reference: {json_path}")
         self.assertTrue(md_path.exists(), f"missing generated Markdown reference: {md_path}")
+        self.assertTrue(
+            packaged_json_path.exists(),
+            f"missing packaged JSON reference: {packaged_json_path}",
+        )
 
         reference = build_tool_surface_reference()
         expected_json = json.dumps(reference, indent=2, ensure_ascii=False) + "\n"
@@ -22,6 +33,11 @@ class TestGeneratedIntegrationToolReference(unittest.TestCase):
             json_path.read_text(encoding="utf-8"),
             expected_json,
             "generated JSON drifted; run tools/generate_integration_tool_reference.py",
+        )
+        self.assertEqual(
+            packaged_json_path.read_text(encoding="utf-8"),
+            expected_json,
+            "packaged MCP reference drifted from the generated source",
         )
         self.assertEqual(
             md_path.read_text(encoding="utf-8"),

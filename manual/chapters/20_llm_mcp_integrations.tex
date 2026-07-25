@@ -170,12 +170,16 @@ Operational guards in v2 layer implementation:
 \subsection{Machine-readable prediction validation}
 
 Human output remains the default. Agents can request a bounded result with
-\cmd{schema_version}, \cmd{ok}, \cmd{warnings}, and \cmd{errors}:
+\cmd{schema_version}, \cmd{ok}, \cmd{mode}, \cmd{repair_enabled},
+\cmd{warnings}, and \cmd{errors}:
 \begin{lstlisting}[language=bash]
 yolozu validate predictions reports/predictions.json --strict --json
 \end{lstlisting}
 The schema is
 \path{docs/schemas/predictions_validation_result.schema.json}.
+The MCP and tool-runner default \cmd{strict=true} is fail-closed.
+\cmd{strict=false} explicitly selects compatibility repair and reports every
+repair. Likewise, \cmd{eval_coco} remains strict unless \cmd{repair=true}.
 
 \subsection{Synchronous tools}
 \begin{itemize}

@@ -4,8 +4,8 @@ from mcp.server.fastmcp import FastMCP
 
 from .ai_surface import (
     ai_surface_sets,
+    discover_manifest_tools,
     generate_config,
-    list_manifest_tools,
     review_config,
 )
 from .manifest_resources import (
@@ -83,7 +83,7 @@ def ai_tools_tool(
             )
     try:
         surfaces = ai_surface_sets(safe_manifest_path)
-        tools = list_manifest_tools(
+        discovery = discover_manifest_tools(
             manifest_path=safe_manifest_path,
             guaranteed=guaranteed,
             supported=supported,
@@ -91,6 +91,7 @@ def ai_tools_tool(
             tag=tag,
             ids_only=ids_only,
         )
+        tools = discovery["tools"]
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         return _rejected_input(
             "ai_tools",
@@ -132,6 +133,10 @@ def ai_tools_tool(
             surfaces["mcp_live"]["tool_ids"]
         )
         payload["surfaces"] = surfaces
+    if maturity is not None or tag is not None:
+        payload["filter_diagnostics"] = discovery[
+            "filter_diagnostics"
+        ]
     return payload
 
 
@@ -206,7 +211,7 @@ def doctor_tool(output: str = "reports/doctor.json") -> dict:
 
 @app.tool(name="validate_predictions")
 def validate_predictions_tool(path: str, strict: bool = True) -> dict:
-    """Validate predictions JSON."""
+    """Validate strictly, or explicitly repair with strict=false."""
     return validate_predictions(path=path, strict=strict)
 
 
@@ -224,8 +229,9 @@ def eval_coco_tool(
     dry_run: bool = True,
     output: str = "reports/mcp_coco_eval.json",
     max_images: int | None = None,
+    repair: bool = False,
 ) -> dict:
-    """Evaluate predictions using eval-coco."""
+    """Evaluate predictions strictly unless repair is explicitly enabled."""
     return eval_coco(
         dataset=dataset,
         predictions=predictions,
@@ -233,6 +239,7 @@ def eval_coco_tool(
         dry_run=dry_run,
         output=output,
         max_images=max_images,
+        repair=repair,
     )
 
 

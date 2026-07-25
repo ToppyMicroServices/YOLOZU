@@ -70,6 +70,7 @@ class EvalCocoRequest(BaseModel):
     dry_run: bool = True
     output: str = "reports/mcp_coco_eval.json"
     max_images: int | None = None
+    repair: bool = False
 
 
 class PredictImagesRequest(BaseModel):
@@ -212,6 +213,7 @@ def eval_coco_route(req: EvalCocoRequest) -> dict:
             dry_run=req.dry_run,
             output=req.output,
             max_images=req.max_images,
+            repair=req.repair,
         )
     )
 

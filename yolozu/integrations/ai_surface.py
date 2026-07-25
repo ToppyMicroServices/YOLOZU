@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
-from .manifest_resources import load_tool_manifest
+from .manifest_resources import (
+    load_packaged_tool_reference,
+    load_tool_manifest,
+)
 
 _AI_SURFACE_NAMES = (
     "mcp_live",
@@ -59,7 +62,34 @@ def _as_filter_set(value: str | Iterable[str] | None) -> set[str]:
     return {str(part).strip() for part in value if str(part).strip()}
 
 
-def list_manifest_tools(
+def _packaged_live_metadata(
+    manifest_path: str | None,
+) -> dict[str, dict[str, Any]]:
+    if manifest_path is not None:
+        return {}
+    reference = load_packaged_tool_reference()
+    rows = reference.get("mcp_live_tools")
+    if not isinstance(rows, list):
+        raise ValueError("packaged MCP reference is missing mcp_live_tools")
+    metadata: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("packaged MCP reference contains a non-object tool")
+        name = str(row.get("name") or "")
+        if not name or name in metadata:
+            raise ValueError(
+                "packaged MCP reference contains a missing or duplicate tool name"
+            )
+        input_schema = row.get("input_schema")
+        if not isinstance(input_schema, dict):
+            raise ValueError(
+                f"packaged MCP reference tool {name} is missing input_schema"
+            )
+        metadata[name] = dict(row)
+    return metadata
+
+
+def _discover_manifest_tools(
     *,
     manifest_path: str | None = None,
     only_supported: bool = False,
@@ -68,7 +98,7 @@ def list_manifest_tools(
     maturity: str | Iterable[str] | None = None,
     tag: str | Iterable[str] | None = None,
     ids_only: bool = False,
-) -> list[dict[str, Any]] | list[str]:
+) -> tuple[list[dict[str, Any]] | list[str], dict[str, Any]]:
     doc = load_tool_manifest(manifest_path)
     raw_tools = list(doc.get("tools") or [])
     tools_by_id = {
@@ -80,6 +110,7 @@ def list_manifest_tools(
     maturity_filter = _as_filter_set(maturity)
     tag_filter = _as_filter_set(tag)
     surfaces = _surface_sets_from_manifest(doc)
+    live_metadata = _packaged_live_metadata(manifest_path)
     guaranteed_ids = set(surfaces["guaranteed_ai_safe"]["tool_ids"])
     supported_ids = set(surfaces["mcp_live"]["tool_ids"])
     selected_ids = set(tools_by_id)
@@ -92,34 +123,169 @@ def list_manifest_tools(
             else supported_ids
         )
 
+    excluded_unclassified_maturity = 0
+    excluded_unclassified_tags = 0
     for tool_id in sorted(selected_ids):
         tool = tools_by_id.get(tool_id, {})
-        tool_maturity = str(tool.get("maturity") or "")
-        if maturity_filter and tool_maturity not in maturity_filter:
+        live = live_metadata.get(tool_id)
+        if live is not None:
+            raw_maturity = live.get("maturity")
+            tool_maturity = (
+                str(raw_maturity)
+                if isinstance(raw_maturity, str) and raw_maturity
+                else None
+            )
+            tool_tags = [
+                str(value)
+                for value in list(live.get("tags") or [])
+                if str(value)
+            ]
+            maturity_source = str(
+                live.get("maturity_source") or "unclassified"
+            )
+            tags_source = str(
+                live.get("tags_source") or "unclassified"
+            )
+        else:
+            raw_maturity = tool.get("maturity")
+            tool_maturity = (
+                str(raw_maturity)
+                if isinstance(raw_maturity, str) and raw_maturity
+                else None
+            )
+            tool_tags = [
+                str(value)
+                for value in list(tool.get("tags") or [])
+                if str(value)
+            ]
+            maturity_source = (
+                "tools_manifest"
+                if tool_maturity is not None
+                else "unclassified"
+            )
+            tags_source = (
+                "tools_manifest" if tool_tags else "unclassified"
+            )
+        if maturity_filter:
+            if tool_maturity is None:
+                excluded_unclassified_maturity += 1
+                continue
+            if tool_maturity not in maturity_filter:
+                continue
+        if tag_filter and not tool_tags:
+            excluded_unclassified_tags += 1
             continue
-        tool_tags = [str(value) for value in (tool.get("tags") or [])]
         if tag_filter and not tag_filter.issubset(set(tool_tags)):
             continue
+        source = (
+            str(live.get("metadata_source") or "mcp_reference")
+            if live is not None
+            else "tools"
+        )
         items.append(
             {
                 "id": tool_id,
-                "summary": str(tool.get("summary") or ""),
-                "maturity": tool_maturity,
-                "tags": tool_tags,
-                "inputs": list(tool.get("inputs") or []),
-                "examples": list(tool.get("examples") or []),
-                "effects": dict(tool.get("effects") or {}),
-                "requires": dict(tool.get("requires") or {}),
-                "metadata_source": (
-                    "tools"
-                    if tool_id in tools_by_id
-                    else "ai_surfaces"
+                "summary": str(
+                    (live or {}).get("summary")
+                    or tool.get("summary")
+                    or ""
                 ),
+                "maturity": tool_maturity,
+                "maturity_source": maturity_source,
+                "tags": tool_tags,
+                "tags_source": tags_source,
+                "surface_tiers": list(
+                    (live or {}).get("surface_tiers") or []
+                ),
+                "inputs": list(
+                    (live or {}).get("inputs")
+                    or tool.get("inputs")
+                    or []
+                ),
+                "input_schema": (
+                    dict(live["input_schema"])
+                    if live is not None
+                    else None
+                ),
+                "examples": list(
+                    (live or {}).get("examples")
+                    or tool.get("examples")
+                    or []
+                ),
+                "effects": (
+                    (live or {}).get("effects")
+                    if live is not None
+                    else dict(tool.get("effects") or {})
+                ),
+                "requires": (
+                    (live or {}).get("requires")
+                    if live is not None
+                    else dict(tool.get("requires") or {})
+                ),
+                "metadata_source": source,
             }
         )
+    diagnostics = {
+        "maturity_filter": sorted(maturity_filter),
+        "tag_filter": sorted(tag_filter),
+        "excluded_unclassified_maturity": excluded_unclassified_maturity,
+        "excluded_unclassified_tags": excluded_unclassified_tags,
+        "semantics": (
+            "maturity/tag filters match explicit metadata only; "
+            "unclassified tools are excluded and counted"
+        ),
+    }
     if ids_only:
-        return [row["id"] for row in items]
-    return items
+        return [row["id"] for row in items], diagnostics
+    return items, diagnostics
+
+
+def discover_manifest_tools(
+    *,
+    manifest_path: str | None = None,
+    only_supported: bool = False,
+    guaranteed: bool = False,
+    supported: bool = False,
+    maturity: str | Iterable[str] | None = None,
+    tag: str | Iterable[str] | None = None,
+    ids_only: bool = False,
+) -> dict[str, Any]:
+    """Return selected tool records plus explicit filter diagnostics."""
+    tools, diagnostics = _discover_manifest_tools(
+        manifest_path=manifest_path,
+        only_supported=only_supported,
+        guaranteed=guaranteed,
+        supported=supported,
+        maturity=maturity,
+        tag=tag,
+        ids_only=ids_only,
+    )
+    return {
+        "tools": tools,
+        "filter_diagnostics": diagnostics,
+    }
+
+
+def list_manifest_tools(
+    *,
+    manifest_path: str | None = None,
+    only_supported: bool = False,
+    guaranteed: bool = False,
+    supported: bool = False,
+    maturity: str | Iterable[str] | None = None,
+    tag: str | Iterable[str] | None = None,
+    ids_only: bool = False,
+) -> list[dict[str, Any]] | list[str]:
+    """Compatibility list view of :func:`discover_manifest_tools`."""
+    return discover_manifest_tools(
+        manifest_path=manifest_path,
+        only_supported=only_supported,
+        guaranteed=guaranteed,
+        supported=supported,
+        maturity=maturity,
+        tag=tag,
+        ids_only=ids_only,
+    )["tools"]
 
 
 def generate_config(

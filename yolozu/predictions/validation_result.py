@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .predictions import validate_predictions_payload
-
 _MAX_WARNINGS = 100
 
 
@@ -32,6 +30,8 @@ def validate_predictions_path(
         "ok": False,
         "path": raw_path,
         "strict": bool(strict),
+        "mode": "strict" if strict else "repair",
+        "repair_enabled": not bool(strict),
         "entry_count": None,
         "warnings": [],
         "errors": [],
@@ -44,7 +44,6 @@ def validate_predictions_path(
     try:
         payload = json.loads(resolved.read_text(encoding="utf-8"))
         result["entry_count"] = _entry_count(payload)
-        validation = validate_predictions_payload(payload, strict=bool(strict))
     except FileNotFoundError as exc:
         result["errors"] = [
             {"code": "file_not_found", "message": str(exc)}
@@ -60,7 +59,14 @@ def validate_predictions_path(
             {"code": "read_error", "message": str(exc)}
         ]
         return result, 1
-    except (TypeError, ValueError) as exc:
+
+    # Import lazily to avoid a package-initialization cycle: ``yolozu.api``
+    # imports the predictions implementation modules directly.
+    from yolozu.api import APIError, validate_predictions
+
+    try:
+        validation = validate_predictions(payload, repair=not bool(strict))
+    except (APIError, TypeError, ValueError) as exc:
         result["errors"] = [
             {"code": "invalid_predictions", "message": str(exc)}
         ]
