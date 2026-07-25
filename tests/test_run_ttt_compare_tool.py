@@ -548,7 +548,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
                 def maybe_fail_report(path, text):
                     if (
                         report_failure
-                        and Path(path).name == "tent_before_after_compare.json"
+                        and "tent_before_after_compare.json" in Path(path).name
                     ):
                         raise OSError(f"{case} injected report failure")
                     return real_atomic_text(path, text)
@@ -630,6 +630,13 @@ class TestRunTTTCompareTool(unittest.TestCase):
                 )["execution_status"]
                 self.assertEqual(status["state"], "failed")
                 self.assertTrue(status.get("error"))
+                if report_failure:
+                    self.assertFalse(
+                        (run_dir / "tent_before_after_compare.json").exists()
+                    )
+                    self.assertFalse(
+                        (run_dir / "tent_before_after_compare.md").exists()
+                    )
                 return status["stage"]
 
             self.assertEqual(
@@ -674,6 +681,35 @@ class TestRunTTTCompareTool(unittest.TestCase):
             payload = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(payload["execution_status"]["state"], "completed")
         self.assertEqual(payload["execution_status"]["stage"], "complete")
+
+    def test_report_pair_removes_json_if_markdown_stage_fails(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            json_path = root / "compare.json"
+            markdown_path = root / "compare.md"
+            real_atomic = run_ttt_compare._atomic_write_text
+
+            def fail_markdown(path, text):
+                if "compare.md" in Path(path).name:
+                    raise OSError("markdown write failed")
+                return real_atomic(path, text)
+
+            with (
+                mock.patch.object(
+                    run_ttt_compare,
+                    "_atomic_write_text",
+                    side_effect=fail_markdown,
+                ),
+                self.assertRaisesRegex(OSError, "markdown write failed"),
+            ):
+                run_ttt_compare._write_report_pair(
+                    json_path,
+                    markdown_path,
+                    report={"status": "should-not-survive"},
+                    markdown="# should not survive\n",
+                )
+            self.assertFalse(json_path.exists())
+            self.assertFalse(markdown_path.exists())
 
     def test_simple_map_proxy_detector_matches_pycocotools_failure(self):
         result = {

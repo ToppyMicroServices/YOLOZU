@@ -95,6 +95,30 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     )
 
 
+def _write_report_pair(
+    json_path: Path,
+    markdown_path: Path,
+    *,
+    report: dict[str, Any],
+    markdown: str,
+) -> None:
+    json_pending = json_path.with_name(f".{json_path.name}.pending")
+    markdown_pending = markdown_path.with_name(f".{markdown_path.name}.pending")
+    _remove_stale_artifacts(
+        [json_pending, markdown_pending, json_path, markdown_path]
+    )
+    try:
+        _atomic_write_json(json_pending, report)
+        _atomic_write_text(markdown_pending, markdown)
+        os.replace(json_pending, json_path)
+        os.replace(markdown_pending, markdown_path)
+    except BaseException:
+        _remove_stale_artifacts(
+            [json_pending, markdown_pending, json_path, markdown_path]
+        )
+        raise
+
+
 def _resolve_boilerplate(token: str) -> tuple[str, Path, dict[str, Any]]:
     raw = str(token).strip()
     value = _coerce_method(raw)
@@ -983,6 +1007,8 @@ def main(argv: list[str] | None = None) -> int:
         report: dict[str, Any] = {
             "schema_version": 1,
             "kind": "ttt_before_after_compare",
+            "evidence_kind": "local_diagnostic",
+            "efficacy_conclusion": "not_established",
             "timestamp": _now_utc(),
             "boilerplate_name": requested_boilerplate,
             "boilerplate_path": str(boilerplate_path),
@@ -1014,6 +1040,13 @@ def main(argv: list[str] | None = None) -> int:
                 "device": str(args.device),
                 "boilerplate_sha256": prerequisites["boilerplate_sha256"],
                 "checkpoint_sha256": prerequisites["checkpoint_sha256"],
+                "configs": prerequisites["configs"],
+            },
+            "provenance": {
+                "evidence_kind": "local_diagnostic",
+                "model_preflight": prerequisites["model_preflight"],
+                "checkpoint_sha256": prerequisites["checkpoint_sha256"],
+                "boilerplate_sha256": prerequisites["boilerplate_sha256"],
                 "configs": prerequisites["configs"],
             },
             "baseline": {
@@ -1050,6 +1083,8 @@ def main(argv: list[str] | None = None) -> int:
         report["research_report"] = {
             "kind": "research_lane_report",
             "lane": "ttt",
+            "evidence_kind": "local_diagnostic",
+            "efficacy_conclusion": "not_established",
             "stable_baseline_artifact": _short(baseline_predictions),
             "research_output_artifact": _short(adapted_predictions),
             "report_artifact": _short(compare_json),
@@ -1089,8 +1124,12 @@ def main(argv: list[str] | None = None) -> int:
 
         stage = "report_write"
         _set_plan_status(plan, plan_json, state="running", stage=stage)
-        _atomic_write_json(compare_json, report)
-        _atomic_write_text(compare_md, _render_markdown(report))
+        _write_report_pair(
+            compare_json,
+            compare_md,
+            report=report,
+            markdown=_render_markdown(report),
+        )
         _set_plan_status(plan, plan_json, state="completed", stage="complete")
         print(compare_json)
         print(compare_md)
