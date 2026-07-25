@@ -16,6 +16,8 @@ __all__ = [
     "TTAConfig",
     "apply_tta_transform",
     "TTTConfig",
+    "TTT_METHOD_PROFILES",
+    "get_ttt_method_profile",
 ]
 
 
@@ -37,6 +39,17 @@ def __getattr__(name: str) -> Any:  # pragma: no cover
 
         globals()[name] = TTTConfig
         return TTTConfig
+
+    if name in {"TTT_METHOD_PROFILES", "get_ttt_method_profile"}:
+        from .method_profiles import TTT_METHOD_PROFILES, get_ttt_method_profile
+
+        exports = {
+            "TTT_METHOD_PROFILES": TTT_METHOD_PROFILES,
+            "get_ttt_method_profile": get_ttt_method_profile,
+        }
+        value = exports[name]
+        globals()[name] = value
+        return value
 
     if name in {"TentConfig", "TentRunner"}:
         from .tent import TentConfig, TentRunner
