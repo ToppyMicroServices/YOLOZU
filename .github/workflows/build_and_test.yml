@@ -166,7 +166,9 @@ jobs:
           python tools/generate_web_docs.py --check --json
           python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
           python -m unittest tests.test_byop_quickstarts -v
-          python -m unittest tests.test_web_docs_generation -v
+          python -m unittest \
+            tests.test_web_docs_generation \
+            tests.test_web_docs_candidate_wheel -v
 
       - name: MCP/actions smoke
         run: |
@@ -304,6 +306,13 @@ jobs:
           python -m unittest \
             tests.test_candidate_artifact_ai_surface \
             tests.test_integrations_ttt_jobs -v
+
+      - name: Web docs contract and candidate-wheel journey
+        run: |
+          python tools/generate_web_docs.py --check --json
+          python -m unittest \
+            tests.test_web_docs_generation \
+            tests.test_web_docs_candidate_wheel -v
 
       - name: Smoke walkthrough (deep, offline)
         run: |

@@ -72,6 +72,15 @@ class TestWebDocsGeneration(unittest.TestCase):
             proc.stdout + proc.stderr,
         )
 
+        content = json.loads(json.dumps(source))
+        content["python_api"] = "not-an-object"
+        proc = self._run_with_content(content)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "web docs content requires python_api object",
+            proc.stdout + proc.stderr,
+        )
+
     def test_generated_bundle_is_current(self) -> None:
         proc = subprocess.run(
             [
@@ -141,15 +150,18 @@ class TestWebDocsGeneration(unittest.TestCase):
     def test_tutorial_and_failure_guide_cover_the_acceptance_path(self) -> None:
         tutorial = self._read("start.html")
         for command in (
-            "python3 -m pip install -U yolozu",
+            "python3 -m venv .venv",
+            "python -m pip install &quot;yolozu[coco]&quot;",
             "yolozu doctor --proof",
-            "yolozu demo instance-seg",
             "yolozu validate dataset",
             "yolozu validate predictions",
             "yolozu eval-coco",
+            "from yolozu.api import evaluate_coco",
         ):
             with self.subTest(command=command):
                 self.assertIn(command, tutorial)
+        self.assertNotIn("yolozu guide", tutorial)
+        self.assertNotIn("data/smoke", tutorial)
         self.assertIn('data-docs-event="YOLOZU docs completion"', tutorial)
 
         failures = self._read("troubleshooting.html")
@@ -168,6 +180,7 @@ class TestWebDocsGeneration(unittest.TestCase):
                 "command",
                 "schema",
                 "tutorial",
+                "api",
                 "lane",
                 "example",
                 "glossary",
@@ -204,7 +217,64 @@ class TestWebDocsGeneration(unittest.TestCase):
         sources = provenance["source_hashes"]
         self.assertIn("tools/manifest.json", sources)
         self.assertIn("docs/web_docs_content.json", sources)
+        self.assertIn("docs/python_api.md", sources)
         self.assertIn("docs/schemas/predictions.schema.json", sources)
+
+    def test_tutorial_commands_are_ordered_self_contained_and_explicit(self) -> None:
+        content = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        commands = [
+            command
+            for step in content["tutorial"]["thirty_minute"]
+            for command in step["commands"]
+        ]
+        joined = "\n".join(commands)
+
+        proof_index = next(
+            index for index, command in enumerate(commands) if "doctor --proof" in command
+        )
+        validation_indices = [
+            index for index, command in enumerate(commands) if "yolozu validate " in command
+        ]
+        eval_indices = [
+            index for index, command in enumerate(commands) if "yolozu eval-coco" in command
+        ]
+        self.assertEqual(len(validation_indices), 2)
+        self.assertEqual(len(eval_indices), 1)
+        self.assertLess(proof_index, min(validation_indices))
+        self.assertLess(max(validation_indices), min(eval_indices))
+
+        real_eval = commands[eval_indices[0]]
+        self.assertNotIn("--dry-run", real_eval)
+        fallback_eval = content["tutorial"]["dry_run_fallback"]["command"]
+        self.assertIn("--dry-run", fallback_eval)
+        for flag in (" -d ", " -p ", " -s ", " -o "):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, real_eval)
+                self.assertIn(flag, fallback_eval)
+        for path in (
+            "reports/quickstart/proof/toy_dataset",
+            "reports/quickstart/proof/known_predictions.json",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(path, joined)
+
+        self.assertIn('python -m pip install "yolozu[coco]"', commands)
+        self.assertTrue(
+            all("--strict" in commands[index] for index in validation_indices)
+        )
+        self.assertNotIn("yolozu guide", joined)
+        self.assertNotIn("data/smoke", joined)
+        self.assertNotIn("/path/to/", joined)
+
+        python_example = content["python_api"]["example"]
+        compile(python_example, "<web-doc-python-api-example>", "exec")
+        self.assertIn("from yolozu.api import evaluate_coco", python_example)
+        self.assertIn("Path.cwd().resolve()", python_example)
+        self.assertNotIn("subprocess", python_example)
 
     def test_generated_internal_links_and_assets_resolve(self) -> None:
         for html_path in sorted(self.output.glob("*.html")):
@@ -213,15 +283,24 @@ class TestWebDocsGeneration(unittest.TestCase):
             for target in targets:
                 with self.subTest(page=html_path.name, target=target):
                     if (
-                        target.startswith(("http://", "https://", "/", "#", "mailto:"))
+                        target.startswith(("http://", "https://", "/", "mailto:"))
                         or target == ""
                     ):
                         continue
-                    relative = target.split("#", 1)[0].split("?", 1)[0]
+                    path_part, _, fragment = target.partition("#")
+                    relative = path_part.split("?", 1)[0]
+                    destination = self.output / relative if relative else html_path
                     self.assertTrue(
-                        (self.output / relative).is_file(),
+                        destination.is_file(),
                         f"{html_path.name}: unresolved local target {target}",
                     )
+                    if fragment:
+                        destination_text = destination.read_text(encoding="utf-8")
+                        self.assertIn(
+                            f'id="{fragment}"',
+                            destination_text,
+                            f"{html_path.name}: unresolved fragment {target}",
+                        )
 
 
 if __name__ == "__main__":
