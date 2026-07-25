@@ -280,7 +280,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
         self.assertIn("--sample-generate-config", help_proc.stdout)
         self.assertIn("--sample-review-config", help_proc.stdout)
 
-        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+        with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             compact_proc = subprocess.run(
                 [
@@ -290,7 +290,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                     "--guaranteed",
                     "--ids-only",
                 ],
-                cwd=str(repo_root),
+                cwd=str(root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -321,6 +321,43 @@ class TestAiFirstMcpSurface(unittest.TestCase):
             self.assertLess(len(compact_proc.stdout.encode("utf-8")), 1_500)
             self.assertEqual(compact_proc.stdout.count("\n"), 1)
 
+            filtered_proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--print-tools",
+                    "--supported",
+                    "--ids-only",
+                    "--maturity",
+                    "stable",
+                ],
+                cwd=str(root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(filtered_proc.returncode, 0)
+            filtered_doc = json.loads(filtered_proc.stdout)
+            expected_stable = {
+                item["id"]
+                for item in list_manifest_tools(supported=True)
+                if item["maturity"] == "stable"
+            }
+            self.assertEqual(
+                set(filtered_doc["selected_tool_ids"]),
+                expected_stable,
+            )
+            diagnostics = filtered_doc["filter_diagnostics"]
+            self.assertGreater(
+                diagnostics["excluded_unclassified_maturity"],
+                0,
+            )
+            self.assertIn(
+                "explicit metadata only",
+                diagnostics["semantics"],
+            )
+
             override_path = root / "manifest.json"
             surface = {
                 "availability": "test",
@@ -349,7 +386,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                     "--print-tools",
                     "--ids-only",
                 ],
-                cwd=str(repo_root),
+                cwd=str(root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -382,7 +419,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                         str(outside_manifest),
                         "--print-tools",
                     ],
-                    cwd=str(repo_root),
+                    cwd=str(root),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
@@ -397,7 +434,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
             cfg_path = root / "ai_generate_config.json"
             gen_proc = subprocess.run(
                 [sys.executable, str(script), "--sample-generate-config"],
-                cwd=str(repo_root),
+                cwd=str(root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -410,7 +447,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
 
             review_proc = subprocess.run(
                 [sys.executable, str(script), "--sample-review-config", str(cfg_path)],
-                cwd=str(repo_root),
+                cwd=str(root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -433,7 +470,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                     "--sample-review-config",
                     str(rejected_cfg),
                 ],
-                cwd=str(repo_root),
+                cwd=str(root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -452,7 +489,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                         "--sample-review-config",
                         str(outside_config),
                     ],
-                    cwd=str(repo_root),
+                    cwd=str(root),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,

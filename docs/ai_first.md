@@ -51,6 +51,11 @@ alias for the guaranteed set.
 With `--ids-only`, `manifest_tools` and `selected_tool_ids` contain only the
 filtered selection, while `surface_counts` keeps the response compact. Omit
 `--ids-only` when full records and the expanded `surfaces` object are needed.
+Full live discovery includes a nonempty summary and the exact MCP JSON
+`input_schema` for every id from the generated reference packaged in the
+wheel. Surface membership and maturity are separate: no `stable` maturity is
+inferred from `guaranteed_ai_safe`. A maturity/tag filter excludes
+unclassified records and reports those exclusions in `filter_diagnostics`.
 
 ## 4) Fast path (3 commands)
 
@@ -188,3 +193,6 @@ The CI gate should verify:
 - `yolozu-mcp --help`
 - manifest validation (`tools/validate_tool_manifest.py --require-declarative`)
 - deterministic sample interface contracts (`generate_config` / `review_config`) via tests
+- candidate artifacts through git archive, sdist, wheel, a clean virtual
+  environment, and an outside-checkout strict validation with `PYTHONPATH`
+  cleared

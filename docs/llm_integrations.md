@@ -192,6 +192,10 @@ Generated interface contract reference:
 
 The JSON reference's `surfaces` object is the machine-readable source for
 `mcp_live`, `guaranteed_ai_safe`, `config_review`, and `actions_public`.
+The same generated JSON is packaged in the wheel for checkout-independent
+discovery. It provides the exact live input schemas and summaries. Surface
+membership does not infer maturity; filters expose counts for excluded
+unclassified metadata.
 
 ## 7) Connection templates (examples)
 

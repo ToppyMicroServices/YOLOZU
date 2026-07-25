@@ -12903,14 +12903,14 @@
           "required": false
         },
         {
-          "description": "Repeatable maturity filter for manifest discovery.",
+          "description": "Repeatable explicit-maturity filter; unclassified exclusions are counted in filter_diagnostics.",
           "flag": "--maturity",
           "kind": "string",
           "name": "maturity",
           "required": false
         },
         {
-          "description": "Repeatable required-tag filter for manifest discovery.",
+          "description": "Repeatable explicit-tag filter; unclassified exclusions are counted in filter_diagnostics.",
           "flag": "--tag",
           "kind": "string",
           "name": "tag",
@@ -12954,7 +12954,7 @@
           "name": "transport"
         },
         {
-          "description": "When --print-tools is used, prints explicit public surface sets, applied filters, and manifest records or compact ids.",
+          "description": "When --print-tools is used, prints explicit public surface sets, exact live MCP summaries/input schemas, applied filters with unclassified counts, and records or compact ids.",
           "kind": "stdout",
           "name": "tool_surface_json"
         },
@@ -12981,7 +12981,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids, and inspect filtered packaged-manifest discovery plus the guaranteed AI-safe/config-review/Actions surface sets.",
+      "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids, and inspect filtered packaged discovery with exact generated input schemas, explicit unclassified metadata, and guaranteed AI-safe/config-review/Actions surface sets.",
       "tags": [
         "mcp",
         "integration",

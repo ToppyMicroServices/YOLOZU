@@ -61,6 +61,11 @@ The live MCP server registers a broader 25-tool surface. The generated JSON
 reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
 \cmd{config_review}, and \cmd{actions_public}; registration alone does not
 promote environment-dependent operations into the guaranteed set.
+The generated JSON reference is also packaged in the wheel and supplies a
+summary plus exact JSON input schema for every live id. Surface membership does
+not infer maturity. Missing explicit maturity or tag metadata remains
+unclassified, and filtered discovery reports the number of excluded
+unclassified records.
 Read-only discovery and \cmd{--help} do not create job-storage artifacts;
 \cmd{runs/mcp_jobs} is initialized only when a job operation needs it.
 

@@ -89,6 +89,10 @@ Its `surfaces` object separates live MCP registration from the guaranteed
 AI-safe subset, config-review helpers, and Actions endpoints. CI also calls the
 supported MCP SDK's live `app.list_tools()` API and compares canonical names and
 input schemas with this reference.
+The JSON reference is copied into the wheel as a package resource so full
+discovery remains available outside a checkout. Its `surface_tiers` are not
+maturity classifications; missing explicit maturity/tag metadata stays
+unclassified and filter diagnostics report any resulting exclusions.
 
 ## CI no-abandon rule
 

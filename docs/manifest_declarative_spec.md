@@ -41,6 +41,12 @@ its historical meaning as the guaranteed subset.
 In `ids_only` mode, `manifest_tools` is the filtered selection rather than the
 entire registry, and expanded surface lists are replaced by bounded
 `surface_counts`.
+The generated MCP reference also supplies the exact JSON input schema and
+function summary for every live id and is packaged with the wheel. Surface
+membership is not a maturity claim: a live or guaranteed id without an
+explicit matching `tools[].maturity` remains `maturity: null` with
+`maturity_source: unclassified`. Maturity/tag filters match explicit metadata
+only and report excluded unclassified counts in `filter_diagnostics`.
 
 ## Input declaration rules
 

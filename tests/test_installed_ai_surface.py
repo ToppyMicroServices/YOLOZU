@@ -19,12 +19,39 @@ class TestInstalledAiSurface(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             wheel_dir = root / "wheel"
+            source = root / "source"
             target = root / "site"
             workspace = root / "consumer"
             wheel_dir.mkdir()
             target.mkdir()
             workspace.mkdir()
+            shutil.copytree(
+                repo_root,
+                source,
+                ignore=shutil.ignore_patterns(
+                    ".git",
+                    "build",
+                    "dist",
+                    "*.egg-info",
+                    "__pycache__",
+                ),
+            )
             shutil.copytree(repo_root / "data" / "smoke", workspace / "data" / "smoke")
+            invalid_path = workspace / "invalid_predictions.json"
+            invalid_payload = json.loads(
+                (
+                    workspace
+                    / "data"
+                    / "smoke"
+                    / "predictions"
+                    / "predictions_dummy.json"
+                ).read_text(encoding="utf-8")
+            )
+            invalid_payload["predictions"][0]["detections"][0]["score"] = 1.5
+            invalid_path.write_text(
+                json.dumps(invalid_payload),
+                encoding="utf-8",
+            )
 
             build = subprocess.run(
                 [
@@ -36,7 +63,7 @@ class TestInstalledAiSurface(unittest.TestCase):
                     "--no-build-isolation",
                     "--wheel-dir",
                     str(wheel_dir),
-                    str(repo_root),
+                    str(source),
                 ],
                 cwd=str(root),
                 stdout=subprocess.PIPE,
@@ -80,16 +107,32 @@ class TestInstalledAiSurface(unittest.TestCase):
 import json
 from pathlib import Path
 import yolozu
+from yolozu.api import (
+    APIError,
+    evaluate_coco as api_evaluate_coco,
+    validate_predictions as api_validate_predictions,
+)
 from yolozu.integrations.ai_surface import list_manifest_tools, review_config
-from yolozu.integrations.tool_runner import eval_coco, validate_predictions
+from yolozu.integrations.tool_runner import (
+    eval_coco,
+    validate_predictions as runner_validate_predictions,
+)
 
-relative = validate_predictions(
+relative = runner_validate_predictions(
     "data/smoke/predictions/predictions_dummy.json",
 )
-absolute = validate_predictions(
+absolute = runner_validate_predictions(
     str(Path.cwd() / "data/smoke/predictions/predictions_dummy.json"),
 )
-outside = validate_predictions({str(outside)!r})
+outside = runner_validate_predictions({str(outside)!r})
+strict_invalid = runner_validate_predictions(
+    "invalid_predictions.json",
+    strict=True,
+)
+repaired_invalid = runner_validate_predictions(
+    "invalid_predictions.json",
+    strict=False,
+)
 evaluation = eval_coco(
     "data/smoke",
     "data/smoke/predictions/predictions_dummy.json",
@@ -97,6 +140,57 @@ evaluation = eval_coco(
     dry_run=True,
     output="reports/eval.json",
     max_images=2,
+)
+strict_evaluation = eval_coco(
+    "data/smoke",
+    "invalid_predictions.json",
+    split="val",
+    dry_run=True,
+    output="reports/eval_strict_failed.json",
+    max_images=2,
+)
+repaired_evaluation = eval_coco(
+    "data/smoke",
+    "invalid_predictions.json",
+    split="val",
+    dry_run=True,
+    output="reports/eval_repaired.json",
+    max_images=2,
+    repair=True,
+)
+
+valid_api = api_validate_predictions(
+    Path.cwd() / "data/smoke/predictions/predictions_dummy.json",
+)
+try:
+    api_validate_predictions(Path.cwd() / "invalid_predictions.json")
+except APIError as exc:
+    strict_api_error = exc.to_dict()
+else:
+    strict_api_error = None
+repaired_api = api_validate_predictions(
+    Path.cwd() / "invalid_predictions.json",
+    repair=True,
+)
+try:
+    api_evaluate_coco(
+        Path.cwd() / "data/smoke",
+        Path.cwd() / "invalid_predictions.json",
+        split="val",
+        dry_run=True,
+        max_images=2,
+    )
+except APIError as exc:
+    strict_api_eval_error = exc.to_dict()
+else:
+    strict_api_eval_error = None
+repaired_api_eval = api_evaluate_coco(
+    Path.cwd() / "data/smoke",
+    Path.cwd() / "invalid_predictions.json",
+    split="val",
+    dry_run=True,
+    max_images=2,
+    repair=True,
 )
 unsafe_review = review_config(
     {{
@@ -119,7 +213,22 @@ print(json.dumps({{
     "relative": relative,
     "absolute": absolute,
     "outside": outside,
+    "strict_invalid": strict_invalid,
+    "repaired_invalid": repaired_invalid,
     "evaluation": evaluation,
+    "strict_evaluation": strict_evaluation,
+    "repaired_evaluation": repaired_evaluation,
+    "strict_evaluation_report": json.loads(
+        Path("reports/eval_strict_failed.json").read_text()
+    ),
+    "repaired_evaluation_report": json.loads(
+        Path("reports/eval_repaired.json").read_text()
+    ),
+    "valid_api": valid_api.to_dict(include_entries=False),
+    "strict_api_error": strict_api_error,
+    "repaired_api": repaired_api.to_dict(include_entries=False),
+    "strict_api_eval_error": strict_api_eval_error,
+    "repaired_api_eval": repaired_api_eval.to_dict(),
     "report_exists": Path("reports/eval.json").is_file(),
     "unsafe_review": unsafe_review,
 }}, sort_keys=True))
@@ -225,12 +334,144 @@ print(json.dumps({{
             self.assertTrue(payload["absolute"]["ok"])
             self.assertFalse(payload["outside"]["ok"])
             self.assertIn("path escapes workspace", payload["outside"]["error"])
+            self.assertFalse(payload["strict_invalid"]["ok"])
+            self.assertEqual(
+                payload["strict_invalid"]["validation"]["mode"],
+                "strict",
+            )
+            self.assertTrue(payload["repaired_invalid"]["ok"])
+            self.assertEqual(
+                payload["repaired_invalid"]["validation"]["mode"],
+                "repair",
+            )
+            self.assertTrue(
+                payload["repaired_invalid"]["validation"][
+                    "repair_enabled"
+                ]
+            )
+            self.assertTrue(
+                any(
+                    "score: out of range" in warning
+                    for warning in payload["repaired_invalid"][
+                        "validation"
+                    ]["warnings"]
+                )
+            )
             self.assertTrue(
                 payload["evaluation"]["ok"],
                 msg=json.dumps(payload["evaluation"], indent=2),
             )
+            self.assertFalse(payload["strict_evaluation"]["ok"])
+            self.assertEqual(
+                payload["strict_evaluation_report"]["status"],
+                "failed",
+            )
+            self.assertTrue(payload["repaired_evaluation"]["ok"])
+            repaired_report = payload["repaired_evaluation_report"]
+            self.assertEqual(repaired_report["status"], "ok")
+            self.assertEqual(
+                repaired_report["validation"]["mode"],
+                "repair",
+            )
+            self.assertEqual(
+                repaired_report["counts"],
+                {
+                    "dataset_images_total": 10,
+                    "detections": 10,
+                    "detections_excluded": 40,
+                    "detections_input": 50,
+                    "images": 2,
+                    "prediction_images_evaluated": 2,
+                    "prediction_images_excluded": 8,
+                    "prediction_images_total": 10,
+                    "selected_images_without_predictions": 0,
+                },
+            )
+            self.assertTrue(payload["valid_api"]["ok"])
+            self.assertEqual(payload["valid_api"]["mode"], "strict")
+            self.assertIsNotNone(payload["strict_api_error"])
+            self.assertEqual(
+                payload["strict_api_error"]["code"],
+                "E_PREDICTIONS_INVALID",
+            )
+            self.assertEqual(payload["repaired_api"]["mode"], "repair")
+            self.assertIsNotNone(payload["strict_api_eval_error"])
+            self.assertEqual(
+                payload["strict_api_eval_error"]["code"],
+                "E_PREDICTIONS_INVALID",
+            )
+            self.assertEqual(
+                payload["repaired_api_eval"]["counts"],
+                repaired_report["counts"],
+            )
             self.assertTrue(payload["report_exists"])
             self.assertFalse(payload["unsafe_review"]["ok"])
+
+            if importlib.util.find_spec("mcp") is not None:
+                live_script = f"""
+import asyncio
+import json
+import os
+import sys
+from pathlib import Path
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async def main():
+    child_env = os.environ.copy()
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "yolozu.integrations.mcp_server"],
+        cwd={str(workspace)!r},
+        env=child_env,
+    )
+    async with stdio_client(params) as streams:
+        async with ClientSession(*streams) as session:
+            await session.initialize()
+            listed = await session.list_tools()
+            called = await session.call_tool(
+                "validate_predictions",
+                {{
+                    "path": "data/smoke/predictions/predictions_dummy.json",
+                    "strict": True,
+                }},
+            )
+            print(json.dumps({{
+                "names": [tool.name for tool in listed.tools],
+                "called_error": called.isError,
+                "called": json.loads(called.content[0].text),
+            }}, sort_keys=True))
+
+asyncio.run(main())
+"""
+                live = subprocess.run(
+                    [sys.executable, "-c", live_script],
+                    cwd=str(workspace),
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(
+                    live.returncode,
+                    0,
+                    msg=(
+                        "installed-wheel MCP round trip failed:\n"
+                        f"{live.stdout}\n{live.stderr}"
+                    ),
+                )
+                live_payload = json.loads(live.stdout)
+                self.assertEqual(
+                    set(live_payload["names"]),
+                    set(payload["supported_ids"]),
+                )
+                self.assertFalse(live_payload["called_error"])
+                self.assertTrue(live_payload["called"]["ok"])
+                self.assertEqual(
+                    live_payload["called"]["validation"]["mode"],
+                    "strict",
+                )
 
 
 if __name__ == "__main__":
