@@ -1,7 +1,7 @@
 # Backbones (`rtdetr_pose` adapter)
 
 YOLOZU core interface contracts are model-family agnostic. This page documents the
-adapter-scoped backbone contract for the in-repo `rtdetr_pose` training path.
+adapter-scoped backbone interface contract for the in-repo `rtdetr_pose` training path.
 
 ## Output interface contract (required)
 

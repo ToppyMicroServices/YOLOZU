@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import threading
 import time
@@ -8,6 +9,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+
+from ..manifest_resources import workspace_root
 
 
 _JOB_FAILURE_ERRORS = (
@@ -40,7 +43,7 @@ class JobManager:
         self._lock = threading.Lock()
         self._jobs: dict[str, _JobState] = {}
         if storage_dir is None:
-            storage_dir = Path(__file__).resolve().parents[3] / "runs" / "mcp_jobs"
+            storage_dir = workspace_root() / "runs" / "mcp_jobs"
         self._storage_dir = Path(storage_dir)
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._load_from_disk()
@@ -95,9 +98,32 @@ class JobManager:
                 self._persist(state)
             try:
                 result = fn()
+                failed = False
+                failure_error: str | None = None
+                if isinstance(result, Mapping):
+                    result_ok = result.get("ok")
+                    exit_code = result.get("exit_code")
+                    failed = result_ok is False or (
+                        isinstance(exit_code, int)
+                        and not isinstance(exit_code, bool)
+                        and exit_code != 0
+                    )
+                    if failed:
+                        raw_error = result.get("error")
+                        if isinstance(raw_error, Mapping):
+                            raw_error = (
+                                raw_error.get("message")
+                                or raw_error.get("code")
+                            )
+                        failure_error = str(
+                            raw_error
+                            or result.get("summary")
+                            or f"{name} returned an unsuccessful result"
+                        )
                 with self._lock:
-                    state.status = "completed"
+                    state.status = "failed" if failed else "completed"
                     state.result = result
+                    state.error = failure_error
                     state.finished_at = time.time()
                     self._persist(state)
                 return result

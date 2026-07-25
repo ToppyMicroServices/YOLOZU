@@ -1,4 +1,78 @@
 {
+  "ai_surfaces": {
+    "actions_public": {
+      "availability": "requires optional actions dependencies",
+      "tool_ids": [
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    },
+    "config_review": {
+      "availability": "in-process config generation and review",
+      "tool_ids": [
+        "generate_config",
+        "review_config"
+      ]
+    },
+    "guaranteed_ai_safe": {
+      "availability": "deterministic lightweight guarantee",
+      "tool_ids": [
+        "doctor",
+        "generate_config",
+        "review_config",
+        "validate_predictions"
+      ]
+    },
+    "mcp_live": {
+      "availability": "requires optional mcp dependency",
+      "tool_ids": [
+        "ai_tools",
+        "generate_config",
+        "review_config",
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "export_onnx_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    }
+  },
   "contracts": {
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
@@ -34,6 +108,11 @@
       "schema": "docs/schemas/predictions.schema.json",
       "summary": "YOLOZU predictions JSON (list of {image,detections} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_predictions.py <path> [--strict]"
+    },
+    "predictions_validation_result_json": {
+      "producer": "python3 tools/validate_predictions.py <path> --json",
+      "schema": "docs/schemas/predictions_validation_result.schema.json",
+      "summary": "Bounded machine-readable success/failure result for predictions validation."
     },
     "reference_adapter_regression_report_json": {
       "producer": "python3 tools/run_reference_adapter_regression.py",
@@ -9170,13 +9249,13 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes generated MCP/Actions contract JSON.",
+            "description": "Writes generated MCP/Actions interface contract JSON.",
             "flag": "--json-out",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Writes generated MCP/Actions contract Markdown.",
+            "description": "Writes generated MCP/Actions interface contract Markdown.",
             "flag": "--md-out",
             "kind": "file",
             "scope": "path"
@@ -9221,13 +9300,13 @@
       "outputs": [
         {
           "default": null,
-          "description": "Generated machine-readable MCP/Actions contract.",
+          "description": "Generated machine-readable MCP/Actions interface contract.",
           "kind": "file",
           "name": "contract_json"
         },
         {
           "default": null,
-          "description": "Generated human-readable MCP/Actions contract.",
+          "description": "Generated human-readable MCP/Actions interface contract.",
           "kind": "file",
           "name": "contract_md"
         }
@@ -12753,6 +12832,7 @@
         "docs/llm_integrations.md",
         "docs/mcp_extension_architecture.md",
         "docs/copilot_mcp_integration.md",
+        "docs/openai_mcp_actions.md",
         "manual/chapters/20_llm_mcp_integrations.tex",
         "docs/ai_first.md",
         "docs/tools_index.md"
@@ -12764,15 +12844,23 @@
       "entrypoint": "tools/run_mcp_server.py",
       "examples": [
         {
-          "command": "python3 tools/run_mcp_server.py",
+          "command": "yolozu-mcp",
           "description": "Start MCP stdio server."
         },
         {
-          "command": "python3 tools/run_mcp_server.py --print-tools --manifest tools/manifest.json",
-          "description": "Inspect manifest-backed tool surface as JSON."
+          "command": "yolozu-mcp --print-tools --guaranteed --ids-only",
+          "description": "Inspect the four guaranteed AI-safe MCP tool ids."
         },
         {
-          "command": "python3 tools/run_mcp_server.py --sample-generate-config > reports/ai_generate_config.json && python3 tools/run_mcp_server.py --sample-review-config reports/ai_generate_config.json",
+          "command": "yolozu-mcp --print-tools --supported --ids-only",
+          "description": "Inspect all registered live MCP tool ids."
+        },
+        {
+          "command": "yolozu-mcp --print-tools --ids-only --maturity stable --tag validation",
+          "description": "Filter compact discovery by maturity and tag."
+        },
+        {
+          "command": "yolozu-mcp --sample-generate-config > reports/ai_generate_config.json && yolozu-mcp --sample-review-config reports/ai_generate_config.json",
           "description": "Generate deterministic sample config and review it."
         }
       ],
@@ -12787,8 +12875,7 @@
           "required": false
         },
         {
-          "default": "tools/manifest.json",
-          "description": "Manifest path used for tool-surface introspection commands.",
+          "description": "Optional manifest override for tool-surface introspection; default is the resource packaged with yolozu.",
           "flag": "--manifest",
           "kind": "file",
           "name": "manifest",
@@ -12799,6 +12886,41 @@
           "flag": "--print-tools",
           "kind": "string",
           "name": "print_tools",
+          "required": false
+        },
+        {
+          "description": "Filter discovery to the guaranteed AI-safe MCP set.",
+          "flag": "--guaranteed",
+          "kind": "string",
+          "name": "guaranteed",
+          "required": false
+        },
+        {
+          "description": "Compatibility filter for tools registered on the live MCP surface; registration is not an execution guarantee.",
+          "flag": "--supported",
+          "kind": "string",
+          "name": "supported",
+          "required": false
+        },
+        {
+          "description": "Repeatable explicit-maturity filter; unclassified exclusions are counted in filter_diagnostics.",
+          "flag": "--maturity",
+          "kind": "string",
+          "name": "maturity",
+          "required": false
+        },
+        {
+          "description": "Repeatable explicit-tag filter; unclassified exclusions are counted in filter_diagnostics.",
+          "flag": "--tag",
+          "kind": "string",
+          "name": "tag",
+          "required": false
+        },
+        {
+          "description": "Emit compact JSON with sorted selected ids instead of full records.",
+          "flag": "--ids-only",
+          "kind": "string",
+          "name": "ids_only",
           "required": false
         },
         {
@@ -12832,7 +12954,7 @@
           "name": "transport"
         },
         {
-          "description": "When --print-tools is used, prints manifest-backed tool surface JSON.",
+          "description": "When --print-tools is used, prints explicit public surface sets, exact live MCP summaries/input schemas, applied filters with unclassified counts, and records or compact ids.",
           "kind": "stdout",
           "name": "tool_surface_json"
         },
@@ -12859,7 +12981,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config).",
+      "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids, and inspect filtered packaged discovery with exact generated input schemas, explicit unclassified metadata, and guaranteed AI-safe/config-review/Actions surface sets.",
       "tags": [
         "mcp",
         "integration",
@@ -15896,10 +16018,14 @@
       "contracts": {
         "consumes": [
           "predictions_json"
+        ],
+        "produces": [
+          "predictions_validation_result_json"
         ]
       },
       "docs": [
         "docs/byop_quickstarts.md",
+        "docs/ai_first.md",
         "docs/predictions_schema.md",
         "docs/production_readiness.md"
       ],
@@ -15912,6 +16038,10 @@
         {
           "command": "python3 tools/validate_predictions.py reports/predictions.json --strict",
           "description": "Strict schema validation."
+        },
+        {
+          "command": "python3 tools/validate_predictions.py reports/predictions.json --strict --json",
+          "description": "Emit a bounded machine-readable validation result."
         }
       ],
       "id": "validate_predictions",
@@ -15927,6 +16057,12 @@
           "kind": "string",
           "name": "strict",
           "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
         }
       ],
       "maturity": "stable",
@@ -15935,6 +16071,11 @@
           "description": "OK/WARN lines.",
           "kind": "stdout",
           "name": "stdout"
+        },
+        {
+          "description": "With --json, a schema-versioned success/failure payload with bounded warnings.",
+          "kind": "stdout",
+          "name": "validation_result_json"
         }
       ],
       "platform": {
@@ -15944,7 +16085,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Validate YOLOZU predictions JSON schema (permissive by default; strict optional).",
+      "summary": "Validate YOLOZU predictions JSON (permissive by default; strict optional) with compatible human output or an explicit bounded JSON result.",
       "tags": [
         "predictions",
         "validation"

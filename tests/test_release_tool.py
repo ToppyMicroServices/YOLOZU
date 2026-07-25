@@ -7,6 +7,22 @@ import unittest
 from pathlib import Path
 
 
+_RELEASE_METADATA_PATHS = (
+    "yolozu/__init__.py",
+    "CHANGELOG.md",
+    "CITATION.cff",
+    "tools/manifest.json",
+    "yolozu/data/manifest/tools_manifest.json",
+)
+
+
+def _release_metadata_bytes(repo_root: Path) -> dict[str, bytes]:
+    return {
+        relative: (repo_root / relative).read_bytes()
+        for relative in _RELEASE_METADATA_PATHS
+    }
+
+
 def _package_version(repo_root: Path) -> str:
     text = (repo_root / "yolozu" / "__init__.py").read_text(encoding="utf-8")
     m = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', text)
@@ -61,6 +77,7 @@ class TestReleaseTool(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "release.py"
         version = _package_version(repo_root)
+        before = _release_metadata_bytes(repo_root)
 
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             out = Path(td) / "release_report.json"
@@ -104,11 +121,13 @@ class TestReleaseTool(unittest.TestCase):
             self.assertFalse(bool(release_actions.get("pypi_update_via_publish_workflow")))
             self.assertFalse(bool(release_actions.get("zenodo_manual_doi_via_release_event")))
             self.assertFalse(bool(release_actions.get("zenodo_manual_doi_dispatch")))
+        self.assertEqual(_release_metadata_bytes(repo_root), before)
 
     def test_shell_wrapper_dry_run_writes_report(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         wrapper = repo_root / "release.sh"
         version = _package_version(repo_root)
+        before = _release_metadata_bytes(repo_root)
 
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             out = Path(td) / "release_report.from_shell.json"
@@ -138,10 +157,12 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(bool(payload.get("dry_run")))
             self.assertEqual(str(payload.get("current_version")), version)
             self.assertEqual(str(payload.get("versioning_scheme")), "semver")
+        self.assertEqual(_release_metadata_bytes(repo_root), before)
 
     def test_check_reports_current_metadata_without_release_steps(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "release.py"
+        before = _release_metadata_bytes(repo_root)
 
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             out = Path(td) / "release_metadata_check.json"
@@ -167,6 +188,7 @@ class TestReleaseTool(unittest.TestCase):
             self.assertTrue(payload["non_writing"])
             self.assertTrue(payload["metadata_validation"]["ok"])
             self.assertEqual(payload["steps"], [])
+        self.assertEqual(_release_metadata_bytes(repo_root), before)
 
     def test_skip_zenodo_fails_closed_before_release(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

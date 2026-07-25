@@ -6,6 +6,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from ..manifest_resources import (
+    load_tool_manifest,
+    resolve_workspace_path,
+    workspace_root,
+)
 from .core import fail_response, ok_response
 
 _FALLBACK_ALLOWED_TOP_LEVEL = {
@@ -28,17 +33,10 @@ _MAX_STDERR_CHARS = 100_000
 _DEFAULT_TIMEOUT_SEC = 600
 
 
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
 def _allowed_from_manifest() -> set[str]:
-    path = repo_root() / "tools" / "manifest.json"
-    if not path.exists():
-        return set()
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        payload = load_tool_manifest()
+    except (ValueError, OSError, UnicodeDecodeError):
         return set()
     tools = payload.get("tools") if isinstance(payload, dict) else None
     if not isinstance(tools, list):
@@ -75,20 +73,17 @@ def _build_allowed_top_level() -> set[str]:
 _ALLOWED_TOP_LEVEL = _build_allowed_top_level()
 
 
-def _looks_like_path_token(token: str) -> bool:
-    return "/" in token or token.startswith(".") or token.endswith((".json", ".yaml", ".yml", ".onnx", ".pt", ".engine"))
+def _guard_path_token(token: str, *, root: Path) -> None:
+    resolve_workspace_path(token, root=root)
 
 
-def _guard_path_token(token: str) -> None:
-    if not _looks_like_path_token(token):
+def _guard_argument_token(token: str, *, root: Path) -> None:
+    if token.startswith("-") and "=" in token:
+        _, value = token.split("=", 1)
+        if value:
+            _guard_path_token(value, root=root)
         return
-    if token.startswith("~"):
-        raise ValueError(f"home-dir paths are not allowed: {token}")
-    p = Path(token)
-    if ".." in p.parts:
-        raise ValueError(f"path traversal is not allowed: {token}")
-    if p.is_absolute():
-        raise ValueError(f"absolute paths are not allowed: {token}")
+    _guard_path_token(token, root=root)
 
 
 def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
@@ -97,15 +92,39 @@ def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
     return text[:max_chars] + "\n...[truncated]", True
 
 
-def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
+def _attach_json_result(
+    payload: dict[str, Any],
+    *,
+    stdout: str,
+    result_key: str | None,
+) -> None:
+    if not result_key:
+        return
+    try:
+        result = json.loads(stdout)
+    except (json.JSONDecodeError, TypeError):
+        return
+    if isinstance(result, dict):
+        payload[result_key] = result
+
+
+def run_cli_tool(
+    name: str,
+    args: list[str],
+    *,
+    artifacts: dict[str, str] | None = None,
+    workspace: str | Path | None = None,
+    json_result_key: str | None = None,
+) -> dict[str, Any]:
     if not args:
         return fail_response(name, message="empty command")
     if args[0] not in _ALLOWED_TOP_LEVEL:
         return fail_response(name, message=f"command not allowed: {args[0]}")
 
+    root = workspace_root(workspace)
     try:
         for token in args:
-            _guard_path_token(token)
+            _guard_argument_token(token, root=root)
     except ValueError as exc:
         return fail_response(name, message=str(exc), exc=exc)
 
@@ -113,7 +132,7 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
     try:
         proc = subprocess.run(
             cmd,
-            cwd=str(repo_root()),
+            cwd=str(root),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -137,6 +156,11 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
             "stdout_truncated": stdout_truncated,
             "stderr_truncated": stderr_truncated,
         }
+        _attach_json_result(
+            payload,
+            stdout=stdout,
+            result_key=json_result_key,
+        )
         return payload
 
     stdout, stdout_truncated = _truncate_text(proc.stdout, _MAX_STDOUT_CHARS)
@@ -159,6 +183,11 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
             "stdout_truncated": stdout_truncated,
             "stderr_truncated": stderr_truncated,
         }
+        _attach_json_result(
+            payload,
+            stdout=stdout,
+            result_key=json_result_key,
+        )
         return payload
 
     payload = ok_response(
@@ -178,13 +207,25 @@ def run_cli_tool(name: str, args: list[str], *, artifacts: dict[str, str] | None
             },
         },
     )
+    _attach_json_result(
+        payload,
+        stdout=stdout,
+        result_key=json_result_key,
+    )
     for key, raw_path in (artifacts or {}).items():
-        _guard_path_token(raw_path)
+        _guard_path_token(raw_path, root=root)
         payload["artifacts"][key] = raw_path
     return payload
 
 
-def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
+def run_cli_tool_redacted(
+    name: str,
+    args: list[str],
+    *,
+    artifacts: dict[str, str] | None = None,
+    workspace: str | Path | None = None,
+    json_result_key: str | None = None,
+) -> dict[str, Any]:
     """Run a yolozu CLI subcommand without returning stdout/stderr.
 
     This is intended for public-facing REST surfaces where raw process output may
@@ -195,9 +236,10 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
     if args[0] not in _ALLOWED_TOP_LEVEL:
         return fail_response(name, message=f"command not allowed: {args[0]}")
 
+    root = workspace_root(workspace)
     try:
         for token in args:
-            _guard_path_token(token)
+            _guard_argument_token(token, root=root)
     except ValueError:
         return fail_response(name, message="invalid command arguments")
 
@@ -205,9 +247,10 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
     try:
         proc = subprocess.run(
             cmd,
-            cwd=str(repo_root()),
-            stdout=subprocess.DEVNULL,
+            cwd=str(root),
+            stdout=subprocess.PIPE if json_result_key else subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            text=True,
             timeout=_DEFAULT_TIMEOUT_SEC,
             check=False,
         )
@@ -242,6 +285,11 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
             "timeout_sec": _DEFAULT_TIMEOUT_SEC,
             "stdio_redacted": True,
         }
+        _attach_json_result(
+            payload,
+            stdout=proc.stdout or "",
+            result_key=json_result_key,
+        )
         return payload
 
     payload = ok_response(
@@ -256,7 +304,12 @@ def run_cli_tool_redacted(name: str, args: list[str], *, artifacts: dict[str, st
             },
         },
     )
+    _attach_json_result(
+        payload,
+        stdout=proc.stdout or "",
+        result_key=json_result_key,
+    )
     for key, raw_path in (artifacts or {}).items():
-        _guard_path_token(raw_path)
+        _guard_path_token(raw_path, root=root)
         payload["artifacts"][key] = raw_path
     return payload

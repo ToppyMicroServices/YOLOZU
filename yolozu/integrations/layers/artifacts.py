@@ -6,14 +6,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+from ..manifest_resources import packaged_manifest_bytes, workspace_root
 
 
 def _git_sha() -> str | None:
     try:
-        root = _repo_root()
+        root = workspace_root()
         out = subprocess.check_output(
             ["git", "-c", f"safe.directory={root}", "rev-parse", "HEAD"],
             cwd=str(root),
@@ -26,10 +24,11 @@ def _git_sha() -> str | None:
 
 
 def _manifest_hash() -> str | None:
-    path = _repo_root() / "tools" / "manifest.json"
-    if not path.exists():
+    try:
+        payload = packaged_manifest_bytes()
+    except (FileNotFoundError, ModuleNotFoundError, OSError):
         return None
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    digest = hashlib.sha256(payload).hexdigest()
     return digest
 
 
@@ -43,7 +42,7 @@ def collect_artifact_metadata() -> dict[str, Any]:
 
 
 def list_runs(limit: int = 20) -> list[dict[str, Any]]:
-    runs_root = _repo_root() / "runs"
+    runs_root = workspace_root() / "runs"
     if not runs_root.exists():
         return []
     candidates = [p for p in runs_root.iterdir() if p.is_dir()]
@@ -59,7 +58,10 @@ def list_runs(limit: int = 20) -> list[dict[str, Any]]:
 
 
 def describe_run(run_id: str) -> dict[str, Any] | None:
-    runs_root = _repo_root() / "runs"
+    if not run_id or Path(run_id).name != run_id or run_id in {".", ".."}:
+        return None
+    root = workspace_root()
+    runs_root = root / "runs"
     run_dir = runs_root / run_id
     if not run_dir.exists() or not run_dir.is_dir():
         return None
@@ -67,7 +69,7 @@ def describe_run(run_id: str) -> dict[str, Any] | None:
     files: list[str] = []
     for path in run_dir.rglob("*"):
         if path.is_file():
-            files.append(str(path.relative_to(_repo_root())))
+            files.append(str(path.relative_to(root)))
     files.sort()
     return {
         "run_id": run_id,

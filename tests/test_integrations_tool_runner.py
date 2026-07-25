@@ -1,4 +1,9 @@
+import json
+import os
+import tempfile
+import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from yolozu.integrations import tool_runner
@@ -13,7 +18,38 @@ class TestIntegrationToolRunner(unittest.TestCase):
         self.assertTrue(out["ok"])
         run_cli.assert_called_once_with(
             "validate_predictions",
-            ["validate", "predictions", "data/smoke/predictions/predictions_dummy.json", "--strict"],
+            [
+                "validate",
+                "predictions",
+                "data/smoke/predictions/predictions_dummy.json",
+                "--json",
+                "--strict",
+            ],
+            json_result_key="validation",
+        )
+
+    def test_a1b_validate_predictions_non_strict_requests_repair_mode(self):
+        with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
+            run_cli.return_value = {
+                "ok": True,
+                "tool": "validate_predictions",
+                "summary": "ok",
+            }
+            out = tool_runner.validate_predictions(
+                "reports/legacy_predictions.json",
+                strict=False,
+            )
+
+        self.assertTrue(out["ok"])
+        run_cli.assert_called_once_with(
+            "validate_predictions",
+            [
+                "validate",
+                "predictions",
+                "reports/legacy_predictions.json",
+                "--json",
+            ],
+            json_result_key="validation",
         )
 
     def test_a2_validate_dataset_builds_expected_args(self):
@@ -151,6 +187,36 @@ class TestIntegrationToolRunner(unittest.TestCase):
             artifacts={"report": "reports/mcp_coco_eval.json"},
         )
 
+    def test_c7b_eval_coco_repair_is_explicit(self):
+        with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
+            run_cli.return_value = {
+                "ok": True,
+                "tool": "eval_coco",
+                "summary": "ok",
+            }
+            out = tool_runner.eval_coco(
+                "data/smoke",
+                "reports/legacy_predictions.json",
+                repair=True,
+            )
+
+        self.assertTrue(out["ok"])
+        run_cli.assert_called_once_with(
+            "eval_coco",
+            [
+                "eval-coco",
+                "--dataset",
+                "data/smoke",
+                "--predictions",
+                "reports/legacy_predictions.json",
+                "--output",
+                "reports/mcp_coco_eval.json",
+                "--dry-run",
+                "--repair",
+            ],
+            artifacts={"report": "reports/mcp_coco_eval.json"},
+        )
+
     def test_c8_eval_instance_seg_defaults(self):
         with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
             run_cli.return_value = {"ok": True, "tool": "eval_instance_seg", "summary": "ok"}
@@ -252,6 +318,88 @@ class TestIntegrationToolRunner(unittest.TestCase):
 
         self.assertTrue(out["ok"])
         submit_job.assert_called_once_with("test", ["test", "configs/test.yaml", "--max-images", "8"])
+
+    def test_scenario_extra_args_reject_undeclared_flags_before_submit(self):
+        with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:
+            out = tool_runner.test_job(
+                "configs/test.yaml",
+                extra_args=["-x=/tmp/outside.json"],
+            )
+
+        self.assertFalse(out["ok"])
+        self.assertIn("undeclared flag", out["error"])
+        submit_job.assert_not_called()
+
+    def test_scenario_extra_args_reject_missing_values(self):
+        with patch("yolozu.integrations.tool_runner.run_cli_tool") as run_cli:
+            out = tool_runner.run_scenarios(
+                "configs/test.yaml",
+                extra_args=["--output"],
+            )
+
+        self.assertFalse(out["ok"])
+        self.assertIn("requires one value", out["error"])
+        run_cli.assert_not_called()
+
+    def test_real_failed_subprocess_job_propagates_to_jobs_status(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        original_cwd = Path.cwd()
+        original_pythonpath = os.environ.get("PYTHONPATH")
+        tool_runner._job_manager.cache_clear()
+        manager = None
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                workspace = Path(td)
+                (workspace / "invalid.json").write_text(
+                    json.dumps(
+                        {
+                            "adapter": "not_a_real_adapter",
+                            "dataset": "missing",
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                os.chdir(workspace)
+                os.environ["PYTHONPATH"] = str(repo_root)
+                queued = tool_runner.test_job("invalid.json")
+                self.assertTrue(queued["ok"], queued)
+                manager = tool_runner._job_manager()
+
+                response = {}
+                for _ in range(200):
+                    response = tool_runner.jobs_status(
+                        queued["job_id"]
+                    )
+                    if (
+                        (response.get("job") or {}).get("status")
+                        == "failed"
+                    ):
+                        break
+                    time.sleep(0.01)
+
+                self.assertFalse(response["ok"], response)
+                self.assertEqual(response["exit_code"], 1)
+                self.assertEqual(
+                    response["job"]["status"],
+                    "failed",
+                )
+                self.assertFalse(
+                    response["job"]["result"]["ok"],
+                )
+                self.assertNotEqual(
+                    response["job"]["result"]["exit_code"],
+                    0,
+                )
+                self.assertIn("cli failed", response["error"])
+        finally:
+            if manager is not None:
+                manager._executor.shutdown(wait=True)
+            tool_runner._job_manager.cache_clear()
+            os.chdir(original_cwd)
+            if original_pythonpath is None:
+                os.environ.pop("PYTHONPATH", None)
+            else:
+                os.environ["PYTHONPATH"] = original_pythonpath
 
     def test_e13_ttt_job_args(self):
         with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:

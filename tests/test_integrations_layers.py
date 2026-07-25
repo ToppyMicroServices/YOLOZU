@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 import time
@@ -29,6 +30,138 @@ class TestIntegrationLayers(unittest.TestCase):
         out = run_cli_tool("validate_predictions", ["validate", "predictions", "../bad.json"])
         self.assertFalse(out["ok"])
         self.assertIn("path traversal", out.get("error", ""))
+
+    def test_api_layer_allows_absolute_path_inside_explicit_workspace(self):
+        completed = subprocess.CompletedProcess(args=["x"], returncode=0, stdout="{}", stderr="")
+        with tempfile.TemporaryDirectory() as td:
+            inside = Path(td) / "predictions.json"
+            with patch(
+                "yolozu.integrations.layers.api.subprocess.run",
+                return_value=completed,
+            ) as run:
+                out = run_cli_tool(
+                    "validate_predictions",
+                    ["validate", "predictions", str(inside)],
+                    workspace=td,
+                )
+        self.assertTrue(out["ok"])
+        self.assertEqual(
+            run.call_args.kwargs["cwd"],
+            str(Path(td).resolve()),
+        )
+
+    def test_api_layer_rejects_absolute_path_outside_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            out = run_cli_tool(
+                "validate_predictions",
+                ["validate", "predictions", "/tmp/outside.json"],
+                workspace=td,
+            )
+        self.assertFalse(out["ok"])
+        self.assertIn("path escapes workspace", out.get("error", ""))
+
+    def test_api_layer_rejects_symlink_escape_from_workspace(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside:
+            workspace = Path(td)
+            outside_file = Path(outside) / "predictions.json"
+            outside_file.write_text("[]", encoding="utf-8")
+            link = workspace / "linked_predictions.json"
+            link.symlink_to(outside_file)
+
+            out = run_cli_tool(
+                "validate_predictions",
+                ["validate", "predictions", link.name],
+                workspace=workspace,
+            )
+
+        self.assertFalse(out["ok"])
+        self.assertIn("path escapes workspace", out.get("error", ""))
+
+    def test_api_layer_rejects_extensionless_symlink_escape_from_workspace(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside:
+            workspace = Path(td)
+            outside_file = Path(outside) / "predictions.json"
+            outside_file.write_text("[]", encoding="utf-8")
+            link = workspace / "plain"
+            link.symlink_to(outside_file)
+
+            out = run_cli_tool(
+                "validate_predictions",
+                ["validate", "predictions", link.name],
+                workspace=workspace,
+            )
+
+        self.assertFalse(out["ok"])
+        self.assertIn("path escapes workspace", out.get("error", ""))
+
+    def test_api_layer_rejects_home_shortcut_without_extension(self):
+        out = run_cli_tool(
+            "validate_predictions",
+            ["validate", "predictions", "~"],
+        )
+        self.assertFalse(out["ok"])
+        self.assertIn("home-dir paths", out.get("error", ""))
+
+    def test_api_layer_prevents_equals_form_outside_writes(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = root / "workspace"
+            outside = root / "outside"
+            (workspace / "data" / "images" / "val").mkdir(
+                parents=True,
+            )
+            (workspace / "data" / "labels" / "val").mkdir(
+                parents=True,
+            )
+            outside.mkdir()
+            (workspace / "data" / "images" / "val" / "a.jpg").write_bytes(
+                b""
+            )
+            (
+                workspace / "data" / "labels" / "val" / "a.txt"
+            ).write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+            (workspace / "config.json").write_text(
+                json.dumps(
+                    {
+                        "adapter": "dummy",
+                        "dataset": "data",
+                        "split": "val",
+                        "max_images": 1,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            symlink_target = outside / "symlink.json"
+            (workspace / "plain").symlink_to(symlink_target)
+            cases = [
+                (
+                    f"--output={outside / 'absolute.json'}",
+                    outside / "absolute.json",
+                ),
+                (
+                    f"-x={outside / 'short.json'}",
+                    outside / "short.json",
+                ),
+                (
+                    "--output=../outside/traversal.json",
+                    outside / "traversal.json",
+                ),
+                ("--output=plain", symlink_target),
+            ]
+            with patch.dict(
+                os.environ,
+                {"PYTHONPATH": str(repo_root)},
+            ):
+                for token, target in cases:
+                    with self.subTest(token=token):
+                        out = run_cli_tool(
+                            "run_scenarios",
+                            ["test", "config.json", token],
+                            workspace=workspace,
+                        )
+                        self.assertFalse(out["ok"], out)
+                        self.assertFalse(target.exists())
 
     def test_api_layer_rejects_non_allowlisted_command(self):
         out = run_cli_tool("bad", ["rm", "-rf", "/tmp/x"])
@@ -79,6 +212,63 @@ class TestIntegrationLayers(unittest.TestCase):
             status = manager.status("job_stale")
             self.assertIsNotNone(status)
             self.assertEqual(status["status"], "unknown")
+
+    def test_failed_result_marks_job_and_status_response_failed(self):
+        with tempfile.TemporaryDirectory() as td:
+            manager = JobManager(max_workers=1, storage_dir=td)
+            job_id = manager.submit(
+                "real_failure",
+                lambda: {
+                    "ok": False,
+                    "tool": "real_failure",
+                    "summary": "real command failed",
+                    "exit_code": 2,
+                    "error": "invalid command",
+                },
+            )
+            for _ in range(100):
+                status = manager.status(job_id)
+                if status and status["status"] == "failed":
+                    break
+                time.sleep(0.01)
+
+            self.assertIsNotNone(status)
+            self.assertEqual(status["status"], "failed")
+            self.assertEqual(status["error"], "invalid command")
+            self.assertFalse(status["result"]["ok"])
+
+            with patch(
+                "yolozu.integrations.tool_runner._job_manager",
+                return_value=manager,
+            ):
+                response = jobs_status(job_id)
+
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["exit_code"], 1)
+        self.assertIn("invalid command", response["summary"])
+        self.assertEqual(response["error"], "invalid command")
+        self.assertEqual(response["job"]["status"], "failed")
+
+    def test_nonzero_result_without_ok_marks_job_failed(self):
+        with tempfile.TemporaryDirectory() as td:
+            manager = JobManager(max_workers=1, storage_dir=td)
+            job_id = manager.submit(
+                "nonzero",
+                lambda: {
+                    "tool": "nonzero",
+                    "summary": "nonzero exit",
+                    "exit_code": 7,
+                },
+            )
+            for _ in range(100):
+                status = manager.status(job_id)
+                if status and status["status"] == "failed":
+                    break
+                time.sleep(0.01)
+
+        self.assertIsNotNone(status)
+        self.assertEqual(status["status"], "failed")
+        self.assertEqual(status["error"], "nonzero exit")
 
     def test_runs_list_and_describe_shape(self):
         runs = runs_list(limit=2)

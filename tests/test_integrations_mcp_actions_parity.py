@@ -1,3 +1,4 @@
+import copy
 import unittest
 from unittest.mock import patch
 
@@ -10,6 +11,38 @@ class TestIntegrationsMcpActionsParity(unittest.TestCase):
         reference = build_tool_surface_reference()
         errors = collect_surface_parity_errors(reference)
         self.assertEqual(errors, [], "parity drift detected:\n- " + "\n- ".join(errors))
+
+    def test_surface_cardinality_and_full_parameter_contracts(self):
+        reference = build_tool_surface_reference()
+        surfaces = reference["surfaces"]
+        self.assertEqual(len(surfaces["guaranteed_ai_safe"]["tool_ids"]), 4)
+        self.assertEqual(len(surfaces["mcp_live"]["tool_ids"]), 25)
+        self.assertEqual(len(surfaces["actions_public"]["tool_ids"]), 21)
+        self.assertEqual(len(reference["mcp_live_tools"]), 25)
+        self.assertEqual(len(reference["tools"]), 21)
+
+        for tool in reference["tools"]:
+            with self.subTest(tool=tool["canonical_name"]):
+                self.assertEqual(
+                    tool["mcp"]["parameter_schema"],
+                    tool["actions"]["parameter_schema"],
+                )
+                self.assertEqual(
+                    tool["mcp"]["params"],
+                    tool["tool_runner"]["params"],
+                )
+
+    def test_parity_checker_rejects_a_schema_contract_regression(self):
+        reference = build_tool_surface_reference()
+        tampered = copy.deepcopy(reference)
+        tampered["tools"][0]["parity"]["mcp_vs_actions_schema"] = False
+
+        errors = collect_surface_parity_errors(tampered)
+
+        self.assertTrue(
+            any("mcp_vs_actions_schema" in error for error in errors),
+            errors,
+        )
 
     def test_tool_runner_responses_keep_contract_keys(self):
         required = {"ok", "tool", "summary", "exit_code"}

@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+_MAX_WARNINGS = 100
+
+
+def _entry_count(payload: Any) -> int | None:
+    if isinstance(payload, dict) and "predictions" in payload:
+        entries = payload.get("predictions")
+        return len(entries) if isinstance(entries, list) else None
+    if isinstance(payload, (dict, list)):
+        return len(payload)
+    return None
+
+
+def _validate_predictions_path_result(
+    path: str | Path,
+    *,
+    strict: bool = False,
+    max_warnings: int | None,
+) -> tuple[dict[str, Any], int]:
+    """Internal validator supporting unbounded human diagnostics."""
+    raw_path = str(path)
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "tool": "validate_predictions",
+        "ok": False,
+        "path": raw_path,
+        "strict": bool(strict),
+        "mode": "strict" if strict else "repair",
+        "repair_enabled": not bool(strict),
+        "entry_count": None,
+        "warnings": [],
+        "errors": [],
+        "limits": {
+            "warnings_max": max_warnings,
+            "warnings_truncated": 0,
+        },
+    }
+    resolved = Path(path).expanduser()
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+        result["entry_count"] = _entry_count(payload)
+    except FileNotFoundError as exc:
+        result["errors"] = [
+            {"code": "file_not_found", "message": str(exc)}
+        ]
+        return result, 1
+    except json.JSONDecodeError as exc:
+        result["errors"] = [
+            {"code": "invalid_json", "message": str(exc)}
+        ]
+        return result, 1
+    except (OSError, UnicodeError) as exc:
+        result["errors"] = [
+            {"code": "read_error", "message": str(exc)}
+        ]
+        return result, 1
+
+    # Import lazily to avoid a package-initialization cycle: ``yolozu.api``
+    # imports the predictions implementation modules directly.
+    from yolozu.api import APIError, validate_predictions
+
+    try:
+        validation = validate_predictions(payload, repair=not bool(strict))
+    except (APIError, TypeError, ValueError) as exc:
+        result["errors"] = [
+            {"code": "invalid_predictions", "message": str(exc)}
+        ]
+        return result, 1
+
+    result["ok"] = True
+    warnings = list(validation.warnings)
+    if max_warnings is None:
+        result["warnings"] = warnings
+    else:
+        result["warnings"] = warnings[:max_warnings]
+        result["limits"]["warnings_truncated"] = max(
+            0,
+            len(warnings) - max_warnings,
+        )
+    return result, 0
+
+
+def validate_predictions_path(
+    path: str | Path,
+    *,
+    strict: bool = False,
+) -> tuple[dict[str, Any], int]:
+    """Validate one predictions file and return a bounded JSON-ready result."""
+    return _validate_predictions_path_result(
+        path,
+        strict=strict,
+        max_warnings=_MAX_WARNINGS,
+    )

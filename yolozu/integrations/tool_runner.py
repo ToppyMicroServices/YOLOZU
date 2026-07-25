@@ -1,17 +1,78 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 from .layers.api import run_cli_tool, run_cli_tool_redacted
 from .layers.artifacts import collect_artifact_metadata, describe_run, list_runs
+from .layers.core import fail_response
 from .layers.jobs import JobManager
 
-_JOBS = JobManager()
+
+_SCENARIO_EXTRA_VALUE_FLAGS = frozenset(
+    {
+        "--adapter",
+        "--checkpoint",
+        "--config",
+        "--dataset",
+        "--device",
+        "--max-detections",
+        "--max-images",
+        "--output",
+        "--predictions",
+        "--score-threshold",
+        "--split",
+    }
+)
+
+
+@lru_cache(maxsize=1)
+def _job_manager() -> JobManager:
+    """Create persistent job storage only when a job operation is requested."""
+    return JobManager()
 
 
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
     payload.setdefault("meta", collect_artifact_metadata())
     return payload
+
+
+def _validated_scenario_extra_args(
+    name: str,
+    extra_args: list[str] | None,
+) -> tuple[list[str], dict[str, Any] | None]:
+    """Accept only declared one-value scenario flags on AI-facing surfaces."""
+    tokens = list(extra_args or [])
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token.startswith("--") and "=" in token:
+            flag, value = token.split("=", 1)
+            if flag not in _SCENARIO_EXTRA_VALUE_FLAGS or not value:
+                error = ValueError(
+                    f"extra_args contains undeclared or empty flag: {flag}"
+                )
+                return [], _with_meta(
+                    fail_response(name, message=str(error), exc=error)
+                )
+            index += 1
+            continue
+        if token not in _SCENARIO_EXTRA_VALUE_FLAGS:
+            error = ValueError(
+                f"extra_args contains undeclared flag: {token}"
+            )
+            return [], _with_meta(
+                fail_response(name, message=str(error), exc=error)
+            )
+        if index + 1 >= len(tokens) or tokens[index + 1].startswith("--"):
+            error = ValueError(
+                f"extra_args flag requires one value: {token}"
+            )
+            return [], _with_meta(
+                fail_response(name, message=str(error), exc=error)
+            )
+        index += 2
+    return tokens, None
 
 
 def doctor(*, output: str = "reports/doctor.json") -> dict[str, Any]:
@@ -23,17 +84,31 @@ def doctor_public(*, output: str = "reports/doctor.json") -> dict[str, Any]:
 
 
 def validate_predictions(path: str, *, strict: bool = True) -> dict[str, Any]:
-    args = ["validate", "predictions", path]
+    """Validate strictly, or explicitly request repair with ``strict=False``."""
+    args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
-    return _with_meta(run_cli_tool("validate_predictions", args))
+    return _with_meta(
+        run_cli_tool(
+            "validate_predictions",
+            args,
+            json_result_key="validation",
+        )
+    )
 
 
 def validate_predictions_public(path: str, *, strict: bool = True) -> dict[str, Any]:
-    args = ["validate", "predictions", path]
+    """Public response variant with the same strict/repair semantics."""
+    args = ["validate", "predictions", path, "--json"]
     if strict:
         args.append("--strict")
-    return _with_meta(run_cli_tool_redacted("validate_predictions", args))
+    return _with_meta(
+        run_cli_tool_redacted(
+            "validate_predictions",
+            args,
+            json_result_key="validation",
+        )
+    )
 
 
 def validate_dataset(
@@ -74,6 +149,7 @@ def eval_coco(
     dry_run: bool = True,
     output: str = "reports/mcp_coco_eval.json",
     max_images: int | None = None,
+    repair: bool = False,
 ) -> dict[str, Any]:
     args = [
         "eval-coco",
@@ -90,6 +166,8 @@ def eval_coco(
         args.append("--dry-run")
     if max_images is not None:
         args.extend(["--max-images", str(max_images)])
+    if repair:
+        args.append("--repair")
     return _with_meta(run_cli_tool("eval_coco", args, artifacts={"report": output}))
 
 
@@ -101,6 +179,7 @@ def eval_coco_public(
     dry_run: bool = True,
     output: str = "reports/mcp_coco_eval.json",
     max_images: int | None = None,
+    repair: bool = False,
 ) -> dict[str, Any]:
     args = [
         "eval-coco",
@@ -117,6 +196,8 @@ def eval_coco_public(
         args.append("--dry-run")
     if max_images is not None:
         args.extend(["--max-images", str(max_images)])
+    if repair:
+        args.append("--repair")
     return _with_meta(run_cli_tool_redacted("eval_coco", args, artifacts={"report": output}))
 
 
@@ -439,12 +520,24 @@ def eval_long_tail_public(
 
 
 def run_scenarios(config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "run_scenarios",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", config, *safe_extra_args]
     return _with_meta(run_cli_tool("run_scenarios", args))
 
 
 def run_scenarios_public(config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "run_scenarios",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", config, *safe_extra_args]
     return _with_meta(run_cli_tool_redacted("run_scenarios", args))
 
 
@@ -517,7 +610,12 @@ def convert_dataset_public(
 
 
 def submit_job(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
-    job_id = _JOBS.submit(name, lambda: _with_meta(run_cli_tool(name, args, artifacts=artifacts)))
+    job_id = _job_manager().submit(
+        name,
+        lambda: _with_meta(
+            run_cli_tool(name, args, artifacts=artifacts)
+        ),
+    )
     return {
         "ok": True,
         "tool": "jobs.submit",
@@ -530,7 +628,12 @@ def submit_job(name: str, args: list[str], *, artifacts: dict[str, str] | None =
 
 
 def submit_job_public(name: str, args: list[str], *, artifacts: dict[str, str] | None = None) -> dict[str, Any]:
-    job_id = _JOBS.submit(name, lambda: _with_meta(run_cli_tool_redacted(name, args, artifacts=artifacts)))
+    job_id = _job_manager().submit(
+        name,
+        lambda: _with_meta(
+            run_cli_tool_redacted(name, args, artifacts=artifacts)
+        ),
+    )
     return {
         "ok": True,
         "tool": "jobs.submit",
@@ -548,13 +651,13 @@ def jobs_list() -> dict[str, Any]:
         "tool": "jobs.list",
         "summary": "listed jobs",
         "exit_code": 0,
-        "jobs": _JOBS.list(),
+        "jobs": _job_manager().list(),
         "meta": collect_artifact_metadata(),
     }
 
 
 def jobs_status(job_id: str) -> dict[str, Any]:
-    status = _JOBS.status(job_id)
+    status = _job_manager().status(job_id)
     if status is None:
         return {
             "ok": False,
@@ -564,18 +667,26 @@ def jobs_status(job_id: str) -> dict[str, Any]:
             "job_id": job_id,
             "meta": collect_artifact_metadata(),
         }
+    failed = status.get("status") == "failed"
+    error = str(status.get("error") or "job failed") if failed else None
+    summary = (
+        f"job failed: {error}"
+        if failed
+        else f"job status: {status.get('status')}"
+    )
     return {
-        "ok": True,
+        "ok": not failed,
         "tool": "jobs.status",
-        "summary": f"job status: {status.get('status')}",
-        "exit_code": 0,
+        "summary": summary,
+        "exit_code": 1 if failed else 0,
         "job": status,
+        **({"error": error} if error is not None else {}),
         "meta": collect_artifact_metadata(),
     }
 
 
 def jobs_cancel(job_id: str) -> dict[str, Any]:
-    out = _JOBS.cancel(job_id)
+    out = _job_manager().cancel(job_id)
     if out is None:
         return {
             "ok": False,
@@ -673,12 +784,24 @@ def export_onnx_job_public(dataset: str, output: str, *, split: str | None = Non
 
 
 def test_job(test_config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", test_config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "test",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", test_config, *safe_extra_args]
     return submit_job("test", args)
 
 
 def test_job_public(test_config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", test_config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "test",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", test_config, *safe_extra_args]
     return submit_job_public("test", args)
 
 

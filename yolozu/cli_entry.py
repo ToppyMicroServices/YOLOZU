@@ -570,6 +570,12 @@ def main(argv: list[str] | None = None) -> int:
     val_pred = validate_sub.add_parser("predictions", help="Validate predictions JSON (detections+bbox schema).")
     val_pred.add_argument("path", type=str, help="Path to predictions JSON (list or wrapper).")
     val_pred.add_argument("--strict", action="store_true", help="Strict validation (types, required keys).")
+    val_pred.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        help="Emit a stable machine-readable validation result.",
+    )
 
     val_seg = validate_sub.add_parser("seg", help="Validate semantic segmentation predictions JSON (id->mask mapping).")
     val_seg.add_argument("path", type=str, help="Path to segmentation predictions JSON.")

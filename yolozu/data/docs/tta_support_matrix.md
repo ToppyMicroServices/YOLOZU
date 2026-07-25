@@ -5,7 +5,7 @@ This page summarizes what YOLOZU supports today for **test-time training / test-
 Principles:
 - **Safe by default**: clear reset policies and guard rails.
 - **Explicit scope**: we prefer “supported / partial / not supported” over vague claims.
-- **Contract-first**: evaluation remains comparable via `predictions.json`.
+- **Interface-contract-first**: evaluation remains comparable via `predictions.json`.
 
 ## Algorithms
 
@@ -29,7 +29,7 @@ Legend:
 | Reset policy | Supported | Deterministic reset points / schedules.
 | Update budget | Supported | Limit steps / samples / time.
 | Drift detection hooks | Supported | Integrates with `yolozu doctor` and run metadata.
-| Metrics comparability | Supported | Evaluation stays contract-first via schema + validators.
+| Metrics comparability | Supported | Evaluation stays interface-contract-first via schema + validators.
 
 ## Where to go next
 

@@ -271,7 +271,7 @@ Use this path when integrating YOLOZU tools with MCP clients or Actions/OpenAPI 
 Shortest 3 commands:
 
 ```bash
-python3 tools/run_mcp_server.py
+yolozu-mcp
 python3 tools/run_actions_api.py
 python3 tools/export_actions_openapi.py --output reports/actions_openapi.json
 ```
@@ -281,7 +281,7 @@ Reference docs:
 - [OpenAI MCP / Actions](openai_mcp_actions.md)
 - [Copilot MCP integration](copilot_mcp_integration.md)
 - [MCP extension architecture](mcp_extension_architecture.md)
-- [AI-first guide (supported MCP scope)](ai_first.md)
+- [AI-first guide (MCP scope)](ai_first.md)
 
 ## F) YOLO-style migration (v5/v8/11/26)
 

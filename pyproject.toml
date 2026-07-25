@@ -68,7 +68,7 @@ train = [
   "safetensors>=0.4",
 ]
 coco = ["pycocotools>=2.0.7"]
-mcp = ["mcp>=1.0.0"]
+mcp = ["mcp>=1.26,<2"]
 actions = ["fastapi>=0.110", "uvicorn>=0.30", "pydantic>=2.0"]
 
 # Tools / integrations (optional)
@@ -112,7 +112,7 @@ full = [
   "onnxscript>=0.1",
   "safetensors>=0.4",
   "pycocotools>=2.0.7",
-  "mcp>=1.0.0",
+  "mcp>=1.26,<2",
   "fastapi>=0.110",
   "uvicorn>=0.30",
   "pydantic>=2.0",
@@ -164,6 +164,7 @@ full = "Convenience superset for docs/demo paths; CI avoids relying on this to l
 
 [project.scripts]
 yolozu = "yolozu.cli:main"
+yolozu-mcp = "yolozu.integrations.mcp_cli:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -186,6 +187,7 @@ include = ["yolozu*", "rtdetr_pose*"]
   "configs/continual/*.yml",
   "manifest/*.json",
   "manifest/*.md",
+  "integrations/*.json",
   "protocols/*.json",
   "schemas/*.json",
   "docs/*.md",

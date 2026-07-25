@@ -23,6 +23,31 @@ Each `tools[]` item MUST include:
 - `outputs` array (can be empty, but field must exist)
 - `examples` with at least one runnable command
 
+## Top-level AI surface sets
+
+`ai_surfaces` is the machine-readable SSOT for public integration boundaries:
+
+- `mcp_live`: exact canonical ids registered by the live MCP server
+- `guaranteed_ai_safe`: deterministic lightweight guarantee
+- `config_review`: in-process config generation/review subset
+- `actions_public`: canonical operations shared with the Actions API
+
+Each set declares ordered, unique `tool_ids` and a short `availability`
+boundary. Generated MCP/Actions references and compact discovery must derive
+these classifications from the source and packaged manifests.
+Compact discovery exposes explicit `guaranteed_mcp_tools` and
+`live_mcp_tools` fields. The compatibility field `supported_mcp_tools` retains
+its historical meaning as the guaranteed subset.
+In `ids_only` mode, `manifest_tools` is the filtered selection rather than the
+entire registry, and expanded surface lists are replaced by bounded
+`surface_counts`.
+The generated MCP reference also supplies the exact JSON input schema and
+function summary for every live id and is packaged with the wheel. Surface
+membership is not a maturity claim: a live or guaranteed id without an
+explicit matching `tools[].maturity` remains `maturity: null` with
+`maturity_source: unclassified`. Maturity/tag filters match explicit metadata
+only and report excluded unclassified counts in `filter_diagnostics`.
+
 ## Input declaration rules
 
 For each `inputs[]` item:

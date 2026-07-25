@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add the typed `yolozu.api` in-process validation and COCO evaluation surface with packaged `py.typed` metadata.
+- Add an installed `yolozu-mcp` entry point with manifest-backed compact discovery and explicit AI surface sets.
 
 ### Changed
 - Make `eval-coco` fail closed by default, add concise path/repair aliases, and emit structured success/failure reports.
+- Route machine-readable predictions validation through `yolozu.api`; MCP and Actions validation now expose strict versus explicit repair semantics.
+- Keep all 25 live MCP and 21 Actions parameter schemas synchronized from the integration interface contract.
 
 ### Fixed
 - Evaluate bounded dataset subsets without misclassifying known unselected prediction images as unknown.
+- Resolve manifests and integration paths from installed package resources and the caller workspace instead of requiring a source checkout.
 
 ## [4.5.1] - 2026-06-21
 
