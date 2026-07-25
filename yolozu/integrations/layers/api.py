@@ -6,7 +6,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from ..manifest_resources import load_tool_manifest, workspace_root
+from ..manifest_resources import (
+    load_tool_manifest,
+    resolve_workspace_path,
+    workspace_root,
+)
 from .core import fail_response, ok_response
 
 _FALLBACK_ALLOWED_TOP_LEVEL = {
@@ -69,27 +73,8 @@ def _build_allowed_top_level() -> set[str]:
 _ALLOWED_TOP_LEVEL = _build_allowed_top_level()
 
 
-def _looks_like_path_token(token: str) -> bool:
-    return "/" in token or token.startswith(".") or token.endswith((".json", ".yaml", ".yml", ".onnx", ".pt", ".engine"))
-
-
 def _guard_path_token(token: str, *, root: Path) -> None:
-    if token.startswith("~"):
-        raise ValueError(f"home-dir paths are not allowed: {token}")
-    p = Path(token)
-    candidate = p if p.is_absolute() else root / p
-    if not (
-        _looks_like_path_token(token)
-        or candidate.exists()
-        or candidate.is_symlink()
-    ):
-        return
-    if ".." in p.parts:
-        raise ValueError(f"path traversal is not allowed: {token}")
-    try:
-        candidate.resolve().relative_to(root)
-    except ValueError as exc:
-        raise ValueError(f"path escapes workspace: {token}") from exc
+    resolve_workspace_path(token, root=root)
 
 
 def _guard_argument_token(token: str, *, root: Path) -> None:

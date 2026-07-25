@@ -192,9 +192,11 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                 [
                     sys.executable,
                     "-c",
-                    "from yolozu.integrations.ai_surface import "
-                    "list_manifest_tools; list_manifest_tools("
-                    "guaranteed=True, ids_only=True)",
+                    (
+                        "from yolozu.integrations.ai_surface import "
+                        "list_manifest_tools; list_manifest_tools("
+                        "guaranteed=True, ids_only=True)"
+                    ),
                 ],
                 cwd=str(workspace),
                 env=env,

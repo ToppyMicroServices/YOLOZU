@@ -181,16 +181,16 @@ def review_config_tool(config_json: str, workspace_root: str = ".") -> dict:
             root=resolved_workspace_root(),
         )
         doc = json.loads(p.read_text(encoding="utf-8"))
-    except ValueError as exc:
-        return _rejected_input(
-            "review_config",
-            code="unsafe_or_invalid_config",
-            message=str(exc),
-        )
     except (OSError, UnicodeDecodeError) as exc:
         return _rejected_input(
             "review_config",
             code="config_read_failed",
+            message=str(exc),
+        )
+    except ValueError as exc:
+        return _rejected_input(
+            "review_config",
+            code="unsafe_or_invalid_config",
             message=str(exc),
         )
     review = review_config(doc, workspace_root=str(safe_review_root))
