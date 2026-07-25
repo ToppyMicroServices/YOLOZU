@@ -36,7 +36,8 @@ def resolve_workspace_path(
     # platform aliases (for example /var -> /private/var) and symlink targets;
     # the resolved value is rejected below unless it remains under the trusted
     # root. The explicit suppression documents this bounded sanitizer for CodeQL.
-    resolved = candidate.resolve()  # lgtm[py/path-injection]
+    # codeql[py/path-injection]
+    resolved = candidate.resolve()
     try:
         resolved.relative_to(trusted_root)
     except ValueError as exc:
