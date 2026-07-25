@@ -21,7 +21,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
             "config": str(kwargs["config_path"]),
             "model_class": "tests.CompatibleDetector",
             "checkpoint_compatibility": {
-                "status": "compatible",
+                "status": "full",
                 "load": {"loaded": True},
             },
             "structured_mim_supported": True,
@@ -37,6 +37,20 @@ class TestRunTTTCompareTool(unittest.TestCase):
         (labels / "000001.txt").write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
         return dataset
 
+    def test_markdown_emits_promotion_boundary_once(self):
+        rendered = run_ttt_compare._render_markdown(
+            {
+                "method": "tent",
+                "method_profile": {
+                    "profile_id": "yolozu_detector_entropy_v2",
+                    "reference_faithful": False,
+                    "efficacy": "not_established",
+                },
+                "promotion_eligible": False,
+            }
+        )
+        self.assertEqual(rendered.count("- Promotion eligible:"), 1)
+
     def test_help_lists_boilerplate_and_skip_eval(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "run_ttt_compare.py"
@@ -50,7 +64,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
         )
         if proc.returncode != 0:
             self.fail(f"run_ttt_compare --help failed:\n{proc.stdout}\n{proc.stderr}")
-        self.assertIn("--boilerplate", proc.stdout)
+        self.assertIn("--method", proc.stdout)
         self.assertIn("--skip-eval", proc.stdout)
         self.assertIn("--dry-run", proc.stdout)
 
@@ -243,7 +257,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
         )
         if proc.returncode != 0:
             self.fail(f"ttt_compare.sh --help failed:\n{proc.stdout}\n{proc.stderr}")
-        self.assertIn("--boilerplate", proc.stdout)
+        self.assertIn("--method", proc.stdout)
         self.assertIn("tent", proc.stdout)
         self.assertIn("dry-run", proc.stdout.lower())
 
@@ -317,6 +331,81 @@ class TestRunTTTCompareTool(unittest.TestCase):
             self.assertEqual(status["state"], "failed")
             self.assertEqual(status["stage"], "prerequisite_validation")
             self.assertIn("checkpoint is empty", status["error"])
+
+    @unittest.skipIf(torch is None, "torch not installed")
+    def test_model_preflight_accepts_real_full_checkpoint(self):
+        from yolozu.adapter import RTDETRPoseAdapter
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            config = root / "tiny.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "dataset": {"root": ".", "split": "val", "format": "yolo"},
+                        "model": {
+                            "num_classes": 3,
+                            "hidden_dim": 64,
+                            "num_queries": 10,
+                            "stem_channels": 8,
+                            "backbone_channels": [16, 32, 64],
+                            "stage_blocks": [1, 1, 1],
+                            "num_encoder_layers": 1,
+                            "num_decoder_layers": 1,
+                            "nhead": 4,
+                            "encoder_dim_feedforward": 128,
+                            "decoder_dim_feedforward": 128,
+                        },
+                        "train": {"batch_size": 1, "lr": 0.0001, "epochs": 1},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            source = RTDETRPoseAdapter(
+                config_path=str(config),
+                device="cpu",
+                image_size=(32, 32),
+            )
+            checkpoint = root / "full.pt"
+            torch.save(source.get_model().state_dict(), checkpoint)
+            result = run_ttt_compare._model_checkpoint_preflight(
+                config_path=config,
+                checkpoint=checkpoint,
+                method="tent",
+            )
+            checkpoint_report = result["checkpoint_compatibility"]
+            self.assertEqual(checkpoint_report["status"], "full")
+            self.assertIs(checkpoint_report["load"]["loaded"], True)
+
+    def test_model_preflight_rejects_noncanonical_or_unloaded_status(self):
+        class StubAdapter:
+            def __init__(self, report):
+                self.report = report
+
+            def get_model(self):
+                return object()
+
+            def get_checkpoint_report(self):
+                return self.report
+
+        cases = (
+            ({"status": "compatible", "load": {"loaded": True}}, "status='compatible'"),
+            ({"status": "partial", "load": {"loaded": True}}, "status='partial'"),
+            ({"status": "incompatible", "load": {"loaded": False}}, "loaded model"),
+            ({"status": "full", "load": {"loaded": False}}, "loaded model"),
+        )
+        for report, message in cases:
+            with self.subTest(report=report):
+                with mock.patch(
+                    "yolozu.adapter.RTDETRPoseAdapter",
+                    return_value=StubAdapter(report),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, message):
+                        run_ttt_compare._model_checkpoint_preflight(
+                            config_path=Path("config.json"),
+                            checkpoint=Path("checkpoint.pt"),
+                            method="tent",
+                        )
 
     @unittest.skipIf(torch is None, "torch not installed")
     def test_dry_run_rejects_incompatible_checkpoint_before_success_plan(self):

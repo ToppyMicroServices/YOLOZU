@@ -235,7 +235,7 @@ class TestPipCLICommands(unittest.TestCase):
             png_lines = [line for line in lines if line.lower().endswith(".png")]
             self.assertTrue(png_lines, "demo stdout should include an overlay PNG path")
 
-    def test_demo_ttt_improvement_smoke(self):
+    def test_demo_ttt_diagnostic_smoke(self):
         repo_root = Path(__file__).resolve().parents[1]
         try:
             import numpy  # noqa: F401
@@ -273,12 +273,17 @@ class TestPipCLICommands(unittest.TestCase):
             out_path = Path(lines[-1])
             self.assertTrue(out_path.is_file(), f"demo report missing: {out_path}")
             payload = json.loads(out_path.read_text(encoding="utf-8"))
-            self.assertEqual(payload.get("kind"), "ttt_improvement_demo")
+            self.assertEqual(payload.get("kind"), "ttt_diagnostic_demo")
+            self.assertEqual(payload.get("evidence_kind"), "local_diagnostic")
+            self.assertIs(payload.get("promotion_eligible"), False)
+            self.assertEqual(payload.get("efficacy_conclusion"), "not_established")
             self.assertEqual(payload.get("interface_contract"), "predictions interface contract")
             metrics = payload.get("metrics") or {}
             self.assertIn("no_ttt", metrics)
             self.assertIn("with_ttt", metrics)
             self.assertIn("delta", metrics)
+            self.assertEqual(metrics.get("metric_semantics"), "non_coco_proxy")
+            self.assertEqual(set((metrics.get("no_ttt") or {}).keys()), {"proxy_ap50", "proxy_ap50_95"})
             artifacts = payload.get("artifacts") or {}
             for k in ("pred_no_ttt", "pred_ttt", "overlay_no_ttt", "overlay_ttt"):
                 self.assertIn(k, artifacts, f"missing artifact key: {k}")

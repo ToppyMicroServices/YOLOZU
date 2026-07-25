@@ -417,41 +417,69 @@ def test_job_tool(test_config: str, extra_args: list[str] | None = None) -> dict
 
 @app.tool(name="ttt_job")
 def ttt_job_tool(
-    test_config: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
+    config: str = "builtin:base",
+    split: str = "val",
+    report: str | None = None,
     method: str = "tent",
     preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    steps: int = 1,
+    reset: str = "sample",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
 ) -> dict:
-    """Queue TTT scenario command as asynchronous job and return job_id."""
+    """Queue a local TTT export diagnostic and return its asynchronous job_id."""
     return ttt_job(
-        test_config=test_config,
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
         method=method,
         preset=preset,
         steps=steps,
         reset=reset,
-        extra_args=extra_args,
+        device=device,
+        max_images=max_images,
+        force=force,
     )
 
 
 @app.tool(name="ctta_job")
 def ctta_job_tool(
-    test_config: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
+    config: str = "builtin:base",
+    split: str = "val",
+    report: str | None = None,
     method: str = "cotta",
     preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    steps: int = 1,
+    reset: str = "stream",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
 ) -> dict:
-    """Queue CTTA scenario command as asynchronous job and return job_id."""
+    """Queue a local continual-TTA export diagnostic and return its job_id."""
     return ctta_job(
-        test_config=test_config,
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
         method=method,
         preset=preset,
         steps=steps,
         reset=reset,
-        extra_args=extra_args,
+        device=device,
+        max_images=max_images,
+        force=force,
     )
 
 

@@ -206,6 +206,22 @@ When an underlying command returns \cmd{ok=false} or a nonzero
 \cmd{exit_code}, the job is \cmd{failed} and \cmd{jobs.status} also returns a
 top-level \cmd{ok=false}. The nested result is retained for diagnostics.
 
+\subsection{TTT and CTTA job boundary}
+
+\cmd{ttt\_job} and \cmd{ctta\_job} execute the installed
+\cmd{yolozu export} path. They require workspace-relative \cmd{dataset} and
+\cmd{checkpoint} inputs. The default \cmd{config} is the packaged
+\cmd{builtin:base} resource. Before queueing, checkpoint preflight must report
+the canonical loader value \cmd{status=full} and
+\cmd{load.loaded=true}; partial, incompatible, missing, or unloaded
+checkpoints fail with \cmd{stage=preflight}. Arbitrary
+\cmd{extra\_args} are not accepted.
+
+\cmd{ttt\_job} defaults to Tent with sample reset.
+\cmd{ctta\_job} defaults to the YOLOZU CoTTA variant with stream reset.
+Successful completion produces predictions and a TTT report, but remains a
+local diagnostic and does not establish efficacy.
+
 \section{AI operation pitfalls (high-impact)}
 
 \begin{enumerate}

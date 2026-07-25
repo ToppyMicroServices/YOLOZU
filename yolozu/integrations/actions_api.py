@@ -166,21 +166,35 @@ class TestJobRequest(BaseModel):
 
 
 class TTTJobRequest(BaseModel):
-    test_config: str
+    dataset: str
+    checkpoint: str
+    output: str | None = None
+    config: str = "builtin:base"
+    split: str = "val"
+    report: str | None = None
     method: str = "tent"
     preset: str | None = None
-    steps: int | None = None
-    reset: bool = False
-    extra_args: list[str] | None = None
+    steps: int = 1
+    reset: str = "sample"
+    device: str = "cpu"
+    max_images: int = 1
+    force: bool = True
 
 
 class CTTAJobRequest(BaseModel):
-    test_config: str
+    dataset: str
+    checkpoint: str
+    output: str | None = None
+    config: str = "builtin:base"
+    split: str = "val"
+    report: str | None = None
     method: str = "cotta"
     preset: str | None = None
-    steps: int | None = None
-    reset: bool = False
-    extra_args: list[str] | None = None
+    steps: int = 1
+    reset: str = "stream"
+    device: str = "cpu"
+    max_images: int = 1
+    force: bool = True
 
 
 @app.get("/healthz")
@@ -342,12 +356,19 @@ def test_job_route(req: TestJobRequest) -> dict:
 def ttt_job_route(req: TTTJobRequest) -> dict:
     return _sanitize_response(
         ttt_job(
-            test_config=req.test_config,
+            dataset=req.dataset,
+            checkpoint=req.checkpoint,
+            output=req.output,
+            config=req.config,
+            split=req.split,
+            report=req.report,
             method=req.method,
             preset=req.preset,
             steps=req.steps,
             reset=req.reset,
-            extra_args=req.extra_args,
+            device=req.device,
+            max_images=req.max_images,
+            force=req.force,
         )
     )
 
@@ -356,12 +377,19 @@ def ttt_job_route(req: TTTJobRequest) -> dict:
 def ctta_job_route(req: CTTAJobRequest) -> dict:
     return _sanitize_response(
         ctta_job(
-            test_config=req.test_config,
+            dataset=req.dataset,
+            checkpoint=req.checkpoint,
+            output=req.output,
+            config=req.config,
+            split=req.split,
+            report=req.report,
             method=req.method,
             preset=req.preset,
             steps=req.steps,
             reset=req.reset,
-            extra_args=req.extra_args,
+            device=req.device,
+            max_images=req.max_images,
+            force=req.force,
         )
     )
 

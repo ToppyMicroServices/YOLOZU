@@ -264,7 +264,7 @@ def _model_checkpoint_preflight(
         raise RuntimeError(
             "checkpoint preflight report does not confirm a loaded model"
         )
-    if str(checkpoint_report.get("status") or "") != "compatible":
+    if str(checkpoint_report.get("status") or "") != "full":
         raise RuntimeError(
             "TTT compare requires a fully compatible checkpoint; "
             f"preflight status={checkpoint_report.get('status')!r}"

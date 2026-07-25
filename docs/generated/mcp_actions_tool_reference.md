@@ -173,22 +173,36 @@ The `mcp_live` set is the exact list returned by the installed MCP SDK's live to
 ### `ttt_job`
 
 `tool_runner` params:
-- `test_config` (required)
+- `dataset` (required)
+- `checkpoint` (required)
+- `output` (default: `None`)
+- `config` (default: `builtin:base`)
+- `split` (default: `val`)
+- `report` (default: `None`)
 - `method` (default: `tent`)
 - `preset` (default: `None`)
-- `steps` (default: `None`)
-- `reset` (default: `False`)
-- `extra_args` (default: `None`)
+- `steps` (default: `1`)
+- `reset` (default: `sample`)
+- `device` (default: `cpu`)
+- `max_images` (default: `1`)
+- `force` (default: `True`)
 
 ### `ctta_job`
 
 `tool_runner` params:
-- `test_config` (required)
+- `dataset` (required)
+- `checkpoint` (required)
+- `output` (default: `None`)
+- `config` (default: `builtin:base`)
+- `split` (default: `val`)
+- `report` (default: `None`)
 - `method` (default: `cotta`)
 - `preset` (default: `None`)
-- `steps` (default: `None`)
-- `reset` (default: `False`)
-- `extra_args` (default: `None`)
+- `steps` (default: `1`)
+- `reset` (default: `stream`)
+- `device` (default: `cpu`)
+- `max_images` (default: `1`)
+- `force` (default: `True`)
 
 ### `jobs_list`
 

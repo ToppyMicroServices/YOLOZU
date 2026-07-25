@@ -9,6 +9,7 @@ from yolozu.inference.adapter import ModelAdapter, RTDETRPoseAdapter
 from yolozu.tta import integration
 from yolozu.tta.cli_options import TTT_METHOD_CHOICES, add_ttt_arguments
 from yolozu.tta.config import SUPPORTED_TTT_METHODS, TTTConfig
+from yolozu.tta.method_profiles import TTT_METHOD_PROFILES
 
 
 class TestTTTDocsImplementationAlignment(unittest.TestCase):
@@ -61,7 +62,6 @@ class TestTTTDocsImplementationAlignment(unittest.TestCase):
         matrix_methods = tuple(
             row[0].lower()
             for row in self._table_rows(algorithm_section)
-            if row[1] == "Supported"
         )
 
         parser = self._ttt_parser()
@@ -77,6 +77,29 @@ class TestTTTDocsImplementationAlignment(unittest.TestCase):
             with self.subTest(method=method):
                 parsed = parser.parse_args(["--ttt-method", method])
                 self.assertEqual(parsed.ttt_method, method)
+
+    def test_source_and_packaged_support_matrix_are_exact_copies(self) -> None:
+        source = self.repo_root / "docs" / "tta_support_matrix.md"
+        packaged = self.repo_root / "yolozu" / "data" / "docs" / "tta_support_matrix.md"
+        self.assertEqual(source.read_bytes(), packaged.read_bytes())
+
+        text = source.read_text(encoding="utf-8")
+        for method, profile in TTT_METHOD_PROFILES.items():
+            with self.subTest(method=method):
+                self.assertIn(str(profile["profile_id"]), text)
+                self.assertIn(str(profile["efficacy"]).replace("_", " "), text.lower())
+        for marker in (
+            "CVPR 2024",
+            "CVPRW 2024",
+            "CVPR 2025",
+            "ICCV 2025",
+            "NeurIPS 2025",
+            "WACV 2026",
+            "CVPRW 2026",
+        ):
+            self.assertIn(marker, text)
+        self.assertIn("unimplemented in YOLOZU", text)
+        self.assertIn("RT-DETR", text)
 
     def test_export_help_renders_the_implemented_method_choices_and_opt_in_default(self) -> None:
         proc = subprocess.run(
@@ -145,7 +168,7 @@ class TestTTTDocsImplementationAlignment(unittest.TestCase):
                     row[0].lower(): row
                     for row in self._table_rows(algorithm_section)
                 }
-                mim_note = rows["mim"][2].lower()
+                mim_note = " ".join(rows["mim"]).lower()
                 self.assertIn("masked image modeling", mim_note)
                 self.assertIn("masked reconstruction", mim_note)
                 self.assertNotIn("mutual-information", mim_note)

@@ -8405,8 +8405,32 @@
         "function": "ttt_job",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8421,17 +8445,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "aliases": []
@@ -8441,8 +8475,32 @@
         "function": "ttt_job_tool",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8457,17 +8515,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
@@ -8595,8 +8663,32 @@
         "request_model": "TTTJobRequest",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8611,17 +8703,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
@@ -8764,8 +8866,32 @@
         "function": "ctta_job",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8780,17 +8906,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "aliases": []
@@ -8800,8 +8936,32 @@
         "function": "ctta_job_tool",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8816,17 +8976,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
@@ -8954,8 +9124,32 @@
         "request_model": "CTTAJobRequest",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8970,17 +9164,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
