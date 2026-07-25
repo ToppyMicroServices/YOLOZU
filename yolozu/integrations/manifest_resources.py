@@ -32,7 +32,11 @@ def resolve_workspace_path(
         if candidate_path.is_absolute()
         else trusted_root / candidate_path
     )
-    resolved = candidate.resolve()
+    # ``resolve`` does not open the caller-selected file. It canonicalizes
+    # platform aliases (for example /var -> /private/var) and symlink targets;
+    # the resolved value is rejected below unless it remains under the trusted
+    # root. The explicit suppression documents this bounded sanitizer for CodeQL.
+    resolved = candidate.resolve()  # lgtm[py/path-injection]
     try:
         resolved.relative_to(trusted_root)
     except ValueError as exc:
