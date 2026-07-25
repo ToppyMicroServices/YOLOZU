@@ -1,6 +1,6 @@
 # TTT / TTA support matrix
 
-Updated: 2026-07-25
+Updated: 2026-07-26
 
 This page separates runnable code, implementation fidelity, measured efficacy,
 and production maturity. These are independent properties.
@@ -81,6 +81,7 @@ be checked before any implementation decision.
 | ICCV 2025 | [Continual Adaptation: Environment-Conditional Parameter Generation for Object Detection in Dynamic Environments](https://openaccess.thecvf.com/content/ICCV2025/papers/Li_Continual_Adaptation_Environment-Conditional_Parameter_Generation_for_Object_Detection_in_Dynamic_ICCV_2025_paper.pdf) | Dynamic detector parameter generation | Unimplemented; RT-DETR unverified |
 | NeurIPS 2025 | [Foundation-model test-time adaptation for object detection](https://nips.cc/virtual/2025/poster/118473) | Foundation-model-assisted detector adaptation | Unimplemented; RT-DETR unverified |
 | WACV 2026 | [Logit-Adjusted Test-Time Adaptation under Partial Class Imbalance](https://openaccess.thecvf.com/content/WACV2026/html/Weerasinghe_Logit-Adjusted_Test-Time_Adaptation_under_Partial_Class_Imbalance_WACV_2026_paper.html) | Class-imbalance handling; paper evaluation is classification-oriented | Unimplemented; detector and RT-DETR applicability unverified |
+| CVPR 2026 | [CD-Buffer: Complementary Dual-Buffer Framework for Test-Time Adaptation in Adverse Weather Object Detection](https://openaccess.thecvf.com/content/CVPR2026/html/Song_CD-Buffer_Complementary_Dual-Buffer_Framework_for_Test-Time_Adaptation_in_Adverse_Weather_CVPR_2026_paper.html) | Discrepancy-driven balance of subtractive pruning and additive refinement on detector weather shifts | Unimplemented; RT-DETR applicability and software license unverified |
 | CVPRW 2026 | [Topology-Guided Test-Time Adaptation via Persistent Homology](https://openaccess.thecvf.com/content/CVPR2026W/ABAW/papers/Mutlu_Topology-Guided_Test-Time_Adaptation_via_Persistent_Homology_From_Affective_Behavior_Analysis_CVPRW_2026_paper.pdf) | Includes YOLOS/DETR experiments in a different task context | Unimplemented; YOLOZU RT-DETR applicability unverified |
 
 ## Safety and reproducibility controls
