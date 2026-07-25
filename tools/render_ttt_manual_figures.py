@@ -230,6 +230,8 @@ def _validate_evidence_source(source: dict[str, Any]) -> dict[str, Any]:
 
     if source.get("promotion_eligible") is not False:
         raise ValueError("measured evidence requires promotion_eligible=false")
+    if source.get("efficacy") != "not_established":
+        raise ValueError("measured evidence requires efficacy=not_established")
     provenance = source.get("provenance")
     if not isinstance(provenance, dict):
         raise ValueError("measured evidence requires provenance object")

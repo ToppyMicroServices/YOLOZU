@@ -120,11 +120,20 @@ class TestRenderTTTManualFiguresTool(unittest.TestCase):
         }
 
     def test_measured_evidence_requires_provenance_and_hash_match(self) -> None:
+        with self.assertRaisesRegex(ValueError, "efficacy=not_established"):
+            renderer._validate_evidence_source(
+                {
+                    "evidence_kind": "measured",
+                    "promotion_eligible": False,
+                    "efficacy": "established",
+                }
+            )
         with self.assertRaisesRegex(ValueError, "requires provenance"):
             renderer._validate_evidence_source(
                 {
                     "evidence_kind": "measured",
                     "promotion_eligible": False,
+                    "efficacy": "not_established",
                 }
             )
         with tempfile.TemporaryDirectory() as td:
