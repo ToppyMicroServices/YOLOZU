@@ -364,16 +364,50 @@ def _render_start(content: dict[str, Any]) -> str:
         f"<li>{html.escape(_as_nonempty_string(item, where='tutorial.two_hour[]'))}</li>"
         for item in content["tutorial"]["two_hour"]
     )
+    dry_run_fallback = content["tutorial"]["dry_run_fallback"]
+    fallback_title = _as_nonempty_string(
+        dry_run_fallback.get("title"),
+        where="tutorial.dry_run_fallback.title",
+    )
+    fallback_command = _as_nonempty_string(
+        dry_run_fallback.get("command"),
+        where="tutorial.dry_run_fallback.command",
+    )
+    fallback_description = _as_nonempty_string(
+        dry_run_fallback.get("description"),
+        where="tutorial.dry_run_fallback.description",
+    )
+    python_api = content["python_api"]
+    api_title = _as_nonempty_string(
+        python_api.get("title"),
+        where="python_api.title",
+    )
+    api_description = _as_nonempty_string(
+        python_api.get("description"),
+        where="python_api.description",
+    )
+    api_example = _as_nonempty_string(
+        python_api.get("example"),
+        where="python_api.example",
+    )
+    api_expected = _as_nonempty_string(
+        python_api.get("expected"),
+        where="python_api.expected",
+    )
+    api_source = _as_nonempty_string(
+        python_api.get("source"),
+        where="python_api.source",
+    )
     body = f"""
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Stable lane</span>
   <h1 id="page-title">A 30-minute path to a checked report</h1>
-  <p class="lead">This path is CPU-only and begins with generated proof artifacts,
-  so the dataset and prediction paths come from evidence rather than memory.</p>
+  <p class="lead">This path creates every dataset and prediction input locally,
+  evaluates it strictly, and works unchanged outside the source checkout.</p>
   {_search_shell("Filter steps or search all docs")}
 </section>
 <section class="section" aria-labelledby="steps-title">
-  <h2 id="steps-title">Proof → visible demo → validate → evaluate</h2>
+  <h2 id="steps-title">Install → proof → validate → evaluate</h2>
   <div class="steps">
     {''.join(steps)}
   </div>
@@ -385,6 +419,23 @@ def _render_start(content: dict[str, Any]) -> str:
   </div>
   <p class="source-note">Canonical procedure:
     {_source_link(content, "docs/cpu_only_dod.md", "CPU-only DoD")}.
+  </p>
+  <aside class="callout" data-search-card
+    data-search-text="{html.escape(f'{fallback_title} {fallback_command} {fallback_description}', quote=True)}">
+    <h3>{html.escape(fallback_title)}</h3>
+    <p>{html.escape(fallback_description)}</p>
+    {_commands_block([fallback_command])}
+  </aside>
+</section>
+<section class="section" aria-labelledby="python-api-title" data-search-card
+  data-search-text="{html.escape(f'{api_title} {api_description} {api_example}', quote=True)}">
+  <span class="eyebrow">Stable Python API</span>
+  <h2 id="python-api-title">{html.escape(api_title)}</h2>
+  <p>{html.escape(api_description)}</p>
+  {_commands_block([api_example])}
+  <p><strong>Expected:</strong> {html.escape(api_expected)}</p>
+  <p class="source-note">Supported symbols and error policy:
+    {_source_link(content, api_source, "Stable Python API")}.
   </p>
 </section>
 <section class="section" aria-labelledby="two-hour-title">
@@ -399,7 +450,7 @@ def _render_start(content: dict[str, Any]) -> str:
         content=content,
         page_id="start",
         title="30-minute path",
-        description="CPU-only proof, visible demo, strict validation, and pinned evaluation.",
+        description="Self-contained proof artifacts, strict validation, real evaluation, and a typed Python API.",
         body=body,
     )
 
@@ -748,9 +799,19 @@ def _search_index(
         {
             "title": "30-minute path",
             "kind": "tutorial",
-            "summary": "CPU proof, visible demo, strict validation, and evaluation.",
+            "summary": "Self-contained proof, strict validation, real evaluation, and typed API.",
             "href": "start.html",
-            "search_text": "install doctor proof demo validate eval tutorial",
+            "search_text": "install candidate wheel doctor proof validate eval coco tutorial",
+        },
+        {
+            "title": content["python_api"]["title"],
+            "kind": "api",
+            "summary": content["python_api"]["description"],
+            "href": "start.html#python-api-title",
+            "search_text": (
+                f"python api evaluate_coco typed strict "
+                f"{content['python_api']['description']}"
+            ),
         },
     ]
     for lane in content["lanes"]:
@@ -888,6 +949,23 @@ def _validate_content(content: Any) -> dict[str, Any]:
     )
     if not two_hour:
         raise SystemExit("tutorial.two_hour must not be empty")
+    dry_run_fallback = tutorial.get("dry_run_fallback")
+    if not isinstance(dry_run_fallback, dict):
+        raise SystemExit("tutorial requires dry_run_fallback object")
+    for key in ("title", "command", "description"):
+        _as_nonempty_string(
+            dry_run_fallback.get(key),
+            where=f"tutorial.dry_run_fallback.{key}",
+        )
+
+    python_api = content.get("python_api")
+    if not isinstance(python_api, dict):
+        raise SystemExit("web docs content requires python_api object")
+    for key in ("title", "description", "source", "example", "expected"):
+        _as_nonempty_string(
+            python_api.get(key),
+            where=f"python_api.{key}",
+        )
 
     object_groups = {}
     for key in ("examples", "glossary", "failures"):
@@ -961,6 +1039,7 @@ def _validate_content(content: Any) -> dict[str, Any]:
     source_paths = []
     for lane in lanes:
         source_paths.append(lane.get("source"))
+    source_paths.append(python_api.get("source"))
     for group in (examples, glossary, failures):
         for item in group:
             source_paths.append(item.get("source"))
@@ -1032,7 +1111,11 @@ def _build_bundle(
         "troubleshooting.html": _render_troubleshooting(content).encode("utf-8"),
         "search-index.json": _json_bytes(_search_index(content, tools, schemas)),
     }
-    source_files = [manifest_path, content_path]
+    source_files = [
+        manifest_path,
+        content_path,
+        REPO_ROOT / content["python_api"]["source"],
+    ]
     for asset_name in ("styles.css", "docs.js"):
         source = DEFAULT_ASSETS / asset_name
         if not source.is_file():

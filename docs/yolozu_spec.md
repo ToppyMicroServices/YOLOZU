@@ -45,6 +45,7 @@ manifest entry does not promote opt-in subcommands or flags.
 | TTA | Experimental and opt-in |
 | TTT | Research and opt-in |
 | CLI convenience | Mixed by capability; entrypoint-level maturity is not transitive to subcommands or flags |
+| Searchable web onboarding | Stable generated documentation; linked commands retain their narrower capability maturity |
 
 ### 1) Dataset I/O (YOLO format)
 
@@ -170,6 +171,19 @@ Canonical CLI:
 Legacy compatibility wrapper (source checkout only):
 
 - `python3 tools/yolozu.py ...`
+
+### 10) Searchable web onboarding
+
+- The generated web docs at <https://www.toppymicros.com/yolozu/docs/> provide a
+  self-contained strict CLI path and the stable typed `yolozu.api` example.
+- `doctor --proof` creates the tutorial dataset and predictions before either
+  interface consumes them; the tutorial does not depend on repository fixtures.
+- Real COCO metrics are the canonical `yolozu[coco]` path. The explicit
+  dependency-free `--dry-run` fallback validates and converts inputs but does
+  not produce metric evidence.
+- `tools/manifest.json`, `docs/schemas/`, `docs/web_docs_content.json`, and
+  `docs/python_api.md` remain the SSOT inputs. Generated drift, links, source
+  hashes, and an outside-checkout candidate-wheel journey are tested.
 
 ## Interface Contracts
 

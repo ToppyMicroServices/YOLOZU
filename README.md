@@ -64,7 +64,7 @@ flowchart LR
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): real eager/TorchScript outputs evaluated through one pinned lane
-- [Searchable web docs](https://www.toppymicros.com/yolozu/docs/): 30-minute path, generated commands and schemas, examples, glossary, and failure guide
+- [Searchable web docs](https://www.toppymicros.com/yolozu/docs/): self-contained strict 30-minute path, typed Python API, generated commands and schemas, examples, glossary, and failure guide
 
 ## Primary Focus
 

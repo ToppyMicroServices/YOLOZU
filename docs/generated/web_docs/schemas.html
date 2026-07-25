@@ -84,12 +84,12 @@
 
 <article class="card" id="schema-coco-eval-report-schema"
   data-schema-path="docs/schemas/coco_eval_report.schema.json" data-search-card
-  data-search-text="YOLOZU COCO Eval Report Report payload emitted by tools/eval_coco.py (supports dry-run mode). docs/schemas/coco_eval_report.schema.json bbox_format, counts, dataset, dry_run, max_images, metrics, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, timestamp, warnings bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings">
+  data-search-text="YOLOZU COCO Eval Report Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed. docs/schemas/coco_eval_report.schema.json bbox_format, counts, dataset, dry_run, error, max_images, metrics, normalization, ok, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, status, timestamp, validation, warnings bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings">
   <h3>YOLOZU COCO Eval Report</h3>
-  <p>Report payload emitted by tools/eval_coco.py (supports dry-run mode).</p>
+  <p>Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed.</p>
   <dl class="kv">
     
-    <dt>Root properties</dt><dd><code>bbox_format, counts, dataset, dry_run, max_images, metrics, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, timestamp, warnings</code></dd>
+    <dt>Root properties</dt><dd><code>bbox_format, counts, dataset, dry_run, error, max_images, metrics, normalization, ok, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, status, timestamp, validation, warnings</code></dd>
     <dt>Root required</dt><dd><code>bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/coco_eval_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>

@@ -178,6 +178,8 @@ deep profile 的额外产出：
 
 文档入口：[`docs/README.md`](docs/README.md)
 
+可搜索的 web docs：<https://www.toppymicros.com/yolozu/docs/>（先生成输入的 strict 30 分钟路径、typed Python API、自动生成的 command/schema reference）
+
 AI-friendly 工具注册表（source of truth）：[`tools/manifest.json`](tools/manifest.json)
 
 工具列表与参数示例：[`docs/tools_index.md`](docs/tools_index.md)

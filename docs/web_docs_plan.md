@@ -9,7 +9,7 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 
 | Section | Purpose | Source of truth |
 |---|---|---|
-| Start here | Install, `doctor --proof`, demo, validate, eval | `README.md`, `docs/install.md`, `docs/cpu_only_dod.md` |
+| Start here | Isolated install, `doctor --proof`, strict validation, real eval | `README.md`, `docs/install.md`, `docs/cpu_only_dod.md`, `docs/python_api.md` |
 | Tutorials | 30-minute and 2-hour guided flows | `docs/README.md`, `docs/evaluation_protocol_template.md` |
 | Command reference | Generated CLI/tool reference | `tools/manifest.json`, `docs/tools_index.md` |
 | Schema browser | Predictions, dataset/eval, training, SynthGen, research schemas | `docs/schema_governance.md`, `docs/schemas/` |
@@ -22,11 +22,16 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 
 ### 30-minute path
 
-1. Install and run `yolozu doctor --proof`.
-2. Run `yolozu demo instance-seg --progress`.
-3. Validate the demo predictions and dataset.
-4. Open the generated report and overlays.
-5. Read the report using the protocol and skip-reason checklist.
+1. Install `yolozu[coco]` in an isolated environment. A candidate wheel may be
+   substituted for the PyPI package, with `pycocotools` installed alongside it.
+2. Run `yolozu doctor --proof` to create the toy dataset and predictions used
+   by every later command.
+3. Strictly validate the generated dataset and predictions.
+4. Run real COCOeval through concise `eval-coco` flags. Use `--dry-run` only as
+   an explicit dependency-free validation/conversion fallback.
+5. Use the same artifacts through the stable `yolozu.api` surface when
+   embedding the evaluation in Python.
+6. Read the report using the protocol and skip-reason checklist.
 
 ### 2-hour path
 
@@ -63,13 +68,14 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 The bundle includes:
 
 1. a searchable hub that leads with "Evaluate existing predictions";
-2. the 30-minute and two-hour tutorial paths;
+2. the self-contained 30-minute and two-hour tutorial paths;
 3. a command reference generated from every `tools/manifest.json` entry;
 4. a schema browser generated from every `docs/schemas/*.json` file;
 5. a repository-backed example gallery and report-reading checklist;
 6. a curated glossary;
 7. an evidence-first failure guide; and
-8. a search index spanning commands, schemas, lanes, examples, terms, and
+8. a stable typed-Python example sourced from `docs/python_api.md`; and
+9. a search index spanning commands, schemas, lanes, examples, terms, and
    troubleshooting entries.
 
 Stable, Bridge, Benchmark, and Research cards use separate visual states.
@@ -91,8 +97,18 @@ CI uses a non-writing drift gate:
 
 ```bash
 python3 tools/generate_web_docs.py --check --json
-python3 -m unittest tests.test_web_docs_generation
+python3 -m unittest \
+  tests.test_web_docs_generation \
+  tests.test_web_docs_candidate_wheel
 ```
+
+The candidate-wheel journey builds the checked-out commit, installs that wheel
+in a nested environment, removes `PYTHONPATH`, verifies that `yolozu` imports
+from the installed wheel, and executes the tutorial from a directory outside
+the checkout. The nested environment deliberately reuses the CI runner's
+already-installed dependencies so the test remains offline; this isolates the
+YOLOZU package origin, not dependency resolution. Public fresh-install evidence
+is handled separately by `scripts/fresh_install_journey.sh`.
 
 `provenance.json` records SHA-256 hashes for every manifest, schema, curated
 content file, and copied example image used by the bundle. The generated bundle

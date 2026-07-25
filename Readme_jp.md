@@ -64,6 +64,7 @@ flowchart LR
 - [`docs/install.md`](docs/install.md): install、`doctor`、環境確認
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): Ultralytics、Detectron2、MMDetection、YOLOX から共通 report までの検査済み手順
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): eager / TorchScript の実出力を同じ評価経路で比較した再現可能な事例
+- [検索可能な web docs](https://www.toppymicros.com/yolozu/docs/): 入力を先に生成する strict 30分 path、typed Python API、生成済み command/schema reference
 
 ## Primary Focus
 

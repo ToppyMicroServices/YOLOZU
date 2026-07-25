@@ -9,9 +9,16 @@
   {
     "href": "start.html",
     "kind": "tutorial",
-    "search_text": "install doctor proof demo validate eval tutorial",
-    "summary": "CPU proof, visible demo, strict validation, and evaluation.",
+    "search_text": "install candidate wheel doctor proof validate eval coco tutorial",
+    "summary": "Self-contained proof, strict validation, real evaluation, and typed API.",
     "title": "30-minute path"
+  },
+  {
+    "href": "start.html#python-api-title",
+    "kind": "api",
+    "search_text": "python api evaluate_coco typed strict The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory.",
+    "summary": "The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory.",
+    "title": "Use the same strict lane from Python"
   },
   {
     "href": "start.html",
@@ -107,8 +114,8 @@
   {
     "href": "commands.html#tool-benchmark-model",
     "kind": "command",
-    "search_text": "benchmark_model Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. experimental tools/benchmark_model.py --model --data --imgsz --half --no-half --int8 --no-int8 --device --verbose --format --task --split --max-images --dry-run --strict --repro-policy --runtime-lock --run-id --output --history --predictions-output --eval-output --parity-output --batch --dynamic --no-dynamic --nms --no-nms --simplify --no-simplify --opset --workspace --fraction --latency-source --parity-reference-backend --iterations --warmup --sleep-s --torch-model --onnx-model --engine-model --torchscript-model --openvino-model --depth-mask --depth-align --depth-parity-mae-atol --depth-parity-rmse-atol --segmentation-parity-mismatch-atol --keypoints-parity-iou-thresh --keypoints-parity-score-atol --keypoints-parity-bbox-atol --keypoints-parity-kp-atol --pose-parity-rot-deg-atol --pose-parity-trans-atol --pose-parity-depth-atol --protocol",
-    "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
+    "search_text": "benchmark_model Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval/parity with task-specific metrics and provenance; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix. experimental tools/benchmark_model.py --model --data --imgsz --half --no-half --int8 --no-int8 --device --verbose --format --task --split --max-images --dry-run --strict --repro-policy --runtime-lock --run-id --output --history --predictions-output --eval-output --parity-output --batch --dynamic --no-dynamic --nms --no-nms --simplify --no-simplify --opset --workspace --fraction --latency-source --parity-reference-backend --classification-parity-score-atol --obb-parity-iou-thresh --obb-parity-score-atol --iterations --warmup --sleep-s --torch-model --onnx-model --engine-model --torchscript-model --openvino-model --depth-mask --depth-align --depth-parity-mae-atol --depth-parity-rmse-atol --segmentation-parity-mismatch-atol --keypoints-parity-iou-thresh --keypoints-parity-score-atol --keypoints-parity-bbox-atol --keypoints-parity-kp-atol --pose-parity-rot-deg-atol --pose-parity-trans-atol --pose-parity-depth-atol --protocol",
+    "summary": "Benchmark entrypoint with real torch/onnx/engine/torchscript and conditional OpenVINO detect orchestration when available; fail-closed rejection of detect artifact_eval; fail-closed, strict-JSON artifact-backed classification and OBB eval/parity with task-specific metrics and provenance; artifact-backed real eval/parity lanes for segmentation/keypoints/depth/pose6d on torch/onnx/engine/torchscript/openvino; task/source/format-aware flag and artifact interface contract validation; explicit task semantics, runtime/license boundary docs, stable artifacts, explicit skipped-format reporting, and a canonical support matrix.",
     "title": "benchmark_model"
   },
   {
@@ -205,8 +212,8 @@
   {
     "href": "commands.html#tool-convert-coco-instance-seg-predictions",
     "kind": "command",
-    "search_text": "convert_coco_instance_seg_predictions Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract. stable tools/convert_coco_instance_seg_predictions.py --predictions --instances-json --output --masks-dir --min-score --max-preds",
-    "summary": "Convert COCO instance segmentation predictions (polygons/RLE) into YOLOZU instance-seg PNG-mask contract.",
+    "search_text": "convert_coco_instance_seg_predictions Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract. stable tools/convert_coco_instance_seg_predictions.py --predictions --instances-json --output --masks-dir --min-score --max-preds",
+    "summary": "Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract.",
     "title": "convert_coco_instance_seg_predictions"
   },
   {
@@ -233,8 +240,8 @@
   {
     "href": "commands.html#tool-eval-coco",
     "kind": "command",
-    "search_text": "eval_coco Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate). stable tools/eval_coco.py --dataset --predictions --output --protocol --split --max-images --bbox-format --dry-run --classes --assume-class-id-is-category-id",
-    "summary": "Evaluate predictions on a YOLO-format dataset using COCOeval (or dry-run convert/validate).",
+    "search_text": "eval_coco Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with concise path aliases, explicit repair, and bounded-subset accounting; --dry-run does not require pycocotools. stable tools/eval_coco.py --dataset --predictions --output --protocol --split --max-images --bbox-format --dry-run --repair --classes --assume-class-id-is-category-id",
+    "summary": "Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with concise path aliases, explicit repair, and bounded-subset accounting; --dry-run does not require pycocotools.",
     "title": "eval_coco"
   },
   {
@@ -310,8 +317,8 @@
   {
     "href": "commands.html#tool-export-predictions",
     "kind": "command",
-    "search_text": "export_predictions Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
-    "summary": "Stable baseline in-repo predictions export entrypoint; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so the parent maturity does not promote those sub-lanes.",
+    "search_text": "export_predictions Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --allow-partial-checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-compile-fullgraph --no-torch-compile-fullgraph --torch-compile-dynamic --allow-compile-fallback --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
+    "summary": "Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes.",
     "title": "export_predictions"
   },
   {
@@ -415,8 +422,8 @@
   {
     "href": "commands.html#tool-export-trt",
     "kind": "command",
-    "search_text": "export_trt Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models. experimental tools/export_trt.py --config --checkpoint --device --image-size --onnx --onnx-meta --opset --input-name --dynamic-hw --engine --engine-meta --precision --min-shape --opt-shape --max-shape --workspace --timing-cache --trtexec --extra-args --skip-onnx --skip-engine --dry-run",
-    "summary": "Canonical PyTorch → ONNX → TensorRT export route for in-repo rtdetr_pose models.",
+    "search_text": "export_trt Fail-closed PyTorch → ONNX → TensorRT export route with shared RT-DETR checkpoint compatibility evidence. experimental tools/export_trt.py --config --checkpoint --allow-partial-checkpoint --device --image-size --onnx --onnx-meta --opset --input-name --dynamic-hw --engine --engine-meta --precision --min-shape --opt-shape --max-shape --workspace --timing-cache --trtexec --extra-args --skip-onnx --skip-engine --dry-run",
+    "summary": "Fail-closed PyTorch → ONNX → TensorRT export route with shared RT-DETR checkpoint compatibility evidence.",
     "title": "export_trt"
   },
   {
@@ -464,22 +471,29 @@
   {
     "href": "commands.html#tool-generate-integration-tool-reference",
     "kind": "command",
-    "search_text": "generate_integration_tool_reference Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode. stable tools/generate_integration_tool_reference.py --json-out --md-out --check",
-    "summary": "Generate MCP↔Actions contract reference from tool_runner + server wrappers and fail on drift in check mode.",
+    "search_text": "generate_integration_tool_reference Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode. stable tools/generate_integration_tool_reference.py --json-out --md-out --check",
+    "summary": "Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode.",
     "title": "generate_integration_tool_reference"
+  },
+  {
+    "href": "commands.html#tool-generate-runtime-parity-case-study",
+    "kind": "command",
+    "search_text": "generate_runtime_parity_case_study Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane. experimental tools/generate_runtime_parity_case_study.py --dataset --split --max-images --score-threshold --max-detections --seed --threads --weights --expected-weights-sha256 --allow-download --output-dir --baseline-dir --metric-atol",
+    "summary": "Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane.",
+    "title": "generate_runtime_parity_case_study"
   },
   {
     "href": "commands.html#tool-generate-smoke-assets",
     "kind": "command",
-    "search_text": "generate_smoke_assets Generate deterministic offline smoke assets under data/smoke from local data/coco128. stable tools/generate_smoke_assets.py ",
+    "search_text": "generate_smoke_assets Generate deterministic offline smoke assets under data/smoke from local data/coco128. stable tools/generate_smoke_assets.py --help",
     "summary": "Generate deterministic offline smoke assets under data/smoke from local data/coco128.",
     "title": "generate_smoke_assets"
   },
   {
     "href": "commands.html#tool-generate-web-docs",
     "kind": "command",
-    "search_text": "generate_web_docs Generate searchable onboarding web docs from the tool manifest, JSON Schemas, and curated repository sources. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json",
-    "summary": "Generate searchable onboarding web docs from the tool manifest, JSON Schemas, and curated repository sources.",
+    "search_text": "generate_web_docs Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json",
+    "summary": "Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance.",
     "title": "generate_web_docs"
   },
   {
@@ -625,15 +639,15 @@
   {
     "href": "commands.html#tool-release",
     "kind": "command",
-    "search_text": "release Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable release.sh --dry-run --versioning --output --allow-dirty --allow-non-main --skip-checks --skip-gh --skip-zenodo",
-    "summary": "Single-command release automation: auto versioning (SemVer X.Y.Z or CalVer YYYY.MM.DD.MICRO), tag push, GitHub release publish, and one release-event handoff to the PyPI and Zenodo workflows. The helper never dispatches manual_doi.yml a second time; that workflow serializes a version and skips an already-published manual version idempotently. The publish workflow validates package version, optional manual release_tag input, and CHANGELOG heading alignment before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+    "search_text": "release Single-command release automation: validate current metadata, atomically synchronize package version, dated CHANGELOG and CITATION metadata, and explicitly current-release-coupled source/packaged manifest examples; then auto-version, tag, publish a GitHub release, and hand off once to the PyPI and Zenodo workflows. Historical manifest examples require explicit evidence and are not auto-bumped. The publish workflow revalidates synchronized metadata before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable release.sh --dry-run --check --versioning --output --allow-dirty --allow-non-main --skip-checks --skip-gh --skip-zenodo",
+    "summary": "Single-command release automation: validate current metadata, atomically synchronize package version, dated CHANGELOG and CITATION metadata, and explicitly current-release-coupled source/packaged manifest examples; then auto-version, tag, publish a GitHub release, and hand off once to the PyPI and Zenodo workflows. Historical manifest examples require explicit evidence and are not auto-bumped. The publish workflow revalidates synchronized metadata before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
     "title": "release"
   },
   {
     "href": "commands.html#tool-release-tag",
     "kind": "command",
-    "search_text": "release_tag Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable tools/release_tag.py --version --tag-prefix --title --notes-file --release-state --push-tag --run-checks --allow-dirty --allow-non-main --dry-run --output",
-    "summary": "Release/tag operation helper for creating tags, optional push, and GitHub draft/published release creation with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
+    "search_text": "release_tag Release/tag operation helper that fails closed unless package version, requested tag, dated CHANGELOG heading, CITATION version/date, and source/packaged manifests agree; after validation it can create/push tags and create GitHub draft/published releases with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... stable tools/release_tag.py --version --tag-prefix --title --notes-file --release-state --push-tag --run-checks --allow-dirty --allow-non-main --dry-run --output",
+    "summary": "Release/tag operation helper that fails closed unless package version, requested tag, dated CHANGELOG heading, CITATION version/date, and source/packaged manifests agree; after validation it can create/push tags and create GitHub draft/published releases with report output. Downstream publish automation can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/....",
     "title": "release_tag"
   },
   {
@@ -660,15 +674,15 @@
   {
     "href": "commands.html#tool-rtdetr-pose-backend-suite",
     "kind": "command",
-    "search_text": "rtdetr_pose_backend_suite Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt). experimental tools/rtdetr_pose_backend_suite.py --config --checkpoint --device --image-size --batch --samples --seed --onnx --engine --input-name --onnx-meta --engine-meta --embed-meta --trtexec --backends --reference --score-atol --bbox-atol --warmup --iterations --output --dry-run",
-    "summary": "Backend parity + benchmark suite for rtdetr_pose (torch vs onnxruntime vs tensorrt).",
+    "search_text": "rtdetr_pose_backend_suite Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence. experimental tools/rtdetr_pose_backend_suite.py --config --checkpoint --allow-partial-checkpoint --device --image-size --batch --samples --seed --onnx --engine --input-name --onnx-meta --engine-meta --embed-meta --trtexec --backends --reference --score-atol --bbox-atol --warmup --iterations --output --dry-run",
+    "summary": "Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence.",
     "title": "rtdetr_pose_backend_suite"
   },
   {
     "href": "commands.html#tool-rtdetr-pose-train-continual",
     "kind": "command",
-    "search_text": "rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract). research rtdetr_pose/tools/train_continual.py --config --run-dir --replay-size --replay-fraction --replay-per-task-cap",
-    "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 contract).",
+    "search_text": "rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract). research rtdetr_pose/tools/train_continual.py --config --run-dir --replay-size --replay-fraction --replay-per-task-cap",
+    "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract).",
     "title": "rtdetr_pose_train_continual"
   },
   {
@@ -800,8 +814,8 @@
   {
     "href": "commands.html#tool-validate-run-meta",
     "kind": "command",
-    "search_text": "validate_run_meta Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command). stable tools/validate_run_meta.py  --allow-missing-git-sha",
-    "summary": "Validate run_meta.json contract (git SHA, dependency lock, preprocess, hardware/runtime, command).",
+    "search_text": "validate_run_meta Validate the run_meta.json interface contract (git SHA, dependency lock, preprocess, hardware/runtime, command). stable tools/validate_run_meta.py  --allow-missing-git-sha",
+    "summary": "Validate the run_meta.json interface contract (git SHA, dependency lock, preprocess, hardware/runtime, command).",
     "title": "validate_run_meta"
   },
   {
@@ -842,7 +856,7 @@
   {
     "href": "commands.html#tool-yolozu",
     "kind": "command",
-    "search_text": "yolozu Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. stable yolozu/cli.py --allow-gpu --allow-network --allow-rgb-masks --allow-undeclared-effects --allow-unknown-flags --allow-unsafe-paths --allow-write-root --alpha --backend --batch --boxes-scale --cache --cache-dir --calibration-bins --calibration-iou --checkpoint --class-balanced-beta --classes --combined-output --config --contract --dataset --dataset-root --dataset-from --device --devices --diag-iou --dry-run --extra-records-json --external-backend --explain --resume-from --tao-task --fit-iou --fit-max-detections --fit-temperature --focal-gamma --force --force-import-overwrite --from --gamma --glob --goal --head-fraction --help --html --image-size --images-dir --input-dir --input-name --instances-json --iou-threshold --json --keep-per-image --kp-line --kp-radius --ldam-margin --logit-adjustment-tau --lora-alpha --lora-dropout --lora-freeze-base --lora-r --lora-target --lora-train-bias --lort-tau --loss-plugin --lr-scheduler --max-detections --max-images --max-overlays --max-runs --max-score --medium-fraction --method --metric --metric-key --metric-plugin --min-score --model --no-lora-freeze-base --no-ttt-rollback-on-stop --no-ttt-sar-adaptive --no-ttt-stop-on-non-finite --notes --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --output --output-report --proof --proof-dir --overlay-alpha --overlay-max-size --overlay-sort --overlays-dir --openvino-model --parity-reference-backend --pck-threshold --per-image-limit --pred-root --predictions --progress --python --rebalance-sampler --records-json --replay-fraction --replay-per-task-cap --replay-size --resolved-config-out --resume --run-dir --runtime-output-json --run-json --score-threshold --seed --split --stage1-epochs --stage2-epochs --stats-in --stats-out --strength --success-rot-deg --success-trans --tag --task --tau --temperature --temperature-grid --title --topk --train-script --tta --val-records-json --tta-flip-prob --tta-keypoint-swap-pairs --tta-log-out --tta-mode --tta-model-merge-iou --tta-norm-only --tta-seed --ttt --ttt-aux-depth-weight --ttt-aux-keypoints-weight --ttt-aux-pose-weight --ttt-aux-seg-weight --ttt-aux-temperature --ttt-batch-size --ttt-cotta-aggregation --ttt-cotta-augmentations --ttt-cotta-ema-momentum --ttt-cotta-restore-interval --ttt-cotta-restore-prob --ttt-eata-anchor-lambda --ttt-eata-conf-min --ttt-eata-entropy-max --ttt-eata-entropy-min --ttt-eata-max-skip-streak --ttt-eata-min-valid-dets --ttt-eata-selected-ratio-min --ttt-exclude --ttt-include --ttt-lite-entropy-weight --ttt-lite-minmax --ttt-lite-non-torch --ttt-lite-temperature --ttt-log-out --ttt-lr --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-max-loss-increase --ttt-max-loss-ratio --ttt-max-total-update-norm --ttt-max-update-norm --ttt-method --ttt-patch-size --ttt-preset --ttt-reset --ttt-rollback-on-stop --ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sar-rho --ttt-sdft-task --ttt-seed --ttt-steps --ttt-stop-on-non-finite --ttt-update-filter --weights --preset --spec --registry-out --execute --stop-on-failure --task-family --train-opt --out-dir --image-mode",
+    "search_text": "yolozu Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. stable yolozu/cli.py --allow-compile-fallback --allow-gpu --allow-network --allow-rgb-masks --allow-undeclared-effects --allow-unknown-flags --allow-unsafe-paths --allow-write-root --alpha --backend --batch --boxes-scale --cache --cache-dir --calibration-bins --calibration-iou --checkpoint --class-balanced-beta --classes --combined-output --config --contract --dataset --dataset-root --dataset-from --device --devices --diag-iou --dry-run --extra-records-json --external-backend --explain --resume-from --tao-task --fit-iou --fit-max-detections --fit-temperature --focal-gamma --force --force-import-overwrite --from --gamma --glob --goal --head-fraction --help --html --image-size --images-dir --infer-batch-size --input-dir --input-name --instances-json --iou-threshold --json --keep-per-image --kp-line --kp-radius --ldam-margin --logit-adjustment-tau --lora-alpha --lora-dropout --lora-freeze-base --lora-r --lora-target --lora-train-bias --lort-tau --loss-plugin --lr-scheduler --max-detections --max-images --max-overlays --max-runs --max-score --medium-fraction --method --metric --metric-key --metric-plugin --min-score --model --no-lora-freeze-base --no-torch-channels-last --no-torch-compile-fullgraph --no-torch-inference-mode --no-ttt-rollback-on-stop --no-ttt-sar-adaptive --no-ttt-stop-on-non-finite --notes --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --output --output-report --proof --proof-dir --overlay-alpha --overlay-max-size --overlay-sort --overlays-dir --openvino-model --parity-reference-backend --classification-parity-score-atol --obb-parity-iou-thresh --obb-parity-score-atol --pck-threshold --per-image-limit --pred-root --predictions --progress --python --rebalance-sampler --records-json --replay-fraction --replay-per-task-cap --replay-size --resolved-config-out --resume --run-dir --runtime-output-json --run-json --score-threshold --seed --split --stage1-epochs --stage2-epochs --stats-in --stats-out --strength --success-rot-deg --success-trans --tag --task --tau --temperature --temperature-grid --torch-amp --torch-channels-last --torch-compile --torch-compile-backend --torch-compile-fullgraph --torch-compile-dynamic --torch-compile-mode --torch-inference-mode --title --topk --train-script --tta --val-records-json --tta-flip-prob --tta-keypoint-swap-pairs --tta-log-out --tta-mode --tta-model-merge-iou --tta-norm-only --tta-seed --ttt --ttt-aux-depth-weight --ttt-aux-keypoints-weight --ttt-aux-pose-weight --ttt-aux-seg-weight --ttt-aux-temperature --ttt-batch-size --ttt-cotta-aggregation --ttt-cotta-augmentations --ttt-cotta-ema-momentum --ttt-cotta-restore-interval --ttt-cotta-restore-prob --ttt-eata-anchor-lambda --ttt-eata-conf-min --ttt-eata-entropy-max --ttt-eata-entropy-min --ttt-eata-max-skip-streak --ttt-eata-min-valid-dets --ttt-eata-selected-ratio-min --ttt-exclude --ttt-include --ttt-lite-entropy-weight --ttt-lite-minmax --ttt-lite-non-torch --ttt-lite-temperature --ttt-log-out --ttt-lr --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-max-loss-increase --ttt-max-loss-ratio --ttt-max-total-update-norm --ttt-max-update-norm --ttt-method --ttt-patch-size --ttt-preset --ttt-reset --ttt-rollback-on-stop --ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sar-rho --ttt-sdft-task --ttt-seed --ttt-steps --ttt-stop-on-non-finite --ttt-update-filter --weights --preset --spec --registry-out --execute --stop-on-failure --task-family --train-opt --out-dir --image-mode",
     "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
     "title": "yolozu"
   },
@@ -863,8 +877,8 @@
   {
     "href": "schemas.html#schema-coco-eval-report-schema",
     "kind": "schema",
-    "search_text": "YOLOZU COCO Eval Report Report payload emitted by tools/eval_coco.py (supports dry-run mode). bbox_format counts dataset dry_run max_images metrics predictions protocol protocol_id report_schema_version split split_requested stats timestamp warnings docs/schemas/coco_eval_report.schema.json",
-    "summary": "Report payload emitted by tools/eval_coco.py (supports dry-run mode).",
+    "search_text": "YOLOZU COCO Eval Report Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed. bbox_format counts dataset dry_run error max_images metrics normalization ok predictions protocol protocol_id report_schema_version split split_requested stats status timestamp validation warnings docs/schemas/coco_eval_report.schema.json",
+    "summary": "Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed.",
     "title": "YOLOZU COCO Eval Report"
   },
   {

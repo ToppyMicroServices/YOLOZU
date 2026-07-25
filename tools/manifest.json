@@ -9564,6 +9564,8 @@
     },
     {
       "docs": [
+        "docs/python_api.md",
+        "docs/web_docs_content.json",
         "docs/web_docs_plan.md",
         "docs/generated/web_docs/index.html"
       ],
@@ -9636,7 +9638,7 @@
       "outputs": [
         {
           "default": "docs/generated/web_docs",
-          "description": "Generated static onboarding web-docs bundle.",
+          "description": "Generated static onboarding web-docs bundle with source hashes and generated-file inventory in provenance.json.",
           "kind": "dir",
           "name": "web_docs_bundle"
         },
@@ -9656,7 +9658,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Generate searchable onboarding web docs from the tool manifest, JSON Schemas, and curated repository sources.",
+      "summary": "Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance.",
       "tags": [
         "docs",
         "generated-docs",

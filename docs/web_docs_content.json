@@ -40,47 +40,47 @@
     "thirty_minute": [
       {
         "minutes": "0–5",
-        "title": "Install and prove the stable lane",
+        "title": "Install the evaluation extra in an isolated environment",
         "commands": [
-          "python3 -m pip install -U yolozu",
-          "yolozu doctor --proof --output reports/dod_cpu_smoke/doctor.json --proof-dir reports/dod_cpu_smoke/doctor_proof"
+          "python3 -m venv .venv",
+          ". .venv/bin/activate",
+          "python -m pip install \"yolozu[coco]\"",
+          "mkdir -p yolozu-quickstart && cd yolozu-quickstart"
         ],
-        "expected": "A CPU-only proof report, known predictions, toy dataset, and pinned mAP result under reports/dod_cpu_smoke/doctor_proof/."
+        "expected": "The active environment contains YOLOZU and pycocotools. For a candidate build, install the candidate wheel plus pycocotools instead; the remaining commands are unchanged and run outside the source checkout."
       },
       {
         "minutes": "5–10",
-        "title": "Create visible evaluation evidence",
+        "title": "Create every tutorial input locally",
         "commands": [
-          "yolozu demo instance-seg --inference none --run-dir reports/dod_cpu_smoke/demo_instance_seg --progress"
+          "yolozu doctor --proof --output reports/quickstart/doctor.json --proof-dir reports/quickstart/proof"
         ],
-        "expected": "instance_seg_demo_report.json and PNG overlays under reports/dod_cpu_smoke/demo_instance_seg/."
+        "expected": "The proof writes reports/quickstart/proof/toy_dataset, known_predictions.json, eval_report.json, and proof_report.json without downloading a model or dataset."
       },
       {
         "minutes": "10–18",
-        "title": "Resolve the proof artifacts",
+        "title": "Check both interface boundaries explicitly",
         "commands": [
-          "PROOF=reports/dod_cpu_smoke/doctor_proof/proof_report.json",
-          "DATASET=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"artifacts\"][\"dataset\"])' \"$PROOF\")",
-          "PREDICTIONS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"artifacts\"][\"predictions\"])' \"$PROOF\")"
+          "yolozu validate dataset reports/quickstart/proof/toy_dataset --split val2017 --strict",
+          "yolozu validate predictions reports/quickstart/proof/known_predictions.json --strict"
         ],
-        "expected": "DATASET and PREDICTIONS point to the files recorded by the proof report; no path is guessed."
+        "expected": "Both validators exit successfully. These paths are outputs of the preceding proof command, not repository fixtures or guessed user paths."
       },
       {
         "minutes": "18–23",
-        "title": "Validate both sides of the interface",
+        "title": "Run real COCOeval with concise flags",
         "commands": [
-          "yolozu validate dataset \"$DATASET\" --split val2017 --strict",
-          "yolozu validate predictions \"$PREDICTIONS\" --strict"
+          "yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 -o reports/quickstart/eval_coco.json"
         ],
-        "expected": "Both strict validators exit successfully before evaluation."
+        "expected": "eval_coco.json has status ok, dry_run false, validation mode strict, repair disabled, and real COCO metrics. Evaluation is strict by default."
       },
       {
         "minutes": "23–27",
-        "title": "Run the pinned evaluation",
+        "title": "Inspect the real report",
         "commands": [
-          "yolozu eval-coco --dataset \"$DATASET\" --split val2017 --predictions \"$PREDICTIONS\" --dry-run --output reports/dod_cpu_smoke/eval_coco_dry_run.json"
+          "python -m json.tool reports/quickstart/eval_coco.json"
         ],
-        "expected": "A checked detection evaluation report at reports/dod_cpu_smoke/eval_coco_dry_run.json."
+        "expected": "Confirm status ok, dry_run false, validation mode strict, repair disabled, the evaluated image/detection counts, and non-null COCO metrics."
       },
       {
         "minutes": "27–30",
@@ -89,6 +89,11 @@
         "expected": "Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports."
       }
     ],
+    "dry_run_fallback": {
+      "title": "Core-install fallback (not real evaluation)",
+      "command": "yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 --dry-run -o reports/quickstart/eval_coco_dry_run.json",
+      "description": "Use this only when pycocotools is intentionally unavailable. It performs strict validation and conversion, writes dry_run true, and leaves all metrics null; do not present it as evaluation evidence."
+    },
     "two_hour": [
       "Complete the 30-minute stable path.",
       "Export or import predictions from an external stack through a checked bridge.",
@@ -97,6 +102,13 @@
       "Fill out docs/evaluation_protocol_template.md for the run.",
       "Choose stable evaluation, backend parity, or a Research lane from evidence—not from a missing feature assumption."
     ]
+  },
+  "python_api": {
+    "title": "Use the same strict lane from Python",
+    "description": "The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory.",
+    "source": "docs/python_api.md",
+    "example": "from pathlib import Path\n\nfrom yolozu.api import evaluate_coco\n\nworkspace = Path.cwd().resolve()\nresult = evaluate_coco(\n    dataset=workspace / \"reports/quickstart/proof/toy_dataset\",\n    predictions=workspace / \"reports/quickstart/proof/known_predictions.json\",\n    split=\"val2017\",\n)\nprint(result.to_dict()[\"metrics\"])",
+    "expected": "The call uses the inputs created by doctor --proof, validates strictly by default, and returns a CocoEvaluationResult. Pass dry_run=True only when metrics are intentionally unavailable."
   },
   "examples": [
     {
