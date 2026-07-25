@@ -122,7 +122,7 @@ jobs:
     name: manual build (main.tex only)
     needs:
       - changes
-    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci == 'true' }}
+    if: ${{ needs.changes.outputs.manual_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
