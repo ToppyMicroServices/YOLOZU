@@ -6,13 +6,13 @@ from typing import Any
 
 DETECTOR_LOGITS_SEMANTICS: dict[str, Any] = {
     "class_axis": "last",
+    "foreground_selection": "none",
     "query_semantics": (
-        "entropy is reduced over every non-class element, including detector queries"
+        "entropy is reduced over every non-class element, including detector queries; "
+        "cross-view and cross-step query correspondence is not established"
     ),
-    "no_object_semantics": (
-        "the generic runner does not remove a detector no-object class; when the "
-        "model exposes one in the final class axis, it participates in the loss"
-    ),
+    "query_correspondence": "not_established",
+    "no_object_semantics": ("included_if_present_in_final_axis_otherwise_unidentified"),
     "scope": "model_output_logits_or_pred_logits",
 }
 
@@ -20,6 +20,9 @@ DETECTOR_LOGITS_SEMANTICS: dict[str, Any] = {
 TTT_METHOD_PROFILES: dict[str, dict[str, Any]] = {
     "tent": {
         "profile_id": "yolozu_detector_entropy_v2",
+        "runnable": True,
+        "maturity": "research",
+        "fidelity": "detector_adapted_not_reference_faithful",
         "implementation_class": "detector_adapted",
         "reference_faithful": False,
         "efficacy": "not_established",
@@ -34,7 +37,11 @@ TTT_METHOD_PROFILES: dict[str, dict[str, Any]] = {
         ),
     },
     "mim": {
-        "profile_id": "yolozu_mim_hook_conditional_v1",
+        "profile_id": "yolozu_structured_mim_v1",
+        "runnable": True,
+        "runtime_preconditions": ["compatible_checkpoint", "structured_mim_model_hook"],
+        "maturity": "research",
+        "fidelity": "model_hook_conditional_not_reference_faithful",
         "implementation_class": "conditional_model_hook",
         "reference_faithful": False,
         "efficacy": "not_established",
@@ -50,18 +57,25 @@ TTT_METHOD_PROFILES: dict[str, dict[str, Any]] = {
     },
     "cotta": {
         "profile_id": "yolozu_phase1_variant",
+        "runnable": True,
+        "maturity": "research",
+        "fidelity": "not_reference_faithful",
         "implementation_class": "research_variant",
         "reference_faithful": False,
         "efficacy": "not_established",
         "loss": {
             "primary": "augmented_detector_logit_entropy",
             "diagnostic": "ema_teacher_consistency_mse",
+            "augmented_view_query_correspondence": "not_established",
             "detector_logits": deepcopy(DETECTOR_LOGITS_SEMANTICS),
         },
         "notes": "Phase-1 YOLOZU variant; not a reference-faithful CoTTA implementation.",
     },
     "eata": {
         "profile_id": "yolozu_phase1_variant",
+        "runnable": True,
+        "maturity": "research",
+        "fidelity": "not_reference_faithful",
         "implementation_class": "research_variant",
         "reference_faithful": False,
         "efficacy": "not_established",
@@ -74,6 +88,9 @@ TTT_METHOD_PROFILES: dict[str, dict[str, Any]] = {
     },
     "sar": {
         "profile_id": "yolozu_phase1_variant",
+        "runnable": True,
+        "maturity": "research",
+        "fidelity": "not_reference_faithful",
         "implementation_class": "research_variant",
         "reference_faithful": False,
         "efficacy": "not_established",
@@ -94,4 +111,6 @@ def get_ttt_method_profile(method: str) -> dict[str, Any]:
         return deepcopy(TTT_METHOD_PROFILES[key])
     except KeyError as exc:
         choices = ", ".join(sorted(TTT_METHOD_PROFILES))
-        raise ValueError(f"unknown TTT method profile {method!r}; expected one of: {choices}") from exc
+        raise ValueError(
+            f"unknown TTT method profile {method!r}; expected one of: {choices}"
+        ) from exc

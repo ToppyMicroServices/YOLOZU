@@ -53,20 +53,17 @@ def _extract_outputs(output: Any) -> dict[str, Any]:
 
 
 def _deterministic_weak_photometric_view(batch: Any) -> Any:
-    """Return a shape-preserving weak view without RNG or cross-step state."""
+    """Return a shape-preserving image-tensor view without RNG or state."""
 
     _ensure_torch()
-    if isinstance(batch, torch.Tensor):
-        if not bool(batch.is_floating_point()):
-            return batch
-        return (batch * 0.98) + 0.01
-    if isinstance(batch, dict):
-        return {key: _deterministic_weak_photometric_view(value) for key, value in batch.items()}
-    if isinstance(batch, tuple):
-        return tuple(_deterministic_weak_photometric_view(value) for value in batch)
-    if isinstance(batch, list):
-        return [_deterministic_weak_photometric_view(value) for value in batch]
-    return batch
+    if not isinstance(batch, torch.Tensor):
+        raise TypeError(
+            "Tent auxiliary consistency requires the adapter image-tensor batch "
+            "contract; structured batches are rejected to avoid perturbing labels"
+        )
+    if not bool(batch.is_floating_point()):
+        raise TypeError("Tent auxiliary consistency requires a floating image tensor")
+    return (batch * 0.98) + 0.01
 
 
 def _entropy(logits: "torch.Tensor") -> "torch.Tensor":
@@ -192,8 +189,12 @@ class TentRunner(TTARunner):
             with torch.no_grad():
                 teacher_outputs = _extract_outputs(self.model(batch))
             student_batch = _deterministic_weak_photometric_view(batch)
-            if isinstance(batch, torch.Tensor) and isinstance(student_batch, torch.Tensor):
-                view_delta = float((student_batch.detach() - batch.detach()).abs().mean().cpu().item())
+            if isinstance(batch, torch.Tensor) and isinstance(
+                student_batch, torch.Tensor
+            ):
+                view_delta = float(
+                    (student_batch.detach() - batch.detach()).abs().mean().cpu().item()
+                )
 
         self.model.train()
         output = self.model(student_batch)
@@ -223,7 +224,9 @@ class TentRunner(TTARunner):
         grad_norm_clipped = grad_norm
         if self.config.max_grad_norm is not None:
             try:
-                torch.nn.utils.clip_grad_norm_(self.params, float(self.config.max_grad_norm))
+                torch.nn.utils.clip_grad_norm_(
+                    self.params, float(self.config.max_grad_norm)
+                )
             except Exception:  # pragma: no cover
                 pass
             grad_norm_clipped = _global_grad_norm(self.params)
