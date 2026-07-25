@@ -8,8 +8,10 @@ import json
 import re
 import shutil
 import sys
-from pathlib import Path
+import tempfile
+from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -17,8 +19,9 @@ DEFAULT_MANIFEST = REPO_ROOT / "tools" / "manifest.json"
 DEFAULT_SCHEMAS = REPO_ROOT / "docs" / "schemas"
 DEFAULT_CONTENT = REPO_ROOT / "docs" / "web_docs_content.json"
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "generated" / "web_docs"
-DEFAULT_ASSETS = REPO_ROOT / "docs" / "web_docs_assets"
 LANE_IDS = ("stable", "bridge", "benchmark", "research")
+GENERATOR_PATH = "tools/generate_web_docs.py"
+SAFE_IMAGE_SUFFIXES = {".jpeg", ".jpg", ".png", ".webp"}
 PAGE_NAV = (
     ("index", "Overview", "index.html"),
     ("start", "30-minute path", "start.html"),
@@ -40,22 +43,25 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--manifest",
         default=str(DEFAULT_MANIFEST),
-        help="Source tools manifest JSON.",
+        help="Repository-local source tools manifest JSON.",
     )
     parser.add_argument(
         "--schemas",
         default=str(DEFAULT_SCHEMAS),
-        help="Directory containing source JSON Schemas.",
+        help="Repository-local directory containing source JSON Schemas.",
     )
     parser.add_argument(
         "--content",
         default=str(DEFAULT_CONTENT),
-        help="Curated web-docs content JSON.",
+        help="Repository-local curated web-docs content JSON.",
     )
     parser.add_argument(
         "--output",
         default=str(DEFAULT_OUTPUT),
-        help="Generated static-site output directory.",
+        help=(
+            "Generated static-site output directory. Existing non-empty output "
+            "must be wholly owned by this generator's provenance."
+        ),
     )
     parser.add_argument(
         "--check",
@@ -112,17 +118,123 @@ def _as_string_list(value: Any, *, where: str) -> list[str]:
     ]
 
 
+def _contains_control(value: str) -> bool:
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+
+
+def _repo_relative_path(value: Any, *, where: str, must_exist: bool = True) -> Path:
+    raw = _as_nonempty_string(value, where=where)
+    if (
+        _contains_control(raw)
+        or "\\" in raw
+        or raw.startswith("/")
+        or re.match(r"^[A-Za-z]:", raw)
+    ):
+        raise SystemExit(f"{where} must be a repository-relative POSIX path")
+    pure = PurePosixPath(raw)
+    if any(part in {"", ".", ".."} for part in pure.parts):
+        raise SystemExit(f"{where} must not contain empty, dot, or parent segments")
+    candidate = REPO_ROOT.joinpath(*pure.parts)
+    try:
+        resolved = candidate.resolve(strict=must_exist)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"{where} not found in repository: {raw}") from exc
+    try:
+        resolved.relative_to(REPO_ROOT)
+    except ValueError as exc:
+        raise SystemExit(
+            f"{where} must stay inside the repository: {raw}"
+        ) from exc
+    if must_exist and not resolved.is_file():
+        raise SystemExit(f"{where} must be a repository file: {raw}")
+    return resolved
+
+
+def _repo_input_path(path: Path, *, where: str, kind: str) -> Path:
+    if path.is_symlink():
+        raise SystemExit(f"{where} must not be a symlink")
+    try:
+        resolved = path.resolve(strict=True)
+        resolved.relative_to(REPO_ROOT)
+    except (FileNotFoundError, ValueError) as exc:
+        raise SystemExit(f"{where} must resolve inside the repository") from exc
+    if kind == "file" and not resolved.is_file():
+        raise SystemExit(f"{where} must be a repository file")
+    if kind == "dir" and not resolved.is_dir():
+        raise SystemExit(f"{where} must be a repository directory")
+    return resolved
+
+
+def _safe_href(
+    value: Any,
+    *,
+    where: str,
+    https_only: bool = False,
+) -> str:
+    raw = _as_nonempty_string(value, where=where)
+    decoded = unquote(raw)
+    if (
+        _contains_control(raw)
+        or _contains_control(decoded)
+        or "\\" in raw
+        or "\\" in decoded
+        or raw.startswith("//")
+        or decoded.startswith("//")
+    ):
+        raise SystemExit(f"{where} contains an unsafe URL")
+    parsed = urlsplit(raw)
+    path_parts = PurePosixPath(unquote(parsed.path)).parts
+    if any(part in {"..", "."} for part in path_parts):
+        raise SystemExit(f"{where} must not contain dot or parent path segments")
+    if parsed.scheme or parsed.netloc:
+        if (
+            parsed.scheme.lower() != "https"
+            or not parsed.netloc
+            or parsed.username is not None
+            or parsed.password is not None
+        ):
+            raise SystemExit(f"{where} must use an HTTPS URL without credentials")
+        return raw
+    if https_only:
+        raise SystemExit(f"{where} must be an absolute HTTPS URL")
+    first_part = path_parts[0] if path_parts else ""
+    if ":" in first_part:
+        raise SystemExit(f"{where} contains an unsafe URL scheme")
+    return raw
+
+
+def _image_output_name(value: Any, *, where: str) -> str:
+    raw = _as_nonempty_string(value, where=where)
+    pure = PurePosixPath(raw)
+    if (
+        _contains_control(raw)
+        or "\\" in raw
+        or len(pure.parts) != 1
+        or pure.name in {"", ".", ".."}
+        or pure.suffix.lower() not in SAFE_IMAGE_SUFFIXES
+    ):
+        raise SystemExit(
+            f"{where} must be a single safe image filename "
+            f"with one of {sorted(SAFE_IMAGE_SUFFIXES)!r}"
+        )
+    return raw
+
+
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return slug or "entry"
 
 
 def _source_url(content: dict[str, Any], rel: str) -> str:
-    base = _as_nonempty_string(
+    base = _safe_href(
         content["site"].get("repository_base"),
         where="site.repository_base",
+        https_only=True,
     )
-    return base.rstrip("/") + "/" + rel.lstrip("/")
+    safe_rel = _repo_relative_path(rel, where="source link").relative_to(
+        REPO_ROOT
+    ).as_posix()
+    return base.rstrip("/") + "/" + safe_rel
 
 
 def _source_link(content: dict[str, Any], rel: str, label: str = "Source") -> str:
@@ -164,6 +276,11 @@ def _layout(
     canonical_base = _as_nonempty_string(
         site.get("canonical_base"),
         where="site.canonical_base",
+    )
+    canonical_base = _safe_href(
+        canonical_base,
+        where="site.canonical_base",
+        https_only=True,
     ).rstrip("/")
     filename = "index.html" if page_id == "index" else f"{page_id}.html"
     canonical = f"{canonical_base}/" if page_id == "index" else f"{canonical_base}/{filename}"
@@ -531,6 +648,15 @@ def _render_commands(content: dict[str, Any], tools: list[dict[str, Any]]) -> st
 </section>
 <section class="section" aria-labelledby="commands-title">
   <h2 id="commands-title">Manifested tools</h2>
+  <aside class="callout" data-search-card
+    data-search-text="installed command repository checkout entrypoint yolozu yolozu-mcp tools scripts">
+    <h3>Installed commands and repository-only entrypoints</h3>
+    <p>Use <code>yolozu</code>, <code>yolozu-mcp</code>, and the documented
+    <code>yolozu.api</code> symbols from an installed package. Entries beginning
+    with <code>tools/</code> or <code>scripts/</code> are maintainer and
+    source-checkout commands unless their entry explicitly documents an installed
+    console command.</p>
+  </aside>
   <div class="tool-list">{''.join(cards)}</div>
   <p class="source-note">{_source_link(content, "tools/manifest.json", "Open the source manifest")}.</p>
 </section>
@@ -902,6 +1028,16 @@ def _validate_content(content: Any) -> dict[str, Any]:
         raise SystemExit("web docs content requires site object")
     for key in ("title", "description", "canonical_base", "repository_base"):
         _as_nonempty_string(site.get(key), where=f"site.{key}")
+    _safe_href(
+        site.get("canonical_base"),
+        where="site.canonical_base",
+        https_only=True,
+    )
+    _safe_href(
+        site.get("repository_base"),
+        where="site.repository_base",
+        https_only=True,
+    )
 
     lanes = _as_object_list(content.get("lanes"), where="lanes")
     lane_ids = [
@@ -914,8 +1050,16 @@ def _validate_content(content: Any) -> dict[str, Any]:
         lane_id = _as_nonempty_string(lane.get("id"), where="lanes[].id")
         for key in ("title", "summary", "start_page", "source"):
             _as_nonempty_string(lane.get(key), where=f"lanes[{lane_id}].{key}")
+        _safe_href(
+            lane.get("start_page"),
+            where=f"lanes[{lane_id}].start_page",
+        )
+        _repo_relative_path(
+            lane.get("source"),
+            where=f"lanes[{lane_id}].source",
+        )
         if lane_id == "research":
-            _as_nonempty_string(
+            _safe_href(
                 lane.get("stable_return"),
                 where="lanes[research].stable_return",
             )
@@ -966,6 +1110,10 @@ def _validate_content(content: Any) -> dict[str, Any]:
             python_api.get(key),
             where=f"python_api.{key}",
         )
+    _repo_relative_path(
+        python_api.get("source"),
+        where="python_api.source",
+    )
 
     object_groups = {}
     for key in ("examples", "glossary", "failures"):
@@ -990,6 +1138,10 @@ def _validate_content(content: Any) -> dict[str, Any]:
                 example.get(key),
                 where=f"examples[{example_id}].{key}",
             )
+        _repo_relative_path(
+            example.get("source"),
+            where=f"examples[{example_id}].source",
+        )
         lane = _as_nonempty_string(
             example.get("lane"),
             where=f"examples[{example_id}].lane",
@@ -1010,6 +1162,18 @@ def _validate_content(content: Any) -> dict[str, Any]:
             value = example.get(key)
             if value is not None:
                 _as_nonempty_string(value, where=f"examples[{example_id}].{key}")
+        for key in ("stable_artifact", "image_source"):
+            value = example.get(key)
+            if value is not None:
+                _repo_relative_path(
+                    value,
+                    where=f"examples[{example_id}].{key}",
+                )
+        if example.get("image_output") is not None:
+            _image_output_name(
+                example["image_output"],
+                where=f"examples[{example_id}].image_output",
+            )
         if bool(example.get("image_source")) != bool(example.get("image_output")):
             raise SystemExit(
                 f"example {example_id} must set both image_source and image_output"
@@ -1023,6 +1187,10 @@ def _validate_content(content: Any) -> dict[str, Any]:
                 entry.get(key),
                 where=f"glossary[{term}].{key}",
             )
+        _repo_relative_path(
+            entry.get("source"),
+            where=f"glossary[{term}].source",
+        )
 
     failures = object_groups["failures"]
     for failure in failures:
@@ -1035,22 +1203,10 @@ def _validate_content(content: Any) -> dict[str, Any]:
                 failure.get(key),
                 where=f"failures[{symptom}].{key}",
             )
-
-    source_paths = []
-    for lane in lanes:
-        source_paths.append(lane.get("source"))
-    source_paths.append(python_api.get("source"))
-    for group in (examples, glossary, failures):
-        for item in group:
-            source_paths.append(item.get("source"))
-            if item.get("stable_artifact"):
-                source_paths.append(item["stable_artifact"])
-            if item.get("image_source"):
-                source_paths.append(item["image_source"])
-    for rel in source_paths:
-        rel_path = _as_nonempty_string(rel, where="content source path")
-        if not (REPO_ROOT / rel_path).is_file():
-            raise SystemExit(f"web docs source file not found: {rel_path}")
+        _repo_relative_path(
+            failure.get("source"),
+            where=f"failures[{symptom}].source",
+        )
     return content
 
 
@@ -1091,37 +1247,102 @@ def _json_bytes(payload: Any) -> bytes:
     )
 
 
+def _text_bytes(value: str) -> bytes:
+    return (
+        "\n".join(line.rstrip() for line in value.splitlines()).strip() + "\n"
+    ).encode("utf-8")
+
+
+def _content_source_paths(content: dict[str, Any]) -> set[Path]:
+    relative_paths: set[str] = {
+        "docs/cpu_only_dod.md",
+        "docs/evaluation_protocol_template.md",
+        "docs/schema_governance.md",
+        "tools/manifest.json",
+    }
+    relative_paths.update(str(lane["source"]) for lane in content["lanes"])
+    relative_paths.add(str(content["python_api"]["source"]))
+    for group_name in ("examples", "glossary", "failures"):
+        for entry in content[group_name]:
+            relative_paths.add(str(entry["source"]))
+            for optional_key in ("stable_artifact", "image_source"):
+                if entry.get(optional_key):
+                    relative_paths.add(str(entry[optional_key]))
+    return {
+        _repo_relative_path(path, where="provenance source")
+        for path in relative_paths
+    }
+
+
+def _manifest_source_paths(tools: list[dict[str, Any]]) -> set[Path]:
+    paths: set[Path] = set()
+    for tool in tools:
+        tool_id = str(tool["id"])
+        paths.add(
+            _repo_relative_path(
+                tool["entrypoint"],
+                where=f"tools[{tool_id}].entrypoint",
+            )
+        )
+        for index, value in enumerate(tool.get("docs") or []):
+            path = _repo_relative_path(
+                value,
+                where=f"tools[{tool_id}].docs[{index}]",
+            )
+            if DEFAULT_OUTPUT not in path.parents:
+                paths.add(path)
+    return paths
+
+
 def _build_bundle(
     *,
     manifest_path: Path,
     schemas_dir: Path,
     content_path: Path,
 ) -> tuple[dict[str, bytes], dict[str, int]]:
+    manifest_path = _repo_input_path(
+        manifest_path,
+        where="--manifest",
+        kind="file",
+    )
+    schemas_dir = _repo_input_path(
+        schemas_dir,
+        where="--schemas",
+        kind="dir",
+    )
+    content_path = _repo_input_path(
+        content_path,
+        where="--content",
+        kind="file",
+    )
     content = _validate_content(_load_json(content_path, label="web docs content"))
     tools = _load_manifest(manifest_path)
     schemas = _load_schemas(schemas_dir)
 
     bundle: dict[str, bytes] = {
-        "index.html": _render_index(content).encode("utf-8"),
-        "start.html": _render_start(content).encode("utf-8"),
-        "commands.html": _render_commands(content, tools).encode("utf-8"),
-        "schemas.html": _render_schemas(content, schemas).encode("utf-8"),
-        "examples.html": _render_examples(content).encode("utf-8"),
-        "glossary.html": _render_glossary(content).encode("utf-8"),
-        "troubleshooting.html": _render_troubleshooting(content).encode("utf-8"),
+        "index.html": _text_bytes(_render_index(content)),
+        "start.html": _text_bytes(_render_start(content)),
+        "commands.html": _text_bytes(_render_commands(content, tools)),
+        "schemas.html": _text_bytes(_render_schemas(content, schemas)),
+        "examples.html": _text_bytes(_render_examples(content)),
+        "glossary.html": _text_bytes(_render_glossary(content)),
+        "troubleshooting.html": _text_bytes(_render_troubleshooting(content)),
         "search-index.json": _json_bytes(_search_index(content, tools, schemas)),
     }
-    source_files = [
+    source_files = {
         manifest_path,
         content_path,
-        REPO_ROOT / content["python_api"]["source"],
-    ]
+        _repo_relative_path(GENERATOR_PATH, where="generator"),
+        *_content_source_paths(content),
+        *_manifest_source_paths(tools),
+    }
     for asset_name in ("styles.css", "docs.js"):
-        source = DEFAULT_ASSETS / asset_name
-        if not source.is_file():
-            raise SystemExit(f"web docs asset not found: {_repo_rel(source)}")
+        source = _repo_relative_path(
+            f"docs/web_docs_assets/{asset_name}",
+            where="web docs asset",
+        )
         bundle[f"assets/{asset_name}"] = source.read_bytes()
-        source_files.append(source)
+        source_files.add(source)
 
     for example in content["examples"]:
         image_source = example.get("image_source")
@@ -1132,16 +1353,23 @@ def _build_bundle(
             raise SystemExit(
                 f"example {example.get('id')} must set both image_source and image_output"
             )
-        source = REPO_ROOT / image_source
-        bundle[f"assets/examples/{image_output}"] = source.read_bytes()
-        source_files.append(source)
+        source = _repo_relative_path(
+            image_source,
+            where=f"examples[{example.get('id')}].image_source",
+        )
+        safe_output = _image_output_name(
+            image_output,
+            where=f"examples[{example.get('id')}].image_output",
+        )
+        bundle[f"assets/examples/{safe_output}"] = source.read_bytes()
+        source_files.add(source)
 
-    source_files.extend(schema["path"] for schema in schemas)
+    source_files.update(schema["path"] for schema in schemas)
     provenance = {
         "schema_version": 1,
         "generator": "tools/generate_web_docs.py",
         "source_hashes": {
-            _repo_rel(path): _sha256(path.read_bytes()) for path in sorted(set(source_files))
+            _repo_rel(path): _sha256(path.read_bytes()) for path in sorted(source_files)
         },
         "generated_files": sorted([*bundle, "provenance.json"]),
         "counts": {
@@ -1178,16 +1406,100 @@ def _compare_bundle(output: Path, bundle: dict[str, bytes]) -> dict[str, list[st
     return {"missing": missing, "stale": stale, "extra": extra}
 
 
-def _write_bundle(output: Path, bundle: dict[str, bytes]) -> None:
-    resolved = output.resolve()
-    if resolved == REPO_ROOT or REPO_ROOT == resolved.parent:
-        raise SystemExit("refusing to replace the repository root or a top-level directory")
-    if output.exists():
-        shutil.rmtree(output)
+def _safe_output_path(output: Path) -> Path:
+    if output.is_symlink():
+        raise SystemExit("refusing a symlink web-docs output directory")
+    resolved = output.resolve(strict=False)
+    home = Path.home().resolve()
+    dangerous = (
+        resolved == Path(resolved.anchor)
+        or resolved == home
+        or resolved == REPO_ROOT
+        or resolved in REPO_ROOT.parents
+        or resolved.parent == REPO_ROOT
+    )
+    if dangerous:
+        raise SystemExit(
+            "refusing the filesystem root, home, repository root, "
+            "a repository ancestor, or a top-level repository directory"
+        )
+    if resolved.exists() and not resolved.is_dir():
+        raise SystemExit("web-docs output must be a directory")
+    return resolved
+
+
+def _actual_file_names(output: Path) -> set[str]:
+    return {
+        path.relative_to(output).as_posix()
+        for path in output.rglob("*")
+        if path.is_file() or path.is_symlink()
+    }
+
+
+def _assert_owned_output(output: Path) -> None:
+    if not output.exists() or not any(output.iterdir()):
+        return
+    provenance_path = output / "provenance.json"
+    try:
+        provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+        raise SystemExit(
+            "refusing to replace a non-empty output without valid provenance"
+        ) from exc
+    generated = provenance.get("generated_files")
+    if (
+        provenance.get("schema_version") != 1
+        or provenance.get("generator") != GENERATOR_PATH
+        or not isinstance(generated, list)
+        or any(not isinstance(name, str) for name in generated)
+        or "provenance.json" not in generated
+        or set(generated) != _actual_file_names(output)
+    ):
+        raise SystemExit(
+            "refusing to replace output not wholly owned by the web-docs generator"
+        )
+
+
+def _write_files(output: Path, bundle: dict[str, bytes]) -> None:
     for rel, data in bundle.items():
         destination = output / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(data)
+
+
+def _write_bundle(output: Path, bundle: dict[str, bytes]) -> None:
+    resolved = _safe_output_path(output)
+    _assert_owned_output(resolved)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(
+        tempfile.mkdtemp(
+            prefix=f".{resolved.name}.yolozu-web-stage-",
+            dir=resolved.parent,
+        )
+    )
+    backup: Path | None = None
+    try:
+        _write_files(stage, bundle)
+        if resolved.exists():
+            backup = Path(
+                tempfile.mkdtemp(
+                    prefix=f".{resolved.name}.yolozu-web-backup-",
+                    dir=resolved.parent,
+                )
+            )
+            backup.rmdir()
+            resolved.rename(backup)
+        try:
+            stage.rename(resolved)
+        except BaseException:
+            if backup is not None and backup.exists() and not resolved.exists():
+                backup.rename(resolved)
+            raise
+        if backup is not None:
+            shutil.rmtree(backup)
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1203,7 +1515,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.check:
-        drift = _compare_bundle(output, bundle)
+        safe_output = _safe_output_path(output)
+        drift = _compare_bundle(safe_output, bundle)
         ok = not any(drift.values())
         result = {
             "ok": ok,

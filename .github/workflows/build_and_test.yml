@@ -157,8 +157,11 @@ jobs:
       - name: Install lightweight deps (hash-locked docs/MCP/actions set)
         run: |
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-web-docs.lock
 
       - name: Manifest + docs references gate
+        env:
+          YOLOZU_REQUIRE_REAL_COCO: "1"
         run: |
           python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
           python tools/audit_docs_examples_drift.py --json
@@ -308,7 +311,10 @@ jobs:
             tests.test_integrations_ttt_jobs -v
 
       - name: Web docs contract and candidate-wheel journey
+        env:
+          YOLOZU_REQUIRE_REAL_COCO: "1"
         run: |
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-web-docs.lock
           python tools/generate_web_docs.py --check --json
           python -m unittest \
             tests.test_web_docs_generation \

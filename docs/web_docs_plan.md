@@ -58,6 +58,14 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 - Stable, bridge, benchmark, and research lanes must remain visually separate.
 - Research pages must link back to the stable evaluation artifact they extend.
 - Generated pages must fail CI when their source manifest/schema entries drift.
+- Every configured source must resolve to a regular file inside the repository;
+  absolute, parent-traversing, and symlink-escaping paths are rejected.
+- Generated links must be internal links or credential-free HTTPS URLs.
+- A non-empty output directory may be replaced only when its complete contents
+  match generator-owned `provenance.json`; replacement is staged and renamed
+  atomically.
+- The CI candidate-wheel journey must execute real COCOeval. Missing
+  `pycocotools` is a failure in that gate.
 - No web page should be the only source for CLI flags or schema fields.
 
 ## Implemented Surface
@@ -104,15 +112,23 @@ python3 -m unittest \
 
 The candidate-wheel journey builds the checked-out commit, installs that wheel
 in a nested environment, removes `PYTHONPATH`, verifies that `yolozu` imports
-from the installed wheel, and executes the tutorial from a directory outside
-the checkout. The nested environment deliberately reuses the CI runner's
-already-installed dependencies so the test remains offline; this isolates the
-YOLOZU package origin, not dependency resolution. Public fresh-install evidence
-is handled separately by `scripts/fresh_install_journey.sh`.
+from the installed wheel, invokes the installed `yolozu` console script, and
+executes the commands and Python example held in `docs/web_docs_content.json`
+from a directory outside the checkout. CI installs
+`requirements-locks/requirements-web-docs.lock` and sets
+`YOLOZU_REQUIRE_REAL_COCO=1`, so the documented real COCOeval path cannot
+silently fall back to a dry run. The nested environment deliberately reuses
+those hash-locked runner dependencies so the gate remains offline; this
+isolates the YOLOZU package origin, not dependency resolution. Public
+fresh-install evidence is handled separately by
+`scripts/fresh_install_journey.sh`.
 
-`provenance.json` records SHA-256 hashes for every manifest, schema, curated
-content file, and copied example image used by the bundle. The generated bundle
-is published unchanged under `/yolozu/docs/` on the ToppyMicroServices site.
-Repository Markdown, JSON Schemas, manifests, and report artifacts remain the
-source of truth; the web pages link back to them and do not define new flags or
-fields.
+`provenance.json` records SHA-256 hashes for the generator and every SSOT file
+referenced by the rendered pages, including all manifested implementation/docs
+links, schemas, curated content, stable artifacts, and copied images. The
+generator accepts source inputs only from inside the repository and refuses to
+delete a non-empty directory whose complete inventory is not generator-owned.
+The generated bundle is published unchanged under `/yolozu/docs/` on the
+ToppyMicroServices site. Repository Markdown, JSON Schemas, manifests, and
+report artifacts remain the source of truth; the web pages link back to them
+and do not define new flags or fields.

@@ -36,14 +36,14 @@
     </nav>
   </header>
   <main id="main" class="container">
-    
+
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from docs/schemas/*.json</span>
   <h1 id="page-title">Schema browser</h1>
   <p class="lead">21 checked-in JSON Schemas covering predictions,
   evaluation reports, training handoff, registry records, and Research artifacts.
   Open the source schema for complete field constraints.</p>
-  
+
 <div class="search-shell" role="search">
   <label for="docs-search">Filter schema titles, paths, properties, or descriptions</label>
   <input id="docs-search" class="search-input" type="search"
@@ -62,7 +62,7 @@
   <h3>AI Generate Config</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>arguments, goal, recommended_sequence, safety, schema_version, tool</code></dd>
     <dt>Root required</dt><dd><code>arguments, goal, recommended_sequence, safety, schema_version, tool</code></dd>
   </dl>
@@ -75,7 +75,7 @@
   <h3>AI Review Config</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>issues, ok, schema_version, summary, warnings</code></dd>
     <dt>Root required</dt><dd><code>issues, ok, schema_version, summary, warnings</code></dd>
   </dl>
@@ -88,7 +88,7 @@
   <h3>YOLOZU COCO Eval Report</h3>
   <p>Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>bbox_format, counts, dataset, dry_run, error, max_images, metrics, normalization, ok, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, status, timestamp, validation, warnings</code></dd>
     <dt>Root required</dt><dd><code>bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings</code></dd>
   </dl>
@@ -101,7 +101,7 @@
   <h3>YOLOZU Continual Promotion Decision</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>decision, hard_gates, inputs, kind, observed, recommended_next, research_report, run_record, schema_version, soft_gates, thresholds, timestamp_utc</code></dd>
     <dt>Root required</dt><dd><code>decision, hard_gates, inputs, kind, observed, recommended_next, research_report, schema_version, soft_gates, thresholds, timestamp_utc</code></dd>
   </dl>
@@ -114,7 +114,7 @@
   <h3>YOLOZU Eval Suite Report</h3>
   <p>Report payload emitted by tools/eval_suite.py (supports dry-run mode).</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>bbox_format, dataset, images, protocol, protocol_hash, protocol_id, protocol_schema_version, report_schema_version, results, split, split_requested, timestamp</code></dd>
     <dt>Root required</dt><dd><code>bbox_format, dataset, images, results, timestamp</code></dd>
   </dl>
@@ -127,7 +127,7 @@
   <h3>YOLOZU Instance Segmentation Eval Report</h3>
   <p>Report payload emitted by tools/eval_instance_segmentation.py.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
     <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
   </dl>
@@ -140,7 +140,7 @@
   <h3>YOLOZU Instance Segmentation Predictions JSON</h3>
   <p>Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
     <dt>Root required</dt><dd><code>No root required list</code></dd>
   </dl>
@@ -153,7 +153,7 @@
   <h3>YOLOZU Metrics Report</h3>
   <p>Stable report schema emitted by yolozu.metrics_report.build_report().</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
     <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
   </dl>
@@ -166,7 +166,7 @@
   <h3>YOLOZU Predictions JSON</h3>
   <p>Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
     <dt>Root required</dt><dd><code>No root required list</code></dd>
   </dl>
@@ -179,7 +179,7 @@
   <h3>Reference Adapter Regression Report</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>baseline_meta, baseline_path, contract, diff_summary_path, failures, gate_policy, gates, hard_failures, ok, predictions_sha256, protocol, run, run_meta, schema_version, soft_failures, speed, summary, topk_examples, topk_examples_dir, warnings</code></dd>
     <dt>Root required</dt><dd><code>gate_policy, gates, ok, run, schema_version, speed, summary</code></dd>
   </dl>
@@ -192,7 +192,7 @@
   <h3>YOLOZU Research Lane Report</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>kind, lane, latency_overhead, promotion_gate, report_artifact, research_output_artifact, rollback, stable_baseline_artifact</code></dd>
     <dt>Root required</dt><dd><code>kind, lane, latency_overhead, promotion_gate, research_output_artifact, rollback, stable_baseline_artifact</code></dd>
   </dl>
@@ -205,7 +205,7 @@
   <h3>YOLOZU Research Note</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title</code></dd>
     <dt>Root required</dt><dd><code>environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title</code></dd>
   </dl>
@@ -218,7 +218,7 @@
   <h3>YOLOZU Run Meta Contract</h3>
   <p>Reproducibility metadata emitted at runs/&lt;run_id&gt;/reports/run_meta.json.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>command, dependency_lock, git, hardware, preprocess, runtime, schema_version</code></dd>
     <dt>Root required</dt><dd><code>command, dependency_lock, git, hardware, preprocess, runtime, schema_version</code></dd>
   </dl>
@@ -231,7 +231,7 @@
   <h3>YOLOZU Segmentation Dataset Descriptor</h3>
   <p>Dataset descriptor produced by tools/prepare_*_seg.py scripts. Intended for semantic segmentation evaluation tools.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>classes, dataset, ignore_index, mode, path_type, samples, split, task</code></dd>
     <dt>Root required</dt><dd><code>dataset, ignore_index, mode, path_type, samples, split, task</code></dd>
   </dl>
@@ -244,7 +244,7 @@
   <h3>YOLOZU Segmentation Eval Report</h3>
   <p>Report payload emitted by tools/eval_segmentation.py.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
     <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
   </dl>
@@ -257,7 +257,7 @@
   <h3>YOLOZU Segmentation Predictions JSON</h3>
   <p>Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
     <dt>Root required</dt><dd><code>No root required list</code></dd>
   </dl>
@@ -270,7 +270,7 @@
   <h3>YOLOZU Tools Manifest</h3>
   <p>Checked-in YOLOZU JSON Schema.</p>
   <dl class="kv">
-    
+
     <dt>Root properties</dt><dd><code>contracts, generated_at_utc, manifest_version, repo, tools</code></dd>
     <dt>Root required</dt><dd><code>manifest_version, tools</code></dd>
   </dl>

@@ -9573,7 +9573,7 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes the generated static web-docs bundle.",
+            "description": "Atomically replaces only an empty or provenance-owned generated web-docs directory; refuses symlinks, critical directories, and unowned content.",
             "flag": "--output",
             "kind": "dir",
             "scope": "tree"
@@ -9584,7 +9584,7 @@
       "examples": [
         {
           "command": "python3 tools/generate_web_docs.py",
-          "description": "Regenerate the checked-in searchable web-docs bundle."
+          "description": "Regenerate the checked-in searchable web-docs bundle after validating repository-local sources and safe HTTPS/internal links."
         },
         {
           "command": "python3 tools/generate_web_docs.py --check --json",
@@ -9638,7 +9638,7 @@
       "outputs": [
         {
           "default": "docs/generated/web_docs",
-          "description": "Generated static onboarding web-docs bundle with source hashes and generated-file inventory in provenance.json.",
+          "description": "Generated static onboarding web-docs bundle with hashes for every referenced SSOT source and a complete generated-file inventory in provenance.json.",
           "kind": "dir",
           "name": "web_docs_bundle"
         },
@@ -9658,7 +9658,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance.",
+      "summary": "Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.",
       "tags": [
         "docs",
         "generated-docs",

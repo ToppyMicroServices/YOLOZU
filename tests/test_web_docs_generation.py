@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import subprocess
@@ -7,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 class TestWebDocsGeneration(unittest.TestCase):
@@ -17,8 +19,14 @@ class TestWebDocsGeneration(unittest.TestCase):
     def _read(self, relative: str) -> str:
         return (self.output / relative).read_text(encoding="utf-8")
 
-    def _run_with_content(self, content: dict[str, object]) -> subprocess.CompletedProcess[str]:
-        with tempfile.TemporaryDirectory() as temporary:
+    def _run_with_content(
+        self,
+        content: dict[str, object],
+    ) -> subprocess.CompletedProcess[str]:
+        with tempfile.TemporaryDirectory(
+            prefix=".web-docs-test-",
+            dir=self.repo_root,
+        ) as temporary:
             root = Path(temporary)
             content_path = root / "content.json"
             content_path.write_text(
@@ -117,6 +125,12 @@ class TestWebDocsGeneration(unittest.TestCase):
             "https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/manifest.json",
             commands,
         )
+        self.assertIn(
+            "Installed commands and repository-only entrypoints",
+            commands,
+        )
+        self.assertIn("<code>yolozu-mcp</code>", commands)
+        self.assertIn("<code>tools/</code>", commands)
 
     def test_schema_browser_covers_every_checked_in_schema(self) -> None:
         schema_paths = sorted(
@@ -214,11 +228,307 @@ class TestWebDocsGeneration(unittest.TestCase):
             if path.is_file()
         }
         self.assertEqual(generated, actual)
-        sources = provenance["source_hashes"]
-        self.assertIn("tools/manifest.json", sources)
-        self.assertIn("docs/web_docs_content.json", sources)
-        self.assertIn("docs/python_api.md", sources)
-        self.assertIn("docs/schemas/predictions.schema.json", sources)
+        sources = set(provenance["source_hashes"])
+        content = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        manifest = json.loads(
+            (self.repo_root / "tools" / "manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_sources = {
+            "tools/generate_web_docs.py",
+            "tools/manifest.json",
+            "docs/web_docs_content.json",
+            "docs/web_docs_assets/styles.css",
+            "docs/web_docs_assets/docs.js",
+            "docs/cpu_only_dod.md",
+            "docs/evaluation_protocol_template.md",
+            "docs/schema_governance.md",
+            *(
+                path.relative_to(self.repo_root).as_posix()
+                for path in (self.repo_root / "docs" / "schemas").glob("*.json")
+            ),
+        }
+        expected_sources.update(lane["source"] for lane in content["lanes"])
+        expected_sources.add(content["python_api"]["source"])
+        for group_name in ("examples", "glossary", "failures"):
+            for entry in content[group_name]:
+                expected_sources.add(entry["source"])
+                for optional_key in ("stable_artifact", "image_source"):
+                    if entry.get(optional_key):
+                        expected_sources.add(entry[optional_key])
+        for tool in manifest["tools"]:
+            expected_sources.add(tool["entrypoint"])
+            expected_sources.update(
+                path
+                for path in (tool.get("docs") or [])
+                if not path.startswith("docs/generated/web_docs/")
+            )
+        self.assertEqual(sources, expected_sources)
+
+    def test_content_rejects_external_or_traversing_sources(self) -> None:
+        source = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        unsafe_values = (
+            str(Path(tempfile.gettempdir()) / "outside.png"),
+            "../outside.png",
+            "docs/../README.md",
+            r"docs\assets\image.png",
+        )
+        for unsafe in unsafe_values:
+            with self.subTest(source=unsafe):
+                content = json.loads(json.dumps(source))
+                content["examples"][0]["image_source"] = unsafe
+                proc = self._run_with_content(content)
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn(
+                    "examples[instance-seg-visible-demo].image_source",
+                    proc.stdout + proc.stderr,
+                )
+
+    def test_content_rejects_unsafe_image_output_and_urls(self) -> None:
+        source = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for unsafe in (
+            "../outside.png",
+            "nested/outside.png",
+            r"..\outside.png",
+            "outside.html",
+        ):
+            with self.subTest(image_output=unsafe):
+                content = json.loads(json.dumps(source))
+                content["examples"][0]["image_output"] = unsafe
+                proc = self._run_with_content(content)
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn("safe image filename", proc.stdout + proc.stderr)
+
+        for unsafe in (
+            "javascript:alert(1)",
+            "data:text/html,unsafe",
+            "file:///etc/passwd",
+            "//attacker.example/path",
+            "https://user:pass@example.com/path",
+            "https://example.com/a/../b",
+            "start.html%0ajavascript:alert(1)",
+        ):
+            with self.subTest(url=unsafe):
+                content = json.loads(json.dumps(source))
+                content["lanes"][0]["start_page"] = unsafe
+                proc = self._run_with_content(content)
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn(
+                    "lanes[stable].start_page",
+                    proc.stdout + proc.stderr,
+                )
+
+    def test_symlink_source_escape_is_rejected(self) -> None:
+        source = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        with tempfile.TemporaryDirectory(
+            prefix=".web-docs-test-",
+            dir=self.repo_root,
+        ) as temporary:
+            root = Path(temporary)
+            external = Path(tempfile.gettempdir()) / "yolozu-web-source.txt"
+            external.write_text("outside\n", encoding="utf-8")
+            link = root / "source.png"
+            try:
+                link.symlink_to(external)
+                source["examples"][0]["image_source"] = link.relative_to(
+                    self.repo_root
+                ).as_posix()
+                content_path = root / "content.json"
+                content_path.write_text(json.dumps(source), encoding="utf-8")
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        "tools/generate_web_docs.py",
+                        "--content",
+                        str(content_path),
+                        "--output",
+                        str(root / "output"),
+                    ],
+                    cwd=self.repo_root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn("inside the repository", proc.stdout + proc.stderr)
+            finally:
+                external.unlink(missing_ok=True)
+
+    def test_unowned_output_is_preserved_and_owned_output_is_replaceable(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix=".web-docs-test-",
+            dir=self.repo_root,
+        ) as temporary:
+            root = Path(temporary)
+            unowned = root / "unowned" / "bundle"
+            unowned.mkdir(parents=True)
+            sentinel = unowned / "sentinel.txt"
+            sentinel.write_text("preserve me\n", encoding="utf-8")
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "tools/generate_web_docs.py",
+                    "--output",
+                    str(unowned),
+                ],
+                cwd=self.repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "preserve me\n")
+
+            owned = root / "owned" / "bundle"
+            for _ in range(2):
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        "tools/generate_web_docs.py",
+                        "--output",
+                        str(owned),
+                    ],
+                    cwd=self.repo_root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertTrue((owned / "provenance.json").is_file())
+
+    def test_symlink_output_is_rejected_without_touching_target(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix=".web-docs-test-",
+            dir=self.repo_root,
+        ) as temporary:
+            root = Path(temporary)
+            target = root / "target"
+            target.mkdir()
+            sentinel = target / "sentinel.txt"
+            sentinel.write_text("preserve me\n", encoding="utf-8")
+            output_link = root / "nested" / "output"
+            output_link.parent.mkdir()
+            output_link.symlink_to(target, target_is_directory=True)
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "tools/generate_web_docs.py",
+                    "--output",
+                    str(output_link),
+                ],
+                cwd=self.repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("symlink", proc.stdout + proc.stderr)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "preserve me\n")
+
+    def test_atomic_replace_rolls_back_when_stage_rename_fails(self) -> None:
+        module_path = self.repo_root / "tools" / "generate_web_docs.py"
+        spec = importlib.util.spec_from_file_location(
+            "yolozu_test_generate_web_docs",
+            module_path,
+        )
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        bundle, _ = module._build_bundle(
+            manifest_path=self.repo_root / "tools" / "manifest.json",
+            schemas_dir=self.repo_root / "docs" / "schemas",
+            content_path=self.repo_root / "docs" / "web_docs_content.json",
+        )
+        with tempfile.TemporaryDirectory(
+            prefix=".web-docs-test-",
+            dir=self.repo_root,
+        ) as temporary:
+            output = Path(temporary) / "nested" / "bundle"
+            module._write_bundle(output, bundle)
+            before = {
+                path.relative_to(output).as_posix(): path.read_bytes()
+                for path in output.rglob("*")
+                if path.is_file()
+            }
+            replacement = dict(bundle)
+            replacement["index.html"] = b"replacement\n"
+            real_rename = Path.rename
+
+            def fail_stage_rename(path: Path, target: Path) -> Path:
+                if ".yolozu-web-stage-" in path.name:
+                    raise OSError("injected stage rename failure")
+                return real_rename(path, target)
+
+            with mock.patch.object(Path, "rename", fail_stage_rename):
+                with self.assertRaisesRegex(
+                    OSError,
+                    "injected stage rename failure",
+                ):
+                    module._write_bundle(output, replacement)
+            after = {
+                path.relative_to(output).as_posix(): path.read_bytes()
+                for path in output.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(after, before)
+
+    def test_cli_source_inputs_must_stay_in_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            external_content = Path(temporary) / "content.json"
+            external_content.write_text("{}\n", encoding="utf-8")
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "tools/generate_web_docs.py",
+                    "--content",
+                    str(external_content),
+                    "--output",
+                    str(Path(temporary) / "nested" / "output"),
+                ],
+                cwd=self.repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(
+            "--content must resolve inside the repository",
+            proc.stdout + proc.stderr,
+        )
+
+    def test_generated_text_has_no_trailing_whitespace(self) -> None:
+        for path in self.output.rglob("*"):
+            if path.suffix not in {".css", ".html", ".js", ".json"}:
+                continue
+            for line_number, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(),
+                start=1,
+            ):
+                with self.subTest(path=path.name, line=line_number):
+                    self.assertEqual(line, line.rstrip())
 
     def test_tutorial_commands_are_ordered_self_contained_and_explicit(self) -> None:
         content = json.loads(

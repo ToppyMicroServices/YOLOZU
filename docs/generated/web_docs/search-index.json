@@ -492,8 +492,8 @@
   {
     "href": "commands.html#tool-generate-web-docs",
     "kind": "command",
-    "search_text": "generate_web_docs Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json",
-    "summary": "Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance.",
+    "search_text": "generate_web_docs Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json",
+    "summary": "Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.",
     "title": "generate_web_docs"
   },
   {

@@ -36,14 +36,14 @@
     </nav>
   </header>
   <main id="main" class="container">
-    
+
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
   <p class="lead">116 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
-  
+
 <div class="search-shell" role="search">
   <label for="docs-search">Filter command IDs, summaries, flags, and examples</label>
   <input id="docs-search" class="search-input" type="search"
@@ -55,6 +55,15 @@
 </section>
 <section class="section" aria-labelledby="commands-title">
   <h2 id="commands-title">Manifested tools</h2>
+  <aside class="callout" data-search-card
+    data-search-text="installed command repository checkout entrypoint yolozu yolozu-mcp tools scripts">
+    <h3>Installed commands and repository-only entrypoints</h3>
+    <p>Use <code>yolozu</code>, <code>yolozu-mcp</code>, and the documented
+    <code>yolozu.api</code> symbols from an installed package. Entries beginning
+    with <code>tools/</code> or <code>scripts/</code> are maintainer and
+    source-checkout commands unless their entry explicitly documents an installed
+    console command.</p>
+  </aside>
   <div class="tool-list">
 <details class="card" id="tool-adapter-parity-suite" data-tool-id="adapter_parity_suite"
   data-search-card data-search-text="adapter_parity_suite Run parity checks for multiple adapter outputs against a reference adapter predictions file. experimental tools/adapter_parity_suite.py python3 tools/adapter_parity_suite.py --adapter-predictions rtdetr=reports/pred_rtdetr.json --adapter-predictions mmdet=reports/pred_mmdet.json --adapter-predictions detectron2=reports/pred_detectron2.json --adapter-predictions yolo_runtime=reports/pred_yolo_runtime.json --adapter-predictions opencv_dnn=reports/pred_opencv_dnn.json --adapter-predictions custom_cpp=reports/pred_custom_cpp.json --reference-adapter rtdetr --output reports/adapter_parity_suite.json">
@@ -985,8 +994,8 @@ python3 tools/generate_smoke_assets.py --help</code></pre>
 </details>
 
 <details class="card" id="tool-generate-web-docs" data-tool-id="generate_web_docs"
-  data-search-card data-search-text="generate_web_docs Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance. stable tools/generate_web_docs.py python3 tools/generate_web_docs.py python3 tools/generate_web_docs.py --check --json">
-  <summary><code>generate_web_docs</code> — Generate searchable onboarding web docs with a self-contained strict CLI journey, stable typed Python example, manifest command reference, schemas, and source provenance.</summary>
+  data-search-card data-search-text="generate_web_docs Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence. stable tools/generate_web_docs.py python3 tools/generate_web_docs.py python3 tools/generate_web_docs.py --check --json">
+  <summary><code>generate_web_docs</code> — Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.</summary>
   <div class="meta">
     <span class="badge badge-stable">stable</span>
     <span><code>tools/generate_web_docs.py</code></span>

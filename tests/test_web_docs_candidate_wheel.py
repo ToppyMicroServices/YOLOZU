@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import ast
 import json
 import os
+import shlex
 import subprocess
 import sys
+import sysconfig
 import tarfile
 import tempfile
 import unittest
@@ -44,6 +47,24 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
     def test_candidate_wheel_runs_tutorial_outside_checkout_without_pythonpath(
         self,
     ) -> None:
+        content = json.loads(
+            (self.repo_root / "docs" / "web_docs_content.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        documented_commands = [
+            command
+            for step in content["tutorial"]["thirty_minute"]
+            for command in step["commands"]
+        ]
+
+        def documented_command(snippet: str) -> str:
+            matches = [
+                command for command in documented_commands if snippet in command
+            ]
+            self.assertEqual(len(matches), 1, (snippet, matches))
+            return matches[0]
+
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source_archive = root / "source.tar"
@@ -62,6 +83,14 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             with tarfile.open(source_archive) as archive:
                 archive.extractall(source_root)
 
+            self._run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import setuptools, wheel",
+                ],
+                cwd=source_root,
+            )
             self._run(
                 [
                     sys.executable,
@@ -87,8 +116,25 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             )
             if os.name == "nt":
                 python = venv_dir / "Scripts" / "python.exe"
+                cli_path = venv_dir / "Scripts" / "yolozu.exe"
             else:
                 python = venv_dir / "bin" / "python"
+                cli_path = venv_dir / "bin" / "yolozu"
+            runner_site = Path(sysconfig.get_paths()["purelib"]).resolve()
+            nested_site_proc = self._run(
+                [
+                    str(python),
+                    "-c",
+                    "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+                ],
+                cwd=root,
+            )
+            nested_site = Path(nested_site_proc.stdout.strip()).resolve()
+            if runner_site != nested_site:
+                (nested_site / "yolozu-ci-runner-dependencies.pth").write_text(
+                    str(runner_site) + "\n",
+                    encoding="utf-8",
+                )
             self._run(
                 [
                     str(python),
@@ -124,17 +170,18 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             self.assertNotIn(self.repo_root, installed_location.parents)
             self.assertIn(venv_dir.resolve(), installed_location.parents)
 
-            cli = [str(python), "-m", "yolozu"]
+            self.assertTrue(cli_path.is_file(), f"missing console script: {cli_path}")
+
+            def installed_command(command: str) -> list[str]:
+                parts = shlex.split(command)
+                if parts[0] == "yolozu":
+                    parts[0] = str(cli_path)
+                elif parts[0] == "python":
+                    parts[0] = str(python)
+                return parts
+
             doctor_proc = subprocess.run(
-                [
-                    *cli,
-                    "doctor",
-                    "--proof",
-                    "--output",
-                    "reports/quickstart/doctor.json",
-                    "--proof-dir",
-                    "reports/quickstart/proof",
-                ],
+                installed_command(documented_command("yolozu doctor --proof")),
                 cwd=work_dir,
                 env=env,
                 stdout=subprocess.PIPE,
@@ -169,39 +216,25 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             dataset = "reports/quickstart/proof/toy_dataset"
             predictions = "reports/quickstart/proof/known_predictions.json"
             self._run(
-                [
-                    *cli,
-                    "validate",
-                    "dataset",
-                    dataset,
-                    "--split",
-                    "val2017",
-                    "--strict",
-                ],
+                installed_command(
+                    documented_command("yolozu validate dataset")
+                ),
                 cwd=work_dir,
                 env=env,
             )
             self._run(
-                [*cli, "validate", "predictions", predictions, "--strict"],
+                installed_command(
+                    documented_command("yolozu validate predictions")
+                ),
                 cwd=work_dir,
                 env=env,
             )
 
             dry_report = work_dir / "reports" / "quickstart" / "eval_coco_dry_run.json"
             self._run(
-                [
-                    *cli,
-                    "eval-coco",
-                    "-d",
-                    dataset,
-                    "-p",
-                    predictions,
-                    "-s",
-                    "val2017",
-                    "--dry-run",
-                    "-o",
-                    str(dry_report),
-                ],
+                installed_command(
+                    content["tutorial"]["dry_run_fallback"]["command"]
+                ),
                 cwd=work_dir,
                 env=env,
             )
@@ -261,7 +294,7 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             rejected_report.write_text('{"status": "ok"}\n', encoding="utf-8")
             reject_proc = subprocess.run(
                 [
-                    *cli,
+                    str(cli_path),
                     "eval-coco",
                     "-d",
                     dataset,
@@ -295,21 +328,17 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                 stderr=subprocess.DEVNULL,
                 check=False,
             ).returncode == 0
+            require_real_coco = os.environ.get("YOLOZU_REQUIRE_REAL_COCO") == "1"
+            if require_real_coco and not pycocotools_available:
+                self.fail(
+                    "YOLOZU_REQUIRE_REAL_COCO=1 but pycocotools is unavailable"
+                )
             if pycocotools_available:
                 real_report = work_dir / "reports" / "quickstart" / "eval_coco.json"
                 self._run(
-                    [
-                        *cli,
-                        "eval-coco",
-                        "-d",
-                        dataset,
-                        "-p",
-                        predictions,
-                        "-s",
-                        "val2017",
-                        "-o",
-                        str(real_report),
-                    ],
+                    installed_command(
+                        documented_command("yolozu eval-coco")
+                    ),
                     cwd=work_dir,
                     env=env,
                 )
@@ -317,24 +346,16 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                 self.assertEqual(real_payload["status"], "ok")
                 self.assertFalse(real_payload["dry_run"])
                 self.assertIsInstance(real_payload["metrics"]["map50"], float)
+                report_inspection = documented_command("python -m json.tool")
+                self._run(
+                    installed_command(report_inspection),
+                    cwd=work_dir,
+                    env=env,
+                )
 
                 documented_api_script = work_dir / "documented_api_check.py"
                 documented_api_script.write_text(
-                    "\n".join(
-                        [
-                            "import json",
-                            "from pathlib import Path",
-                            "from yolozu.api import evaluate_coco",
-                            "workspace = Path.cwd().resolve()",
-                            "result = evaluate_coco(",
-                            '    dataset=workspace / "reports/quickstart/proof/toy_dataset",',
-                            '    predictions=workspace / "reports/quickstart/proof/known_predictions.json",',
-                            '    split="val2017",',
-                            ")",
-                            "print(json.dumps(result.to_dict(), sort_keys=True))",
-                        ]
-                    )
-                    + "\n",
+                    content["python_api"]["example"] + "\n",
                     encoding="utf-8",
                 )
                 documented_api_proc = self._run(
@@ -342,11 +363,11 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                     cwd=work_dir,
                     env=env,
                 )
-                documented_api_payload = json.loads(documented_api_proc.stdout)
-                self.assertEqual(documented_api_payload["status"], "ok")
-                self.assertFalse(documented_api_payload["dry_run"])
+                documented_metrics = ast.literal_eval(
+                    documented_api_proc.stdout.strip()
+                )
                 self.assertIsInstance(
-                    documented_api_payload["metrics"]["map50"],
+                    documented_metrics["map50"],
                     float,
                 )
 
