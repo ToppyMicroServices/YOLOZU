@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import threading
 import time
@@ -97,9 +98,32 @@ class JobManager:
                 self._persist(state)
             try:
                 result = fn()
+                failed = False
+                failure_error: str | None = None
+                if isinstance(result, Mapping):
+                    result_ok = result.get("ok")
+                    exit_code = result.get("exit_code")
+                    failed = result_ok is False or (
+                        isinstance(exit_code, int)
+                        and not isinstance(exit_code, bool)
+                        and exit_code != 0
+                    )
+                    if failed:
+                        raw_error = result.get("error")
+                        if isinstance(raw_error, Mapping):
+                            raw_error = (
+                                raw_error.get("message")
+                                or raw_error.get("code")
+                            )
+                        failure_error = str(
+                            raw_error
+                            or result.get("summary")
+                            or f"{name} returned an unsuccessful result"
+                        )
                 with self._lock:
-                    state.status = "completed"
+                    state.status = "failed" if failed else "completed"
                     state.result = result
+                    state.error = failure_error
                     state.finished_at = time.time()
                     self._persist(state)
                 return result

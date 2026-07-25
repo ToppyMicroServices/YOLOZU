@@ -5,7 +5,25 @@ from typing import Any
 
 from .layers.api import run_cli_tool, run_cli_tool_redacted
 from .layers.artifacts import collect_artifact_metadata, describe_run, list_runs
+from .layers.core import fail_response
 from .layers.jobs import JobManager
+
+
+_SCENARIO_EXTRA_VALUE_FLAGS = frozenset(
+    {
+        "--adapter",
+        "--checkpoint",
+        "--config",
+        "--dataset",
+        "--device",
+        "--max-detections",
+        "--max-images",
+        "--output",
+        "--predictions",
+        "--score-threshold",
+        "--split",
+    }
+)
 
 
 @lru_cache(maxsize=1)
@@ -17,6 +35,44 @@ def _job_manager() -> JobManager:
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
     payload.setdefault("meta", collect_artifact_metadata())
     return payload
+
+
+def _validated_scenario_extra_args(
+    name: str,
+    extra_args: list[str] | None,
+) -> tuple[list[str], dict[str, Any] | None]:
+    """Accept only declared one-value scenario flags on AI-facing surfaces."""
+    tokens = list(extra_args or [])
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token.startswith("--") and "=" in token:
+            flag, value = token.split("=", 1)
+            if flag not in _SCENARIO_EXTRA_VALUE_FLAGS or not value:
+                error = ValueError(
+                    f"extra_args contains undeclared or empty flag: {flag}"
+                )
+                return [], _with_meta(
+                    fail_response(name, message=str(error), exc=error)
+                )
+            index += 1
+            continue
+        if token not in _SCENARIO_EXTRA_VALUE_FLAGS:
+            error = ValueError(
+                f"extra_args contains undeclared flag: {token}"
+            )
+            return [], _with_meta(
+                fail_response(name, message=str(error), exc=error)
+            )
+        if index + 1 >= len(tokens) or tokens[index + 1].startswith("--"):
+            error = ValueError(
+                f"extra_args flag requires one value: {token}"
+            )
+            return [], _with_meta(
+                fail_response(name, message=str(error), exc=error)
+            )
+        index += 2
+    return tokens, None
 
 
 def doctor(*, output: str = "reports/doctor.json") -> dict[str, Any]:
@@ -464,12 +520,24 @@ def eval_long_tail_public(
 
 
 def run_scenarios(config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "run_scenarios",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", config, *safe_extra_args]
     return _with_meta(run_cli_tool("run_scenarios", args))
 
 
 def run_scenarios_public(config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "run_scenarios",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", config, *safe_extra_args]
     return _with_meta(run_cli_tool_redacted("run_scenarios", args))
 
 
@@ -599,12 +667,20 @@ def jobs_status(job_id: str) -> dict[str, Any]:
             "job_id": job_id,
             "meta": collect_artifact_metadata(),
         }
+    failed = status.get("status") == "failed"
+    error = str(status.get("error") or "job failed") if failed else None
+    summary = (
+        f"job failed: {error}"
+        if failed
+        else f"job status: {status.get('status')}"
+    )
     return {
-        "ok": True,
+        "ok": not failed,
         "tool": "jobs.status",
-        "summary": f"job status: {status.get('status')}",
-        "exit_code": 0,
+        "summary": summary,
+        "exit_code": 1 if failed else 0,
         "job": status,
+        **({"error": error} if error is not None else {}),
         "meta": collect_artifact_metadata(),
     }
 
@@ -708,12 +784,24 @@ def export_onnx_job_public(dataset: str, output: str, *, split: str | None = Non
 
 
 def test_job(test_config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", test_config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "test",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", test_config, *safe_extra_args]
     return submit_job("test", args)
 
 
 def test_job_public(test_config: str, *, extra_args: list[str] | None = None) -> dict[str, Any]:
-    args = ["test", test_config, *(extra_args or [])]
+    safe_extra_args, rejected = _validated_scenario_extra_args(
+        "test",
+        extra_args,
+    )
+    if rejected is not None:
+        return rejected
+    args = ["test", test_config, *safe_extra_args]
     return submit_job_public("test", args)
 
 

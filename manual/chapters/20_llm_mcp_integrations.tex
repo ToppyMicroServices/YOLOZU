@@ -158,7 +158,8 @@ Operational guards in v2 layer implementation:
 \begin{itemize}
   \item Allowlist is manifest-first (the manifest packaged with \yolozu{}) with conservative fallback defaults.
   \item The process current working directory is the default workspace.
-  \item Path tokens are guarded (\cmd{..}, home-directory shortcuts, symlink escapes, and absolute paths outside the workspace are rejected).
+  \item Path tokens are guarded (\cmd{..}, home-directory shortcuts, symlink escapes, absolute paths outside the workspace, and escaped values in \cmd{--flag=path} are rejected).
+  \item Scenario \cmd{extra_args} accept only declared long-form flags with one value; short, unknown, empty, or missing-value flags are rejected.
   \item Job state persistence to \cmd{runs/mcp_jobs/*.json} for restart-safe status retrieval.
   \item Stale in-flight states (queued/running after restart) are surfaced as \cmd{unknown}.
   \item CLI execution timeout and output-size caps with explicit truncation metadata.
@@ -183,8 +184,10 @@ yolozu validate predictions reports/predictions.json --strict --json
 The schema is
 \path{docs/schemas/predictions_validation_result.schema.json}.
 The MCP and tool-runner default \cmd{strict=true} is fail-closed.
-\cmd{strict=false} explicitly selects compatibility repair and reports every
-repair. Likewise, \cmd{eval_coco} remains strict unless \cmd{repair=true}.
+\cmd{strict=false} explicitly selects compatibility repair and reports up to
+100 repair warnings, with the omitted count in
+\cmd{limits.warnings_truncated}. Likewise, \cmd{eval_coco} remains strict
+unless \cmd{repair=true}.
 
 \subsection{Synchronous tools}
 \begin{itemize}
@@ -199,6 +202,9 @@ repair. Likewise, \cmd{eval_coco} remains strict unless \cmd{repair=true}.
   \item compatibility alias: \cmd{export_onnx_job} (same behavior as \cmd{export_predictions_job})
   \item control/query: \cmd{jobs.list}, \cmd{jobs.status}, \cmd{jobs.cancel}, \cmd{runs.list}, \cmd{runs.describe}
 \end{itemize}
+When an underlying command returns \cmd{ok=false} or a nonzero
+\cmd{exit_code}, the job is \cmd{failed} and \cmd{jobs.status} also returns a
+top-level \cmd{ok=false}. The nested result is retained for diagnostics.
 
 \section{AI operation pitfalls (high-impact)}
 

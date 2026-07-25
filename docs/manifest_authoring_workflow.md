@@ -49,11 +49,15 @@ python3 tools/audit_docs_examples_drift.py --json
 python3 tools/generate_benchmark_support_matrix.py --check --json
 ```
 
-4. Sync packaged manifest copy (single source of truth sync):
+4. Canonicalize the source manifest and sync the packaged byte-identical copy:
 
 ```bash
 python3 tools/sync_tools_manifest.py
 ```
+
+This command rewrites both files with sorted JSON keys. After it runs,
+`tools/manifest.json` and
+`yolozu/data/manifest/tools_manifest.json` must be byte-identical.
 
 5. Run regression tests:
 
@@ -130,7 +134,7 @@ python -m pytest -q tests/test_tool_manifest.py tests/test_packaged_tools_manife
 ## PR checklist snippet
 
 - [ ] `tools/manifest.json` updated for changed tool behavior
-- [ ] `python3 tools/sync_tools_manifest.py` run (`yolozu/data/manifest/tools_manifest.json` synced)
+- [ ] `python3 tools/sync_tools_manifest.py` run (source canonicalized; packaged copy byte-identical)
 - [ ] strict declarative validation passes
 - [ ] generated benchmark support matrix check passes when benchmark support metadata changed
 - [ ] manifest regression tests pass (`test_packaged_tools_manifest`, `test_manifest_docs_references`)

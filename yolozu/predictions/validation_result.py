@@ -16,13 +16,13 @@ def _entry_count(payload: Any) -> int | None:
     return None
 
 
-def validate_predictions_path(
+def _validate_predictions_path_result(
     path: str | Path,
     *,
     strict: bool = False,
-    max_warnings: int | None = _MAX_WARNINGS,
+    max_warnings: int | None,
 ) -> tuple[dict[str, Any], int]:
-    """Validate one predictions file and return a stable JSON-ready result."""
+    """Internal validator supporting unbounded human diagnostics."""
     raw_path = str(path)
     result: dict[str, Any] = {
         "schema_version": 1,
@@ -77,10 +77,22 @@ def validate_predictions_path(
     if max_warnings is None:
         result["warnings"] = warnings
     else:
-        limit = max(0, int(max_warnings))
-        result["warnings"] = warnings[:limit]
+        result["warnings"] = warnings[:max_warnings]
         result["limits"]["warnings_truncated"] = max(
             0,
-            len(warnings) - limit,
+            len(warnings) - max_warnings,
         )
     return result, 0
+
+
+def validate_predictions_path(
+    path: str | Path,
+    *,
+    strict: bool = False,
+) -> tuple[dict[str, Any], int]:
+    """Validate one predictions file and return a bounded JSON-ready result."""
+    return _validate_predictions_path_result(
+        path,
+        strict=strict,
+        max_warnings=_MAX_WARNINGS,
+    )

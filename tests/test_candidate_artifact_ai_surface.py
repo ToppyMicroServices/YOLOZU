@@ -268,6 +268,13 @@ print(json.dumps({
             self.assertTrue(validation_payload["ok"])
             self.assertEqual(validation_payload["mode"], "strict")
             self.assertFalse(validation_payload["repair_enabled"])
+            self.assertEqual(
+                validation_payload["limits"],
+                {
+                    "warnings_max": 100,
+                    "warnings_truncated": 0,
+                },
+            )
 
             helped = self._run(
                 [str(mcp_entry), "--help"],

@@ -220,6 +220,17 @@ jobs:
             tests.test_packaged_tools_manifest \
             tests.test_manifest_docs_references -v
 
+      - name: Assert contract tests do not mutate tracked SSOT copies
+        run: |
+          git diff --exit-code -- \
+            tools/manifest.json \
+            yolozu/data/manifest/tools_manifest.json \
+            docs/schemas/predictions_validation_result.schema.json \
+            yolozu/data/schemas/predictions_validation_result.schema.json \
+            docs/generated/mcp_actions_tool_reference.json \
+            docs/generated/mcp_actions_tool_reference.md \
+            yolozu/data/integrations/mcp_actions_tool_reference.json
+
   smoke_gate:
     name: "ci tier: core (runtime smoke)"
     needs:

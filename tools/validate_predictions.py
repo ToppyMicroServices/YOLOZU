@@ -7,6 +7,9 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.predictions import validate_predictions_path  # noqa: E402
+from yolozu.predictions.validation_result import (  # noqa: E402
+    _validate_predictions_path_result,
+)
 
 
 def _parse_args(argv):
@@ -32,11 +35,17 @@ def _parse_args(argv):
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
-    result, exit_code = validate_predictions_path(
-        args.predictions,
-        strict=bool(args.strict),
-        max_warnings=100 if args.json else None,
-    )
+    if args.json:
+        result, exit_code = validate_predictions_path(
+            args.predictions,
+            strict=bool(args.strict),
+        )
+    else:
+        result, exit_code = _validate_predictions_path_result(
+            args.predictions,
+            strict=bool(args.strict),
+            max_warnings=None,
+        )
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return exit_code

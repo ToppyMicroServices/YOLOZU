@@ -42,7 +42,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--supported",
         action="store_true",
-        help="With --print-tools, keep tools registered on the supported live MCP surface.",
+        help=(
+            "Compatibility flag: with --print-tools, keep tools registered on "
+            "the live MCP surface; this is not an execution guarantee."
+        ),
     )
     parser.add_argument(
         "--maturity",

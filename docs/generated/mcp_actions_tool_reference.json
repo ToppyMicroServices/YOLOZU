@@ -2373,7 +2373,7 @@
     {
       "name": "run_scenarios",
       "function": "run_scenarios_tool",
-      "summary": "Run scenario suite via yolozu test.",
+      "summary": "Run scenarios with declared long-form scenario flags only.",
       "category": "sync",
       "surface_tiers": [
         "mcp_live",
@@ -3346,7 +3346,7 @@
     {
       "name": "test_job",
       "function": "test_job_tool",
-      "summary": "Queue test scenario command as asynchronous job and return job_id.",
+      "summary": "Queue a test using declared long-form scenario flags only.",
       "category": "job",
       "surface_tiers": [
         "mcp_live",

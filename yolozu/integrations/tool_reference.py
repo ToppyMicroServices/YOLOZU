@@ -940,7 +940,8 @@ def render_tool_surface_markdown(reference: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "The `mcp_live` set is the exact list returned by the supported MCP SDK's live tool-list API. "
+            "The `mcp_live` set is the exact list returned by the installed MCP SDK's live tool-list API; "
+            "registration is discovery evidence, not an execution guarantee. "
             "Only `guaranteed_ai_safe` carries the deterministic lightweight guarantee; "
             "`actions_public` lists canonical operations shared with the Actions API.",
             "",

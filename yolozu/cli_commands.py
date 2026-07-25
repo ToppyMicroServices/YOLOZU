@@ -1790,14 +1790,21 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
     if args.validate_command == "predictions":
         from yolozu.predictions import validate_predictions_path
-
-        result, exit_code = validate_predictions_path(
-            str(args.path),
-            strict=bool(args.strict),
-            max_warnings=(
-                100 if bool(getattr(args, "json", False)) else None
-            ),
+        from yolozu.predictions.validation_result import (
+            _validate_predictions_path_result,
         )
+
+        if bool(getattr(args, "json", False)):
+            result, exit_code = validate_predictions_path(
+                str(args.path),
+                strict=bool(args.strict),
+            )
+        else:
+            result, exit_code = _validate_predictions_path_result(
+                str(args.path),
+                strict=bool(args.strict),
+                max_warnings=None,
+            )
         if bool(getattr(args, "json", False)):
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return exit_code

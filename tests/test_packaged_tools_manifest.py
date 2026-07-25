@@ -52,6 +52,11 @@ class TestPackagedToolsManifest(unittest.TestCase):
             expected,
             "packaged manifest must match the canonical sync_tools_manifest.py output.",
         )
+        self.assertEqual(
+            repo_manifest.read_text(encoding="utf-8"),
+            expected,
+            "source manifest must also use canonical JSON formatting.",
+        )
 
     def test_tools_are_sorted_by_id_for_deterministic_diff(self):
         repo_root = Path(__file__).resolve().parents[1]

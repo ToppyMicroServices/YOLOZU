@@ -1,4 +1,78 @@
 {
+  "ai_surfaces": {
+    "actions_public": {
+      "availability": "requires optional actions dependencies",
+      "tool_ids": [
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    },
+    "config_review": {
+      "availability": "in-process config generation and review",
+      "tool_ids": [
+        "generate_config",
+        "review_config"
+      ]
+    },
+    "guaranteed_ai_safe": {
+      "availability": "deterministic lightweight guarantee",
+      "tool_ids": [
+        "doctor",
+        "generate_config",
+        "review_config",
+        "validate_predictions"
+      ]
+    },
+    "mcp_live": {
+      "availability": "requires optional mcp dependency",
+      "tool_ids": [
+        "ai_tools",
+        "generate_config",
+        "review_config",
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "export_onnx_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    }
+  },
   "contracts": {
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
@@ -84,80 +158,6 @@
       "producer": "python3 tools/support_external_training.py train-yolox --output <path>",
       "schema": "docs/schemas/training_run_summary.schema.json",
       "summary": "Backend-neutral training run summary interface contract emitted by the reference trainer and by external lanes that also publish a fixed wrapper-owned external run bundle and standardized next_steps commands."
-    }
-  },
-  "ai_surfaces": {
-    "mcp_live": {
-      "availability": "requires optional mcp dependency",
-      "tool_ids": [
-        "ai_tools",
-        "generate_config",
-        "review_config",
-        "doctor",
-        "validate_predictions",
-        "validate_dataset",
-        "eval_coco",
-        "predict_images",
-        "parity_check",
-        "calibrate_predictions",
-        "eval_instance_seg",
-        "eval_long_tail",
-        "run_scenarios",
-        "convert_dataset",
-        "train_job",
-        "export_predictions_job",
-        "export_onnx_job",
-        "test_job",
-        "ttt_job",
-        "ctta_job",
-        "jobs_list",
-        "jobs_status",
-        "jobs_cancel",
-        "runs_list",
-        "runs_describe"
-      ]
-    },
-    "guaranteed_ai_safe": {
-      "availability": "deterministic lightweight guarantee",
-      "tool_ids": [
-        "doctor",
-        "generate_config",
-        "review_config",
-        "validate_predictions"
-      ]
-    },
-    "config_review": {
-      "availability": "in-process config generation and review",
-      "tool_ids": [
-        "generate_config",
-        "review_config"
-      ]
-    },
-    "actions_public": {
-      "availability": "requires optional actions dependencies",
-      "tool_ids": [
-        "doctor",
-        "validate_predictions",
-        "validate_dataset",
-        "eval_coco",
-        "predict_images",
-        "parity_check",
-        "calibrate_predictions",
-        "eval_instance_seg",
-        "eval_long_tail",
-        "run_scenarios",
-        "convert_dataset",
-        "train_job",
-        "export_predictions_job",
-        "test_job",
-        "ttt_job",
-        "ctta_job",
-        "jobs_list",
-        "jobs_status",
-        "jobs_cancel",
-        "runs_list",
-        "runs_describe"
-      ]
     }
   },
   "manifest_version": 1,
@@ -12896,7 +12896,7 @@
           "required": false
         },
         {
-          "description": "Filter discovery to tools registered on the supported live MCP surface.",
+          "description": "Compatibility filter for tools registered on the live MCP surface; registration is not an execution guarantee.",
           "flag": "--supported",
           "kind": "string",
           "name": "supported",

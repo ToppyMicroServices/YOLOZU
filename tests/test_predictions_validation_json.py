@@ -250,6 +250,59 @@ class TestPredictionsValidationJson(unittest.TestCase):
         self.assertEqual(len(result["warnings"]), 100)
         self.assertEqual(result["limits"]["warnings_truncated"], 50)
 
+    def test_human_clis_preserve_all_warning_output(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "many.json"
+            path.write_text(
+                json.dumps(
+                    [
+                        {"image": f"{index}.jpg", "detections": []}
+                        for index in range(150)
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            module = self._run(
+                [
+                    sys.executable,
+                    "-m",
+                    "yolozu",
+                    "validate",
+                    "predictions",
+                    str(path),
+                    "--strict",
+                ]
+            )
+            standalone = self._run(
+                [
+                    sys.executable,
+                    str(
+                        self.repo_root
+                        / "tools"
+                        / "validate_predictions.py"
+                    ),
+                    str(path),
+                    "--strict",
+                ]
+            )
+
+        self.assertEqual(module.returncode, 0, msg=module.stderr)
+        self.assertEqual(len(module.stderr.splitlines()), 150)
+        self.assertNotIn("omitted", module.stderr)
+        self.assertEqual(
+            standalone.returncode,
+            0,
+            msg=standalone.stderr,
+        )
+        self.assertEqual(
+            sum(
+                line.startswith("WARN:")
+                for line in standalone.stdout.splitlines()
+            ),
+            150,
+        )
+        self.assertNotIn("omitted", standalone.stdout)
+
     def test_source_and_packaged_result_schemas_match(self) -> None:
         source = (
             self.repo_root
@@ -269,7 +322,7 @@ class TestPredictionsValidationJson(unittest.TestCase):
             json.loads(packaged.read_text(encoding="utf-8")),
         )
 
-    def test_success_and_failure_match_packaged_result_schema(self) -> None:
+    def test_all_public_result_modes_match_packaged_schema(self) -> None:
         schema = json.loads(
             (
                 self.repo_root
@@ -279,24 +332,31 @@ class TestPredictionsValidationJson(unittest.TestCase):
                 / "predictions_validation_result.schema.json"
             ).read_text(encoding="utf-8")
         )
-        success, success_exit = validate_predictions_path(
-            self.fixture,
-            strict=True,
-        )
         with tempfile.TemporaryDirectory() as td:
             invalid = Path(td) / "invalid.json"
             invalid.write_text(json.dumps("not predictions"), encoding="utf-8")
-            failure, failure_exit = validate_predictions_path(
-                invalid,
-                strict=True,
-            )
+            cases = [
+                ("strict_success", self.fixture, True, 0),
+                ("repair_success", self.fixture, False, 0),
+                ("strict_failure", invalid, True, 1),
+                ("repair_failure", invalid, False, 1),
+            ]
+            results = []
+            for name, path, strict, expected_exit in cases:
+                with self.subTest(name=name):
+                    result, exit_code = validate_predictions_path(
+                        path,
+                        strict=strict,
+                    )
+                    self.assertEqual(exit_code, expected_exit)
+                    self.assertEqual(
+                        result["limits"]["warnings_max"],
+                        100,
+                    )
+                    _assert_schema_value(result, schema)
+                    results.append(result)
 
-        self.assertEqual(success_exit, 0)
-        self.assertEqual(failure_exit, 1)
-        _assert_schema_value(success, schema)
-        _assert_schema_value(failure, schema)
-
-        missing_mode = dict(success)
+        missing_mode = dict(results[0])
         missing_mode.pop("mode")
         with self.assertRaisesRegex(AssertionError, "missing required"):
             _assert_schema_value(missing_mode, schema)

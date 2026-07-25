@@ -58,6 +58,10 @@ yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_r
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 ```
 
+Here “registered” means discoverable through the live MCP schema. It does not
+promise that environment-dependent execution will succeed; only the four-tool
+`guaranteed_ai_safe` set carries the lightweight deterministic guarantee.
+
 Best-effort only (environment-dependent):
 - training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths
 
@@ -77,14 +81,21 @@ This format is designed so Claude/Copilot/other MCP-capable clients can summariz
 
 - Path policy: caller-relative paths use the process current working directory;
   `..`, home-directory shortcuts, symlink escapes, and absolute paths outside
-  that workspace are rejected by integration layer guards.
+  that workspace are rejected by integration layer guards, including
+  `--flag=path` argument values.
+- Scenario `extra_args` accept only declared long-form flags with one value;
+  short, unknown, empty, and missing-value flags are rejected.
 - Use workspace-relative paths whenever possible.
 - For long-running tasks, use `job_id` + `jobs_status` instead of waiting on one synchronous call.
+- `jobs_status.ok` becomes `false` when the underlying command returns
+  `ok=false` or a nonzero `exit_code`; the nested `job.result` is retained for
+  diagnostics.
 - Treat `ok/tool/summary/exit_code` as canonical status and `meta` as optional provenance.
 - Set `dry_run`, `strict`, and `force` explicitly to avoid client-specific default drift.
 - `validate_predictions(strict=true)` is fail-closed. Use `strict=false` only
   when compatibility repair is intended; the response identifies repair mode
-  and lists each repair. `eval_coco` is also strict unless `repair=true`.
+  and returns up to 100 repair warnings plus
+  `limits.warnings_truncated`. `eval_coco` is also strict unless `repair=true`.
 
 ## 2) OpenAI (ChatGPT) routes
 

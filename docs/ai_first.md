@@ -77,6 +77,11 @@ yolozu-mcp --print-tools --supported --ids-only
 yolozu-mcp --print-tools --ids-only --maturity stable --tag validation
 ```
 
+`mcp_live` means the operation is registered and discoverable. It is not an
+execution guarantee: only `guaranteed_ai_safe` carries the deterministic,
+lightweight guarantee, and every other operation remains subject to its
+declared dependencies and runtime inputs.
+
 SynthGen-safe fast path (interface-contract-only, CPU):
 
 ```bash
@@ -90,6 +95,10 @@ Start MCP stdio server:
 ```bash
 yolozu-mcp
 ```
+
+For queued operations, poll `jobs_status`. A command result with `ok=false` or
+a nonzero `exit_code` produces `job.status: "failed"` and a top-level
+`jobs_status.ok: false`; the nested result remains available for diagnostics.
 
 Installed-wheel Python fast path (run from the consumer workspace):
 
@@ -106,7 +115,8 @@ if not result["ok"]:
 `result["validation"]` follows the validation-result schema described below.
 The MCP/tool-runner default is fail-closed (`strict=True`). Passing
 `strict=False` is the explicit compatibility-repair mode; the result then
-contains `mode: "repair"`, `repair_enabled: true`, and every repair warning.
+contains `mode: "repair"`, `repair_enabled: true`, up to 100 repair warnings,
+and the omitted count in `limits.warnings_truncated`.
 
 ## 5) JSON interface contracts for AI surface
 
@@ -182,9 +192,11 @@ Safe defaults for AI execution:
 Installed Python helpers resolve relative input and output paths against the
 caller's current working directory. Absolute paths are accepted only when they
 remain inside that workspace; `..`, home-directory shortcuts, and paths that
-resolve outside it are rejected. Manifest discovery uses the packaged resource
-by default, so it does not require a repository checkout. An explicit
-`--manifest` override is resolved against the same caller workspace.
+resolve outside it are rejected, including values passed as `--flag=path`.
+Scenario `extra_args` accept only declared long-form, one-value flags; short or
+unknown flags are rejected before execution. Manifest discovery uses the
+packaged resource by default, so it does not require a repository checkout. An
+explicit `--manifest` override is resolved against the same caller workspace.
 
 ## 7) CI gate for AI/MCP surface
 

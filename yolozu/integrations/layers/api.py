@@ -74,18 +74,31 @@ def _looks_like_path_token(token: str) -> bool:
 
 
 def _guard_path_token(token: str, *, root: Path) -> None:
-    if not _looks_like_path_token(token):
-        return
     if token.startswith("~"):
         raise ValueError(f"home-dir paths are not allowed: {token}")
     p = Path(token)
+    candidate = p if p.is_absolute() else root / p
+    if not (
+        _looks_like_path_token(token)
+        or candidate.exists()
+        or candidate.is_symlink()
+    ):
+        return
     if ".." in p.parts:
         raise ValueError(f"path traversal is not allowed: {token}")
-    candidate = p if p.is_absolute() else root / p
     try:
         candidate.resolve().relative_to(root)
     except ValueError as exc:
         raise ValueError(f"path escapes workspace: {token}") from exc
+
+
+def _guard_argument_token(token: str, *, root: Path) -> None:
+    if token.startswith("-") and "=" in token:
+        _, value = token.split("=", 1)
+        if value:
+            _guard_path_token(value, root=root)
+        return
+    _guard_path_token(token, root=root)
 
 
 def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
@@ -126,7 +139,7 @@ def run_cli_tool(
     root = workspace_root(workspace)
     try:
         for token in args:
-            _guard_path_token(token, root=root)
+            _guard_argument_token(token, root=root)
     except ValueError as exc:
         return fail_response(name, message=str(exc), exc=exc)
 
@@ -241,7 +254,7 @@ def run_cli_tool_redacted(
     root = workspace_root(workspace)
     try:
         for token in args:
-            _guard_path_token(token, root=root)
+            _guard_argument_token(token, root=root)
     except ValueError:
         return fail_response(name, message="invalid command arguments")
 

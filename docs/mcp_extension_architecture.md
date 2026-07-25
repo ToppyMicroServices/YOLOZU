@@ -67,7 +67,10 @@ Current API surface:
 - Path traversal (`..`) is rejected.
 - The caller process's current working directory is the default workspace.
 - Absolute paths are allowed only within that workspace; home-directory
-  shortcuts, symlink escapes, and absolute paths outside it are rejected.
+  shortcuts, symlink escapes, and absolute paths outside it are rejected,
+  including values embedded in `--flag=path`.
+- Scenario `extra_args` use a declared long-form one-value flag allowlist;
+  short, unknown, empty, or missing-value flags are rejected.
 - CLI execution has a timeout guard (default 600s).
 - MCP route: `stdout`/`stderr` are capped and marked with truncation metadata in response payloads.
 - Actions API route: CLI `stdout`/`stderr` are redacted by default (`limits.stdio_redacted=true`) and errors are genericized to avoid leaking exception details.
@@ -87,8 +90,9 @@ Generated parity reference:
 
 Its `surfaces` object separates live MCP registration from the guaranteed
 AI-safe subset, config-review helpers, and Actions endpoints. CI also calls the
-supported MCP SDK's live `app.list_tools()` API and compares canonical names and
+installed MCP SDK's live `app.list_tools()` API and compares canonical names and
 input schemas with this reference.
+Live registration is discovery evidence, not an execution guarantee.
 The JSON reference is copied into the wheel as a package resource so full
 discovery remains available outside a checkout. Its `surface_tiers` are not
 maturity classifications; missing explicit maturity/tag metadata stays

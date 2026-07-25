@@ -33,7 +33,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     obj = _read_json(src)
+    _write_json(src, obj)
     _write_json(dst, obj)
+    print(src)
     print(dst)
     return 0
 

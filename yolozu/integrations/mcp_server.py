@@ -357,7 +357,7 @@ def eval_long_tail_tool(
 
 @app.tool(name="run_scenarios")
 def run_scenarios_tool(config: str, extra_args: list[str] | None = None) -> dict:
-    """Run scenario suite via yolozu test."""
+    """Run scenarios with declared long-form scenario flags only."""
     return run_scenarios(config=config, extra_args=extra_args)
 
 
@@ -411,7 +411,7 @@ def export_onnx_job_tool(dataset: str, output: str, split: str | None = None, fo
 
 @app.tool(name="test_job")
 def test_job_tool(test_config: str, extra_args: list[str] | None = None) -> dict:
-    """Queue test scenario command as asynchronous job and return job_id."""
+    """Queue a test using declared long-form scenario flags only."""
     return test_job(test_config=test_config, extra_args=extra_args)
 
 

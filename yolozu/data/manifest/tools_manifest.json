@@ -12896,7 +12896,7 @@
           "required": false
         },
         {
-          "description": "Filter discovery to tools registered on the supported live MCP surface.",
+          "description": "Compatibility filter for tools registered on the live MCP surface; registration is not an execution guarantee.",
           "flag": "--supported",
           "kind": "string",
           "name": "supported",
