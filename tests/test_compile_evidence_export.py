@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tools import export_predictions
+from yolozu.inference import export_predictions_cli as export_predictions
 
 
 def _fallback_report():

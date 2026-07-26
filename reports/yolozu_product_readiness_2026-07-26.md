@@ -9,6 +9,8 @@
   `yolozu-mcp --print-tools --guaranteed --ids-only`.
 - PRs #232, #233, and #214 merged the installed AI/MCP surface, fail-closed TTT
   jobs and evidence boundaries, and the searchable web-docs source bundle.
+- Release `v4.6.0` is published from `49e41f1` on GitHub and PyPI. Both PyPI
+  artifacts have a GitHub Actions publisher attestation.
 - Web generation accepts only repository-local manifest, schema, content, and
   referenced artifact sources. It rejects unsafe URLs, symlink escapes, unsafe
   output targets, and replacement of non-empty output not wholly owned by its
@@ -36,6 +38,9 @@
   and `https://www.toppymicros.com/yolozu/docs/` served all 14 generated files
   byte-for-byte equal to the bundle on YOLOZU `main`, including provenance,
   search index, and favicon.
+- A fresh environment installed `yolozu[coco]==4.6.0` from public PyPI and
+  passed `--help`, `doctor --proof`, strict dataset/predictions validation,
+  typed API evaluation, compact AI discovery, and non-dry-run COCOeval.
 
 ## Unknown / risk
 
@@ -46,21 +51,23 @@
   unavailable until the evidence required by `YOLOZU-ll2.53` is reproduced.
 - Current TTA candidates remain unimplemented and unqualified under the common
   protocol in `YOLOZU-ll2.54`.
-- Public PyPI remains on the prior release until `YOLOZU-ll2.30` publishes and
-  verifies the next version.
+- The current setuptools license-table and classifier form is deprecated but
+  does not block `v4.6.0`; migration is tracked as `YOLOZU-ll2.59` before its
+  dated compatibility deadline.
 
 ## Recommendation
 
-Publish one verified YOLOZU release that includes the installed API/MCP, TTT
-safety boundary, and web-docs source.
-Keep TTT efficacy claims blocked. After release verification, prioritize three
-observed design-partner onboarding sessions and weekly privacy-safe adoption
-snapshots over adding more Research methods.
+Keep TTT efficacy claims blocked. Prioritize three observed design-partner
+onboarding sessions and weekly privacy-safe adoption snapshots over adding more
+Research methods. Complete the packaging metadata migration before its dated
+compatibility deadline.
 
 ## Change trigger
 
 - Reopen web-readiness work if the production bundle stops matching YOLOZU
   `main`, provenance validation fails, or live search/assets regress.
+- Reopen release-readiness work if the public wheel/sdist, publisher
+  attestations, rendered metadata, or fresh-install real COCO route regresses.
 - Change the TTT efficacy conclusion only after `YOLOZU-ll2.53` is satisfied
   with release-addressable, independently reproduced artifacts.
 - Expand the TTA method list only after `YOLOZU-ll2.54` records primary-source,

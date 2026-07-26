@@ -30,6 +30,8 @@ class TestInstalledAiSurface(unittest.TestCase):
                 source,
                 ignore=shutil.ignore_patterns(
                     ".git",
+                    ".venv*",
+                    ".worktrees",
                     "build",
                     "dist",
                     "*.egg-info",

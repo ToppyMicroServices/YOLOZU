@@ -1,10 +1,6 @@
-import sys
 import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from tools import export_predictions
+from yolozu.inference import export_predictions_cli as export_predictions
 
 
 class TestExportPredictionsTTALog(unittest.TestCase):

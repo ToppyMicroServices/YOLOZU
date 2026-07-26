@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Keep repository-wrapper prediction and TTA/TTT log paths anchored to the checkout when invoked from another working directory.
+
 ## [4.6.0] - 2026-07-26
 
 ### Changed
