@@ -63,6 +63,33 @@ yolozu guide --goal first-run
 yolozu guide --goal evaluate
 ```
 
+## Python / AI 最短用法
+
+当 workflow 由其他 Python program 管理时，可使用 typed in-process API：
+
+```python
+from pathlib import Path
+
+from yolozu.api import evaluate_coco
+
+result = evaluate_coco(
+    dataset=Path("/absolute/path/to/dataset"),
+    predictions=Path("/absolute/path/to/predictions.json"),
+    dry_run=True,
+)
+print(result.to_dict())
+```
+
+向 AI client 暴露更大工具面之前，先提供小型 guaranteed tool list：
+
+```bash
+yolozu-mcp --print-tools --guaranteed --ids-only
+```
+
+typed error、workspace boundary、MCP setup 及更大的 opt-in discovery 见
+[`docs/python_api.md`](docs/python_api.md) 和
+[`docs/ai_first.md`](docs/ai_first.md)。
+
 如果 YOLOZU 帮你节省了时间，欢迎点个 Star，让更多人更容易找到它。
 
 ## 使用与许可边界

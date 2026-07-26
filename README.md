@@ -41,6 +41,33 @@ yolozu guide --goal first-run
 yolozu guide --goal evaluate
 ```
 
+## Python And AI Quick Use
+
+Use the typed in-process API when another Python program owns the workflow:
+
+```python
+from pathlib import Path
+
+from yolozu.api import evaluate_coco
+
+result = evaluate_coco(
+    dataset=Path("/absolute/path/to/dataset"),
+    predictions=Path("/absolute/path/to/predictions.json"),
+    dry_run=True,
+)
+print(result.to_dict())
+```
+
+Give an AI client the small guaranteed-tool list before exposing wider surfaces:
+
+```bash
+yolozu-mcp --print-tools --guaranteed --ids-only
+```
+
+See [`docs/python_api.md`](docs/python_api.md) and
+[`docs/ai_first.md`](docs/ai_first.md) for typed errors, workspace boundaries,
+MCP setup, and larger opt-in discovery.
+
 ```mermaid
 flowchart LR
     A["Ultralytics"] --> D["wrapped predictions.json"]
