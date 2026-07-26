@@ -245,6 +245,7 @@ class TestWebDocsGeneration(unittest.TestCase):
             "docs/web_docs_content.json",
             "docs/web_docs_assets/styles.css",
             "docs/web_docs_assets/docs.js",
+            "docs/web_docs_assets/favicon.svg",
             "docs/cpu_only_dod.md",
             "docs/evaluation_protocol_template.md",
             "docs/schema_governance.md",

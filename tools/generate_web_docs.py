@@ -301,6 +301,7 @@ def _layout(
   <meta property="og:url" content="{html.escape(canonical, quote=True)}" />
   <meta property="og:site_name" content="ToppyMicroServices" />
   <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="assets/styles.css" />
   <script defer data-domain="toppymicros.com" data-auto="false"
     src="https://plausible.io/js/script.tag"></script>
@@ -1336,7 +1337,7 @@ def _build_bundle(
         *_content_source_paths(content),
         *_manifest_source_paths(tools),
     }
-    for asset_name in ("styles.css", "docs.js"):
+    for asset_name in ("styles.css", "docs.js", "favicon.svg"):
         source = _repo_relative_path(
             f"docs/web_docs_assets/{asset_name}",
             where="web docs asset",
