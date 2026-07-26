@@ -228,6 +228,7 @@ Contact: develop@toppymicros.com
 | generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode. |
 | generate_runtime_parity_case_study | experimental | tools/generate_runtime_parity_case_study.py | Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane. |
 | generate_smoke_assets | stable | tools/generate_smoke_assets.py | Generate deterministic offline smoke assets under data/smoke from local data/coco128. |
+| generate_web_docs | stable | tools/generate_web_docs.py | Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence. |
 | gpu_validation_preflight | experimental | tools/gpu_validation_preflight.py | Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. |
 | hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
 | import_yolo_data_yaml | stable | tools/import_yolo_data_yaml.py | Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). |

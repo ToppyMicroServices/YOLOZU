@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schema browser — YOLOZU Docs</title>
+  <meta name="description" content="Generated browser for YOLOZU prediction, report, training, and Research schemas." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/schemas.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Schema browser — YOLOZU Docs" />
+  <meta property="og:description" content="Generated browser for YOLOZU prediction, report, training, and Research schemas." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/schemas.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="schemas">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html" aria-current="page">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Generated from docs/schemas/*.json</span>
+  <h1 id="page-title">Schema browser</h1>
+  <p class="lead">22 checked-in JSON Schemas covering predictions,
+  evaluation reports, training handoff, registry records, and Research artifacts.
+  Open the source schema for complete field constraints.</p>
+
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter schema titles, paths, properties, or descriptions</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="schemas-title">
+  <h2 id="schemas-title">Checked-in schema surfaces</h2>
+  <div class="schema-list">
+<article class="card" id="schema-ai-generate-config-schema"
+  data-schema-path="docs/schemas/ai_generate_config.schema.json" data-search-card
+  data-search-text="AI Generate Config Checked-in YOLOZU JSON Schema. docs/schemas/ai_generate_config.schema.json arguments, goal, recommended_sequence, safety, schema_version, tool arguments, goal, recommended_sequence, safety, schema_version, tool">
+  <h3>AI Generate Config</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>arguments, goal, recommended_sequence, safety, schema_version, tool</code></dd>
+    <dt>Root required</dt><dd><code>arguments, goal, recommended_sequence, safety, schema_version, tool</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/ai_generate_config.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-ai-review-config-schema"
+  data-schema-path="docs/schemas/ai_review_config.schema.json" data-search-card
+  data-search-text="AI Review Config Checked-in YOLOZU JSON Schema. docs/schemas/ai_review_config.schema.json issues, ok, schema_version, summary, warnings issues, ok, schema_version, summary, warnings">
+  <h3>AI Review Config</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>issues, ok, schema_version, summary, warnings</code></dd>
+    <dt>Root required</dt><dd><code>issues, ok, schema_version, summary, warnings</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/ai_review_config.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-coco-eval-report-schema"
+  data-schema-path="docs/schemas/coco_eval_report.schema.json" data-search-card
+  data-search-text="YOLOZU COCO Eval Report Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed. docs/schemas/coco_eval_report.schema.json bbox_format, counts, dataset, dry_run, error, max_images, metrics, normalization, ok, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, status, timestamp, validation, warnings bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings">
+  <h3>YOLOZU COCO Eval Report</h3>
+  <p>Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>bbox_format, counts, dataset, dry_run, error, max_images, metrics, normalization, ok, predictions, protocol, protocol_id, report_schema_version, split, split_requested, stats, status, timestamp, validation, warnings</code></dd>
+    <dt>Root required</dt><dd><code>bbox_format, counts, dataset, dry_run, metrics, predictions, stats, timestamp, warnings</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/coco_eval_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-continual-promotion-decision-schema"
+  data-schema-path="docs/schemas/continual_promotion_decision.schema.json" data-search-card
+  data-search-text="YOLOZU Continual Promotion Decision Checked-in YOLOZU JSON Schema. docs/schemas/continual_promotion_decision.schema.json decision, hard_gates, inputs, kind, observed, recommended_next, research_report, run_record, schema_version, soft_gates, thresholds, timestamp_utc decision, hard_gates, inputs, kind, observed, recommended_next, research_report, schema_version, soft_gates, thresholds, timestamp_utc">
+  <h3>YOLOZU Continual Promotion Decision</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>decision, hard_gates, inputs, kind, observed, recommended_next, research_report, run_record, schema_version, soft_gates, thresholds, timestamp_utc</code></dd>
+    <dt>Root required</dt><dd><code>decision, hard_gates, inputs, kind, observed, recommended_next, research_report, schema_version, soft_gates, thresholds, timestamp_utc</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/continual_promotion_decision.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-eval-suite-report-schema"
+  data-schema-path="docs/schemas/eval_suite_report.schema.json" data-search-card
+  data-search-text="YOLOZU Eval Suite Report Report payload emitted by tools/eval_suite.py (supports dry-run mode). docs/schemas/eval_suite_report.schema.json bbox_format, dataset, images, protocol, protocol_hash, protocol_id, protocol_schema_version, report_schema_version, results, split, split_requested, timestamp bbox_format, dataset, images, results, timestamp">
+  <h3>YOLOZU Eval Suite Report</h3>
+  <p>Report payload emitted by tools/eval_suite.py (supports dry-run mode).</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>bbox_format, dataset, images, protocol, protocol_hash, protocol_id, protocol_schema_version, report_schema_version, results, split, split_requested, timestamp</code></dd>
+    <dt>Root required</dt><dd><code>bbox_format, dataset, images, results, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/eval_suite_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-instance-seg-eval-report-schema"
+  data-schema-path="docs/schemas/instance_seg_eval_report.schema.json" data-search-card
+  data-search-text="YOLOZU Instance Segmentation Eval Report Report payload emitted by tools/eval_instance_segmentation.py. docs/schemas/instance_seg_eval_report.schema.json losses, meta, metrics, schema_version, timestamp losses, meta, metrics, schema_version, timestamp">
+  <h3>YOLOZU Instance Segmentation Eval Report</h3>
+  <p>Report payload emitted by tools/eval_instance_segmentation.py.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+    <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/instance_seg_eval_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-instance-segmentation-predictions-schema"
+  data-schema-path="docs/schemas/instance_segmentation_predictions.schema.json" data-search-card
+  data-search-text="YOLOZU Instance Segmentation Predictions JSON Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported. docs/schemas/instance_segmentation_predictions.schema.json No root properties declared No root required list">
+  <h3>YOLOZU Instance Segmentation Predictions JSON</h3>
+  <p>Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/instance_segmentation_predictions.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-metrics-report-schema"
+  data-schema-path="docs/schemas/metrics_report.schema.json" data-search-card
+  data-search-text="YOLOZU Metrics Report Stable report schema emitted by yolozu.metrics_report.build_report(). docs/schemas/metrics_report.schema.json losses, meta, metrics, schema_version, timestamp losses, meta, metrics, schema_version, timestamp">
+  <h3>YOLOZU Metrics Report</h3>
+  <p>Stable report schema emitted by yolozu.metrics_report.build_report().</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+    <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/metrics_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-predictions-schema"
+  data-schema-path="docs/schemas/predictions.schema.json" data-search-card
+  data-search-text="YOLOZU Predictions JSON Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported. docs/schemas/predictions.schema.json No root properties declared No root required list">
+  <h3>YOLOZU Predictions JSON</h3>
+  <p>Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/predictions.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-predictions-validation-result-schema"
+  data-schema-path="docs/schemas/predictions_validation_result.schema.json" data-search-card
+  data-search-text="YOLOZU predictions validation result Checked-in YOLOZU JSON Schema. docs/schemas/predictions_validation_result.schema.json entry_count, errors, limits, mode, ok, path, repair_enabled, schema_version, strict, tool, warnings entry_count, errors, limits, mode, ok, path, repair_enabled, schema_version, strict, tool, warnings">
+  <h3>YOLOZU predictions validation result</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/predictions_validation_result.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>entry_count, errors, limits, mode, ok, path, repair_enabled, schema_version, strict, tool, warnings</code></dd>
+    <dt>Root required</dt><dd><code>entry_count, errors, limits, mode, ok, path, repair_enabled, schema_version, strict, tool, warnings</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/predictions_validation_result.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-reference-adapter-regression-report-schema"
+  data-schema-path="docs/schemas/reference_adapter_regression_report.schema.json" data-search-card
+  data-search-text="Reference Adapter Regression Report Checked-in YOLOZU JSON Schema. docs/schemas/reference_adapter_regression_report.schema.json baseline_meta, baseline_path, contract, diff_summary_path, failures, gate_policy, gates, hard_failures, ok, predictions_sha256, protocol, run, run_meta, schema_version, soft_failures, speed, summary, topk_examples, topk_examples_dir, warnings gate_policy, gates, ok, run, schema_version, speed, summary">
+  <h3>Reference Adapter Regression Report</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>baseline_meta, baseline_path, contract, diff_summary_path, failures, gate_policy, gates, hard_failures, ok, predictions_sha256, protocol, run, run_meta, schema_version, soft_failures, speed, summary, topk_examples, topk_examples_dir, warnings</code></dd>
+    <dt>Root required</dt><dd><code>gate_policy, gates, ok, run, schema_version, speed, summary</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/reference_adapter_regression_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-research-lane-report-schema"
+  data-schema-path="docs/schemas/research_lane_report.schema.json" data-search-card
+  data-search-text="YOLOZU Research Lane Report Checked-in YOLOZU JSON Schema. docs/schemas/research_lane_report.schema.json kind, lane, latency_overhead, promotion_gate, report_artifact, research_output_artifact, rollback, stable_baseline_artifact kind, lane, latency_overhead, promotion_gate, research_output_artifact, rollback, stable_baseline_artifact">
+  <h3>YOLOZU Research Lane Report</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>kind, lane, latency_overhead, promotion_gate, report_artifact, research_output_artifact, rollback, stable_baseline_artifact</code></dd>
+    <dt>Root required</dt><dd><code>kind, lane, latency_overhead, promotion_gate, research_output_artifact, rollback, stable_baseline_artifact</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/research_lane_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-research-note-schema"
+  data-schema-path="docs/schemas/research_note.schema.json" data-search-card
+  data-search-text="YOLOZU Research Note Checked-in YOLOZU JSON Schema. docs/schemas/research_note.schema.json environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title">
+  <h3>YOLOZU Research Note</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title</code></dd>
+    <dt>Root required</dt><dd><code>environment, kind, lane, latency_overhead, limitations, method, metrics, promotion_gate, research_output_artifact, research_report_artifact, rollback, schema_version, stable_baseline_artifact, status, title</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/research_note.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-run-meta-schema"
+  data-schema-path="docs/schemas/run_meta.schema.json" data-search-card
+  data-search-text="YOLOZU Run Meta Contract Reproducibility metadata emitted at runs/&lt;run_id&gt;/reports/run_meta.json. docs/schemas/run_meta.schema.json command, dependency_lock, git, hardware, preprocess, runtime, schema_version command, dependency_lock, git, hardware, preprocess, runtime, schema_version">
+  <h3>YOLOZU Run Meta Contract</h3>
+  <p>Reproducibility metadata emitted at runs/&lt;run_id&gt;/reports/run_meta.json.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>command, dependency_lock, git, hardware, preprocess, runtime, schema_version</code></dd>
+    <dt>Root required</dt><dd><code>command, dependency_lock, git, hardware, preprocess, runtime, schema_version</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/run_meta.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-seg-dataset-schema"
+  data-schema-path="docs/schemas/seg_dataset.schema.json" data-search-card
+  data-search-text="YOLOZU Segmentation Dataset Descriptor Dataset descriptor produced by tools/prepare_*_seg.py scripts. Intended for semantic segmentation evaluation tools. docs/schemas/seg_dataset.schema.json classes, dataset, ignore_index, mode, path_type, samples, split, task dataset, ignore_index, mode, path_type, samples, split, task">
+  <h3>YOLOZU Segmentation Dataset Descriptor</h3>
+  <p>Dataset descriptor produced by tools/prepare_*_seg.py scripts. Intended for semantic segmentation evaluation tools.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>classes, dataset, ignore_index, mode, path_type, samples, split, task</code></dd>
+    <dt>Root required</dt><dd><code>dataset, ignore_index, mode, path_type, samples, split, task</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/seg_dataset.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-seg-eval-report-schema"
+  data-schema-path="docs/schemas/seg_eval_report.schema.json" data-search-card
+  data-search-text="YOLOZU Segmentation Eval Report Report payload emitted by tools/eval_segmentation.py. docs/schemas/seg_eval_report.schema.json losses, meta, metrics, schema_version, timestamp losses, meta, metrics, schema_version, timestamp">
+  <h3>YOLOZU Segmentation Eval Report</h3>
+  <p>Report payload emitted by tools/eval_segmentation.py.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+    <dt>Root required</dt><dd><code>losses, meta, metrics, schema_version, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/seg_eval_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-segmentation-predictions-schema"
+  data-schema-path="docs/schemas/segmentation_predictions.schema.json" data-search-card
+  data-search-text="YOLOZU Segmentation Predictions JSON Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported. docs/schemas/segmentation_predictions.schema.json No root properties declared No root required list">
+  <h3>YOLOZU Segmentation Predictions JSON</h3>
+  <p>Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/segmentation_predictions.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-tools-manifest-schema"
+  data-schema-path="docs/schemas/tools_manifest.schema.json" data-search-card
+  data-search-text="YOLOZU Tools Manifest Checked-in YOLOZU JSON Schema. docs/schemas/tools_manifest.schema.json ai_surfaces, contracts, generated_at_utc, manifest_version, repo, tools ai_surfaces, manifest_version, tools">
+  <h3>YOLOZU Tools Manifest</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+
+    <dt>Root properties</dt><dd><code>ai_surfaces, contracts, generated_at_utc, manifest_version, repo, tools</code></dd>
+    <dt>Root required</dt><dd><code>ai_surfaces, manifest_version, tools</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/tools_manifest.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-training-handoff-schema"
+  data-schema-path="docs/schemas/training_handoff.schema.json" data-search-card
+  data-search-text="YOLOZU training handoff Checked-in YOLOZU JSON Schema. docs/schemas/training_handoff.schema.json backend_id, command, description, format, input_contract, output_contract, stage, supported, task_family backend_id, command, description, format, input_contract, output_contract, stage, supported, task_family">
+  <h3>YOLOZU training handoff</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://yolozu.dev/schemas/training_handoff.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>backend_id, command, description, format, input_contract, output_contract, stage, supported, task_family</code></dd>
+    <dt>Root required</dt><dd><code>backend_id, command, description, format, input_contract, output_contract, stage, supported, task_family</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/training_handoff.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-training-orchestration-report-schema"
+  data-schema-path="docs/schemas/training_orchestration_report.schema.json" data-search-card
+  data-search-text="YOLOZU training orchestration report Checked-in YOLOZU JSON Schema. docs/schemas/training_orchestration_report.schema.json counts, execute, forced_dry_run, format, ok, registry_out, results, schema_version, spec, timestamp format, ok, results, schema_version, spec, timestamp">
+  <h3>YOLOZU training orchestration report</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://yolozu.dev/schemas/training_orchestration_report.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>counts, execute, forced_dry_run, format, ok, registry_out, results, schema_version, spec, timestamp</code></dd>
+    <dt>Root required</dt><dd><code>format, ok, results, schema_version, spec, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/training_orchestration_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-training-registry-entry-schema"
+  data-schema-path="docs/schemas/training_registry_entry.schema.json" data-search-card
+  data-search-text="YOLOZU training registry entry Checked-in YOLOZU JSON Schema. docs/schemas/training_registry_entry.schema.json backend_display_name, backend_id, dataset_root, dry_run, format, maturity, next_steps, ok, orchestration, run_output_contract_kind, split, steps, summary_json, task, timestamp, training_executed, work_dir backend_id, format, ok, summary_json, timestamp">
+  <h3>YOLOZU training registry entry</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://yolozu.dev/schemas/training_registry_entry.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>backend_display_name, backend_id, dataset_root, dry_run, format, maturity, next_steps, ok, orchestration, run_output_contract_kind, split, steps, summary_json, task, timestamp, training_executed, work_dir</code></dd>
+    <dt>Root required</dt><dd><code>backend_id, format, ok, summary_json, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/training_registry_entry.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-training-run-summary-schema"
+  data-schema-path="docs/schemas/training_run_summary.schema.json" data-search-card
+  data-search-text="YOLOZU training run summary Checked-in YOLOZU JSON Schema. docs/schemas/training_run_summary.schema.json backend, canonical_train_config, dataset, dry_run, format, handoff_contracts, license_boundary, next_steps, notes, ok, process, registry_entry, run_output_contract, runtime_error, schema_version, steps, timestamp, training_data_flow, training_executed, work_dir backend, canonical_train_config, format, ok, run_output_contract, schema_version, steps, timestamp">
+  <h3>YOLOZU training run summary</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://yolozu.dev/schemas/training_run_summary.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>backend, canonical_train_config, dataset, dry_run, format, handoff_contracts, license_boundary, next_steps, notes, ok, process, registry_entry, run_output_contract, runtime_error, schema_version, steps, timestamp, training_data_flow, training_executed, work_dir</code></dd>
+    <dt>Root required</dt><dd><code>backend, canonical_train_config, format, ok, run_output_contract, schema_version, steps, timestamp</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/training_run_summary.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+</div>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schema_governance.md" target="_blank" rel="noopener noreferrer">Schema governance and lifecycle</a>.</p>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>

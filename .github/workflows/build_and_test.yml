@@ -157,14 +157,21 @@ jobs:
       - name: Install lightweight deps (hash-locked docs/MCP/actions set)
         run: |
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-web-docs.lock
 
       - name: Manifest + docs references gate
+        env:
+          YOLOZU_REQUIRE_REAL_COCO: "1"
         run: |
           python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
           python tools/audit_docs_examples_drift.py --json
           python tools/generate_benchmark_support_matrix.py --check --json
+          python tools/generate_web_docs.py --check --json
           python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
           python -m unittest tests.test_byop_quickstarts -v
+          python -m unittest \
+            tests.test_web_docs_generation \
+            tests.test_web_docs_candidate_wheel -v
 
       - name: MCP/actions smoke
         run: |
@@ -302,6 +309,16 @@ jobs:
           python -m unittest \
             tests.test_candidate_artifact_ai_surface \
             tests.test_integrations_ttt_jobs -v
+
+      - name: Web docs contract and candidate-wheel journey
+        env:
+          YOLOZU_REQUIRE_REAL_COCO: "1"
+        run: |
+          python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-web-docs.lock
+          python tools/generate_web_docs.py --check --json
+          python -m unittest \
+            tests.test_web_docs_generation \
+            tests.test_web_docs_candidate_wheel -v
 
       - name: Smoke walkthrough (deep, offline)
         run: |

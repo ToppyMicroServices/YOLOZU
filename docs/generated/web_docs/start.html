@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>30-minute path — YOLOZU Docs</title>
+  <meta name="description" content="Self-contained proof artifacts, strict validation, real evaluation, and a typed Python API." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/start.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="30-minute path — YOLOZU Docs" />
+  <meta property="og:description" content="Self-contained proof artifacts, strict validation, real evaluation, and a typed Python API." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/start.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="start">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html" aria-current="page">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Stable lane</span>
+  <h1 id="page-title">A 30-minute path to a checked report</h1>
+  <p class="lead">This path creates every dataset and prediction input locally,
+  evaluates it strictly, and works unchanged outside the source checkout.</p>
+
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter steps or search all docs</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="steps-title">
+  <h2 id="steps-title">Install → proof → validate → evaluate</h2>
+  <div class="steps">
+
+<article class="step" data-search-card
+  data-search-text="0–5 Install the evaluation extra in an isolated environment The active environment contains YOLOZU and pycocotools. For a candidate build, install the candidate wheel plus pycocotools instead; the remaining commands are unchanged and run outside the source checkout. python3 -m venv .venv . .venv/bin/activate python -m pip install &quot;yolozu[coco]&quot; mkdir -p yolozu-quickstart &amp;&amp; cd yolozu-quickstart">
+  <div class="meta"><span>0–5 minutes</span></div>
+  <h3>Install the evaluation extra in an isolated environment</h3>
+  <pre><code>python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install &quot;yolozu[coco]&quot;
+mkdir -p yolozu-quickstart &amp;&amp; cd yolozu-quickstart</code></pre>
+  <p><strong>Expected:</strong> The active environment contains YOLOZU and pycocotools. For a candidate build, install the candidate wheel plus pycocotools instead; the remaining commands are unchanged and run outside the source checkout.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="5–10 Create every tutorial input locally The proof writes reports/quickstart/proof/toy_dataset, known_predictions.json, eval_report.json, and proof_report.json without downloading a model or dataset. yolozu doctor --proof --output reports/quickstart/doctor.json --proof-dir reports/quickstart/proof">
+  <div class="meta"><span>5–10 minutes</span></div>
+  <h3>Create every tutorial input locally</h3>
+  <pre><code>yolozu doctor --proof --output reports/quickstart/doctor.json --proof-dir reports/quickstart/proof</code></pre>
+  <p><strong>Expected:</strong> The proof writes reports/quickstart/proof/toy_dataset, known_predictions.json, eval_report.json, and proof_report.json without downloading a model or dataset.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="10–18 Check both interface boundaries explicitly Both validators exit successfully. These paths are outputs of the preceding proof command, not repository fixtures or guessed user paths. yolozu validate dataset reports/quickstart/proof/toy_dataset --split val2017 --strict yolozu validate predictions reports/quickstart/proof/known_predictions.json --strict">
+  <div class="meta"><span>10–18 minutes</span></div>
+  <h3>Check both interface boundaries explicitly</h3>
+  <pre><code>yolozu validate dataset reports/quickstart/proof/toy_dataset --split val2017 --strict
+yolozu validate predictions reports/quickstart/proof/known_predictions.json --strict</code></pre>
+  <p><strong>Expected:</strong> Both validators exit successfully. These paths are outputs of the preceding proof command, not repository fixtures or guessed user paths.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="18–23 Run real COCOeval with concise flags eval_coco.json has status ok, dry_run false, validation mode strict, repair disabled, and real COCO metrics. Evaluation is strict by default. yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 -o reports/quickstart/eval_coco.json">
+  <div class="meta"><span>18–23 minutes</span></div>
+  <h3>Run real COCOeval with concise flags</h3>
+  <pre><code>yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 -o reports/quickstart/eval_coco.json</code></pre>
+  <p><strong>Expected:</strong> eval_coco.json has status ok, dry_run false, validation mode strict, repair disabled, and real COCO metrics. Evaluation is strict by default.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="23–27 Inspect the real report Confirm status ok, dry_run false, validation mode strict, repair disabled, the evaluated image/detection counts, and non-null COCO metrics. python -m json.tool reports/quickstart/eval_coco.json">
+  <div class="meta"><span>23–27 minutes</span></div>
+  <h3>Inspect the real report</h3>
+  <pre><code>python -m json.tool reports/quickstart/eval_coco.json</code></pre>
+  <p><strong>Expected:</strong> Confirm status ok, dry_run false, validation mode strict, repair disabled, the evaluated image/detection counts, and non-null COCO metrics.</p>
+</article>
+
+<article class="step" data-search-card
+  data-search-text="27–30 Read before comparing Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports. ">
+  <div class="meta"><span>27–30 minutes</span></div>
+  <h3>Read before comparing</h3>
+
+  <p><strong>Expected:</strong> Confirm task, dataset/split, prediction source, export settings, protocol identity, metric family, and any skipped lane before comparing two reports.</p>
+</article>
+
+  </div>
+  <div class="hero-actions">
+    <a class="button primary" href="examples.html"
+      data-docs-event="YOLOZU docs completion"
+      data-event-target="checked-report">I have a checked report</a>
+    <a class="button" href="troubleshooting.html">Something failed</a>
+  </div>
+  <p class="source-note">Canonical procedure:
+    <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">CPU-only DoD</a>.
+  </p>
+  <aside class="callout" data-search-card
+    data-search-text="Core-install fallback (not real evaluation) yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 --dry-run -o reports/quickstart/eval_coco_dry_run.json Use this only when pycocotools is intentionally unavailable. It performs strict validation and conversion, writes dry_run true, and leaves all metrics null; do not present it as evaluation evidence.">
+    <h3>Core-install fallback (not real evaluation)</h3>
+    <p>Use this only when pycocotools is intentionally unavailable. It performs strict validation and conversion, writes dry_run true, and leaves all metrics null; do not present it as evaluation evidence.</p>
+    <pre><code>yolozu eval-coco -d reports/quickstart/proof/toy_dataset -p reports/quickstart/proof/known_predictions.json -s val2017 --dry-run -o reports/quickstart/eval_coco_dry_run.json</code></pre>
+  </aside>
+</section>
+<section class="section" aria-labelledby="python-api-title" data-search-card
+  data-search-text="Use the same strict lane from Python The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory. from pathlib import Path
+
+from yolozu.api import evaluate_coco
+
+workspace = Path.cwd().resolve()
+result = evaluate_coco(
+    dataset=workspace / &quot;reports/quickstart/proof/toy_dataset&quot;,
+    predictions=workspace / &quot;reports/quickstart/proof/known_predictions.json&quot;,
+    split=&quot;val2017&quot;,
+)
+print(result.to_dict()[&quot;metrics&quot;])">
+  <span class="eyebrow">Stable Python API</span>
+  <h2 id="python-api-title">Use the same strict lane from Python</h2>
+  <p>The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory.</p>
+  <pre><code>from pathlib import Path
+
+from yolozu.api import evaluate_coco
+
+workspace = Path.cwd().resolve()
+result = evaluate_coco(
+    dataset=workspace / &quot;reports/quickstart/proof/toy_dataset&quot;,
+    predictions=workspace / &quot;reports/quickstart/proof/known_predictions.json&quot;,
+    split=&quot;val2017&quot;,
+)
+print(result.to_dict()[&quot;metrics&quot;])</code></pre>
+  <p><strong>Expected:</strong> The call uses the inputs created by doctor --proof, validates strictly by default, and returns a CocoEvaluationResult. Pass dry_run=True only when metrics are intentionally unavailable.</p>
+  <p class="source-note">Supported symbols and error policy:
+    <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/python_api.md" target="_blank" rel="noopener noreferrer">Stable Python API</a>.
+  </p>
+</section>
+<section class="section" aria-labelledby="two-hour-title">
+  <h2 id="two-hour-title">Continue to the two-hour path</h2>
+  <ol class="check-list"><li>Complete the 30-minute stable path.</li>
+<li>Export or import predictions from an external stack through a checked bridge.</li>
+<li>Run a CPU-only evaluation with the same dataset, split, and fixed protocol.</li>
+<li>Compare two wrapped prediction artifacts and their reports.</li>
+<li>Fill out docs/evaluation_protocol_template.md for the run.</li>
+<li>Choose stable evaluation, backend parity, or a Research lane from evidence—not from a missing feature assumption.</li></ol>
+  <p class="source-note">Use
+    <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/evaluation_protocol_template.md" target="_blank" rel="noopener noreferrer">the evaluation protocol template</a>
+    before comparing artifacts.</p>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>

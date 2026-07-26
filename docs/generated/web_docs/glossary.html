@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glossary — YOLOZU Docs</title>
+  <meta name="description" content="YOLOZU glossary for interface contracts, protocol identity, lanes, and evidence." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/glossary.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Glossary — YOLOZU Docs" />
+  <meta property="og:description" content="YOLOZU glossary for interface contracts, protocol identity, lanes, and evidence." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/glossary.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="glossary">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html" aria-current="page">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Curated from repository SSOT</span>
+  <h1 id="page-title">Glossary</h1>
+  <p class="lead">Terms for the predictions boundary, protocol identity, maturity
+  lanes, and comparison evidence.</p>
+
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter glossary terms and definitions</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="terms-title">
+  <h2 id="terms-title">Core terms</h2>
+  <div class="grid two">
+<article class="card" id="term-predictions-interface-contract" data-search-card
+  data-search-text="Predictions interface contract The stable wrapped predictions boundary that lets validation and evaluation stay independent of the training or inference framework.">
+  <h3>Predictions interface contract</h3>
+  <p>The stable wrapped predictions boundary that lets validation and evaluation stay independent of the training or inference framework.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/predictions_schema.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-wrapped-predictions" data-search-card
+  data-search-text="Wrapped predictions A predictions payload with schema version, prediction entries, and metadata needed to interpret how the artifact was produced.">
+  <h3>Wrapped predictions</h3>
+  <p>A predictions payload with schema version, prediction entries, and metadata needed to interpret how the artifact was produced.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/predictions_schema.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-protocol-identity" data-search-card
+  data-search-text="Protocol identity The recorded dataset, split, metric settings, thresholds, and other evaluation choices that determine whether reports are comparable.">
+  <h3>Protocol identity</h3>
+  <p>The recorded dataset, split, metric settings, thresholds, and other evaluation choices that determine whether reports are comparable.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/evaluation_protocol_template.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-export-settings" data-search-card
+  data-search-text="Export settings Producer-side preprocessing and output settings recorded in meta.export_settings so prediction artifacts can be interpreted and compared.">
+  <h3>Export settings</h3>
+  <p>Producer-side preprocessing and output settings recorded in meta.export_settings so prediction artifacts can be interpreted and compared.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/predictions_schema.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-stable-lane" data-search-card
+  data-search-text="Stable lane Prediction validation and evaluation capabilities that form the product&#x27;s supported core boundary.">
+  <h3>Stable lane</h3>
+  <p>Prediction validation and evaluation capabilities that form the product&#x27;s supported core boundary.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-bridge-lane" data-search-card
+  data-search-text="Bridge lane An adapter, exporter, or external training handoff that emits the stable predictions interface contract without replacing it.">
+  <h3>Bridge lane</h3>
+  <p>An adapter, exporter, or external training handoff that emits the stable predictions interface contract without replacing it.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/byop_quickstarts.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-benchmark-lane" data-search-card
+  data-search-text="Benchmark lane A qualification path for runtime or backend parity used after stable prediction evaluation is already working.">
+  <h3>Benchmark lane</h3>
+  <p>A qualification path for runtime or backend parity used after stable prediction evaluation is already working.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_support_matrix.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-research-lane" data-search-card
+  data-search-text="Research lane An opt-in experiment over a stable artifact whose output does not establish production readiness.">
+  <h3>Research lane</h3>
+  <p>An opt-in experiment over a stable artifact whose output does not establish production readiness.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-skipped-lane" data-search-card
+  data-search-text="Skipped lane A path that did not execute because a capability, artifact, runtime, or prerequisite was unavailable; it is not a passing result.">
+  <h3>Skipped lane</h3>
+  <p>A path that did not execute because a capability, artifact, runtime, or prerequisite was unavailable; it is not a passing result.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_support_matrix.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+
+<article class="card" id="term-comparable-report" data-search-card
+  data-search-text="Comparable report A report whose task, data, protocol, predictions provenance, and metric semantics align with the report it is compared against.">
+  <h3>Comparable report</h3>
+  <p>A report whose task, data, protocol, predictions provenance, and metric semantics align with the report it is compared against.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/evaluation_protocol_template.md" target="_blank" rel="noopener noreferrer">Canonical context</a></p>
+</article>
+</div>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>

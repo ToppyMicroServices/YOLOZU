@@ -9564,6 +9564,112 @@
     },
     {
       "docs": [
+        "docs/python_api.md",
+        "docs/web_docs_content.json",
+        "docs/web_docs_plan.md",
+        "docs/generated/web_docs/index.html"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Atomically replaces only an empty or provenance-owned generated web-docs directory; refuses symlinks, critical directories, and unowned content.",
+            "flag": "--output",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/generate_web_docs.py",
+      "examples": [
+        {
+          "command": "python3 tools/generate_web_docs.py",
+          "description": "Regenerate the checked-in searchable web-docs bundle after validating repository-local sources and safe HTTPS/internal links."
+        },
+        {
+          "command": "python3 tools/generate_web_docs.py --check --json",
+          "description": "Fail without writing when manifest, schema, content, or asset changes have not been regenerated."
+        }
+      ],
+      "id": "generate_web_docs",
+      "inputs": [
+        {
+          "default": "tools/manifest.json",
+          "flag": "--manifest",
+          "kind": "file",
+          "name": "manifest",
+          "required": false
+        },
+        {
+          "default": "docs/schemas",
+          "flag": "--schemas",
+          "kind": "dir",
+          "name": "schemas",
+          "required": false
+        },
+        {
+          "default": "docs/web_docs_content.json",
+          "flag": "--content",
+          "kind": "file",
+          "name": "content",
+          "required": false
+        },
+        {
+          "default": "docs/generated/web_docs",
+          "flag": "--output",
+          "kind": "dir",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--check",
+          "kind": "string",
+          "name": "check",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "default": "docs/generated/web_docs",
+          "description": "Generated static onboarding web-docs bundle with hashes for every referenced SSOT source and a complete generated-file inventory in provenance.json.",
+          "kind": "dir",
+          "name": "web_docs_bundle"
+        },
+        {
+          "description": "Generation or drift-check status.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.",
+      "tags": [
+        "docs",
+        "generated-docs",
+        "manifest",
+        "onboarding",
+        "schemas",
+        "web"
+      ]
+    },
+    {
+      "docs": [
         "docs/runpod_gpu_validation_split.md",
         "docs/doctor_diagnostics.md",
         "manual/chapters/17_realtime_batch_inference.tex"

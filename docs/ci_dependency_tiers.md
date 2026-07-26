@@ -18,7 +18,9 @@ Default cost policy:
 - Jobs: `smoke_gate`; `pip_smoke` is main-push only.
 
 2. `docs_mcp`
-- Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock`
+- Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-docs-actions.lock`, then `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-web-docs.lock`
+- The web-docs candidate gate sets `YOLOZU_REQUIRE_REAL_COCO=1`; a missing
+  `pycocotools` installation is a failure, not a dry-run fallback.
 - Purpose: docs/manual/README and MCP/Actions surface checks without running full runtime regression gates.
 - Jobs: `docs_mcp_gate`.
 

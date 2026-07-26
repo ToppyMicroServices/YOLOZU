@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples and report reading — YOLOZU Docs</title>
+  <meta name="description" content="Repository-backed YOLOZU reports, overlays, expected files, and comparison checklist." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/examples.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Examples and report reading — YOLOZU Docs" />
+  <meta property="og:description" content="Repository-backed YOLOZU reports, overlays, expected files, and comparison checklist." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/examples.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="examples">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html">30-minute path</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html" aria-current="page">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+
+<section class="hero" aria-labelledby="page-title">
+  <span class="eyebrow">Artifact-backed examples</span>
+  <h1 id="page-title">Examples and report reading</h1>
+  <p class="lead">Each example points back to checked-in repository evidence and
+  lists the companion files or fields needed to interpret it.</p>
+
+<div class="search-shell" role="search">
+  <label for="docs-search">Filter examples, lanes, and expected files</label>
+  <input id="docs-search" class="search-input" type="search"
+    placeholder="Try validate, predictions, protocol, schema, or TTT"
+    autocomplete="off" data-docs-search />
+  <div class="search-results" aria-live="polite" data-docs-search-results></div>
+</div>
+
+</section>
+<section class="section" aria-labelledby="gallery-title">
+  <h2 id="gallery-title">Examples gallery</h2>
+  <div class="grid two">
+<article class="card lane-card lane-stable" id="example-instance-seg-visible-demo"
+  data-search-card data-search-text="Instance-segmentation report and overlays stable A checked demo that pairs a JSON metric report with visible mask overlays. instance_seg_demo_report.json overlays/*.png demo_config.json">
+  <span class="badge badge-stable">stable</span>
+  <h3>Instance-segmentation report and overlays</h3>
+  <p>A checked demo that pairs a JSON metric report with visible mask overlays.</p>
+  <img class="example-image" src="assets/examples/instance-seg-demo.png" alt="Instance-segmentation report and overlays" loading="lazy" decoding="async" />
+  <h3>Expected companion files or fields</h3>
+  <ul class="check-list"><li><code>instance_seg_demo_report.json</code></li>
+<li><code>overlays/*.png</code></li>
+<li><code>demo_config.json</code></li></ul>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">Source artifact</a></p>
+</article>
+
+<article class="card lane-card lane-bridge" id="example-external-predictions-bridge"
+  data-search-card data-search-text="External framework prediction artifacts bridge Detectron2, MMDetection, YOLOv8, and YOLOX examples converge on the same wrapped predictions interface contract before scoring. wrapped predictions JSON meta.export_settings adapter/source identity">
+  <span class="badge badge-bridge">bridge</span>
+  <h3>External framework prediction artifacts</h3>
+  <p>Detectron2, MMDetection, YOLOv8, and YOLOX examples converge on the same wrapped predictions interface contract before scoring.</p>
+
+  <h3>Expected companion files or fields</h3>
+  <ul class="check-list"><li><code>wrapped predictions JSON</code></li>
+<li><code>meta.export_settings</code></li>
+<li><code>adapter/source identity</code></li></ul>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/byop_quickstarts.md" target="_blank" rel="noopener noreferrer">Source artifact</a></p>
+</article>
+
+<article class="card lane-card lane-benchmark" id="example-backend-support-audit"
+  data-search-card data-search-text="Backend support and skip semantics benchmark The generated support matrix records implemented, conditional, and unsupported backend paths without presenting a missing lane as a passing result. benchmark support metadata explicit support status skip or failure reason where applicable">
+  <span class="badge badge-benchmark">benchmark</span>
+  <h3>Backend support and skip semantics</h3>
+  <p>The generated support matrix records implemented, conditional, and unsupported backend paths without presenting a missing lane as a passing result.</p>
+
+  <h3>Expected companion files or fields</h3>
+  <ul class="check-list"><li><code>benchmark support metadata</code></li>
+<li><code>explicit support status</code></li>
+<li><code>skip or failure reason where applicable</code></li></ul>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/data/manifest/benchmark_support.json" target="_blank" rel="noopener noreferrer">Source artifact</a></p>
+</article>
+
+<article class="card lane-card lane-research" id="example-ttt-before-after"
+  data-search-card data-search-text="TTT Research evidence requirements research The bundled image is a synthetic documentation fixture. It demonstrates the required artifacts and provenance only; it does not establish method efficacy or promote TTT to Stable maturity. baseline_predictions.json method_predictions.json before_after_compare.json TTT log and plan">
+  <span class="badge badge-research">research</span>
+  <h3>TTT Research evidence requirements</h3>
+  <p>The bundled image is a synthetic documentation fixture. It demonstrates the required artifacts and provenance only; it does not establish method efficacy or promote TTT to Stable maturity.</p>
+  <img class="example-image" src="assets/examples/ttt-method-results.png" alt="TTT Research evidence requirements" loading="lazy" decoding="async" />
+  <h3>Expected companion files or fields</h3>
+  <ul class="check-list"><li><code>baseline_predictions.json</code></li>
+<li><code>method_predictions.json</code></li>
+<li><code>before_after_compare.json</code></li>
+<li><code>TTT log and plan</code></li></ul>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/assets/ttt_method_results_source.json" target="_blank" rel="noopener noreferrer">Source artifact</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/data/smoke/predictions/predictions_dummy.json" target="_blank" rel="noopener noreferrer">Stable baseline artifact</a></p>
+</article>
+</div>
+</section>
+<section class="section" aria-labelledby="checklist-title">
+  <h2 id="checklist-title">Before comparing two reports</h2>
+  <div class="notice">
+    <ul class="check-list"><li>Same task and metric family</li>
+<li>Same dataset identity and split</li>
+<li>Validated predictions interface contract</li>
+<li>Recorded producer and export settings</li>
+<li>Pinned protocol settings</li>
+<li>Class and coordinate semantics aligned</li>
+<li>Skipped, conditional, or unsupported lanes kept explicit</li>
+<li>Visible evidence linked where the task provides it</li></ul>
+  </div>
+  <div class="hero-actions">
+    <a class="button primary" href="start.html"
+      data-docs-event="YOLOZU docs stable return"
+      data-event-target="stable-tutorial">Return to stable evaluation</a>
+    <a class="button" href="troubleshooting.html">Resolve a mismatch</a>
+  </div>
+</section>
+
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+    </div>
+  </footer>
+</body>
+</html>
