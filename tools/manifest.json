@@ -1018,10 +1018,11 @@
       "id": "benchmark_keypoints_eval",
       "inputs": [
         {
+          "description": "Dataset root; required unless --data is used.",
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
-          "required": true
+          "required": false
         },
         {
           "flag": "--split",
@@ -14619,6 +14620,12 @@
             "flag": "--run-dir",
             "kind": "dir",
             "scope": "tree"
+          },
+          {
+            "description": "Concise alias for --run-dir; writes the same complete diagnostic artifact tree.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
           }
         ]
       },
@@ -14643,13 +14650,27 @@
           "flag": "--boilerplate",
           "kind": "string",
           "name": "boilerplate",
-          "required": true
+          "required": false
+        },
+        {
+          "description": "Concise method selector that derives the matching boilerplate.",
+          "flag": "--method",
+          "kind": "string",
+          "name": "method",
+          "required": false
         },
         {
           "flag": "--dataset",
           "kind": "dir",
           "name": "dataset",
           "required": true
+        },
+        {
+          "description": "Concise alias for --dataset.",
+          "flag": "--data",
+          "kind": "dir",
+          "name": "data_alias",
+          "required": false
         },
         {
           "default": "val",
@@ -14659,16 +14680,31 @@
           "required": false
         },
         {
+          "description": "Checkpoint path; required unless --weights is used.",
           "flag": "--checkpoint",
           "kind": "file",
           "name": "checkpoint",
-          "required": true
+          "required": false
+        },
+        {
+          "description": "Concise alias for --checkpoint.",
+          "flag": "--weights",
+          "kind": "file",
+          "name": "weights_alias",
+          "required": false
         },
         {
           "default": "reports/ttt_compare/<method>",
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
+          "required": false
+        },
+        {
+          "description": "Concise alias for --run-dir.",
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out_alias",
           "required": false
         },
         {
@@ -14707,6 +14743,13 @@
           "flag": "--skip-eval",
           "kind": "string",
           "name": "skip_eval",
+          "required": false
+        },
+        {
+          "description": "Concise alias for --skip-eval.",
+          "flag": "--no-eval",
+          "kind": "string",
+          "name": "no_eval_alias",
           "required": false
         },
         {
