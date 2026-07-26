@@ -151,9 +151,9 @@
     },
     {
       "id": "ttt-before-after",
-      "title": "TTT before/after Research evidence",
+      "title": "TTT Research evidence requirements",
       "lane": "research",
-      "description": "Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity.",
+      "description": "The bundled image is a synthetic documentation fixture. It demonstrates the required artifacts and provenance only; it does not establish method efficacy or promote TTT to Stable maturity.",
       "image_source": "docs/assets/ttt_method_results_summary.png",
       "image_output": "ttt-method-results.png",
       "source": "docs/assets/ttt_method_results_source.json",

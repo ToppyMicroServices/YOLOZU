@@ -93,8 +93,8 @@
   {
     "href": "commands.html#tool-benchmark-eata-stability",
     "kind": "command",
-    "search_text": "benchmark_eata_stability Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults. research tools/benchmark_eata_stability.py --baseline --eata --output-json --output-md --max-overhead-ratio --max-loss-ratio --min-selected-ratio",
-    "summary": "Benchmark EATA stability/efficiency tradeoffs versus baseline TTT and emit recommended defaults.",
+    "search_text": "benchmark_eata_stability Compare EATA stability/efficiency diagnostics with a baseline; efficacy remains not established and the report cannot promote defaults. research tools/benchmark_eata_stability.py --baseline --eata --output-json --output-md --max-overhead-ratio --max-loss-ratio --min-selected-ratio",
+    "summary": "Compare EATA stability/efficiency diagnostics with a baseline; efficacy remains not established and the report cannot promote defaults.",
     "title": "benchmark_eata_stability"
   },
   {
@@ -121,8 +121,8 @@
   {
     "href": "commands.html#tool-benchmark-sar-robustness",
     "kind": "command",
-    "search_text": "benchmark_sar_robustness Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report. research tools/benchmark_sar_robustness.py --cotta --eata --sar --output-json --output-md --max-overhead-ratio --max-loss-ratio --max-variance-ratio",
-    "summary": "Benchmark SAR robustness gains and side effects versus CoTTA/EATA and emit a go/no-go report.",
+    "search_text": "benchmark_sar_robustness Compare local SAR/CoTTA/EATA diagnostics; efficacy remains not established and the report is not go/no-go evidence. research tools/benchmark_sar_robustness.py --cotta --eata --sar --output-json --output-md --max-overhead-ratio --max-loss-ratio --max-variance-ratio",
+    "summary": "Compare local SAR/CoTTA/EATA diagnostics; efficacy remains not established and the report is not go/no-go evidence.",
     "title": "benchmark_sar_robustness"
   },
   {
@@ -317,8 +317,8 @@
   {
     "href": "commands.html#tool-export-predictions",
     "kind": "command",
-    "search_text": "export_predictions Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --allow-partial-checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-compile-fullgraph --no-torch-compile-fullgraph --torch-compile-dynamic --allow-compile-fallback --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
-    "summary": "Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes.",
+    "search_text": "export_predictions Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, TTA remains Experimental, TTT remains Research, and parent maturity does not promote either lane. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --allow-partial-checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-compile-fullgraph --no-torch-compile-fullgraph --torch-compile-dynamic --allow-compile-fallback --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
+    "summary": "Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, TTA remains Experimental, TTT remains Research, and parent maturity does not promote either lane.",
     "title": "export_predictions"
   },
   {
@@ -660,8 +660,8 @@
   {
     "href": "commands.html#tool-render-ttt-manual-figures",
     "kind": "command",
-    "search_text": "render_ttt_manual_figures Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use. research tools/render_ttt_manual_figures.py --source-json --docs-assets-dir --manual-figures-dir",
-    "summary": "Render beginner-friendly TTT manual PNG figures from fixed report artifacts for docs/manual use.",
+    "search_text": "render_ttt_manual_figures Render the six-file docs/manual TTT figure bundle atomically from validated synthetic-fixture or hash-bound measured sources. research tools/render_ttt_manual_figures.py --source-json --docs-assets-dir --manual-figures-dir",
+    "summary": "Render the six-file docs/manual TTT figure bundle atomically from validated synthetic-fixture or hash-bound measured sources.",
     "title": "render_ttt_manual_figures"
   },
   {
@@ -688,8 +688,8 @@
   {
     "href": "commands.html#tool-run-actions-api",
     "kind": "command",
-    "search_text": "run_actions_api Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend. stable tools/run_actions_api.py --host --port --workers --reload",
-    "summary": "Run FastAPI/OpenAPI endpoint for GPT Actions using YOLOZU integration backend.",
+    "search_text": "run_actions_api Run the GPT Actions API, including fail-closed typed TTT/CTTA export jobs with full checkpoint preflight. stable tools/run_actions_api.py --host --port --workers --reload",
+    "summary": "Run the GPT Actions API, including fail-closed typed TTT/CTTA export jobs with full checkpoint preflight.",
     "title": "run_actions_api"
   },
   {
@@ -702,8 +702,8 @@
   {
     "href": "commands.html#tool-run-mcp-server",
     "kind": "command",
-    "search_text": "run_mcp_server Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config). stable tools/run_mcp_server.py --transport --manifest --print-tools --sample-generate-config --sample-review-config --workspace-root",
-    "summary": "Run YOLOZU MCP stdio server and AI-first deterministic surface helpers (doctor/generate_config/review_config).",
+    "search_text": "run_mcp_server Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight. stable tools/run_mcp_server.py --transport --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root",
+    "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight.",
     "title": "run_mcp_server"
   },
   {
@@ -744,8 +744,8 @@
   {
     "href": "commands.html#tool-run-ttt-compare",
     "kind": "command",
-    "search_text": "run_ttt_compare Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory. research tools/run_ttt_compare.py --boilerplate --dataset --split --checkpoint --run-dir --backend --device --max-images --protocol --image-size --skip-eval --dry-run --force",
-    "summary": "Run baseline-vs-adapted TTT compare from a method boilerplate and write before-after artifacts plus a research_report boundary under one run directory.",
+    "search_text": "run_ttt_compare Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming. research tools/run_ttt_compare.py --boilerplate --method --dataset --data --split --checkpoint --weights --run-dir --out --backend --device --max-images --protocol --image-size --skip-eval --no-eval --dry-run --force",
+    "summary": "Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming.",
     "title": "run_ttt_compare"
   },
   {
@@ -779,8 +779,8 @@
   {
     "href": "commands.html#tool-ttt-compare",
     "kind": "command",
-    "search_text": "ttt_compare Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare. research scripts/ttt_compare.sh --boilerplate --dataset --split --checkpoint --run-dir --backend --device --max-images --protocol --image-size --skip-eval --dry-run --force",
-    "summary": "Short shell entrypoint for baseline-vs-adapted TTT compare using method boilerplates, including both the repo-backed MIM smoke fixture and the fixed real-probe MIM compare.",
+    "search_text": "ttt_compare Short shell entrypoint for the fail-closed TTT local diagnostic; requires a fully compatible checkpoint and never promotes efficacy. research scripts/ttt_compare.sh --boilerplate --dataset --split --checkpoint --run-dir --backend --device --max-images --protocol --image-size --skip-eval --dry-run --force",
+    "summary": "Short shell entrypoint for the fail-closed TTT local diagnostic; requires a fully compatible checkpoint and never promotes efficacy.",
     "title": "ttt_compare"
   },
   {
@@ -807,8 +807,8 @@
   {
     "href": "commands.html#tool-validate-predictions",
     "kind": "command",
-    "search_text": "validate_predictions Validate YOLOZU predictions JSON schema (permissive by default; strict optional). stable tools/validate_predictions.py  --strict",
-    "summary": "Validate YOLOZU predictions JSON schema (permissive by default; strict optional).",
+    "search_text": "validate_predictions Validate YOLOZU predictions JSON (permissive by default; strict optional) with compatible human output or an explicit bounded JSON result. stable tools/validate_predictions.py  --strict --json",
+    "summary": "Validate YOLOZU predictions JSON (permissive by default; strict optional) with compatible human output or an explicit bounded JSON result.",
     "title": "validate_predictions"
   },
   {
@@ -856,8 +856,8 @@
   {
     "href": "commands.html#tool-yolozu",
     "kind": "command",
-    "search_text": "yolozu Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. stable yolozu/cli.py --allow-compile-fallback --allow-gpu --allow-network --allow-rgb-masks --allow-undeclared-effects --allow-unknown-flags --allow-unsafe-paths --allow-write-root --alpha --backend --batch --boxes-scale --cache --cache-dir --calibration-bins --calibration-iou --checkpoint --class-balanced-beta --classes --combined-output --config --contract --dataset --dataset-root --dataset-from --device --devices --diag-iou --dry-run --extra-records-json --external-backend --explain --resume-from --tao-task --fit-iou --fit-max-detections --fit-temperature --focal-gamma --force --force-import-overwrite --from --gamma --glob --goal --head-fraction --help --html --image-size --images-dir --infer-batch-size --input-dir --input-name --instances-json --iou-threshold --json --keep-per-image --kp-line --kp-radius --ldam-margin --logit-adjustment-tau --lora-alpha --lora-dropout --lora-freeze-base --lora-r --lora-target --lora-train-bias --lort-tau --loss-plugin --lr-scheduler --max-detections --max-images --max-overlays --max-runs --max-score --medium-fraction --method --metric --metric-key --metric-plugin --min-score --model --no-lora-freeze-base --no-torch-channels-last --no-torch-compile-fullgraph --no-torch-inference-mode --no-ttt-rollback-on-stop --no-ttt-sar-adaptive --no-ttt-stop-on-non-finite --notes --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --output --output-report --proof --proof-dir --overlay-alpha --overlay-max-size --overlay-sort --overlays-dir --openvino-model --parity-reference-backend --classification-parity-score-atol --obb-parity-iou-thresh --obb-parity-score-atol --pck-threshold --per-image-limit --pred-root --predictions --progress --python --rebalance-sampler --records-json --replay-fraction --replay-per-task-cap --replay-size --resolved-config-out --resume --run-dir --runtime-output-json --run-json --score-threshold --seed --split --stage1-epochs --stage2-epochs --stats-in --stats-out --strength --success-rot-deg --success-trans --tag --task --tau --temperature --temperature-grid --torch-amp --torch-channels-last --torch-compile --torch-compile-backend --torch-compile-fullgraph --torch-compile-dynamic --torch-compile-mode --torch-inference-mode --title --topk --train-script --tta --val-records-json --tta-flip-prob --tta-keypoint-swap-pairs --tta-log-out --tta-mode --tta-model-merge-iou --tta-norm-only --tta-seed --ttt --ttt-aux-depth-weight --ttt-aux-keypoints-weight --ttt-aux-pose-weight --ttt-aux-seg-weight --ttt-aux-temperature --ttt-batch-size --ttt-cotta-aggregation --ttt-cotta-augmentations --ttt-cotta-ema-momentum --ttt-cotta-restore-interval --ttt-cotta-restore-prob --ttt-eata-anchor-lambda --ttt-eata-conf-min --ttt-eata-entropy-max --ttt-eata-entropy-min --ttt-eata-max-skip-streak --ttt-eata-min-valid-dets --ttt-eata-selected-ratio-min --ttt-exclude --ttt-include --ttt-lite-entropy-weight --ttt-lite-minmax --ttt-lite-non-torch --ttt-lite-temperature --ttt-log-out --ttt-lr --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-max-loss-increase --ttt-max-loss-ratio --ttt-max-total-update-norm --ttt-max-update-norm --ttt-method --ttt-patch-size --ttt-preset --ttt-reset --ttt-rollback-on-stop --ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sar-rho --ttt-sdft-task --ttt-seed --ttt-steps --ttt-stop-on-non-finite --ttt-update-filter --weights --preset --spec --registry-out --execute --stop-on-failure --task-family --train-opt --out-dir --image-mode",
-    "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
+    "search_text": "yolozu Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows, including a packaged torch/TTT exporter usable outside a source checkout; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags. stable yolozu/cli.py --allow-compile-fallback --allow-gpu --allow-network --allow-rgb-masks --allow-undeclared-effects --allow-unknown-flags --allow-unsafe-paths --allow-write-root --alpha --backend --batch --boxes-scale --cache --cache-dir --calibration-bins --calibration-iou --checkpoint --class-balanced-beta --classes --combined-output --config --contract --dataset --dataset-root --dataset-from --device --devices --diag-iou --dry-run --extra-records-json --external-backend --explain --resume-from --tao-task --fit-iou --fit-max-detections --fit-temperature --focal-gamma --force --force-import-overwrite --from --gamma --glob --goal --head-fraction --help --html --image-size --images-dir --infer-batch-size --input-dir --input-name --instances-json --iou-threshold --json --keep-per-image --kp-line --kp-radius --ldam-margin --logit-adjustment-tau --lora-alpha --lora-dropout --lora-freeze-base --lora-r --lora-target --lora-train-bias --lort-tau --loss-plugin --lr-scheduler --max-detections --max-images --max-overlays --max-runs --max-score --medium-fraction --method --metric --metric-key --metric-plugin --min-score --model --no-lora-freeze-base --no-torch-channels-last --no-torch-compile-fullgraph --no-torch-inference-mode --no-ttt-rollback-on-stop --no-ttt-sar-adaptive --no-ttt-stop-on-non-finite --notes --oks --oks-max-dets --oks-sigmas --oks-sigmas-file --output --output-report --proof --proof-dir --overlay-alpha --overlay-max-size --overlay-sort --overlays-dir --openvino-model --parity-reference-backend --classification-parity-score-atol --obb-parity-iou-thresh --obb-parity-score-atol --pck-threshold --per-image-limit --pred-root --predictions --progress --python --rebalance-sampler --records-json --replay-fraction --replay-per-task-cap --replay-size --resolved-config-out --resume --run-dir --runtime-output-json --run-json --score-threshold --seed --split --stage1-epochs --stage2-epochs --stats-in --stats-out --strength --success-rot-deg --success-trans --tag --task --tau --temperature --temperature-grid --torch-amp --torch-channels-last --torch-compile --torch-compile-backend --torch-compile-fullgraph --torch-compile-dynamic --torch-compile-mode --torch-inference-mode --title --topk --train-script --tta --val-records-json --tta-flip-prob --tta-keypoint-swap-pairs --tta-log-out --tta-mode --tta-model-merge-iou --tta-norm-only --tta-seed --ttt --ttt-aux-depth-weight --ttt-aux-keypoints-weight --ttt-aux-pose-weight --ttt-aux-seg-weight --ttt-aux-temperature --ttt-batch-size --ttt-cotta-aggregation --ttt-cotta-augmentations --ttt-cotta-ema-momentum --ttt-cotta-restore-interval --ttt-cotta-restore-prob --ttt-eata-anchor-lambda --ttt-eata-conf-min --ttt-eata-entropy-max --ttt-eata-entropy-min --ttt-eata-max-skip-streak --ttt-eata-min-valid-dets --ttt-eata-selected-ratio-min --ttt-exclude --ttt-include --ttt-lite-entropy-weight --ttt-lite-minmax --ttt-lite-non-torch --ttt-lite-temperature --ttt-log-out --ttt-lr --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-max-loss-increase --ttt-max-loss-ratio --ttt-max-total-update-norm --ttt-max-update-norm --ttt-method --ttt-patch-size --ttt-preset --ttt-reset --ttt-rollback-on-stop --ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sar-rho --ttt-sdft-task --ttt-seed --ttt-steps --ttt-stop-on-non-finite --ttt-update-filter --weights --preset --spec --registry-out --execute --stop-on-failure --task-family --train-opt --out-dir --image-mode",
+    "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows, including a packaged torch/TTT exporter usable outside a source checkout; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
     "title": "yolozu"
   },
   {
@@ -924,6 +924,13 @@
     "title": "YOLOZU Predictions JSON"
   },
   {
+    "href": "schemas.html#schema-predictions-validation-result-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU predictions validation result Checked-in YOLOZU JSON Schema. entry_count errors limits mode ok path repair_enabled schema_version strict tool warnings docs/schemas/predictions_validation_result.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU predictions validation result"
+  },
+  {
     "href": "schemas.html#schema-reference-adapter-regression-report-schema",
     "kind": "schema",
     "search_text": "Reference Adapter Regression Report Checked-in YOLOZU JSON Schema. baseline_meta baseline_path contract diff_summary_path failures gate_policy gates hard_failures ok predictions_sha256 protocol run run_meta schema_version soft_failures speed summary topk_examples topk_examples_dir warnings docs/schemas/reference_adapter_regression_report.schema.json",
@@ -975,7 +982,7 @@
   {
     "href": "schemas.html#schema-tools-manifest-schema",
     "kind": "schema",
-    "search_text": "YOLOZU Tools Manifest Checked-in YOLOZU JSON Schema. contracts generated_at_utc manifest_version repo tools docs/schemas/tools_manifest.schema.json",
+    "search_text": "YOLOZU Tools Manifest Checked-in YOLOZU JSON Schema. ai_surfaces contracts generated_at_utc manifest_version repo tools docs/schemas/tools_manifest.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Tools Manifest"
   },
@@ -1031,9 +1038,9 @@
   {
     "href": "examples.html#example-ttt-before-after",
     "kind": "example",
-    "search_text": "TTT before/after Research evidence research Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity. baseline_predictions.json method_predictions.json before_after_compare.json TTT log and plan",
-    "summary": "Research summaries remain attached to a stable baseline prediction artifact and do not promote the method to Stable maturity.",
-    "title": "TTT before/after Research evidence"
+    "search_text": "TTT Research evidence requirements research The bundled image is a synthetic documentation fixture. It demonstrates the required artifacts and provenance only; it does not establish method efficacy or promote TTT to Stable maturity. baseline_predictions.json method_predictions.json before_after_compare.json TTT log and plan",
+    "summary": "The bundled image is a synthetic documentation fixture. It demonstrates the required artifacts and provenance only; it does not establish method efficacy or promote TTT to Stable maturity.",
+    "title": "TTT Research evidence requirements"
   },
   {
     "href": "glossary.html#term-predictions-interface-contract",

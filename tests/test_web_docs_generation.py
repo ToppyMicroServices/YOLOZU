@@ -612,6 +612,11 @@ class TestWebDocsGeneration(unittest.TestCase):
                             f"{html_path.name}: unresolved fragment {target}",
                         )
 
+    def test_ttt_example_discloses_synthetic_evidence_boundary(self) -> None:
+        examples = (self.output / "examples.html").read_text(encoding="utf-8")
+        self.assertIn("synthetic documentation fixture", examples)
+        self.assertIn("does not establish method efficacy", examples)
+
 
 if __name__ == "__main__":
     unittest.main()
