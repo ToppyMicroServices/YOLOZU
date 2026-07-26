@@ -246,7 +246,7 @@ def resolve_path(path: str | Path) -> Path:
     p = Path(path)
     if p.is_absolute():
         return p
-    return REPO_ROOT / p
+    return Path.cwd() / p
 
 
 def compile_dynamic_value(value: Any) -> bool | None:
@@ -712,7 +712,9 @@ def export_with_backend(
 ) -> Path:
     validate_export_numeric_args(args)
 
-    dataset = dataset_override or (args.dataset if args.dataset else str(REPO_ROOT / "data" / "coco128"))
+    dataset = dataset_override or (
+        args.dataset if args.dataset else str(Path.cwd() / "data" / "coco128")
+    )
     dataset_fp = dataset_meta or dataset
 
     backend = str(args.backend)
@@ -764,7 +766,11 @@ def export_with_backend(
             "max_images": args.max_images,
             "adapter": adapter,
             "config": str(args.config) if backend == "torch" else None,
-            "config_sha256": sha256_file(REPO_ROOT / str(args.config)) if backend == "torch" else None,
+            "config_sha256": (
+                sha256_file(resolve_path(args.config))
+                if backend == "torch"
+                else None
+            ),
             "checkpoint": str(args.checkpoint) if backend == "torch" else None,
             "checkpoint_sha256": sha256_file(args.checkpoint) if backend == "torch" and args.checkpoint else None,
             "device": str(args.device) if backend == "torch" else None,
@@ -1039,7 +1045,8 @@ def export_with_backend(
             raise SystemExit("internal error: missing adapter")
         cmd = [
             sys.executable,
-            "tools/export_predictions.py",
+            "-m",
+            "yolozu.inference.export_predictions_cli",
             "--adapter",
             adapter,
             "--dataset",

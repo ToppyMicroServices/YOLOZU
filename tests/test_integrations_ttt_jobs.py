@@ -4,6 +4,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from yolozu.integrations import tool_runner
 from yolozu.integrations.layers.jobs import JobManager
@@ -83,14 +84,26 @@ class TestIntegrationTTTJobs(unittest.TestCase):
             root = Path(td)
             dataset = self._make_dataset(root, repo_root)
             dataset_rel = str(dataset.relative_to(repo_root))
-            before = len(tool_runner._JOBS.list())
-            result = tool_runner.ttt_job(dataset_rel, f"{root.name}/missing.pt")
-            self.assertFalse(result["ok"])
-            self.assertEqual(result["exit_code"], 2)
-            self.assertEqual(result["stage"], "preflight")
-            self.assertIs(result["queued"], False)
-            self.assertIn("fully compatible", result["error"])
-            self.assertEqual(len(tool_runner._JOBS.list()), before)
+            manager = JobManager(max_workers=1, storage_dir=root / "jobs")
+            try:
+                with patch.object(
+                    tool_runner,
+                    "_job_manager",
+                    return_value=manager,
+                ):
+                    before = len(manager.list())
+                    result = tool_runner.ttt_job(
+                        dataset_rel,
+                        f"{root.name}/missing.pt",
+                    )
+                    self.assertFalse(result["ok"])
+                    self.assertEqual(result["exit_code"], 2)
+                    self.assertEqual(result["stage"], "preflight")
+                    self.assertIs(result["queued"], False)
+                    self.assertIn("fully compatible", result["error"])
+                    self.assertEqual(len(manager.list()), before)
+            finally:
+                manager._executor.shutdown(wait=True)
 
     @unittest.skipIf(torch is None, "torch is required for live TTT job integration")
     def test_ttt_and_ctta_jobs_complete_with_exit_and_reports(self):
@@ -104,71 +117,88 @@ class TestIntegrationTTTJobs(unittest.TestCase):
                 return str(path.relative_to(repo_root))
 
             manager = JobManager(max_workers=1, storage_dir=root / "jobs")
-            original = tool_runner._JOBS
-            tool_runner._JOBS = manager
             try:
-                cases = (
-                    (
-                        "ttt",
-                        tool_runner.ttt_job,
-                        "tent",
-                        "sample",
-                    ),
-                    (
-                        "ctta",
-                        tool_runner.ctta_job,
-                        "cotta",
-                        "stream",
-                    ),
-                )
-                for lane, submit, method, reset in cases:
-                    output = root / f"{lane}_predictions.json"
-                    report = root / f"{lane}_report.json"
-                    queued = submit(
-                        rel(dataset),
-                        rel(checkpoint),
-                        rel(output),
-                        config=rel(config),
-                        report=rel(report),
-                        method=method,
-                        reset=reset,
-                        steps=1,
-                        max_images=1,
+                with patch.object(
+                    tool_runner,
+                    "_job_manager",
+                    return_value=manager,
+                ):
+                    cases = (
+                        (
+                            "ttt",
+                            tool_runner.ttt_job,
+                            "tent",
+                            "sample",
+                        ),
+                        (
+                            "ctta",
+                            tool_runner.ctta_job,
+                            "cotta",
+                            "stream",
+                        ),
                     )
-                    self.assertTrue(queued["ok"], queued)
-                    self.assertEqual(queued["status"], "queued")
-                    self.assertEqual(queued["preflight"]["status"], "full")
-                    terminal = self._wait_for_terminal(queued["job_id"])
-                    job = terminal["job"]
-                    self.assertEqual(job["status"], "completed", terminal)
-                    result = job["result"]
-                    self.assertTrue(result["ok"], result)
-                    self.assertEqual(result["exit_code"], 0)
-                    self.assertEqual(result["command"][3], "export")
-                    self.assertNotIn("test", result["command"][3:])
-                    self.assertTrue(output.is_file())
-                    self.assertTrue(report.is_file())
-                    self.assertEqual(result["artifacts"]["predictions"], rel(output))
-                    self.assertEqual(result["artifacts"]["ttt_report"], rel(report))
-                    report_payload = json.loads(report.read_text(encoding="utf-8"))
-                    ttt = report_payload["ttt"]
-                    self.assertEqual(ttt["method"], method)
-                    method_report = ttt["report"]
-                    if method_report.get("mode") == "sample":
-                        method_report = method_report["per_sample"][0]["report"]
-                    self.assertEqual(
-                        method_report["method_profile"]["efficacy"],
-                        "not_established",
-                    )
-                    persisted = json.loads(
-                        (root / "jobs" / f"{queued['job_id']}.json").read_text(
-                            encoding="utf-8"
+                    for lane, submit, method, reset in cases:
+                        output = root / f"{lane}_predictions.json"
+                        report = root / f"{lane}_report.json"
+                        queued = submit(
+                            rel(dataset),
+                            rel(checkpoint),
+                            rel(output),
+                            config=rel(config),
+                            report=rel(report),
+                            method=method,
+                            reset=reset,
+                            steps=1,
+                            max_images=1,
                         )
-                    )
-                    self.assertEqual(persisted["status"], "completed")
-                    self.assertEqual(persisted["result"]["exit_code"], 0)
+                        self.assertTrue(queued["ok"], queued)
+                        self.assertEqual(queued["status"], "queued")
+                        self.assertEqual(queued["preflight"]["status"], "full")
+                        terminal = self._wait_for_terminal(queued["job_id"])
+                        job = terminal["job"]
+                        self.assertEqual(job["status"], "completed", terminal)
+                        result = job["result"]
+                        self.assertTrue(result["ok"], result)
+                        self.assertEqual(result["exit_code"], 0)
+                        self.assertEqual(result["command"][3], "export")
+                        self.assertNotIn("test", result["command"][3:])
+                        self.assertTrue(output.is_file())
+                        self.assertTrue(report.is_file())
+                        self.assertEqual(
+                            result["artifacts"]["predictions"],
+                            rel(output),
+                        )
+                        self.assertEqual(
+                            result["artifacts"]["ttt_report"],
+                            rel(report),
+                        )
+                        report_payload = json.loads(
+                            report.read_text(encoding="utf-8")
+                        )
+                        ttt = report_payload["ttt"]
+                        self.assertEqual(ttt["method"], method)
+                        method_report = ttt["report"]
+                        if method_report.get("mode") == "sample":
+                            method_report = method_report["per_sample"][0][
+                                "report"
+                            ]
+                        self.assertEqual(
+                            method_report["method_profile"]["efficacy"],
+                            "not_established",
+                        )
+                        persisted = json.loads(
+                            (
+                                root
+                                / "jobs"
+                                / f"{queued['job_id']}.json"
+                            ).read_text(encoding="utf-8")
+                        )
+                        self.assertEqual(persisted["status"], "completed")
+                        self.assertEqual(
+                            persisted["result"]["exit_code"],
+                            0,
+                        )
             finally:
-                tool_runner._JOBS = original
                 manager._executor.shutdown(wait=True)
 
 

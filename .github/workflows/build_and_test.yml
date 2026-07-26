@@ -295,6 +295,14 @@ jobs:
             tests/test_support_external_training_tool.py \
             tests/test_ai_first_mcp_surface.py
 
+      - name: Installed candidate TTT/CTTA contract
+        env:
+          YOLOZU_REQUIRE_TTT_CANDIDATE: "1"
+        run: |
+          python -m unittest \
+            tests.test_candidate_artifact_ai_surface \
+            tests.test_integrations_ttt_jobs -v
+
       - name: Smoke walkthrough (deep, offline)
         run: |
           bash scripts/smoke.sh --profile deep --torch-device cpu

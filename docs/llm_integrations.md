@@ -215,6 +215,11 @@ discovery. It provides the exact live input schemas and summaries. Surface
 membership does not infer maturity; filters expose counts for excluded
 unclassified metadata.
 
+The installed `yolozu export` path uses the exporter packaged in the wheel;
+it does not require `tools/export_predictions.py` from a source checkout.
+Candidate-artifact CI installs the wheel into a clean environment and completes
+both `ttt_job` and `ctta_job` from an external consumer directory.
+
 ## 7) Connection templates (examples)
 
 Example MCP client profiles (template JSON):

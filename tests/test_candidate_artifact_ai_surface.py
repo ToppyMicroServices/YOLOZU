@@ -317,6 +317,181 @@ print(json.dumps({
             self.assertIn("yolozu[mcp]", missing_extra.stderr)
             self.assertFalse((consumer / "runs").exists())
 
+            require_ttt = os.environ.get(
+                "YOLOZU_REQUIRE_TTT_CANDIDATE",
+            ) == "1"
+            torch_available = importlib.util.find_spec("torch") is not None
+            if require_ttt:
+                self.assertTrue(
+                    torch_available,
+                    "required candidate TTT test needs torch in the CI runner",
+                )
+            if torch_available:
+                purelib_probe = self._run(
+                    [
+                        str(venv_python),
+                        "-c",
+                        (
+                            "import sysconfig; "
+                            "print(sysconfig.get_paths()['purelib'])"
+                        ),
+                    ],
+                    cwd=consumer,
+                    env=clean_env,
+                )
+                self.assertEqual(
+                    purelib_probe.returncode,
+                    0,
+                    msg=purelib_probe.stderr,
+                )
+                host_site_dirs = [
+                    Path(entry).resolve()
+                    for entry in sys.path
+                    if "site-packages" in entry
+                    and Path(entry).is_dir()
+                ]
+                self.assertTrue(
+                    host_site_dirs,
+                    "host dependency site-packages could not be located",
+                )
+                dependency_bridge = (
+                    Path(purelib_probe.stdout.strip())
+                    / "_yolozu_candidate_host_dependencies.pth"
+                )
+                dependency_bridge.write_text(
+                    "".join(f"{path}\n" for path in host_site_dirs),
+                    encoding="utf-8",
+                )
+
+                live_jobs = self._run(
+                    [
+                        str(venv_python),
+                        "-c",
+                        """
+import json
+import sys
+import time
+from pathlib import Path
+
+import torch
+import yolozu
+from yolozu.adapter import RTDETRPoseAdapter
+from yolozu.integrations import tool_runner
+
+prefix = Path(sys.prefix).resolve()
+module = Path(yolozu.__file__).resolve()
+if not module.is_relative_to(prefix):
+    raise SystemExit(f"candidate package escaped venv: {module}")
+
+config = Path("tiny_rtdetr.json")
+config.write_text(json.dumps({
+    "dataset": {"root": ".", "split": "val", "format": "yolo"},
+    "model": {
+        "num_classes": 1,
+        "hidden_dim": 64,
+        "num_queries": 10,
+        "stem_channels": 8,
+        "backbone_channels": [16, 32, 64],
+        "stage_blocks": [1, 1, 1],
+        "num_encoder_layers": 1,
+        "num_decoder_layers": 1,
+        "nhead": 4,
+        "encoder_dim_feedforward": 128,
+        "decoder_dim_feedforward": 128,
+    },
+    "train": {"batch_size": 1, "lr": 0.0001, "epochs": 1},
+}), encoding="utf-8")
+adapter = RTDETRPoseAdapter(
+    config_path=str(config),
+    device="cpu",
+    image_size=(32, 32),
+)
+checkpoint = Path("compatible.pt")
+torch.save(adapter.get_model().state_dict(), checkpoint)
+
+results = {}
+cases = (
+    ("ttt", tool_runner.ttt_job, "tent", "sample"),
+    ("ctta", tool_runner.ctta_job, "cotta", "stream"),
+)
+for lane, submit, method, reset in cases:
+    output = f"runs/{lane}/predictions.json"
+    report = f"runs/{lane}/report.json"
+    queued = submit(
+        "data/smoke",
+        str(checkpoint),
+        output,
+        config=str(config),
+        report=report,
+        method=method,
+        reset=reset,
+        max_images=1,
+    )
+    if not queued.get("ok"):
+        raise SystemExit(json.dumps(queued, sort_keys=True))
+    deadline = time.monotonic() + 60
+    terminal = {}
+    while time.monotonic() < deadline:
+        terminal = tool_runner.jobs_status(queued["job_id"])
+        status = (terminal.get("job") or {}).get("status")
+        if status in {"completed", "failed", "cancelled"}:
+            break
+        time.sleep(0.02)
+    job = terminal.get("job") or {}
+    result = job.get("result") or {}
+    if job.get("status") != "completed" or not result.get("ok"):
+        raise SystemExit(json.dumps(terminal, sort_keys=True))
+    if not Path(output).is_file() or not Path(report).is_file():
+        raise SystemExit(f"missing {lane} artifacts")
+    results[lane] = {
+        "job_status": job["status"],
+        "exit_code": result["exit_code"],
+        "preflight": queued["preflight"]["status"],
+        "method": json.loads(
+            Path(report).read_text(encoding="utf-8")
+        )["ttt"]["method"],
+    }
+print(json.dumps({
+    "module": str(module),
+    "results": results,
+}, sort_keys=True))
+""",
+                    ],
+                    cwd=consumer,
+                    env=clean_env,
+                )
+                self.assertEqual(
+                    live_jobs.returncode,
+                    0,
+                    msg=(
+                        "installed TTT/CTTA jobs failed outside checkout:\n"
+                        f"{live_jobs.stdout}\n{live_jobs.stderr}"
+                    ),
+                )
+                live_payload = json.loads(live_jobs.stdout)
+                self.assertTrue(
+                    Path(live_payload["module"]).resolve().is_relative_to(
+                        venv_dir.resolve()
+                    )
+                )
+                self.assertEqual(
+                    live_payload["results"],
+                    {
+                        "ctta": {
+                            "exit_code": 0,
+                            "job_status": "completed",
+                            "method": "cotta",
+                            "preflight": "full",
+                        },
+                        "ttt": {
+                            "exit_code": 0,
+                            "job_status": "completed",
+                            "method": "tent",
+                            "preflight": "full",
+                        },
+                    },
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

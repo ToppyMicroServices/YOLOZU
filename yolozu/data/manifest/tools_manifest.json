@@ -5785,7 +5785,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Stable fail-closed in-repo predictions export entrypoint with checkpoint compatibility evidence; optional acceleration flags require backend/device qualification, opt-in TTA remains Experimental, and opt-in TTT remains Research, so parent maturity does not promote those sub-lanes.",
+      "summary": "Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, and opt-in TTA/TTT remain Experimental/Research.",
       "tags": [
         "predictions",
         "adapter"
@@ -18102,7 +18102,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
+      "summary": "Top-level YOLOZU dispatcher for validation, migration, dataset, training, and predictions/eval workflows, including a packaged torch/TTT exporter usable outside a source checkout; Stable applies to the parent/core lane and does not promote Experimental or Research subcommands and flags.",
       "tags": [
         "cli",
         "predictions",
