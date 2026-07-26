@@ -142,6 +142,7 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                     "pip",
                     "install",
                     "--disable-pip-version-check",
+                    "--ignore-installed",
                     "--no-deps",
                     str(wheels[0]),
                 ],

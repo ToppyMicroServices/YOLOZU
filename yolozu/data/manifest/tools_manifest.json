@@ -5156,19 +5156,19 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Removes any prior target before inference, then writes predictions JSON only after checkpoint compatibility and requested torch.compile execution/fallback are evidenced.",
+            "description": "Repository-relative paths are anchored to the checkout. Removes any prior target before inference, then writes predictions JSON only after checkpoint compatibility and requested torch.compile execution/fallback are evidenced.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional TTA log JSON output; a requested prior log is removed before inference.",
+            "description": "Optional TTA log JSON output; repository-relative paths are anchored to the checkout and a requested prior log is removed before inference.",
             "flag": "--tta-log-out",
             "kind": "file",
             "scope": "path"
           },
           {
-            "description": "Optional TTT log JSON output; a requested prior log is removed before inference.",
+            "description": "Optional TTT log JSON output; repository-relative paths are anchored to the checkout and a requested prior log is removed before inference.",
             "flag": "--ttt-log-out",
             "kind": "file",
             "scope": "path"

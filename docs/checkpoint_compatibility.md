@@ -84,6 +84,12 @@ An incompatible checkpoint therefore cannot leave an older prediction,
 export, or parity artifact at the requested path looking like a successful
 result.
 
+For the repository wrapper, relative prediction and TTA/TTT log paths are
+resolved from the checkout root even when the wrapper is invoked from another
+working directory. Absolute paths are used as supplied. The installed
+`yolozu` package remains workspace-oriented and resolves its relative paths
+from the caller's working directory.
+
 `export_trt.py --skip-onnx` consumes an existing ONNX artifact and therefore
 rejects `--checkpoint`; checkpoint provenance must come from the metadata of
 the ONNX export that produced that artifact.
