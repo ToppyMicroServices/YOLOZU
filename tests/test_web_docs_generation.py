@@ -6,12 +6,11 @@ import re
 import subprocess
 import sys
 import tempfile
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 
-class TestWebDocsGeneration(unittest.TestCase):
+class TestWebDocsGeneration(TestCase):
     def setUp(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.output = self.repo_root / "docs" / "generated" / "web_docs"
@@ -620,4 +619,4 @@ class TestWebDocsGeneration(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()

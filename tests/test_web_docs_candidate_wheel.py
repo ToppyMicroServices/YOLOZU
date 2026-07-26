@@ -81,7 +81,7 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                 cwd=self.repo_root,
             )
             with tarfile.open(source_archive) as archive:
-                archive.extractall(source_root)
+                archive.extractall(source_root, filter="data")
 
             self._run(
                 [
