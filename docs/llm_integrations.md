@@ -64,6 +64,8 @@ promise that environment-dependent execution will succeed; only the four-tool
 
 Best-effort only (environment-dependent):
 - training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths
+- TTT/CTTA jobs, which require torch and a checkpoint with
+  `status=full` for the selected RT-DETR config
 
 Return format policy:
 - Always machine-readable JSON with stable top-level keys:
@@ -96,6 +98,11 @@ This format is designed so Claude/Copilot/other MCP-capable clients can summariz
   when compatibility repair is intended; the response identifies repair mode
   and returns up to 100 repair warnings plus
   `limits.warnings_truncated`. `eval_coco` is also strict unless `repair=true`.
+- `ttt_job` and `ctta_job` require workspace-relative `dataset` and
+  `checkpoint` inputs. They fail before queueing unless strict checkpoint
+  preflight reports `status=full` and `load.loaded=true`.
+- Treat their predictions and TTT log as local diagnostics. A completed job
+  does not establish efficacy.
 
 ## 2) OpenAI (ChatGPT) routes
 
@@ -207,6 +214,11 @@ The same generated JSON is packaged in the wheel for checkout-independent
 discovery. It provides the exact live input schemas and summaries. Surface
 membership does not infer maturity; filters expose counts for excluded
 unclassified metadata.
+
+The installed `yolozu export` path uses the exporter packaged in the wheel;
+it does not require `tools/export_predictions.py` from a source checkout.
+Candidate-artifact CI installs the wheel into a clean environment and completes
+both `ttt_job` and `ctta_job` from an external consumer directory.
 
 ## 7) Connection templates (examples)
 

@@ -69,27 +69,39 @@ class TestPresetsMultitask(unittest.TestCase):
 
 class TestChooseDefaultPresetId(unittest.TestCase):
     def test_pose_tent(self):
-        args = SimpleNamespace(ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="pose")
+        args = SimpleNamespace(
+            ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="pose"
+        )
         self.assertEqual(_choose_default_preset_id(args), "pose_safe")
 
     def test_keypoints_tent(self):
-        args = SimpleNamespace(ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="keypoints")
+        args = SimpleNamespace(
+            ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="keypoints"
+        )
         self.assertEqual(_choose_default_preset_id(args), "keypoints_safe")
 
     def test_depth_tent(self):
-        args = SimpleNamespace(ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="depth")
+        args = SimpleNamespace(
+            ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="depth"
+        )
         self.assertEqual(_choose_default_preset_id(args), "depth_safe")
 
     def test_seg_tent(self):
-        args = SimpleNamespace(ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="seg")
+        args = SimpleNamespace(
+            ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="seg"
+        )
         self.assertEqual(_choose_default_preset_id(args), "seg_safe")
 
     def test_pose_mim(self):
-        args = SimpleNamespace(ttt_method="mim", ttt_update_filter="all", ttt_sdft_task="pose")
+        args = SimpleNamespace(
+            ttt_method="mim", ttt_update_filter="all", ttt_sdft_task="pose"
+        )
         self.assertEqual(_choose_default_preset_id(args), "pose_mim")
 
     def test_no_task_default(self):
-        args = SimpleNamespace(ttt_method="tent", ttt_update_filter="all", ttt_sdft_task="")
+        args = SimpleNamespace(
+            ttt_method="tent", ttt_update_filter="all", ttt_sdft_task=""
+        )
         self.assertEqual(_choose_default_preset_id(args), "safe")
 
     def test_no_task_attr(self):
@@ -170,12 +182,11 @@ if torch is not None and nn is not None:
             self.assertIsNotNone(total)
             self.assertIn("aux_seg_logits", parts)
 
-        def test_no_teacher_uses_self_detach(self):
+        def test_missing_teacher_fails_closed_without_aux_loss(self):
             x = torch.randn(2, 3, 6, requires_grad=True)
             outputs = {"logits": torch.randn(2, 5), "rot6d": x}
             total, _ = _aux_consistency_loss(outputs, None, pose_weight=1.0)
-            # Self-consistency with detached copy → should be 0
-            self.assertAlmostEqual(float(total), 0.0, places=5)
+            self.assertIsNone(total)
 
         def test_shape_mismatch_skipped(self):
             outputs = {"logits": torch.randn(2, 5), "rot6d": torch.randn(2, 3, 6)}
@@ -186,6 +197,7 @@ if torch is not None and nn is not None:
     class TestTentRunnerMultitask(unittest.TestCase):
         def _make_model(self):
             """Simple model that returns multi-head outputs."""
+
             class MultiHead(nn.Module):
                 def __init__(self):
                     super().__init__()
@@ -228,16 +240,20 @@ if torch is not None and nn is not None:
             self.assertIn("loss_entropy", metrics)
             self.assertNotIn("aux_rot6d", metrics)
 
-        def test_tent_runner_reset_clears_teacher(self):
+        def test_tent_runner_has_no_persistent_teacher_state(self):
             model = self._make_model()
             cfg = TentConfig(lr=1e-4, update_filter="all", aux_pose_weight=1.0)
             runner = TentRunner(model, config=cfg)
 
-            batch = torch.randn(2, 4)
-            runner.adapt_step(batch)
-            self.assertIsNotNone(runner._teacher_outputs)
+            first = torch.full((2, 4), 0.2)
+            second = torch.full((2, 4), 0.8)
+            first_metrics = runner.adapt_step(first)
+            second_metrics = runner.adapt_step(second)
+            self.assertNotIn("_teacher_outputs", vars(runner))
+            self.assertEqual(first_metrics["aux_target_current_batch"], 1.0)
+            self.assertEqual(second_metrics["aux_target_current_batch"], 1.0)
             runner.reset()
-            self.assertIsNone(runner._teacher_outputs)
+            self.assertNotIn("_teacher_outputs", vars(runner))
 
 
 if __name__ == "__main__":

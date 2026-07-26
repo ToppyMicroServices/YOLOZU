@@ -1182,7 +1182,7 @@ def main(argv: list[str] | None = None) -> int:
 
     demo_ttt = demo_sub.add_parser(
         "ttt",
-        help="TTT improvement micro-demo (few-shot train + deterministic domain shift + mAP proxy).",
+        help="Local TTT diagnostic (few-shot train + deterministic shift + non-COCO AP proxy).",
     )
     demo_ttt.add_argument("--run-dir", default=None, help="Run directory (default: demo_output/ttt/<utc>).")
     demo_ttt.add_argument("--dataset-root", default=str(Path("data") / "smoke"), help="Source YOLO dataset root (default: data/smoke).")

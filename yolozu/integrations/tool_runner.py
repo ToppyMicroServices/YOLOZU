@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import uuid
+from pathlib import Path
 from typing import Any
 
 from .layers.api import run_cli_tool, run_cli_tool_redacted
 from .layers.artifacts import collect_artifact_metadata, describe_run, list_runs
 from .layers.core import fail_response
 from .layers.jobs import JobManager
-
+from .manifest_resources import resolve_workspace_path
 
 _SCENARIO_EXTRA_VALUE_FLAGS = frozenset(
     {
@@ -30,6 +32,22 @@ _SCENARIO_EXTRA_VALUE_FLAGS = frozenset(
 def _job_manager() -> JobManager:
     """Create persistent job storage only when a job operation is requested."""
     return JobManager()
+
+
+_DEFAULT_TTT_CONFIG = "builtin:base"
+_TTT_METHODS = {"tent", "mim", "cotta", "eata", "sar"}
+
+
+def _workspace_path(value: str, *, label: str, kind: str) -> Path:
+    token = str(value).strip()
+    if not token:
+        raise ValueError(f"{label} is required")
+    path = Path(token)
+    if path.is_absolute():
+        raise ValueError(f"{label} must be workspace-relative")
+    if kind not in {"file", "dir", "output"}:
+        raise ValueError(f"unsupported path kind: {kind}")
+    return resolve_workspace_path(path)
 
 
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
@@ -805,81 +823,298 @@ def test_job_public(test_config: str, *, extra_args: list[str] | None = None) ->
     return submit_job_public("test", args)
 
 
-def ttt_job(
-    test_config: str,
+def _ttt_export_job(
     *,
-    method: str = "tent",
-    preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    job_name: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None,
+    config: str,
+    split: str,
+    report: str | None,
+    method: str,
+    preset: str | None,
+    steps: int,
+    reset: str,
+    device: str,
+    max_images: int,
+    force: bool,
+    public: bool,
 ) -> dict[str, Any]:
-    args = ["test", test_config, "--ttt", "--ttt-method", method]
+    run_token = uuid.uuid4().hex[:12]
+    run_root = Path("runs") / f"mcp_{job_name}" / run_token
+    dataset_value = str(dataset).strip()
+    checkpoint_value = str(checkpoint).strip()
+    config_value = str(config).strip()
+    split_value = str(split).strip()
+    output_value = "" if output is None else str(output).strip()
+    report_value = "" if report is None else str(report).strip()
+    output_path = output_value or str(run_root / "predictions.json")
+    report_path = report_value or str(run_root / "ttt_report.json")
+    try:
+        method_value = str(method).strip().lower()
+        if method_value not in _TTT_METHODS:
+            raise ValueError(
+                f"method must be one of: {', '.join(sorted(_TTT_METHODS))}"
+            )
+        if str(reset) not in {"sample", "stream"}:
+            raise ValueError("reset must be 'sample' or 'stream'")
+        if int(steps) < 1:
+            raise ValueError("steps must be >= 1")
+        if int(max_images) < 1:
+            raise ValueError("max_images must be >= 1")
+        dataset_path = _workspace_path(
+            dataset_value, label="dataset", kind="dir"
+        )
+        _workspace_path(
+            checkpoint_value, label="checkpoint", kind="file"
+        )
+        if not config_value.startswith(("builtin:", "pkg:")):
+            _workspace_path(config_value, label="config", kind="file")
+        from yolozu.dataset import build_manifest
+
+        dataset_manifest = build_manifest(
+            str(dataset_path), split=split_value
+        )
+        if not list(dataset_manifest.get("images") or []):
+            raise ValueError(
+                "dataset split has no images: "
+                f"dataset={dataset_value!r}, split={split_value!r}"
+            )
+        output_resolved = _workspace_path(
+            output_path, label="output", kind="output"
+        )
+        report_resolved = _workspace_path(
+            report_path, label="report", kind="output"
+        )
+        if output_resolved == report_resolved:
+            raise ValueError(
+                "output and report must be different workspace-relative paths"
+            )
+
+        from yolozu.adapter import RTDETRPoseAdapter
+
+        adapter = RTDETRPoseAdapter(
+            config_path=config_value,
+            checkpoint_path=checkpoint_value,
+            device="cpu",
+            image_size=(32, 32),
+        )
+        model = adapter.get_model()
+        checkpoint_report = adapter.get_checkpoint_report()
+        if not isinstance(checkpoint_report, dict):
+            raise RuntimeError("checkpoint preflight produced no compatibility report")
+        if str(checkpoint_report.get("status") or "") != "full":
+            raise RuntimeError(
+                "checkpoint must be fully compatible with the selected RT-DETR config"
+            )
+        if not bool((checkpoint_report.get("load") or {}).get("loaded")):
+            raise RuntimeError("checkpoint preflight did not confirm model loading")
+        if method_value == "mim":
+            from yolozu.tta.ttt_mim import supports_structured_mim
+
+            if not supports_structured_mim(model):
+                raise RuntimeError(
+                    "MIM requires a config/checkpoint with the structured MIM hook"
+                )
+        preflight = {
+            "status": "full",
+            "config": config_value,
+            "checkpoint_sha256": (
+                (checkpoint_report.get("checkpoint") or {}).get("sha256")
+            ),
+            "model_class": (
+                (checkpoint_report.get("model") or {}).get("class")
+            ),
+        }
+    except Exception as exc:
+        payload = fail_response(
+            job_name,
+            message=(
+                "TTT job prerequisite check failed before queueing: "
+                f"{exc}. Provide a checkpoint fully compatible "
+                f"with config={config_value!r}."
+            ),
+            exit_code=2,
+            exc=exc,
+        )
+        payload["stage"] = "preflight"
+        payload["queued"] = False
+        return payload
+
+    args = [
+        "export",
+        "--backend",
+        "torch",
+        "--dataset",
+        dataset_value,
+        "--split",
+        split_value,
+        "--config",
+        config_value,
+        "--device",
+        device,
+        "--max-images",
+        str(max_images),
+        "--output",
+        output_path,
+        "--ttt",
+        "--ttt-method",
+        method_value,
+        "--ttt-reset",
+        reset,
+        "--ttt-steps",
+        str(steps),
+        "--ttt-log-out",
+        report_path,
+    ]
+    args.extend(["--checkpoint", checkpoint_value])
     if preset:
         args.extend(["--ttt-preset", preset])
-    if steps is not None:
-        args.extend(["--ttt-steps", str(steps)])
-    if reset:
-        args.append("--ttt-reset")
-    args.extend(extra_args or [])
-    return submit_job("test", args)
+    if force:
+        args.append("--force")
+    artifacts = {"predictions": output_path, "ttt_report": report_path}
+    submit = submit_job_public if public else submit_job
+    payload = submit(job_name, args, artifacts=artifacts)
+    payload["preflight"] = preflight
+    return payload
+
+
+def ttt_job(
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
+    *,
+    config: str = _DEFAULT_TTT_CONFIG,
+    split: str = "val",
+    report: str | None = None,
+    method: str = "tent",
+    preset: str | None = None,
+    steps: int = 1,
+    reset: str = "sample",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
+) -> dict[str, Any]:
+    return _ttt_export_job(
+        job_name="ttt",
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
+        method=method,
+        preset=preset,
+        steps=steps,
+        reset=reset,
+        device=device,
+        max_images=max_images,
+        force=force,
+        public=False,
+    )
 
 
 def ttt_job_public(
-    test_config: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
     *,
+    config: str = _DEFAULT_TTT_CONFIG,
+    split: str = "val",
+    report: str | None = None,
     method: str = "tent",
     preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    steps: int = 1,
+    reset: str = "sample",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
 ) -> dict[str, Any]:
-    args = ["test", test_config, "--ttt", "--ttt-method", method]
-    if preset:
-        args.extend(["--ttt-preset", preset])
-    if steps is not None:
-        args.extend(["--ttt-steps", str(steps)])
-    if reset:
-        args.append("--ttt-reset")
-    args.extend(extra_args or [])
-    return submit_job_public("test", args)
+    return _ttt_export_job(
+        job_name="ttt",
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
+        method=method,
+        preset=preset,
+        steps=steps,
+        reset=reset,
+        device=device,
+        max_images=max_images,
+        force=force,
+        public=True,
+    )
 
 
 def ctta_job(
-    test_config: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
     *,
+    config: str = _DEFAULT_TTT_CONFIG,
+    split: str = "val",
+    report: str | None = None,
     method: str = "cotta",
     preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    steps: int = 1,
+    reset: str = "stream",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
 ) -> dict[str, Any]:
-    args = ["test", test_config, "--ttt", "--ttt-method", method]
-    if preset:
-        args.extend(["--ttt-preset", preset])
-    if steps is not None:
-        args.extend(["--ttt-steps", str(steps)])
-    if reset:
-        args.append("--ttt-reset")
-    args.extend(extra_args or [])
-    return submit_job("test", args)
+    return _ttt_export_job(
+        job_name="ctta",
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
+        method=method,
+        preset=preset,
+        steps=steps,
+        reset=reset,
+        device=device,
+        max_images=max_images,
+        force=force,
+        public=False,
+    )
 
 
 def ctta_job_public(
-    test_config: str,
+    dataset: str,
+    checkpoint: str,
+    output: str | None = None,
     *,
+    config: str = _DEFAULT_TTT_CONFIG,
+    split: str = "val",
+    report: str | None = None,
     method: str = "cotta",
     preset: str | None = None,
-    steps: int | None = None,
-    reset: bool = False,
-    extra_args: list[str] | None = None,
+    steps: int = 1,
+    reset: str = "stream",
+    device: str = "cpu",
+    max_images: int = 1,
+    force: bool = True,
 ) -> dict[str, Any]:
-    args = ["test", test_config, "--ttt", "--ttt-method", method]
-    if preset:
-        args.extend(["--ttt-preset", preset])
-    if steps is not None:
-        args.extend(["--ttt-steps", str(steps)])
-    if reset:
-        args.append("--ttt-reset")
-    args.extend(extra_args or [])
-    return submit_job_public("test", args)
+    return _ttt_export_job(
+        job_name="ctta",
+        dataset=dataset,
+        checkpoint=checkpoint,
+        output=output,
+        config=config,
+        split=split,
+        report=report,
+        method=method,
+        preset=preset,
+        steps=steps,
+        reset=reset,
+        device=device,
+        max_images=max_images,
+        force=force,
+        public=True,
+    )

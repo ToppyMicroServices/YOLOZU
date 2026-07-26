@@ -85,7 +85,7 @@ def _gpu_run_meta() -> dict[str, Any]:
 def _base_run_meta(*, seed: int | None, notes: str | None, config_fingerprint: dict[str, Any]) -> dict[str, Any]:
     from yolozu.inference.export_orchestrator import sha256_json
 
-    cwd = _repo_root()
+    cwd = Path.cwd()
     return {
         "timestamp": _now_utc(),
         "seed": seed,
@@ -109,6 +109,7 @@ def _base_run_meta(*, seed: int | None, notes: str | None, config_fingerprint: d
 
 
 def _subprocess_or_die(cmd: list[str]) -> str:
+    module_command = len(cmd) >= 3 and cmd[1] == "-m"
     if len(cmd) >= 2:
         candidate = Path(str(cmd[1]))
         if candidate.suffix == ".py":
@@ -117,7 +118,7 @@ def _subprocess_or_die(cmd: list[str]) -> str:
                 raise SystemExit(f"required script not found: {candidate}")
     proc = subprocess.run(
         cmd,
-        cwd=str(_repo_root()),
+        cwd=str(Path.cwd() if module_command else _repo_root()),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -1693,7 +1694,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
     from yolozu.inference.export_orchestrator import export_with_backend
 
     if not getattr(args, "dataset", None):
-        args.dataset = str(_repo_root() / "data" / "coco128")
+        args.dataset = str(Path.cwd() / "data" / "coco128")
     out_path = export_with_backend(
         args,
         subprocess_or_die=_subprocess_or_die,

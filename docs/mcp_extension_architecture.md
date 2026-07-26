@@ -45,6 +45,20 @@ TTT/CTTA tools (E13-E14) are implemented as async jobs in the same shared backen
 - E13: `ttt_job`
 - E14: `ctta_job`
 
+Both tools queue the installed `yolozu export` command, not the scenario
+`yolozu test` command. Required inputs are a workspace-relative YOLO dataset
+and checkpoint. The default model config is the packaged `builtin:base`
+resource. Before a job is queued, YOLOZU instantiates the selected model and
+requires the checkpoint loader's canonical `status=full` plus
+`load.loaded=true`. Missing, partial, incompatible, or unloaded checkpoints
+return `ok=false`, `exit_code=2`, `stage=preflight`, and `queued=false`.
+
+The job result contains two declared artifacts: predictions JSON and a TTT
+report JSON. Both are local diagnostics; successful execution does not
+establish method efficacy or promote a default. `ttt_job` defaults to
+Tent/sample reset; `ctta_job` defaults to the YOLOZU CoTTA variant/stream reset.
+Neither surface accepts arbitrary `extra_args`.
+
 ## Long-running jobs
 
 Long tools should return quickly with `job_id`.
@@ -80,6 +94,8 @@ Current API surface:
 - Keep tool names and underlying CLI behavior semantically aligned (avoid name/behavior drift).
 - Keep MCP tool signatures aligned with Actions API request models for the same operation.
 - Prefer explicit parameter passing (`split`, `dry_run`, `strict`, `force`) over implicit defaults.
+- For `ttt_job`/`ctta_job`, provide `dataset`, `checkpoint`, and, when the
+  checkpoint does not target `builtin:base`, the matching `config`.
 - Keep response interface contracts stable (`ok`, `tool`, `summary`, `exit_code`) and add fields compatibly.
 - Include actionable error categories for common failures: allowlist, path guard, timeout, command failure.
 

@@ -5,8 +5,30 @@ from unittest.mock import patch
 from yolozu.integrations import tool_runner
 from yolozu.integrations.tool_reference import build_tool_surface_reference, collect_surface_parity_errors
 
+try:
+    from yolozu.integrations import actions_api
+except ImportError:  # pragma: no cover - optional Actions dependency
+    actions_api = None
+
 
 class TestIntegrationsMcpActionsParity(unittest.TestCase):
+    def test_actions_ttt_route_redacts_unexpected_submission_errors(self):
+        if actions_api is None:
+            self.skipTest("Actions dependencies are not installed")
+        request = actions_api.TTTJobRequest(
+            dataset="data/smoke",
+            checkpoint="checkpoints/model.pt",
+        )
+        with patch.object(
+            actions_api,
+            "ttt_job",
+            side_effect=RuntimeError("private stack detail"),
+        ):
+            payload = actions_api.ttt_job_route(request)
+
+        self.assertEqual(payload["error"], "internal job submission error")
+        self.assertNotIn("private stack detail", str(payload))
+
     def test_surface_parity_has_no_drift(self):
         reference = build_tool_surface_reference()
         errors = collect_surface_parity_errors(reference)
@@ -85,8 +107,8 @@ class TestIntegrationsMcpActionsParity(unittest.TestCase):
                 ("train_job", ("configs/train.yaml",), {}),
                 ("export_predictions_job", ("data/smoke", "reports/export_predictions.json"), {}),
                 ("test_job", ("configs/test.yaml",), {}),
-                ("ttt_job", ("configs/test.yaml",), {}),
-                ("ctta_job", ("configs/test.yaml",), {}),
+                ("ttt_job", ("data/smoke", "checkpoints/model.pt"), {}),
+                ("ctta_job", ("data/smoke", "checkpoints/model.pt"), {}),
                 ("jobs_list", (), {}),
                 ("jobs_status", ("job_unknown",), {}),
                 ("jobs_cancel", ("job_unknown",), {}),

@@ -10,12 +10,15 @@ from typing import Any
 
 from .base import TTARunner, TTAConfig, apply_tta_transform
 from .config import TTTConfig
+from .method_profiles import TTT_METHOD_PROFILES, get_ttt_method_profile
 
 __all__ = [
     "TTARunner",
     "TTAConfig",
     "apply_tta_transform",
     "TTTConfig",
+    "TTT_METHOD_PROFILES",
+    "get_ttt_method_profile",
 ]
 
 

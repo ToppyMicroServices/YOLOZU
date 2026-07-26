@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Iterable
 
 from .config import SUPPORTED_TTT_METHODS, TTTConfig
+from .method_profiles import get_ttt_method_profile
 from .tent import TentConfig, TentRunner
 
 try:
@@ -31,6 +32,7 @@ class TTTReport:
     stopped_early: bool = False
     stop_reason: str | None = None
     step_metrics: list[dict[str, Any]] | None = None
+    method_profile: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -403,6 +405,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
             stopped_early=False,
             stop_reason=None,
             step_metrics=[],
+            method_profile=get_ttt_method_profile(str(config.method)),
         )
 
     _ensure_torch()
@@ -474,7 +477,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                 pre_snapshot = _snapshot_params(params)
                 pre_buffer_snapshot = _snapshot_norm_buffers(model) if bool(config.rollback_on_stop) else []
                 metrics = runner.adapt_step(batch)
-                loss_value = float(metrics.get("loss_entropy", 0.0))
+                loss_value = float(metrics.get("loss_total", metrics.get("loss_entropy", 0.0)))
                 if initial_loss is None:
                     initial_loss = loss_value
 
@@ -491,6 +494,14 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     "total_update_norm": float(total_update_norm),
                     "rolled_back": False,
                 }
+                for metric_name in (
+                    "loss_entropy",
+                    "loss_aux_consistency",
+                    "aux_target_current_batch",
+                    "aux_student_view_mean_abs_delta",
+                ):
+                    if metric_name in metrics:
+                        step_entry[metric_name] = float(metrics[metric_name])
 
                 non_finite_fields: list[str] = []
                 if bool(config.stop_on_non_finite):
@@ -1159,4 +1170,5 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         stopped_early=bool(stopped_early),
         stop_reason=stop_reason,
         step_metrics=step_metrics,
+        method_profile=get_ttt_method_profile(method),
     )

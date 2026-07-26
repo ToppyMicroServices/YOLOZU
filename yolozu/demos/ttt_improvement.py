@@ -1,9 +1,8 @@
-"""TTT improvement micro-demo (deterministic, real images when available).
+"""TTT diagnostic comparison demo (deterministic, real images when available).
 
-This demo is designed to *show an improvement* when enabling test-time training (TTT)
-under a fixed, deterministic domain shift. It intentionally keeps the setup
-small/fast (few-shot + few images) so it can be used as a reproducible smoke-style
-check by users.
+The output is a local diagnostic. It does not establish efficacy and cannot
+promote a method, checkpoint, or default. The built-in AP calculation is a
+non-COCO proxy and is named accordingly.
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ try:
 except Exception:  # pragma: no cover
     RTDETRPoseAdapter = None  # type: ignore[assignment]
 
-__all__ = ["TTTDemoResult", "run_ttt_improvement_demo"]
+__all__ = ["TTTDemoResult", "run_ttt_diagnostic_demo", "run_ttt_improvement_demo"]
 
 SUPPORTED_CORRUPTIONS = (
     "gaussian_blur",
@@ -271,12 +270,12 @@ def run_ttt_improvement_demo(
     ttt_preset: str = "safe",
     force: bool = False,
 ) -> TTTDemoResult:
-    """Run a deterministic "TTT improves metrics" micro-demo.
+    """Run a deterministic local TTT diagnostic comparison.
 
     Notes:
-    - This demo trains a tiny few-shot checkpoint on the clean split first. This makes the
-      improvement reproducible without requiring external model downloads.
-    - Metrics are the built-in simple mAP proxy (mAP50 and mAP50-95) computed over bbox labels.
+    - The tiny few-shot checkpoint avoids external model downloads.
+    - ``proxy_ap50`` and ``proxy_ap50_95`` are non-COCO diagnostics.
+    - Any positive or negative delta is local observation, not efficacy evidence.
     """
 
     if RTDETRPoseAdapter is None:  # pragma: no cover
@@ -377,7 +376,7 @@ def run_ttt_improvement_demo(
         ttt_report = None
         if enable_ttt:
             if str(ttt_preset) != "safe":
-                raise ValueError("demo currently supports only --ttt-preset safe (to keep the claim stable)")
+                raise ValueError("demo currently supports only --ttt-preset safe")
             ttt_cfg = TTTConfig(
                 enabled=True,
                 method="tent",
@@ -438,8 +437,8 @@ def run_ttt_improvement_demo(
 
     map_no_ttt = evaluate_map(shift_records, preds_no_ttt, iou_thresholds=thresholds)
     map_ttt = evaluate_map(shift_records, preds_ttt, iou_thresholds=thresholds)
-    metrics_no_ttt = {"map50": float(map_no_ttt.map50), "map50_95": float(map_no_ttt.map50_95)}
-    metrics_ttt = {"map50": float(map_ttt.map50), "map50_95": float(map_ttt.map50_95)}
+    metrics_no_ttt = {"proxy_ap50": float(map_no_ttt.map50), "proxy_ap50_95": float(map_no_ttt.map50_95)}
+    metrics_ttt = {"proxy_ap50": float(map_ttt.map50), "proxy_ap50_95": float(map_ttt.map50_95)}
     diff_summary: dict[str, Any] = {"changed_images": 0, "total_images": 0, "top1_score_abs_diff_mean": 0.0}
     try:
         def _top1_sig(dets: Any) -> tuple[int | None, float | None, tuple[float, float, float, float] | None]:
@@ -572,7 +571,10 @@ def run_ttt_improvement_demo(
         overlay_ttt_path = None
 
     report = {
-        "kind": "ttt_improvement_demo",
+        "kind": "ttt_diagnostic_demo",
+        "evidence_kind": "local_diagnostic",
+        "promotion_eligible": False,
+        "efficacy_conclusion": "not_established",
         "timestamp": _now_utc_iso(),
         "interface_contract": "predictions interface contract",
         "dataset": {
@@ -601,12 +603,13 @@ def run_ttt_improvement_demo(
         },
         "metrics": {
             "name": "simple_map_proxy",
+            "metric_semantics": "non_coco_proxy",
             "iou_thresholds": [float(t) for t in thresholds],
             "no_ttt": dict(metrics_no_ttt),
             "with_ttt": dict(metrics_ttt),
             "delta": {
-                "map50": float(metrics_ttt["map50"] - metrics_no_ttt["map50"]),
-                "map50_95": float(metrics_ttt["map50_95"] - metrics_no_ttt["map50_95"]),
+                "proxy_ap50": float(metrics_ttt["proxy_ap50"] - metrics_no_ttt["proxy_ap50"]),
+                "proxy_ap50_95": float(metrics_ttt["proxy_ap50_95"] - metrics_no_ttt["proxy_ap50_95"]),
             },
         },
         "diff_summary": diff_summary,
@@ -635,3 +638,7 @@ def run_ttt_improvement_demo(
         metrics_no_ttt=metrics_no_ttt,
         metrics_ttt=metrics_ttt,
     )
+
+
+# Backwards-compatible import name. New code should use the diagnostic name.
+run_ttt_diagnostic_demo = run_ttt_improvement_demo

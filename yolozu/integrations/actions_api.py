@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -45,6 +48,23 @@ def _sanitize_response(payload):  # type: ignore[no-untyped-def]
     if isinstance(payload, list):
         return [_sanitize_response(item) for item in payload]
     return payload
+
+
+def _invoke_public_job(
+    name: str,
+    operation: Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
+    """Return a stable public failure without exposing unexpected exceptions."""
+    try:
+        return _sanitize_response(operation())
+    except Exception:
+        return {
+            "ok": False,
+            "tool": name,
+            "summary": f"{name}: failed before job submission",
+            "exit_code": 1,
+            "error": "internal job submission error",
+        }
 
 
 class DoctorRequest(BaseModel):
@@ -166,21 +186,35 @@ class TestJobRequest(BaseModel):
 
 
 class TTTJobRequest(BaseModel):
-    test_config: str
+    dataset: str
+    checkpoint: str
+    output: str | None = None
+    config: str = "builtin:base"
+    split: str = "val"
+    report: str | None = None
     method: str = "tent"
     preset: str | None = None
-    steps: int | None = None
-    reset: bool = False
-    extra_args: list[str] | None = None
+    steps: int = 1
+    reset: str = "sample"
+    device: str = "cpu"
+    max_images: int = 1
+    force: bool = True
 
 
 class CTTAJobRequest(BaseModel):
-    test_config: str
+    dataset: str
+    checkpoint: str
+    output: str | None = None
+    config: str = "builtin:base"
+    split: str = "val"
+    report: str | None = None
     method: str = "cotta"
     preset: str | None = None
-    steps: int | None = None
-    reset: bool = False
-    extra_args: list[str] | None = None
+    steps: int = 1
+    reset: str = "stream"
+    device: str = "cpu"
+    max_images: int = 1
+    force: bool = True
 
 
 @app.get("/healthz")
@@ -340,29 +374,45 @@ def test_job_route(req: TestJobRequest) -> dict:
 
 @app.post("/jobs/ttt")
 def ttt_job_route(req: TTTJobRequest) -> dict:
-    return _sanitize_response(
-        ttt_job(
-            test_config=req.test_config,
+    return _invoke_public_job(
+        "ttt",
+        lambda: ttt_job(
+            dataset=req.dataset,
+            checkpoint=req.checkpoint,
+            output=req.output,
+            config=req.config,
+            split=req.split,
+            report=req.report,
             method=req.method,
             preset=req.preset,
             steps=req.steps,
             reset=req.reset,
-            extra_args=req.extra_args,
-        )
+            device=req.device,
+            max_images=req.max_images,
+            force=req.force,
+        ),
     )
 
 
 @app.post("/jobs/ctta")
 def ctta_job_route(req: CTTAJobRequest) -> dict:
-    return _sanitize_response(
-        ctta_job(
-            test_config=req.test_config,
+    return _invoke_public_job(
+        "ctta",
+        lambda: ctta_job(
+            dataset=req.dataset,
+            checkpoint=req.checkpoint,
+            output=req.output,
+            config=req.config,
+            split=req.split,
+            report=req.report,
             method=req.method,
             preset=req.preset,
             steps=req.steps,
             reset=req.reset,
-            extra_args=req.extra_args,
-        )
+            device=req.device,
+            max_images=req.max_images,
+            force=req.force,
+        ),
     )
 
 

@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Render beginner-friendly TTT manual figures from fixed result artifacts."""
+"""Render TTT evidence-boundary figures from a validated source artifact."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
+import re
 import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -15,15 +20,43 @@ from PIL import Image, ImageDraw, ImageFont
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ASSETS = REPO_ROOT / "docs" / "assets"
 MANUAL_FIGURES = REPO_ROOT / "manual" / "figures"
+FIGURE_NAMES = (
+    "ttt_method_results_summary.png",
+    "ttt_compare_pipeline.png",
+    "ttt_probe_example_panel.png",
+)
+MEASURED_RESOURCE_NAMES = (
+    "checkpoint",
+    "config",
+    "dataset_manifest",
+    "image_order",
+    "baseline_predictions",
+    "adapted_predictions",
+)
+SYNTHETIC_FORBIDDEN_KEY_TOKENS = {
+    "accuracy",
+    "changed",
+    "delta",
+    "improved",
+    "improvement",
+    "latency",
+    "loss",
+    "metric",
+    "metrics",
+    "quality",
+    "runtime",
+    "score",
+    "throughput",
+}
 
 
 def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    candidates = [
+    candidates = (
         "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
         "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/Library/Fonts/Arial.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    ]
+    )
     for candidate in candidates:
         path = Path(candidate)
         if path.exists():
@@ -37,12 +70,193 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
 FONT_18 = _load_font(18)
 FONT_22 = _load_font(22)
 FONT_28 = _load_font(28)
-FONT_34 = _load_font(34)
 FONT_40 = _load_font(40)
 
 
-def _text(draw: ImageDraw.ImageDraw, xy: tuple[int, int], text: str, *, font, fill=(20, 20, 20)) -> None:
-    draw.text(xy, text, font=font, fill=fill)
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _walk_items(value: Any, *, path: str = "$"):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}"
+            yield child_path, str(key), child
+            yield from _walk_items(child, path=child_path)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _walk_items(child, path=f"{path}[{index}]")
+
+
+def _synthetic_key_is_measured(key: str) -> bool:
+    normalized = key.strip().lower()
+    tokens = [token for token in re.split(r"[^a-z0-9]+", normalized) if token]
+    if any(token in SYNTHETIC_FORBIDDEN_KEY_TOKENS for token in tokens):
+        return True
+    return any(
+        re.fullmatch(r"(?:ap|map|cocoap|cocomap)(?:\d+(?:_\d+)?)?", token)
+        for token in tokens
+    )
+
+
+def _is_git_tracked(path: Path) -> bool:
+    try:
+        relative = path.resolve().relative_to(REPO_ROOT)
+    except ValueError:
+        return False
+    result = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", str(relative)],
+        cwd=REPO_ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def _git_commit_exists(commit: str) -> bool:
+    result = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=REPO_ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def _validate_resource_binding(name: str, binding: Any) -> dict[str, Any]:
+    if not isinstance(binding, dict):
+        raise ValueError(f"measured provenance.{name} must be an object")
+    declared_hash = str(binding.get("sha256") or "").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", declared_hash):
+        raise ValueError(f"measured provenance.{name}.sha256 must be 64 lowercase hex")
+
+    path_text = binding.get("path")
+    url_text = binding.get("url")
+    if bool(path_text) == bool(url_text):
+        raise ValueError(
+            f"measured provenance.{name} must set exactly one of path or url"
+        )
+    if path_text:
+        path = Path(str(path_text))
+        if not path.is_absolute():
+            path = REPO_ROOT / path
+        if not path.is_file():
+            raise FileNotFoundError(f"measured provenance.{name} path missing: {path}")
+        if not _is_git_tracked(path):
+            raise ValueError(
+                f"measured provenance.{name} must reference a git-tracked file: {path}"
+            )
+        actual_hash = _sha256(path)
+        if actual_hash != declared_hash:
+            raise ValueError(
+                f"measured provenance.{name} sha256 mismatch: "
+                f"declared={declared_hash} actual={actual_hash}"
+            )
+        return {
+            "path": path,
+            "sha256": actual_hash,
+            "verification": "local_git_tracked_hash_verified",
+        }
+
+    url = str(url_text)
+    if not re.fullmatch(r"https://[^\s]+/releases/download/[^\s]+", url):
+        raise ValueError(
+            f"measured provenance.{name}.url must be an HTTPS release download URL"
+        )
+    return {
+        "url": url,
+        "sha256": declared_hash,
+        "verification": "declared_not_fetched",
+    }
+
+
+def _validate_proxy_metric_names(value: Any, *, path: str = "$") -> None:
+    if isinstance(value, list):
+        for index, child in enumerate(value):
+            _validate_proxy_metric_names(child, path=f"{path}[{index}]")
+        return
+    if not isinstance(value, dict):
+        return
+    if value.get("metric_backend") == "simple_map_proxy":
+        for key, candidate in value.items():
+            normalized = str(key).lower()
+            if (
+                re.fullmatch(
+                    r"(?:map|coco_map|map50|map50_95|coco_map50|coco_map50_95)",
+                    normalized,
+                )
+                and candidate is not None
+            ):
+                raise ValueError(
+                    "simple_map_proxy values must use proxy_ap* names, never COCO mAP: "
+                    f"{path}.{key}"
+                )
+    for key, child in value.items():
+        _validate_proxy_metric_names(child, path=f"{path}.{key}")
+
+
+def _validate_evidence_source(source: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(source, dict):
+        raise ValueError("TTT evidence source must be a JSON object")
+    evidence_kind = str(source.get("evidence_kind") or "")
+    if evidence_kind not in {"synthetic_fixture", "measured"}:
+        raise ValueError("evidence_kind must be synthetic_fixture or measured")
+
+    if evidence_kind == "synthetic_fixture":
+        if source.get("promotion_eligible") is not False:
+            raise ValueError("synthetic_fixture requires promotion_eligible=false")
+        if source.get("efficacy") != "unavailable":
+            raise ValueError("synthetic_fixture requires efficacy=unavailable")
+        for item_path, key, value in _walk_items(source):
+            if _synthetic_key_is_measured(key):
+                raise ValueError(
+                    f"synthetic_fixture forbids measured field {item_path}"
+                )
+            normalized = key.strip().lower()
+            if (
+                normalized in {"promotion_eligible", "promote", "promotion"}
+                and value is not False
+            ):
+                raise ValueError(
+                    f"synthetic_fixture forbids promotion claim at {item_path}"
+                )
+        return {"evidence_kind": evidence_kind, "resources": {}}
+
+    if source.get("promotion_eligible") is not False:
+        raise ValueError("measured evidence requires promotion_eligible=false")
+    if source.get("efficacy") != "not_established":
+        raise ValueError("measured evidence requires efficacy=not_established")
+    provenance = source.get("provenance")
+    if not isinstance(provenance, dict):
+        raise ValueError("measured evidence requires provenance object")
+    commit = str(provenance.get("commit") or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("measured provenance.commit must be a 40-character git SHA")
+    if not _git_commit_exists(commit):
+        raise ValueError("measured provenance.commit does not resolve to a git commit")
+    if not isinstance(provenance.get("seed"), int):
+        raise ValueError("measured provenance.seed must be an integer")
+    tool_versions = provenance.get("tool_versions")
+    if not isinstance(tool_versions, dict) or not tool_versions:
+        raise ValueError("measured provenance.tool_versions must be a non-empty object")
+    if any(
+        not str(key).strip() or not str(value).strip()
+        for key, value in tool_versions.items()
+    ):
+        raise ValueError("measured provenance.tool_versions entries must be non-empty")
+
+    resources = {
+        name: _validate_resource_binding(name, provenance.get(name))
+        for name in MEASURED_RESOURCE_NAMES
+    }
+    _validate_proxy_metric_names(source)
+    return {"evidence_kind": evidence_kind, "resources": resources}
 
 
 def _wrap_text(text: str, width: int) -> list[str]:
@@ -68,400 +282,290 @@ def _draw_wrapped(
     text: str,
     *,
     font,
+    width: int,
+    line_gap: int = 8,
     fill=(20, 20, 20),
-    width: int = 48,
-    line_gap: int = 6,
 ) -> int:
     x, y = xy
-    lines = _wrap_text(text, width)
-    for line in lines:
+    for line in _wrap_text(text, width):
         draw.text((x, y), line, font=font, fill=fill)
-        bbox = draw.textbbox((x, y), line, font=font)
-        y = bbox[3] + line_gap
+        y = draw.textbbox((x, y), line, font=font)[3] + line_gap
     return y
 
 
-def _panel(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], *, title: str) -> None:
-    x0, y0, x1, y1 = box
-    draw.rounded_rectangle(box, radius=18, outline=(150, 160, 175), width=3, fill=(249, 250, 252))
-    draw.rounded_rectangle((x0 + 12, y0 + 12, x1 - 12, y0 + 58), radius=12, fill=(232, 238, 246))
-    _text(draw, (x0 + 24, y0 + 20), title, font=FONT_28)
-
-
-def _scale_values(values: list[float]) -> tuple[list[float], str]:
-    if not values:
-        return values, ""
-    max_value = max(values)
-    if max_value < 0.01:
-        return [v * 1000.0 for v in values], "×10^-3"
-    if max_value < 0.1:
-        return [v * 100.0 for v in values], "×10^-2"
-    return values, ""
-
-
-def _draw_bar_chart(
+def _panel(
     draw: ImageDraw.ImageDraw,
     box: tuple[int, int, int, int],
     *,
     title: str,
-    methods: list[str],
-    values: list[float],
-    baseline_idx: int = 0,
+    body: str,
 ) -> None:
     x0, y0, x1, y1 = box
-    chart_x0 = x0 + 54
-    chart_y0 = y0 + 70
-    chart_x1 = x1 - 30
-    chart_y1 = y1 - 50
-    _text(draw, (x0 + 12, y0 + 12), title, font=FONT_22)
-
-    scaled, unit = _scale_values(values)
-    max_value = max(scaled) if scaled else 1.0
-    max_value = max(max_value, 1e-6)
-    axis_color = (120, 130, 145)
-    draw.line((chart_x0, chart_y0, chart_x0, chart_y1), fill=axis_color, width=2)
-    draw.line((chart_x0, chart_y1, chart_x1, chart_y1), fill=axis_color, width=2)
-
-    ticks = 4
-    for idx in range(ticks + 1):
-        frac = idx / ticks
-        y = int(chart_y1 - frac * (chart_y1 - chart_y0))
-        draw.line((chart_x0 - 8, y, chart_x1, y), fill=(228, 232, 238), width=1)
-        value = max_value * frac
-        label = f"{value:.2f}"
-        _text(draw, (x0 + 2, y - 10), label, font=FONT_18, fill=(80, 90, 100))
-
-    count = len(methods)
-    bar_gap = 22
-    width_total = chart_x1 - chart_x0 - bar_gap * (count - 1)
-    bar_w = max(width_total // max(count, 1), 30)
-
-    for idx, (method, value) in enumerate(zip(methods, scaled)):
-        bar_x0 = chart_x0 + idx * (bar_w + bar_gap) + 18
-        bar_x1 = bar_x0 + bar_w
-        frac = value / max_value if max_value else 0.0
-        bar_y0 = int(chart_y1 - frac * (chart_y1 - chart_y0))
-        fill = (88, 132, 226) if idx != baseline_idx else (150, 150, 150)
-        draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, chart_y1), radius=8, fill=fill)
-        label = method.upper() if method != "baseline" else "BASE"
-        text_bbox = draw.textbbox((0, 0), label, font=FONT_18)
-        draw.text((bar_x0 + (bar_w - (text_bbox[2] - text_bbox[0])) // 2, chart_y1 + 10), label, font=FONT_18, fill=(30, 30, 30))
-        value_label = f"{value:.2f}"
-        vb = draw.textbbox((0, 0), value_label, font=FONT_18)
-        draw.text((bar_x0 + (bar_w - (vb[2] - vb[0])) // 2, max(bar_y0 - 26, chart_y0)), value_label, font=FONT_18, fill=(20, 20, 20))
-
-    if unit:
-        _text(draw, (chart_x1 - 60, chart_y0 - 32), unit, font=FONT_18, fill=(80, 90, 100))
+    draw.rounded_rectangle(
+        box,
+        radius=18,
+        outline=(150, 160, 175),
+        width=3,
+        fill=(249, 250, 252),
+    )
+    draw.rounded_rectangle(
+        (x0 + 12, y0 + 12, x1 - 12, y0 + 58),
+        radius=12,
+        fill=(232, 238, 246),
+    )
+    draw.text((x0 + 24, y0 + 20), title, font=FONT_28, fill=(20, 20, 20))
+    _draw_wrapped(
+        draw,
+        (x0 + 36, y0 + 82),
+        body,
+        font=FONT_22,
+        width=112,
+    )
 
 
 def _draw_summary_figure(source: dict[str, Any], out_path: Path) -> None:
-    img = Image.new("RGB", (1800, 1420), (255, 255, 255))
+    img = Image.new("RGB", (1800, 900), (255, 255, 255))
     draw = ImageDraw.Draw(img)
-
-    _text(draw, (70, 40), "TTT result summary (real shifted probe + fixed-probe MIM)", font=FONT_40)
-    subtitle = (
-        "Real probe: same few-shot checkpoint + same 10 shifted images (gaussian_noise severity 3, seed 2026). "
-        "All five methods below use a fixed before/after protocol. In this runtime, MIM quality numbers come from "
-        "the built-in simple_map_proxy fallback because pycocotools is not installed."
-    )
-    _draw_wrapped(draw, (70, 95), subtitle, font=FONT_22, width=125, line_gap=6)
-
-    left = (70, 190, 900, 720)
-    right = (930, 190, 1760, 720)
-    _panel(draw, left, title="Real probe metric delta")
-    _panel(draw, right, title="Method execution notes")
-
-    methods = ["baseline", "tent", "mim", "cotta", "eata", "sar"]
-    map50 = [source["metrics"][m]["map50"] for m in methods]
-    map5095 = [source["metrics"][m]["map50_95"] for m in methods]
-    _draw_bar_chart(draw, (95, 270, 860, 480), title="mAP50 on the 10-image shifted probe", methods=methods, values=map50)
-    _draw_bar_chart(draw, (95, 495, 860, 705), title="mAP50-95 on the same probe", methods=methods, values=map5095)
-
-    x = 955
-    y = 280
-    bullets = [
-        f"Tent / MIM / CoTTA / EATA / SAR all improved from {source['metrics']['baseline']['map50']:.6f} to {source['metrics']['tent']['map50']:.6f} (mAP50).",
-        f"The same five methods improved from {source['metrics']['baseline']['map50_95']:.6f} to {source['metrics']['tent']['map50_95']:.6f} (mAP50-95).",
-    ]
-    for bullet in bullets:
-        draw.ellipse((x, y + 8, x + 10, y + 18), fill=(88, 132, 226))
-        y = _draw_wrapped(draw, (x + 24, y), bullet, font=FONT_22, width=48, line_gap=8) + 10
-
-    mim = source["metrics"]["mim"]
-    card = (955, 600, 1735, 970)
-    draw.rounded_rectangle(card, radius=18, outline=(147, 157, 168), width=2, fill=(245, 247, 250))
-    _text(draw, (980, 620), "MIM fixed probe note", font=FONT_28)
-    mim_lines = [
-        f"Fixture: fixed real probe ({mim['images']} images)",
-        f"steps_run={mim['steps_run']}, mean_final_loss={mim['mean_final_loss']:.6f}",
-        f"changed_images={mim['changed_images']} / {mim['images']}",
-        f"map50={mim['map50']:.6f}, map50_95={mim['map50_95']:.6f}",
-    ]
-    y = 665
-    for line in mim_lines:
-        y = _draw_wrapped(draw, (980, y), line, font=FONT_22, width=48, line_gap=8) + 4
-    _draw_wrapped(
-        draw,
-        (980, y + 8),
-        "Interpretation: MIM now has a real fixed-probe example. The metric backend is simple_map_proxy in this CPU-only runtime.",
-        font=FONT_22,
-        width=48,
-        line_gap=8,
-    )
-
-    footer = (
-        "Source artifacts: reports/ttt_improvement_probe/ttt_improvement_report.json and "
-        "reports/ttt_compare/mim_probe_cpu/mim_before_after_compare.json"
-    )
-    _draw_wrapped(draw, (70, 1340), footer, font=FONT_18, fill=(95, 105, 115), width=155, line_gap=4)
+    if source["evidence_kind"] == "synthetic_fixture":
+        title = "TTT evidence status"
+        intro = (
+            "This checked-in source is a synthetic documentation fixture. It "
+            "contains no measured quality, score, loss, latency, or improvement values."
+        )
+        panels = (
+            (
+                "Confirmed",
+                "Rendering and workflow layout are reproducible from tracked source files.",
+            ),
+            (
+                "Unknown / risk",
+                "TTT efficacy is unavailable until compatible, hash-bound measured artifacts are attached.",
+            ),
+            (
+                "Promotion",
+                "Not eligible. Synthetic fixtures cannot promote a method, checkpoint, or default.",
+            ),
+        )
+    else:
+        provenance = source["provenance"]
+        title = "TTT measured evidence binding"
+        intro = (
+            "Artifact identities and provenance were validated. Attachment alone "
+            "does not establish efficacy or checkpoint promotion."
+        )
+        panels = (
+            ("Commit", str(provenance["commit"])),
+            ("Seed", str(provenance["seed"])),
+            (
+                "Conclusion",
+                "Efficacy not established; promotion remains ineligible.",
+            ),
+        )
+    draw.text((70, 45), title, font=FONT_40, fill=(20, 20, 20))
+    _draw_wrapped(draw, (70, 105), intro, font=FONT_28, width=105, line_gap=10)
+    y = 250
+    for panel_title, body in panels:
+        _panel(draw, (70, y, 1730, y + 160), title=panel_title, body=body)
+        y += 190
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
 
 
 def _draw_pipeline_figure(out_path: Path) -> None:
-    img = Image.new("RGB", (1800, 620), (255, 255, 255))
+    img = Image.new("RGB", (1800, 700), (255, 255, 255))
     draw = ImageDraw.Draw(img)
-    _text(draw, (70, 35), "TTT compare workflow (what to run and what to open first)", font=FONT_40)
-    subtitle = "The compare flow is intentionally short: freeze the subset, export once without TTT, export once with one boilerplate, then open the before/after report before touching raw logs."
-    _draw_wrapped(draw, (70, 92), subtitle, font=FONT_22, width=140, line_gap=6)
-
-    boxes = [
-        ("1. Freeze subset", "Deterministic domain-shift target or fixed subset. Keep the exact same images for every method."),
-        ("2. Baseline export", "Run one export without TTT. This writes baseline_predictions.json."),
-        ("3. Adapted export", "Run Tent / MIM / CoTTA / EATA / SAR once. This writes <method>_predictions.json and <method>_ttt_log.json."),
-        ("4. Compare", "Open <method>_before_after_compare.md first. Use raw logs only for deeper diagnosis."),
-    ]
-    start_x = 70
-    width = 390
-    gap = 50
-    y0 = 220
-    for idx, (title, body) in enumerate(boxes):
-        x0 = start_x + idx * (width + gap)
-        x1 = x0 + width
-        draw.rounded_rectangle((x0, y0, x1, 470), radius=24, outline=(136, 148, 168), width=3, fill=(246, 248, 251))
-        _text(draw, (x0 + 24, y0 + 24), title, font=FONT_28)
-        _draw_wrapped(draw, (x0 + 24, y0 + 78), body, font=FONT_18, width=24, line_gap=7)
-        if idx < len(boxes) - 1:
-            cx = x1 + 15
-            cy = y0 + 125
-            draw.line((cx, cy, cx + 26, cy), fill=(88, 132, 226), width=6)
-            draw.polygon([(cx + 26, cy), (cx + 6, cy - 10), (cx + 6, cy + 10)], fill=(88, 132, 226))
-
-    notes = [
-        "Why this order works:",
-        "• the compare markdown already answers whether adaptation ran, whether predictions changed, and what file to inspect next",
-        "• the raw TTT log is for diagnostics, not for first-pass interpretation",
-        "• use one boilerplate per method instead of typing long --ttt-* option sets by hand",
-    ]
-    y = 505
-    for line in notes:
-        font = FONT_22 if line.startswith("•") else FONT_28
-        y = _draw_wrapped(draw, (70, y), line, font=font, width=145, line_gap=5) + 4
-
+    draw.text(
+        (70, 40),
+        "TTT evidence workflow",
+        font=FONT_40,
+        fill=(20, 20, 20),
+    )
+    _draw_wrapped(
+        draw,
+        (70, 100),
+        (
+            "The shortest safe path validates prerequisites before execution and "
+            "keeps diagnostic output separate from promotion evidence."
+        ),
+        font=FONT_28,
+        width=108,
+        line_gap=10,
+    )
+    boxes = (
+        (
+            "1. Bind",
+            "Checkpoint, config, dataset manifest, ordered images, seed, commit, and tool versions.",
+        ),
+        (
+            "2. Preflight",
+            "Require full checkpoint compatibility and the selected method's runnable model path.",
+        ),
+        (
+            "3. Compare",
+            "Export baseline and adapted predictions; record every failed execution stage atomically.",
+        ),
+        (
+            "4. Interpret",
+            "Name proxy metrics as proxy AP, keep efficacy not established, and never auto-promote.",
+        ),
+    )
+    x = 70
+    for title, body in boxes:
+        _panel(draw, (x, 245, x + 390, 565), title=title, body=body)
+        x += 430
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
 
 
-def _norm_to_xyxy(det: dict[str, Any], width: int, height: int) -> tuple[int, int, int, int]:
-    bbox = det["bbox"]
-    cx = float(bbox["cx"]) * width
-    cy = float(bbox["cy"]) * height
-    w = float(bbox["w"]) * width
-    h = float(bbox["h"]) * height
-    x0 = int(cx - w / 2)
-    y0 = int(cy - h / 2)
-    x1 = int(cx + w / 2)
-    y1 = int(cy + h / 2)
-    return x0, y0, x1, y1
-
-
-def _load_prediction_entry(path: Path, image_name: str) -> dict[str, Any]:
-    preds = json.loads(path.read_text(encoding="utf-8"))["predictions"]
-    for entry in preds:
-        if Path(entry["image"]).name == image_name:
-            return entry
-    raise KeyError(f"missing prediction entry for {image_name} in {path}")
-
-
-def _load_gt_detections(label_path: Path) -> list[dict[str, Any]]:
-    detections = []
-    for raw in label_path.read_text(encoding="utf-8").splitlines():
-        if not raw.strip():
-            continue
-        cls, cx, cy, w, h = raw.split()[:5]
-        detections.append(
-            {
-                "class_id": int(cls),
-                "score": None,
-                "bbox": {"cx": float(cx), "cy": float(cy), "w": float(w), "h": float(h)},
-            }
-        )
-    return detections
-
-
-def _top_detection(detections: list[dict[str, Any]]) -> dict[str, Any] | None:
-    if not detections:
-        return None
-    return max(detections, key=lambda det: float(det.get("score") or 0.0))
-
-
-def _load_probe_predictions(path: Path) -> dict[str, dict[str, Any]]:
-    if not path.exists():
-        return {}
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    return {Path(entry["image"]).name: entry for entry in payload.get("predictions", [])}
-
-
-def _draw_boxes(base: Image.Image, detections: list[dict[str, Any]], *, color: tuple[int, int, int], title: str, top_k: int | None = None) -> Image.Image:
-    img = base.copy()
+def _draw_probe_grid(
+    source: dict[str, Any],
+    out_path: Path,
+    *,
+    validation: dict[str, Any],
+) -> None:
+    img = Image.new("RGB", (1800, 700), (255, 255, 255))
     draw = ImageDraw.Draw(img)
-    width, height = img.size
-    filtered = detections
-    if top_k is not None:
-        filtered = sorted(detections, key=lambda d: float(d.get("score") or 0.0), reverse=True)[:top_k]
-    for det in filtered:
-        x0, y0, x1, y1 = _norm_to_xyxy(det, width, height)
-        draw.rectangle((x0, y0, x1, y1), outline=color, width=4)
-        score = det.get("score")
-        label = f"id={det['class_id']}" if score is None else f"id={det['class_id']} {float(score):.3f}"
-        label_top = max(0, y0 - 28)
-        label_bottom = max(label_top + 24, y0)
-        draw.rounded_rectangle((x0, label_top, x0 + max(90, len(label) * 9), label_bottom), radius=8, fill=color)
-        draw.text((x0 + 6, label_top + 4), label, font=FONT_18, fill=(255, 255, 255))
-    banner_h = 40
-    draw.rounded_rectangle((0, 0, width, banner_h), radius=0, fill=(248, 248, 250))
-    draw.text((12, 8), title, font=FONT_22, fill=(20, 20, 20))
-    return img
-
-
-def _draw_top_box(draw: ImageDraw.ImageDraw, det: dict[str, Any] | None, *, width: int, height: int, color: tuple[int, int, int]) -> None:
-    if det is None:
-        return
-    x0, y0, x1, y1 = _norm_to_xyxy(det, width, height)
-    draw.rectangle((x0, y0, x1, y1), outline=color, width=4)
-
-
-def _draw_probe_grid(source: dict[str, Any], out_path: Path) -> None:
-    probe_root = REPO_ROOT / source["probe_dataset"]
-    by_no_ttt = _load_probe_predictions(REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_no_ttt.json")
-    by_ttt = _load_probe_predictions(REPO_ROOT / "reports" / "ttt_improvement_probe" / "pred_ttt.json")
-    if by_no_ttt:
-        image_names = sorted(by_no_ttt)
-    else:
-        image_names = sorted(path.name for path in (probe_root / "images" / "val").glob("*.jpg"))
-
-    rows: list[dict[str, Any]] = []
-    for image_name in image_names:
-        label_path = probe_root / "labels" / "val" / image_name.replace(".jpg", ".txt")
-        gt = _load_gt_detections(label_path)
-        entry = by_no_ttt.get(image_name, {"detections": gt})
-        ttt_entry = by_ttt.get(image_name, {"detections": gt})
-        top_no_ttt = _top_detection(entry.get("detections", []))
-        top_ttt = _top_detection(ttt_entry.get("detections", []))
-        score_no_ttt = float(top_no_ttt.get("score") or 0.0) if top_no_ttt else 0.0
-        score_ttt = float(top_ttt.get("score") or 0.0) if top_ttt else 0.0
-        rows.append(
-            {
-                "image": image_name,
-                "gt_count": len(gt),
-                "no_ttt_count": len(entry.get("detections", [])),
-                "ttt_count": len(ttt_entry.get("detections", [])),
-                "top_no_ttt": top_no_ttt,
-                "top_ttt": top_ttt,
-                "score_no_ttt": score_no_ttt,
-                "score_ttt": score_ttt,
-                "score_abs_delta": abs(score_ttt - score_no_ttt),
-            }
+    if source["evidence_kind"] == "synthetic_fixture":
+        title = "TTT qualitative evidence prerequisite"
+        intro = (
+            "No prediction boxes are rendered from labels or ground truth. A "
+            "measured panel requires hash-bound baseline and adapted predictions."
         )
-    rows.sort(key=lambda row: (row["score_abs_delta"], row["image"]), reverse=True)
-
-    cols = 5
-    tile_w = 330
-    tile_h = 320
-    thumb_w = 290
-    thumb_h = 170
-    gutter = 20
-    title_h = 190
-    footer_h = 85
-    canvas = Image.new("RGB", (cols * tile_w + (cols + 1) * gutter, title_h + 2 * tile_h + 3 * gutter + footer_h), (255, 255, 255))
-    draw = ImageDraw.Draw(canvas)
-    _text(draw, (50, 25), "Per-image shifted probe view (same 10-image subset used in the metric chart)", font=FONT_34)
-    intro = (
-        "Each tile is one image from the fixed shifted probe. Red = highest-score baseline detection. "
-        "Blue = highest-score detection after Tent. The text under each tile shows the top-score movement."
-    )
-    _draw_wrapped(draw, (50, 78), intro, font=FONT_22, width=112, line_gap=6)
-    legend_y = 170
-    draw.rounded_rectangle((50, legend_y, 250, legend_y + 38), radius=12, fill=(248, 248, 250), outline=(180, 185, 190))
-    draw.rectangle((65, legend_y + 11, 85, legend_y + 27), outline=(210, 73, 70), width=3)
-    _text(draw, (95, legend_y + 6), "baseline top1", font=FONT_18)
-    draw.rectangle((215, legend_y + 11, 235, legend_y + 27), outline=(53, 101, 216), width=3)
-    _text(draw, (245, legend_y + 6), "TTT top1", font=FONT_18)
-
-    start_y = title_h + gutter
-    for idx, row in enumerate(rows):
-        col = idx % cols
-        row_idx = idx // cols
-        x0 = gutter + col * (tile_w + gutter)
-        y0 = start_y + row_idx * (tile_h + gutter)
-        x1 = x0 + tile_w
-        y1 = y0 + tile_h
-        draw.rounded_rectangle((x0, y0, x1, y1), radius=20, outline=(150, 160, 175), width=2, fill=(249, 250, 252))
-        image_path = probe_root / "images" / "val" / row["image"]
-        thumb = Image.open(image_path).convert("RGB").resize((thumb_w, thumb_h))
-        thumb_draw = ImageDraw.Draw(thumb)
-        _draw_top_box(thumb_draw, row["top_no_ttt"], width=thumb_w, height=thumb_h, color=(210, 73, 70))
-        _draw_top_box(thumb_draw, row["top_ttt"], width=thumb_w, height=thumb_h, color=(53, 101, 216))
-        canvas.paste(thumb, (x0 + 20, y0 + 18))
-        _text(draw, (x0 + 20, y0 + 196), row["image"], font=FONT_18)
-        score_line = f"score {row['score_no_ttt']:.3f} -> {row['score_ttt']:.3f}   |Δ| {row['score_abs_delta']:.3f}"
-        det_line = f"dets {row['no_ttt_count']} -> {row['ttt_count']}   GT {row['gt_count']}"
-        _text(draw, (x0 + 20, y0 + 228), score_line, font=FONT_18)
-        _text(draw, (x0 + 20, y0 + 264), det_line, font=FONT_18)
-
-    footer = (
-        f"All ten images are from {source['probe_dataset']}. The figure shows only the top-1 baseline and top-1 TTT boxes per image "
-        "to keep the grid readable; use the prediction JSON and compare markdown for full detections."
-    )
-    if not by_no_ttt or not by_ttt:
-        footer += " When probe prediction artifacts are missing, the renderer falls back to label-derived boxes so CI can still regenerate the figure."
-    _draw_wrapped(draw, (40, canvas.height - 64), footer, font=FONT_18, width=150, line_gap=4)
+        panels = (
+            (
+                "Current state",
+                "Synthetic fixture only — efficacy unavailable, promotion ineligible, and no prediction fallback.",
+            ),
+            (
+                "Change trigger",
+                "Attach complete measured provenance and both prediction artifacts.",
+            ),
+        )
+    else:
+        resources = validation["resources"]
+        title = "TTT prediction artifact binding"
+        intro = (
+            "Baseline and adapted predictions are mandatory. Release URL hashes "
+            "remain declarations because this renderer does not fetch them."
+        )
+        panels = tuple(
+            (
+                name,
+                (
+                    f"{binding.get('path') or binding.get('url')} | "
+                    f"{binding['verification']} | sha256={binding['sha256']}"
+                ),
+            )
+            for name, binding in (
+                ("baseline_predictions", resources["baseline_predictions"]),
+                ("adapted_predictions", resources["adapted_predictions"]),
+            )
+        )
+    draw.text((70, 45), title, font=FONT_40, fill=(20, 20, 20))
+    _draw_wrapped(draw, (70, 110), intro, font=FONT_28, width=100, line_gap=10)
+    y = 250
+    for panel_title, body in panels:
+        _panel(draw, (70, y, 1730, y + 175), title=panel_title, body=body)
+        y += 205
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(out_path)
+    img.save(out_path)
 
 
-def _copy_outputs(paths: list[Path], target_dir: Path) -> None:
-    target_dir.mkdir(parents=True, exist_ok=True)
-    for path in paths:
-        shutil.copy2(path, target_dir / path.name)
+def _restore_bundle(
+    snapshots: dict[Path, bytes | None],
+    pending: list[Path],
+) -> None:
+    for path in pending:
+        path.unlink(missing_ok=True)
+    for target, previous in snapshots.items():
+        if previous is None:
+            target.unlink(missing_ok=True)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(previous)
+
+
+def _render_and_publish(
+    source: dict[str, Any],
+    *,
+    validation: dict[str, Any],
+    docs_dir: Path,
+    manual_dir: Path,
+) -> None:
+    targets = [
+        *(docs_dir / name for name in FIGURE_NAMES),
+        *(manual_dir / name for name in FIGURE_NAMES),
+    ]
+    snapshots = {
+        target: target.read_bytes() if target.is_file() else None for target in targets
+    }
+    pending: list[Path] = []
+    with tempfile.TemporaryDirectory(prefix="ttt-figure-stage-", dir=REPO_ROOT) as td:
+        stage = Path(td)
+        rendered = [stage / name for name in FIGURE_NAMES]
+        _draw_summary_figure(source, rendered[0])
+        _draw_pipeline_figure(rendered[1])
+        _draw_probe_grid(source, rendered[2], validation=validation)
+
+        try:
+            for target, rendered_path in zip(targets, rendered + rendered):
+                target.parent.mkdir(parents=True, exist_ok=True)
+                pending_path = target.with_name(f".{target.name}.pending")
+                pending_path.unlink(missing_ok=True)
+                shutil.copy2(rendered_path, pending_path)
+                pending.append(pending_path)
+            for pending_path, target in zip(pending, targets):
+                os.replace(pending_path, target)
+        except BaseException:
+            _restore_bundle(snapshots, pending)
+            raise
 
 
 def build_argparser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Render beginner-friendly TTT manual figures from fixed result artifacts.")
-    p.add_argument("--source-json", default="docs/assets/ttt_method_results_source.json", help="Source JSON containing fixed TTT summary results.")
-    p.add_argument("--docs-assets-dir", default="docs/assets", help="Directory to receive generated docs asset PNGs.")
-    p.add_argument("--manual-figures-dir", default="manual/figures", help="Directory to receive copied manual figure PNGs.")
-    return p
+    parser = argparse.ArgumentParser(
+        description="Render beginner-friendly TTT manual figures from validated evidence."
+    )
+    parser.add_argument(
+        "--source-json",
+        default="docs/assets/ttt_method_results_source.json",
+        help="Validated TTT evidence source JSON.",
+    )
+    parser.add_argument(
+        "--docs-assets-dir",
+        default="docs/assets",
+        help="Directory to receive generated docs asset PNGs.",
+    )
+    parser.add_argument(
+        "--manual-figures-dir",
+        default="manual/figures",
+        help="Directory to receive synchronized manual PNGs.",
+    )
+    return parser
 
 
-def main() -> int:
-    args = build_argparser().parse_args()
-    source = json.loads((REPO_ROOT / args.source_json).read_text(encoding="utf-8"))
-    docs_dir = REPO_ROOT / args.docs_assets_dir
-    manual_dir = REPO_ROOT / args.manual_figures_dir
+def main(argv: list[str] | None = None) -> int:
+    args = build_argparser().parse_args(argv)
+    source_path = Path(args.source_json)
+    if not source_path.is_absolute():
+        source_path = REPO_ROOT / source_path
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    validation = _validate_evidence_source(source)
 
-    summary_png = docs_dir / "ttt_method_results_summary.png"
-    pipeline_png = docs_dir / "ttt_compare_pipeline.png"
-    example_png = docs_dir / "ttt_probe_example_panel.png"
+    docs_dir = Path(args.docs_assets_dir)
+    if not docs_dir.is_absolute():
+        docs_dir = REPO_ROOT / docs_dir
+    manual_dir = Path(args.manual_figures_dir)
+    if not manual_dir.is_absolute():
+        manual_dir = REPO_ROOT / manual_dir
 
-    _draw_summary_figure(source, summary_png)
-    _draw_pipeline_figure(pipeline_png)
-    _draw_probe_grid(source, example_png)
-    _copy_outputs([summary_png, pipeline_png, example_png], manual_dir)
-
-    print(summary_png)
-    print(pipeline_png)
-    print(example_png)
+    _render_and_publish(
+        source,
+        validation=validation,
+        docs_dir=docs_dir,
+        manual_dir=manual_dir,
+    )
+    for name in FIGURE_NAMES:
+        print(docs_dir / name)
     return 0
 
 

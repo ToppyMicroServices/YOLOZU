@@ -6,18 +6,19 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/ttt_compare.sh --boilerplate {tent,mim,mim_probe,cotta,eata,sar} --dataset <root> --checkpoint <ckpt> [options]
+Usage: bash scripts/ttt_compare.sh --method {tent,mim,mim_probe,cotta,eata,sar} --data <root> --weights <ckpt> [options]
 
-Short recommended entrypoint for baseline-vs-adapted TTT comparison.
+Short entrypoint for a fail-closed baseline-vs-adapted TTT local diagnostic.
 It delegates to python3 tools/run_ttt_compare.py and uses per-method boilerplates.
+The selected checkpoint must pass full compatibility preflight.
 
 Common examples:
-  bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent
-  bash scripts/ttt_compare.sh --boilerplate mim  --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/mim
-  bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
-  bash scripts/ttt_compare.sh --boilerplate cotta --dataset data/smoke --split val --checkpoint /path/to.ckpt --device cuda --run-dir reports/ttt_compare/cotta
+  bash scripts/ttt_compare.sh --method tent --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/tent -n 1 --no-eval
+  bash scripts/ttt_compare.sh --method mim --data data/smoke --weights checkpoints/rtdetr_pose_mim.pt --out reports/ttt_compare/mim -n 1 --no-eval
+  bash scripts/ttt_compare.sh --method cotta --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/cotta -n 1 --dry-run
 
 Pass --dry-run to write a plan without running export/eval.
+Reports are local diagnostics; execution does not establish efficacy.
 EOF
 }
 

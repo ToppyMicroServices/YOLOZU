@@ -3456,7 +3456,7 @@
     {
       "name": "ttt_job",
       "function": "ttt_job_tool",
-      "summary": "Queue TTT scenario command as asynchronous job and return job_id.",
+      "summary": "Queue a local TTT export diagnostic and return its asynchronous job_id.",
       "category": "job",
       "surface_tiers": [
         "mcp_live",
@@ -3468,8 +3468,32 @@
       "tags_source": "unclassified",
       "params": [
         {
-          "name": "test_config",
+          "name": "dataset",
           "required": true
+        },
+        {
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "config",
+          "required": false,
+          "default": "builtin:base"
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": "val"
+        },
+        {
+          "name": "report",
+          "required": false,
+          "default": null
         },
         {
           "name": "method",
@@ -3484,26 +3508,94 @@
         {
           "name": "steps",
           "required": false,
-          "default": null
+          "default": 1
         },
         {
           "name": "reset",
           "required": false,
-          "default": false
+          "default": "sample"
         },
         {
-          "name": "extra_args",
+          "name": "device",
           "required": false,
-          "default": null
+          "default": "cpu"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": 1
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
         }
       ],
       "inputs": [
         {
-          "name": "test_config",
+          "name": "dataset",
           "required": true,
           "schema": {
             "type": "string",
-            "title": "Test Config"
+            "title": "Dataset"
+          }
+        },
+        {
+          "name": "checkpoint",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Checkpoint"
+          }
+        },
+        {
+          "name": "output",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output",
+            "default": null
+          }
+        },
+        {
+          "name": "config",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Config",
+            "default": "builtin:base"
+          }
+        },
+        {
+          "name": "split",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Split",
+            "default": "val"
+          }
+        },
+        {
+          "name": "report",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "default": null
           }
         },
         {
@@ -3535,52 +3627,91 @@
           "name": "steps",
           "required": false,
           "schema": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Steps",
-            "default": null
+            "default": 1
           }
         },
         {
           "name": "reset",
           "required": false,
           "schema": {
-            "type": "boolean",
+            "type": "string",
             "title": "Reset",
-            "default": false
+            "default": "sample"
           }
         },
         {
-          "name": "extra_args",
+          "name": "device",
           "required": false,
           "schema": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Extra Args",
-            "default": null
+            "type": "string",
+            "title": "Device",
+            "default": "cpu"
+          }
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Max Images",
+            "default": 1
+          }
+        },
+        {
+          "name": "force",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
           }
         }
       ],
       "input_schema": {
         "properties": {
-          "test_config": {
+          "dataset": {
             "type": "string",
-            "title": "Test Config"
+            "title": "Dataset"
+          },
+          "checkpoint": {
+            "type": "string",
+            "title": "Checkpoint"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output",
+            "default": null
+          },
+          "config": {
+            "type": "string",
+            "title": "Config",
+            "default": "builtin:base"
+          },
+          "split": {
+            "type": "string",
+            "title": "Split",
+            "default": "val"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "default": null
           },
           "method": {
             "type": "string",
@@ -3600,48 +3731,75 @@
             "default": null
           },
           "steps": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Steps",
-            "default": null
+            "default": 1
           },
           "reset": {
-            "type": "boolean",
+            "type": "string",
             "title": "Reset",
-            "default": false
+            "default": "sample"
           },
-          "extra_args": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Extra Args",
-            "default": null
+          "device": {
+            "type": "string",
+            "title": "Device",
+            "default": "cpu"
+          },
+          "max_images": {
+            "type": "integer",
+            "title": "Max Images",
+            "default": 1
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
           }
         },
         "title": "ttt_job_toolArguments",
         "type": "object",
         "required": [
-          "test_config"
+          "dataset",
+          "checkpoint"
         ]
       },
       "parameter_schema": {
         "properties": {
-          "test_config": {
+          "dataset": {
             "type": "string"
+          },
+          "checkpoint": {
+            "type": "string"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "config": {
+            "type": "string",
+            "default": "builtin:base"
+          },
+          "split": {
+            "type": "string",
+            "default": "val"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "method": {
             "type": "string",
@@ -3659,37 +3817,29 @@
             "default": null
           },
           "steps": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
+            "type": "integer",
+            "default": 1
           },
           "reset": {
-            "type": "boolean",
-            "default": false
+            "type": "string",
+            "default": "sample"
           },
-          "extra_args": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
+          "device": {
+            "type": "string",
+            "default": "cpu"
+          },
+          "max_images": {
+            "type": "integer",
+            "default": 1
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
           }
         },
         "required": [
-          "test_config"
+          "dataset",
+          "checkpoint"
         ]
       },
       "examples": [],
@@ -3700,7 +3850,7 @@
     {
       "name": "ctta_job",
       "function": "ctta_job_tool",
-      "summary": "Queue CTTA scenario command as asynchronous job and return job_id.",
+      "summary": "Queue a local continual-TTA export diagnostic and return its job_id.",
       "category": "job",
       "surface_tiers": [
         "mcp_live",
@@ -3712,8 +3862,32 @@
       "tags_source": "unclassified",
       "params": [
         {
-          "name": "test_config",
+          "name": "dataset",
           "required": true
+        },
+        {
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "name": "output",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "config",
+          "required": false,
+          "default": "builtin:base"
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": "val"
+        },
+        {
+          "name": "report",
+          "required": false,
+          "default": null
         },
         {
           "name": "method",
@@ -3728,26 +3902,94 @@
         {
           "name": "steps",
           "required": false,
-          "default": null
+          "default": 1
         },
         {
           "name": "reset",
           "required": false,
-          "default": false
+          "default": "stream"
         },
         {
-          "name": "extra_args",
+          "name": "device",
           "required": false,
-          "default": null
+          "default": "cpu"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": 1
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": true
         }
       ],
       "inputs": [
         {
-          "name": "test_config",
+          "name": "dataset",
           "required": true,
           "schema": {
             "type": "string",
-            "title": "Test Config"
+            "title": "Dataset"
+          }
+        },
+        {
+          "name": "checkpoint",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Checkpoint"
+          }
+        },
+        {
+          "name": "output",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output",
+            "default": null
+          }
+        },
+        {
+          "name": "config",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Config",
+            "default": "builtin:base"
+          }
+        },
+        {
+          "name": "split",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Split",
+            "default": "val"
+          }
+        },
+        {
+          "name": "report",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "default": null
           }
         },
         {
@@ -3779,52 +4021,91 @@
           "name": "steps",
           "required": false,
           "schema": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Steps",
-            "default": null
+            "default": 1
           }
         },
         {
           "name": "reset",
           "required": false,
           "schema": {
-            "type": "boolean",
+            "type": "string",
             "title": "Reset",
-            "default": false
+            "default": "stream"
           }
         },
         {
-          "name": "extra_args",
+          "name": "device",
           "required": false,
           "schema": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Extra Args",
-            "default": null
+            "type": "string",
+            "title": "Device",
+            "default": "cpu"
+          }
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Max Images",
+            "default": 1
+          }
+        },
+        {
+          "name": "force",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
           }
         }
       ],
       "input_schema": {
         "properties": {
-          "test_config": {
+          "dataset": {
             "type": "string",
-            "title": "Test Config"
+            "title": "Dataset"
+          },
+          "checkpoint": {
+            "type": "string",
+            "title": "Checkpoint"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output",
+            "default": null
+          },
+          "config": {
+            "type": "string",
+            "title": "Config",
+            "default": "builtin:base"
+          },
+          "split": {
+            "type": "string",
+            "title": "Split",
+            "default": "val"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "default": null
           },
           "method": {
             "type": "string",
@@ -3844,48 +4125,75 @@
             "default": null
           },
           "steps": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Steps",
-            "default": null
+            "default": 1
           },
           "reset": {
-            "type": "boolean",
+            "type": "string",
             "title": "Reset",
-            "default": false
+            "default": "stream"
           },
-          "extra_args": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Extra Args",
-            "default": null
+          "device": {
+            "type": "string",
+            "title": "Device",
+            "default": "cpu"
+          },
+          "max_images": {
+            "type": "integer",
+            "title": "Max Images",
+            "default": 1
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": true
           }
         },
         "title": "ctta_job_toolArguments",
         "type": "object",
         "required": [
-          "test_config"
+          "dataset",
+          "checkpoint"
         ]
       },
       "parameter_schema": {
         "properties": {
-          "test_config": {
+          "dataset": {
             "type": "string"
+          },
+          "checkpoint": {
+            "type": "string"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "config": {
+            "type": "string",
+            "default": "builtin:base"
+          },
+          "split": {
+            "type": "string",
+            "default": "val"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "method": {
             "type": "string",
@@ -3903,37 +4211,29 @@
             "default": null
           },
           "steps": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
+            "type": "integer",
+            "default": 1
           },
           "reset": {
-            "type": "boolean",
-            "default": false
+            "type": "string",
+            "default": "stream"
           },
-          "extra_args": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
+          "device": {
+            "type": "string",
+            "default": "cpu"
+          },
+          "max_images": {
+            "type": "integer",
+            "default": 1
+          },
+          "force": {
+            "type": "boolean",
+            "default": true
           }
         },
         "required": [
-          "test_config"
+          "dataset",
+          "checkpoint"
         ]
       },
       "examples": [],
@@ -8405,8 +8705,32 @@
         "function": "ttt_job",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8421,17 +8745,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "aliases": []
@@ -8441,8 +8775,32 @@
         "function": "ttt_job_tool",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8457,24 +8815,72 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string",
-              "title": "Test Config"
+              "title": "Dataset"
+            },
+            "checkpoint": {
+              "type": "string",
+              "title": "Checkpoint"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Output",
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "title": "Config",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "title": "Split",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Report",
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8494,48 +8900,75 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "integer",
               "title": "Steps",
-              "default": null
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
+              "type": "string",
               "title": "Reset",
-              "default": false
+              "default": "sample"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Extra Args",
-              "default": null
+            "device": {
+              "type": "string",
+              "title": "Device",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "title": "Max Images",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
             }
           },
           "title": "ttt_job_toolArguments",
           "type": "object",
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "parameter_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string"
+            },
+            "checkpoint": {
+              "type": "string"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8553,37 +8986,29 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+              "type": "integer",
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
-              "default": false
+              "type": "string",
+              "default": "sample"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+            "device": {
+              "type": "string",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
             }
           },
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "aliases": []
@@ -8595,8 +9020,32 @@
         "request_model": "TTTJobRequest",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8611,24 +9060,72 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "sample"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string",
-              "title": "Test Config"
+              "title": "Dataset"
+            },
+            "checkpoint": {
+              "type": "string",
+              "title": "Checkpoint"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Output",
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "title": "Config",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "title": "Split",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Report",
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8648,48 +9145,75 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "integer",
               "title": "Steps",
-              "default": null
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
+              "type": "string",
               "title": "Reset",
-              "default": false
+              "default": "sample"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Extra Args",
-              "default": null
+            "device": {
+              "type": "string",
+              "title": "Device",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "title": "Max Images",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
             }
           },
           "title": "TTTJobRequest",
           "type": "object",
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "parameter_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string"
+            },
+            "checkpoint": {
+              "type": "string"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8707,37 +9231,29 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+              "type": "integer",
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
-              "default": false
+              "type": "string",
+              "default": "sample"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+            "device": {
+              "type": "string",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
             }
           },
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "aliases": []
@@ -8764,8 +9280,32 @@
         "function": "ctta_job",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8780,17 +9320,27 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "aliases": []
@@ -8800,8 +9350,32 @@
         "function": "ctta_job_tool",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8816,24 +9390,72 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string",
-              "title": "Test Config"
+              "title": "Dataset"
+            },
+            "checkpoint": {
+              "type": "string",
+              "title": "Checkpoint"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Output",
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "title": "Config",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "title": "Split",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Report",
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8853,48 +9475,75 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "integer",
               "title": "Steps",
-              "default": null
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
+              "type": "string",
               "title": "Reset",
-              "default": false
+              "default": "stream"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Extra Args",
-              "default": null
+            "device": {
+              "type": "string",
+              "title": "Device",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "title": "Max Images",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
             }
           },
           "title": "ctta_job_toolArguments",
           "type": "object",
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "parameter_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string"
+            },
+            "checkpoint": {
+              "type": "string"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "method": {
               "type": "string",
@@ -8912,37 +9561,29 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+              "type": "integer",
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
-              "default": false
+              "type": "string",
+              "default": "stream"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+            "device": {
+              "type": "string",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
             }
           },
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "aliases": []
@@ -8954,8 +9595,32 @@
         "request_model": "CTTAJobRequest",
         "params": [
           {
-            "name": "test_config",
+            "name": "dataset",
             "required": true
+          },
+          {
+            "name": "checkpoint",
+            "required": true
+          },
+          {
+            "name": "output",
+            "required": false,
+            "default": null
+          },
+          {
+            "name": "config",
+            "required": false,
+            "default": "builtin:base"
+          },
+          {
+            "name": "split",
+            "required": false,
+            "default": "val"
+          },
+          {
+            "name": "report",
+            "required": false,
+            "default": null
           },
           {
             "name": "method",
@@ -8970,24 +9635,72 @@
           {
             "name": "steps",
             "required": false,
-            "default": null
+            "default": 1
           },
           {
             "name": "reset",
             "required": false,
-            "default": false
+            "default": "stream"
           },
           {
-            "name": "extra_args",
+            "name": "device",
             "required": false,
-            "default": null
+            "default": "cpu"
+          },
+          {
+            "name": "max_images",
+            "required": false,
+            "default": 1
+          },
+          {
+            "name": "force",
+            "required": false,
+            "default": true
           }
         ],
         "input_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string",
-              "title": "Test Config"
+              "title": "Dataset"
+            },
+            "checkpoint": {
+              "type": "string",
+              "title": "Checkpoint"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Output",
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "title": "Config",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "title": "Split",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Report",
+              "default": null
             },
             "method": {
               "type": "string",
@@ -9007,48 +9720,75 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "integer",
               "title": "Steps",
-              "default": null
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
+              "type": "string",
               "title": "Reset",
-              "default": false
+              "default": "stream"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Extra Args",
-              "default": null
+            "device": {
+              "type": "string",
+              "title": "Device",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "title": "Max Images",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "title": "Force",
+              "default": true
             }
           },
           "title": "CTTAJobRequest",
           "type": "object",
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "parameter_schema": {
           "properties": {
-            "test_config": {
+            "dataset": {
               "type": "string"
+            },
+            "checkpoint": {
+              "type": "string"
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "config": {
+              "type": "string",
+              "default": "builtin:base"
+            },
+            "split": {
+              "type": "string",
+              "default": "val"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "method": {
               "type": "string",
@@ -9066,37 +9806,29 @@
               "default": null
             },
             "steps": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+              "type": "integer",
+              "default": 1
             },
             "reset": {
-              "type": "boolean",
-              "default": false
+              "type": "string",
+              "default": "stream"
             },
-            "extra_args": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
+            "device": {
+              "type": "string",
+              "default": "cpu"
+            },
+            "max_images": {
+              "type": "integer",
+              "default": 1
+            },
+            "force": {
+              "type": "boolean",
+              "default": true
             }
           },
           "required": [
-            "test_config"
+            "dataset",
+            "checkpoint"
           ]
         },
         "aliases": []

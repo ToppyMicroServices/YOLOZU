@@ -52,6 +52,20 @@ def _extract_outputs(output: Any) -> dict[str, Any]:
     return {"logits": output}
 
 
+def _deterministic_weak_photometric_view(batch: Any) -> Any:
+    """Return a shape-preserving image-tensor view without RNG or state."""
+
+    _ensure_torch()
+    if not isinstance(batch, torch.Tensor):
+        raise TypeError(
+            "Tent auxiliary consistency requires the adapter image-tensor batch "
+            "contract; structured batches are rejected to avoid perturbing labels"
+        )
+    if not bool(batch.is_floating_point()):
+        raise TypeError("Tent auxiliary consistency requires a floating image tensor")
+    return (batch * 0.98) + 0.01
+
+
 def _entropy(logits: "torch.Tensor") -> "torch.Tensor":
     probs = F.softmax(logits, dim=-1)
     logp = torch.log(torch.clamp(probs, min=1e-12))
@@ -70,8 +84,7 @@ def _aux_consistency_loss(
     """Compute auxiliary consistency losses between student & teacher outputs.
 
     Each loss uses L1/smooth-L1 between the current model's prediction and a
-    frozen teacher snapshot (or the detached current output when no teacher is
-    provided).  Returns (total_aux_loss, {name: scalar}).
+    frozen same-input snapshot. Returns (total_aux_loss, {name: scalar}).
     """
     _ensure_torch()
     parts: dict[str, float] = {}
@@ -102,7 +115,7 @@ def _aux_consistency_loss(
                 continue
             t_val = t_val.detach()
         else:
-            t_val = s_val.detach()
+            continue
 
         if s_val.shape != t_val.shape:
             continue
@@ -155,7 +168,6 @@ class TentRunner(TTARunner):
             raise ValueError("no parameters selected for Tent")
         self.optimizer = torch.optim.Adam(self.params, lr=float(self.config.lr))
         self.updated_param_count = _count_params(self.params)
-        self._teacher_outputs: dict[str, Any] | None = None
         self._has_aux = (
             float(self.config.aux_pose_weight) > 0
             or float(self.config.aux_keypoints_weight) > 0
@@ -166,34 +178,44 @@ class TentRunner(TTARunner):
     def reset(self) -> None:
         for group in self.optimizer.param_groups:
             group["lr"] = float(self.config.lr)
-        self._teacher_outputs = None
 
     def adapt_step(self, batch: Any) -> dict[str, float]:
         _ensure_torch()
+        teacher_outputs: dict[str, Any] | None = None
+        student_batch = batch
+        view_delta = 0.0
+        if self._has_aux:
+            self.model.eval()
+            with torch.no_grad():
+                teacher_outputs = _extract_outputs(self.model(batch))
+            student_batch = _deterministic_weak_photometric_view(batch)
+            if isinstance(batch, torch.Tensor) and isinstance(
+                student_batch, torch.Tensor
+            ):
+                view_delta = float(
+                    (student_batch.detach() - batch.detach()).abs().mean().cpu().item()
+                )
+
         self.model.train()
-        output = self.model(batch)
+        output = self.model(student_batch)
         outputs = _extract_outputs(output)
         logits = _extract_logits(output)
-        loss = _entropy(logits)
-
-        # Snapshot teacher on first step for auxiliary consistency losses.
-        if self._has_aux and self._teacher_outputs is None:
-            self._teacher_outputs = {
-                k: v.detach().clone() if isinstance(v, torch.Tensor) else v
-                for k, v in outputs.items()
-            }
+        entropy_loss = _entropy(logits)
+        loss = entropy_loss
 
         aux_metrics: dict[str, float] = {}
+        aux_loss_value = 0.0
         if self._has_aux:
             aux_loss, aux_metrics = _aux_consistency_loss(
                 outputs,
-                self._teacher_outputs,
+                teacher_outputs,
                 pose_weight=float(self.config.aux_pose_weight),
                 keypoints_weight=float(self.config.aux_keypoints_weight),
                 depth_weight=float(self.config.aux_depth_weight),
                 seg_weight=float(self.config.aux_seg_weight),
             )
             if aux_loss is not None:
+                aux_loss_value = float(aux_loss.detach().cpu().item())
                 loss = loss + aux_loss
 
         self.optimizer.zero_grad(set_to_none=True)
@@ -202,13 +224,19 @@ class TentRunner(TTARunner):
         grad_norm_clipped = grad_norm
         if self.config.max_grad_norm is not None:
             try:
-                torch.nn.utils.clip_grad_norm_(self.params, float(self.config.max_grad_norm))
+                torch.nn.utils.clip_grad_norm_(
+                    self.params, float(self.config.max_grad_norm)
+                )
             except Exception:  # pragma: no cover
                 pass
             grad_norm_clipped = _global_grad_norm(self.params)
         self.optimizer.step()
         result = {
-            "loss_entropy": float(loss.detach().cpu()),
+            "loss_total": float(loss.detach().cpu()),
+            "loss_entropy": float(entropy_loss.detach().cpu()),
+            "loss_aux_consistency": float(aux_loss_value),
+            "aux_target_current_batch": 1.0 if self._has_aux else 0.0,
+            "aux_student_view_mean_abs_delta": float(view_delta),
             "grad_norm": float(grad_norm),
             "grad_norm_clipped": float(grad_norm_clipped),
         }

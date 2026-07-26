@@ -33,7 +33,7 @@ instead of promoting it by inference.
 - Strict manifest validation passes for all 115 entries.
 - Per-entrypoint help audit scans 106 Python tools with zero execution errors and zero missing flags.
 - Manual CLI drift audit passes for the current 28-command/alias top-level surface.
-- Public docs example audit passes 154 shell examples.
+- Public docs example audit passes 153 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
 - Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10
   Linux/macOS jobs for Python 3.10 through 3.14 in

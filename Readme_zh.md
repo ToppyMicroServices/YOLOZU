@@ -304,24 +304,19 @@ python3 tools/export_predictions.py --adapter dummy --dataset reports/domain_shi
 
 详情：[`docs/ttt_protocol.md`](docs/ttt_protocol.md)
 
-推荐使用简短的 before/after compare workflow：
+简短的 before/after 本地诊断（checkpoint 必须与所选 config 完全兼容）：
 
 ```bash
-bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent --device cuda
+bash scripts/ttt_compare.sh --method tent --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/tent -n 1 --no-eval
 ```
 
 已提供的 boilerplate：`tent`、`mim`、`mim_probe`、`cotta`、`eata`、`sar`。
 详见：[`docs/ttt_compare_boilerplates.md`](docs/ttt_compare_boilerplates.md)
 
-固定 real probe 的 MIM 示例：
+历史上的 ignored real-probe 数据和 checkpoint 不属于当前 SSOT，也不是 clean checkout
+成功路径。`mim_probe` 只保留为 config boilerplate，不代表已验证的效果。
 
-```bash
-bash scripts/ttt_compare.sh --boilerplate mim_probe --dataset reports/ttt_improvement_probe/domain_shift_dataset --split val --checkpoint reports/ttt_improvement_probe/checkpoint.pt --run-dir reports/ttt_compare/mim_probe_cpu --device cpu --max-images 10
-```
-
-这个 fixed probe 会让全部 10 张图像的预测发生变化，并把内置比较指标从 `map50=0.00326797` 提升到 `0.00392157`。
-
-TTT improvement micro-demo（展示 metric delta 与 overlay）：
+TTT 本地诊断 demo（非 COCO proxy AP 与 overlay）：
 
 ```bash
 python3 -m pip install -U 'yolozu[demo]'
@@ -333,6 +328,10 @@ yolozu demo ttt
 - `demo_output/ttt/<utc>/overlay_no_ttt.png`
 - `demo_output/ttt/<utc>/overlay_ttt.png`
 - `demo_output/ttt/<utc>/ttt_improvement_report.json`
+
+报告明确写入 `evidence_kind=local_diagnostic`、
+`promotion_eligible=false`、`efficacy_conclusion=not_established`。文件名为兼容性保留，
+不表示已证明 improvement。
 
 Reference adapter regression（RT-DETR，真实模型基线）：
 

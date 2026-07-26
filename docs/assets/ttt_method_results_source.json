@@ -1,69 +1,27 @@
 {
-  "schema_version": 1,
-  "probe_dataset": "reports/ttt_improvement_probe/domain_shift_dataset",
-  "probe_checkpoint": "reports/ttt_improvement_probe/checkpoint.pt",
-  "probe_adapter_config": "configs/yolo26_rtdetr_pose/yolo26n.json",
-  "probe_domain_shift": {
-    "corruption": "gaussian_noise",
-    "deterministic": true,
-    "id": "gaussian_noise_s3_seed2026",
-    "image_count": 10,
-    "images_sha256": "d333513c7988734b46c9aca2135c535d17007d43b85e168be8b96efb25820122",
-    "seed": 2026,
-    "severity": 3,
-    "source_dataset_root": "/Users/akira/YOLOZU/data/smoke",
-    "split": "val",
-    "target_dataset_root": "/Users/akira/YOLOZU/reports/ttt_improvement_probe/domain_shift_dataset"
-  },
-  "metrics": {
-    "baseline": {
-      "map50": 0.00326797385620915,
-      "map50_95": 0.000326797385620915
-    },
-    "tent": {
-      "map50": 0.00392156862745098,
-      "map50_95": 0.000392156862745098,
-      "steps_run": 1,
-      "mean_final_loss": null,
-      "warnings": []
-    },
-    "cotta": {
-      "map50": 0.00392156862745098,
-      "map50_95": 0.000392156862745098,
-      "steps_run": 1,
-      "mean_final_loss": null,
-      "warnings": []
-    },
-    "eata": {
-      "map50": 0.00392156862745098,
-      "map50_95": 0.000392156862745098,
-      "steps_run": 1,
-      "mean_final_loss": null,
-      "warnings": []
-    },
-    "sar": {
-      "map50": 0.00392156862745098,
-      "map50_95": 0.000392156862745098,
-      "steps_run": 1,
-      "mean_final_loss": null,
-      "warnings": []
-    },
-    "mim": {
-      "fixture": "fixed_real_probe",
-      "status": "completed",
-      "map50": 0.00392156862745098,
-      "map50_95": 0.000392156862745098,
-      "metric_backend": "simple_map_proxy",
-      "steps_run": 10,
-      "mean_final_loss": 0.07915127947926522,
-      "changed_images": 10,
-      "images": 10,
-      "warnings": [],
-      "note": "MIM uses the fixed 10-image shifted probe, the yolo26n demo checkpoint, and a MIM-enabled config. In this runtime the quality numbers come from the built-in simple_map_proxy fallback because pycocotools is not installed."
-    }
+  "schema_version": 2,
+  "evidence_kind": "synthetic_fixture",
+  "promotion_eligible": false,
+  "efficacy": "unavailable",
+  "fixture": {
+    "purpose": "Reproduce the documentation layout and explain the evidence prerequisites without presenting measured TTT results.",
+    "methods": [
+      "tent",
+      "mim",
+      "cotta",
+      "eata",
+      "sar"
+    ],
+    "workflow": [
+      "freeze a deterministic ordered subset",
+      "bind a compatible checkpoint and config by sha256",
+      "export baseline and adapted predictions",
+      "evaluate with explicitly named metric semantics",
+      "attach commit, seed, and tool versions"
+    ]
   },
   "qualitative_example": {
-    "image": "000000000009.jpg",
-    "note": "Food-tray image from the same shifted 10-image probe. Use it to explain what the shifted input looks like; use the metric chart for the trustworthy comparison."
+    "status": "not_attached",
+    "reason": "Synthetic fixtures cannot substitute ground-truth labels for measured prediction artifacts."
   }
 }

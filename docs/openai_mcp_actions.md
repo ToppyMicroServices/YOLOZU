@@ -76,6 +76,8 @@ Main endpoints:
 - `POST /eval/long-tail`
 - `POST /jobs/export-predictions` (canonical)
 - `POST /jobs/export-onnx` (compatibility alias)
+- `POST /jobs/ttt`
+- `POST /jobs/ctta`
 - `POST /jobs/*` and `GET /runs/*` style equivalents for async control/reporting
 
 ## Request example
@@ -92,6 +94,28 @@ curl -sS -X POST http://127.0.0.1:8080/eval/coco \
     "output": "reports/actions_eval_coco_dry_run.json"
   }'
 ```
+
+TTT job request (the checkpoint must be fully compatible with the selected
+config):
+
+```bash
+curl -sS -X POST http://127.0.0.1:8080/jobs/ttt \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "dataset": "data/smoke",
+    "checkpoint": "checkpoints/rtdetr_pose.pt",
+    "config": "builtin:base",
+    "split": "val",
+    "method": "tent",
+    "reset": "sample",
+    "steps": 1,
+    "max_images": 1
+  }'
+```
+
+An accepted request returns a `job_id`; poll `GET /jobs/{job_id}`. Missing or
+non-full checkpoints fail before queueing with `stage=preflight`. The resulting
+predictions and TTT report are local diagnostics, not efficacy evidence.
 
 ## Operational notes
 

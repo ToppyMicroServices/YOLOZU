@@ -77,10 +77,10 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
             "notes": "Audits YOLOv/MMDetection/Detectron2/RT-DETR entrypoints with reportable interface contract outputs.",
         },
         {
-            "capability": "ttt_improvement",
+            "capability": "ttt_diagnostic",
             "status": "supported" if dep_map.get("torch", False) else "deps_missing",
             "entrypoints": ["yolozu demo ttt", "python3 tools/export_predictions.py --adapter rtdetr_pose --ttt ..."],
-            "notes": "Runs a deterministic domain shift + few-shot train, then measures simple mAP proxy delta with TTT on/off.",
+            "notes": "Runs a deterministic local comparison with non-COCO proxy AP; efficacy remains not established.",
         },
     ]
 
@@ -1027,14 +1027,14 @@ def handle_demo_command(args: argparse.Namespace) -> int:
                 "Install: python3 -m pip install -U 'yolozu[demo]' (pip) or python3 -m pip install -e '.[demo]' (repo checkout)"
             ) from exc
 
-        from yolozu.demos.ttt_improvement import run_ttt_improvement_demo
+        from yolozu.demos.ttt_improvement import run_ttt_diagnostic_demo
 
         suite_id = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
         run_dir = getattr(args, "run_dir", None)
         if run_dir is None:
             run_dir = str(Path("demo_output") / "ttt" / suite_id)
 
-        res = run_ttt_improvement_demo(
+        res = run_ttt_diagnostic_demo(
             run_dir=run_dir,
             dataset_root=str(getattr(args, "dataset_root")),
             split=str(getattr(args, "split", "val")),
@@ -1058,14 +1058,15 @@ def handle_demo_command(args: argparse.Namespace) -> int:
         m0 = res.metrics_no_ttt
         m1 = res.metrics_ttt
         d = {
-            "map50": float(m1.get("map50", 0.0)) - float(m0.get("map50", 0.0)),
-            "map50_95": float(m1.get("map50_95", 0.0)) - float(m0.get("map50_95", 0.0)),
+            "proxy_ap50": float(m1.get("proxy_ap50", 0.0)) - float(m0.get("proxy_ap50", 0.0)),
+            "proxy_ap50_95": float(m1.get("proxy_ap50_95", 0.0)) - float(m0.get("proxy_ap50_95", 0.0)),
         }
         print(
-            "ttt demo: "
-            f"map50 {m0.get('map50'):.9g}→{m1.get('map50'):.9g} (Δ={d['map50']:.9g}) "
-            f"map50_95 {m0.get('map50_95'):.9g}→{m1.get('map50_95'):.9g} (Δ={d['map50_95']:.9g}) "
-            f"(output_dir={res.run_dir})"
+            "ttt diagnostic (non-COCO proxy; efficacy not established): "
+            f"proxy_ap50 {m0.get('proxy_ap50'):.9g}→{m1.get('proxy_ap50'):.9g} "
+            f"(Δ={d['proxy_ap50']:.9g}) "
+            f"proxy_ap50_95 {m0.get('proxy_ap50_95'):.9g}→{m1.get('proxy_ap50_95'):.9g} "
+            f"(Δ={d['proxy_ap50_95']:.9g}) (output_dir={res.run_dir})"
         )
         if res.overlay_no_ttt_path:
             print(str(res.overlay_no_ttt_path))

@@ -402,55 +402,82 @@ class TestIntegrationToolRunner(unittest.TestCase):
                 os.environ["PYTHONPATH"] = original_pythonpath
 
     def test_e13_ttt_job_args(self):
-        with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:
-            submit_job.return_value = {"ok": True, "tool": "jobs.submit", "job_id": "job_x"}
-            out = tool_runner.ttt_job("configs/test_ttt.yaml", method="tent", preset="safe", steps=2, reset=True)
-
-        self.assertTrue(out["ok"])
-        submit_job.assert_called_once_with(
-            "test",
-            [
-                "test",
-                "configs/test_ttt.yaml",
-                "--ttt",
-                "--ttt-method",
-                "tent",
-                "--ttt-preset",
-                "safe",
-                "--ttt-steps",
-                "2",
-                "--ttt-reset",
-            ],
-        )
-
-    def test_e14_ctta_job_args(self):
-        with patch("yolozu.integrations.tool_runner.submit_job") as submit_job:
-            submit_job.return_value = {"ok": True, "tool": "jobs.submit", "job_id": "job_x"}
-            out = tool_runner.ctta_job(
-                "configs/test_ctta.yaml",
-                method="cotta",
-                preset="conservative",
-                steps=1,
-                reset=False,
-                extra_args=["--max-images", "4"],
+        with patch(
+            "yolozu.integrations.tool_runner._ttt_export_job"
+        ) as export_job:
+            export_job.return_value = {
+                "ok": True,
+                "tool": "jobs.submit",
+                "job_id": "job_x",
+            }
+            out = tool_runner.ttt_job(
+                "data/target",
+                "weights/model.pt",
+                "runs/ttt/predictions.json",
+                config="configs/model.json",
+                report="runs/ttt/report.json",
+                method="tent",
+                preset="safe",
+                steps=2,
+                reset="sample",
+                max_images=4,
             )
 
         self.assertTrue(out["ok"])
-        submit_job.assert_called_once_with(
-            "test",
-            [
-                "test",
-                "configs/test_ctta.yaml",
-                "--ttt",
-                "--ttt-method",
-                "cotta",
-                "--ttt-preset",
-                "conservative",
-                "--ttt-steps",
-                "1",
-                "--max-images",
-                "4",
-            ],
+        export_job.assert_called_once_with(
+            job_name="ttt",
+            dataset="data/target",
+            checkpoint="weights/model.pt",
+            output="runs/ttt/predictions.json",
+            config="configs/model.json",
+            split="val",
+            report="runs/ttt/report.json",
+            method="tent",
+            preset="safe",
+            steps=2,
+            reset="sample",
+            device="cpu",
+            max_images=4,
+            force=True,
+            public=False,
+        )
+
+    def test_e14_ctta_job_args(self):
+        with patch(
+            "yolozu.integrations.tool_runner._ttt_export_job"
+        ) as export_job:
+            export_job.return_value = {
+                "ok": True,
+                "tool": "jobs.submit",
+                "job_id": "job_x",
+            }
+            out = tool_runner.ctta_job(
+                "data/stream",
+                "weights/model.pt",
+                method="cotta",
+                preset="conservative",
+                steps=1,
+                reset="stream",
+                max_images=4,
+            )
+
+        self.assertTrue(out["ok"])
+        export_job.assert_called_once_with(
+            job_name="ctta",
+            dataset="data/stream",
+            checkpoint="weights/model.pt",
+            output=None,
+            config="builtin:base",
+            split="val",
+            report=None,
+            method="cotta",
+            preset="conservative",
+            steps=1,
+            reset="stream",
+            device="cpu",
+            max_images=4,
+            force=True,
+            public=False,
         )
 
 
