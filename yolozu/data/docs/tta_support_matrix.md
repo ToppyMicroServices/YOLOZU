@@ -2,6 +2,12 @@
 
 Updated: 2026-07-26
 
+Principles:
+- **Safe by default**: clear reset policies and guard rails.
+- **Explicit scope**: use supported, partial, or not supported instead of vague claims.
+- **Interface-contract-first**: evaluation remains comparable through the
+  predictions interface contract.
+
 This page separates runnable code, implementation fidelity, measured efficacy,
 and production maturity. These are independent properties.
 
@@ -17,7 +23,7 @@ and production maturity. These are independent properties.
 
 - `--tta` uses `postprocess` by default. It transforms exported predictions and
   does not rerun the model.
-- `--tta --tta-mode model` reruns one horizontally flipped branch for
+- `--tta --tta-mode model` reruns one horizontally flipped inference branch for
   `rtdetr_pose`, maps it back, and merges it with the baseline predictions.
 - Other adapters warn and fall back to `postprocess` when `model` is requested.
 
@@ -69,7 +75,7 @@ the YOLOZU profile, not evidence of paper-level equivalence.
 ## Current detector-adaptation candidates
 
 The entries below are literature-review candidates, not YOLOZU features. As of
-2026-07-25 they are unimplemented in YOLOZU, unverified on YOLOZU's RT-DETR
+2026-07-26 they are unimplemented in YOLOZU, unverified on YOLOZU's RT-DETR
 adapter, and have no YOLOZU efficacy result. Software-license suitability must
 be checked before any implementation decision.
 

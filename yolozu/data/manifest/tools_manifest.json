@@ -5785,7 +5785,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, and opt-in TTA/TTT remain Experimental/Research.",
+      "summary": "Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, TTA remains Experimental, TTT remains Research, and parent maturity does not promote either lane.",
       "tags": [
         "predictions",
         "adapter"
