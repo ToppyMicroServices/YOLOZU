@@ -1,6 +1,6 @@
 # SSOT Capability Coverage Audit
 
-Audit date: 2026-07-25
+Audit date: 2026-07-26
 Benchmark reconciliation update: 2026-07-23
 
 This audit maps the capability claims in [Production Readiness](production_readiness.md) and
@@ -34,9 +34,9 @@ instead of promoting it by inference.
 - Strict manifest validation passes for all 116 entries.
 - Per-entrypoint help audit scans 107 Python tools with zero execution errors and zero missing flags.
 - Manual CLI drift audit passes for the current 28-command/alias top-level surface.
-- Public docs example audit passes 153 shell examples.
+- Public docs example audit passes 114 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
-- The generated web-docs bundle is current for 116 tools and 21 JSON Schemas.
+- The generated web-docs bundle is current for 116 tools and 22 JSON Schemas.
 - Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10
   Linux/macOS jobs for Python 3.10 through 3.14 in
   [workflow run 29421807474](https://github.com/ToppyMicroServices/YOLOZU/actions/runs/29421807474).
