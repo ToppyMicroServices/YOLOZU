@@ -32,8 +32,10 @@
 - Browser dogfood loaded all generated assets, returned 12 results for a `TTT`
   search, displayed the synthetic-evidence boundary, and loaded its 1800×900
   image without console warnings.
-- The company-site publication branch contains a byte-for-byte copy of the
-  generated 14-file bundle and links it from `/yolozu/`.
+- After company-site PR #9 merged as `2e3c2f4`, GitHub Pages reported `built`
+  and `https://www.toppymicros.com/yolozu/docs/` served all 14 generated files
+  byte-for-byte equal to the bundle on YOLOZU `main`, including provenance,
+  search index, and favicon.
 
 ## Unknown / risk
 
@@ -46,21 +48,19 @@
   protocol in `YOLOZU-ll2.54`.
 - Public PyPI remains on the prior release until `YOLOZU-ll2.30` publishes and
   verifies the next version.
-- The company-site production URL must be checked after PR #9 is merged and the
-  GitHub Pages deployment completes.
 
 ## Recommendation
 
-Merge and verify company-site PR #9, then publish one verified YOLOZU release
-that includes the installed API/MCP, TTT safety boundary, and web-docs source.
+Publish one verified YOLOZU release that includes the installed API/MCP, TTT
+safety boundary, and web-docs source.
 Keep TTT efficacy claims blocked. After release verification, prioritize three
 observed design-partner onboarding sessions and weekly privacy-safe adoption
 snapshots over adding more Research methods.
 
 ## Change trigger
 
-- Promote the web surface only after the production URL serves the provenance-
-  bound bundle and its search/assets pass a live check.
+- Reopen web-readiness work if the production bundle stops matching YOLOZU
+  `main`, provenance validation fails, or live search/assets regress.
 - Change the TTT efficacy conclusion only after `YOLOZU-ll2.53` is satisfied
   with release-addressable, independently reproduced artifacts.
 - Expand the TTA method list only after `YOLOZU-ll2.54` records primary-source,
