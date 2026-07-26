@@ -112,6 +112,7 @@ Supporting docs:
 - Schema governance / browser coverage: [`schema_governance.md`](schema_governance.md)
 - Searchable web docs: <https://www.toppymicros.com/yolozu/docs/>
 - Web docs generation and publication plan: [`web_docs_plan.md`](web_docs_plan.md)
+- Product readiness audit: [`../reports/yolozu_product_readiness_2026-07-26.md`](../reports/yolozu_product_readiness_2026-07-26.md)
 - Generated CLI reference: [`generated/cli_reference.md`](generated/cli_reference.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
 - Research note template: [`research_note_template.md`](research_note_template.md)

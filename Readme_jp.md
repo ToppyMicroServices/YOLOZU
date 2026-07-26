@@ -41,6 +41,33 @@ yolozu guide --goal first-run
 yolozu guide --goal evaluate
 ```
 
+## Python / AI から最短で使う
+
+workflow を別の Python program が管理する場合は、typed in-process API を使えます。
+
+```python
+from pathlib import Path
+
+from yolozu.api import evaluate_coco
+
+result = evaluate_coco(
+    dataset=Path("/absolute/path/to/dataset"),
+    predictions=Path("/absolute/path/to/predictions.json"),
+    dry_run=True,
+)
+print(result.to_dict())
+```
+
+AI client には、まず小さな guaranteed tool list だけを渡せます。
+
+```bash
+yolozu-mcp --print-tools --guaranteed --ids-only
+```
+
+typed error、workspace boundary、MCP setup、広い opt-in discovery は
+[`docs/python_api.md`](docs/python_api.md) と
+[`docs/ai_first.md`](docs/ai_first.md) を参照してください。
+
 ```mermaid
 flowchart LR
     A["Ultralytics"] --> D["wrapped predictions.json"]
