@@ -77,6 +77,7 @@ class TestIntegrationTTTJobs(unittest.TestCase):
                 return payload
             time.sleep(0.02)
         self.fail(f"job did not reach a terminal state: {job_id}")
+        return {}
 
     def test_missing_checkpoint_fails_before_queueing(self):
         repo_root = Path(__file__).resolve().parents[1]

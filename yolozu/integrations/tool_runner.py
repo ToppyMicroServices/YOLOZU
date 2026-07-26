@@ -45,12 +45,9 @@ def _workspace_path(value: str, *, label: str, kind: str) -> Path:
     path = Path(token)
     if path.is_absolute():
         raise ValueError(f"{label} must be workspace-relative")
-    resolved = resolve_workspace_path(path)
-    if kind == "file" and not resolved.is_file():
-        raise FileNotFoundError(f"{label} not found or not a file: {token}")
-    if kind == "dir" and not resolved.is_dir():
-        raise FileNotFoundError(f"{label} not found or not a directory: {token}")
-    return resolved
+    if kind not in {"file", "dir", "output"}:
+        raise ValueError(f"unsupported path kind: {kind}")
+    return resolve_workspace_path(path)
 
 
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
@@ -861,11 +858,9 @@ def _ttt_export_job(
         if int(max_images) < 1:
             raise ValueError("max_images must be >= 1")
         dataset_path = _workspace_path(dataset, label="dataset", kind="dir")
-        checkpoint_path = _workspace_path(
+        _workspace_path(
             checkpoint, label="checkpoint", kind="file"
         )
-        if checkpoint_path.stat().st_size <= 0:
-            raise ValueError("checkpoint must be non-empty")
         if not str(config).startswith(("builtin:", "pkg:")):
             _workspace_path(config, label="config", kind="file")
         from yolozu.dataset import build_manifest

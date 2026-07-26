@@ -9,4 +9,4 @@ from yolozu.inference.export_predictions_cli import main
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

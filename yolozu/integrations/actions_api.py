@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -45,6 +48,23 @@ def _sanitize_response(payload):  # type: ignore[no-untyped-def]
     if isinstance(payload, list):
         return [_sanitize_response(item) for item in payload]
     return payload
+
+
+def _invoke_public_job(
+    name: str,
+    operation: Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
+    """Return a stable public failure without exposing unexpected exceptions."""
+    try:
+        return _sanitize_response(operation())
+    except Exception:
+        return {
+            "ok": False,
+            "tool": name,
+            "summary": f"{name}: failed before job submission",
+            "exit_code": 1,
+            "error": "internal job submission error",
+        }
 
 
 class DoctorRequest(BaseModel):
@@ -354,8 +374,9 @@ def test_job_route(req: TestJobRequest) -> dict:
 
 @app.post("/jobs/ttt")
 def ttt_job_route(req: TTTJobRequest) -> dict:
-    return _sanitize_response(
-        ttt_job(
+    return _invoke_public_job(
+        "ttt",
+        lambda: ttt_job(
             dataset=req.dataset,
             checkpoint=req.checkpoint,
             output=req.output,
@@ -369,14 +390,15 @@ def ttt_job_route(req: TTTJobRequest) -> dict:
             device=req.device,
             max_images=req.max_images,
             force=req.force,
-        )
+        ),
     )
 
 
 @app.post("/jobs/ctta")
 def ctta_job_route(req: CTTAJobRequest) -> dict:
-    return _sanitize_response(
-        ctta_job(
+    return _invoke_public_job(
+        "ctta",
+        lambda: ctta_job(
             dataset=req.dataset,
             checkpoint=req.checkpoint,
             output=req.output,
@@ -390,7 +412,7 @@ def ctta_job_route(req: CTTAJobRequest) -> dict:
             device=req.device,
             max_images=req.max_images,
             force=req.force,
-        )
+        ),
     )
 
 

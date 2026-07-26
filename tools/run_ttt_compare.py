@@ -84,6 +84,7 @@ def _atomic_write_text(path: Path, text: str) -> None:
         try:
             tmp_path.unlink()
         except FileNotFoundError:
+            # The atomic replace may already have consumed the temporary path.
             pass
         raise
 
