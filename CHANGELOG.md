@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-07-26
+
+### Changed
+- Record production Web verification.
+- Add concise API and AI quick use.
+- Add searchable web onboarding.
+- Harden evidence and installed jobs.
+- Harden installed AI and MCP surfaces.
+- Add strict evaluation API and concise CLI.
+- Add reproducible runtime parity case study.
+- Preserve Beads tombstones during sync.
+- Isolate missing pycocotools path.
+- Align runtime qualification versions.
+- Add classification and OBB parity artifacts.
+- Reject incompatible checkpoints.
+- Defer benchmark breadth by evidence.
+- Normalize interface contract terminology.
+- Synchronize release metadata.
+- Correct OBB AP semantics.
+- Prove torch compile execution.
+- Align plan with implemented research lane.
+- Use export import sharing workflow.
+- Prevent duplicate manual DOI publishing.
+- Align public product positioning.
+- Add design-partner observation kit.
+- Record completed fresh-install matrix.
+- Reject invalid classification and OBB artifacts.
+- Establish structured feedback loop.
+- Define mixed-lane boundaries.
+- Version external exporter outputs.
+- Reject detect artifact evaluation.
+- Reconcile support semantics.
+- Enforce expanded CLI example drift gate.
+- Add checked BYOP prediction quickstarts.
+- Bound Ultralytics max image inputs.
+- Reject inert artifact evaluation flags.
+- Synchronize OpenVINO CLI options.
+- Align full reference adapter baseline.
+- Fail closed when external runtimes do not run.
+- Establish privacy-safe funnel baseline.
+- Include lazy-import modules in binaries.
+- Allow unrelated runtime warnings.
+- Align reference adapter config fingerprint.
+- Verify public PyPI first-run journey.
+- Add capability coverage audit.
+- Verify PyPI artifacts after publish.
+- Add RT-DETR query GCN refinement.
+- Harden prediction parity bbox handling.
+- Standardize training data flow.
+- Add dataset bbox contract v1.
+
 ### Added
 - Add the typed `yolozu.api` in-process validation and COCO evaluation surface with packaged `py.typed` metadata.
 - Add an installed `yolozu-mcp` entry point with manifest-backed compact discovery and explicit AI surface sets.
