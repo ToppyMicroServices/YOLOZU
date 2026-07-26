@@ -142,11 +142,11 @@ class TestIntegrationTTTJobs(unittest.TestCase):
                         output = root / f"{lane}_predictions.json"
                         report = root / f"{lane}_report.json"
                         queued = submit(
-                            rel(dataset),
-                            rel(checkpoint),
-                            rel(output),
-                            config=rel(config),
-                            report=rel(report),
+                            f"  {rel(dataset)}  ",
+                            f"  {rel(checkpoint)}  ",
+                            f"  {rel(output)}  ",
+                            config=f"  {rel(config)}  ",
+                            report=f"  {rel(report)}  ",
                             method=method,
                             reset=reset,
                             steps=1,

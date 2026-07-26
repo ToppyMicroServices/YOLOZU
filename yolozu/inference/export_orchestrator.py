@@ -37,6 +37,30 @@ def sha256_file(path: str | Path) -> str | None:
         return None
 
 
+def config_sha256(config: str | Path) -> str | None:
+    """Hash the effective file or packaged RT-DETR configuration."""
+    value = str(config)
+    if value.startswith(("builtin:", "pkg:")):
+        name = value.split(":", 1)[1].strip()
+        if not name:
+            return None
+        if not name.endswith(".json"):
+            name = f"{name}.json"
+        relative = name if "/" in name else f"configs/{name}"
+        try:
+            import importlib.resources
+
+            content = (
+                importlib.resources.files("rtdetr_pose")
+                .joinpath(relative)
+                .read_bytes()
+            )
+        except Exception:
+            return None
+        return sha256_bytes(content)
+    return sha256_file(resolve_path(value))
+
+
 def sha256_json(obj: Any) -> str:
     data = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return sha256_bytes(data)
@@ -767,7 +791,7 @@ def export_with_backend(
             "adapter": adapter,
             "config": str(args.config) if backend == "torch" else None,
             "config_sha256": (
-                sha256_file(resolve_path(args.config))
+                config_sha256(args.config)
                 if backend == "torch"
                 else None
             ),

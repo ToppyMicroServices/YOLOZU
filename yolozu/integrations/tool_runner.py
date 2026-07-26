@@ -843,8 +843,14 @@ def _ttt_export_job(
 ) -> dict[str, Any]:
     run_token = uuid.uuid4().hex[:12]
     run_root = Path("runs") / f"mcp_{job_name}" / run_token
-    output_path = str(output or (run_root / "predictions.json"))
-    report_path = str(report or (run_root / "ttt_report.json"))
+    dataset_value = str(dataset).strip()
+    checkpoint_value = str(checkpoint).strip()
+    config_value = str(config).strip()
+    split_value = str(split).strip()
+    output_value = "" if output is None else str(output).strip()
+    report_value = "" if report is None else str(report).strip()
+    output_path = output_value or str(run_root / "predictions.json")
+    report_path = report_value or str(run_root / "ttt_report.json")
     try:
         method_value = str(method).strip().lower()
         if method_value not in _TTT_METHODS:
@@ -857,18 +863,23 @@ def _ttt_export_job(
             raise ValueError("steps must be >= 1")
         if int(max_images) < 1:
             raise ValueError("max_images must be >= 1")
-        dataset_path = _workspace_path(dataset, label="dataset", kind="dir")
-        _workspace_path(
-            checkpoint, label="checkpoint", kind="file"
+        dataset_path = _workspace_path(
+            dataset_value, label="dataset", kind="dir"
         )
-        if not str(config).startswith(("builtin:", "pkg:")):
-            _workspace_path(config, label="config", kind="file")
+        _workspace_path(
+            checkpoint_value, label="checkpoint", kind="file"
+        )
+        if not config_value.startswith(("builtin:", "pkg:")):
+            _workspace_path(config_value, label="config", kind="file")
         from yolozu.dataset import build_manifest
 
-        dataset_manifest = build_manifest(str(dataset_path), split=str(split))
+        dataset_manifest = build_manifest(
+            str(dataset_path), split=split_value
+        )
         if not list(dataset_manifest.get("images") or []):
             raise ValueError(
-                f"dataset split has no images: dataset={dataset!r}, split={split!r}"
+                "dataset split has no images: "
+                f"dataset={dataset_value!r}, split={split_value!r}"
             )
         output_resolved = _workspace_path(
             output_path, label="output", kind="output"
@@ -884,8 +895,8 @@ def _ttt_export_job(
         from yolozu.adapter import RTDETRPoseAdapter
 
         adapter = RTDETRPoseAdapter(
-            config_path=config,
-            checkpoint_path=checkpoint,
+            config_path=config_value,
+            checkpoint_path=checkpoint_value,
             device="cpu",
             image_size=(32, 32),
         )
@@ -908,7 +919,7 @@ def _ttt_export_job(
                 )
         preflight = {
             "status": "full",
-            "config": config,
+            "config": config_value,
             "checkpoint_sha256": (
                 (checkpoint_report.get("checkpoint") or {}).get("sha256")
             ),
@@ -921,7 +932,8 @@ def _ttt_export_job(
             job_name,
             message=(
                 "TTT job prerequisite check failed before queueing: "
-                f"{exc}. Provide a checkpoint fully compatible with config={config!r}."
+                f"{exc}. Provide a checkpoint fully compatible "
+                f"with config={config_value!r}."
             ),
             exit_code=2,
             exc=exc,
@@ -935,11 +947,11 @@ def _ttt_export_job(
         "--backend",
         "torch",
         "--dataset",
-        dataset,
+        dataset_value,
         "--split",
-        split,
+        split_value,
         "--config",
-        config,
+        config_value,
         "--device",
         device,
         "--max-images",
@@ -956,7 +968,7 @@ def _ttt_export_job(
         "--ttt-log-out",
         report_path,
     ]
-    args.extend(["--checkpoint", checkpoint])
+    args.extend(["--checkpoint", checkpoint_value])
     if preset:
         args.extend(["--ttt-preset", preset])
     if force:
