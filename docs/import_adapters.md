@@ -189,8 +189,15 @@ sidecars.
 ```bash
 yolozu doctor train-dataset --from auto --dataset /path/to/dataset_root --split val2017 --output -
 yolozu doctor train-dataset --from coco-keypoints --dataset /path/to/coco_keypoints_root --split val2017 --output -
+yolozu doctor train-dataset --from coco-instances --instances /path/to/instances_val2017.json --images-dir /path/to/images/val2017 --split val2017 --output -
 yolozu doctor train-dataset --from pose6d --dataset /path/to/yolozu_pose_wrapper --split train --output -
 ```
+
+The explicit COCO form requires both `--instances` and `--images-dir`, but not
+`--dataset`. Direct YOLO/YOLOZU and records inputs pass the same strict
+validation used by `validate dataset`; zero-record splits fail, and
+`records.validation` reports whether the full dataset or only the configured
+`--max-images` prefix was checked.
 
 ## Train shorthand (`train --import`)
 

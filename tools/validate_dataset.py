@@ -13,7 +13,12 @@ def _parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--dataset", default=None, help="YOLO-format dataset root (defaults to data/coco128).")
     p.add_argument("--split", default=None, help="Dataset split under images/ and labels/.")
-    p.add_argument("--mode", choices=("fail", "warn"), default="fail", help="Treat validation failures as errors or warnings.")
+    p.add_argument(
+        "--mode",
+        choices=("fail", "warn"),
+        default="fail",
+        help="Treat record validation failures as errors or warnings; an empty dataset always fails.",
+    )
     p.add_argument("--non-strict", action="store_true", help="Relax bbox range checks (still checks types/structure).")
     p.add_argument("--no-image-check", action="store_true", help="Skip checking that image files exist and can be read.")
     return p.parse_args(argv)

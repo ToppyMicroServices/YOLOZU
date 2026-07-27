@@ -187,6 +187,16 @@ the normalized bbox records also include the required sidecars: existing
 `depth_path`/`depth`/`D_obj` for depth, and `R_gt`/`t_gt` or `pose` plus
 `K_gt`/`intrinsics` for pose6d.
 
+Both `validate dataset` and `doctor train-dataset` fail closed when the selected
+split resolves to zero records. Direct-train readiness uses strict record
+validation, including readable images and normalized bbox geometry. The
+validator keeps each stored `cx`/`cy`/`w`/`h` value inside `[0,1]` and allows
+only `1e-6` floating-point tolerance when deriving bbox edges; it does not clip
+or rewrite labels. The doctor report exposes this decision under
+`records.validation`, including `policy`, `scope`, `checked`, `total`,
+`bbox_edge_tolerance`, and error/warning arrays. If `--max-images` caps the
+check, `scope` is `first_n` rather than `all`.
+
 ## Training (RT-DETR pose reference trainer)
 
 Stable fine-tuning recipe:
@@ -267,6 +277,22 @@ python3 -m yolozu import dataset \
   --output reports/coco_keypoints_wrapper \
   --force
 ```
+
+If annotations and images are provided as separate paths, the same preflight
+does not require a synthetic dataset root:
+
+```bash
+python3 -m yolozu doctor train-dataset \
+  --from coco-instances \
+  --instances /path/to/instances_train2017.json \
+  --images-dir /path/to/images/train2017 \
+  --split train2017 \
+  --output -
+```
+
+`--instances` and `--images-dir` must be supplied together. This native COCO
+input is strictly validated but remains a migration input; the emitted next
+command creates the read-only wrapper before reference training.
 
 3) Run the minimal trainer:
 - python3 rtdetr_pose/tools/train_minimal.py --dataset-root data/coco128 --config rtdetr_pose/configs/base.json --max-steps 50 --use-matcher

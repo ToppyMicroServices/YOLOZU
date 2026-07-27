@@ -515,6 +515,8 @@ def _validate_segmentation_layout(
         samples = list(desc.samples)
         if max_images is not None:
             samples = samples[: int(max_images)]
+        if not samples:
+            errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
             image_path = resolve_dataset_path(sample.image, dataset_root=descriptor_path.parent, path_type=desc.path_type)
             if not image_path.exists():
@@ -531,6 +533,8 @@ def _validate_segmentation_layout(
         samples = list(iter_pascal_voc_seg_samples(dataset_root, split=str(layout_info.get("split") or "val")))
         if max_images is not None:
             samples = samples[: int(max_images)]
+        if not samples:
+            errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
             if not sample.image_path.exists():
                 errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
@@ -544,6 +548,8 @@ def _validate_segmentation_layout(
         samples = list(iter_cityscapes_samples(dataset_root, split=str(layout_info.get("split") or "val")))
         if max_images is not None:
             samples = samples[: int(max_images)]
+        if not samples:
+            errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
             if not sample.image_path.exists():
                 errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
@@ -557,6 +563,8 @@ def _validate_segmentation_layout(
         samples = list(iter_ade20k_samples(dataset_root, split=str(layout_info.get("split") or "val")))
         if max_images is not None:
             samples = samples[: int(max_images)]
+        if not samples:
+            errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
             if not sample.image_path.exists():
                 errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
@@ -1381,7 +1389,8 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
 
     from rtdetr_pose.dataset import build_manifest as build_rtdetr_manifest
     from rtdetr_pose.train_records import _load_records_json, normalize_training_records
-    from yolozu.dataset import inspect_dataset_layout
+    from yolozu.dataset import inspect_dataset_layout, load_coco_instances_dataset
+    from yolozu.dataset_validator import validate_dataset_records
 
     def _now_utc() -> str:
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -1508,11 +1517,50 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             "pose_intrinsics": int(pose_intrinsics),
         }
 
+    def _strict_validation(records: list[dict[str, Any]], *, base: Path) -> dict[str, Any]:
+        inspected = records[: int(getattr(args, "max_images", 200) or 200)]
+        validation_records: list[dict[str, Any]] = []
+        for record in inspected:
+            prepared = dict(record)
+            image_value = prepared.get("image") or prepared.get("image_path")
+            if isinstance(image_value, str) and image_value.strip():
+                image_path = Path(image_value).expanduser()
+                if not image_path.is_absolute():
+                    cwd_candidate = Path.cwd() / image_path
+                    image_path = cwd_candidate if cwd_candidate.exists() else base / image_path
+                prepared["image"] = str(image_path.resolve())
+            validation_records.append(prepared)
+        result = validate_dataset_records(
+            validation_records,
+            strict=True,
+            mode="fail",
+            check_images=True,
+        )
+        return {
+            "policy": "strict",
+            "scope": "all" if len(inspected) == len(records) else "first_n",
+            "checked": int(len(inspected)),
+            "total": int(len(records)),
+            "bbox_edge_tolerance": 1e-6,
+            "error_count": int(len(result.errors)),
+            "warning_count": int(len(result.warnings)),
+            "errors": list(result.errors),
+            "warnings": list(result.warnings),
+        }
+
+    def _summarize_and_validate(records: list[dict[str, Any]], *, base: Path) -> dict[str, Any]:
+        summary = _summarize_records(records, base=base)
+        summary["validation"] = _strict_validation(records, base=base)
+        return summary
+
     def _apply_task_readiness(readiness: dict[str, Any], summary: dict[str, Any]) -> dict[str, Any]:
         task = str(readiness.get("task_family") or "").strip().lower()
+        validation = summary.get("validation") or {}
         base_ready = bool(summary.get("count")) and int(summary.get("missing_image_path") or 0) == 0
         base_ready = base_ready and int(summary.get("missing_image_file") or 0) == 0
         base_ready = base_ready and int(summary.get("malformed_labels") or 0) == 0
+        base_ready = base_ready and int(validation.get("checked") or 0) > 0
+        base_ready = base_ready and int(validation.get("error_count") or 0) == 0
         if task == "depth":
             ready = base_ready and int(summary.get("depth_labels") or 0) > 0 and int(summary.get("missing_depth_file") or 0) == 0
             readiness["direct_train_ready"] = bool(readiness.get("direct_train_ready")) and bool(ready)
@@ -1537,12 +1585,15 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             readiness["requires_normalization"] = True
         else:
             readiness["direct_train_ready"] = bool(readiness.get("direct_train_ready")) and bool(base_ready)
-            readiness["train_ready_after_migration"] = bool(readiness.get("train_ready_after_migration"))
+            readiness["train_ready_after_migration"] = bool(readiness.get("train_ready_after_migration")) and bool(base_ready)
+        if not base_ready and task not in {"classification", "obb"}:
+            readiness["requires_normalization"] = True
+            readiness["reason"] = "strict dataset validation failed; inspect records.validation errors before training"
         return readiness
 
     def _record_summary(records_path: Path, *, label: str) -> dict[str, Any]:
         records = normalize_training_records(_load_records_json(records_path, label=label))
-        summary = _summarize_records(records, base=records_path.parent)
+        summary = _summarize_and_validate(records, base=records_path.parent)
         summary["path"] = str(records_path)
         summary["direct_train_ready"] = (
             bool(records)
@@ -1550,6 +1601,7 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             and int(summary.get("missing_image_file") or 0) == 0
             and int(summary.get("missing_depth_file") or 0) == 0
             and int(summary.get("malformed_labels") or 0) == 0
+            and int((summary.get("validation") or {}).get("error_count") or 0) == 0
         )
         return summary
 
@@ -1586,6 +1638,79 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
             )
             if not (report.get("reference_trainer") or {}).get("direct_train_ready"):
                 report["errors"].append("records JSON is not train-ready")
+            return _write_report(report)
+
+        instances_path = _resolve_path(getattr(args, "instances", None))
+        images_dir = _resolve_path(getattr(args, "images_dir", None))
+        if (instances_path is None) != (images_dir is None):
+            report["errors"].append("--instances and --images-dir must be provided together")
+            return _write_report(report)
+
+        if instances_path is not None and images_dir is not None:
+            if dataset_from not in {"auto", "coco", "coco-keypoints", "coco-instances"}:
+                report["errors"].append("--instances/--images-dir require --from auto, coco, coco-keypoints, or coco-instances")
+                return _write_report(report)
+            if not instances_path.is_file():
+                report["errors"].append(f"COCO annotations file does not exist: {instances_path}")
+                return _write_report(report)
+            if not images_dir.is_dir():
+                report["errors"].append(f"COCO images directory does not exist: {images_dir}")
+                return _write_report(report)
+
+            instances_doc = json.loads(instances_path.read_text(encoding="utf-8"))
+            if not isinstance(instances_doc, dict):
+                raise ValueError("COCO annotations root must be an object")
+            inferred_keypoints = any(
+                isinstance(annotation, dict) and annotation.get("keypoints") is not None
+                for annotation in (instances_doc.get("annotations") or [])
+            )
+            task_family = "keypoints" if dataset_from == "coco-keypoints" or (dataset_from == "auto" and inferred_keypoints) else "bbox"
+            dataset_from = "coco-keypoints" if task_family == "keypoints" else "coco-instances"
+            report["dataset_from"] = dataset_from
+            report["layout"] = {
+                "format": "coco_instances_explicit",
+                "instances": str(instances_path),
+                "images_dir": str(images_dir),
+                "split": split or None,
+                "task_family": task_family,
+            }
+            records = load_coco_instances_dataset(
+                instances_doc,
+                images_dir=images_dir,
+                include_crowd=bool(getattr(args, "include_crowd", False)),
+            )
+            normalized = normalize_training_records(records)
+            summary = _summarize_and_validate(normalized, base=instances_path.parent)
+            report["records"] = summary
+            readiness = _reference_trainer_readiness(
+                task_family=task_family,
+                source_format="coco-instances",
+            )
+            readiness = _apply_task_readiness(readiness, summary)
+            report["reference_trainer"] = readiness
+            validation = summary.get("validation") or {}
+            if int(validation.get("error_count") or 0):
+                report["errors"].append(
+                    f"strict dataset validation failed with {int(validation.get('error_count') or 0)} error(s)"
+                )
+            import_command = (
+                "python3 -m yolozu import dataset --from coco-instances "
+                f"--instances {shlex.quote(str(instances_path))} "
+                f"--images-dir {shlex.quote(str(images_dir))} "
+                "--output reports/train_dataset_wrapper --force"
+                + (f" --split {shlex.quote(split)}" if split else "")
+            )
+            if bool(readiness.get("train_ready_after_migration")):
+                report["next_commands"].extend(
+                    [
+                        import_command,
+                        "python3 -m yolozu train <config> --dataset-root reports/train_dataset_wrapper",
+                    ]
+                )
+            else:
+                report["next_commands"].append(
+                    "Fix records.validation errors before importing or training this dataset."
+                )
             return _write_report(report)
 
         if dataset_path is None:
@@ -1637,11 +1762,16 @@ def _cmd_doctor_train_dataset(args: argparse.Namespace) -> int:
                 manifest = build_rtdetr_manifest(dataset_path, split=split or str((layout_info or {}).get("split") or "train"))
                 records = list(manifest.get("images") or [])
                 inspected = records[: int(getattr(args, "max_images", 200) or 200)]
-                summary = _summarize_records(normalize_training_records(records), base=dataset_path)
+                summary = _summarize_and_validate(normalize_training_records(records), base=dataset_path)
                 summary["inspected"] = int(len(inspected))
                 summary["keypoints_meta"] = manifest.get("keypoints_meta")
                 report["records"] = summary
                 readiness = _apply_task_readiness(readiness, summary)
+                validation = summary.get("validation") or {}
+                if int(validation.get("error_count") or 0):
+                    report["errors"].append(
+                        f"strict dataset validation failed with {int(validation.get('error_count') or 0)} error(s)"
+                    )
                 if not records:
                     readiness["direct_train_ready"] = False
                     readiness["requires_normalization"] = True
