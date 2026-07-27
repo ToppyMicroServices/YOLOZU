@@ -112,7 +112,10 @@ TTA Experimental, and TTT Research.
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
-lane. See [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+lane. The bounded 2026-07-27 diagnostic bundle is available as a
+[GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27);
+it does not establish efficacy or independent reproduction. See
+[`docs/ttt_protocol.md`](docs/ttt_protocol.md).
 
 ## Production Readiness
 

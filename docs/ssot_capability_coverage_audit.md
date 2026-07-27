@@ -4,6 +4,13 @@ Audit date: 2026-07-26
 Benchmark reconciliation update: 2026-07-23
 TTT evidence update: 2026-07-27
 
+The corresponding 30-run diagnostic artifacts and checkpoints are fixed in the
+[2026-07-27 prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
+(archive SHA-256
+`bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068`).
+This satisfies release addressability only; independent reproduction and
+efficacy remain open.
+
 This audit maps the capability claims in [Production Readiness](production_readiness.md) and
 [YOLOZU Spec](yolozu_spec.md) to implementation, CLI, manifest, packaged metadata, documentation,
 tests, and reproducible evidence. Implementation presence is not evidence of production maturity.
