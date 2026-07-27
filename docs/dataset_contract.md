@@ -54,3 +54,9 @@ receives Dataset Contract records and selects the backend view it needs:
 
 Training summaries expose this route as `training_data_flow` so downstream
 automation can verify that a backend did not bypass the Dataset Contract.
+
+The authoritative source/target and preservation table is
+[`dataset_processing_matrix.md`](dataset_processing_matrix.md). In particular,
+deterministic subsets must preserve any mask, depth, CAD, intrinsics, keypoint,
+or object-pose sidecars referenced by selected records; copying only image and
+bbox files is not a valid multi-task subset.

@@ -100,6 +100,7 @@ flowchart LR
 - [`docs/README.md`](docs/README.md): docs 全体の入口と最短の使い方
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): predictions interface contract
 - [`docs/python_api.md`](docs/python_api.md): typed in-process validation/evaluation API と error policy
+- [`docs/dataset_processing_matrix.md`](docs/dataset_processing_matrix.md): dataset の source/target、保持項目、qualification 境界
 - [`docs/install.md`](docs/install.md): install、`doctor`、環境確認
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): Ultralytics、Detectron2、MMDetection、YOLOX から共通 report までの検査済み手順
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): eager / TorchScript の実出力を同じ評価経路で比較した再現可能な事例

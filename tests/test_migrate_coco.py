@@ -24,6 +24,7 @@ class TestMigrateCoco(unittest.TestCase):
             coco_root = root / "coco"
             (coco_root / "images" / "val2017").mkdir(parents=True, exist_ok=True)
             (coco_root / "annotations").mkdir(parents=True, exist_ok=True)
+            (coco_root / "images" / "val2017" / "0001.jpg").write_bytes(b"")
 
             instances = {
                 "images": [{"id": 1, "file_name": "0001.jpg", "width": 100, "height": 200}],

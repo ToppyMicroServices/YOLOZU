@@ -9971,11 +9971,16 @@
       ]
     },
     {
+      "docs": [
+        "docs/dataset_processing_matrix.md",
+        "docs/dataset_contract.md",
+        "reports/dataset_roundtrip_2026-07-27.md"
+      ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes subset dataset tree under --out (images/ + labels/ + subset metadata).",
+            "description": "Writes an ownership-marked subset tree under --out, including selected images/labels, referenced mask/depth/CAD sidecars, keypoint metadata, and provenance hashes.",
             "flag": "--out",
             "kind": "dir",
             "scope": "tree"
@@ -9986,7 +9991,7 @@
       "examples": [
         {
           "command": "python3 tools/make_subset_dataset.py --dataset data/coco128 --split train2017 --n 50 --seed 0 --out reports/coco128_50",
-          "description": "Create a frozen 50-image subset for ablations."
+          "description": "Create a frozen 50-image subset with referenced training sidecars and file hashes for ablations."
         }
       ],
       "id": "make_subset_dataset",
@@ -10026,12 +10031,14 @@
           "required": false
         },
         {
+          "description": "Copy selected images, labels, and referenced sidecars instead of creating symlinks.",
           "flag": "--copy",
           "kind": "string",
           "name": "copy",
           "required": false
         },
         {
+          "description": "Replace only a non-symlink output bearing the YOLOZU subset ownership marker; unowned and protected paths are refused.",
           "flag": "--overwrite",
           "kind": "string",
           "name": "overwrite",
@@ -10054,7 +10061,7 @@
         },
         {
           "default": "<out>/subset.json",
-          "description": "Subset metadata (image list + sha).",
+          "description": "Subset metadata with selection, per-file SHA-256, byte/runtime totals, and source metadata hashes.",
           "kind": "file",
           "name": "subset_json"
         },
@@ -10072,7 +10079,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs.",
+      "summary": "Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement.",
       "tags": [
         "dataset"
       ]

@@ -233,7 +233,7 @@ Contact: develop@toppymicros.com
 | hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
 | import_yolo_data_yaml | stable | tools/import_yolo_data_yaml.py | Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). |
 | list_models | stable | yolozu/cli.py | List fetchable model IDs from the built-in (or custom) model registry. |
-| make_subset_dataset | stable | tools/make_subset_dataset.py | Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs. |
+| make_subset_dataset | stable | tools/make_subset_dataset.py | Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement. |
 | measure_trt_latency | experimental | tools/measure_trt_latency.py | Measure a TensorRT engine's latency/FPS and write a metrics report JSON. |
 | normalize_predictions | stable | tools/normalize_predictions.py | Normalize prediction class ids (category_id↔class_id) and optionally wrap with meta. |
 | orchestrate_train | experimental | tools/orchestrate_train.py | Lightweight experiment orchestration entrypoint for training: expand a multi-backend spec into planned commands or execute them, support top-level defaults such as dataset/split/resume_from, emit one orchestration report JSON, and optionally append executed runs to a shared JSONL registry with backend counts and registry_summary. |

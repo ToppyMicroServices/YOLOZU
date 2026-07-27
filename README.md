@@ -100,6 +100,7 @@ flowchart LR
 - [`docs/README.md`](docs/README.md): top-level docs map and shortest working paths
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
 - [`docs/python_api.md`](docs/python_api.md): typed in-process validation/evaluation API and error policy
+- [`docs/dataset_processing_matrix.md`](docs/dataset_processing_matrix.md): dataset source/target, preservation, and qualification boundaries
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): real eager/TorchScript outputs evaluated through one pinned lane
