@@ -385,6 +385,8 @@ def main(argv: list[str] | None = None) -> int:
                     str(float(args.score_threshold)),
                     "--max-detections",
                     str(int(args.max_detections)),
+                    "--dataset-hash-mode",
+                    "content",
                     "--force",
                 ]
                 if args.protocol:

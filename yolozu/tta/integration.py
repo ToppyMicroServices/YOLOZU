@@ -3,10 +3,14 @@ from __future__ import annotations
 import copy
 import math
 import platform
-import resource
 import time
 from dataclasses import asdict, dataclass
 from typing import Any, Iterable
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - unavailable on Windows
+    resource = None
 
 from .config import SUPPORTED_TTT_METHODS, TTTConfig
 from .method_profiles import get_ttt_method_profile
@@ -80,7 +84,9 @@ def _ensure_torch():
         raise RuntimeError("torch is required for TTT")
 
 
-def _process_peak_rss_bytes() -> int:
+def _process_peak_rss_bytes() -> int | None:
+    if resource is None:
+        return None
     value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
     if platform.system() == "Darwin":
         return value
@@ -110,10 +116,17 @@ def _memory_start(model: Any) -> dict[str, Any]:
                 "metric": "current_allocated_bytes",
                 "start_allocated_bytes": int(current()),
             }
+    peak_rss = _process_peak_rss_bytes()
+    if peak_rss is None:
+        return {
+            "backend": "unavailable",
+            "metric": None,
+            "reason": "resource_module_unavailable",
+        }
     return {
         "backend": "process",
         "metric": "peak_rss_bytes",
-        "start_peak_rss_bytes": _process_peak_rss_bytes(),
+        "start_peak_rss_bytes": peak_rss,
     }
 
 
@@ -127,7 +140,7 @@ def _memory_finish(start: dict[str, Any]) -> dict[str, Any]:
         current = getattr(torch.mps, "current_allocated_memory", None)
         if callable(current):
             result["end_allocated_bytes"] = int(current())
-    else:
+    elif backend == "process":
         result["end_peak_rss_bytes"] = _process_peak_rss_bytes()
     return result
 

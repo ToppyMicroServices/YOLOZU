@@ -13,7 +13,8 @@ Status: **local diagnostic; efficacy not established; promotion ineligible**.
 - Protocols: Tent/MIM/EATA/SAR use sample reset; CoTTA uses continual stream
 - Matrix: 30/30 child comparisons completed
 
-The suite generated checkpoint/config hashes, dataset content and order hashes,
+The suite selected strict `content` dataset hashing and generated
+checkpoint/config hashes, dataset content and order hashes,
 COCO AP, clean retention, shifted-domain AP, calibration status, detector-output
 collapse status, update ratio, subprocess latency, process peak RSS, and actual
 forward/backward/optimizer counts.

@@ -216,6 +216,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Maximum detections per image shared by both exports (default: 300).",
     )
     p.add_argument(
+        "--dataset-hash-mode",
+        choices=("metadata", "content"),
+        default="metadata",
+        help=(
+            "Dataset identity mode: path+size metadata by default, or full image "
+            "content hashing for strict small-bundle provenance."
+        ),
+    )
+    p.add_argument(
         "--skip-eval",
         "--no-eval",
         action="store_true",
@@ -317,6 +326,7 @@ def _validate_prerequisites(
     common_export_args: list[Any],
     skip_eval: bool,
     max_images: int | None,
+    dataset_hash_mode: str,
 ) -> dict[str, Any]:
     if not dataset.is_dir():
         raise FileNotFoundError(f"dataset root not found or not a directory: {dataset}")
@@ -334,7 +344,8 @@ def _validate_prerequisites(
     if max_images is not None:
         records = records[: max(0, int(max_images))]
     order_hasher = hashlib.sha256()
-    content_hasher = hashlib.sha256()
+    metadata_hasher = hashlib.sha256()
+    content_hasher = hashlib.sha256() if dataset_hash_mode == "content" else None
     for record in records:
         image = Path(str(record.get("image") or "")).resolve()
         try:
@@ -343,10 +354,15 @@ def _validate_prerequisites(
             image_key = str(image)
         order_hasher.update(image_key.encode("utf-8"))
         order_hasher.update(b"\n")
-        content_hasher.update(image_key.encode("utf-8"))
-        content_hasher.update(b"\0")
-        content_hasher.update(_sha256(image).encode("ascii"))
-        content_hasher.update(b"\n")
+        metadata_hasher.update(image_key.encode("utf-8"))
+        metadata_hasher.update(b"\0")
+        metadata_hasher.update(str(image.stat().st_size).encode("ascii"))
+        metadata_hasher.update(b"\n")
+        if content_hasher is not None:
+            content_hasher.update(image_key.encode("utf-8"))
+            content_hasher.update(b"\0")
+            content_hasher.update(_sha256(image).encode("ascii"))
+            content_hasher.update(b"\n")
 
     config_paths = _referenced_config_paths(common_export_args)
     config_hashes: list[dict[str, str]] = []
@@ -376,7 +392,16 @@ def _validate_prerequisites(
     return {
         "dataset_images": int(len(records)),
         "dataset_order_sha256": order_hasher.hexdigest(),
-        "dataset_content_sha256": content_hasher.hexdigest(),
+        "dataset_hash_mode": dataset_hash_mode,
+        "dataset_hash_sha256": (
+            content_hasher.hexdigest()
+            if content_hasher is not None
+            else metadata_hasher.hexdigest()
+        ),
+        "dataset_metadata_sha256": metadata_hasher.hexdigest(),
+        "dataset_content_sha256": (
+            content_hasher.hexdigest() if content_hasher is not None else None
+        ),
         "checkpoint_sha256": _sha256(checkpoint),
         "boilerplate_sha256": _sha256(boilerplate_path),
         "configs": config_hashes,
@@ -1058,6 +1083,7 @@ def main(argv: list[str] | None = None) -> int:
             max_images=(
                 int(args.max_images) if args.max_images is not None else None
             ),
+            dataset_hash_mode=str(args.dataset_hash_mode),
         )
         plan["prerequisites"] = prerequisites
         if args.dry_run:
@@ -1202,6 +1228,9 @@ def main(argv: list[str] | None = None) -> int:
                 "configs": prerequisites["configs"],
                 "dataset_images": prerequisites["dataset_images"],
                 "dataset_order_sha256": prerequisites["dataset_order_sha256"],
+                "dataset_hash_mode": prerequisites["dataset_hash_mode"],
+                "dataset_hash_sha256": prerequisites["dataset_hash_sha256"],
+                "dataset_metadata_sha256": prerequisites["dataset_metadata_sha256"],
                 "dataset_content_sha256": prerequisites["dataset_content_sha256"],
                 "score_threshold": float(args.score_threshold),
                 "max_detections": int(args.max_detections),
@@ -1213,6 +1242,9 @@ def main(argv: list[str] | None = None) -> int:
                 "boilerplate_sha256": prerequisites["boilerplate_sha256"],
                 "configs": prerequisites["configs"],
                 "dataset_order_sha256": prerequisites["dataset_order_sha256"],
+                "dataset_hash_mode": prerequisites["dataset_hash_mode"],
+                "dataset_hash_sha256": prerequisites["dataset_hash_sha256"],
+                "dataset_metadata_sha256": prerequisites["dataset_metadata_sha256"],
                 "dataset_content_sha256": prerequisites["dataset_content_sha256"],
             },
             "baseline": {

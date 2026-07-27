@@ -76,6 +76,10 @@ class TestRunTTTEvidenceSuite(TestCase):
             for item in plan["matrix"]:
                 command = item["command"]
                 self.assertIn("--seed", command)
+                self.assertIn("--dataset-hash-mode", command)
+                self.assertEqual(
+                    command[command.index("--dataset-hash-mode") + 1], "content"
+                )
                 self.assertIn("--dry-run", command)
 
     def test_help_lists_concise_inputs(self):

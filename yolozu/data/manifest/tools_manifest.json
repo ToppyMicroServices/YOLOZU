@@ -14870,6 +14870,14 @@
           "required": false
         },
         {
+          "default": "metadata",
+          "description": "Use path+size metadata hashing by default, or content for strict byte-level image provenance.",
+          "flag": "--dataset-hash-mode",
+          "kind": "string",
+          "name": "dataset_hash_mode",
+          "required": false
+        },
+        {
           "flag": "--skip-eval",
           "kind": "string",
           "name": "skip_eval",

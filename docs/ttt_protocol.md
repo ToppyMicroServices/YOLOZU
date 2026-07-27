@@ -77,6 +77,12 @@ report contains:
 - COCO metrics only when COCO evaluation actually ran
 - `proxy_ap50` and `proxy_ap50_95` for the non-COCO fallback
 
+Dataset identity uses a path-and-file-size metadata hash by default so a
+full-dataset run does not reread every image before inference. Use
+`--dataset-hash-mode content` when strict byte-level image provenance is needed
+for a bounded diagnostic bundle. The multi-seed evidence command selects
+`content` automatically for its capped clean/shift matrix.
+
 See [TTT compare boilerplates](ttt_compare_boilerplates.md) for artifact names
 and method-specific commands.
 

@@ -13,7 +13,33 @@ except ImportError:  # pragma: no cover
 
 from yolozu.adapter import DummyAdapter, ModelAdapter
 from yolozu.tta.config import TTTConfig
+from yolozu.tta import integration as integration_module
 from yolozu.tta.integration import run_ttt
+
+
+class TestTTTMemoryPortability(unittest.TestCase):
+    def test_process_memory_gracefully_degrades_without_resource_module(self):
+        class CpuParameter:
+            class Device:
+                type = "cpu"
+
+            device = Device()
+
+        class CpuModel:
+            @staticmethod
+            def parameters():
+                return iter([CpuParameter()])
+
+        with unittest.mock.patch.object(integration_module, "resource", None):
+            self.assertIsNone(integration_module._process_peak_rss_bytes())
+            self.assertEqual(
+                integration_module._memory_start(CpuModel()),
+                {
+                    "backend": "unavailable",
+                    "metric": None,
+                    "reason": "resource_module_unavailable",
+                },
+            )
 
 
 @unittest.skipIf(torch is None, "torch not installed")
