@@ -67,6 +67,10 @@ class TestRunTTTCompareTool(unittest.TestCase):
         self.assertIn("--method", proc.stdout)
         self.assertIn("--skip-eval", proc.stdout)
         self.assertIn("--dry-run", proc.stdout)
+        self.assertIn("--seed", proc.stdout)
+        self.assertIn("--score-threshold", proc.stdout)
+        self.assertIn("--max-detections", proc.stdout)
+        self.assertIn("--dataset-hash-mode", proc.stdout)
 
     def test_dry_run_writes_plan_for_all_builtin_boilerplates(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -120,6 +124,24 @@ class TestRunTTTCompareTool(unittest.TestCase):
                 self.assertGreater(int(prerequisites.get("dataset_images") or 0), 0)
                 self.assertEqual(
                     len(str(prerequisites.get("checkpoint_sha256") or "")), 64
+                )
+                self.assertEqual(
+                    len(str(prerequisites.get("dataset_order_sha256") or "")), 64
+                )
+                self.assertEqual(
+                    prerequisites.get("dataset_hash_mode"), "metadata"
+                )
+                self.assertEqual(
+                    len(str(prerequisites.get("dataset_hash_sha256") or "")), 64
+                )
+                self.assertEqual(
+                    len(str(prerequisites.get("dataset_metadata_sha256") or "")), 64
+                )
+                self.assertIsNone(prerequisites.get("dataset_content_sha256"))
+                adapted_command = commands["adapted_export"]
+                self.assertIn("--ttt-seed", adapted_command)
+                self.assertEqual(
+                    adapted_command[adapted_command.index("--ttt-seed") + 1], "0"
                 )
                 if method in {"tent", "cotta", "eata", "sar"}:
                     self.assertEqual(
@@ -286,6 +308,8 @@ class TestRunTTTCompareTool(unittest.TestCase):
                         str(run_dir),
                         "-n",
                         "1",
+                        "--dataset-hash-mode",
+                        "content",
                         "--dry-run",
                         "--force",
                     ]
@@ -294,6 +318,12 @@ class TestRunTTTCompareTool(unittest.TestCase):
             payload = json.loads((run_dir / "plan.json").read_text(encoding="utf-8"))
             self.assertEqual(payload["execution_status"]["state"], "not_executed")
             self.assertEqual(payload["prerequisites"]["dataset_images"], 1)
+            self.assertEqual(
+                payload["prerequisites"]["dataset_hash_mode"], "content"
+            )
+            self.assertEqual(
+                len(payload["prerequisites"]["dataset_content_sha256"]), 64
+            )
 
     def test_dry_run_rejects_empty_checkpoint_and_records_failed_stage(self):
         repo_root = Path(__file__).resolve().parents[1]

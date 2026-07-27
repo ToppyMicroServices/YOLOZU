@@ -744,9 +744,16 @@
   {
     "href": "commands.html#tool-run-ttt-compare",
     "kind": "command",
-    "search_text": "run_ttt_compare Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming. research tools/run_ttt_compare.py --boilerplate --method --dataset --data --split --checkpoint --weights --run-dir --out --backend --device --max-images --protocol --image-size --skip-eval --no-eval --dry-run --force",
-    "summary": "Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming.",
+    "search_text": "run_ttt_compare Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters. research tools/run_ttt_compare.py --boilerplate --method --dataset --data --split --checkpoint --weights --run-dir --out --backend --device --max-images --protocol --image-size --seed --score-threshold --max-detections --dataset-hash-mode --skip-eval --no-eval --dry-run --force",
+    "summary": "Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters.",
     "title": "run_ttt_compare"
+  },
+  {
+    "href": "commands.html#tool-run-ttt-evidence-suite",
+    "kind": "command",
+    "search_text": "run_ttt_evidence_suite Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds. research tools/run_ttt_evidence_suite.py --dataset --shifted-dataset --split --checkpoint --mim-checkpoint --out --methods --seeds --max-images --image-size --device --score-threshold --max-detections --protocol --dry-run --force",
+    "summary": "Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds.",
+    "title": "run_ttt_evidence_suite"
   },
   {
     "href": "commands.html#tool-smoke",

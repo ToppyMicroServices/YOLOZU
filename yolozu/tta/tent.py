@@ -239,6 +239,9 @@ class TentRunner(TTARunner):
             "aux_student_view_mean_abs_delta": float(view_delta),
             "grad_norm": float(grad_norm),
             "grad_norm_clipped": float(grad_norm_clipped),
+            "forward_calls": 2.0 if self._has_aux else 1.0,
+            "backward_calls": 1.0,
+            "optimizer_steps": 1.0,
         }
         result.update(aux_metrics)
         return result

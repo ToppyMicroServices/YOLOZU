@@ -2,9 +2,15 @@ from __future__ import annotations
 
 import copy
 import math
+import platform
 import time
 from dataclasses import asdict, dataclass
 from typing import Any, Iterable
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - unavailable on Windows
+    resource = None
 
 from .config import SUPPORTED_TTT_METHODS, TTTConfig
 from .method_profiles import get_ttt_method_profile
@@ -33,6 +39,11 @@ class TTTReport:
     stop_reason: str | None = None
     step_metrics: list[dict[str, Any]] | None = None
     method_profile: dict[str, Any] | None = None
+    forward_calls: int = 0
+    backward_calls: int = 0
+    optimizer_steps: int = 0
+    update_ratio: float = 0.0
+    memory: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -71,6 +82,67 @@ class TTTReport:
 def _ensure_torch():
     if torch is None:
         raise RuntimeError("torch is required for TTT")
+
+
+def _process_peak_rss_bytes() -> int | None:
+    if resource is None:
+        return None
+    value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    if platform.system() == "Darwin":
+        return value
+    return value * 1024
+
+
+def _memory_start(model: Any) -> dict[str, Any]:
+    device_type = "cpu"
+    try:
+        first_param = next(model.parameters())
+        device_type = str(first_param.device.type)
+    except (AttributeError, StopIteration):
+        pass
+
+    if device_type == "cuda" and torch is not None and torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+        return {
+            "backend": "torch_cuda",
+            "metric": "peak_allocated_bytes",
+            "start_allocated_bytes": int(torch.cuda.memory_allocated()),
+        }
+    if device_type == "mps" and torch is not None and hasattr(torch, "mps"):
+        current = getattr(torch.mps, "current_allocated_memory", None)
+        if callable(current):
+            return {
+                "backend": "torch_mps",
+                "metric": "current_allocated_bytes",
+                "start_allocated_bytes": int(current()),
+            }
+    peak_rss = _process_peak_rss_bytes()
+    if peak_rss is None:
+        return {
+            "backend": "unavailable",
+            "metric": None,
+            "reason": "resource_module_unavailable",
+        }
+    return {
+        "backend": "process",
+        "metric": "peak_rss_bytes",
+        "start_peak_rss_bytes": peak_rss,
+    }
+
+
+def _memory_finish(start: dict[str, Any]) -> dict[str, Any]:
+    result = dict(start)
+    backend = str(start.get("backend") or "")
+    if backend == "torch_cuda":
+        result["peak_allocated_bytes"] = int(torch.cuda.max_memory_allocated())
+        result["end_allocated_bytes"] = int(torch.cuda.memory_allocated())
+    elif backend == "torch_mps":
+        current = getattr(torch.mps, "current_allocated_memory", None)
+        if callable(current):
+            result["end_allocated_bytes"] = int(current())
+    elif backend == "process":
+        result["end_peak_rss_bytes"] = _process_peak_rss_bytes()
+    return result
 
 
 def _count_unique_params(params: Iterable["torch.Tensor"]) -> int:
@@ -406,6 +478,11 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
             stop_reason=None,
             step_metrics=[],
             method_profile=get_ttt_method_profile(str(config.method)),
+            forward_calls=0,
+            backward_calls=0,
+            optimizer_steps=0,
+            update_ratio=0.0,
+            memory=None,
         )
 
     _ensure_torch()
@@ -437,6 +514,9 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
     step_metrics: list[dict[str, Any]] = []
     stopped_early = False
     stop_reason: str | None = None
+    forward_calls = 0
+    backward_calls = 0
+    optimizer_steps = 0
 
     was_training = bool(getattr(model, "training", False))
 
@@ -449,6 +529,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
             warnings.append("failed_to_seed_generator")
             generator = None
 
+    memory_start = _memory_start(model)
     start = time.time()
     try:
         initial_loss: float | None = None
@@ -477,6 +558,9 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                 pre_snapshot = _snapshot_params(params)
                 pre_buffer_snapshot = _snapshot_norm_buffers(model) if bool(config.rollback_on_stop) else []
                 metrics = runner.adapt_step(batch)
+                forward_calls += int(metrics.get("forward_calls", 1))
+                backward_calls += int(metrics.get("backward_calls", 1))
+                optimizer_steps += int(metrics.get("optimizer_steps", 1))
                 loss_value = float(metrics.get("loss_total", metrics.get("loss_entropy", 0.0)))
                 if initial_loss is None:
                     initial_loss = loss_value
@@ -596,6 +680,9 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                         generator=generator,
                         max_grad_norm=config.max_grad_norm,
                     )
+                forward_calls += 1
+                backward_calls += 1
+                optimizer_steps += 1
                 loss_value = float(loss.detach().cpu().item())
                 if initial_loss is None:
                     initial_loss = loss_value
@@ -720,22 +807,26 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     augmentations=aug_set,
                     aggregation=str(config.cotta_aggregation),
                 )
+                forward_calls += int(aug_meta.get("branches") or 0)
                 loss = _entropy_loss_from_logits(student_logits)
                 loss.backward()
+                backward_calls += 1
                 grad_norm = _global_grad_norm(params)
                 grad_norm_clipped = None
                 if config.max_grad_norm is not None:
                     clipped = torch.nn.utils.clip_grad_norm_(params, float(config.max_grad_norm))
                     grad_norm_clipped = float(clipped.detach().cpu().item()) if torch.is_tensor(clipped) else float(clipped)
                 optimizer.step()
+                optimizer_steps += 1
 
                 with torch.no_grad():
-                    teacher_logits, _ = _forward_cotta_augs(
+                    teacher_logits, teacher_aug_meta = _forward_cotta_augs(
                         teacher,
                         x,
                         augmentations=aug_set,
                         aggregation=str(config.cotta_aggregation),
                     )
+                    forward_calls += int(teacher_aug_meta.get("branches") or 0)
                     consistency = float(((student_logits.detach() - teacher_logits.detach()) ** 2).mean().cpu().item())
 
                 _ema_update(teacher, model, momentum=ema_momentum)
@@ -856,6 +947,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
 
                 optimizer.zero_grad(set_to_none=True)
                 logits = _extract_logits(model(x))
+                forward_calls += 1
                 if logits.ndim == 0:
                     raise RuntimeError("EATA logits must have batch dimension")
 
@@ -927,6 +1019,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                 anchor_loss = _eata_anchor_loss(base_snapshot)
                 loss = adapt_loss + (anchor_lambda * anchor_loss)
                 loss.backward()
+                backward_calls += 1
 
                 grad_norm = _global_grad_norm(params)
                 grad_norm_clipped = None
@@ -935,6 +1028,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     grad_norm_clipped = float(clipped.detach().cpu().item()) if torch.is_tensor(clipped) else float(clipped)
 
                 optimizer.step()
+                optimizer_steps += 1
 
                 loss_value = float(loss.detach().cpu().item())
                 adapt_loss_value = float(adapt_loss.detach().cpu().item())
@@ -1042,8 +1136,10 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
 
                 optimizer.zero_grad(set_to_none=True)
                 logits_first = _extract_logits(model(x))
+                forward_calls += 1
                 loss_first = _entropy_loss_from_logits(logits_first)
                 loss_first.backward()
+                backward_calls += 1
 
                 grad_norm_first = _global_grad_norm(params)
                 grad_norm_clipped = None
@@ -1060,11 +1156,14 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
 
                 optimizer.zero_grad(set_to_none=True)
                 logits_second = _extract_logits(model(x))
+                forward_calls += 1
                 loss_second = _entropy_loss_from_logits(logits_second)
                 loss_second.backward()
+                backward_calls += 1
 
                 _sar_restore(backup)
                 optimizer.step()
+                optimizer_steps += 1
 
                 loss_value = float(loss_second.detach().cpu().item())
                 if initial_loss is None:
@@ -1171,4 +1270,9 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         stop_reason=stop_reason,
         step_metrics=step_metrics,
         method_profile=get_ttt_method_profile(method),
+        forward_calls=int(forward_calls),
+        backward_calls=int(backward_calls),
+        optimizer_steps=int(optimizer_steps),
+        update_ratio=float(optimizer_steps) / float(max(1, steps)),
+        memory=_memory_finish(memory_start),
     )

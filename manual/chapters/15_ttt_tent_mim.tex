@@ -175,6 +175,27 @@ This produces \path{domain_shift_recipe.json} containing
 \path{export_settings.domain_shift_target} with fixed
 (\path{corruption}, \path{severity}, \path{seed}, \path{images_sha256}).
 
+\subsection{Multi-seed evidence suite}
+After preparing a shifted dataset and fully compatible base and MIM
+checkpoints, run the complete clean/shift matrix with:
+\begin{lstlisting}[language=bash]
+python3 tools/run_ttt_evidence_suite.py \
+  -d data/coco128 \
+  -x /path/to/shifted-coco128 \
+  -c /path/to/base-checkpoint.pt \
+  --mim-checkpoint /path/to/mim-checkpoint.pt \
+  -o reports/ttt_evidence \
+  -n 8 \
+  --seeds 11,22,33
+\end{lstlisting}
+
+The suite requires at least three unique seeds, fails when any child comparison
+fails, and separates sample-reset from continual-stream results. It generates
+COCO AP, calibration/collapse status, update ratio, latency, memory, and actual
+forward/backward/optimizer counts. The 2026-07-27 local diagnostic completed all
+30 comparisons but found no AP50:95 improvement; efficacy remains
+\texttt{not\_established}.
+
 To bind that recipe into prediction artifacts:
 \begin{lstlisting}[language=bash]
 python3 tools/export_predictions.py \

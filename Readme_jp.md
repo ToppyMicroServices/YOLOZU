@@ -110,6 +110,11 @@ flowchart LR
 subcommand/flag を昇格させるわけではありません。`export_predictions` では baseline
 export は Stable、TTA は Experimental、TTT は Research のままです。
 
+`tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
+clean/shift matrix を実行できます。生成された metric だけで Research lane
+を昇格させることはありません。詳細は
+[`docs/ttt_protocol.md`](docs/ttt_protocol.md)を参照してください。
+
 ## Production Readiness
 
 - いま production-ready と言いやすいもの: prediction validation/evaluation と predictions interface contract

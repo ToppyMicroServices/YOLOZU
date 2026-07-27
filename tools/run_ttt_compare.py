@@ -17,6 +17,7 @@ repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
 from yolozu.dataset import build_manifest
+from yolozu.eval.long_tail_metrics import evaluate_long_tail_detection
 from yolozu.eval.simple_map import evaluate_map
 from yolozu.predictions.predictions_parity import compare_predictions
 from yolozu.tta.method_profiles import get_ttt_method_profile
@@ -197,6 +198,33 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Optional export image size (one or two ints).",
     )
     p.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Deterministic TTT seed (default: 0).",
+    )
+    p.add_argument(
+        "--score-threshold",
+        type=float,
+        default=0.001,
+        help="Prediction score threshold shared by baseline and adapted exports (default: 0.001).",
+    )
+    p.add_argument(
+        "--max-detections",
+        type=int,
+        default=300,
+        help="Maximum detections per image shared by both exports (default: 300).",
+    )
+    p.add_argument(
+        "--dataset-hash-mode",
+        choices=("metadata", "content"),
+        default="metadata",
+        help=(
+            "Dataset identity mode: path+size metadata by default, or full image "
+            "content hashing for strict small-bundle provenance."
+        ),
+    )
+    p.add_argument(
         "--skip-eval",
         "--no-eval",
         action="store_true",
@@ -222,6 +250,10 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise ValueError(
             "real TTT compare currently requires --backend torch; use --dry-run to inspect the plan for other backends"
         )
+    if not 0.0 <= float(args.score_threshold) <= 1.0:
+        raise ValueError("--score-threshold must be in [0, 1]")
+    if int(args.max_detections) <= 0:
+        raise ValueError("--max-detections must be > 0")
 
 
 def _referenced_config_paths(common_export_args: list[Any]) -> list[Path]:
@@ -293,6 +325,8 @@ def _validate_prerequisites(
     method: str,
     common_export_args: list[Any],
     skip_eval: bool,
+    max_images: int | None,
+    dataset_hash_mode: str,
 ) -> dict[str, Any]:
     if not dataset.is_dir():
         raise FileNotFoundError(f"dataset root not found or not a directory: {dataset}")
@@ -307,6 +341,28 @@ def _validate_prerequisites(
     records = list(manifest.get("images") or [])
     if not records:
         raise ValueError(f"dataset split has no images: root={dataset} split={split!r}")
+    if max_images is not None:
+        records = records[: max(0, int(max_images))]
+    order_hasher = hashlib.sha256()
+    metadata_hasher = hashlib.sha256()
+    content_hasher = hashlib.sha256() if dataset_hash_mode == "content" else None
+    for record in records:
+        image = Path(str(record.get("image") or "")).resolve()
+        try:
+            image_key = str(image.relative_to(dataset.resolve()))
+        except ValueError:
+            image_key = str(image)
+        order_hasher.update(image_key.encode("utf-8"))
+        order_hasher.update(b"\n")
+        metadata_hasher.update(image_key.encode("utf-8"))
+        metadata_hasher.update(b"\0")
+        metadata_hasher.update(str(image.stat().st_size).encode("ascii"))
+        metadata_hasher.update(b"\n")
+        if content_hasher is not None:
+            content_hasher.update(image_key.encode("utf-8"))
+            content_hasher.update(b"\0")
+            content_hasher.update(_sha256(image).encode("ascii"))
+            content_hasher.update(b"\n")
 
     config_paths = _referenced_config_paths(common_export_args)
     config_hashes: list[dict[str, str]] = []
@@ -335,6 +391,17 @@ def _validate_prerequisites(
 
     return {
         "dataset_images": int(len(records)),
+        "dataset_order_sha256": order_hasher.hexdigest(),
+        "dataset_hash_mode": dataset_hash_mode,
+        "dataset_hash_sha256": (
+            content_hasher.hexdigest()
+            if content_hasher is not None
+            else metadata_hasher.hexdigest()
+        ),
+        "dataset_metadata_sha256": metadata_hasher.hexdigest(),
+        "dataset_content_sha256": (
+            content_hasher.hexdigest() if content_hasher is not None else None
+        ),
         "checkpoint_sha256": _sha256(checkpoint),
         "boilerplate_sha256": _sha256(boilerplate_path),
         "configs": config_hashes,
@@ -344,6 +411,7 @@ def _validate_prerequisites(
 
 
 def _run(cmd: list[str], *, cwd: Path) -> dict[str, Any]:
+    started = time.perf_counter()
     proc = subprocess.run(
         cmd,
         cwd=str(cwd),
@@ -357,6 +425,7 @@ def _run(cmd: list[str], *, cwd: Path) -> dict[str, Any]:
         "returncode": int(proc.returncode),
         "stdout": str(proc.stdout),
         "stderr": str(proc.stderr),
+        "wall_seconds": float(time.perf_counter() - started),
     }
 
 
@@ -431,6 +500,12 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
     guard_breaches = 0
     rollback_steps = 0
     stopped_early_count = 0
+    forward_calls = 0
+    backward_calls = 0
+    optimizer_steps = 0
+    update_ratios: list[float] = []
+    peak_memory_bytes: list[int] = []
+    memory_metrics: set[str] = set()
     for part in parts:
         part_losses = part.get("losses")
         if isinstance(part_losses, list):
@@ -456,6 +531,23 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
             stopped_early_count += 1
         steps_run += int(part.get("steps_run") or 0)
         seconds.append(_safe_float(part.get("seconds"), 0.0))
+        forward_calls += int(part.get("forward_calls") or 0)
+        backward_calls += int(part.get("backward_calls") or 0)
+        optimizer_steps += int(part.get("optimizer_steps") or 0)
+        update_ratios.append(_safe_float(part.get("update_ratio"), 0.0))
+        memory = part.get("memory")
+        if isinstance(memory, dict):
+            metric = str(memory.get("metric") or "")
+            if metric:
+                memory_metrics.add(metric)
+            for key in (
+                "peak_allocated_bytes",
+                "end_allocated_bytes",
+                "end_peak_rss_bytes",
+            ):
+                value = memory.get(key)
+                if isinstance(value, int):
+                    peak_memory_bytes.append(int(value))
     return {
         "enabled": True,
         "method": str(ttt.get("method") or report.get("method") or "unknown"),
@@ -471,6 +563,16 @@ def _extract_ttt_summary(payload: dict[str, Any]) -> dict[str, Any]:
         "guard_breaches": int(guard_breaches),
         "rollback_steps": int(rollback_steps),
         "stopped_early_count": int(stopped_early_count),
+        "forward_calls": int(forward_calls),
+        "backward_calls": int(backward_calls),
+        "optimizer_steps": int(optimizer_steps),
+        "mean_update_ratio": (
+            float(sum(update_ratios) / len(update_ratios))
+            if update_ratios
+            else 0.0
+        ),
+        "peak_memory_bytes": max(peak_memory_bytes) if peak_memory_bytes else None,
+        "memory_metrics": sorted(memory_metrics),
         "warnings": warnings,
     }
 
@@ -487,6 +589,60 @@ def _prediction_counts(payload: dict[str, Any]) -> dict[str, int]:
         if isinstance(raw, list):
             detections += len(raw)
     return {"images": int(len(predictions)), "detections": int(detections)}
+
+
+def _prediction_diagnostics(
+    *,
+    dataset: Path,
+    split: str,
+    payload: dict[str, Any],
+    max_images: int | None,
+    max_detections: int,
+) -> dict[str, Any]:
+    manifest = build_manifest(str(dataset), split=str(split))
+    records = list(manifest.get("images") or [])
+    if max_images is not None:
+        records = records[: max(0, int(max_images))]
+    predictions = payload.get("predictions")
+    entries = (
+        [item for item in predictions if isinstance(item, dict)]
+        if isinstance(predictions, list)
+        else []
+    )
+    diagnostic = evaluate_long_tail_detection(
+        records,
+        entries,
+        max_detections=int(max_detections),
+        calibration_bins=10,
+        calibration_iou=0.5,
+    )
+    calibration = dict(
+        (((diagnostic.get("metrics") or {}).get("calibration")) or {})
+    )
+    counts = dict(diagnostic.get("counts") or {})
+    detection_count = int(counts.get("detections") or 0)
+    zero_detection_images = sum(
+        1 for entry in entries if not list(entry.get("detections") or [])
+    )
+    calibration["status"] = (
+        "measured" if detection_count > 0 else "unavailable_no_detections"
+    )
+    return {
+        "calibration": calibration,
+        "collapse": {
+            "status": (
+                "detector_output_empty"
+                if detection_count <= 0
+                else "detections_observed"
+            ),
+            "images": int(len(entries)),
+            "detections": detection_count,
+            "zero_detection_images": int(zero_detection_images),
+            "detections_per_image": (
+                float(detection_count) / float(len(entries)) if entries else 0.0
+            ),
+        },
+    }
 
 
 def _extract_eval_metrics(path: Path) -> dict[str, Any] | None:
@@ -792,6 +948,10 @@ def main(argv: list[str] | None = None) -> int:
         str(checkpoint),
         "--device",
         str(args.device),
+        "--score-threshold",
+        str(float(args.score_threshold)),
+        "--max-detections",
+        str(int(args.max_detections)),
         *[str(x) for x in common_export_args],
     ]
     if args.max_images is not None:
@@ -817,6 +977,8 @@ def main(argv: list[str] | None = None) -> int:
         [
             "--ttt-reset",
             reset,
+            "--ttt-seed",
+            str(int(args.seed)),
             "--ttt-log-out",
             str(adapted_ttt_log),
             *[str(x) for x in extra_export_args],
@@ -841,6 +1003,9 @@ def main(argv: list[str] | None = None) -> int:
         "backend": str(args.backend),
         "device": str(args.device),
         "max_images": args.max_images,
+        "seed": int(args.seed),
+        "score_threshold": float(args.score_threshold),
+        "max_detections": int(args.max_detections),
         "commands": {
             "baseline_export": base_cmd,
             "adapted_export": adapted_cmd,
@@ -915,6 +1080,10 @@ def main(argv: list[str] | None = None) -> int:
             method=method,
             common_export_args=common_export_args,
             skip_eval=bool(args.skip_eval),
+            max_images=(
+                int(args.max_images) if args.max_images is not None else None
+            ),
+            dataset_hash_mode=str(args.dataset_hash_mode),
         )
         plan["prerequisites"] = prerequisites
         if args.dry_run:
@@ -988,6 +1157,20 @@ def main(argv: list[str] | None = None) -> int:
         _set_plan_status(plan, plan_json, state="running", stage=stage)
         baseline_payload = _load_json(baseline_predictions)
         adapted_payload = _load_json(adapted_predictions)
+        baseline_diagnostics = _prediction_diagnostics(
+            dataset=dataset,
+            split=str(args.split),
+            payload=baseline_payload,
+            max_images=max_images,
+            max_detections=int(args.max_detections),
+        )
+        adapted_diagnostics = _prediction_diagnostics(
+            dataset=dataset,
+            split=str(args.split),
+            payload=adapted_payload,
+            max_images=max_images,
+            max_detections=int(args.max_detections),
+        )
 
         stage = "prediction_comparison"
         _set_plan_status(plan, plan_json, state="running", stage=stage)
@@ -1039,9 +1222,18 @@ def main(argv: list[str] | None = None) -> int:
                 "checkpoint": str(checkpoint),
                 "backend": str(args.backend),
                 "device": str(args.device),
+                "seed": int(args.seed),
                 "boilerplate_sha256": prerequisites["boilerplate_sha256"],
                 "checkpoint_sha256": prerequisites["checkpoint_sha256"],
                 "configs": prerequisites["configs"],
+                "dataset_images": prerequisites["dataset_images"],
+                "dataset_order_sha256": prerequisites["dataset_order_sha256"],
+                "dataset_hash_mode": prerequisites["dataset_hash_mode"],
+                "dataset_hash_sha256": prerequisites["dataset_hash_sha256"],
+                "dataset_metadata_sha256": prerequisites["dataset_metadata_sha256"],
+                "dataset_content_sha256": prerequisites["dataset_content_sha256"],
+                "score_threshold": float(args.score_threshold),
+                "max_detections": int(args.max_detections),
             },
             "provenance": {
                 "evidence_kind": "local_diagnostic",
@@ -1049,14 +1241,21 @@ def main(argv: list[str] | None = None) -> int:
                 "checkpoint_sha256": prerequisites["checkpoint_sha256"],
                 "boilerplate_sha256": prerequisites["boilerplate_sha256"],
                 "configs": prerequisites["configs"],
+                "dataset_order_sha256": prerequisites["dataset_order_sha256"],
+                "dataset_hash_mode": prerequisites["dataset_hash_mode"],
+                "dataset_hash_sha256": prerequisites["dataset_hash_sha256"],
+                "dataset_metadata_sha256": prerequisites["dataset_metadata_sha256"],
+                "dataset_content_sha256": prerequisites["dataset_content_sha256"],
             },
             "baseline": {
                 "prediction_counts": _prediction_counts(baseline_payload),
                 "ttt_summary": _extract_ttt_summary(baseline_payload),
+                "diagnostics": baseline_diagnostics,
             },
             "adapted": {
                 "prediction_counts": _prediction_counts(adapted_payload),
                 "ttt_summary": _extract_ttt_summary(adapted_payload),
+                "diagnostics": adapted_diagnostics,
             },
             "prediction_delta": _summarize_parity(parity_report),
             "prediction_delta_detail": {
@@ -1074,13 +1273,10 @@ def main(argv: list[str] | None = None) -> int:
             report["protocol"] = str(args.protocol)
         report["baseline_eval"] = baseline_eval_metrics
         report["adapted_eval"] = adapted_eval_metrics
-        baseline_summary = report["baseline"]["ttt_summary"]
         adapted_summary = report["adapted"]["ttt_summary"]
-        baseline_seconds = baseline_summary.get("mean_seconds")
-        adapted_seconds = adapted_summary.get("mean_seconds")
-        latency_delta = None
-        if baseline_seconds is not None and adapted_seconds is not None:
-            latency_delta = float(adapted_seconds) - float(baseline_seconds)
+        baseline_seconds = float(baseline_result.get("wall_seconds") or 0.0)
+        adapted_seconds = float(adapted_result.get("wall_seconds") or 0.0)
+        latency_delta = float(adapted_seconds) - float(baseline_seconds)
         report["research_report"] = {
             "kind": "research_lane_report",
             "lane": "ttt",
@@ -1090,9 +1286,29 @@ def main(argv: list[str] | None = None) -> int:
             "research_output_artifact": _short(adapted_predictions),
             "report_artifact": _short(compare_json),
             "latency_overhead": {
-                "baseline_mean_seconds": baseline_seconds,
-                "adapted_mean_seconds": adapted_seconds,
-                "delta_mean_seconds": latency_delta,
+                "metric": "subprocess_wall_seconds",
+                "baseline_seconds": baseline_seconds,
+                "adapted_seconds": adapted_seconds,
+                "delta_seconds": latency_delta,
+                "adaptation_inner_mean_seconds": adapted_summary.get(
+                    "mean_seconds"
+                ),
+            },
+            "adaptation_cost": {
+                "forward_calls": int(adapted_summary.get("forward_calls") or 0),
+                "backward_calls": int(adapted_summary.get("backward_calls") or 0),
+                "optimizer_steps": int(adapted_summary.get("optimizer_steps") or 0),
+                "mean_update_ratio": adapted_summary.get("mean_update_ratio"),
+                "peak_memory_bytes": adapted_summary.get("peak_memory_bytes"),
+                "memory_metrics": adapted_summary.get("memory_metrics") or [],
+            },
+            "calibration": {
+                "baseline": baseline_diagnostics["calibration"],
+                "adapted": adapted_diagnostics["calibration"],
+            },
+            "collapse": {
+                "baseline": baseline_diagnostics["collapse"],
+                "adapted": adapted_diagnostics["collapse"],
             },
             "rollback": {
                 "reset_policy": reset,

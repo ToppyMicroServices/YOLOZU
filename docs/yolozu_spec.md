@@ -134,7 +134,9 @@ Current in-repo `rtdetr_pose` backbone choices:
   `tools/export_predictions.py` via `--ttt`
   - runs strictly pre-prediction to keep output schema unchanged
   - with `--wrap`, writes `meta.ttt` including config + report (losses, updated params,
-    MIM mask ratio)
+    MIM mask ratio, memory, update ratio, and forward/backward counters)
+  - `tools/run_ttt_evidence_suite.py` runs a fail-closed clean/shift matrix for
+    at least three seeds and separates sample-reset from continual-stream results
 - Interface notes: `docs/ttt_integration_plan.md`
 
 ### 9) CLI convenience
