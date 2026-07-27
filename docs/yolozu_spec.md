@@ -137,6 +137,8 @@ Current in-repo `rtdetr_pose` backbone choices:
     MIM mask ratio, memory, update ratio, and forward/backward counters)
   - `tools/run_ttt_evidence_suite.py` runs a fail-closed clean/shift matrix for
     at least three seeds and separates sample-reset from continual-stream results
+  - the 2026-07-27 diagnostic bundle is release-addressable, but its zero
+    improvement and single-environment origin keep efficacy `not_established`
 - Interface notes: `docs/ttt_integration_plan.md`
 
 ### 9) CLI convenience

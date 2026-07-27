@@ -111,7 +111,11 @@ fails. It does not recursively delete the output directory.
 
 The 2026-07-27 local run completed all 30 comparisons. It found no AP50:95
 improvement and remains `efficacy_conclusion=not_established`; see
-[the evidence report](../reports/ttt_evidence_2026-07-27.md).
+[the evidence report](../reports/ttt_evidence_2026-07-27.md). The complete
+checkpoint and child-artifact bundle is published as the
+[2026-07-27 diagnostic prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
+with archive SHA-256
+`bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068`.
 
 ## Local diagnostic demo
 
@@ -147,9 +151,10 @@ Positive or negative delta is only a local observation.
    making any efficacy claim.
 
 The built-in source tree does not contain a promotion-quality checkpoint bundle.
-A current-compatible local diagnostic bundle was generated on 2026-07-27, but
-its short COCO128 training run did not improve AP and has not been independently
-reproduced. Historical ignored
+A current-compatible local diagnostic bundle was generated and published on
+2026-07-27, but its short COCO128 training run did not improve AP and has not
+been independently reproduced. Publication makes the exact inputs and outputs
+addressable; it does not change the efficacy boundary. Historical ignored
 `reports/ttt_improvement_probe` paths are not part of the SSOT and are not a
 clean-checkout success path.
 The dated boundary and remaining evidence requirements are recorded in

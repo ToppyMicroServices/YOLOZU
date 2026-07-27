@@ -60,6 +60,11 @@ metrics are generated. It does **not** prove efficacy: the diagnostic
 checkpoints are short COCO128 training runs, every improvement delta is zero,
 and all artifacts were produced in one local environment.
 
-The full child artifacts and checkpoint provenance must be published at a
-release-addressable location and independently reproduced before the Beads
-efficacy task can close.
+The full child artifacts and checkpoint provenance are published in the
+[TTT diagnostic evidence 2026-07-27 prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27).
+The archive SHA-256 is
+`bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068`;
+its internal manifest verifies 261 files.
+
+Release addressability is satisfied. Independent reproduction in a second
+environment remains required before the Beads efficacy task can close.

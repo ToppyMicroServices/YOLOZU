@@ -112,7 +112,11 @@ export は Stable、TTA は Experimental、TTT は Research のままです。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
-を昇格させることはありません。詳細は
+を昇格させることはありません。2026-07-27 の限定的な診断bundleは
+[GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
+で公開しています。archive SHA-256 は
+`bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068` です。
+これは efficacy や independent reproduction を示すものではありません。詳細は
 [`docs/ttt_protocol.md`](docs/ttt_protocol.md)を参照してください。
 
 ## Production Readiness
