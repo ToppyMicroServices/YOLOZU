@@ -1,13 +1,12 @@
 import json
 import tempfile
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 import tools.run_ttt_evidence_suite as suite
 
 
-class TestRunTTTEvidenceSuite(unittest.TestCase):
+class TestRunTTTEvidenceSuite(TestCase):
     def test_requires_three_unique_seeds(self):
         args = suite._parse_args(
             [
@@ -86,4 +85,4 @@ class TestRunTTTEvidenceSuite(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()

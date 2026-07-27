@@ -325,8 +325,8 @@ def _render_markdown(summary: dict[str, Any]) -> str:
             "",
             "## Interpretation boundary",
             "",
-            "These runs are generated local diagnostics. They do not establish method "
-            "efficacy or independently reproduce a release result.",
+            "These runs are generated local diagnostics. They do not establish "
+            + "method efficacy or independently reproduce a release result.",
             "",
         ]
     )
