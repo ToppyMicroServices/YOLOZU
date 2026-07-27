@@ -68,6 +68,18 @@ typed error、workspace boundary、MCP setup、広い opt-in discovery は
 [`docs/python_api.md`](docs/python_api.md) と
 [`docs/ai_first.md`](docs/ai_first.md) を参照してください。
 
+training 前には、空または不正な split を fail closed で検査し、train doctor
+から machine-readable な readiness 判定を取得します。
+
+```bash
+yolozu validate dataset /path/to/yolo_dataset --split train --strict
+yolozu doctor train-dataset --dataset /path/to/yolo_dataset --split train --output -
+```
+
+COCO annotation と画像を別々に指定する場合は、`--instances` と
+`--images-dir` を併用します。この経路では `--dataset` は不要です。詳細は
+[`docs/training_inference_export.md`](docs/training_inference_export.md) を参照してください。
+
 ```mermaid
 flowchart LR
     A["Ultralytics"] --> D["wrapped predictions.json"]

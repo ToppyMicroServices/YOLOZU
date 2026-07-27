@@ -196,11 +196,13 @@ class TestDoctorImportCLI(unittest.TestCase):
         self.assertTrue(any("--dataset-root" in str(cmd) for cmd in payload.get("next_commands") or []))
 
     def test_doctor_train_dataset_reports_records_json_readiness(self):
+        from PIL import Image
+
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td)
             (root / "images").mkdir(parents=True, exist_ok=True)
-            (root / "images" / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            Image.new("RGB", (8, 8)).save(root / "images" / "0001.png")
             records_path = root / "records.json"
             records_path.write_text(
                 json.dumps(
@@ -325,6 +327,8 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertTrue(any("external training lane" in str(cmd) for cmd in payload.get("next_commands") or []))
 
     def test_doctor_train_dataset_reports_obb_label_contract(self):
+        from PIL import Image
+
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td) / "obb"
@@ -332,7 +336,7 @@ class TestDoctorImportCLI(unittest.TestCase):
             labels = root / "labels" / "train"
             images.mkdir(parents=True, exist_ok=True)
             labels.mkdir(parents=True, exist_ok=True)
-            (images / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            Image.new("RGB", (64, 32)).save(images / "0001.png")
             (labels / "0001.txt").write_text("0 0.5 0.5 0.25 0.20 0.78\n", encoding="utf-8")
             (root / "dataset.json").write_text(
                 json.dumps(
@@ -373,6 +377,8 @@ class TestDoctorImportCLI(unittest.TestCase):
             self.assertEqual(int(records.get("obb_labels") or 0), 1)
 
     def test_doctor_train_dataset_reports_depth_and_pose6d_sidecars(self):
+        from PIL import Image
+
         repo_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             root = Path(td) / "geom"
@@ -380,7 +386,7 @@ class TestDoctorImportCLI(unittest.TestCase):
             labels = root / "labels" / "train"
             images.mkdir(parents=True, exist_ok=True)
             labels.mkdir(parents=True, exist_ok=True)
-            (images / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            Image.new("RGB", (64, 32)).save(images / "0001.png")
             (labels / "0001.txt").write_text("0 0.5 0.5 0.25 0.20\n", encoding="utf-8")
             (root / "depth_0001.npy").write_bytes(b"placeholder")
             (labels / "0001.json").write_text(
@@ -421,6 +427,93 @@ class TestDoctorImportCLI(unittest.TestCase):
                 self.assertEqual(int(records.get("depth_labels") or 0), 1)
                 self.assertEqual(int(records.get("pose_labels") or 0), 1)
                 self.assertEqual(int(records.get("pose_intrinsics") or 0), 1)
+
+    def test_doctor_train_dataset_accepts_explicit_coco_arguments(self):
+        from PIL import Image
+
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            images_dir = root / "images"
+            images_dir.mkdir(parents=True)
+            Image.new("RGB", (64, 32)).save(images_dir / "0001.jpg")
+            instances_path = root / "instances.json"
+            instances_path.write_text(
+                json.dumps(
+                    {
+                        "images": [{"id": 1, "file_name": "0001.jpg", "width": 64, "height": 32}],
+                        "annotations": [
+                            {"id": 1, "image_id": 1, "category_id": 7, "bbox": [0, 0, 10, 20], "iscrowd": 0}
+                        ],
+                        "categories": [{"id": 7, "name": "thing"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--from",
+                    "coco-instances",
+                    "--instances",
+                    str(instances_path),
+                    "--images-dir",
+                    str(images_dir),
+                    "--split",
+                    "val2017",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            if proc.returncode != 0:
+                self.fail(f"doctor train-dataset explicit COCO failed:\n{proc.stdout}\n{proc.stderr}")
+            payload = json.loads(proc.stdout)
+            self.assertEqual(payload.get("dataset_from"), "coco-instances")
+            self.assertEqual((payload.get("layout") or {}).get("format"), "coco_instances_explicit")
+            validation = (payload.get("records") or {}).get("validation") or {}
+            self.assertEqual(int(validation.get("checked") or 0), 1)
+            self.assertEqual(int(validation.get("error_count") or 0), 0)
+            readiness = payload.get("reference_trainer") or {}
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            self.assertTrue(bool(readiness.get("train_ready_after_migration")))
+            self.assertTrue(any("--instances" in str(command) for command in payload.get("next_commands") or []))
+
+    def test_doctor_train_dataset_rejects_strict_bbox_failure(self):
+        from PIL import Image
+
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td) / "invalid"
+            images = root / "images" / "train"
+            labels = root / "labels" / "train"
+            images.mkdir(parents=True)
+            labels.mkdir(parents=True)
+            Image.new("RGB", (64, 32)).save(images / "0001.jpg")
+            (labels / "0001.txt").write_text("0 0.99 0.5 0.20 0.20\n", encoding="utf-8")
+
+            proc = self._run(
+                [
+                    "doctor",
+                    "train-dataset",
+                    "--dataset",
+                    str(root),
+                    "--split",
+                    "train",
+                    "--output",
+                    "-",
+                ],
+                cwd=repo_root,
+            )
+            self.assertEqual(proc.returncode, 2)
+            payload = json.loads(proc.stdout)
+            readiness = payload.get("reference_trainer") or {}
+            self.assertFalse(bool(readiness.get("direct_train_ready")))
+            validation = (payload.get("records") or {}).get("validation") or {}
+            self.assertGreater(int(validation.get("error_count") or 0), 0)
+            self.assertTrue(any("strict dataset validation failed" in str(error) for error in payload.get("errors") or []))
 
     def test_doctor_import_config_ultralytics_stdout(self):
         repo_root = Path(__file__).resolve().parents[1]

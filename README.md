@@ -68,6 +68,18 @@ See [`docs/python_api.md`](docs/python_api.md) and
 [`docs/ai_first.md`](docs/ai_first.md) for typed errors, workspace boundaries,
 MCP setup, and larger opt-in discovery.
 
+Before training, fail closed on an empty or invalid split and ask the train
+doctor for a machine-readable readiness decision:
+
+```bash
+yolozu validate dataset /path/to/yolo_dataset --split train --strict
+yolozu doctor train-dataset --dataset /path/to/yolo_dataset --split train --output -
+```
+
+For separate COCO annotation and image paths, use `--instances` together with
+`--images-dir`; `--dataset` is not required. See
+[`docs/training_inference_export.md`](docs/training_inference_export.md).
+
 ```mermaid
 flowchart LR
     A["Ultralytics"] --> D["wrapped predictions.json"]

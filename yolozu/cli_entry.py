@@ -240,10 +240,23 @@ def main(argv: list[str] | None = None) -> int:
     doctor_train.add_argument("--split", default=None, help="Split name (for example train, val, val2017).")
     doctor_train.add_argument("--records-json", default=None, help="Training records JSON to check instead of scanning --dataset.")
     doctor_train.add_argument("--val-records-json", default=None, help="Optional validation records JSON to check.")
-    doctor_train.add_argument("--instances", default=None, help="COCO instances/person_keypoints JSON path for explicit COCO checks.")
-    doctor_train.add_argument("--images-dir", default=None, help="COCO images directory for explicit COCO checks.")
+    doctor_train.add_argument(
+        "--instances",
+        default=None,
+        help="COCO instances/person_keypoints JSON path; requires --images-dir and does not require --dataset.",
+    )
+    doctor_train.add_argument(
+        "--images-dir",
+        default=None,
+        help="COCO images directory; requires --instances for explicit COCO checks.",
+    )
     doctor_train.add_argument("--include-crowd", action="store_true", help="Include COCO iscrowd annotations.")
-    doctor_train.add_argument("--max-images", type=int, default=200, help="Cap records inspected for summary (default: 200).")
+    doctor_train.add_argument(
+        "--max-images",
+        type=int,
+        default=200,
+        help="Cap records inspected and strictly validated (default: 200; report marks first_n scope when capped).",
+    )
 
     list_p = sub.add_parser("list", help="List registries and built-in catalogs.")
     list_sub = list_p.add_subparsers(dest="list_command", required=True)
@@ -594,7 +607,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     val_ds.add_argument("--max-images", type=int, default=None, help="Optional cap for number of images checked.")
     val_ds.add_argument("--strict", action="store_true", help="Strict bbox checks (range + inside-image).")
-    val_ds.add_argument("--mode", choices=("fail", "warn"), default="fail", help="fail=exit nonzero on errors; warn=always exit 0.")
+    val_ds.add_argument(
+        "--mode",
+        choices=("fail", "warn"),
+        default="fail",
+        help="fail=exit nonzero on errors; warn=downgrade record errors, but an empty dataset still exits nonzero.",
+    )
     val_ds.add_argument("--no-check-images", action="store_true", help="Skip image existence/size checks.")
 
     eis = sub.add_parser(

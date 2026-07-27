@@ -16940,7 +16940,11 @@
         },
         {
           "command": "python3 -m yolozu doctor train-dataset --dataset data/smoke --split val --output -",
-          "description": "Check whether a dataset is directly train-ready for the RT-DETR reference trainer and print next commands."
+          "description": "Strictly validate the selected dataset records and report machine-readable direct-train readiness plus next commands."
+        },
+        {
+          "command": "python3 -m yolozu doctor train-dataset --from coco-instances --instances /path/to/instances_train2017.json --images-dir /path/to/images/train2017 --split train2017 --output -",
+          "description": "Strictly preflight separate COCO annotation and image paths without requiring a synthetic dataset root."
         },
         {
           "command": "python3 -m yolozu doctor train-dataset --from obb --dataset /path/to/yolo_obb_root --split train --output -",
@@ -17300,7 +17304,7 @@
           "required": false
         },
         {
-          "description": "Dataset source selector for `yolozu doctor train-dataset`, `yolozu import dataset`, and `yolozu migrate dataset`; train-dataset supports auto, ultralytics, coco, coco-keypoints, coco-instances, segmentation, classification, obb, depth, and pose6d. Import/migrate support the subset implemented by their dataset adapters.",
+          "description": "Dataset source selector for `yolozu doctor train-dataset`, `yolozu import dataset`, and `yolozu migrate dataset`; train-dataset supports auto, ultralytics, coco, coco-keypoints, coco-instances, segmentation, classification, obb, depth, and pose6d. Explicit coco-instances preflight accepts --instances with --images-dir. Import/migrate support the subset implemented by their dataset adapters.",
           "flag": "--from",
           "kind": "string",
           "name": "from_format",
@@ -17351,10 +17355,17 @@
           "required": false
         },
         {
-          "description": "Forwarded image directory for COCO instance-style dataset resolution.",
+          "description": "COCO image directory used with --instances for explicit doctor/import dataset resolution.",
           "flag": "--images-dir",
           "kind": "dir",
           "name": "images_dir",
+          "required": false
+        },
+        {
+          "description": "Include COCO iscrowd annotations during explicit doctor/import dataset resolution.",
+          "flag": "--include-crowd",
+          "kind": "string",
+          "name": "include_crowd",
           "required": false
         },
         {
@@ -17375,6 +17386,13 @@
           "flag": "--input-name",
           "kind": "string",
           "name": "input_name",
+          "required": false
+        },
+        {
+          "description": "COCO instances/person_keypoints JSON used with --images-dir for explicit train-dataset preflight; --dataset is not required.",
+          "flag": "--instances",
+          "kind": "file",
+          "name": "instances",
           "required": false
         },
         {
@@ -17487,6 +17505,7 @@
           "required": false
         },
         {
+          "description": "Cap records inspected by applicable commands; doctor train-dataset reports scope=first_n when validation is capped.",
           "flag": "--max-images",
           "kind": "number",
           "name": "max_images",

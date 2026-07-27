@@ -14,6 +14,8 @@ from yolozu.core.image_size import get_image_size
 
 __all__ = ["DatasetValidationResult", "validate_dataset_records"]
 
+_NORMALIZED_BBOX_EDGE_TOLERANCE = 1e-6
+
 
 @dataclass(frozen=True)
 class DatasetValidationResult:
@@ -64,6 +66,10 @@ def validate_dataset_records(
 
     warnings: list[str] = []
     errors: list[str] = []
+    records_list = list(records)
+
+    if not records_list:
+        errors.append("dataset contains no records")
 
     def add_error(msg: str) -> None:
         if mode == "warn":
@@ -71,7 +77,7 @@ def validate_dataset_records(
         else:
             errors.append(msg)
 
-    for idx, record in enumerate(records):
+    for idx, record in enumerate(records_list):
         where = f"records[{idx}]"
         if not isinstance(record, dict):
             add_error(f"{where}: record must be an object")
@@ -134,7 +140,12 @@ def validate_dataset_records(
                 y1 = float(cy) - float(bh) / 2.0
                 x2 = float(cx) + float(bw) / 2.0
                 y2 = float(cy) + float(bh) / 2.0
-                if x1 < 0.0 or y1 < 0.0 or x2 > 1.0 or y2 > 1.0:
+                if (
+                    x1 < -_NORMALIZED_BBOX_EDGE_TOLERANCE
+                    or y1 < -_NORMALIZED_BBOX_EDGE_TOLERANCE
+                    or x2 > 1.0 + _NORMALIZED_BBOX_EDGE_TOLERANCE
+                    or y2 > 1.0 + _NORMALIZED_BBOX_EDGE_TOLERANCE
+                ):
                     add_error(f"{lwhere}: bbox extends outside image in normalized coords")
 
         # Metadata sanity checks (optional).

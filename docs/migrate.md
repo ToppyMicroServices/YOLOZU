@@ -131,6 +131,20 @@ recognized external-lane intake interface contracts. Depth and pose6d are direct
 reference trainer only after the dataset resolves to bbox records with the
 required sidecars.
 
+Separate COCO paths can be checked without assembling a root directory:
+
+```bash
+yolozu doctor train-dataset --from coco-instances \
+  --instances /path/to/instances_val2017.json \
+  --images-dir /path/to/images/val2017 \
+  --split val2017 --output -
+```
+
+Both arguments are required together. The doctor strictly validates readable
+images and bbox geometry, rejects zero-record inputs, and emits the matching
+`import dataset --from coco-instances` command only when migration readiness is
+true.
+
 Validate (label-only):
 
 ```bash

@@ -7,6 +7,43 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 class TestDatasetValidator(unittest.TestCase):
+    def test_empty_dataset_is_always_an_error(self):
+        from yolozu.dataset_validator import validate_dataset_records
+
+        for mode in ("fail", "warn"):
+            with self.subTest(mode=mode):
+                res = validate_dataset_records([], strict=True, mode=mode)
+                self.assertFalse(res.ok())
+                self.assertTrue(any("no records" in error for error in res.errors))
+
+    def test_strict_allows_only_float_rounding_at_image_edge(self):
+        from yolozu.dataset_validator import validate_dataset_records
+
+        base = {
+            "image": "unused.jpg",
+            "labels": [{"class_id": 0, "cx": 0.4999995, "cy": 0.5, "w": 1.0, "h": 1.0}],
+        }
+        within_tolerance = validate_dataset_records(
+            [base],
+            strict=True,
+            mode="fail",
+            check_images=False,
+        )
+        self.assertTrue(within_tolerance.ok(), within_tolerance.errors)
+
+        outside_tolerance = {
+            **base,
+            "labels": [{"class_id": 0, "cx": 0.4999985, "cy": 0.5, "w": 1.0, "h": 1.0}],
+        }
+        result = validate_dataset_records(
+            [outside_tolerance],
+            strict=True,
+            mode="fail",
+            check_images=False,
+        )
+        self.assertFalse(result.ok())
+        self.assertTrue(any("extends outside" in error for error in result.errors))
+
     def test_strict_rejects_out_of_range_bbox(self):
         from PIL import Image
 
