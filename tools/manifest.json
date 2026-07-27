@@ -14846,6 +14846,30 @@
           "required": false
         },
         {
+          "default": 0,
+          "description": "Deterministic TTT seed recorded in the execution plan and passed to the adapter.",
+          "flag": "--seed",
+          "kind": "number",
+          "name": "seed",
+          "required": false
+        },
+        {
+          "default": 0.001,
+          "description": "Shared prediction score threshold for baseline and adapted exports.",
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "default": 300,
+          "description": "Shared maximum detections per image for baseline and adapted exports.",
+          "flag": "--max-detections",
+          "kind": "number",
+          "name": "max_detections",
+          "required": false
+        },
+        {
           "flag": "--skip-eval",
           "kind": "string",
           "name": "skip_eval",
@@ -14899,13 +14923,13 @@
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_ttt_log.json",
-          "description": "TTT log artifact with adaptation step metrics used to summarize rollback counters.",
+          "description": "TTT log with adaptation, rollback, memory, update-ratio, and forward/backward counters.",
           "kind": "file",
           "name": "ttt_log"
         },
         {
           "default": "reports/ttt_compare/<method>/<method>_before_after_compare.json",
-          "description": "Compare JSON artifact including research_report latency/rollback/promotion-gate boundary fields.",
+          "description": "Compare JSON with real COCO metrics, calibration/collapse diagnostics, provenance, cost counters, and promotion boundary.",
           "kind": "file",
           "name": "compare_json"
         },
@@ -14926,13 +14950,194 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming.",
+      "summary": "Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters.",
       "tags": [
         "ttt",
         "ctta",
         "compare",
         "boilerplate",
         "report"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "coco_eval_report_json"
+        ]
+      },
+      "docs": [
+        "docs/ttt_protocol.md",
+        "manual/chapters/15_ttt_tent_mim.tex",
+        "reports/ttt_evidence_2026-07-27.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes plans, per-domain/per-method/per-seed comparisons, and aggregate JSON/Markdown under one output directory without recursively deleting it.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/run_ttt_evidence_suite.py",
+      "examples": [
+        {
+          "command": "python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence -n 8 --seeds 11,22,33",
+          "description": "Run the full clean/shifted five-method evidence matrix with concise aliases and three seeds."
+        },
+        {
+          "command": "python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence --dry-run",
+          "description": "Validate inputs and write all child execution plans without running inference."
+        }
+      ],
+      "id": "run_ttt_evidence_suite",
+      "inputs": [
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--shifted-dataset",
+          "kind": "dir",
+          "name": "shifted_dataset",
+          "required": true
+        },
+        {
+          "default": "train2017",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "flag": "--mim-checkpoint",
+          "kind": "file",
+          "name": "mim_checkpoint",
+          "required": true
+        },
+        {
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": true
+        },
+        {
+          "default": "tent,mim,cotta,eata,sar",
+          "flag": "--methods",
+          "kind": "string",
+          "name": "methods",
+          "required": false
+        },
+        {
+          "default": "11,22,33",
+          "flag": "--seeds",
+          "kind": "string",
+          "name": "seeds",
+          "required": false
+        },
+        {
+          "default": 8,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": 128,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "default": 0.001,
+          "flag": "--score-threshold",
+          "kind": "number",
+          "name": "score_threshold",
+          "required": false
+        },
+        {
+          "default": 300,
+          "flag": "--max-detections",
+          "kind": "number",
+          "name": "max_detections",
+          "required": false
+        },
+        {
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "description": "Overwrite known child artifacts without recursively deleting the output directory.",
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": "<out>/plan.json",
+          "description": "Complete matrix plan and per-child execution status.",
+          "kind": "file",
+          "name": "plan_json"
+        },
+        {
+          "default": "<out>/summary.json",
+          "description": "Generated multi-seed clean/shifted aggregate with protocol separation and explicit independent-reproduction status.",
+          "kind": "file",
+          "name": "summary_json"
+        },
+        {
+          "default": "<out>/summary.md",
+          "description": "Human-readable evidence summary with the efficacy boundary.",
+          "kind": "file",
+          "name": "summary_markdown"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds.",
+      "tags": [
+        "ttt",
+        "ctta",
+        "benchmark",
+        "evidence",
+        "reproducibility"
       ]
     },
     {

@@ -110,6 +110,10 @@ These are capability-level boundaries. A Stable parent CLI or manifest entry doe
 promote opt-in subcommands or flags: `export_predictions` keeps baseline export Stable,
 TTA Experimental, and TTT Research.
 
+TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
+`tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
+lane. See [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
+
 ## Production Readiness
 
 - Production-ready today: prediction validation/evaluation and the predictions interface contract

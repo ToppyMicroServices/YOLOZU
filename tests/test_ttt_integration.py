@@ -119,6 +119,11 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertEqual(len(report.losses), 2)
         self.assertIsInstance(report.updated_param_count, int)
         self.assertGreater(report.updated_param_count or 0, 0)
+        self.assertEqual(report.forward_calls, 2)
+        self.assertEqual(report.backward_calls, 2)
+        self.assertEqual(report.optimizer_steps, 2)
+        self.assertEqual(report.update_ratio, 1.0)
+        self.assertEqual((report.memory or {}).get("metric"), "peak_rss_bytes")
 
     def test_run_ttt_mim(self):
         class ReconModel(nn.Module):
@@ -165,6 +170,9 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertEqual(len(report.losses), 2)
         self.assertIsInstance(report.updated_param_count, int)
         self.assertGreater(report.updated_param_count or 0, 0)
+        self.assertEqual(report.forward_calls, 2)
+        self.assertEqual(report.backward_calls, 2)
+        self.assertEqual(report.optimizer_steps, 2)
 
     def test_run_ttt_mim_structured_branch(self):
         class StructuredMIMModel(nn.Module):
@@ -281,6 +289,9 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertIn("ema_momentum", report.step_metrics[0])
         self.assertIn("restored_count", report.step_metrics[0])
         self.assertIn("aug", report.step_metrics[0])
+        self.assertEqual(report.forward_calls, 8)
+        self.assertEqual(report.backward_calls, 2)
+        self.assertEqual(report.optimizer_steps, 2)
 
     def test_run_ttt_unsupported_adapter_errors(self):
         adapter = DummyAdapter()
@@ -346,6 +357,9 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertIn("selected_count", report.step_metrics[0])
         self.assertIn("adapt_loss", report.step_metrics[0])
         self.assertIn("anchor_loss", report.step_metrics[0])
+        self.assertEqual(report.forward_calls, 2)
+        self.assertEqual(report.backward_calls, 2)
+        self.assertEqual(report.optimizer_steps, 2)
 
     def test_run_ttt_sar_lora_only(self):
         class Model(nn.Module):
@@ -399,6 +413,9 @@ class TestTTTIntegration(unittest.TestCase):
         self.assertIn("loss_first", report.step_metrics[0])
         self.assertIn("loss_second", report.step_metrics[0])
         self.assertIn("sar_rho", report.step_metrics[0])
+        self.assertEqual(report.forward_calls, 4)
+        self.assertEqual(report.backward_calls, 4)
+        self.assertEqual(report.optimizer_steps, 2)
 
 
 if __name__ == "__main__":

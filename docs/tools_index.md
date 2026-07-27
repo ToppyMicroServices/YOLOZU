@@ -86,6 +86,7 @@ yolozu validate predictions reports/predictions.json --strict --json
 
 - Recommended short entrypoint: `bash scripts/ttt_compare.sh --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
 - Python equivalent: `python3 tools/run_ttt_compare.py --boilerplate tent --dataset data/smoke --split val --checkpoint /path/to.ckpt --run-dir reports/ttt_compare/tent`
+- Multi-seed clean/shift matrix: `python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence -n 8 --seeds 11,22,33`
 - Available boilerplates: `tent`, `mim`, `cotta`, `eata`, `sar`
 - Details: `docs/ttt_compare_boilerplates.md`, `docs/ttt_protocol.md`
 

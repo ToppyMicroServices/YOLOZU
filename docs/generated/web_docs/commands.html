@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">116 manifest entries with declared maturity, inputs,
+  <p class="lead">117 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1523,19 +1523,34 @@ python3 tools/run_reference_adapter_regression.py --dataset data/smoke --split v
 </details>
 
 <details class="card" id="tool-run-ttt-compare" data-tool-id="run_ttt_compare"
-  data-search-card data-search-text="run_ttt_compare Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming. research tools/run_ttt_compare.py python3 tools/run_ttt_compare.py --method tent --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/tent -n 1 --no-eval python3 tools/run_ttt_compare.py --method mim --data data/smoke --weights checkpoints/rtdetr_pose_mim.pt --out reports/ttt_compare/mim -n 1 --no-eval python3 tools/run_ttt_compare.py --method cotta --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/cotta -n 1 --dry-run">
-  <summary><code>run_ttt_compare</code> — Run a fail-closed baseline-vs-adapted TTT local diagnostic with full checkpoint preflight, atomic stage status, and non-COCO proxy naming.</summary>
+  data-search-card data-search-text="run_ttt_compare Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters. research tools/run_ttt_compare.py python3 tools/run_ttt_compare.py --method tent --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/tent -n 1 --no-eval python3 tools/run_ttt_compare.py --method mim --data data/smoke --weights checkpoints/rtdetr_pose_mim.pt --out reports/ttt_compare/mim -n 1 --no-eval python3 tools/run_ttt_compare.py --method cotta --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/cotta -n 1 --dry-run">
+  <summary><code>run_ttt_compare</code> — Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters.</summary>
   <div class="meta">
     <span class="badge badge-research">research</span>
     <span><code>tools/run_ttt_compare.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--boilerplate</code> — string</li><li><code>--method</code> — string</li><li><code>--dataset</code> — required, dir</li><li><code>--data</code> — dir</li><li><code>--split</code> — default=val, string</li><li><code>--checkpoint</code> — file</li><li><code>--weights</code> — file</li><li><code>--run-dir</code> — default=reports/ttt_compare/&lt;method&gt;, dir</li><li><code>--out</code> — dir</li><li><code>--backend</code> — default=torch, string</li><li><code>--device</code> — default=cpu, string</li><li><code>--max-images</code> — number</li><li><code>--protocol</code> — string</li><li><code>--image-size</code> — string</li><li><code>--skip-eval</code> — string</li><li><code>--no-eval</code> — string</li><li><code>--dry-run</code> — string</li><li><code>--force</code> — string</li></ul>
+  <ul class="check-list"><li><code>--boilerplate</code> — string</li><li><code>--method</code> — string</li><li><code>--dataset</code> — required, dir</li><li><code>--data</code> — dir</li><li><code>--split</code> — default=val, string</li><li><code>--checkpoint</code> — file</li><li><code>--weights</code> — file</li><li><code>--run-dir</code> — default=reports/ttt_compare/&lt;method&gt;, dir</li><li><code>--out</code> — dir</li><li><code>--backend</code> — default=torch, string</li><li><code>--device</code> — default=cpu, string</li><li><code>--max-images</code> — number</li><li><code>--protocol</code> — string</li><li><code>--image-size</code> — string</li><li><code>--seed</code> — default=0, number</li><li><code>--score-threshold</code> — default=0.001, number</li><li><code>--max-detections</code> — default=300, number</li><li><code>--skip-eval</code> — string</li><li><code>--no-eval</code> — string</li><li><code>--dry-run</code> — string</li><li><code>--force</code> — string</li></ul>
   <h3>Examples</h3>
   <pre><code>python3 tools/run_ttt_compare.py --method tent --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/tent -n 1 --no-eval
 python3 tools/run_ttt_compare.py --method mim --data data/smoke --weights checkpoints/rtdetr_pose_mim.pt --out reports/ttt_compare/mim -n 1 --no-eval
 python3 tools/run_ttt_compare.py --method cotta --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/cotta -n 1 --dry-run</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_ttt_compare.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ttt_protocol.md" target="_blank" rel="noopener noreferrer">ttt_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ttt_compare_boilerplates.md" target="_blank" rel="noopener noreferrer">ttt_compare_boilerplates.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/15_ttt_tent_mim.tex" target="_blank" rel="noopener noreferrer">15_ttt_tent_mim.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/research_lane_report.schema.json" target="_blank" rel="noopener noreferrer">research_lane_report.schema.json</a></p>
+</details>
+
+<details class="card" id="tool-run-ttt-evidence-suite" data-tool-id="run_ttt_evidence_suite"
+  data-search-card data-search-text="run_ttt_evidence_suite Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds. research tools/run_ttt_evidence_suite.py python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence -n 8 --seeds 11,22,33 python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence --dry-run">
+  <summary><code>run_ttt_evidence_suite</code> — Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/run_ttt_evidence_suite.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--dataset</code> — required, dir</li><li><code>--shifted-dataset</code> — required, dir</li><li><code>--split</code> — default=train2017, string</li><li><code>--checkpoint</code> — required, file</li><li><code>--mim-checkpoint</code> — required, file</li><li><code>--out</code> — required, dir</li><li><code>--methods</code> — default=tent,mim,cotta,eata,sar, string</li><li><code>--seeds</code> — default=11,22,33, string</li><li><code>--max-images</code> — default=8, number</li><li><code>--image-size</code> — default=128, number</li><li><code>--device</code> — default=cpu, string</li><li><code>--score-threshold</code> — default=0.001, number</li><li><code>--max-detections</code> — default=300, number</li><li><code>--protocol</code> — string</li><li><code>--dry-run</code> — string</li><li><code>--force</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence -n 8 --seeds 11,22,33
+python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /path/to/base.pt --mim-checkpoint /path/to/mim.pt -o reports/ttt_evidence --dry-run</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_ttt_evidence_suite.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ttt_protocol.md" target="_blank" rel="noopener noreferrer">ttt_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/15_ttt_tent_mim.tex" target="_blank" rel="noopener noreferrer">15_ttt_tent_mim.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/ttt_evidence_2026-07-27.md" target="_blank" rel="noopener noreferrer">ttt_evidence_2026-07-27.md</a></p>
 </details>
 
 <details class="card" id="tool-smoke" data-tool-id="smoke"

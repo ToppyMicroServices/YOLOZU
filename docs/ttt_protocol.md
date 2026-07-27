@@ -80,6 +80,33 @@ report contains:
 See [TTT compare boilerplates](ttt_compare_boilerplates.md) for artifact names
 and method-specific commands.
 
+## Multi-seed evidence command
+
+Use one command to run clean and deterministic-shift comparisons for all five
+methods. The command requires at least three unique seeds and keeps sample-reset
+and continual-stream results separate:
+
+```bash
+python3 tools/run_ttt_evidence_suite.py \
+  -d data/coco128 \
+  -x /path/to/shifted-coco128 \
+  -c /path/to/base-checkpoint.pt \
+  --mim-checkpoint /path/to/mim-checkpoint.pt \
+  -o reports/ttt_evidence \
+  -n 8 \
+  --seeds 11,22,33
+```
+
+Each comparison records a deterministic TTT seed, checkpoint/config SHA-256,
+dataset order/content SHA-256, real COCO AP when `pycocotools` is available,
+calibration and collapse status, update ratio, subprocess latency, peak memory,
+and forward/backward/optimizer counts. The suite fails if any child comparison
+fails. It does not recursively delete the output directory.
+
+The 2026-07-27 local run completed all 30 comparisons. It found no AP50:95
+improvement and remains `efficacy_conclusion=not_established`; see
+[the evidence report](../reports/ttt_evidence_2026-07-27.md).
+
 ## Local diagnostic demo
 
 The packaged CLI also provides a self-contained diagnostic:
@@ -113,8 +140,10 @@ Positive or negative delta is only a local observation.
 6. Use an independently specified evaluation protocol and repeated runs before
    making any efficacy claim.
 
-The built-in source tree does not contain a current, fully compatible measured
-checkpoint bundle for promotion evidence. Historical ignored
+The built-in source tree does not contain a promotion-quality checkpoint bundle.
+A current-compatible local diagnostic bundle was generated on 2026-07-27, but
+its short COCO128 training run did not improve AP and has not been independently
+reproduced. Historical ignored
 `reports/ttt_improvement_probe` paths are not part of the SSOT and are not a
 clean-checkout success path.
 The dated boundary and remaining evidence requirements are recorded in
