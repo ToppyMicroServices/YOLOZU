@@ -1068,8 +1068,8 @@ python3 -m yolozu list models --registry path/to/model_registry.json --json</cod
 </details>
 
 <details class="card" id="tool-make-subset-dataset" data-tool-id="make_subset_dataset"
-  data-search-card data-search-text="make_subset_dataset Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs. stable tools/make_subset_dataset.py python3 tools/make_subset_dataset.py --dataset data/coco128 --split train2017 --n 50 --seed 0 --out reports/coco128_50">
-  <summary><code>make_subset_dataset</code> — Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs.</summary>
+  data-search-card data-search-text="make_subset_dataset Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement. stable tools/make_subset_dataset.py python3 tools/make_subset_dataset.py --dataset data/coco128 --split train2017 --n 50 --seed 0 --out reports/coco128_50">
+  <summary><code>make_subset_dataset</code> — Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement.</summary>
   <div class="meta">
     <span class="badge badge-stable">stable</span>
     <span><code>tools/make_subset_dataset.py</code></span>
@@ -1078,7 +1078,7 @@ python3 -m yolozu list models --registry path/to/model_registry.json --json</cod
   <ul class="check-list"><li><code>--dataset</code> — required, dir</li><li><code>--split</code> — default=None, string</li><li><code>--n</code> — default=50, number</li><li><code>--seed</code> — default=0, number</li><li><code>--out</code> — default=reports/subset_dataset, dir</li><li><code>--copy</code> — string</li><li><code>--overwrite</code> — string</li><li><code>--strategy</code> — string</li></ul>
   <h3>Examples</h3>
   <pre><code>python3 tools/make_subset_dataset.py --dataset data/coco128 --split train2017 --n 50 --seed 0 --out reports/coco128_50</code></pre>
-  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/make_subset_dataset.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/make_subset_dataset.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/dataset_processing_matrix.md" target="_blank" rel="noopener noreferrer">dataset_processing_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/dataset_contract.md" target="_blank" rel="noopener noreferrer">dataset_contract.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/dataset_roundtrip_2026-07-27.md" target="_blank" rel="noopener noreferrer">dataset_roundtrip_2026-07-27.md</a></p>
 </details>
 
 <details class="card" id="tool-measure-trt-latency" data-tool-id="measure_trt_latency"

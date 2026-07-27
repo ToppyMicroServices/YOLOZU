@@ -65,6 +65,8 @@ In other words, users do not need to manually classify the incoming dataset fami
 
 Dataset preflight fails closed when the selected split contains no records. Direct-train readiness uses the same strict record validation as \cmd{yolozu validate dataset}: images must be readable and normalized bbox values must be valid. Stored values are not clipped or rewritten. A tolerance of \cmd{1e-6} applies only to floating-point round-off in derived bbox edges. The machine-readable \path{records.validation} object records the policy, checked and total counts, whether the scope is \cmd{all} or \cmd{first_n}, and all reported errors and warnings.
 
+The authoritative source/target table is \path{docs/dataset_processing_matrix.md}. A deterministic multi-task subset is valid only when selected images and labels retain referenced mask, depth, CAD, intrinsics, keypoint, and object-pose sidecars. The subset helper records per-file SHA-256 values and replaces only an ownership-marked output directory; it refuses symlink, protected, and unowned replacement targets.
+
 For record-based training, \cmd{python3 -m yolozu train <config> --records-json <train.json> --val-records-json <val.json>} forwards explicit train and validation records to the reference trainer. Both files may be a JSON list of records or an object with an \path{images} list. Records may use either \path{image} or \path{image_path}; label boxes may use flat \path{cx}/\path{cy}/\path{w}/\path{h} fields or nested \path{bbox} fields. OBB records may include \path{angle} or \path{obb}; depth and pose6d records may carry sidecars at the record level or on individual labels. Use this path when the dataset cannot be cleanly represented as one YOLO-style split directory.
 
 \begin{lstlisting}[language=bash]

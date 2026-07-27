@@ -527,8 +527,8 @@
   {
     "href": "commands.html#tool-make-subset-dataset",
     "kind": "command",
-    "search_text": "make_subset_dataset Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs. stable tools/make_subset_dataset.py --dataset --split --n --seed --out --copy --overwrite --strategy",
-    "summary": "Create a deterministic subset YOLO dataset (symlink/copy images+labels) for reproducible eval/ablation runs.",
+    "search_text": "make_subset_dataset Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement. stable tools/make_subset_dataset.py --dataset --split --n --seed --out --copy --overwrite --strategy",
+    "summary": "Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement.",
     "title": "make_subset_dataset"
   },
   {

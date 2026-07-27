@@ -305,6 +305,23 @@ class ManifestDataset(Dataset):
             return None
         if isinstance(value, str):
             path = Path(value)
+            if path.suffix.lower() in (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"):
+                try:
+                    import numpy as np
+                    from PIL import Image
+                except ImportError:
+                    return None
+                try:
+                    loaded = np.array(Image.open(path), copy=True)
+                except (OSError, ValueError):
+                    return None
+                if loaded.ndim == 2:
+                    return loaded
+                if loaded.ndim == 3 and loaded.shape[2] >= 1:
+                    first = loaded[..., 0]
+                    if all(np.array_equal(first, loaded[..., channel]) for channel in range(1, loaded.shape[2])):
+                        return first
+                return None
             if path.suffix.lower() == ".json":
                 try:
                     return json.loads(path.read_text())
@@ -845,6 +862,14 @@ class ManifestDataset(Dataset):
                         else:
                             stacked.append(t)
                     m_tensor = torch.stack(stacked, dim=0)
+                    if tuple(m_tensor.shape[-2:]) != (target_size, target_size):
+                        m_tensor = torch.nn.functional.interpolate(
+                            m_tensor.unsqueeze(1),
+                            size=(target_size, target_size),
+                            mode="nearest",
+                        ).squeeze(1)
+                    if flip:
+                        m_tensor = torch.flip(m_tensor, dims=(-1,))
 
                 for item in gt_D_obj:
                     if item is not None:
@@ -863,6 +888,15 @@ class ManifestDataset(Dataset):
                         else:
                             stacked.append(t)
                     d_tensor = torch.stack(stacked, dim=0)
+                    if tuple(d_tensor.shape[-2:]) != (target_size, target_size):
+                        d_tensor = torch.nn.functional.interpolate(
+                            d_tensor.unsqueeze(1),
+                            size=(target_size, target_size),
+                            mode="bilinear",
+                            align_corners=False,
+                        ).squeeze(1)
+                    if flip:
+                        d_tensor = torch.flip(d_tensor, dims=(-1,))
             if num_inst == 0:
                 gt_labels_t = torch.empty((0,), dtype=torch.long)
                 gt_bbox_t = torch.empty((0, 4), dtype=torch.float32)
