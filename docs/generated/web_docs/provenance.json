@@ -26,9 +26,9 @@
   "schema_version": 1,
   "source_hashes": {
     "CONTRIBUTING.md": "d80fb82f1e97f616c5e10b15adaf189acf8ede8df631d01e77af5c6526b312f1",
-    "README.md": "90edf3490bafba0083a9829a0c6c8453abbfe1fcb8bc2b066a71667d857a9aa9",
+    "README.md": "d4735e8aced37e9db191e354a872c422471c4720b79ae4c1cd3e1d533f1d2056",
     "RELEASE.md": "36806ef202f50fb9ca98726f3a5d3c66483741bb9b2b399b3a1302ffd6a16d89",
-    "Readme_jp.md": "a7b9dbef432b2d45b156c35a9761690d0640e1ea1ccb26aeba284f905d760081",
+    "Readme_jp.md": "2e5ab2181f05532af83e2f55556daba46f09594711f8a3a921c74caba1a0b76b",
     "Readme_zh.md": "6102a7854c6ce946101c082656d0345d4e3b7f3c2e826cc35e38b92eec6a60f8",
     "data/smoke/README.md": "8763fbc7545484a77b99a077cded552b03680109cec70fcd4c56bc2ed2cd4284",
     "data/smoke/predictions/predictions_dummy.json": "e028f2d9fb9f567527cd2b38f94ad7ed366665cec840af61bec62c736013e6fe",
