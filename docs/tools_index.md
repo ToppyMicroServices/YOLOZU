@@ -139,7 +139,8 @@ yolozu validate predictions reports/predictions.json --strict --json
 - 6DoF backend benchmark/parity: `python3 tools/benchmark_model.py --task pose6d --model reports/pose_torch.json --onnx-model reports/pose_onnx.json --data /path/to/yolo_pose_dataset --format torch,onnx --latency-source artifact_eval --pose-parity-trans-atol 1e-4 --output reports/benchmark_pose6d_report.json`
   - artifact-backed real eval/parity lane for backend-specific predictions artifacts; evaluates with `tools/eval_pose.py` and compares pose fields directly
 - SynthGen overlay renderer: `python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png`
-- SynthGen smoke (interface contract + overlay + eval): `python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports`
+- SynthGen fresh handoff + smoke: `./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification`
+- SynthGen existing-export smoke: `python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports`
 
 ## Continual learning (anti-forgetting)
 

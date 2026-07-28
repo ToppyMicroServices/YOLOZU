@@ -398,6 +398,7 @@ Reference: [Model fetch](model_fetch.md)
 Use this path when synthetic shards are produced outside YOLOZU and you only need intake/interface-contract/eval here.
 
 ```bash
+./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification
 python3 tools/validate_synthgen_contract.py --input /path/to/synthgen_dataset/shards/train_000.jsonl --max-samples 200
 python3 tools/render_synthgen_overlay.py --dataset-root /path/to/synthgen_dataset --schema-id animal_v1 --sample-index 0 --output reports/synthgen_overlay.png
 python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval.json

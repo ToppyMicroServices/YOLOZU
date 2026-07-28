@@ -15350,6 +15350,7 @@
         "docs/synthgen_intake.md",
         "docs/synthgen_repo_integration.md",
         "docs/synthgen_contract.md",
+        "reports/synthgen_handoff_2026-07-28.md",
         "data/smoke/synthgen_minishard/README.md",
         "docs/production_readiness.md"
       ],
@@ -15369,6 +15370,10 @@
         {
           "command": "python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports",
           "description": "Run SynthGen smoke on bundled fixture."
+        },
+        {
+          "command": "./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification",
+          "description": "Generate and qualify a fresh Open3D-to-YOLOZU background-edit handoff."
         }
       ],
       "id": "smoke_synthgen",
@@ -15407,6 +15412,53 @@
           "kind": "dir",
           "name": "output_dir",
           "required": false
+        },
+        {
+          "flag": "--synthgen-repo",
+          "kind": "dir",
+          "name": "synthgen_repo",
+          "required": false
+        },
+        {
+          "flag": "--synthgen-python",
+          "kind": "file",
+          "name": "synthgen_python",
+          "required": false
+        },
+        {
+          "default": "open3d",
+          "flag": "--backend",
+          "kind": "string",
+          "name": "backend",
+          "required": false
+        },
+        {
+          "default": "bg_only_inpaint",
+          "flag": "--mode",
+          "kind": "string",
+          "name": "mode",
+          "required": false
+        },
+        {
+          "default": 20260727,
+          "flag": "--global-seed",
+          "kind": "number",
+          "name": "global_seed",
+          "required": false
+        },
+        {
+          "default": 3,
+          "flag": "--num-train",
+          "kind": "number",
+          "name": "num_train",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--num-val",
+          "kind": "number",
+          "name": "num_val",
+          "required": false
         }
       ],
       "maturity": "experimental",
@@ -15437,7 +15489,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run deterministic SynthGen smoke (interface-contract validate + one overlay + eval) using local mini-shard fixtures.",
+      "summary": "Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks.",
       "tags": [
         "synthgen",
         "smoke",

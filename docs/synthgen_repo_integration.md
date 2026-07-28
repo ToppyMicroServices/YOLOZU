@@ -2,8 +2,11 @@
 
 Use this page when an external generator repo such as `YOLOZU-synthgen` is preparing to hand off synthetic shards to YOLOZU.
 
-This handoff was verified end to end with a local `YOLOZU-synthgen` checkout on April 2, 2026 using the CPU path. No GPU or MPS runtime is required for the intake, overlay, or evaluation steps below.
-Treat this as an experimental handoff path: the intake and evaluation steps are reproducible, but the external generator environment still needs its own qualification.
+This handoff was re-qualified end to end with the Open3D renderer on July 28,
+2026. The intake, loading, overlay, and evaluation steps are CPU-capable.
+Treat this as an experimental handoff path: `render_only` and the deterministic
+`internal_stub` for `bg_only_inpaint` are qualified locally, but no external
+generative provider or downstream model quality is qualified.
 See [`production_readiness.md`](production_readiness.md).
 
 ## One-page handoff order
@@ -14,7 +17,8 @@ See [`production_readiness.md`](production_readiness.md).
 4. Run `validate_synthgen_contract.py`.
 5. Run `render_synthgen_overlay.py`.
 6. Run `eval_synthgen.py`.
-7. Run `smoke_synthgen.py` if you want one bundled acceptance check.
+7. Run `smoke_synthgen.py`; pass `--synthgen-repo` for a fresh one-command
+   generator-to-YOLOZU qualification.
 
 ## Goal
 
@@ -22,7 +26,7 @@ Keep the integration boundary small and stable:
 
 - generator repo owns prompts, rendering, asset selection, and shard creation
 - YOLOZU owns intake validation, loading, overlay inspection, and evaluation
-- the shared boundary is the SynthGen predictions interface contract
+- the shared boundary is the SynthGen sample interface contract
 
 Primary references:
 
@@ -53,9 +57,10 @@ Current geometry sources are renderer-side `primitive_box` placeholders and `mes
 
 Supported generation modes:
 
-- `render_only`
-- `bg_only_inpaint`
-- `appearance_only_conditioned`
+- `render_only`: locally qualified with Open3D and YOLOZU intake
+- `bg_only_inpaint`: only the deterministic `internal_stub` is locally
+  qualified; a real external provider needs separate evidence
+- `appearance_only_conditioned`: internal experimental only
 
 Intentionally unsupported as the main labeled-data path:
 
@@ -169,26 +174,44 @@ Practical placement rule:
 
 ## Verified repo-to-repo probe
 
-The following probe was run successfully across `YOLOZU-synthgen` and YOLOZU:
-
-1. Generate demo shards in `YOLOZU-synthgen`:
+The current probe is one command from the YOLOZU checkout:
 
 ```bash
-PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen generate-demo-dataset \
-  --output-dir /tmp/yolozu_synthgen_demo \
-  --num-train 2 \
-  --num-val 1
+./.venv/bin/python tools/smoke_synthgen.py \
+  --synthgen-repo ../YOLOZU-synthgen \
+  --output-dir /tmp/yolozu-synthgen-qualification
 ```
 
-2. Export a YOLOZU-compatible dataset root:
+It creates five Open3D samples, applies `bg_only_inpaint` to a selected sample,
+fails closed on QA rejection, compares renderer-owned truth byte-for-byte,
+exports and validates the shard, executes both generator and YOLOZU loaders,
+renders an overlay, and runs an oracle interface self-check. The output root
+must be fresh; the command never deletes an existing generated handoff.
 
-```bash
-PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen export-yolozu-synthgen \
-  --shards-root /tmp/yolozu_synthgen_demo/shards \
-  --output-dir /tmp/yolozu_synthgen_export
+Use `--mode render_only` for the other public mode. Use `--synthgen-python` when
+the generator environment is not under `.venv312` or `.venv`.
+
+Python consumers can use the shipped adapters directly:
+
+```python
+from torch.utils.data import DataLoader
+from yolozu.data.synthgen_shard_dataset import (
+    SynthGenShardDataset,
+    collate_synthgen_batch,
+)
+
+dataset = SynthGenShardDataset("/path/to/export", schema_id="animal_v1")
+loader = DataLoader(dataset, batch_size=2, collate_fn=collate_synthgen_batch)
+batch = next(iter(loader))
 ```
 
-3. Run the YOLOZU handoff checks against `/tmp/yolozu_synthgen_export`.
+For agents, inspect `tools/manifest.json` entry `smoke_synthgen`, use `--help`,
+read `smoke_synthgen_summary.json`, and stop if `status != "ok"`,
+`qa_report.accepted != true`, or any `truth_equal` field is false.
+
+The pinned run, hashes, provider/privacy boundary, rejected path, and measured
+results are in
+[`reports/synthgen_handoff_2026-07-28.md`](../reports/synthgen_handoff_2026-07-28.md).
 
 ## Handoff checks to run in YOLOZU
 
@@ -220,7 +243,7 @@ python3 tools/eval_synthgen.py \
   --output reports/synthgen_eval.json
 ```
 
-4. Run the bundled end-to-end smoke:
+4. Run the bundled end-to-end smoke on an existing export:
 
 ```bash
 python3 tools/smoke_synthgen.py \
@@ -248,6 +271,8 @@ Integration is ready when all of the following are true:
   - `reports/smoke_synthgen_eval.json`
   - `reports/smoke_synthgen_summary.json`
 - path resolution is explicit: either keep predictions under `shards/` or rewrite any shard-relative asset paths before evaluation
+- a fresh cross-repo run additionally records generator/YOLOZU commits, strict
+  QA, truth equality, loader summaries, and artifact hashes
 
 ## Versioning rule
 

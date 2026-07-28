@@ -75,6 +75,14 @@ MVP training/eval policy in YOLOZU uses `vis == 2` for keypoint regression metri
 
 ## Canonical ingestion path
 
+For a fresh sibling-repository qualification, use the one-command wrapper:
+
+```bash
+./.venv/bin/python tools/smoke_synthgen.py \
+  --synthgen-repo ../YOLOZU-synthgen \
+  --output-dir /tmp/yolozu-synthgen-qualification
+```
+
 1. Validate interface contract:
 
 ```bash

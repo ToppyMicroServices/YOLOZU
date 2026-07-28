@@ -35,6 +35,18 @@ These templates pin:
 
 ## Commands
 
+Generate and qualify a fresh cross-repo handoff:
+
+```bash
+./.venv/bin/python tools/smoke_synthgen.py \
+  --synthgen-repo ../YOLOZU-synthgen \
+  --output-dir /tmp/yolozu-synthgen-qualification
+```
+
+The generated prediction file is an oracle interface self-check, not evidence
+of model accuracy. The qualified background path is the deterministic
+`internal_stub`; no external generative provider is currently qualified.
+
 Validate interface contract:
 
 ```bash
@@ -75,3 +87,5 @@ Path note:
 - YOLOZU only guarantees ingestion for records that satisfy `schema_version="1"` of `synthgen_sample`.
 - If generator-side schema evolves, add a new versioned interface contract here before enabling it in YOLOZU adapters.
 - For repo-to-repo handoff, use `docs/synthgen_repo_integration.md` as the acceptance checklist.
+- Machine and agent consumers should use `smoke_synthgen_summary.json` and fail
+  on rejected QA or changed truth tensors.

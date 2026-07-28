@@ -278,22 +278,25 @@ This makes the path rule explicit:
 
 \section{Verified cross-repo probe}
 
-This handoff was exercised end to end on April 2, 2026 using a local \path{YOLOZU-synthgen} checkout and the CPU path. GPU or MPS support is not required for these intake checks.
+This handoff was re-qualified with the Open3D renderer on July 28, 2026.
+\texttt{render\_only} and the deterministic \texttt{internal\_stub} for
+\texttt{bg\_only\_inpaint} are locally qualified. No external generative
+provider or model-training quality is qualified.
 
-\subsection{Generator-side commands}
+\subsection{One-command qualification}
 
 \begin{lstlisting}[language=bash]
-PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen generate-demo-dataset \
-  --output-dir /tmp/yolozu_synthgen_demo \
-  --num-train 2 \
-  --num-val 1
-
-PYTHONPATH=src ./.venv/bin/python -m yolozu_synthgen export-yolozu-synthgen \
-  --shards-root /tmp/yolozu_synthgen_demo/shards \
-  --output-dir /tmp/yolozu_synthgen_export
+./.venv/bin/python tools/smoke_synthgen.py \
+  --synthgen-repo ../YOLOZU-synthgen \
+  --output-dir /tmp/yolozu-synthgen-qualification
 \end{lstlisting}
 
-\subsection{YOLOZU-side acceptance checks}
+The command refuses to replace an existing generated handoff. It records both
+source commits, QA, renderer-owned truth equality, loader summaries, an overlay,
+hashes, and an oracle interface self-check. The oracle result is not model
+accuracy.
+
+\subsection{Existing-export acceptance checks}
 
 \begin{lstlisting}[language=bash]
 python3 tools/validate_synthgen_contract.py \
