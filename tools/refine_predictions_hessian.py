@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import logging
 import math
@@ -39,8 +40,14 @@ def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="Apply opt-in Hessian offset refinement and emit a bounded research report."
+    )
     p.add_argument("--predictions", required=True, help="Input predictions JSON.")
     p.add_argument("--output", required=True, help="Output predictions JSON.")
     p.add_argument("--config", default=None, help="Optional YAML/JSON config for refinement settings.")
@@ -728,6 +735,7 @@ def _refine_entry(
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     args = _resolve_runtime_args(args)
+    started = time.perf_counter()
 
     in_path = _resolve(args.predictions)
     out_path = _resolve(args.output)
@@ -791,6 +799,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = refined
 
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    elapsed_seconds = time.perf_counter() - started
 
     if args.log_output and log_images is not None:
         log_path = _resolve(str(args.log_output))
@@ -808,11 +817,18 @@ def main(argv: list[str] | None = None) -> int:
                 "research_output_artifact": str(out_path),
                 "report_artifact": str(log_path),
                 "latency_overhead": {
-                    "source": "not_measured_by_refine_predictions_hessian",
-                    "value": None,
+                    "source": "measured_by_refine_predictions_hessian",
+                    "unit": "seconds",
+                    "total": float(elapsed_seconds),
+                    "prediction_images": len(predictions),
+                    "seconds_per_image": float(elapsed_seconds / max(1, len(predictions))),
+                },
+                "artifact_hashes": {
+                    "input_sha256": _sha256(in_path),
+                    "output_sha256": _sha256(out_path),
                 },
                 "rollback": {
-                    "status": "not_applicable",
+                    "status": "separate_artifact",
                     "reason": "Hessian refinement writes a separate output artifact and does not mutate the input predictions.",
                 },
                 "promotion_gate": {

@@ -59,6 +59,11 @@ class TestDistillPredictionsCLI(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out.exists())
             self.assertTrue(report.exists())
+            research = json.loads(report.read_text())["research_report"]
+            self.assertEqual(research["lane"], "distillation")
+            self.assertEqual(research["promotion_gate"]["decision"], "review_required")
+            self.assertEqual(len(research["artifact_hashes"]["output_sha256"]), 64)
+            self.assertGreaterEqual(research["latency_overhead"]["total"], 0.0)
 
     def test_accepts_yaml_config(self):
         repo_root = Path(__file__).resolve().parents[1]

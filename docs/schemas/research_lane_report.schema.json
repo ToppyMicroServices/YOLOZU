@@ -21,7 +21,8 @@
       "enum": [
         "ttt",
         "continual",
-        "hessian"
+        "hessian",
+        "distillation"
       ]
     },
     "stable_baseline_artifact": {

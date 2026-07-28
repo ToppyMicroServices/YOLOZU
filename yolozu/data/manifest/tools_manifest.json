@@ -74,6 +74,11 @@
     }
   },
   "contracts": {
+    "artifact_research_qualification_json": {
+      "producer": "python3 tools/qualify_artifact_research.py",
+      "schema": "docs/schemas/artifact_research_qualification.schema.json",
+      "summary": "Measured three-repeat qualification summary for offline distillation and Hessian research lanes."
+    },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
       "schema": "docs/schemas/coco_eval_report.schema.json",
@@ -118,6 +123,10 @@
       "producer": "python3 tools/run_reference_adapter_regression.py",
       "schema": "docs/schemas/reference_adapter_regression_report.schema.json",
       "summary": "Reference adapter regression report with schema/consistency/metric/speed gate results."
+    },
+    "research_lane_report_json": {
+      "schema": "docs/schemas/research_lane_report.schema.json",
+      "summary": "Research-only artifact boundary with measured overhead, rollback, and an explicit promotion decision."
     },
     "run_meta_json": {
       "schema": "docs/schemas/run_meta.schema.json",
@@ -2260,7 +2269,8 @@
         ],
         "produces": [
           "predictions_json",
-          "metrics_report_json"
+          "metrics_report_json",
+          "research_lane_report_json"
         ]
       },
       "docs": [
@@ -3258,7 +3268,8 @@
         ],
         "produces": [
           "predictions_json",
-          "metrics_report_json"
+          "metrics_report_json",
+          "research_lane_report_json"
         ]
       },
       "docs": [
@@ -3275,7 +3286,7 @@
             "scope": "path"
           },
           {
-            "description": "Writes the distillation report JSON (metrics + matched/added counts + parameters).",
+            "description": "Writes metrics, measured latency, artifact hashes, rollback, and promotion boundary.",
             "flag": "--output-report",
             "kind": "file",
             "scope": "path"
@@ -4138,7 +4149,7 @@
           "required": false
         },
         {
-          "default": 1e-06,
+          "default": 0.000001,
           "flag": "--min-depth",
           "kind": "number",
           "name": "min_depth",
@@ -9451,7 +9462,7 @@
           "required": false
         },
         {
-          "default": 1e-08,
+          "default": 1E-8,
           "flag": "--metric-atol",
           "kind": "number",
           "name": "metric_atol",
@@ -11598,7 +11609,132 @@
           "predictions_json"
         ],
         "produces": [
+          "artifact_research_qualification_json"
+        ]
+      },
+      "docs": [
+        "docs/distillation.md",
+        "docs/hessian_solver.md",
+        "docs/research_lanes.md",
+        "docs/schemas/artifact_research_qualification.schema.json",
+        "docs/schemas/research_lane_report.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates a fresh evidence bundle and refuses to replace an existing directory.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/qualify_artifact_research.py",
+      "examples": [
+        {
+          "command": "./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research",
+          "description": "Run three deterministic distillation/Hessian repetitions plus real COCO evaluation."
+        }
+      ],
+      "id": "qualify_artifact_research",
+      "inputs": [
+        {
+          "default": "reports/predictions_rtdetr_pose_baseline.json",
+          "flag": "--student",
+          "kind": "file",
+          "name": "student",
+          "required": false
+        },
+        {
+          "default": "data/smoke/predictions/predictions_dummy.json",
+          "flag": "--teacher",
+          "kind": "file",
+          "name": "teacher",
+          "required": false
+        },
+        {
+          "default": "data/coco128",
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "default": "train2017",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": "configs/examples/distill_predictions.yaml",
+          "flag": "--distill-config",
+          "kind": "file",
+          "name": "distill_config",
+          "required": false
+        },
+        {
+          "default": "configs/runtime/hessian_refine_example.yaml",
+          "flag": "--hessian-config",
+          "kind": "file",
+          "name": "hessian_config",
+          "required": false
+        },
+        {
+          "default": "reports/artifact_research_qualification",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "default": 3,
+          "flag": "--repeats",
+          "kind": "number",
+          "name": "repeats",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": "reports/artifact_research_qualification/qualification_summary.json",
+          "description": "Hash-bound metrics, repetition results, negative controls, and hold decisions.",
+          "kind": "file",
+          "name": "artifact_research_qualification_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "pycocotools",
+          "torch"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates.",
+      "tags": [
+        "distillation",
+        "evidence",
+        "hessian",
+        "research",
+        "reproducibility"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
           "predictions_json"
+        ],
+        "produces": [
+          "predictions_json",
+          "research_lane_report_json"
         ]
       },
       "docs": [
@@ -11615,6 +11751,12 @@
           {
             "description": "Writes refined predictions JSON.",
             "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes measured latency, hashes, rollback, and promotion boundary.",
+            "flag": "--log-output",
             "kind": "file",
             "scope": "path"
           }
@@ -14714,7 +14856,8 @@
     {
       "contracts": {
         "produces": [
-          "predictions_json"
+          "predictions_json",
+          "research_lane_report_json"
         ]
       },
       "docs": [

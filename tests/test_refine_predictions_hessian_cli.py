@@ -93,6 +93,8 @@ class TestRefinePredictionsHessianCLI(unittest.TestCase):
             self.assertEqual(report.get("kind"), "research_lane_report")
             self.assertEqual(report.get("lane"), "hessian")
             self.assertEqual((report.get("promotion_gate") or {}).get("decision"), "review_required")
+            self.assertEqual(len((report.get("artifact_hashes") or {}).get("output_sha256", "")), 64)
+            self.assertGreaterEqual(float((report.get("latency_overhead") or {}).get("total", -1.0)), 0.0)
 
 
 if __name__ == "__main__":
