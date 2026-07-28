@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from yolozu.predictions import validate_predictions_payload
+
 try:
     import torch  # type: ignore
 except Exception:  # pragma: no cover
@@ -73,6 +75,9 @@ class TestRefinePredictionsHessianCLI(unittest.TestCase):
 
             payload = json.loads(out_path.read_text())
             self.assertIn("predictions", payload)
+            validate_predictions_payload(payload, strict=False)
+            self.assertEqual(payload["meta"]["adapter"], "hessian_postprocess")
+            self.assertIsInstance(payload["meta"]["config"], str)
             det0 = payload["predictions"][0]["detections"][0]
             self.assertIn("hessian_refinement", det0)
             self.assertIn("offsets", det0.get("hessian_refinement", {}))

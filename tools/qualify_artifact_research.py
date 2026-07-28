@@ -93,6 +93,8 @@ def _sha256(path: Path) -> str:
 
 def _canonical_json_sha256(path: Path) -> str:
     payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and isinstance(payload.get("predictions"), list):
+        payload = payload["predictions"]
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
