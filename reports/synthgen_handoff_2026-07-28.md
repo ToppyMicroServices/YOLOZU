@@ -45,6 +45,9 @@ does not delete or replace it.
 - generator training-loader batch: 2 images, `[2,3,768,768]`
 - YOLOZU bridge batch: 2 images, `[2,768,768,3]`; keypoints
   `[2,2,9,3]`
+- shard and stream adapters: 5/5 `animal_v1`, 0/5 `mechanical_v1`
+- variable instance counts: `[2,1,2,1,3]`; padded keypoint batch
+  `[5,3,9,3]`
 - oracle interface self-check: visible-keypoint error 0 px, depth MAE 0,
   instance pixel accuracy 1.0, semantic mIoU 1.0
 

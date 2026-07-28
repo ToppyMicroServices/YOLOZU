@@ -167,7 +167,7 @@
     "recipes/synthgen/README.md": "d957e334a652ef46fc79a8a90c434d7240f4d316abc5a63f202af8204859ae9e",
     "release.sh": "20059faf4c482cc1350c8a6b4041e8c75a972fd1b2fad68cd2cace761a6b097c",
     "reports/dataset_roundtrip_2026-07-27.md": "7536cd76a583336ddd3212a7fa8f281e755bd0d212ebd73a32412e34b02ee7e0",
-    "reports/synthgen_handoff_2026-07-28.md": "d5617a1f12042f1d7a406d9082ccb605b013b16f6b1326b1be240d4aa02e5346",
+    "reports/synthgen_handoff_2026-07-28.md": "93cd00f5f28c4c22ac755c240cd143e8f24bf14b45615c8b0381501e226a1af8",
     "reports/ttt_evidence_2026-07-27.md": "540807ca0c84a8deded38872ec56c868a3baa57e30cf4f334e66f04da10959ef",
     "rtdetr_pose/README.md": "aec601490c70aea50aa57e47fd627ac726c705a3935b962ff077c3dee10c0328",
     "rtdetr_pose/tools/train_continual.py": "79f959acb617dd2915a775a937720cab3cec9f4be05e1aff7e6bb7eaac52abdb",
