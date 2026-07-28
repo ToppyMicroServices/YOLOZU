@@ -38,6 +38,22 @@ This keeps the stable lane and research lane readable side by side.
 
 ## One-command artifact qualification
 
+For the tracked three-seed naive-versus-checkpoint-distillation continual
+diagnostic:
+
+```bash
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --output-dir /tmp/yolozu-sdft-qualification
+```
+
+The command uses real COCOeval, an explicit initial-checkpoint FWT baseline,
+identical data/order/budget checks, and a schema-defined JSON summary. It
+refuses existing output and archive paths. The repository implementation is an
+SDFT-style detector regularizer, not a faithful reproduction of the
+demonstration-conditioned language-model SDFT algorithm. Its bounded local
+domain shift remains Research and cannot satisfy the independent-reproduction
+gate by itself.
+
 For offline distillation and Hessian refinement, the shortest measured path is:
 
 ```bash

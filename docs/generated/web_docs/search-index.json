@@ -254,8 +254,8 @@
   {
     "href": "commands.html#tool-eval-continual",
     "kind": "command",
-    "search_text": "eval_continual Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. research tools/eval_continual.py --run-json --device --metric --metric-key --image-size --max-images --iou-threshold --min-score --keep-per-image --success-trans --success-rot-deg --force --output --html",
-    "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.",
+    "search_text": "eval_continual Evaluate a continual learning run with real COCOeval, simple mAP proxy, or pose metrics; define FWT only from an explicit initial-checkpoint baseline; and write hash-bound JSON+HTML. research tools/eval_continual.py --run-json --device --metric --metric-key --image-size --max-images --iou-threshold --min-score --keep-per-image --baseline-checkpoint --success-trans --success-rot-deg --force --output --html",
+    "summary": "Evaluate a continual learning run with real COCOeval, simple mAP proxy, or pose metrics; define FWT only from an explicit initial-checkpoint baseline; and write hash-bound JSON+HTML.",
     "title": "eval_continual"
   },
   {
@@ -625,8 +625,8 @@
   {
     "href": "commands.html#tool-prepare-ttt-domain-shift-target",
     "kind": "command",
-    "search_text": "prepare_ttt_domain_shift_target Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence. research scripts/prepare_ttt_domain_shift_target.py --dataset-root --split --out --corruption --severity --seed --max-images --copy-labels --no-copy-labels --force --recipe-out",
-    "summary": "Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence.",
+    "search_text": "prepare_ttt_domain_shift_target Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement. research scripts/prepare_ttt_domain_shift_target.py --dataset-root --split --out --corruption --severity --seed --max-images --copy-labels --no-copy-labels --force --recipe-out",
+    "summary": "Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement.",
     "title": "prepare_ttt_domain_shift_target"
   },
   {
@@ -649,6 +649,13 @@
     "search_text": "qualify_artifact_research Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. research tools/qualify_artifact_research.py --student --teacher --dataset --split --distill-config --hessian-config --output-dir --repeats",
     "summary": "Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates.",
     "title": "qualify_artifact_research"
+  },
+  {
+    "href": "commands.html#tool-qualify-sdft-continual",
+    "kind": "command",
+    "search_text": "qualify_sdft_continual Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates. research tools/qualify_sdft_continual.py --spec --output-dir --archive",
+    "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.",
+    "title": "qualify_sdft_continual"
   },
   {
     "href": "commands.html#tool-refine-predictions-hessian",
@@ -702,8 +709,8 @@
   {
     "href": "commands.html#tool-rtdetr-pose-train-continual",
     "kind": "command",
-    "search_text": "rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract). research rtdetr_pose/tools/train_continual.py --config --run-dir --replay-size --replay-fraction --replay-per-task-cap",
-    "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract).",
+    "search_text": "rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance. research rtdetr_pose/tools/train_continual.py --config --run-dir --initial-checkpoint --replay-size --replay-fraction --replay-per-task-cap",
+    "summary": "Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance.",
     "title": "rtdetr_pose_train_continual"
   },
   {
@@ -1006,6 +1013,13 @@
     "search_text": "YOLOZU Run Meta Contract Reproducibility metadata emitted at runs/<run_id>/reports/run_meta.json. command dependency_lock git hardware preprocess runtime schema_version docs/schemas/run_meta.schema.json",
     "summary": "Reproducibility metadata emitted at runs/<run_id>/reports/run_meta.json.",
     "title": "YOLOZU Run Meta Contract"
+  },
+  {
+    "href": "schemas.html#schema-sdft-continual-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision environment initial_checkpoints inputs kind protocol runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU SDFT-Style Continual Qualification"
   },
   {
     "href": "schemas.html#schema-seg-dataset-schema",

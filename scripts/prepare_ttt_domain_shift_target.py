@@ -31,6 +31,8 @@ SUPPORTED_CORRUPTIONS = (
     "contrast",
     "jpeg",
 )
+OUTPUT_MARKER = ".yolozu_domain_shift_output.json"
+OUTPUT_KIND = "yolozu_domain_shift_output"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -57,7 +59,7 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--recipe-out",
         default=None,
-        help="Optional recipe JSON output path (default: <out>/domain_shift_recipe.json).",
+        help="Optional recipe JSON path inside --out (default: <out>/domain_shift_recipe.json).",
     )
     return p
 
@@ -94,6 +96,48 @@ def _dataset_images_digest(paths: list[tuple[str, Path]]) -> str:
         hasher.update(_sha256_file(path).encode("utf-8"))
         hasher.update(b"\n")
     return hasher.hexdigest()
+
+
+def _tree_digest(root: Path) -> str | None:
+    if not root.is_dir():
+        return None
+    hasher = hashlib.sha256()
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        hasher.update(path.relative_to(root).as_posix().encode("utf-8"))
+        hasher.update(b"\0")
+        hasher.update(_sha256_file(path).encode("ascii"))
+        hasher.update(b"\n")
+    return hasher.hexdigest()
+
+
+def _validate_output(*, out_root: Path, dataset_root: Path, force: bool) -> None:
+    if out_root.is_symlink():
+        raise SystemExit(f"refusing symlink output root: {out_root}")
+
+    resolved_out = out_root.resolve()
+    resolved_source = dataset_root.resolve()
+    protected = {Path("/").resolve(), Path.home().resolve(), repo_root.resolve()}
+    if resolved_out in protected:
+        raise SystemExit(f"refusing protected output root: {resolved_out}")
+    if resolved_out == resolved_source or resolved_out.is_relative_to(resolved_source) or resolved_source.is_relative_to(resolved_out):
+        raise SystemExit(f"source and output roots must not overlap: source={resolved_source} output={resolved_out}")
+
+    if not out_root.exists():
+        return
+    if not out_root.is_dir():
+        raise SystemExit(f"output exists and is not a directory: {out_root}")
+    if not force:
+        raise SystemExit(f"output already exists: {out_root} (use --force)")
+
+    marker_path = out_root / OUTPUT_MARKER
+    if marker_path.is_symlink() or not marker_path.is_file():
+        raise SystemExit(f"refusing to replace unowned output directory (missing {OUTPUT_MARKER}): {out_root}")
+    try:
+        marker = json.loads(marker_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"refusing invalid output ownership marker: {marker_path}") from exc
+    if marker.get("kind") != OUTPUT_KIND or marker.get("output_root") != str(resolved_out):
+        raise SystemExit(f"refusing mismatched output ownership marker: {marker_path}")
 
 
 def _apply_corruption(image: Image.Image, *, corruption: str, severity: int, seed: int) -> Image.Image:
@@ -143,14 +187,11 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--severity must be in [1, 5]")
 
     dataset_root = _resolve_path(str(args.dataset_root))
-    if not dataset_root.exists():
+    if not dataset_root.is_dir():
         raise SystemExit(f"dataset root not found: {dataset_root}")
 
     out_root = _resolve_path(str(args.out))
-    if out_root.exists():
-        if not args.force:
-            raise SystemExit(f"output already exists: {out_root} (use --force)")
-        shutil.rmtree(out_root)
+    _validate_output(out_root=out_root, dataset_root=dataset_root, force=bool(args.force))
 
     manifest = build_manifest(str(dataset_root), split=str(args.split))
     split = str(manifest.get("split") or args.split)
@@ -160,20 +201,63 @@ def main(argv: list[str] | None = None) -> int:
     if not records:
         raise SystemExit(f"no images found for split '{split}' in {dataset_root}")
 
-    out_images_dir = out_root / "images" / split
-    out_labels_dir = out_root / "labels" / split
-    out_images_dir.mkdir(parents=True, exist_ok=True)
-    out_labels_dir.mkdir(parents=True, exist_ok=True)
-
-    written_images: list[tuple[str, Path]] = []
+    source_labels_split = dataset_root / "labels" / split
+    if bool(args.copy_labels) and not source_labels_split.is_dir():
+        raise SystemExit(f"labels split not found: {source_labels_split}")
+    for path in source_labels_split.rglob("*") if source_labels_split.is_dir() else ():
+        if path.is_symlink():
+            raise SystemExit(f"refusing symlink in source labels: {path}")
     for rec in records:
         image_raw = str(rec.get("image") or "")
         if not image_raw:
             continue
-        src_image = Path(image_raw)
-        if not src_image.is_absolute():
-            src_image = dataset_root / src_image
-        src_image = src_image.resolve()
+        candidate = Path(image_raw)
+        if not candidate.is_absolute():
+            candidate = dataset_root / candidate
+        if candidate.is_symlink():
+            raise SystemExit(f"refusing symlink source image: {candidate}")
+        resolved = candidate.resolve()
+        if not resolved.is_relative_to(dataset_root.resolve()):
+            raise SystemExit(f"refusing source image outside dataset root: {resolved}")
+        if not resolved.is_file():
+            raise SystemExit(f"missing source image: {resolved}")
+
+    if out_root.exists():
+        shutil.rmtree(out_root)
+
+    out_images_dir = out_root / "images" / split
+    out_labels_dir = out_root / "labels" / split
+    out_images_dir.mkdir(parents=True, exist_ok=True)
+    out_labels_dir.mkdir(parents=True, exist_ok=True)
+    (out_root / OUTPUT_MARKER).write_text(
+        json.dumps(
+            {
+                "kind": OUTPUT_KIND,
+                "version": 1,
+                "output_root": str(out_root.resolve()),
+                "source_dataset_root": str(dataset_root.resolve()),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    written_images: list[tuple[str, Path]] = []
+    source_images: list[tuple[str, Path]] = []
+    for rec in records:
+        image_raw = str(rec.get("image") or "")
+        if not image_raw:
+            continue
+        src_image_candidate = Path(image_raw)
+        if not src_image_candidate.is_absolute():
+            src_image_candidate = dataset_root / src_image_candidate
+        if src_image_candidate.is_symlink():
+            raise SystemExit(f"refusing symlink source image: {src_image_candidate}")
+        src_image = src_image_candidate.resolve()
+        if not src_image.is_relative_to(dataset_root.resolve()):
+            raise SystemExit(f"refusing source image outside dataset root: {src_image}")
         if not src_image.exists():
             raise SystemExit(f"missing source image: {src_image}")
         try:
@@ -195,17 +279,19 @@ def main(argv: list[str] | None = None) -> int:
             )
             shifted.save(out_image)
         written_images.append((image_key, out_image))
+        source_images.append((image_key, src_image))
 
-    source_labels_split = dataset_root / "labels" / split
     if bool(args.copy_labels):
-        if not source_labels_split.exists():
-            raise SystemExit(f"labels split not found: {source_labels_split}")
         shutil.copytree(source_labels_split, out_labels_dir, dirs_exist_ok=True)
     classes_json = source_labels_split / "classes.json"
     if classes_json.exists():
         shutil.copy2(classes_json, out_labels_dir / "classes.json")
 
     recipe_path = _resolve_path(str(args.recipe_out)) if args.recipe_out else (out_root / "domain_shift_recipe.json")
+    if not recipe_path.resolve().is_relative_to(out_root.resolve()):
+        raise SystemExit(f"--recipe-out must stay inside --out: {recipe_path}")
+    if recipe_path.is_symlink():
+        raise SystemExit(f"refusing symlink recipe output: {recipe_path}")
     recipe_path.parent.mkdir(parents=True, exist_ok=True)
 
     recipe_id = f"{args.corruption}_s{int(severity)}_seed{int(args.seed)}"
@@ -219,7 +305,10 @@ def main(argv: list[str] | None = None) -> int:
         "source_dataset_root": str(dataset_root),
         "target_dataset_root": str(out_root),
         "image_count": int(len(written_images)),
+        "source_images_sha256": _dataset_images_digest(source_images),
         "images_sha256": str(images_digest),
+        "source_labels_sha256": _tree_digest(source_labels_split),
+        "output_labels_sha256": _tree_digest(out_labels_dir),
         "deterministic": True,
     }
     recipe = {

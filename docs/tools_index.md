@@ -151,11 +151,14 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 
 ## Continual learning (anti-forgetting)
 
+- Three-seed naive-versus-checkpoint-distillation qualification:
+  - `./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification`
+  - Runs real COCOeval, baseline-relative FWT, fairness/hash/cost checks, promotion decisions, and a checksum bundle.
 - Train (runner that wires replay + checkpoint-based self-distillation):
-  - `python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml`
+  - `python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --initial-checkpoint runs/initial/checkpoint.pt`
   - Internally passes `--self-distill-from <prev_ckpt>` (plus optional replay / EWC / SI) into `rtdetr_pose/tools/train_minimal.py`.
 - Evaluate forgetting / per-task summaries:
-  - `python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --max-images 50`
+  - `python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --metric coco --metric-key map50_95 --max-images 50`
   - On macOS, `--device mps` is supported when `yolozu doctor` reports `mps_available=true`.
   - Docs: `docs/continual_learning.md`
 - Decide whether the candidate checkpoint should be promoted, reviewed, or held:

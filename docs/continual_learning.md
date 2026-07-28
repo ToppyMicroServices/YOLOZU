@@ -8,7 +8,7 @@ Continual learning is **opt-in**. It is not enabled by YOLOZU's default validati
 
 The baseline strategy is:
 
-- **Memoryless**: self-distillation from the previous checkpoint (`--self-distill-from`) so the new model stays close to the old one (SDFT-style objective; reverse-KL on logits by default).
+- **Memoryless**: self-distillation from the previous checkpoint (`--self-distill-from`) so the new model stays close to the old one (an SDFT-style checkpoint regularizer; reverse-KL on logits by default).
 - **Memory**: add a small **replay buffer** (default 50 images, reservoir sampling) and train on *(current task + replay)* while also self-distilling.
 - Optional: **LoRA** to restrict trainable parameters (parameter-efficient continual fine-tuning).
 
@@ -195,6 +195,20 @@ Cons:
 - depends on quantization backend support
 - in practice, this repo treats the quantized path as more experimental than plain LoRA
 
+## Method boundary and current literature
+
+YOLOZU's implementation distills detector logits and boxes from the previous
+checkpoint. It is not a faithful implementation of the
+demonstration-conditioned, on-policy language-model procedure introduced in
+“Self-Distillation Enables Continual Learning.” The shared idea is
+self-distillation for retention; the data construction, model family, and
+objective are different. Results from the paper therefore cannot be transferred
+to this detector lane without direct evidence.
+
+The repository also does not treat a low forgetting number alone as efficacy:
+old-task retention, new-task adaptation, BWT, baseline-relative FWT, runtime,
+memory, and repeated-seed behavior must be read together.
+
 ## References (self-distillation background)
 
 This repo’s checkpoint-based self-distillation is a pragmatic anti-forgetting regularizer; it is not intended as a faithful reproduction of any single paper.
@@ -217,29 +231,68 @@ yolozu demo continual --compare --markdown
 
 This is a **toy synthetic** demo (not an image model). For real continual fine-tuning on image datasets, use the `rtdetr_pose` workflow below.
 
+## One-command qualification
+
+The shortest repository-tracked image-model comparison is:
+
+```bash
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --output-dir /tmp/yolozu-sdft-qualification
+```
+
+It generates one deterministic Gaussian-blur target, builds one initial
+checkpoint per seed, runs naive and checkpoint-distillation sequences for seeds
+11/22/33 with identical data/order/budget, evaluates every matrix cell through
+real `pycocotools` COCOeval, emits promotion decisions, and creates a checksum
+archive. Both `--output-dir` and the archive must be new paths.
+
+The machine-readable entrypoint is
+`<output-dir>/qualification_summary.json`, defined by
+[`schemas/sdft_continual_qualification.schema.json`](schemas/sdft_continual_qualification.schema.json).
+This makes the result consumable by scripts and agents without parsing console
+text. The bounded COCO128 blur sequence is diagnostic evidence, not an external
+benchmark or production promotion.
+
 ## Quick start (domain-incremental)
 
 1) Create a continual config (start from the example):
 
 - `configs/continual/rtdetr_pose_domain_inc_example.yaml`
 
-2) Run continual fine-tuning:
+2) Run continual fine-tuning from an explicit initial checkpoint:
 
 ```bash
 python3 rtdetr_pose/tools/train_continual.py \
-  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
+  --config configs/continual/rtdetr_pose_domain_inc_example.yaml \
+  --initial-checkpoint runs/initial/checkpoint.pt
 ```
 
 To run **memoryless**, set `continual.replay_size: 0` in the config (or pass `--replay-size 0`).
 
-3) Evaluate forgetting (mAP proxy or pose metrics + CL summary metrics):
+3) Evaluate with real COCOeval and baseline-relative FWT:
 
 ```bash
 python3 tools/eval_continual.py \
   --run-json runs/continual/<run>/continual_run.json \
   --device cpu \
+  --metric coco \
+  --metric-key map50_95 \
   --max-images 50
 ```
+
+`--metric coco` requires `pycocotools`. `simple_map` remains a lightweight
+proxy for wiring checks; it is not used by the qualification command.
+
+Summary definitions follow the task matrix convention:
+
+- average accuracy: final score averaged over all tasks
+- forgetting: best prior score minus final score, averaged over tasks that had a later task
+- BWT: final score minus the score immediately after learning that prior task
+- FWT: score immediately before learning a future task minus that task's explicit initial-checkpoint baseline
+
+FWT is `null` when neither `--baseline-checkpoint` nor
+`continual_run.json.initial_checkpoint` is available. A raw pre-training score
+is retained in `summary.details`, but it is not mislabeled as FWT.
 
 On macOS, you can switch `--device` to `mps` when `yolozu doctor --output -` reports `runtime_capabilities.torch.mps_available: true`. In other words, MPS is supported when `torch.backends.mps.is_available()` is `true`. If MPS is not available on that machine, use `cpu`.
 
@@ -382,52 +435,30 @@ GitHub Actions step shape:
   run: python3 tools/continual_decide.py --eval-json runs/continual/${RUN_ID}/continual_eval.json --run-json runs/continual/${RUN_ID}/continual_run.json --curation-json reports/continual_curation.json --max-forgetting 0.05 --min-new-task-score 0.40 --min-old-task-final 0.40 --min-reviewed-labels 20 --min-highconf-pseudo-labels 50 --min-total-curated-examples 60
 ```
 
-## Measured smoke run (what we actually validated)
+## Evidence status
 
-We ran a tiny two-task continual-learning smoke experiment in this repo to verify that the memoryless SDFT path is really exercised.
-
-Setup:
-- source data: a small deterministic slice of `data/coco128`
-- Task A: 8 train images + 4 val images
-- Task B: 8 train images + 4 val images
-- device: `cpu`
-- `image_size=160`
-- `batch_size=1`
-- `max_steps=2`
-- replay: disabled (`replay_size: 0`)
-
-We compared:
-- naive sequential fine-tune: Task B resumes from Task A without a teacher checkpoint
-- memoryless SDFT: Task B resumes from Task A and also receives `--self-distill-from <task_a_checkpoint>`
-
-Observed facts from the measured run:
-- the SDFT run recorded `self_distill_from` in `task01_task_b/run_record.json`
-- the SDFT run wrote `loss_sdft`, `loss_sdft_bbox`, and `loss_sdft_logits` into `task01_task_b/metrics.json`
-- the naive run did not emit those SDFT-specific loss terms
-
-Observed task-B losses in that smoke run:
-
-| Run | Teacher on Task B | Final Task-B loss | Distillation-only terms |
-|---|---|---:|---|
-| naive | none | `2.673` | none |
-| SDFT | Task A checkpoint | `1.975` | `loss_sdft=0.187`, `loss_sdft_bbox=0.057`, `loss_sdft_logits=0.130` |
-
-Important limitation:
-- this smoke run used only 2 optimization steps per task and only 4 validation images per task
-- the proxy mAP matrix therefore stayed at `0.0` for both runs
-- so this example validates the SDFT wiring and emitted artifacts, not a meaningful accuracy gain
+The older two-step/four-image smoke only proved that the teacher loss was wired.
+It is not current efficacy evidence. The tracked qualification replaces that
+ad-hoc procedure with three seeds, a fixed spec, current-compatible initial
+checkpoints, real COCOeval, fairness assertions, hashes, cost records, and
+promotion decisions. Efficacy remains `not_established` unless those results
+show a reproducible positive retention/adaptation trade-off.
 
 ## Outputs (train)
 
 `train_continual.py` creates a run folder under `runs/continual/` and writes:
 
-- `continual_run.json` (tasks, checkpoints, config hash, run record)
+- `continual_run.json` (initial checkpoint, tasks, config/model hashes, run record)
 - `replay_buffer.json` (buffer summary)
 - Per-task folders:
   - `checkpoint.pt` (weights-only)
   - `checkpoint_bundle.pt` (optional; if enabled in `train_minimal.py`)
   - `metrics.jsonl/json/csv`
   - `run_record.json`
+
+Each task entry also records the checkpoint and teacher hashes, train/validation
+record hashes, executed command, wall time, and child-process peak RSS (with the
+platform-specific unit stated in the run metadata).
 
 ## Full config schema (code-accurate)
 
@@ -446,6 +477,7 @@ Top-level keys:
 |---|---|---|---|
 | `schema_version` | int | `1` | only `1` supported |
 | `model_config` | str | required | RTDETR pose model JSON path |
+| `initial_checkpoint` | str/null | `null` | optional config form of the pre-task checkpoint/FWT baseline |
 | `train` | object | `{}` | forwarded to `train_minimal.py` (snake_case keys) |
 | `continual` | object | `{}` | CL-specific options |
 | `tasks` | list | required | sequential tasks |
@@ -530,13 +562,14 @@ Top-level keys:
 |---|---|---|
 | `--config` | required | continual YAML/JSON |
 | `--run-dir` | auto timestamp dir | output base dir |
+| `--initial-checkpoint` | `None` | checkpoint used before task 0 and by evaluation as the FWT baseline |
 | `--replay-size` | `None` | overrides `continual.replay_size` |
 | `--replay-fraction` | `None` | overrides `continual.replay_fraction` |
 | `--replay-per-task-cap` | `None` | overrides `continual.replay_per_task_cap` |
 
 ## Notes / caveats
 
-- The current continual evaluation uses `yolozu.simple_map` (CPU-friendly proxy). For full COCO mAP you can switch your workflow to `tools/eval_coco.py` with `pycocotools` installed.
+- `--metric coco` uses the stable in-process COCO API and real `pycocotools` COCOeval. `simple_map` remains available only as a lightweight proxy.
 - `rtdetr_pose` dataset loading scans `*.jpg`, `*.jpeg`, `*.png`, `*.bmp`, `*.tif`, `*.tiff`, `*.webp`, and `*.gif` under `images/<split>/`.
 
 ## References (parameter-efficient tuning background)

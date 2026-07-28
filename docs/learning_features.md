@@ -33,16 +33,13 @@ If you are new to LoRA / QLoRA, start with the plain-language diagrams in [`docs
 Representative commands:
 
 ```bash
-python3 rtdetr_pose/tools/train_continual.py \
-  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
-
-python3 tools/eval_continual.py \
-  --run-json runs/continual/<run>/continual_run.json \
-  --device cpu \
-  --max-images 50
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --output-dir /tmp/yolozu-sdft-qualification
 ```
 
 Artifacts:
+- `<output-dir>/qualification_summary.json` (schema-defined AI/API surface)
+- `<output-dir>/checksums.sha256` and `<output-dir>.tgz`
 - `runs/continual/<run>/continual_run.json` (single source of truth)
 - `runs/continual/<run>/replay_buffer.json` (+ per-task `replay_records.json`)
 - `runs/continual/<run>/continual_eval.{json,html}` (from `eval_continual.py`)

@@ -143,6 +143,11 @@
       "summary": "Run provenance metadata interface contract emitted at runs/<run_id>/reports/run_meta.json.",
       "validator": "python3 tools/validate_run_meta.py <path>"
     },
+    "sdft_continual_qualification_json": {
+      "producer": "python3 tools/qualify_sdft_continual.py --output-dir <fresh-dir>",
+      "schema": "docs/schemas/sdft_continual_qualification.schema.json",
+      "summary": "Three-seed naive-versus-SDFT-style continual qualification with real COCOeval, provenance, fairness checks, and an explicit decision boundary."
+    },
     "seg_dataset_json": {
       "schema": "docs/schemas/seg_dataset.schema.json",
       "summary": "Segmentation dataset.json descriptor produced by tools/prepare_*_seg.py."
@@ -3972,6 +3977,10 @@
       "entrypoint": "tools/eval_continual.py",
       "examples": [
         {
+          "command": "python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --metric coco --metric-key map50_95 --max-images 50",
+          "description": "Evaluate with the real pycocotools COCOeval backend and initial-checkpoint FWT baseline."
+        },
+        {
           "command": "python3 tools/eval_continual.py --run-json runs/continual/<run>/continual_run.json --device cpu --max-images 50",
           "description": "Evaluate and summarize forgetting."
         },
@@ -4041,6 +4050,12 @@
           "required": false
         },
         {
+          "flag": "--baseline-checkpoint",
+          "kind": "file",
+          "name": "baseline_checkpoint",
+          "required": false
+        },
+        {
           "flag": "--success-trans",
           "kind": "number",
           "name": "success_trans",
@@ -4093,13 +4108,15 @@
         "macos_ok": true
       },
       "requires": {
+        "notes": "pycocotools is required only for --metric coco; simple_map and pose use repository evaluators.",
         "python_packages": [
           "torch",
-          "Pillow"
+          "Pillow",
+          "pycocotools"
         ]
       },
       "runner": "python3",
-      "summary": "Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.",
+      "summary": "Evaluate a continual learning run with real COCOeval, simple mAP proxy, or pose metrics; define FWT only from an explicit initial-checkpoint baseline; and write hash-bound JSON+HTML.",
       "tags": [
         "continual",
         "eval",
@@ -11615,13 +11632,13 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes corrupted target dataset root (images/labels split).",
+            "description": "Writes an ownership-marked corrupted target dataset root; --force replaces only a valid owned, non-overlapping, non-symlink output.",
             "flag": "--out",
             "kind": "dir",
             "scope": "tree"
           },
           {
-            "description": "Writes domain shift recipe JSON containing export_settings linkage.",
+            "description": "Writes domain shift recipe JSON inside the owned --out root; external and symlink paths are refused.",
             "flag": "--recipe-out",
             "kind": "file",
             "scope": "path"
@@ -11730,7 +11747,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence.",
+      "summary": "Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement.",
       "tags": [
         "ttt",
         "domain-shift",
@@ -12076,6 +12093,105 @@
         "hessian",
         "research",
         "reproducibility"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "sdft_continual_qualification_json"
+        ]
+      },
+      "docs": [
+        "docs/continual_learning.md",
+        "docs/research_lanes.md",
+        "docs/schemas/sdft_continual_qualification.schema.json",
+        "manual/chapters/14_continual_learning.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates a fresh qualification directory and refuses existing paths.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Creates a compressed checksum bundle and refuses existing paths.",
+            "flag": "--archive",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/qualify_sdft_continual.py",
+      "examples": [
+        {
+          "command": "./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification",
+          "description": "Run the tracked three-seed naive-versus-SDFT-style sequence with real COCOeval."
+        }
+      ],
+      "id": "qualify_sdft_continual",
+      "inputs": [
+        {
+          "default": "configs/continual/sdft_coco128_blur_qualification.json",
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
+          "required": false
+        },
+        {
+          "default": "reports/sdft_continual_qualification",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--archive",
+          "kind": "file",
+          "name": "archive",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": "<output-dir>/qualification_summary.json",
+          "description": "Machine-readable metrics, provenance, fairness checks, and decision boundary.",
+          "kind": "file",
+          "name": "sdft_continual_qualification_json"
+        },
+        {
+          "default": "<output-dir>.tgz",
+          "description": "Full evidence bundle with a checksum manifest.",
+          "kind": "file",
+          "name": "evidence_bundle"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "Pillow",
+          "pycocotools",
+          "torch"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.",
+      "tags": [
+        "continual",
+        "coco",
+        "evidence",
+        "research",
+        "sdft",
+        "self-distillation"
       ]
     },
     {
@@ -13095,6 +13211,10 @@
         {
           "command": "python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --replay-size 0",
           "description": "Memoryless mode (disable replay; still uses previous-checkpoint self-distillation when distill.enabled)."
+        },
+        {
+          "command": "python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --initial-checkpoint runs/initial/checkpoint.pt --replay-size 0",
+          "description": "Start both task training and later FWT evaluation from an explicit current-compatible checkpoint."
         }
       ],
       "id": "rtdetr_pose_train_continual",
@@ -13109,6 +13229,12 @@
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
+          "required": false
+        },
+        {
+          "flag": "--initial-checkpoint",
+          "kind": "file",
+          "name": "initial_checkpoint",
           "required": false
         },
         {
@@ -13153,7 +13279,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from <prev_ckpt> to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract).",
+      "summary": "Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance.",
       "tags": [
         "rtdetr_pose",
         "continual",

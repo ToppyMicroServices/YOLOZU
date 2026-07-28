@@ -128,6 +128,14 @@ BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton p
 には対応しません。安全な変換・評価 wiring はありますが、実データの
 multi-seed efficacy と independent reproduction は未完です。
 
+continual-learning lane には、schema 定義済みの3 seed
+naive-versus-checkpoint-distillation 診断を1 commandで実行する経路があります:
+`./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification`。
+実 COCOeval、initial-checkpoint 基準の FWT、hash、時間、memory、公平性チェックを
+記録します。これは language-model SDFT の忠実な再現ではなく、detector 向けの
+SDFT-style regularizer です。efficacy と independent reproduction が確立するまでは
+Research のままです。
+
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
 を昇格させることはありません。2026-07-27 の限定的な診断bundleは

@@ -614,6 +614,8 @@ def _continual_train(args: argparse.Namespace) -> int:
     cmd = [sys.executable, "rtdetr_pose/tools/train_continual.py", "--config", str(args.config)]
     if args.run_dir:
         cmd.extend(["--run-dir", str(args.run_dir)])
+    if args.initial_checkpoint:
+        cmd.extend(["--initial-checkpoint", str(args.initial_checkpoint)])
     if args.replay_size is not None:
         cmd.extend(["--replay-size", str(int(args.replay_size))])
     if args.replay_fraction is not None:
@@ -656,6 +658,8 @@ def _continual_eval(args: argparse.Namespace) -> int:
         cmd.extend(["--success-trans", str(float(args.success_trans))])
     if args.keep_per_image is not None:
         cmd.extend(["--keep-per-image", str(int(args.keep_per_image))])
+    if args.baseline_checkpoint:
+        cmd.extend(["--baseline-checkpoint", str(args.baseline_checkpoint)])
 
     out = _subprocess_or_die(cmd)
     if out:
@@ -1225,23 +1229,25 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_ct = sub.add_parser("continual-train", aliases=["ct"], help="Run continual fine-tuning for rtdetr_pose.")
     p_ct.add_argument("-c", "--config", required=True, help="YAML/JSON continual learning config.")
     p_ct.add_argument("-r", "--run-dir", default=None, help="Optional run directory (default: runs/continual/<stamp>_rtdetr_pose).")
+    p_ct.add_argument("--initial-checkpoint", default=None, help="Checkpoint used before task 0 and as the FWT baseline.")
     p_ct.add_argument("--replay-size", type=int, default=None, help="Override continual.replay_size (0 disables replay).")
     p_ct.add_argument("--replay-fraction", type=float, default=None, help="Override continual.replay_fraction.")
     p_ct.add_argument("--replay-per-task-cap", type=int, default=None, help="Override continual.replay_per_task_cap.")
     p_ct.set_defaults(_fn=_continual_train)
 
-    p_ce = sub.add_parser("continual-eval", aliases=["ce"], help="Evaluate a continual run (simple mAP proxy or pose metrics).")
+    p_ce = sub.add_parser("continual-eval", aliases=["ce"], help="Evaluate a continual run (COCO, simple mAP proxy, or pose metrics).")
     p_ce.add_argument("-r", "--run-json", required=True, help="Path to runs/.../continual_run.json produced by train_continual.py.")
     p_ce.add_argument("-d", "--device", default="cpu", help="Torch device for export (default: cpu).")
     p_ce.add_argument("--image-size", type=int, default=320, help="Adapter image size (square, default: 320).")
     p_ce.add_argument("--max-images", type=int, default=None, help="Optional cap for export/eval.")
-    p_ce.add_argument("--metric", choices=("simple_map", "pose"), default="simple_map", help="Metric backend (default: simple_map).")
+    p_ce.add_argument("--metric", choices=("coco", "simple_map", "pose"), default="simple_map", help="Metric backend (default: simple_map).")
     p_ce.add_argument("--metric-key", default=None, help="Metric key for CL summaries (default depends on --metric).")
     p_ce.add_argument("--iou-threshold", type=float, default=None, help="Pose matching IoU threshold (default: 0.5).")
     p_ce.add_argument("--min-score", type=float, default=None, help="Pose eval min score (default: 0.0).")
     p_ce.add_argument("--success-rot-deg", type=float, default=None, help="Pose success rotation threshold in degrees (default: 15).")
     p_ce.add_argument("--success-trans", type=float, default=None, help="Pose success translation threshold in meters (default: 0.1).")
     p_ce.add_argument("--keep-per-image", type=int, default=None, help="Keep N per-image summaries (default: 0).")
+    p_ce.add_argument("--baseline-checkpoint", default=None, help="Initial checkpoint used to define FWT.")
     p_ce.add_argument("--output", default=None, help="Output JSON path (default: <run_dir>/continual_eval.json).")
     p_ce.add_argument("--html", default=None, help="Optional HTML report path (default: <run_dir>/continual_eval.html).")
     p_ce.add_argument("--force", action="store_true", help="Overwrite existing prediction/eval outputs.")

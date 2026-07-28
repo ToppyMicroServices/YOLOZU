@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">120 manifest entries with declared maturity, inputs,
+  <p class="lead">121 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -501,16 +501,17 @@ python3 tools/eval_coco.py -d data/coco128 -p reports/legacy_predictions.json --
 </details>
 
 <details class="card" id="tool-eval-continual" data-tool-id="eval_continual"
-  data-search-card data-search-text="eval_continual Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. research tools/eval_continual.py python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device mps --max-images 50 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50 --metric pose --metric-key pose_success">
-  <summary><code>eval_continual</code> — Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true.</summary>
+  data-search-card data-search-text="eval_continual Evaluate a continual learning run with real COCOeval, simple mAP proxy, or pose metrics; define FWT only from an explicit initial-checkpoint baseline; and write hash-bound JSON+HTML. research tools/eval_continual.py python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --metric coco --metric-key map50_95 --max-images 50 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device mps --max-images 50 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50 --metric pose --metric-key pose_success">
+  <summary><code>eval_continual</code> — Evaluate a continual learning run with real COCOeval, simple mAP proxy, or pose metrics; define FWT only from an explicit initial-checkpoint baseline; and write hash-bound JSON+HTML.</summary>
   <div class="meta">
     <span class="badge badge-research">research</span>
     <span><code>tools/eval_continual.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--run-json</code> — required, file</li><li><code>--device</code> — string</li><li><code>--metric</code> — string</li><li><code>--metric-key</code> — string</li><li><code>--image-size</code> — string</li><li><code>--max-images</code> — number</li><li><code>--iou-threshold</code> — number</li><li><code>--min-score</code> — number</li><li><code>--keep-per-image</code> — number</li><li><code>--success-trans</code> — number</li><li><code>--success-rot-deg</code> — number</li><li><code>--force</code> — string</li><li><code>--output</code> — file</li><li><code>--html</code> — file</li></ul>
+  <ul class="check-list"><li><code>--run-json</code> — required, file</li><li><code>--device</code> — string</li><li><code>--metric</code> — string</li><li><code>--metric-key</code> — string</li><li><code>--image-size</code> — string</li><li><code>--max-images</code> — number</li><li><code>--iou-threshold</code> — number</li><li><code>--min-score</code> — number</li><li><code>--keep-per-image</code> — number</li><li><code>--baseline-checkpoint</code> — file</li><li><code>--success-trans</code> — number</li><li><code>--success-rot-deg</code> — number</li><li><code>--force</code> — string</li><li><code>--output</code> — file</li><li><code>--html</code> — file</li></ul>
   <h3>Examples</h3>
-  <pre><code>python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50
+  <pre><code>python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --metric coco --metric-key map50_95 --max-images 50
+python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50
 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device mps --max-images 50
 python3 tools/eval_continual.py --run-json runs/continual/&lt;run&gt;/continual_run.json --device cpu --max-images 50 --metric pose --metric-key pose_success</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/eval_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a></p>
@@ -1271,8 +1272,8 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
 </details>
 
 <details class="card" id="tool-prepare-ttt-domain-shift-target" data-tool-id="prepare_ttt_domain_shift_target"
-  data-search-card data-search-text="prepare_ttt_domain_shift_target Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence. research scripts/prepare_ttt_domain_shift_target.py python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force">
-  <summary><code>prepare_ttt_domain_shift_target</code> — Prepare deterministic domain-shift target dataset and recipe JSON for reproducible TTT evidence.</summary>
+  data-search-card data-search-text="prepare_ttt_domain_shift_target Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement. research scripts/prepare_ttt_domain_shift_target.py python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force">
+  <summary><code>prepare_ttt_domain_shift_target</code> — Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement.</summary>
   <div class="meta">
     <span class="badge badge-research">research</span>
     <span><code>scripts/prepare_ttt_domain_shift_target.py</code></span>
@@ -1324,6 +1325,20 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_artifact_research.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/distillation.md" target="_blank" rel="noopener noreferrer">distillation.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/hessian_solver.md" target="_blank" rel="noopener noreferrer">hessian_solver.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/artifact_research_qualification.schema.json" target="_blank" rel="noopener noreferrer">artifact_research_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/research_lane_report.schema.json" target="_blank" rel="noopener noreferrer">research_lane_report.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/artifact_research_evidence_2026-07-28.md" target="_blank" rel="noopener noreferrer">artifact_research_evidence_2026-07-28.md</a></p>
+</details>
+
+<details class="card" id="tool-qualify-sdft-continual" data-tool-id="qualify_sdft_continual"
+  data-search-card data-search-text="qualify_sdft_continual Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates. research tools/qualify_sdft_continual.py ./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification">
+  <summary><code>qualify_sdft_continual</code> — Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/qualify_sdft_continual.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--spec</code> — default=configs/continual/sdft_coco128_blur_qualification.json, file</li><li><code>--output-dir</code> — default=reports/sdft_continual_qualification, dir</li><li><code>--archive</code> — default=None, file</li></ul>
+  <h3>Examples</h3>
+  <pre><code>./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_sdft_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/sdft_continual_qualification.schema.json" target="_blank" rel="noopener noreferrer">sdft_continual_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/14_continual_learning.tex" target="_blank" rel="noopener noreferrer">14_continual_learning.tex</a></p>
 </details>
 
 <details class="card" id="tool-refine-predictions-hessian" data-tool-id="refine_predictions_hessian"
@@ -1429,17 +1444,18 @@ python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manu
 </details>
 
 <details class="card" id="tool-rtdetr-pose-train-continual" data-tool-id="rtdetr_pose_train_continual"
-  data-search-card data-search-text="rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from &lt;prev_ckpt&gt; to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract). research rtdetr_pose/tools/train_continual.py python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --replay-size 0">
-  <summary><code>rtdetr_pose_train_continual</code> — Continual fine-tuning runner for rtdetr_pose that wires replay + checkpoint-based self-distillation (passes --self-distill-from &lt;prev_ckpt&gt; to train_minimal), with optional LoRA/EWC/SI and a documented QLoRA-compatible path through the trainer config. Backbone swaps are configured via model.backbone.* in the model config (P3/P4/P5 interface contract).</summary>
+  data-search-card data-search-text="rtdetr_pose_train_continual Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance. research rtdetr_pose/tools/train_continual.py python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --replay-size 0 python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --initial-checkpoint runs/initial/checkpoint.pt --replay-size 0">
+  <summary><code>rtdetr_pose_train_continual</code> — Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance.</summary>
   <div class="meta">
     <span class="badge badge-research">research</span>
     <span><code>rtdetr_pose/tools/train_continual.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--config</code> — required, file</li><li><code>--run-dir</code> — dir</li><li><code>--replay-size</code> — number</li><li><code>--replay-fraction</code> — number</li><li><code>--replay-per-task-cap</code> — number</li></ul>
+  <ul class="check-list"><li><code>--config</code> — required, file</li><li><code>--run-dir</code> — dir</li><li><code>--initial-checkpoint</code> — file</li><li><code>--replay-size</code> — number</li><li><code>--replay-fraction</code> — number</li><li><code>--replay-per-task-cap</code> — number</li></ul>
   <h3>Examples</h3>
   <pre><code>python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml
-python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --replay-size 0</code></pre>
+python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --replay-size 0
+python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_pose_domain_inc_example.yaml --initial-checkpoint runs/initial/checkpoint.pt --replay-size 0</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/rtdetr_pose/tools/train_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/backbones.md" target="_blank" rel="noopener noreferrer">backbones.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/quantization.md" target="_blank" rel="noopener noreferrer">quantization.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_inference_export.md" target="_blank" rel="noopener noreferrer">training_inference_export.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/rtdetr_pose/README.md" target="_blank" rel="noopener noreferrer">README.md</a></p>
 </details>
 
