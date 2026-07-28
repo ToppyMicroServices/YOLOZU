@@ -13,6 +13,23 @@ This is an **opt-in research lane** for offline analysis or controlled studies, 
 This is intentionally separated from model training and from TensorRT graph conversion.
 Default validation, evaluation, demo, and export commands do not run Hessian refinement implicitly.
 
+For a measured baseline/refinement comparison with three deterministic
+repetitions, use:
+
+```bash
+./.venv/bin/python tools/qualify_artifact_research.py \
+  --output-dir /tmp/yolozu-artifact-research
+```
+
+This command uses the stable COCO evaluator for every artifact and records
+latency, SHA-256 values, rollback, stop reasons, and a promotion gate. The
+2026-07-28 COCO128 run produced `no_signal` for all 1,280 detections in every
+repetition because that dataset does not supply the per-instance depth/mask
+signal required by the current offset objective. Metrics were unchanged and
+the lane remains `hold`; this is a negative control, not a successful
+refinement result. See
+[`../reports/artifact_research_evidence_2026-07-28.md`](../reports/artifact_research_evidence_2026-07-28.md).
+
 ## Motivation
 
 Regression heads in RT-DETR predict continuous values:
@@ -249,6 +266,12 @@ Each refined detection includes metadata:
   }
 }
 ```
+
+When `--log-output` is set, the log also includes a `research_report` with
+measured total/per-image time, input/output SHA-256 values, separate-artifact
+rollback, and an explicit `review_required` promotion boundary. Wrapped
+prediction output supplements the complete stable `meta` interface contract,
+so it can be passed directly to strict validation and evaluation.
 
 ## Comparison with L-BFGS Calibration
 

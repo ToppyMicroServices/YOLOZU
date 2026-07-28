@@ -4149,7 +4149,7 @@
           "required": false
         },
         {
-          "default": 0.000001,
+          "default": 1e-06,
           "flag": "--min-depth",
           "kind": "number",
           "name": "min_depth",
@@ -9462,7 +9462,7 @@
           "required": false
         },
         {
-          "default": 1E-8,
+          "default": 1e-08,
           "flag": "--metric-atol",
           "kind": "number",
           "name": "metric_atol",
@@ -11617,7 +11617,8 @@
         "docs/hessian_solver.md",
         "docs/research_lanes.md",
         "docs/schemas/artifact_research_qualification.schema.json",
-        "docs/schemas/research_lane_report.schema.json"
+        "docs/schemas/research_lane_report.schema.json",
+        "reports/artifact_research_evidence_2026-07-28.md"
       ],
       "effects": {
         "fixed_writes": [],

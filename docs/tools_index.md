@@ -170,6 +170,11 @@ yolozu validate predictions reports/predictions.json --strict --json
   - Outputs: `reports/predictions_distilled.json`, `reports/distill_report.json`
   - Read first: `distill_report.json`
   - Docs: `docs/distillation.md`
+- Distillation + Hessian measured qualification:
+  - `./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research`
+  - Runs three deterministic repetitions per lane, real COCOeval, measured latency, hashes, rollback, and explicit hold/promotion gates.
+  - Refuses repository-external source inputs and an existing output directory.
+  - Evidence: `reports/artifact_research_evidence_2026-07-28.md`
 
 ## Machine-readable tool registry
 

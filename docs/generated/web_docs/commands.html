@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">117 manifest entries with declared maturity, inputs,
+  <p class="lead">118 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1280,6 +1280,20 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>python3 tools/publish_benchmark_table.py --report reports/benchmark_latency.json --output-json reports/benchmark_table.json --output-md reports/benchmark_table.md --source-command &quot;python3 tools/benchmark_latency.py --config configs/benchmark_latency_example.json&quot;</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/publish_benchmark_table.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_publication.md" target="_blank" rel="noopener noreferrer">benchmark_publication.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/yolo26_eval_protocol.md" target="_blank" rel="noopener noreferrer">yolo26_eval_protocol.md</a></p>
+</details>
+
+<details class="card" id="tool-qualify-artifact-research" data-tool-id="qualify_artifact_research"
+  data-search-card data-search-text="qualify_artifact_research Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. research tools/qualify_artifact_research.py ./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research">
+  <summary><code>qualify_artifact_research</code> — Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/qualify_artifact_research.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--student</code> — default=reports/predictions_rtdetr_pose_baseline.json, file</li><li><code>--teacher</code> — default=data/smoke/predictions/predictions_dummy.json, file</li><li><code>--dataset</code> — default=data/coco128, dir</li><li><code>--split</code> — default=train2017, string</li><li><code>--distill-config</code> — default=configs/examples/distill_predictions.yaml, file</li><li><code>--hessian-config</code> — default=configs/runtime/hessian_refine_example.yaml, file</li><li><code>--output-dir</code> — default=reports/artifact_research_qualification, dir</li><li><code>--repeats</code> — default=3, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_artifact_research.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/distillation.md" target="_blank" rel="noopener noreferrer">distillation.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/hessian_solver.md" target="_blank" rel="noopener noreferrer">hessian_solver.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/artifact_research_qualification.schema.json" target="_blank" rel="noopener noreferrer">artifact_research_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/research_lane_report.schema.json" target="_blank" rel="noopener noreferrer">research_lane_report.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/artifact_research_evidence_2026-07-28.md" target="_blank" rel="noopener noreferrer">artifact_research_evidence_2026-07-28.md</a></p>
 </details>
 
 <details class="card" id="tool-refine-predictions-hessian" data-tool-id="refine_predictions_hessian"
