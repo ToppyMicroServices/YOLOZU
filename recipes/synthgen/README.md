@@ -3,6 +3,17 @@
 This recipe shows how to consume external `YOLOZU-synthgen` shards in YOLOZU.
 Generation stays in the external repo; YOLOZU handles contract validation, visualization, and evaluation.
 
+## One-command fresh handoff
+
+```bash
+./.venv/bin/python tools/smoke_synthgen.py \
+  --synthgen-repo ../YOLOZU-synthgen \
+  --output-dir /tmp/yolozu-synthgen-qualification
+```
+
+This is an oracle interface self-check, not model-quality evidence. It qualifies
+Open3D `render_only` and the deterministic background-edit stub only.
+
 ## 1) Validate contract records
 
 ```bash

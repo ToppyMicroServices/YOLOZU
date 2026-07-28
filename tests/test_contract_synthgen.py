@@ -233,6 +233,22 @@ class TestSynthGenContract(unittest.TestCase):
             payload = json.loads(summary.read_text(encoding="utf-8"))
             self.assertEqual(payload.get("status"), "ok")
 
+    def test_smoke_synthgen_help_exposes_fresh_handoff_mode(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        proc = subprocess.run(
+            [sys.executable, str(repo_root / "tools/smoke_synthgen.py"), "--help"],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("--synthgen-repo", proc.stdout)
+        self.assertIn("--synthgen-python", proc.stdout)
+        self.assertIn("--backend", proc.stdout)
+        self.assertIn("--mode", proc.stdout)
+
     def test_synthgen_json_schema_file_exists_and_required_fields(self):
         repo_root = Path(__file__).resolve().parents[1]
         schema_path = repo_root / "schemas" / "synthgen_sample.schema.json"
