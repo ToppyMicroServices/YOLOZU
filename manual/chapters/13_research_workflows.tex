@@ -379,6 +379,24 @@ The conceptual lineage still comes from the broader distillation literature:
 Within research loops, prediction distillation is most useful as a \textbf{fast feasibility check}:
 keep the dataset subset fixed, keep the downstream evaluator fixed, and use the distilled artifact to answer whether there is teacher signal worth pursuing further.
 
+\subsection{Measured distillation and Hessian qualification}
+For a concise, hash-bound comparison, run both non-TTT artifact lanes three
+times and evaluate every output with the stable COCO evaluator:
+\begin{lstlisting}[language=bash]
+./.venv/bin/python tools/qualify_artifact_research.py \
+  --output-dir /tmp/yolozu-artifact-research
+\end{lstlisting}
+The command refuses to replace an existing output directory and confines all
+source artifacts, datasets, and configs to the repository. Its summary records
+the source commit, input hashes, environment, per-run latency, normalized
+prediction hashes, stable metrics, rollback, and the promotion decision.
+
+The 2026-07-28 evidence is deliberately not a promotion result. Distillation
+used a ten-image smoke fixture as the teacher and therefore establishes the
+interface/evaluator path only. Hessian refinement received no depth/mask
+signal on COCO128, so every attempted offset update was a \texttt{no\_signal}
+negative control. Both lanes remain \texttt{hold}.
+
 \section{Latency/FPS benchmarks with historical tracking (JSONL)}
 Benchmark reports must be treated as formal artifacts. The latency harness generates a stable JSON report and can append results to a JSONL history file:
 \begin{lstlisting}[language=bash]

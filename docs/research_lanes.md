@@ -36,6 +36,29 @@ This keeps the stable lane and research lane readable side by side.
 | Hessian refinement | You are running offline/local post-inference correction studies | [`hessian_solver.md`](hessian_solver.md) | Treat the refined predictions as a new evaluated artifact with its own log |
 | SynthGen research handoff | You are qualifying generated shard data or synthetic evaluation inputs | [`synthgen_repo_integration.md`](synthgen_repo_integration.md), [`synthgen_contract.md`](synthgen_contract.md) | Validate the SynthGen sample interface contract before using the shard |
 
+## One-command artifact qualification
+
+For offline distillation and Hessian refinement, the shortest measured path is:
+
+```bash
+./.venv/bin/python tools/qualify_artifact_research.py \
+  --output-dir /tmp/yolozu-artifact-research
+```
+
+The command refuses an existing output directory, confines student, teacher,
+dataset, and config inputs to the repository, runs three deterministic
+repetitions, and evaluates the stable baseline and every transformed artifact
+with real COCOeval. The result is a hash-bound
+`qualification_summary.json` shaped by
+[`schemas/artifact_research_qualification.schema.json`](schemas/artifact_research_qualification.schema.json).
+
+The 2026-07-28 checked-in evidence remains `hold` for both lanes. The
+distillation teacher is a ten-image smoke fixture rather than an independently
+inferred full-set teacher. COCO128 provides no depth/mask auxiliary signal for
+the current Hessian offset objective, so that run is a measured negative
+control. See
+[`../reports/artifact_research_evidence_2026-07-28.md`](../reports/artifact_research_evidence_2026-07-28.md).
+
 ## Report Expectations
 
 Every research result should say:
@@ -66,7 +89,7 @@ The research lane DoD is intentionally separate from the stable evaluation DoD:
 - only research-lane artifacts carry `research_report`
 - research workflows start from an evaluated input artifact
 - research workflows write a separate research output artifact or research report
-- TTT / continual / Hessian workflows are opt-in and not production defaults
+- TTT / continual / distillation / Hessian workflows are opt-in and not production defaults
 - Hessian examples stay framed as offline analysis or controlled studies
 - promotion gates decide whether a research result is promoted, reviewed, or held
 

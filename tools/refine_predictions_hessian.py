@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import logging
 import math
@@ -9,6 +10,8 @@ from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
+
+from yolozu.predictions import validate_predictions_payload
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +42,82 @@ def _now_utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _wrapped_meta(
+    *,
+    input_meta: dict[str, Any] | None,
+    predictions: list[dict[str, Any]],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    meta = dict(input_meta or {})
+    meta.update(
+        {
+            "timestamp": _now_utc(),
+            "adapter": str(meta.get("adapter") or "hessian_postprocess"),
+            "config": str(args.config_path or ""),
+            "images": len(predictions),
+        }
+    )
+    meta.setdefault(
+        "tta",
+        {
+            "enabled": False,
+            "seed": None,
+            "flip_prob": 0.0,
+            "norm_only": False,
+            "warnings": [],
+            "summary": None,
+        },
+    )
+    meta.setdefault(
+        "ttt",
+        {
+            "enabled": False,
+            "method": "none",
+            "steps": 0,
+            "batch_size": 1,
+            "lr": 0.0,
+            "update_filter": "none",
+            "include": None,
+            "exclude": None,
+            "max_batches": 0,
+            "seed": None,
+            "mim": {"mask_prob": 0.0, "patch_size": 16, "mask_value": 0.0},
+            "report": None,
+        },
+    )
+    meta["hessian_refinement"] = {
+        "tool": "refine_predictions_hessian",
+        "enabled": bool(args.enabled),
+        "refine_offsets": bool(args.enabled and args.refine_offsets),
+        "dataset": args.dataset,
+        "split": args.split,
+        "device": args.device,
+        "steps": int(args.steps),
+        "damping": float(args.damping),
+        "fd_eps": float(args.fd_eps),
+        "line_search": int(args.line_search),
+        "line_search_decay": float(args.line_search_decay),
+        "w_reg": float(args.w_reg),
+        "w_depth": float(args.w_depth),
+        "w_mask": float(args.w_mask),
+        "max_step_px": float(args.max_step_px),
+        "max_total_update_px": float(args.max_total_update_px),
+        "tol_delta": float(args.tol_delta),
+        "tol_loss": float(args.tol_loss),
+        "log_output": args.log_output,
+        "dry_run": bool(args.dry_run),
+    }
+    return meta
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="Apply opt-in Hessian offset refinement and emit a bounded research report."
+    )
     p.add_argument("--predictions", required=True, help="Input predictions JSON.")
     p.add_argument("--output", required=True, help="Output predictions JSON.")
     p.add_argument("--config", default=None, help="Optional YAML/JSON config for refinement settings.")
@@ -728,6 +805,7 @@ def _refine_entry(
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     args = _resolve_runtime_args(args)
+    started = time.perf_counter()
 
     in_path = _resolve(args.predictions)
     out_path = _resolve(args.output)
@@ -758,39 +836,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.wrap:
         payload: dict[str, Any] = {
+            "schema_version": 1,
             "predictions": refined,
-            "meta": {
-                "timestamp": _now_utc(),
-                "tool": "refine_predictions_hessian",
-                "enabled": bool(args.enabled),
-                "refine_offsets": bool(args.enabled and args.refine_offsets),
-                "config": {
-                    "config_path": args.config_path,
-                    "dataset": args.dataset,
-                    "split": args.split,
-                    "device": args.device,
-                    "steps": int(args.steps),
-                    "damping": float(args.damping),
-                    "fd_eps": float(args.fd_eps),
-                    "line_search": int(args.line_search),
-                    "line_search_decay": float(args.line_search_decay),
-                    "w_reg": float(args.w_reg),
-                    "w_depth": float(args.w_depth),
-                    "w_mask": float(args.w_mask),
-                    "max_step_px": float(args.max_step_px),
-                    "max_total_update_px": float(args.max_total_update_px),
-                    "tol_delta": float(args.tol_delta),
-                    "tol_loss": float(args.tol_loss),
-                    "log_output": args.log_output,
-                },
-                "dry_run": bool(args.dry_run),
-                "input_meta": meta_in,
-            },
+            "meta": _wrapped_meta(input_meta=meta_in, predictions=refined, args=args),
         }
     else:
         payload = refined
 
+    validate_predictions_payload(payload, strict=False)
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    elapsed_seconds = time.perf_counter() - started
 
     if args.log_output and log_images is not None:
         log_path = _resolve(str(args.log_output))
@@ -808,11 +863,18 @@ def main(argv: list[str] | None = None) -> int:
                 "research_output_artifact": str(out_path),
                 "report_artifact": str(log_path),
                 "latency_overhead": {
-                    "source": "not_measured_by_refine_predictions_hessian",
-                    "value": None,
+                    "source": "measured_by_refine_predictions_hessian",
+                    "unit": "seconds",
+                    "total": float(elapsed_seconds),
+                    "prediction_images": len(predictions),
+                    "seconds_per_image": float(elapsed_seconds / max(1, len(predictions))),
+                },
+                "artifact_hashes": {
+                    "input_sha256": _sha256(in_path),
+                    "output_sha256": _sha256(out_path),
                 },
                 "rollback": {
-                    "status": "not_applicable",
+                    "status": "separate_artifact",
                     "reason": "Hessian refinement writes a separate output artifact and does not mutate the input predictions.",
                 },
                 "promotion_gate": {

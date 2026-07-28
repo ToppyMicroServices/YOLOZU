@@ -1,0 +1,230 @@
+{
+  "distillation": {
+    "deterministic_prediction_output": true,
+    "metric_delta": {
+      "ar100": 0.07233249842102911,
+      "map50": 0.07335099707153814,
+      "map50_95": 0.07335099707153814,
+      "map75": 0.07335099707153814
+    },
+    "promotion_gate": {
+      "decision": "hold",
+      "reason": "The checked-in teacher is a ten-image smoke fixture, not an independently inferred teacher over the full evaluation set; positive metrics are interface evidence, not model-efficacy evidence."
+    },
+    "repetitions": [
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.00028381250001530134,
+          "source": "measured_by_distill_predictions",
+          "total": 0.03632800000195857,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.07233249842102911,
+          "map50": 0.07335099707153814,
+          "map50_95": 0.07335099707153814,
+          "map75": 0.07335099707153814
+        },
+        "prediction_artifact": "distill_repeat_1.json",
+        "prediction_canonical_sha256": "2141a153aef6ec4925ba884e7ed0c448215e13332e8c4bada3e3fdb5c32f8d8e",
+        "prediction_sha256": "c586c9978a9f1ab1cfd43eb86dbedf442651fd0ebcea0d5e4440fe97f4e95019",
+        "repeat": 1,
+        "research_report": "distill_repeat_1_report.json",
+        "research_report_sha256": "027c023fc0ef6d5d972ec3fdd223ab3920c9af845c4c3f391c8e77ef976962ef",
+        "stable_eval": "distill_repeat_1_eval.json",
+        "stable_eval_sha256": "b7097d9e1ea4408a692a0bea21b683c0be47f5593165532f071cce965a6ef033"
+      },
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.00028877408595917586,
+          "source": "measured_by_distill_predictions",
+          "total": 0.03696308300277451,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.07233249842102911,
+          "map50": 0.07335099707153814,
+          "map50_95": 0.07335099707153814,
+          "map75": 0.07335099707153814
+        },
+        "prediction_artifact": "distill_repeat_2.json",
+        "prediction_canonical_sha256": "2141a153aef6ec4925ba884e7ed0c448215e13332e8c4bada3e3fdb5c32f8d8e",
+        "prediction_sha256": "c586c9978a9f1ab1cfd43eb86dbedf442651fd0ebcea0d5e4440fe97f4e95019",
+        "repeat": 2,
+        "research_report": "distill_repeat_2_report.json",
+        "research_report_sha256": "c838f71d3964894b9433c2ab0423a46fab7a5e0218498ec1d48f563083070717",
+        "stable_eval": "distill_repeat_2_eval.json",
+        "stable_eval_sha256": "0a4dddf9e29c6c9f9d8a9be6db6873a6e70659f367c36b7178063278bbcf15ae"
+      },
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.0002805120390405591,
+          "source": "measured_by_distill_predictions",
+          "total": 0.035905540997191565,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.07233249842102911,
+          "map50": 0.07335099707153814,
+          "map50_95": 0.07335099707153814,
+          "map75": 0.07335099707153814
+        },
+        "prediction_artifact": "distill_repeat_3.json",
+        "prediction_canonical_sha256": "2141a153aef6ec4925ba884e7ed0c448215e13332e8c4bada3e3fdb5c32f8d8e",
+        "prediction_sha256": "c586c9978a9f1ab1cfd43eb86dbedf442651fd0ebcea0d5e4440fe97f4e95019",
+        "repeat": 3,
+        "research_report": "distill_repeat_3_report.json",
+        "research_report_sha256": "c9a44c2bd05ac300c6db08fb946a191c86a5e0aaa3d97c54c4eb13520530282e",
+        "stable_eval": "distill_repeat_3_eval.json",
+        "stable_eval_sha256": "ffd5a5b594f9224c43e9f5ab94eeb5c866dd596b019c20d9c65114a92a52f967"
+      }
+    ],
+    "rollback": "Keep the stable baseline artifact; transformed outputs are separate files."
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "pycocotools": "2.0.11",
+    "python": "3.14.6",
+    "torch": "2.12.0.dev20260330"
+  },
+  "hessian": {
+    "deterministic_prediction_output": true,
+    "metric_delta": {
+      "ar100": 0.0,
+      "map50": 0.0,
+      "map50_95": 0.0,
+      "map75": 0.0
+    },
+    "promotion_gate": {
+      "decision": "hold",
+      "reason": "COCO128 has no per-instance depth/mask auxiliary signal for this offset objective, so the run is a measured no-signal negative control."
+    },
+    "repetitions": [
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.006422437179679719,
+          "source": "measured_by_refine_predictions_hessian",
+          "total": 0.822071958999004,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "prediction_artifact": "hessian_repeat_1.json",
+        "prediction_canonical_sha256": "3ed633d28f6d031a612c00844be8146c795b15d67620e38edc313243201ed2e0",
+        "prediction_sha256": "7f981689a8d992cd37dbd0043e90c11621f1e735681fd79fcd1d4e9333c88e36",
+        "repeat": 1,
+        "research_report": "hessian_repeat_1_report.json",
+        "research_report_sha256": "0708b1e29552927605edb7cbf9493ed5de219c3ab9729e610911389e61f7dc71",
+        "stable_eval": "hessian_repeat_1_eval.json",
+        "stable_eval_sha256": "898645444d0482db4846e8940c35e7bd6c269d865447adc96bbf300831e7bd60",
+        "stop_reasons": {
+          "no_signal": 1280
+        }
+      },
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.0053222369765535404,
+          "source": "measured_by_refine_predictions_hessian",
+          "total": 0.6812463329988532,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "prediction_artifact": "hessian_repeat_2.json",
+        "prediction_canonical_sha256": "3ed633d28f6d031a612c00844be8146c795b15d67620e38edc313243201ed2e0",
+        "prediction_sha256": "fa24bc93e99d9c724bcd597332019f7bd7966fba96594d91a08174b290daa315",
+        "repeat": 2,
+        "research_report": "hessian_repeat_2_report.json",
+        "research_report_sha256": "5b5439e8e250c1bc09465ce016638f4ba988c074ced37e7cf5dee568eca13fb1",
+        "stable_eval": "hessian_repeat_2_eval.json",
+        "stable_eval_sha256": "52578c7d158a1c98ccce167d50014acb5452cc6e18cdd8e19aa5b28755e86374",
+        "stop_reasons": {
+          "no_signal": 1280
+        }
+      },
+      {
+        "latency_overhead": {
+          "prediction_images": 128,
+          "seconds_per_image": 0.005351428054694907,
+          "source": "measured_by_refine_predictions_hessian",
+          "total": 0.684982791000948,
+          "unit": "seconds"
+        },
+        "metrics": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "prediction_artifact": "hessian_repeat_3.json",
+        "prediction_canonical_sha256": "3ed633d28f6d031a612c00844be8146c795b15d67620e38edc313243201ed2e0",
+        "prediction_sha256": "01073f238f2e574d8d72f07cec1ca3d065c3d4e008c6aad21b447178ad94a387",
+        "repeat": 3,
+        "research_report": "hessian_repeat_3_report.json",
+        "research_report_sha256": "8861656c97a5f9ac5c0135f16ac3b4d8eb12ef3709d3afbdc7a49bbfcfaf6c9d",
+        "stable_eval": "hessian_repeat_3_eval.json",
+        "stable_eval_sha256": "190acfda4199c48363847340a9f3e1c99c4a1882d5987a48e27fd538972580bb",
+        "stop_reasons": {
+          "no_signal": 1280
+        }
+      }
+    ],
+    "rollback": "Keep the stable baseline artifact; refined outputs are separate files."
+  },
+  "inputs": {
+    "dataset": "data/coco128",
+    "dataset_tree_sha256": "2b20f0b2541de8f01167fb71cdd0eed01aac7ec4bdf6c7036fb106332721c71d",
+    "distill_config": "configs/examples/distill_predictions.yaml",
+    "distill_config_sha256": "44d9ce86a78f8492181d28d80d7326eb391f7816764a886c551795357ee11463",
+    "hessian_config": "configs/runtime/hessian_refine_example.yaml",
+    "hessian_config_sha256": "77e44875db48a2cdae9817e71a0e43bcf14d255363c4738785bca609083793b6",
+    "split": "train2017",
+    "student": "reports/predictions_rtdetr_pose_baseline.json",
+    "student_sha256": "2099efb5d5c46877c84a3576a7d7bedc5cf36f80062a2539ca7cb481d4fb456a",
+    "teacher": "data/smoke/predictions/predictions_dummy.json",
+    "teacher_prediction_images": 10,
+    "teacher_sha256": "e028f2d9fb9f567527cd2b38f94ad7ed366665cec840af61bec62c736013e6fe"
+  },
+  "kind": "artifact_research_qualification",
+  "qualification": {
+    "all_prediction_outputs_deterministic": true,
+    "production_promotion": false,
+    "repeats_completed": 3,
+    "repeats_required": 3,
+    "stable_evaluator": "tools/eval_coco.py with pycocotools"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "e745253ec7d034e83bdcecd8141d3922aa31586d",
+    "tracked_changes": [],
+    "tracked_changes_present": false
+  },
+  "stable_baseline": {
+    "eval_artifact": "baseline_eval.json",
+    "eval_sha256": "69dd886f7022891805a0b085885efa4dee43792fc80732556920175afcd460b6",
+    "metrics": {
+      "ar100": 0.0,
+      "map50": 0.0,
+      "map50_95": 0.0,
+      "map75": 0.0
+    },
+    "normalized_artifact": "baseline_predictions.json",
+    "normalized_sha256": "fbba36208e5e7acdfc08e4b30a63ae52a76e2a8f6307505b2acca03a975e7f18",
+    "prediction_images": 128,
+    "source_artifact": "reports/predictions_rtdetr_pose_baseline.json"
+  },
+  "timestamp": "2026-07-28T13:31:46Z"
+}

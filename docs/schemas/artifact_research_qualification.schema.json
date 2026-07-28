@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU Artifact Research Qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp",
+    "source",
+    "inputs",
+    "environment",
+    "stable_baseline",
+    "distillation",
+    "hessian",
+    "qualification"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "const": "artifact_research_qualification"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object"
+    },
+    "inputs": {
+      "type": "object"
+    },
+    "environment": {
+      "type": "object"
+    },
+    "stable_baseline": {
+      "type": "object",
+      "required": [
+        "source_artifact",
+        "normalized_sha256",
+        "eval_sha256",
+        "metrics"
+      ]
+    },
+    "distillation": {
+      "$ref": "#/definitions/lane"
+    },
+    "hessian": {
+      "$ref": "#/definitions/lane"
+    },
+    "qualification": {
+      "type": "object",
+      "required": [
+        "repeats_required",
+        "repeats_completed",
+        "all_prediction_outputs_deterministic",
+        "production_promotion"
+      ]
+    }
+  },
+  "definitions": {
+    "lane": {
+      "type": "object",
+      "required": [
+        "repetitions",
+        "deterministic_prediction_output",
+        "metric_delta",
+        "promotion_gate",
+        "rollback"
+      ],
+      "properties": {
+        "repetitions": {
+          "type": "array",
+          "minItems": 3
+        },
+        "deterministic_prediction_output": {
+          "type": "boolean"
+        },
+        "metric_delta": {
+          "type": "object"
+        },
+        "promotion_gate": {
+          "type": "object",
+          "required": [
+            "decision",
+            "reason"
+          ]
+        },
+        "rollback": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

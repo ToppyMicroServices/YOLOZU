@@ -77,6 +77,7 @@ class TestResearchLaneDocs(unittest.TestCase):
         ):
             self.assertIn(field, required)
 
+        self.assertIn("distillation", schema["properties"]["lane"]["enum"])
         research_doc = self.research_doc.read_text(encoding="utf-8")
         self.assertIn("schemas/research_lane_report.schema.json", research_doc)
         self.assertIn("stable_baseline_artifact", research_doc)

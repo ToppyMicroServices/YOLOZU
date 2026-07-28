@@ -175,6 +175,21 @@ python3 tools/refine_predictions_hessian.py \
   \item Validate the predictions interface contract: \cmd{yolozu validate predictions reports/predictions_refined.json --strict}
 \end{enumerate}
 
+\subsection{Measured negative-control command}
+Use the shared non-TTT artifact qualifier when a before/after result needs
+three deterministic repetitions, stable COCO metrics, measured cost, hashes,
+and an explicit promotion gate:
+\begin{lstlisting}[language=bash]
+./.venv/bin/python tools/qualify_artifact_research.py \
+  --output-dir /tmp/yolozu-artifact-research
+\end{lstlisting}
+In the 2026-07-28 COCO128 run, all 1,280 detections in every repetition
+stopped with \texttt{no\_signal}; the dataset does not provide the
+per-instance depth/mask signal required by the current offset objective.
+Metrics were unchanged, so the result remains \texttt{hold}. This records a
+reproducible boundary and must not be described as evidence that Hessian
+refinement improves model quality.
+
 \section{Core configuration parameters}
 Commonly tuned parameters (which correspond to the documentation in \path{docs/hessian_solver.md}):
 \begin{itemize}

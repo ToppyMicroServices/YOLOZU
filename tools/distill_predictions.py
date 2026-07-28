@@ -1,6 +1,8 @@
 import argparse
+import hashlib
 import json
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -18,7 +20,9 @@ from yolozu.simple_map import evaluate_map
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="Blend teacher/student prediction artifacts and emit a bounded research report."
+    )
     p.add_argument("--student", required=True, help="Student predictions JSON.")
     p.add_argument("--teacher", required=True, help="Teacher predictions JSON.")
     p.add_argument("--output", default="reports/predictions_distilled.json", help="Output predictions JSON.")
@@ -53,6 +57,15 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def _now_utc() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _resolve(path_str: str) -> Path:
+    path = Path(path_str).expanduser()
+    return path.resolve() if path.is_absolute() else (repo_root / path).resolve()
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _parse_simple_yaml_value(raw: str) -> Any:
@@ -199,6 +212,7 @@ def _validate_distill_params(params: dict[str, Any]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
+    started = time.perf_counter()
 
     config = _load_config(args.config)
 
@@ -226,10 +240,11 @@ def main(argv: list[str] | None = None) -> int:
         distilled_entries = student_entries
         stats = None
 
-    output_path = repo_root / args.output
+    output_path = _resolve(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     validate_predictions_payload(distilled_entries, strict=False)
-    output_path.write_text(json.dumps(distilled_entries, indent=2, sort_keys=True))
+    output_path.write_text(json.dumps(distilled_entries, indent=2, sort_keys=True), encoding="utf-8")
+    elapsed_seconds = time.perf_counter() - started
 
     metrics = {}
     if args.dataset:
@@ -255,8 +270,37 @@ def main(argv: list[str] | None = None) -> int:
         },
     )
 
-    report_path = repo_root / args.output_report
+    report_path = _resolve(args.output_report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
+    student_path = _resolve(args.student)
+    teacher_path = _resolve(args.teacher)
+    report["research_report"] = {
+        "kind": "research_lane_report",
+        "lane": "distillation",
+        "stable_baseline_artifact": str(student_path),
+        "research_output_artifact": str(output_path),
+        "report_artifact": str(report_path),
+        "latency_overhead": {
+            "source": "measured_by_distill_predictions",
+            "unit": "seconds",
+            "total": float(elapsed_seconds),
+            "prediction_images": len(distilled_entries),
+            "seconds_per_image": float(elapsed_seconds / max(1, len(distilled_entries))),
+        },
+        "artifact_hashes": {
+            "student_sha256": _sha256(student_path),
+            "teacher_sha256": _sha256(teacher_path),
+            "output_sha256": _sha256(output_path),
+        },
+        "rollback": {
+            "status": "separate_artifact",
+            "reason": "Distillation writes a separate output and does not mutate either input artifact.",
+        },
+        "promotion_gate": {
+            "decision": "review_required",
+            "reason": "Evaluate the distilled artifact with the stable task evaluator before any promotion.",
+        },
+    }
     write_json(report_path, report)
     print(report_path)
     return 0

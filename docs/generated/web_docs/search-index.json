@@ -630,6 +630,13 @@
     "title": "publish_benchmark_table"
   },
   {
+    "href": "commands.html#tool-qualify-artifact-research",
+    "kind": "command",
+    "search_text": "qualify_artifact_research Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. research tools/qualify_artifact_research.py --student --teacher --dataset --split --distill-config --hessian-config --output-dir --repeats",
+    "summary": "Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates.",
+    "title": "qualify_artifact_research"
+  },
+  {
     "href": "commands.html#tool-refine-predictions-hessian",
     "kind": "command",
     "search_text": "refine_predictions_hessian Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. research tools/refine_predictions_hessian.py --predictions --output --config --enable --disable --wrap --refine-offsets --dataset --split --device --steps --damping --fd-eps --line-search --line-search-decay --w-reg --w-depth --w-mask --max-step-px --max-total-update-px --tol-delta --tol-loss --log-output --log-steps --dry-run",
@@ -880,6 +887,13 @@
     "search_text": "AI Review Config Checked-in YOLOZU JSON Schema. issues ok schema_version summary warnings docs/schemas/ai_review_config.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "AI Review Config"
+  },
+  {
+    "href": "schemas.html#schema-artifact-research-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Artifact Research Qualification Checked-in YOLOZU JSON Schema. distillation environment hessian inputs kind qualification schema_version source stable_baseline timestamp docs/schemas/artifact_research_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Artifact Research Qualification"
   },
   {
     "href": "schemas.html#schema-coco-eval-report-schema",

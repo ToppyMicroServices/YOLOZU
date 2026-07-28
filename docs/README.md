@@ -105,6 +105,7 @@ Supporting docs:
 - Runtime version and qualification boundaries: [`versions.md`](versions.md)
 - SSOT capability coverage audit: [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md)
 - TTT readiness and evidence boundary: [`../reports/ttt_readiness_audit_2026-07-26.md`](../reports/ttt_readiness_audit_2026-07-26.md)
+- Non-TTT artifact research evidence: [`../reports/artifact_research_evidence_2026-07-28.md`](../reports/artifact_research_evidence_2026-07-28.md)
 - Evaluation protocol template: [`evaluation_protocol_template.md`](evaluation_protocol_template.md)
 - Reproducible runtime comparison: [`case_studies/maskrcnn_eager_torchscript.md`](case_studies/maskrcnn_eager_torchscript.md)
 - Adoption measurement, feedback cadence, and dated baseline: [`adoption/README.md`](adoption/README.md)

@@ -398,6 +398,29 @@ Why use it:
 If the result looks promising, do **not** stop at the lightweight proxy.
 Follow up with the full evaluator you would normally trust for the task.
 
+### Measured three-repeat qualification
+
+Use the shared qualifier when you need stable COCO metrics, deterministic
+repetitions, measured transformation time, hashes, rollback, and an explicit
+promotion decision in one bundle:
+
+```bash
+./.venv/bin/python tools/qualify_artifact_research.py \
+  --output-dir /tmp/yolozu-artifact-research
+```
+
+Each `distill_report.json` now carries a schema-governed `research_report`
+object with `lane=distillation`, measured seconds, student/teacher/output
+SHA-256 values, a separate-artifact rollback, and `review_required`.
+The qualifier makes the final `hold` or promotion decision only after real
+COCOeval.
+
+The checked-in 2026-07-28 run gained `0.0733509971` mAP50-95 from a zero
+baseline, but the teacher was the ten-image smoke fixture. That number proves
+the artifact and evaluator path, not general model efficacy, so the result is
+held. The report and full compressed bundle are documented in
+[`../reports/artifact_research_evidence_2026-07-28.md`](../reports/artifact_research_evidence_2026-07-28.md).
+
 ## Pros / Cons
 
 ## Pros
