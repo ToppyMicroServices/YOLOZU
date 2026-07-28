@@ -91,6 +91,14 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _repo_ref(path: Path) -> str:
+    return path.relative_to(repo_root).as_posix()
+
+
+def _bundle_ref(path: Path, *, output_dir: Path) -> str:
+    return path.relative_to(output_dir).as_posix()
+
+
 def _canonical_json_sha256(path: Path) -> str:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(payload, dict) and isinstance(payload.get("predictions"), list):
@@ -142,6 +150,14 @@ def _metrics(path: Path) -> dict[str, float]:
     if payload.get("ok") is not True or not isinstance(metrics, dict):
         raise ValueError(f"stable evaluator did not succeed: {path}")
     return {str(key): float(value) for key, value in metrics.items()}
+
+
+def _research_report(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    report = payload.get("research_report")
+    if not isinstance(report, dict):
+        raise ValueError(f"missing research_report: {path}")
+    return report
 
 
 def _hessian_stop_reasons(path: Path) -> dict[str, int]:
@@ -239,15 +255,17 @@ def main(argv: list[str] | None = None) -> int:
             ]
         )
         _run([*eval_base, "--predictions", str(distill_predictions), "--output", str(distill_eval)])
+        distill_boundary = _research_report(distill_report)
         distill_runs.append(
             {
                 "repeat": repeat,
-                "prediction_artifact": str(distill_predictions),
+                "prediction_artifact": _bundle_ref(distill_predictions, output_dir=output_dir),
                 "prediction_sha256": _sha256(distill_predictions),
                 "prediction_canonical_sha256": _canonical_json_sha256(distill_predictions),
-                "research_report": str(distill_report),
+                "research_report": _bundle_ref(distill_report, output_dir=output_dir),
                 "research_report_sha256": _sha256(distill_report),
-                "stable_eval": str(distill_eval),
+                "latency_overhead": distill_boundary["latency_overhead"],
+                "stable_eval": _bundle_ref(distill_eval, output_dir=output_dir),
                 "stable_eval_sha256": _sha256(distill_eval),
                 "metrics": _metrics(distill_eval),
             }
@@ -277,15 +295,17 @@ def main(argv: list[str] | None = None) -> int:
             ]
         )
         _run([*eval_base, "--predictions", str(hessian_predictions), "--output", str(hessian_eval)])
+        hessian_boundary = _research_report(hessian_report)
         hessian_runs.append(
             {
                 "repeat": repeat,
-                "prediction_artifact": str(hessian_predictions),
+                "prediction_artifact": _bundle_ref(hessian_predictions, output_dir=output_dir),
                 "prediction_sha256": _sha256(hessian_predictions),
                 "prediction_canonical_sha256": _canonical_json_sha256(hessian_predictions),
-                "research_report": str(hessian_report),
+                "research_report": _bundle_ref(hessian_report, output_dir=output_dir),
                 "research_report_sha256": _sha256(hessian_report),
-                "stable_eval": str(hessian_eval),
+                "latency_overhead": hessian_boundary["latency_overhead"],
+                "stable_eval": _bundle_ref(hessian_eval, output_dir=output_dir),
                 "stable_eval_sha256": _sha256(hessian_eval),
                 "metrics": _metrics(hessian_eval),
                 "stop_reasons": _hessian_stop_reasons(hessian_report),
@@ -306,17 +326,17 @@ def main(argv: list[str] | None = None) -> int:
         "timestamp": _now_utc(),
         "source": _git_source(),
         "inputs": {
-            "student": str(student),
+            "student": _repo_ref(student),
             "student_sha256": _sha256(student),
-            "teacher": str(teacher),
+            "teacher": _repo_ref(teacher),
             "teacher_sha256": _sha256(teacher),
             "teacher_prediction_images": len(teacher_entries) if isinstance(teacher_entries, list) else None,
-            "dataset": str(dataset),
+            "dataset": _repo_ref(dataset),
             "dataset_tree_sha256": _tree_sha256(dataset),
             "split": args.split,
-            "distill_config": str(distill_config),
+            "distill_config": _repo_ref(distill_config),
             "distill_config_sha256": _sha256(distill_config),
-            "hessian_config": str(hessian_config),
+            "hessian_config": _repo_ref(hessian_config),
             "hessian_config_sha256": _sha256(hessian_config),
         },
         "environment": {
@@ -326,11 +346,11 @@ def main(argv: list[str] | None = None) -> int:
             "pycocotools": _package_version("pycocotools"),
         },
         "stable_baseline": {
-            "source_artifact": str(student),
-            "normalized_artifact": str(baseline_predictions),
+            "source_artifact": _repo_ref(student),
+            "normalized_artifact": _bundle_ref(baseline_predictions, output_dir=output_dir),
             "normalized_sha256": _sha256(baseline_predictions),
             "prediction_images": baseline_images,
-            "eval_artifact": str(baseline_eval),
+            "eval_artifact": _bundle_ref(baseline_eval, output_dir=output_dir),
             "eval_sha256": _sha256(baseline_eval),
             "metrics": baseline_metrics,
         },
