@@ -9,6 +9,20 @@ It requires consistent intrinsics after resize and letterbox, and consistent uni
 }
 \ChapterAudience{Read this chapter when your workflow depends on geometry, depth, pose, intrinsics, or symmetry-aware evaluation.}
 
+\section{Scope and terminology}
+In this chapter, pose means rigid-object pose:
+\begin{itemize}
+  \item 2D keypoints are image-plane \cmd{(x,y,visibility)} values.
+  \item \cmd{kpts3d\_object} denotes optional 3D points in an object or CAD frame.
+  \item Object 6DoF pose is the object-to-camera rotation \cmd{R} and translation \cmd{t}.
+  \item Human 3D skeleton pose is not implemented and is unsupported.
+\end{itemize}
+The Research-stage BOP T-LESS procedure, owned-output safety rules, dataset
+license boundary, and current evidence gaps are pinned in
+\path{docs/bop_tless_protocol.md}. Its deterministic
+\cmd{train\_primesense} frame holdout is diagnostic and is not the official BOP
+test benchmark.
+
 
 \section{Units, intrinsics, and coordinate conventions}
 Depth/pose workflows are extremely sensitive to units and to intrinsics consistency.

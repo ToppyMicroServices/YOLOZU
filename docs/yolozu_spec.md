@@ -42,6 +42,7 @@ manifest entry does not promote opt-in subcommands or flags.
 | Template verification and gating | Deferred as a standalone capability; research gate tuning does not promote the runtime utility |
 | Predictions JSON interface contract | Stable |
 | Evaluation harness | Stable for validation/evaluation of existing wrapped predictions; task-specific tools retain their manifest maturity |
+| BOP T-LESS object 6DoF workflow | Research; safe conversion/evaluation wiring is qualified locally, but no release-addressable real multi-seed efficacy result exists |
 | TTA | Experimental and opt-in |
 | TTT | Research and opt-in |
 | CLI convenience | Mixed by capability; entrypoint-level maturity is not transitive to subcommands or flags |
@@ -56,6 +57,17 @@ manifest entry does not promote opt-in subcommands or flags.
   - depth: `depth_path` / `depth` / `D_obj`
   - pose: `R_gt` / `t_gt` (or `pose`)
   - intrinsics: `K_gt` / `intrinsics`
+
+### 1.1) 3D and pose terminology
+
+- 2D keypoints are image-plane `(x, y, visibility)` values.
+- `kpts3d_object` means optional object-space `(X, Y, Z)` keypoints.
+- Pose `R_gt` / `t_gt` means rigid-object 6DoF object-to-camera pose.
+- Human 3D skeleton pose is unsupported.
+
+The BOP T-LESS Research protocol, safe owned-output rules, CAD/ADD/ADDS
+boundary, and current evidence gaps are defined in
+[`bop_tless_protocol.md`](bop_tless_protocol.md).
 
 ### 2) Mask-only label derivation
 

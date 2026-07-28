@@ -52,11 +52,6 @@
       "rationale": "Schema compatibility maintenance check."
     },
     {
-      "path": "tools/download_bop_dataset.py",
-      "disposition": "dataset_recipe",
-      "rationale": "Dataset acquisition helper for optional BOP workflows."
-    },
-    {
       "path": "tools/example_mim_inference.py",
       "disposition": "example_helper",
       "rationale": "Small example script for MIM experimentation, not a supported CLI."
@@ -135,11 +130,6 @@
       "path": "tools/plot_metrics.py",
       "disposition": "analysis_helper",
       "rationale": "Local plotting helper for run analysis."
-    },
-    {
-      "path": "tools/prepare_bop_yolozu.py",
-      "disposition": "dataset_recipe",
-      "rationale": "Optional BOP preparation helper."
     },
     {
       "path": "tools/prepare_coco_keypoints_yolozu.py",

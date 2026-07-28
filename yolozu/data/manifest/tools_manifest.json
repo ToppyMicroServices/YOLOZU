@@ -79,6 +79,16 @@
       "schema": "docs/schemas/artifact_research_qualification.schema.json",
       "summary": "Measured three-repeat qualification summary for offline distillation and Hessian research lanes."
     },
+    "bop_conversion_report_json": {
+      "producer": "python3 tools/prepare_bop_yolozu.py",
+      "schema": "docs/schemas/bop_conversion_report.schema.json",
+      "summary": "BOP-to-YOLOZU conversion provenance, deterministic partition, CAD model hashes, units, and dataset license."
+    },
+    "bop_download_manifest_json": {
+      "producer": "python3 tools/download_bop_dataset.py",
+      "schema": "docs/schemas/bop_download_manifest.schema.json",
+      "summary": "BOP archive URLs, byte sizes, SHA-256 values, cache paths, and upstream dataset license."
+    },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
       "schema": "docs/schemas/coco_eval_report.schema.json",
@@ -3548,6 +3558,135 @@
         "smoke",
         "evaluation",
         "cpu"
+      ]
+    },
+    {
+      "contract_outputs": {
+        "bop_download_manifest_json": "download_manifest_json"
+      },
+      "contracts": {
+        "produces": [
+          "bop_download_manifest_json"
+        ]
+      },
+      "docs": [
+        "docs/bop_tless_protocol.md",
+        "docs/dataset_processing_matrix.md",
+        "reports/bop_pose_readiness_2026-07-28.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes extracted BOP archives and download_manifest.json under --out after validating all ZIP members.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Writes or reuses downloaded ZIP archives under --cache when explicitly supplied.",
+            "flag": "--cache",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/download_bop_dataset.py",
+      "examples": [
+        {
+          "command": "python3 tools/download_bop_dataset.py --dataset tless --out reports/bop",
+          "description": "Download the fixed T-LESS base and train_primesense archives, validate extraction paths, and write provenance."
+        },
+        {
+          "command": "python3 tools/download_bop_dataset.py --help",
+          "description": "Show network, cache, archive, and output options before execution."
+        }
+      ],
+      "id": "download_bop_dataset",
+      "inputs": [
+        {
+          "description": "BOP dataset id under the fixed bop-benchmark Hugging Face namespace.",
+          "flag": "--dataset",
+          "kind": "string",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "default": null,
+          "description": "Optional comma-separated plain ZIP filenames overriding the dataset defaults.",
+          "flag": "--archives",
+          "kind": "string",
+          "name": "archives",
+          "required": false
+        },
+        {
+          "description": "Destination root for extracted archives and download_manifest.json.",
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": true
+        },
+        {
+          "default": null,
+          "description": "Optional ZIP cache; defaults to <out>/zips.",
+          "flag": "--cache",
+          "kind": "dir",
+          "name": "cache",
+          "required": false
+        },
+        {
+          "description": "Re-download and re-extract archives.",
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        },
+        {
+          "description": "Allow quota-interrupted partial extraction for smoke work; never use as completed dataset evidence.",
+          "flag": "--allow-partial-extract",
+          "kind": "string",
+          "name": "allow_partial_extract",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Extracted BOP dataset root created at --out.",
+          "kind": "dir",
+          "name": "dataset_root"
+        },
+        {
+          "default": "<out>/zips",
+          "description": "Downloaded archive cache, or the path supplied by --cache.",
+          "kind": "dir",
+          "name": "archive_cache"
+        },
+        {
+          "default": "<out>/download_manifest.json",
+          "description": "Archive provenance, hashes, byte sizes, and dataset license record.",
+          "kind": "file",
+          "name": "download_manifest_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "runner": "python3",
+      "summary": "Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance.",
+      "tags": [
+        "dataset",
+        "bop",
+        "tless",
+        "pose6d",
+        "provenance"
       ]
     },
     {
@@ -10663,6 +10802,217 @@
         "dataset",
         "ade20k",
         "segmentation"
+      ]
+    },
+    {
+      "contract_outputs": {
+        "bop_conversion_report_json": "conversion_report_json"
+      },
+      "contracts": {
+        "produces": [
+          "bop_conversion_report_json"
+        ]
+      },
+      "docs": [
+        "docs/bop_tless_protocol.md",
+        "docs/dataset_processing_matrix.md",
+        "docs/production_readiness.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "reports/bop_pose_readiness_2026-07-28.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes an ownership-marked YOLOZU dataset tree, sidecars, deterministic CAD subsets, and a conversion report under --out.",
+            "flag": "--out",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/prepare_bop_yolozu.py",
+      "examples": [
+        {
+          "command": "python3 tools/prepare_bop_yolozu.py --bop-root /workspace/bop/tless --split train_primesense --out reports/bop_tless_yolozu --out-split train2017 --partition-modulus 5 --partition-remainder 0 --partition-mode exclude --link-images",
+          "description": "Convert a deterministic T-LESS diagnostic training partition with object-pose and CAD sidecars."
+        },
+        {
+          "command": "python3 tools/prepare_bop_yolozu.py --help",
+          "description": "Show source, partition, CAD, owned-output, and conversion options."
+        }
+      ],
+      "id": "prepare_bop_yolozu",
+      "inputs": [
+        {
+          "description": "Extracted BOP dataset root.",
+          "flag": "--bop-root",
+          "kind": "dir",
+          "name": "bop_root",
+          "required": true
+        },
+        {
+          "description": "BOP source split folder name.",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": true
+        },
+        {
+          "description": "Ownership-marked output dataset root.",
+          "flag": "--out",
+          "kind": "dir",
+          "name": "out",
+          "required": true
+        },
+        {
+          "default": "train2017",
+          "flag": "--out-split",
+          "kind": "string",
+          "name": "out_split",
+          "required": false
+        },
+        {
+          "default": "bbox_visib",
+          "flag": "--bbox-source",
+          "kind": "string",
+          "name": "bbox_source",
+          "required": false
+        },
+        {
+          "default": 0.0,
+          "flag": "--visib-fract-min",
+          "kind": "number",
+          "name": "visib_fract_min",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--max-scenes",
+          "kind": "number",
+          "name": "max_scenes",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--partition-modulus",
+          "kind": "number",
+          "name": "partition_modulus",
+          "required": false
+        },
+        {
+          "default": 0,
+          "flag": "--partition-remainder",
+          "kind": "number",
+          "name": "partition_remainder",
+          "required": false
+        },
+        {
+          "default": "include",
+          "flag": "--partition-mode",
+          "kind": "string",
+          "name": "partition_mode",
+          "required": false
+        },
+        {
+          "description": "Create image symlinks instead of copies.",
+          "flag": "--link-images",
+          "kind": "string",
+          "name": "link_images",
+          "required": false
+        },
+        {
+          "default": "obj_id_minus_1",
+          "flag": "--class-map",
+          "kind": "string",
+          "name": "class_map",
+          "required": false
+        },
+        {
+          "default": 0.001,
+          "description": "BOP translation and CAD point scale to metres.",
+          "flag": "--t-scale",
+          "kind": "number",
+          "name": "t_scale",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional BOP model directory; auto-detected under the source root.",
+          "flag": "--models-dir",
+          "kind": "dir",
+          "name": "models_dir",
+          "required": false
+        },
+        {
+          "default": 1000,
+          "description": "Maximum deterministic CAD points retained per object.",
+          "flag": "--cad-max-points",
+          "kind": "number",
+          "name": "cad_max_points",
+          "required": false
+        },
+        {
+          "description": "Replace only an output bearing the valid YOLOZU BOP ownership marker.",
+          "flag": "--overwrite",
+          "kind": "string",
+          "name": "overwrite",
+          "required": false
+        },
+        {
+          "description": "Add a new split only to an owned output without replacing an existing split.",
+          "flag": "--append-owned",
+          "kind": "string",
+          "name": "append_owned",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Converted ownership-marked YOLOZU dataset root.",
+          "kind": "dir",
+          "name": "dataset_root"
+        },
+        {
+          "default": "<out>/dataset.json",
+          "description": "Dataset descriptor containing all appended splits.",
+          "kind": "file",
+          "name": "dataset_descriptor"
+        },
+        {
+          "default": "<out>/conversion_reports/<out_split>.json",
+          "description": "Conversion, partition, units, model hashes, and license provenance report.",
+          "kind": "file",
+          "name": "conversion_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance.",
+      "tags": [
+        "dataset",
+        "bop",
+        "tless",
+        "object_pose",
+        "pose6d",
+        "cad"
       ]
     },
     {

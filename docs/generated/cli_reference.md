@@ -191,6 +191,7 @@ Contact: develop@toppymicros.com
 | convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract. |
 | distill_predictions | research | tools/distill_predictions.py | Offline prediction distillation helper: blend teacher predictions into a student predictions JSON, emit a distilled artifact plus report, and document the workflow with beginner-facing mental models and YAML boilerplates, clearly separate from training-time self-distillation or TTT. |
 | dod_cpu_smoke | stable | scripts/dod_cpu_smoke.sh | Run and time the CPU-only public DoD path: doctor proof, demo, validation, and eval dry-run. |
+| download_bop_dataset | research | tools/download_bop_dataset.py | Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance. |
 | download_coco_instances_tiny | stable | scripts/download_coco_instances_tiny.py | Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. |
 | eval_coco | stable | tools/eval_coco.py | Strictly validate and evaluate predictions on a YOLO-format dataset using COCOeval, with concise path aliases, explicit repair, and bounded-subset accounting; --dry-run does not require pycocotools. |
 | eval_continual | research | tools/eval_continual.py | Evaluate a continual learning run (simple mAP proxy or pose metrics + forgetting) and write JSON+HTML on CPU or, on supported macOS hosts, with --device mps when torch.backends.mps.is_available() is true. |
@@ -240,6 +241,7 @@ Contact: develop@toppymicros.com
 | package_segmentation_predictions | experimental | tools/package_segmentation_predictions.py | Package a class-id mask directory into the YOLOZU segmentation predictions interface contract. |
 | pre_push | stable | scripts/pre_push.sh | Run local pre-push gates (ruff, focused unit tests including manifest/generated-reference/SSOT coverage and external bridge dry-run DoD, offline smoke, and real-image preflight) to catch CI failures before pushing. |
 | prepare_ade20k_seg | stable | tools/prepare_ade20k_seg.py | Prepare ADE20K semantic segmentation layout + dataset.json manifest. |
+| prepare_bop_yolozu | research | tools/prepare_bop_yolozu.py | Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance. |
 | prepare_cityscapes_seg | stable | tools/prepare_cityscapes_seg.py | Prepare Cityscapes semantic segmentation layout + dataset.json manifest. |
 | prepare_coco_instance_seg | stable | tools/prepare_coco_instance_seg.py | Convert official COCO instances JSON into YOLO-format labels + per-instance PNG masks + sidecar metadata for instance-seg eval. |
 | prepare_coco_yolo | stable | tools/prepare_coco_yolo.py | Convert official COCO instances JSON into YOLO-format labels + (optional) copy images. |
