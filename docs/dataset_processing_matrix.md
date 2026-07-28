@@ -16,7 +16,7 @@ training intake. A Stable parent command does not make every row Stable.
 | YOLO multi-task layout with sidecar JSON | `make_subset_dataset.py` | Owned symlink/copy subset | bbox, keypoints, masks, depth maps/units, intrinsics, object-pose sidecars, provenance metadata | Qualified on `data/real_multitask_fewshot`; bbox/masks are COCO-derived, while keypoints/depth/object pose are explicitly heuristic |
 | Classification folder or OBB labels | `doctor train-dataset` | Recognized external-lane intake | source metadata only | External-only; not a direct RT-DETR reference-trainer input |
 | SynthGen shard/stream | SynthGen loaders and validation tools | Experimental intake records | renderer-owned truth fields | See `synthgen_contract.md`; image generation remains outside YOLOZU |
-| BOP object pose | BOP conversion and object-pose evaluation | Research/object-pose records | bbox, intrinsics, object rotation/translation, optional CAD data | See `bop_tless_protocol.md`; this is not human 3D skeleton pose |
+| BOP object pose | Safe BOP download, owned conversion, and object-pose evaluation | Research/object-pose records | bbox, intrinsics, object rotation/translation, source depth, deterministic metre-scaled CAD subsets, model/archive hashes, available symmetry metadata | See [`bop_tless_protocol.md`](bop_tless_protocol.md); this is not human 3D skeleton pose and no real multi-seed efficacy result is published |
 
 ## Wrapper versus materialized output
 
@@ -48,6 +48,11 @@ yolozu export-dataset coco --dataset reports/source_wrapper --split val2017 \
 python3 tools/make_subset_dataset.py \
   --dataset data/real_multitask_fewshot --split val --n 2 --strategy first \
   --copy --out reports/real_multitask_subset
+
+# BOP rigid-object pose conversion (Research)
+python3 tools/prepare_bop_yolozu.py \
+  --bop-root /workspace/bop/tless --split train_primesense \
+  --out reports/bop_tless --out-split train2017
 ```
 
 ## Python use

@@ -101,6 +101,7 @@ flowchart LR
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): the predictions interface contract
 - [`docs/python_api.md`](docs/python_api.md): typed in-process validation/evaluation API and error policy
 - [`docs/dataset_processing_matrix.md`](docs/dataset_processing_matrix.md): dataset source/target, preservation, and qualification boundaries
+- [`docs/bop_tless_protocol.md`](docs/bop_tless_protocol.md): Research-stage BOP T-LESS rigid-object 6DoF protocol and evidence boundary
 - [`docs/install.md`](docs/install.md): install, `doctor`, and environment setup
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): real eager/TorchScript outputs evaluated through one pinned lane
@@ -117,11 +118,15 @@ flowchart LR
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
 - Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths, TTA
-- Research: continual learning, self-distillation, TTT, Hessian refinement
+- Research: continual learning, self-distillation, TTT, Hessian refinement, and BOP T-LESS rigid-object 6DoF
 
 These are capability-level boundaries. A Stable parent CLI or manifest entry does not
 promote opt-in subcommands or flags: `export_predictions` keeps baseline export Stable,
 TTA Experimental, and TTT Research.
+
+The BOP lane means rigid-object `R,t` pose, not human 3D skeleton pose. Its
+safe conversion and evaluation wiring is available, but real multi-seed
+efficacy and independent reproduction remain open.
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research

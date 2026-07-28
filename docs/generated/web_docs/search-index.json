@@ -231,6 +231,13 @@
     "title": "dod_cpu_smoke"
   },
   {
+    "href": "commands.html#tool-download-bop-dataset",
+    "kind": "command",
+    "search_text": "download_bop_dataset Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance. research tools/download_bop_dataset.py --dataset --archives --out --cache --force --allow-partial-extract",
+    "summary": "Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance.",
+    "title": "download_bop_dataset"
+  },
+  {
     "href": "commands.html#tool-download-coco-instances-tiny",
     "kind": "command",
     "search_text": "download_coco_instances_tiny Download a tiny COCO instances (polygon) subset (2 images by default) for `yolozu demo instance-seg` without bundling images in git. stable scripts/download_coco_instances_tiny.py --out-root --split --num-images --seed --timeout --force --keep-zip",
@@ -574,6 +581,13 @@
     "title": "prepare_ade20k_seg"
   },
   {
+    "href": "commands.html#tool-prepare-bop-yolozu",
+    "kind": "command",
+    "search_text": "prepare_bop_yolozu Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance. research tools/prepare_bop_yolozu.py --bop-root --split --out --out-split --bbox-source --visib-fract-min --max-scenes --max-images --partition-modulus --partition-remainder --partition-mode --link-images --class-map --t-scale --models-dir --cad-max-points --overwrite --append-owned",
+    "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance.",
+    "title": "prepare_bop_yolozu"
+  },
+  {
     "href": "commands.html#tool-prepare-cityscapes-seg",
     "kind": "command",
     "search_text": "prepare_cityscapes_seg Prepare Cityscapes semantic segmentation layout + dataset.json manifest. stable tools/prepare_cityscapes_seg.py --cityscapes-root --out --split --label-type --mode --force",
@@ -894,6 +908,20 @@
     "search_text": "YOLOZU Artifact Research Qualification Checked-in YOLOZU JSON Schema. distillation environment hessian inputs kind qualification schema_version source stable_baseline timestamp docs/schemas/artifact_research_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Artifact Research Qualification"
+  },
+  {
+    "href": "schemas.html#schema-bop-conversion-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU BOP conversion report Checked-in YOLOZU JSON Schema. bbox_source cad_max_points cad_models cad_points_unit converted_images dataset_license kind models_dir output_split partition schema_version source_root source_split translation_scale_to_meters visibility_fraction_min docs/schemas/bop_conversion_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU BOP conversion report"
+  },
+  {
+    "href": "schemas.html#schema-bop-download-manifest-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU BOP download manifest Checked-in YOLOZU JSON Schema. archives complete dataset kind license schema_version source docs/schemas/bop_download_manifest.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU BOP download manifest"
   },
   {
     "href": "schemas.html#schema-coco-eval-report-schema",

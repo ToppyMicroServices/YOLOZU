@@ -116,6 +116,7 @@ Supporting docs:
 - Product readiness audit: [`../reports/yolozu_product_readiness_2026-07-26.md`](../reports/yolozu_product_readiness_2026-07-26.md)
 - Generated CLI reference: [`generated/cli_reference.md`](generated/cli_reference.md)
 - Dataset processing and round-trip matrix: [`dataset_processing_matrix.md`](dataset_processing_matrix.md)
+- BOP T-LESS rigid-object 6DoF Research protocol: [`bop_tless_protocol.md`](bop_tless_protocol.md)
 - Research lanes: [`research_lanes.md`](research_lanes.md)
 - Research note template: [`research_note_template.md`](research_note_template.md)
 - Learning features overview: [`learning_features.md`](learning_features.md)

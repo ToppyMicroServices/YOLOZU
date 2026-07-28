@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">118 manifest entries with declared maturity, inputs,
+  <p class="lead">120 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -453,6 +453,21 @@ bash scripts/dod_cpu_smoke.sh --run-dir /tmp/yolozu_dod_cpu_smoke
 YOLOZU_PYTHON=/path/to/venv/bin/python bash scripts/dod_cpu_smoke.sh --installed-package --run-dir /tmp/yolozu_dod_cpu_smoke
 bash scripts/dod_cpu_smoke.sh --help</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/scripts/dod_cpu_smoke.sh" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cpu_only_dod.md" target="_blank" rel="noopener noreferrer">cpu_only_dod.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/02_installation.tex" target="_blank" rel="noopener noreferrer">02_installation.tex</a></p>
+</details>
+
+<details class="card" id="tool-download-bop-dataset" data-tool-id="download_bop_dataset"
+  data-search-card data-search-text="download_bop_dataset Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance. research tools/download_bop_dataset.py python3 tools/download_bop_dataset.py --dataset tless --out reports/bop python3 tools/download_bop_dataset.py --help">
+  <summary><code>download_bop_dataset</code> — Safely download fixed-host BOP archives and record hashes, byte sizes, URLs, and license provenance.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/download_bop_dataset.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--dataset</code> — required, string</li><li><code>--archives</code> — default=None, string</li><li><code>--out</code> — required, dir</li><li><code>--cache</code> — default=None, dir</li><li><code>--force</code> — string</li><li><code>--allow-partial-extract</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/download_bop_dataset.py --dataset tless --out reports/bop
+python3 tools/download_bop_dataset.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/download_bop_dataset.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/bop_tless_protocol.md" target="_blank" rel="noopener noreferrer">bop_tless_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/dataset_processing_matrix.md" target="_blank" rel="noopener noreferrer">dataset_processing_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/bop_pose_readiness_2026-07-28.md" target="_blank" rel="noopener noreferrer">bop_pose_readiness_2026-07-28.md</a></p>
 </details>
 
 <details class="card" id="tool-download-coco-instances-tiny" data-tool-id="download_coco_instances_tiny"
@@ -1167,6 +1182,21 @@ bash scripts/pre_push.sh --skip-smoke</code></pre>
   <h3>Examples</h3>
   <pre><code>python3 tools/prepare_ade20k_seg.py --ade20k-root /path/to/ADEChallengeData2016 --split train --out data/ade20k_seg --mode manifest</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_ade20k_seg.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
+</details>
+
+<details class="card" id="tool-prepare-bop-yolozu" data-tool-id="prepare_bop_yolozu"
+  data-search-card data-search-text="prepare_bop_yolozu Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance. research tools/prepare_bop_yolozu.py python3 tools/prepare_bop_yolozu.py --bop-root /workspace/bop/tless --split train_primesense --out reports/bop_tless_yolozu --out-split train2017 --partition-modulus 5 --partition-remainder 0 --partition-mode exclude --link-images python3 tools/prepare_bop_yolozu.py --help">
+  <summary><code>prepare_bop_yolozu</code> — Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/prepare_bop_yolozu.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--bop-root</code> — required, dir</li><li><code>--split</code> — required, string</li><li><code>--out</code> — required, dir</li><li><code>--out-split</code> — default=train2017, string</li><li><code>--bbox-source</code> — default=bbox_visib, string</li><li><code>--visib-fract-min</code> — default=0.0, number</li><li><code>--max-scenes</code> — default=None, number</li><li><code>--max-images</code> — default=None, number</li><li><code>--partition-modulus</code> — default=None, number</li><li><code>--partition-remainder</code> — default=0, number</li><li><code>--partition-mode</code> — default=include, string</li><li><code>--link-images</code> — string</li><li><code>--class-map</code> — default=obj_id_minus_1, string</li><li><code>--t-scale</code> — default=0.001, number</li><li><code>--models-dir</code> — default=None, dir</li><li><code>--cad-max-points</code> — default=1000, number</li><li><code>--overwrite</code> — string</li><li><code>--append-owned</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/prepare_bop_yolozu.py --bop-root /workspace/bop/tless --split train_primesense --out reports/bop_tless_yolozu --out-split train2017 --partition-modulus 5 --partition-remainder 0 --partition-mode exclude --link-images
+python3 tools/prepare_bop_yolozu.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_bop_yolozu.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/bop_tless_protocol.md" target="_blank" rel="noopener noreferrer">bop_tless_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/dataset_processing_matrix.md" target="_blank" rel="noopener noreferrer">dataset_processing_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/16_depth_6dof_symmetry.tex" target="_blank" rel="noopener noreferrer">16_depth_6dof_symmetry.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/bop_pose_readiness_2026-07-28.md" target="_blank" rel="noopener noreferrer">bop_pose_readiness_2026-07-28.md</a></p>
 </details>
 
 <details class="card" id="tool-prepare-cityscapes-seg" data-tool-id="prepare_cityscapes_seg"

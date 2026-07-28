@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/bop_conversion_report.schema.json",
+  "title": "YOLOZU BOP conversion report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "source_root",
+    "source_split",
+    "output_split",
+    "converted_images",
+    "translation_scale_to_meters",
+    "bbox_source",
+    "visibility_fraction_min",
+    "partition",
+    "cad_points_unit",
+    "cad_max_points",
+    "cad_models",
+    "dataset_license"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "bop_yolozu_conversion" },
+    "source_root": { "type": "string", "minLength": 1 },
+    "source_split": { "type": "string", "minLength": 1 },
+    "output_split": { "type": "string", "minLength": 1 },
+    "converted_images": { "type": "integer", "minimum": 0 },
+    "translation_scale_to_meters": { "type": "number", "exclusiveMinimum": 0 },
+    "bbox_source": { "type": "string", "enum": ["bbox_visib", "bbox_obj", "bbox_vis"] },
+    "visibility_fraction_min": { "type": "number", "minimum": 0, "maximum": 1 },
+    "partition": {
+      "type": "object",
+      "required": ["modulus", "remainder", "mode"],
+      "properties": {
+        "modulus": { "type": ["integer", "null"], "minimum": 2 },
+        "remainder": { "type": "integer", "minimum": 0 },
+        "mode": { "type": "string", "enum": ["include", "exclude"] }
+      },
+      "additionalProperties": false
+    },
+    "models_dir": { "type": ["string", "null"] },
+    "cad_points_unit": { "type": "string", "const": "meters" },
+    "cad_max_points": { "type": "integer", "minimum": 2 },
+    "cad_models": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "points_sha256", "source", "source_sha256", "points"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "points_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "source": { "type": "string", "minLength": 1 },
+          "source_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "points": { "type": "integer", "minimum": 2 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "dataset_license": {
+      "type": ["object", "null"],
+      "properties": {
+        "spdx": { "type": "string" },
+        "source": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

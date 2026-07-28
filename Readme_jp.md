@@ -101,6 +101,7 @@ flowchart LR
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): predictions interface contract
 - [`docs/python_api.md`](docs/python_api.md): typed in-process validation/evaluation API と error policy
 - [`docs/dataset_processing_matrix.md`](docs/dataset_processing_matrix.md): dataset の source/target、保持項目、qualification 境界
+- [`docs/bop_tless_protocol.md`](docs/bop_tless_protocol.md): BOP T-LESS の rigid-object 6DoF Research protocol と evidence 境界
 - [`docs/install.md`](docs/install.md): install、`doctor`、環境確認
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): Ultralytics、Detectron2、MMDetection、YOLOX から共通 report までの検査済み手順
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): eager / TorchScript の実出力を同じ評価経路で比較した再現可能な事例
@@ -117,11 +118,15 @@ flowchart LR
 
 - Stable: prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo path、install/doctor
 - Experimental: backend parity、benchmark orchestration、external training handoff、macOS/MPS evaluation path、TTA
-- Research: continual learning、self-distillation、TTT、Hessian refinement
+- Research: continual learning、self-distillation、TTT、Hessian refinement、BOP T-LESS rigid-object 6DoF
 
 これは capability-level の境界です。Stable の親 CLI や manifest entry が opt-in の
 subcommand/flag を昇格させるわけではありません。`export_predictions` では baseline
 export は Stable、TTA は Experimental、TTT は Research のままです。
+
+BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton pose
+には対応しません。安全な変換・評価 wiring はありますが、実データの
+multi-seed efficacy と independent reproduction は未完です。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane

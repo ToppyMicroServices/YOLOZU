@@ -117,7 +117,7 @@ yolozu demo pose --backend aruco
 ## YOLOZU 概览
 
 - **稳定的评估主线**：通过同一 predictions interface contract 验证和公平评估已有 predictions。
-- **支持多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、6DoF pose。
+- **支持多任务评估**：覆盖 object detection、segmentation、keypoints、monocular depth、rigid-object 6DoF pose；不支持 human 3D skeleton pose。
 - **可审计的结果**：protocol-pinned metadata 和带版本的 artifact 支持可复现比较与 CI regression。
 - **需要验证的桥接能力**：export、external training、benchmark、backend parity 和 deployment template 属于 Experimental 或其他 qualified lane。
 - **次要研究能力**：continual learning、self-distillation、TTT 和 Hessian refinement 是 opt-in Research lane，不会改变 stable evaluation 主线。
@@ -126,7 +126,7 @@ yolozu demo pose --backend aruco
 
 - Stable：prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo、install/doctor
 - Experimental：backend parity、benchmark orchestration、external training handoff、macOS/MPS evaluation、TTA
-- Research：continual learning、self-distillation、TTT、Hessian refinement
+- Research：continual learning、self-distillation、TTT、Hessian refinement、BOP T-LESS rigid-object 6DoF
 
 这些标签描述 capability-level 边界。Stable 的父级 CLI 或 manifest entry 不会提升
 opt-in subcommand/flag 的成熟度：`export_predictions` 的 baseline export 为 Stable，

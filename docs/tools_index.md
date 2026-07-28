@@ -13,6 +13,7 @@ Source of truth:
 - Stable: prediction validation/evaluation and the predictions interface contract
 - Experimental: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS qualification paths, TTA
 - Research: continual learning, TTT, Hessian refinement
+- Research object-pose workflow: BOP T-LESS acquisition/conversion and 6DoF evaluation
 - Read first: `docs/production_readiness.md`
 
 ## Canonical CLI (recommended entrypoint)
@@ -76,11 +77,17 @@ yolozu validate predictions reports/predictions.json --strict --json
 
 ## Dataset helpers
 
+- `python3 tools/download_bop_dataset.py --help`
+- `python3 tools/prepare_bop_yolozu.py --help` (rigid-object 6DoF; human 3D skeleton pose is unsupported)
 - `python3 tools/make_subset_dataset.py --dataset /path/to/yolo --n 500 --seed 0 --out reports/subset_dataset`
 - `python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force`
 - Tiny COCO instances subset for demos (downloads 2 images + polygons JSON): `python3 scripts/download_coco_instances_tiny.py`
 - `python3 tools/prepare_real_multitask_fewshot.py --out data/real_multitask_fewshot --train-images 6 --val-images 2 --strict-provenance --force`
 - `python3 tools/validate_synthgen_contract.py --input /path/to/shard.jsonl --max-samples 200`
+
+The BOP tools are manifest-declared Research entrypoints. Read
+[`bop_tless_protocol.md`](bop_tless_protocol.md) before allowing network or
+write effects; `--overwrite` is restricted to owned conversion roots.
 
 ## TTT compare boilerplates
 

@@ -1,6 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  cat <<'EOF'
+Usage: bash deploy/runpod/bootstrap_bop_tless_train_primesense.sh [--help]
+
+Download and extract the BOP T-LESS base and train_primesense archives.
+
+Environment:
+  OUT_DIR   Destination root (default: /workspace/bop)
+
+The downloader records archive URLs, SHA-256 values, byte sizes, and the
+CC-BY-4.0 dataset source in download_manifest.json.
+EOF
+}
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  "")
+    ;;
+  *)
+    echo "error: unknown argument: $1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${REPO_ROOT}"
 
