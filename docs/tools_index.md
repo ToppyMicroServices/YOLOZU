@@ -116,6 +116,7 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 - External finetune smoke matrix (YOLOv/MMDetection/Detectron2/RT-DETR): `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
   - RT-DETR non-dry torch-missing path is explicit (`failure_code=E_DEP_TORCH_MISSING`).
   - MMDetection/Detectron2 with external train launchers can continue train-path audit even if projection deps are missing (`projection_error` + `train_path_audited=true`).
+  - Non-dry YOLOX/MMDetection/Detectron2 without a launcher fails with `E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; projection-only is not training.
   - machine.dev/GPU example: `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework rtdetr --device cuda --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --require-training-execution --output reports/external_finetune_smoke.machine_dev.json`
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
@@ -169,9 +170,14 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 
 ## Real-image multitask finetune demo
 
+- One-command qualification: `./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`
+  - emits schema-defined execution/dependency/provenance/checkpoint/metric-scope evidence and an explicit `hold` decision
 - `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force`
 - `python3 tools/run_real_multitask_finetune_demo.py --dataset-root data/real_multitask_fewshot --prepare --download-if-missing --allow-auto-download --accept-dataset-license --download-num-images 8 --out reports/real_multitask_finetune_demo --device cpu --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --strict-provenance --force`
 - Stages: `bbox -> segmentation -> keypoints -> depth -> pose6d`
+- Current boundary: bbox and polygon masks come from COCO annotations;
+  keypoints/depth/pose6d are heuristic, and only bbox mAP is emitted after each
+  stage. The command proves execution, not task-native training quality.
 
 ## Distillation helpers
 

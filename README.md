@@ -141,6 +141,14 @@ matrix cell and every SDFT-minus-naive delta was zero, so the decision is
 as a [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28);
 see the [evidence report](reports/sdft_continual_evidence_2026-07-28.md).
 
+Experimental fine-tuning lanes can be audited in one command with
+`./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`.
+The schema-defined result separates executed training from config projection,
+records dependency failures and checkpoint/provenance hashes, and keeps the
+lane Experimental when task-native metrics or non-heuristic labels are absent.
+The bounded clean-source result remains `hold`; see the
+[fine-tuning evidence report](reports/finetune_lane_evidence_2026-07-29.md).
+
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
 lane. The bounded 2026-07-27 diagnostic bundle is available as a

@@ -16,6 +16,38 @@ The focus is a stable interface contract for reproducible command inputs/outputs
 YOLOX is the recommended external YOLO-style lane because it preserves YOLOZU's
 Apache-2.0 repository policy more cleanly than optional copyleft bridges.
 
+## One-command qualification
+
+To run the repository-local five-stage trainer, attempt all five smoke-matrix
+frameworks non-dry, probe the wider advertised runtime surface, and write one
+schema-defined decision:
+
+```bash
+./.venv/bin/python tools/qualify_finetune_lanes.py \
+  --output-dir /tmp/yolozu-finetune-qualification
+```
+
+The machine-readable entrypoint is
+`<output-dir>/qualification_summary.json`, defined by
+[`schemas/finetune_lane_qualification.schema.json`](schemas/finetune_lane_qualification.schema.json).
+The command refuses an existing output path and a dataset outside the
+repository. It records source/environment/dataset hashes, per-stage checkpoint
+handoffs, runtime/memory, dependency probes, actual training execution, metric
+scope, and an explicit `hold` decision.
+
+Exit code 0 means `protocol_complete=true`: all required attempts produced
+machine-readable evidence. It does not mean that every external backend trained
+or that promotion passed. Consumers, including agents, must read
+`decision.status`, `decision.training_quality`, and the per-lane
+`training_executed` / `failure_code` fields.
+
+The 2026-07-29 clean-source bounded run is recorded in
+[`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
+
+`non-dry` now means a training command must actually run. Config projection
+without an external launcher fails with
+`E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.
+
 ## Config templates
 
 Prepared templates live in:
@@ -98,6 +130,15 @@ When projection dependencies (`mmengine`, `detectron2`) are missing, the tool st
 - `training_executed` reflects the actual external training command result
 
 This keeps train-path auditing usable on minimal environments.
+
+Without a train script, a non-dry MMDetection, Detectron2, or YOLOX selection
+fails closed even if projection succeeds. Missing projection dependencies are
+reported separately in `dependency_status`.
+
+For TAO and other executable-backed bridges, a missing external command is
+reported as a structured runtime failure. TAO uses
+`E_EXTERNAL_RUNTIME_MISSING`; the wrapper does not expose an uncaught
+`FileNotFoundError`.
 
 ## 4) machine.dev / GPU validation
 

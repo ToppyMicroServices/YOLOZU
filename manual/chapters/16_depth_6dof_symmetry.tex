@@ -259,6 +259,21 @@ python3 rtdetr_pose/tools/train_minimal.py \
 \end{lstlisting}
 
 \subsection{Real-image few-shot multitask demo}
+Run the combined real/external qualification first:
+\begin{lstlisting}[language=bash]
+./.venv/bin/python tools/qualify_finetune_lanes.py \
+  --output-dir /tmp/yolozu-finetune-qualification
+\end{lstlisting}
+The schema-defined summary separates actual training from config projection and
+records checkpoint handoffs, hashes, runtime/memory, dependency failures, and
+metric scope.  The tracked fixture has COCO ground truth for boxes and polygon
+masks, but keypoint/depth/pose6d sidecars are deterministic heuristics.  The
+staged runner currently reports bbox mAP after every stage rather than
+task-native metrics for the latter four stages, so the qualification remains
+\cmd{hold} and Experimental.
+The clean-source bounded result is recorded in
+\cmd{reports/finetune\_lane\_evidence\_2026-07-29.md}.
+
 To run a staged smoke pipeline over \cmd{bbox -> segmentation -> keypoints -> depth -> pose6d}:
 \begin{lstlisting}[language=bash]
 # 0) Download tiny COCO subset manually (review dataset license terms)

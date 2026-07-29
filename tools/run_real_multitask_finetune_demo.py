@@ -12,14 +12,19 @@ Tasks covered:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
+import platform
+import resource
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+repo_root = Path(__file__).resolve().parents[1]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -88,6 +93,73 @@ def _parser() -> argparse.ArgumentParser:
 
 def _run(cmd: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, text=True, capture_output=True, cwd=(str(cwd) if cwd else None), check=False)
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _tree_sha256(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        rel = path.relative_to(root).as_posix()
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(_sha256_file(path).encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def _git_source() -> dict[str, Any]:
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return {
+        "commit": commit.stdout.strip() if commit.returncode == 0 else None,
+        "tracked_changes_present": bool(status.stdout.strip()) if status.returncode == 0 else None,
+        "tracked_changes": status.stdout.splitlines() if status.returncode == 0 else [],
+    }
+
+
+def _runtime_environment(python: str) -> dict[str, Any]:
+    return {
+        "platform": platform.platform(),
+        "python": platform.python_version(),
+        "selected_python": str(python),
+    }
+
+
+def _child_peak_rss_bytes() -> int | None:
+    try:
+        value = int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+    except (AttributeError, OSError, ValueError):
+        return None
+    return value if sys.platform == "darwin" else value * 1024
+
+
+def _load_json_dict(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _load_last_val_map(path: Path) -> float | None:
@@ -188,6 +260,7 @@ def _train_task(
 ) -> dict[str, Any]:
     run_dir = out_dir / task_name
     run_dir.mkdir(parents=True, exist_ok=True)
+    started = time.perf_counter()
 
     cmd = [
         python,
@@ -238,6 +311,19 @@ def _train_task(
     val_map = _load_last_val_map(run_dir / "val_metrics.jsonl")
     checkpoint = run_dir / "checkpoint_bundle.pt"
     artifacts = _collect_artifact_presence(run_dir)
+    metrics_path = run_dir / "metrics.json"
+    metrics_payload = _load_json_dict(metrics_path)
+    run_record = ((metrics_payload or {}).get("meta") or {}).get("run_record")
+    run_record = run_record if isinstance(run_record, dict) else {}
+    run_args = run_record.get("args")
+    run_args = run_args if isinstance(run_args, dict) else {}
+    recorded_resume = run_args.get("resume_from")
+    expected_resume = str(resume_from) if resume_from is not None else None
+    resume_matches = (
+        recorded_resume is None
+        if expected_resume is None
+        else Path(str(recorded_resume)).resolve() == Path(expected_resume).resolve()
+    )
 
     return {
         "task": task_name,
@@ -246,6 +332,18 @@ def _train_task(
         "val_map50_95": val_map,
         "run_dir": str(run_dir),
         "checkpoint_bundle": str(checkpoint),
+        "checkpoint_bundle_sha256": _sha256_file(checkpoint) if checkpoint.is_file() else None,
+        "resume_from": expected_resume,
+        "resume_from_sha256": _sha256_file(resume_from) if resume_from is not None and resume_from.is_file() else None,
+        "checkpoint_compatibility": {
+            "resume_requested": bool(resume_from is not None),
+            "recorded_resume": str(recorded_resume) if recorded_resume is not None else None,
+            "recorded_resume_matches_requested": bool(resume_matches),
+            "training_completed": bool(proc.returncode == 0),
+        },
+        "metrics_json_sha256": _sha256_file(metrics_path) if metrics_path.is_file() else None,
+        "wall_seconds": float(time.perf_counter() - started),
+        "child_peak_rss_bytes_after": _child_peak_rss_bytes(),
         "ok": bool(proc.returncode == 0),
         "artifacts": artifacts,
     }
@@ -305,8 +403,13 @@ def main(argv: list[str] | None = None) -> int:
     if not bool(args.skip_imbalance):
         base_bbox_args.extend(["--imbalance-strategy", "class_balanced", "--imbalance-gamma", "1.0"])
 
-    task_matrix: list[tuple[str, list[str]]] = [
-        ("bbox", base_bbox_args),
+    label_provenance = (
+        prepare_summary.get("label_provenance")
+        if isinstance(prepare_summary, dict) and isinstance(prepare_summary.get("label_provenance"), dict)
+        else {}
+    )
+    task_matrix: list[tuple[str, list[str], list[str]]] = [
+        ("bbox", base_bbox_args, ["bbox"]),
         (
             "segmentation",
             [
@@ -315,8 +418,9 @@ def main(argv: list[str] | None = None) -> int:
                 "--fracal-stats-out",
                 str(out_dir / "segmentation" / "fracal_seg.json"),
             ],
+            ["bbox", "segmentation_metadata"],
         ),
-        ("keypoints", ["--num-keypoints", str(int(args.num_keypoints))]),
+        ("keypoints", ["--num-keypoints", str(int(args.num_keypoints))], ["bbox", "keypoints"]),
         (
             "depth",
             [
@@ -327,6 +431,7 @@ def main(argv: list[str] | None = None) -> int:
                 "--cost-z",
                 "1.0",
             ],
+            ["bbox", "depth"],
         ),
         (
             "pose6d",
@@ -342,13 +447,14 @@ def main(argv: list[str] | None = None) -> int:
                 "--cost-t",
                 "0.5",
             ],
+            ["bbox", "depth", "rotation", "translation"],
         ),
     ]
 
     results: list[dict[str, Any]] = []
     previous_ckpt: Path | None = None
     epoch_budget = int(args.epochs)
-    for task_name, extra in task_matrix:
+    for task_name, extra, requested_modalities in task_matrix:
         res = _train_task(
             python=str(args.python),
             dataset_root=dataset_root,
@@ -365,6 +471,26 @@ def main(argv: list[str] | None = None) -> int:
             resume_from=previous_ckpt,
             extra_args=extra,
         )
+        supervision_value = label_provenance.get(task_name)
+        heuristic_supervision = isinstance(supervision_value, str) and (
+            "heuristic" in supervision_value or "derived" in supervision_value
+        )
+        res["requested_modalities"] = requested_modalities
+        res["supervision"] = {
+            "source": supervision_value,
+            "strict_realism_eligible": bool(not heuristic_supervision and supervision_value is not None),
+        }
+        res["evaluation"] = {
+            "reported_metric": "bbox_map50_95",
+            "before": None,
+            "after": res.get("val_map50_95"),
+            "task_native": bool(task_name == "bbox"),
+            "limitation": (
+                None
+                if task_name == "bbox"
+                else "the current staged runner reports bbox mAP only; no task-native before/after metric is emitted"
+            ),
+        }
         results.append(res)
 
         ckpt = Path(str(res.get("checkpoint_bundle") or ""))
@@ -378,8 +504,21 @@ def main(argv: list[str] | None = None) -> int:
     artifact_complete = all(bool((r.get("artifacts") or {}).get("complete", False)) for r in results)
     ok = bool(ok_all and artifact_complete)
     report = {
+        "schema_version": 2,
+        "kind": "real_multitask_finetune_execution",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "source": _git_source(),
+        "environment": _runtime_environment(str(args.python)),
         "ok": ok,
         "dataset_root": str(dataset_root),
+        "dataset": {
+            "tree_sha256": _tree_sha256(dataset_root),
+            "prepare_summary_sha256": (
+                _sha256_file(dataset_root / "prepare_summary.json")
+                if (dataset_root / "prepare_summary.json").is_file()
+                else None
+            ),
+        },
         "prepare": prep_result,
         "prepare_summary": prepare_summary,
         "settings": {
@@ -400,6 +539,15 @@ def main(argv: list[str] | None = None) -> int:
             "tasks_ok": int(sum(1 for r in results if bool(r.get("ok", False)))),
             "artifacts_complete": bool(artifact_complete),
             "warnings": provenance_warnings,
+        },
+        "decision": {
+            "status": "hold",
+            "maturity": "experimental",
+            "reasons": [
+                "task-native before/after metrics are absent for segmentation, keypoints, depth, and pose6d",
+                "keypoints, depth, and pose6d fixture supervision is heuristic",
+                "the bounded few-shot run is execution evidence rather than training-quality evidence",
+            ],
         },
         "notes": {
             "segmentation": "segmentation stage uses real mask metadata plus bbox objective in the current train_minimal reference trainer",

@@ -37,6 +37,34 @@ It complements:
 - All detector-family lanes use `raw dataset -> DatasetAdapter -> YOLOZU Dataset Contract -> TrainingBackend`. The training summary records this as `training_data_flow`; YOLO-family lanes consume the `cxcywh_norm` adapter view, while DETR-family lanes consume `xyxy_abs`.
 - External training reports include `execution_status.state` so callers can distinguish `dry_run_handoff`, `requires_external_train_script`, `runtime_failed`, and `executed` without treating every wrapper report as real backend training.
 - `MPS` is only claimed when the local runtime actually reports availability. Do not read this table as a blanket macOS guarantee.
+- Backend maturity describes the YOLOZU-owned interface and handoff at the
+  narrowest declared surface. It does not assert that an external runtime,
+  launcher, model, or dataset-specific training result is installed or
+  qualified in the current environment.
+
+## Execution qualification
+
+Run the current environment through one fail-closed matrix:
+
+```bash
+./.venv/bin/python tools/qualify_finetune_lanes.py \
+  --output-dir /tmp/yolozu-finetune-qualification
+```
+
+`qualification_summary.json` distinguishes config projection, handoff
+readiness, dependency availability, and actual training. It also records that
+the tracked real-image fixture has COCO ground truth for bbox/polygon masks but
+heuristic keypoint/depth/pose6d sidecars, and that the staged runner currently
+emits bbox validation mAP rather than task-native metrics for the latter four
+stages. External process-launch failures are normalized into machine-readable
+runtime errors, including a missing TAO executable. These boundaries retain
+Experimental maturity.
+
+For automation, exit code 0 means the qualification protocol completed and
+`protocol_complete` is true. Promotion remains a separate decision in
+`decision.status`; a completed hold result is not a training-quality pass.
+The clean-source bounded result is recorded in
+[`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
 
 ## Production posture
 
@@ -61,6 +89,7 @@ Tooling surface:
 
 - `tools/orchestrate_train.py`
 - `tools/support_external_training.py`
+- `tools/qualify_finetune_lanes.py`
 - `tools/export_predictions_coco_keypoints.py`
 - `tools/package_segmentation_predictions.py`
 - `tools/check_segmentation_parity.py`

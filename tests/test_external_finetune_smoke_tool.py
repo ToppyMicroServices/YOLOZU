@@ -290,6 +290,41 @@ raise SystemExit(0)
             self.assertTrue(bool(row.get("train_script_configured")))
             self.assertTrue(bool(row.get("training_executed")))
 
+    def test_non_dry_yolox_without_train_script_fails_closed(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "run_external_finetune_smoke.py"
+
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            out = root / "external_finetune_smoke.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--framework",
+                    "yolox",
+                    "--non-dry-framework",
+                    "yolox",
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            row = json.loads(out.read_text(encoding="utf-8"))["results"][0]
+            self.assertFalse(bool(row["ok"]))
+            self.assertFalse(bool(row["training_executed"]))
+            self.assertTrue(bool(row["projection_executed"]))
+            self.assertEqual(row["failure_code"], "E_EXTERNAL_TRAIN_SCRIPT_REQUIRED")
+            self.assertIn("projection is not training", row["runtime_error"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -104,6 +104,11 @@
       "schema": "docs/schemas/eval_suite_report.schema.json",
       "summary": "Report payload emitted by tools/eval_suite.py (suite over prediction JSONs)."
     },
+    "finetune_lane_qualification_json": {
+      "producer": "python3 tools/qualify_finetune_lanes.py --output-dir <fresh-dir>",
+      "schema": "docs/schemas/finetune_lane_qualification.schema.json",
+      "summary": "Execution, provenance, dependency, checkpoint-handoff, metric-scope, and hold decision for real-image and external fine-tuning lanes."
+    },
     "instance_seg_eval_report_json": {
       "producer": "python3 tools/eval_instance_segmentation.py",
       "schema": "docs/schemas/instance_seg_eval_report.schema.json",
@@ -12098,6 +12103,133 @@
     {
       "contracts": {
         "produces": [
+          "finetune_lane_qualification_json"
+        ]
+      },
+      "docs": [
+        "docs/external_finetune_smoke.md",
+        "docs/schemas/finetune_lane_qualification.schema.json",
+        "docs/training_capability_matrix.md",
+        "docs/training_inference_export.md",
+        "docs/tools_index.md",
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "reports/finetune_lane_evidence_2026-07-29.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates a fresh qualification directory containing reports, logs, checkpoints, provider attempts, and checksums.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/qualify_finetune_lanes.py",
+      "examples": [
+        {
+          "command": "./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification",
+          "description": "Execute the repository-local five-stage trainer and non-dry external matrix, then emit one schema-defined hold decision."
+        }
+      ],
+      "id": "qualify_finetune_lanes",
+      "inputs": [
+        {
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
+          "flag": "--python",
+          "kind": "string",
+          "name": "python",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--epochs",
+          "kind": "number",
+          "name": "epochs",
+          "required": false
+        },
+        {
+          "default": 4,
+          "flag": "--max-steps",
+          "kind": "number",
+          "name": "max_steps",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--batch-size",
+          "kind": "number",
+          "name": "batch_size",
+          "required": false
+        },
+        {
+          "default": 128,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output-dir>/qualification_summary.json",
+          "description": "Schema-defined machine-readable execution matrix, protocol completion signal, provenance, hashes, metric boundaries, and hold decision.",
+          "kind": "file",
+          "name": "finetune_lane_qualification_json"
+        },
+        {
+          "default": "<output-dir>/checksums.sha256",
+          "description": "SHA-256 manifest for every emitted qualification artifact.",
+          "kind": "file",
+          "name": "checksums"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "torch"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient.",
+      "tags": [
+        "evidence",
+        "finetune",
+        "interop",
+        "multitask",
+        "reproducibility",
+        "training"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
           "sdft_continual_qualification_json"
         ]
       },
@@ -13553,7 +13685,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR and emit a machine-readable interface contract report with dependency-classified failures, train-path audit fields, and an explicit Apache-2.0-first license boundary.",
+      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifacts, hashes, runtime, source, and license boundaries.",
       "tags": [
         "finetune",
         "interop",
@@ -13926,7 +14058,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run staged real-image multitask finetune demo across bbox/segmentation/keypoints/depth/pose6d with strict task-data checks.",
+      "summary": "Run staged real-image bbox/segmentation/keypoints/depth/pose6d training with strict provenance, checkpoint-handoff hashes, runtime/memory, and explicit task-native metric and heuristic-label boundaries.",
       "tags": [
         "demo",
         "finetune",
@@ -16327,7 +16459,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",

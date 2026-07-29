@@ -102,6 +102,9 @@ class TestRunRealMultitaskFinetuneDemoTool(unittest.TestCase):
             report_path = out_dir / "multitask_finetune_demo_report.json"
             payload = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertTrue(payload.get("ok"))
+            self.assertEqual(payload.get("schema_version"), 2)
+            self.assertEqual(payload.get("kind"), "real_multitask_finetune_execution")
+            self.assertEqual((payload.get("decision") or {}).get("status"), "hold")
             evidence = payload.get("evidence") or {}
             self.assertEqual(int(evidence.get("tasks_total", -1)), 5)
             self.assertEqual(int(evidence.get("tasks_ok", -1)), 5)

@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -67,6 +68,51 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             self.assertEqual(payload["backend"]["backend_id"], "tao")
             self.assertIn("resume", payload["handoff_contracts"])
             self.assertIn("reports/resume_handoff.json", payload["run_output_contract"]["stable_artifacts"])
+
+    def test_tao_missing_runtime_writes_machine_readable_failure(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out = root / "train_tao.json"
+            work_dir = root / "tao_work"
+            env = dict(os.environ)
+            env["PATH"] = ""
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "train-tao",
+                    "--preset",
+                    "none",
+                    "--config",
+                    "configs/examples/finetune_external/tao_finetune_smoke.yaml",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--task-family",
+                    "bbox",
+                    "--work-dir",
+                    str(work_dir),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 1, msg=f"stdout={proc.stdout}\nstderr={proc.stderr}")
+            self.assertTrue(out.is_file())
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload["failure_code"], "E_EXTERNAL_RUNTIME_MISSING")
+            self.assertEqual(payload["execution_status"]["state"], "runtime_failed")
+            self.assertFalse(payload["execution_status"]["real_training_executed"])
+            self.assertIn("FileNotFoundError", payload["runtime_error"])
+            self.assertEqual(payload["process"]["returncode"], 127)
 
     def test_yolox_dry_run_dod_gate(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

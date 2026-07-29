@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU Fine-Tuning Lane Qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp",
+    "protocol_complete",
+    "source",
+    "environment",
+    "inputs",
+    "protocol",
+    "real_multitask",
+    "external_matrix",
+    "advertised_provider_attempts",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "const": "finetune_lane_qualification"
+    },
+    "protocol_complete": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "object",
+      "required": ["commit", "tracked_changes_present"]
+    },
+    "environment": {
+      "type": "object",
+      "required": ["platform", "python", "selected_python", "runtime_probes"]
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["dataset_root", "dataset_tree_sha256", "label_provenance"]
+    },
+    "protocol": {
+      "type": "object",
+      "required": ["device", "epochs", "max_steps", "batch_size", "image_size", "strict_provenance"]
+    },
+    "real_multitask": {
+      "type": "object",
+      "required": ["returncode", "report", "report_sha256", "tasks_total", "tasks_ok", "tasks"],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "minItems": 5
+        }
+      }
+    },
+    "external_matrix": {
+      "type": "object",
+      "required": ["returncode", "report", "report_sha256", "frameworks", "training_executed", "results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "minItems": 5
+        }
+      }
+    },
+    "advertised_provider_attempts": {
+      "type": "array",
+      "minItems": 4
+    },
+    "decision": {
+      "type": "object",
+      "required": ["status", "maturity", "training_quality", "reasons"],
+      "properties": {
+        "status": {
+          "const": "hold"
+        },
+        "maturity": {
+          "const": "experimental"
+        },
+        "training_quality": {
+          "const": "not_established"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

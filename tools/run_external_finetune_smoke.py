@@ -14,9 +14,11 @@ presence checks). Use --non-dry-framework to execute selected frameworks.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -252,6 +254,68 @@ def _tail(text: str, n: int = 10) -> list[str]:
     return str(text or "").splitlines()[-n:]
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _tree_sha256(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        rel = path.relative_to(root).as_posix()
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(_sha256_file(path).encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def _git_source() -> dict[str, Any]:
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return {
+        "commit": commit.stdout.strip() if commit.returncode == 0 else None,
+        "tracked_changes_present": bool(status.stdout.strip()) if status.returncode == 0 else None,
+        "tracked_changes": status.stdout.splitlines() if status.returncode == 0 else [],
+    }
+
+
+def _runtime_environment(python: str) -> dict[str, Any]:
+    return {
+        "platform": platform.platform(),
+        "python": platform.python_version(),
+        "selected_python": str(python),
+    }
+
+
+def _artifact_hashes(root: Path) -> list[dict[str, Any]]:
+    artifacts: list[dict[str, Any]] = []
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        artifacts.append(
+            {
+                "path": str(path),
+                "bytes": int(path.stat().st_size),
+                "sha256": _sha256_file(path),
+            }
+        )
+    return artifacts
+
+
 def _probe_python_module(*, python: str, module: str, cwd: Path) -> tuple[bool, str | None]:
     probe_cmd = [str(python), "-c", f"import {module}"]
     try:
@@ -375,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
     yolox_train_script = _resolve_path(str(args.yolox_train_script)) if args.yolox_train_script else None
 
     for framework in selected:
+        row_started = time.perf_counter()
         cfg_path = config_map[framework]
         row_dir = work_dir / framework
         row_dir.mkdir(parents=True, exist_ok=True)
@@ -394,6 +459,7 @@ def main(argv: list[str] | None = None) -> int:
         train_path_audited = False
         train_script_configured: bool | None = None
         capability_checks: list[str] = []
+        dependency_status: dict[str, Any] = {}
 
         if not cfg_path.exists():
             ok = False
@@ -510,12 +576,13 @@ def main(argv: list[str] | None = None) -> int:
                 if not projection_ok:
                     projection_error = "yolox config projection failed"
                 if yolox_train_script is None:
-                    ok = projection_ok
-                    if projection_ok:
-                        row_warnings.append("YOLOX non-dry run executed projection only (set --yolox-train-script for actual training).")
-                    if not projection_ok:
-                        runtime_error = "yolox config projection failed"
-                        failure_code = "E_YOLOX_PROJECTION_FAILED"
+                    ok = False
+                    runtime_error = (
+                        "YOLOX non-dry execution requires --yolox-train-script; "
+                        "config projection is not training."
+                    )
+                    failure_code = "E_EXTERNAL_TRAIN_SCRIPT_REQUIRED"
+                    row_warnings.append("YOLOX config projection completed, but no training command was executed.")
                 else:
                     if not projection_ok:
                         row_warnings.append(
@@ -641,15 +708,27 @@ def main(argv: list[str] | None = None) -> int:
                 projection_executed = projection_ok
                 if not projection_ok:
                     projection_error = "mmdet config projection failed"
+                    has_mmengine, mmengine_error = _probe_python_module(
+                        python=str(args.python), module="mmengine", cwd=repo_root
+                    )
+                    has_mmdet, mmdet_error = _probe_python_module(
+                        python=str(args.python), module="mmdet", cwd=repo_root
+                    )
+                    dependency_status = {
+                        "mmengine": {"available": has_mmengine, "error": mmengine_error},
+                        "mmdet": {"available": has_mmdet, "error": mmdet_error},
+                    }
                 if mmdet_train_script is None:
-                    ok = projection_ok
-                    if projection_ok:
-                        row_warnings.append(
-                            "MMDetection non-dry run executed projection only (set --mmdet-train-script for actual training)."
-                        )
-                    if not projection_ok:
-                        runtime_error = "mmdet config projection failed"
-                        failure_code = "E_MMDET_PROJECTION_FAILED"
+                    ok = False
+                    missing = sorted(name for name, state in dependency_status.items() if not state["available"])
+                    runtime_error = (
+                        "MMDetection non-dry execution requires --mmdet-train-script; "
+                        "config projection is not training."
+                    )
+                    failure_code = "E_EXTERNAL_TRAIN_SCRIPT_REQUIRED"
+                    if missing:
+                        runtime_error += " Missing projection dependencies: " + ", ".join(missing)
+                        row_warnings.append("MMDetection projection dependencies are unavailable: " + ", ".join(missing))
                 else:
                     if not projection_ok:
                         row_warnings.append(
@@ -712,15 +791,24 @@ def main(argv: list[str] | None = None) -> int:
                 projection_executed = projection_ok
                 if not projection_ok:
                     projection_error = "detectron2 config projection failed"
+                    has_detectron2, detectron2_error = _probe_python_module(
+                        python=str(args.python), module="detectron2", cwd=repo_root
+                    )
+                    dependency_status = {
+                        "detectron2": {"available": has_detectron2, "error": detectron2_error}
+                    }
                 if detectron2_train_script is None:
-                    ok = projection_ok
-                    if projection_ok:
-                        row_warnings.append(
-                            "Detectron2 non-dry run executed projection only (set --detectron2-train-script for actual training)."
-                        )
-                    if not projection_ok:
-                        runtime_error = "detectron2 config projection failed"
-                        failure_code = "E_DETECTRON2_PROJECTION_FAILED"
+                    ok = False
+                    runtime_error = (
+                        "Detectron2 non-dry execution requires --detectron2-train-script; "
+                        "config projection is not training."
+                    )
+                    failure_code = "E_EXTERNAL_TRAIN_SCRIPT_REQUIRED"
+                    if dependency_status and not bool(
+                        (dependency_status.get("detectron2") or {}).get("available")
+                    ):
+                        runtime_error += " Missing projection dependency: detectron2"
+                        row_warnings.append("Detectron2 projection dependency is unavailable.")
                 else:
                     if not projection_ok:
                         row_warnings.append(
@@ -774,6 +862,10 @@ def main(argv: list[str] | None = None) -> int:
                 "aux_commands": aux_commands,
                 "work_dir": str(row_dir),
                 "capability_checks": capability_checks,
+                "dependency_status": dependency_status,
+                "wall_seconds": float(time.perf_counter() - row_started),
+                "config_sha256": _sha256_file(cfg_path) if cfg_path.is_file() else None,
+                "artifacts": _artifact_hashes(row_dir),
                 "stdout_tail": stdout_tail,
                 "stderr_tail": stderr_tail,
                 "warnings": row_warnings,
@@ -798,10 +890,15 @@ def main(argv: list[str] | None = None) -> int:
         ok_all = False
 
     report = {
+        "schema_version": 2,
+        "kind": "external_finetune_execution_matrix",
         "task": "external_finetune_smoke",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "source": _git_source(),
+        "environment": _runtime_environment(str(args.python)),
         "ok": bool(ok_all),
         "dataset_root": str(dataset_root),
+        "dataset_tree_sha256": _tree_sha256(dataset_root),
         "split": split,
         "frameworks": selected,
         "non_dry_frameworks": sorted(non_dry),
