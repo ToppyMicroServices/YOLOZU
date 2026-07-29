@@ -12112,7 +12112,8 @@
         "docs/training_capability_matrix.md",
         "docs/training_inference_export.md",
         "docs/tools_index.md",
-        "manual/chapters/16_depth_6dof_symmetry.tex"
+        "manual/chapters/16_depth_6dof_symmetry.tex",
+        "reports/finetune_lane_evidence_2026-07-29.md"
       ],
       "effects": {
         "fixed_writes": [],

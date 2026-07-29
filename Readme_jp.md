@@ -147,6 +147,9 @@ Experimental な fine-tuning lane は
 の1 commandで監査できます。schema 定義済みの結果は実 training と config
 projection を分離し、dependency failure、checkpoint/provenance hashを記録します。
 task-native metricや非heuristic labelが不足する場合はExperimentalのままです。
+clean sourceでの限定実行結果は`hold`です。詳細は
+[fine-tuning evidence report](reports/finetune_lane_evidence_2026-07-29.md)
+を参照してください。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane

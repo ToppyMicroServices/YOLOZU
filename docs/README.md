@@ -66,6 +66,7 @@ yolozu doctor --proof
 - If you need an external training lane: use `yolozu train --external-backend yolox|detectron2|ultralytics|hf-detr ...` and then go to [Training / inference / export](training_inference_export.md#external-yolo-style-training-lane-yolox-primary-optional-bridges-second)
 - If you need the current training scope boundary first: read [Current training support](training_inference_export.md#current-training-support)
 - If you need the platform view of training: read [Training backend interface](training_backend_interface.md), [Training capability matrix](training_capability_matrix.md), and [Training orchestration](training_orchestration.md)
+- If you need the latest real/external fine-tuning evidence: read the [2026-07-29 qualification report](../reports/finetune_lane_evidence_2026-07-29.md)
 - If you are qualifying non-default paths: use [D) Bench/Parity](#d-benchparity-parity-check--benchmark-entry), [Research lanes](research_lanes.md), or [SynthGen handoff](synthgen_repo_integration.md)
 
 ## Offline repo smoke

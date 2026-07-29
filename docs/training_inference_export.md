@@ -401,6 +401,8 @@ bbox and polygon masks; keypoints, depth, and pose6d are deterministic
 annotation-derived heuristics. The current staged runner validates bbox mAP
 after every stage, not task-native segmentation/keypoint/depth/pose metrics, so
 the result cannot establish multi-task training quality.
+The clean-source bounded result and its verified hashes are recorded in
+[`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
 
 Use these tools for an end-to-end staged demo on real source images:
 

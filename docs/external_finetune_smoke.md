@@ -41,6 +41,9 @@ or that promotion passed. Consumers, including agents, must read
 `decision.status`, `decision.training_quality`, and the per-lane
 `training_executed` / `failure_code` fields.
 
+The 2026-07-29 clean-source bounded run is recorded in
+[`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
+
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with
 `E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.

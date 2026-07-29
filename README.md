@@ -146,6 +146,8 @@ Experimental fine-tuning lanes can be audited in one command with
 The schema-defined result separates executed training from config projection,
 records dependency failures and checkpoint/provenance hashes, and keeps the
 lane Experimental when task-native metrics or non-heuristic labels are absent.
+The bounded clean-source result remains `hold`; see the
+[fine-tuning evidence report](reports/finetune_lane_evidence_2026-07-29.md).
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research

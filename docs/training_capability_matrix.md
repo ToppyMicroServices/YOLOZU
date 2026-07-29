@@ -63,6 +63,8 @@ Experimental maturity.
 For automation, exit code 0 means the qualification protocol completed and
 `protocol_complete` is true. Promotion remains a separate decision in
 `decision.status`; a completed hold result is not a training-quality pass.
+The clean-source bounded result is recorded in
+[`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
 
 ## Production posture
 
