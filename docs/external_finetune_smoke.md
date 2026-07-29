@@ -35,6 +35,12 @@ repository. It records source/environment/dataset hashes, per-stage checkpoint
 handoffs, runtime/memory, dependency probes, actual training execution, metric
 scope, and an explicit `hold` decision.
 
+Exit code 0 means `protocol_complete=true`: all required attempts produced
+machine-readable evidence. It does not mean that every external backend trained
+or that promotion passed. Consumers, including agents, must read
+`decision.status`, `decision.training_quality`, and the per-lane
+`training_executed` / `failure_code` fields.
+
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with
 `E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.

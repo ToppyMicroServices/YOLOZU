@@ -6,6 +6,7 @@
     "schema_version",
     "kind",
     "timestamp",
+    "protocol_complete",
     "source",
     "environment",
     "inputs",
@@ -23,6 +24,9 @@
     "kind": {
       "type": "string",
       "const": "finetune_lane_qualification"
+    },
+    "protocol_complete": {
+      "type": "boolean"
     },
     "source": {
       "type": "object",

@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
@@ -44,6 +45,12 @@ class TestQualifyFinetuneLanesCli(unittest.TestCase):
         with self.assertRaises(SystemExit) as ctx:
             module._confined_repo_path("/tmp", kind="dataset root")
         self.assertIn("inside the repository", str(ctx.exception))
+
+    def test_schema_requires_protocol_completion_signal(self) -> None:
+        schema_path = self._script().parents[1] / "docs" / "schemas" / "finetune_lane_qualification.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        self.assertIn("protocol_complete", schema["required"])
+        self.assertEqual(schema["properties"]["protocol_complete"]["type"], "boolean")
 
 
 if __name__ == "__main__":

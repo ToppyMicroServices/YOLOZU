@@ -12193,7 +12193,7 @@
       "outputs": [
         {
           "default": "<output-dir>/qualification_summary.json",
-          "description": "Schema-defined machine-readable execution matrix, provenance, hashes, metric boundaries, and hold decision.",
+          "description": "Schema-defined machine-readable execution matrix, protocol completion signal, provenance, hashes, metric boundaries, and hold decision.",
           "kind": "file",
           "name": "finetune_lane_qualification_json"
         },
@@ -12216,7 +12216,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes and retaining Experimental maturity when labels or task-native metrics are insufficient.",
+      "summary": "Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient.",
       "tags": [
         "evidence",
         "finetune",

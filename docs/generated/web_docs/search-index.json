@@ -653,8 +653,8 @@
   {
     "href": "commands.html#tool-qualify-finetune-lanes",
     "kind": "command",
-    "search_text": "qualify_finetune_lanes Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes and retaining Experimental maturity when labels or task-native metrics are insufficient. experimental tools/qualify_finetune_lanes.py --output-dir --dataset-root --python --device --epochs --max-steps --batch-size --image-size",
-    "summary": "Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes and retaining Experimental maturity when labels or task-native metrics are insufficient.",
+    "search_text": "qualify_finetune_lanes Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient. experimental tools/qualify_finetune_lanes.py --output-dir --dataset-root --python --device --epochs --max-steps --batch-size --image-size",
+    "summary": "Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient.",
     "title": "qualify_finetune_lanes"
   },
   {
@@ -961,7 +961,7 @@
   {
     "href": "schemas.html#schema-finetune-lane-qualification-schema",
     "kind": "schema",
-    "search_text": "YOLOZU Fine-Tuning Lane Qualification Checked-in YOLOZU JSON Schema. advertised_provider_attempts decision environment external_matrix inputs kind protocol real_multitask schema_version source docs/schemas/finetune_lane_qualification.schema.json",
+    "search_text": "YOLOZU Fine-Tuning Lane Qualification Checked-in YOLOZU JSON Schema. advertised_provider_attempts decision environment external_matrix inputs kind protocol protocol_complete real_multitask schema_version source docs/schemas/finetune_lane_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Fine-Tuning Lane Qualification"
   },

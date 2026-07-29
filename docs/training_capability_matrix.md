@@ -60,6 +60,10 @@ stages. External process-launch failures are normalized into machine-readable
 runtime errors, including a missing TAO executable. These boundaries retain
 Experimental maturity.
 
+For automation, exit code 0 means the qualification protocol completed and
+`protocol_complete` is true. Promotion remains a separate decision in
+`decision.status`; a completed hold result is not a training-quality pass.
+
 ## Production posture
 
 - Start with `reference-rtdetr-pose` if you want the richest in-repo training path.

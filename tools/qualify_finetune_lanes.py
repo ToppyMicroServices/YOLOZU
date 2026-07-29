@@ -199,6 +199,13 @@ def _provider_attempts(
         started = time.perf_counter()
         proc = _run(cmd)
         report = _load_json(report_path) if report_path.is_file() else None
+        execution_status = (report or {}).get("execution_status")
+        execution_status = execution_status if isinstance(execution_status, dict) else {}
+        failure_code = (report or {}).get("failure_code")
+        if not failure_code and execution_status.get("state") == "requires_external_train_script":
+            failure_code = "E_EXTERNAL_TRAIN_SCRIPT_REQUIRED"
+        elif not failure_code and execution_status.get("state") == "runtime_failed":
+            failure_code = "E_EXTERNAL_RUNTIME_FAILED"
         attempts.append(
             {
                 "provider": provider,
@@ -207,8 +214,8 @@ def _provider_attempts(
                 "wall_seconds": float(time.perf_counter() - started),
                 "report": str(report_path) if report_path.is_file() else None,
                 "report_sha256": _sha256_file(report_path) if report_path.is_file() else None,
-                "execution_status": (report or {}).get("execution_status"),
-                "failure_code": (report or {}).get("failure_code"),
+                "execution_status": execution_status or None,
+                "failure_code": failure_code,
                 "runtime_error": (report or {}).get("runtime_error"),
                 "stderr_tail": (proc.stderr or "").splitlines()[-10:],
             }
@@ -225,6 +232,7 @@ def _write_markdown(summary: dict[str, Any], path: Path) -> None:
         f"- source commit: `{summary['source'].get('commit')}`",
         f"- decision: **{summary['decision']['status']}**",
         f"- maturity: **{summary['decision']['maturity']}**",
+        f"- protocol complete: **{summary['protocol_complete']}**",
         f"- real stages executed: {real['tasks_ok']}/{real['tasks_total']}",
         f"- external training executed: {external['training_executed']}/{external['frameworks']}",
         "",
@@ -389,10 +397,19 @@ def main(argv: list[str] | None = None) -> int:
     if bool(source.get("tracked_changes_present")):
         reasons.append("the qualification was run with tracked source changes present")
 
+    protocol_complete = bool(
+        real_proc.returncode == 0
+        and len(real_tasks) == 5
+        and all(bool(task.get("ok")) for task in real_tasks)
+        and len(external_results) == 5
+        and len(provider_attempts) == 4
+        and all(bool(attempt.get("report")) for attempt in provider_attempts)
+    )
     summary = {
         "schema_version": 1,
         "kind": "finetune_lane_qualification",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "protocol_complete": protocol_complete,
         "source": source,
         "environment": {
             "platform": platform.platform(),
@@ -449,13 +466,7 @@ def main(argv: list[str] | None = None) -> int:
     print(str(summary_path))
     print(str(checksums))
 
-    execution_complete = bool(
-        real_proc.returncode == 0
-        and len(real_tasks) == 5
-        and all(bool(task.get("ok")) for task in real_tasks)
-        and external_results
-    )
-    return 0 if execution_complete else 1
+    return 0 if protocol_complete else 1
 
 
 if __name__ == "__main__":
