@@ -80,6 +80,97 @@ class TestPrepareTTTDomainShiftTargetScript(unittest.TestCase):
         self.assertIn("--severity", combined)
         self.assertIn("--seed", combined)
 
+    def test_force_refuses_unowned_existing_output(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "prepare_ttt_domain_shift_target.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            out = root / "unowned"
+            out.mkdir()
+            sentinel = out / "keep.txt"
+            sentinel.write_text("keep", encoding="utf-8")
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--out",
+                    str(out),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("refusing to replace unowned output directory", proc.stderr)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+    def test_refuses_output_inside_source_dataset(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "prepare_ttt_domain_shift_target.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--out",
+                    str(dataset / "shifted"),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("source and output roots must not overlap", proc.stderr)
+
+    def test_refuses_recipe_output_outside_owned_root(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "scripts" / "prepare_ttt_domain_shift_target.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            dataset = self._make_dataset(root)
+            outside_recipe = root / "outside.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--dataset-root",
+                    str(dataset),
+                    "--split",
+                    "val",
+                    "--out",
+                    str(root / "shifted"),
+                    "--recipe-out",
+                    str(outside_recipe),
+                    "--force",
+                ],
+                cwd=str(repo_root),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("--recipe-out must stay inside --out", proc.stderr)
+            self.assertFalse(outside_recipe.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

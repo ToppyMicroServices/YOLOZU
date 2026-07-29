@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YOLOZU SDFT-Style Continual Qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp",
+    "source",
+    "environment",
+    "inputs",
+    "protocol",
+    "initial_checkpoints",
+    "runs",
+    "comparisons",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "const": "sdft_continual_qualification"
+    },
+    "source": {
+      "type": "object",
+      "required": ["commit", "tracked_changes_present"]
+    },
+    "environment": {
+      "type": "object",
+      "required": ["platform", "python", "torch", "pycocotools"]
+    },
+    "inputs": {
+      "type": "object",
+      "required": [
+        "spec",
+        "spec_sha256",
+        "model_config",
+        "model_config_sha256",
+        "source_dataset_tree_sha256",
+        "target_dataset_tree_sha256"
+      ]
+    },
+    "protocol": {
+      "type": "object",
+      "required": [
+        "seeds",
+        "methods",
+        "train",
+        "evaluation",
+        "promotion_gates",
+        "same_data_order_and_budget"
+      ],
+      "properties": {
+        "seeds": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"type": "integer"}
+        },
+        "methods": {
+          "const": ["naive", "sdft"]
+        },
+        "same_data_order_and_budget": {
+          "type": "boolean"
+        }
+      }
+    },
+    "initial_checkpoints": {
+      "type": "array",
+      "minItems": 3
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 6
+    },
+    "comparisons": {
+      "type": "array",
+      "minItems": 3
+    },
+    "decision": {
+      "type": "object",
+      "required": ["status", "efficacy", "per_run_decisions", "reasons"],
+      "properties": {
+        "status": {
+          "enum": ["hold", "review", "promote"]
+        },
+        "efficacy": {
+          "enum": ["not_established", "supported", "not_supported"]
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

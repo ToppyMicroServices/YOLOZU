@@ -7,6 +7,7 @@ task-by-time performance matrix.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -47,16 +48,22 @@ def _get(matrix: list[list[float | None]], t: int, i: int) -> float | None:
         return None
 
 
-def summarize_continual_matrix(matrix: list[list[float | None]]) -> ContinualSummary:
+def summarize_continual_matrix(
+    matrix: list[list[float | None]],
+    *,
+    baseline: Sequence[float | None] | None = None,
+) -> ContinualSummary:
     """Compute standard continual-learning metrics from a performance matrix.
 
     matrix[t][i] = performance on task i after finishing training up to task t.
 
     Returned metrics follow common CL conventions:
     - avg_acc: average of final performance across tasks
-    - forgetting: average over tasks of (best past performance - final performance)
-    - bwt: average over tasks of (final performance - performance right after learning task)
-    - fwt: forward transfer (optional; computed when values exist for tasks before they are learned)
+    - forgetting: average over prior tasks of (best past performance - final performance)
+    - bwt: average over prior tasks of (final performance - performance right after learning task)
+    - fwt: average over future tasks of (performance immediately before learning
+      the task - initial-checkpoint baseline). FWT is undefined without a
+      baseline vector.
     """
 
     if not matrix:
@@ -69,6 +76,7 @@ def summarize_continual_matrix(matrix: list[list[float | None]]) -> ContinualSum
     diag_vals: list[float] = []
     forget_vals: list[float] = []
     bwt_vals: list[float] = []
+    fwt_pretrain_vals: list[float] = []
     fwt_vals: list[float] = []
 
     for i in range(int(n_tasks)):
@@ -80,10 +88,10 @@ def summarize_continual_matrix(matrix: list[list[float | None]]) -> ContinualSum
         if v_diag is not None:
             diag_vals.append(v_diag)
 
-        # Forgetting: max over t>=i then compare to final.
-        if v_final is not None:
+        # The final task has no later task that could cause forgetting.
+        if i < t_final and v_final is not None:
             best = None
-            for t in range(int(i), len(matrix)):
+            for t in range(int(i), int(t_final)):
                 v = _get(matrix, t, i)
                 if v is None:
                     continue
@@ -92,20 +100,18 @@ def summarize_continual_matrix(matrix: list[list[float | None]]) -> ContinualSum
                 forget_vals.append(float(best - v_final))
 
         # Backward transfer: final - diag.
-        if v_final is not None and v_diag is not None:
+        if i < t_final and v_final is not None and v_diag is not None:
             bwt_vals.append(float(v_final - v_diag))
 
-        # Forward transfer: performance on task i before it is trained, vs random baseline.
-        # We don't assume a baseline here; report the best pre-training performance if present.
+        # GEM convention: R[i-1, i] - baseline[i].
         if i > 0:
-            best_pre = None
-            for t in range(0, int(i)):
-                v = _get(matrix, t, i)
-                if v is None:
-                    continue
-                best_pre = v if best_pre is None else max(best_pre, v)
-            if best_pre is not None:
-                fwt_vals.append(float(best_pre))
+            pretrain = _get(matrix, int(i) - 1, i)
+            if pretrain is not None:
+                fwt_pretrain_vals.append(float(pretrain))
+                if baseline is not None and i < len(baseline):
+                    baseline_value = baseline[i]
+                    if baseline_value is not None:
+                        fwt_vals.append(float(pretrain - float(baseline_value)))
 
     details = {
         "t_final": int(t_final),
@@ -114,14 +120,20 @@ def summarize_continual_matrix(matrix: list[list[float | None]]) -> ContinualSum
         "diag": list(diag_vals),
         "forget_per_task": list(forget_vals),
         "bwt_per_task": list(bwt_vals),
-        "fwt_pretrain_best": list(fwt_vals),
+        "fwt_baseline": list(baseline) if baseline is not None else None,
+        "fwt_pretrain": list(fwt_pretrain_vals),
+        "fwt_delta_per_task": list(fwt_vals),
+        "fwt_defined": baseline is not None and len(fwt_vals) == max(0, int(n_tasks) - 1),
     }
 
     return ContinualSummary(
         avg_acc=_mean(final_vals),
         forgetting=_mean(forget_vals),
         bwt=_mean(bwt_vals),
-        fwt=_mean(fwt_vals),
+        fwt=(
+            _mean(fwt_vals)
+            if baseline is not None and len(fwt_vals) == max(0, int(n_tasks) - 1)
+            else None
+        ),
         details=details,
     )
-

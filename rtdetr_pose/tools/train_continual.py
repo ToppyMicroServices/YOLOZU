@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
+import resource
 import subprocess
 import sys
 import time
@@ -25,10 +28,42 @@ def _now_utc() -> str:
 
 
 def _sha256_json(obj: Any) -> str:
-    import hashlib
-
     data = json.dumps(obj, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _records_sha256(records: list[dict[str, Any]], *, dataset_root: Path) -> str:
+    digest = hashlib.sha256()
+    root = dataset_root.resolve()
+    for record in records:
+        normalized = dict(record)
+        image_raw = normalized.pop("image_path", None)
+        image_path = Path(str(image_raw)).resolve() if image_raw else None
+        if image_path is not None:
+            try:
+                image_ref = image_path.relative_to(root).as_posix()
+            except ValueError:
+                image_ref = str(image_path)
+            digest.update(image_ref.encode("utf-8"))
+            digest.update(b"\0")
+            if image_path.is_file():
+                digest.update(_sha256_file(image_path).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(
+            json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str).encode(
+                "utf-8"
+            )
+        )
+        digest.update(b"\n")
+    return digest.hexdigest()
 
 
 def _load_config(path: Path) -> dict[str, Any]:
@@ -157,6 +192,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Continual fine-tuning runner for rtdetr_pose (domain-incremental).")
     p.add_argument("--config", required=True, help="YAML/JSON continual learning config.")
     p.add_argument("--run-dir", default=None, help="Output directory for this continual run.")
+    p.add_argument(
+        "--initial-checkpoint",
+        default=None,
+        help="Current-compatible checkpoint used before task 0 and as the FWT baseline.",
+    )
     p.add_argument("--replay-size", type=int, default=None, help="Override continual.replay_size (0 disables replay).")
     p.add_argument(
         "--replay-fraction",
@@ -189,6 +229,13 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("config.model_config is required (rtdetr_pose JSON config)")
     model_config_path = _resolve(model_config, base=repo_root)
     assert model_config_path is not None
+    if not model_config_path.is_file():
+        raise SystemExit(f"model config not found: {model_config_path}")
+
+    initial_raw = args.initial_checkpoint or cfg.get("initial_checkpoint")
+    initial_checkpoint = _resolve(str(initial_raw), base=repo_root) if initial_raw else None
+    if initial_checkpoint is not None and not initial_checkpoint.is_file():
+        raise SystemExit(f"initial checkpoint not found: {initial_checkpoint}")
 
     train_cfg = cfg.get("train") if isinstance(cfg.get("train"), dict) else {}
     continual_cfg = cfg.get("continual") if isinstance(cfg.get("continual"), dict) else {}
@@ -243,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         args={
             "config": str(cfg_path),
             "run_dir": str(run_dir),
+            "initial_checkpoint": str(initial_checkpoint) if initial_checkpoint is not None else None,
             "replay_size": int(replay_size),
             "replay_fraction": replay_fraction,
             "replay_per_task_cap": replay_per_task_cap,
@@ -254,11 +302,26 @@ def main(argv: list[str] | None = None) -> int:
     buffer = ReplayBuffer(capacity=int(replay_size), seed=int(seed))
 
     run_meta: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "timestamp_utc": _now_utc(),
         "config_path": str(cfg_path),
         "config_hash": _sha256_json(cfg),
+        "config_file_sha256": _sha256_file(cfg_path),
         "model_config": str(model_config_path),
+        "model_config_sha256": _sha256_file(model_config_path),
+        "initial_checkpoint": (
+            {
+                "path": str(initial_checkpoint),
+                "sha256": _sha256_file(initial_checkpoint),
+            }
+            if initial_checkpoint is not None
+            else None
+        ),
+        "environment": {
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+            "peak_rss_unit": "bytes" if sys.platform == "darwin" else "KiB",
+        },
         "seed": int(seed),
         "replay": {
             "size": int(replay_size),
@@ -282,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
         "run_record": run_record,
     }
 
-    prev_ckpt: Path | None = None
+    prev_ckpt: Path | None = initial_checkpoint
     prev_ewc_state: Path | None = None
     prev_si_state: Path | None = None
 
@@ -291,6 +354,7 @@ def main(argv: list[str] | None = None) -> int:
         task_out.mkdir(parents=True, exist_ok=True)
 
         train_records = _to_abs_paths(_load_records(task.dataset_root, split=task.train_split), base=repo_root)
+        val_records = _to_abs_paths(_load_records(task.dataset_root, split=task.val_split), base=repo_root)
         replay_k = None
         if replay_fraction is not None:
             replay_k = max(0, int(round(float(replay_fraction) * float(len(train_records)))))
@@ -330,10 +394,11 @@ def main(argv: list[str] | None = None) -> int:
         if extra_records_path is not None:
             train_args.extend(["--extra-records-json", str(extra_records_path)])
 
+        teacher_checkpoint = prev_ckpt if task_idx > 0 and distill_enabled else None
         if prev_ckpt is not None:
             train_args.extend(["--resume-from", str(prev_ckpt)])
-            if distill_enabled:
-                train_args.extend(["--self-distill-from", str(prev_ckpt)])
+            if teacher_checkpoint is not None:
+                train_args.extend(["--self-distill-from", str(teacher_checkpoint)])
                 train_args.extend(["--self-distill-keys", str(run_meta["distill"]["keys"])])
                 train_args.extend(["--self-distill-weight", str(float(run_meta["distill"]["weight"]))])
                 train_args.extend(["--self-distill-temperature", str(float(run_meta["distill"]["temperature"]))])
@@ -391,7 +456,10 @@ def main(argv: list[str] | None = None) -> int:
         train_args.extend(_as_cli_args(forwarded))
 
         cmd = _train_minimal_cmd(python=sys.executable, args=train_args)
+        started = time.perf_counter()
         _subprocess_or_die(cmd)
+        train_seconds = time.perf_counter() - started
+        child_peak_rss = int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
 
         ckpt_path = task_out / "checkpoint.pt"
         if not ckpt_path.exists():
@@ -417,10 +485,21 @@ def main(argv: list[str] | None = None) -> int:
                 "train_split": str(task.train_split),
                 "val_split": str(task.val_split),
                 "train_records": int(len(train_records)),
+                "val_records": int(len(val_records)),
+                "train_records_sha256": _records_sha256(train_records, dataset_root=task.dataset_root),
+                "val_records_sha256": _records_sha256(val_records, dataset_root=task.dataset_root),
                 "replay_requested": replay_k,
                 "replay_used": int(len(buffer_records)),
                 "run_dir": str(task_out),
                 "checkpoint": str(ckpt_path),
+                "checkpoint_sha256": _sha256_file(ckpt_path),
+                "teacher_checkpoint": str(teacher_checkpoint) if teacher_checkpoint is not None else None,
+                "teacher_checkpoint_sha256": (
+                    _sha256_file(teacher_checkpoint) if teacher_checkpoint is not None else None
+                ),
+                "train_seconds": float(train_seconds),
+                "child_peak_rss": child_peak_rss,
+                "command": cmd,
                 "ewc_state": (str(prev_ewc_state) if prev_ewc_state is not None else None),
                 "si_state": (str(prev_si_state) if prev_si_state is not None else None),
             }

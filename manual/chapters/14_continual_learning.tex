@@ -386,10 +386,14 @@ So the operational rule is:
 Run continual fine-tuning using a config (start from the example):
 \begin{lstlisting}[language=bash]
 python3 rtdetr_pose/tools/train_continual.py \
-  --config configs/continual/rtdetr_pose_domain_inc_example.yaml
+  --config configs/continual/rtdetr_pose_domain_inc_example.yaml \
+  --initial-checkpoint runs/initial/checkpoint.pt
 \end{lstlisting}
 
 To run \textbf{memoryless} (no replay), set replay size to 0 in the config.
+The explicit initial checkpoint is also the baseline used to define forward
+transfer; without it, FWT is reported as undefined rather than treating a raw
+pre-training score as transfer.
 
 \paragraph{Note on "distillation" terminology}
 This chapter's \emph{distillation} refers to \textbf{checkpoint-based self-distillation during training} (e.g., \cmd{--self-distill-from}) as an anti-forgetting mechanism.
@@ -531,93 +535,43 @@ This is usually the cleanest first experiment because it answers the central que
 Can the model adapt to the new data without forgetting too much of the previous detector behavior?
 \end{quote}
 
-\subsection{Measured smoke run: naive sequential fine-tune vs memoryless SDFT}
+\subsection{Tracked three-seed qualification}
 
-To make the workflow concrete, we ran a tiny two-task continual-learning smoke experiment in this repository.
-This was not intended as a benchmark.
-Its purpose was to verify that the SDFT path really executes, records the teacher checkpoint, and emits the expected continual-learning artifacts.
-
-\paragraph{Setup.}
-We created two tiny task roots from \path{data/coco128}:
-\begin{itemize}
-  \item Task A: 8 train images + 4 val images,
-  \item Task B: 8 train images + 4 val images.
-\end{itemize}
-
-Both runs used the same detector config and the same tiny budget:
-\begin{itemize}
-  \item device: CPU,
-  \item image size: $160$,
-  \item batch size: $1$,
-  \item max steps per task: $2$,
-  \item replay: disabled (\cmd{replay_size: 0}).
-\end{itemize}
-
-We then executed two runs:
-\begin{itemize}
-  \item \textbf{naive sequential fine-tune}: Task B resumes from Task A, but uses no teacher checkpoint,
-  \item \textbf{memoryless SDFT}: Task B resumes from Task A and also receives \cmd{--self-distill-from} pointing to the Task A checkpoint.
-\end{itemize}
-
-\paragraph{Commands.}
-The measured runs were produced with:
+The older two-step, four-image smoke run verified wiring only and is not
+efficacy evidence.  The current bounded diagnostic is executed with one
+command:
 \begin{lstlisting}[language=bash]
-python3 rtdetr_pose/tools/train_continual.py \
-  --config /tmp/yolozu_sdft_manual_naive.yaml \
-  --run-dir runs/continual/manual_sdft_smoke_naive
-
-python3 rtdetr_pose/tools/train_continual.py \
-  --config /tmp/yolozu_sdft_manual_sdft.yaml \
-  --run-dir runs/continual/manual_sdft_smoke_sdft
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --output-dir /tmp/yolozu-sdft-qualification
 \end{lstlisting}
 
-And evaluated with:
-\begin{lstlisting}[language=bash]
-python3 tools/eval_continual.py \
-  --run-json runs/continual/manual_sdft_smoke_naive/continual_run.json \
-  --device cpu \
-  --image-size 160 \
-  --max-images 4 \
-  --metric simple_map \
-  --force
+The repository-tracked spec fixes seeds 11, 22, and 33, one COCO128 source
+domain, one deterministic Gaussian-blur target, a common initial checkpoint per
+seed, and identical data order and optimization budget for naive sequential
+fine-tuning and checkpoint distillation.  Every task-matrix cell is evaluated
+with the real \cmd{pycocotools} COCOeval path.
 
-python3 tools/eval_continual.py \
-  --run-json runs/continual/manual_sdft_smoke_sdft/continual_run.json \
-  --device cpu \
-  --image-size 160 \
-  --max-images 4 \
-  --metric simple_map \
-  --force
-\end{lstlisting}
+The command emits \path{qualification_summary.json},
+\path{checksums.sha256}, and a compressed bundle.  The JSON records checkpoint,
+teacher, config, dataset/order, source, environment, runtime, memory, and file
+hashes, together with the per-run promotion decisions.  Existing output and
+archive paths are refused.
 
-\paragraph{Observed results.}
-The important thing to notice is not a claimed accuracy gain, but that the SDFT path became visible in the recorded outputs:
-\begin{center}
-\begin{tabular}{@{}p{1.6cm}p{2.8cm}p{2.5cm}p{6.4cm}@{}}
-\toprule
-Run & Task B teacher & Task B final loss & Extra recorded loss terms \\
-\midrule
-Naive & none & 2.673 & none \\
-SDFT & Task A checkpoint & 1.975 & \cmd{loss_sdft}=0.187,\ \cmd{loss_sdft_bbox}=0.057,\ \cmd{loss_sdft_logits}=0.130 \\
-\bottomrule
-\end{tabular}
-\end{center}
+This detector implementation is SDFT-style: it regularizes against the previous
+checkpoint's logits and boxes.  It is not a faithful reproduction of the
+demonstration-conditioned, on-policy language-model procedure in
+\cite{shenfeld2026sdft}.  The bounded local domain shift also does not satisfy
+the independent-reproduction gate.  Efficacy therefore remains
+\cmd{not_established} unless repeated task metrics support a positive
+retention/adaptation trade-off.
 
-More specifically:
-\begin{itemize}
-  \item \path{runs/continual/manual_sdft_smoke_sdft/task01_task_b/run_record.json} recorded \cmd{self_distill_from} pointing to the Task A checkpoint.
-  \item \path{runs/continual/manual_sdft_smoke_sdft/task01_task_b/metrics.json} contained \cmd{loss_sdft}, \cmd{loss_sdft_bbox}, and \cmd{loss_sdft_logits}, which do not appear in the naive run.
-  \item Both runs wrote the expected continual-learning outputs: \path{continual_run.json}, per-task checkpoints, per-task metrics, and \path{continual_eval.json}.
-\end{itemize}
-
-\paragraph{What this smoke run does \emph{not} prove.}
-Because this validation run used only two optimization steps per task and only four validation images per task, the proxy mAP matrix stayed at zero for both runs.
-That means this example should be read as a \emph{wiring and artifact validation}, not as evidence that SDFT improved accuracy in this tiny setting.
-
-The right interpretation is:
-\begin{quote}
-the teacher path executed correctly, the distillation loss was active on Task B, and the continual-learning artifacts were emitted in a form that can be inspected and compared.
-\end{quote}
+The clean 2026-07-28 execution completed all six method/seed runs, but every
+real-COCOeval task score and every SDFT-minus-naive delta was zero.  The
+recorded decision is therefore \cmd{hold} and efficacy is
+\cmd{not_established}.  The release-addressable bundle and checksums are linked
+from \path{reports/sdft_continual_evidence_2026-07-28.md}.  Zero
+forgetting/BWT/FWT is not a success signal in this run because every underlying
+task score is also zero.
 
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:
@@ -625,8 +579,16 @@ Evaluate forgetting and per-task metrics from the recorded run JSON:
 python3 tools/eval_continual.py \
   --run-json runs/continual/<run>/continual_run.json \
   --device cpu \
+  --metric coco \
+  --metric-key map50_95 \
   --max-images 50
 \end{lstlisting}
+
+The initial checkpoint is taken from \path{continual_run.json}, or can be
+overridden with \cmd{--baseline-checkpoint}.  Forward transfer is defined as
+the score immediately before learning a future task minus that task's initial
+checkpoint score.  It is reported as \cmd{null} when the baseline is absent;
+the raw pre-training score is never labeled as FWT.
 
 If your dataset provides pose sidecar metadata (e.g., under \path{labels/<split>/*.json}), you can request pose metrics:
 \begin{lstlisting}[language=bash]
@@ -675,7 +637,8 @@ python3 tools/eval_continual.py \
 \cmd{train_continual.py} writes a run folder under \path{runs/continual/}.
 Key outputs:
 \begin{itemize}
-  \item \path{continual_run.json}: task list, checkpoints, config hash, and run record.
+  \item \path{continual_run.json}: initial checkpoint, task list, config/model
+    hashes, run record, and per-task teacher/data-order/time/memory provenance.
   \item \path{replay_buffer.json}: buffer summary (when replay is enabled).
   \item Per-task subfolders, typically including:\\
     \path{checkpoint.pt}, \path{metrics.jsonl}, \path{metrics.csv}, \path{run_record.json}.
@@ -701,8 +664,10 @@ Commonly tuned items include:
 
 \section{Notes}
 \begin{itemize}
-  \item Some continual comparisons use a CPU-friendly proxy metric (e.g., a lightweight mAP-style summary) on a pinned subset to keep iteration fast.
-  \item For ``real'' mAP, switch your evaluation workflow to a full COCO evaluator when appropriate.
+  \item \cmd{--metric coco} uses real COCOeval and requires
+    \cmd{pycocotools}.
+  \item \cmd{simple_map} remains a lightweight wiring proxy and is not used by
+    the tracked qualification.
 \end{itemize}
 
 \section{References (self-distillation background)}

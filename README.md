@@ -128,6 +128,19 @@ The BOP lane means rigid-object `R,t` pose, not human 3D skeleton pose. Its
 safe conversion and evaluation wiring is available, but real multi-seed
 efficacy and independent reproduction remain open.
 
+The continual-learning lane now has a one-command, schema-defined three-seed
+naive-versus-checkpoint-distillation diagnostic:
+`./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification`.
+It runs real COCOeval and records baseline-relative FWT, hashes, time, memory,
+and fairness checks. This is an SDFT-style detector regularizer rather than a
+faithful reproduction of language-model SDFT, and it remains Research until
+efficacy and independent reproduction are established.
+The completed 2026-07-28 run is a measured negative result: every real-COCOeval
+matrix cell and every SDFT-minus-naive delta was zero, so the decision is
+`hold` and efficacy is `not_established`. The hash-verified bundle is available
+as a [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28);
+see the [evidence report](reports/sdft_continual_evidence_2026-07-28.md).
+
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
 lane. The bounded 2026-07-27 diagnostic bundle is available as a
