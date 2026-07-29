@@ -208,6 +208,7 @@ def _provider_attempts(
                 "report": str(report_path) if report_path.is_file() else None,
                 "report_sha256": _sha256_file(report_path) if report_path.is_file() else None,
                 "execution_status": (report or {}).get("execution_status"),
+                "failure_code": (report or {}).get("failure_code"),
                 "runtime_error": (report or {}).get("runtime_error"),
                 "stderr_tail": (proc.stderr or "").splitlines()[-10:],
             }

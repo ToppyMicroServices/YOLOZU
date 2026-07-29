@@ -585,15 +585,23 @@ def _run(
     cwd: Path = repo_root,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        cmd,
-        cwd=str(cwd),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=False,
-    )
+    try:
+        return subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=127,
+            stdout="",
+            stderr=f"{type(exc).__name__}: {exc}",
+        )
 
 
 _PRESETS: dict[str, dict[str, str]] = {
@@ -1883,6 +1891,7 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
 
     training_executed = False
     runtime_error: str | None = None
+    failure_code: str | None = None
     proc_info: dict[str, Any] | None = None
     if not bool(args.dry_run):
         proc = _run(command, cwd=repo_root, env=dict(os.environ))
@@ -1893,7 +1902,13 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
         }
         training_executed = proc.returncode == 0
         if proc.returncode != 0:
-            runtime_error = f"external NVIDIA TAO train command failed ({proc.returncode})"
+            if proc.returncode == 127:
+                detail = (proc.stderr or "").strip()
+                runtime_error = f"external NVIDIA TAO runtime unavailable: {detail}"
+                failure_code = "E_EXTERNAL_RUNTIME_MISSING"
+            else:
+                runtime_error = f"external NVIDIA TAO train command failed ({proc.returncode})"
+                failure_code = "E_EXTERNAL_RUNTIME_FAILED"
 
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_tao.json"))).resolve()
     handoff_contracts = _external_handoff_contracts(
@@ -1953,6 +1968,7 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
             "train_script": train_script or None,
             "template_train_command": template,
             "train_config_projection": str(projection_path),
+            "failure_code": failure_code,
             "layers": {
                 "trainer_runner": "external NVIDIA TAO launcher",
                 "repo_impl": "support_external_training train-tao",

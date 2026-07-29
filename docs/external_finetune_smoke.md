@@ -126,6 +126,11 @@ Without a train script, a non-dry MMDetection, Detectron2, or YOLOX selection
 fails closed even if projection succeeds. Missing projection dependencies are
 reported separately in `dependency_status`.
 
+For TAO and other executable-backed bridges, a missing external command is
+reported as a structured runtime failure. TAO uses
+`E_EXTERNAL_RUNTIME_MISSING`; the wrapper does not expose an uncaught
+`FileNotFoundError`.
+
 ## 4) machine.dev / GPU validation
 
 For GPU environments (for example `machine.dev`), run non-dry checks with a CUDA device:

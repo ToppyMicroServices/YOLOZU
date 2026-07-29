@@ -56,7 +56,9 @@ readiness, dependency availability, and actual training. It also records that
 the tracked real-image fixture has COCO ground truth for bbox/polygon masks but
 heuristic keypoint/depth/pose6d sidecars, and that the staged runner currently
 emits bbox validation mAP rather than task-native metrics for the latter four
-stages. These boundaries retain Experimental maturity.
+stages. External process-launch failures are normalized into machine-readable
+runtime errors, including a missing TAO executable. These boundaries retain
+Experimental maturity.
 
 ## Production posture
 
