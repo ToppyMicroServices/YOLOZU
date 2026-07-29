@@ -54,6 +54,12 @@ demonstration-conditioned language-model SDFT algorithm. Its bounded local
 domain shift remains Research and cannot satisfy the independent-reproduction
 gate by itself.
 
+The clean 2026-07-28 execution completed all three seeds, but all real-COCOeval
+task scores and method deltas were zero. It is published as a measured negative
+result with decision `hold` and efficacy `not_established`; see the
+[evidence report](../reports/sdft_continual_evidence_2026-07-28.md) and
+[release-addressable bundle](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28).
+
 For offline distillation and Hessian refinement, the shortest measured path is:
 
 ```bash

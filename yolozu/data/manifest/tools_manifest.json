@@ -12105,7 +12105,8 @@
         "docs/continual_learning.md",
         "docs/research_lanes.md",
         "docs/schemas/sdft_continual_qualification.schema.json",
-        "manual/chapters/14_continual_learning.tex"
+        "manual/chapters/14_continual_learning.tex",
+        "reports/sdft_continual_evidence_2026-07-28.md"
       ],
       "effects": {
         "fixed_writes": [],

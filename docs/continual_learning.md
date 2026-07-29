@@ -253,6 +253,19 @@ This makes the result consumable by scripts and agents without parsing console
 text. The bounded COCO128 blur sequence is diagnostic evidence, not an external
 benchmark or production promotion.
 
+### Recorded 2026-07-28 result
+
+The clean three-seed execution completed every real-COCOeval matrix cell, but
+all task scores and all SDFT-minus-naive deltas were zero. The decision is
+therefore `hold`, and efficacy is `not_established`. Zero forgetting/BWT/FWT in
+this run is not a positive result because the corresponding task scores were
+also zero. The hash-verified bundle and exact environment, timing, memory, and
+fairness observations are recorded in the
+[evidence report](../reports/sdft_continual_evidence_2026-07-28.md) and
+[GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28).
+An independent reproduction and a non-zero positive retention/adaptation
+trade-off remain required for promotion.
+
 ## Quick start (domain-incremental)
 
 1) Create a continual config (start from the example):

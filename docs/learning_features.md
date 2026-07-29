@@ -44,7 +44,9 @@ Artifacts:
 - `runs/continual/<run>/replay_buffer.json` (+ per-task `replay_records.json`)
 - `runs/continual/<run>/continual_eval.{json,html}` (from `eval_continual.py`)
 
-Details: [`docs/continual_learning.md`](continual_learning.md).
+Details: [`docs/continual_learning.md`](continual_learning.md). The completed
+three-seed negative result, hashes, and promotion boundary are recorded in
+[`reports/sdft_continual_evidence_2026-07-28.md`](../reports/sdft_continual_evidence_2026-07-28.md).
 
 ## 3) Test-time training (TTT) under domain shift (Tent / MIM / CoTTA / EATA / SAR)
 

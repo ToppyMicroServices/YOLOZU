@@ -135,6 +135,12 @@ naive-versus-checkpoint-distillation 診断を1 commandで実行する経路が�
 記録します。これは language-model SDFT の忠実な再現ではなく、detector 向けの
 SDFT-style regularizer です。efficacy と independent reproduction が確立するまでは
 Research のままです。
+2026-07-28 の実行結果は陰性で、実 COCOeval の全 matrix cell と
+SDFT-minus-naive delta が 0 でした。したがって判定は `hold`、efficacy は
+`not_established` です。hash 検証済み bundle は
+[GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28)
+で公開しており、詳細は
+[evidence report](reports/sdft_continual_evidence_2026-07-28.md)に記録しています。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
