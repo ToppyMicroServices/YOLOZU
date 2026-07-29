@@ -342,6 +342,7 @@ Reference: [Detectron2/MMDetection interop](interop_detectron2_mmdet.md)
 
 External finetune smoke matrix:
 - `python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json`
+- one-command real/external qualification: `./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`
 - Guide: [External finetune smoke](external_finetune_smoke.md)
 
 ## H) OpenCV-DNN migration (CPU/CUDA/OpenVINO)

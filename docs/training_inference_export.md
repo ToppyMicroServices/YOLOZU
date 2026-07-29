@@ -388,6 +388,20 @@ python3 rtdetr_pose/tools/train_minimal.py \
 
 ### Real-image few-shot multitask finetune demo (bbox/seg/keypoints/depth/pose6d)
 
+The shortest qualification command is:
+
+```bash
+./.venv/bin/python tools/qualify_finetune_lanes.py \
+  --output-dir /tmp/yolozu-finetune-qualification
+```
+
+It runs the staged trainer and the external non-dry matrix and emits a
+schema-defined JSON decision. The tracked fixture uses COCO ground truth for
+bbox and polygon masks; keypoints, depth, and pose6d are deterministic
+annotation-derived heuristics. The current staged runner validates bbox mAP
+after every stage, not task-native segmentation/keypoint/depth/pose metrics, so
+the result cannot establish multi-task training quality.
+
 Use these tools for an end-to-end staged demo on real source images:
 
 ```bash
@@ -414,7 +428,9 @@ python3 tools/run_real_multitask_finetune_demo.py \
 
 The report is written to:
 `reports/real_multitask_finetune_demo/multitask_finetune_demo_report.json`.
-`prepare_summary.json` には各タスク教師信号の provenance（COCO GT / annotation-derived heuristic）も記録されます。
+It records dataset/checkpoint/config hashes, checkpoint handoff compatibility,
+runtime/memory, and metric scope. `prepare_summary.json` records each
+supervision source (COCO GT or annotation-derived heuristic).
 
 ### External YOLO-style training lane (YOLOX primary, optional bridges second)
 

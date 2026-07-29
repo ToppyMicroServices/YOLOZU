@@ -16,6 +16,29 @@ The focus is a stable interface contract for reproducible command inputs/outputs
 YOLOX is the recommended external YOLO-style lane because it preserves YOLOZU's
 Apache-2.0 repository policy more cleanly than optional copyleft bridges.
 
+## One-command qualification
+
+To run the repository-local five-stage trainer, attempt all five smoke-matrix
+frameworks non-dry, probe the wider advertised runtime surface, and write one
+schema-defined decision:
+
+```bash
+./.venv/bin/python tools/qualify_finetune_lanes.py \
+  --output-dir /tmp/yolozu-finetune-qualification
+```
+
+The machine-readable entrypoint is
+`<output-dir>/qualification_summary.json`, defined by
+[`schemas/finetune_lane_qualification.schema.json`](schemas/finetune_lane_qualification.schema.json).
+The command refuses an existing output path and a dataset outside the
+repository. It records source/environment/dataset hashes, per-stage checkpoint
+handoffs, runtime/memory, dependency probes, actual training execution, metric
+scope, and an explicit `hold` decision.
+
+`non-dry` now means a training command must actually run. Config projection
+without an external launcher fails with
+`E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.
+
 ## Config templates
 
 Prepared templates live in:
@@ -98,6 +121,10 @@ When projection dependencies (`mmengine`, `detectron2`) are missing, the tool st
 - `training_executed` reflects the actual external training command result
 
 This keeps train-path auditing usable on minimal environments.
+
+Without a train script, a non-dry MMDetection, Detectron2, or YOLOX selection
+fails closed even if projection succeeds. Missing projection dependencies are
+reported separately in `dependency_status`.
 
 ## 4) machine.dev / GPU validation
 

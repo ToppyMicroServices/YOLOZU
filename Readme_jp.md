@@ -142,6 +142,12 @@ SDFT-minus-naive delta が 0 でした。したがって判定は `hold`、effic
 で公開しており、詳細は
 [evidence report](reports/sdft_continual_evidence_2026-07-28.md)に記録しています。
 
+Experimental な fine-tuning lane は
+`./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`
+の1 commandで監査できます。schema 定義済みの結果は実 training と config
+projection を分離し、dependency failure、checkpoint/provenance hashを記録します。
+task-native metricや非heuristic labelが不足する場合はExperimentalのままです。
+
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
 を昇格させることはありません。2026-07-27 の限定的な診断bundleは
