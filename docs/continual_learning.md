@@ -263,8 +263,9 @@ also zero. The hash-verified bundle and exact environment, timing, memory, and
 fairness observations are recorded in the
 [evidence report](../reports/sdft_continual_evidence_2026-07-28.md) and
 [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28).
-An independent reproduction and a non-zero positive retention/adaptation
-trade-off remain required for promotion.
+The bundle was independently reproduced in a clean Python 3.12 environment on
+2026-07-30 with matching semantic results. A non-zero positive
+retention/adaptation trade-off remains required for promotion.
 
 ## Quick start (domain-incremental)
 

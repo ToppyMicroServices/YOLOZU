@@ -1,6 +1,7 @@
 # TTT evidence run — 2026-07-27
 
-Status: **local diagnostic; efficacy not established; promotion ineligible**.
+Status: **independently reproduced diagnostic; efficacy not established;
+promotion ineligible**.
 
 ## Confirmed execution
 
@@ -53,7 +54,30 @@ settings, and the shifted target produced no improvement. The generated
 calibration field therefore reports `unavailable_no_detections` where
 applicable instead of presenting zero ECE as measured calibration.
 
-## Boundary and remaining gate
+## Independent reproduction (2026-07-30)
+
+A clean Python 3.12.13 environment downloaded the prerelease archive, verified
+the archive SHA-256 and all 261 embedded manifest entries, and checked out the
+exact source commit
+`db39bc3a7f1fab6b4c53f5c2251375822b5d31e7`. It then reran all 30 matrix
+cells (clean/shifted, five methods, seeds 11/22/33) with real
+`pycocotools` evaluation.
+
+The comparison covered the 11 semantic fields in every child result and all
+aggregate rows. It found zero differences. Dataset/shift and checkpoint hashes
+also matched:
+
+| Artifact | Independent result |
+|---|---|
+| Base checkpoint | `291d10f63908bd4b4746e910fb17ed677be16ff824fba77fe18b27285cffcdba` |
+| MIM checkpoint | `7014cd470624cb256668ea2a90690848fef778e44e720e7ca819eba757dccf31` |
+| Rerun summary JSON | `12854d789aac6cc2ea61c7ca0929140eff4f75b8be7a41608ebfd58dbfcdac69` |
+| Rerun summary Markdown | `0ad5ba6d04ec450fd76bf06546dbce3264dd98cfa6d708ba177efb94efffbf0c` |
+
+Independent reproduction is therefore established for this bounded diagnostic.
+It does not change the efficacy result.
+
+## Boundary and promotion gate
 
 This run proves that the current-compatible paths execute and that the required
 metrics are generated. It does **not** prove efficacy: the diagnostic
@@ -66,5 +90,7 @@ The archive SHA-256 is
 `bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068`;
 its internal manifest verifies 261 files.
 
-Release addressability is satisfied. Independent reproduction in a second
-environment remains required before the Beads efficacy task can close.
+Release addressability and independent reproduction are satisfied. Promotion
+still requires a preregistered protocol with non-zero task metrics and a
+supported improvement; the reproduced zero-delta result remains
+`not_established`.

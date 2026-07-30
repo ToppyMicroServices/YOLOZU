@@ -16,6 +16,7 @@
     "partition",
     "cad_points_unit",
     "cad_max_points",
+    "cad_keypoints",
     "cad_models",
     "dataset_license"
   ],
@@ -42,6 +43,7 @@
     "models_dir": { "type": ["string", "null"] },
     "cad_points_unit": { "type": "string", "const": "meters" },
     "cad_max_points": { "type": "integer", "minimum": 2 },
+    "cad_keypoints": { "type": "integer", "minimum": 0 },
     "cad_models": {
       "type": "object",
       "additionalProperties": {
@@ -52,7 +54,10 @@
           "points_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
           "source": { "type": "string", "minLength": 1 },
           "source_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-          "points": { "type": "integer", "minimum": 2 }
+          "points": { "type": "integer", "minimum": 2 },
+          "keypoint_anchors": { "type": "string", "minLength": 1 },
+          "keypoint_anchors_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "keypoint_count": { "type": "integer", "minimum": 1 }
         },
         "additionalProperties": false
       }

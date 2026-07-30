@@ -6,7 +6,7 @@
   },
   "model": {
     "num_classes": 30,
-    "num_keypoints": 0,
+    "num_keypoints": 4,
     "hidden_dim": 256,
     "num_queries": 100,
     "use_uncertainty": false,
@@ -29,6 +29,7 @@
     "weights": {
       "cls": 1.0,
       "box": 1.0,
+      "kp": 0.1,
       "z": 0.1,
       "rot": 0.1,
       "off": 0.0,
@@ -41,4 +42,3 @@
     "epochs": 1
   }
 }
-

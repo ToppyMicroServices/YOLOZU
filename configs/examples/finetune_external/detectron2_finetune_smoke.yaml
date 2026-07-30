@@ -1,25 +1,26 @@
 # Detectron2 finetune smoke template for YOLOZU.
 #
-# This file is designed for detectron2/tools/train_net.py style runners.
-# Dataset registration is user/environment specific; set DATASETS.TRAIN/TEST via
-# command line overrides or project trainer script.
-
-_BASE_: "detectron2://COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml"
+# This file is designed for Detectron2's default config plus a launcher that
+# registers the selected COCO dataset before constructing DefaultTrainer.
 
 MODEL:
+  DEVICE: "cpu"
   WEIGHTS: ""
   ROI_HEADS:
-    NUM_CLASSES: 80
+    NUM_CLASSES: 2
 
 SOLVER:
-  IMS_PER_BATCH: 2
+  IMS_PER_BATCH: 1
   BASE_LR: 0.00025
-  MAX_ITER: 50
+  MAX_ITER: 1
   STEPS: []
+  CHECKPOINT_PERIOD: 1
 
 INPUT:
-  MIN_SIZE_TRAIN: (640,)
-  MAX_SIZE_TRAIN: 640
+  MIN_SIZE_TRAIN: (64,)
+  MAX_SIZE_TRAIN: 64
+  MIN_SIZE_TEST: 64
+  MAX_SIZE_TEST: 64
 
 DATALOADER:
   NUM_WORKERS: 0

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/external_runtime_qualification.schema.json",
+  "title": "YOLOZU external runtime qualification evidence",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "date",
+    "dataset",
+    "environments",
+    "lanes",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "external_runtime_qualification" },
+    "date": { "type": "string", "format": "date" },
+    "dataset": {
+      "type": "object",
+      "required": ["path", "tree_sha256"]
+    },
+    "environments": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["role", "python", "torch"]
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "runtime",
+          "license_boundary",
+          "primary",
+          "independent",
+          "maturity"
+        ],
+        "properties": {
+          "primary": {
+            "type": "object",
+            "required": ["training_executed", "state", "report_sha256"]
+          },
+          "independent": {
+            "type": "object",
+            "required": ["status"]
+          },
+          "maturity": { "type": "string", "const": "experimental" }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["status", "efficacy", "promotion_eligible", "reasons"],
+      "properties": {
+        "status": { "type": "string", "const": "hold" },
+        "efficacy": { "type": "string", "const": "not_established" },
+        "promotion_eligible": { "type": "boolean", "const": false }
+      }
+    }
+  },
+  "additionalProperties": true
+}

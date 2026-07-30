@@ -18,10 +18,13 @@ In this chapter, pose means rigid-object pose:
   \item Human 3D skeleton pose is not implemented and is unsupported.
 \end{itemize}
 The Research-stage BOP T-LESS procedure, owned-output safety rules, dataset
-license boundary, and current evidence gaps are pinned in
+license boundary, and current evidence are pinned in
 \path{docs/bop_tless_protocol.md}. Its deterministic
 \cmd{train\_primesense} frame holdout is diagnostic and is not the official BOP
-test benchmark.
+test benchmark.  The 2026-07-30 run uses strict BOP boxes, visible masks,
+depth, object \cmd{R,t}, and CAD anchors projected with ground-truth intrinsics.
+Projected anchors receive visible status only at pixels confirmed by the
+instance \cmd{mask\_visib}; the procedure does not use model-inferred labels.
 
 
 \section{Units, intrinsics, and coordinate conventions}
@@ -266,13 +269,15 @@ Run the combined real/external qualification first:
 \end{lstlisting}
 The schema-defined summary separates actual training from config projection and
 records checkpoint handoffs, hashes, runtime/memory, dependency failures, and
-metric scope.  The tracked fixture has COCO ground truth for boxes and polygon
-masks, but keypoint/depth/pose6d sidecars are deterministic heuristics.  The
-staged runner currently reports bbox mAP after every stage rather than
-task-native metrics for the latter four stages, so the qualification remains
-\cmd{hold} and Experimental.
+metric scope.  The original tracked fixture has COCO ground truth for boxes and
+polygon masks, but keypoint/depth/pose6d sidecars are deterministic heuristics.
+The 2026-07-30 T-LESS follow-up replaces those fields with strict BOP GT and
+emits separate bbox, segmentation, keypoint, depth, and object-6DoF
+before/after fields over three seeds.  No predicted pose matched GT, so bbox and
+segmentation metrics are zero while keypoint/depth/pose/ADD/ADD-S metrics are
+null.  The qualification therefore remains \cmd{hold} and Experimental.
 The clean-source bounded result is recorded in
-\cmd{reports/finetune\_lane\_evidence\_2026-07-29.md}.
+\cmd{reports/bop\_tless\_evidence\_2026-07-30.md}.
 
 To run a staged smoke pipeline over \cmd{bbox -> segmentation -> keypoints -> depth -> pose6d}:
 \begin{lstlisting}[language=bash]

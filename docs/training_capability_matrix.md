@@ -60,6 +60,15 @@ stages. External process-launch failures are normalized into machine-readable
 runtime errors, including a missing TAO executable. These boundaries retain
 Experimental maturity.
 
+The separate 2026-07-30 strict-T-LESS qualification removes that heuristic-GT
+limitation for a bounded object-pose diagnostic. Ultralytics, HF DETR, and
+Detectron2 also completed and independently repeated real training plus
+predictions interface contract export/evaluation. YOLOX, MMDetection, MMPose,
+MMSeg, and TAO produced structured runtime failures on the tested macOS CPU
+host. All lanes remain Experimental because successful metrics were zero and
+the other runtimes were unavailable. See
+[`reports/external_runtime_evidence_2026-07-30.md`](../reports/external_runtime_evidence_2026-07-30.md).
+
 For automation, exit code 0 means the qualification protocol completed and
 `protocol_complete` is true. Promotion remains a separate decision in
 `decision.status`; a completed hold result is not a training-quality pass.

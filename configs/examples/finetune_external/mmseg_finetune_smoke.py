@@ -8,14 +8,12 @@ Expected env vars (set by YOLOZU wrappers):
 - YOLOZU_SPLIT
 """
 
-import os
-
 _base_ = "mmseg::pspnet/pspnet_r50-d8_4xb2-40k_cityscapes-512x1024.py"
 if not _base_:
     raise RuntimeError("_base_ must point to an MMSeg base config")
 
-dataset_root = os.getenv("YOLOZU_DATASET_ROOT", "data/cityscapes")
-split = os.getenv("YOLOZU_SPLIT", "train")
+dataset_root = "{{$YOLOZU_DATASET_ROOT:data/cityscapes}}"
+split = "{{$YOLOZU_SPLIT:train}}"
 
 train_dataloader = dict(
     batch_size=2,

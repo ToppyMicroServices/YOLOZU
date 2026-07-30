@@ -8,14 +8,12 @@ Expected env vars (set by YOLOZU wrappers):
 - YOLOZU_SPLIT
 """
 
-import os
-
 _base_ = "mmpose::body_2d_keypoint/topdown_heatmap/coco/td-hm_res50_8xb64-210e_coco-256x192.py"
 if not _base_:
     raise RuntimeError("_base_ must point to an MMPose base config")
 
-dataset_root = os.getenv("YOLOZU_DATASET_ROOT", "data/coco")
-split = os.getenv("YOLOZU_SPLIT", "train")
+dataset_root = "{{$YOLOZU_DATASET_ROOT:data/coco}}"
+split = "{{$YOLOZU_SPLIT:train}}"
 
 train_dataloader = dict(
     batch_size=2,

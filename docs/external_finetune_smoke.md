@@ -44,6 +44,30 @@ or that promotion passed. Consumers, including agents, must read
 The 2026-07-29 clean-source bounded run is recorded in
 [`reports/finetune_lane_evidence_2026-07-29.md`](../reports/finetune_lane_evidence_2026-07-29.md).
 
+## Installed-runtime qualification (2026-07-30)
+
+Two independent Python/Torch environments executed real training, export, and
+evaluation for the three lanes available on the tested macOS CPU host:
+Ultralytics 8.4.112, Transformers 5.14.1 DETR, and Detectron2 0.6. All three
+predictions artifacts passed the predictions interface contract. HF DETR
+produced byte-identical checkpoints and predictions; Ultralytics and
+Detectron2 reproduced the same zero-detection/zero-mAP semantics.
+
+Real non-dry launchers were also invoked for YOLOX, MMDetection, MMPose, MMSeg,
+and TAO. They failed with structured environment/runtime errors; config
+projection was not counted as training. The matrix now records per-lane wall
+time and peak RSS and rejects launchers that print an uncaught traceback but
+exit zero.
+
+The machine-readable record and evidence boundary are:
+
+- [`reports/external_runtime_qualification_2026-07-30.json`](../reports/external_runtime_qualification_2026-07-30.json)
+- [`schemas/external_runtime_qualification.schema.json`](schemas/external_runtime_qualification.schema.json)
+- [`reports/external_runtime_evidence_2026-07-30.md`](../reports/external_runtime_evidence_2026-07-30.md)
+
+All external lanes remain Experimental: successful bounded metrics were zero,
+and five runtimes were unavailable on this host.
+
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with
 `E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.

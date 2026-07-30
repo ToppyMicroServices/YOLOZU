@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/bop_tless_qualification.schema.json",
+  "title": "YOLOZU BOP T-LESS multitask qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "role",
+    "protocol",
+    "environment",
+    "dataset_archives",
+    "ground_truth",
+    "rows",
+    "seed_count",
+    "decision",
+    "efficacy",
+    "promotion_eligible",
+    "qualification_reasons"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "bop_tless_multitask_qualification" },
+    "role": { "type": "string", "enum": ["primary", "independent"] },
+    "protocol": {
+      "type": "object",
+      "required": ["dataset", "scope", "partition", "status"]
+    },
+    "environment": {
+      "type": "object",
+      "required": ["python", "platform"]
+    },
+    "dataset_archives": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["name", "bytes", "sha256", "url", "extraction_status"],
+        "properties": {
+          "name": { "type": "string" },
+          "bytes": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "url": { "type": "string", "format": "uri" },
+          "extraction_status": { "type": "string", "const": "complete_extracted" }
+        }
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "required": ["strict", "provenance", "annotation_counts"],
+      "properties": {
+        "strict": { "type": "boolean", "const": true },
+        "provenance": {
+          "type": "object",
+          "required": ["bbox", "segmentation", "keypoints", "depth", "pose6d", "model_inference_used"],
+          "properties": {
+            "model_inference_used": { "type": "boolean", "const": false }
+          }
+        },
+        "annotation_counts": {
+          "type": "object",
+          "required": [
+            "images_with_depth",
+            "instances_with_mask",
+            "instances_with_pose6d",
+            "visible_projected_keypoints"
+          ]
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "seed",
+          "trained_epochs",
+          "before",
+          "after",
+          "delta",
+          "thresholds",
+          "baseline",
+          "trained"
+        ],
+        "properties": {
+          "before": {
+            "type": "object",
+            "required": ["bbox", "task_native"]
+          },
+          "after": {
+            "type": "object",
+            "required": ["bbox", "task_native"]
+          },
+          "baseline": {
+            "type": "object",
+            "required": ["checkpoint_sha256", "runtime_seconds", "peak_rss_bytes"]
+          },
+          "trained": {
+            "type": "object",
+            "required": ["checkpoint_sha256", "runtime_seconds", "peak_rss_bytes"]
+          }
+        }
+      }
+    },
+    "seed_count": { "type": "integer", "minimum": 3 },
+    "comparison": {
+      "type": ["object", "null"],
+      "properties": {
+        "semantic_match": { "type": "boolean" }
+      }
+    },
+    "decision": { "type": "string", "const": "hold" },
+    "efficacy": { "type": "string", "const": "not_established" },
+    "promotion_eligible": { "type": "boolean", "const": false },
+    "qualification_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

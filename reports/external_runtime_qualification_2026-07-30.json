@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "kind": "external_runtime_qualification",
+  "date": "2026-07-30",
+  "dataset": {
+    "path": "data/smoke",
+    "split": "val",
+    "images": 10,
+    "objects": 50,
+    "tree_sha256": "ad3d37b8b53d6c650cd4126c62dc8407c16ef4fe50dbd3a29d3426f548e12c8d",
+    "tree_hash_excludes_runtime_cache": true
+  },
+  "environments": [
+    {
+      "role": "primary",
+      "python": "3.12.13",
+      "torch": "2.14.0.dev20260729",
+      "platform": "macOS arm64 CPU"
+    },
+    {
+      "role": "independent",
+      "python": "3.14.6",
+      "torch": "2.12.0.dev20260330",
+      "platform": "macOS arm64 CPU"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "ultralytics",
+      "runtime": {
+        "name": "ultralytics",
+        "version": "8.4.112"
+      },
+      "license_boundary": {
+        "observed_package_metadata": "AGPL-3.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": true,
+        "state": "executed",
+        "optimizer_batches": 5,
+        "wall_seconds": 22.44624137500068,
+        "peak_rss_bytes": 782204928,
+        "config_sha256": "b91f0fe309602217ce4ecbf0a0aefad0131297dcbe0ef2ab6b1651cd8bfe08f7",
+        "checkpoint_sha256": "4fa6f75ce535b3b125778250a98893dfe840436ba977c1ef7fc5b4e187c14dd3",
+        "predictions_sha256": "b58fe044743336130b2ff2c1ddb99641e1be7dcc2879bb43b0539c2257627446",
+        "eval_sha256": "43cf587a4f3ff13b0cbaf99d229bc485e1690baaaf59a2367a5c43620815e586",
+        "report_sha256": "c7fa35432c31daa648444a8b5d453077b5c8033cfdad577b0e272987528d9b9e",
+        "predictions_interface_contract_valid": true,
+        "bbox_map50_95": 0.0
+      },
+      "independent": {
+        "status": "executed",
+        "training_executed": true,
+        "wall_seconds": 21.417408875000547,
+        "peak_rss_bytes": 751239168,
+        "checkpoint_sha256": "4854b62749f18fd147e7c593416a49b99f077ca0609a4a2c9585e7c970e6b3aa",
+        "predictions_sha256": "40539b3a6222dd477e5a3eb79f7974f4b42ecc0e3d56805edd8ea699cdf05cad",
+        "eval_sha256": "6ccc14375dc67d1dc8d41ade007e839061dca3ba3b241df0a4a0d2a2aa51edf7",
+        "report_sha256": "2b299f78fdb3e13f77394bedf921f00fff0e618e39a066236d75893e1a7434b3",
+        "semantic_match": true,
+        "byte_identical_checkpoint": false,
+        "bbox_map50_95": 0.0
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "hf-detr",
+      "runtime": {
+        "name": "transformers",
+        "version": "5.14.1"
+      },
+      "license_boundary": {
+        "observed_package_metadata": "Apache 2.0 License",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": true,
+        "state": "executed",
+        "optimizer_steps": 1,
+        "loss": 10.847846984863281,
+        "wall_seconds": 0.07076941699779127,
+        "peak_rss_bytes": 393904128,
+        "config_sha256": "8533c771573d0080dd29b01945393bba845234b692974e5e9f586799f5b3f732",
+        "checkpoint_sha256": "bf663fda9337df5767659d19b229f55d31bf354d170a5a013832ff90cba8afca",
+        "predictions_sha256": "086c04ed394d7e9d75222ab9688f83674147a1ac005d3ed5f56d5a4cabbc469a",
+        "eval_sha256": "96445108b50b8ee1f7d61962ca659f08cbf7facfaef4ca43ba0f3ae026539587",
+        "report_sha256": "d82d6a85eeb68831f2998e3f7a0e6b1a23a7f4b7fee37b55ac4fdd3196ec2f23",
+        "predictions_interface_contract_valid": true,
+        "bbox_map50_95": 0.0
+      },
+      "independent": {
+        "status": "executed",
+        "training_executed": true,
+        "wall_seconds": 0.04796662499575177,
+        "peak_rss_bytes": 417234944,
+        "checkpoint_sha256": "bf663fda9337df5767659d19b229f55d31bf354d170a5a013832ff90cba8afca",
+        "predictions_sha256": "086c04ed394d7e9d75222ab9688f83674147a1ac005d3ed5f56d5a4cabbc469a",
+        "eval_sha256": "7c1e05303938ffda45f81e5877cf7f3cc387eb1daa42e8be864aca69859b48f8",
+        "report_sha256": "81070d812e003a1daacafb1232376750f0d2b37fd59c1e7d324d6c9666ba12a5",
+        "semantic_match": true,
+        "byte_identical_checkpoint": true,
+        "byte_identical_predictions": true,
+        "bbox_map50_95": 0.0
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "detectron2",
+      "runtime": {
+        "name": "detectron2",
+        "version": "0.6",
+        "source_commit": "b4a4a3bd136852dae5fb1de37978dee412653e31"
+      },
+      "license_boundary": {
+        "source_license": "Apache-2.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": true,
+        "state": "executed",
+        "optimizer_steps": 1,
+        "wall_seconds": 1.5246680000054766,
+        "peak_rss_bytes": 783843328,
+        "config_sha256": "6e04ee6c1f0e5204a2d99635b8dc72c72a7fb1bb7b2030fde7a27af3c6a074f3",
+        "checkpoint_sha256": "75f8087051d6490e7136f126f2e15ed3b8e53f62774275d6443783ce257b7056",
+        "predictions_sha256": "4c5eb03f275db2835b12aecc3e849f7e4b3c9d179aa454e882eb4a76eaf2df12",
+        "eval_sha256": "02f3438543d4effc84054d39d487499df766d849f624eea70d6d1d28170eb54d",
+        "report_sha256": "b091899c2c96ce02c84dd0bb13bf3f601533e90a6ea39cb9722014e90f9a56b7",
+        "predictions_interface_contract_valid": true,
+        "bbox_map50_95": 0.0
+      },
+      "independent": {
+        "status": "executed",
+        "training_executed": true,
+        "wall_seconds": 1.4578654170036316,
+        "peak_rss_bytes": 902430720,
+        "checkpoint_sha256": "ec2d185a1d52e9703e2fec518192ff783031a768113d65c68e28bc0ea6f9ae75",
+        "predictions_sha256": "9db8270c027d093ae7365512d2594a71c5f00c64dd869dbdebdc80f79c634384",
+        "eval_sha256": "b57f3834fb467a692d694ed0a941e7a24fb915eef601cc69b7699fc1431b1963",
+        "report_sha256": "4a2d1288f2121e4295d4a0dd8f6f41a4f16e3c93d2d85d9e5274c18083ba6061",
+        "semantic_match": true,
+        "byte_identical_checkpoint": false,
+        "bbox_map50_95": 0.0
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "yolox",
+      "runtime": {
+        "name": "yolox",
+        "version": "0.3.0",
+        "source_commit": "6ddff4824372906469a7fae2dc3206c7aa4bbaee"
+      },
+      "license_boundary": {
+        "source_license": "Apache-2.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": false,
+        "state": "runtime_failed",
+        "failure": "CPU runtime lacks torch._C._cuda_setDevice required by the upstream trainer",
+        "launcher_returncode": 0,
+        "uncaught_traceback_detected": true,
+        "report_sha256": "f646f8738d41d9f4f346e606361c66ff07d5fde324c3c4127f9893723f97b313"
+      },
+      "independent": {
+        "status": "not_applicable_after_primary_runtime_failure"
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "mmdetection",
+      "runtime": {
+        "name": "mmdet",
+        "version": "3.3.0",
+        "mmengine": "0.10.7",
+        "mmcv_lite": "2.1.0"
+      },
+      "license_boundary": {
+        "observed_package_metadata": "Apache License 2.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": false,
+        "state": "runtime_failed",
+        "failure": "mmcv native extension mmcv._ext is unavailable for the installed Torch nightly",
+        "report_sha256": "12bc229fdba55db3b828dad0733d3809e6d5542fe651aa0b29dd992559a2319f"
+      },
+      "independent": {
+        "status": "not_applicable_after_primary_runtime_failure"
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "mmpose",
+      "runtime": {
+        "name": "mmpose",
+        "version": "1.3.2",
+        "mmengine": "0.10.7",
+        "mmcv_lite": "2.1.0"
+      },
+      "license_boundary": {
+        "observed_package_metadata": "Apache License 2.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": false,
+        "state": "runtime_failed",
+        "failure": "xtcocotools is unavailable on the tested Python 3.12 environment",
+        "report_sha256": "c4ab63015089afe553340b55f5d6a57d72bfccc4e0147637dd2809383e8375d5"
+      },
+      "independent": {
+        "status": "not_applicable_after_primary_runtime_failure"
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "mmseg",
+      "runtime": {
+        "name": "mmsegmentation",
+        "version": "1.2.2",
+        "mmengine": "0.10.7",
+        "mmcv_lite": "2.1.0"
+      },
+      "license_boundary": {
+        "observed_package_metadata": "Apache License 2.0",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": false,
+        "state": "runtime_failed",
+        "failure": "mmcv native extension mmcv._ext is unavailable for the installed Torch nightly",
+        "report_sha256": "880a1b69f9a32b04974636cf9634589960be68f794cc8a3a21b6bed98d7a24b3"
+      },
+      "independent": {
+        "status": "not_applicable_after_primary_runtime_failure"
+      },
+      "maturity": "experimental"
+    },
+    {
+      "id": "tao",
+      "runtime": {
+        "name": "NVIDIA TAO",
+        "version": null
+      },
+      "license_boundary": {
+        "status": "runtime_not_installed",
+        "bundled_with_yolozu": false,
+        "review_required": true
+      },
+      "primary": {
+        "training_executed": false,
+        "state": "runtime_failed",
+        "failure": "tao executable not found",
+        "failure_code": "E_EXTERNAL_RUNTIME_MISSING",
+        "report_sha256": "0b879561193af7fd4e0ffa9d98fba188fd49cc66432fa42da735d8bcb2f4acaa"
+      },
+      "independent": {
+        "status": "not_applicable_after_primary_runtime_failure"
+      },
+      "maturity": "experimental"
+    }
+  ],
+  "decision": {
+    "status": "hold",
+    "efficacy": "not_established",
+    "promotion_eligible": false,
+    "reasons": [
+      "three_of_eight_lanes_executed_real_training",
+      "successful_lanes_reproduced_but_bounded_metrics_are_zero",
+      "five_lanes_remain_runtime_unavailable_on_the_tested_host",
+      "optional_runtime_license_boundaries_require_deployment_review"
+    ]
+  }
+}

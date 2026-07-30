@@ -406,6 +406,13 @@
     "title": "export_predictions_trt"
   },
   {
+    "href": "commands.html#tool-export-predictions-ultralytics",
+    "kind": "command",
+    "search_text": "export_predictions_ultralytics Run identity-safe Ultralytics inference and export strict YOLOZU predictions JSON without losing source paths in current runtime batching. experimental tools/export_predictions_ultralytics.py --model --dataset --split --source --output --image-size --conf --iou --stride --letterbox --no-letterbox --max-det --max-images --batch --device --half --end2end --no-end2end --protocol --wrap --dry-run --strict",
+    "summary": "Run identity-safe Ultralytics inference and export strict YOLOZU predictions JSON without losing source paths in current runtime batching.",
+    "title": "export_predictions_ultralytics"
+  },
+  {
     "href": "commands.html#tool-export-predictions-yolo-runtime",
     "kind": "command",
     "search_text": "export_predictions_yolo_runtime Run bounded external YOLO-runtime inference and export explicitly versioned predictions.json with cardinality-checked execution evidence. stable tools/export_predictions_yolo_runtime.py --model --dataset --split --source --output --image-size --conf --iou --stride --max-det --max-images --batch --device --half --letterbox --no-letterbox --protocol --end2end --no-end2end --wrap --strict --dry-run",
@@ -583,8 +590,8 @@
   {
     "href": "commands.html#tool-prepare-bop-yolozu",
     "kind": "command",
-    "search_text": "prepare_bop_yolozu Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance. research tools/prepare_bop_yolozu.py --bop-root --split --out --out-split --bbox-source --visib-fract-min --max-scenes --max-images --partition-modulus --partition-remainder --partition-mode --link-images --class-map --t-scale --models-dir --cad-max-points --overwrite --append-owned",
-    "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance.",
+    "search_text": "prepare_bop_yolozu Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, strict GT sidecars, metre-scaled CAD points/keypoints, and provenance. research tools/prepare_bop_yolozu.py --bop-root --split --out --out-split --bbox-source --visib-fract-min --max-scenes --max-images --partition-modulus --partition-remainder --partition-mode --link-images --class-map --t-scale --models-dir --cad-max-points --cad-keypoints --overwrite --append-owned",
+    "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, strict GT sidecars, metre-scaled CAD points/keypoints, and provenance.",
     "title": "prepare_bop_yolozu"
   },
   {
@@ -730,8 +737,8 @@
   {
     "href": "commands.html#tool-run-external-finetune-smoke",
     "kind": "command",
-    "search_text": "run_external_finetune_smoke Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifacts, hashes, runtime, source, and license boundaries. experimental tools/run_external_finetune_smoke.py --dataset-root --split --output --work-dir --python --epochs --max-steps --batch-size --image-size --device --framework --non-dry-framework --require-non-dry --require-training-execution --mmdet-train-script --detectron2-train-script --yolox-train-script",
-    "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifacts, hashes, runtime, source, and license boundaries.",
+    "search_text": "run_external_finetune_smoke Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifact hashes, wall time, peak RSS, runtime, source, and license boundaries. experimental tools/run_external_finetune_smoke.py --dataset-root --split --output --work-dir --python --epochs --max-steps --batch-size --image-size --device --framework --non-dry-framework --require-non-dry --require-training-execution --mmdet-train-script --detectron2-train-script --yolox-train-script",
+    "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifact hashes, wall time, peak RSS, runtime, source, and license boundaries.",
     "title": "run_external_finetune_smoke"
   },
   {
@@ -805,6 +812,13 @@
     "title": "smoke_synthgen"
   },
   {
+    "href": "commands.html#tool-summarize-bop-tless-qualification",
+    "kind": "command",
+    "search_text": "summarize_bop_tless_qualification Aggregate three-seed BOP T-LESS bbox and task-native baseline/trained evidence and compare an independent rerun semantically. research tools/summarize_bop_tless_qualification.py --run-base --dataset --download-manifest --output --role --source-summary",
+    "summary": "Aggregate three-seed BOP T-LESS bbox and task-native baseline/trained evidence and compare an independent rerun semantically.",
+    "title": "summarize_bop_tless_qualification"
+  },
+  {
     "href": "commands.html#tool-support-external-training",
     "kind": "command",
     "search_text": "support_external_training External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends. experimental tools/support_external_training.py --subcommand --dataset --split --batch --exp --train-script --weights --output --work-dir --dry-run --config --task-family --resume-from --tao-task --train-opt --registry-out",
@@ -817,6 +831,20 @@
     "search_text": "support_yolo_detr YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization. experimental tools/support_yolo_detr.py --preset --from --dataset --split --batch --instances-json --images-dir --model --model-id --provider --input --output --report --train-script --trt-engine --work-dir --dry-run --strict",
     "summary": "YOLO/DETR support utility with fixed 3-layer integration interface contract (trainer/repo/export), short-option + alias UX, preset defaults, shared dataset conversion, ONNX export template, and prediction normalization.",
     "title": "support_yolo_detr"
+  },
+  {
+    "href": "commands.html#tool-train-detectron2-runtime-smoke",
+    "kind": "command",
+    "search_text": "train_detectron2_runtime_smoke Run bounded real Detectron2 training on a YOLOZU COCO wrapper and emit hash/resource evidence. experimental tools/train_detectron2_runtime_smoke.py --config-file --output-dir --resume --eval-only --num-gpus --num-machines --machine-rank --dist-url",
+    "summary": "Run bounded real Detectron2 training on a YOLOZU COCO wrapper and emit hash/resource evidence.",
+    "title": "train_detectron2_runtime_smoke"
+  },
+  {
+    "href": "commands.html#tool-train-hf-detr-runtime-smoke",
+    "kind": "command",
+    "search_text": "train_hf_detr_runtime_smoke Run a bounded real scratch Transformers DETR optimizer step and emit deterministic checkpoint/predictions/resource evidence. experimental tools/train_hf_detr_runtime_smoke.py --model-id --dataset --split --epochs --batch-size --learning-rate --max-steps --resume-from --output-dir",
+    "summary": "Run a bounded real scratch Transformers DETR optimizer step and emit deterministic checkpoint/predictions/resource evidence.",
+    "title": "train_hf_detr_runtime_smoke"
   },
   {
     "href": "commands.html#tool-ttt-compare",
@@ -926,7 +954,7 @@
   {
     "href": "schemas.html#schema-bop-conversion-report-schema",
     "kind": "schema",
-    "search_text": "YOLOZU BOP conversion report Checked-in YOLOZU JSON Schema. bbox_source cad_max_points cad_models cad_points_unit converted_images dataset_license kind models_dir output_split partition schema_version source_root source_split translation_scale_to_meters visibility_fraction_min docs/schemas/bop_conversion_report.schema.json",
+    "search_text": "YOLOZU BOP conversion report Checked-in YOLOZU JSON Schema. bbox_source cad_keypoints cad_max_points cad_models cad_points_unit converted_images dataset_license kind models_dir output_split partition schema_version source_root source_split translation_scale_to_meters visibility_fraction_min docs/schemas/bop_conversion_report.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU BOP conversion report"
   },
@@ -936,6 +964,13 @@
     "search_text": "YOLOZU BOP download manifest Checked-in YOLOZU JSON Schema. archives complete dataset kind license schema_version source docs/schemas/bop_download_manifest.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU BOP download manifest"
+  },
+  {
+    "href": "schemas.html#schema-bop-tless-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU BOP T-LESS multitask qualification Checked-in YOLOZU JSON Schema. comparison dataset_archives decision efficacy environment ground_truth kind promotion_eligible protocol qualification_reasons role rows schema_version seed_count docs/schemas/bop_tless_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU BOP T-LESS multitask qualification"
   },
   {
     "href": "schemas.html#schema-coco-eval-report-schema",
@@ -957,6 +992,13 @@
     "search_text": "YOLOZU Eval Suite Report Report payload emitted by tools/eval_suite.py (supports dry-run mode). bbox_format dataset images protocol protocol_hash protocol_id protocol_schema_version report_schema_version results split split_requested timestamp docs/schemas/eval_suite_report.schema.json",
     "summary": "Report payload emitted by tools/eval_suite.py (supports dry-run mode).",
     "title": "YOLOZU Eval Suite Report"
+  },
+  {
+    "href": "schemas.html#schema-external-runtime-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU external runtime qualification evidence Checked-in YOLOZU JSON Schema. dataset date decision environments kind lanes schema_version docs/schemas/external_runtime_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU external runtime qualification evidence"
   },
   {
     "href": "schemas.html#schema-finetune-lane-qualification-schema",

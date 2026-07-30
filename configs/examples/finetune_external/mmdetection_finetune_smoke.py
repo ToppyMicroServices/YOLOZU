@@ -10,16 +10,14 @@ Expected env vars (set by tools/run_external_finetune_smoke.py):
 - YOLOZU_BATCH_SIZE
 """
 
-import os
-
 _base_ = "mmdet::faster_rcnn/faster-rcnn_r50_fpn_1x_coco.py"
 if not _base_:
     raise RuntimeError("_base_ must point to an MMDetection base config")
 
-dataset_root = os.getenv("YOLOZU_DATASET_ROOT", "data/coco")
-split = os.getenv("YOLOZU_SPLIT", "train2017")
-max_epochs = int(os.getenv("YOLOZU_MAX_EPOCHS", "1"))
-batch_size = int(os.getenv("YOLOZU_BATCH_SIZE", "2"))
+dataset_root = "{{$YOLOZU_DATASET_ROOT:data/coco}}"
+split = "{{$YOLOZU_SPLIT:train2017}}"
+max_epochs = int("{{$YOLOZU_MAX_EPOCHS:1}}")
+batch_size = int("{{$YOLOZU_BATCH_SIZE:2}}")
 
 train_dataloader = dict(
     batch_size=batch_size,

@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import platform
+import resource
 import subprocess
 import sys
 import time
@@ -91,6 +92,26 @@ def _parser() -> argparse.ArgumentParser:
 
 def _run(cmd: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, cwd=str(cwd), env=env, text=True, capture_output=True, check=False)
+
+
+def _process_succeeded(proc: subprocess.CompletedProcess[str]) -> bool:
+    """Reject launchers that print an uncaught exception but exit zero."""
+
+    combined = "\n".join((str(proc.stdout or ""), str(proc.stderr or "")))
+    fatal_markers = (
+        "Traceback (most recent call last):",
+        "Unhandled exception",
+        "UNCAUGHT EXCEPTION",
+    )
+    return int(proc.returncode) == 0 and not any(marker in combined for marker in fatal_markers)
+
+
+def _peak_rss_bytes() -> int:
+    peak = max(
+        int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss),
+        int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss),
+    )
+    return peak if platform.system() == "Darwin" else peak * 1024
 
 
 def _resolve_path(path_like: str, *, base: Path | None = None) -> Path:
@@ -613,7 +634,7 @@ def main(argv: list[str] | None = None) -> int:
                         returncode = int(proc2.returncode)
                         stdout_tail = _tail(proc2.stdout)
                         stderr_tail = _tail(proc2.stderr)
-                        ok = proc2.returncode == 0
+                        ok = _process_succeeded(proc2)
                         runtime_error = None if ok else runtime_error
                         failure_code = None if ok else failure_code
                         training_executed = ok
@@ -673,7 +694,7 @@ def main(argv: list[str] | None = None) -> int:
                     returncode = int(proc.returncode)
                     stdout_tail = _tail(proc.stdout)
                     stderr_tail = _tail(proc.stderr)
-                    ok = proc.returncode == 0
+                    ok = _process_succeeded(proc)
                     training_executed = ok
                     if not ok:
                         combined = "\n".join([str(proc.stderr or ""), str(proc.stdout or "")])
@@ -759,7 +780,7 @@ def main(argv: list[str] | None = None) -> int:
                         returncode = int(proc2.returncode)
                         stdout_tail = _tail(proc2.stdout)
                         stderr_tail = _tail(proc2.stderr)
-                        ok = proc2.returncode == 0
+                        ok = _process_succeeded(proc2)
                         runtime_error = None if ok else runtime_error
                         failure_code = None if ok else failure_code
                         training_executed = ok
@@ -836,7 +857,7 @@ def main(argv: list[str] | None = None) -> int:
                         returncode = int(proc2.returncode)
                         stdout_tail = _tail(proc2.stdout)
                         stderr_tail = _tail(proc2.stderr)
-                        ok = proc2.returncode == 0
+                        ok = _process_succeeded(proc2)
                         runtime_error = None if ok else runtime_error
                         failure_code = None if ok else failure_code
                         training_executed = ok
@@ -864,6 +885,7 @@ def main(argv: list[str] | None = None) -> int:
                 "capability_checks": capability_checks,
                 "dependency_status": dependency_status,
                 "wall_seconds": float(time.perf_counter() - row_started),
+                "peak_rss_bytes": _peak_rss_bytes(),
                 "config_sha256": _sha256_file(cfg_path) if cfg_path.is_file() else None,
                 "artifacts": _artifact_hashes(row_dir),
                 "stdout_tail": stdout_tail,

@@ -125,21 +125,24 @@ subcommand/flag を昇格させるわけではありません。`export_predicti
 export は Stable、TTA は Experimental、TTT は Research のままです。
 
 BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton pose
-には対応しません。安全な変換・評価 wiring はありますが、実データの
-multi-seed efficacy と independent reproduction は未完です。
+には対応しません。実 T-LESS 診断について strict GT、3 seed の task-native
+before/after、独立 semantic reproduction まで完了しました。ただし bounded
+checkpoint では pose prediction が1件も matchせず、frame holdout は official
+BOP test ではないため Research のままです。詳細は
+[evidence report](reports/bop_tless_evidence_2026-07-30.md)を参照してください。
 
 continual-learning lane には、schema 定義済みの3 seed
 naive-versus-checkpoint-distillation 診断を1 commandで実行する経路があります:
 `./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification`。
 実 COCOeval、initial-checkpoint 基準の FWT、hash、時間、memory、公平性チェックを
 記録します。これは language-model SDFT の忠実な再現ではなく、detector 向けの
-SDFT-style regularizer です。efficacy と independent reproduction が確立するまでは
-Research のままです。
+SDFT-style regularizer です。efficacy が確立するまでは Research のままです。
 2026-07-28 の実行結果は陰性で、実 COCOeval の全 matrix cell と
 SDFT-minus-naive delta が 0 でした。したがって判定は `hold`、efficacy は
 `not_established` です。hash 検証済み bundle は
 [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28)
-で公開しており、詳細は
+で公開しており、別の Python/Torch 環境で独立再現済みです。efficacy は未確立の
+ままです。詳細は
 [evidence report](reports/sdft_continual_evidence_2026-07-28.md)に記録しています。
 
 Experimental な fine-tuning lane は
@@ -150,6 +153,11 @@ task-native metricや非heuristic labelが不足する場合はExperimentalの�
 clean sourceでの限定実行結果は`hold`です。詳細は
 [fine-tuning evidence report](reports/finetune_lane_evidence_2026-07-29.md)
 を参照してください。
+2026-07-30 の追加検証では strict T-LESS GT を使い、Ultralytics、HF DETR、
+Detectron2 の実 training を2環境で再現しました。他の5 runtimeは実 launcher
+から構造化された availability failure を出しています。
+[runtime evidence](reports/external_runtime_evidence_2026-07-30.md)の判定は
+Experimental / `hold` です。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
@@ -157,7 +165,8 @@ clean/shift matrix を実行できます。生成された metric だけで Rese
 [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
 で公開しています。archive SHA-256 は
 `bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068` です。
-これは efficacy や independent reproduction を示すものではありません。詳細は
+全30 matrix cell は独立環境で semantic difference 0として再現済みです。
+これは診断の再現性を示しますが、efficacy は示しません。詳細は
 [`docs/ttt_protocol.md`](docs/ttt_protocol.md)を参照してください。
 
 ## Production Readiness

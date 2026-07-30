@@ -604,6 +604,18 @@ def _run(
         )
 
 
+def _external_process_succeeded(proc: subprocess.CompletedProcess[str]) -> bool:
+    """Reject launchers that swallow an uncaught exception and exit zero."""
+
+    combined = "\n".join((str(proc.stdout or ""), str(proc.stderr or "")))
+    fatal_markers = (
+        "Traceback (most recent call last):",
+        "Unhandled exception",
+        "UNCAUGHT EXCEPTION",
+    )
+    return int(proc.returncode) == 0 and not any(marker in combined for marker in fatal_markers)
+
+
 _PRESETS: dict[str, dict[str, str]] = {
     "smoke": {
         "from_format": "internal",
@@ -1151,9 +1163,13 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
                 "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
                 "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
             }
-            training_executed = proc.returncode == 0
-            if proc.returncode != 0:
-                runtime_error = f"external YOLOX train script failed ({proc.returncode})"
+            training_executed = _external_process_succeeded(proc)
+            if not training_executed:
+                runtime_error = (
+                    f"external YOLOX train script failed ({proc.returncode})"
+                    if proc.returncode != 0
+                    else "external YOLOX launcher exited zero after an uncaught traceback"
+                )
 
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_yolox.json"))).resolve()
     handoff_contracts = _external_handoff_contracts(
@@ -1392,9 +1408,13 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
                 "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
                 "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
             }
-            training_executed = proc.returncode == 0
-            if proc.returncode != 0:
-                runtime_error = f"external Detectron2 train script failed ({proc.returncode})"
+            training_executed = _external_process_succeeded(proc)
+            if not training_executed:
+                runtime_error = (
+                    f"external Detectron2 train script failed ({proc.returncode})"
+                    if proc.returncode != 0
+                    else "external Detectron2 launcher exited zero after an uncaught traceback"
+                )
 
     report_path = Path(str(_resolve_value(args.output, fallback="reports/support_external_training.train_detectron2.json"))).resolve()
     handoff_contracts = _external_handoff_contracts(
@@ -1633,9 +1653,13 @@ def _cmd_train_mmfamily(
                 "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
                 "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
             }
-            training_executed = proc.returncode == 0
-            if proc.returncode != 0:
-                runtime_error = f"external {provider_label} train script failed ({proc.returncode})"
+            training_executed = _external_process_succeeded(proc)
+            if not training_executed:
+                runtime_error = (
+                    f"external {provider_label} train script failed ({proc.returncode})"
+                    if proc.returncode != 0
+                    else f"external {provider_label} launcher exited zero after an uncaught traceback"
+                )
 
     report_path = Path(str(_resolve_value(args.output, fallback=default_output))).resolve()
     handoff_contracts = _external_handoff_contracts(
@@ -1900,12 +1924,15 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
             "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
             "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
         }
-        training_executed = proc.returncode == 0
-        if proc.returncode != 0:
+        training_executed = _external_process_succeeded(proc)
+        if not training_executed:
             if proc.returncode == 127:
                 detail = (proc.stderr or "").strip()
                 runtime_error = f"external NVIDIA TAO runtime unavailable: {detail}"
                 failure_code = "E_EXTERNAL_RUNTIME_MISSING"
+            elif proc.returncode == 0:
+                runtime_error = "external NVIDIA TAO launcher exited zero after an uncaught traceback"
+                failure_code = "E_EXTERNAL_RUNTIME_FAILED"
             else:
                 runtime_error = f"external NVIDIA TAO train command failed ({proc.returncode})"
                 failure_code = "E_EXTERNAL_RUNTIME_FAILED"
@@ -2359,9 +2386,13 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
                 "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
                 "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
             }
-            training_executed = proc.returncode == 0
-            if proc.returncode != 0:
-                runtime_error = f"external HF train script failed ({proc.returncode})"
+            training_executed = _external_process_succeeded(proc)
+            if not training_executed:
+                runtime_error = (
+                    f"external HF train script failed ({proc.returncode})"
+                    if proc.returncode != 0
+                    else "external HF launcher exited zero after an uncaught traceback"
+                )
         else:
             runtime_error = (
                 "HF DETR entry requires --train-script for non-dry execution. "
