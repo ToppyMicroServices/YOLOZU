@@ -129,7 +129,8 @@ real T-LESS diagnostic has strict GT, three-seed task-native before/after
 evaluation, and an independent semantic reproduction. The follow-up exports
 matched pose estimates for the official BOP19 test targets and evaluates them
 with the pinned official toolkit. The lane remains Research because protocol
-completion does not by itself establish pose efficacy. See the
+completion produced only small, seed-inconsistent official and task-native
+scores; one seed had zero 0.1-diameter pose success. See the
 [diagnostic report](reports/bop_tless_evidence_2026-07-30.md) and
 [official-test report](reports/bop19_tless_official_evidence_2026-07-30.md).
 

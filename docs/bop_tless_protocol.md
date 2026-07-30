@@ -180,3 +180,10 @@ The later official-test qualification is recorded separately in
 [`../reports/bop19_tless_official_evidence_2026-07-30.md`](../reports/bop19_tless_official_evidence_2026-07-30.md).
 It supersedes only the protocol gap; it does not rewrite the diagnostic
 frame-holdout result or promote the lane.
+
+Across seeds 11/22/33, official BOP19 average recall was
+`0.00100161`, `0.00188282`, and `0.00190980`. Symmetry-aware 0.1-diameter
+pose-success rates were `0.00856298`, `0.01183248`, and `0.0`.
+An independent semantic replay matched every reported value within `1e-9`.
+These small, seed-inconsistent values are real measurements, but they do not
+establish pose efficacy; the decision remains `hold` / `not_established`.

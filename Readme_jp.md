@@ -129,7 +129,8 @@ BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton p
 before/after、独立 semantic reproduction まで完了しました。追加検証では
 official BOP19 test target 向けの matched pose estimate を export し、pin した
 official toolkit で評価します。protocol 完了だけでは pose efficacy を確立
-しないため、Research のままです。詳細は
+せず、official/task-native score は小さく seed 間で不安定で、1 seed は
+0.1-diameter pose success が 0 でした。そのため Research のままです。詳細は
 [診断 report](reports/bop_tless_evidence_2026-07-30.md)と
 [official-test report](reports/bop19_tless_official_evidence_2026-07-30.md)を
 参照してください。
