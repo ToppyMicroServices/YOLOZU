@@ -90,13 +90,18 @@ jobs:
           set -euo pipefail
           image="pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel"
           docker pull "${image}"
+          set +e
           docker run --rm --gpus all \
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
             "${image}" \
-            bash scripts/run_external_runtime_gpu_qualification.sh \
+            bash -lc "apt-get update && apt-get install -y --no-install-recommends git && bash scripts/run_external_runtime_gpu_qualification.sh \
               --output-dir reports/compatible_host_external_runtimes \
-              --dataset-root data/real_multitask_fewshot
+              --dataset-root data/real_multitask_fewshot"
+          status=$?
+          set -e
+          sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
+          exit "${status}"
 
       - name: Qualify pinned NVIDIA TAO runtime
         id: tao
@@ -116,12 +121,17 @@ jobs:
           image="nvcr.io/nvidia/tao/tao-toolkit:5.5.0-pyt"
           docker pull "${image}"
           mkdir -p reports/compatible_host_external_runtimes/tao
+          set +e
           docker run --rm --gpus all \
             -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/datasets/detection:/data" \
             -v "${{ github.workspace }}/configs/examples/finetune_external/tao_dino_runtime_smoke.yaml:/spec.yaml:ro" \
             -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/tao:/results" \
             "${image}" \
             dino train -e /spec.yaml
+          status=$?
+          set -e
+          sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
+          exit "${status}"
 
       - name: Record compatible-host workflow result
         if: ${{ always() }}

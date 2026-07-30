@@ -43,9 +43,29 @@ the primary `qualification_summary.json`. Reproduction and efficacy are
 separate fields: matching a negative gate outcome does not turn it into
 efficacy evidence.
 
+Both final runs used source commit
+`aefd28202d09b56f78cf825ae8c3b4354c1cb127` with no tracked changes.
+The independent summary records `reproduced=true`,
+`direction_and_gate_outcome_match=true`, and
+`efficacy_supported=false`.
+
+## Artifact integrity
+
+| Artifact | SHA-256 |
+|---|---|
+| Primary archive | `59234100efbfe6f4dd96b37ad6774b03da42f9045a0ab963afeff63465132e85` |
+| Primary checksum manifest | `81027a9453356555affc834998092f7927e2b3a967e7c428916a99d46d6d440a` |
+| Primary summary | `c3f67c56dde4c41f34180599cb97eac769b6b18f43d34719afdac1d81d8a1757` |
+| Independent archive | `0dfe2f62f4f943595af30a5bba60aa79d76d90af7f6a473be04295c51c352bcf` |
+| Independent checksum manifest | `56c2ecbd74ed17917aef2739c7c54dfe876bdb5aa83912134dcf4462f485fab7` |
+| Independent summary | `09eaff8138a6e485e8d62a9a3ac73a6cd0a8325da03bbb900d7fac142c33bad5` |
+
+The tracked machine-readable summaries are
+[`primary`](sdft_confirmatory_primary_2026-07-30.json) and
+[`independent`](sdft_confirmatory_independent_2026-07-30.json).
+
 ## Decision
 
 This run removes the earlier all-zero measurement blocker, but it does not
 support a seed-robust retention/adaptation advantage. The decision remains
 `hold`, efficacy remains `not_established`, and the lane remains Research.
-

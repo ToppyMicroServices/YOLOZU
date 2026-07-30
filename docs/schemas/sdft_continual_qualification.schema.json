@@ -95,7 +95,7 @@
         }
       }
     },
-    "independent_reproduction": {
+    "reproduction": {
       "type": ["object", "null"],
       "description": "Semantic comparison with a primary summary; reproduced does not imply efficacy_supported.",
       "properties": {

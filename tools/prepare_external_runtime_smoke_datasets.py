@@ -51,7 +51,24 @@ def _class_names(source: Path, split: str) -> list[str]:
         if isinstance(payload, list):
             return [str(value) for value in payload]
         if isinstance(payload, dict):
-            return [str(payload[key]) for key in sorted(payload, key=lambda value: int(value))]
+            names = payload.get("names")
+            if isinstance(names, list):
+                return [str(value) for value in names]
+            if isinstance(names, dict):
+                return [
+                    str(names[key])
+                    for key in sorted(names, key=lambda value: int(value))
+                ]
+            numeric = {
+                str(key): value
+                for key, value in payload.items()
+                if str(key).isdigit()
+            }
+            if numeric:
+                return [
+                    str(numeric[key])
+                    for key in sorted(numeric, key=lambda value: int(value))
+                ]
     max_class = -1
     for path in sorted((source / "labels" / split).glob("*.txt")):
         for line in path.read_text(encoding="utf-8").splitlines():

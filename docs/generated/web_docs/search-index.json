@@ -1115,7 +1115,7 @@
   {
     "href": "schemas.html#schema-sdft-continual-qualification-schema",
     "kind": "schema",
-    "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision efficacy_assessment environment independent_reproduction initial_checkpoints inputs kind protocol role runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
+    "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision efficacy_assessment environment initial_checkpoints inputs kind protocol reproduction role runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU SDFT-Style Continual Qualification"
   },
