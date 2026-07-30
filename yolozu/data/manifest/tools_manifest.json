@@ -14240,7 +14240,7 @@
       "outputs": [
         {
           "default": "<output-dir>/qualification_summary.json",
-          "description": "Pinned runtime versions, per-lane execution state, reports, and checkpoint hashes.",
+          "description": "Pinned runtime versions, per-lane execution state, launcher resource use, reports, checkpoint hashes, and structural resume/export/eval/parity handoff validation.",
           "kind": "file",
           "name": "external_runtime_qualification_json"
         }
@@ -14262,7 +14262,7 @@
         ]
       },
       "runner": "bash",
-      "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures.",
+      "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures and requiring checkpoints, launcher resource use, and structural resume/export/eval/parity handoff validation.",
       "tags": [
         "external-runtime",
         "gpu",
@@ -17197,7 +17197,7 @@
           "required": false
         },
         {
-          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes.",
+          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes. MMDetection auto inference treats explicit Mask R-CNN or mask_head markers as segmentation; a COCO instances filename alone remains bbox.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
@@ -17236,7 +17236,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, optional bridge runtime_license_boundary metadata, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
+          "description": "Machine-readable training summary describing the selected external training lane, launcher wall/CPU/peak-RSS resource use for non-dry runs, its fixed external run bundle, optional bridge runtime_license_boundary metadata, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },
@@ -20273,7 +20273,7 @@
           "required": false
         },
         {
-          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`.",
+          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`. MMDetection auto inference treats explicit Mask R-CNN or mask_head markers as segmentation; a COCO instances filename alone remains bbox.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",

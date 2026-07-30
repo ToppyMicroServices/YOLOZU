@@ -97,6 +97,9 @@ fi
 python3 -m pip install --disable-pip-version-check -e "${MMDET_ROOT}"
 python3 -m pip install --disable-pip-version-check -e "${MMPOSE_ROOT}"
 python3 -m pip install --disable-pip-version-check -e "${MMSEG_ROOT}"
+MMDET_COMMIT="$(git -C "${MMDET_ROOT}" rev-parse HEAD)"
+MMPOSE_COMMIT="$(git -C "${MMPOSE_ROOT}" rev-parse HEAD)"
+MMSEG_COMMIT="$(git -C "${MMSEG_ROOT}" rev-parse HEAD)"
 
 declare -a LANES=(yolox mmdetection mmpose mmseg)
 declare -A STATUS
@@ -122,6 +125,7 @@ python3 tools/support_external_training.py train-mmdetection \
   --config configs/examples/finetune_external/mmdetection_finetune_smoke.py \
   --train-script "${MMDET_ROOT}/tools/train.py" \
   --python python3 \
+  --task-family bbox \
   --work-dir "${OUTPUT_DIR}/mmdetection/work" \
   --output "${OUTPUT_DIR}/mmdetection/training_summary.json"
 STATUS[mmdetection]=$?
@@ -173,7 +177,7 @@ done
 
 python3 - "${OUTPUT_DIR}" \
   "${STATUS[yolox]}" "${STATUS[mmdetection]}" "${STATUS[mmpose]}" "${STATUS[mmseg]}" \
-  "${YOLOX_COMMIT}" <<'PY'
+  "${YOLOX_COMMIT}" "${MMDET_COMMIT}" "${MMPOSE_COMMIT}" "${MMSEG_COMMIT}" <<'PY'
 import hashlib
 import importlib.metadata
 import json
@@ -196,6 +200,28 @@ for name, code in zip(names, codes):
     report = root / name / "training_summary.json"
     payload = json.loads(report.read_text()) if report.is_file() else {}
     checkpoint = root / name / "checkpoint_evidence.json"
+    handoff_contracts = payload.get("handoff_contracts") or {}
+    handoff_stages = {}
+    for stage in ("resume", "export", "eval", "parity"):
+        contract = handoff_contracts.get(stage) or {}
+        output_contract = contract.get("output_contract") or {}
+        output_type = str(output_contract.get("type") or "")
+        stage_ok = bool(
+            contract.get("supported")
+            and contract.get("command")
+            and output_contract
+        )
+        if stage == "export":
+            stage_ok = stage_ok and "interface contract" in output_type
+        elif stage == "eval":
+            stage_ok = stage_ok and output_type == "evaluation_report"
+        elif stage == "parity":
+            stage_ok = stage_ok and output_type == "parity_report"
+        handoff_stages[stage] = {
+            "ok": stage_ok,
+            "output_type": output_type,
+        }
+    resource_usage = ((payload.get("process") or {}).get("resource_usage"))
     lanes.append(
         {
             "id": name,
@@ -206,6 +232,11 @@ for name, code in zip(names, codes):
             "report": str(report) if report.is_file() else None,
             "report_sha256": hashlib.sha256(report.read_bytes()).hexdigest() if report.is_file() else None,
             "checkpoint_evidence": json.loads(checkpoint.read_text()) if checkpoint.is_file() else None,
+            "resource_usage": resource_usage,
+            "handoff_validation": {
+                "passed": all(row["ok"] for row in handoff_stages.values()),
+                "stages": handoff_stages,
+            },
         }
     )
 peak = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
@@ -220,12 +251,32 @@ summary = {
         "gpu": __import__("torch").cuda.get_device_name(0) if __import__("torch").cuda.is_available() else None,
         "peak_rss_bytes": peak,
     },
-    "sources": {"yolox_commit": sys.argv[6]},
+    "sources": {
+        "yolox_commit": sys.argv[6],
+        "mmdetection_commit": sys.argv[7],
+        "mmpose_commit": sys.argv[8],
+        "mmsegmentation_commit": sys.argv[9],
+    },
     "lanes": lanes,
     "all_training_executed": all(row["training_executed"] for row in lanes),
+    "all_checkpoints_recorded": all(row["checkpoint_evidence"] for row in lanes),
+    "all_resource_usage_recorded": all(row["resource_usage"] for row in lanes),
+    "all_handoff_contracts_validated": all(
+        row["handoff_validation"]["passed"] for row in lanes
+    ),
 }
+summary["qualification_passed"] = all(
+    (
+        summary["all_training_executed"],
+        summary["all_checkpoints_recorded"],
+        summary["all_resource_usage_recorded"],
+        summary["all_handoff_contracts_validated"],
+    )
+)
 (root / "qualification_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
 print(root / "qualification_summary.json")
+if not summary["qualification_passed"]:
+    raise SystemExit(1)
 PY
 
 for lane in "${LANES[@]}"; do

@@ -122,7 +122,9 @@ jobs:
           set -x
           image="nvcr.io/nvidia/tao/tao-toolkit:5.5.0-pyt"
           docker pull "${image}"
+          image_digest="$(docker image inspect --format '{{index .RepoDigests 0}}' "${image}")"
           mkdir -p reports/compatible_host_external_runtimes/tao
+          started_epoch="$(date +%s)"
           set +e
           docker run --rm --gpus all \
             -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/datasets/detection:/data" \
@@ -134,8 +136,14 @@ jobs:
           set -e
           sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
           if [[ "${status}" -eq 0 ]]; then
-            python3 - <<'PY'
+            TAO_IMAGE="${image}" \
+              TAO_IMAGE_DIGEST="${image_digest}" \
+              TAO_STARTED_EPOCH="${started_epoch}" \
+              python3 - <<'PY'
+          import hashlib
           import json
+          import os
+          import time
           from pathlib import Path
 
           status_path = Path("reports/compatible_host_external_runtimes/tao/status.json")
@@ -153,7 +161,28 @@ jobs:
           )
           if not checkpoints:
               raise SystemExit("TAO reported SUCCESS without a checkpoint")
-          print(checkpoints[-1])
+          checkpoint = checkpoints[-1]
+          evidence = {
+              "schema_version": 1,
+              "kind": "tao_compatible_host_runtime_evidence",
+              "image": os.environ["TAO_IMAGE"],
+              "image_digest": os.environ["TAO_IMAGE_DIGEST"],
+              "terminal_status": records[-1],
+              "wall_seconds": max(
+                  0.0, time.time() - float(os.environ["TAO_STARTED_EPOCH"])
+              ),
+              "checkpoint": {
+                  "path": checkpoint.relative_to(status_path.parent).as_posix(),
+                  "bytes": checkpoint.stat().st_size,
+                  "sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
+              },
+          }
+          evidence_path = status_path.parent / "runtime_evidence.json"
+          evidence_path.write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(evidence_path)
           PY
           fi
           exit "${status}"

@@ -24,6 +24,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+try:
+    import resource
+except ImportError:  # pragma: no cover - unavailable on Windows
+    resource = None
+
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
@@ -585,8 +590,10 @@ def _run(
     cwd: Path = repo_root,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    started = time.perf_counter()
+    usage_before = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
     try:
-        return subprocess.run(
+        result = subprocess.run(
             cmd,
             cwd=str(cwd),
             env=env,
@@ -596,12 +603,43 @@ def _run(
             check=False,
         )
     except OSError as exc:
-        return subprocess.CompletedProcess(
+        result = subprocess.CompletedProcess(
             args=cmd,
             returncode=127,
             stdout="",
             stderr=f"{type(exc).__name__}: {exc}",
         )
+    usage_after = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
+    usage: dict[str, Any] = {
+        "wall_seconds": time.perf_counter() - started,
+        "measurement_scope": "launcher child process tree",
+    }
+    if usage_before is not None and usage_after is not None:
+        max_rss = int(usage_after.ru_maxrss)
+        usage.update(
+            {
+                "child_user_cpu_seconds": max(
+                    0.0, float(usage_after.ru_utime - usage_before.ru_utime)
+                ),
+                "child_system_cpu_seconds": max(
+                    0.0, float(usage_after.ru_stime - usage_before.ru_stime)
+                ),
+                "child_peak_rss_bytes": max_rss
+                if sys.platform == "darwin"
+                else max_rss * 1024,
+            }
+        )
+    setattr(result, "_yolozu_resource_usage", usage)
+    return result
+
+
+def _process_report(proc: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    return {
+        "returncode": int(proc.returncode),
+        "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+        "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+        "resource_usage": getattr(proc, "_yolozu_resource_usage", None),
+    }
 
 
 def _external_process_succeeded(proc: subprocess.CompletedProcess[str]) -> bool:
@@ -855,7 +893,14 @@ def _infer_detectron2_task_family(config_path: Path) -> str:
 def _infer_mmdetection_task_family(config_path: Path) -> str:
     text = config_path.read_text(encoding="utf-8", errors="ignore")
     lowered = text.lower()
-    if "mask_head" in lowered or "instance" in lowered:
+    segmentation_markers = (
+        "mask_head",
+        "mask-rcnn",
+        "mask_rcnn",
+        "cascade-mask",
+        "cascade_mask",
+    )
+    if any(marker in lowered for marker in segmentation_markers):
         return "segmentation"
     return "bbox"
 
@@ -1158,11 +1203,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_BATCH_SIZE"] = str(int(args.batch))
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1403,11 +1444,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_TASK_FAMILY"] = str(task_family)
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1648,11 +1685,7 @@ def _cmd_train_mmfamily(
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_TASK_FAMILY"] = str(task_family)
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1919,11 +1952,7 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
     proc_info: dict[str, Any] | None = None
     if not bool(args.dry_run):
         proc = _run(command, cwd=repo_root, env=dict(os.environ))
-        proc_info = {
-            "returncode": int(proc.returncode),
-            "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-            "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-        }
+        proc_info = _process_report(proc)
         training_executed = _external_process_succeeded(proc)
         if not training_executed:
             if proc.returncode == 127:
@@ -2381,11 +2410,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
     if not bool(args.dry_run):
         if train_script:
             proc = _run(command, cwd=repo_root)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (

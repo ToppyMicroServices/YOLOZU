@@ -241,6 +241,7 @@ The manifest is intended for:
 - Top-level train route (primary lane): `python3 -m yolozu train --external-backend yolox configs/examples/finetune_external/yolox_s_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_yolox.json`
 - Detectron2 external lane (`bbox` / instance `segmentation` / `keypoints` selected by config): `python3 -m yolozu train --external-backend detectron2 configs/examples/finetune_external/detectron2_finetune_smoke.yaml --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_detectron2_bbox.json`
 - MMDetection external lane (`bbox` / instance `segmentation`): `python3 -m yolozu train --external-backend mmdetection configs/examples/finetune_external/mmdetection_finetune_smoke.py --dataset data/smoke --split val --task-family bbox --dry-run --output reports/train_external_mmdetection_bbox.json`
+- MMDetection `auto` task detection uses explicit Mask R-CNN / `mask_head` markers for `segmentation`; a COCO `instances_*.json` filename alone remains `bbox`. Use `--task-family` to override.
 - MMPose external lane (`keypoints`): `python3 -m yolozu train --external-backend mmpose configs/examples/finetune_external/mmpose_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmpose.json`
 - MMSeg external lane (semantic `segmentation`): `python3 -m yolozu train --external-backend mmseg configs/examples/finetune_external/mmseg_finetune_smoke.py --dataset data/smoke --split val --dry-run --output reports/train_external_mmseg.json`
 - Optional top-level Ultralytics bridge: `python3 -m yolozu train --external-backend ultralytics yolo11n.pt --dataset data/smoke --split val --dry-run --output reports/train_external_ultralytics.json`
@@ -257,7 +258,8 @@ The manifest is intended for:
 - ONNX export wrapper (dry-run): `python3 tools/support_external_training.py export-onnx -P smoke -o models/yolo11n.onnx -n -r reports/support_external_training.export_onnx.json`
 - Legacy alias: `python3 tools/support_yolo_detr.py ...`
 - Read first: `docs/interop_yolox.md`, `docs/training_inference_export.md`, `docs/license_policy.md`
-- External lanes now write a standardized wrapper-owned bundle under `work_dir/`, including `reports/export_handoff.json`, `reports/eval_handoff.json`, `reports/parity_handoff.json`, and `reports/training_registry_entry.json`.
+- External lanes now write a standardized wrapper-owned bundle under `work_dir/`, including launcher wall/CPU/peak-RSS resource use plus `reports/export_handoff.json`, `reports/eval_handoff.json`, `reports/parity_handoff.json`, and `reports/training_registry_entry.json`.
+- The compatible-host qualification fails closed unless every open-source lane records non-dry training, a checkpoint hash, launcher resource use, and structurally valid resume/export/eval/parity handoffs. Structural handoff validation does not claim model-quality parity.
 
 ### AI-required manifest fields
 
