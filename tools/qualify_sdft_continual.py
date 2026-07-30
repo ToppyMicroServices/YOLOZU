@@ -41,6 +41,17 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default=None,
         help="Bundle path (default: <output-dir>.tgz). Existing paths are refused.",
     )
+    parser.add_argument(
+        "--role",
+        choices=("primary", "independent"),
+        default="primary",
+        help="Reproduction role (default: primary).",
+    )
+    parser.add_argument(
+        "--source-summary",
+        default=None,
+        help="Primary qualification_summary.json required for --role independent.",
+    )
     return parser.parse_args(argv)
 
 
@@ -193,8 +204,12 @@ def _initial_checkpoint(
     dataset: Path,
     split: str,
     train: dict[str, Any],
+    initial_training: dict[str, Any],
     seed: int,
 ) -> tuple[Path, float]:
+    initial_epochs = int(initial_training.get("epochs", 0))
+    initial_max_steps = int(initial_training.get("max_steps", 1))
+    initial_lr = float(initial_training.get("lr", train["lr"]))
     command = [
         sys.executable,
         str(repo_root / "rtdetr_pose/tools/train_minimal.py"),
@@ -213,19 +228,21 @@ def _initial_checkpoint(
         "--image-size",
         str(int(train["image_size"])),
         "--epochs",
-        "0",
+        str(initial_epochs),
         "--max-steps",
-        "1",
+        str(initial_max_steps),
         "--batch-size",
         str(int(train["batch_size"])),
         "--lr",
-        str(float(train["lr"])),
+        str(initial_lr),
         "--num-workers",
         str(int(train["num_workers"])),
         "--seed",
         str(int(seed)),
         "--real-images",
         "--deterministic",
+        "--use-matcher",
+        "--strict-task-data",
         "--no-export-onnx",
     ]
     seconds = _run(command, label=f"seed {seed}: build initial checkpoint")
@@ -470,6 +487,124 @@ def _comparison(naive: dict[str, Any], sdft: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _efficacy_assessment(
+    *,
+    comparisons: list[dict[str, Any]],
+    runs: list[dict[str, Any]],
+    gates: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(gates, dict):
+        return {
+            "configured": False,
+            "passed": False,
+            "seed_results": [],
+            "reason": "efficacy_gates_not_configured",
+        }
+
+    min_source = float(gates["min_source_score"])
+    min_target = float(gates["min_target_score"])
+    min_old_delta = float(gates["min_old_task_delta_sdft_minus_naive"])
+    min_new_delta = float(gates["min_new_task_delta_sdft_minus_naive"])
+    strict_old = bool(gates.get("require_strict_old_task_improvement", False))
+    sdft_by_seed = {
+        int(run["seed"]): run
+        for run in runs
+        if str(run.get("method")) == "sdft"
+    }
+    seed_results: list[dict[str, Any]] = []
+    for comparison in comparisons:
+        seed = int(comparison["seed"])
+        run = sdft_by_seed.get(seed) or {}
+        matrix = run.get("matrix_values")
+        final_row = matrix[-1] if isinstance(matrix, list) and matrix and isinstance(matrix[-1], list) else []
+        source_score = _number(final_row[0]) if final_row else None
+        target_score = _number(final_row[-1]) if final_row else None
+        old_delta = _number(comparison.get("final_old_task_delta_sdft_minus_naive"))
+        new_delta = _number(comparison.get("final_new_task_delta_sdft_minus_naive"))
+        checks = {
+            "source_score_nonzero": source_score is not None and source_score >= min_source,
+            "target_score_nonzero": target_score is not None and target_score >= min_target,
+            "old_task_delta": (
+                old_delta is not None
+                and (old_delta > min_old_delta if strict_old else old_delta >= min_old_delta)
+            ),
+            "new_task_delta": new_delta is not None and new_delta >= min_new_delta,
+        }
+        seed_results.append(
+            {
+                "seed": seed,
+                "source_score": source_score,
+                "target_score": target_score,
+                "old_task_delta_sdft_minus_naive": old_delta,
+                "new_task_delta_sdft_minus_naive": new_delta,
+                "checks": checks,
+                "passed": all(checks.values()),
+            }
+        )
+    return {
+        "configured": True,
+        "passed": len(seed_results) >= 3 and all(item["passed"] for item in seed_results),
+        "gates": dict(gates),
+        "seed_results": seed_results,
+    }
+
+
+def _independent_reproduction(
+    *,
+    source_summary: dict[str, Any],
+    source_summary_path: Path,
+    current_summary: dict[str, Any],
+) -> dict[str, Any]:
+    source_protocol = source_summary.get("protocol") if isinstance(source_summary.get("protocol"), dict) else {}
+    current_protocol = current_summary.get("protocol") if isinstance(current_summary.get("protocol"), dict) else {}
+    source_assessment = (
+        source_summary.get("efficacy_assessment")
+        if isinstance(source_summary.get("efficacy_assessment"), dict)
+        else {}
+    )
+    current_assessment = (
+        current_summary.get("efficacy_assessment")
+        if isinstance(current_summary.get("efficacy_assessment"), dict)
+        else {}
+    )
+
+    def directions(assessment: dict[str, Any]) -> list[dict[str, Any]]:
+        rows = assessment.get("seed_results") if isinstance(assessment.get("seed_results"), list) else []
+        return [
+            {
+                "seed": item.get("seed"),
+                "old_positive": _number(item.get("old_task_delta_sdft_minus_naive")) is not None
+                and float(item["old_task_delta_sdft_minus_naive"]) > 0.0,
+                "new_non_degrading": _number(item.get("new_task_delta_sdft_minus_naive")) is not None
+                and float(item["new_task_delta_sdft_minus_naive"])
+                >= float((assessment.get("gates") or {}).get("min_new_task_delta_sdft_minus_naive", 0.0)),
+                "passed": bool(item.get("passed")),
+            }
+            for item in rows
+            if isinstance(item, dict)
+        ]
+
+    protocol_match = {
+        key: source_protocol.get(key) == current_protocol.get(key)
+        for key in ("seeds", "methods", "train", "initial_training", "evaluation", "promotion_gates")
+    }
+    direction_match = directions(source_assessment) == directions(current_assessment)
+    reproduced = bool(all(protocol_match.values()) and direction_match)
+    supported = bool(
+        source_assessment.get("passed")
+        and current_assessment.get("passed")
+        and reproduced
+    )
+    return {
+        "source_summary": str(source_summary_path),
+        "source_summary_sha256": _sha256(source_summary_path),
+        "protocol_match": protocol_match,
+        "direction_and_gate_outcome_match": direction_match,
+        "reproduced": reproduced,
+        "efficacy_supported": supported,
+    }
+
+
 def _report_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# SDFT Continual Qualification",
@@ -545,7 +680,21 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("spec.seeds must contain at least three seeds")
     if methods != ["naive", "sdft"]:
         raise SystemExit("spec.methods must be exactly ['naive', 'sdft']")
+    source_summary_path: Path | None = None
+    source_summary: dict[str, Any] | None = None
+    if args.role == "independent":
+        if not args.source_summary:
+            raise SystemExit("--source-summary is required when --role independent")
+        source_summary_path = Path(str(args.source_summary)).expanduser().resolve()
+        if not source_summary_path.is_file():
+            raise SystemExit(f"source summary not found: {source_summary_path}")
+        source_summary = _json(source_summary_path)
     train = spec["train"]
+    initial_training = spec.get("initial_training")
+    if initial_training is None:
+        initial_training = {"epochs": 0, "max_steps": 1, "lr": train["lr"]}
+    if not isinstance(initial_training, dict):
+        raise SystemExit("spec.initial_training must be an object when provided")
     target_cfg = spec["target_domain"]
     evaluation = spec["evaluation"]
     gates = spec["promotion_gates"]
@@ -586,6 +735,7 @@ def main(argv: list[str] | None = None) -> int:
             dataset=source,
             split=split,
             train=train,
+            initial_training=initial_training,
             seed=seed,
         )
         initial_records.append(
@@ -624,9 +774,15 @@ def main(argv: list[str] | None = None) -> int:
         for item in comparisons
     )
     all_decisions = [str(run.get("promotion_decision")) for run in runs]
+    efficacy_assessment = _efficacy_assessment(
+        comparisons=comparisons,
+        runs=runs,
+        gates=spec.get("efficacy_gates"),
+    )
     summary = {
         "schema_version": 1,
         "kind": "sdft_continual_qualification",
+        "role": str(args.role),
         "timestamp": _now_utc(),
         "source": _git_source(),
         "environment": {
@@ -650,6 +806,7 @@ def main(argv: list[str] | None = None) -> int:
             "seeds": [int(seed) for seed in seeds],
             "methods": list(methods),
             "train": train,
+            "initial_training": initial_training,
             "evaluation": evaluation,
             "promotion_gates": gates,
             "same_data_order_and_budget": fairness_ok,
@@ -657,6 +814,7 @@ def main(argv: list[str] | None = None) -> int:
         "initial_checkpoints": initial_records,
         "runs": runs,
         "comparisons": comparisons,
+        "efficacy_assessment": efficacy_assessment,
         "decision": {
             "status": "hold",
             "efficacy": "not_established",
@@ -668,6 +826,48 @@ def main(argv: list[str] | None = None) -> int:
             ],
         },
     }
+    if args.role == "primary" and bool(efficacy_assessment.get("passed")):
+        summary["decision"] = {
+            "status": "review",
+            "efficacy": "not_established",
+            "per_run_decisions": all_decisions,
+            "reasons": [
+                "the preregistered non-zero retention/adaptation gates passed",
+                "independent reproduction is required before efficacy is supported",
+                "the repository-local blur sequence remains a bounded Research diagnostic",
+            ],
+        }
+    if args.role == "independent":
+        assert source_summary is not None
+        assert source_summary_path is not None
+        reproduction = _independent_reproduction(
+            source_summary=source_summary,
+            source_summary_path=source_summary_path,
+            current_summary=summary,
+        )
+        summary["reproduction"] = reproduction
+        if reproduction["efficacy_supported"]:
+            summary["decision"] = {
+                "status": "review",
+                "efficacy": "supported",
+                "per_run_decisions": all_decisions,
+                "reasons": [
+                    "the preregistered non-zero retention/adaptation gates passed in both runs",
+                    "the independent run reproduced the per-seed direction and gate outcomes",
+                    "the repository-local blur sequence remains Research and is not an external benchmark",
+                ],
+            }
+        elif not reproduction["reproduced"]:
+            summary["decision"]["reasons"].insert(
+                0,
+                "independent run did not reproduce all protocol, direction, and gate outcomes",
+            )
+        else:
+            summary["decision"]["reasons"] = [
+                "the independent run reproduced the protocol and gate outcomes",
+                "one or more preregistered efficacy gates failed in both runs",
+                "the repository-local blur sequence remains a bounded Research diagnostic",
+            ]
     summary_path = output_dir / "qualification_summary.json"
     _write_json(summary_path, summary)
     (output_dir / "qualification_report.md").write_text(_report_markdown(summary), encoding="utf-8")
@@ -681,8 +881,8 @@ def main(argv: list[str] | None = None) -> int:
         "checksums_sha256": _sha256(checksums),
         "archive": str(archive_path),
         "archive_sha256": _sha256(archive_path),
-        "decision": "hold",
-        "efficacy": "not_established",
+        "decision": summary["decision"]["status"],
+        "efficacy": summary["decision"]["efficacy"],
     }
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
