@@ -82,6 +82,101 @@ jobs:
               ls -la reports/gpu_practical_finetune_demo || true
             '
 
+      - name: Qualify pinned YOLOX and OpenMMLab runtimes
+        id: external
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel"
+          docker pull "${image}"
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            "${image}" \
+            bash scripts/run_external_runtime_gpu_qualification.sh \
+              --output-dir reports/compatible_host_external_runtimes \
+              --dataset-root data/real_multitask_fewshot
+
+      - name: Qualify pinned NVIDIA TAO runtime
+        id: tao
+        continue-on-error: true
+        shell: bash
+        env:
+          NGC_API_KEY: ${{ secrets.NGC_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NGC_API_KEY:-}" ]]; then
+            echo "NGC_API_KEY is unavailable" >&2
+            exit 1
+          fi
+          set +x
+          echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+          set -x
+          image="nvcr.io/nvidia/tao/tao-toolkit:5.5.0-pyt"
+          docker pull "${image}"
+          mkdir -p reports/compatible_host_external_runtimes/tao
+          docker run --rm --gpus all \
+            -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/datasets/detection:/data" \
+            -v "${{ github.workspace }}/configs/examples/finetune_external/tao_dino_runtime_smoke.yaml:/spec.yaml:ro" \
+            -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/tao:/results" \
+            "${image}" \
+            dino train -e /spec.yaml
+
+      - name: Record compatible-host workflow result
+        if: ${{ always() }}
+        shell: bash
+        env:
+          EXTERNAL_OUTCOME: ${{ steps.external.outcome }}
+          TAO_OUTCOME: ${{ steps.tao.outcome }}
+          GITHUB_SHA_VALUE: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("reports/compatible_host_external_runtimes")
+          root.mkdir(parents=True, exist_ok=True)
+          files = []
+          for path in sorted(item for item in root.rglob("*") if item.is_file()):
+              files.append(
+                  {
+                      "path": path.relative_to(root).as_posix(),
+                      "bytes": path.stat().st_size,
+                      "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                  }
+              )
+          payload = {
+              "schema_version": 1,
+              "kind": "compatible_host_external_runtime_workflow",
+              "source_commit": os.environ["GITHUB_SHA_VALUE"],
+              "open_source_lanes": os.environ["EXTERNAL_OUTCOME"],
+              "tao_lane": os.environ["TAO_OUTCOME"],
+              "artifacts": files,
+          }
+          (root / "workflow_summary.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+          PY
+
+      - name: Upload compatible-host evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: compatible-host-external-runtimes
+          if-no-files-found: error
+          path: reports/compatible_host_external_runtimes/**
+
+      - name: Enforce compatible-host qualification
+        if: ${{ always() }}
+        shell: bash
+        env:
+          EXTERNAL_OUTCOME: ${{ steps.external.outcome }}
+          TAO_OUTCOME: ${{ steps.tao.outcome }}
+        run: |
+          test "${EXTERNAL_OUTCOME}" = "success"
+          test "${TAO_OUTCOME}" = "success"
+
       - name: Upload GPU practical suite artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
