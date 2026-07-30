@@ -11,8 +11,10 @@ feedback, not from individual usage tracking.
 - Report path: `docs/adoption/YYYY-MM-DD-baseline.md`
 - Review path: [`quarterly_review_template.md`](quarterly_review_template.md)
 
-The first dated baseline is
-[`2026-07-23-baseline.md`](2026-07-23-baseline.md).
+## Weekly snapshots
+
+- [`2026-07-23-baseline.md`](2026-07-23-baseline.md)
+- [`2026-07-30-baseline.md`](2026-07-30-baseline.md)
 
 ## Monthly feedback review
 
