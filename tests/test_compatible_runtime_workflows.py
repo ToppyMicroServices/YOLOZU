@@ -67,6 +67,19 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
         self.assertIn('output_type == "parity_report"', script)
         self.assertIn('raise SystemExit(1)', script)
 
+    def test_runtime_abi_is_re_pinned_and_probed_after_editable_installs(self) -> None:
+        script = (
+            self.repo_root / "scripts" / "run_external_runtime_gpu_qualification.sh"
+        ).read_text(encoding="utf-8")
+        editable_install = script.rindex(
+            'python3 -m pip install --disable-pip-version-check -e "${MMSEG_ROOT}"'
+        )
+        final_numpy_pin = script.rindex('"numpy==1.26.4"')
+        self.assertGreater(final_numpy_pin, editable_install)
+        self.assertIn('"regex==2024.11.6"', script)
+        self.assertIn("import xtcocotools._mask", script)
+        self.assertIn("torch.from_numpy", script)
+
     def test_openmmlab_smoke_configs_disable_worker_and_weight_fetches(self) -> None:
         config_root = (
             self.repo_root / "configs" / "examples" / "finetune_external"

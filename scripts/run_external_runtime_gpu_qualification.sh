@@ -67,7 +67,7 @@ python3 tools/prepare_external_runtime_smoke_datasets.py \
 python3 -m pip install --disable-pip-version-check \
   "numpy==1.26.4" "setuptools<81" "openmim==0.3.9" \
   "opencv-python-headless==4.10.0.84" "pycocotools==2.0.8" \
-  "ftfy==6.3.1" \
+  "ftfy==6.3.1" "regex==2024.11.6" \
   "loguru==0.7.2" "thop==0.1.1.post2209072238" \
   "tabulate==0.9.0" "tensorboard==2.18.0"
 python3 -m mim install "mmengine==0.10.7"
@@ -98,6 +98,20 @@ fi
 python3 -m pip install --disable-pip-version-check -e "${MMDET_ROOT}"
 python3 -m pip install --disable-pip-version-check -e "${MMPOSE_ROOT}"
 python3 -m pip install --disable-pip-version-check -e "${MMSEG_ROOT}"
+# Editable third-party installs may resolve NumPy 2.x, which is ABI-incompatible
+# with the pinned Torch 2.1.2 and xtcocotools wheels used by this workflow.
+python3 -m pip install --disable-pip-version-check --force-reinstall --no-deps \
+  "numpy==1.26.4"
+python3 - <<'PY'
+import numpy
+import regex
+import torch
+import xtcocotools._mask
+
+probe = torch.from_numpy(numpy.zeros((1,), dtype=numpy.float32))
+if probe.dtype != torch.float32:
+    raise SystemExit("NumPy/Torch conversion probe failed")
+PY
 MMDET_COMMIT="$(git -C "${MMDET_ROOT}" rev-parse HEAD)"
 MMPOSE_COMMIT="$(git -C "${MMPOSE_ROOT}" rev-parse HEAD)"
 MMSEG_COMMIT="$(git -C "${MMSEG_ROOT}" rev-parse HEAD)"
