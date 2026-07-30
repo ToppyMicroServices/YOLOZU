@@ -609,6 +609,21 @@ def _resolved_num_classes(dataset_root: Path, split: str) -> int | None:
     return None
 
 
+def _runtime_num_classes(env_value: str | None, inferred: int | None) -> str:
+    candidate: str | int = inferred or 1
+    if env_value is not None and env_value.strip():
+        candidate = env_value.strip()
+    try:
+        value = int(candidate)
+    except (TypeError, ValueError) as exc:
+        raise SystemExit(
+            "YOLOZU_NUM_CLASSES must be a positive integer."
+        ) from exc
+    if value <= 0:
+        raise SystemExit("YOLOZU_NUM_CLASSES must be a positive integer.")
+    return str(value)
+
+
 def _run(
     cmd: list[str],
     *,
@@ -1170,10 +1185,9 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         Path(str(resolution.dataset_root)),
         str(resolution.split),
     )
-    runtime_num_classes = str(
-        os.environ.get("YOLOZU_NUM_CLASSES")
-        or inferred_num_classes
-        or 1
+    runtime_num_classes = _runtime_num_classes(
+        os.environ.get("YOLOZU_NUM_CLASSES"),
+        inferred_num_classes,
     )
 
     train_cfg = project_yolox_exp(config=exp_path).to_dict()

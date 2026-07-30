@@ -246,6 +246,45 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
                 str(work_dir),
             )
 
+    def test_yolox_rejects_invalid_runtime_class_count(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            for value in ("0", "not-an-integer"):
+                with self.subTest(value=value):
+                    env = dict(os.environ)
+                    env["YOLOZU_NUM_CLASSES"] = value
+                    proc = subprocess.run(
+                        [
+                            sys.executable,
+                            str(script),
+                            "train-yolox",
+                            "--dataset",
+                            "data/smoke",
+                            "--split",
+                            "val",
+                            "--exp",
+                            "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                            "--dry-run",
+                            "--work-dir",
+                            str(root / value / "work"),
+                            "--output",
+                            str(root / value / "report.json"),
+                        ],
+                        cwd=str(repo_root),
+                        env=env,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        check=False,
+                    )
+                    self.assertNotEqual(proc.returncode, 0)
+                    self.assertIn(
+                        "YOLOZU_NUM_CLASSES must be a positive integer.",
+                        proc.stderr,
+                    )
+
     def test_yolox_non_dry_without_train_script_reports_status(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "support_external_training.py"

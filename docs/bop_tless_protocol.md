@@ -143,6 +143,9 @@ python3 tools/export_bop19_rtdetr_pose.py \
   --output reports/yolozu-rtdetrpose-s11_tless-test.csv
 ```
 
+The export report records `peak_rss_bytes=null` when the host Python platform
+does not provide the optional `resource` module.
+
 `tools/summarize_bop19_pose_evidence.py` combines the official VSD, MSSD, and
 MSPD scores with matched rotation/translation errors and BOP toolkit
 ADD/ADD-S-style errors. No test GT is read during inference. The summary keeps

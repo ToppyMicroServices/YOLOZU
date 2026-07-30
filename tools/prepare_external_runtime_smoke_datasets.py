@@ -57,7 +57,7 @@ def _class_names(source: Path, split: str) -> list[str]:
             if isinstance(names, dict):
                 return [
                     str(names[key])
-                    for key in sorted(names, key=lambda value: int(value))
+                    for key in sorted(names, key=int)
                 ]
             numeric = {
                 str(key): value
@@ -67,7 +67,7 @@ def _class_names(source: Path, split: str) -> list[str]:
             if numeric:
                 return [
                     str(numeric[key])
-                    for key in sorted(numeric, key=lambda value: int(value))
+                    for key in sorted(numeric, key=int)
                 ]
     max_class = -1
     for path in sorted((source / "labels" / split).glob("*.txt")):

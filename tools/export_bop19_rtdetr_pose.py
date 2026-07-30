@@ -10,11 +10,15 @@ import importlib.metadata
 import json
 import math
 import platform
-import resource
 import sys
 import time
 from pathlib import Path
 from typing import Any
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - exercised on platforms without resource.
+    resource = None
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
@@ -51,6 +55,13 @@ def _sha256(path: Path) -> str:
 
 def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _peak_rss_bytes() -> int | None:
+    if resource is None:
+        return None
+    value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    return value if sys.platform == "darwin" else value * 1024
 
 
 def _package_version(name: str) -> str | None:
@@ -302,9 +313,6 @@ def main(argv: list[str] | None = None) -> int:
                 ]
             )
 
-    peak_rss = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    if sys.platform != "darwin":
-        peak_rss *= 1024
     report = {
         "schema_version": 1,
         "kind": "bop19_rtdetr_pose_export",
@@ -346,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
         },
         "resources": {
             "wall_seconds": float(time.perf_counter() - started),
-            "peak_rss_bytes": peak_rss,
+            "peak_rss_bytes": _peak_rss_bytes(),
         },
         "licenses": {
             "dataset": "CC-BY-4.0",

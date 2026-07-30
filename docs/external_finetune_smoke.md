@@ -95,6 +95,8 @@ T4. They also reproduced launcher resource measurements and structural
 resume/export/eval/parity handoff validation. Runtime availability and
 structural handoff reproducibility do not establish training quality,
 checkpoint byte determinism, or promote any lane beyond Experimental.
+An explicit `YOLOZU_NUM_CLASSES` override must be a positive integer; invalid
+values fail before the external YOLOX launcher starts.
 
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with

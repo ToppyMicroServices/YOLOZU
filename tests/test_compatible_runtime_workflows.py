@@ -113,6 +113,22 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
         self.assertNotIn('self.preprocess = "letterbox"', text)
         self.assertNotIn('self.optimizer = "SGD"', text)
 
+    def test_yolox_checkpoint_discovery_prefers_requested_output(self) -> None:
+        script = (
+            self.repo_root / "scripts" / "run_external_runtime_gpu_qualification.sh"
+        ).read_text(encoding="utf-8")
+        requested_search = (
+            'checkpoint="$(find "${search_root}" -type f '
+            "\\( -name '*.pth' -o -name '*.pt' \\)"
+        )
+        fallback_guard = (
+            'if [[ -z "${checkpoint}" && "${lane}" = "yolox" '
+            "&& -d runs/yolox_finetune ]]; then"
+        )
+        self.assertIn(requested_search, script)
+        self.assertIn(fallback_guard, script)
+        self.assertLess(script.index(requested_search), script.index(fallback_guard))
+
     def test_mmpose_validation_uses_fixture_ground_truth_boxes(self) -> None:
         path = (
             self.repo_root

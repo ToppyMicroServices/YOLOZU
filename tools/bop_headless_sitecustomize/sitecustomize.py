@@ -29,4 +29,5 @@ if sys.platform == "darwin":
         _quartz.get_dpi = _headless_safe_get_dpi
         _canvas.get_dpi = _headless_safe_get_dpi
     except (ImportError, RuntimeError):
+        # The shim is optional; unavailable Vispy/Quartz leaves normal startup intact.
         pass

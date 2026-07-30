@@ -3,6 +3,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 class TestExportBOP19RTDETRPose(unittest.TestCase):
@@ -51,6 +52,10 @@ class TestExportBOP19RTDETRPose(unittest.TestCase):
     def test_rot6d_identity(self) -> None:
         rotation = self.module._rot6d_to_matrix([1.0, 0.0, 0.0, 0.0, 1.0, 0.0])
         self.assertEqual(rotation, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+    def test_peak_rss_gracefully_degrades_without_resource_module(self) -> None:
+        with mock.patch.object(self.module, "resource", None):
+            self.assertIsNone(self.module._peak_rss_bytes())
 
 
 if __name__ == "__main__":

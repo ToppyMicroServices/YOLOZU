@@ -5432,7 +5432,7 @@
         },
         {
           "default": "<output>.report.json",
-          "description": "Checkpoint, target, runtime, resource, and license provenance.",
+          "description": "Checkpoint, target, runtime, resource, and license provenance; peak_rss_bytes is null when the host lacks the optional resource module.",
           "kind": "file",
           "name": "export_report_json"
         }
@@ -17271,7 +17271,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata, requires an explicit YOLOZU_NUM_CLASSES override to be a positive integer, and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",

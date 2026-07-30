@@ -170,10 +170,10 @@ set -e
 
 for lane in "${LANES[@]}"; do
   search_root="${OUTPUT_DIR}/${lane}"
-  if [[ "${lane}" = "yolox" && -d runs/yolox_finetune ]]; then
-    search_root="runs/yolox_finetune"
-  fi
   checkpoint="$(find "${search_root}" -type f \( -name '*.pth' -o -name '*.pt' \) 2>/dev/null | sort | tail -n 1)"
+  if [[ -z "${checkpoint}" && "${lane}" = "yolox" && -d runs/yolox_finetune ]]; then
+    checkpoint="$(find runs/yolox_finetune -type f \( -name '*.pth' -o -name '*.pt' \) 2>/dev/null | sort | tail -n 1)"
+  fi
   if [[ -n "${checkpoint}" ]]; then
     python3 - "${checkpoint}" "${OUTPUT_DIR}/${lane}/checkpoint_evidence.json" <<'PY'
 import hashlib
