@@ -33,6 +33,7 @@ val_dataloader = dict(
     dataset=dict(
         data_root=dataset_root,
         ann_file=f"annotations/person_keypoints_{split}.json",
+        bbox_file=None,
         data_prefix=dict(img="images/"),
     ),
 )
@@ -43,3 +44,7 @@ train_cfg = dict(max_epochs=1, val_interval=1)
 load_from = None
 model = dict(backbone=dict(init_cfg=None))
 default_hooks = dict(logger=dict(interval=1), checkpoint=dict(interval=1, save_best=None))
+val_evaluator = dict(
+    ann_file=f"{dataset_root}/annotations/person_keypoints_{split}.json"
+)
+test_evaluator = val_evaluator

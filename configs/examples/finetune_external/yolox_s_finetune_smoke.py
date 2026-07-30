@@ -65,7 +65,6 @@ class Exp(_BaseExp):
         self.weight_decay = 5e-4
         self.momentum = 0.9
         self.nesterov = True
-        self.preprocess = "letterbox"
         self.decode_postprocess = "nms"
         self.nmsthre = 0.65
         self.test_conf = 0.01

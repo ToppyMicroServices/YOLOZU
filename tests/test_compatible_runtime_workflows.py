@@ -101,6 +101,32 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
                 self.assertIn("load_from = None", text)
                 self.assertIn("model = dict(backbone=dict(init_cfg=None))", text)
 
+    def test_yolox_config_preserves_callable_preprocess_method(self) -> None:
+        path = (
+            self.repo_root
+            / "configs"
+            / "examples"
+            / "finetune_external"
+            / "yolox_s_finetune_smoke.py"
+        )
+        text = path.read_text(encoding="utf-8")
+        self.assertNotIn('self.preprocess = "letterbox"', text)
+
+    def test_mmpose_validation_uses_fixture_ground_truth_boxes(self) -> None:
+        path = (
+            self.repo_root
+            / "configs"
+            / "examples"
+            / "finetune_external"
+            / "mmpose_finetune_smoke.py"
+        )
+        text = path.read_text(encoding="utf-8")
+        self.assertIn("bbox_file=None", text)
+        self.assertIn(
+            'ann_file=f"{dataset_root}/annotations/person_keypoints_{split}.json"',
+            text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
