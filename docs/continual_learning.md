@@ -267,6 +267,40 @@ The bundle was independently reproduced in a clean Python 3.12 environment on
 2026-07-30 with matching semantic results. A non-zero positive
 retention/adaptation trade-off remains required for promotion.
 
+### Confirmatory non-zero qualification (2026-07-30)
+
+The confirmatory spec increases initial training to 64 steps for 10 epochs,
+uses 20 continual steps per task, and fixes unused seeds 44, 55, and 66.
+Before execution it requires source and target task scores of at least
+`1e-6`, non-decreasing new-task performance within `1e-6`, and a strictly
+positive old-task SDFT-minus-naive delta for every seed.
+
+All six runs produced non-zero source and target scores. Seeds 44 and 55 passed
+the retention/adaptation checks, but seed 66 had an old-task delta of
+`-7.100043986321695e-7` and failed the preregistered strict-retention gate.
+The protocol and gate outcomes were independently reproduced. Reproduction is
+therefore established for this bounded result, while efficacy remains
+`not_established` and the decision remains `hold`. See the
+[confirmatory evidence report](../reports/sdft_confirmatory_evidence_2026-07-30.md).
+
+Run the fixed confirmatory spec explicitly:
+
+```bash
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --spec configs/continual/sdft_coco128_blur_confirmatory_qualification.json \
+  --output-dir /tmp/yolozu-sdft-confirmatory
+```
+
+An independent run must use a fresh output path and the primary summary:
+
+```bash
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --spec configs/continual/sdft_coco128_blur_confirmatory_qualification.json \
+  --output-dir /tmp/yolozu-sdft-confirmatory-independent \
+  --role independent \
+  --source-summary /tmp/yolozu-sdft-confirmatory/qualification_summary.json
+```
+
 ## Quick start (domain-incremental)
 
 1) Create a continual config (start from the example):

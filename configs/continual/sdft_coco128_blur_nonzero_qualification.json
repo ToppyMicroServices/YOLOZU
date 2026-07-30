@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "kind": "sdft_continual_qualification",
+  "model_config": "rtdetr_pose/configs/continual_coco128_tiny.json",
+  "source_dataset": {
+    "root": "data/coco128",
+    "split": "train2017"
+  },
+  "target_domain": {
+    "corruption": "gaussian_blur",
+    "severity": 3,
+    "transform_seed": 2026
+  },
+  "methods": ["naive", "sdft"],
+  "seeds": [11, 22, 33],
+  "initial_training": {
+    "epochs": 5,
+    "max_steps": 64,
+    "lr": 0.001
+  },
+  "train": {
+    "device": "cpu",
+    "amp": "none",
+    "image_size": 64,
+    "epochs": 1,
+    "max_steps": 20,
+    "batch_size": 2,
+    "lr": 0.0005,
+    "num_workers": 0,
+    "real_images": true,
+    "deterministic": true,
+    "use_matcher": true,
+    "task_aligner": "none",
+    "no_export_onnx": true
+  },
+  "sdft": {
+    "keys": "logits,bbox",
+    "weight": 1.0,
+    "temperature": 1.0,
+    "kl": "reverse"
+  },
+  "evaluation": {
+    "backend": "coco",
+    "metric_key": "map50_95",
+    "max_images": 128
+  },
+  "promotion_gates": {
+    "max_forgetting": 0.05,
+    "min_new_task_score": 0.000001,
+    "min_old_task_final": 0.000001
+  },
+  "efficacy_gates": {
+    "min_source_score": 0.000001,
+    "min_target_score": 0.000001,
+    "min_old_task_delta_sdft_minus_naive": 0.0,
+    "min_new_task_delta_sdft_minus_naive": -0.000001,
+    "require_strict_old_task_improvement": true
+  },
+  "claim_boundary": {
+    "efficacy": "not_established",
+    "independent_reproduction_required": true
+  }
+}

@@ -5320,6 +5320,147 @@
       ]
     },
     {
+      "docs": [
+        "docs/bop_tless_protocol.md",
+        "docs/schemas/bop19_tless_pose_qualification.schema.json",
+        "docs/tools_index.md",
+        "reports/bop19_tless_official_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes a fresh official BOP19 result CSV.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          },
+          {
+            "description": "Writes a fresh inference provenance report.",
+            "flag": "--report",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_bop19_rtdetr_pose.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_bop19_rtdetr_pose.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --config rtdetr_pose/configs/bop_tless_official.json --checkpoint /workspace/run/checkpoint.pt --output reports/method_tless-test.csv",
+          "description": "Export target-conditioned RT-DETR pose estimates for official BOP19 localization evaluation."
+        },
+        {
+          "command": "python3 tools/export_bop19_rtdetr_pose.py --help",
+          "description": "Show official-target, checkpoint, device, and bounded-probe options."
+        }
+      ],
+      "id": "export_bop19_rtdetr_pose",
+      "inputs": [
+        {
+          "flag": "--bop-root",
+          "kind": "dir",
+          "name": "bop_root",
+          "required": true
+        },
+        {
+          "flag": "--targets",
+          "kind": "file",
+          "name": "targets",
+          "required": true
+        },
+        {
+          "flag": "--config",
+          "kind": "file",
+          "name": "config",
+          "required": true
+        },
+        {
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "default": null,
+          "flag": "--report",
+          "kind": "file",
+          "name": "report",
+          "required": false
+        },
+        {
+          "default": "test_primesense",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": "cpu",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "default": 96,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Official BOP19 localization CSV.",
+          "kind": "file",
+          "name": "bop19_results_csv"
+        },
+        {
+          "default": "<output>.report.json",
+          "description": "Checkpoint, target, runtime, resource, and license provenance; peak_rss_bytes is null when the host lacks the optional resource module.",
+          "kind": "file",
+          "name": "export_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "Pillow",
+          "numpy",
+          "torch"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Export trained RT-DETR object-pose predictions over official BOP19 targets without using test GT during inference.",
+      "tags": [
+        "bop",
+        "tless",
+        "pose6d",
+        "export",
+        "research"
+      ]
+    },
+    {
       "contract_outputs": {
         "predictions_json": "predictions_json"
       },
@@ -11552,6 +11693,102 @@
     },
     {
       "docs": [
+        "docs/schemas/compatible_host_external_runtime_qualification.schema.json",
+        "docs/training_capability_matrix.md",
+        "docs/external_finetune_smoke.md",
+        "docs/tools_index.md",
+        "reports/external_runtime_compatible_host_evidence_2026-07-30.md",
+        "reports/external_runtime_compatible_host_primary_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates fresh detection, keypoint, and segmentation runtime fixture trees.",
+            "flag": "--output",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/prepare_external_runtime_smoke_datasets.py",
+      "examples": [
+        {
+          "command": "python3 tools/prepare_external_runtime_smoke_datasets.py --source data/real_multitask_fewshot --split train --output /tmp/yolozu-runtime-fixtures --max-images 6",
+          "description": "Prepare bounded task-family fixtures for external runtime availability training."
+        },
+        {
+          "command": "python3 tools/prepare_external_runtime_smoke_datasets.py --help",
+          "description": "Show source, split, output, and size-bound options."
+        }
+      ],
+      "id": "prepare_external_runtime_smoke_datasets",
+      "inputs": [
+        {
+          "flag": "--source",
+          "kind": "dir",
+          "name": "source",
+          "required": true
+        },
+        {
+          "default": "train",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "dir",
+          "name": "output",
+          "required": true
+        },
+        {
+          "default": 6,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output>/preparation_report.json",
+          "description": "Runtime-only label provenance, counts, paths, native COCO/Cityscapes layouts, internal label mirrors used to prevent unintended reconversion, and payload tree hash.",
+          "kind": "file",
+          "name": "preparation_report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
+      "tags": [
+        "dataset",
+        "external-runtime",
+        "training",
+        "experimental"
+      ]
+    },
+    {
+      "docs": [
         "docs/cvat_keypoints_recovery.md"
       ],
       "effects": {
@@ -12476,7 +12713,8 @@
         "docs/research_lanes.md",
         "docs/schemas/sdft_continual_qualification.schema.json",
         "manual/chapters/14_continual_learning.tex",
-        "reports/sdft_continual_evidence_2026-07-28.md"
+        "reports/sdft_continual_evidence_2026-07-28.md",
+        "reports/sdft_confirmatory_evidence_2026-07-30.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -12524,6 +12762,20 @@
           "kind": "file",
           "name": "archive",
           "required": false
+        },
+        {
+          "default": "primary",
+          "flag": "--role",
+          "kind": "string",
+          "name": "role",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--source-summary",
+          "kind": "file",
+          "name": "source_summary",
+          "required": false
         }
       ],
       "maturity": "research",
@@ -12555,7 +12807,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.",
+      "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction.",
       "tags": [
         "continual",
         "coco",
@@ -13931,6 +14183,107 @@
         "interop",
         "smoke",
         "training"
+      ]
+    },
+    {
+      "docs": [
+        "docs/schemas/compatible_host_external_runtime_qualification.schema.json",
+        "docs/training_capability_matrix.md",
+        "docs/external_finetune_smoke.md",
+        "docs/tools_index.md",
+        "reports/external_runtime_compatible_host_evidence_2026-07-30.md",
+        "reports/external_runtime_compatible_host_primary_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Installs pinned external runtimes and writes per-lane training evidence under a fresh output root.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          },
+          {
+            "description": "Clones pinned external runtime source trees when absent.",
+            "flag": "--runtime-root",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "scripts/run_external_runtime_gpu_qualification.sh",
+      "examples": [
+        {
+          "command": "bash scripts/run_external_runtime_gpu_qualification.sh --output-dir reports/compatible_host_external_runtimes --dataset-root data/real_multitask_fewshot",
+          "description": "Run pinned YOLOX and OpenMMLab non-dry training on a compatible Linux CUDA host."
+        },
+        {
+          "command": "bash scripts/run_external_runtime_gpu_qualification.sh --help",
+          "description": "Show compatible-host input and output options."
+        }
+      ],
+      "id": "run_external_runtime_gpu_qualification",
+      "inputs": [
+        {
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "default": "data/real_multitask_fewshot",
+          "flag": "--dataset-root",
+          "kind": "dir",
+          "name": "dataset_root",
+          "required": false
+        },
+        {
+          "default": "/tmp/yolozu-external-runtimes",
+          "flag": "--runtime-root",
+          "kind": "dir",
+          "name": "runtime_root",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output-dir>/qualification_summary.json",
+          "description": "Pinned runtime versions, per-lane execution state, launcher resource use, reports, checkpoint hashes, and structural resume/export/eval/parity handoff validation.",
+          "kind": "file",
+          "name": "external_runtime_qualification_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": false,
+        "gpu_required": true,
+        "linux_ok": true,
+        "macos_ok": false
+      },
+      "requires": {
+        "commands": [
+          "git",
+          "nvidia-smi"
+        ],
+        "network": true,
+        "python_packages": [
+          "torch"
+        ]
+      },
+      "runner": "bash",
+      "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures and requiring checkpoints, launcher resource use, and structural resume/export/eval/parity handoff validation.",
+      "tags": [
+        "external-runtime",
+        "gpu",
+        "training",
+        "qualification"
       ]
     },
     {
@@ -16493,6 +16846,122 @@
       ]
     },
     {
+      "docs": [
+        "docs/bop_tless_protocol.md",
+        "docs/schemas/bop19_tless_pose_qualification.schema.json",
+        "docs/tools_index.md",
+        "reports/bop19_tless_official_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes a fresh official/task-native three-seed qualification summary.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/summarize_bop19_pose_evidence.py",
+      "examples": [
+        {
+          "command": "python3 tools/summarize_bop19_pose_evidence.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --result reports/method-s11_tless-test.csv --result reports/method-s22_tless-test.csv --result reports/method-s33_tless-test.csv --official-eval-root reports/bop-eval --native-errors-root reports/bop-native --toolkit-commit cea62d651c7e395b2e1962b9749e4e89693c6ac4 --output reports/bop19_tless_pose_qualification.json",
+          "description": "Combine official BOP19 scores and matched pose metrics for three seeds."
+        },
+        {
+          "command": "python3 tools/summarize_bop19_pose_evidence.py --help",
+          "description": "Show official evaluator, native error, and independent reproduction inputs."
+        }
+      ],
+      "id": "summarize_bop19_pose_evidence",
+      "inputs": [
+        {
+          "flag": "--bop-root",
+          "kind": "dir",
+          "name": "bop_root",
+          "required": true
+        },
+        {
+          "flag": "--targets",
+          "kind": "file",
+          "name": "targets",
+          "required": true
+        },
+        {
+          "flag": "--result",
+          "kind": "file",
+          "name": "result",
+          "required": true
+        },
+        {
+          "flag": "--official-eval-root",
+          "kind": "dir",
+          "name": "official_eval_root",
+          "required": true
+        },
+        {
+          "flag": "--native-errors-root",
+          "kind": "dir",
+          "name": "native_errors_root",
+          "required": true
+        },
+        {
+          "flag": "--toolkit-commit",
+          "kind": "string",
+          "name": "toolkit_commit",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "default": "primary",
+          "flag": "--role",
+          "kind": "string",
+          "name": "role",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--source-summary",
+          "kind": "file",
+          "name": "source_summary",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Three-seed official BOP19 and matched rotation, translation, ADD, ADD-S, and pose-success summary.",
+          "kind": "file",
+          "name": "bop19_pose_qualification_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction.",
+      "tags": [
+        "bop",
+        "tless",
+        "pose6d",
+        "evaluation",
+        "reproducibility"
+      ]
+    },
+    {
       "contracts": {
         "produces": [
           "bop_tless_qualification_json"
@@ -16725,6 +17194,7 @@
           "required": false
         },
         {
+          "description": "Wrapper-owned working directory. YOLOX also receives this path as its native checkpoint/output directory.",
           "flag": "--work-dir",
           "kind": "dir",
           "name": "work_dir",
@@ -16744,7 +17214,7 @@
           "required": false
         },
         {
-          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes.",
+          "description": "Reported task family for Detectron2 / MMDetection / MMPose / MMSeg / TAO external lanes. MMDetection auto inference treats explicit Mask R-CNN or mask_head markers as segmentation; a COCO instances filename alone remains bbox.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",
@@ -16783,7 +17253,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Machine-readable training summary describing the selected external training lane, its fixed external run bundle, optional bridge runtime_license_boundary metadata, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
+          "description": "Machine-readable training summary describing the selected external training lane, launcher wall/CPU/peak-RSS resource use for non-dry runs, its fixed external run bundle, optional bridge runtime_license_boundary metadata, artifact_plan for expected outputs, and next_steps for resume/export/eval/parity.",
           "kind": "file",
           "name": "training_run_summary_json"
         },
@@ -16801,7 +17271,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata, requires an explicit YOLOZU_NUM_CLASSES override to be a positive integer, and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",
@@ -19820,7 +20290,7 @@
           "required": false
         },
         {
-          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`.",
+          "description": "Forwarded task family for `train --external-backend detectron2|mmdetection|mmpose|mmseg|tao`. MMDetection auto inference treats explicit Mask R-CNN or mask_head markers as segmentation; a COCO instances filename alone remains bbox.",
           "flag": "--task-family",
           "kind": "string",
           "name": "task_family",

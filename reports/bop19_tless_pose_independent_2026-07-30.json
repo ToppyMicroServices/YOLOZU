@@ -1,0 +1,137 @@
+{
+  "dataset": {
+    "license": "CC-BY-4.0",
+    "models_info": "/private/tmp/yolozu-bop-official/models_eval/models_info.json",
+    "models_info_sha256": "48a13b6e4532c20954dbe014a082439b05984d12ff13da1da62635a8dee59925",
+    "name": "BOP T-LESS",
+    "target_entries": 4904,
+    "target_instances": 6423,
+    "targets": "/private/tmp/yolozu-bop-official/tless/test_targets_bop19.json",
+    "targets_sha256": "5ced8796c421baad79816fe905a36fe6ad440efe78cd640d167fc4b8f26c3cfe"
+  },
+  "decision": {
+    "efficacy": "not_established",
+    "reasons": [
+      "independent metrics reproduced",
+      "official and task-native measurements are recorded without converting null to zero",
+      "the bounded local training budget is not a competitive BOP benchmark claim"
+    ],
+    "status": "hold"
+  },
+  "environment": {
+    "bop_toolkit_commit": "cea62d651c7e395b2e1962b9749e4e89693c6ac4",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6"
+  },
+  "kind": "bop19_tless_pose_qualification",
+  "protocol": {
+    "additional_official_error_calculations": [
+      "ADD",
+      "ADI",
+      "AD"
+    ],
+    "matching": "BOP score-ordered estimates matched to unused GT by minimum symmetry-aware AD",
+    "official_evaluator": "bop_toolkit scripts/eval_bop19_pose.py",
+    "official_metrics": [
+      "VSD",
+      "MSSD",
+      "MSPD"
+    ],
+    "pose_success_threshold": "symmetry-aware AD <= 0.1 * model diameter",
+    "test_ground_truth_used_for_inference": false,
+    "translation_unit": "millimetre"
+  },
+  "reproduction": {
+    "same_seed_metrics_within_1e-9": true,
+    "source_summary": "/private/tmp/yolozu-bop19-tless-primary.json",
+    "source_summary_sha256": "3df0f8ca3371601de6bba97f0d04f51a29657b50d4aa9bf9401b87a6670ebc4c"
+  },
+  "role": "independent",
+  "runs": [
+    {
+      "export_report": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s11_tless-test.csv.report.json",
+      "export_report_sha256": "3b5867638663bb5b7a6d21db671dbc787ac6b71942dc5337d817c4a7ab231399",
+      "official_bop19": {
+        "bop19_average_recall": 0.0010016088017022159,
+        "bop19_average_recall_mspd": 0.002039545383777051,
+        "bop19_average_recall_mssd": 0.00035808812081581813,
+        "bop19_average_recall_vsd": 0.0006071929005137786,
+        "bop19_average_time_per_image": 0.005557316655940409
+      },
+      "official_scores": "/private/tmp/yolozu-bop-eval-official/yolozu-rtdetrpose-s11_tless-test/scores_bop19.json",
+      "official_scores_sha256": "09f351d78171db5a192529b0f83245df911ca26ecdd2a7ea2eae455eab057722",
+      "result_csv": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s11_tless-test.csv",
+      "result_csv_sha256": "ac59acc9e8f1c075f721f27b8f83e4e3c0022950ae36cab672487611f08e24dd",
+      "seed": 11,
+      "task_native": {
+        "add_error_mm_mean": 90.05954456711667,
+        "add_s_error_mm_mean": 43.26921400802668,
+        "matched_instances": 2402,
+        "pose_success_0.1d_count": 55,
+        "pose_success_0.1d_rate": 0.00856297680211739,
+        "rotation_error_deg_mean": 120.23049330933812,
+        "symmetry_aware_ad_error_mm_mean": 43.26921400802668,
+        "target_instances": 6423,
+        "translation_error_mm_mean": 76.24032663456019,
+        "unmatched_instances": 4021
+      }
+    },
+    {
+      "export_report": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s22_tless-test.csv.report.json",
+      "export_report_sha256": "b04fd56dca3f14191c6ca610e72b2d598f6c73070d7ed7b6edf1f7c2e602d731",
+      "official_bop19": {
+        "bop19_average_recall": 0.0018828169598837507,
+        "bop19_average_recall_mspd": 0.004203643157403082,
+        "bop19_average_recall_mssd": 0.0005449167055892885,
+        "bop19_average_recall_vsd": 0.0008998910166588818,
+        "bop19_average_time_per_image": 0.00641262977904968
+      },
+      "official_scores": "/private/tmp/yolozu-bop-eval-official/yolozu-rtdetrpose-s22_tless-test/scores_bop19.json",
+      "official_scores_sha256": "a70967d8278a00afa831d4fdba0b2590f2d17d72ff87f238ecc02794352fc605",
+      "result_csv": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s22_tless-test.csv",
+      "result_csv_sha256": "9f400303f94be7106039a95887ff5f91a071be43f9e7da761bc135a7270a68b3",
+      "seed": 22,
+      "task_native": {
+        "add_error_mm_mean": 91.59398477898722,
+        "add_s_error_mm_mean": 44.14075729477202,
+        "matched_instances": 2730,
+        "pose_success_0.1d_count": 76,
+        "pose_success_0.1d_rate": 0.011832477035653122,
+        "rotation_error_deg_mean": 116.81682483100259,
+        "symmetry_aware_ad_error_mm_mean": 44.14075729477202,
+        "target_instances": 6423,
+        "translation_error_mm_mean": 75.77801009517303,
+        "unmatched_instances": 3693
+      }
+    },
+    {
+      "export_report": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s33_tless-test.csv.report.json",
+      "export_report_sha256": "1ef312cc7b52d2ba190a213bef4d68f6881cbcd568d9b3d477f02555402239ae",
+      "official_bop19": {
+        "bop19_average_recall": 0.0019098033110176967,
+        "bop19_average_recall_mspd": 0.00572940993305309,
+        "bop19_average_recall_mssd": 0.0,
+        "bop19_average_recall_vsd": 0.0,
+        "bop19_average_time_per_image": 0.012458859869977999
+      },
+      "official_scores": "/private/tmp/yolozu-bop-eval-official/yolozu-rtdetrpose-s33_tless-test/scores_bop19.json",
+      "official_scores_sha256": "cf1b099ca1c14f92d14c1193dea755f3e9870bad061d91e3c3ea7ef2fd6ea2c9",
+      "result_csv": "/private/tmp/yolozu-bop-results/yolozu-rtdetrpose-s33_tless-test.csv",
+      "result_csv_sha256": "539dc782fcc440f139848466cb074f4f978a8fc852263b6249bf62d1e7e7a9ee",
+      "seed": 33,
+      "task_native": {
+        "add_error_mm_mean": 166.53438249374616,
+        "add_s_error_mm_mean": 97.28500509402848,
+        "matched_instances": 23,
+        "pose_success_0.1d_count": 0,
+        "pose_success_0.1d_rate": 0.0,
+        "rotation_error_deg_mean": 115.32854481742572,
+        "symmetry_aware_ad_error_mm_mean": 97.28500509402848,
+        "target_instances": 6423,
+        "translation_error_mm_mean": 154.30023340509217,
+        "unmatched_instances": 6400
+      }
+    }
+  ],
+  "schema_version": 1
+}

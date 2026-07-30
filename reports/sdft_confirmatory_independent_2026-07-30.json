@@ -1,0 +1,766 @@
+{
+  "comparisons": [
+    {
+      "avg_acc_delta_sdft_minus_naive": 4.481207678111876e-07,
+      "bwt_delta_sdft_minus_naive": 4.880769767117556e-07,
+      "final_new_task_delta_sdft_minus_naive": 4.0816455891061933e-07,
+      "final_old_task_delta_sdft_minus_naive": 4.880769767117556e-07,
+      "forgetting_reduction_naive_minus_sdft": 4.880769767117556e-07,
+      "fwt_delta_sdft_minus_naive": 0.0,
+      "seed": 44,
+      "task0_state_identical": true,
+      "task0_train_order_identical": true,
+      "task1_train_order_identical": true
+    },
+    {
+      "avg_acc_delta_sdft_minus_naive": 1.6639807656821564e-06,
+      "bwt_delta_sdft_minus_naive": 1.7560120401185442e-06,
+      "final_new_task_delta_sdft_minus_naive": 1.5719494912457694e-06,
+      "final_old_task_delta_sdft_minus_naive": 1.7560120401185442e-06,
+      "forgetting_reduction_naive_minus_sdft": 1.7560120401185442e-06,
+      "fwt_delta_sdft_minus_naive": 0.0,
+      "seed": 55,
+      "task0_state_identical": true,
+      "task0_train_order_identical": true,
+      "task1_train_order_identical": true
+    },
+    {
+      "avg_acc_delta_sdft_minus_naive": -7.145322795527072e-07,
+      "bwt_delta_sdft_minus_naive": -7.100043986321695e-07,
+      "final_new_task_delta_sdft_minus_naive": -7.190601604732457e-07,
+      "final_old_task_delta_sdft_minus_naive": -7.100043986321695e-07,
+      "forgetting_reduction_naive_minus_sdft": -7.100043986321695e-07,
+      "fwt_delta_sdft_minus_naive": 0.0,
+      "seed": 66,
+      "task0_state_identical": true,
+      "task0_train_order_identical": true,
+      "task1_train_order_identical": true
+    }
+  ],
+  "decision": {
+    "efficacy": "not_established",
+    "per_run_decisions": [
+      "hold",
+      "promote",
+      "promote",
+      "promote",
+      "promote",
+      "promote"
+    ],
+    "reasons": [
+      "the independent run reproduced the protocol and gate outcomes",
+      "one or more preregistered efficacy gates failed in both runs",
+      "the repository-local blur sequence remains a bounded Research diagnostic"
+    ],
+    "status": "hold"
+  },
+  "efficacy_assessment": {
+    "configured": true,
+    "gates": {
+      "min_new_task_delta_sdft_minus_naive": -1e-06,
+      "min_old_task_delta_sdft_minus_naive": 0.0,
+      "min_source_score": 1e-06,
+      "min_target_score": 1e-06,
+      "require_strict_old_task_improvement": true
+    },
+    "passed": false,
+    "seed_results": [
+      {
+        "checks": {
+          "new_task_delta": true,
+          "old_task_delta": true,
+          "source_score_nonzero": true,
+          "target_score_nonzero": true
+        },
+        "new_task_delta_sdft_minus_naive": 4.0816455891061933e-07,
+        "old_task_delta_sdft_minus_naive": 4.880769767117556e-07,
+        "passed": true,
+        "seed": 44,
+        "source_score": 1.7431320596848416e-06,
+        "target_score": 1.1156045181982987e-06
+      },
+      {
+        "checks": {
+          "new_task_delta": true,
+          "old_task_delta": true,
+          "source_score_nonzero": true,
+          "target_score_nonzero": true
+        },
+        "new_task_delta_sdft_minus_naive": 1.5719494912457694e-06,
+        "old_task_delta_sdft_minus_naive": 1.7560120401185442e-06,
+        "passed": true,
+        "seed": 55,
+        "source_score": 5.898324407157991e-06,
+        "target_score": 5.723820976487333e-06
+      },
+      {
+        "checks": {
+          "new_task_delta": true,
+          "old_task_delta": false,
+          "source_score_nonzero": true,
+          "target_score_nonzero": true
+        },
+        "new_task_delta_sdft_minus_naive": -7.190601604732457e-07,
+        "old_task_delta_sdft_minus_naive": -7.100043986321695e-07,
+        "passed": false,
+        "seed": 66,
+        "source_score": 4.710894452464701e-06,
+        "target_score": 4.711172563758177e-06
+      }
+    ]
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "pycocotools": "2.0.11",
+    "python": "3.14.6",
+    "torch": "2.12.0.dev20260330"
+  },
+  "initial_checkpoints": [
+    {
+      "checkpoint": "seed_44/initial/checkpoint.pt",
+      "seed": 44,
+      "sha256": "471a4ebd02e57657078d31cfe7bc730d9625108b62431edf823d269af3628a28",
+      "state_dict_sha256": "96aedf05afca0ec0ff6fdb1a8d53f2613b11688e641602ea7f1421ae19266836",
+      "wall_seconds": 23.35384962500393
+    },
+    {
+      "checkpoint": "seed_55/initial/checkpoint.pt",
+      "seed": 55,
+      "sha256": "dab516806609b60d05bb00b77a40c5fb86df943e02878c9078393e2ff24c4819",
+      "state_dict_sha256": "c89734aff4d07b03903fd33a507576c3714c969735d00f4607253f1ee0e4a444",
+      "wall_seconds": 21.387175542004115
+    },
+    {
+      "checkpoint": "seed_66/initial/checkpoint.pt",
+      "seed": 66,
+      "sha256": "4c46de9590f79b7388efef3e98953a12f8b0f5499ef1fa9b3958745fc8fbe08c",
+      "state_dict_sha256": "1c9343524d5bcfcf6b32b99bbfc644c040a51357cf1569848b5b62d7bc8c6ce5",
+      "wall_seconds": 20.881134040995676
+    }
+  ],
+  "inputs": {
+    "domain_shift_recipe_sha256": "d9c7938b4d7383785c4f699eb1bbd39657715916dae511c8a4f63ee06119f978",
+    "model_config": "rtdetr_pose/configs/continual_coco128_tiny.json",
+    "model_config_sha256": "214a4717cfdb942c4fae34f27ad65b5060c07a396c96a7e9baf37dae79816c50",
+    "source_dataset": "data/coco128",
+    "source_dataset_tree_sha256": "a47ad492999ffad7eec820c39eaa54514fc44fd6b751fe09373b1020e12ff0cc",
+    "spec": "configs/continual/sdft_coco128_blur_confirmatory_qualification.json",
+    "spec_sha256": "66fe791362c05103b092abb0d9a871a24a97260806374eee45086365dede2363",
+    "target_dataset": "datasets/gaussian_blur_s3",
+    "target_dataset_tree_sha256": "59514441f6a392d7c641eeab42f598eb74de1294c40dc8861f45c67d42d51ffb"
+  },
+  "kind": "sdft_continual_qualification",
+  "protocol": {
+    "evaluation": {
+      "backend": "coco",
+      "max_images": 128,
+      "metric_key": "map50_95"
+    },
+    "initial_training": {
+      "epochs": 10,
+      "lr": 0.001,
+      "max_steps": 64
+    },
+    "methods": [
+      "naive",
+      "sdft"
+    ],
+    "promotion_gates": {
+      "max_forgetting": 0.05,
+      "min_new_task_score": 1e-06,
+      "min_old_task_final": 1e-06
+    },
+    "same_data_order_and_budget": true,
+    "seeds": [
+      44,
+      55,
+      66
+    ],
+    "train": {
+      "amp": "none",
+      "batch_size": 2,
+      "deterministic": true,
+      "device": "cpu",
+      "epochs": 1,
+      "image_size": 64,
+      "lr": 0.0005,
+      "max_steps": 20,
+      "no_export_onnx": true,
+      "num_workers": 0,
+      "real_images": true,
+      "task_aligner": "none",
+      "use_matcher": true
+    }
+  },
+  "reproduction": {
+    "direction_and_gate_outcome_match": true,
+    "efficacy_supported": false,
+    "protocol_match": {
+      "evaluation": true,
+      "initial_training": true,
+      "methods": true,
+      "promotion_gates": true,
+      "seeds": true,
+      "train": true
+    },
+    "reproduced": true,
+    "source_summary": "/private/tmp/yolozu-sdft-confirmatory-aefd282-primary/qualification_summary.json",
+    "source_summary_sha256": "c3f67c56dde4c41f34180599cb97eac769b6b18f43d34719afdac1d81d8a1757"
+  },
+  "role": "independent",
+  "runs": [
+    {
+      "baseline_values": [
+        1.997281422417171e-06,
+        1.993216011469682e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 328548352,
+          "path": "seed_44/naive/run/task00_source/checkpoint.pt",
+          "sha256": "af83beb5b624cd1a54ffa6bbf8a7a096ba88c3804b9a1d1c4a33955d0bfc8b87",
+          "state_dict_sha256": "efe4eb333c71c6150fa54e6fa7192f5e6ad22611b5c546e8f67d80ea917531af",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.7937269169997307,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 328548352,
+          "path": "seed_44/naive/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "d0f10fbdc67f452a7f5063f90a701a9e47b726115030c9fcfc841edd113eaab0",
+          "state_dict_sha256": "1b83e407ecd04398c6bf5dcc4c0e36eb2e6910d8c2f3420867a985e665085969",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 3.111164291993191,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_44/naive/continual_config.json",
+      "config_sha256": "32c42a6f129da556ab86e6f0d2f3b7184b5faafd25f4407f696e6149f1e10899",
+      "decision_json": "seed_44/naive/run/continual_promotion_decision.json",
+      "decision_json_sha256": "17c9328bfe1e1ffa08eed4fc66c9054222d892d0104f3e1690ff553bfcaa2d54",
+      "eval_json": "seed_44/naive/run/continual_eval.json",
+      "eval_json_sha256": "f389a760c50b4a3157f5a40bfb3b9ff35c8d55bb3a118d2d80bcc6c70ffc1ed1",
+      "matrix_values": [
+        [
+          9.58423125599913e-08,
+          9.422335457755902e-08
+        ],
+        [
+          1.255055082973086e-06,
+          7.074399592876794e-07
+        ]
+      ],
+      "method": "naive",
+      "promotion_decision": "hold",
+      "run_json": "seed_44/naive/run/continual_run.json",
+      "run_json_sha256": "5e975f3dad91f089f7caf5e46ad1c70de6a4e5e1626bc5bdc3a0a83d1cfede50",
+      "seed": 44,
+      "summary": {
+        "avg_acc": 9.812475211303827e-07,
+        "bwt": 1.1592127704130948e-06,
+        "details": {
+          "bwt_per_task": [
+            1.1592127704130948e-06
+          ],
+          "diag": [
+            9.58423125599913e-08,
+            7.074399592876794e-07
+          ],
+          "final": [
+            1.255055082973086e-06,
+            7.074399592876794e-07
+          ],
+          "forget_per_task": [
+            -1.1592127704130948e-06
+          ],
+          "fwt_baseline": [
+            1.997281422417171e-06,
+            1.993216011469682e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            -1.8989926568921228e-06
+          ],
+          "fwt_pretrain": [
+            9.422335457755902e-08
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": -1.1592127704130948e-06,
+        "fwt": -1.8989926568921228e-06
+      },
+      "wall_seconds": {
+        "decision": 1.859415541999624,
+        "evaluation": 17.9371295000019,
+        "train": 9.298070874996483
+      }
+    },
+    {
+      "baseline_values": [
+        1.997281422417171e-06,
+        1.993216011469682e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 325713920,
+          "path": "seed_44/sdft/run/task00_source/checkpoint.pt",
+          "sha256": "af83beb5b624cd1a54ffa6bbf8a7a096ba88c3804b9a1d1c4a33955d0bfc8b87",
+          "state_dict_sha256": "efe4eb333c71c6150fa54e6fa7192f5e6ad22611b5c546e8f67d80ea917531af",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.221473999998125,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 327794688,
+          "path": "seed_44/sdft/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "94c511797d20219da886fd85f8ce21552577be315e35b71909078754431227d8",
+          "state_dict_sha256": "2415b1a23681c07f70eeb3f43133d47962ee1e017be1f4b476e2b8f124203ad5",
+          "teacher_checkpoint": "/private/tmp/yolozu-sdft-confirmatory-aefd282-independent/seed_44/sdft/run/task00_source/checkpoint.pt",
+          "teacher_checkpoint_sha256": "af83beb5b624cd1a54ffa6bbf8a7a096ba88c3804b9a1d1c4a33955d0bfc8b87",
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 3.0757860420053476,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_44/sdft/continual_config.json",
+      "config_sha256": "cab932a7316d615203e7eeeb440955074820a75b56dd37594dc6b193bc2ebfb6",
+      "decision_json": "seed_44/sdft/run/continual_promotion_decision.json",
+      "decision_json_sha256": "c1e5e7efaa04954ee0913badc06c36b29a3c217144cb0737b4e15256e23fa465",
+      "eval_json": "seed_44/sdft/run/continual_eval.json",
+      "eval_json_sha256": "e180a2d72e3ac51a59da17ed0ff572940f98f4cdfefed8d3261cd9e519fbc05b",
+      "matrix_values": [
+        [
+          9.58423125599913e-08,
+          9.422335457755902e-08
+        ],
+        [
+          1.7431320596848416e-06,
+          1.1156045181982987e-06
+        ]
+      ],
+      "method": "sdft",
+      "promotion_decision": "promote",
+      "run_json": "seed_44/sdft/run/continual_run.json",
+      "run_json_sha256": "8365f5aa2db8fe7e7efe8031319640e144dfde1474a5eb7623c8bc6cf3a5b297",
+      "seed": 44,
+      "summary": {
+        "avg_acc": 1.4293682889415703e-06,
+        "bwt": 1.6472897471248504e-06,
+        "details": {
+          "bwt_per_task": [
+            1.6472897471248504e-06
+          ],
+          "diag": [
+            9.58423125599913e-08,
+            1.1156045181982987e-06
+          ],
+          "final": [
+            1.7431320596848416e-06,
+            1.1156045181982987e-06
+          ],
+          "forget_per_task": [
+            -1.6472897471248504e-06
+          ],
+          "fwt_baseline": [
+            1.997281422417171e-06,
+            1.993216011469682e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            -1.8989926568921228e-06
+          ],
+          "fwt_pretrain": [
+            9.422335457755902e-08
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": -1.6472897471248504e-06,
+        "fwt": -1.8989926568921228e-06
+      },
+      "wall_seconds": {
+        "decision": 1.4602621250014636,
+        "evaluation": 16.12263966700266,
+        "train": 8.006537291999848
+      }
+    },
+    {
+      "baseline_values": [
+        2.608132011048579e-06,
+        3.5368052865631207e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 331005952,
+          "path": "seed_55/naive/run/task00_source/checkpoint.pt",
+          "sha256": "fc800de02ab1e805711987a5e364827e1f2ba6535622e0e7691578cdd48b3225",
+          "state_dict_sha256": "3f3c131b7496eefd471a376a670b95ff4557fe5f8102215c269e582ab9161519",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.0155582090010284,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 335134720,
+          "path": "seed_55/naive/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "8a407a337465ef8170a74a23ccd330c909f6fc0255cdb83ae679c498bd459060",
+          "state_dict_sha256": "60535cdd76a0e7940a048850b71c1398eee227a6486d0ff0699e48bf7bbbf324",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 2.7547740419977345,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_55/naive/continual_config.json",
+      "config_sha256": "7ba7979b70898d84b8239a1ed239487089b74dd4aa4049367958ea0af680c078",
+      "decision_json": "seed_55/naive/run/continual_promotion_decision.json",
+      "decision_json_sha256": "8df0e862d72a91ece7e041f0531ed0af081950960101f022ddda3c0f38b76e1d",
+      "eval_json": "seed_55/naive/run/continual_eval.json",
+      "eval_json_sha256": "4cb27a1bdc03d2d8d8471a3f6b10ee6e93e3db3ae15e9798b29db5140238055a",
+      "matrix_values": [
+        [
+          8.198859012846418e-06,
+          7.727162415912143e-06
+        ],
+        [
+          4.142312367039447e-06,
+          4.1518714852415634e-06
+        ]
+      ],
+      "method": "naive",
+      "promotion_decision": "promote",
+      "run_json": "seed_55/naive/run/continual_run.json",
+      "run_json_sha256": "76fcaceb184bd637488dded42b800d843c2a2c920b33ed3a117867ee7acf00c5",
+      "seed": 55,
+      "summary": {
+        "avg_acc": 4.147091926140505e-06,
+        "bwt": -4.056546645806971e-06,
+        "details": {
+          "bwt_per_task": [
+            -4.056546645806971e-06
+          ],
+          "diag": [
+            8.198859012846418e-06,
+            4.1518714852415634e-06
+          ],
+          "final": [
+            4.142312367039447e-06,
+            4.1518714852415634e-06
+          ],
+          "forget_per_task": [
+            4.056546645806971e-06
+          ],
+          "fwt_baseline": [
+            2.608132011048579e-06,
+            3.5368052865631207e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            4.190357129349022e-06
+          ],
+          "fwt_pretrain": [
+            7.727162415912143e-06
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": 4.056546645806971e-06,
+        "fwt": 4.190357129349022e-06
+      },
+      "wall_seconds": {
+        "decision": 1.5734319999974105,
+        "evaluation": 15.516776875003416,
+        "train": 7.644713250003406
+      }
+    },
+    {
+      "baseline_values": [
+        2.608132011048579e-06,
+        3.5368052865631207e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 329433088,
+          "path": "seed_55/sdft/run/task00_source/checkpoint.pt",
+          "sha256": "fc800de02ab1e805711987a5e364827e1f2ba6535622e0e7691578cdd48b3225",
+          "state_dict_sha256": "3f3c131b7496eefd471a376a670b95ff4557fe5f8102215c269e582ab9161519",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.025436666997848,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 331202560,
+          "path": "seed_55/sdft/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "4897f4723107873c391baf54f892e9d9815a28021da1bbdf0985ad62ad4d3444",
+          "state_dict_sha256": "e380679f9ab30d98017cf59000474086443afccae5c8428d70cf0071fe173391",
+          "teacher_checkpoint": "/private/tmp/yolozu-sdft-confirmatory-aefd282-independent/seed_55/sdft/run/task00_source/checkpoint.pt",
+          "teacher_checkpoint_sha256": "fc800de02ab1e805711987a5e364827e1f2ba6535622e0e7691578cdd48b3225",
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 3.073811542002659,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_55/sdft/continual_config.json",
+      "config_sha256": "1347da7ef3fa2e549fa362ca536323ac715b407c6bc719585528bf8c0cb012b7",
+      "decision_json": "seed_55/sdft/run/continual_promotion_decision.json",
+      "decision_json_sha256": "0304998b23b154eddd24c28c76929156b7a4315a0fad21ebd028e04455635040",
+      "eval_json": "seed_55/sdft/run/continual_eval.json",
+      "eval_json_sha256": "61f57784c35abf36bab68911263226fd1c2dd2fa71d34b9f42326598dca64fd9",
+      "matrix_values": [
+        [
+          8.198859012846418e-06,
+          7.727162415912143e-06
+        ],
+        [
+          5.898324407157991e-06,
+          5.723820976487333e-06
+        ]
+      ],
+      "method": "sdft",
+      "promotion_decision": "promote",
+      "run_json": "seed_55/sdft/run/continual_run.json",
+      "run_json_sha256": "e0e933fa60e9656a56e53f2d4c0a63600afbfd175f34412a16de72e53d2e7a8f",
+      "seed": 55,
+      "summary": {
+        "avg_acc": 5.8110726918226616e-06,
+        "bwt": -2.300534605688427e-06,
+        "details": {
+          "bwt_per_task": [
+            -2.300534605688427e-06
+          ],
+          "diag": [
+            8.198859012846418e-06,
+            5.723820976487333e-06
+          ],
+          "final": [
+            5.898324407157991e-06,
+            5.723820976487333e-06
+          ],
+          "forget_per_task": [
+            2.300534605688427e-06
+          ],
+          "fwt_baseline": [
+            2.608132011048579e-06,
+            3.5368052865631207e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            4.190357129349022e-06
+          ],
+          "fwt_pretrain": [
+            7.727162415912143e-06
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": 2.300534605688427e-06,
+        "fwt": 4.190357129349022e-06
+      },
+      "wall_seconds": {
+        "decision": 1.4778670419982518,
+        "evaluation": 15.121196624997538,
+        "train": 7.713190000002214
+      }
+    },
+    {
+      "baseline_values": [
+        1.4350317592293544e-06,
+        1.4841316129583915e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 328695808,
+          "path": "seed_66/naive/run/task00_source/checkpoint.pt",
+          "sha256": "a2e4c8891847423bf6016058e57f426d558737bbb482401635f57014804a868e",
+          "state_dict_sha256": "c1f9d9afb8e508be370cfe2545782df9c9c1f3dcb8dd227587cc146327493d6e",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.373396375005541,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 328695808,
+          "path": "seed_66/naive/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "ce1d8dada09f0ce1dd42c70e9c3588aadc0811e01f04e139f02afd4e3477013c",
+          "state_dict_sha256": "cfdb06d19d4fb384756d224026ddad55a2bfc943fc52b346c9a0519015c4af1d",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 3.426611333001347,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_66/naive/continual_config.json",
+      "config_sha256": "e484d243dda02a1b7c95d670710bd5c8b5863c9ef5933c5b14fe7c3968d84596",
+      "decision_json": "seed_66/naive/run/continual_promotion_decision.json",
+      "decision_json_sha256": "e4fb780511db0194a1f3d703692fbd37265579a9d2d18d328f0e6addefa8f6d6",
+      "eval_json": "seed_66/naive/run/continual_eval.json",
+      "eval_json_sha256": "1e3293a248f29c799c9df2e36636ac5fbb5afb91d1921cc01b968f8f697d890d",
+      "matrix_values": [
+        [
+          4.535593004956138e-06,
+          4.53543618383895e-06
+        ],
+        [
+          5.42089885109687e-06,
+          5.430232724231423e-06
+        ]
+      ],
+      "method": "naive",
+      "promotion_decision": "promote",
+      "run_json": "seed_66/naive/run/continual_run.json",
+      "run_json_sha256": "dcd50a71f3b23c696efbaa15060447fb01fa6113278803456c4ffea667c8dd89",
+      "seed": 66,
+      "summary": {
+        "avg_acc": 5.4255657876641465e-06,
+        "bwt": 8.85305846140732e-07,
+        "details": {
+          "bwt_per_task": [
+            8.85305846140732e-07
+          ],
+          "diag": [
+            4.535593004956138e-06,
+            5.430232724231423e-06
+          ],
+          "final": [
+            5.42089885109687e-06,
+            5.430232724231423e-06
+          ],
+          "forget_per_task": [
+            -8.85305846140732e-07
+          ],
+          "fwt_baseline": [
+            1.4350317592293544e-06,
+            1.4841316129583915e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            3.0513045708805587e-06
+          ],
+          "fwt_pretrain": [
+            4.53543618383895e-06
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": -8.85305846140732e-07,
+        "fwt": 3.0513045708805587e-06
+      },
+      "wall_seconds": {
+        "decision": 1.5857191249961033,
+        "evaluation": 17.50021704199753,
+        "train": 8.870863875003124
+      }
+    },
+    {
+      "baseline_values": [
+        1.4350317592293544e-06,
+        1.4841316129583915e-06
+      ],
+      "checkpoints": [
+        {
+          "child_peak_rss": 326811648,
+          "path": "seed_66/sdft/run/task00_source/checkpoint.pt",
+          "sha256": "a2e4c8891847423bf6016058e57f426d558737bbb482401635f57014804a868e",
+          "state_dict_sha256": "c1f9d9afb8e508be370cfe2545782df9c9c1f3dcb8dd227587cc146327493d6e",
+          "teacher_checkpoint": null,
+          "teacher_checkpoint_sha256": null,
+          "train_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968",
+          "train_seconds": 3.6878634590029833,
+          "val_records_sha256": "3508bbfb8347a0b799dcb5c94029b7f1895d49c938b41080b077ed2f952bb968"
+        },
+        {
+          "child_peak_rss": 327450624,
+          "path": "seed_66/sdft/run/task01_gaussian_blur_s3/checkpoint.pt",
+          "sha256": "75dd99fe20ec529d54a9dbd290fba0428fe0a84e3123c2688a31904bfdbf349c",
+          "state_dict_sha256": "37cc72f65e6f755f804a00dd0ac73502690fcb98d5691891be760e42ac05da08",
+          "teacher_checkpoint": "/private/tmp/yolozu-sdft-confirmatory-aefd282-independent/seed_66/sdft/run/task00_source/checkpoint.pt",
+          "teacher_checkpoint_sha256": "a2e4c8891847423bf6016058e57f426d558737bbb482401635f57014804a868e",
+          "train_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3",
+          "train_seconds": 3.438164708997647,
+          "val_records_sha256": "d1b42bfa3f6ceecab4040fca89097ff3c59a787dae4349a4d51854a71d55c2b3"
+        }
+      ],
+      "config": "seed_66/sdft/continual_config.json",
+      "config_sha256": "796695b53562167d5c11209a36249a43400ef30423d451681d36170c4668d6bd",
+      "decision_json": "seed_66/sdft/run/continual_promotion_decision.json",
+      "decision_json_sha256": "77f340a3d1460bd41d461f8f7c035face10b714189e2da1e5029742dddab68f9",
+      "eval_json": "seed_66/sdft/run/continual_eval.json",
+      "eval_json_sha256": "a857b0abfe2d08e328f77ac236ca510dc932c8f3c43c46efd25379ee0da28a1a",
+      "matrix_values": [
+        [
+          4.535593004956138e-06,
+          4.53543618383895e-06
+        ],
+        [
+          4.710894452464701e-06,
+          4.711172563758177e-06
+        ]
+      ],
+      "method": "sdft",
+      "promotion_decision": "promote",
+      "run_json": "seed_66/sdft/run/continual_run.json",
+      "run_json_sha256": "d5a7d006737b7df892f89c4c93ba90c20b05a04c3bc24e4076e972ba30b7c435",
+      "seed": 66,
+      "summary": {
+        "avg_acc": 4.711033508111439e-06,
+        "bwt": 1.753014475085625e-07,
+        "details": {
+          "bwt_per_task": [
+            1.753014475085625e-07
+          ],
+          "diag": [
+            4.535593004956138e-06,
+            4.711172563758177e-06
+          ],
+          "final": [
+            4.710894452464701e-06,
+            4.711172563758177e-06
+          ],
+          "forget_per_task": [
+            -1.753014475085625e-07
+          ],
+          "fwt_baseline": [
+            1.4350317592293544e-06,
+            1.4841316129583915e-06
+          ],
+          "fwt_defined": true,
+          "fwt_delta_per_task": [
+            3.0513045708805587e-06
+          ],
+          "fwt_pretrain": [
+            4.53543618383895e-06
+          ],
+          "n_tasks": 2,
+          "t_final": 1
+        },
+        "forgetting": -1.753014475085625e-07,
+        "fwt": 3.0513045708805587e-06
+      },
+      "wall_seconds": {
+        "decision": 1.656806624996534,
+        "evaluation": 17.593820834001235,
+        "train": 8.833041749996482
+      }
+    }
+  ],
+  "schema_version": 1,
+  "source": {
+    "commit": "aefd28202d09b56f78cf825ae8c3b4354c1cb127",
+    "tracked_changes": [],
+    "tracked_changes_present": false
+  },
+  "timestamp": "2026-07-30T11:17:44Z"
+}

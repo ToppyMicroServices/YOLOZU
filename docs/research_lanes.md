@@ -62,6 +62,14 @@ The bundle was independently reproduced in a second Python/Torch environment
 on 2026-07-30 with matching semantic results. The remaining blocker is the
 all-zero retention/adaptation result, not reproducibility.
 
+A stronger confirmatory spec then produced non-zero source and target scores
+for seeds 44, 55, and 66. Seeds 44 and 55 passed the preregistered
+retention/adaptation checks, while seed 66 failed the strict old-task
+improvement threshold. An independent run reproduced the protocol, metric
+directions, and gate outcomes. This removes the all-zero measurement blocker
+but does not establish efficacy; the result remains `hold`. See
+[`reports/sdft_confirmatory_evidence_2026-07-30.md`](../reports/sdft_confirmatory_evidence_2026-07-30.md).
+
 For offline distillation and Hessian refinement, the shortest measured path is:
 
 ```bash

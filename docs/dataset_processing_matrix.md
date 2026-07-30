@@ -16,7 +16,7 @@ training intake. A Stable parent command does not make every row Stable.
 | YOLO multi-task layout with sidecar JSON | `make_subset_dataset.py` | Owned symlink/copy subset | bbox, keypoints, masks, depth maps/units, intrinsics, object-pose sidecars, provenance metadata | Qualified on `data/real_multitask_fewshot`; bbox/masks are COCO-derived, while keypoints/depth/object pose are explicitly heuristic |
 | Classification folder or OBB labels | `doctor train-dataset` | Recognized external-lane intake | source metadata only | External-only; not a direct RT-DETR reference-trainer input |
 | SynthGen shard/stream | SynthGen loaders and validation tools | Experimental intake records | renderer-owned truth fields | See `synthgen_contract.md`; image generation remains outside YOLOZU |
-| BOP object pose | Safe BOP download, owned conversion, and object-pose evaluation | Research/object-pose records | bbox, intrinsics, object rotation/translation, source depth, deterministic metre-scaled CAD subsets, model/archive hashes, available symmetry metadata | See [`bop_tless_protocol.md`](bop_tless_protocol.md); this is not human 3D skeleton pose and no real multi-seed efficacy result is published |
+| BOP object pose | Safe BOP download, owned conversion, official-target pose export, and object-pose evaluation | Research/object-pose records | bbox, intrinsics, object rotation/translation, source depth, deterministic metre-scaled CAD subsets, model/archive/result hashes, available symmetry metadata | See [`bop_tless_protocol.md`](bop_tless_protocol.md); official BOP19 protocol execution is tracked, but this is not human 3D skeleton pose and no positive multi-seed efficacy result is claimed |
 
 ## Wrapper versus materialized output
 

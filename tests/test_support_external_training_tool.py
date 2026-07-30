@@ -114,6 +114,50 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             self.assertIn("FileNotFoundError", payload["runtime_error"])
             self.assertEqual(payload["process"]["returncode"], 127)
 
+    def test_mmdetection_auto_infers_coco_instances_as_bbox(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            out = root / "train_mmdetection.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "train-mmdetection",
+                    "--preset",
+                    "none",
+                    "--config",
+                    "configs/examples/finetune_external/mmdetection_finetune_smoke.py",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--dry-run",
+                    "--work-dir",
+                    str(root / "work"),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            if proc.returncode != 0:
+                self.fail(
+                    "support_external_training train-mmdetection failed:"
+                    f"\n{proc.stdout}\n{proc.stderr}"
+                )
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(payload["task_family"], "bbox")
+            self.assertEqual(payload["canonical_train_config"]["task"], "bbox")
+            self.assertEqual(
+                payload["handoff_contracts"]["export"]["output_contract"]["type"],
+                "predictions interface contract",
+            )
+
     def test_yolox_dry_run_dod_gate(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "support_external_training.py"
@@ -188,6 +232,58 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
 
             execution_payload = json.loads((work_dir / "reports" / "execution.json").read_text(encoding="utf-8"))
             self.assertEqual((execution_payload.get("execution_status") or {}).get("state"), "dry_run_handoff")
+            projection = json.loads(
+                (work_dir / "yolox_train_config_projection.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                projection["environment_hints"]["YOLOZU_NUM_CLASSES"],
+                "80",
+            )
+            self.assertEqual(
+                projection["environment_hints"]["YOLOZU_OUTPUT_DIR"],
+                str(work_dir),
+            )
+
+    def test_yolox_rejects_invalid_runtime_class_count(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            for value in ("0", "not-an-integer"):
+                with self.subTest(value=value):
+                    env = dict(os.environ)
+                    env["YOLOZU_NUM_CLASSES"] = value
+                    proc = subprocess.run(
+                        [
+                            sys.executable,
+                            str(script),
+                            "train-yolox",
+                            "--dataset",
+                            "data/smoke",
+                            "--split",
+                            "val",
+                            "--exp",
+                            "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                            "--dry-run",
+                            "--work-dir",
+                            str(root / value / "work"),
+                            "--output",
+                            str(root / value / "report.json"),
+                        ],
+                        cwd=str(repo_root),
+                        env=env,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        check=False,
+                    )
+                    self.assertNotEqual(proc.returncode, 0)
+                    self.assertIn(
+                        "YOLOZU_NUM_CLASSES must be a positive integer.",
+                        proc.stderr,
+                    )
 
     def test_yolox_non_dry_without_train_script_reports_status(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -273,6 +369,10 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             self.assertFalse(payload["training_executed"])
             self.assertFalse(payload["execution_status"]["real_training_executed"])
             self.assertIn("exited zero", payload["runtime_error"])
+            usage = payload["process"]["resource_usage"]
+            self.assertGreaterEqual(usage["wall_seconds"], 0.0)
+            self.assertGreaterEqual(usage["child_user_cpu_seconds"], 0.0)
+            self.assertGreaterEqual(usage["child_peak_rss_bytes"], 0)
 
 
 if __name__ == "__main__":

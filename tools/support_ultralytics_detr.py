@@ -24,6 +24,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+try:
+    import resource
+except ImportError:  # pragma: no cover - unavailable on Windows
+    resource = None
+
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo_root))
 
@@ -579,14 +584,56 @@ def _optional_bridge_runtime_boundary(
     }
 
 
+def _resolved_num_classes(dataset_root: Path, split: str) -> int | None:
+    instances_path = (
+        dataset_root / "annotations" / f"instances_{split}.json"
+    )
+    if instances_path.is_file():
+        payload = json.loads(instances_path.read_text(encoding="utf-8"))
+        categories = payload.get("categories") if isinstance(payload, dict) else None
+        if isinstance(categories, list) and categories:
+            return len(categories)
+
+    classes_path = dataset_root / "labels" / split / "classes.json"
+    if classes_path.is_file():
+        payload = json.loads(classes_path.read_text(encoding="utf-8"))
+        if isinstance(payload, list) and payload:
+            return len(payload)
+        if isinstance(payload, dict):
+            names = payload.get("names")
+            if isinstance(names, (list, dict)) and names:
+                return len(names)
+            numeric_keys = [key for key in payload if str(key).isdigit()]
+            if numeric_keys:
+                return len(numeric_keys)
+    return None
+
+
+def _runtime_num_classes(env_value: str | None, inferred: int | None) -> str:
+    candidate: str | int = inferred or 1
+    if env_value is not None and env_value.strip():
+        candidate = env_value.strip()
+    try:
+        value = int(candidate)
+    except (TypeError, ValueError) as exc:
+        raise SystemExit(
+            "YOLOZU_NUM_CLASSES must be a positive integer."
+        ) from exc
+    if value <= 0:
+        raise SystemExit("YOLOZU_NUM_CLASSES must be a positive integer.")
+    return str(value)
+
+
 def _run(
     cmd: list[str],
     *,
     cwd: Path = repo_root,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    started = time.perf_counter()
+    usage_before = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
     try:
-        return subprocess.run(
+        result = subprocess.run(
             cmd,
             cwd=str(cwd),
             env=env,
@@ -596,12 +643,43 @@ def _run(
             check=False,
         )
     except OSError as exc:
-        return subprocess.CompletedProcess(
+        result = subprocess.CompletedProcess(
             args=cmd,
             returncode=127,
             stdout="",
             stderr=f"{type(exc).__name__}: {exc}",
         )
+    usage_after = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
+    usage: dict[str, Any] = {
+        "wall_seconds": time.perf_counter() - started,
+        "measurement_scope": "launcher child process tree",
+    }
+    if usage_before is not None and usage_after is not None:
+        max_rss = int(usage_after.ru_maxrss)
+        usage.update(
+            {
+                "child_user_cpu_seconds": max(
+                    0.0, float(usage_after.ru_utime - usage_before.ru_utime)
+                ),
+                "child_system_cpu_seconds": max(
+                    0.0, float(usage_after.ru_stime - usage_before.ru_stime)
+                ),
+                "child_peak_rss_bytes": max_rss
+                if sys.platform == "darwin"
+                else max_rss * 1024,
+            }
+        )
+    setattr(result, "_yolozu_resource_usage", usage)
+    return result
+
+
+def _process_report(proc: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    return {
+        "returncode": int(proc.returncode),
+        "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
+        "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
+        "resource_usage": getattr(proc, "_yolozu_resource_usage", None),
+    }
 
 
 def _external_process_succeeded(proc: subprocess.CompletedProcess[str]) -> bool:
@@ -799,11 +877,13 @@ def _yolox_train_template(
     batch: int,
     weights: str | None,
     devices: int,
+    work_dir: str,
 ) -> str:
     cmd = [
         "YOLOZU_DATASET_ROOT=<dataset_root>",
         "YOLOZU_SPLIT=<split>",
         "YOLOZU_NUM_CLASSES=<num_classes>",
+        f"YOLOZU_OUTPUT_DIR={work_dir}",
         str(python),
         str(train_script),
         "-f",
@@ -855,7 +935,14 @@ def _infer_detectron2_task_family(config_path: Path) -> str:
 def _infer_mmdetection_task_family(config_path: Path) -> str:
     text = config_path.read_text(encoding="utf-8", errors="ignore")
     lowered = text.lower()
-    if "mask_head" in lowered or "instance" in lowered:
+    segmentation_markers = (
+        "mask_head",
+        "mask-rcnn",
+        "mask_rcnn",
+        "cascade-mask",
+        "cascade_mask",
+    )
+    if any(marker in lowered for marker in segmentation_markers):
         return "segmentation"
     return "bbox"
 
@@ -1094,6 +1181,14 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         images_dir=str(args.images_dir) if args.images_dir else None,
         force=bool(args.force),
     )
+    inferred_num_classes = _resolved_num_classes(
+        Path(str(resolution.dataset_root)),
+        str(resolution.split),
+    )
+    runtime_num_classes = _runtime_num_classes(
+        os.environ.get("YOLOZU_NUM_CLASSES"),
+        inferred_num_classes,
+    )
 
     train_cfg = project_yolox_exp(config=exp_path).to_dict()
     resume_value = _resolve_value(
@@ -1121,6 +1216,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         batch=int(args.batch),
         weights=(str(resume_path) if resume_path else None),
         devices=int(args.devices),
+        work_dir=str(work_dir),
     )
 
     projection_path = work_dir / "yolox_train_config_projection.json"
@@ -1136,6 +1232,8 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         "environment_hints": {
             "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
             "YOLOZU_SPLIT": str(resolution.split),
+            "YOLOZU_NUM_CLASSES": runtime_num_classes,
+            "YOLOZU_OUTPUT_DIR": str(work_dir),
         },
     }
     _write_json(projection_path, projection_payload)
@@ -1157,12 +1255,10 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             env["YOLOZU_DATASET_ROOT"] = str(resolution.dataset_root)
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_BATCH_SIZE"] = str(int(args.batch))
+            env["YOLOZU_NUM_CLASSES"] = runtime_num_classes
+            env["YOLOZU_OUTPUT_DIR"] = str(work_dir)
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1403,11 +1499,7 @@ def _cmd_train_detectron2(args: argparse.Namespace) -> int:
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_TASK_FAMILY"] = str(task_family)
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1648,11 +1740,7 @@ def _cmd_train_mmfamily(
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_TASK_FAMILY"] = str(task_family)
             proc = _run(command, cwd=repo_root, env=env)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -1919,11 +2007,7 @@ def _cmd_train_tao(args: argparse.Namespace) -> int:
     proc_info: dict[str, Any] | None = None
     if not bool(args.dry_run):
         proc = _run(command, cwd=repo_root, env=dict(os.environ))
-        proc_info = {
-            "returncode": int(proc.returncode),
-            "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-            "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-        }
+        proc_info = _process_report(proc)
         training_executed = _external_process_succeeded(proc)
         if not training_executed:
             if proc.returncode == 127:
@@ -2381,11 +2465,7 @@ def _cmd_train_hf_detr(args: argparse.Namespace) -> int:
     if not bool(args.dry_run):
         if train_script:
             proc = _run(command, cwd=repo_root)
-            proc_info = {
-                "returncode": int(proc.returncode),
-                "stdout_tail": str(proc.stdout or "").splitlines()[-20:],
-                "stderr_tail": str(proc.stderr or "").splitlines()[-20:],
-            }
+            proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
             if not training_executed:
                 runtime_error = (
@@ -2839,7 +2919,12 @@ def _build_parser() -> argparse.ArgumentParser:
     tyx.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
     tyx.add_argument("-b", "--batch", type=int, default=16, help="Global batch size (default: 16).")
     tyx.add_argument("-D", "--devices", type=int, default=1, help="Device count forwarded to the external YOLOX launcher (default: 1).")
-    tyx.add_argument("-W", "--work-dir", default="runs/support_external_training/yolox", help="Work/cache dir.")
+    tyx.add_argument(
+        "-W",
+        "--work-dir",
+        default="runs/support_external_training/yolox",
+        help="Wrapper work/cache and native YOLOX checkpoint/output directory.",
+    )
     tyx.add_argument("-o", "--output", default="reports/support_external_training.train_yolox.json", help="Report JSON output path.")
     tyx.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tyx.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")

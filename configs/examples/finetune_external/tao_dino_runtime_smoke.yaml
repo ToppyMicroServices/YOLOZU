@@ -1,0 +1,40 @@
+train:
+  results_dir: /results
+  num_gpus: 1
+  num_nodes: 1
+  num_epochs: 1
+  validation_interval: 1
+  checkpoint_interval: 1
+  precision: fp32
+  optim:
+    lr_backbone: 0.00002
+    lr: 0.0002
+    lr_steps: [1]
+    momentum: 0.9
+dataset:
+  train_data_sources:
+    - image_dir: /data/train2017/
+      json_file: /data/annotations/instances_train2017.json
+  val_data_sources:
+    - image_dir: /data/val2017/
+      json_file: /data/annotations/instances_val2017.json
+  num_classes: 80
+  batch_size: 1
+  workers: 0
+  augmentation:
+    scales: [64]
+    input_mean: [0.485, 0.456, 0.406]
+    input_std: [0.229, 0.224, 0.225]
+    horizontal_flip_prob: 0.0
+    fixed_padding: true
+model:
+  backbone: resnet_50
+  train_backbone: true
+  pretrained_backbone_path: null
+  num_feature_levels: 4
+  dec_layers: 1
+  enc_layers: 1
+  num_queries: 10
+  num_select: 10
+  dropout_ratio: 0.0
+  dim_feedforward: 256

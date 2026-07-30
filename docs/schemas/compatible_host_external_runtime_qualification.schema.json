@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/compatible_host_external_runtime_qualification.schema.json",
+  "title": "YOLOZU compatible-host external runtime qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "environment",
+    "sources",
+    "lanes",
+    "all_training_executed",
+    "all_checkpoints_recorded",
+    "all_resource_usage_recorded",
+    "all_handoff_contracts_validated",
+    "qualification_passed"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "kind": {
+      "type": "string",
+      "const": "compatible_host_external_runtime_qualification"
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "platform",
+        "python",
+        "versions",
+        "cuda_available",
+        "gpu",
+        "peak_rss_bytes"
+      ]
+    },
+    "sources": {
+      "type": "object",
+      "required": [
+        "yolox_commit",
+        "mmdetection_commit",
+        "mmpose_commit",
+        "mmsegmentation_commit"
+      ]
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "returncode",
+          "training_executed",
+          "execution_status",
+          "report_sha256",
+          "checkpoint_evidence",
+          "resource_usage",
+          "handoff_validation"
+        ]
+      }
+    },
+    "all_training_executed": {"type": "boolean"},
+    "all_checkpoints_recorded": {"type": "boolean"},
+    "all_resource_usage_recorded": {"type": "boolean"},
+    "all_handoff_contracts_validated": {"type": "boolean"},
+    "qualification_passed": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

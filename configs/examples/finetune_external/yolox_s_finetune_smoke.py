@@ -12,6 +12,7 @@ dataset resolution and reporting on its side:
 - ``YOLOZU_BATCH_SIZE``
 - ``YOLOZU_MAX_EPOCHS``
 - ``YOLOZU_IMAGE_SIZE``
+- ``YOLOZU_OUTPUT_DIR``
 
 YOLO-family defaults intentionally differ from the RT-DETR reference lane:
 this template keeps letterbox-shaped square inputs, SGD-style optimization,
@@ -59,18 +60,18 @@ class Exp(_BaseExp):
         self.flip_prob = 0.0
         self.warmup_epochs = 0
         self.no_aug_epochs = 1
-        self.optimizer = "SGD"
         self.basic_lr_per_img = 0.001 / max(1, _env_int("YOLOZU_BATCH_SIZE", 2))
         self.weight_decay = 5e-4
         self.momentum = 0.9
         self.nesterov = True
-        self.preprocess = "letterbox"
         self.decode_postprocess = "nms"
         self.nmsthre = 0.65
         self.test_conf = 0.01
         self.print_interval = 1
         self.eval_interval = 1
-        self.output_dir = "runs/yolox_finetune"
+        self.output_dir = os.environ.get(
+            "YOLOZU_OUTPUT_DIR", "runs/yolox_finetune"
+        )
         self.exp_name = "yolox_smoke"
 
         # Standard YOLOX data knobs. External launchers can override these.

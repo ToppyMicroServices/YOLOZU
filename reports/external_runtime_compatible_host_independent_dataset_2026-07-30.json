@@ -1,0 +1,20 @@
+{
+  "classes": 5,
+  "ground_truth": {
+    "detection": "repository fixture bbox labels",
+    "keypoints": "bbox-derived anchors for runtime availability only",
+    "segmentation": "bbox-derived class masks for runtime availability only"
+  },
+  "images": 2,
+  "instances": 28,
+  "kind": "external_runtime_smoke_datasets",
+  "outputs": {
+    "detection": "/workspace/reports/compatible_host_external_runtimes/datasets/detection",
+    "keypoints": "/workspace/reports/compatible_host_external_runtimes/datasets/keypoints",
+    "segmentation": "/workspace/reports/compatible_host_external_runtimes/datasets/segmentation"
+  },
+  "schema_version": 1,
+  "source": "/workspace/data/real_multitask_fewshot",
+  "source_split": "train",
+  "tree_sha256": "b36d5af592faedf2ae7ca04a91f2495a0569debd6e8b5681bebef0a8270d1435"
+}

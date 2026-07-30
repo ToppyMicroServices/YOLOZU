@@ -125,11 +125,14 @@ promote opt-in subcommands or flags: `export_predictions` keeps baseline export 
 TTA Experimental, and TTT Research.
 
 The BOP lane means rigid-object `R,t` pose, not human 3D skeleton pose. Its
-real T-LESS diagnostic now has strict GT, three-seed task-native before/after
-evaluation, and an independent semantic reproduction. It remains Research
-because the bounded checkpoints produced no matched pose predictions and the
-frame holdout is not the official BOP test benchmark. See the
-[evidence report](reports/bop_tless_evidence_2026-07-30.md).
+real T-LESS diagnostic has strict GT, three-seed task-native before/after
+evaluation, and an independent semantic reproduction. The follow-up exports
+matched pose estimates for the official BOP19 test targets and evaluates them
+with the pinned official toolkit. The lane remains Research because protocol
+completion produced only small, seed-inconsistent official and task-native
+scores; one seed had zero 0.1-diameter pose success. See the
+[diagnostic report](reports/bop_tless_evidence_2026-07-30.md) and
+[official-test report](reports/bop19_tless_official_evidence_2026-07-30.md).
 
 The continual-learning lane now has a one-command, schema-defined three-seed
 naive-versus-checkpoint-distillation diagnostic:
@@ -145,6 +148,12 @@ as a [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/t
 the bundle has been independently reproduced in a second Python/Torch
 environment. See the
 [evidence report](reports/sdft_continual_evidence_2026-07-28.md).
+The 2026-07-30 confirmatory spec produced non-zero task scores for all seeds,
+and an independent run reproduced the protocol and gate outcomes. Two of three
+seeds passed the preregistered retention/adaptation checks; seed 66 failed the
+strict old-task improvement gate. Efficacy therefore remains
+`not_established`; see the
+[confirmatory report](reports/sdft_confirmatory_evidence_2026-07-30.md).
 
 Experimental fine-tuning lanes can be audited in one command with
 `./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`.
@@ -158,6 +167,13 @@ Ultralytics, HF DETR, and Detectron2 across two environments; five other
 external runtimes emitted structured availability failures. The
 [runtime evidence](reports/external_runtime_evidence_2026-07-30.md) remains
 Experimental and `hold`.
+A compatible Linux/CUDA workflow separately completed non-dry training for
+YOLOX, MMDetection, MMPose, MMSeg, and NVIDIA TAO in two independent runs on
+the same pinned T4 stack. This establishes compatible-host runtime
+availability and structural handoff reproducibility, not training quality or
+checkpoint byte determinism. All five lanes remain Experimental / `hold`; see
+the
+[compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md).
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
