@@ -89,8 +89,12 @@ explicit.
 
 The dated compatible-host result is recorded separately in
 [`reports/external_runtime_compatible_host_evidence_2026-07-30.md`](../reports/external_runtime_compatible_host_evidence_2026-07-30.md).
-Runtime availability does not establish training quality or promote any lane
-beyond Experimental.
+Two independent runs at the same source commit completed non-dry training and
+checkpoint creation for all four open-source lanes and NVIDIA TAO on a Tesla
+T4. They also reproduced launcher resource measurements and structural
+resume/export/eval/parity handoff validation. Runtime availability and
+structural handoff reproducibility do not establish training quality,
+checkpoint byte determinism, or promote any lane beyond Experimental.
 
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with

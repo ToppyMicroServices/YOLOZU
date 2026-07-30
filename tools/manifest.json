@@ -11697,7 +11697,15 @@
         "docs/training_capability_matrix.md",
         "docs/external_finetune_smoke.md",
         "docs/tools_index.md",
-        "reports/external_runtime_compatible_host_evidence_2026-07-30.md"
+        "reports/external_runtime_compatible_host_evidence_2026-07-30.md",
+        "reports/external_runtime_compatible_host_primary_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json"
       ],
       "effects": {
         "fixed_writes": [],
@@ -14183,7 +14191,15 @@
         "docs/training_capability_matrix.md",
         "docs/external_finetune_smoke.md",
         "docs/tools_index.md",
-        "reports/external_runtime_compatible_host_evidence_2026-07-30.md"
+        "reports/external_runtime_compatible_host_evidence_2026-07-30.md",
+        "reports/external_runtime_compatible_host_primary_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_tao_2026-07-30.json",
+        "reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json"
       ],
       "effects": {
         "fixed_writes": [],

@@ -365,6 +365,17 @@ does not count config projection as training.  Results remain Experimental and
 \cmd{hold}; see
 \path{reports/external_runtime_evidence_2026-07-30.md}.
 
+A separate compatible Linux/CUDA qualification at source commit
+\cmd{806496d} completed non-dry YOLOX, MMDetection, MMPose, MMSeg, and
+NVIDIA TAO training in two independent Tesla T4 runs.  Both runs recorded
+checkpoints, launcher resource use, and valid structural
+resume/export/eval/parity handoffs.  The source pins, dataset tree, and all
+fail-closed gates reproduced, while checkpoint hashes differed.  This
+establishes compatible-host runtime availability and structural handoff
+reproducibility, not checkpoint byte determinism or training quality.  The
+lanes remain Experimental and \cmd{hold}; see
+\path{reports/external_runtime_compatible_host_evidence_2026-07-30.md}.
+
 Top-level Detectron2 training lane examples:
 \begin{lstlisting}[language=bash]
 python3 -m yolozu train \

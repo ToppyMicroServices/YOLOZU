@@ -1,0 +1,22 @@
+{
+  "checkpoint": {
+    "bytes": 367044426,
+    "path": "model_epoch_000.pth",
+    "sha256": "379f7a518cfc70ff558dc0cef1384ae16dcb7d9bc6b8e309e11fe7f1a13dc82e"
+  },
+  "image": "nvcr.io/nvidia/tao/tao-toolkit:5.5.0-pyt",
+  "image_digest": "nvcr.io/nvidia/tao/tao-toolkit@sha256:d0d24bc5608832246ed6f7f768b8dbbe429e0e41c580582a0b89606bb9e752a9",
+  "kind": "tao_compatible_host_runtime_evidence",
+  "schema_version": 1,
+  "vendor_completion_record": {
+    "date": "7/30/2026",
+    "kpi": {
+      "train_loss": 17.32905387878418
+    },
+    "message": "Train finished successfully.",
+    "status": "RUNNING",
+    "time": "13:45:3",
+    "verbosity": "INFO"
+  },
+  "wall_seconds": 50.782429695129395
+}

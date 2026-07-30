@@ -124,6 +124,7 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 - Compatible Linux/CUDA runtime qualification: `bash scripts/run_external_runtime_gpu_qualification.sh --output-dir reports/compatible_host_external_runtimes --dataset-root data/real_multitask_fewshot`
   - pins YOLOX and OpenMMLab source/runtime versions, executes non-dry training, and records failures instead of treating projection as training
   - NVIDIA TAO remains a separate container step because it has a vendor runtime and license boundary
+  - two same-commit Tesla T4 runs completed all five lanes; this establishes runtime availability and structural handoff reproducibility, not checkpoint byte determinism or training quality
 - Keypoints (PCK + optional OKS mAP): `python3 tools/eval_keypoints.py --dataset /path/to/yolo --predictions reports/predictions.json --output reports/keypoints_eval.json`
   - Add `--oks` to compute COCO OKS mAP (requires `pycocotools`).
 - Keypoints parity (backend output diffs): `python3 tools/check_keypoints_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --iou-thresh 0.99 --kp-atol 1e-4`

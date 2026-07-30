@@ -167,8 +167,12 @@ Ultralytics, HF DETR, and Detectron2 across two environments; five other
 external runtimes emitted structured availability failures. The
 [runtime evidence](reports/external_runtime_evidence_2026-07-30.md) remains
 Experimental and `hold`.
-A compatible Linux/CUDA workflow separately pins and executes YOLOX,
-MMDetection, MMPose, MMSeg, and NVIDIA TAO; its result is kept in the
+A compatible Linux/CUDA workflow separately completed non-dry training for
+YOLOX, MMDetection, MMPose, MMSeg, and NVIDIA TAO in two independent runs on
+the same pinned T4 stack. This establishes compatible-host runtime
+availability and structural handoff reproducibility, not training quality or
+checkpoint byte determinism. All five lanes remain Experimental / `hold`; see
+the
 [compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md).
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with

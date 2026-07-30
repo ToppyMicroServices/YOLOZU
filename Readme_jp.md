@@ -169,10 +169,13 @@ Detectron2 の実 training を2環境で再現しました。他の5 runtimeは�
 から構造化された availability failure を出しています。
 [runtime evidence](reports/external_runtime_evidence_2026-07-30.md)の判定は
 Experimental / `hold` です。
-別の compatible Linux/CUDA workflow で YOLOX、MMDetection、MMPose、MMSeg、
-NVIDIA TAO を pin して実行し、その結果を
+別の compatible Linux/CUDA workflow では、同一の pin 済み T4 stack 上で
+YOLOX、MMDetection、MMPose、MMSeg、NVIDIA TAO の non-dry training を
+2回独立に完了しました。これは compatible-host runtime availability と
+structural handoff の再現性を示しますが、training quality や checkpoint の
+byte 決定性は示しません。5 lane は Experimental / `hold` のままです。詳細は
 [compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md)
-に分離して記録します。
+に記録しています。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane

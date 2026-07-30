@@ -1,0 +1,233 @@
+{
+  "all_checkpoints_recorded": true,
+  "all_handoff_contracts_validated": true,
+  "all_resource_usage_recorded": true,
+  "all_training_executed": true,
+  "environment": {
+    "cuda_available": true,
+    "gpu": "Tesla T4",
+    "peak_rss_bytes": 18481152,
+    "platform": "Linux-6.8.0-1060-aws-x86_64-with-glibc2.31",
+    "python": "3.10.13",
+    "versions": {
+      "mmcv": "2.1.0",
+      "mmdet": "3.3.0",
+      "mmengine": "0.10.7",
+      "mmpose": "1.3.2",
+      "mmsegmentation": "1.2.2",
+      "torch": "2.1.2",
+      "yolox": "0.3.0"
+    }
+  },
+  "kind": "compatible_host_external_runtime_qualification",
+  "lanes": [
+    {
+      "checkpoint_evidence": {
+        "bytes": 71850046,
+        "checkpoint": "/workspace/reports/compatible_host_external_runtimes/yolox/work/yolox_smoke/latest_ckpt.pth",
+        "sha256": "d74e7f8a7eb2ab17a99b243b12bbe6ce330946c59a56094096b11ffc24f2bad4"
+      },
+      "execution_status": {
+        "artifact_backed": true,
+        "handoff_ready": true,
+        "real_training_executed": true,
+        "requires_external_train_script": true,
+        "skip_reason": null,
+        "state": "executed",
+        "train_script": "/tmp/yolozu-external-runtimes/YOLOX/tools/train.py"
+      },
+      "handoff_validation": {
+        "passed": true,
+        "stages": {
+          "eval": {
+            "ok": true,
+            "output_type": "evaluation_report"
+          },
+          "export": {
+            "ok": true,
+            "output_type": "predictions interface contract"
+          },
+          "parity": {
+            "ok": true,
+            "output_type": "parity_report"
+          },
+          "resume": {
+            "ok": true,
+            "output_type": "external_run_contract_bundle"
+          }
+        }
+      },
+      "id": "yolox",
+      "report": "/workspace/reports/compatible_host_external_runtimes/yolox/training_summary.json",
+      "report_sha256": "1a0a34f34aab1c42a4a726492eeceb54b1969913232051b7cdcf7b7854d5dc8d",
+      "resource_usage": {
+        "child_peak_rss_bytes": 1594777600,
+        "child_system_cpu_seconds": 3.592437,
+        "child_user_cpu_seconds": 5.169534,
+        "measurement_scope": "launcher child process tree",
+        "wall_seconds": 9.451243609000016
+      },
+      "returncode": 0,
+      "runtime_error": null,
+      "training_executed": true
+    },
+    {
+      "checkpoint_evidence": {
+        "bytes": 333525378,
+        "checkpoint": "/workspace/reports/compatible_host_external_runtimes/mmdetection/work/epoch_1.pth",
+        "sha256": "7c0fe1f2c6c0f3b7c449bf8764b79a0c57f1b3ae8630c26900ea4581dde25157"
+      },
+      "execution_status": {
+        "artifact_backed": true,
+        "handoff_ready": true,
+        "real_training_executed": true,
+        "requires_external_train_script": true,
+        "skip_reason": null,
+        "state": "executed",
+        "train_script": "/tmp/yolozu-external-runtimes/mmdetection/tools/train.py"
+      },
+      "handoff_validation": {
+        "passed": true,
+        "stages": {
+          "eval": {
+            "ok": true,
+            "output_type": "evaluation_report"
+          },
+          "export": {
+            "ok": true,
+            "output_type": "predictions interface contract"
+          },
+          "parity": {
+            "ok": true,
+            "output_type": "parity_report"
+          },
+          "resume": {
+            "ok": true,
+            "output_type": "external_run_contract_bundle"
+          }
+        }
+      },
+      "id": "mmdetection",
+      "report": "/workspace/reports/compatible_host_external_runtimes/mmdetection/training_summary.json",
+      "report_sha256": "bc9b184b50818f5e97779da04ffa4f15bff55e3f97d0c8857ac8be117a6acfe6",
+      "resource_usage": {
+        "child_peak_rss_bytes": 2170593280,
+        "child_system_cpu_seconds": 3.751742,
+        "child_user_cpu_seconds": 9.51488,
+        "measurement_scope": "launcher child process tree",
+        "wall_seconds": 12.537047228000006
+      },
+      "returncode": 0,
+      "runtime_error": null,
+      "training_executed": true
+    },
+    {
+      "checkpoint_evidence": {
+        "bytes": 408488850,
+        "checkpoint": "/workspace/reports/compatible_host_external_runtimes/mmpose/work/epoch_1.pth",
+        "sha256": "9c790e83833d69f92046206442ae6b0d78b6ee3fa20e062663b325097e96596b"
+      },
+      "execution_status": {
+        "artifact_backed": true,
+        "handoff_ready": true,
+        "real_training_executed": true,
+        "requires_external_train_script": true,
+        "skip_reason": null,
+        "state": "executed",
+        "train_script": "/tmp/yolozu-external-runtimes/mmpose/tools/train.py"
+      },
+      "handoff_validation": {
+        "passed": true,
+        "stages": {
+          "eval": {
+            "ok": true,
+            "output_type": "evaluation_report"
+          },
+          "export": {
+            "ok": true,
+            "output_type": "predictions interface contract"
+          },
+          "parity": {
+            "ok": true,
+            "output_type": "parity_report"
+          },
+          "resume": {
+            "ok": true,
+            "output_type": "external_run_contract_bundle"
+          }
+        }
+      },
+      "id": "mmpose",
+      "report": "/workspace/reports/compatible_host_external_runtimes/mmpose/training_summary.json",
+      "report_sha256": "a169d984e84b297cef3625249d4c715632e47a5304dfa080693fa651d263f6bb",
+      "resource_usage": {
+        "child_peak_rss_bytes": 2015174656,
+        "child_system_cpu_seconds": 3.685515,
+        "child_user_cpu_seconds": 9.510385,
+        "measurement_scope": "launcher child process tree",
+        "wall_seconds": 12.192179459000045
+      },
+      "returncode": 0,
+      "runtime_error": null,
+      "training_executed": true
+    },
+    {
+      "checkpoint_evidence": {
+        "bytes": 392241368,
+        "checkpoint": "/workspace/reports/compatible_host_external_runtimes/mmseg/work/iter_20.pth",
+        "sha256": "fd64bc621438c883a10ef1bd0b0b26f0c304793d96a06bdebb1ef41d8bf165f7"
+      },
+      "execution_status": {
+        "artifact_backed": true,
+        "handoff_ready": true,
+        "real_training_executed": true,
+        "requires_external_train_script": true,
+        "skip_reason": null,
+        "state": "executed",
+        "train_script": "/tmp/yolozu-external-runtimes/mmsegmentation/tools/train.py"
+      },
+      "handoff_validation": {
+        "passed": true,
+        "stages": {
+          "eval": {
+            "ok": true,
+            "output_type": "evaluation_report"
+          },
+          "export": {
+            "ok": true,
+            "output_type": "segmentation predictions interface contract"
+          },
+          "parity": {
+            "ok": true,
+            "output_type": "parity_report"
+          },
+          "resume": {
+            "ok": true,
+            "output_type": "external_run_contract_bundle"
+          }
+        }
+      },
+      "id": "mmseg",
+      "report": "/workspace/reports/compatible_host_external_runtimes/mmseg/training_summary.json",
+      "report_sha256": "770830fc88a6e558cb79bb52813f3831e571b702268fc6a854300d740bc223a9",
+      "resource_usage": {
+        "child_peak_rss_bytes": 2202738688,
+        "child_system_cpu_seconds": 4.680945,
+        "child_user_cpu_seconds": 79.661224,
+        "measurement_scope": "launcher child process tree",
+        "wall_seconds": 92.16121241399992
+      },
+      "returncode": 0,
+      "runtime_error": null,
+      "training_executed": true
+    }
+  ],
+  "qualification_passed": true,
+  "schema_version": 1,
+  "sources": {
+    "mmdetection_commit": "44ebd17b145c2372c4b700bfb9cb20dbd28ab64a",
+    "mmpose_commit": "5408bc76f5b848cf925a0d1857899011d8c5b497",
+    "mmsegmentation_commit": "c685fe6767c4cadf6b051983ca6208f1b9d1ccb8",
+    "yolox_commit": "6ddff4824372906469a7fae2dc3206c7aa4bbaee"
+  }
+}
