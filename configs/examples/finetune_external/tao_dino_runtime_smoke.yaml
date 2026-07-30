@@ -31,7 +31,7 @@ model:
   backbone: resnet_50
   train_backbone: true
   pretrained_backbone_path: null
-  num_feature_levels: 3
+  num_feature_levels: 4
   dec_layers: 1
   enc_layers: 1
   num_queries: 10

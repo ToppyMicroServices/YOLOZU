@@ -95,7 +95,9 @@ jobs:
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
             "${image}" \
-            bash -lc "apt-get update && apt-get install -y --no-install-recommends git && bash scripts/run_external_runtime_gpu_qualification.sh \
+            bash -lc "apt-get update && apt-get install -y --no-install-recommends \
+              git libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libxcb1 && \
+              bash scripts/run_external_runtime_gpu_qualification.sh \
               --output-dir reports/compatible_host_external_runtimes \
               --dataset-root data/real_multitask_fewshot"
           status=$?
@@ -131,6 +133,29 @@ jobs:
           status=$?
           set -e
           sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
+          if [[ "${status}" -eq 0 ]]; then
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          status_path = Path("reports/compatible_host_external_runtimes/tao/status.json")
+          records = [
+              json.loads(line)
+              for line in status_path.read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          ]
+          if not records or records[-1].get("status") != "SUCCESS":
+              raise SystemExit("TAO did not report terminal SUCCESS")
+          checkpoints = sorted(
+              path
+              for path in status_path.parent.rglob("*")
+              if path.is_file() and path.suffix in {".pth", ".pt"}
+          )
+          if not checkpoints:
+              raise SystemExit("TAO reported SUCCESS without a checkpoint")
+          print(checkpoints[-1])
+          PY
+          fi
           exit "${status}"
 
       - name: Record compatible-host workflow result

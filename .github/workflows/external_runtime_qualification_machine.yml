@@ -32,13 +32,20 @@ jobs:
           set -euo pipefail
           image="pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel"
           docker pull "${image}"
+          set +e
           docker run --rm --gpus all \
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
             "${image}" \
-            bash scripts/run_external_runtime_gpu_qualification.sh \
-              --output-dir reports/compatible_host_external_runtimes \
-              --dataset-root data/real_multitask_fewshot
+            bash -lc "apt-get update && apt-get install -y --no-install-recommends \
+              git libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libxcb1 && \
+              bash scripts/run_external_runtime_gpu_qualification.sh \
+                --output-dir reports/compatible_host_external_runtimes \
+                --dataset-root data/real_multitask_fewshot"
+          status=$?
+          set -e
+          sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
+          exit "${status}"
 
       - name: Run pinned NVIDIA TAO training probe
         id: tao
@@ -57,12 +64,40 @@ jobs:
           image="nvcr.io/nvidia/tao/tao-toolkit:5.5.0-pyt"
           docker pull "${image}"
           mkdir -p reports/compatible_host_external_runtimes/tao
+          set +e
           docker run --rm --gpus all \
             -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/datasets/detection:/data" \
             -v "${{ github.workspace }}/configs/examples/finetune_external/tao_dino_runtime_smoke.yaml:/spec.yaml:ro" \
             -v "${{ github.workspace }}/reports/compatible_host_external_runtimes/tao:/results" \
             "${image}" \
             dino train -e /spec.yaml
+          status=$?
+          set -e
+          sudo chown -R "$(id -u):$(id -g)" reports/compatible_host_external_runtimes
+          if [[ "${status}" -eq 0 ]]; then
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          status_path = Path("reports/compatible_host_external_runtimes/tao/status.json")
+          records = [
+              json.loads(line)
+              for line in status_path.read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          ]
+          if not records or records[-1].get("status") != "SUCCESS":
+              raise SystemExit("TAO did not report terminal SUCCESS")
+          checkpoints = sorted(
+              path
+              for path in status_path.parent.rglob("*")
+              if path.is_file() and path.suffix in {".pth", ".pt"}
+          )
+          if not checkpoints:
+              raise SystemExit("TAO reported SUCCESS without a checkpoint")
+          print(checkpoints[-1])
+          PY
+          fi
+          exit "${status}"
 
       - name: Record workflow result
         if: ${{ always() }}
