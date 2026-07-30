@@ -42,6 +42,26 @@ class TestPrepareExternalRuntimeSmokeDatasets(unittest.TestCase):
             )
             self.assertEqual(detection["annotations"][0]["bbox"], [6.0, 2.0, 8.0, 6.0])
             self.assertEqual(len(keypoints["annotations"][0]["keypoints"]), 51)
+            for task in ("detection", "keypoints"):
+                self.assertEqual(
+                    (
+                        output
+                        / task
+                        / "labels"
+                        / "train2017"
+                        / "a.txt"
+                    ).read_text(encoding="utf-8"),
+                    "0 0.5 0.5 0.4 0.6\n",
+                )
+                self.assertTrue(
+                    (
+                        output
+                        / task
+                        / "labels"
+                        / "train2017"
+                        / "classes.json"
+                    ).is_file()
+                )
             self.assertTrue(
                 (output / "segmentation" / "labels" / "train" / "a_gtFine_labelTrainIds.png").is_file()
             )
@@ -88,6 +108,16 @@ class TestPrepareExternalRuntimeSmokeDatasets(unittest.TestCase):
                 [row["name"] for row in detection["categories"]],
                 ["person", "car"],
             )
+            copied = json.loads(
+                (
+                    output
+                    / "detection"
+                    / "labels"
+                    / "train2017"
+                    / "classes.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(copied["keypoint_names"], ["left", "right"])
 
     def test_refuses_existing_output(self):
         repo = Path(__file__).resolve().parents[1]

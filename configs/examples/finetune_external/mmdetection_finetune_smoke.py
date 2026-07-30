@@ -22,6 +22,7 @@ batch_size = int("{{$YOLOZU_BATCH_SIZE:2}}")
 train_dataloader = dict(
     batch_size=batch_size,
     num_workers=0,
+    persistent_workers=False,
     dataset=dict(
         data_root=dataset_root,
         ann_file=f"annotations/instances_{split}.json",
@@ -31,6 +32,7 @@ train_dataloader = dict(
 
 val_dataloader = dict(
     num_workers=0,
+    persistent_workers=False,
     dataset=dict(
         data_root=dataset_root,
         ann_file=f"annotations/instances_{split}.json",

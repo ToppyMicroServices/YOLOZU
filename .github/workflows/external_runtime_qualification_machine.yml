@@ -93,8 +93,16 @@ jobs:
               for line in status_path.read_text(encoding="utf-8").splitlines()
               if line.strip()
           ]
-          if not records or records[-1].get("status") != "SUCCESS":
-              raise SystemExit("TAO did not report terminal SUCCESS")
+          failed = any(record.get("status") == "FAILURE" for record in records)
+          finished = bool(
+              records
+              and (
+                  records[-1].get("status") == "SUCCESS"
+                  or records[-1].get("message") == "Train finished successfully."
+              )
+          )
+          if failed or not finished:
+              raise SystemExit("TAO did not report successful training completion")
           checkpoints = sorted(
               path
               for path in status_path.parent.rglob("*")
@@ -108,7 +116,7 @@ jobs:
               "kind": "tao_compatible_host_runtime_evidence",
               "image": os.environ["TAO_IMAGE"],
               "image_digest": os.environ["TAO_IMAGE_DIGEST"],
-              "terminal_status": records[-1],
+              "vendor_completion_record": records[-1],
               "wall_seconds": max(
                   0.0, time.time() - float(os.environ["TAO_STARTED_EPOCH"])
               ),

@@ -28,7 +28,11 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
         for path in self.workflow_paths:
             with self.subTest(workflow=path.name):
                 text = path.read_text(encoding="utf-8")
-                self.assertIn('records[-1].get("status") != "SUCCESS"', text)
+                self.assertIn(
+                    'records[-1].get("message") == "Train finished successfully."',
+                    text,
+                )
+                self.assertIn('record.get("status") == "FAILURE"', text)
                 self.assertIn('path.suffix in {".pth", ".pt"}', text)
                 self.assertIn("TAO reported SUCCESS without a checkpoint", text)
                 self.assertIn("docker image inspect", text)
@@ -62,6 +66,27 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
         self.assertIn('output_type == "evaluation_report"', script)
         self.assertIn('output_type == "parity_report"', script)
         self.assertIn('raise SystemExit(1)', script)
+
+    def test_openmmlab_smoke_configs_disable_worker_and_weight_fetches(self) -> None:
+        config_root = (
+            self.repo_root / "configs" / "examples" / "finetune_external"
+        )
+        for name in (
+            "mmdetection_finetune_smoke.py",
+            "mmpose_finetune_smoke.py",
+            "mmseg_finetune_smoke.py",
+        ):
+            with self.subTest(config=name):
+                text = (config_root / name).read_text(encoding="utf-8")
+                self.assertIn("persistent_workers=False", text)
+        for name in (
+            "mmpose_finetune_smoke.py",
+            "mmseg_finetune_smoke.py",
+        ):
+            with self.subTest(scratch_config=name):
+                text = (config_root / name).read_text(encoding="utf-8")
+                self.assertIn("load_from = None", text)
+                self.assertIn("model = dict(backbone=dict(init_cfg=None))", text)
 
 
 if __name__ == "__main__":

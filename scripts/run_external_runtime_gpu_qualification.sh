@@ -67,6 +67,7 @@ python3 tools/prepare_external_runtime_smoke_datasets.py \
 python3 -m pip install --disable-pip-version-check \
   "numpy==1.26.4" "setuptools<81" "openmim==0.3.9" \
   "opencv-python-headless==4.10.0.84" "pycocotools==2.0.8" \
+  "ftfy==6.3.1" \
   "loguru==0.7.2" "thop==0.1.1.post2209072238" \
   "tabulate==0.9.0" "tensorboard==2.18.0"
 python3 -m mim install "mmengine==0.10.7"

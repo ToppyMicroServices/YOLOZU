@@ -584,6 +584,31 @@ def _optional_bridge_runtime_boundary(
     }
 
 
+def _resolved_num_classes(dataset_root: Path, split: str) -> int | None:
+    instances_path = (
+        dataset_root / "annotations" / f"instances_{split}.json"
+    )
+    if instances_path.is_file():
+        payload = json.loads(instances_path.read_text(encoding="utf-8"))
+        categories = payload.get("categories") if isinstance(payload, dict) else None
+        if isinstance(categories, list) and categories:
+            return len(categories)
+
+    classes_path = dataset_root / "labels" / split / "classes.json"
+    if classes_path.is_file():
+        payload = json.loads(classes_path.read_text(encoding="utf-8"))
+        if isinstance(payload, list) and payload:
+            return len(payload)
+        if isinstance(payload, dict):
+            names = payload.get("names")
+            if isinstance(names, (list, dict)) and names:
+                return len(names)
+            numeric_keys = [key for key in payload if str(key).isdigit()]
+            if numeric_keys:
+                return len(numeric_keys)
+    return None
+
+
 def _run(
     cmd: list[str],
     *,
@@ -837,11 +862,13 @@ def _yolox_train_template(
     batch: int,
     weights: str | None,
     devices: int,
+    work_dir: str,
 ) -> str:
     cmd = [
         "YOLOZU_DATASET_ROOT=<dataset_root>",
         "YOLOZU_SPLIT=<split>",
         "YOLOZU_NUM_CLASSES=<num_classes>",
+        f"YOLOZU_OUTPUT_DIR={work_dir}",
         str(python),
         str(train_script),
         "-f",
@@ -1139,6 +1166,15 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         images_dir=str(args.images_dir) if args.images_dir else None,
         force=bool(args.force),
     )
+    inferred_num_classes = _resolved_num_classes(
+        Path(str(resolution.dataset_root)),
+        str(resolution.split),
+    )
+    runtime_num_classes = str(
+        os.environ.get("YOLOZU_NUM_CLASSES")
+        or inferred_num_classes
+        or 1
+    )
 
     train_cfg = project_yolox_exp(config=exp_path).to_dict()
     resume_value = _resolve_value(
@@ -1166,6 +1202,7 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         batch=int(args.batch),
         weights=(str(resume_path) if resume_path else None),
         devices=int(args.devices),
+        work_dir=str(work_dir),
     )
 
     projection_path = work_dir / "yolox_train_config_projection.json"
@@ -1181,6 +1218,8 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
         "environment_hints": {
             "YOLOZU_DATASET_ROOT": str(resolution.dataset_root),
             "YOLOZU_SPLIT": str(resolution.split),
+            "YOLOZU_NUM_CLASSES": runtime_num_classes,
+            "YOLOZU_OUTPUT_DIR": str(work_dir),
         },
     }
     _write_json(projection_path, projection_payload)
@@ -1202,6 +1241,8 @@ def _cmd_train_yolox(args: argparse.Namespace) -> int:
             env["YOLOZU_DATASET_ROOT"] = str(resolution.dataset_root)
             env["YOLOZU_SPLIT"] = str(resolution.split)
             env["YOLOZU_BATCH_SIZE"] = str(int(args.batch))
+            env["YOLOZU_NUM_CLASSES"] = runtime_num_classes
+            env["YOLOZU_OUTPUT_DIR"] = str(work_dir)
             proc = _run(command, cwd=repo_root, env=env)
             proc_info = _process_report(proc)
             training_executed = _external_process_succeeded(proc)
@@ -2864,7 +2905,12 @@ def _build_parser() -> argparse.ArgumentParser:
     tyx.add_argument("-g", "--images-dir", default=None, help="COCO images dir (for coco_instances mode).")
     tyx.add_argument("-b", "--batch", type=int, default=16, help="Global batch size (default: 16).")
     tyx.add_argument("-D", "--devices", type=int, default=1, help="Device count forwarded to the external YOLOX launcher (default: 1).")
-    tyx.add_argument("-W", "--work-dir", default="runs/support_external_training/yolox", help="Work/cache dir.")
+    tyx.add_argument(
+        "-W",
+        "--work-dir",
+        default="runs/support_external_training/yolox",
+        help="Wrapper work/cache and native YOLOX checkpoint/output directory.",
+    )
     tyx.add_argument("-o", "--output", default="reports/support_external_training.train_yolox.json", help="Report JSON output path.")
     tyx.add_argument("--registry-out", default=None, help="Optional JSONL registry path to append a training registry entry.")
     tyx.add_argument("-n", "--dry-run", action="store_true", help="Do not execute runtime training.")

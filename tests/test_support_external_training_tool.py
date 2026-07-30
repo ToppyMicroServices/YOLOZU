@@ -232,6 +232,19 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
 
             execution_payload = json.loads((work_dir / "reports" / "execution.json").read_text(encoding="utf-8"))
             self.assertEqual((execution_payload.get("execution_status") or {}).get("state"), "dry_run_handoff")
+            projection = json.loads(
+                (work_dir / "yolox_train_config_projection.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                projection["environment_hints"]["YOLOZU_NUM_CLASSES"],
+                "80",
+            )
+            self.assertEqual(
+                projection["environment_hints"]["YOLOZU_OUTPUT_DIR"],
+                str(work_dir),
+            )
 
     def test_yolox_non_dry_without_train_script_reports_status(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

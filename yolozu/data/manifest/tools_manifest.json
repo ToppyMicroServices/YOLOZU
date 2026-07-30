@@ -11754,7 +11754,7 @@
       "outputs": [
         {
           "default": "<output>/preparation_report.json",
-          "description": "Runtime-only label provenance, counts, paths, and payload tree hash.",
+          "description": "Runtime-only label provenance, counts, paths, native COCO/Cityscapes layouts, internal label mirrors used to prevent unintended reconversion, and payload tree hash.",
           "kind": "file",
           "name": "preparation_report_json"
         }
@@ -11771,7 +11771,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
+      "summary": "Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
       "tags": [
         "dataset",
         "external-runtime",
@@ -17178,6 +17178,7 @@
           "required": false
         },
         {
+          "description": "Wrapper-owned working directory. YOLOX also receives this path as its native checkpoint/output directory.",
           "flag": "--work-dir",
           "kind": "dir",
           "name": "work_dir",
@@ -17254,7 +17255,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+      "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
       "tags": [
         "training",
         "interop",

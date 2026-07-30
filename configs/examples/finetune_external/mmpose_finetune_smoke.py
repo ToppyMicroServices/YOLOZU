@@ -18,6 +18,7 @@ split = "{{$YOLOZU_SPLIT:train}}"
 train_dataloader = dict(
     batch_size=2,
     num_workers=0,
+    persistent_workers=False,
     dataset=dict(
         data_root=dataset_root,
         ann_file=f"annotations/person_keypoints_{split}.json",
@@ -28,6 +29,7 @@ train_dataloader = dict(
 val_dataloader = dict(
     batch_size=2,
     num_workers=0,
+    persistent_workers=False,
     dataset=dict(
         data_root=dataset_root,
         ann_file=f"annotations/person_keypoints_{split}.json",
@@ -38,4 +40,6 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 
 train_cfg = dict(max_epochs=1, val_interval=1)
+load_from = None
+model = dict(backbone=dict(init_cfg=None))
 default_hooks = dict(logger=dict(interval=1), checkpoint=dict(interval=1, save_best=None))

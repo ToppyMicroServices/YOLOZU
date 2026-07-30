@@ -203,6 +203,13 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
             label_path = source / "labels" / split / f"{source_image.stem}.txt"
+            for root in (detection_root, keypoint_root):
+                for destination_split in ("train2017", "val2017"):
+                    destination_label = (
+                        root / "labels" / destination_split / label_path.name
+                    )
+                    destination_label.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(label_path, destination_label)
             for line in label_path.read_text(encoding="utf-8").splitlines():
                 values = line.split()
                 if len(values) < 5:
@@ -243,6 +250,18 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 annotation_id += 1
             mask.save(city_label)
+
+    source_classes = source / "labels" / split / "classes.json"
+    for root in (detection_root, keypoint_root):
+        for destination_split in ("train2017", "val2017"):
+            metadata_root = root / "labels" / destination_split
+            metadata_root.mkdir(parents=True, exist_ok=True)
+            if source_classes.is_file():
+                shutil.copy2(source_classes, metadata_root / "classes.json")
+            (metadata_root / "classes.txt").write_text(
+                "\n".join(names) + "\n",
+                encoding="utf-8",
+            )
 
     categories = [
         {"id": index + 1, "name": name, "supercategory": "object"}
