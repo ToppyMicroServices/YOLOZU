@@ -38,8 +38,8 @@ class TestTrainingFamilyRecipes(unittest.TestCase):
         spec.loader.exec_module(module)
         exp = module.get_exp()
 
-        self.assertEqual(exp.optimizer, "SGD")
-        self.assertEqual(exp.preprocess, "letterbox")
+        self.assertNotIn("optimizer", vars(exp))
+        self.assertNotIn("preprocess", vars(exp))
         self.assertEqual(exp.decode_postprocess, "nms")
         self.assertGreater(float(exp.nmsthre), 0.0)
         self.assertTrue(bool(exp.nesterov))

@@ -111,6 +111,7 @@ class TestCompatibleRuntimeWorkflows(unittest.TestCase):
         )
         text = path.read_text(encoding="utf-8")
         self.assertNotIn('self.preprocess = "letterbox"', text)
+        self.assertNotIn('self.optimizer = "SGD"', text)
 
     def test_mmpose_validation_uses_fixture_ground_truth_boxes(self) -> None:
         path = (

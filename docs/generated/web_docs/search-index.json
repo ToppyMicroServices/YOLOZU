@@ -625,8 +625,8 @@
   {
     "href": "commands.html#tool-prepare-external-runtime-smoke-datasets",
     "kind": "command",
-    "search_text": "prepare_external_runtime_smoke_datasets Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. experimental tools/prepare_external_runtime_smoke_datasets.py --source --split --output --max-images",
-    "summary": "Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
+    "search_text": "prepare_external_runtime_smoke_datasets Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. experimental tools/prepare_external_runtime_smoke_datasets.py --source --split --output --max-images",
+    "summary": "Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
     "title": "prepare_external_runtime_smoke_datasets"
   },
   {
@@ -758,8 +758,8 @@
   {
     "href": "commands.html#tool-run-external-runtime-gpu-qualification",
     "kind": "command",
-    "search_text": "run_external_runtime_gpu_qualification Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures. experimental scripts/run_external_runtime_gpu_qualification.sh --output-dir --dataset-root --runtime-root",
-    "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures.",
+    "search_text": "run_external_runtime_gpu_qualification Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures and requiring checkpoints, launcher resource use, and structural resume/export/eval/parity handoff validation. experimental scripts/run_external_runtime_gpu_qualification.sh --output-dir --dataset-root --runtime-root",
+    "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures and requiring checkpoints, launcher resource use, and structural resume/export/eval/parity handoff validation.",
     "title": "run_external_runtime_gpu_qualification"
   },
   {
@@ -849,8 +849,8 @@
   {
     "href": "commands.html#tool-support-external-training",
     "kind": "command",
-    "search_text": "support_external_training External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends. experimental tools/support_external_training.py --subcommand --dataset --split --batch --exp --train-script --weights --output --work-dir --dry-run --config --task-family --resume-from --tao-task --train-opt --registry-out",
-    "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
+    "search_text": "support_external_training External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends. experimental tools/support_external_training.py --subcommand --dataset --split --batch --exp --train-script --weights --output --work-dir --dry-run --config --task-family --resume-from --tao-task --train-opt --registry-out",
+    "summary": "External training bridge with a fixed 3-layer interface contract: Apache-2.0-friendly YOLOX-style training as the primary lane, Detectron2/MMDetection/MMPose/MMSeg/TAO external lanes for common vision tasks, plus optional Ultralytics and HF DETR bridges with explicit runtime/license boundaries. YOLOX infers the class count from dataset metadata and confines native outputs to --work-dir. Missing external executables return machine-readable runtime failures instead of uncaught process-launch errors. Executed runs also write standardized resume/export/eval/parity handoff JSONs and an optional append-only registry entry. OpenCV DNN and ONNX Runtime remain export/inference runtimes rather than training backends.",
     "title": "support_external_training"
   },
   {
@@ -1017,7 +1017,7 @@
   {
     "href": "schemas.html#schema-compatible-host-external-runtime-qualification-schema",
     "kind": "schema",
-    "search_text": "YOLOZU compatible-host external runtime qualification Checked-in YOLOZU JSON Schema. all_training_executed environment kind lanes schema_version sources docs/schemas/compatible_host_external_runtime_qualification.schema.json",
+    "search_text": "YOLOZU compatible-host external runtime qualification Checked-in YOLOZU JSON Schema. all_checkpoints_recorded all_handoff_contracts_validated all_resource_usage_recorded all_training_executed environment kind lanes qualification_passed schema_version sources docs/schemas/compatible_host_external_runtime_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU compatible-host external runtime qualification"
   },

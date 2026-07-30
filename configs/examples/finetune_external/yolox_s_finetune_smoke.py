@@ -60,7 +60,6 @@ class Exp(_BaseExp):
         self.flip_prob = 0.0
         self.warmup_epochs = 0
         self.no_aug_epochs = 1
-        self.optimizer = "SGD"
         self.basic_lr_per_img = 0.001 / max(1, _env_int("YOLOZU_BATCH_SIZE", 2))
         self.weight_decay = 5e-4
         self.momentum = 0.9
