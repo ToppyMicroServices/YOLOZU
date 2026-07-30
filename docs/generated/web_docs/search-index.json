@@ -322,6 +322,13 @@
     "title": "export_actions_openapi"
   },
   {
+    "href": "commands.html#tool-export-bop19-rtdetr-pose",
+    "kind": "command",
+    "search_text": "export_bop19_rtdetr_pose Export trained RT-DETR object-pose predictions over official BOP19 targets without using test GT during inference. research tools/export_bop19_rtdetr_pose.py --bop-root --targets --config --checkpoint --output --report --split --device --image-size --max-images",
+    "summary": "Export trained RT-DETR object-pose predictions over official BOP19 targets without using test GT during inference.",
+    "title": "export_bop19_rtdetr_pose"
+  },
+  {
     "href": "commands.html#tool-export-predictions",
     "kind": "command",
     "search_text": "export_predictions Repository wrapper for the packaged fail-closed predictions exporter with checkpoint compatibility evidence; installed yolozu export does not depend on repository-only tools, optional acceleration flags require backend/device qualification, TTA remains Experimental, TTT remains Research, and parent maturity does not promote either lane. stable tools/export_predictions.py --adapter --dataset --output --domain-shift-recipe --wrap --config --device --image-size --score-threshold --max-detections --checkpoint --allow-partial-checkpoint --lora-r --lora-alpha --lora-dropout --lora-target --lora-freeze-base --no-lora-freeze-base --lora-train-bias --max-images --split --tta --tta-seed --tta-flip-prob --tta-norm-only --tta-flip-keypoints --no-tta-flip-keypoints --tta-flip-pose-offsets --no-tta-flip-pose-offsets --tta-log-out --ttt --ttt-preset --ttt-method --ttt-reset --ttt-steps --ttt-batch-size --ttt-lr --ttt-stop-on-non-finite --no-ttt-stop-on-non-finite --ttt-rollback-on-stop --no-ttt-rollback-on-stop --ttt-seed --ttt-max-update-norm --ttt-max-total-update-norm --ttt-max-loss-ratio --ttt-max-loss-increase --ttt-update-filter --ttt-include --ttt-exclude --ttt-log-out --ttt-patch-size --ttt-mask-prob --ttt-mask-value --ttt-max-batches --ttt-max-grad-norm --ttt-cotta-ema-momentum --ttt-cotta-augmentations --ttt-cotta-aggregation --ttt-cotta-restore-prob --ttt-cotta-restore-interval --ttt-eata-conf-min --ttt-eata-entropy-min --ttt-eata-entropy-max --ttt-eata-min-valid-dets --ttt-eata-anchor-lambda --ttt-eata-selected-ratio-min --ttt-eata-max-skip-streak --ttt-sar-rho --ttt-sar-adaptive --no-ttt-sar-adaptive --ttt-sar-first-step-scale --ttt-sdft-task --ttt-aux-pose-weight --ttt-aux-keypoints-weight --ttt-aux-depth-weight --ttt-aux-seg-weight --ttt-aux-temperature --infer-batch-size --torch-compile --torch-compile-backend --torch-compile-mode --torch-compile-fullgraph --no-torch-compile-fullgraph --torch-compile-dynamic --allow-compile-fallback --torch-amp --torch-channels-last --no-torch-channels-last --torch-inference-mode --no-torch-inference-mode --tta-mode --tta-keypoint-swap-pairs --tta-model-merge-iou",
@@ -616,6 +623,13 @@
     "title": "prepare_coco_yolo"
   },
   {
+    "href": "commands.html#tool-prepare-external-runtime-smoke-datasets",
+    "kind": "command",
+    "search_text": "prepare_external_runtime_smoke_datasets Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. experimental tools/prepare_external_runtime_smoke_datasets.py --source --split --output --max-images",
+    "summary": "Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
+    "title": "prepare_external_runtime_smoke_datasets"
+  },
+  {
     "href": "commands.html#tool-prepare-keypoints-dataset",
     "kind": "command",
     "search_text": "prepare_keypoints_dataset Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. stable tools/prepare_keypoints_dataset.py --source --out --list-formats --format --split --num-keypoints --keypoint-names --annotations --images-dir --out-split --min-kps --max-images --link-images --category-id --category-name --class-id --cvat-images-dir",
@@ -667,8 +681,8 @@
   {
     "href": "commands.html#tool-qualify-sdft-continual",
     "kind": "command",
-    "search_text": "qualify_sdft_continual Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates. research tools/qualify_sdft_continual.py --spec --output-dir --archive",
-    "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.",
+    "search_text": "qualify_sdft_continual Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction. research tools/qualify_sdft_continual.py --spec --output-dir --archive --role --source-summary",
+    "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction.",
     "title": "qualify_sdft_continual"
   },
   {
@@ -742,6 +756,13 @@
     "title": "run_external_finetune_smoke"
   },
   {
+    "href": "commands.html#tool-run-external-runtime-gpu-qualification",
+    "kind": "command",
+    "search_text": "run_external_runtime_gpu_qualification Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures. experimental scripts/run_external_runtime_gpu_qualification.sh --output-dir --dataset-root --runtime-root",
+    "summary": "Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures.",
+    "title": "run_external_runtime_gpu_qualification"
+  },
+  {
     "href": "commands.html#tool-run-mcp-server",
     "kind": "command",
     "search_text": "run_mcp_server Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight. stable tools/run_mcp_server.py --transport --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root",
@@ -810,6 +831,13 @@
     "search_text": "smoke_synthgen Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks. experimental tools/smoke_synthgen.py --dataset-root --schema-id --predictions --max-samples --output-dir --synthgen-repo --synthgen-python --backend --mode --global-seed --num-train --num-val",
     "summary": "Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks.",
     "title": "smoke_synthgen"
+  },
+  {
+    "href": "commands.html#tool-summarize-bop19-pose-evidence",
+    "kind": "command",
+    "search_text": "summarize_bop19_pose_evidence Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction. research tools/summarize_bop19_pose_evidence.py --bop-root --targets --result --official-eval-root --native-errors-root --toolkit-commit --output --role --source-summary",
+    "summary": "Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction.",
+    "title": "summarize_bop19_pose_evidence"
   },
   {
     "href": "commands.html#tool-summarize-bop-tless-qualification",
@@ -952,6 +980,13 @@
     "title": "YOLOZU Artifact Research Qualification"
   },
   {
+    "href": "schemas.html#schema-bop19-tless-pose-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU official BOP19 T-LESS pose qualification Checked-in YOLOZU JSON Schema. dataset decision environment kind protocol reproduction role runs schema_version docs/schemas/bop19_tless_pose_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU official BOP19 T-LESS pose qualification"
+  },
+  {
     "href": "schemas.html#schema-bop-conversion-report-schema",
     "kind": "schema",
     "search_text": "YOLOZU BOP conversion report Checked-in YOLOZU JSON Schema. bbox_source cad_keypoints cad_max_points cad_models cad_points_unit converted_images dataset_license kind models_dir output_split partition schema_version source_root source_split translation_scale_to_meters visibility_fraction_min docs/schemas/bop_conversion_report.schema.json",
@@ -978,6 +1013,13 @@
     "search_text": "YOLOZU COCO Eval Report Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed. bbox_format counts dataset dry_run error max_images metrics normalization ok predictions protocol protocol_id report_schema_version split split_requested stats status timestamp validation warnings docs/schemas/coco_eval_report.schema.json",
     "summary": "Report payload emitted by yolozu eval-coco and tools/eval_coco.py. Evaluation is strict by default; failed runs overwrite stale success artifacts with status=failed.",
     "title": "YOLOZU COCO Eval Report"
+  },
+  {
+    "href": "schemas.html#schema-compatible-host-external-runtime-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU compatible-host external runtime qualification Checked-in YOLOZU JSON Schema. all_training_executed environment kind lanes schema_version sources docs/schemas/compatible_host_external_runtime_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU compatible-host external runtime qualification"
   },
   {
     "href": "schemas.html#schema-continual-promotion-decision-schema",
@@ -1073,7 +1115,7 @@
   {
     "href": "schemas.html#schema-sdft-continual-qualification-schema",
     "kind": "schema",
-    "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision environment initial_checkpoints inputs kind protocol runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
+    "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision efficacy_assessment environment independent_reproduction initial_checkpoints inputs kind protocol role runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU SDFT-Style Continual Qualification"
   },

@@ -126,10 +126,13 @@ export は Stable、TTA は Experimental、TTT は Research のままです。
 
 BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton pose
 には対応しません。実 T-LESS 診断について strict GT、3 seed の task-native
-before/after、独立 semantic reproduction まで完了しました。ただし bounded
-checkpoint では pose prediction が1件も matchせず、frame holdout は official
-BOP test ではないため Research のままです。詳細は
-[evidence report](reports/bop_tless_evidence_2026-07-30.md)を参照してください。
+before/after、独立 semantic reproduction まで完了しました。追加検証では
+official BOP19 test target 向けの matched pose estimate を export し、pin した
+official toolkit で評価します。protocol 完了だけでは pose efficacy を確立
+しないため、Research のままです。詳細は
+[診断 report](reports/bop_tless_evidence_2026-07-30.md)と
+[official-test report](reports/bop19_tless_official_evidence_2026-07-30.md)を
+参照してください。
 
 continual-learning lane には、schema 定義済みの3 seed
 naive-versus-checkpoint-distillation 診断を1 commandで実行する経路があります:
@@ -144,6 +147,13 @@ SDFT-minus-naive delta が 0 でした。したがって判定は `hold`、effic
 で公開しており、別の Python/Torch 環境で独立再現済みです。efficacy は未確立の
 ままです。詳細は
 [evidence report](reports/sdft_continual_evidence_2026-07-28.md)に記録しています。
+2026-07-30 の confirmatory spec では全 seed で非ゼロ task score を得て、
+protocol と gate outcome を独立再現しました。ただし事前登録した
+retention/adaptation check の通過は 3 seed 中 2 seed で、seed 66 は strict
+old-task improvement gate に失敗しました。そのため efficacy は
+`not_established` のままです。詳細は
+[confirmatory report](reports/sdft_confirmatory_evidence_2026-07-30.md)を
+参照してください。
 
 Experimental な fine-tuning lane は
 `./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`
@@ -158,6 +168,10 @@ Detectron2 の実 training を2環境で再現しました。他の5 runtimeは�
 から構造化された availability failure を出しています。
 [runtime evidence](reports/external_runtime_evidence_2026-07-30.md)の判定は
 Experimental / `hold` です。
+別の compatible Linux/CUDA workflow で YOLOX、MMDetection、MMPose、MMSeg、
+NVIDIA TAO を pin して実行し、その結果を
+[compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md)
+に分離して記録します。
 
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane

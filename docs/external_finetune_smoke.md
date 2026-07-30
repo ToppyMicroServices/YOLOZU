@@ -68,6 +68,30 @@ The machine-readable record and evidence boundary are:
 All external lanes remain Experimental: successful bounded metrics were zero,
 and five runtimes were unavailable on this host.
 
+## Compatible Linux/CUDA qualification
+
+Run the pinned open-source runtime group on a compatible Linux/CUDA host:
+
+```bash
+bash scripts/run_external_runtime_gpu_qualification.sh \
+  --output-dir reports/compatible_host_external_runtimes \
+  --dataset-root data/real_multitask_fewshot
+```
+
+The command prepares bounded detection, keypoint, and segmentation layouts,
+pins YOLOX and OpenMMLab runtime versions, invokes every launcher non-dry, and
+writes `qualification_summary.json` following
+[`schemas/compatible_host_external_runtime_qualification.schema.json`](schemas/compatible_host_external_runtime_qualification.schema.json).
+It refuses an existing output directory and exits non-zero unless all four
+open-source runtime lanes record actual training. NVIDIA TAO runs as a separate
+vendor-container workflow step so its runtime and license boundary remain
+explicit.
+
+The dated compatible-host result is recorded separately in
+[`reports/external_runtime_compatible_host_evidence_2026-07-30.md`](../reports/external_runtime_compatible_host_evidence_2026-07-30.md).
+Runtime availability does not establish training quality or promote any lane
+beyond Experimental.
+
 `non-dry` now means a training command must actually run. Config projection
 without an external launcher fails with
 `E_EXTERNAL_TRAIN_SCRIPT_REQUIRED`; it is not counted as training.

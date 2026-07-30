@@ -33,11 +33,13 @@ backslash, and symlink archive members before extraction.
 
 ## Concise CLI
 
-Inspect the two entrypoints before a network or write operation:
+Inspect the entrypoints before a network or write operation:
 
 ```bash
 bash deploy/runpod/bootstrap_bop_tless_train_primesense.sh --help
 bash deploy/runpod/run_rtdetr_pose_bop_tless_pose_eval.sh --help
+python3 tools/export_bop19_rtdetr_pose.py --help
+python3 tools/summarize_bop19_pose_evidence.py --help
 ```
 
 Download and convert directly:
@@ -121,6 +123,35 @@ The declared JSON outputs are:
   [`schemas/bop_conversion_report.schema.json`](schemas/bop_conversion_report.schema.json)
 - `qualification_summary.json`, schema:
   [`schemas/bop_tless_qualification.schema.json`](schemas/bop_tless_qualification.schema.json)
+- official BOP19 three-seed summary, schema:
+  [`schemas/bop19_tless_pose_qualification.schema.json`](schemas/bop19_tless_pose_qualification.schema.json)
+
+## Official BOP19 test qualification
+
+The official-test path is separate from the diagnostic
+`train_primesense` frame holdout. It trains only from strict real
+`train_primesense` GT, exports one target-conditioned estimate for every entry
+in `test_targets_bop19.json`, and evaluates the result with the pinned official
+BOP toolkit:
+
+```bash
+python3 tools/export_bop19_rtdetr_pose.py \
+  --bop-root /workspace/tless \
+  --targets /workspace/tless/test_targets_bop19.json \
+  --config rtdetr_pose/configs/bop_tless_official.json \
+  --checkpoint /workspace/run/checkpoint.pt \
+  --output reports/yolozu-rtdetrpose-s11_tless-test.csv
+```
+
+`tools/summarize_bop19_pose_evidence.py` combines the official VSD, MSSD, and
+MSPD scores with matched rotation/translation errors and BOP toolkit
+ADD/ADD-S-style errors. No test GT is read during inference. The summary keeps
+unmeasurable values as `null`, records the toolkit commit and every input hash,
+and supports a separate `--role independent --source-summary ...` replay.
+
+The official T-LESS archive set used for this qualification consists of the
+base, models, and `test_primesense` archives. Its license remains CC BY 4.0 and
+separate from YOLOZU's Apache-2.0 code license.
 
 ## Qualification boundary
 
@@ -144,3 +175,8 @@ translation, pose-success, ADD, and ADD-S values were null because no predicted
 instance matched GT. Null is preserved rather than rewritten as zero. The lane
 therefore remains Research with `hold` and `not_established`. See
 [`../reports/bop_tless_evidence_2026-07-30.md`](../reports/bop_tless_evidence_2026-07-30.md).
+
+The later official-test qualification is recorded separately in
+[`../reports/bop19_tless_official_evidence_2026-07-30.md`](../reports/bop19_tless_official_evidence_2026-07-30.md).
+It supersedes only the protocol gap; it does not rewrite the diagnostic
+frame-holdout result or promote the lane.

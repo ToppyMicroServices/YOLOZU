@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">126 manifest entries with declared maturity, inputs,
+  <p class="lead">130 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -644,6 +644,21 @@ python3 tools/eval_pose.py --dataset /path/to/yolo_pose_dataset --predictions re
   <h3>Examples</h3>
   <pre><code>python3 tools/export_actions_openapi.py --output reports/actions_openapi.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/export_actions_openapi.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/mcp_extension_architecture.md" target="_blank" rel="noopener noreferrer">mcp_extension_architecture.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
+</details>
+
+<details class="card" id="tool-export-bop19-rtdetr-pose" data-tool-id="export_bop19_rtdetr_pose"
+  data-search-card data-search-text="export_bop19_rtdetr_pose Export trained RT-DETR object-pose predictions over official BOP19 targets without using test GT during inference. research tools/export_bop19_rtdetr_pose.py python3 tools/export_bop19_rtdetr_pose.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --config rtdetr_pose/configs/bop_tless_official.json --checkpoint /workspace/run/checkpoint.pt --output reports/method_tless-test.csv python3 tools/export_bop19_rtdetr_pose.py --help">
+  <summary><code>export_bop19_rtdetr_pose</code> — Export trained RT-DETR object-pose predictions over official BOP19 targets without using test GT during inference.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/export_bop19_rtdetr_pose.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--bop-root</code> — required, dir</li><li><code>--targets</code> — required, file</li><li><code>--config</code> — required, file</li><li><code>--checkpoint</code> — required, file</li><li><code>--output</code> — required, file</li><li><code>--report</code> — default=None, file</li><li><code>--split</code> — default=test_primesense, string</li><li><code>--device</code> — default=cpu, string</li><li><code>--image-size</code> — default=96, number</li><li><code>--max-images</code> — default=None, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/export_bop19_rtdetr_pose.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --config rtdetr_pose/configs/bop_tless_official.json --checkpoint /workspace/run/checkpoint.pt --output reports/method_tless-test.csv
+python3 tools/export_bop19_rtdetr_pose.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/export_bop19_rtdetr_pose.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/bop_tless_protocol.md" target="_blank" rel="noopener noreferrer">bop_tless_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/bop19_tless_pose_qualification.schema.json" target="_blank" rel="noopener noreferrer">bop19_tless_pose_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/bop19_tless_official_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">bop19_tless_official_evidence_2026-07-30.md</a></p>
 </details>
 
 <details class="card" id="tool-export-predictions" data-tool-id="export_predictions"
@@ -1257,6 +1272,21 @@ python3 tools/prepare_bop_yolozu.py --help</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_coco_yolo.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
 </details>
 
+<details class="card" id="tool-prepare-external-runtime-smoke-datasets" data-tool-id="prepare_external_runtime_smoke_datasets"
+  data-search-card data-search-text="prepare_external_runtime_smoke_datasets Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. experimental tools/prepare_external_runtime_smoke_datasets.py python3 tools/prepare_external_runtime_smoke_datasets.py --source data/real_multitask_fewshot --split train --output /tmp/yolozu-runtime-fixtures --max-images 6 python3 tools/prepare_external_runtime_smoke_datasets.py --help">
+  <summary><code>prepare_external_runtime_smoke_datasets</code> — Prepare bounded COCO detection, COCO keypoint, and Cityscapes-style segmentation layouts for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/prepare_external_runtime_smoke_datasets.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--source</code> — required, dir</li><li><code>--split</code> — default=train, string</li><li><code>--output</code> — required, dir</li><li><code>--max-images</code> — default=6, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/prepare_external_runtime_smoke_datasets.py --source data/real_multitask_fewshot --split train --output /tmp/yolozu-runtime-fixtures --max-images 6
+python3 tools/prepare_external_runtime_smoke_datasets.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_external_runtime_smoke_datasets.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/compatible_host_external_runtime_qualification.schema.json" target="_blank" rel="noopener noreferrer">compatible_host_external_runtime_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_capability_matrix.md" target="_blank" rel="noopener noreferrer">training_capability_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_evidence_2026-07-30.md</a></p>
+</details>
+
 <details class="card" id="tool-prepare-keypoints-dataset" data-tool-id="prepare_keypoints_dataset"
   data-search-card data-search-text="prepare_keypoints_dataset Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. stable tools/prepare_keypoints_dataset.py python3 tools/prepare_keypoints_dataset.py --source /path/to/export --format auto --out data/keypoints_dataset python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --format cvat_xml --out data/keypoints_dataset">
   <summary><code>prepare_keypoints_dataset</code> — Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper.</summary>
@@ -1357,17 +1387,17 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
 </details>
 
 <details class="card" id="tool-qualify-sdft-continual" data-tool-id="qualify_sdft_continual"
-  data-search-card data-search-text="qualify_sdft_continual Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates. research tools/qualify_sdft_continual.py ./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification">
-  <summary><code>qualify_sdft_continual</code> — Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, provenance hashes, and explicit hold gates.</summary>
+  data-search-card data-search-text="qualify_sdft_continual Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction. research tools/qualify_sdft_continual.py ./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification">
+  <summary><code>qualify_sdft_continual</code> — Qualify the repository&#x27;s checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction.</summary>
   <div class="meta">
     <span class="badge badge-research">research</span>
     <span><code>tools/qualify_sdft_continual.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--spec</code> — default=configs/continual/sdft_coco128_blur_qualification.json, file</li><li><code>--output-dir</code> — default=reports/sdft_continual_qualification, dir</li><li><code>--archive</code> — default=None, file</li></ul>
+  <ul class="check-list"><li><code>--spec</code> — default=configs/continual/sdft_coco128_blur_qualification.json, file</li><li><code>--output-dir</code> — default=reports/sdft_continual_qualification, dir</li><li><code>--archive</code> — default=None, file</li><li><code>--role</code> — default=primary, string</li><li><code>--source-summary</code> — default=None, file</li></ul>
   <h3>Examples</h3>
   <pre><code>./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification</code></pre>
-  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_sdft_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/sdft_continual_qualification.schema.json" target="_blank" rel="noopener noreferrer">sdft_continual_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/14_continual_learning.tex" target="_blank" rel="noopener noreferrer">14_continual_learning.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/sdft_continual_evidence_2026-07-28.md" target="_blank" rel="noopener noreferrer">sdft_continual_evidence_2026-07-28.md</a></p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_sdft_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/sdft_continual_qualification.schema.json" target="_blank" rel="noopener noreferrer">sdft_continual_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/14_continual_learning.tex" target="_blank" rel="noopener noreferrer">14_continual_learning.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/sdft_continual_evidence_2026-07-28.md" target="_blank" rel="noopener noreferrer">sdft_continual_evidence_2026-07-28.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/sdft_confirmatory_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">sdft_confirmatory_evidence_2026-07-30.md</a></p>
 </details>
 
 <details class="card" id="tool-refine-predictions-hessian" data-tool-id="refine_predictions_hessian"
@@ -1517,6 +1547,21 @@ python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1</code>
 python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolox --non-dry-framework yolov --non-dry-framework rtdetr --yolox-train-script /path/to/YOLOX/tools/train.py --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json
 python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_external_finetune_smoke.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/interop_detectron2_mmdet.md" target="_blank" rel="noopener noreferrer">interop_detectron2_mmdet.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/interop_yolox.md" target="_blank" rel="noopener noreferrer">interop_yolox.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/license_policy.md" target="_blank" rel="noopener noreferrer">license_policy.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_inference_export.md" target="_blank" rel="noopener noreferrer">training_inference_export.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">external_runtime_evidence_2026-07-30.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_qualification_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_qualification_2026-07-30.json</a></p>
+</details>
+
+<details class="card" id="tool-run-external-runtime-gpu-qualification" data-tool-id="run_external_runtime_gpu_qualification"
+  data-search-card data-search-text="run_external_runtime_gpu_qualification Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures. experimental scripts/run_external_runtime_gpu_qualification.sh bash scripts/run_external_runtime_gpu_qualification.sh --output-dir reports/compatible_host_external_runtimes --dataset-root data/real_multitask_fewshot bash scripts/run_external_runtime_gpu_qualification.sh --help">
+  <summary><code>run_external_runtime_gpu_qualification</code> — Install pinned YOLOX and OpenMMLab runtimes and execute all non-dry training lanes on a compatible Linux CUDA host while retaining structured failures.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>scripts/run_external_runtime_gpu_qualification.sh</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--output-dir</code> — required, dir</li><li><code>--dataset-root</code> — default=data/real_multitask_fewshot, dir</li><li><code>--runtime-root</code> — default=/tmp/yolozu-external-runtimes, dir</li></ul>
+  <h3>Examples</h3>
+  <pre><code>bash scripts/run_external_runtime_gpu_qualification.sh --output-dir reports/compatible_host_external_runtimes --dataset-root data/real_multitask_fewshot
+bash scripts/run_external_runtime_gpu_qualification.sh --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/scripts/run_external_runtime_gpu_qualification.sh" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/compatible_host_external_runtime_qualification.schema.json" target="_blank" rel="noopener noreferrer">compatible_host_external_runtime_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_capability_matrix.md" target="_blank" rel="noopener noreferrer">training_capability_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_evidence_2026-07-30.md</a></p>
 </details>
 
 <details class="card" id="tool-run-mcp-server" data-tool-id="run_mcp_server"
@@ -1672,6 +1717,21 @@ bash scripts/smoke.sh --profile deep --torch-device cuda</code></pre>
   <pre><code>python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports
 ./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/smoke_synthgen.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_intake.md" target="_blank" rel="noopener noreferrer">synthgen_intake.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_repo_integration.md" target="_blank" rel="noopener noreferrer">synthgen_repo_integration.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_contract.md" target="_blank" rel="noopener noreferrer">synthgen_contract.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/synthgen_handoff_2026-07-28.md" target="_blank" rel="noopener noreferrer">synthgen_handoff_2026-07-28.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/data/smoke/synthgen_minishard/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a></p>
+</details>
+
+<details class="card" id="tool-summarize-bop19-pose-evidence" data-tool-id="summarize_bop19_pose_evidence"
+  data-search-card data-search-text="summarize_bop19_pose_evidence Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction. research tools/summarize_bop19_pose_evidence.py python3 tools/summarize_bop19_pose_evidence.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --result reports/method-s11_tless-test.csv --result reports/method-s22_tless-test.csv --result reports/method-s33_tless-test.csv --official-eval-root reports/bop-eval --native-errors-root reports/bop-native --toolkit-commit cea62d651c7e395b2e1962b9749e4e89693c6ac4 --output reports/bop19_tless_pose_qualification.json python3 tools/summarize_bop19_pose_evidence.py --help">
+  <summary><code>summarize_bop19_pose_evidence</code> — Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/summarize_bop19_pose_evidence.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--bop-root</code> — required, dir</li><li><code>--targets</code> — required, file</li><li><code>--result</code> — required, file</li><li><code>--official-eval-root</code> — required, dir</li><li><code>--native-errors-root</code> — required, dir</li><li><code>--toolkit-commit</code> — required, string</li><li><code>--output</code> — required, file</li><li><code>--role</code> — default=primary, string</li><li><code>--source-summary</code> — default=None, file</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/summarize_bop19_pose_evidence.py --bop-root /workspace/tless --targets /workspace/tless/test_targets_bop19.json --result reports/method-s11_tless-test.csv --result reports/method-s22_tless-test.csv --result reports/method-s33_tless-test.csv --official-eval-root reports/bop-eval --native-errors-root reports/bop-native --toolkit-commit cea62d651c7e395b2e1962b9749e4e89693c6ac4 --output reports/bop19_tless_pose_qualification.json
+python3 tools/summarize_bop19_pose_evidence.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/summarize_bop19_pose_evidence.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/bop_tless_protocol.md" target="_blank" rel="noopener noreferrer">bop_tless_protocol.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/bop19_tless_pose_qualification.schema.json" target="_blank" rel="noopener noreferrer">bop19_tless_pose_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/bop19_tless_official_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">bop19_tless_official_evidence_2026-07-30.md</a></p>
 </details>
 
 <details class="card" id="tool-summarize-bop-tless-qualification" data-tool-id="summarize_bop_tless_qualification"

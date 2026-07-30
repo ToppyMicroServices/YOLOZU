@@ -21,7 +21,10 @@ The Research-stage BOP T-LESS procedure, owned-output safety rules, dataset
 license boundary, and current evidence are pinned in
 \path{docs/bop_tless_protocol.md}. Its deterministic
 \cmd{train\_primesense} frame holdout is diagnostic and is not the official BOP
-test benchmark.  The 2026-07-30 run uses strict BOP boxes, visible masks,
+test benchmark.  A separate follow-up exports one target-conditioned estimate
+per official BOP19 target and evaluates VSD, MSSD, MSPD, rotation, translation,
+ADD, ADD-S, and symmetry-aware success with a pinned BOP toolkit commit.  The
+2026-07-30 training input uses strict BOP boxes, visible masks,
 depth, object \cmd{R,t}, and CAD anchors projected with ground-truth intrinsics.
 Projected anchors receive visible status only at pixels confirmed by the
 instance \cmd{mask\_visib}; the procedure does not use model-inferred labels.
@@ -278,6 +281,10 @@ segmentation metrics are zero while keypoint/depth/pose/ADD/ADD-S metrics are
 null.  The qualification therefore remains \cmd{hold} and Experimental.
 The clean-source bounded result is recorded in
 \cmd{reports/bop\_tless\_evidence\_2026-07-30.md}.
+The official-test result is kept separately in
+\cmd{reports/bop19\_tless\_official\_evidence\_2026-07-30.md}; completing the
+official protocol does not promote the Research lane without positive,
+reproducible pose quality.
 
 To run a staged smoke pipeline over \cmd{bbox -> segmentation -> keypoints -> depth -> pose6d}:
 \begin{lstlisting}[language=bash]

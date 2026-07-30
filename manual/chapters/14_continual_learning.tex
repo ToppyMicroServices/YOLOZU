@@ -578,6 +578,17 @@ data hashes and semantic qualification results matched.  This completes the
 independent-reproduction gate for the bounded diagnostic without changing the
 \cmd{hold} decision.
 
+A confirmatory spec then increased initial training to 64 steps over 10 epochs,
+kept the continual budget at 20 steps, and used unused seeds 44, 55, and 66.
+All source and target scores exceeded the preregistered \(10^{-6}\) measurement
+floor.  Seeds 44 and 55 passed the retention/adaptation checks, but seed 66
+had a negative old-task SDFT-minus-naive delta and failed the strict-retention
+gate.  An independent run reproduced the protocol, metric directions, and gate
+outcomes.  Reproduction is therefore established for this bounded non-zero
+result, while efficacy remains \cmd{not\_established} and the decision remains
+\cmd{hold}.  The exact thresholds and metrics are recorded in
+\path{reports/sdft_confirmatory_evidence_2026-07-30.md}.
+
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:
 \begin{lstlisting}[language=bash]

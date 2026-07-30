@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolozu.dev/schemas/bop19_tless_pose_qualification.schema.json",
+  "title": "YOLOZU official BOP19 T-LESS pose qualification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "role",
+    "environment",
+    "dataset",
+    "protocol",
+    "runs",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "kind": {"type": "string", "const": "bop19_tless_pose_qualification"},
+    "role": {"type": "string", "enum": ["primary", "independent"]},
+    "environment": {
+      "type": "object",
+      "required": ["platform", "python", "bop_toolkit_commit"]
+    },
+    "dataset": {
+      "type": "object",
+      "required": [
+        "name",
+        "license",
+        "targets_sha256",
+        "target_entries",
+        "target_instances",
+        "models_info_sha256"
+      ]
+    },
+    "protocol": {
+      "type": "object",
+      "required": [
+        "official_evaluator",
+        "official_metrics",
+        "additional_official_error_calculations",
+        "matching",
+        "test_ground_truth_used_for_inference",
+        "translation_unit",
+        "pose_success_threshold"
+      ],
+      "properties": {
+        "test_ground_truth_used_for_inference": {"type": "boolean", "const": false}
+      }
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "seed",
+          "result_csv_sha256",
+          "export_report_sha256",
+          "official_scores_sha256",
+          "official_bop19",
+          "task_native"
+        ]
+      }
+    },
+    "reproduction": {
+      "type": "object",
+      "required": [
+        "source_summary_sha256",
+        "same_seed_metrics_within_1e-9"
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "required": ["status", "efficacy", "reasons"],
+      "properties": {
+        "status": {"type": "string", "const": "hold"},
+        "efficacy": {"type": "string", "const": "not_established"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

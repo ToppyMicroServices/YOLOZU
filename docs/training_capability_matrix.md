@@ -69,6 +69,14 @@ host. All lanes remain Experimental because successful metrics were zero and
 the other runtimes were unavailable. See
 [`reports/external_runtime_evidence_2026-07-30.md`](../reports/external_runtime_evidence_2026-07-30.md).
 
+Those host-specific failures are retained as observed macOS evidence. A
+separate Linux/CUDA workflow pins YOLOX, MMEngine/MMCV, MMDetection, MMPose,
+MMSeg, and the NVIDIA TAO 5.5.0 container and requires non-dry training rather
+than config projection. The repository-owned dataset converter marks its
+generated labels as runtime-only, so a compatible-host execution pass is an
+availability result rather than a training-quality result. See
+[`reports/external_runtime_compatible_host_evidence_2026-07-30.md`](../reports/external_runtime_compatible_host_evidence_2026-07-30.md).
+
 For automation, exit code 0 means the qualification protocol completed and
 `protocol_complete` is true. Promotion remains a separate decision in
 `decision.status`; a completed hold result is not a training-quality pass.

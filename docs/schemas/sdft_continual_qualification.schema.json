@@ -24,6 +24,10 @@
       "type": "string",
       "const": "sdft_continual_qualification"
     },
+    "role": {
+      "type": "string",
+      "enum": ["primary", "independent"]
+    },
     "source": {
       "type": "object",
       "required": ["commit", "tracked_changes_present"]
@@ -78,6 +82,26 @@
     "comparisons": {
       "type": "array",
       "minItems": 3
+    },
+    "efficacy_assessment": {
+      "type": ["object", "null"],
+      "description": "Preregistered non-zero and retention/adaptation gates. Reproduction and efficacy are reported separately.",
+      "properties": {
+        "configured": {"type": "boolean"},
+        "passed": {"type": "boolean"},
+        "seed_results": {
+          "type": "array",
+          "minItems": 3
+        }
+      }
+    },
+    "independent_reproduction": {
+      "type": ["object", "null"],
+      "description": "Semantic comparison with a primary summary; reproduced does not imply efficacy_supported.",
+      "properties": {
+        "reproduced": {"type": "boolean"},
+        "efficacy_supported": {"type": "boolean"}
+      }
     },
     "decision": {
       "type": "object",
