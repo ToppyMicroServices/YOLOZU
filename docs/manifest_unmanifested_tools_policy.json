@@ -57,11 +57,6 @@
       "rationale": "Small example script for MIM experimentation, not a supported CLI."
     },
     {
-      "path": "tools/export_predictions_ultralytics.py",
-      "disposition": "optional_bridge_helper",
-      "rationale": "Optional third-party bridge kept outside the stable Apache-2.0 core path."
-    },
-    {
       "path": "tools/fetch_coco128_official.py",
       "disposition": "dataset_recipe",
       "rationale": "Dataset fetch helper for local smoke data preparation."

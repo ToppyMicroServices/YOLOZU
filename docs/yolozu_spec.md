@@ -42,7 +42,7 @@ manifest entry does not promote opt-in subcommands or flags.
 | Template verification and gating | Deferred as a standalone capability; research gate tuning does not promote the runtime utility |
 | Predictions JSON interface contract | Stable |
 | Evaluation harness | Stable for validation/evaluation of existing wrapped predictions; task-specific tools retain their manifest maturity |
-| BOP T-LESS object 6DoF workflow | Research; safe conversion/evaluation wiring is qualified locally, but no release-addressable real multi-seed efficacy result exists |
+| BOP T-LESS object 6DoF workflow | Research; real strict-GT three-seed before/after evidence and independent reproduction exist, but no matched pose predictions establish efficacy |
 | TTA | Experimental and opt-in |
 | TTT | Research and opt-in |
 | CLI convenience | Mixed by capability; entrypoint-level maturity is not transitive to subcommands or flags |
@@ -66,7 +66,7 @@ manifest entry does not promote opt-in subcommands or flags.
 - Human 3D skeleton pose is unsupported.
 
 The BOP T-LESS Research protocol, safe owned-output rules, CAD/ADD/ADDS
-boundary, and current evidence gaps are defined in
+boundary, and current evidence are defined in
 [`bop_tless_protocol.md`](bop_tless_protocol.md).
 
 ### 2) Mask-only label derivation

@@ -327,11 +327,13 @@ Read next:
 For user convenience, YOLOZU includes template configs and a unified smoke runner for external finetune entrypoints:
 \begin{itemize}
   \item YOLO-family runtime
+  \item YOLOX
   \item Detectron2
   \item MMDetection
   \item MMPose
   \item MMSeg
   \item NVIDIA TAO
+  \item Hugging Face DETR
   \item RT-DETR (\path{rtdetr_pose})
 \end{itemize}
 
@@ -353,6 +355,15 @@ python3 tools/run_external_finetune_smoke.py \
   --split train \
   --output reports/external_finetune_smoke.json
 \end{lstlisting}
+
+The 2026-07-30 installed-runtime qualification executed real Ultralytics,
+Transformers DETR, and Detectron2 training in two Python/Torch environments,
+then exported and evaluated their predictions interface contract artifacts.
+YOLOX, MMDetection, MMPose, MMSeg, and TAO emitted structured runtime failures
+on the tested macOS CPU host.  The matrix records wall time and peak RSS and
+does not count config projection as training.  Results remain Experimental and
+\cmd{hold}; see
+\path{reports/external_runtime_evidence_2026-07-30.md}.
 
 Top-level Detectron2 training lane examples:
 \begin{lstlisting}[language=bash]

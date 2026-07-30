@@ -51,8 +51,9 @@ python3 tools/make_subset_dataset.py \
 
 # BOP rigid-object pose conversion (Research)
 python3 tools/prepare_bop_yolozu.py \
-  --bop-root /workspace/bop/tless --split train_primesense \
-  --out reports/bop_tless --out-split train2017
+  --bop-root /workspace/bop --split train_primesense \
+  --out reports/bop_tless --out-split train2017 \
+  --cad-keypoints 4
 ```
 
 ## Python use

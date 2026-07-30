@@ -46,9 +46,10 @@ Download and convert directly:
 python3 tools/download_bop_dataset.py \
   --dataset tless --out /workspace/bop
 python3 tools/prepare_bop_yolozu.py \
-  --bop-root /workspace/bop/tless --split train_primesense \
+  --bop-root /workspace/bop --split train_primesense \
   --out /workspace/bop-yolozu-tless --out-split train2017 \
   --partition-modulus 5 --partition-remainder 0 --partition-mode exclude \
+  --cad-keypoints 4 \
   --link-images
 ```
 
@@ -56,9 +57,10 @@ Add the deterministic validation partition only to an owned conversion root:
 
 ```bash
 python3 tools/prepare_bop_yolozu.py \
-  --bop-root /workspace/bop/tless --split train_primesense \
+  --bop-root /workspace/bop --split train_primesense \
   --out /workspace/bop-yolozu-tless --out-split val2017 \
   --partition-modulus 5 --partition-remainder 0 --partition-mode include \
+  --cad-keypoints 4 \
   --link-images --append-owned
 ```
 
@@ -76,10 +78,11 @@ from tools.prepare_bop_yolozu import main as prepare_bop
 
 download_bop(["--dataset", "tless", "--out", "/workspace/bop"])
 prepare_bop([
-    "--bop-root", "/workspace/bop/tless",
+    "--bop-root", "/workspace/bop",
     "--split", "train_primesense",
     "--out", "/workspace/bop-yolozu-tless",
     "--out-split", "train2017",
+    "--cad-keypoints", "4",
 ])
 ```
 
@@ -102,7 +105,13 @@ The converter preserves image/class/bbox data, camera intrinsics, object-to-came
 a BOP model directory is present, it copies a deterministic, metre-scaled CAD
 point subset per object, records model hashes, and attaches per-instance CAD
 paths so `eval_pose.py` can report ADD and ADD-S. Available BOP symmetry
-metadata is preserved in the sidecar.
+metadata is preserved in the sidecar. `--cad-keypoints N` selects deterministic
+object-space CAD anchors and projects them with the BOP ground-truth `K/R/t`
+into ordinary YOLO keypoint labels. An in-frame anchor receives
+`visibility=2` only when its projected pixel is also present in that
+instance's BOP `mask_visib`; an in-frame but mask-occluded anchor receives
+`visibility=1`. This is strict object-pose GT; it is not a human skeleton
+annotation.
 
 The declared JSON outputs are:
 
@@ -110,6 +119,8 @@ The declared JSON outputs are:
   [`schemas/bop_download_manifest.schema.json`](schemas/bop_download_manifest.schema.json)
 - `conversion_reports/<split>.json`, schema:
   [`schemas/bop_conversion_report.schema.json`](schemas/bop_conversion_report.schema.json)
+- `qualification_summary.json`, schema:
+  [`schemas/bop_tless_qualification.schema.json`](schemas/bop_tless_qualification.schema.json)
 
 ## Qualification boundary
 
@@ -122,14 +133,14 @@ elapsed seconds, metrics, and license boundaries. This diagnostic frame holdout
 is not the official BOP test protocol and must not be reported as a BOP
 benchmark result.
 
-No checked-in run currently satisfies all of the following:
+The 2026-07-30 run downloaded and hash-verified the real base, models, and
+`train_primesense` archives; built strict bbox/mask/CAD-keypoint/depth/object-
+pose GT; evaluated baseline and trained checkpoints for seeds 11/22/33; and
+repeated the protocol in a clean Python 3.12 environment. Primary and
+independent summaries matched semantically.
 
-- baseline-versus-trained results on the pinned real subset;
-- three completed seeds with detection, rotation, translation, pose success,
-  ADD, and ADD-S metrics;
-- recorded checkpoint/config hashes, runtime/cost, and failure cases;
-- independent reproduction from a release-addressable evidence archive.
-
-Until those items are complete, this lane remains Research and model efficacy
-is `not_established`. See
-[`../reports/bop_pose_readiness_2026-07-28.md`](../reports/bop_pose_readiness_2026-07-28.md).
+All bbox and segmentation mAP values were zero. Keypoint, depth, rotation,
+translation, pose-success, ADD, and ADD-S values were null because no predicted
+instance matched GT. Null is preserved rather than rewritten as zero. The lane
+therefore remains Research with `hold` and `not_established`. See
+[`../reports/bop_tless_evidence_2026-07-30.md`](../reports/bop_tless_evidence_2026-07-30.md).

@@ -125,8 +125,11 @@ promote opt-in subcommands or flags: `export_predictions` keeps baseline export 
 TTA Experimental, and TTT Research.
 
 The BOP lane means rigid-object `R,t` pose, not human 3D skeleton pose. Its
-safe conversion and evaluation wiring is available, but real multi-seed
-efficacy and independent reproduction remain open.
+real T-LESS diagnostic now has strict GT, three-seed task-native before/after
+evaluation, and an independent semantic reproduction. It remains Research
+because the bounded checkpoints produced no matched pose predictions and the
+frame holdout is not the official BOP test benchmark. See the
+[evidence report](reports/bop_tless_evidence_2026-07-30.md).
 
 The continual-learning lane now has a one-command, schema-defined three-seed
 naive-versus-checkpoint-distillation diagnostic:
@@ -134,12 +137,14 @@ naive-versus-checkpoint-distillation diagnostic:
 It runs real COCOeval and records baseline-relative FWT, hashes, time, memory,
 and fairness checks. This is an SDFT-style detector regularizer rather than a
 faithful reproduction of language-model SDFT, and it remains Research until
-efficacy and independent reproduction are established.
+efficacy is established.
 The completed 2026-07-28 run is a measured negative result: every real-COCOeval
 matrix cell and every SDFT-minus-naive delta was zero, so the decision is
 `hold` and efficacy is `not_established`. The hash-verified bundle is available
 as a [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/sdft-evidence-2026-07-28);
-see the [evidence report](reports/sdft_continual_evidence_2026-07-28.md).
+the bundle has been independently reproduced in a second Python/Torch
+environment. See the
+[evidence report](reports/sdft_continual_evidence_2026-07-28.md).
 
 Experimental fine-tuning lanes can be audited in one command with
 `./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification`.
@@ -148,6 +153,11 @@ records dependency failures and checkpoint/provenance hashes, and keeps the
 lane Experimental when task-native metrics or non-heuristic labels are absent.
 The bounded clean-source result remains `hold`; see the
 [fine-tuning evidence report](reports/finetune_lane_evidence_2026-07-29.md).
+The 2026-07-30 follow-up used strict T-LESS GT and executed real training in
+Ultralytics, HF DETR, and Detectron2 across two environments; five other
+external runtimes emitted structured availability failures. The
+[runtime evidence](reports/external_runtime_evidence_2026-07-30.md) remains
+Experimental and `hold`.
 
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
@@ -155,7 +165,8 @@ lane. The bounded 2026-07-27 diagnostic bundle is available as a
 [GitHub prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27);
 the archive SHA-256 is
 `bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068`.
-It does not establish efficacy or independent reproduction. See
+All 30 matrix cells have been independently reproduced with zero semantic
+differences. This establishes diagnostic reproducibility, not efficacy. See
 [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
 
 ## Production Readiness

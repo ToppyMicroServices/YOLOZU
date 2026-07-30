@@ -152,9 +152,10 @@ Positive or negative delta is only a local observation.
 
 The built-in source tree does not contain a promotion-quality checkpoint bundle.
 A current-compatible local diagnostic bundle was generated and published on
-2026-07-27, but its short COCO128 training run did not improve AP and has not
-been independently reproduced. Publication makes the exact inputs and outputs
-addressable; it does not change the efficacy boundary. Historical ignored
+2026-07-27, but its short COCO128 training run did not improve AP. A clean
+Python 3.12 environment independently reran all 30 cells on 2026-07-30 with
+zero semantic differences. Reproduction does not change the efficacy boundary.
+Historical ignored
 `reports/ttt_improvement_probe` paths are not part of the SSOT and are not a
 clean-checkout success path.
 The dated boundary and remaining evidence requirements are recorded in

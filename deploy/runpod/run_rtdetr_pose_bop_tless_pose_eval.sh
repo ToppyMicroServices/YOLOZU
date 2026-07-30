@@ -10,7 +10,9 @@ BOP T-LESS. This is object pose; it does not implement human 3D skeleton pose.
 
 Environment:
   OUT_DIR       Extracted BOP root (default: /workspace/bop)
-  BOP_ROOT      T-LESS dataset root (default: $OUT_DIR/tless)
+  BOP_ROOT      T-LESS dataset root (default: $OUT_DIR)
+  SKIP_DOWNLOAD Set to 1 only when a complete download_manifest already exists
+  PYTHON        Python executable (default: python3)
   BOP_SPLIT     BOP split (default: train_primesense)
   DATASET_OUT   YOLOZU conversion output (default: /workspace/bop-yolozu-tless-train)
   OUT_SPLIT     Converted split (default: train2017)
@@ -27,7 +29,10 @@ Environment:
   MAX_DETS      Maximum detections per image (default: 100)
   EPOCHS_CSV    Comma-separated epoch budgets (default: 1,5,20)
   SEEDS_CSV     Comma-separated seeds (default: 11,22,33)
+  MAX_STEPS     Optional maximum train steps per epoch (default: 0 = all)
   RUN_BASE      Fresh timestamped run parent
+  REPRODUCTION_ROLE  primary or independent (default: primary)
+  SOURCE_SUMMARY     Primary summary required for independent reproduction
 
 Each seed evaluates its deterministic zero-epoch initialization baseline before
 the trained epoch budgets. Every run records config/checkpoint hashes, elapsed
@@ -57,10 +62,20 @@ cd "${REPO_ROOT}"
 
 # 1) Download/extract BOP T-LESS train_primesense (real RGBD + GT pose).
 OUT_DIR="${OUT_DIR:-/workspace/bop}"
-bash deploy/runpod/bootstrap_bop_tless_train_primesense.sh
+PYTHON="${PYTHON:-python3}"
+SKIP_DOWNLOAD="${SKIP_DOWNLOAD:-0}"
+if [[ "${SKIP_DOWNLOAD}" == "1" ]]; then
+  if [[ ! -f "${OUT_DIR}/download_manifest.json" || ! -d "${OUT_DIR}/train_primesense" ]]; then
+    echo "error: SKIP_DOWNLOAD=1 requires a complete extracted BOP root at ${OUT_DIR}" >&2
+    exit 2
+  fi
+else
+  OUT_DIR="${OUT_DIR}" PYTHON="${PYTHON}" \
+    bash deploy/runpod/bootstrap_bop_tless_train_primesense.sh
+fi
 
 # 2) Convert to YOLOZU dataset (YOLO labels + per-image sidecar with K/R/t).
-BOP_ROOT="${BOP_ROOT:-${OUT_DIR}/tless}"
+BOP_ROOT="${BOP_ROOT:-${OUT_DIR}}"
 BOP_SPLIT="${BOP_SPLIT:-train_primesense}"
 DATASET_OUT="${DATASET_OUT:-/workspace/bop-yolozu-tless-train}"
 OUT_SPLIT="${OUT_SPLIT:-train2017}"
@@ -69,7 +84,7 @@ MAX_VAL_IMAGES="${MAX_VAL_IMAGES:-50}"
 PARTITION_MODULUS="${PARTITION_MODULUS:-5}"
 VISIB_MIN="${VISIB_MIN:-0.2}"
 
-python3 tools/prepare_bop_yolozu.py \
+"${PYTHON}" tools/prepare_bop_yolozu.py \
   --bop-root "${BOP_ROOT}" \
   --split "${BOP_SPLIT}" \
   --out "${DATASET_OUT}" \
@@ -80,10 +95,11 @@ python3 tools/prepare_bop_yolozu.py \
   --partition-remainder 0 \
   --partition-mode exclude \
   --max-images "${MAX_TRAIN_IMAGES}" \
+  --cad-keypoints 4 \
   --link-images \
   --overwrite
 
-python3 tools/prepare_bop_yolozu.py \
+"${PYTHON}" tools/prepare_bop_yolozu.py \
   --bop-root "${BOP_ROOT}" \
   --split "${BOP_SPLIT}" \
   --out "${DATASET_OUT}" \
@@ -94,6 +110,7 @@ python3 tools/prepare_bop_yolozu.py \
   --partition-remainder 0 \
   --partition-mode include \
   --max-images "${MAX_VAL_IMAGES}" \
+  --cad-keypoints 4 \
   --link-images \
   --append-owned
 
@@ -107,6 +124,7 @@ SCORE_THRESH="${SCORE_THRESH:-0.0}"
 MAX_DETS="${MAX_DETS:-100}"
 EPOCHS_CSV="${EPOCHS_CSV:-1,5,20}"
 SEEDS_CSV="${SEEDS_CSV:-11,22,33}"
+MAX_STEPS="${MAX_STEPS:-0}"
 RUN_BASE="${RUN_BASE:-/workspace/runs/rtdetr_pose_bop_tless}"
 
 mkdir -p "${RUN_BASE}"
@@ -118,7 +136,36 @@ train_checkpoint() {
   local epochs="$2"
   local seed="$3"
 
-  python3 rtdetr_pose/tools/train_minimal.py \
+  local resource_json="${run_dir}/resource.json"
+  "${PYTHON}" -c '
+import json
+import resource
+import subprocess
+import sys
+import time
+
+out = sys.argv[1]
+command = sys.argv[2:]
+started = time.perf_counter()
+proc = subprocess.run(command, check=False)
+peak = int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+if sys.platform != "darwin":
+    peak *= 1024
+with open(out, "w", encoding="utf-8") as handle:
+    json.dump(
+        {
+            "command": command,
+            "returncode": int(proc.returncode),
+            "wall_seconds": float(time.perf_counter() - started),
+            "peak_rss_bytes": peak,
+        },
+        handle,
+        indent=2,
+        sort_keys=True,
+    )
+    handle.write("\n")
+raise SystemExit(proc.returncode)
+' "${resource_json}" "${PYTHON}" rtdetr_pose/tools/train_minimal.py \
     --config "${CONFIG}" \
     --dataset-root "${DATASET_OUT}" \
     --split "${OUT_SPLIT}" \
@@ -129,7 +176,14 @@ train_checkpoint() {
     --batch-size "${BATCH_SIZE}" \
     --lr "${LR}" \
     --use-matcher \
+    --strict-task-data \
+    --depth-mode sidecar \
+    --depth-unit metric \
+    --cost-z 1.0 \
+    --cost-rot 1.0 \
+    --cost-t 0.5 \
     --epochs "${epochs}" \
+    --max-steps "${MAX_STEPS}" \
     --seed "${seed}" \
     --run-dir "${run_dir}" \
     --checkpoint-out "${run_dir}/checkpoint.pt" \
@@ -144,7 +198,7 @@ evaluate_checkpoint() {
   local epochs="$4"
   local started_epoch="$5"
 
-  python3 tools/export_predictions.py \
+  "${PYTHON}" tools/export_predictions.py \
     --adapter rtdetr_pose \
     --dataset "${DATASET_OUT}" \
     --split val2017 \
@@ -158,7 +212,7 @@ evaluate_checkpoint() {
     --wrap \
     --output "${run_dir}/pred.json" >/dev/null
 
-  python3 tools/eval_suite.py \
+  "${PYTHON}" tools/eval_suite.py \
     --dataset "${DATASET_OUT}" \
     --split val2017 \
     --predictions-glob "${run_dir}/pred.json" \
@@ -166,7 +220,7 @@ evaluate_checkpoint() {
     --max-images "${MAX_VAL_IMAGES}" \
     --output "${run_dir}/eval_suite.json" >/dev/null
 
-  python3 tools/eval_pose.py \
+  "${PYTHON}" tools/eval_pose.py \
     --dataset "${DATASET_OUT}" \
     --split val2017 \
     --predictions "${run_dir}/pred.json" \
@@ -174,6 +228,23 @@ evaluate_checkpoint() {
     --iou-threshold 0.5 \
     --max-images "${MAX_VAL_IMAGES}" \
     --output "${run_dir}/pose_eval.json" >/dev/null
+
+  "${PYTHON}" tools/eval_keypoints.py \
+    --dataset "${DATASET_OUT}" \
+    --split val2017 \
+    --predictions "${run_dir}/pred.json" \
+    --min-score "${SCORE_THRESH}" \
+    --iou-threshold 0.5 \
+    --max-images "${MAX_VAL_IMAGES}" \
+    --output "${run_dir}/keypoints_eval.json" >/dev/null
+
+  "${PYTHON}" tools/eval_instance_segmentation.py \
+    --dataset "${DATASET_OUT}" \
+    --split val2017 \
+    --predictions "${run_dir}/pred.json" \
+    --min-score "${SCORE_THRESH}" \
+    --max-images "${MAX_VAL_IMAGES}" \
+    --output "${run_dir}/segmentation_eval.json" >/dev/null
 
   local finished_epoch
   finished_epoch="$(date +%s)"
@@ -186,7 +257,7 @@ evaluate_checkpoint() {
   CONFIG_PATH="${CONFIG}" \
   DATASET_PATH="${DATASET_OUT}" \
   DOWNLOAD_MANIFEST_PATH="${OUT_DIR}/download_manifest.json" \
-  python3 - <<'PY'
+  "${PYTHON}" - <<'PY'
 import hashlib
 import json
 import os
@@ -206,8 +277,13 @@ config = Path(os.environ["CONFIG_PATH"])
 checkpoint = run / "checkpoint.pt"
 suite = json.loads((run / "eval_suite.json").read_text())
 pose_report = json.loads((run / "pose_eval.json").read_text())
+keypoints_report = json.loads((run / "keypoints_eval.json").read_text())
+segmentation_report = json.loads((run / "segmentation_eval.json").read_text())
+resource_report = json.loads((run / "resource.json").read_text())
 metrics = suite["results"][0].get("metrics", {})
 pose = pose_report.get("metrics", {})
+keypoints = keypoints_report.get("metrics", {})
+segmentation = segmentation_report.get("metrics", {})
 payload = {
     "schema_version": 1,
     "kind": "bop_tless_diagnostic_run",
@@ -215,6 +291,7 @@ payload = {
     "seed": int(os.environ["RUN_SEED"]),
     "epochs": int(os.environ["RUN_EPOCHS"]),
     "runtime_seconds": int(os.environ["FINISHED_EPOCH"]) - int(os.environ["STARTED_EPOCH"]),
+    "train_resource": resource_report,
     "config": str(config),
     "config_sha256": sha256(config),
     "checkpoint": str(checkpoint),
@@ -223,8 +300,24 @@ payload = {
     "dataset_download_manifest": os.environ["DOWNLOAD_MANIFEST_PATH"],
     "dataset_license": "CC-BY-4.0",
     "model_implementation_license": "Apache-2.0",
+    "bbox_metrics": metrics,
     "metrics": metrics,
-    "pose_metrics": pose,
+    "task_native_metrics": {
+        "segmentation": segmentation,
+        "keypoints": keypoints,
+        "depth": {
+            "depth_abs_mean_m": pose.get("depth_abs_mean"),
+            "depth_abs_median_m": pose.get("depth_abs_median"),
+            "pairs": (pose_report.get("counts") or {}).get("depth_measured"),
+        },
+        "pose6d": pose,
+    },
+    "thresholds": {
+        "iou": 0.5,
+        "rotation_success_degrees": 15.0,
+        "translation_success_meters": 0.1,
+        "add_adds_unit": "meters",
+    },
 }
 (run / "run_metadata.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 print(
@@ -267,6 +360,19 @@ for seed in "${seeds_arr[@]}"; do
     evaluate_checkpoint "${run_dir}" trained "${seed}" "${ep}" "${started_epoch}"
   done
 done
+
+REPRODUCTION_ROLE="${REPRODUCTION_ROLE:-primary}"
+summary_args=(
+  --run-base "${RUN_BASE}"
+  --dataset "${DATASET_OUT}"
+  --download-manifest "${OUT_DIR}/download_manifest.json"
+  --output "${RUN_BASE}/qualification_summary.json"
+  --role "${REPRODUCTION_ROLE}"
+)
+if [[ -n "${SOURCE_SUMMARY:-}" ]]; then
+  summary_args+=(--source-summary "${SOURCE_SUMMARY}")
+fi
+"${PYTHON}" tools/summarize_bop_tless_qualification.py "${summary_args[@]}"
 
 echo
 echo "[bop-tless] Done. Runs under: ${RUN_BASE}"

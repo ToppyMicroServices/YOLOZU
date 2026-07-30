@@ -44,7 +44,7 @@ class Exp(_BaseExp):
         split = os.environ.get("YOLOZU_SPLIT", "train")
         image_size = _env_int("YOLOZU_IMAGE_SIZE", 96)
 
-        self.num_classes = 1
+        self.num_classes = _env_int("YOLOZU_NUM_CLASSES", 1)
         self.depth = 0.33
         self.width = 0.50
         self.max_epoch = _env_int("YOLOZU_MAX_EPOCHS", 1)
@@ -75,9 +75,9 @@ class Exp(_BaseExp):
 
         # Standard YOLOX data knobs. External launchers can override these.
         self.data_dir = str(dataset_root)
-        self.train_ann = str(split)
-        self.val_ann = str(split)
-        self.test_ann = str(split)
+        self.train_ann = f"instances_{split}.json"
+        self.val_ann = f"instances_{split}.json"
+        self.test_ann = f"instances_{split}.json"
 
 
 def get_exp() -> Exp:

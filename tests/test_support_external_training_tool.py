@@ -231,6 +231,49 @@ class TestSupportExternalTrainingTool(unittest.TestCase):
             execution_payload = json.loads((work_dir / "reports" / "execution.json").read_text(encoding="utf-8"))
             self.assertEqual((execution_payload.get("execution_status") or {}).get("state"), "requires_external_train_script")
 
+    def test_yolox_zero_exit_traceback_is_not_training_success(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools" / "support_external_training.py"
+        with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
+            root = Path(td)
+            launcher = root / "swallowed_traceback.py"
+            launcher.write_text(
+                "import sys\n"
+                "print('Traceback (most recent call last):', file=sys.stderr)\n"
+                "print('RuntimeError: swallowed', file=sys.stderr)\n",
+                encoding="utf-8",
+            )
+            out = root / "train_yolox.json"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "train-yolox",
+                    "--dataset",
+                    "data/smoke",
+                    "--split",
+                    "val",
+                    "--exp",
+                    "configs/examples/finetune_external/yolox_s_finetune_smoke.py",
+                    "--train-script",
+                    str(launcher),
+                    "--work-dir",
+                    str(root / "work"),
+                    "--output",
+                    str(out),
+                ],
+                cwd=str(repo_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 1)
+            payload = json.loads(out.read_text(encoding="utf-8"))
+            self.assertFalse(payload["training_executed"])
+            self.assertFalse(payload["execution_status"]["real_training_executed"])
+            self.assertIn("exited zero", payload["runtime_error"])
+
 
 if __name__ == "__main__":
     unittest.main()

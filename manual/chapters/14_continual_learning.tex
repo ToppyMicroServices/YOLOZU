@@ -561,9 +561,8 @@ This detector implementation is SDFT-style: it regularizes against the previous
 checkpoint's logits and boxes.  It is not a faithful reproduction of the
 demonstration-conditioned, on-policy language-model procedure in
 \cite{shenfeld2026sdft}.  The bounded local domain shift also does not satisfy
-the independent-reproduction gate.  Efficacy therefore remains
-\cmd{not_established} unless repeated task metrics support a positive
-retention/adaptation trade-off.
+an efficacy gate.  Efficacy therefore remains \cmd{not_established} unless
+repeated task metrics support a positive retention/adaptation trade-off.
 
 The clean 2026-07-28 execution completed all six method/seed runs, but every
 real-COCOeval task score and every SDFT-minus-naive delta was zero.  The
@@ -572,6 +571,12 @@ recorded decision is therefore \cmd{hold} and efficacy is
 from \path{reports/sdft_continual_evidence_2026-07-28.md}.  Zero
 forgetting/BWT/FWT is not a success signal in this run because every underlying
 task score is also zero.
+
+On 2026-07-30, a separate Python 3.12 environment verified all 434 embedded
+hashes and reran all 12 train/eval paths at the exact source commit.  Canonical
+data hashes and semantic qualification results matched.  This completes the
+independent-reproduction gate for the bounded diagnostic without changing the
+\cmd{hold} decision.
 
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:

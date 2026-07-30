@@ -89,6 +89,11 @@
       "schema": "docs/schemas/bop_download_manifest.schema.json",
       "summary": "BOP archive URLs, byte sizes, SHA-256 values, cache paths, and upstream dataset license."
     },
+    "bop_tless_qualification_json": {
+      "producer": "python3 tools/summarize_bop_tless_qualification.py",
+      "schema": "docs/schemas/bop_tless_qualification.schema.json",
+      "summary": "Strict-GT BOP T-LESS baseline/trained task-native metrics, evidence hashes, hold decision, and independent semantic reproduction result."
+    },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
       "schema": "docs/schemas/coco_eval_report.schema.json",
@@ -103,6 +108,10 @@
       "producer": "python3 tools/eval_suite.py",
       "schema": "docs/schemas/eval_suite_report.schema.json",
       "summary": "Report payload emitted by tools/eval_suite.py (suite over prediction JSONs)."
+    },
+    "external_runtime_qualification_json": {
+      "schema": "docs/schemas/external_runtime_qualification.schema.json",
+      "summary": "Cross-environment real-training, artifact, resource, failure-normalization, license-boundary, and independent reproduction record for optional external runtimes."
     },
     "finetune_lane_qualification_json": {
       "producer": "python3 tools/qualify_finetune_lanes.py --output-dir <fresh-dir>",
@@ -3582,7 +3591,8 @@
       "docs": [
         "docs/bop_tless_protocol.md",
         "docs/dataset_processing_matrix.md",
-        "reports/bop_pose_readiness_2026-07-28.md"
+        "reports/bop_pose_readiness_2026-07-28.md",
+        "reports/bop_tless_evidence_2026-07-30.md"
       ],
       "effects": {
         "fixed_writes": [],
@@ -3605,7 +3615,7 @@
       "examples": [
         {
           "command": "python3 tools/download_bop_dataset.py --dataset tless --out reports/bop",
-          "description": "Download the fixed T-LESS base and train_primesense archives, validate extraction paths, and write provenance."
+          "description": "Download the fixed T-LESS base, models, and train_primesense archives, validate extraction paths, and write provenance."
         },
         {
           "command": "python3 tools/download_bop_dataset.py --help",
@@ -8076,6 +8086,219 @@
         ]
       },
       "docs": [
+        "docs/external_finetune_smoke.md",
+        "docs/external_inference.md",
+        "docs/predictions_schema.md",
+        "reports/external_runtime_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes identity-safe Ultralytics inference results as YOLOZU predictions JSON.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/export_predictions_ultralytics.py",
+      "examples": [
+        {
+          "command": "python3 tools/export_predictions_ultralytics.py --model runs/ultralytics/weights/best.pt --dataset data/smoke --split val --max-images 10 --image-size 96 --device cpu --no-end2end --protocol nms_applied --wrap --strict --output reports/pred_ultralytics.json",
+          "description": "Export one manifest image at a time so current Ultralytics releases preserve exact result-path identity."
+        },
+        {
+          "command": "python3 tools/export_predictions_ultralytics.py --help",
+          "description": "Show model, source-selection, protocol, and predictions output options."
+        }
+      ],
+      "id": "export_predictions_ultralytics",
+      "inputs": [
+        {
+          "flag": "--model",
+          "kind": "file",
+          "name": "model",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "default": null,
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--source",
+          "kind": "string",
+          "name": "source",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "default": 640,
+          "flag": "--image-size",
+          "kind": "number",
+          "name": "image_size",
+          "required": false
+        },
+        {
+          "default": 0.001,
+          "flag": "--conf",
+          "kind": "number",
+          "name": "conf",
+          "required": false
+        },
+        {
+          "default": 0.7,
+          "flag": "--iou",
+          "kind": "number",
+          "name": "iou",
+          "required": false
+        },
+        {
+          "default": 32,
+          "flag": "--stride",
+          "kind": "number",
+          "name": "stride",
+          "required": false
+        },
+        {
+          "default": true,
+          "flag": "--letterbox",
+          "kind": "string",
+          "name": "letterbox",
+          "required": false
+        },
+        {
+          "flag": "--no-letterbox",
+          "kind": "string",
+          "name": "no_letterbox",
+          "required": false
+        },
+        {
+          "default": 300,
+          "flag": "--max-det",
+          "kind": "number",
+          "name": "max_det",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "default": 1,
+          "description": "Recorded backend batch preference; local paths are submitted individually for identity safety.",
+          "flag": "--batch",
+          "kind": "number",
+          "name": "batch",
+          "required": false
+        },
+        {
+          "default": "cuda",
+          "flag": "--device",
+          "kind": "string",
+          "name": "device",
+          "required": false
+        },
+        {
+          "flag": "--half",
+          "kind": "string",
+          "name": "half",
+          "required": false
+        },
+        {
+          "default": true,
+          "flag": "--end2end",
+          "kind": "string",
+          "name": "end2end",
+          "required": false
+        },
+        {
+          "flag": "--no-end2end",
+          "kind": "string",
+          "name": "no_end2end",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--protocol",
+          "kind": "string",
+          "name": "protocol",
+          "required": false
+        },
+        {
+          "flag": "--wrap",
+          "kind": "string",
+          "name": "wrap",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--strict",
+          "kind": "string",
+          "name": "strict",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Predictions JSON with exact manifest-image identity, model hash, protocol, runtime version, and execution metadata.",
+          "kind": "file",
+          "name": "predictions_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "ultralytics"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Run identity-safe Ultralytics inference and export strict YOLOZU predictions JSON without losing source paths in current runtime batching.",
+      "tags": [
+        "predictions",
+        "ultralytics",
+        "export",
+        "interop",
+        "license-boundary"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "predictions_json"
+        ]
+      },
+      "docs": [
         "docs/byop_quickstarts.md",
         "docs/external_inference.md",
         "docs/predictions_schema.md",
@@ -10840,13 +11063,14 @@
         "docs/dataset_processing_matrix.md",
         "docs/production_readiness.md",
         "manual/chapters/16_depth_6dof_symmetry.tex",
-        "reports/bop_pose_readiness_2026-07-28.md"
+        "reports/bop_pose_readiness_2026-07-28.md",
+        "reports/bop_tless_evidence_2026-07-30.md"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes an ownership-marked YOLOZU dataset tree, sidecars, deterministic CAD subsets, and a conversion report under --out.",
+            "description": "Writes an ownership-marked YOLOZU dataset tree, strict BOP sidecars, deterministic CAD subsets/keypoints, prepare_summary.json, and a conversion report under --out.",
             "flag": "--out",
             "kind": "dir",
             "scope": "tree"
@@ -10856,8 +11080,8 @@
       "entrypoint": "tools/prepare_bop_yolozu.py",
       "examples": [
         {
-          "command": "python3 tools/prepare_bop_yolozu.py --bop-root /workspace/bop/tless --split train_primesense --out reports/bop_tless_yolozu --out-split train2017 --partition-modulus 5 --partition-remainder 0 --partition-mode exclude --link-images",
-          "description": "Convert a deterministic T-LESS diagnostic training partition with object-pose and CAD sidecars."
+          "command": "python3 tools/prepare_bop_yolozu.py --bop-root /workspace/bop --split train_primesense --out reports/bop_tless_yolozu --out-split train2017 --partition-modulus 5 --partition-remainder 0 --partition-mode exclude --cad-keypoints 4 --link-images",
+          "description": "Convert a deterministic T-LESS diagnostic training partition with strict masks/depth/object-pose and projected CAD-keypoint sidecars."
         },
         {
           "command": "python3 tools/prepare_bop_yolozu.py --help",
@@ -10982,6 +11206,14 @@
           "required": false
         },
         {
+          "default": 0,
+          "description": "Number of deterministic object-space CAD anchors projected with BOP K/R/t; visibility=2 additionally requires the instance mask_visib pixel.",
+          "flag": "--cad-keypoints",
+          "kind": "number",
+          "name": "cad_keypoints",
+          "required": false
+        },
+        {
           "description": "Replace only an output bearing the valid YOLOZU BOP ownership marker.",
           "flag": "--overwrite",
           "kind": "string",
@@ -11015,6 +11247,12 @@
           "description": "Conversion, partition, units, model hashes, and license provenance report.",
           "kind": "file",
           "name": "conversion_report_json"
+        },
+        {
+          "default": "<out>/prepare_summary.json",
+          "description": "Strict ground-truth provenance, annotation counts, and qualification checks.",
+          "kind": "file",
+          "name": "prepare_summary_json"
         }
       ],
       "platform": {
@@ -11027,7 +11265,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, metre-scaled CAD points, and provenance.",
+      "summary": "Convert BOP rigid-object pose data into an owned YOLOZU dataset with deterministic splits, strict GT sidecars, metre-scaled CAD points/keypoints, and provenance.",
       "tags": [
         "dataset",
         "bop",
@@ -13518,13 +13756,15 @@
         "docs/interop_yolox.md",
         "docs/license_policy.md",
         "docs/tools_index.md",
-        "docs/training_inference_export.md"
+        "docs/training_inference_export.md",
+        "reports/external_runtime_evidence_2026-07-30.md",
+        "reports/external_runtime_qualification_2026-07-30.json"
       ],
       "effects": {
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes external finetune smoke report JSON.",
+            "description": "Writes external finetune smoke report JSON with execution status, wall time, peak RSS, failures, and artifact hashes.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -13685,7 +13925,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifacts, hashes, runtime, source, and license boundaries.",
+      "summary": "Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifact hashes, wall time, peak RSS, runtime, source, and license boundaries.",
       "tags": [
         "finetune",
         "interop",
@@ -16255,6 +16495,108 @@
     {
       "contracts": {
         "produces": [
+          "bop_tless_qualification_json"
+        ]
+      },
+      "docs": [
+        "docs/bop_tless_protocol.md",
+        "docs/schemas/bop_tless_qualification.schema.json",
+        "reports/bop_tless_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes a baseline/trained task-native BOP T-LESS qualification summary.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/summarize_bop_tless_qualification.py",
+      "examples": [
+        {
+          "command": "python3 tools/summarize_bop_tless_qualification.py --run-base runs/bop_tless --dataset reports/bop_tless --download-manifest reports/bop/download_manifest.json --output reports/bop_tless_qualification.json",
+          "description": "Aggregate three-seed strict-GT baseline/trained task-native metrics without promoting a diagnostic result."
+        },
+        {
+          "command": "python3 tools/summarize_bop_tless_qualification.py --help",
+          "description": "Show primary/independent comparison and evidence input options."
+        }
+      ],
+      "id": "summarize_bop_tless_qualification",
+      "inputs": [
+        {
+          "flag": "--run-base",
+          "kind": "dir",
+          "name": "run_base",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "flag": "--download-manifest",
+          "kind": "file",
+          "name": "download_manifest",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        },
+        {
+          "default": "primary",
+          "flag": "--role",
+          "kind": "string",
+          "name": "role",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--source-summary",
+          "kind": "file",
+          "name": "source_summary",
+          "required": false
+        }
+      ],
+      "maturity": "research",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Schema-defined BOP T-LESS strict-GT before/after qualification summary with hold decision and optional semantic reproduction comparison.",
+          "kind": "file",
+          "name": "qualification_summary_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Aggregate three-seed BOP T-LESS bbox and task-native baseline/trained evidence and compare an independent rerun semantically.",
+      "tags": [
+        "bop",
+        "tless",
+        "pose6d",
+        "qualification",
+        "reproducibility"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
           "training_run_summary_json"
         ]
       },
@@ -16681,6 +17023,263 @@
         "training",
         "adapter",
         "normalization"
+      ]
+    },
+    {
+      "docs": [
+        "docs/external_finetune_smoke.md",
+        "reports/external_runtime_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes Detectron2 checkpoints, native logs, and training_evidence.json under the explicit output directory.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/train_detectron2_runtime_smoke.py",
+      "examples": [
+        {
+          "command": "YOLOZU_DATASET_ROOT=reports/coco_wrapper python3 tools/train_detectron2_runtime_smoke.py --config-file configs/examples/finetune_external/detectron2_finetune_smoke.yaml --output-dir reports/detectron2_runtime_smoke SOLVER.MAX_ITER 1",
+          "description": "Run one bounded Detectron2 optimizer step on a YOLOZU COCO wrapper and record checkpoint/resource evidence."
+        },
+        {
+          "command": "python3 tools/train_detectron2_runtime_smoke.py --help",
+          "description": "Show launcher-compatible config, output, resume, and override options without importing Detectron2."
+        }
+      ],
+      "id": "train_detectron2_runtime_smoke",
+      "inputs": [
+        {
+          "flag": "--config-file",
+          "kind": "file",
+          "name": "config_file",
+          "required": true
+        },
+        {
+          "default": null,
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "flag": "--resume",
+          "kind": "string",
+          "name": "resume",
+          "required": false
+        },
+        {
+          "flag": "--eval-only",
+          "kind": "string",
+          "name": "eval_only",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--num-gpus",
+          "kind": "number",
+          "name": "num_gpus",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--num-machines",
+          "kind": "number",
+          "name": "num_machines",
+          "required": false
+        },
+        {
+          "default": 0,
+          "flag": "--machine-rank",
+          "kind": "number",
+          "name": "machine_rank",
+          "required": false
+        },
+        {
+          "default": "auto",
+          "flag": "--dist-url",
+          "kind": "string",
+          "name": "dist_url",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output-dir>/model_final.pth",
+          "description": "Bounded Detectron2 checkpoint.",
+          "kind": "file",
+          "name": "checkpoint"
+        },
+        {
+          "default": "<output-dir>/training_evidence.json",
+          "description": "Config/dataset/checkpoint hashes, runtime version/license boundary, wall time, and peak RSS.",
+          "kind": "file",
+          "name": "training_evidence_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "detectron2",
+          "torch"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Run bounded real Detectron2 training on a YOLOZU COCO wrapper and emit hash/resource evidence.",
+      "tags": [
+        "training",
+        "detectron2",
+        "external-runtime",
+        "evidence"
+      ]
+    },
+    {
+      "docs": [
+        "docs/external_finetune_smoke.md",
+        "reports/external_runtime_evidence_2026-07-30.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes a tiny DETR config, checkpoint, strict predictions JSON, and training_evidence.json.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/train_hf_detr_runtime_smoke.py",
+      "examples": [
+        {
+          "command": "python3 tools/train_hf_detr_runtime_smoke.py --dataset data/smoke --split val --epochs 1 --batch-size 2 --max-steps 1 --output-dir reports/hf_detr_runtime_smoke",
+          "description": "Train a scratch tiny DETR for one optimizer step on real labeled images and emit predictions interface contract evidence."
+        },
+        {
+          "command": "python3 tools/train_hf_detr_runtime_smoke.py --help",
+          "description": "Show bounded training, resume, and output options without importing Transformers."
+        }
+      ],
+      "id": "train_hf_detr_runtime_smoke",
+      "inputs": [
+        {
+          "default": "local-tiny-detr",
+          "flag": "--model-id",
+          "kind": "string",
+          "name": "model_id",
+          "required": false
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "default": "train",
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--epochs",
+          "kind": "number",
+          "name": "epochs",
+          "required": false
+        },
+        {
+          "default": 2,
+          "flag": "--batch-size",
+          "kind": "number",
+          "name": "batch_size",
+          "required": false
+        },
+        {
+          "default": 0.0001,
+          "flag": "--learning-rate",
+          "kind": "number",
+          "name": "learning_rate",
+          "required": false
+        },
+        {
+          "default": 1,
+          "flag": "--max-steps",
+          "kind": "number",
+          "name": "max_steps",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--resume-from",
+          "kind": "file",
+          "name": "resume_from",
+          "required": false
+        },
+        {
+          "default": null,
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output-dir>/checkpoint.pt",
+          "description": "Scratch tiny-DETR state-dict checkpoint.",
+          "kind": "file",
+          "name": "checkpoint"
+        },
+        {
+          "default": "<output-dir>/predictions.json",
+          "description": "Strict YOLOZU predictions interface contract artifact from the trained model.",
+          "kind": "file",
+          "name": "predictions_json"
+        },
+        {
+          "default": "<output-dir>/training_evidence.json",
+          "description": "Config/dataset/checkpoint/prediction hashes, runtime versions/license boundary, loss, wall time, and peak RSS.",
+          "kind": "file",
+          "name": "training_evidence_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "transformers",
+          "torch",
+          "scipy",
+          "numpy",
+          "pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Run a bounded real scratch Transformers DETR optimizer step and emit deterministic checkpoint/predictions/resource evidence.",
+      "tags": [
+        "training",
+        "transformers",
+        "detr",
+        "external-runtime",
+        "evidence"
       ]
     },
     {

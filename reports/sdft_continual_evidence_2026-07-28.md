@@ -90,10 +90,33 @@ The bundle contains the schema-defined summary, all per-seed configs, initial
 and trained checkpoints, COCO reports, continual run records, promotion
 decisions, and file checksums.
 
+## Independent reproduction (2026-07-30)
+
+A separate Python 3.12.13 environment verified the release archive SHA-256 and
+all 434 embedded hashes, checked out source commit
+`d54ea3d2e8647c4742562e639872b2d9c4b83b7c`, and reran all 12 train/eval
+paths (two methods, two tasks, three seeds) with actual `pycocotools`
+COCOeval.
+
+- source dataset canonical tree SHA-256:
+  `a47ad492999ffad7eec820c39eaa54514fc44fd6b751fe09373b1020e12ff0cc`
+- all 256 canonical data-file hashes matched;
+- semantic qualification results matched for every seed and method;
+- rerun archive SHA-256:
+  `a9ba5e748fadb1a28b0e503e71c02258c3e1d8ed28908db6c94abef8693cf3bb`
+- rerun qualification summary SHA-256:
+  `41015c0a40b76f423ed2a7f15f9e0412dc6e0aa1833c8b8cf5d3431977b0a712`
+- rerun checksum manifest SHA-256:
+  `c7bd9644f19f7a690840bd8a7382970e5b13e355e91d43ab78fa85f3bee51bd5`
+
+Path-bearing JSON fields differ because the clean extraction used a different
+absolute root; content and semantic comparisons exclude those relocation-only
+fields. Independent reproduction is established for the bounded diagnostic.
+
 ## Remaining promotion conditions
 
 Promotion requires a preregistered task sequence and budget that produce
 non-zero task metrics, a positive retention/adaptation trade-off against the
-naive baseline across all fixed seeds, and reproduction by an independent
-operator from the release-addressable bundle. Until those conditions are met,
-the lane remains Research and `hold`.
+naive baseline across all fixed seeds. The release-addressable independent
+reproduction gate is complete, but the all-zero result does not support
+efficacy. The lane remains Research and `hold`.

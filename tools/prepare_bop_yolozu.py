@@ -14,7 +14,7 @@ _OWNERSHIP_KIND = "yolozu_bop_conversion_output"
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Convert a BOP dataset split into a YOLOZU YOLO-format dataset with sidecars.")
-    p.add_argument("--bop-root", required=True, help="Path to extracted BOP dataset root (e.g., /tmp/bop/tless).")
+    p.add_argument("--bop-root", required=True, help="Path to extracted BOP dataset root (e.g., /tmp/bop).")
     p.add_argument("--split", required=True, help="BOP split folder name (e.g., train_primesense, val, test).")
     p.add_argument("--out", required=True, help="Output dataset root (YOLO images/ + labels/).")
     p.add_argument("--out-split", default="train2017", help="Output split name under images/ and labels/ (default: train2017).")
@@ -63,6 +63,15 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         type=int,
         default=1000,
         help="Maximum deterministic CAD points stored per object for ADD/ADDS evaluation (default: 1000).",
+    )
+    p.add_argument(
+        "--cad-keypoints",
+        type=int,
+        default=0,
+        help=(
+            "Project this many deterministic object-space CAD anchors through "
+            "BOP K/R/t ground truth into YOLO keypoint labels (default: 0)."
+        ),
     )
     output_mode = p.add_mutually_exclusive_group()
     output_mode.add_argument(
@@ -305,6 +314,78 @@ def _bbox_xywh_to_cxcywh_norm(bbox_xywh: list[float], *, width: int, height: int
     return float(cx), float(cy), float(bw), float(bh)
 
 
+def _select_cad_anchors(points: list[list[float]], *, count: int) -> list[list[float]]:
+    """Select deterministic, spatially separated CAD anchors."""
+    if count <= 0 or not points:
+        return []
+    ordered = sorted([[float(v) for v in point[:3]] for point in points])
+    selected = [ordered[0]]
+    remaining = ordered[1:]
+    while remaining and len(selected) < count:
+        best_index = max(
+            range(len(remaining)),
+            key=lambda idx: (
+                min(
+                    sum((remaining[idx][axis] - anchor[axis]) ** 2 for axis in range(3))
+                    for anchor in selected
+                ),
+                tuple(remaining[idx]),
+            ),
+        )
+        selected.append(remaining.pop(best_index))
+    return selected
+
+
+def _project_cad_anchors(
+    anchors: list[list[float]],
+    *,
+    rotation: list[list[float]],
+    translation: list[float],
+    intrinsics: list[float],
+    width: int,
+    height: int,
+    count: int,
+    visible_mask_path: Path | None = None,
+) -> list[tuple[float, float, int]]:
+    mask = None
+    if visible_mask_path is not None and visible_mask_path.is_file():
+        from PIL import Image
+
+        with Image.open(visible_mask_path) as image:
+            mask = image.convert("L").copy()
+    projected: list[tuple[float, float, int]] = []
+    for point in anchors[:count]:
+        camera = [
+            sum(float(rotation[row][col]) * float(point[col]) for col in range(3))
+            + float(translation[row])
+            for row in range(3)
+        ]
+        if camera[2] <= 0.0:
+            projected.append((0.0, 0.0, 0))
+            continue
+        u = (float(intrinsics[0]) * camera[0] + float(intrinsics[2]) * camera[2]) / camera[2]
+        v = (float(intrinsics[4]) * camera[1] + float(intrinsics[5]) * camera[2]) / camera[2]
+        x = u / float(width)
+        y = v / float(height)
+        in_frame = 0.0 <= x < 1.0 and 0.0 <= y < 1.0
+        visible = False
+        if in_frame and mask is not None:
+            pixel_x = min(mask.width - 1, max(0, int(round(u))))
+            pixel_y = min(mask.height - 1, max(0, int(round(v))))
+            visible = bool(mask.getpixel((pixel_x, pixel_y)) > 0)
+        visibility = 2 if visible else (1 if in_frame else 0)
+        projected.append(
+            (
+                min(1.0, max(0.0, x)),
+                min(1.0, max(0.0, y)),
+                visibility,
+            )
+        )
+    while len(projected) < count:
+        projected.append((0.0, 0.0, 0))
+    return projected
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
@@ -329,6 +410,8 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("--partition-remainder must be in [0, partition-modulus)")
     if int(args.cad_max_points) < 2:
         raise SystemExit("--cad-max-points must be >= 2")
+    if int(args.cad_keypoints) < 0:
+        raise SystemExit("--cad-keypoints must be >= 0")
     models_dir = _resolve_models_dir(bop_root, args.models_dir)
     models_info: dict[str, Any] = {}
     if models_dir is not None and (models_dir / "models_info.json").is_file():
@@ -348,6 +431,14 @@ def main(argv: list[str] | None = None) -> int:
     _ensure_dir(out_labels)
     cad_output = out_root / "cad_points"
     cad_records: dict[int, dict[str, Any]] = {}
+    cad_anchors: dict[int, list[list[float]]] = {}
+    any_masks_written = False
+    annotation_counts = {
+        "images_with_depth": 0,
+        "instances_with_mask": 0,
+        "instances_with_pose6d": 0,
+        "visible_projected_keypoints": 0,
+    }
 
     scene_dirs = sorted([p for p in split_dir.iterdir() if p.is_dir() and p.name.isdigit()])
     if args.max_scenes is not None:
@@ -401,8 +492,10 @@ def main(argv: list[str] | None = None) -> int:
             off_list: list[list[float] | None] = []
             cad_list: list[str | None] = []
             symmetry_list: list[dict[str, Any] | None] = []
+            mask_list: list[str | None] = []
+            mask_classes: list[int] = []
 
-            for inst, info in zip(instances, infos):
+            for gt_index, (inst, info) in enumerate(zip(instances, infos)):
                 if not isinstance(inst, dict) or not isinstance(info, dict):
                     continue
                 try:
@@ -432,11 +525,21 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     raise SystemExit(f"unsupported class_map: {args.class_map}")
 
-                label_lines.append(f"{class_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}")
+                label_line = f"{class_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}"
+                mask_path = scene_dir / "mask_visib" / f"{image_id:06d}_{gt_index:06d}.png"
+                mask_list.append(str(mask_path) if mask_path.is_file() else None)
+                mask_classes.append(class_id)
+                if mask_path.is_file():
+                    annotation_counts["instances_with_mask"] += 1
 
                 r = inst.get("cam_R_m2c")
                 t = inst.get("cam_t_m2c")
                 if not (isinstance(r, list) and len(r) == 9 and isinstance(t, list) and len(t) == 3):
+                    if int(args.cad_keypoints) > 0:
+                        label_line += " " + " ".join(
+                            "0.000000 0.000000 0" for _ in range(int(args.cad_keypoints))
+                        )
+                    label_lines.append(label_line)
                     r_list.append(None)
                     t_list.append(None)
                     off_list.append(None)
@@ -450,6 +553,7 @@ def main(argv: list[str] | None = None) -> int:
                     [float(r[6]), float(r[7]), float(r[8])],
                 ]
                 t3 = [float(t[0]) * float(args.t_scale), float(t[1]) * float(args.t_scale), float(t[2]) * float(args.t_scale)]
+                annotation_counts["instances_with_pose6d"] += 1
                 r_list.append(r3)
                 t_list.append(t3)
                 off_list.append([0.0, 0.0])
@@ -475,7 +579,43 @@ def main(argv: list[str] | None = None) -> int:
                             "source_sha256": _sha256(model_path),
                             "points": len(points),
                         }
+                        anchors = _select_cad_anchors(points, count=int(args.cad_keypoints))
+                        if anchors:
+                            anchors_path = cad_output / f"obj_{obj_id:06d}_keypoints.json"
+                            anchors_path.write_text(
+                                json.dumps(anchors, separators=(",", ":")) + "\n",
+                                encoding="utf-8",
+                            )
+                            cad_record["keypoint_anchors"] = str(anchors_path)
+                            cad_record["keypoint_anchors_sha256"] = _sha256(anchors_path)
+                            cad_record["keypoint_count"] = len(anchors)
+                            cad_anchors[obj_id] = anchors
                         cad_records[obj_id] = cad_record
+                if obj_id not in cad_anchors and cad_record is not None:
+                    anchors_path_value = cad_record.get("keypoint_anchors")
+                    if isinstance(anchors_path_value, str) and Path(anchors_path_value).is_file():
+                        loaded_anchors = _load_json(Path(anchors_path_value))
+                        if isinstance(loaded_anchors, list):
+                            cad_anchors[obj_id] = loaded_anchors
+                if int(args.cad_keypoints) > 0:
+                    projected = _project_cad_anchors(
+                        cad_anchors.get(obj_id, []),
+                        rotation=r3,
+                        translation=t3,
+                        intrinsics=[float(k[i]) for i in range(9)],
+                        width=width,
+                        height=height,
+                        count=int(args.cad_keypoints),
+                        visible_mask_path=(mask_path if mask_path.is_file() else None),
+                    )
+                    label_line += " " + " ".join(
+                        f"{x:.6f} {y:.6f} {visibility}"
+                        for x, y, visibility in projected
+                    )
+                    annotation_counts["visible_projected_keypoints"] += sum(
+                        1 for _x, _y, visibility in projected if visibility == 2
+                    )
+                label_lines.append(label_line)
                 cad_list.append(str(cad_record["path"]) if cad_record is not None else None)
                 info = models_info.get(str(obj_id))
                 if isinstance(info, dict):
@@ -493,6 +633,8 @@ def main(argv: list[str] | None = None) -> int:
             if not label_lines:
                 converted_images += 1
                 continue
+            if depth_path is not None:
+                annotation_counts["images_with_depth"] += 1
 
             stem = Path(out_name).stem
             (out_labels / f"{stem}.txt").write_text("\n".join(label_lines) + "\n", encoding="utf-8")
@@ -506,6 +648,10 @@ def main(argv: list[str] | None = None) -> int:
                 "bop_root": str(bop_root),
                 "bop_split": str(args.split),
             }
+            if any(value is not None for value in mask_list):
+                sidecar["mask_path"] = mask_list
+                sidecar["mask_classes"] = mask_classes
+                any_masks_written = True
             if any(value is not None for value in r_list) and any(value is not None for value in t_list):
                 sidecar["R_gt"] = r_list
                 sidecar["t_gt"] = t_list
@@ -537,9 +683,27 @@ def main(argv: list[str] | None = None) -> int:
     splits[out_split] = {"images_dir": str(out_images), "labels_dir": str(out_labels)}
     descriptor["splits"] = splits
     descriptor["latest_split"] = out_split
+    if int(args.cad_keypoints) > 0:
+        descriptor["keypoints_meta"] = {
+            "num_keypoints": int(args.cad_keypoints),
+            "keypoint_names": [
+                f"cad_anchor_{index}" for index in range(int(args.cad_keypoints))
+            ],
+            "skeleton": [],
+            "source": "BOP object CAD anchors projected by ground-truth K/R/t",
+        }
     descriptor_path.write_text(json.dumps(descriptor, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     license_info = None
-    if bop_root.name.lower() == "tless":
+    download_dataset = None
+    download_manifest_path = bop_root / "download_manifest.json"
+    if download_manifest_path.is_file():
+        try:
+            download_manifest = _load_json(download_manifest_path)
+        except (OSError, json.JSONDecodeError):
+            download_manifest = None
+        if isinstance(download_manifest, dict):
+            download_dataset = str(download_manifest.get("dataset") or "").lower()
+    if bop_root.name.lower() == "tless" or download_dataset == "tless":
         license_info = {
             "spdx": "CC-BY-4.0",
             "source": "https://bop.felk.cvut.cz/datasets/",
@@ -566,8 +730,45 @@ def main(argv: list[str] | None = None) -> int:
                 "models_dir": str(models_dir) if models_dir is not None else None,
                 "cad_points_unit": "meters",
                 "cad_max_points": int(args.cad_max_points),
+                "cad_keypoints": int(args.cad_keypoints),
                 "cad_models": {str(obj_id): value for obj_id, value in sorted(cad_records.items())},
                 "dataset_license": license_info,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (out_root / "prepare_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bop_multitask_prepare_summary",
+                "dataset_license": license_info,
+                "source_root": str(bop_root),
+                "source_split": str(args.split),
+                "label_provenance": {
+                    "bbox": "bop_bbox_visib_gt",
+                    "segmentation": "bop_mask_visib_gt",
+                    "keypoints": (
+                        "bop_gt_cad_projection" if int(args.cad_keypoints) > 0 else None
+                    ),
+                    "depth": "bop_depth_gt",
+                    "pose6d": "bop_object_pose_gt",
+                    "model_inference_used": False,
+                },
+                "annotation_counts": annotation_counts,
+                "checks": {
+                    "segmentation_masks_non_empty": any_masks_written,
+                    "strict_ground_truth": bool(
+                        int(args.cad_keypoints) > 0
+                        and annotation_counts["visible_projected_keypoints"] > 0
+                        and annotation_counts["images_with_depth"] > 0
+                        and annotation_counts["instances_with_mask"] > 0
+                        and annotation_counts["instances_with_pose6d"] > 0
+                    ),
+                },
             },
             indent=2,
             sort_keys=True,

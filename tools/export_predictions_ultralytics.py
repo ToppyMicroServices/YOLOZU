@@ -49,7 +49,15 @@ def _parse_args(argv):
         default=None,
         help="Cap selected manifest images and actual inference inputs; cannot be combined with --source.",
     )
-    parser.add_argument("--batch", type=int, default=1, help="Batch size for inference (default: 1)")
+    parser.add_argument(
+        "--batch",
+        type=int,
+        default=1,
+        help=(
+            "Recorded backend batch preference (default: 1). Local image paths "
+            "are submitted one at a time to preserve result-path identity."
+        ),
+    )
     parser.add_argument("--device", default="cuda", help="Device for inference (default: cuda)")
     parser.add_argument("--half", action="store_true", help="Use FP16 inference where supported")
     parser.add_argument(
@@ -242,19 +250,23 @@ def main(argv=None):
         except Exception as exc:  # pragma: no cover
             raise SystemExit("ultralytics package is required (pip install ultralytics) unless --dry-run is set") from exc
         model = YOLO(args.model)
-        results = model.predict(
-            source=runtime_sources,
-            imgsz=int(args.image_size),
-            conf=float(args.conf),
-            iou=float(args.iou),
-            max_det=int(args.max_det),
-            batch=int(args.batch),
-            device=args.device,
-            half=bool(args.half),
-            end2end=bool(args.end2end),
-            stream=True,
-            verbose=False,
-        )
+        def _identity_safe_results():
+            for runtime_source in runtime_sources:
+                yield from model.predict(
+                    source=runtime_source,
+                    imgsz=int(args.image_size),
+                    conf=float(args.conf),
+                    iou=float(args.iou),
+                    max_det=int(args.max_det),
+                    batch=1,
+                    device=args.device,
+                    half=bool(args.half),
+                    end2end=bool(args.end2end),
+                    stream=True,
+                    verbose=False,
+                )
+
+        results = _identity_safe_results()
     else:
         runtime_error = "dry_run"
 
@@ -350,6 +362,7 @@ def main(argv=None):
             "iou": float(args.iou),
             "max_det": int(args.max_det),
             "batch": int(args.batch),
+            "runtime_batch_mode": "identity_safe_single_source",
             "device": str(args.device),
             "half": bool(args.half),
             "end2end": bool(args.end2end),

@@ -45,21 +45,30 @@ class TestExportPredictionsUltralyticsTool(TestCase):
         *,
         result_limit: int | None = None,
         result_paths: list[str | None] | None = None,
+        return_all_paths: bool = False,
     ) -> types.ModuleType:
         fake_module = types.ModuleType("ultralytics")
         fake_module.__version__ = "test"
+        call_index = 0
 
         class FakeYOLO:
             def __init__(self, model: str) -> None:
                 capture["model"] = model
 
             def predict(self, **kwargs):
-                sources = list(kwargs["source"])
-                capture["sources"] = sources
+                nonlocal call_index
+                source = kwargs["source"]
+                sources = [source] if isinstance(source, str) else list(source)
+                capture.setdefault("sources", [])
+                capture["sources"].extend(sources)
                 capture["predict_kwargs"] = kwargs
-                selected = result_paths
-                if selected is None:
-                    selected = sources if result_limit is None else sources[:result_limit]
+                if result_paths is not None:
+                    selected = result_paths if return_all_paths else result_paths[call_index : call_index + 1]
+                elif result_limit is None or call_index < result_limit:
+                    selected = sources
+                else:
+                    selected = []
+                call_index += 1
                 return [_FakeResult(path) for path in selected]
 
         fake_module.YOLO = FakeYOLO
@@ -219,7 +228,11 @@ class TestExportPredictionsUltralyticsTool(TestCase):
                 self._run(
                     dataset=dataset,
                     output=output,
-                    fake_module=self._fake_ultralytics(capture, result_paths=result_paths),
+                    fake_module=self._fake_ultralytics(
+                        capture,
+                        result_paths=result_paths,
+                        return_all_paths=True,
+                    ),
                     extra_args=["--max-images", "2"],
                 )
 

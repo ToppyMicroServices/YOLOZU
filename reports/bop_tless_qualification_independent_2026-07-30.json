@@ -1,0 +1,755 @@
+{
+  "comparison": {
+    "semantic_match": true,
+    "source_summary": "/private/tmp/yolozu-evidence/bop-primary-maskgt-runs-v2/qualification_summary.json",
+    "source_summary_sha256": "6ee80f6ee18af9985bb004c6239303b246054f6a7a4a89b81c9e86e5758b4a45"
+  },
+  "config": "rtdetr_pose/configs/bop_tless_smoke.json",
+  "config_sha256": "b64935446733d11151f4f7a4af655d9f6144f1906764235ff81ab7f8069a1c07",
+  "dataset": "/private/tmp/yolozu-evidence/tless-qualification-independent-maskgt",
+  "dataset_archives": [
+    {
+      "bytes": 49597,
+      "cache_path": "/tmp/yolozu-evidence/bop-zips/tless_base.zip",
+      "extraction_status": "complete_extracted",
+      "name": "tless_base.zip",
+      "sha256": "dd70ca884b7c471a530a952f70c5ab2c212f3d2c2f371be86397442b97d70a7e",
+      "url": "https://huggingface.co/datasets/bop-benchmark/tless/resolve/main/tless_base.zip"
+    },
+    {
+      "bytes": 33468762,
+      "cache_path": "/tmp/yolozu-evidence/bop-zips/tless_models.zip",
+      "extraction_status": "complete_extracted",
+      "name": "tless_models.zip",
+      "sha256": "6a29c59766b8d2af05e62e71739f0ca7243ad81bc3c7f9a24925504a8cb37928",
+      "url": "https://huggingface.co/datasets/bop-benchmark/tless/resolve/main/tless_models.zip"
+    },
+    {
+      "bytes": 2486152818,
+      "cache_path": "/tmp/yolozu-evidence/bop-zips/tless_train_primesense.zip",
+      "extraction_status": "complete_extracted",
+      "name": "tless_train_primesense.zip",
+      "sha256": "7262fdf0e9de09cf5d051ca108d860c7c5fd563ee58496751e970458c6897ba1",
+      "url": "https://huggingface.co/datasets/bop-benchmark/tless/resolve/main/tless_train_primesense.zip"
+    }
+  ],
+  "dataset_download_manifest": "/private/tmp/yolozu-evidence/bop-independent/download_manifest.json",
+  "dataset_download_manifest_sha256": "d6829d3355956de84d9fccccbcf03d6137fb9b98aab0370976b5d935cd9afbc1",
+  "dataset_license": {
+    "dataset_card": "https://huggingface.co/datasets/bop-benchmark/tless",
+    "source": "https://bop.felk.cvut.cz/datasets/",
+    "spdx": "CC-BY-4.0"
+  },
+  "dataset_prepare_summary": "/private/tmp/yolozu-evidence/tless-qualification-independent-maskgt/prepare_summary.json",
+  "dataset_prepare_summary_sha256": "7d3207cae3d8dd3ac4ef99bcfd537ffef2aae1c54cdd49a6ebf425d50a6688e6",
+  "decision": "hold",
+  "efficacy": "not_established",
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "python": "3.12.13"
+  },
+  "ground_truth": {
+    "annotation_counts": {
+      "images_with_depth": 8,
+      "instances_with_mask": 8,
+      "instances_with_pose6d": 8,
+      "visible_projected_keypoints": 27
+    },
+    "provenance": {
+      "bbox": "bop_bbox_visib_gt",
+      "depth": "bop_depth_gt",
+      "keypoints": "bop_gt_cad_projection",
+      "model_inference_used": false,
+      "pose6d": "bop_object_pose_gt",
+      "segmentation": "bop_mask_visib_gt"
+    },
+    "strict": true
+  },
+  "kind": "bop_tless_multitask_qualification",
+  "model_implementation_license": "Apache-2.0",
+  "promotion_eligible": false,
+  "protocol": {
+    "dataset": "BOP T-LESS train_primesense",
+    "partition": "frame_id modulo 5, remainder 0 held out",
+    "scope": "object 6DoF pose; human 3D skeleton pose unsupported",
+    "status": "diagnostic_frame_holdout_not_official_bop_test"
+  },
+  "qualification_reasons": [
+    "diagnostic_frame_holdout_is_not_official_bop_test",
+    "no_predefined_promotion_threshold_pass"
+  ],
+  "role": "independent",
+  "rows": [
+    {
+      "after": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 0,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "baseline": {
+        "checkpoint_sha256": "f1768b141a297b586eb4b149710ec5ce9337565ec0f4c478a183144e5ceb44f5",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed11_baseline_2026-07-30T08-41-27Z/run_metadata.json",
+        "metadata_sha256": "8cf7fbde1cd6c3c2a167dcba3b5a0b8b50fa585236b971458695096c1aa1a1ea",
+        "peak_rss_bytes": 344834048,
+        "runtime_seconds": 3
+      },
+      "before": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 440,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "delta": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0.0
+          },
+          "keypoints": {
+            "instances_gt": 0.0,
+            "instances_matched": 0.0,
+            "instances_pred": -440.0,
+            "iou_threshold": 0.0,
+            "keypoints_correct": 0.0,
+            "keypoints_labeled": 0.0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.0
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": null,
+            "counts": {
+              "classes": 0.0,
+              "gt_instances": 0.0,
+              "images": 0.0,
+              "pred_instances": 0.0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "seed": 11,
+      "thresholds": {
+        "add_adds_unit": "meters",
+        "iou": 0.5,
+        "rotation_success_degrees": 15.0,
+        "translation_success_meters": 0.1
+      },
+      "trained": {
+        "checkpoint_sha256": "69cab55e463cd660d0e2c9ea69744a425c411e569a7256f2c42b9199640259c2",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed11_ep1_2026-07-30T08-41-30Z/run_metadata.json",
+        "metadata_sha256": "e683d268855483cd7c855d6e8be106216f08d43a112c7ae665f79cb1b5685237",
+        "peak_rss_bytes": 1845903360,
+        "runtime_seconds": 9
+      },
+      "trained_epochs": 1
+    },
+    {
+      "after": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 0,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "baseline": {
+        "checkpoint_sha256": "716dceedf2742a28c304a43ca606e6a057fdf1c4e2ed378d1678c3945b8837a2",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed22_baseline_2026-07-30T08-41-39Z/run_metadata.json",
+        "metadata_sha256": "0c63c4bb1cb016fd36c194ec629ca392c9327a2895c2dab1ff792d480a64a780",
+        "peak_rss_bytes": 344915968,
+        "runtime_seconds": 3
+      },
+      "before": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 800,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "delta": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0.0
+          },
+          "keypoints": {
+            "instances_gt": 0.0,
+            "instances_matched": 0.0,
+            "instances_pred": -800.0,
+            "iou_threshold": 0.0,
+            "keypoints_correct": 0.0,
+            "keypoints_labeled": 0.0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.0
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": null,
+            "counts": {
+              "classes": 0.0,
+              "gt_instances": 0.0,
+              "images": 0.0,
+              "pred_instances": 0.0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "seed": 22,
+      "thresholds": {
+        "add_adds_unit": "meters",
+        "iou": 0.5,
+        "rotation_success_degrees": 15.0,
+        "translation_success_meters": 0.1
+      },
+      "trained": {
+        "checkpoint_sha256": "fe7cc92488ec279b02bcae2f6f5ede544cc3991b46961b3eea9fe431a0301855",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed22_ep1_2026-07-30T08-41-42Z/run_metadata.json",
+        "metadata_sha256": "0ff5432cf4746a473d63d75cb2e5f9e111b481d3ffef8303e9ce4497aa4cd352",
+        "peak_rss_bytes": 1881751552,
+        "runtime_seconds": 9
+      },
+      "trained_epochs": 1
+    },
+    {
+      "after": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 0,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "baseline": {
+        "checkpoint_sha256": "afb05c4f3aa29d3d7ae35a9312ef9ae3f1bd9b48fede5828846cb8fe62cece0a",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed33_baseline_2026-07-30T08-41-51Z/run_metadata.json",
+        "metadata_sha256": "e074a4d891cec270eb65310a7c6ba0b6049d7d583ee08075a862ee86b8e725d0",
+        "peak_rss_bytes": 344719360,
+        "runtime_seconds": 4
+      },
+      "before": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0
+          },
+          "keypoints": {
+            "instances_gt": 8,
+            "instances_matched": 0,
+            "instances_pred": 736,
+            "iou_threshold": 0.5,
+            "keypoints_correct": 0,
+            "keypoints_labeled": 0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.1
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": [
+              {
+                "ap@0.50": 0.0,
+                "ap@0.55": 0.0,
+                "ap@0.60": 0.0,
+                "ap@0.65": 0.0,
+                "ap@0.70": 0.0,
+                "ap@0.75": 0.0,
+                "ap@0.80": 0.0,
+                "ap@0.85": 0.0,
+                "ap@0.90": 0.0,
+                "ap@0.95": 0.0,
+                "id": 0,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "name": null
+              }
+            ],
+            "counts": {
+              "classes": 1,
+              "gt_instances": 8,
+              "images": 8,
+              "pred_instances": 0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "delta": {
+        "bbox": {
+          "ar100": 0.0,
+          "map50": 0.0,
+          "map50_95": 0.0,
+          "map75": 0.0
+        },
+        "task_native": {
+          "depth": {
+            "depth_abs_mean_m": null,
+            "depth_abs_median_m": null,
+            "pairs": 0.0
+          },
+          "keypoints": {
+            "instances_gt": 0.0,
+            "instances_matched": 0.0,
+            "instances_pred": -736.0,
+            "iou_threshold": 0.0,
+            "keypoints_correct": 0.0,
+            "keypoints_labeled": 0.0,
+            "mean_norm_l2": null,
+            "min_score": 0.0,
+            "pck": null,
+            "pck_threshold": 0.0
+          },
+          "pose6d": {
+            "add_mean": null,
+            "add_median": null,
+            "adds_mean": null,
+            "adds_median": null,
+            "depth_abs_mean": null,
+            "depth_abs_median": null,
+            "iou_mean": null,
+            "match_rate": 0.0,
+            "pose_success": null,
+            "rot_deg_mean": null,
+            "rot_deg_median": null,
+            "rot_success": null,
+            "trans_l2_mean": null,
+            "trans_l2_median": null,
+            "trans_success": null
+          },
+          "segmentation": {
+            "classes": null,
+            "counts": {
+              "classes": 0.0,
+              "gt_instances": 0.0,
+              "images": 0.0,
+              "pred_instances": 0.0
+            },
+            "map50": 0.0,
+            "map50_95": 0.0
+          }
+        }
+      },
+      "seed": 33,
+      "thresholds": {
+        "add_adds_unit": "meters",
+        "iou": 0.5,
+        "rotation_success_degrees": 15.0,
+        "translation_success_meters": 0.1
+      },
+      "trained": {
+        "checkpoint_sha256": "153209a5d8a3787ea3ef11bcd5b2a5bc9f4688fba17ba98b933769cd2bbd68b8",
+        "metadata": "/private/tmp/yolozu-evidence/bop-independent-maskgt-runs/seed33_ep1_2026-07-30T08-41-55Z/run_metadata.json",
+        "metadata_sha256": "56880136d7f0b17bd1f2e6da3f6e1b266c85787bedf7961b12dea70ef174bcef",
+        "peak_rss_bytes": 1825619968,
+        "runtime_seconds": 9
+      },
+      "trained_epochs": 1
+    }
+  ],
+  "schema_version": 1,
+  "seed_count": 3
+}

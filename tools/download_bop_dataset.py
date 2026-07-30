@@ -15,7 +15,7 @@ HF_DATASETS_BASE = "https://huggingface.co/datasets"
 DATASET_DEFAULT_ARCHIVES: dict[str, list[str]] = {
     # Common BOP dataset repos on HF use <dataset>_base.zip plus split-specific archives.
     # We keep this list minimal and allow overriding via --archives.
-    "tless": ["tless_base.zip", "tless_train_primesense.zip"],
+    "tless": ["tless_base.zip", "tless_models.zip", "tless_train_primesense.zip"],
     "lm": ["lm_base.zip", "lm_train_pbr.zip"],
 }
 
@@ -190,10 +190,31 @@ def main(argv: list[str] | None = None) -> int:
         encoding="utf-8",
     )
 
-    # Print dataset root hint if present.
-    ds_dir = out_dir / dataset
-    if ds_dir.exists():
-        print(ds_dir)
+    # Official BOP archives are not consistent about their top-level folder.
+    # T-LESS base metadata extracts under <out>/tless, while models and
+    # train_primesense extract directly under <out>. Prefer the directory that
+    # actually contains a split/model folder instead of assuming <out>/<id>.
+    nested = out_dir / dataset
+    direct_markers = [
+        out_dir / "models",
+        out_dir / "models_eval",
+        out_dir / "models_cad",
+        *sorted(out_dir.glob("train*")),
+        *sorted(out_dir.glob("test*")),
+        *sorted(out_dir.glob("val*")),
+    ]
+    nested_markers = [
+        nested / "models",
+        nested / "models_eval",
+        nested / "models_cad",
+        *sorted(nested.glob("train*")),
+        *sorted(nested.glob("test*")),
+        *sorted(nested.glob("val*")),
+    ]
+    if any(path.exists() for path in direct_markers):
+        print(out_dir)
+    elif any(path.exists() for path in nested_markers):
+        print(nested)
     else:
         print(out_dir)
     return 0
