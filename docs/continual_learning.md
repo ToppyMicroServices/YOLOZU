@@ -283,6 +283,31 @@ therefore established for this bounded result, while efficacy remains
 `not_established` and the decision remains `hold`. See the
 [confirmatory evidence report](../reports/sdft_confirmatory_evidence_2026-07-30.md).
 
+### Prospective response-selection + replay qualification (not yet run)
+
+The next study is frozen before execution at
+[`configs/continual/sdft_response_replay_preregistration.json`](../configs/continual/sdft_response_replay_preregistration.json).
+It uses unused seeds 88/99/111 and four ablations: `naive`, `sdft_response`,
+`replay`, and `sdft_response_replay`. Response selection keeps only teacher
+queries whose foreground confidence reaches `0.2` and exceeds the final
+no-object class, capped at 20 queries per image. Response distillation abstains
+below 2 selected queries. Replay is fixed to a
+32-record reservoir, a 0.25 sampling fraction, and a 16-record per-task cap.
+
+The runner records candidate/used query counts, abstention, and replay usage. The preregistered
+execution gate rejects a run when response methods select no foreground query,
+replay methods consume no old-task records on task 2, task-0 weights differ,
+the response abstention ratio exceeds `0.5`, or data order/budget differs. No result is reported yet; the existing
+confirmatory decision remains `hold`.
+See the [preregistration report](../reports/sdft_response_replay_preregistration_2026-08-01.md)
+for the frozen boundary without result data.
+
+```bash
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --spec configs/continual/sdft_response_replay_preregistration.json \
+  --output-dir /tmp/yolozu-sdft-response-replay
+```
+
 Run the fixed confirmatory spec explicitly:
 
 ```bash

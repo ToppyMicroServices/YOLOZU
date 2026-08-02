@@ -23,7 +23,16 @@ from yolozu.predictions.predictions_parity import compare_predictions
 from yolozu.tta.method_profiles import get_ttt_method_profile
 
 BOILERPLATE_DIR = repo_root / "configs" / "examples" / "ttt_compare"
-KNOWN_BOILERPLATES = ("tent", "mim", "mim_probe", "cotta", "eata", "sar")
+SUPPORTED_METHODS = ("tent", "mim", "cotta", "eata", "sar")
+KNOWN_BOILERPLATES = (
+    "tent",
+    "mim",
+    "mim_probe",
+    "cotta",
+    "eata",
+    "sar",
+    "detector_response",
+)
 
 
 def _now_utc() -> str:
@@ -132,7 +141,7 @@ def _resolve_boilerplate(token: str) -> tuple[str, Path, dict[str, Any]]:
         raise FileNotFoundError(f"boilerplate not found: {path}")
     payload = _load_json(path)
     method = str(payload.get("method") or "").strip().lower()
-    if method not in KNOWN_BOILERPLATES:
+    if method not in SUPPORTED_METHODS:
         raise ValueError(f"boilerplate {path} has unsupported method: {method!r}")
     return method, path, payload
 
@@ -149,7 +158,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--boilerplate",
         "--method",
         required=True,
-        help="Boilerplate name (tent/mim/mim_probe/cotta/eata/sar) or JSON path.",
+        help="Boilerplate name (tent/mim/mim_probe/cotta/eata/sar/detector_response) or JSON path.",
     )
     p.add_argument(
         "-d", "--dataset", "--data", required=True, help="YOLO-format dataset root."
@@ -1187,7 +1196,13 @@ def main(argv: list[str] | None = None) -> int:
             bbox_atol=float((boilerplate.get("compare") or {}).get("bbox_atol", 1e-4)),
         )
 
-        method_profile = get_ttt_method_profile(method)
+        detector_response = bool(
+            preset == "detector_response_safe"
+            or "--ttt-detector-response" in adapted_cmd
+        )
+        method_profile = get_ttt_method_profile(
+            method, detector_response=detector_response
+        )
         report: dict[str, Any] = {
             "schema_version": 1,
             "kind": "ttt_before_after_compare",

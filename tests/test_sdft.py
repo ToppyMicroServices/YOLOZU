@@ -104,7 +104,77 @@ class TestSDFT(unittest.TestCase):
         with self.assertRaises(ValueError):
             compute_sdft_loss(student, teacher, SdftConfig(temperature=0.0))
 
+    @unittest.skipIf(torch is None, "torch not installed")
+    def test_response_selection_limits_gradients_and_excludes_no_object(self):
+        student_logits = torch.tensor(
+            [[[2.0, 1.0, -1.0], [1.0, 0.0, 2.0]]], requires_grad=True
+        )
+        student_bbox = torch.ones(1, 2, 4, requires_grad=True)
+        teacher = {
+            "logits": torch.tensor([[[4.0, 0.0, -1.0], [0.0, 0.0, 3.0]]]),
+            "bbox": torch.zeros(1, 2, 4),
+        }
+        total, parts = compute_sdft_loss(
+            {"logits": student_logits, "bbox": student_bbox},
+            teacher,
+            SdftConfig(
+                keys=("logits", "bbox"),
+                response_selection=True,
+                response_conf_min=0.5,
+                response_topk=5,
+            ),
+        )
+        total.backward()
+        self.assertEqual(float(parts["sdft_selected_queries"]), 1.0)
+        self.assertEqual(float(parts["sdft_used_queries"]), 1.0)
+        self.assertEqual(float(parts["sdft_abstained"]), 0.0)
+        self.assertTrue(torch.count_nonzero(student_logits.grad[0, 0, :2]))
+        self.assertEqual(float(student_logits.grad[0, 0, -1]), 0.0)
+        self.assertEqual(int(torch.count_nonzero(student_logits.grad[0, 1])), 0)
+        self.assertTrue(torch.count_nonzero(student_bbox.grad[0, 0]))
+        self.assertEqual(int(torch.count_nonzero(student_bbox.grad[0, 1])), 0)
+
+    @unittest.skipIf(torch is None, "torch not installed")
+    def test_response_selection_zero_match_is_connected_zero(self):
+        logits = torch.zeros(1, 2, 3, requires_grad=True)
+        total, parts = compute_sdft_loss(
+            {"logits": logits},
+            {"logits": torch.tensor([[[0.0, 0.0, 4.0], [0.0, 0.0, 4.0]]])},
+            SdftConfig(
+                keys=("logits",),
+                response_selection=True,
+                response_conf_min=0.9,
+            ),
+        )
+        total.backward()
+        self.assertEqual(float(total.detach()), 0.0)
+        self.assertEqual(float(parts["sdft_selected_queries"]), 0.0)
+        self.assertEqual(float(parts["sdft_used_queries"]), 0.0)
+        self.assertEqual(float(parts["sdft_abstained"]), 1.0)
+        self.assertEqual(int(torch.count_nonzero(logits.grad)), 0)
+
+    @unittest.skipIf(torch is None, "torch not installed")
+    def test_response_selection_abstains_below_minimum(self):
+        logits = torch.tensor(
+            [[[2.0, 1.0, -1.0], [1.0, 0.0, 2.0]]], requires_grad=True
+        )
+        total, parts = compute_sdft_loss(
+            {"logits": logits},
+            {"logits": torch.tensor([[[4.0, 0.0, -1.0], [0.0, 0.0, 3.0]]])},
+            SdftConfig(
+                keys=("logits",),
+                response_selection=True,
+                response_conf_min=0.5,
+                response_min_selected=2,
+            ),
+        )
+        total.backward()
+        self.assertEqual(float(total.detach()), 0.0)
+        self.assertEqual(float(parts["sdft_selected_queries"]), 1.0)
+        self.assertEqual(float(parts["sdft_used_queries"]), 0.0)
+        self.assertEqual(float(parts["sdft_abstained"]), 1.0)
+        self.assertEqual(int(torch.count_nonzero(logits.grad)), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
-

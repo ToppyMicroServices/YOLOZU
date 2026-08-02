@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping, Literal
 
+from yolozu.response_selection import select_foreground_queries
+
 __all__ = [
     "SdftConfig",
     "KlMode",
@@ -82,6 +84,13 @@ class SdftConfig:
     # -- Segmentation --
     seg_weight: float = 1.0
 
+    # Detection-native response selection. The final logits class is treated
+    # as RT-DETR's no-object class and is not distilled as foreground.
+    response_selection: bool = False
+    response_conf_min: float = 0.2
+    response_topk: int = 20
+    response_min_selected: int = 1
+
 
 def _require_torch() -> None:
     if torch is None or F is None:  # pragma: no cover
@@ -113,6 +122,14 @@ def _validate_config(cfg: SdftConfig) -> None:
         raise ValueError("depth_weight must be >= 0")
     if cfg.seg_weight < 0.0:
         raise ValueError("seg_weight must be >= 0")
+    if cfg.response_conf_min < 0.0 or cfg.response_conf_min > 1.0:
+        raise ValueError("response_conf_min must be between 0 and 1")
+    if cfg.response_topk < 0:
+        raise ValueError("response_topk must be >= 0")
+    if cfg.response_min_selected < 1:
+        raise ValueError("response_min_selected must be >= 1")
+    if 0 < cfg.response_topk < cfg.response_min_selected:
+        raise ValueError("response_topk must be 0 or >= response_min_selected")
 
 
 def kl_divergence_from_logits(
@@ -324,6 +341,27 @@ def compute_sdft_loss(
 
     total = None
     parts: dict[str, torch.Tensor] = {}
+    response_mask = None
+    response_candidate_mask = None
+    response_confidence = None
+    response_selected_count = 0
+    response_abstained = False
+    if bool(cfg.response_selection):
+        teacher_logits = teacher_outputs.get("logits")
+        if not isinstance(teacher_logits, torch.Tensor):
+            raise ValueError("SDFT response selection requires teacher logits")
+        selected = select_foreground_queries(
+            teacher_logits,
+            confidence_min=float(cfg.response_conf_min),
+            topk=int(cfg.response_topk),
+        )
+        response_candidate_mask = selected.mask
+        response_mask = response_candidate_mask
+        response_confidence = selected.confidence
+        response_selected_count = selected.selected_count
+        response_abstained = response_selected_count < int(cfg.response_min_selected)
+        if response_abstained:
+            response_mask = torch.zeros_like(response_mask)
 
     for key in cfg.keys:
         if key not in student_outputs or key not in teacher_outputs:
@@ -342,6 +380,22 @@ def compute_sdft_loss(
         if t_val.device != s_val.device:
             t_val = t_val.to(device=s_val.device)
 
+        if response_mask is not None and tuple(s_val.shape[:2]) == tuple(response_mask.shape):
+            mask = response_mask.to(device=s_val.device)
+            if bool(mask.any()):
+                s_val = s_val[mask]
+                t_val = t_val[mask]
+                if key == "logits":
+                    if int(s_val.shape[-1]) < 2:
+                        raise ValueError("SDFT response selection requires a no-object logit")
+                    s_val = s_val[..., :-1]
+                    t_val = t_val[..., :-1]
+            else:
+                loss_k = s_val.sum() * 0.0
+                parts[f"loss_sdft_{key}"] = loss_k
+                total = loss_k if total is None else (total + loss_k)
+                continue
+
         loss_k = _compute_key_loss(key, s_val, t_val, cfg)
         w = _get_key_weight(cfg, key)
         loss_k = loss_k * w
@@ -358,6 +412,35 @@ def compute_sdft_loss(
     if float(cfg.weight) != 1.0:
         for name in list(parts.keys()):
             parts[name] = parts[name] * float(cfg.weight)
+    if response_mask is not None:
+        used_count = int(response_mask.sum().detach().cpu().item())
+        parts["sdft_selected_queries"] = torch.tensor(
+            float(response_selected_count), device=total.device, dtype=total.dtype
+        )
+        parts["sdft_used_queries"] = torch.tensor(
+            float(used_count), device=total.device, dtype=total.dtype
+        )
+        parts["sdft_selected_ratio"] = torch.tensor(
+            float(response_selected_count) / float(max(1, response_mask.numel())),
+            device=total.device,
+            dtype=total.dtype,
+        )
+        parts["sdft_abstained"] = torch.tensor(
+            1.0 if response_abstained else 0.0,
+            device=total.device,
+            dtype=total.dtype,
+        )
+        parts["sdft_response_min_selected"] = torch.tensor(
+            float(cfg.response_min_selected), device=total.device, dtype=total.dtype
+        )
+        selected_mean = 0.0
+        if response_selected_count > 0 and response_confidence is not None:
+            selected_mean = float(
+                response_confidence[response_candidate_mask].mean().detach().cpu().item()
+            )
+        parts["sdft_selected_confidence_mean"] = torch.tensor(
+            selected_mean, device=total.device, dtype=total.dtype
+        )
     parts["loss_sdft"] = total
     return total, parts
 

@@ -336,6 +336,10 @@ def main(argv: list[str] | None = None) -> int:
             "temperature": float(distill_cfg.get("temperature", 1.0)),
             "kl": str(distill_cfg.get("kl", "reverse")),
             "keys": str(distill_cfg.get("keys", "logits,bbox")),
+            "response_selection": bool(distill_cfg.get("response_selection", False)),
+            "response_conf_min": float(distill_cfg.get("response_conf_min", 0.2)),
+            "response_topk": int(distill_cfg.get("response_topk", 20)),
+            "response_min_selected": int(distill_cfg.get("response_min_selected", 1)),
         },
         "derpp": dict(derpp_cfg) if isinstance(derpp_cfg, dict) else {},
         "ewc": dict(ewc_cfg) if isinstance(ewc_cfg, dict) else {},
@@ -403,6 +407,11 @@ def main(argv: list[str] | None = None) -> int:
                 train_args.extend(["--self-distill-weight", str(float(run_meta["distill"]["weight"]))])
                 train_args.extend(["--self-distill-temperature", str(float(run_meta["distill"]["temperature"]))])
                 train_args.extend(["--self-distill-kl", str(run_meta["distill"]["kl"])])
+                if bool(run_meta["distill"]["response_selection"]):
+                    train_args.append("--self-distill-response-selection")
+                    train_args.extend(["--self-distill-response-conf-min", str(float(run_meta["distill"]["response_conf_min"]))])
+                    train_args.extend(["--self-distill-response-topk", str(int(run_meta["distill"]["response_topk"]))])
+                    train_args.extend(["--self-distill-response-min-selected", str(int(run_meta["distill"]["response_min_selected"]))])
 
         if lora_enabled:
             train_args.extend(["--lora-r", str(int(lora_cfg.get("r") or 0))])

@@ -20,7 +20,7 @@ from yolozu.tta.cli_options import (
     build_ttt_settings_from_args,
 )
 from yolozu.tta.integration import run_ttt
-from yolozu.tta.presets import apply_ttt_preset_args
+from yolozu.tta.presets import apply_ttt_preset_args, validate_ttt_requirements
 
 
 def _parse_args(argv):
@@ -494,6 +494,10 @@ def main(argv=None):
     domain_shift_recipe = _load_domain_shift_recipe(args.domain_shift_recipe)
 
     apply_ttt_preset_args(args)
+    try:
+        validate_ttt_requirements(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     if int(args.infer_batch_size) <= 0:
         raise SystemExit("--infer-batch-size must be >= 1")

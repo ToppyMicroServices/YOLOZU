@@ -38,6 +38,8 @@ class TestTTTCLIOptions(unittest.TestCase):
                 "0.5",
                 "--ttt-aux-temperature",
                 "1.3",
+                "--ttt-response-min-selected",
+                "3",
             ]
         )
         cfg = build_ttt_config_from_args(ns)
@@ -47,6 +49,7 @@ class TestTTTCLIOptions(unittest.TestCase):
         self.assertEqual(cfg.aux_depth_weight, 0.4)
         self.assertEqual(cfg.aux_seg_weight, 0.5)
         self.assertEqual(cfg.aux_temperature, 1.3)
+        self.assertEqual(cfg.response_min_selected, 3)
 
         settings = build_ttt_settings_from_args(ns)
         self.assertEqual(settings["sdft_task"], "depth")
@@ -55,6 +58,7 @@ class TestTTTCLIOptions(unittest.TestCase):
         self.assertEqual(settings["aux"]["depth_weight"], 0.4)
         self.assertEqual(settings["aux"]["seg_weight"], 0.5)
         self.assertEqual(settings["aux"]["temperature"], 1.3)
+        self.assertEqual(settings["detector_response"]["min_selected"], 3)
         self.assertIsNone(settings["include"])
         self.assertIsNone(settings["exclude"])
 
@@ -78,6 +82,8 @@ class TestTTTCLIOptions(unittest.TestCase):
         self.assertIn("0.75", cmd)
         self.assertIn("--ttt-aux-temperature", cmd)
         self.assertIn("0.9", cmd)
+        self.assertIn("--ttt-response-min-selected", cmd)
+        self.assertIn("1", cmd)
 
 
 if __name__ == "__main__":

@@ -23,8 +23,11 @@ class TestTrainMinimalSDFTArgs(unittest.TestCase):
         self.assertEqual(args.self_distill_kl, "reverse")
         self.assertEqual(args.self_distill_weight, 1.0)
         self.assertEqual(args.self_distill_temperature, 1.0)
+        self.assertFalse(args.self_distill_response_selection)
+        self.assertEqual(args.self_distill_response_conf_min, 0.2)
+        self.assertEqual(args.self_distill_response_topk, 20)
+        self.assertEqual(args.self_distill_response_min_selected, 1)
 
 
 if __name__ == "__main__":
     unittest.main()
-

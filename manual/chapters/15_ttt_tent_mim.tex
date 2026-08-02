@@ -281,12 +281,29 @@ Both CLIs expose \cmd{--ttt-preset}:
   \item \cmd{cotta_safe}: CoTTA with conservative update/restore guard rails
   \item \cmd{eata_safe}: EATA selective adaptation with anti-forgetting defaults
   \item \cmd{sar_safe}: SAR LoRA-first sharpness-aware adaptation defaults
+  \item \cmd{detector_response_safe}: selected-foreground class/box consistency with no-object exclusion
   \item \cmd{pose_safe}/\cmd{keypoints_safe}/\cmd{depth_safe}/\cmd{seg_safe}: task-aware Tent defaults
   \item \cmd{pose_mim}: pose-aware MIM defaults
 \end{itemize}
 
+\cmd{sar_safe} selects \cmd{lora_only}; it does not silently choose an adapter
+rank. Supply one explicitly. The exporter validates this before model setup:
+\begin{lstlisting}[language=bash]
+python3 tools/export_predictions.py \
+  --adapter rtdetr_pose --dataset data/smoke \
+  --config rtdetr_pose/configs/base.json \
+  --lora-r 4 --ttt --ttt-preset sar_safe \
+  --wrap --output reports/predictions_sar_lora.json
+\end{lstlisting}
+
 Presets override core knobs (method, steps, lr, update filter, max batches) and set conservative guard rails unless you override them.
 Use \cmd{--ttt-sdft-task \{pose,keypoints,depth,seg,full\}} and \cmd{--ttt-aux-*} weights to steer multi-task adaptation losses.
+For detection-native response TTT, \cmd{--ttt-response-min-selected} defaults
+to 1.  Below the configured count the response objective abstains.  With no
+auxiliary loss active, backward and optimizer execution are skipped and the
+normalization buffers are restored.  The report records both per-step and
+aggregate abstention.  A higher threshold is
+an evaluation choice, not an established quality improvement.
 
 \section{Method Catalog with concrete examples}
 The currently implemented parameter-updating TTT/CTTA methods are:
@@ -1419,6 +1436,24 @@ python3 -m yolozu export \
   --ttt-log-out reports/ttt_log_safe.json \
   --output reports/pred_ttt_safe.json
 \end{lstlisting}
+
+For detector-native foreground response consistency, use the concise compare
+boilerplate:
+\begin{lstlisting}[language=bash]
+./.venv/bin/python tools/run_ttt_compare.py \
+  --method detector_response \
+  --data data/smoke \
+  --weights /path/to/yolo26n-checkpoint.pt \
+  --out reports/ttt_compare/detector_response \
+  --image-size 320 --score-threshold 0.1
+\end{lstlisting}
+This profile excludes the final no-object class, selects confident foreground
+queries, and applies same-query class/box consistency across a weak photometric
+view.  In the bounded 2026-08-01 10-image diagnostic, clean COCO mAP50:95 moved
+from 0.000990 to 0.001188 and the shifted score from 0.000330 to 0.000396, with
+no guard stop.  The result is a single-checkpoint local observation, not an
+independent efficacy result; maturity remains Research and efficacy remains
+\cmd{not\_established}.
 
 \section{MIM-based adaptation (high level)}
 The geometry-aligned MIM branch (when enabled in the model) can be used for test-time adaptation.

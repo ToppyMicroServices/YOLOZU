@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "kind": "sdft_continual_qualification",
+  "study_phase": "prospective_preregistered",
+  "preregistered_at": "2026-08-02",
+  "draft_created_at": "2026-08-01",
+  "amendments_before_execution": [
+    {
+      "date": "2026-08-02",
+      "change": "Added response-selection abstention threshold and maximum abstention-ratio execution gate before any preregistered run."
+    }
+  ],
+  "prior_result_seeds_excluded": [11, 22, 33, 44, 55, 66, 77],
+  "model_config": "rtdetr_pose/configs/continual_coco128_tiny.json",
+  "source_dataset": {
+    "root": "data/coco128",
+    "split": "train2017"
+  },
+  "target_domain": {
+    "corruption": "gaussian_blur",
+    "severity": 3,
+    "transform_seed": 2026
+  },
+  "methods": ["naive", "sdft_response", "replay", "sdft_response_replay"],
+  "seeds": [88, 99, 111],
+  "initial_training": {
+    "epochs": 10,
+    "max_steps": 64,
+    "lr": 0.001
+  },
+  "train": {
+    "device": "cpu",
+    "amp": "none",
+    "image_size": 64,
+    "epochs": 1,
+    "max_steps": 20,
+    "batch_size": 2,
+    "lr": 0.0005,
+    "num_workers": 0,
+    "real_images": true,
+    "deterministic": true,
+    "use_matcher": true,
+    "task_aligner": "none",
+    "no_export_onnx": true
+  },
+  "sdft": {
+    "keys": "logits,bbox",
+    "weight": 1.0,
+    "temperature": 1.0,
+    "kl": "reverse",
+    "response_selection": true,
+    "response_conf_min": 0.2,
+    "response_topk": 20,
+    "response_min_selected": 2,
+    "no_object_semantics": "final_class_excluded_from_foreground_distillation"
+  },
+  "replay": {
+    "size": 32,
+    "fraction": 0.25,
+    "per_task_cap": 16,
+    "strategy": "reservoir"
+  },
+  "evaluation": {
+    "backend": "coco",
+    "metric_key": "map50_95",
+    "max_images": 128
+  },
+  "promotion_gates": {
+    "max_forgetting": 0.05,
+    "min_new_task_score": 0.000001,
+    "min_old_task_final": 0.000001
+  },
+  "efficacy_gates": {
+    "min_source_score": 0.000001,
+    "min_target_score": 0.000001,
+    "min_old_task_delta_sdft_minus_naive": 0.0,
+    "min_new_task_delta_sdft_minus_naive": -0.000001,
+    "require_strict_old_task_improvement": true
+  },
+  "execution_checks": {
+    "require_selected_foreground_queries": true,
+    "max_response_abstention_ratio": 0.5,
+    "require_replay_on_second_task": true,
+    "require_identical_task0_state": true,
+    "require_identical_train_order_and_budget": true
+  },
+  "claim_boundary": {
+    "efficacy": "not_established_until_preregistered_primary_and_independent_runs_pass",
+    "independent_reproduction_required": true,
+    "external_benchmark_required_for_promotion": true,
+    "research_only": true
+  }
+}

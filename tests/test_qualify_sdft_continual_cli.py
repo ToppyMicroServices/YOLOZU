@@ -89,6 +89,61 @@ class TestQualifySDFTContinualCLI(unittest.TestCase):
         self.assertFalse(set(spec["seeds"]) & set(spec["calibration_seeds_excluded"]))
         self.assertEqual(spec["seeds"], [44, 55, 66])
 
+    def test_response_replay_preregistration_is_prospective_and_unseen(self) -> None:
+        spec = json.loads(
+            (
+                self.repo_root
+                / "configs/continual/sdft_response_replay_preregistration.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(spec["study_phase"], "prospective_preregistered")
+        self.assertEqual(spec["preregistered_at"], "2026-08-02")
+        self.assertTrue(spec["amendments_before_execution"])
+        self.assertEqual(
+            spec["methods"],
+            ["naive", "sdft_response", "replay", "sdft_response_replay"],
+        )
+        self.assertFalse(set(spec["seeds"]) & set(spec["prior_result_seeds_excluded"]))
+        self.assertTrue(spec["sdft"]["response_selection"])
+        self.assertGreaterEqual(spec["sdft"]["response_min_selected"], 1)
+        self.assertLess(spec["execution_checks"]["max_response_abstention_ratio"], 1.0)
+        self.assertGreater(spec["replay"]["size"], 0)
+        self.assertGreater(spec["replay"]["fraction"], 0.0)
+
+    def test_preregistered_ablation_configs_separate_response_and_replay(self) -> None:
+        spec = json.loads(
+            (
+                self.repo_root
+                / "configs/continual/sdft_response_replay_preregistration.json"
+            ).read_text(encoding="utf-8")
+        )
+        common = {
+            "model_config": self.repo_root / spec["model_config"],
+            "source": self.repo_root / spec["source_dataset"]["root"],
+            "target": self.repo_root / spec["source_dataset"]["root"],
+            "split": spec["source_dataset"]["split"],
+            "train": spec["train"],
+            "sdft": spec["sdft"],
+            "replay": spec["replay"],
+            "seed": spec["seeds"][0],
+        }
+        configs = {
+            method: self.module._continual_config(method=method, **common)
+            for method in spec["methods"]
+        }
+        self.assertFalse(configs["naive"]["continual"]["distill"]["enabled"])
+        self.assertEqual(configs["naive"]["continual"]["replay_size"], 0)
+        self.assertTrue(configs["sdft_response"]["continual"]["distill"]["response_selection"])
+        self.assertEqual(
+            configs["sdft_response"]["continual"]["distill"]["response_min_selected"],
+            spec["sdft"]["response_min_selected"],
+        )
+        self.assertEqual(configs["sdft_response"]["continual"]["replay_size"], 0)
+        self.assertFalse(configs["replay"]["continual"]["distill"]["enabled"])
+        self.assertGreater(configs["replay"]["continual"]["replay_size"], 0)
+        self.assertTrue(configs["sdft_response_replay"]["continual"]["distill"]["response_selection"])
+        self.assertGreater(configs["sdft_response_replay"]["continual"]["replay_size"], 0)
+
     def test_efficacy_assessment_requires_every_seed(self) -> None:
         gates = {
             "min_source_score": 0.01,
@@ -133,8 +188,12 @@ class TestQualifySDFTContinualCLI(unittest.TestCase):
             "methods": ["naive", "sdft"],
             "train": {"max_steps": 20},
             "initial_training": {"epochs": 10},
+            "sdft": {"weight": 1.0},
+            "replay": None,
             "evaluation": {"backend": "coco"},
             "promotion_gates": {"max_forgetting": 0.05},
+            "efficacy_gates": {"min_source_score": 0.01},
+            "execution_checks": None,
         }
         assessment = {
             "passed": False,
@@ -161,6 +220,70 @@ class TestQualifySDFTContinualCLI(unittest.TestCase):
             )
         self.assertTrue(result["reproduced"])
         self.assertFalse(result["efficacy_supported"])
+
+        changed = json.loads(json.dumps(current))
+        changed["protocol"]["execution_checks"] = {
+            "max_response_abstention_ratio": 0.75
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            source_path = Path(tmp) / "source.json"
+            source_path.write_text(json.dumps(source), encoding="utf-8")
+            mismatch = self.module._independent_reproduction(
+                source_summary=source,
+                source_summary_path=source_path,
+                current_summary=changed,
+            )
+        self.assertFalse(mismatch["reproduced"])
+
+    def test_execution_assessment_enforces_abstention_and_replay(self) -> None:
+        runs = []
+        for method in ("naive", "sdft_response", "replay", "sdft_response_replay"):
+            response = {
+                "max_used_queries": 2.0,
+                "abstention_ratio": 0.25,
+            } if "sdft_response" in method else {}
+            runs.append(
+                {
+                    "seed": 88,
+                    "method": method,
+                    "checkpoints": [
+                        {
+                            "state_dict_sha256": "same-task0",
+                            "train_records_sha256": "same-order0",
+                            "replay_used": 0,
+                            "response_selection": {},
+                        },
+                        {
+                            "state_dict_sha256": f"task1-{method}",
+                            "train_records_sha256": "same-order1",
+                            "replay_used": 4 if method in ("replay", "sdft_response_replay") else 0,
+                            "response_selection": response,
+                        },
+                    ],
+                }
+            )
+        checks = {
+            "require_selected_foreground_queries": True,
+            "require_replay_on_second_task": True,
+            "require_identical_task0_state": True,
+            "require_identical_train_order_and_budget": True,
+            "max_response_abstention_ratio": 0.5,
+        }
+        passed = self.module._execution_assessment(
+            runs=runs,
+            comparisons=[],
+            checks=checks,
+        )
+        self.assertTrue(passed["passed"])
+
+        runs[-1]["checkpoints"][-1]["response_selection"]["abstention_ratio"] = 0.75
+        failed = self.module._execution_assessment(
+            runs=runs,
+            comparisons=[],
+            checks=checks,
+        )
+        self.assertFalse(failed["passed"])
+        self.assertFalse(failed["checks"]["response_abstention_ratio"])
 
 
 if __name__ == "__main__":

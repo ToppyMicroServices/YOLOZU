@@ -1,7 +1,7 @@
 # TTT before-after compare boilerplates
 
 The compare runner provides concise, fail-closed local diagnostics for Tent,
-MIM, CoTTA, EATA, and SAR. All methods remain Research. A completed run does
+MIM, CoTTA, EATA, SAR, and detector-native response consistency. All methods remain Research. A completed run does
 not establish efficacy.
 
 ## Shortest path
@@ -53,6 +53,7 @@ arbitrary bytes, `load.loaded=false`, and the noncanonical status value
 | CoTTA | `cotta` | `yolozu_phase1_variant` | Full checkpoint compatibility | Not established |
 | EATA | `eata` | `yolozu_phase1_variant` | Full checkpoint compatibility | Not established |
 | SAR | `sar` | `yolozu_phase1_variant` | Full checkpoint compatibility | Not established |
+| Detection response | `detector_response` | `yolozu_detection_response_v1` | Full YOLO26n compatibility and foreground/no-object logits | Not established |
 
 The `mim_probe` boilerplate remains a configuration alias for a YOLO26 MIM
 model. Its historical ignored dataset/checkpoint are not bundled and are not a
@@ -98,6 +99,23 @@ bash scripts/ttt_compare.sh \
 
 Replace `cotta` with `eata` or `sar` for those YOLOZU phase-1 variants.
 
+Detection-native response consistency:
+
+```bash
+bash scripts/ttt_compare.sh \
+  --method detector_response \
+  --data data/smoke \
+  --weights checkpoints/yolo26n.pt \
+  --out reports/ttt_compare/detector_response \
+  --image-size 320 --score-threshold 0.1
+```
+
+This boilerplate selects confident foreground queries, excludes the final
+no-object class, and keeps same-query class/box responses consistent across a
+weak photometric view. Its default minimum is one selected query; below the
+configured `--ttt-response-min-selected` value it records abstention and skips
+the pure response backward/optimizer update while restoring normalization buffers.
+
 ## Generated artifacts
 
 For `--out reports/ttt_compare/tent`, the runner writes:
@@ -123,6 +141,7 @@ The final report includes:
 - method profile and detector loss semantics
 - config/checkpoint/dataset provenance
 - before/after prediction counts and guard diagnostics
+- selected-query and abstention diagnostics
 
 If pycocotools is unavailable, fallback keys are `proxy_ap50` and
 `proxy_ap50_95`. They are non-COCO diagnostics and are never emitted as COCO

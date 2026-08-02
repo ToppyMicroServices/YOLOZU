@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "kind": "ttt_detection_native_local_diagnostic",
+  "date": "2026-08-01",
+  "source_base_commit": "40bae5cee4e3c4962650ff25e24b22e6a56ec422",
+  "method_profile": "yolozu_detection_response_v1",
+  "checkpoint": {
+    "status": "full",
+    "sha256": "f07f27c5191e974798744408eb7b361317f6ca6880e53eb0612d997f2e8e506b",
+    "clean_checkout_artifact": false
+  },
+  "protocol": {
+    "reset": "sample",
+    "steps": 3,
+    "update_filter": "norm_only",
+    "lr": 0.00005,
+    "response_conf_min": 0.2,
+    "response_topk": 20,
+    "score_threshold": 0.1,
+    "max_detections": 100,
+    "image_size": 320,
+    "images": 10,
+    "metric_backend": "pycocotools"
+  },
+  "results": {
+    "clean": {
+      "dataset_content_sha256": "0280a79bdcf4813f5d14698757a83a293d53adef05e63711f0c878ea68536453",
+      "baseline_map50_95": 0.0009900990099009901,
+      "adapted_map50_95": 0.0011881188118811883,
+      "delta_map50_95": 0.0001980198019801982,
+      "mean_selected_queries": 14.466666666666667,
+      "mean_selected_confidence": 0.3522692799568176
+    },
+    "shifted": {
+      "dataset_content_sha256": "d333513c7988734b46c9aca2135c535d17007d43b85e168be8b96efb25820122",
+      "baseline_map50_95": 0.00033003300330033,
+      "adapted_map50_95": 0.00039603960396039607,
+      "delta_map50_95": 0.00006600660066006604,
+      "mean_selected_queries": 15.4,
+      "mean_selected_confidence": 0.37693299949169157
+    }
+  },
+  "guards": {
+    "steps": 30,
+    "guard_breaches": 0,
+    "rollback_steps": 0,
+    "stopped_early": 0
+  },
+  "abstention_compatibility": {
+    "assessment": "posthoc_from_recorded_selected_query_counts",
+    "response_min_selected": 1,
+    "minimum_recorded_selected_queries": 12,
+    "steps_that_would_abstain": 0
+  },
+  "decision": {
+    "status": "hold",
+    "efficacy": "not_established",
+    "promotion_eligible": false,
+    "reasons": [
+      "single local checkpoint and environment",
+      "ten-image bounded fixture",
+      "no independent reproduction",
+      "checkpoint and shifted fixture are not clean-checkout artifacts"
+    ]
+  }
+}

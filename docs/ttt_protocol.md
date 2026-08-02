@@ -172,6 +172,41 @@ on normalization parameters is useful to inspect.
 **Concrete repo result:** execution, loss, update-norm, rollback, and prediction
 delta reporting are implemented and tested. Efficacy is not established.
 
+#### Detection-native response comparison
+
+The concise detector-aware route is:
+
+```bash
+./.venv/bin/python tools/run_ttt_compare.py \
+  --method detector_response \
+  --data data/smoke \
+  --weights /path/to/yolo26n-checkpoint.pt \
+  --out reports/ttt_compare/detector_response \
+  --image-size 320 --score-threshold 0.1
+```
+
+`detector_response_safe` uses Tent's guarded normalization update but replaces
+all-query entropy as the optimization target. It selects teacher queries whose
+foreground confidence is at least `0.2` and exceeds the final no-object class,
+then applies same-query foreground-class KL, sigmoid-box consistency, and a
+small selected-foreground entropy term across a deterministic weak photometric
+view. The method profile records these query and no-object semantics explicitly.
+`--ttt-response-min-selected` defaults to 1. Below that count, the response
+objective abstains; when no auxiliary task loss is active, YOLOZU skips both
+backward and optimizer execution and restores normalization buffers so neither
+optimizer momentum nor train-mode statistics move the adapted state.
+The report records per-step `response_abstained` / `update_abstained` values and
+aggregate `abstained_steps` / `abstention_ratio` values. Raising the minimum is
+a dataset-specific conservative choice, not a proven accuracy improvement.
+
+The 2026-08-01 10-image local diagnostic observed clean COCO mAP50:95
+`0.000990→0.001188` and shifted `0.000330→0.000396`; all 30 recorded steps had
+at least 12 selected queries, so none would abstain under the default minimum
+of 1. This uses one local checkpoint and one bounded
+fixture, has not been independently reproduced, and remains
+`efficacy=not_established`. See
+[`../reports/ttt_detection_native_evidence_2026-08-01.md`](../reports/ttt_detection_native_evidence_2026-08-01.md).
+
 Each auxiliary consistency target is a detached eval-mode snapshot from the
 same current image batch. Targets are not carried across batches. Structured or
 non-floating auxiliary batches are rejected so pose/keypoint/depth/seg labels
@@ -241,8 +276,22 @@ This does not establish robustness gain or efficacy.
 Presets are convenience configurations, not validated recommendations:
 
 - `safe`, `adapter_only`
-- `mim_safe`, `cotta_safe`, `eata_safe`, `sar_safe`
+- `mim_safe`, `cotta_safe`, `eata_safe`, `sar_safe`, `detector_response_safe`
 - `pose_safe`, `keypoints_safe`, `depth_safe`, `seg_safe`, `pose_mim`
+
+`sar_safe` uses the `lora_only` update scope and therefore requires an explicit
+LoRA rank. The exporter checks this before model setup and prints a short
+working example instead of failing later with an empty parameter selection:
+
+```bash
+python3 tools/export_predictions.py \
+  --adapter rtdetr_pose \
+  --dataset data/smoke \
+  --config rtdetr_pose/configs/base.json \
+  --lora-r 4 \
+  --ttt --ttt-preset sar_safe \
+  --wrap --output reports/predictions_sar_lora.json
+```
 
 `--ttt-reset sample` restores selected parameters for each image. Use it for
 order-independent diagnostics. `--ttt-reset stream` keeps adapted parameters

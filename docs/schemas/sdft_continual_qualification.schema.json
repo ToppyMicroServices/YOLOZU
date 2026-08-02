@@ -64,10 +64,22 @@
           "items": {"type": "integer"}
         },
         "methods": {
-          "const": ["naive", "sdft"]
+          "oneOf": [
+            {"const": ["naive", "sdft"]},
+            {"const": ["naive", "sdft_response", "replay", "sdft_response_replay"]}
+          ]
         },
         "same_data_order_and_budget": {
           "type": "boolean"
+        },
+        "sdft": {
+          "type": ["object", "null"]
+        },
+        "replay": {
+          "type": ["object", "null"]
+        },
+        "execution_checks": {
+          "type": ["object", "null"]
         }
       }
     },
@@ -93,6 +105,15 @@
           "type": "array",
           "minItems": 3
         }
+      }
+    },
+    "execution_assessment": {
+      "type": ["object", "null"],
+      "description": "Preregistered response-selection, abstention, replay, state, and ordering checks.",
+      "properties": {
+        "configured": {"type": "boolean"},
+        "passed": {"type": "boolean"},
+        "checks": {"type": "object"}
       }
     },
     "reproduction": {
