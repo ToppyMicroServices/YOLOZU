@@ -95,3 +95,13 @@ class TTTConfig:
     # construct a matching SdftConfig and use it as an aux distillation loss
     # against the model's own frozen-copy outputs (teacher-free SDFT).
     sdft_task: str | None = None
+
+    # Detection-native response consistency. The final class is treated as
+    # RT-DETR's no-object class and excluded from foreground distillation.
+    detector_response: bool = False
+    response_conf_min: float = 0.2
+    response_topk: int = 20
+    response_min_selected: int = 1
+    response_class_weight: float = 1.0
+    response_bbox_weight: float = 1.0
+    response_entropy_weight: float = 0.05

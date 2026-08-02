@@ -20,6 +20,22 @@ from rtdetr_pose.train_utils import decode_detections_from_outputs, save_checkpo
 logger = logging.getLogger(__name__)
 
 
+def combine_preweighted_distillation_losses(
+    supervised_loss: Any,
+    *,
+    sdft_total: Any | None = None,
+    derpp_total: Any | None = None,
+) -> Any:
+    """Add distillation totals that already include their global weights."""
+
+    total = supervised_loss
+    if sdft_total is not None:
+        total = total + sdft_total
+    if derpp_total is not None:
+        total = total + derpp_total
+    return total
+
+
 def setup_distillation_and_derpp(
     *,
     args: Any,
@@ -62,6 +78,10 @@ def setup_distillation_and_derpp(
             logits_weight=float(args.self_distill_logits_weight),
             bbox_weight=float(args.self_distill_bbox_weight),
             other_l1_weight=float(args.self_distill_other_l1_weight),
+            response_selection=bool(args.self_distill_response_selection),
+            response_conf_min=float(args.self_distill_response_conf_min),
+            response_topk=int(args.self_distill_response_topk),
+            response_min_selected=int(args.self_distill_response_min_selected),
         )
         if is_main:
             print(
@@ -71,6 +91,8 @@ def setup_distillation_and_derpp(
                 f"kl={sdft_cfg.kl}",
                 f"temp={sdft_cfg.temperature}",
                 f"weight={sdft_cfg.weight}",
+                f"response_selection={sdft_cfg.response_selection}",
+                f"response_min_selected={sdft_cfg.response_min_selected}",
             )
 
     derpp_cfg = None

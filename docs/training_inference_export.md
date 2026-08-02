@@ -751,6 +751,12 @@ python3 rtdetr_pose/tools/train_minimal.py \
 
 LoRA is enabled when `--lora-r > 0`.
 
+LoRA checkpoints store the base and adapter parameters in one model state. A
+reload must rebuild the same model and inject the same rank, alpha, and target
+before loading the checkpoint. The end-to-end regression suite covers one
+adapter-only update, full checkpoint save, exact prediction parity after
+reload, and a subsequent adapter-only update.
+
 | Key (CLI / config) | Type | Default | Choices / Notes |
 |---|---:|---:|---|
 | `--lora-r` / `lora_r` | int | `0` | `>0` enables LoRA |
@@ -798,6 +804,10 @@ Continual-learning regularizers in the same trainer:
 | `--self-distill-temperature` / `self_distill_temperature` | float | `1.0` | logits temperature |
 | `--self-distill-kl` / `self_distill_kl` | str | `reverse` | `forward`, `reverse`, `sym` |
 | `--self-distill-keys` / `self_distill_keys` | str | `logits,bbox` | comma list |
+| `--self-distill-response-selection` | bool | `false` | select confident foreground queries and exclude the final no-object class |
+| `--self-distill-response-conf-min` | float | `0.2` | minimum teacher foreground confidence |
+| `--self-distill-response-topk` | int | `20` | selected queries per image; `0` is unlimited |
+| `--self-distill-response-min-selected` | int | `1` | abstain from the response-distillation term below this selected-query count |
 | `--derpp` / `derpp` | bool | `false` | DER++ replay distillation |
 | `--derpp-teacher-key` / `derpp_teacher_key` | str | `derpp_teacher_npz` | record key/path |
 | `--derpp-weight` / `derpp_weight` | float | `1.0` | DER++ global weight |
@@ -806,6 +816,10 @@ Continual-learning regularizers in the same trainer:
 | `--si` / `si` | bool | `false` | SI regularizer |
 | `--si-c` / `si_c` | float | `1.0` | SI penalty weight |
 | `--si-epsilon` / `si_epsilon` | float | `1e-3` | SI stabilization |
+
+Response-selected SDFT records candidate and used query counts plus
+`sdft_abstained`. Abstention zeros only the distillation term; supervised and
+other configured training losses continue normally.
 
 ### Advanced training options
 
@@ -929,6 +943,7 @@ Optional TTT (test-time training, pre-prediction):
 	- python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-sdft-task pose --ttt-aux-pose-weight 0.5 --ttt-aux-temperature 1.0 --ttt-reset sample --wrap --output reports/predictions_ttt_pose.json
 - MIM (recommended safe preset + guard rails):
 	- python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-preset mim_safe --ttt-reset sample --wrap --output reports/predictions_ttt_mim_safe.json
+	- `sar_safe` is LoRA-only and requires an explicit rank: `python3 tools/export_predictions.py --adapter rtdetr_pose --lora-r 4 --ttt --ttt-preset sar_safe --wrap --output reports/predictions_ttt_sar_lora.json`
 - Bounded adaptation-cost run (stream + batch/chunk knobs):
   - python3 tools/export_predictions.py --adapter rtdetr_pose --ttt --ttt-preset safe --ttt-reset stream --ttt-batch-size 4 --ttt-max-batches 8 --wrap --output reports/predictions_ttt_stream_b4_k8.json
 

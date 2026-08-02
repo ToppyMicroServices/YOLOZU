@@ -43,6 +43,8 @@ class TTTReport:
     backward_calls: int = 0
     optimizer_steps: int = 0
     update_ratio: float = 0.0
+    abstained_steps: int = 0
+    abstention_ratio: float = 0.0
     memory: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -477,7 +479,9 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
             stopped_early=False,
             stop_reason=None,
             step_metrics=[],
-            method_profile=get_ttt_method_profile(str(config.method)),
+            method_profile=get_ttt_method_profile(
+                str(config.method), detector_response=bool(config.detector_response)
+            ),
             forward_calls=0,
             backward_calls=0,
             optimizer_steps=0,
@@ -517,6 +521,7 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
     forward_calls = 0
     backward_calls = 0
     optimizer_steps = 0
+    abstained_steps = 0
 
     was_training = bool(getattr(model, "training", False))
 
@@ -546,6 +551,13 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     aux_keypoints_weight=float(getattr(config, "aux_keypoints_weight", 0.0)),
                     aux_depth_weight=float(getattr(config, "aux_depth_weight", 0.0)),
                     aux_seg_weight=float(getattr(config, "aux_seg_weight", 0.0)),
+                    detector_response=bool(getattr(config, "detector_response", False)),
+                    response_conf_min=float(getattr(config, "response_conf_min", 0.2)),
+                    response_topk=int(getattr(config, "response_topk", 20)),
+                    response_min_selected=int(getattr(config, "response_min_selected", 1)),
+                    response_class_weight=float(getattr(config, "response_class_weight", 1.0)),
+                    response_bbox_weight=float(getattr(config, "response_bbox_weight", 1.0)),
+                    response_entropy_weight=float(getattr(config, "response_entropy_weight", 0.05)),
                 ),
             )
             params = list(getattr(runner, "params", []))
@@ -556,11 +568,19 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
             for step_idx in range(steps):
                 batch = batches[step_idx % len(batches)]
                 pre_snapshot = _snapshot_params(params)
-                pre_buffer_snapshot = _snapshot_norm_buffers(model) if bool(config.rollback_on_stop) else []
+                pre_buffer_snapshot = (
+                    _snapshot_norm_buffers(model)
+                    if bool(config.rollback_on_stop) or bool(config.detector_response)
+                    else []
+                )
                 metrics = runner.adapt_step(batch)
+                if bool(metrics.get("update_abstained", 0)):
+                    _restore_buffers(pre_buffer_snapshot)
+                    metrics["buffers_restored_on_abstention"] = 1.0
                 forward_calls += int(metrics.get("forward_calls", 1))
                 backward_calls += int(metrics.get("backward_calls", 1))
                 optimizer_steps += int(metrics.get("optimizer_steps", 1))
+                abstained_steps += int(metrics.get("update_abstained", 0))
                 loss_value = float(metrics.get("loss_total", metrics.get("loss_entropy", 0.0)))
                 if initial_loss is None:
                     initial_loss = loss_value
@@ -583,6 +603,16 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
                     "loss_aux_consistency",
                     "aux_target_current_batch",
                     "aux_student_view_mean_abs_delta",
+                    "loss_response_class",
+                    "loss_response_bbox",
+                    "loss_response_foreground_entropy",
+                    "response_selected_queries",
+                    "response_selected_ratio",
+                    "response_selected_confidence_mean",
+                    "response_min_selected",
+                    "response_abstained",
+                    "update_abstained",
+                    "buffers_restored_on_abstention",
                 ):
                     if metric_name in metrics:
                         step_entry[metric_name] = float(metrics[metric_name])
@@ -1269,10 +1299,14 @@ def run_ttt(adapter: Any, records: list[dict[str, Any]], *, config: TTTConfig) -
         stopped_early=bool(stopped_early),
         stop_reason=stop_reason,
         step_metrics=step_metrics,
-        method_profile=get_ttt_method_profile(method),
+        method_profile=get_ttt_method_profile(
+            method, detector_response=bool(config.detector_response)
+        ),
         forward_calls=int(forward_calls),
         backward_calls=int(backward_calls),
         optimizer_steps=int(optimizer_steps),
         update_ratio=float(optimizer_steps) / float(max(1, steps)),
+        abstained_steps=int(abstained_steps),
+        abstention_ratio=float(abstained_steps) / float(max(1, len(step_metrics))),
         memory=_memory_finish(memory_start),
     )

@@ -165,6 +165,18 @@ def add_ttt_arguments(parser: argparse.ArgumentParser, *, include_enable_flag: b
         default=1.0,
         help="Auxiliary consistency temperature (default: 1.0).",
     )
+    parser.add_argument(
+        "--ttt-detector-response",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Use selected foreground class/box response consistency for Tent (default: false).",
+    )
+    parser.add_argument("--ttt-response-conf-min", type=float, default=0.2, help="Minimum teacher foreground confidence (default: 0.2).")
+    parser.add_argument("--ttt-response-topk", type=int, default=20, help="Maximum selected foreground queries per image; 0 is unlimited (default: 20).")
+    parser.add_argument("--ttt-response-min-selected", type=int, default=1, help="Abstain from the detector-response update below this selected-query count (default: 1).")
+    parser.add_argument("--ttt-response-class-weight", type=float, default=1.0, help="Selected foreground class consistency weight (default: 1.0).")
+    parser.add_argument("--ttt-response-bbox-weight", type=float, default=1.0, help="Selected foreground box consistency weight (default: 1.0).")
+    parser.add_argument("--ttt-response-entropy-weight", type=float, default=0.05, help="Selected foreground entropy weight (default: 0.05).")
     parser.add_argument("--ttt-log-out", default=None, help="Optional path to write TTT log JSON.")
 
 
@@ -221,6 +233,13 @@ def build_ttt_config_from_args(args: Any) -> TTTConfig:
         aux_seg_weight=float(getattr(args, "ttt_aux_seg_weight", 0.0)),
         aux_temperature=float(getattr(args, "ttt_aux_temperature", 1.0)),
         sdft_task=_sdft_task_from_args(args),
+        detector_response=bool(getattr(args, "ttt_detector_response", False)),
+        response_conf_min=float(getattr(args, "ttt_response_conf_min", 0.2)),
+        response_topk=int(getattr(args, "ttt_response_topk", 20)),
+        response_min_selected=int(getattr(args, "ttt_response_min_selected", 1)),
+        response_class_weight=float(getattr(args, "ttt_response_class_weight", 1.0)),
+        response_bbox_weight=float(getattr(args, "ttt_response_bbox_weight", 1.0)),
+        response_entropy_weight=float(getattr(args, "ttt_response_entropy_weight", 0.05)),
     )
 
 
@@ -307,6 +326,15 @@ def build_ttt_settings_from_args(args: Any) -> dict[str, Any]:
             "seg_weight": float(getattr(args, "ttt_aux_seg_weight", 0.0)),
             "temperature": float(getattr(args, "ttt_aux_temperature", 1.0)),
         },
+        "detector_response": {
+            "enabled": bool(getattr(args, "ttt_detector_response", False)),
+            "confidence_min": float(getattr(args, "ttt_response_conf_min", 0.2)),
+            "topk": int(getattr(args, "ttt_response_topk", 20)),
+            "min_selected": int(getattr(args, "ttt_response_min_selected", 1)),
+            "class_weight": float(getattr(args, "ttt_response_class_weight", 1.0)),
+            "bbox_weight": float(getattr(args, "ttt_response_bbox_weight", 1.0)),
+            "entropy_weight": float(getattr(args, "ttt_response_entropy_weight", 0.05)),
+        },
     }
 
 
@@ -375,6 +403,13 @@ def build_ttt_cli_args(args: Any, *, include_enable_flag: bool = True) -> list[s
     cmd.extend(["--ttt-aux-depth-weight", str(float(args.ttt_aux_depth_weight))])
     cmd.extend(["--ttt-aux-seg-weight", str(float(args.ttt_aux_seg_weight))])
     cmd.extend(["--ttt-aux-temperature", str(float(args.ttt_aux_temperature))])
+    cmd.append("--ttt-detector-response" if bool(args.ttt_detector_response) else "--no-ttt-detector-response")
+    cmd.extend(["--ttt-response-conf-min", str(float(args.ttt_response_conf_min))])
+    cmd.extend(["--ttt-response-topk", str(int(args.ttt_response_topk))])
+    cmd.extend(["--ttt-response-min-selected", str(int(args.ttt_response_min_selected))])
+    cmd.extend(["--ttt-response-class-weight", str(float(args.ttt_response_class_weight))])
+    cmd.extend(["--ttt-response-bbox-weight", str(float(args.ttt_response_bbox_weight))])
+    cmd.extend(["--ttt-response-entropy-weight", str(float(args.ttt_response_entropy_weight))])
     if args.ttt_log_out:
         cmd.extend(["--ttt-log-out", str(args.ttt_log_out)])
     return cmd

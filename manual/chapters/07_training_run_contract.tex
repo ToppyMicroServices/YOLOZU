@@ -517,6 +517,12 @@ For the plain-language intuition and the difference between LoRA and QLoRA, see 
 \bottomrule
 \end{longtable}
 
+LoRA checkpoints retain the base and adapter tensors in one model state. Reload
+the same model architecture, inject the same rank, alpha, and target, and then
+load the checkpoint. The regression suite verifies an adapter-only update,
+checkpoint save, exact prediction parity after reload, and one additional
+adapter-only update.
+
 \section{Default configuration list (practical minimum)}
 The canonical default configurations are maintained within:
 \begin{itemize}

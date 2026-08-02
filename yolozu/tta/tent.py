@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover
 
 from .base import TTARunner
 from .ttt_mim import _count_params, select_parameters
+from yolozu.response_selection import detector_response_loss
 
 
 @dataclass
@@ -29,6 +30,14 @@ class TentConfig:
     aux_keypoints_weight: float = 0.0
     aux_depth_weight: float = 0.0
     aux_seg_weight: float = 0.0
+
+    detector_response: bool = False
+    response_conf_min: float = 0.2
+    response_topk: int = 20
+    response_min_selected: int = 1
+    response_class_weight: float = 1.0
+    response_bbox_weight: float = 1.0
+    response_entropy_weight: float = 0.05
 
 
 def _ensure_torch():
@@ -158,6 +167,13 @@ class TentRunner(TTARunner):
         _ensure_torch()
         self.model = model
         self.config = config or TentConfig()
+        if bool(self.config.detector_response):
+            if not 0.0 <= float(self.config.response_conf_min) <= 1.0:
+                raise ValueError("response_conf_min must be between 0 and 1")
+            if int(self.config.response_min_selected) < 1:
+                raise ValueError("response_min_selected must be >= 1")
+            if 0 < int(self.config.response_topk) < int(self.config.response_min_selected):
+                raise ValueError("response_topk must be 0 or >= response_min_selected")
         self.params = select_parameters(
             model,
             update_filter=self.config.update_filter,
@@ -174,6 +190,7 @@ class TentRunner(TTARunner):
             or float(self.config.aux_depth_weight) > 0
             or float(self.config.aux_seg_weight) > 0
         )
+        self._has_teacher = self._has_aux or bool(self.config.detector_response)
 
     def reset(self) -> None:
         for group in self.optimizer.param_groups:
@@ -184,7 +201,7 @@ class TentRunner(TTARunner):
         teacher_outputs: dict[str, Any] | None = None
         student_batch = batch
         view_delta = 0.0
-        if self._has_aux:
+        if self._has_teacher:
             self.model.eval()
             with torch.no_grad():
                 teacher_outputs = _extract_outputs(self.model(batch))
@@ -203,8 +220,24 @@ class TentRunner(TTARunner):
         entropy_loss = _entropy(logits)
         loss = entropy_loss
 
+        response_metrics: dict[str, float] = {}
+        if bool(self.config.detector_response):
+            if teacher_outputs is None:  # pragma: no cover - guarded by _has_teacher
+                raise RuntimeError("detector response TTT requires teacher outputs")
+            loss, response_metrics = detector_response_loss(
+                outputs,
+                teacher_outputs,
+                confidence_min=float(self.config.response_conf_min),
+                topk=int(self.config.response_topk),
+                min_selected=int(self.config.response_min_selected),
+                class_weight=float(self.config.response_class_weight),
+                bbox_weight=float(self.config.response_bbox_weight),
+                entropy_weight=float(self.config.response_entropy_weight),
+            )
+
         aux_metrics: dict[str, float] = {}
         aux_loss_value = 0.0
+        aux_loss = None
         if self._has_aux:
             aux_loss, aux_metrics = _aux_consistency_loss(
                 outputs,
@@ -218,19 +251,27 @@ class TentRunner(TTARunner):
                 aux_loss_value = float(aux_loss.detach().cpu().item())
                 loss = loss + aux_loss
 
+        update_abstained = bool(response_metrics.get("response_abstained", 0.0)) and aux_loss is None
         self.optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        grad_norm = _global_grad_norm(self.params)
-        grad_norm_clipped = grad_norm
-        if self.config.max_grad_norm is not None:
-            try:
-                torch.nn.utils.clip_grad_norm_(
-                    self.params, float(self.config.max_grad_norm)
-                )
-            except Exception:  # pragma: no cover
-                pass
-            grad_norm_clipped = _global_grad_norm(self.params)
-        self.optimizer.step()
+        grad_norm = 0.0
+        grad_norm_clipped = 0.0
+        backward_calls = 0.0
+        optimizer_steps = 0.0
+        if not update_abstained:
+            loss.backward()
+            backward_calls = 1.0
+            grad_norm = _global_grad_norm(self.params)
+            grad_norm_clipped = grad_norm
+            if self.config.max_grad_norm is not None:
+                try:
+                    torch.nn.utils.clip_grad_norm_(
+                        self.params, float(self.config.max_grad_norm)
+                    )
+                except Exception:  # pragma: no cover
+                    pass
+                grad_norm_clipped = _global_grad_norm(self.params)
+            self.optimizer.step()
+            optimizer_steps = 1.0
         result = {
             "loss_total": float(loss.detach().cpu()),
             "loss_entropy": float(entropy_loss.detach().cpu()),
@@ -239,11 +280,13 @@ class TentRunner(TTARunner):
             "aux_student_view_mean_abs_delta": float(view_delta),
             "grad_norm": float(grad_norm),
             "grad_norm_clipped": float(grad_norm_clipped),
-            "forward_calls": 2.0 if self._has_aux else 1.0,
-            "backward_calls": 1.0,
-            "optimizer_steps": 1.0,
+            "forward_calls": 2.0 if self._has_teacher else 1.0,
+            "backward_calls": backward_calls,
+            "optimizer_steps": optimizer_steps,
+            "update_abstained": 1.0 if update_abstained else 0.0,
         }
         result.update(aux_metrics)
+        result.update(response_metrics)
         return result
 
     def maybe_log(self) -> dict[str, Any] | None:

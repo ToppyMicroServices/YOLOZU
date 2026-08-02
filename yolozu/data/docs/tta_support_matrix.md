@@ -1,6 +1,6 @@
 # TTT / TTA support matrix
 
-Updated: 2026-07-26
+Updated: 2026-08-02
 
 Principles:
 - **Safe by default**: clear reset policies and guard rails.
@@ -56,6 +56,14 @@ element, including detector queries.
 These semantics differ from classification-only formulations and are part of
 the YOLOZU profile, not evidence of paper-level equivalence.
 
+The opt-in `detector_response` Tent variant instead selects teacher foreground
+queries that exceed both a confidence threshold and the final no-object
+probability. It keeps same-query class/box responses consistent across a weak
+view. If selection is below `--ttt-response-min-selected`, the response term
+abstains; without another auxiliary loss, backward and optimizer execution are
+skipped and normalization buffers are restored. This is a YOLOZU research
+variant with efficacy not established.
+
 ## Evidence boundary
 
 - `synthetic_fixture` sources may reproduce documentation layout only. They
@@ -98,6 +106,7 @@ be checked before any implementation decision.
 | Update budget | Implemented | Steps, batches, gradient/update norms, and loss guards are bounded |
 | Failure state | Implemented | Compare plans record `running`, `failed`, `not_executed`, or `completed` with the exact stage |
 | Checkpoint preflight | Implemented | Full config/checkpoint compatibility is required, including structured MIM support for a MIM compare |
+| Detection-response abstention | Implemented | Below the configured minimum selection count, the pure response update performs no backward or optimizer step, restores normalization buffers, and reports the abstention |
 | Metrics comparability | Conditional | COCO metrics require the COCO evaluator; fallback diagnostics remain explicitly named proxy AP |
 
 ## Where to go next

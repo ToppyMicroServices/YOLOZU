@@ -51,7 +51,7 @@ from yolozu.run_record import build_run_record, validate_run_record_contract
 from yolozu.sdft import compute_sdft_loss
 from rtdetr_pose.train_finalize import finalize_training
 from rtdetr_pose.train_records import enforce_strict_task_data, load_train_records, log_dataset_stats_and_update_run_record, maybe_write_run_meta_and_fracal_stats, resolve_val_records
-from rtdetr_pose.train_runtime import build_validation_loader, install_termination_handlers, run_validation, setup_continual_regularizers, setup_distillation_and_derpp
+from rtdetr_pose.train_runtime import build_validation_loader, combine_preweighted_distillation_losses, install_termination_handlers, run_validation, setup_continual_regularizers, setup_distillation_and_derpp
 
 # Re-exports from submodules (backward compatibility)
 from rtdetr_pose.train_cli import *  # noqa: F401,F403
@@ -1059,7 +1059,6 @@ def main(argv: list[str] | None = None) -> int:
                     if sdft_total is not None and sdft_parts is not None and sdft_cfg is not None:
                         loss_dict["loss_supervised"] = loss_supervised
                         loss_dict.update(sdft_parts)
-                        loss = loss + float(sdft_cfg.weight) * sdft_total
 
                     if derpp_total is not None and derpp_parts is not None and derpp_cfg is not None:
                         loss_dict["derpp_samples"] = torch.tensor(int(derpp_count), device=loss.device)
@@ -1071,7 +1070,12 @@ def main(argv: list[str] | None = None) -> int:
                                 continue
                             suffix = str(k).replace("loss_sdft_", "")
                             loss_dict[f"loss_derpp_{suffix}"] = v
-                        loss = loss + float(derpp_cfg.weight) * derpp_total
+
+                    loss = combine_preweighted_distillation_losses(
+                        loss_supervised,
+                        sdft_total=sdft_total,
+                        derpp_total=derpp_total,
+                    )
 
                     if ewc_state is not None and ewc_penalty_fn is not None and float(args.ewc_lambda) != 0.0:
                         ewc_raw = ewc_penalty_fn(unwrap_model(model), ewc_state)

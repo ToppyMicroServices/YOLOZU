@@ -35,6 +35,31 @@ def _write_tiny_rtdetr_pose_config(path: Path) -> None:
 
 
 class TestExportPredictionsLoRACLI(unittest.TestCase):
+    def test_sar_safe_without_lora_fails_before_model_setup(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "rtdetr_pose",
+                "--ttt",
+                "--ttt-preset",
+                "sar_safe",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+
+        self.assertNotEqual(proc.returncode, 0)
+        message = proc.stdout + proc.stderr
+        self.assertIn("LoRA-only TTT requires --lora-r > 0", message)
+        self.assertIn("--lora-r 4 --ttt --ttt-preset sar_safe", message)
+        self.assertNotIn("selected_param_count", message)
+
     def test_help_includes_lora_flags(self):
         script = repo_root / "tools" / "export_predictions.py"
         proc = subprocess.run(
@@ -66,8 +91,35 @@ class TestExportPredictionsLoRACLI(unittest.TestCase):
             "--torch-inference-mode",
             "--tta-flip-keypoints",
             "--tta-flip-pose-offsets",
+            "--ttt-response-min-selected",
         ):
             self.assertIn(flag, out)
+
+    def test_detector_response_invalid_abstention_fails_before_model_setup(self):
+        script = repo_root / "tools" / "export_predictions.py"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--adapter",
+                "rtdetr_pose",
+                "--ttt",
+                "--ttt-detector-response",
+                "--ttt-response-topk",
+                "1",
+                "--ttt-response-min-selected",
+                "2",
+            ],
+            cwd=str(repo_root),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        message = proc.stdout + proc.stderr
+        self.assertIn("top-k 0 or >= min-selected", message)
+        self.assertNotIn("checkpoint", message.lower())
 
     def test_unified_export_help_includes_compile_evidence_flags(self):
         script = repo_root / "tools" / "yolozu.py"

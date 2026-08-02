@@ -19,6 +19,7 @@ class TTTPreset:
     max_total_update_norm: float | None = None
     max_loss_ratio: float | None = None
     max_loss_increase: float | None = None
+    detector_response: bool = False
 
 
 PRESETS: dict[str, TTTPreset] = {
@@ -95,6 +96,19 @@ PRESETS: dict[str, TTTPreset] = {
         max_update_norm=1.0,
         max_total_update_norm=1.0,
         max_loss_ratio=3.0,
+    ),
+    "detector_response_safe": TTTPreset(
+        method="tent",
+        steps=3,
+        batch_size=1,
+        lr=5e-5,
+        update_filter="norm_only",
+        max_batches=1,
+        max_grad_norm=1.0,
+        max_update_norm=1.0,
+        max_total_update_norm=1.0,
+        max_loss_ratio=3.0,
+        detector_response=True,
     ),
     # -- Task-specific presets (pose / keypoints / depth / seg) --
     "pose_safe": TTTPreset(
@@ -197,6 +211,7 @@ def _ttt_core_is_defaultish(args: Any) -> bool:
         lr = float(getattr(args, "ttt_lr", 1e-4))
         update_filter = str(getattr(args, "ttt_update_filter", "all"))
         max_batches = int(getattr(args, "ttt_max_batches", 1))
+        detector_response = bool(getattr(args, "ttt_detector_response", False))
     except Exception:
         return False
 
@@ -206,6 +221,7 @@ def _ttt_core_is_defaultish(args: Any) -> bool:
         and abs(lr - 1e-4) <= 1e-12
         and update_filter == "all"
         and max_batches == 1
+        and not detector_response
     )
 
 
@@ -246,6 +262,7 @@ def apply_ttt_preset_args(args: Any) -> None:
         args.ttt_lr = float(preset.lr)
         args.ttt_update_filter = str(preset.update_filter)
         args.ttt_max_batches = int(preset.max_batches)
+        args.ttt_detector_response = bool(preset.detector_response)
         _fill_ttt_safety_defaults(args, preset=preset)
         return
 
@@ -263,7 +280,39 @@ def apply_ttt_preset_args(args: Any) -> None:
         args.ttt_lr = float(preset.lr)
         args.ttt_update_filter = str(preset.update_filter)
         args.ttt_max_batches = int(preset.max_batches)
+        args.ttt_detector_response = bool(preset.detector_response)
         _fill_ttt_safety_defaults(args, preset=preset)
         return
 
     _fill_ttt_safety_defaults(args, preset=preset)
+
+
+def validate_ttt_lora_requirements(args: Any) -> None:
+    """Fail before model setup when a LoRA-only TTT scope has no LoRA."""
+
+    if not bool(getattr(args, "ttt", False)):
+        return
+    update_filter = str(getattr(args, "ttt_update_filter", "all") or "all").lower()
+    lora_r = int(getattr(args, "lora_r", 0) or 0)
+    if update_filter == "lora_only" and lora_r <= 0:
+        raise ValueError(
+            "LoRA-only TTT requires --lora-r > 0. "
+            "Example: --lora-r 4 --ttt --ttt-preset sar_safe"
+        )
+
+
+def validate_ttt_requirements(args: Any) -> None:
+    """Fail before model setup for invalid cross-option TTT requirements."""
+
+    validate_ttt_lora_requirements(args)
+    if not bool(getattr(args, "ttt", False)) or not bool(
+        getattr(args, "ttt_detector_response", False)
+    ):
+        return
+    topk = int(getattr(args, "ttt_response_topk", 20))
+    min_selected = int(getattr(args, "ttt_response_min_selected", 1))
+    if min_selected < 1 or (0 < topk < min_selected):
+        raise ValueError(
+            "Detector-response TTT needs min-selected >= 1 and top-k 0 or >= min-selected. "
+            "Example: --ttt-response-topk 20 --ttt-response-min-selected 1"
+        )

@@ -187,6 +187,18 @@ clean/shift matrix を実行できます。生成された metric だけで Rese
 これは診断の再現性を示しますが、efficacy は示しません。詳細は
 [`docs/ttt_protocol.md`](docs/ttt_protocol.md)を参照してください。
 
+別の 2026-08-01 local diagnostic では、full compatibility を満たすより強い
+source checkpoint と detector-native response objective を使いました。final
+no-object class を除外し、信頼できる foreground query だけを選び、弱い
+photometric view 間で同一 query の class/box consistency を取ります。選択数が
+設定した最小値未満なら backward と optimizer を実行せず、normalization buffer
+を復元して abstain します。固定した
+10画像の clean/shifted fixture では COCO mAP50:95 がそれぞれ
+`0.000990→0.001188`、`0.000330→0.000396` となり、guard stop は0件でした。
+これは限定的な正の観測であり、独立 evidence や efficacy claim ではありません。
+詳細は [detection-native report](reports/ttt_detection_native_evidence_2026-08-01.md)
+を参照してください。
+
 ## Production Readiness
 
 - いま production-ready と言いやすいもの: prediction validation/evaluation と predictions interface contract

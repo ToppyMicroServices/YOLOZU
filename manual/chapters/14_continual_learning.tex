@@ -589,6 +589,24 @@ result, while efficacy remains \cmd{not\_established} and the decision remains
 \cmd{hold}.  The exact thresholds and metrics are recorded in
 \path{reports/sdft_confirmatory_evidence_2026-07-30.md}.
 
+The next study is prospectively frozen in
+\path{configs/continual/sdft_response_replay_preregistration.json}.  It uses
+unused seeds 88, 99, and 111 and separates naive, response-selected SDFT,
+replay-only, and combined groups.  Response selection excludes the final
+no-object class and keeps only confident foreground queries.  Execution gates
+also require non-zero used-query counts, an abstention ratio no greater than
+0.5, replay use on the second task, identical task-0 state, and identical data
+order/budget.  Response distillation contributes zero below two selected
+queries; supervised and other training losses continue.  The preregistration
+has not been executed, so it contains no result and does not change the current
+\cmd{hold} decision.
+
+\begin{lstlisting}[language=bash]
+./.venv/bin/python tools/qualify_sdft_continual.py \
+  --spec configs/continual/sdft_response_replay_preregistration.json \
+  --output-dir /tmp/yolozu-sdft-response-replay
+\end{lstlisting}
+
 \subsection{Evaluate}
 Evaluate forgetting and per-task metrics from the recorded run JSON:
 \begin{lstlisting}[language=bash]

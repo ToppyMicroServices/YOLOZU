@@ -71,6 +71,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
         self.assertIn("--score-threshold", proc.stdout)
         self.assertIn("--max-detections", proc.stdout)
         self.assertIn("--dataset-hash-mode", proc.stdout)
+        self.assertIn("detector_response", proc.stdout)
 
     def test_dry_run_writes_plan_for_all_builtin_boilerplates(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -79,7 +80,7 @@ class TestRunTTTCompareTool(unittest.TestCase):
             dataset = self._make_dataset(root)
             checkpoint = root / "dummy.ckpt"
             checkpoint.write_bytes(b"non-empty-checkpoint")
-            for method in ("tent", "mim", "mim_probe", "cotta", "eata", "sar"):
+            for method in ("tent", "mim", "mim_probe", "cotta", "eata", "sar", "detector_response"):
                 run_dir = root / method
                 with mock.patch.object(
                     run_ttt_compare,
@@ -109,7 +110,13 @@ class TestRunTTTCompareTool(unittest.TestCase):
                 self.assertTrue(plan_path.is_file(), f"missing plan for {method}")
                 payload = json.loads(plan_path.read_text(encoding="utf-8"))
                 self.assertEqual(payload.get("boilerplate_name"), method)
-                expected_method = "mim" if method == "mim_probe" else method
+                expected_method = (
+                    "mim"
+                    if method == "mim_probe"
+                    else "tent"
+                    if method == "detector_response"
+                    else method
+                )
                 self.assertEqual(payload.get("method"), expected_method)
                 commands = payload.get("commands") or {}
                 self.assertIn("baseline_export", commands)
@@ -148,6 +155,12 @@ class TestRunTTTCompareTool(unittest.TestCase):
                         prerequisites["configs"][0]["path"],
                         "rtdetr_pose/configs/base.json",
                     )
+                if method == "detector_response":
+                    self.assertEqual(
+                        prerequisites["configs"][0]["path"],
+                        "configs/yolo26_rtdetr_pose/yolo26n.json",
+                    )
+                    self.assertIn("--ttt-detector-response", adapted_command)
 
     def test_mim_and_sar_boilerplates_expand_real_update_args(self):
         repo_root = Path(__file__).resolve().parents[1]

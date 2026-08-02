@@ -88,6 +88,7 @@ TTT argument builder.
 | CoTTA | `--ttt-cotta-ema-momentum`, `--ttt-cotta-augmentations`, `--ttt-cotta-aggregation`, `--ttt-cotta-restore-prob`, `--ttt-cotta-restore-interval` |
 | EATA | `--ttt-eata-conf-min`, `--ttt-eata-entropy-min`, `--ttt-eata-entropy-max`, `--ttt-eata-min-valid-dets`, `--ttt-eata-anchor-lambda`, `--ttt-eata-selected-ratio-min`, `--ttt-eata-max-skip-streak` |
 | SAR | `--ttt-sar-rho`, `--ttt-sar-adaptive`, `--ttt-sar-first-step-scale` |
+| Detection-native response | `--ttt-detector-response`, `--ttt-response-conf-min`, `--ttt-response-topk`, `--ttt-response-min-selected`, `--ttt-response-class-weight`, `--ttt-response-bbox-weight`, `--ttt-response-entropy-weight` |
 | Task-aware auxiliary losses | `--ttt-sdft-task`, `--ttt-aux-pose-weight`, `--ttt-aux-keypoints-weight`, `--ttt-aux-depth-weight`, `--ttt-aux-seg-weight`, `--ttt-aux-temperature` |
 | Standalone report | `--ttt-log-out` |
 
@@ -116,6 +117,10 @@ used, elapsed time, losses, selected parameter count, warnings, stop state, and
 bounded step metrics. Method-specific fields include MIM mask ratio, CoTTA
 augmentation/EMA/restoration details, EATA selection and anchor metrics, and SAR
 first/second losses and perturbation data.
+Detection-native response steps also report selected-query counts and explicit
+response/update abstention. If the selected count is below the configured minimum
+and no auxiliary loss is active, backward and optimizer execution are skipped
+and normalization buffers are restored.
 
 When `--ttt-log-out` is used with `--ttt`, the same settings and report are written to
 a standalone JSON artifact.

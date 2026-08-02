@@ -843,6 +843,30 @@ def build_parser() -> argparse.ArgumentParser:
         default=1.0,
         help="Per-key L1 weight for any other distilled tensor outputs.",
     )
+    parser.add_argument(
+        "--self-distill-response-selection",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Distill only confident foreground queries that beat the final no-object class (default: false).",
+    )
+    parser.add_argument(
+        "--self-distill-response-conf-min",
+        type=float,
+        default=0.2,
+        help="Minimum teacher foreground confidence for selected-query distillation (default: 0.2).",
+    )
+    parser.add_argument(
+        "--self-distill-response-topk",
+        type=int,
+        default=20,
+        help="Maximum selected teacher queries per image; 0 is unlimited (default: 20).",
+    )
+    parser.add_argument(
+        "--self-distill-response-min-selected",
+        type=int,
+        default=1,
+        help="Abstain from response distillation below this selected-query count (default: 1).",
+    )
 
     # DER++ replay distillation (optional; requires per-sample teacher outputs in records)
     parser.add_argument(

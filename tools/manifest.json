@@ -5704,7 +5704,7 @@
           "required": false
         },
         {
-          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim).",
+          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, detector_response_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim); sar_safe requires --lora-r > 0.",
           "flag": "--ttt-preset",
           "kind": "string",
           "name": "ttt_preset",
@@ -5984,6 +5984,57 @@
           "flag": "--ttt-aux-temperature",
           "kind": "number",
           "name": "ttt_aux_temperature",
+          "required": false
+        },
+        {
+          "description": "Use selected foreground class/box response consistency and exclude the final no-object class.",
+          "flag": "--ttt-detector-response",
+          "kind": "string",
+          "name": "ttt_detector_response",
+          "required": false
+        },
+        {
+          "flag": "--no-ttt-detector-response",
+          "kind": "string",
+          "name": "no_ttt_detector_response",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-conf-min",
+          "kind": "number",
+          "name": "ttt_response_conf_min",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-topk",
+          "kind": "number",
+          "name": "ttt_response_topk",
+          "required": false
+        },
+        {
+          "default": 1,
+          "description": "Abstain from a pure detector-response update below this selected-query count.",
+          "flag": "--ttt-response-min-selected",
+          "kind": "number",
+          "name": "ttt_response_min_selected",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-class-weight",
+          "kind": "number",
+          "name": "ttt_response_class_weight",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-bbox-weight",
+          "kind": "number",
+          "name": "ttt_response_bbox_weight",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-entropy-weight",
+          "kind": "number",
+          "name": "ttt_response_entropy_weight",
           "required": false
         },
         {
@@ -12738,6 +12789,10 @@
         {
           "command": "./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification",
           "description": "Run the tracked three-seed naive-versus-SDFT-style sequence with real COCOeval."
+        },
+        {
+          "command": "./.venv/bin/python tools/qualify_sdft_continual.py --spec configs/continual/sdft_response_replay_preregistration.json --output-dir /tmp/yolozu-sdft-response-replay",
+          "description": "Run the prospectively registered naive/SDFT-response/replay/combined four-group qualification."
         }
       ],
       "id": "qualify_sdft_continual",
@@ -12807,7 +12862,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Qualify the repository's checkpoint-distillation continual lane against naive sequential fine-tuning across three fixed seeds, real COCOeval, identical data/order/budget, preregistered non-zero gates, and an optional independent reproduction.",
+      "summary": "Qualify checkpoint-distillation continual learning across fixed seeds and real COCOeval, including the prospective naive/SDFT-response/replay/combined ablation with selected-query and replay execution gates.",
       "tags": [
         "continual",
         "coco",
@@ -13902,7 +13957,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, prior-stage checkpoint self-distillation, replay/LoRA/EWC/SI options, and per-task checkpoint, teacher, data-order, time, memory, and command provenance.",
+      "summary": "Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, optional no-object-aware foreground response selection, replay/LoRA/EWC/SI, and per-task checkpoint, teacher, data-order, time, memory, and command provenance.",
       "tags": [
         "rtdetr_pose",
         "continual",
@@ -16101,6 +16156,10 @@
         {
           "command": "python3 tools/run_ttt_compare.py --method cotta --data data/smoke --weights checkpoints/rtdetr_pose.pt --out reports/ttt_compare/cotta -n 1 --dry-run",
           "description": "Validate dataset, config, and full checkpoint compatibility, then write a CoTTA execution plan without exporting predictions."
+        },
+        {
+          "command": "python3 tools/run_ttt_compare.py --method detector_response --data data/smoke --weights checkpoints/yolo26n.pt --out reports/ttt_compare/detector_response --image-size 320 --score-threshold 0.1",
+          "description": "Run the concise no-object-aware selected-foreground class/box consistency comparison."
         }
       ],
       "id": "run_ttt_compare",
@@ -16311,7 +16370,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, calibration/collapse diagnostics, and generated adaptation-cost counters.",
+      "summary": "Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, adaptation-cost counters, and a concise detector-response boilerplate for selected foreground class/box consistency.",
       "tags": [
         "ttt",
         "ctta",
@@ -19991,6 +20050,57 @@
           "required": false
         },
         {
+          "description": "Use selected foreground class/box response consistency and exclude the final no-object class.",
+          "flag": "--ttt-detector-response",
+          "kind": "string",
+          "name": "ttt_detector_response",
+          "required": false
+        },
+        {
+          "flag": "--no-ttt-detector-response",
+          "kind": "string",
+          "name": "no_ttt_detector_response",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-conf-min",
+          "kind": "number",
+          "name": "ttt_response_conf_min",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-topk",
+          "kind": "number",
+          "name": "ttt_response_topk",
+          "required": false
+        },
+        {
+          "default": 1,
+          "description": "Abstain from a pure detector-response update below this selected-query count.",
+          "flag": "--ttt-response-min-selected",
+          "kind": "number",
+          "name": "ttt_response_min_selected",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-class-weight",
+          "kind": "number",
+          "name": "ttt_response_class_weight",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-bbox-weight",
+          "kind": "number",
+          "name": "ttt_response_bbox_weight",
+          "required": false
+        },
+        {
+          "flag": "--ttt-response-entropy-weight",
+          "kind": "number",
+          "name": "ttt_response_entropy_weight",
+          "required": false
+        },
+        {
           "flag": "--ttt-batch-size",
           "kind": "number",
           "name": "ttt_batch_size",
@@ -20182,7 +20292,7 @@
           "required": false
         },
         {
-          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim).",
+          "description": "TTT preset profile (safe, adapter_only, mim_safe, cotta_safe, eata_safe, sar_safe, detector_response_safe, pose_safe, keypoints_safe, depth_safe, seg_safe, pose_mim); sar_safe requires --lora-r > 0.",
           "flag": "--ttt-preset",
           "kind": "string",
           "name": "ttt_preset",

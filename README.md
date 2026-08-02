@@ -185,6 +185,18 @@ All 30 matrix cells have been independently reproduced with zero semantic
 differences. This establishes diagnostic reproducibility, not efficacy. See
 [`docs/ttt_protocol.md`](docs/ttt_protocol.md).
 
+A separate 2026-08-01 local diagnostic uses a stronger, fully compatible
+source checkpoint and a detector-native response objective: it excludes the
+final no-object class, selects confident foreground queries, and keeps
+same-query class/box consistency across a weak photometric view. It abstains
+without backward or optimizer execution and restores normalization buffers
+when the selected count is below the
+configured minimum. On the fixed
+10-image clean/shifted fixtures, COCO mAP50:95 changed from
+`0.000990→0.001188` and `0.000330→0.000396`, respectively, with no guard stops.
+This is a positive bounded observation, not independent evidence or an efficacy
+claim. See the [detection-native report](reports/ttt_detection_native_evidence_2026-08-01.md).
+
 ## Production Readiness
 
 - Production-ready today: prediction validation/evaluation and the predictions interface contract

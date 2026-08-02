@@ -103,14 +103,40 @@ TTT_METHOD_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
-def get_ttt_method_profile(method: str) -> dict[str, Any]:
+def get_ttt_method_profile(method: str, *, detector_response: bool = False) -> dict[str, Any]:
     """Return an isolated machine-readable profile for a supported TTT method."""
 
     key = str(method or "").strip().lower()
     try:
-        return deepcopy(TTT_METHOD_PROFILES[key])
+        profile = deepcopy(TTT_METHOD_PROFILES[key])
     except KeyError as exc:
         choices = ", ".join(sorted(TTT_METHOD_PROFILES))
         raise ValueError(
             f"unknown TTT method profile {method!r}; expected one of: {choices}"
         ) from exc
+    if detector_response:
+        if key != "tent":
+            raise ValueError("detector response selection is currently supported only for tent")
+        profile["profile_id"] = "yolozu_detection_response_v1"
+        profile["loss"] = {
+            "primary": "selected_foreground_response_consistency",
+            "components": ["foreground_class_kl", "bbox_smooth_l1", "foreground_entropy"],
+            "detector_logits": {
+                "class_axis": "last",
+                "foreground_selection": "teacher_confidence_and_no_object_margin",
+                "query_semantics": "same-query consistency between original and weak photometric views",
+                "query_correspondence": "same_query_index_shape_preserving_view",
+                "no_object_semantics": "final_class_excluded_from_foreground_distillation",
+                "scope": "model_output_logits_and_bbox",
+            },
+        }
+        profile["abstention"] = {
+            "condition": "selected_foreground_queries_below_configured_minimum",
+            "effect": "skip_backward_and_optimizer_step_and_restore_norm_buffers_when_no_auxiliary_loss_is_active",
+            "report_fields": ["response_abstained", "update_abstained", "buffers_restored_on_abstention", "abstained_steps"],
+        }
+        profile["notes"] = (
+            "YOLOZU detector-native research variant with frozen original-view "
+            "responses; efficacy is not established."
+        )
+    return profile

@@ -70,6 +70,18 @@ directions, and gate outcomes. This removes the all-zero measurement blocker
 but does not establish efficacy; the result remains `hold`. See
 [`reports/sdft_confirmatory_evidence_2026-07-30.md`](../reports/sdft_confirmatory_evidence_2026-07-30.md).
 
+The next qualification is prospectively frozen in
+[`configs/continual/sdft_response_replay_preregistration.json`](../configs/continual/sdft_response_replay_preregistration.json).
+It uses unused seeds 88/99/111 and separates four groups: naive,
+response-selected SDFT, replay-only, and their combination. The final class is
+treated as no-object and excluded from foreground distillation; the second task
+abstains from response distillation below two selected queries, and fails its
+execution gate above a 0.5 abstention ratio. The second task must also prove
+that replay records were consumed. This preregistration has not
+been executed, so it contains no result and does not change the current `hold`.
+The fixed boundary is summarized in the
+[preregistration report](../reports/sdft_response_replay_preregistration_2026-08-01.md).
+
 For offline distillation and Hessian refinement, the shortest measured path is:
 
 ```bash

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a bounded naive-vs-SDFT continual-learning qualification."""
+"""Run a bounded SDFT/replay continual-learning qualification."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ repo_root = Path(__file__).resolve().parents[1]
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Run a repository-tracked three-seed naive-vs-SDFT sequence with "
+            "Run a repository-tracked three-seed SDFT/replay qualification with "
             "real COCOeval, promotion decisions, provenance, and a checksum bundle."
         )
     )
@@ -197,6 +197,46 @@ def _write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _selection_metrics(path: Path) -> dict[str, Any]:
+    selected_values: list[float] = []
+    used_values: list[float] = []
+    abstained_values: list[float] = []
+    if path.is_file():
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            if not raw.strip():
+                continue
+            payload = json.loads(raw)
+            losses = payload.get("losses") if isinstance(payload, dict) else None
+            if not isinstance(losses, dict):
+                continue
+            value = _number(losses.get("sdft_selected_queries"))
+            if value is not None:
+                selected_values.append(float(value))
+            used = _number(losses.get("sdft_used_queries"))
+            if used is not None:
+                used_values.append(float(used))
+            abstained = _number(losses.get("sdft_abstained"))
+            if abstained is not None:
+                abstained_values.append(float(abstained))
+    return {
+        "records": int(len(selected_values)),
+        "max_selected_queries": max(selected_values) if selected_values else None,
+        "mean_selected_queries": (
+            float(sum(selected_values) / len(selected_values)) if selected_values else None
+        ),
+        "max_used_queries": max(used_values) if used_values else None,
+        "mean_used_queries": (
+            float(sum(used_values) / len(used_values)) if used_values else None
+        ),
+        "abstained_records": int(sum(1 for value in abstained_values if value > 0.0)),
+        "abstention_ratio": (
+            float(sum(1 for value in abstained_values if value > 0.0) / len(abstained_values))
+            if abstained_values
+            else None
+        ),
+    }
+
+
 def _initial_checkpoint(
     *,
     output: Path,
@@ -260,23 +300,42 @@ def _continual_config(
     split: str,
     train: dict[str, Any],
     sdft: dict[str, Any],
+    replay: dict[str, Any],
     seed: int,
     method: str,
 ) -> dict[str, Any]:
+    response_distill = method in ("sdft_response", "sdft_response_replay")
+    replay_enabled = method in ("replay", "sdft_response_replay")
     return {
         "schema_version": 1,
         "model_config": str(model_config),
         "train": dict(train),
         "continual": {
             "seed": int(seed),
-            "replay_size": 0,
-            "replay_strategy": "reservoir",
+            "replay_size": int(replay.get("size", 0)) if replay_enabled else 0,
+            "replay_strategy": str(replay.get("strategy", "reservoir")),
+            "replay_fraction": (
+                float(replay["fraction"])
+                if replay_enabled and replay.get("fraction") is not None
+                else None
+            ),
+            "replay_per_task_cap": (
+                int(replay["per_task_cap"])
+                if replay_enabled and replay.get("per_task_cap") is not None
+                else None
+            ),
             "distill": {
-                "enabled": method == "sdft",
+                "enabled": method in ("sdft", "sdft_response", "sdft_response_replay"),
                 "keys": str(sdft["keys"]),
                 "weight": float(sdft["weight"]),
                 "temperature": float(sdft["temperature"]),
                 "kl": str(sdft["kl"]),
+                "response_selection": bool(
+                    response_distill and sdft.get("response_selection", False)
+                ),
+                "response_conf_min": float(sdft.get("response_conf_min", 0.2)),
+                "response_topk": int(sdft.get("response_topk", 20)),
+                "response_min_selected": int(sdft.get("response_min_selected", 1)),
             },
         },
         "tasks": [
@@ -305,6 +364,7 @@ def _run_method(
     split: str,
     train: dict[str, Any],
     sdft: dict[str, Any],
+    replay: dict[str, Any],
     evaluation: dict[str, Any],
     gates: dict[str, Any],
     initial_checkpoint: Path,
@@ -323,13 +383,13 @@ def _run_method(
             split=split,
             train=train,
             sdft=sdft,
+            replay=replay,
             seed=seed,
             method=method,
         ),
     )
     run_dir = method_dir / "run"
-    train_seconds = _run(
-        [
+    train_command = [
             sys.executable,
             str(repo_root / "rtdetr_pose/tools/train_continual.py"),
             "--config",
@@ -338,9 +398,17 @@ def _run_method(
             str(run_dir),
             "--initial-checkpoint",
             str(initial_checkpoint),
-            "--replay-size",
-            "0",
-        ],
+        ]
+    if method in ("replay", "sdft_response_replay"):
+        train_command.extend(["--replay-size", str(int(replay["size"]))])
+        if replay.get("fraction") is not None:
+            train_command.extend(["--replay-fraction", str(float(replay["fraction"]))])
+        if replay.get("per_task_cap") is not None:
+            train_command.extend(["--replay-per-task-cap", str(int(replay["per_task_cap"]))])
+    else:
+        train_command.extend(["--replay-size", "0"])
+    train_seconds = _run(
+        train_command,
         label=f"seed {seed} {method}: train source then target",
     )
     run_json = run_dir / "continual_run.json"
@@ -395,6 +463,7 @@ def _run_method(
     checkpoints = []
     for task in tasks:
         checkpoint = Path(str(task["checkpoint"]))
+        selection_metrics_path = checkpoint.parent / "metrics.jsonl"
         checkpoints.append(
             {
                 "path": checkpoint.relative_to(output_dir).as_posix(),
@@ -406,6 +475,8 @@ def _run_method(
                 "val_records_sha256": task.get("val_records_sha256"),
                 "train_seconds": task.get("train_seconds"),
                 "child_peak_rss": task.get("child_peak_rss"),
+                "replay_used": task.get("replay_used"),
+                "response_selection": _selection_metrics(selection_metrics_path),
             }
         )
     return {
@@ -473,6 +544,7 @@ def _comparison(naive: dict[str, Any], sdft: dict[str, Any]) -> dict[str, Any]:
     sdft_task0 = sdft["checkpoints"][0]
     return {
         "seed": naive["seed"],
+        "candidate_method": str(sdft.get("method") or "sdft"),
         "task0_state_identical": naive_task0["state_dict_sha256"] == sdft_task0["state_dict_sha256"],
         "task0_train_order_identical": naive_task0["train_records_sha256"] == sdft_task0["train_records_sha256"],
         "task1_train_order_identical": (
@@ -487,11 +559,52 @@ def _comparison(naive: dict[str, Any], sdft: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _ablation_comparison(reference: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+    reference_summary = reference.get("summary") if isinstance(reference.get("summary"), dict) else {}
+    candidate_summary = candidate.get("summary") if isinstance(candidate.get("summary"), dict) else {}
+
+    def delta(key: str) -> float | None:
+        left = _number(reference_summary.get(key))
+        right = _number(candidate_summary.get(key))
+        return None if left is None or right is None else float(right - left)
+
+    reference_matrix = reference.get("matrix_values")
+    candidate_matrix = candidate.get("matrix_values")
+    old_delta = None
+    new_delta = None
+    if (
+        isinstance(reference_matrix, list)
+        and isinstance(candidate_matrix, list)
+        and reference_matrix
+        and candidate_matrix
+        and isinstance(reference_matrix[-1], list)
+        and isinstance(candidate_matrix[-1], list)
+    ):
+        ref_old = _number(reference_matrix[-1][0])
+        cand_old = _number(candidate_matrix[-1][0])
+        ref_new = _number(reference_matrix[-1][-1])
+        cand_new = _number(candidate_matrix[-1][-1])
+        old_delta = None if ref_old is None or cand_old is None else float(cand_old - ref_old)
+        new_delta = None if ref_new is None or cand_new is None else float(cand_new - ref_new)
+    return {
+        "seed": int(reference["seed"]),
+        "reference_method": str(reference["method"]),
+        "candidate_method": str(candidate["method"]),
+        "final_old_task_delta": old_delta,
+        "final_new_task_delta": new_delta,
+        "avg_acc_delta": delta("avg_acc"),
+        "forgetting_delta": delta("forgetting"),
+        "bwt_delta": delta("bwt"),
+        "fwt_delta": delta("fwt"),
+    }
+
+
 def _efficacy_assessment(
     *,
     comparisons: list[dict[str, Any]],
     runs: list[dict[str, Any]],
     gates: dict[str, Any] | None,
+    candidate_method: str = "sdft",
 ) -> dict[str, Any]:
     if not isinstance(gates, dict):
         return {
@@ -509,7 +622,7 @@ def _efficacy_assessment(
     sdft_by_seed = {
         int(run["seed"]): run
         for run in runs
-        if str(run.get("method")) == "sdft"
+        if str(run.get("method")) == str(candidate_method)
     }
     seed_results: list[dict[str, Any]] = []
     for comparison in comparisons:
@@ -549,6 +662,69 @@ def _efficacy_assessment(
     }
 
 
+def _execution_assessment(
+    *,
+    runs: list[dict[str, Any]],
+    comparisons: list[dict[str, Any]],
+    checks: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(checks, dict):
+        return {"configured": False, "passed": True, "checks": {}}
+
+    response_runs = [
+        run for run in runs if str(run.get("method")) in ("sdft_response", "sdft_response_replay")
+    ]
+    replay_runs = [
+        run for run in runs if str(run.get("method")) in ("replay", "sdft_response_replay")
+    ]
+    selected_ok = all(
+        _number(((run.get("checkpoints") or [{}, {}])[-1].get("response_selection") or {}).get("max_used_queries"))
+        is not None
+        and float((run["checkpoints"][-1]["response_selection"])["max_used_queries"]) > 0.0
+        for run in response_runs
+    ) and bool(response_runs)
+    max_abstention_ratio = _number(checks.get("max_response_abstention_ratio"))
+    abstention_ok = all(
+        _number(((run.get("checkpoints") or [{}, {}])[-1].get("response_selection") or {}).get("abstention_ratio"))
+        is not None
+        and float((run["checkpoints"][-1]["response_selection"])["abstention_ratio"])
+        <= float(max_abstention_ratio)
+        for run in response_runs
+    ) if max_abstention_ratio is not None else True
+    replay_ok = all(
+        int((run.get("checkpoints") or [{}, {}])[-1].get("replay_used") or 0) > 0
+        for run in replay_runs
+    ) and bool(replay_runs)
+    runs_by_seed: dict[int, list[dict[str, Any]]] = {}
+    for run in runs:
+        runs_by_seed.setdefault(int(run["seed"]), []).append(run)
+    task0_ok = bool(runs_by_seed) and all(
+        len({str(group["checkpoints"][0]["state_dict_sha256"]) for group in seed_runs}) == 1
+        for seed_runs in runs_by_seed.values()
+    )
+    order_ok = bool(runs_by_seed) and all(
+        len({str(group["checkpoints"][0]["train_records_sha256"]) for group in seed_runs}) == 1
+        and len({str(group["checkpoints"][1]["train_records_sha256"]) for group in seed_runs}) == 1
+        for seed_runs in runs_by_seed.values()
+    )
+    results = {
+        "selected_foreground_queries": (
+            selected_ok if bool(checks.get("require_selected_foreground_queries")) else True
+        ),
+        "replay_on_second_task": (
+            replay_ok if bool(checks.get("require_replay_on_second_task")) else True
+        ),
+        "response_abstention_ratio": abstention_ok,
+        "identical_task0_state": (
+            task0_ok if bool(checks.get("require_identical_task0_state")) else True
+        ),
+        "identical_train_order_and_budget": (
+            order_ok if bool(checks.get("require_identical_train_order_and_budget")) else True
+        ),
+    }
+    return {"configured": True, "passed": all(results.values()), "checks": results}
+
+
 def _independent_reproduction(
     *,
     source_summary: dict[str, Any],
@@ -586,7 +762,20 @@ def _independent_reproduction(
 
     protocol_match = {
         key: source_protocol.get(key) == current_protocol.get(key)
-        for key in ("seeds", "methods", "train", "initial_training", "evaluation", "promotion_gates")
+        for key in (
+            "seeds",
+            "methods",
+            "train",
+            "initial_training",
+            "sdft",
+            "replay",
+            "evaluation",
+            "promotion_gates",
+            "efficacy_gates",
+            "execution_checks",
+            "study_phase",
+            "preregistered_at",
+        )
     }
     direction_match = directions(source_assessment) == directions(current_assessment)
     reproduced = bool(all(protocol_match.values()) and direction_match)
@@ -678,8 +867,25 @@ def main(argv: list[str] | None = None) -> int:
     methods = spec.get("methods")
     if not isinstance(seeds, list) or len(seeds) < 3:
         raise SystemExit("spec.seeds must contain at least three seeds")
-    if methods != ["naive", "sdft"]:
-        raise SystemExit("spec.methods must be exactly ['naive', 'sdft']")
+    supported_method_pairs = (
+        ["naive", "sdft"],
+        ["naive", "sdft_response", "replay", "sdft_response_replay"],
+    )
+    if methods not in supported_method_pairs:
+        raise SystemExit(
+            "spec.methods must be ['naive', 'sdft'] or "
+            "['naive', 'sdft_response', 'replay', 'sdft_response_replay']"
+        )
+    execution_checks = spec.get("execution_checks")
+    if isinstance(execution_checks, dict):
+        max_abstention_ratio = _number(
+            execution_checks.get("max_response_abstention_ratio")
+        )
+        if max_abstention_ratio is not None and not 0.0 <= max_abstention_ratio <= 1.0:
+            raise SystemExit(
+                "spec.execution_checks.max_response_abstention_ratio must be between 0 and 1"
+            )
+    candidate_method = str(methods[-1])
     source_summary_path: Path | None = None
     source_summary: dict[str, Any] | None = None
     if args.role == "independent":
@@ -724,6 +930,7 @@ def main(argv: list[str] | None = None) -> int:
 
     runs: list[dict[str, Any]] = []
     comparisons: list[dict[str, Any]] = []
+    ablation_comparisons: list[dict[str, Any]] = []
     initial_records: list[dict[str, Any]] = []
     for raw_seed in seeds:
         seed = int(raw_seed)
@@ -757,6 +964,7 @@ def main(argv: list[str] | None = None) -> int:
                 split=split,
                 train=train,
                 sdft=spec["sdft"],
+                replay=(spec.get("replay") if isinstance(spec.get("replay"), dict) else {}),
                 evaluation=evaluation,
                 gates=gates,
                 initial_checkpoint=checkpoint,
@@ -765,7 +973,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             runs.append(result)
             seed_runs[str(method)] = result
-        comparisons.append(_comparison(seed_runs["naive"], seed_runs["sdft"]))
+        comparisons.append(_comparison(seed_runs["naive"], seed_runs[candidate_method]))
+        for reference_method in ("naive", "sdft_response", "replay"):
+            if reference_method in seed_runs and reference_method != candidate_method:
+                ablation_comparisons.append(
+                    _ablation_comparison(
+                        seed_runs[reference_method], seed_runs[candidate_method]
+                    )
+                )
 
     fairness_ok = all(
         item["task0_state_identical"]
@@ -778,7 +993,16 @@ def main(argv: list[str] | None = None) -> int:
         comparisons=comparisons,
         runs=runs,
         gates=spec.get("efficacy_gates"),
+        candidate_method=candidate_method,
     )
+    execution_assessment = _execution_assessment(
+        runs=runs,
+        comparisons=comparisons,
+        checks=(spec.get("execution_checks") if isinstance(spec.get("execution_checks"), dict) else None),
+    )
+    if not bool(execution_assessment.get("passed")):
+        efficacy_assessment["passed"] = False
+        efficacy_assessment["execution_checks_passed"] = False
     summary = {
         "schema_version": 1,
         "kind": "sdft_continual_qualification",
@@ -807,14 +1031,22 @@ def main(argv: list[str] | None = None) -> int:
             "methods": list(methods),
             "train": train,
             "initial_training": initial_training,
+            "sdft": spec.get("sdft"),
+            "replay": spec.get("replay"),
             "evaluation": evaluation,
             "promotion_gates": gates,
+            "efficacy_gates": spec.get("efficacy_gates"),
+            "execution_checks": spec.get("execution_checks"),
+            "study_phase": spec.get("study_phase"),
+            "preregistered_at": spec.get("preregistered_at"),
             "same_data_order_and_budget": fairness_ok,
         },
         "initial_checkpoints": initial_records,
         "runs": runs,
         "comparisons": comparisons,
+        "ablation_comparisons": ablation_comparisons,
         "efficacy_assessment": efficacy_assessment,
+        "execution_assessment": execution_assessment,
         "decision": {
             "status": "hold",
             "efficacy": "not_established",

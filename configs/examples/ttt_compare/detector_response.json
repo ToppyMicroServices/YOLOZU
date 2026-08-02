@@ -1,0 +1,23 @@
+{
+  "method": "tent",
+  "preset": "detector_response_safe",
+  "reset": "sample",
+  "compare": {
+    "iou_thresh": 0.99,
+    "score_atol": 0.0001,
+    "bbox_atol": 0.0001
+  },
+  "common_export_args": [
+    "--config",
+    "configs/yolo26_rtdetr_pose/yolo26n.json"
+  ],
+  "extra_export_args": [
+    "--ttt-detector-response",
+    "--ttt-response-conf-min",
+    "0.2",
+    "--ttt-response-topk",
+    "20",
+    "--ttt-response-min-selected",
+    "1"
+  ]
+}
