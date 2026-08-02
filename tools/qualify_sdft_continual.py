@@ -74,16 +74,17 @@ def _repo_path(value: str, *, kind: str, directory: bool = False) -> Path:
     return path
 
 
-def _fresh_dir(value: str) -> Path:
+def _fresh_dir(value: str, *, create: bool = True) -> Path:
     raw = Path(value).expanduser()
     path = raw.resolve() if raw.is_absolute() else (repo_root / raw).resolve()
     if path.exists() or path.is_symlink():
         raise FileExistsError(f"refusing to replace existing output path: {path}")
-    path.mkdir(parents=True)
+    if create:
+        path.mkdir(parents=True)
     return path
 
 
-def _fresh_archive(value: str | None, *, output_dir: Path) -> Path:
+def _fresh_archive(value: str | None, *, output_dir: Path, create_parent: bool = True) -> Path:
     if value:
         raw = Path(value).expanduser()
         path = raw.resolve() if raw.is_absolute() else (repo_root / raw).resolve()
@@ -91,7 +92,8 @@ def _fresh_archive(value: str | None, *, output_dir: Path) -> Path:
         path = Path(f"{output_dir}.tgz")
     if path.exists() or path.is_symlink():
         raise FileExistsError(f"refusing to replace existing archive path: {path}")
-    path.parent.mkdir(parents=True, exist_ok=True)
+    if create_parent:
+        path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -851,6 +853,12 @@ def _archive(output_dir: Path, archive_path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     try:
+        prospective_output = _fresh_dir(args.output_dir, create=False)
+        _fresh_archive(
+            args.archive,
+            output_dir=prospective_output,
+            create_parent=False,
+        )
         spec_path = _repo_path(args.spec, kind="spec")
         spec = _json(spec_path)
         source_cfg = spec.get("source_dataset")

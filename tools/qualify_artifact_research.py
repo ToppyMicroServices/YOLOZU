@@ -78,12 +78,13 @@ def _repo_input(value: str, *, kind: str) -> Path:
     return resolved
 
 
-def _fresh_output(value: str) -> Path:
+def _fresh_output(value: str, *, create: bool = True) -> Path:
     path = Path(value).expanduser()
     resolved = path.resolve() if path.is_absolute() else (repo_root / path).resolve()
     if resolved.exists():
         raise FileExistsError(f"refusing to replace existing output directory: {resolved}")
-    resolved.mkdir(parents=True)
+    if create:
+        resolved.mkdir(parents=True)
     return resolved
 
 
@@ -206,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--repeats must be >= 3 for qualification")
 
     try:
+        _fresh_output(args.output_dir, create=False)
         student = _repo_input(args.student, kind="student")
         teacher = _repo_input(args.teacher, kind="teacher")
         dataset = _repo_input(args.dataset, kind="dataset")
