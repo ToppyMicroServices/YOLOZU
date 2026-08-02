@@ -337,6 +337,24 @@ class TestMakeSubsetDataset(unittest.TestCase):
         script = repo_root / "tools" / "make_subset_dataset.py"
         dataset_root = repo_root / "data" / "real_multitask_fewshot"
         self.assertTrue(dataset_root.is_dir(), "missing tracked real multitask fixture")
+        selected = ["000000468577", "000000512194"]
+        required_assets = [
+            dataset_root / relative
+            for stem in selected
+            for relative in (
+                Path("images") / "val" / f"{stem}.jpg",
+                Path("labels") / "val" / f"{stem}.txt",
+                Path("labels") / "val" / f"{stem}.json",
+                Path("masks") / "val" / f"{stem}_inst.png",
+                Path("depth") / "val" / f"{stem}_depth.npy",
+            )
+        ]
+        missing_assets = [path for path in required_assets if not path.is_file()]
+        if missing_assets:
+            self.skipTest(
+                "real multitask assets are not installed: "
+                + ", ".join(path.relative_to(repo_root).as_posix() for path in missing_assets)
+            )
 
         with tempfile.TemporaryDirectory(dir=str(repo_root)) as td:
             output = Path(td) / "subset"
@@ -361,7 +379,6 @@ class TestMakeSubsetDataset(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            selected = ["000000468577", "000000512194"]
             for stem in selected:
                 for relative in (
                     Path("images") / "val" / f"{stem}.jpg",
