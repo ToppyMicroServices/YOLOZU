@@ -233,7 +233,7 @@ def _validate_instance_alignment(sample: dict[str, Any], errors: list[str]) -> N
             if kpts3d.ndim == 3 and int(kpts3d.shape[1]) != int(kpts2d.shape[1]):
                 errors.append(f"kpts3d_object: expected K={int(kpts2d.shape[1])}, got {int(kpts3d.shape[1])}")
         except Exception:
-            pass
+            return
 
 
 def validate_synthgen_sample(sample: dict[str, Any]) -> SynthGenValidationResult:

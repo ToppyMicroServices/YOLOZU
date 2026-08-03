@@ -49,6 +49,7 @@ All fields below are required in v1.
 - `bbox2d_visible` is derived from the renderer-owned `inst_id` mask.
 - `kpts3d_object` uses object coordinates.
 - `pose_obj2cam = world_to_camera x object_to_world` using row-major matrices.
+- Use `pad_instance_labels=True` to pad all instance-aligned labels during collation; `pad_keypoints` remains a backward-compatible alias.
 
 ## Visibility (`kpts2d[...,2]`) semantics
 

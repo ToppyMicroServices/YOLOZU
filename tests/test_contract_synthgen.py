@@ -167,7 +167,7 @@ class TestSynthGenContract(unittest.TestCase):
             "pose_obj2cam": np.ones((3, 4, 4), dtype=np.float32),
         }
 
-        batch = collate_synthgen_batch([sample_a, sample_b], pad_keypoints=True)
+        batch = collate_synthgen_batch([sample_a, sample_b], pad_instance_labels=True)
 
         self.assertEqual(batch["bbox2d_visible"].shape, (2, 3, 4))
         self.assertEqual(batch["kpts2d"].shape, (2, 3, 3, 3))

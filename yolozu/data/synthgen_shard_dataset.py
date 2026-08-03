@@ -165,11 +165,17 @@ class SynthGenShardDataset:
             yield self[idx]
 
 
-def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool = False) -> dict[str, Any]:
-    """Collate SynthGen samples with optional instance-label padding."""
+def collate_synthgen_batch(
+    samples: list[dict[str, Any]],
+    *,
+    pad_keypoints: bool = False,
+    pad_instance_labels: bool | None = None,
+) -> dict[str, Any]:
+    """Collate samples, retaining ``pad_keypoints`` as a compatibility alias."""
 
     if not samples:
         return {}
+    pad_instances = pad_keypoints if pad_instance_labels is None else pad_instance_labels
 
     out: dict[str, Any] = {}
     keys: set[str] = set()
@@ -178,7 +184,7 @@ def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool
 
     for key in sorted(keys):
         values = [sample.get(key) for sample in samples]
-        if key in {"bbox2d_visible", "kpts3d_object", "pose_obj2cam"} and pad_keypoints:
+        if key in {"bbox2d_visible", "kpts3d_object", "pose_obj2cam"} and pad_instances:
             arrays = [v for v in values if isinstance(v, np.ndarray)]
             if len(arrays) != len(values):
                 out[key] = values
@@ -205,7 +211,7 @@ def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool
                 padded[i, : int(arr.shape[0])] = arr
             out[key] = padded
             continue
-        if key == "kpts2d" and pad_keypoints:
+        if key == "kpts2d" and pad_instances:
             arrays = [v for v in values if isinstance(v, np.ndarray)]
             if len(arrays) != len(values):
                 out[key] = values
