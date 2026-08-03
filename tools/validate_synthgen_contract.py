@@ -72,7 +72,16 @@ def _load_artifact(value: Any, *, base_dir: Path, root_dir: Path) -> Any:
 def _materialize_record(record: dict[str, Any], *, source_path: Path) -> dict[str, Any]:
     out = dict(record)
     root_dir = source_path.parent.parent if source_path.parent.name == "shards" else source_path.parent
-    for field in ("image", "depth_ndc", "inst_id", "sem_id", "kpts2d", "kpts3d_object", "pose_obj2cam"):
+    for field in (
+        "image",
+        "depth_ndc",
+        "inst_id",
+        "sem_id",
+        "bbox2d_visible",
+        "kpts2d",
+        "kpts3d_object",
+        "pose_obj2cam",
+    ):
         if field in out:
             out[field] = _load_artifact(out[field], base_dir=source_path.parent, root_dir=root_dir)
     if "scene_spec" in out:

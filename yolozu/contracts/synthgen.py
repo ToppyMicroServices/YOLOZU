@@ -44,6 +44,7 @@ class SynthGenSample(TypedDict):
     schema_version: str
     asset_ids: list[str]
     inst_map: str | dict[str, Any]
+    bbox2d_visible: NotRequired[Any]
     kpts3d_object: NotRequired[Any]
     pose_obj2cam: NotRequired[Any]
 
@@ -173,11 +174,22 @@ def _validate_keypoints(sample: dict[str, Any], errors: list[str]) -> None:
 
 
 def _validate_optional_fields(sample: dict[str, Any], errors: list[str]) -> None:
+    if "bbox2d_visible" in sample:
+        try:
+            arr = _as_ndarray(sample["bbox2d_visible"], field="bbox2d_visible")
+            if arr.ndim != 2 or int(arr.shape[-1]) != 4:
+                errors.append(f"bbox2d_visible: expected [N_inst,4], got shape={tuple(arr.shape)}")
+            if arr.dtype != np.float32:
+                errors.append(f"bbox2d_visible: expected float32, got {arr.dtype}")
+        except Exception as exc:
+            errors.append(str(exc))
     if "kpts3d_object" in sample:
         try:
             arr = _as_ndarray(sample["kpts3d_object"], field="kpts3d_object")
             if arr.ndim != 3 or int(arr.shape[-1]) != 3:
                 errors.append(f"kpts3d_object: expected [N_inst,K,3], got shape={tuple(arr.shape)}")
+            if arr.dtype != np.float32:
+                errors.append(f"kpts3d_object: expected float32, got {arr.dtype}")
         except Exception as exc:
             errors.append(str(exc))
     if "pose_obj2cam" in sample:
@@ -189,8 +201,39 @@ def _validate_optional_fields(sample: dict[str, Any], errors: list[str]) -> None
                 errors.append(f"pose_obj2cam: expected [4,4], got shape={tuple(arr.shape)}")
             elif arr.ndim == 3 and tuple(arr.shape[-2:]) != (4, 4):
                 errors.append(f"pose_obj2cam: expected [N_inst,4,4], got shape={tuple(arr.shape)}")
+            if arr.dtype != np.float32:
+                errors.append(f"pose_obj2cam: expected float32, got {arr.dtype}")
         except Exception as exc:
             errors.append(str(exc))
+
+
+def _validate_instance_alignment(sample: dict[str, Any], errors: list[str]) -> None:
+    if "kpts2d" not in sample:
+        return
+    try:
+        kpts2d = _as_ndarray(sample["kpts2d"], field="kpts2d")
+    except Exception:
+        return
+    if kpts2d.ndim != 3:
+        return
+    expected_instances = int(kpts2d.shape[0])
+    for field in ("bbox2d_visible", "kpts3d_object", "pose_obj2cam"):
+        if field not in sample:
+            continue
+        try:
+            arr = _as_ndarray(sample[field], field=field)
+        except Exception:
+            continue
+        actual_instances = 1 if field == "pose_obj2cam" and arr.ndim == 2 else int(arr.shape[0])
+        if arr.ndim >= 1 and actual_instances != expected_instances:
+            errors.append(f"{field}: expected N_inst={expected_instances}, got {actual_instances}")
+    if "kpts3d_object" in sample:
+        try:
+            kpts3d = _as_ndarray(sample["kpts3d_object"], field="kpts3d_object")
+            if kpts3d.ndim == 3 and int(kpts3d.shape[1]) != int(kpts2d.shape[1]):
+                errors.append(f"kpts3d_object: expected K={int(kpts2d.shape[1])}, got {int(kpts3d.shape[1])}")
+        except Exception:
+            return
 
 
 def validate_synthgen_sample(sample: dict[str, Any]) -> SynthGenValidationResult:
@@ -203,6 +246,7 @@ def validate_synthgen_sample(sample: dict[str, Any]) -> SynthGenValidationResult
     _validate_shape_consistency(image=image, depth=depth, inst=inst, sem=sem, errors=errors)
     _validate_keypoints(sample, errors)
     _validate_optional_fields(sample, errors)
+    _validate_instance_alignment(sample, errors)
 
     prompt = sample.get("prompt")
     if not isinstance(prompt, str) or not prompt.strip():
@@ -256,6 +300,8 @@ def normalize_synthgen_sample(sample: dict[str, Any]) -> dict[str, Any]:
     out["inst_map"] = _decode_json_object(out["inst_map"], field="inst_map")
     out["asset_ids"] = [str(x) for x in (out.get("asset_ids") or [])]
 
+    if "bbox2d_visible" in out:
+        out["bbox2d_visible"] = _as_ndarray(out["bbox2d_visible"], field="bbox2d_visible").astype(np.float32, copy=False)
     if "kpts3d_object" in out:
         out["kpts3d_object"] = _as_ndarray(out["kpts3d_object"], field="kpts3d_object").astype(np.float32, copy=False)
     if "pose_obj2cam" in out:

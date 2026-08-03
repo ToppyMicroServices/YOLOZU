@@ -16,6 +16,7 @@ _ARRAY_FIELDS = (
     "depth_ndc",
     "inst_id",
     "sem_id",
+    "bbox2d_visible",
     "kpts2d",
     "kpts3d_object",
     "pose_obj2cam",
@@ -164,11 +165,17 @@ class SynthGenShardDataset:
             yield self[idx]
 
 
-def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool = False) -> dict[str, Any]:
-    """Collate SynthGen samples with optional keypoint padding for variable instance count."""
+def collate_synthgen_batch(
+    samples: list[dict[str, Any]],
+    *,
+    pad_keypoints: bool = False,
+    pad_instance_labels: bool | None = None,
+) -> dict[str, Any]:
+    """Collate samples, retaining ``pad_keypoints`` as a compatibility alias."""
 
     if not samples:
         return {}
+    pad_instances = pad_keypoints if pad_instance_labels is None else pad_instance_labels
 
     out: dict[str, Any] = {}
     keys: set[str] = set()
@@ -177,7 +184,34 @@ def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool
 
     for key in sorted(keys):
         values = [sample.get(key) for sample in samples]
-        if key == "kpts2d" and pad_keypoints:
+        if key in {"bbox2d_visible", "kpts3d_object", "pose_obj2cam"} and pad_instances:
+            arrays = [v for v in values if isinstance(v, np.ndarray)]
+            if len(arrays) != len(values):
+                out[key] = values
+                continue
+            if key == "pose_obj2cam":
+                arrays = [arr[None, ...] if arr.ndim == 2 else arr for arr in arrays]
+            trailing_shapes = {tuple(arr.shape[1:]) for arr in arrays}
+            if len(trailing_shapes) != 1:
+                out[key] = values
+                continue
+            max_n = max(int(arr.shape[0]) for arr in arrays)
+            trailing_shape = tuple(arrays[0].shape[1:])
+            fill_value = {
+                "bbox2d_visible": -1.0,
+                "kpts3d_object": np.nan,
+                "pose_obj2cam": 0.0,
+            }[key]
+            padded = np.full(
+                (len(arrays), max_n, *trailing_shape),
+                fill_value,
+                dtype=np.float32,
+            )
+            for i, arr in enumerate(arrays):
+                padded[i, : int(arr.shape[0])] = arr
+            out[key] = padded
+            continue
+        if key == "kpts2d" and pad_instances:
             arrays = [v for v in values if isinstance(v, np.ndarray)]
             if len(arrays) != len(values):
                 out[key] = values
@@ -193,6 +227,10 @@ def collate_synthgen_batch(samples: list[dict[str, Any]], *, pad_keypoints: bool
                     mask[i, :n] = np.rint(arr[..., 2]).astype(np.int64) > 0
             out[key] = padded
             out["kpts2d_mask"] = mask
+            instance_mask = np.zeros((len(arrays), max_n), dtype=bool)
+            for i, arr in enumerate(arrays):
+                instance_mask[i, : int(arr.shape[0])] = True
+            out["instance_mask"] = instance_mask
             continue
 
         if values and all(isinstance(v, np.ndarray) for v in values):

@@ -121,6 +121,18 @@
         }
       ]
     },
+    "bbox2d_visible": {
+      "description": "Optional float32[N_inst,4] visible boxes in half-open xyxy_abs format, or a path to the array.",
+      "oneOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
     "kpts3d_object": {
       "oneOf": [
         {

@@ -203,9 +203,23 @@ def _prepare_generator_handoff(args, repo_root: Path, output_dir: Path) -> tuple
 
     original_sample = sorted((demo_root / "shards").glob("shard-*/sample-*"))[0]
     mode_sample = sorted(mode_shards.glob("shard-*/sample-*"))[0]
-    truth_fields = ("depth_ndc.npy", "inst_id.npy", "sem_id.npy", "kpts2d.npy")
+    truth_fields = (
+        "depth_ndc.npy",
+        "inst_id.npy",
+        "sem_id.npy",
+        "bbox2d_visible.npy",
+        "kpts2d.npy",
+        "kpts3d_object.npy",
+        "pose_obj2cam.npy",
+    )
     truth_equal = {
-        name: bool(np.array_equal(np.load(original_sample / name), np.load(mode_sample / name)))
+        name: bool(
+            np.array_equal(
+                np.load(original_sample / name),
+                np.load(mode_sample / name),
+                equal_nan=True,
+            )
+        )
         for name in truth_fields
     }
     if not all(truth_equal.values()):

@@ -43,8 +43,13 @@ All fields below are required in v1.
 
 ## Optional fields (v1+)
 
+- `bbox2d_visible`: `float32[N_inst,4]`, half-open absolute-pixel `xyxy`
 - `kpts3d_object`: `float32[N_inst,K,3]`
 - `pose_obj2cam`: `float32[4,4]` or `float32[N_inst,4,4]`
+- `bbox2d_visible` is derived from the renderer-owned `inst_id` mask.
+- `kpts3d_object` uses object coordinates.
+- `pose_obj2cam = world_to_camera x object_to_world` using row-major matrices.
+- Use `pad_instance_labels=True` to pad all instance-aligned labels during collation; `pad_keypoints` remains a backward-compatible alias.
 
 ## Visibility (`kpts2d[...,2]`) semantics
 

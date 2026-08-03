@@ -40,6 +40,15 @@ def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
     )
     np.save(root / f"{stem}_kpts.npy", kpts2d)
 
+    bbox2d_visible = np.array([[8.0, 0.0, 16.0, 16.0], [-1.0, -1.0, -1.0, -1.0]], dtype=np.float32)
+    np.save(root / f"{stem}_bbox.npy", bbox2d_visible)
+
+    kpts3d_object = np.zeros((2, 3, 3), dtype=np.float32)
+    np.save(root / f"{stem}_kpts3d.npy", kpts3d_object)
+
+    pose_obj2cam = np.repeat(np.eye(4, dtype=np.float32)[None, ...], 2, axis=0)
+    np.save(root / f"{stem}_pose.npy", pose_obj2cam)
+
     scene_spec = {"lighting": "studio", "seed": 7}
     inst_map = {"0": 0, "1": 1}
 
@@ -49,7 +58,10 @@ def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
         "depth_ndc": f"{stem}_depth.npy",
         "inst_id": f"{stem}_inst.npy",
         "sem_id": f"{stem}_sem.npy",
+        "bbox2d_visible": f"{stem}_bbox.npy",
         "kpts2d": f"{stem}_kpts.npy",
+        "kpts3d_object": f"{stem}_kpts3d.npy",
+        "pose_obj2cam": f"{stem}_pose.npy",
         "prompt": "synthetic prompt",
         "scene_spec": json.dumps(scene_spec),
         "schema_id": schema_id,
@@ -66,7 +78,10 @@ class TestSynthGenContract(unittest.TestCase):
             "depth_ndc": np.zeros((8, 8), dtype=np.float32),
             "inst_id": np.zeros((8, 8), dtype=np.uint32),
             "sem_id": np.zeros((8, 8), dtype=np.uint16),
+            "bbox2d_visible": np.zeros((1, 4), dtype=np.float32),
             "kpts2d": np.zeros((1, 4, 3), dtype=np.float32),
+            "kpts3d_object": np.zeros((1, 4, 3), dtype=np.float32),
+            "pose_obj2cam": np.eye(4, dtype=np.float32),
             "prompt": "x",
             "scene_spec": "{\"seed\": 1}",
             "schema_id": "animal_v1",
@@ -84,6 +99,7 @@ class TestSynthGenContract(unittest.TestCase):
         self.assertIsInstance(normalized["inst_map"], dict)
         self.assertEqual(normalized["depth_ndc"].dtype, np.float32)
         self.assertEqual(normalized["inst_id"].dtype, np.uint32)
+        self.assertEqual(normalized["pose_obj2cam"].shape, (4, 4))
 
     def test_validate_rejects_depth_range(self):
         sample = {
@@ -127,12 +143,64 @@ class TestSynthGenContract(unittest.TestCase):
             self.assertEqual(sample["image"].dtype, np.uint8)
             self.assertIsInstance(sample["scene_spec"], dict)
             self.assertIsInstance(sample["inst_map"], dict)
+            self.assertEqual(sample["bbox2d_visible"].shape, (2, 4))
+            self.assertEqual(sample["kpts3d_object"].shape, (2, 3, 3))
+            self.assertEqual(sample["pose_obj2cam"].shape, (2, 4, 4))
 
             batch = collate_synthgen_batch([sample, sample], pad_keypoints=True)
             self.assertIn("kpts2d", batch)
             self.assertIn("kpts2d_mask", batch)
             self.assertEqual(batch["kpts2d"].shape[0], 2)
             self.assertEqual(batch["kpts2d_mask"].shape[0], 2)
+
+    def test_collate_pads_all_instance_labels(self):
+        sample_a = {
+            "bbox2d_visible": np.zeros((1, 4), dtype=np.float32),
+            "kpts2d": np.ones((1, 3, 3), dtype=np.float32),
+            "kpts3d_object": np.zeros((1, 3, 3), dtype=np.float32),
+            "pose_obj2cam": np.ones((1, 4, 4), dtype=np.float32),
+        }
+        sample_b = {
+            "bbox2d_visible": np.ones((3, 4), dtype=np.float32),
+            "kpts2d": np.ones((3, 3, 3), dtype=np.float32),
+            "kpts3d_object": np.ones((3, 3, 3), dtype=np.float32),
+            "pose_obj2cam": np.ones((3, 4, 4), dtype=np.float32),
+        }
+
+        batch = collate_synthgen_batch([sample_a, sample_b], pad_instance_labels=True)
+
+        self.assertEqual(batch["bbox2d_visible"].shape, (2, 3, 4))
+        self.assertEqual(batch["kpts2d"].shape, (2, 3, 3, 3))
+        self.assertEqual(batch["kpts3d_object"].shape, (2, 3, 3, 3))
+        self.assertEqual(batch["pose_obj2cam"].shape, (2, 3, 4, 4))
+        self.assertEqual(batch["instance_mask"].tolist(), [[True, False, False], [True, True, True]])
+        self.assertTrue(np.all(batch["bbox2d_visible"][0, 1:] == -1.0))
+        self.assertTrue(np.all(np.isnan(batch["kpts3d_object"][0, 1:])))
+        self.assertTrue(np.all(batch["pose_obj2cam"][0, 1:] == 0.0))
+
+    def test_validate_rejects_misaligned_optional_instance_labels(self):
+        sample = {
+            "image": np.zeros((8, 8, 3), dtype=np.uint8),
+            "depth_ndc": np.zeros((8, 8), dtype=np.float32),
+            "inst_id": np.zeros((8, 8), dtype=np.uint32),
+            "sem_id": np.zeros((8, 8), dtype=np.uint16),
+            "bbox2d_visible": np.zeros((2, 4), dtype=np.float32),
+            "kpts2d": np.zeros((1, 4, 3), dtype=np.float32),
+            "kpts3d_object": np.zeros((1, 3, 3), dtype=np.float32),
+            "pose_obj2cam": np.zeros((1, 4, 4), dtype=np.float32),
+            "prompt": "x",
+            "scene_spec": "{\"seed\": 1}",
+            "schema_id": "animal_v1",
+            "schema_version": "1",
+            "asset_ids": ["a"],
+            "inst_map": "{\"0\": 0}",
+        }
+
+        result = validate_synthgen_sample(sample)
+
+        self.assertFalse(result.ok)
+        self.assertTrue(any("bbox2d_visible: expected N_inst=1" in error for error in result.errors))
+        self.assertTrue(any("kpts3d_object: expected K=4" in error for error in result.errors))
 
     def test_stream_dataset_filters_schema(self):
         sample_a = {
