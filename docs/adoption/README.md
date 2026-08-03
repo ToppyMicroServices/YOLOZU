@@ -26,6 +26,10 @@ feedback, not from individual usage tracking.
 - Beads record: one monthly review item plus separate scoped work items for
   actionable recurring blockers
 
+Reviews:
+
+- [`2026-07-feedback-review.md`](2026-07-feedback-review.md)
+
 The monthly review records category frequency, highest non-security impact,
 response-target results, public evidence, unknowns, and linked Beads actions.
 It includes only public reports and support feedback with anonymous
