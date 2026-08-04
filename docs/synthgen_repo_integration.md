@@ -286,5 +286,5 @@ Integration is ready when all of the following are true:
 - add new `schema_id` values freely
 - do not change required dtype / shape / range semantics inside `schema_version = "1"`
 - 2D-only v1 records remain valid without 3D coordinate metadata; opting into
-  optional 3D labels requires the canonical coordinate contract
+  optional 3D labels requires the canonical coordinate interface contract
 - if the generator needs breaking changes, version the interface contract first in YOLOZU, then enable the new version in adapters and docs
