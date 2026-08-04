@@ -83,7 +83,7 @@
       "minLength": 1
     },
     "scene_spec": {
-      "description": "Scene metadata JSON object or JSON string.",
+      "description": "Scene metadata JSON object or JSON string. Samples with 3D labels must declare coordinate_system=rhs_x_right_y_up_z_back; runtime validation enforces nested transforms.",
       "oneOf": [
         {
           "type": "object"
@@ -134,6 +134,7 @@
       ]
     },
     "kpts3d_object": {
+      "description": "Optional canonical right-handed object-space keypoints [N_inst,K,3].",
       "oneOf": [
         {
           "type": "array"
@@ -145,6 +146,7 @@
       ]
     },
     "pose_obj2cam": {
+      "description": "Optional rigid right-handed object-to-camera transform, recomposed as world_to_camera @ object_to_world.",
       "oneOf": [
         {
           "type": "array"

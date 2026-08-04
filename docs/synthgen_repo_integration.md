@@ -116,6 +116,12 @@ Required semantics:
 - `sem_id` is `uint16[H,W]`
 - `kpts2d` is `float32[N_inst,K,3]` with `(u,v,vis)`
 - `kpts2d[...,2]` uses `0/1/2` visibility semantics
+- records with `kpts3d_object` or `pose_obj2cam` declare
+  `scene_spec.coordinate_system = "rhs_x_right_y_up_z_back"`
+- 3D object/world/camera frames are right-handed with `+X` right, `+Y` up,
+  `+Z` back, camera optical forward `-Z`, and image `+v` down
+- `pose_obj2cam` is a rigid `world_to_camera @ object_to_world` transform;
+  reflection, scale, shear, transposition, and reversed multiplication order are rejected
 
 ## How images and labels are handled
 
@@ -279,4 +285,6 @@ Integration is ready when all of the following are true:
 - add optional fields freely
 - add new `schema_id` values freely
 - do not change required dtype / shape / range semantics inside `schema_version = "1"`
+- 2D-only v1 records remain valid without 3D coordinate metadata; opting into
+  optional 3D labels requires the canonical coordinate interface contract
 - if the generator needs breaking changes, version the interface contract first in YOLOZU, then enable the new version in adapters and docs
