@@ -47,8 +47,15 @@ All fields below are required in v1.
 - `kpts3d_object`: `float32[N_inst,K,3]`
 - `pose_obj2cam`: `float32[4,4]` or `float32[N_inst,4,4]`
 - `bbox2d_visible` is derived from the renderer-owned `inst_id` mask.
-- `kpts3d_object` uses object coordinates.
-- `pose_obj2cam = world_to_camera x object_to_world` using row-major matrices.
+- A sample containing `kpts3d_object` or `pose_obj2cam` must declare
+  `scene_spec.coordinate_system = "rhs_x_right_y_up_z_back"`.
+- `kpts3d_object` uses canonical right-handed object coordinates: `+X` right,
+  `+Y` up, `+Z` back, with the asset front facing `-Z`.
+- The camera uses the same right-handed axes and looks along `-Z`.
+- Matrices are row-major serialized and applied to homogeneous column vectors.
+- `pose_obj2cam = world_to_camera @ object_to_world`.
+- Every pose transform must be rigid with last row `[0,0,0,1]`, orthonormal
+  rotation, and `det(R)=+1`; reflection, scale, and shear are rejected.
 - Use `pad_instance_labels=True` to pad all instance-aligned labels during collation; `pad_keypoints` remains a backward-compatible alias.
 
 ## Visibility (`kpts2d[...,2]`) semantics
@@ -70,8 +77,12 @@ MVP training/eval policy in YOLOZU uses `vis == 2` for keypoint regression metri
 ## Coordinate / unit rules
 
 - `kpts2d` coordinates are pixel coordinates in the same image frame as `image`.
+- Image coordinates use top-left pixel-center origin, `+u` right, and `+v` down.
 - `depth_ndc` is normalized depth in `[0,1]`, not metric depth.
 - `inst_id` / `sem_id` share the exact same `H,W` as `image`.
+- For 3D samples, runtime validation recomposes every pose from the scene camera
+  and object transforms to detect transposition, multiplication-order, and frame mismatches.
+- Existing 2D-only v1 samples do not require 3D coordinate metadata.
 
 ## Machine-readable schema and runtime validator
 

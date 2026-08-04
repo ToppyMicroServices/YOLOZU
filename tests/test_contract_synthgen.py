@@ -8,9 +8,43 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from yolozu.contracts.synthgen import normalize_synthgen_sample, validate_synthgen_sample
+from yolozu.contracts.synthgen import (
+    SYNTHGEN_COORDINATE_SYSTEM,
+    normalize_synthgen_sample,
+    validate_synthgen_sample,
+)
 from yolozu.data.synthgen_shard_dataset import SynthGenShardDataset, collate_synthgen_batch
 from yolozu.data.synthgen_stream_dataset import SynthGenStreamDataset
+
+
+def _canonical_scene_spec(object_count: int) -> dict:
+    identity = np.eye(4, dtype=np.float32).tolist()
+    return {
+        "coordinate_system": SYNTHGEN_COORDINATE_SYSTEM,
+        "camera": {"world_to_camera": identity},
+        "objects": [{"object_to_world": identity} for _ in range(object_count)],
+    }
+
+
+def _inline_3d_sample() -> dict:
+    sample = {
+        "image": np.zeros((8, 8, 3), dtype=np.uint8),
+        "depth_ndc": np.zeros((8, 8), dtype=np.float32),
+        "inst_id": np.zeros((8, 8), dtype=np.uint32),
+        "sem_id": np.zeros((8, 8), dtype=np.uint16),
+        "bbox2d_visible": np.zeros((1, 4), dtype=np.float32),
+        "kpts2d": np.zeros((1, 4, 3), dtype=np.float32),
+        "kpts3d_object": np.zeros((1, 4, 3), dtype=np.float32),
+        "pose_obj2cam": np.eye(4, dtype=np.float32),
+        "prompt": "x",
+        "scene_spec": _canonical_scene_spec(1),
+        "schema_id": "animal_v1",
+        "schema_version": "1",
+        "asset_ids": ["a"],
+        "inst_map": {"0": 0},
+    }
+    sample["kpts2d"][..., 2] = 2
+    return sample
 
 
 def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
@@ -49,7 +83,7 @@ def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
     pose_obj2cam = np.repeat(np.eye(4, dtype=np.float32)[None, ...], 2, axis=0)
     np.save(root / f"{stem}_pose.npy", pose_obj2cam)
 
-    scene_spec = {"lighting": "studio", "seed": 7}
+    scene_spec = _canonical_scene_spec(2)
     inst_map = {"0": 0, "1": 1}
 
     return {
@@ -73,23 +107,7 @@ def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
 
 class TestSynthGenContract(unittest.TestCase):
     def test_validate_and_normalize_inline_sample(self):
-        sample = {
-            "image": np.zeros((8, 8, 3), dtype=np.uint8),
-            "depth_ndc": np.zeros((8, 8), dtype=np.float32),
-            "inst_id": np.zeros((8, 8), dtype=np.uint32),
-            "sem_id": np.zeros((8, 8), dtype=np.uint16),
-            "bbox2d_visible": np.zeros((1, 4), dtype=np.float32),
-            "kpts2d": np.zeros((1, 4, 3), dtype=np.float32),
-            "kpts3d_object": np.zeros((1, 4, 3), dtype=np.float32),
-            "pose_obj2cam": np.eye(4, dtype=np.float32),
-            "prompt": "x",
-            "scene_spec": "{\"seed\": 1}",
-            "schema_id": "animal_v1",
-            "schema_version": "1",
-            "asset_ids": ["a"],
-            "inst_map": "{\"0\": 0}",
-        }
-        sample["kpts2d"][..., 2] = 2
+        sample = _inline_3d_sample()
 
         result = validate_synthgen_sample(sample)
         self.assertTrue(result.ok, msg=f"errors: {result.errors}")
@@ -100,6 +118,44 @@ class TestSynthGenContract(unittest.TestCase):
         self.assertEqual(normalized["depth_ndc"].dtype, np.float32)
         self.assertEqual(normalized["inst_id"].dtype, np.uint32)
         self.assertEqual(normalized["pose_obj2cam"].shape, (4, 4))
+
+    def test_validate_rejects_reflected_pose(self):
+        sample = _inline_3d_sample()
+        sample["pose_obj2cam"][0, 0] = -1.0
+
+        result = validate_synthgen_sample(sample)
+
+        self.assertFalse(result.ok)
+        self.assertTrue(any("det(R)=+1" in error for error in result.errors))
+
+    def test_validate_rejects_scaled_pose(self):
+        sample = _inline_3d_sample()
+        sample["pose_obj2cam"][1, 1] = 0.5
+
+        result = validate_synthgen_sample(sample)
+
+        self.assertFalse(result.ok)
+        self.assertTrue(any("without scale or shear" in error for error in result.errors))
+
+    def test_validate_rejects_pose_composition_mismatch(self):
+        sample = _inline_3d_sample()
+        sample["scene_spec"]["objects"][0]["object_to_world"][0][3] = 1.0
+
+        result = validate_synthgen_sample(sample)
+
+        self.assertFalse(result.ok)
+        self.assertTrue(
+            any("world_to_camera @ object_to_world" in error for error in result.errors)
+        )
+
+    def test_validate_rejects_3d_labels_without_coordinate_system(self):
+        sample = _inline_3d_sample()
+        del sample["scene_spec"]["coordinate_system"]
+
+        result = validate_synthgen_sample(sample)
+
+        self.assertFalse(result.ok)
+        self.assertTrue(any("coordinate_system" in error for error in result.errors))
 
     def test_validate_rejects_depth_range(self):
         sample = {
@@ -187,9 +243,9 @@ class TestSynthGenContract(unittest.TestCase):
             "bbox2d_visible": np.zeros((2, 4), dtype=np.float32),
             "kpts2d": np.zeros((1, 4, 3), dtype=np.float32),
             "kpts3d_object": np.zeros((1, 3, 3), dtype=np.float32),
-            "pose_obj2cam": np.zeros((1, 4, 4), dtype=np.float32),
+            "pose_obj2cam": np.eye(4, dtype=np.float32)[None, ...],
             "prompt": "x",
-            "scene_spec": "{\"seed\": 1}",
+            "scene_spec": _canonical_scene_spec(1),
             "schema_id": "animal_v1",
             "schema_version": "1",
             "asset_ids": ["a"],

@@ -31,6 +31,9 @@ SYNTHGEN_SCHEMA_IDS: tuple[str, ...] = (
     "mechanical_v1",
 )
 
+SYNTHGEN_COORDINATE_SYSTEM = "rhs_x_right_y_up_z_back"
+_RIGID_TRANSFORM_ATOL = 1e-5
+
 
 class SynthGenSample(TypedDict):
     image: Any
@@ -236,6 +239,126 @@ def _validate_instance_alignment(sample: dict[str, Any], errors: list[str]) -> N
             return
 
 
+def _validate_rigid_transform(value: Any, *, field: str, errors: list[str]) -> np.ndarray | None:
+    try:
+        matrix = np.asarray(value, dtype=np.float64)
+    except Exception as exc:
+        errors.append(f"{field}: expected numeric 4x4 transform: {exc}")
+        return None
+    if matrix.shape != (4, 4):
+        errors.append(f"{field}: expected [4,4], got shape={tuple(matrix.shape)}")
+        return None
+    if not bool(np.all(np.isfinite(matrix))):
+        errors.append(f"{field}: expected only finite values")
+        return None
+    if not bool(
+        np.allclose(
+            matrix[3],
+            np.array([0.0, 0.0, 0.0, 1.0]),
+            rtol=0.0,
+            atol=_RIGID_TRANSFORM_ATOL,
+        )
+    ):
+        errors.append(f"{field}: expected homogeneous row [0,0,0,1]")
+        return None
+
+    rotation = matrix[:3, :3]
+    if not bool(
+        np.allclose(
+            rotation.T @ rotation,
+            np.eye(3),
+            rtol=0.0,
+            atol=_RIGID_TRANSFORM_ATOL,
+        )
+    ):
+        errors.append(f"{field}: rotation must be orthonormal without scale or shear")
+        return None
+    determinant = float(np.linalg.det(rotation))
+    if abs(determinant - 1.0) > _RIGID_TRANSFORM_ATOL:
+        errors.append(f"{field}: rotation must preserve right-handedness with det(R)=+1")
+        return None
+    return matrix
+
+
+def _validate_3d_coordinate_contract(sample: dict[str, Any], errors: list[str]) -> None:
+    if "kpts3d_object" not in sample and "pose_obj2cam" not in sample:
+        return
+    try:
+        scene_spec = _decode_json_object(sample.get("scene_spec"), field="scene_spec")
+    except Exception:
+        return
+
+    coordinate_system = scene_spec.get("coordinate_system")
+    if coordinate_system != SYNTHGEN_COORDINATE_SYSTEM:
+        errors.append(
+            "scene_spec.coordinate_system: expected "
+            f"{SYNTHGEN_COORDINATE_SYSTEM!r} for 3D labels"
+        )
+        return
+    if "pose_obj2cam" not in sample:
+        return
+
+    try:
+        pose_value = _as_ndarray(sample["pose_obj2cam"], field="pose_obj2cam")
+    except Exception:
+        return
+    if pose_value.shape == (4, 4):
+        poses = pose_value[np.newaxis, ...]
+    elif pose_value.ndim == 3 and pose_value.shape[-2:] == (4, 4):
+        poses = pose_value
+    else:
+        return
+
+    camera = scene_spec.get("camera")
+    objects = scene_spec.get("objects")
+    if not isinstance(camera, dict) or "world_to_camera" not in camera:
+        errors.append("scene_spec.camera.world_to_camera: required for pose_obj2cam")
+        return
+    if not isinstance(objects, list):
+        errors.append("scene_spec.objects: required for pose_obj2cam")
+        return
+    if len(objects) != int(poses.shape[0]):
+        errors.append(
+            "scene_spec.objects: expected one object per pose_obj2cam matrix, "
+            f"got {len(objects)} objects and {int(poses.shape[0])} poses"
+        )
+        return
+
+    world_to_camera = _validate_rigid_transform(
+        camera["world_to_camera"],
+        field="scene_spec.camera.world_to_camera",
+        errors=errors,
+    )
+    for index, (object_spec, pose) in enumerate(zip(objects, poses, strict=True)):
+        pose_matrix = _validate_rigid_transform(
+            pose,
+            field=f"pose_obj2cam[{index}]",
+            errors=errors,
+        )
+        if not isinstance(object_spec, dict) or "object_to_world" not in object_spec:
+            errors.append(f"scene_spec.objects[{index}].object_to_world: required")
+            continue
+        object_to_world = _validate_rigid_transform(
+            object_spec["object_to_world"],
+            field=f"scene_spec.objects[{index}].object_to_world",
+            errors=errors,
+        )
+        if world_to_camera is None or object_to_world is None or pose_matrix is None:
+            continue
+        expected = world_to_camera @ object_to_world
+        if not bool(
+            np.allclose(
+                pose_matrix,
+                expected,
+                rtol=0.0,
+                atol=_RIGID_TRANSFORM_ATOL,
+            )
+        ):
+            errors.append(
+                f"pose_obj2cam[{index}]: expected world_to_camera @ object_to_world"
+            )
+
+
 def validate_synthgen_sample(sample: dict[str, Any]) -> SynthGenValidationResult:
     errors: list[str] = []
     if not isinstance(sample, dict):
@@ -247,6 +370,7 @@ def validate_synthgen_sample(sample: dict[str, Any]) -> SynthGenValidationResult
     _validate_keypoints(sample, errors)
     _validate_optional_fields(sample, errors)
     _validate_instance_alignment(sample, errors)
+    _validate_3d_coordinate_contract(sample, errors)
 
     prompt = sample.get("prompt")
     if not isinstance(prompt, str) or not prompt.strip():
