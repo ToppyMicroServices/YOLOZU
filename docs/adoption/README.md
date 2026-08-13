@@ -15,6 +15,8 @@ feedback, not from individual usage tracking.
 
 - [`2026-07-23-baseline.md`](2026-07-23-baseline.md)
 - [`2026-07-30-baseline.md`](2026-07-30-baseline.md)
+- [`2026-08-06-baseline.md`](2026-08-06-baseline.md)
+- [`2026-08-13-baseline.md`](2026-08-13-baseline.md)
 
 ## Monthly feedback review
 
@@ -91,12 +93,49 @@ curl -L --compressed --fail --silent --show-error \
   https://pypistats.org/api/packages/yolozu/recent
 ```
 
-For support signals, exclude pull requests and maintainer-authored test issues.
-Record only counts in the adoption report:
+For support signals, use the GraphQL issue and discussion connections so the
+response requests association and outcome fields without requesting author
+identities. The issue connection excludes pull requests. Exclude bots,
+maintainers, members, and collaborators, then retain only aggregate counts in
+the adoption report. Confirm that neither connection requires another page;
+if it does, paginate with the same identity-free field selection.
 
 ```bash
-gh api 'repos/ToppyMicroServices/YOLOZU/issues?state=all&per_page=100' --paginate
-gh api 'repos/ToppyMicroServices/YOLOZU/discussions?per_page=100' --paginate
+gh api graphql -f query='query {
+  repository(owner: "ToppyMicroServices", name: "YOLOZU") {
+    issues(first: 100) {
+      nodes { authorAssociation state author { __typename } }
+      pageInfo { hasNextPage }
+    }
+    discussions(first: 100) {
+      nodes { authorAssociation answerChosenAt author { __typename } }
+      pageInfo { hasNextPage }
+    }
+  }
+}' --jq '{
+  issues_has_next_page: .data.repository.issues.pageInfo.hasNextPage,
+  discussions_has_next_page: .data.repository.discussions.pageInfo.hasNextPage,
+  external_issues: ([.data.repository.issues.nodes[] |
+    select(.author.__typename != "Bot" and
+      .authorAssociation != "OWNER" and .authorAssociation != "MEMBER" and
+      .authorAssociation != "COLLABORATOR")] |
+    length),
+  closed_external_issues: ([.data.repository.issues.nodes[] |
+    select(.author.__typename != "Bot" and .state == "CLOSED" and
+      .authorAssociation != "OWNER" and .authorAssociation != "MEMBER" and
+      .authorAssociation != "COLLABORATOR")] |
+    length),
+  external_discussions: ([.data.repository.discussions.nodes[] |
+    select(.author.__typename != "Bot" and
+      .authorAssociation != "OWNER" and .authorAssociation != "MEMBER" and
+      .authorAssociation != "COLLABORATOR")] |
+    length),
+  answered_external_discussions: ([.data.repository.discussions.nodes[] |
+    select(.author.__typename != "Bot" and .answerChosenAt != null and
+      .authorAssociation != "OWNER" and .authorAssociation != "MEMBER" and
+      .authorAssociation != "COLLABORATOR")] |
+    length)
+}'
 ```
 
 ## Clone interpretation rule
