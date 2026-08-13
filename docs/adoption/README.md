@@ -16,6 +16,7 @@ feedback, not from individual usage tracking.
 - [`2026-07-23-baseline.md`](2026-07-23-baseline.md)
 - [`2026-07-30-baseline.md`](2026-07-30-baseline.md)
 - [`2026-08-06-baseline.md`](2026-08-06-baseline.md)
+- [`2026-08-13-baseline.md`](2026-08-13-baseline.md)
 
 ## Monthly feedback review
 
