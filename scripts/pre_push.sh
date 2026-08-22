@@ -77,7 +77,9 @@ echo "[2/4] unit tests (focused)"
 if [[ "$SKIP_TESTS" == "1" ]]; then
   echo "skip unit tests"
 else
+  python3 tools/generate_adaptive_vision_roadmap.py --check --json
   python3 -m unittest \
+    tests.test_adaptive_vision_roadmap_generator \
     tests.test_packaged_tools_manifest \
     tests.test_manifest_docs_references \
     tests.test_generated_cli_reference \

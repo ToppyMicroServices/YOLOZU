@@ -114,6 +114,14 @@ flowchart LR
 - Benchmark lane: stable evaluation path が動いた後に backend parity を検証すること
 - Research lane: 評価済み artifact に対する opt-in workflow
 
+## Adaptive local vision roadmap
+
+環境に応じたlocal画像処理は、将来のExperimental delivery workです。現在のStableなprediction validation/evaluationの提供範囲は変わりません。
+
+目標とする設計では、AI clientが自然言語をtyped requestへ変換し、YOLOZUはtask、hardware、runtime、workload、protocol、licenseの条件に一致するqualification済みpipelineだけを選択対象にします。証拠が不足または不一致なら、“best”を推測せずabstainします。recommendationとexecutionはlocalで動き、assetを暗黙にdownloadしません。
+
+生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo path、install/doctor

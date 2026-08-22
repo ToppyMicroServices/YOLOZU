@@ -1,0 +1,404 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/adaptive_vision_roadmap.schema.json",
+  "$defs": {
+    "phase": {
+      "additionalProperties": false,
+      "properties": {
+        "child_issue_count": {
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "deliverable": {
+          "maxLength": 768,
+          "minLength": 1,
+          "type": "string"
+        },
+        "issue_id": {
+          "pattern": "^YOLOZU-ll2\\.81\\.[1-5]$",
+          "type": "string"
+        },
+        "order": {
+          "maximum": 5,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "priority": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2"
+          ],
+          "type": "string"
+        },
+        "state": {
+          "const": "roadmap"
+        },
+        "title": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "child_issue_count",
+        "deliverable",
+        "issue_id",
+        "order",
+        "priority",
+        "state",
+        "title"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "continuous_intake": {
+      "items": false,
+      "maxItems": 8,
+      "minItems": 8,
+      "prefixItems": [
+        {
+          "const": "discover_from_monitored_primary_sources"
+        },
+        {
+          "const": "screen_provenance_license_runtime_and_interface"
+        },
+        {
+          "const": "prepare_approved_assets_in_isolation"
+        },
+        {
+          "const": "qualify_on_an_exact_environment_workload_and_protocol"
+        },
+        {
+          "const": "activate_reviewed_evidence"
+        },
+        {
+          "const": "promote_through_a_separate_human_review"
+        },
+        {
+          "const": "monitor_expiry_runtime_drift_and_regressions"
+        },
+        {
+          "const": "revoke_or_roll_back_without_reusing_invalid_evidence"
+        }
+      ],
+      "type": "array",
+      "uniqueItems": true
+    },
+    "generated_report": {
+      "const": "reports/adaptive_vision_roadmap.md"
+    },
+    "guardrails": {
+      "items": {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "kind": {
+      "const": "adaptive_vision_roadmap_projection"
+    },
+    "next_issue_id": {
+      "maxLength": 64,
+      "pattern": "^YOLOZU-ll2\\.81(?:\\.[0-9]+)+$",
+      "type": "string"
+    },
+    "out_of_scope": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "phases": {
+      "items": false,
+      "maxItems": 5,
+      "minItems": 5,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/phase"
+            },
+            {
+              "properties": {
+                "issue_id": {
+                  "const": "YOLOZU-ll2.81.1"
+                },
+                "order": {
+                  "const": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/phase"
+            },
+            {
+              "properties": {
+                "issue_id": {
+                  "const": "YOLOZU-ll2.81.2"
+                },
+                "order": {
+                  "const": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/phase"
+            },
+            {
+              "properties": {
+                "issue_id": {
+                  "const": "YOLOZU-ll2.81.3"
+                },
+                "order": {
+                  "const": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/phase"
+            },
+            {
+              "properties": {
+                "issue_id": {
+                  "const": "YOLOZU-ll2.81.4"
+                },
+                "order": {
+                  "const": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/phase"
+            },
+            {
+              "properties": {
+                "issue_id": {
+                  "const": "YOLOZU-ll2.81.5"
+                },
+                "order": {
+                  "const": 5
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "array"
+    },
+    "product_boundary": {
+      "additionalProperties": false,
+      "properties": {
+        "current_stable_lane": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        "execution_boundary": {
+          "maxLength": 512,
+          "minLength": 1,
+          "type": "string"
+        },
+        "natural_language_boundary": {
+          "maxLength": 512,
+          "minLength": 1,
+          "type": "string"
+        },
+        "public_availability": {
+          "const": "future_experimental_work"
+        },
+        "recommendation_boundary": {
+          "maxLength": 512,
+          "minLength": 1,
+          "type": "string"
+        },
+        "target_maturity": {
+          "const": "Experimental"
+        }
+      },
+      "required": [
+        "current_stable_lane",
+        "execution_boundary",
+        "natural_language_boundary",
+        "public_availability",
+        "recommendation_boundary",
+        "target_maturity"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "scope": {
+      "additionalProperties": false,
+      "properties": {
+        "initial_inputs": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "const": "single_image"
+            },
+            {
+              "const": "bounded_directory"
+            }
+          ],
+          "type": "array",
+          "uniqueItems": true
+        },
+        "initial_tasks": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "const": "object_detection"
+            },
+            {
+              "const": "instance_segmentation"
+            }
+          ],
+          "type": "array",
+          "uniqueItems": true
+        },
+        "later_bounded_lanes": {
+          "items": false,
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "const": "local_stream"
+            },
+            {
+              "const": "session_tracking"
+            },
+            {
+              "const": "static_image_ocr"
+            }
+          ],
+          "type": "array",
+          "uniqueItems": true
+        },
+        "selection_factors": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "initial_inputs",
+        "initial_tasks",
+        "later_bounded_lanes",
+        "selection_factors"
+      ],
+      "type": "object"
+    },
+    "snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "beads_export_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "date": {
+          "format": "date",
+          "type": "string"
+        },
+        "planning_source": {
+          "const": "Beads"
+        },
+        "planning_source_doc": {
+          "const": "docs/roadmap.md"
+        },
+        "root_issue_id": {
+          "const": "YOLOZU-ll2.81"
+        },
+        "timezone": {
+          "const": "Asia/Tokyo"
+        }
+      },
+      "required": [
+        "beads_export_commit",
+        "date",
+        "planning_source",
+        "planning_source_doc",
+        "root_issue_id",
+        "timezone"
+      ],
+      "type": "object"
+    },
+    "source_of_truth": {
+      "additionalProperties": false,
+      "properties": {
+        "capability_boundary": {
+          "const": "yolozu/data/manifest/adaptive_vision_roadmap.json"
+        },
+        "generated_human_report": {
+          "const": "reports/adaptive_vision_roadmap.md"
+        },
+        "live_task_state": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability_boundary",
+        "generated_human_report",
+        "live_task_state"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "continuous_intake",
+    "generated_report",
+    "guardrails",
+    "kind",
+    "next_issue_id",
+    "out_of_scope",
+    "phases",
+    "product_boundary",
+    "schema_version",
+    "scope",
+    "snapshot",
+    "source_of_truth"
+  ],
+  "title": "YOLOZU adaptive vision roadmap projection",
+  "type": "object"
+}

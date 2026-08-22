@@ -114,6 +114,14 @@ flowchart LR
 - Benchmark lane: qualify backend parity after the stable evaluation path is working
 - Research lane: opt-in workflows over already evaluated artifacts
 
+## Adaptive Local Vision Roadmap
+
+Environment-aware local image processing is future Experimental delivery work. It does not change the current Stable prediction validation/evaluation surface.
+
+The target design lets an AI client turn natural language into a typed request, then asks YOLOZU to select only among pipelines qualified for the matching task, hardware, runtime, workload, protocol, and license constraints. If the evidence is missing or mismatched, the result is abstention rather than an inferred “best” model. Recommendation and execution remain local and do not implicitly download assets.
+
+See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow

@@ -35,11 +35,36 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Validate adaptive vision roadmap projection
+        run: |
+          python3 tools/generate_adaptive_vision_roadmap.py --check --json
+          python3 -m unittest tests.test_adaptive_vision_roadmap_generator -v
+
       - name: Build wheel only
         run: |
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-build.lock
           python -m build --wheel
           python -m twine check dist/*.whl
+
+      - name: Validate adaptive vision roadmap wheel resources
+        run: |
+          python - <<'PY'
+          import glob
+          import zipfile
+
+          wheels = sorted(glob.glob("dist/*.whl"))
+          if not wheels:
+            raise SystemExit("no wheels found under dist/")
+          required = {
+            "yolozu/data/manifest/adaptive_vision_roadmap.json",
+            "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+          }
+          with zipfile.ZipFile(wheels[-1], "r") as archive:
+            missing = sorted(required - set(archive.namelist()))
+          if missing:
+            raise SystemExit(f"adaptive vision roadmap wheel resources missing: {missing}")
+          print(f"adaptive vision roadmap wheel resources OK: {wheels[-1]}")
+          PY
 
       - name: Validate built wheel version matches package version
         env:
@@ -145,11 +170,45 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Validate adaptive vision roadmap projection
+        run: |
+          python3 tools/generate_adaptive_vision_roadmap.py --check --json
+          python3 -m unittest tests.test_adaptive_vision_roadmap_generator -v
+
       - name: Build
         run: |
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-build.lock
           python -m build
           python -m twine check dist/*
+
+      - name: Validate adaptive vision roadmap release resources
+        run: |
+          python - <<'PY'
+          import glob
+          import tarfile
+          import zipfile
+
+          required = {
+            "yolozu/data/manifest/adaptive_vision_roadmap.json",
+            "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+          }
+          wheels = sorted(glob.glob("dist/*.whl"))
+          sdists = sorted(glob.glob("dist/*.tar.gz"))
+          if not wheels or not sdists:
+            raise SystemExit("wheel and sdist are both required")
+          with zipfile.ZipFile(wheels[-1], "r") as archive:
+            missing_wheel = sorted(required - set(archive.namelist()))
+          with tarfile.open(sdists[-1], "r:gz") as archive:
+            names = archive.getnames()
+          missing_sdist = sorted(
+            path for path in required if not any(name.endswith("/" + path) for name in names)
+          )
+          if missing_wheel or missing_sdist:
+            raise SystemExit(
+              f"adaptive vision roadmap resources missing: wheel={missing_wheel} sdist={missing_sdist}"
+            )
+          print(f"adaptive vision roadmap release resources OK: {wheels[-1]}, {sdists[-1]}")
+          PY
 
       - name: Validate built wheel version matches package version (and release tag)
         env:

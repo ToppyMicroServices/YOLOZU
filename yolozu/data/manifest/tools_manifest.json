@@ -74,6 +74,10 @@
     }
   },
   "contracts": {
+    "adaptive_vision_roadmap_json": {
+      "schema": "docs/schemas/adaptive_vision_roadmap.schema.json",
+      "summary": "Dated packaged projection of the future Experimental adaptive local-vision scope; Beads remains authoritative for live task state."
+    },
     "artifact_research_qualification_json": {
       "producer": "python3 tools/qualify_artifact_research.py",
       "schema": "docs/schemas/artifact_research_qualification.schema.json",
@@ -9728,6 +9732,107 @@
         "ci",
         "dataset",
         "smoke"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "adaptive_vision_roadmap_json"
+        ]
+      },
+      "docs": [
+        "docs/roadmap.md",
+        "reports/adaptive_vision_roadmap.md",
+        "yolozu/data/manifest/README.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "Regenerates the canonical adaptive vision roadmap report.",
+            "kind": "file",
+            "path": "reports/adaptive_vision_roadmap.md",
+            "scope": "path"
+          }
+        ],
+        "writes": [
+          {
+            "description": "Optional repository-local generated adaptive vision roadmap report path.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/generate_adaptive_vision_roadmap.py",
+      "examples": [
+        {
+          "command": "python3 tools/generate_adaptive_vision_roadmap.py --check --json",
+          "description": "Verify that the tracked roadmap report matches the packaged JSON projection."
+        },
+        {
+          "command": "python3 tools/generate_adaptive_vision_roadmap.py --source yolozu/data/manifest/adaptive_vision_roadmap.json --output reports/adaptive_vision_roadmap.md",
+          "description": "Regenerate the human-readable adaptive vision roadmap projection."
+        }
+      ],
+      "id": "generate_adaptive_vision_roadmap",
+      "inputs": [
+        {
+          "default": "yolozu/data/manifest/adaptive_vision_roadmap.json",
+          "flag": "--source",
+          "kind": "file",
+          "name": "source",
+          "required": false
+        },
+        {
+          "default": "reports/adaptive_vision_roadmap.md",
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": false
+        },
+        {
+          "flag": "--check",
+          "kind": "string",
+          "name": "check",
+          "required": false
+        },
+        {
+          "flag": "--json",
+          "kind": "string",
+          "name": "json",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "default": "reports/adaptive_vision_roadmap.md",
+          "description": "Generated human-readable roadmap projection.",
+          "kind": "file",
+          "name": "adaptive_vision_roadmap_md"
+        },
+        {
+          "description": "Generation or drift-check status.",
+          "kind": "stdout",
+          "name": "stdout"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Generate the adaptive vision roadmap report from its packaged JSON projection.",
+      "tags": [
+        "docs",
+        "generated-docs",
+        "roadmap",
+        "ssot"
       ]
     },
     {

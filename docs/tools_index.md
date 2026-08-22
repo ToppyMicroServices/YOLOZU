@@ -209,6 +209,11 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 - Declarative requirements: `docs/manifest_declarative_spec.md`
 - Authoring workflow: `docs/manifest_authoring_workflow.md`
 - Every manifest entry carries `maturity = stable|experimental|research`; use `docs/production_readiness.md` as the prose source of truth for those labels.
+- Adaptive local-vision public projection: `python3 tools/generate_adaptive_vision_roadmap.py --check --json`
+  - Source: `yolozu/data/manifest/adaptive_vision_roadmap.json`
+  - Schema: `docs/schemas/adaptive_vision_roadmap.schema.json`
+  - Generated report: `reports/adaptive_vision_roadmap.md`
+  - This checks roadmap/document drift only; it is not an inference or qualification command.
 
 ## Policy helpers
 

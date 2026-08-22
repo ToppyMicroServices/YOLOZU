@@ -227,6 +227,7 @@ Contact: develop@toppymicros.com
 | fresh_install_journey | stable | scripts/fresh_install_journey.sh | Install YOLOZU from public PyPI in a clean environment and record the complete stable-lane journey. |
 | gen_ci_dummy_dets_onnx | stable | tools/ci/gen_dummy_dets_onnx.py | Generate a tiny deterministic ONNX model for CI TensorRT/ONNXRuntime smoke parity checks. |
 | gen_ci_smoke_dataset | stable | tools/ci/gen_smoke_dataset.py | Generate a minimal YOLO-format dataset for CI exporter and parity smoke tests. |
+| generate_adaptive_vision_roadmap | stable | tools/generate_adaptive_vision_roadmap.py | Generate the adaptive vision roadmap report from its packaged JSON projection. |
 | generate_benchmark_support_matrix | stable | tools/generate_benchmark_support_matrix.py | Generate the canonical benchmark support matrix from support metadata. |
 | generate_integration_tool_reference | stable | tools/generate_integration_tool_reference.py | Generate the MCP↔Actions interface contract reference from tool_runner + server wrappers and fail on drift in check mode. |
 | generate_runtime_parity_case_study | experimental | tools/generate_runtime_parity_case_study.py | Generate and verify a real Mask R-CNN PyTorch eager versus TorchScript comparison through YOLOZU's stable evaluation lane. |

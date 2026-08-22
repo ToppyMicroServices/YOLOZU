@@ -21,6 +21,7 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Area | Maturity | Production posture | Primary references |
 |---|---|---|---|
 | Predictions validation/evaluation | Stable | Default production lane | [`predictions_schema.md`](predictions_schema.md), [`external_inference.md`](external_inference.md), [`../README.md`](../README.md) |
+| Environment-qualified adaptive local vision | Future delivery; target maturity is Experimental | No public recommendation or execution capability is claimed by the current release. Selection must eventually use exact environment/workload/protocol evidence and abstain when it is missing. | [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md), [`../yolozu/data/manifest/adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json), [`roadmap.md`](roadmap.md) |
 | Dataset I/O and mask-only label derivation | Deferred as standalone capabilities | Implemented and tested inside dataset workflows, but implementation presence and a Stable parent CLI are not standalone production-readiness evidence | [`yolozu_spec.md`](yolozu_spec.md), [`dataset_contract.md`](dataset_contract.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Inference constraints and template gating | Deferred as standalone capabilities | Adapter-internal utilities with no independent public production lane; qualify them with the consuming model and protocol | [`yolozu_spec.md`](yolozu_spec.md), [`gate_weight_tuning.md`](gate_weight_tuning.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Backend parity / benchmark orchestration | Experimental | Useful after environment-specific qualification; classification, OBB, segmentation, keypoints, depth, and pose6d have artifact-backed real eval/parity lanes, without claiming backend inference | [`backend_parity_matrix.md`](backend_parity_matrix.md), [`benchmark_mode.md`](benchmark_mode.md), `manual/chapters/09_parity_bench_protocols.tex` |
@@ -82,6 +83,10 @@ are evidence of availability, not sufficient evidence for maturity promotion.
 - CPU-friendly demo and smoke paths
 
 These are the areas to rely on first for production adoption.
+
+## Future adaptive local vision program
+
+The adaptive local-vision roadmap targets an Experimental lane. It does not add a current model, router, streaming, tracking, or OCR support claim. Its machine-readable scope is [`adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json), and the generated public projection is [`adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md). Live progress remains in Beads under `YOLOZU-ll2.81`.
 
 ## Experimental
 
