@@ -30,6 +30,7 @@ This avoids long-lived PyPI API tokens.
 - Compatibility gates:
   - schema compatibility
   - golden compatibility (`python3 tools/check_golden_compatibility.py`)
+  - adaptive vision roadmap projection/report drift (`python3 tools/generate_adaptive_vision_roadmap.py --check --json`)
   - wheel/sdist contents gates
 
 ## Each release

@@ -38,6 +38,14 @@ yolozu doctor --proof
 - Bridge lane: train/export flows that emit the same predictions interface contract
 - Benchmark/Research lanes: backend parity, SynthGen handoff, and opt-in research lanes over already evaluated artifacts
 
+## Future Adaptive Local Vision Work
+
+The environment-qualified local image-processing program targets an Experimental lane and does not expand the current Stable surface. An AI client supplies a typed request; selection must use matching task, environment, workload, protocol, artifact, and license evidence or abstain.
+
+- Human-readable projection: [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md)
+- Packaged machine-readable projection: [`../yolozu/data/manifest/adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json)
+- Live task source and refresh rule: [`roadmap.md`](roadmap.md)
+
 ## Primary Focus
 
 - Stable lane: evaluate precomputed predictions fairly across frameworks and runtimes

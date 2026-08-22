@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">130 manifest entries with declared maturity, inputs,
+  <p class="lead">131 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -978,6 +978,21 @@ bash scripts/fresh_install_journey.sh --help</code></pre>
   <h3>Examples</h3>
   <pre><code>python3 tools/ci/gen_smoke_dataset.py --out reports/ci_trt_smoke/dataset --split val --hw 48x64</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/ci/gen_smoke_dataset.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ci_incidents.md" target="_blank" rel="noopener noreferrer">ci_incidents.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/11_troubleshooting.tex" target="_blank" rel="noopener noreferrer">11_troubleshooting.tex</a></p>
+</details>
+
+<details class="card" id="tool-generate-adaptive-vision-roadmap" data-tool-id="generate_adaptive_vision_roadmap"
+  data-search-card data-search-text="generate_adaptive_vision_roadmap Generate the adaptive vision roadmap report from its packaged JSON projection. stable tools/generate_adaptive_vision_roadmap.py python3 tools/generate_adaptive_vision_roadmap.py --check --json python3 tools/generate_adaptive_vision_roadmap.py --source yolozu/data/manifest/adaptive_vision_roadmap.json --output reports/adaptive_vision_roadmap.md">
+  <summary><code>generate_adaptive_vision_roadmap</code> — Generate the adaptive vision roadmap report from its packaged JSON projection.</summary>
+  <div class="meta">
+    <span class="badge badge-stable">stable</span>
+    <span><code>tools/generate_adaptive_vision_roadmap.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--source</code> — default=yolozu/data/manifest/adaptive_vision_roadmap.json, file</li><li><code>--output</code> — default=reports/adaptive_vision_roadmap.md, file</li><li><code>--check</code> — string</li><li><code>--json</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/generate_adaptive_vision_roadmap.py --check --json
+python3 tools/generate_adaptive_vision_roadmap.py --source yolozu/data/manifest/adaptive_vision_roadmap.json --output reports/adaptive_vision_roadmap.md</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/generate_adaptive_vision_roadmap.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/roadmap.md" target="_blank" rel="noopener noreferrer">roadmap.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/adaptive_vision_roadmap.md" target="_blank" rel="noopener noreferrer">adaptive_vision_roadmap.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/data/manifest/README.md" target="_blank" rel="noopener noreferrer">README.md</a></p>
 </details>
 
 <details class="card" id="tool-generate-benchmark-support-matrix" data-tool-id="generate_benchmark_support_matrix"

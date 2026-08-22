@@ -100,7 +100,15 @@ def _check_tag_exists_remote(tag: str) -> bool:
 def _quality_check_cmds() -> list[list[str]]:
     return [
         ["python3", "tools/validate_tool_manifest.py", "--manifest", "tools/manifest.json", "--require-declarative"],
-        ["python3", "-m", "unittest", "tests.test_packaged_tools_manifest", "tests.test_manifest_docs_references"],
+        ["python3", "tools/generate_adaptive_vision_roadmap.py", "--check", "--json"],
+        [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_adaptive_vision_roadmap_generator",
+            "tests.test_packaged_tools_manifest",
+            "tests.test_manifest_docs_references",
+        ],
         ["python3", "tools/check_mcp_settings.py", "--output", "reports/mcp_settings_check.release.json"],
     ]
 

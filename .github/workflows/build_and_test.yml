@@ -66,6 +66,8 @@ jobs:
               - 'README.md'
               - 'Readme_jp.md'
               - 'docs/**'
+              - 'reports/adaptive_vision_roadmap.md'
+              - 'tools/generate_adaptive_vision_roadmap.py'
               - 'tools/run_mcp_server.py'
               - 'tools/run_actions_api.py'
               - 'tools/check_mcp_settings.py'
@@ -75,6 +77,9 @@ jobs:
               - 'yolozu/integrations/manifest_resources.py'
               - 'yolozu/integrations/mcp_cli.py'
               - 'yolozu/integrations/tool_reference.py'
+              - 'yolozu/data/manifest/adaptive_vision_roadmap.json'
+              - 'yolozu/data/schemas/adaptive_vision_roadmap.schema.json'
+              - 'tests/test_adaptive_vision_roadmap_generator.py'
               - 'tests/test_ai_first_mcp_surface.py'
               - 'tests/test_candidate_artifact_ai_surface.py'
               - 'tests/test_installed_ai_surface.py'
@@ -165,9 +170,13 @@ jobs:
         run: |
           python tools/validate_tool_manifest.py --manifest tools/manifest.json --require-declarative
           python tools/audit_docs_examples_drift.py --json
+          python tools/generate_adaptive_vision_roadmap.py --check --json
           python tools/generate_benchmark_support_matrix.py --check --json
           python tools/generate_web_docs.py --check --json
-          python -m unittest tests.test_packaged_tools_manifest tests.test_manifest_docs_references -v
+          python -m unittest \
+            tests.test_adaptive_vision_roadmap_generator \
+            tests.test_packaged_tools_manifest \
+            tests.test_manifest_docs_references -v
           python -m unittest tests.test_byop_quickstarts -v
           python -m unittest \
             tests.test_web_docs_generation \
@@ -224,6 +233,7 @@ jobs:
             tests.test_integrations_mcp_actions_parity \
             tests.test_generated_integration_tool_reference \
             tests.test_interface_contract_terminology \
+            tests.test_adaptive_vision_roadmap_generator \
             tests.test_packaged_tools_manifest \
             tests.test_manifest_docs_references -v
 
@@ -232,6 +242,10 @@ jobs:
           git diff --exit-code -- \
             tools/manifest.json \
             yolozu/data/manifest/tools_manifest.json \
+            yolozu/data/manifest/adaptive_vision_roadmap.json \
+            docs/schemas/adaptive_vision_roadmap.schema.json \
+            yolozu/data/schemas/adaptive_vision_roadmap.schema.json \
+            reports/adaptive_vision_roadmap.md \
             docs/schemas/predictions_validation_result.schema.json \
             yolozu/data/schemas/predictions_validation_result.schema.json \
             docs/generated/mcp_actions_tool_reference.json \
@@ -295,6 +309,7 @@ jobs:
             tests/test_docs_examples_drift.py \
             tests/test_generated_cli_reference.py \
             tests/test_ssot_capability_coverage.py \
+            tests/test_adaptive_vision_roadmap_generator.py \
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \
@@ -388,7 +403,7 @@ jobs:
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
           yolozu doctor --output -
           yolozu export --help
-          python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"
+          python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'schemas/adaptive_vision_roadmap.schema.json' in paths; assert 'manifest/adaptive_vision_roadmap.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"
 
       - name: Install build tooling (hash-locked)
         run: |
@@ -411,9 +426,11 @@ jobs:
             names = set(z.namelist())
 
           required = [
+            "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
             "yolozu/data/schemas/predictions.schema.json",
             "yolozu/data/protocols/yolo26_eval.json",
             "yolozu/data/manifest/tools_manifest.json",
+            "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/docs/README.md",
             "yolozu/data/docs/proof_onepager.md",
             "yolozu/data/docs/backend_parity_matrix.md",
@@ -455,9 +472,11 @@ jobs:
             "SECURITY.md",
             "RELEASE.md",
             "tools/manifest.json",
+            "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
             "yolozu/data/schemas/predictions.schema.json",
             "yolozu/data/protocols/yolo26_eval.json",
             "yolozu/data/manifest/tools_manifest.json",
+            "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/docs/README.md",
             "yolozu/data/docs/proof_onepager.md",
             "yolozu/data/docs/backend_parity_matrix.md",
