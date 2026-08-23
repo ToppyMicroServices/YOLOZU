@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/qualification_workload_profile.schema.json",
+  "title": "YOLOZU QualificationWorkloadProfile v1",
+  "description": "Privacy-safe performance-relevant workload identity for future Experimental adaptive routing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "collector_id",
+    "collector_version",
+    "task",
+    "input_mode",
+    "execution_mode",
+    "compute_policy",
+    "provider_allowlist",
+    "precision_allowlist",
+    "input_count",
+    "input_order",
+    "decoded_inputs",
+    "decoder",
+    "batch_size",
+    "concurrency",
+    "max_results_per_image",
+    "latency_interval_id",
+    "handoff",
+    "prompt_characteristics",
+    "workload_fingerprint"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "collector_id": { "const": "yolozu_qualification_workload" },
+    "collector_version": { "const": "1" },
+    "task": { "enum": ["object_detection", "instance_segmentation"] },
+    "input_mode": { "enum": ["single_image", "bounded_directory"] },
+    "execution_mode": { "enum": ["batch", "soft_realtime"] },
+    "compute_policy": { "enum": ["auto", "cpu_only", "accelerator_required"] },
+    "provider_allowlist": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "precision_allowlist": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "enum": ["fp32", "tf32", "fp16", "bf16", "int8"] }
+    },
+    "input_count": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "input_order": { "enum": ["single_image_v1", "normalized_basename_utf8_v1"] },
+    "decoded_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/decoded_input" }
+    },
+    "decoder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "pillow" },
+        "version": { "$ref": "#/$defs/id" }
+      }
+    },
+    "batch_size": { "const": 1 },
+    "concurrency": { "const": 1 },
+    "max_results_per_image": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "latency_interval_id": { "const": "image_e2e_validated_handoff_v1" },
+    "handoff": { "$ref": "#/$defs/handoff" },
+    "max_sustained_samples": { "const": 1000000 },
+    "prompt_characteristics": { "$ref": "#/$defs/prompt_characteristics" },
+    "quality_identity": { "$ref": "#/$defs/quality_identity" },
+    "workload_fingerprint": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "input_mode": { "const": "single_image" } }, "required": ["input_mode"] },
+      "then": {
+        "properties": {
+          "input_count": { "const": 1 },
+          "input_order": { "const": "single_image_v1" },
+          "decoded_inputs": { "minItems": 1, "maxItems": 1 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "input_mode": { "const": "bounded_directory" } }, "required": ["input_mode"] },
+      "then": { "properties": { "input_order": { "const": "normalized_basename_utf8_v1" } } }
+    },
+    {
+      "if": { "properties": { "execution_mode": { "const": "soft_realtime" } }, "required": ["execution_mode"] },
+      "then": { "required": ["max_sustained_samples"] }
+    },
+    {
+      "if": { "properties": { "execution_mode": { "const": "batch" } }, "required": ["execution_mode"] },
+      "then": { "not": { "required": ["max_sustained_samples"] } }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "decoded_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "width", "height", "color_mode", "orientation_policy"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0, "maximum": 99 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 16384 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 16384 },
+        "color_mode": {
+          "enum": ["1", "L", "LA", "P", "PA", "RGB", "RGBA", "RGBX", "CMYK", "YCbCr", "LAB", "HSV", "I", "F", "I;16"]
+        },
+        "orientation_policy": { "const": "exif_transpose_v1" }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "scratch_cap_bytes", "max_mask_artifacts", "max_output_files", "max_output_bytes"],
+      "properties": {
+        "id": { "const": "image_result_mask_handoff_v1" },
+        "version": { "const": 1 },
+        "scratch_cap_bytes": { "const": 536870912 },
+        "max_mask_artifacts": { "const": 1000 },
+        "max_output_files": { "const": 1003 },
+        "max_output_bytes": { "const": 4294967296 }
+      }
+    },
+    "prompt_characteristics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "count", "maximum_codepoint_bucket", "total_utf8_byte_bucket"],
+      "properties": {
+        "mode": { "enum": ["fixed_classes", "text"] },
+        "count": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "maximum_codepoint_bucket": { "enum": ["1-16", "17-32", "33-64", "65-128", "129-256"] },
+        "total_utf8_byte_bucket": { "enum": ["1-256", "257-1024", "1025-2048", "2049-4096"] }
+      }
+    },
+    "quality_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "direction", "evaluation_dataset_id", "evaluation_dataset_sha256", "evaluation_protocol_sha256", "evaluation_vocabulary_id"],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["higher_is_better", "lower_is_better"] },
+        "evaluation_dataset_id": { "$ref": "#/$defs/id" },
+        "evaluation_dataset_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_protocol_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_vocabulary_id": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

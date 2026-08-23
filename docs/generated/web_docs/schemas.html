@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from docs/schemas/*.json</span>
   <h1 id="page-title">Schema browser</h1>
-  <p class="lead">32 checked-in JSON Schemas covering predictions,
+  <p class="lead">35 checked-in JSON Schemas covering predictions,
   evaluation reports, training handoff, registry records, and Research artifacts.
   Open the source schema for complete field constraints.</p>
 
@@ -200,6 +200,19 @@
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/continual_promotion_decision.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
+<article class="card" id="schema-environment-profile-schema"
+  data-schema-path="docs/schemas/environment_profile.schema.json" data-search-card
+  data-search-text="YOLOZU EnvironmentProfile v1 Privacy-safe measured configuration facts for future Experimental adaptive routing. docs/schemas/environment_profile.schema.json accelerators, collected_at, collector_id, collector_version, cpu, environment_fingerprint, os, power_performance_mode, probe_issues, runtimes, schema_version, total_memory accelerators, collected_at, collector_id, collector_version, cpu, environment_fingerprint, os, power_performance_mode, probe_issues, runtimes, schema_version, total_memory">
+  <h3>YOLOZU EnvironmentProfile v1</h3>
+  <p>Privacy-safe measured configuration facts for future Experimental adaptive routing.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/environment_profile.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>accelerators, collected_at, collector_id, collector_version, cpu, environment_fingerprint, os, power_performance_mode, probe_issues, runtimes, schema_version, total_memory</code></dd>
+    <dt>Root required</dt><dd><code>accelerators, collected_at, collector_id, collector_version, cpu, environment_fingerprint, os, power_performance_mode, probe_issues, runtimes, schema_version, total_memory</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/environment_profile.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
 <article class="card" id="schema-eval-suite-report-schema"
   data-schema-path="docs/schemas/eval_suite_report.schema.json" data-search-card
   data-search-text="YOLOZU Eval Suite Report Report payload emitted by tools/eval_suite.py (supports dry-run mode). docs/schemas/eval_suite_report.schema.json bbox_format, dataset, images, protocol, protocol_hash, protocol_id, protocol_schema_version, report_schema_version, results, split, split_requested, timestamp bbox_format, dataset, images, results, timestamp">
@@ -237,6 +250,19 @@
     <dt>Root required</dt><dd><code>advertised_provider_attempts, decision, environment, external_matrix, inputs, kind, protocol, protocol_complete, real_multitask, schema_version, source, timestamp</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/finetune_lane_qualification.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-image-job-spec-schema"
+  data-schema-path="docs/schemas/image_job_spec.schema.json" data-search-card
+  data-search-text="YOLOZU ImageJobSpec v1 Typed request for future Experimental adaptive image routing. Paths are separate tool arguments. docs/schemas/image_job_spec.schema.json allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, fixed_classes, input_mode, job_timeout_seconds, max_accelerator_process_tree_peak_bytes, max_cold_start_ms, max_images, max_p95_latency_ms, max_results_per_image, max_runner_tree_peak_rss_bytes, min_repeat_throughput_fps, min_sustained_fps, network_policy, precision_allowlist, prompt_mode, provider_allowlist, quality_requirement, ranking_policy, schema_version, spdx_allowlist, task, text_prompts allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, input_mode, job_timeout_seconds, max_images, max_results_per_image, network_policy, prompt_mode, ranking_policy, schema_version, task">
+  <h3>YOLOZU ImageJobSpec v1</h3>
+  <p>Typed request for future Experimental adaptive image routing. Paths are separate tool arguments.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/image_job_spec.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, fixed_classes, input_mode, job_timeout_seconds, max_accelerator_process_tree_peak_bytes, max_cold_start_ms, max_images, max_p95_latency_ms, max_results_per_image, max_runner_tree_peak_rss_bytes, min_repeat_throughput_fps, min_sustained_fps, network_policy, precision_allowlist, prompt_mode, provider_allowlist, quality_requirement, ranking_policy, schema_version, spdx_allowlist, task, text_prompts</code></dd>
+    <dt>Root required</dt><dd><code>allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, input_mode, job_timeout_seconds, max_images, max_results_per_image, network_policy, prompt_mode, ranking_policy, schema_version, task</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/image_job_spec.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-instance-seg-eval-report-schema"
@@ -302,6 +328,19 @@
     <dt>Root required</dt><dd><code>entry_count, errors, limits, mode, ok, path, repair_enabled, schema_version, strict, tool, warnings</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/predictions_validation_result.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-qualification-workload-profile-schema"
+  data-schema-path="docs/schemas/qualification_workload_profile.schema.json" data-search-card
+  data-search-text="YOLOZU QualificationWorkloadProfile v1 Privacy-safe performance-relevant workload identity for future Experimental adaptive routing. docs/schemas/qualification_workload_profile.schema.json batch_size, collector_id, collector_version, compute_policy, concurrency, decoded_inputs, decoder, execution_mode, handoff, input_count, input_mode, input_order, latency_interval_id, max_results_per_image, max_sustained_samples, precision_allowlist, prompt_characteristics, provider_allowlist, quality_identity, schema_version, task, workload_fingerprint batch_size, collector_id, collector_version, compute_policy, concurrency, decoded_inputs, decoder, execution_mode, handoff, input_count, input_mode, input_order, latency_interval_id, max_results_per_image, precision_allowlist, prompt_characteristics, provider_allowlist, schema_version, task, workload_fingerprint">
+  <h3>YOLOZU QualificationWorkloadProfile v1</h3>
+  <p>Privacy-safe performance-relevant workload identity for future Experimental adaptive routing.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/qualification_workload_profile.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>batch_size, collector_id, collector_version, compute_policy, concurrency, decoded_inputs, decoder, execution_mode, handoff, input_count, input_mode, input_order, latency_interval_id, max_results_per_image, max_sustained_samples, precision_allowlist, prompt_characteristics, provider_allowlist, quality_identity, schema_version, task, workload_fingerprint</code></dd>
+    <dt>Root required</dt><dd><code>batch_size, collector_id, collector_version, compute_policy, concurrency, decoded_inputs, decoder, execution_mode, handoff, input_count, input_mode, input_order, latency_interval_id, max_results_per_image, precision_allowlist, prompt_characteristics, provider_allowlist, schema_version, task, workload_fingerprint</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/qualification_workload_profile.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-reference-adapter-regression-report-schema"
