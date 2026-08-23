@@ -108,6 +108,10 @@
       "schema": "docs/schemas/continual_promotion_decision.schema.json",
       "summary": "Promotion decision report derived from continual_eval.json plus optional curation soft gates."
     },
+    "environment_profile_json": {
+      "schema": "docs/schemas/environment_profile.schema.json",
+      "summary": "Privacy-safe measured configuration facts for future Experimental adaptive routing; presence is not qualification evidence."
+    },
     "eval_suite_report_json": {
       "producer": "python3 tools/eval_suite.py",
       "schema": "docs/schemas/eval_suite_report.schema.json",
@@ -121,6 +125,10 @@
       "producer": "python3 tools/qualify_finetune_lanes.py --output-dir <fresh-dir>",
       "schema": "docs/schemas/finetune_lane_qualification.schema.json",
       "summary": "Execution, provenance, dependency, checkpoint-handoff, metric-scope, and hold decision for real-image and external fine-tuning lanes."
+    },
+    "image_job_spec_json": {
+      "schema": "docs/schemas/image_job_spec.schema.json",
+      "summary": "Bounded typed image request for future Experimental adaptive routing; paths remain separate tool arguments."
     },
     "instance_seg_eval_report_json": {
       "producer": "python3 tools/eval_instance_segmentation.py",
@@ -146,6 +154,10 @@
       "producer": "python3 tools/validate_predictions.py <path> --json",
       "schema": "docs/schemas/predictions_validation_result.schema.json",
       "summary": "Bounded machine-readable success/failure result for predictions validation."
+    },
+    "qualification_workload_profile_json": {
+      "schema": "docs/schemas/qualification_workload_profile.schema.json",
+      "summary": "Shareable performance-relevant workload identity that excludes prompt text, filenames, content hashes, and local sensitive digests."
     },
     "reference_adapter_regression_report_json": {
       "producer": "python3 tools/run_reference_adapter_regression.py",

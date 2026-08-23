@@ -1043,6 +1043,13 @@
     "title": "YOLOZU Continual Promotion Decision"
   },
   {
+    "href": "schemas.html#schema-environment-profile-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU EnvironmentProfile v1 Privacy-safe measured configuration facts for future Experimental adaptive routing. accelerators collected_at collector_id collector_version cpu environment_fingerprint os power_performance_mode probe_issues runtimes schema_version total_memory docs/schemas/environment_profile.schema.json",
+    "summary": "Privacy-safe measured configuration facts for future Experimental adaptive routing.",
+    "title": "YOLOZU EnvironmentProfile v1"
+  },
+  {
     "href": "schemas.html#schema-eval-suite-report-schema",
     "kind": "schema",
     "search_text": "YOLOZU Eval Suite Report Report payload emitted by tools/eval_suite.py (supports dry-run mode). bbox_format dataset images protocol protocol_hash protocol_id protocol_schema_version report_schema_version results split split_requested timestamp docs/schemas/eval_suite_report.schema.json",
@@ -1062,6 +1069,13 @@
     "search_text": "YOLOZU Fine-Tuning Lane Qualification Checked-in YOLOZU JSON Schema. advertised_provider_attempts decision environment external_matrix inputs kind protocol protocol_complete real_multitask schema_version source docs/schemas/finetune_lane_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Fine-Tuning Lane Qualification"
+  },
+  {
+    "href": "schemas.html#schema-image-job-spec-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU ImageJobSpec v1 Typed request for future Experimental adaptive image routing. Paths are separate tool arguments. allowed_maturities batch_size compute_policy concurrency execution_mode fixed_classes input_mode job_timeout_seconds max_accelerator_process_tree_peak_bytes max_cold_start_ms max_images max_p95_latency_ms max_results_per_image max_runner_tree_peak_rss_bytes min_repeat_throughput_fps min_sustained_fps network_policy precision_allowlist prompt_mode provider_allowlist quality_requirement ranking_policy schema_version spdx_allowlist task text_prompts docs/schemas/image_job_spec.schema.json",
+    "summary": "Typed request for future Experimental adaptive image routing. Paths are separate tool arguments.",
+    "title": "YOLOZU ImageJobSpec v1"
   },
   {
     "href": "schemas.html#schema-instance-seg-eval-report-schema",
@@ -1097,6 +1111,13 @@
     "search_text": "YOLOZU predictions validation result Checked-in YOLOZU JSON Schema. entry_count errors limits mode ok path repair_enabled schema_version strict tool warnings docs/schemas/predictions_validation_result.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU predictions validation result"
+  },
+  {
+    "href": "schemas.html#schema-qualification-workload-profile-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU QualificationWorkloadProfile v1 Privacy-safe performance-relevant workload identity for future Experimental adaptive routing. batch_size collector_id collector_version compute_policy concurrency decoded_inputs decoder execution_mode handoff input_count input_mode input_order latency_interval_id max_results_per_image max_sustained_samples precision_allowlist prompt_characteristics provider_allowlist quality_identity schema_version task workload_fingerprint docs/schemas/qualification_workload_profile.schema.json",
+    "summary": "Privacy-safe performance-relevant workload identity for future Experimental adaptive routing.",
+    "title": "YOLOZU QualificationWorkloadProfile v1"
   },
   {
     "href": "schemas.html#schema-reference-adapter-regression-report-schema",

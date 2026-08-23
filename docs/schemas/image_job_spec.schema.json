@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/image_job_spec.schema.json",
+  "title": "YOLOZU ImageJobSpec v1",
+  "description": "Typed request for future Experimental adaptive image routing. Paths are separate tool arguments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task",
+    "prompt_mode",
+    "input_mode",
+    "execution_mode",
+    "batch_size",
+    "concurrency",
+    "max_images",
+    "max_results_per_image",
+    "job_timeout_seconds",
+    "ranking_policy",
+    "allowed_maturities",
+    "network_policy",
+    "compute_policy"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "task": { "enum": ["object_detection", "instance_segmentation"] },
+    "prompt_mode": { "enum": ["fixed_classes", "text"] },
+    "fixed_classes": { "$ref": "#/$defs/prompt_payload" },
+    "text_prompts": { "$ref": "#/$defs/prompt_payload" },
+    "input_mode": { "enum": ["single_image", "bounded_directory"] },
+    "execution_mode": { "enum": ["batch", "soft_realtime"] },
+    "batch_size": { "const": 1 },
+    "concurrency": { "const": 1 },
+    "max_images": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "max_results_per_image": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "job_timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 3600 },
+    "ranking_policy": {
+      "enum": ["accuracy_first", "latency_first", "throughput_first", "memory_first"]
+    },
+    "allowed_maturities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["Stable", "Experimental"] }
+    },
+    "network_policy": { "const": "deny" },
+    "compute_policy": { "enum": ["auto", "cpu_only", "accelerator_required"] },
+    "provider_allowlist": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" },
+      "default": []
+    },
+    "precision_allowlist": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "enum": ["fp32", "tf32", "fp16", "bf16", "int8"] },
+      "default": []
+    },
+    "spdx_allowlist": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" },
+      "default": []
+    },
+    "max_cold_start_ms": { "$ref": "#/$defs/positive_decimal" },
+    "max_p95_latency_ms": { "$ref": "#/$defs/positive_decimal" },
+    "max_runner_tree_peak_rss_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807
+    },
+    "max_accelerator_process_tree_peak_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807
+    },
+    "min_repeat_throughput_fps": { "$ref": "#/$defs/positive_decimal" },
+    "min_sustained_fps": { "$ref": "#/$defs/positive_decimal" },
+    "quality_requirement": { "$ref": "#/$defs/quality_requirement" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "prompt_mode": { "const": "fixed_classes" } }, "required": ["prompt_mode"] },
+      "then": { "required": ["fixed_classes"], "not": { "required": ["text_prompts"] } }
+    },
+    {
+      "if": { "properties": { "prompt_mode": { "const": "text" } }, "required": ["prompt_mode"] },
+      "then": { "required": ["text_prompts"], "not": { "required": ["fixed_classes"] } }
+    },
+    {
+      "if": { "properties": { "input_mode": { "const": "single_image" } }, "required": ["input_mode"] },
+      "then": { "properties": { "max_images": { "const": 1 } } }
+    },
+    {
+      "if": { "properties": { "execution_mode": { "const": "batch" } }, "required": ["execution_mode"] },
+      "then": { "not": { "required": ["min_sustained_fps"] } }
+    },
+    {
+      "if": { "properties": { "execution_mode": { "const": "soft_realtime" } }, "required": ["execution_mode"] },
+      "then": { "not": { "required": ["min_repeat_throughput_fps"] } }
+    },
+    {
+      "if": { "properties": { "ranking_policy": { "const": "accuracy_first" } }, "required": ["ranking_policy"] },
+      "then": { "required": ["quality_requirement"] }
+    },
+    {
+      "if": { "properties": { "ranking_policy": { "const": "memory_first" } }, "required": ["ranking_policy"] },
+      "then": { "properties": { "compute_policy": { "enum": ["cpu_only", "accelerator_required"] } } }
+    },
+    {
+      "if": { "properties": { "compute_policy": { "const": "cpu_only" } }, "required": ["compute_policy"] },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "required": ["max_accelerator_process_tree_peak_bytes"] },
+            {
+              "properties": {
+                "provider_allowlist": {
+                  "contains": {
+                    "enum": ["cuda", "tensorrt", "mps", "coreml", "onnxruntime_cuda", "onnxruntime_tensorrt", "onnxruntime_coreml"]
+                  }
+                }
+              },
+              "required": ["provider_allowlist"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": { "properties": { "compute_policy": { "const": "accelerator_required" } }, "required": ["compute_policy"] },
+      "then": {
+        "not": {
+          "properties": {
+            "provider_allowlist": { "contains": { "enum": ["cpu", "onnxruntime_cpu", "openvino_cpu"] } }
+          },
+          "required": ["provider_allowlist"]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "canonical_decimal": {
+      "type": "string",
+      "maxLength": 29,
+      "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$"
+    },
+    "positive_decimal": {
+      "allOf": [
+        { "$ref": "#/$defs/canonical_decimal" },
+        { "not": { "const": "0" } },
+        { "pattern": "^(?!-)" }
+      ]
+    },
+    "prompt_payload": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 },
+      "description": "Python semantic validation applies NFKC, trim, control rejection, normalized uniqueness, and the aggregate 4096-byte cap."
+    },
+    "quality_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "direction",
+        "threshold",
+        "evaluation_dataset_id",
+        "evaluation_dataset_sha256",
+        "evaluation_protocol_sha256",
+        "evaluation_vocabulary_id"
+      ],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["higher_is_better", "lower_is_better"] },
+        "threshold": { "$ref": "#/$defs/canonical_decimal" },
+        "evaluation_dataset_id": { "$ref": "#/$defs/id" },
+        "evaluation_dataset_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_protocol_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_vocabulary_id": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

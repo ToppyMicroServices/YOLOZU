@@ -10,6 +10,31 @@ from yolozu.segmentation_predictions import validate_segmentation_predictions_pa
 
 
 class TestSchemaGovernance(unittest.TestCase):
+    def test_adaptive_routing_schema_copies_and_browser_are_current(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        governance = (repo_root / "docs" / "schema_governance.md").read_text(encoding="utf-8")
+        manifest = json.loads((repo_root / "tools" / "manifest.json").read_text(encoding="utf-8"))
+        packaged_manifest = json.loads(
+            (repo_root / "yolozu" / "data" / "manifest" / "tools_manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected = {
+            "image_job_spec_json": "image_job_spec.schema.json",
+            "qualification_workload_profile_json": "qualification_workload_profile.schema.json",
+            "environment_profile_json": "environment_profile.schema.json",
+        }
+        self.assertEqual(manifest, packaged_manifest)
+        for contract_id, basename in expected.items():
+            canonical = repo_root / "docs" / "schemas" / basename
+            packaged = repo_root / "yolozu" / "data" / "schemas" / basename
+            self.assertEqual(canonical.read_bytes(), packaged.read_bytes())
+            self.assertIn(f"`docs/schemas/{basename}`", governance)
+            self.assertEqual(
+                manifest["contracts"][contract_id]["schema"],
+                f"docs/schemas/{basename}",
+            )
+
     def test_predictions_schema_copies_declare_current_versions(self):
         repo_root = Path(__file__).resolve().parents[1]
         schema_paths = [

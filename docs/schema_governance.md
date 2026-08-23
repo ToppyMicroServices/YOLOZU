@@ -9,6 +9,24 @@ The authoritative predictions JSON Schema lives at `docs/schemas/predictions.sch
 `yolozu/data/schemas/predictions.schema.json` (packaged) must stay in sync - they are
 overwritten from the canonical copy during release preparation.
 
+The adaptive image routing v1 interface contracts use these canonical and packaged
+byte-identical pairs. They do not have a third copy under `schemas/`:
+
+- `docs/schemas/image_job_spec.schema.json` and
+  `yolozu/data/schemas/image_job_spec.schema.json`
+- `docs/schemas/qualification_workload_profile.schema.json` and
+  `yolozu/data/schemas/qualification_workload_profile.schema.json`
+- `docs/schemas/environment_profile.schema.json` and
+  `yolozu/data/schemas/environment_profile.schema.json`
+
+Their standard-library Python validators live under `yolozu/adaptive/`. JSON Schema
+fixes the transport shape and bounds. Python validation additionally performs the
+normative semantic checks that JSON Schema cannot express directly, including NFKC
+prompt normalization, aggregate UTF-8 limits, canonical digest verification, ordered
+input indices, and privacy-safe environment fingerprint projection. These records
+define a future Experimental interface; their presence is not model availability or
+qualification evidence.
+
 ## Scope
 
 This governance applies to wrapped prediction-style payloads that include:
@@ -113,6 +131,7 @@ schema surface for that artifact family.
 |---|---|---|---|
 | Predictions | `docs/schemas/predictions.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Packaged copies live in `schemas/` and `yolozu/data/schemas/`. |
 | Adaptive vision roadmap projection | `docs/schemas/adaptive_vision_roadmap.schema.json` | [`roadmap.md`](roadmap.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md) | The byte-identical packaged schema and JSON projection describe future scope, not implementation or qualification evidence. |
+| Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Byte-identical packaged schemas accompany standard-library validators. They define strict future Experimental records and do not advertise a selectable model. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |
 | Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |
 | Training handoff | `docs/schemas/training_run_summary.schema.json`, `docs/schemas/training_handoff.schema.json` | [`training_orchestration.md`](training_orchestration.md) | Handoff JSON carries next steps for resume/export/eval/parity. |
