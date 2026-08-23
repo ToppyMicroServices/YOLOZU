@@ -28,7 +28,6 @@ __all__ = [
 ]
 
 
-SCHEMA_VERSION = 1
 TASKS = frozenset({"object_detection", "instance_segmentation"})
 INPUT_MODES = frozenset({"single_image", "bounded_directory"})
 EXECUTION_MODES = frozenset({"batch", "soft_realtime"})

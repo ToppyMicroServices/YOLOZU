@@ -3,16 +3,15 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from PIL import Image
 
 from yolozu.adaptive.inventory import build_decoded_input_inventory
 
 
-class TestAdaptiveImageInventory(unittest.TestCase):
+class TestAdaptiveImageInventory(TestCase):
     def _image(
         self,
         path: Path,
@@ -275,4 +274,4 @@ class TestAdaptiveImageInventory(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
