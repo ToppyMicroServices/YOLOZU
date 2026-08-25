@@ -458,11 +458,22 @@ class _RunnerSession(Protocol):
     runner_id: str
     runner_version: str
 
-    def probe(self, timeout_seconds: int) -> RunnerProbeResult: ...
-    def load(self, timeout_seconds: int) -> None: ...
-    def warmup(self, index: int, timeout_seconds: int) -> None: ...
-    def predict(self, index: int, timeout_seconds: int) -> tuple[Mapping[str, Any], ...]: ...
-    def close(self, timeout_seconds: int) -> None: ...
+    def probe(self, timeout_seconds: int) -> RunnerProbeResult:
+        raise NotImplementedError
+
+    def load(self, timeout_seconds: int) -> None:
+        raise NotImplementedError
+
+    def warmup(self, index: int, timeout_seconds: int) -> None:
+        raise NotImplementedError
+
+    def predict(
+        self, index: int, timeout_seconds: int
+    ) -> tuple[Mapping[str, Any], ...]:
+        raise NotImplementedError
+
+    def close(self, timeout_seconds: int) -> None:
+        raise NotImplementedError
 
 
 def _runner_worker(
@@ -512,7 +523,7 @@ def _runner_worker(
             if len(encoded) > MAX_RUNNER_MESSAGE_BYTES:
                 raise ValueError("runner response exceeds bounded handoff")
             connection.send_bytes(encoded)
-    except BaseException as exc:
+    except Exception as exc:
         try:
             message = str(exc)
             if len(message.encode("utf-8", "replace")) > 512:
@@ -523,8 +534,8 @@ def _runner_worker(
                     protocol=5,
                 )
             )
-        except BaseException:
-            pass
+        except Exception:
+            return
     finally:
         connection.close()
 
@@ -566,7 +577,7 @@ class _ForkedRunnerSession:
                 for name in ("runner_id", "runner_version")
             ):
                 raise _fail("runner_failed", "runner startup identity is invalid")
-        except BaseException:
+        except Exception:
             self._terminate()
             self._connection.close()
             raise
@@ -991,7 +1002,7 @@ def _repeat_summary(
     samples: list[int] = []
     started = monotonic_ns()
     for input_index in schedule:
-        duration, _handoff = _predict_handoff(
+        prediction = _predict_handoff(
             session=session,
             inputs=inputs,
             input_index=input_index,
@@ -999,7 +1010,7 @@ def _repeat_summary(
             bundle=bundle,
             monotonic_ns=monotonic_ns,
         )
-        samples.append(duration)
+        samples.append(prediction[0])
     ended = monotonic_ns()
     total = ended - started
     if total <= 0 or total > 2**64 - 1:
@@ -1056,7 +1067,7 @@ def _sustained_summary(
     while True:
         if count >= MAX_SUSTAINED_SAMPLES:
             raise _fail("sustained_sample_limit", "sample cap reached before ten-minute section completed")
-        duration, _handoff = _predict_handoff(
+        prediction = _predict_handoff(
             session=session,
             inputs=inputs,
             input_index=count % len(inputs),
@@ -1064,7 +1075,7 @@ def _sustained_summary(
             bundle=bundle,
             monotonic_ns=monotonic_ns,
         )
-        samples[count] = duration
+        samples[count] = prediction[0]
         count += 1
         elapsed = monotonic_ns() - started
         if elapsed >= MIN_SUSTAINED_DURATION_NS:
@@ -1162,7 +1173,7 @@ def _evaluate_quality(
             return {"status": "unknown", "reason": reason}
     predictions: list[bytes] = []
     for input_index in range(len(inputs)):
-        _duration, handoff = _predict_handoff(
+        prediction = _predict_handoff(
             session=session,
             inputs=inputs,
             input_index=input_index,
@@ -1170,7 +1181,7 @@ def _evaluate_quality(
             bundle=bundle,
             monotonic_ns=monotonic_ns,
         )
-        predictions.append(handoff.metadata)
+        predictions.append(prediction[1].metadata)
     measured = canonical_decimal_v1(
         evaluator.evaluate(
             predictions=tuple(predictions),
@@ -1247,7 +1258,7 @@ def _collect_report(
         if probe.status != "supported":
             raise _fail("runner_probe_failed", probe.reason_code or probe.status)
         session.load(LOAD_TIMEOUT_SECONDS)
-        _duration, _handoff = _predict_handoff(
+        _predict_handoff(
             session=session,
             inputs=inputs,
             input_index=0,

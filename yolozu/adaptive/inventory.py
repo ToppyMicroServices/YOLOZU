@@ -142,7 +142,7 @@ class PinnedDecodedInputSet:
 
     def __getitem__(self, index: int) -> PinnedDecodedInput:
         if self._closed:
-            raise RuntimeError("pinned input set is closed")
+            raise LookupError("pinned input set is closed")
         return self.inputs[index]
 
 
