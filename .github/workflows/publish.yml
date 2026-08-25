@@ -41,7 +41,8 @@ jobs:
           python3 -m unittest \
             tests.test_adaptive_vision_roadmap_generator \
             tests.test_adaptive_environment_profile \
-            tests.test_adaptive_bundle_registry -v
+            tests.test_adaptive_bundle_registry \
+            tests.test_adaptive_managed_output -v
 
       - name: Build wheel only
         run: |
@@ -188,7 +189,8 @@ jobs:
           python3 -m unittest \
             tests.test_adaptive_vision_roadmap_generator \
             tests.test_adaptive_environment_profile \
-            tests.test_adaptive_bundle_registry -v
+            tests.test_adaptive_bundle_registry \
+            tests.test_adaptive_managed_output -v
 
       - name: Build
         run: |

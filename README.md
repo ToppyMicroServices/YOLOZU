@@ -126,9 +126,12 @@ SelectionDecision interface contracts are packaged for integration work.
 `environment_profile`; failed probes stay unknown and do not prove that an
 accelerator is absent. The packaged empty bundle registry can also be loaded
 and validated without importing a model runtime. Explicit workspace catalogs
-remain operator-asserted and nonselectable. The selector, recommendation
-service, adapters, and execution path are still unavailable; neither registry
-loading nor an environment profile is qualification evidence.
+remain operator-asserted and nonselectable. A POSIX-only
+`ManagedOutputTransaction` helper now gives future qualifier and execution
+paths bounded no-follow output publication and fail-closed recovery; it is an
+integration API, not an image-processing command. The selector, recommendation
+service, adapters, and execution path are still unavailable. Registry loading,
+an environment profile, and output publication are not qualification evidence.
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 

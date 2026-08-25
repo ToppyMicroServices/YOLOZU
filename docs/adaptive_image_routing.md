@@ -177,6 +177,23 @@ never lists itself; when an enclosing output digest exists, that digest covers t
 manifest bytes. A missing, extra, duplicate, reordered, self-referential, or
 mismatched entry is invalid.
 
+`ManagedOutputTransaction` is the shared implementation for these future
+repository-owned trees. It pins the approved root and destination parent, uses
+directory-relative no-follow operations, and publishes a fresh same-filesystem
+stage only after every declared file and the control manifest validate. `force`
+first validates the exact old manifest and tree. Cleanup unlinks only those
+validated singly linked regular files, then `checksums.json`, then known empty
+directories; it never recursively removes a caller path.
+
+The implementation currently fails closed outside POSIX because the required
+directory-descriptor operations are unavailable there. A same-directory rename
+probe is performed for each transaction. Successful POSIX same-filesystem rename
+supports atomic directory visibility, but power-loss durability remains
+best-effort and is reported separately according to directory-fsync support.
+A recovery marker can finish or roll back only a fully validated known state.
+Changed, missing, or ambiguous state returns `manual_recovery_required` and keeps
+the remaining data for operator review.
+
 ## Control-record and decision budgets
 
 One registry contains at most 128 bundle specs and 4,096 lifecycle events. One
@@ -719,7 +736,7 @@ shortened policy examples are intentionally not valid schema instances.
 ## Non-goals
 
 - No selector, model integration, model download, or benchmark run is made available
-  by these interface contracts.
+  by these interface contracts or the managed-output helper.
 - No current algorithm is claimed to meet an accuracy, latency, throughput, memory,
   soft-real-time, or hardware-support objective.
 - No implicit network access, dependency installation, model acquisition, training,

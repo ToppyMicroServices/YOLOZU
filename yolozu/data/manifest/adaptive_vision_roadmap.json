@@ -19,7 +19,7 @@
     "A missing exact environment, workload, protocol, artifact, license, or quality match results in hold, blocked, or abstained rather than an inferred fallback."
   ],
   "kind": "adaptive_vision_roadmap_projection",
-  "next_issue_id": "YOLOZU-ll2.81.1.8",
+  "next_issue_id": "YOLOZU-ll2.81.1.9",
   "out_of_scope": [
     "hosted image inference",
     "implicit model or dependency installation",
@@ -111,7 +111,7 @@
     ]
   },
   "snapshot": {
-    "beads_export_commit": "5d3b4f38f87e64db50b9729edcda702f284373d3",
+    "beads_export_commit": "063cfd217c55123bf0456c556927daa2e0b7a168",
     "date": "2026-08-25",
     "planning_source": "Beads",
     "planning_source_doc": "docs/roadmap.md",

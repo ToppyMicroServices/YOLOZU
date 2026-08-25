@@ -145,6 +145,8 @@ from yolozu.api import (
     validate_predictions as api_validate_predictions,
 )
 from yolozu.adaptive import (
+    ManagedOutputLimits,
+    ManagedOutputTransaction,
     ScreeningEligibilityObservation,
     SelectionDecision,
     SupportProfileEligibilityObservation,
@@ -249,6 +251,10 @@ print(json.dumps({{
         ScreeningEligibilityObservation.__name__,
         SelectionDecision.__name__,
         SupportProfileEligibilityObservation.__name__,
+    ],
+    "managed_output_symbols": [
+        ManagedOutputLimits.__name__,
+        ManagedOutputTransaction.__name__,
     ],
     "environment_profile": {{
         "schema_version": environment_profile["schema_version"],
@@ -386,6 +392,10 @@ print(json.dumps({{
                     "SelectionDecision",
                     "SupportProfileEligibilityObservation",
                 ],
+            )
+            self.assertEqual(
+                payload["managed_output_symbols"],
+                ["ManagedOutputLimits", "ManagedOutputTransaction"],
             )
             self.assertEqual(
                 payload["environment_profile"],

@@ -76,6 +76,14 @@ from .inventory import (
     DecodedInputObservation,
     build_decoded_input_inventory,
 )
+from .managed_output import (
+    ManagedOutputCapabilities,
+    ManagedOutputError,
+    ManagedOutputLimits,
+    ManagedOutputTransaction,
+    RecoveryResult,
+    recover_managed_output,
+)
 from .selection import (
     CANDIDATE_REASON_CODES,
     ScreeningEligibilityObservation,
@@ -104,10 +112,15 @@ __all__ = [
     "ImageJobSpec",
     "LocalArtifactInventory",
     "LoadedAlgorithmBundleRegistry",
+    "ManagedOutputCapabilities",
+    "ManagedOutputError",
+    "ManagedOutputLimits",
+    "ManagedOutputTransaction",
     "PinnedArtifactSet",
     "PinnedInput",
     "QualificationWorkloadProfile",
     "QualificationReport",
+    "RecoveryResult",
     "RunnerProbeResult",
     "ScreeningEligibilityObservation",
     "SelectionDecision",
@@ -140,6 +153,7 @@ __all__ = [
     "project_bundle_lifecycle",
     "project_evidence_activations",
     "project_support_profiles",
+    "recover_managed_output",
     "validate_algorithm_bundle_registry",
     "validate_algorithm_bundle_spec",
     "validate_bundle_lifecycle_record",

@@ -161,6 +161,10 @@
       "schema": "docs/schemas/local_artifact_inventory.schema.json",
       "summary": "Trusted-preflight observations for every ordered immutable bundle artifact; paths are excluded from the persisted record."
     },
+    "managed_output_checksums_json": {
+      "builder": "yolozu.adaptive.ManagedOutputTransaction",
+      "summary": "Code-owned canonical manifest for every other declared managed output file; generated and revalidated before bounded publication, force cleanup, or recovery."
+    },
     "metrics_report_json": {
       "builder": "yolozu/eval/metrics_report.py",
       "schema": "docs/schemas/metrics_report.schema.json",

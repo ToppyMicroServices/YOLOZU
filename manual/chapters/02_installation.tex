@@ -37,6 +37,13 @@ downloading assets. A caller-supplied workspace catalog remains
 \cmd{operator\_asserted} and nonselectable; registry integrity alone is not
 qualification evidence.
 
+The installed Python API also exposes \cmd{ManagedOutputTransaction} for future
+repository-owned qualifier and execution outputs. It uses bounded manifests,
+directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
+not add an image-processing command, and it does not silently weaken the guarantee
+on platforms without the required primitives. Atomic visibility is scoped to a
+successful same-filesystem rename probe; power-loss durability remains best-effort.
+
 \subsection{First successful run from the installed package}
 For the shortest public-package path with a proof report and PNG evidence:
 \begin{lstlisting}[language=bash]
