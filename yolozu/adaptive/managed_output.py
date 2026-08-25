@@ -12,9 +12,10 @@ import hashlib
 import os
 import secrets
 import stat
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Callable, Iterable, Literal, Mapping
+from typing import Callable, Iterable, Iterator, Literal, Mapping
 
 from .canonical import canonical_json_v1
 from .control_records import load_bounded_json_bytes
@@ -194,6 +195,27 @@ def _open_directory_at(parent_fd: int, name: str) -> int:
         raise _fail("unsafe_directory", f"{name!r} is not a safe directory") from exc
 
 
+@contextmanager
+def _opened_directory_at(parent_fd: int, name: str) -> Iterator[int]:
+    descriptor = _open_directory_at(parent_fd, name)
+    try:
+        yield descriptor
+    finally:
+        os.close(descriptor)
+
+
+@contextmanager
+def _opened_root_directory(path: Path) -> Iterator[int]:
+    descriptor = os.open(
+        path,
+        os.O_RDONLY | _DIRECTORY | _NOFOLLOW | _CLOEXEC,
+    )
+    try:
+        yield descriptor
+    finally:
+        os.close(descriptor)
+
+
 def _lstat_at(parent_fd: int, name: str) -> os.stat_result | None:
     try:
         return os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
@@ -228,35 +250,33 @@ class _ParentGuard:
             raise _fail("root_invalid", "approved root does not exist") from exc
         if not stat.S_ISDIR(root_info.st_mode):
             raise _fail("root_invalid", "approved root must be a non-symlink directory")
+        descriptor_stack = ExitStack()
         try:
-            root_fd = os.open(
-                root_path,
-                os.O_RDONLY | _DIRECTORY | _NOFOLLOW | _CLOEXEC,
-            )
-        except OSError as exc:
-            raise _fail("root_invalid", "approved root could not be pinned") from exc
-        opened: list[int] = [root_fd]
-        identities: list[_Identity] = [_identity(os.fstat(root_fd))]
-        if not _same_identity(identities[0], _identity(root_info)):
-            os.close(root_fd)
-            raise _fail("root_changed", "approved root changed while it was opened")
-        current_fd = root_fd
-        try:
+            try:
+                root_fd = descriptor_stack.enter_context(
+                    _opened_root_directory(root_path)
+                )
+            except OSError as exc:
+                raise _fail("root_invalid", "approved root could not be pinned") from exc
+            identities: list[_Identity] = [_identity(os.fstat(root_fd))]
+            if not _same_identity(identities[0], _identity(root_info)):
+                raise _fail("root_changed", "approved root changed while it was opened")
+            current_fd = root_fd
             for component in parent_parts:
-                next_fd = _open_directory_at(current_fd, component)
-                opened.append(next_fd)
+                next_fd = descriptor_stack.enter_context(
+                    _opened_directory_at(current_fd, component)
+                )
                 identities.append(_identity(os.fstat(next_fd)))
                 current_fd = next_fd
         except Exception:
-            for descriptor in reversed(opened):
-                os.close(descriptor)
+            descriptor_stack.close()
             raise
         self.root_path = root_path
         self.parent_parts = parent_parts
-        self._fds = opened
+        self._descriptor_stack = descriptor_stack.pop_all()
         self._identities = tuple(identities)
         self.root_fd = root_fd
-        self.parent_fd = opened[-1]
+        self.parent_fd = current_fd
 
     @property
     def parent_identity(self) -> _Identity:
@@ -270,11 +290,11 @@ class _ParentGuard:
         if not _same_identity(_identity(root_info), self._identities[0]):
             raise _fail("parent_changed", "approved root identity changed")
         current_fd = self.root_fd
-        temporary: list[int] = []
-        try:
+        with ExitStack() as temporary:
             for index, component in enumerate(self.parent_parts, start=1):
-                next_fd = _open_directory_at(current_fd, component)
-                temporary.append(next_fd)
+                next_fd = temporary.enter_context(
+                    _opened_directory_at(current_fd, component)
+                )
                 if not _same_identity(
                     _identity(os.fstat(next_fd)), self._identities[index]
                 ):
@@ -284,17 +304,11 @@ class _ParentGuard:
                 _identity(os.fstat(self.parent_fd)), self.parent_identity
             ):
                 raise _fail("parent_changed", "pinned destination parent changed")
-        finally:
-            for descriptor in reversed(temporary):
-                os.close(descriptor)
 
     def close(self) -> None:
-        for descriptor in reversed(self._fds):
-            try:
-                os.close(descriptor)
-            except OSError:
-                pass
-        self._fds.clear()
+        descriptor_stack = self._descriptor_stack
+        self._descriptor_stack = ExitStack()
+        descriptor_stack.close()
 
 
 def _read_regular_at(
@@ -356,6 +370,7 @@ def _close_all(descriptors: Iterable[int]) -> None:
         try:
             os.close(descriptor)
         except OSError:
+            # Cleanup can revisit a descriptor after an earlier failure closed it.
             pass
 
 
@@ -1195,6 +1210,7 @@ class ManagedOutputTransaction:
             try:
                 os.close(self._stage_fd)
             except OSError:
+                # Closing an already-closed staged descriptor is harmless cleanup.
                 pass
             self._stage_fd = None
         if hasattr(self, "_guard"):

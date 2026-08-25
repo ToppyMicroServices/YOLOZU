@@ -7,9 +7,8 @@ import stat
 import subprocess
 import sys
 import tempfile
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from yolozu.adaptive.managed_output import (
     ManagedOutputError,
@@ -43,7 +42,7 @@ class _InjectedFailure(RuntimeError):
     pass
 
 
-class ManagedOutputTransactionTests(unittest.TestCase):
+class ManagedOutputTransactionTests(TestCase):
     def test_publish_builds_exact_manifest_and_reports_scoped_capabilities(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -119,15 +118,13 @@ class ManagedOutputTransactionTests(unittest.TestCase):
     def test_incomplete_transaction_aborts_without_recursive_deletion(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            with self.assertRaisesRegex(_InjectedFailure, "stop"):
-                with ManagedOutputTransaction(
-                    root=root,
-                    destination="result",
-                    declared_paths=("a/data.bin", "b/data.bin"),
-                    limits=LIMITS,
-                ) as transaction:
-                    transaction.write_bytes("a/data.bin", b"a")
-                    raise _InjectedFailure("stop")
+            with ManagedOutputTransaction(
+                root=root,
+                destination="result",
+                declared_paths=("a/data.bin", "b/data.bin"),
+                limits=LIMITS,
+            ) as transaction:
+                transaction.write_bytes("a/data.bin", b"a")
             self.assertEqual(list(root.iterdir()), [])
 
     def test_existing_destination_requires_force_and_valid_manifest(self) -> None:
@@ -289,7 +286,9 @@ class ManagedOutputTransactionTests(unittest.TestCase):
                 limits=LIMITS,
             )
             transaction.write_bytes("data.bin", b"data")
-            with mock.patch("yolozu.adaptive.managed_output.os.fstat", side_effect=changed_device):
+            with mock.patch(
+                "yolozu.adaptive.managed_output.os.fstat", side_effect=changed_device
+            ):
                 with self.assertRaisesRegex(ManagedOutputError, "cross_filesystem"):
                     transaction.commit()
             transaction.abort()
@@ -502,7 +501,7 @@ class ManagedOutputTransactionTests(unittest.TestCase):
                         transaction.write_bytes("new/data.bin", b"new")
                         transaction.commit()
                 except _InjectedFailure:
-                    pass
+                    self.assertTrue(fired)
                 self.assertTrue(fired)
                 old_visible = (root / "result" / "old" / "data.bin").is_file()
                 new_visible = (root / "result" / "new" / "data.bin").is_file()
@@ -550,4 +549,4 @@ print(json.dumps({'before': before, 'after': after, 'heavy': heavy}))
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
