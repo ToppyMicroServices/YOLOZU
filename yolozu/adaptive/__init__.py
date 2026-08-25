@@ -95,9 +95,11 @@ from .managed_output import (
     recover_managed_output,
     validate_managed_output_destination,
 )
-from .processing import (
+from .isolation import (
     IsolatedRunnerCapability,
     IsolatedRunnerService,
+)
+from .processing import (
     ProcessingError,
     process_images,
 )

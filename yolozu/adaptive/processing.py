@@ -9,25 +9,30 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable, Mapping, Protocol
+from typing import Any, Callable, Mapping
 
 from yolozu.predictions.predictions import validate_predictions_payload
 
 from .artifact_resolver import ArtifactResolver, PinnedVerifiedArtifactSet
-from .bundle_registry import AlgorithmRunner, RunnerProbeResult, load_algorithm_bundle_registry
+from .bundle_registry import AlgorithmRunner, load_algorithm_bundle_registry
 from .bundles import CODE_OWNED_RUNNER_IDS, AlgorithmBundleSpec
 from .canonical import canonical_json_v1
 from .contracts import (
     HANDOFF_MAX_MASK_ARTIFACTS,
     HANDOFF_MAX_OUTPUT_BYTES,
     HANDOFF_MAX_OUTPUT_FILES,
-    EnvironmentProfile,
     ImageJobSpec,
     build_qualification_workload_profile,
     validate_image_job_spec,
 )
 from .environment import build_environment_profile
 from .inventory import PinnedDecodedInputSet, pin_decoded_inputs
+from .isolation import (
+    IsolatedRunnerCapability,
+    IsolatedRunnerService,
+    _CODE_OWNED_ISOLATED_SERVICES,
+    _RunnerSession,
+)
 from .managed_output import (
     ManagedOutputError,
     ManagedOutputLimits,
@@ -98,82 +103,6 @@ class ProcessingError(ValueError):
         super().__init__(message)
         self.code = code
         self.public_message = message
-
-
-@dataclass(frozen=True)
-class IsolatedRunnerCapability:
-    """Code-owned live isolation capability bound to one policy digest."""
-
-    runner_id: str
-    policy_digest: str
-    status: str
-    backend_id: str | None = None
-    backend_version: str | None = None
-    image_present: bool | None = None
-
-    def __post_init__(self) -> None:
-        if self.status not in {"available", "unavailable"}:
-            raise ValueError("isolated runner capability status is invalid")
-        if self.runner_id not in CODE_OWNED_RUNNER_IDS:
-            raise ValueError("isolated runner capability runner is not code-owned")
-        if (
-            not isinstance(self.policy_digest, str)
-            or len(self.policy_digest) != 64
-            or any(character not in "0123456789abcdef" for character in self.policy_digest)
-        ):
-            raise ValueError("isolated runner capability policy digest is invalid")
-        if self.status == "available":
-            if (
-                not isinstance(self.backend_id, str)
-                or not self.backend_id
-                or not isinstance(self.backend_version, str)
-                or not self.backend_version
-                or type(self.image_present) is not bool
-            ):
-                raise ValueError("available isolation requires complete live capability")
-        elif any(
-            item is not None
-            for item in (self.backend_id, self.backend_version, self.image_present)
-        ):
-            raise ValueError("unavailable isolation forbids live capability claims")
-
-
-class _RunnerSession(Protocol):
-    runner_id: str
-    runner_version: str
-
-    def probe(self, timeout_seconds: int) -> RunnerProbeResult: ...
-
-    def load(self, timeout_seconds: int) -> None: ...
-
-    def predict(
-        self, index: int, timeout_seconds: int
-    ) -> tuple[Mapping[str, Any], ...]: ...
-
-    def close(self, timeout_seconds: int) -> None: ...
-
-
-class IsolatedRunnerService(Protocol):
-    """Code-owned isolation extension; P0 registers no implementation."""
-
-    @property
-    def capability(self) -> IsolatedRunnerCapability: ...
-
-    def open_session(
-        self,
-        *,
-        bundle: AlgorithmBundleSpec,
-        environment: EnvironmentProfile,
-        artifacts: PinnedVerifiedArtifactSet,
-        inputs: PinnedDecodedInputSet,
-        labels: tuple[str, ...],
-        outer_deadline_ns: int,
-    ) -> _RunnerSession: ...
-
-
-# Repository-owned adapter modules may populate these maps. No environment
-# variable, registry field, MCP argument, entry point, or import string can do so.
-_CODE_OWNED_ISOLATED_SERVICES: dict[str, IsolatedRunnerService] = {}
 
 
 @dataclass(frozen=True)

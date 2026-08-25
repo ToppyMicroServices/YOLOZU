@@ -45,6 +45,7 @@ from .evidence import (
     validate_qualification_report,
 )
 from .inventory import build_decoded_input_inventory
+from .isolation import _CODE_OWNED_ISOLATED_SERVICES
 from .qualification import (
     QUALIFICATION_PROTOCOL_FINGERPRINT,
     qualification_report_has_code_owned_issuer,
@@ -725,10 +726,6 @@ def _artifact_inventory(
 def _isolation_observations(
     registry: LoadedAlgorithmBundleRegistry,
 ) -> dict[str, IsolationCapabilityObservation]:
-    # The registry is code-owned and has no caller-controlled registration path.
-    # Import here avoids coupling the read-only module to processing at import time.
-    from .processing import _CODE_OWNED_ISOLATED_SERVICES
-
     observations: dict[str, IsolationCapabilityObservation] = {}
     for bundle in registry.bundles:
         record = bundle.to_dict()
