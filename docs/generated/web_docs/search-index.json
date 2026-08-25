@@ -1024,8 +1024,8 @@
   {
     "href": "schemas.html#schema-algorithm-bundle-spec-schema",
     "kind": "schema",
-    "search_text": "YOLOZU AlgorithmBundleSpec v1 Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing. artifact_set_digest artifacts bundle_id bundle_version class_vocabulary decoder execution_isolation_policy_digest execution_network_required execution_trust_class family_id loader_format model_input_shapes model_revision model_source_id postprocess preprocess prompt_modes provenance_class runner_id runner_options runner_version runtime schema_version screening_binding spec_digest tasks test_only text_prompt_support unsafe_deserialization_required docs/schemas/algorithm_bundle_spec.schema.json",
-    "summary": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing.",
+    "search_text": "YOLOZU AlgorithmBundleSpec v1 Immutable fetchable-model, optional bound-runner, artifact, vocabulary, and execution facts for Experimental adaptive routing. adapter_backend_id artifact_set_digest artifacts bundle_id bundle_version class_vocabulary decoder execution_binding execution_isolation_policy_digest execution_network_required execution_trust_class family_id loader_format model_input_shapes model_revision model_source_id postprocess preprocess prompt_modes provenance_class runner_id runner_options runner_version runtime schema_version screening_binding spec_digest tasks test_only text_prompt_support unsafe_deserialization_required docs/schemas/algorithm_bundle_spec.schema.json",
+    "summary": "Immutable fetchable-model, optional bound-runner, artifact, vocabulary, and execution facts for Experimental adaptive routing.",
     "title": "YOLOZU AlgorithmBundleSpec v1"
   },
   {

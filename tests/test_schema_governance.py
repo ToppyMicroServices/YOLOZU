@@ -51,8 +51,24 @@ class TestSchemaGovernance(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         data_root = repo_root / "yolozu" / "data" / "adaptive_routing"
         registry = json.loads((data_root / "bundle_specs.json").read_text(encoding="utf-8"))
-        self.assertEqual(registry["bundles"], [])
-        self.assertEqual((data_root / "bundle_lifecycle.jsonl").read_bytes(), b"")
+        self.assertEqual(len(registry["bundles"]), 3)
+        self.assertTrue(
+            all(
+                bundle["execution_binding"]["status"] == "unbound"
+                for bundle in registry["bundles"]
+            )
+        )
+        lifecycle = [
+            json.loads(line)
+            for line in (data_root / "bundle_lifecycle.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        self.assertEqual(len(lifecycle), 6)
+        self.assertEqual(
+            [event["event_type"] for event in lifecycle],
+            ["register_global", "candidate_registration"] * 3,
+        )
         self.assertEqual((data_root / "support_profiles.jsonl").read_bytes(), b"")
         self.assertEqual((data_root / "evidence_activation.jsonl").read_bytes(), b"")
         self.assertEqual(

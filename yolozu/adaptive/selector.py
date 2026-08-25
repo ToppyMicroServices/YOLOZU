@@ -359,6 +359,8 @@ def _runtime_and_hardware_reasons(
     isolation: IsolationCapabilityObservation | None,
 ) -> list[str]:
     reasons: set[str] = set()
+    if bundle["execution_binding"]["status"] != "bound":
+        return ["runner_unavailable"]
     runtime = bundle["runtime"]
     provider = runtime["provider_id"]
 

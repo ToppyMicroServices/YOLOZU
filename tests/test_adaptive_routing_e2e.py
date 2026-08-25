@@ -78,7 +78,9 @@ class TestAdaptiveRoutingEndToEnd(unittest.TestCase):
             actual = {
                 "installed_default": {
                     "status": packaged["decision"]["status"],
-                    "reason_codes": [],
+                    "reason_codes": packaged["decision"][
+                        "candidate_evaluations"
+                    ][0]["reason_codes"],
                 },
                 "operator_catalog": {
                     "status": custom["decision"]["status"],
@@ -106,7 +108,7 @@ class TestAdaptiveRoutingEndToEnd(unittest.TestCase):
                 {
                     "installed_default": {
                         "status": "abstained",
-                        "reason_codes": [],
+                        "reason_codes": ["maturity_disallowed"],
                     },
                     "operator_catalog": {
                         "status": "abstained",

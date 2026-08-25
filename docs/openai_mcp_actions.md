@@ -42,14 +42,15 @@ deterministic or dependency-free guarantee.
 The MCP-only `recommend_image_pipeline` operation is Experimental and read-only.
 It can return a selected or abstained SelectionDecision for a structured local
 image job, but it does not execute a model or download or write assets. The
-packaged registry and public evidence stream are empty, so the default installed
-call currently abstains. It is not exposed through GPT Actions.
+packaged registry contains three Candidate baselines with unbound execution. The
+public evidence stream is empty, so the default installed call records
+`maturity_disallowed` and abstains. It is not exposed through GPT Actions.
 
 The paired MCP-only `process_images` operation is also Experimental and not
 exposed through Actions. It requires a complete selected decision, defaults to a
 no-write dry-run, rejects local-state drift, and uses only registered code-owned
-network-free execution. No bundle or runner is registered in the public baseline,
-so it does not make a current runnable-model claim.
+network-free execution. No adaptive runner is bound to the registered Candidate
+baselines, so it does not make a current runnable-model claim.
 
 ## Route B: GPT Actions (OpenAPI)
 

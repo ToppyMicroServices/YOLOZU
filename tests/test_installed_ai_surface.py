@@ -510,8 +510,8 @@ print(json.dumps({{
                     "source_kind": "packaged_ssot",
                     "registry_trust_domain": "yolozu_managed",
                     "lifecycle_trust_domain": "yolozu_managed",
-                    "bundle_count": 0,
-                    "lifecycle_event_count": 0,
+                    "bundle_count": 3,
+                    "lifecycle_event_count": 6,
                 },
             )
             self.assertEqual(
@@ -519,7 +519,7 @@ print(json.dumps({{
                 {
                     "recommendation_ok": True,
                     "recommendation_status": "abstained",
-                    "registry_bundle_count": 0,
+                    "registry_bundle_count": 3,
                     "process_error": "selection_required",
                     "output_exists": False,
                     "protocol_fingerprint_length": 64,

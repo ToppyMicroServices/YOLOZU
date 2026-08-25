@@ -100,6 +100,7 @@ CANDIDATE_REASON_CODES = frozenset(
         "hardware_probe_unknown",
         "runtime_unavailable",
         "runtime_probe_unknown",
+        "runner_unavailable",
         "artifact_size_limit_exceeded",
         "artifact_member_missing",
         "artifact_member_mismatch",

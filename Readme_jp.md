@@ -123,8 +123,11 @@ flowchart LR
 request、environment、evidence、eligibility observation、SelectionDecision の
 厳密な interface contract は packaged 済みです。`yolozu doctor --output -` は
 privacy-safe な live `environment_profile` を返します。probe failure は unknown
-のままで、accelerator 不在の証明には使いません。packaged された空のbundle
-registryは、model runtimeをimportせずに検証して読み込めます。明示したworkspace
+のままで、accelerator 不在の証明には使いません。packaged bundle registryには、
+既存model zooと一致するYOLOX-S、Detectron2 Faster R-CNN R50-FPN 1x、
+MMDetection Faster R-CNN R50-FPN 1xの3件を、未昇格のCandidate baselineとして
+登録しています。固定済みweightは取得可能なmetadataですが、adaptive execution
+bindingは明示的にunboundです。model runtimeをimportせずに検証して読み込めます。明示したworkspace
 catalogはoperator-assertedのままで、選択対象にはなりません。POSIX専用の
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
@@ -135,7 +138,7 @@ registry/lifecycle、stale-head の全gateをdry-runで確認し、`--approve`�
 したreportは`site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。
-ただしpackaged registryはまだ空で、code-owned model runnerも未登録です。そのため
+ただし3件にadaptive runnerはまだbindされていません。そのため
 現在はdummy evidenceを作らず、理由を示して停止します。内部のpure selectorは、
 検証済みのin-memory observationだけを対象に、固定したtrust、compatibility、artifact、
 evidence、performance、deterministic rankingの規則を適用します。provider file、model、
@@ -143,19 +146,22 @@ runner、networkへのI/Oは行いません。ExperimentalかつMCP-onlyの
 `recommend_image_pipeline`は、この方針をread-onlyのstructured recommendationとして
 公開します。typed jobとlocal inputを検証し、artifactを読む前にnon-I/O gateを適用して、
 完全なSelectionDecisionまたは正直なabstentionを返します。inference、assetのdownloadや
-write、自然言語parse、absolute pathやraw probe outputの返却は行いません。packaged
-registryとpublic evidence streamは空なので、default callは現在abstainします。model
+write、自然言語parse、absolute pathやraw probe outputの返却は行いません。3件は
+Candidateのままでpublic evidence streamも空なので、default callは現在
+`maturity_disallowed`でabstainします。model
 adapterはまだありません。ExperimentalかつMCP-onlyの`process_images`は、完全なselected
 decisionを受け取り、job、現在のlifecycle/evidence、environment、workload、input、class mapping、
 pinned artifact stateを再検証します。defaultは書き込みを行わない`dry_run=true`です。明示的な
 実行では、登録済みのcode-ownedかつnetwork-freeなrouteだけを使い、managedな
-predictions/provenance/checksum treeをatomicに公開します。ただしpackaged registryとrunner
+predictions/provenance/checksum treeをatomicに公開します。ただしadaptive runner
 mapは空のため、現時点で実際のadaptive modelは実行できず、model adapterや性能実績を追加した
 ものではありません。activation
 recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。
 
+[baseline bundle registry report](reports/adaptive_baseline_bundle_registry_2026-08-26.md)
+に現在の3段階の境界を記録しています。先行する
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 では、source、sdist、wheel、installed MCP callで同じ境界を確認しています。positiveな
 selector/executor caseは内部fixtureによるもので、実bundleのqualificationやselectedな

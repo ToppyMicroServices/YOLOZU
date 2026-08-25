@@ -31,12 +31,13 @@ unknown. This EnvironmentProfile interface contract records the observed
 configuration; it is not model qualification evidence and does not make an
 Experimental adaptive pipeline available.
 
-The installed package also contains the empty adaptive bundle registry and lifecycle
-SSOT. Its bounded loader validates metadata without importing a model runtime or
-downloading assets. A caller-supplied workspace catalog remains
+The installed package also contains three non-promoted adaptive Candidate bundle
+records matching the existing model zoo. Their weight metadata is pinned, but their
+execution binding is unbound. The bounded loader validates this registry and lifecycle
+SSOT without importing a model runtime or downloading assets. A caller-supplied workspace catalog remains
 \cmd{operator\_asserted} and nonselectable; registry integrity alone is not
 qualification evidence. The Experimental \cmd{yolozu qualify-image-pipeline}
-command is installed, but the empty registry and runner map make the default
+command is installed, but the unbound Candidate records and empty runner map make the default
 invocation fail actionably without dummy evidence. Its \cmd{--help} documents
 the exact-bundle, timeout, pinned-input, and managed-output interface contract.
 
@@ -45,8 +46,9 @@ repository-owned qualification and processing outputs. It uses bounded manifests
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
 not make a model adapter or runnable model bundle available. The installed
 recommendation, selector, and pinned-processing interface contracts are verified,
-but the empty registry, public evidence stream, and runner maps make the default
-recommendation abstain and processing reject with \cmd{selection\_required}.
+but the Candidate-only registry, empty public evidence stream, and empty runner maps
+make the default recommendation abstain with \cmd{maturity\_disallowed} and processing
+reject with \cmd{selection\_required}.
 Positive selector and executor tests use internal fixtures rather than public
 qualification evidence. The managed output path does not silently weaken its guarantee
 on platforms without the required primitives. Atomic visibility is scoped to a

@@ -71,6 +71,12 @@ def _bundle_payload(
         "test_only": False,
         "tasks": ["object_detection"],
         "prompt_modes": ["fixed_classes", "text"],
+        "adapter_backend_id": "onnxruntime",
+        "execution_binding": {
+            "status": "bound",
+            "artifact_scope": "runner_consumed",
+            "reason_code": None,
+        },
         "runner_id": "onnxruntime",
         "runner_version": "1.23.0",
         "execution_trust_class": "code_owned_audited",
@@ -238,6 +244,59 @@ class TestAdaptiveBundleContracts(unittest.TestCase):
                 "$ref"
             ],
             "algorithm_bundle_spec.schema.json",
+        )
+
+    def test_unbound_bundle_is_fetchable_metadata_not_an_execution_claim(self) -> None:
+        payload = _bundle_payload()
+        execution_fields = {
+            "runner_id",
+            "runner_version",
+            "execution_trust_class",
+            "execution_isolation_policy_digest",
+            "loader_format",
+            "unsafe_deserialization_required",
+            "runtime",
+            "model_input_shapes",
+            "decoder",
+            "preprocess",
+            "postprocess",
+            "execution_network_required",
+            "runner_options",
+        }
+        for field in execution_fields:
+            payload.pop(field, None)
+        payload["execution_binding"] = {
+            "status": "unbound",
+            "artifact_scope": "fetchable_model_assets",
+            "reason_code": "runner_artifact_set_incomplete",
+        }
+        payload["spec_digest"] = canonical_sha256_v1(
+            payload, own_digest_field="spec_digest"
+        )
+
+        checked = validate_algorithm_bundle_spec(payload).to_dict()
+        self.assertEqual(checked["execution_binding"]["status"], "unbound")
+        self.assertFalse(execution_fields.intersection(checked))
+        self.assertTrue(
+            _schema_accepts(
+                checked,
+                self.schemas["algorithm_bundle_spec"],
+                root=self.schemas["algorithm_bundle_spec"],
+            )
+        )
+
+        payload["runner_id"] = "onnxruntime"
+        payload["spec_digest"] = canonical_sha256_v1(
+            payload, own_digest_field="spec_digest"
+        )
+        with self.assertRaisesRegex(ValueError, "unbound execution forbids"):
+            validate_algorithm_bundle_spec(payload)
+        self.assertFalse(
+            _schema_accepts(
+                payload,
+                self.schemas["algorithm_bundle_spec"],
+                root=self.schemas["algorithm_bundle_spec"],
+            )
         )
 
     def test_bundle_rejects_mutable_pathlike_and_unsafe_state(self) -> None:

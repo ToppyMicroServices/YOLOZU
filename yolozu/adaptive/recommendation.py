@@ -730,6 +730,8 @@ def _isolation_observations(
     isolated_services = _code_owned_isolated_services()
     for bundle in registry.bundles:
         record = bundle.to_dict()
+        if record["execution_binding"]["status"] != "bound":
+            continue
         if record["execution_trust_class"] != "third_party_isolated":
             continue
         service = isolated_services.get(record["runner_id"])

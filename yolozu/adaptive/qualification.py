@@ -729,6 +729,11 @@ def _select_bundle(
 def _preflight_bundle(bundle: AlgorithmBundleSpec, job: ImageJobSpec, *, channel: str) -> None:
     bundle_record = bundle.to_dict()
     job_record = job.to_dict()
+    if bundle_record["execution_binding"]["status"] != "bound":
+        raise _fail(
+            "runner_unavailable",
+            "bundle metadata is registered without a complete adaptive runner binding",
+        )
     if channel not in job_record["allowed_maturities"]:
         raise _fail("maturity_not_allowed", "request does not allow the selected channel")
     if job_record["task"] not in bundle_record["tasks"]:

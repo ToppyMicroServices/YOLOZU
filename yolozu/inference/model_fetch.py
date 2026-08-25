@@ -57,6 +57,7 @@ class ModelSpec:
     version: str
     license: str
     expected_sha256: str | None
+    expected_size_bytes: int | None
     file_name: str
 
 
@@ -183,6 +184,13 @@ def resolve_model_spec(model_id: str, registry_path: str | Path | None = None) -
             expected_sha = expected_sha.strip().lower()
         else:
             expected_sha = None
+        expected_size = item.get("size_bytes")
+        if expected_size is not None and (
+            isinstance(expected_size, bool)
+            or not isinstance(expected_size, int)
+            or expected_size < 1
+        ):
+            raise ValueError("model size_bytes must be a positive integer")
         return ModelSpec(
             model_id=model_id,
             summary=str(item.get("summary") or ""),
@@ -193,6 +201,7 @@ def resolve_model_spec(model_id: str, registry_path: str | Path | None = None) -
             version=str(item.get("version") or "unknown"),
             license=str(item.get("license") or "UNKNOWN"),
             expected_sha256=expected_sha,
+            expected_size_bytes=expected_size,
             file_name=file_name,
         )
     raise KeyError(model_id)
@@ -320,6 +329,14 @@ def fetch_model(
                 raise RuntimeError(
                     f"failed to download model `{model_id}` from all candidate URLs"
                 ) from last_exc
+            if (
+                spec.expected_size_bytes is not None
+                and tmp_path.stat().st_size != spec.expected_size_bytes
+            ):
+                raise RuntimeError(
+                    f"size mismatch for {model_id}: expected "
+                    f"{spec.expected_size_bytes}, got {tmp_path.stat().st_size}"
+                )
             downloaded_sha = _sha256(tmp_path)
             if spec.expected_sha256 and downloaded_sha != spec.expected_sha256:
                 raise RuntimeError(
@@ -331,6 +348,14 @@ def fetch_model(
                 tmp_path.unlink(missing_ok=True)
 
     cached_sha = _sha256(cached_path)
+    if (
+        spec.expected_size_bytes is not None
+        and cached_path.stat().st_size != spec.expected_size_bytes
+    ):
+        raise RuntimeError(
+            f"cached size mismatch for {model_id}: expected "
+            f"{spec.expected_size_bytes}, got {cached_path.stat().st_size}"
+        )
     if spec.expected_sha256 and cached_sha != spec.expected_sha256:
         raise RuntimeError(
             f"cached sha256 mismatch for {model_id}: expected {spec.expected_sha256}, got {cached_sha}"
@@ -347,6 +372,7 @@ def fetch_model(
         "version": spec.version,
         "license": spec.license,
         "sha256": cached_sha,
+        "size_bytes": cached_path.stat().st_size,
         "created_at": _utc_now(),
         "cached_path": str(cached_path),
         "file_name": spec.file_name,
