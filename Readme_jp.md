@@ -152,8 +152,18 @@ target profileの完全なordered setを別工程でreviewします。sole packa
 setはdormantのままで、lifecycle pointer、evidence activation、runner binding、model
 download、現在利用可能というsupport claimを変更しません。streamは現在空です。
 recommendationとexecutionは同じloader-derived providerを使い、executionはrunner
-sessionを開く直前にlifecycleが固定したhistorical setを再projectします。localで生成
-したreportは`site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
+sessionを開く直前にlifecycleが固定したhistorical setを再projectします。
+Experimental `yolozu update-image-pipeline-lifecycle` は別のreviewedかつdry-run-firstな
+maintenance interface contractです。exactなdisable、enable、license review、全channelに
+効くterminal revoke、channel単位の明示的rollbackを扱います。変更には`--approve`、観測した
+lifecycle/support head、immutableなbundle/artifact identity、approved public reviewが必要です。
+`none`以外へのrollbackは、同一familyのeligible targetについてhistoricalなadvertised profile
+set全体とprofileごとのcurrent repository-managed activationをexactに復元します。新しいdormant
+targetの自動選択、callerが作ったsubset、未割当Candidateをpromotionの迂回路にすること、
+promotion、metricだけを根拠とする変更は行わず、rollback eventにはhistorical target assignment
+のexact digestを記録します。
+この変更ではcanonical lifecycle eventを追記していません。localで生成したreportは
+`site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。
 ただし3件にadaptive runnerはまだbindされていません。そのため
@@ -184,6 +194,8 @@ qualification evidenceにもhuman adoptionの証明にもなりません。
 にはmonitored-source、retention、parser、nonselectionの境界を記録しています。先行する
 [candidate screening foundation report](reports/adaptive_candidate_screening_foundation_2026-08-26.md)
 にはfail-closed screeningとpath-derived trustの境界を記録しています。先行する
+[lifecycle maintenance and rollback report](reports/adaptive_lifecycle_rollback_foundation_2026-08-26.md)
+にはreviewed mutation、immutable history、exact rollbackの境界を記録しています。先行する
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 では、source、sdist、wheel、installed MCP callで同じ境界を確認しています。positiveな
 selector/executor caseは内部fixtureによるもので、実bundleのqualificationやselectedな

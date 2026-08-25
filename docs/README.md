@@ -51,7 +51,10 @@ The environment-qualified local image-processing program targets an Experimental
   `--approve`. `yolozu review-image-pipeline-support-profiles` likewise defaults
   to no-write and can append only a complete reviewed dormant set to the canonical
   support-profile SSOT. That review does not advertise support or make a model
-  executable. A bounded non-executing candidate-screening provider derives pass,
+  executable. `yolozu update-image-pipeline-lifecycle` is a separate dry-run-first
+  reviewed interface contract for exact global maintenance and explicit same-family
+  per-channel rollback. It never mutates from metrics alone, and no canonical
+  lifecycle event was added with the interface. A bounded non-executing candidate-screening provider derives pass,
   hold, or reject before selection. Its packaged stream is empty; custom input
   stays operator-asserted and cannot satisfy the managed-pass gate. A file-free
   pure selector evaluates already validated records, and the MCP-only

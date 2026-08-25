@@ -34,6 +34,10 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/support_profile_spec.schema.json`
 - `docs/schemas/support_profile_record.schema.json` and
   `yolozu/data/schemas/support_profile_record.schema.json`
+- `docs/schemas/support_profile_set_proposal.schema.json` and
+  `yolozu/data/schemas/support_profile_set_proposal.schema.json`
+- `docs/schemas/lifecycle_rollback_bindings.schema.json` and
+  `yolozu/data/schemas/lifecycle_rollback_bindings.schema.json`
 - `docs/schemas/local_artifact_inventory.schema.json` and
   `yolozu/data/schemas/local_artifact_inventory.schema.json`
 - `docs/schemas/qualification_report.schema.json` and
@@ -113,6 +117,15 @@ Repository-managed report directories retain tracked `public_inputs.json`,
 `yolozu/data/adaptive_routing/support_profiles.jsonl`; installed packages read those
 same bytes. No mutable projection copy exists. A successful review records dormant
 scope and does not change lifecycle-advertised support.
+
+`update-image-pipeline-lifecycle` consumes the immutable registry, append-only
+lifecycle and support-profile streams, and, for a non-`none` rollback, the canonical
+`docs/schemas/lifecycle_rollback_bindings.schema.json` shape. The bindings must be
+the complete ordered repository-managed activation set derived for the exact
+historical advertised profiles. The command is dry-run by default. Approval can
+append one reviewed lifecycle record only; it cannot rewrite earlier records,
+bundle specs, artifacts, evidence, or support-profile definitions. Global revocation
+is terminal. Channel rollback changes only the named Experimental or Stable pointer.
 
 `load_algorithm_bundle_registry` accepts only the exact packaged registry/lifecycle
 pair above or an explicit workspace-confined directory containing those two exact
@@ -233,7 +246,7 @@ schema surface for that artifact family.
 | Predictions | `docs/schemas/predictions.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Packaged copies live in `schemas/` and `yolozu/data/schemas/`. |
 | Adaptive vision roadmap projection | `docs/schemas/adaptive_vision_roadmap.schema.json` | [`roadmap.md`](roadmap.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md) | The byte-identical packaged schema and JSON projection describe future scope, not implementation or qualification evidence. |
 | Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md), [`doctor_diagnostics.md`](doctor_diagnostics.md) | Byte-identical packaged schemas accompany standard-library validators. `doctor` produces EnvironmentProfile; recommendation and processing consume the typed request/workload records, but none advertises a selectable model. |
-| Adaptive bundle, lifecycle, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_set_proposal.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed dormant support scope. The review proposal must cover one complete ordered set. Empty packaged SSOT files keep the public default nonselectable. |
+| Adaptive bundle, lifecycle, rollback, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/lifecycle_rollback_bindings.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_set_proposal.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed dormant support scope. Review proposals and rollback bindings must cover their complete ordered sets. The canonical public lifecycle remains Candidate-only; implementation does not imply an available model. |
 | Adaptive candidate screening | `docs/schemas/candidate_screening_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md), [`algorithm_intake/README.md`](algorithm_intake/README.md) | Non-executing mechanical facts and human review produce pass, hold, or reject. The sole packaged stream is empty; workspace input remains operator-asserted, and screening output is not a bundle registry. |
 | Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. The Experimental qualifier emits an unactivated report; the activation command defaults to dry-run and requires explicit review plus approval for an atomic append. The packaged Candidate baselines have unbound execution, and the runner map and public evidence storage remain empty, keeping the default nonselectable and non-executable. |
 | Adaptive selection observations and decisions | `docs/schemas/screening_eligibility_observation.schema.json`, `docs/schemas/support_profile_eligibility_observation.schema.json`, `docs/schemas/selection_decision.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | File-free typed observations and complete selected/abstained records expose every candidate reason. The pure selector consumes only validated in-memory values. An unpointed excluded catalog entry uses an empty pointed-channel set and a null support observation instead of invented evidence. MCP recommendation returns this interface contract; pinned processing accepts only a complete selected record and repeats current-state validation. |

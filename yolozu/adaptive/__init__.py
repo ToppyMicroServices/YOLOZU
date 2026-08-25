@@ -100,6 +100,10 @@ from .isolation import (
     IsolatedRunnerCapability,
     IsolatedRunnerService,
 )
+from .lifecycle import (
+    LifecycleUpdateOutcome,
+    update_image_pipeline_lifecycle,
+)
 from .processing import (
     ProcessingError,
     process_images,
@@ -174,6 +178,7 @@ __all__ = [
     "IsolatedRunnerCapability",
     "IsolatedRunnerService",
     "LocalArtifactInventory",
+    "LifecycleUpdateOutcome",
     "LoadedAlgorithmBundleRegistry",
     "ManagedOutputCapabilities",
     "ManagedOutputError",
@@ -262,4 +267,5 @@ __all__ = [
     "validate_support_profile_record",
     "validate_support_profile_spec",
     "validate_support_profile_snapshot",
+    "update_image_pipeline_lifecycle",
 ]

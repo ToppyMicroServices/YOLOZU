@@ -101,6 +101,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                 }
                 for required in (
                     "yolozu/adaptive/isolation.py",
+                    "yolozu/adaptive/lifecycle.py",
                     "yolozu/adaptive/processing.py",
                     "yolozu/adaptive/algorithm_scout.py",
                     "yolozu/adaptive/screening.py",
@@ -120,6 +121,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/algorithm_scout_report.schema.json",
                     "yolozu/data/schemas/candidate_screening_record.schema.json",
                     "yolozu/data/schemas/support_profile_set_proposal.schema.json",
+                    "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
                     "yolozu/data/integrations/mcp_actions_tool_reference.json",
                 ):
                     self.assertIn(required, sdist_names)

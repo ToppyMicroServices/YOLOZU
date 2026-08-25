@@ -173,6 +173,10 @@
       "summary": "Instance segmentation predictions JSON (list of {image,instances} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_instance_segmentation_predictions.py <path>"
     },
+    "lifecycle_rollback_bindings_json": {
+      "schema": "docs/schemas/lifecycle_rollback_bindings.schema.json",
+      "summary": "Canonical complete ordered repository-managed activation set for one explicit rollback to a previously assigned same-family target; caller-authored subsets and untrusted bindings fail closed."
+    },
     "local_artifact_inventory_json": {
       "schema": "docs/schemas/local_artifact_inventory.schema.json",
       "summary": "Trusted-preflight observations for every ordered immutable bundle artifact; paths are excluded from the persisted record."
@@ -19236,6 +19240,223 @@
         "predictions",
         "gates",
         "tuning"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "algorithm_bundle_registry_json",
+          "bundle_lifecycle_record_json",
+          "support_profile_record_json",
+          "candidate_screening_record_json",
+          "qualification_report_json",
+          "evidence_activation_record_json",
+          "lifecycle_rollback_bindings_json"
+        ],
+        "produces": [
+          "bundle_lifecycle_record_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/schemas/bundle_lifecycle_record.schema.json",
+        "docs/schemas/lifecycle_rollback_bindings.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "With --approve, atomically appends only one validated reviewed lifecycle event.",
+            "kind": "file",
+            "path": "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
+            "scope": "path"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "tools/update_image_pipeline_lifecycle.py",
+      "examples": [
+        {
+          "command": "python3 tools/update_image_pipeline_lifecycle.py disable --family-id <family> --bundle-spec-digest <sha256> --artifact-set-digest <sha256> --expected-lifecycle-head-digest <sha256> --expected-bundle-state-event-digest <sha256> --actor-role-id repo_maintainer --public-review-id gh-<number> --review-status approved --reason 'Review exact global disable'",
+          "description": "Dry-run every exact-identity, immutable-artifact, public-review, and stale-head gate; no record is written."
+        },
+        {
+          "command": "python3 tools/update_image_pipeline_lifecycle.py --help",
+          "description": "Inspect the Experimental lifecycle maintenance and explicit rollback interface contract."
+        }
+      ],
+      "id": "update_image_pipeline_lifecycle",
+      "inputs": [
+        {
+          "kind": "string",
+          "name": "operation",
+          "required": true
+        },
+        {
+          "flag": "--family-id",
+          "kind": "string",
+          "name": "family_id",
+          "required": false
+        },
+        {
+          "flag": "--bundle-spec-digest",
+          "kind": "string",
+          "name": "bundle_spec_digest",
+          "required": false
+        },
+        {
+          "flag": "--artifact-set-digest",
+          "kind": "string",
+          "name": "artifact_set_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-lifecycle-head-digest",
+          "kind": "string",
+          "name": "expected_lifecycle_head_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-bundle-state-event-digest",
+          "kind": "string",
+          "name": "expected_bundle_state_event_digest",
+          "required": false
+        },
+        {
+          "flag": "--channel",
+          "kind": "string",
+          "name": "channel",
+          "required": false
+        },
+        {
+          "flag": "--expected-current-pointer-digest",
+          "kind": "string",
+          "name": "expected_current_pointer_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-prior-assignment-digest",
+          "kind": "string",
+          "name": "expected_prior_assignment_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-support-profile-index-head",
+          "kind": "string",
+          "name": "expected_support_profile_index_head",
+          "required": false
+        },
+        {
+          "flag": "--expected-prior-support-profile-index-head",
+          "kind": "string",
+          "name": "expected_prior_support_profile_index_head",
+          "required": false
+        },
+        {
+          "flag": "--expected-prior-profile-set-record-digest",
+          "kind": "string",
+          "name": "expected_prior_profile_set_record_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-prior-profile-set-digest",
+          "kind": "string",
+          "name": "expected_prior_profile_set_digest",
+          "required": false
+        },
+        {
+          "flag": "--target-bundle-spec-digest",
+          "kind": "string",
+          "name": "target_bundle_spec_digest",
+          "required": false
+        },
+        {
+          "flag": "--target-artifact-set-digest",
+          "kind": "string",
+          "name": "target_artifact_set_digest",
+          "required": false
+        },
+        {
+          "flag": "--evidence-bindings",
+          "kind": "file",
+          "name": "evidence_bindings",
+          "required": false
+        },
+        {
+          "flag": "--license-review",
+          "kind": "string",
+          "name": "license_review",
+          "required": false
+        },
+        {
+          "flag": "--actor-role-id",
+          "kind": "string",
+          "name": "actor_role_id",
+          "required": false
+        },
+        {
+          "flag": "--public-review-id",
+          "kind": "string",
+          "name": "public_review_id",
+          "required": false
+        },
+        {
+          "flag": "--review-status",
+          "kind": "string",
+          "name": "review_status",
+          "required": false
+        },
+        {
+          "flag": "--reason",
+          "kind": "string",
+          "name": "reason",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--approve",
+          "kind": "string",
+          "name": "approve",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout",
+          "description": "Bounded machine-readable dry-run or apply outcome with exact observed identities and every failed gate.",
+          "kind": "stdout",
+          "name": "lifecycle_update_outcome"
+        },
+        {
+          "default": "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
+          "description": "Canonical append-only lifecycle stream after explicit approval and successful readback.",
+          "kind": "file",
+          "name": "bundle_lifecycle_stream"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state.",
+      "tags": [
+        "adaptive-inference",
+        "experimental",
+        "governance",
+        "lifecycle",
+        "rollback",
+        "ssot"
       ]
     },
     {

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import re
-import stat
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +22,12 @@ from .bundles import (
 from .canonical import canonical_json_v1, canonical_sha256_v1
 from .contracts import EnvironmentProfile, ImageJobSpec, QualificationWorkloadProfile
 from .control_records import load_bounded_json_bytes, load_bounded_jsonl_bytes
-from .control_stream import atomic_replace_control_stream
+from .control_stream import (
+    atomic_replace_control_stream,
+    read_control_stream_bytes,
+    resolve_confined_regular_file,
+    resolve_workspace_root,
+)
 from .qualification import QUALIFICATION_PROTOCOL_FINGERPRINT
 from .selection import (
     SupportProfileEligibilityObservation,
@@ -53,6 +57,16 @@ _REVIEWER_ROLES = frozenset({"repo_maintainer", "release_reviewer"})
 _PUBLIC_CHANNELS = frozenset({"Experimental", "Stable"})
 
 FaultHook = Callable[[str], None]
+
+
+def _read_regular(path: Path, *, maximum_bytes: int, label: str) -> bytes:
+    """Compatibility seam over the shared bounded control-stream reader."""
+
+    return read_control_stream_bytes(
+        path,
+        maximum_bytes=maximum_bytes,
+        label=label,
+    )
 
 
 @dataclass(frozen=True)
@@ -108,92 +122,6 @@ class SupportProfileReviewOutcome:
 def _gate(gates: list[_Gate], code: str, detail: str) -> None:
     if not any(item.code == code for item in gates):
         gates.append(_Gate(code, detail))
-
-
-def _workspace_root(path: str | Path) -> Path:
-    lexical = Path(os.path.abspath(Path(path)))
-    if lexical.is_symlink():
-        raise ValueError("workspace root cannot be a symlink")
-    resolved = lexical.resolve(strict=True)
-    if not resolved.is_dir():
-        raise ValueError("workspace root must be a directory")
-    return resolved
-
-
-def _confined_regular_file(
-    path: str | Path,
-    *,
-    workspace: Path,
-    label: str,
-) -> Path:
-    candidate = Path(path)
-    if not candidate.is_absolute():
-        candidate = workspace / candidate
-    lexical = Path(os.path.abspath(candidate))
-    try:
-        relative = lexical.relative_to(workspace)
-    except ValueError as exc:
-        raise ValueError(f"{label} must stay inside the workspace") from exc
-    current = workspace
-    for component in relative.parts:
-        current = current / component
-        if current.is_symlink():
-            raise ValueError(f"{label} contains a symlink component")
-    resolved = lexical.resolve(strict=True)
-    try:
-        resolved.relative_to(workspace)
-    except ValueError as exc:
-        raise ValueError(f"{label} resolves outside the workspace") from exc
-    info = os.stat(resolved, follow_symlinks=False)
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-        raise ValueError(f"{label} must be one singly linked regular file")
-    return resolved
-
-
-def _read_regular(path: Path, *, maximum_bytes: int, label: str) -> bytes:
-    before = os.stat(path, follow_symlinks=False)
-    if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
-        raise ValueError(f"{label} must be one singly linked regular file")
-    if before.st_size > maximum_bytes:
-        raise ValueError(f"{label} exceeds its byte limit")
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags)
-    try:
-        opened = os.fstat(descriptor)
-        identity = (
-            before.st_dev,
-            before.st_ino,
-            before.st_size,
-            before.st_mtime_ns,
-        )
-        if identity != (
-            opened.st_dev,
-            opened.st_ino,
-            opened.st_size,
-            opened.st_mtime_ns,
-        ):
-            raise ValueError(f"{label} changed while opening")
-        chunks: list[bytes] = []
-        total = 0
-        while True:
-            chunk = os.read(descriptor, min(1024 * 1024, maximum_bytes + 1 - total))
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > maximum_bytes:
-                raise ValueError(f"{label} exceeds its byte limit")
-            chunks.append(chunk)
-        after = os.fstat(descriptor)
-        if total != after.st_size or identity != (
-            after.st_dev,
-            after.st_ino,
-            after.st_size,
-            after.st_mtime_ns,
-        ):
-            raise ValueError(f"{label} changed while reading")
-    finally:
-        os.close(descriptor)
-    return b"".join(chunks)
 
 
 def load_support_profile_jsonl_bytes(
@@ -399,14 +327,14 @@ def review_image_pipeline_support_profiles(
     current: Mapping[str, Any] | None = None
 
     try:
-        workspace = _workspace_root(workspace_root)
+        workspace = resolve_workspace_root(workspace_root)
     except (OSError, ValueError) as exc:
         _gate(gates, "workspace_invalid", str(exc))
         workspace = Path(os.path.abspath(Path(workspace_root)))
 
     canonical = workspace / CANONICAL_SUPPORT_PROFILE_STREAM
     try:
-        stream = _confined_regular_file(
+        stream = resolve_confined_regular_file(
             canonical,
             workspace=workspace,
             label="canonical support-profile stream",
@@ -434,7 +362,7 @@ def review_image_pipeline_support_profiles(
         _gate(gates, "proposal_missing", "a workspace-confined canonical proposal is required")
     else:
         try:
-            proposal_file = _confined_regular_file(
+            proposal_file = resolve_confined_regular_file(
                 proposal_path,
                 workspace=workspace,
                 label="support-profile proposal",

@@ -87,6 +87,7 @@ else
     tests.test_adaptive_algorithm_scout \
     tests.test_adaptive_candidate_screening \
     tests.test_adaptive_support_profile_governance \
+    tests.test_adaptive_lifecycle_governance \
     tests.test_adaptive_managed_output \
     tests.test_adaptive_recommendation \
     tests.test_adaptive_processing \

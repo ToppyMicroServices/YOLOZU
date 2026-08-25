@@ -156,6 +156,17 @@ bind a runner, download a model, or claim current support. The stream is current
 empty. Recommendation and execution use the same loader-derived support-profile
 provider, and execution reprojects the lifecycle-pinned historical set before any
 runner session is opened.
+Experimental `yolozu update-image-pipeline-lifecycle` adds a separate reviewed,
+dry-run-first maintenance interface contract for exact disable, enable, license
+review, terminal global revoke, and explicit per-channel rollback. Mutation requires
+`--approve`, the observed lifecycle and support heads, immutable bundle/artifact
+identities, and an approved public review. A non-`none` rollback must restore the
+complete historical advertised profile set and one current repository-managed
+activation per profile for an eligible same-family target. It cannot choose a
+newer dormant target, accept a caller-authored subset, use a never-assigned Candidate
+as a promotion shortcut, promote a bundle, or mutate from metrics alone. The rollback
+event records the exact historical target-assignment digest. No lifecycle event was
+appended by this change.
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.
@@ -188,6 +199,8 @@ records the current three-way state boundary. The earlier
 records the monitored-source, retention, parser, and nonselection boundaries. The earlier
 [candidate screening foundation report](reports/adaptive_candidate_screening_foundation_2026-08-26.md)
 records the fail-closed screening and path-derived trust boundaries. The earlier
+[lifecycle maintenance and rollback report](reports/adaptive_lifecycle_rollback_foundation_2026-08-26.md)
+records the reviewed mutation, immutable-history, and exact rollback boundaries. The earlier
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
 positive selector and executor cases use internal fixtures; they do not qualify a

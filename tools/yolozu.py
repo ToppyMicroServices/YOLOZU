@@ -54,6 +54,7 @@ _PKG_PASSTHROUGH_COMMANDS = {
     "predictions",
     "qualify-image-pipeline",
     "review-image-pipeline-support-profiles",
+    "update-image-pipeline-lifecycle",
     "scout-algorithms",
     "resources",
     "test",
@@ -1420,6 +1421,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         (
             "review-image-pipeline-support-profiles",
             "Delegate to the reviewed dormant support-profile set command.",
+        ),
+        (
+            "update-image-pipeline-lifecycle",
+            "Delegate to the reviewed lifecycle maintenance and rollback command.",
         ),
         (
             "scout-algorithms",

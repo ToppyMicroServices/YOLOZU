@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">137 manifest entries with declared maturity, inputs,
+  <p class="lead">138 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1953,6 +1953,21 @@ bash scripts/ttt_compare.sh --method cotta --data data/smoke --weights checkpoin
   <h3>Examples</h3>
   <pre><code>python3 tools/tune_gate_weights.py --dataset data/coco128 --predictions reports/predictions.json --metric map50_95 --grid-det 1.0 --grid-tmp 0.0,0.5,1.0 --grid-unc 0.0,0.5,1.0 --output-report reports/gate_tuning_report.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/tune_gate_weights.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/gate_weight_tuning.md" target="_blank" rel="noopener noreferrer">gate_weight_tuning.md</a></p>
+</details>
+
+<details class="card" id="tool-update-image-pipeline-lifecycle" data-tool-id="update_image_pipeline_lifecycle"
+  data-search-card data-search-text="update_image_pipeline_lifecycle Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state. experimental tools/update_image_pipeline_lifecycle.py python3 tools/update_image_pipeline_lifecycle.py disable --family-id &lt;family&gt; --bundle-spec-digest &lt;sha256&gt; --artifact-set-digest &lt;sha256&gt; --expected-lifecycle-head-digest &lt;sha256&gt; --expected-bundle-state-event-digest &lt;sha256&gt; --actor-role-id repo_maintainer --public-review-id gh-&lt;number&gt; --review-status approved --reason &#x27;Review exact global disable&#x27; python3 tools/update_image_pipeline_lifecycle.py --help">
+  <summary><code>update_image_pipeline_lifecycle</code> — Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/update_image_pipeline_lifecycle.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>operation</code> — required, string</li><li><code>--family-id</code> — string</li><li><code>--bundle-spec-digest</code> — string</li><li><code>--artifact-set-digest</code> — string</li><li><code>--expected-lifecycle-head-digest</code> — string</li><li><code>--expected-bundle-state-event-digest</code> — string</li><li><code>--channel</code> — string</li><li><code>--expected-current-pointer-digest</code> — string</li><li><code>--expected-prior-assignment-digest</code> — string</li><li><code>--expected-support-profile-index-head</code> — string</li><li><code>--expected-prior-support-profile-index-head</code> — string</li><li><code>--expected-prior-profile-set-record-digest</code> — string</li><li><code>--expected-prior-profile-set-digest</code> — string</li><li><code>--target-bundle-spec-digest</code> — string</li><li><code>--target-artifact-set-digest</code> — string</li><li><code>--evidence-bindings</code> — file</li><li><code>--license-review</code> — string</li><li><code>--actor-role-id</code> — string</li><li><code>--public-review-id</code> — string</li><li><code>--review-status</code> — string</li><li><code>--reason</code> — string</li><li><code>--workspace</code> — default=., dir</li><li><code>--approve</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/update_image_pipeline_lifecycle.py disable --family-id &lt;family&gt; --bundle-spec-digest &lt;sha256&gt; --artifact-set-digest &lt;sha256&gt; --expected-lifecycle-head-digest &lt;sha256&gt; --expected-bundle-state-event-digest &lt;sha256&gt; --actor-role-id repo_maintainer --public-review-id gh-&lt;number&gt; --review-status approved --reason &#x27;Review exact global disable&#x27;
+python3 tools/update_image_pipeline_lifecycle.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/update_image_pipeline_lifecycle.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/bundle_lifecycle_record.schema.json" target="_blank" rel="noopener noreferrer">bundle_lifecycle_record.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/lifecycle_rollback_bindings.schema.json" target="_blank" rel="noopener noreferrer">lifecycle_rollback_bindings.schema.json</a></p>
 </details>
 
 <details class="card" id="tool-validate-instance-segmentation-predictions" data-tool-id="validate_instance_segmentation_predictions"

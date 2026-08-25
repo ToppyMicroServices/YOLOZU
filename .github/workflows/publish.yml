@@ -46,6 +46,7 @@ jobs:
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
             tests.test_adaptive_support_profile_governance \
+            tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
@@ -83,6 +84,7 @@ jobs:
             "yolozu/data/schemas/support_profile_record.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_set_proposal.schema.json",
+            "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/bundle_specs.json",
             "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
@@ -212,6 +214,7 @@ jobs:
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
             tests.test_adaptive_support_profile_governance \
+            tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
@@ -247,6 +250,7 @@ jobs:
             "yolozu/data/schemas/support_profile_record.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_set_proposal.schema.json",
+            "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/bundle_specs.json",
             "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
