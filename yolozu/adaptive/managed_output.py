@@ -253,6 +253,8 @@ class _ParentGuard:
         descriptor_stack = ExitStack()
         try:
             try:
+                # ExitStack owns this descriptor until _ParentGuard.close().
+                # codeql[py/file-not-closed]
                 root_fd = descriptor_stack.enter_context(
                     _opened_root_directory(root_path)
                 )
@@ -263,6 +265,8 @@ class _ParentGuard:
                 raise _fail("root_changed", "approved root changed while it was opened")
             current_fd = root_fd
             for component in parent_parts:
+                # ExitStack owns every pinned parent descriptor until close().
+                # codeql[py/file-not-closed]
                 next_fd = descriptor_stack.enter_context(
                     _opened_directory_at(current_fd, component)
                 )
@@ -292,6 +296,8 @@ class _ParentGuard:
         current_fd = self.root_fd
         with ExitStack() as temporary:
             for index, component in enumerate(self.parent_parts, start=1):
+                # The surrounding ExitStack closes this temporary descriptor.
+                # codeql[py/file-not-closed]
                 next_fd = temporary.enter_context(
                     _opened_directory_at(current_fd, component)
                 )
