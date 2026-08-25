@@ -124,9 +124,12 @@ Strict request, environment, evidence, eligibility-observation, and
 SelectionDecision interface contracts are packaged for integration work.
 `yolozu doctor --output -` now includes a privacy-safe live
 `environment_profile`; failed probes stay unknown and do not prove that an
-accelerator is absent. The packaged empty bundle registry can also be loaded
-and validated without importing a model runtime. Explicit workspace catalogs
-remain operator-asserted and nonselectable. The Experimental
+accelerator is absent. The packaged bundle registry now contains three
+non-promoted Candidate baselines matching the existing model zoo: YOLOX-S,
+Detectron2 Faster R-CNN R50-FPN 1x, and MMDetection Faster R-CNN R50-FPN 1x.
+Their pinned weights are fetchable metadata, but their adaptive execution binding
+is explicitly unbound. Loading and validation do not import a model runtime.
+Explicit workspace catalogs remain operator-asserted and nonselectable. The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
 cancellation, and atomic unactivated `qualification_report.json` publication.
@@ -136,9 +139,8 @@ activation, supersession, or terminal revocation. Mutation requires `--approve`.
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.
-The packaged registry is still empty and no code-owned model runner is
-registered, so the command currently fails actionably instead of producing
-dummy evidence. A pure internal selector now applies the fixed trust,
+No adaptive runner is bound to those records, so the command currently fails
+actionably instead of producing dummy evidence. A pure internal selector now applies the fixed trust,
 compatibility, artifact, evidence, performance, and deterministic ranking rules
 to already validated in-memory observations. It performs no provider-file,
 model, runner, or network I/O. The Experimental MCP-only
@@ -147,19 +149,22 @@ read-only structured recommendation. It validates the typed job and local input,
 checks non-I/O gates before artifact access, and returns either a complete
 SelectionDecision or an honest abstention. It does not run inference, download or
 write assets, parse natural language, or expose absolute paths or raw probe output.
-Because the packaged registry and public evidence stream are empty, the default
-call currently abstains. Experimental MCP-only `process_images` now accepts that
+Because the three records remain Candidate and the public evidence stream is empty,
+the default call currently abstains with `maturity_disallowed`. Experimental
+MCP-only `process_images` now accepts that
 complete selected decision, revalidates the job, current lifecycle/evidence,
 environment, workload, input, class mapping, and pinned artifact state, and defaults
 to a no-write `dry_run=true`. Explicit execution uses only a registered code-owned,
 network-free route and publishes an atomic managed predictions/provenance/checksum
-tree. The packaged registry and runner maps remain empty, so no real adaptive model
+tree. The adaptive runner maps remain empty, so no real adaptive model
 can currently execute; no model adapter or performance claim was added. An activation record alone does
 not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.
 
-The [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
+The [baseline bundle registry report](reports/adaptive_baseline_bundle_registry_2026-08-26.md)
+records the current three-way state boundary. The earlier
+[installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
 positive selector and executor cases use internal fixtures; they do not qualify a
 real bundle or demonstrate a selected public run.

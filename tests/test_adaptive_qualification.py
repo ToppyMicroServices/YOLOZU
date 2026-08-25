@@ -492,16 +492,16 @@ class TestAdaptiveQualification(unittest.TestCase):
                         monotonic_ns=clock.now,
                     )
 
-    def test_empty_packaged_registry_fails_without_dummy_evidence(self) -> None:
+    def test_unbound_packaged_candidate_fails_without_dummy_evidence(self) -> None:
         job = self._job(input_mode="single_image", max_images=1)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with self.assertRaisesRegex(ValueError, "registry_empty"):
+            with self.assertRaisesRegex(ValueError, "bundle_ineligible"):
                 qualify_image_pipeline(
                     job=job,
                     input_path="missing.png",
-                    bundle_id="missing",
-                    bundle_version="1",
+                    bundle_id="yolox-s-coco",
+                    bundle_version="0.1.1rc0",
                     output_dir="reports/qualification",
                     workspace_root=root,
                 )

@@ -61,9 +61,18 @@ support claim, benchmark result, or adoption snapshot.
   dry-run. Explicit execution is restricted to registered code-owned network-free
   routes and an exact bounded managed output tree.
 
+## Current-state addendum
+
+This report records the qualification foundation before baseline registration.
+On 2026-08-26, the three existing model-zoo records were added as non-promoted
+Candidate metadata with unbound execution. No adaptive runner, qualification
+evidence, support claim, or executable route was added. See
+[`adaptive_baseline_bundle_registry_2026-08-26.md`](adaptive_baseline_bundle_registry_2026-08-26.md).
+
 ## Evidence boundary
 
-The packaged bundle registry and repository-owned runner/evaluator factory maps are empty.
+At the time of this foundation report, the packaged bundle registry and
+repository-owned runner/evaluator factory maps were empty.
 Therefore the public command currently returns an actionable error before model
 load and writes no dummy evidence. Normal CI uses injected clocks and runners;
 those fixtures test protocol semantics and do not establish latency, throughput,
@@ -76,10 +85,11 @@ coverage is recorded as `unknown` and cannot satisfy a hard memory gate.
 
 ## Remaining work
 
-Real measurement begins only after a bundle, artifacts, lifecycle/license review,
-and audited code-owned runner are registered. Read-only recommendation is exposed
-through MCP, but the empty registry and evidence store mean the default call
-abstains and no report is active. The pinned processing interface is implemented,
-but the empty registry and runner maps mean no real adaptive model can execute.
+Real measurement begins only after a complete runner-consumed artifact set and
+audited code-owned runner are bound to an eligible bundle. Read-only recommendation
+is exposed through MCP, but the Candidate-only registry and empty evidence store
+mean the default call abstains and no report is active. The pinned processing
+interface is implemented, but the runner maps remain empty, so no real adaptive
+model can execute.
 Model adapters remain separate Beads tasks. A smoke run can never be promoted to
 `qualified`.

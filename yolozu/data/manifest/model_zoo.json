@@ -13,6 +13,9 @@
       },
       "version": "0.1.1rc0",
       "license": "Apache-2.0",
+      "size_bytes": 72089125,
+      "license_source": "yolozu/data/manifest/model_zoo.json#yolox-s-coco",
+      "license_revision": "eba6c8d511033606eb2798dfa9f12747296db1fc",
       "sha256": "f55ded7181e1b0c13285c56e7790b8f0e8f8db590fe4edb37f0b7f345c913a30"
     },
     {
@@ -25,6 +28,9 @@
       },
       "version": "137257794",
       "license": "Apache-2.0",
+      "size_bytes": 167266879,
+      "license_source": "yolozu/data/manifest/model_zoo.json#detectron2-faster-rcnn-r50-fpn-1x-coco",
+      "license_revision": "eba6c8d511033606eb2798dfa9f12747296db1fc",
       "sha256": "b6def88fe428c339d60e718c0e9b4d821580df6a92e02435ef439fea8a3a2395"
     },
     {
@@ -37,6 +43,9 @@
       },
       "version": "20200130-047c8118",
       "license": "Apache-2.0",
+      "size_bytes": 167287506,
+      "license_source": "yolozu/data/manifest/model_zoo.json#mmdet-faster-rcnn-r50-fpn-1x-coco",
+      "license_revision": "eba6c8d511033606eb2798dfa9f12747296db1fc",
       "sha256": "047c8118fc5ca88ba5ae1fab72f2cd6b070501fe3af2f3cba5cfa9a89b44b03e"
     }
   ]

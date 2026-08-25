@@ -76,7 +76,9 @@ class TestAdaptiveRecommendation(unittest.TestCase):
 
             self.assertEqual(sorted(opened), sorted(closed))
 
-    def test_empty_packaged_registry_abstains_without_writes_or_path_leaks(self) -> None:
+    def test_packaged_candidate_baselines_abstain_without_writes_or_path_leaks(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as td:
             workspace = Path(td)
             image_path = workspace / "input.png"
@@ -94,10 +96,22 @@ class TestAdaptiveRecommendation(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertTrue(result["ok"])
             self.assertEqual(result["decision"]["status"], "abstained")
-            self.assertEqual(result["decision"]["registry_bundle_count"], 0)
+            self.assertEqual(result["decision"]["registry_bundle_count"], 3)
             self.assertEqual(
-                result["recommendation_metadata"]["artifact_observations"],
-                [],
+                [
+                    evaluation["reason_codes"]
+                    for evaluation in result["decision"]["candidate_evaluations"]
+                ],
+                [["maturity_disallowed"]] * 3,
+            )
+            self.assertEqual(
+                [
+                    observation["status"]
+                    for observation in result["recommendation_metadata"][
+                        "artifact_observations"
+                    ]
+                ],
+                ["not_checked_due_to_prior_filter"] * 3,
             )
             self.assertIsNone(
                 result["recommendation_metadata"][

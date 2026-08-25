@@ -51,6 +51,17 @@ TASKS = frozenset({"object_detection", "instance_segmentation"})
 PROMPT_MODES = frozenset({"fixed_classes", "text"})
 PROVENANCE_CLASSES = frozenset({"existing_code_owned", "screened_candidate"})
 EXECUTION_TRUST_CLASSES = frozenset({"code_owned_audited", "third_party_isolated"})
+EXECUTION_BINDING_STATES = frozenset({"bound", "unbound"})
+EXECUTION_ARTIFACT_SCOPES = frozenset(
+    {"runner_consumed", "fetchable_model_assets"}
+)
+EXECUTION_UNAVAILABLE_REASONS = frozenset(
+    {
+        "adaptive_runner_unavailable",
+        "runner_artifact_set_incomplete",
+        "runtime_unqualified",
+    }
+)
 ARTIFACT_ROLES = frozenset(
     {
         "code_archive",
@@ -317,6 +328,39 @@ def _validate_runner_options(value: Any) -> dict[str, Any]:
     return out
 
 
+def _validate_execution_binding(value: Any) -> dict[str, Any]:
+    record = _mapping(value, field="execution_binding")
+    allowed = frozenset({"status", "artifact_scope", "reason_code"})
+    _keys(record, field="execution_binding", allowed=allowed, required=allowed)
+    status = _enum(
+        record["status"],
+        field="execution_binding.status",
+        allowed=EXECUTION_BINDING_STATES,
+    )
+    scope = _enum(
+        record["artifact_scope"],
+        field="execution_binding.artifact_scope",
+        allowed=EXECUTION_ARTIFACT_SCOPES,
+    )
+    reason = record["reason_code"]
+    if status == "bound":
+        if scope != "runner_consumed" or reason is not None:
+            raise ValueError(
+                "bound execution requires runner_consumed artifacts and null reason"
+            )
+    else:
+        if scope != "fetchable_model_assets":
+            raise ValueError(
+                "unbound execution permits only fetchable_model_assets"
+            )
+        reason = _enum(
+            reason,
+            field="execution_binding.reason_code",
+            allowed=EXECUTION_UNAVAILABLE_REASONS,
+        )
+    return {"status": status, "artifact_scope": scope, "reason_code": reason}
+
+
 def _validate_runtime(value: Any) -> dict[str, Any]:
     record = _mapping(value, field="runtime")
     allowed = frozenset(
@@ -479,6 +523,8 @@ def validate_algorithm_bundle_spec(value: Mapping[str, Any]) -> AlgorithmBundleS
             "test_only",
             "tasks",
             "prompt_modes",
+            "adapter_backend_id",
+            "execution_binding",
             "runner_id",
             "runner_version",
             "execution_trust_class",
@@ -500,9 +546,25 @@ def validate_algorithm_bundle_spec(value: Mapping[str, Any]) -> AlgorithmBundleS
             "text_prompt_support",
         }
     )
-    required = allowed - {
+    execution_fields = frozenset(
+        {
+            "runner_id",
+            "runner_version",
+            "execution_trust_class",
+            "execution_isolation_policy_digest",
+            "loader_format",
+            "unsafe_deserialization_required",
+            "runtime",
+            "model_input_shapes",
+            "decoder",
+            "preprocess",
+            "postprocess",
+            "execution_network_required",
+            "runner_options",
+        }
+    )
+    required = allowed - execution_fields - {
         "screening_binding",
-        "execution_isolation_policy_digest",
         "class_vocabulary",
         "text_prompt_support",
     }
@@ -568,38 +630,23 @@ def validate_algorithm_bundle_spec(value: Mapping[str, Any]) -> AlgorithmBundleS
     if artifact_set_digest != expected_artifact_digest:
         raise ValueError("artifact_set_digest: digest mismatch")
 
-    trust_class = _enum(
-        record["execution_trust_class"],
-        field="execution_trust_class",
-        allowed=EXECUTION_TRUST_CLASSES,
-    )
-    loader_format = _enum(
-        record["loader_format"], field="loader_format", allowed=LOADER_FORMATS
-    )
-    unsafe = _boolean(
-        record["unsafe_deserialization_required"],
-        field="unsafe_deserialization_required",
-    )
-    needs_isolation = (
-        unsafe
-        or loader_format in UNSAFE_LOADER_FORMATS
-        or any(item["role"] == "code_archive" for item in artifacts)
-    )
-    isolation_digest: str | None = None
-    if trust_class == "code_owned_audited":
-        if needs_isolation:
-            raise ValueError("bundle-supplied code/unsafe loader requires third_party_isolated")
-        if "execution_isolation_policy_digest" in record:
-            raise ValueError("code_owned_audited forbids isolation-policy digest")
-    else:
-        if "execution_isolation_policy_digest" not in record:
-            raise ValueError("third_party_isolated requires isolation-policy digest")
-        isolation_digest = _sha256(
-            record["execution_isolation_policy_digest"],
-            field="execution_isolation_policy_digest",
+    execution_binding = _validate_execution_binding(record["execution_binding"])
+    bound = execution_binding["status"] == "bound"
+    present_execution_fields = execution_fields.intersection(record)
+    if bound:
+        required_execution_fields = execution_fields - {
+            "execution_isolation_policy_digest"
+        }
+        missing = sorted(required_execution_fields - set(record))
+        if missing:
+            raise ValueError(
+                "bound execution is missing fields: " + ", ".join(missing)
+            )
+    elif present_execution_fields:
+        raise ValueError(
+            "unbound execution forbids runner fields: "
+            + ", ".join(sorted(present_execution_fields))
         )
-    if (loader_format in UNSAFE_LOADER_FORMATS) != unsafe:
-        raise ValueError("loader_format and unsafe_deserialization_required disagree")
 
     output: dict[str, Any] = {
         "schema_version": 1,
@@ -621,39 +668,93 @@ def validate_algorithm_bundle_spec(value: Mapping[str, Any]) -> AlgorithmBundleS
             record["tasks"], field="tasks", allowed=TASKS, maximum=2
         ),
         "prompt_modes": prompt_modes,
-        "runner_id": _enum(
-            record["runner_id"],
-            field="runner_id",
-            allowed=CODE_OWNED_RUNNER_IDS,
+        "adapter_backend_id": _token(
+            record["adapter_backend_id"], field="adapter_backend_id"
         ),
-        "runner_version": _token(
-            record["runner_version"], field="runner_version"
-        ),
-        "execution_trust_class": trust_class,
-        "loader_format": loader_format,
-        "unsafe_deserialization_required": unsafe,
+        "execution_binding": execution_binding,
         "model_source_id": _safe_text(
             record["model_source_id"], field="model_source_id", maximum_bytes=512
         ),
         "model_revision": _safe_text(
             record["model_revision"], field="model_revision", maximum_bytes=256
         ),
-        "runtime": _validate_runtime(record["runtime"]),
-        "model_input_shapes": _validate_input_shapes(record["model_input_shapes"]),
-        "decoder": _validate_identity(record["decoder"], field="decoder"),
-        "preprocess": _validate_identity(record["preprocess"], field="preprocess"),
-        "postprocess": _validate_identity(record["postprocess"], field="postprocess"),
-        "execution_network_required": _boolean(
-            record["execution_network_required"], field="execution_network_required"
-        ),
-        "runner_options": _validate_runner_options(record["runner_options"]),
         "artifacts": artifacts,
         "artifact_set_digest": artifact_set_digest,
     }
+    if bound:
+        trust_class = _enum(
+            record["execution_trust_class"],
+            field="execution_trust_class",
+            allowed=EXECUTION_TRUST_CLASSES,
+        )
+        loader_format = _enum(
+            record["loader_format"], field="loader_format", allowed=LOADER_FORMATS
+        )
+        unsafe = _boolean(
+            record["unsafe_deserialization_required"],
+            field="unsafe_deserialization_required",
+        )
+        needs_isolation = (
+            unsafe
+            or loader_format in UNSAFE_LOADER_FORMATS
+            or any(item["role"] == "code_archive" for item in artifacts)
+        )
+        isolation_digest: str | None = None
+        if trust_class == "code_owned_audited":
+            if needs_isolation:
+                raise ValueError(
+                    "bundle-supplied code/unsafe loader requires third_party_isolated"
+                )
+            if "execution_isolation_policy_digest" in record:
+                raise ValueError("code_owned_audited forbids isolation-policy digest")
+        else:
+            if "execution_isolation_policy_digest" not in record:
+                raise ValueError(
+                    "third_party_isolated requires isolation-policy digest"
+                )
+            isolation_digest = _sha256(
+                record["execution_isolation_policy_digest"],
+                field="execution_isolation_policy_digest",
+            )
+        if (loader_format in UNSAFE_LOADER_FORMATS) != unsafe:
+            raise ValueError(
+                "loader_format and unsafe_deserialization_required disagree"
+            )
+        output.update(
+            {
+                "runner_id": _enum(
+                    record["runner_id"],
+                    field="runner_id",
+                    allowed=CODE_OWNED_RUNNER_IDS,
+                ),
+                "runner_version": _token(
+                    record["runner_version"], field="runner_version"
+                ),
+                "execution_trust_class": trust_class,
+                "loader_format": loader_format,
+                "unsafe_deserialization_required": unsafe,
+                "runtime": _validate_runtime(record["runtime"]),
+                "model_input_shapes": _validate_input_shapes(
+                    record["model_input_shapes"]
+                ),
+                "decoder": _validate_identity(record["decoder"], field="decoder"),
+                "preprocess": _validate_identity(
+                    record["preprocess"], field="preprocess"
+                ),
+                "postprocess": _validate_identity(
+                    record["postprocess"], field="postprocess"
+                ),
+                "execution_network_required": _boolean(
+                    record["execution_network_required"],
+                    field="execution_network_required",
+                ),
+                "runner_options": _validate_runner_options(record["runner_options"]),
+            }
+        )
+        if isolation_digest is not None:
+            output["execution_isolation_policy_digest"] = isolation_digest
     if screening is not None:
         output["screening_binding"] = screening
-    if isolation_digest is not None:
-        output["execution_isolation_policy_digest"] = isolation_digest
 
     if "fixed_classes" in prompt_modes:
         if "class_vocabulary" not in record:

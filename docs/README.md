@@ -52,8 +52,10 @@ The environment-qualified local image-processing program targets an Experimental
   and the MCP-only `recommend_image_pipeline` tool exposes its bounded read-only
   recommendation path. MCP-only `process_images` adds pinned revalidation,
   dry-run-by-default execution gating, and bounded managed output publication.
-  The packaged registry, evidence stream, and runner maps are empty, so the
-  default response is abstention and no real adaptive model can currently run.
+  The packaged registry contains three non-promoted Candidate baselines with
+  unbound execution. The evidence stream and runner maps are empty, so the
+  default response records `maturity_disallowed`, abstains, and cannot run a real
+  adaptive model.
 
 ## Primary Focus
 

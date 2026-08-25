@@ -100,7 +100,7 @@
         "isolation_unsupported", "isolation_image_missing", "isolation_policy_mismatch",
         "unsafe_loader_on_host", "compute_policy_mismatch", "provider_not_allowed",
         "precision_not_allowed", "hardware_unavailable", "hardware_probe_unknown",
-        "runtime_unavailable", "runtime_probe_unknown", "artifact_size_limit_exceeded",
+        "runtime_unavailable", "runtime_probe_unknown", "runner_unavailable", "artifact_size_limit_exceeded",
         "artifact_member_missing", "artifact_member_mismatch", "artifact_state_mismatch",
         "evidence_not_qualified", "evidence_untrusted", "evidence_inactive",
         "evidence_revoked", "evidence_expired", "evidence_superseded",

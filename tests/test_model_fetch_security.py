@@ -42,6 +42,7 @@ class TestModelFetchSecurity(unittest.TestCase):
                                 "version": "v1",
                                 "license": "Apache-2.0",
                                 "sha256": sha,
+                                "size_bytes": len(src.read_bytes()),
                             }
                         ],
                     }
@@ -60,6 +61,56 @@ class TestModelFetchSecurity(unittest.TestCase):
             self.assertTrue(out_path.is_file())
             self.assertEqual(out_path.read_bytes(), b"abc123")
             self.assertTrue(meta_path.is_file())
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            self.assertEqual(meta["size_bytes"], len(b"abc123"))
+
+    def test_fetch_model_rejects_size_mismatch_before_cache_publish(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            src = root / "weights.bin"
+            src.write_bytes(b"abc123")
+            registry = root / "registry.json"
+            registry.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "models": [
+                            {
+                                "id": "wrong-size-model",
+                                "summary": "wrong size",
+                                "family": "test",
+                                "source": {
+                                    "type": "official_url",
+                                    "url": src.resolve().as_uri(),
+                                },
+                                "version": "v1",
+                                "license": "Apache-2.0",
+                                "sha256": hashlib.sha256(
+                                    src.read_bytes()
+                                ).hexdigest(),
+                                "size_bytes": len(src.read_bytes()) + 1,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(RuntimeError, "size mismatch"):
+                model_fetch.fetch_model(
+                    model_id="wrong-size-model",
+                    out_dir=root / "models",
+                    cache_dir=root / "cache",
+                    accept_license=True,
+                    registry_path=registry,
+                )
+
+            self.assertFalse(
+                (root / "cache" / "wrong-size-model" / "v1" / "weights.bin").exists()
+            )
+            self.assertFalse(
+                (root / "models" / "wrong-size-model" / "meta.json").exists()
+            )
 
     def test_fetch_model_mirror_urls_fallback(self):
         with tempfile.TemporaryDirectory() as td:

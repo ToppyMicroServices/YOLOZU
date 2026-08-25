@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://www.toppymicros.com/yolozu/schemas/algorithm_bundle_spec.schema.json",
   "title": "YOLOZU AlgorithmBundleSpec v1",
-  "description": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing.",
+  "description": "Immutable fetchable-model, optional bound-runner, artifact, vocabulary, and execution facts for Experimental adaptive routing.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,20 +15,10 @@
     "test_only",
     "tasks",
     "prompt_modes",
-    "runner_id",
-    "runner_version",
-    "execution_trust_class",
-    "loader_format",
-    "unsafe_deserialization_required",
+    "adapter_backend_id",
+    "execution_binding",
     "model_source_id",
     "model_revision",
-    "runtime",
-    "model_input_shapes",
-    "decoder",
-    "preprocess",
-    "postprocess",
-    "execution_network_required",
-    "runner_options",
     "artifacts",
     "artifact_set_digest"
   ],
@@ -55,6 +45,8 @@
       "uniqueItems": true,
       "items": { "enum": ["fixed_classes", "text"] }
     },
+    "adapter_backend_id": { "$ref": "#/$defs/id" },
+    "execution_binding": { "$ref": "#/$defs/execution_binding" },
     "runner_id": { "enum": ["yolo_runtime", "onnxruntime", "tensorrt", "torchvision", "coreml"] },
     "runner_version": { "$ref": "#/$defs/id" },
     "execution_trust_class": { "enum": ["code_owned_audited", "third_party_isolated"] },
@@ -87,6 +79,44 @@
   },
   "allOf": [
     {
+      "if": {
+        "properties": {
+          "execution_binding": {
+            "properties": { "status": { "const": "bound" } },
+            "required": ["status"]
+          }
+        },
+        "required": ["execution_binding"]
+      },
+      "then": {
+        "required": [
+          "runner_id", "runner_version", "execution_trust_class",
+          "loader_format", "unsafe_deserialization_required", "runtime",
+          "model_input_shapes", "decoder", "preprocess", "postprocess",
+          "execution_network_required", "runner_options"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            { "required": ["runner_id"] },
+            { "required": ["runner_version"] },
+            { "required": ["execution_trust_class"] },
+            { "required": ["execution_isolation_policy_digest"] },
+            { "required": ["loader_format"] },
+            { "required": ["unsafe_deserialization_required"] },
+            { "required": ["runtime"] },
+            { "required": ["model_input_shapes"] },
+            { "required": ["decoder"] },
+            { "required": ["preprocess"] },
+            { "required": ["postprocess"] },
+            { "required": ["execution_network_required"] },
+            { "required": ["runner_options"] }
+          ]
+        }
+      }
+    },
+    {
       "if": { "properties": { "provenance_class": { "const": "screened_candidate" } }, "required": ["provenance_class"] },
       "then": { "required": ["screening_binding"] },
       "else": { "not": { "required": ["screening_binding"] } }
@@ -114,6 +144,46 @@
     "bundle_version": { "type": "string", "pattern": "^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$" },
     "text_256": { "type": "string", "minLength": 1, "maxLength": 256 },
     "text_512": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "execution_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "artifact_scope", "reason_code"],
+      "properties": {
+        "status": { "enum": ["bound", "unbound"] },
+        "artifact_scope": { "enum": ["runner_consumed", "fetchable_model_assets"] },
+        "reason_code": {
+          "enum": [
+            null,
+            "adaptive_runner_unavailable",
+            "runner_artifact_set_incomplete",
+            "runtime_unqualified"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "bound" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "artifact_scope": { "const": "runner_consumed" },
+              "reason_code": { "const": null }
+            }
+          },
+          "else": {
+            "properties": {
+              "artifact_scope": { "const": "fetchable_model_assets" },
+              "reason_code": {
+                "enum": [
+                  "adaptive_runner_unavailable",
+                  "runner_artifact_set_incomplete",
+                  "runtime_unqualified"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
     "screening_binding": {
       "type": "object",
       "additionalProperties": false,

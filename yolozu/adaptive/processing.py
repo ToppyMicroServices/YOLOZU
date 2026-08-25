@@ -158,6 +158,11 @@ def _resolve_execution_route(
     """Resolve only code-owned routes; tests may call this below the public gate."""
 
     record = bundle.to_dict()
+    if record["execution_binding"]["status"] != "bound":
+        raise _fail(
+            "runner_unavailable",
+            "the selected bundle has no complete adaptive runner binding",
+        )
     if record["execution_network_required"]:
         raise _fail("network_forbidden", "the selected runner declares network use")
     runner_id = record["runner_id"]

@@ -4,9 +4,20 @@ Verification date: 2026-08-26 (Asia/Tokyo)
 
 Bead: `YOLOZU-ll2.81.1.14`
 
+## Current-state addendum
+
+This report records the earlier foundation state verified for
+`YOLOZU-ll2.81.1.14`. Later on 2026-08-26, `YOLOZU-ll2.81.2.1` registered the three
+existing model-zoo records as non-promoted Candidate metadata. They remain
+non-executable and unqualified because their execution binding is unbound and no
+adaptive runner or evidence exists. The current installed default still abstains,
+but it now evaluates three candidates and records `maturity_disallowed` rather than
+returning zero candidates. See
+[`adaptive_baseline_bundle_registry_2026-08-26.md`](adaptive_baseline_bundle_registry_2026-08-26.md).
+
 ## Result
 
-The source, sdist, wheel, installed Python surface, and installed MCP discovery
+At the time of this verification, the source, sdist, wheel, installed Python surface, and installed MCP discovery
 agree on the Experimental adaptive-routing boundary. The packaged registry,
 public evidence stream, and runner maps are empty. The installed recommendation
 therefore abstains, and processing rejects the abstained decision with
@@ -15,7 +26,7 @@ therefore abstains, and processing rejects the abstained decision with
 This is interface and packaging verification. It does not qualify a real bundle,
 measure model quality or speed, or demonstrate a selected public end-to-end run.
 
-## Exact outcome matrix
+## Recorded outcome matrix
 
 | Layer | Case | Exact expected outcome | Verification |
 |---|---|---|---|

@@ -44,6 +44,7 @@ from yolozu.adaptive.selection import (
 from yolozu.adaptive.selector import (
     EvidenceEligibilityObservation,
     IsolationCapabilityObservation,
+    _runtime_and_hardware_reasons,
     compute_advertised_gates_digest,
     select_qualified_pipeline,
 )
@@ -721,6 +722,75 @@ class TestAdaptiveSelector(unittest.TestCase):
         )
         changed = _select(context).to_dict()["candidate_evaluations"][0]
         self.assertEqual(changed["reason_codes"], ["artifact_state_mismatch"])
+
+    def test_baseline_exclusion_inputs_have_exact_fail_closed_reasons(self) -> None:
+        bundle = _bundle_payload()
+
+        runtime = _context(bundle)
+        environment = runtime.environment.to_dict()
+        environment["runtimes"] = [
+            {"runtime_id": "onnxruntime", "probe_status": "absent"}
+        ]
+        environment["environment_fingerprint"] = compute_environment_fingerprint(
+            environment
+        )
+        runtime.environment = validate_environment_profile(environment)
+        pointer = runtime.registry.lifecycle.channel_pointers[
+            (bundle["family_id"], "Experimental")
+        ]
+        runtime.support[(bundle["spec_digest"], "Experimental")] = _support(
+            bundle=bundle,
+            channel="Experimental",
+            pointer=pointer,
+            environment=runtime.environment,
+            workload=runtime.workload,
+            job=runtime.job,
+        )
+        self.assertEqual(
+            _select(runtime).to_dict()["candidate_evaluations"][0]["reason_codes"],
+            ["runtime_unavailable"],
+        )
+
+        license_review = _context(bundle)
+        license_review.registry.lifecycle.bundle_states[bundle["spec_digest"]][
+            "artifact_license_reviews"
+        ][0]["review_state"] = "unknown"
+        self.assertEqual(
+            _select(license_review).to_dict()["candidate_evaluations"][0][
+                "reason_codes"
+            ],
+            ["license_not_approved"],
+        )
+
+        artifact = _context(bundle)
+        artifact.inventories.clear()
+        self.assertEqual(
+            _select(artifact).to_dict()["candidate_evaluations"][0]["reason_codes"],
+            ["artifact_member_missing"],
+        )
+
+        evidence = _context(bundle)
+        evidence.evidence.clear()
+        self.assertEqual(
+            _select(evidence).to_dict()["candidate_evaluations"][0]["reason_codes"],
+            ["evidence_inactive"],
+        )
+
+        unbound = _bundle_payload()
+        unbound["execution_binding"] = {
+            "status": "unbound",
+            "artifact_scope": "fetchable_model_assets",
+            "reason_code": "runner_artifact_set_incomplete",
+        }
+        self.assertEqual(
+            _runtime_and_hardware_reasons(
+                bundle=unbound,
+                job=_job().to_dict(),
+                environment=_environment().to_dict(),
+                isolation=None,
+            ),
+            ["runner_unavailable"],
+        )
 
     def test_each_terminal_or_untrusted_evidence_state_has_an_exact_reason(
         self,

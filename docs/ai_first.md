@@ -88,16 +88,17 @@ optional registry, evidence, and artifact roots are also workspace-confined. It
 returns `ok=true` for both `selected` and `abstained` SelectionDecision outcomes.
 Malformed, unsafe, corrupt, or internal failures return `ok=false`. The operation
 does not parse natural language, run a model, download assets, write files, or
-request network access. The packaged registry and public evidence stream are
-empty, so the default installed call currently abstains rather than inventing a
-recommendation.
+request network access. The packaged registry contains three Candidate baselines
+with unbound execution. Because Candidate is nonselectable and the public evidence
+stream is empty, the default installed call records `maturity_disallowed` and
+abstains rather than inventing a recommendation.
 
 `process_images` is the paired Experimental MCP-only processing operation. It
 requires the complete selected decision, repeats the governed and pinned local
 preflight, and defaults to `dry_run=true`, which creates no runner or output.
 Only explicit `dry_run=false` may use a registered code-owned network-free route
-and publish the exact managed predictions/provenance/checksum tree. The packaged
-registry and runner maps are empty, so the default installed surface cannot
+and publish the exact managed predictions/provenance/checksum tree. The adaptive
+runner maps are empty, so the default installed surface cannot
 currently execute a real adaptive model. It is not `guaranteed_ai_safe`.
 
 The [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md)

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expose Experimental read-only image-pipeline recommendation through MCP.
 - Add Experimental dry-run-by-default pinned local image processing through MCP.
 - Verify adaptive routing boundaries across source, candidate artifacts, and installed MCP calls.
+- Register the existing model zoo as non-promoted adaptive Candidate baselines.
 
 ### Fixed
 - Keep repository-wrapper prediction and TTA/TTT log paths anchored to the checkout when invoked from another working directory.

@@ -7,7 +7,8 @@ Later interface contracts, qualification evidence, selectors, MCP surfaces, loca
 execution, and tests must follow it.
 
 The current release adds Experimental MCP recommendation and pinned-processing
-surfaces. It does not add a model adapter or a registered runnable bundle.
+surfaces. It also registers three non-promoted Candidate baselines, but it does
+not add a model adapter or a runnable bundle.
 YOLOZU's current Stable predictions validation and evaluation lane remains unchanged.
 
 The source tree now includes strict Python validators and packaged schemas for
@@ -17,9 +18,13 @@ observations, and selection-decision interface contracts.
 `yolozu doctor` additively emits the validated EnvironmentProfile from bounded,
 privacy-safe live probes. An unsupported or failed probe remains unknown, and
 the profile is configuration input rather than qualification evidence.
-The public bundle registry, lifecycle/support/activation streams, and qualification
-report directory contain no selectable evidence. The package validates and loads the
-exact empty bundle-registry/lifecycle SSOT without importing a model runtime.
+The packaged registry contains the three records already present in the model zoo,
+and the lifecycle stream registers each only as Candidate. Their weight assets have
+pinned source, revision, size, SHA-256, license metadata, and cache identity. Their
+`execution_binding` is `unbound`, the support/activation streams and qualification
+report directory contain no selectable evidence, and no adaptive runner is registered.
+The package validates and loads this exact registry/lifecycle SSOT without importing
+a model runtime.
 An explicitly supplied workspace catalog is always operator-asserted and fails the
 public selection trust gate even when its checksums are internally consistent.
 
@@ -33,7 +38,8 @@ MCP-only `recommend_image_pipeline` service validates a structured job and local
 input, applies non-I/O gates before artifact access, and invokes the selector. It
 returns a complete SelectionDecision without inference, model import, downloads,
 writes, network access, natural-language parsing, raw probe output, or absolute
-path disclosure. The empty packaged registry still produces only abstention.
+path disclosure. The packaged Candidate-only registry produces only abstention,
+with `maturity_disallowed` recorded for each current baseline.
 
 The MCP-only `process_images` service accepts the complete selected decision and
 the same typed job/input roots. It rebuilds current governed state, requires every
@@ -44,8 +50,8 @@ allowlisted `code_owned_audited` runner, or a separately registered code-owned
 isolated service with the exact policy digest for `third_party_isolated`. P0 ships
 the isolation interface and fail-closed gate but no isolated backend. Output is an
 exact managed tree containing `predictions.json`, `provenance.json`,
-`checksums.json`, and only referenced masks. The packaged registry and runner maps
-remain empty, so the installed default cannot execute a real adaptive model.
+`checksums.json`, and only referenced masks. The adaptive runner maps remain empty,
+so the installed default cannot execute a real adaptive model.
 
 The source, candidate sdist/wheel, and installed MCP boundaries are checked in the
 [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).
@@ -57,8 +63,9 @@ The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
 exact managed bundles. It pins bounded input and artifact descriptors, runs only a
 repository-owned network-free runner in a terminable child process group, applies
 the frozen v1 schedule and handoff, and publishes one unactivated report through
-`ManagedOutputTransaction`. The packaged registry and code-owned runner factory map
-are currently empty, so the default command fails with an actionable error and does
+`ManagedOutputTransaction`. The three current Candidate records have unbound
+execution and the code-owned runner factory map is empty, so the default command
+fails with an actionable error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
 model adapter, or general image-processing capability.
 
@@ -78,8 +85,8 @@ The command accepts a canonical `ImageJobSpec` JSON file, a workspace-confined
 single image or bounded directory, an exact packaged bundle ID/version and lifecycle
 channel, an optional workspace-confined artifact root, and a fresh managed output
 directory. A ground-truth path can be paired only with an exact registered code-owned
-evaluator and a preregistered quality requirement; no evaluator is registered in the
-current empty baseline. `--qualification-timeout-seconds` is restricted to `60..14400`.
+evaluator and a preregistered quality requirement; no evaluator is registered for
+the current baselines. `--qualification-timeout-seconds` is restricted to `60..14400`.
 Soft-real-time requests require at least 1,260 seconds so the ten-minute section and
 bounded setup can fit. `--smoke` is a short wiring check and can emit only `smoke`,
 never `qualified`.
@@ -762,7 +769,7 @@ The following spellings are stable v1 `CandidateEvaluation` exclusion codes. The
 |---|---|
 | Compatibility | `task_mismatch`, `prompt_mode_mismatch`, `class_vocabulary_mismatch`, `evaluation_dataset_mismatch`, `evaluation_vocabulary_mismatch`, `bundle_spec_mismatch`, `environment_mismatch`, `qualification_workload_mismatch`, `protocol_mismatch` |
 | Lifecycle and trust | `test_only`, `bundle_disabled`, `bundle_revoked`, `maturity_disallowed`, `registry_untrusted`, `lifecycle_untrusted`, `screening_untrusted`, `screening_not_current_pass`, `support_profile_mismatch`, `support_profile_untrusted`, `support_profile_conflict`, `license_not_approved`, `license_not_allowed` |
-| Execution | `network_required`, `isolation_required`, `isolation_unsupported`, `isolation_image_missing`, `isolation_policy_mismatch`, `unsafe_loader_on_host`, `compute_policy_mismatch`, `provider_not_allowed`, `precision_not_allowed`, `hardware_unavailable`, `hardware_probe_unknown`, `runtime_unavailable`, `runtime_probe_unknown` |
+| Execution | `network_required`, `isolation_required`, `isolation_unsupported`, `isolation_image_missing`, `isolation_policy_mismatch`, `unsafe_loader_on_host`, `compute_policy_mismatch`, `provider_not_allowed`, `precision_not_allowed`, `hardware_unavailable`, `hardware_probe_unknown`, `runtime_unavailable`, `runtime_probe_unknown`, `runner_unavailable` |
 | Artifacts | `artifact_size_limit_exceeded`, `artifact_member_missing`, `artifact_member_mismatch`, `artifact_state_mismatch` |
 | Evidence | `evidence_not_qualified`, `evidence_untrusted`, `evidence_inactive`, `evidence_revoked`, `evidence_expired`, `evidence_superseded`, `evidence_conflict`, `evidence_future_dated` |
 | Metrics and gates | `requested_metric_unknown`, `ranking_metric_unknown`, `cold_start_unknown`, `cold_start_above_requirement`, `execution_mode_metric_mismatch`, `quality_gate_failed`, `repeat_throughput_gate_failed`, `sustained_fps_gate_failed`, `p95_latency_gate_failed`, `peak_rss_gate_failed`, `accelerator_memory_gate_failed` |
@@ -784,7 +791,9 @@ A public YOLOZU recommendation requires `yolozu_managed` evidence and one exact
 matching public support profile. A site-qualified recommendation uses reviewed
 `site_managed` evidence for one exact site configuration. It may select locally with
 `support_scope=site_qualified`, but it does not create a public support or endorsement
-claim. Unseen private vocabularies or datasets require matching private site evidence;
+claim. `runner_unavailable` means a registered/fetchable record has no complete,
+validated execution binding; it is not a runtime probe result. Unseen private
+vocabularies or datasets require matching private site evidence;
 public numbers are not substituted.
 
 The implemented `recommend_image_pipeline` MCP tool is the read-only orchestration
@@ -799,8 +808,9 @@ corrupt, or internal failures use `ok=false`.
 
 The tool is MCP-only and `mcp_live`, not `guaranteed_ai_safe`. Optional custom
 registry and evidence roots stay workspace-confined and operator-asserted; they
-cannot self-assign public trust. The default packaged registry and public evidence
-stream remain empty, so an installed default call currently abstains. No
+cannot self-assign public trust. The default packaged registry is Candidate-only
+and the public evidence stream remains empty, so an installed default call currently
+abstains. No
 SelectionDecision starts inference. `process_images` is the separate explicit
 pinned-execution surface: it defaults to dry-run, rejects stale decisions, and
 cannot run until a real governed bundle and code-owned route are registered.

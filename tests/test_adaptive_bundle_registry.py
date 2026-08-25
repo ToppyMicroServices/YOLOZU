@@ -36,6 +36,7 @@ from yolozu.adaptive.control_records import (
     MAX_CONTROL_STRING_BYTES,
     load_bounded_json_bytes,
 )
+from yolozu.inference.model_fetch import load_registry, resolve_model_spec
 
 
 def _write_custom(
@@ -60,14 +61,29 @@ def _write_custom(
 
 
 class TestAdaptiveBundleRegistry(unittest.TestCase):
-    def test_packaged_empty_ssot_loads_without_selectable_bundle(self) -> None:
+    def test_packaged_ssot_loads_candidate_baselines_without_selectable_bundle(
+        self,
+    ) -> None:
         loaded = load_algorithm_bundle_registry()
         self.assertEqual(loaded.source_kind, "packaged_ssot")
         self.assertEqual(loaded.registry_trust_domain, "yolozu_managed")
         self.assertEqual(loaded.lifecycle_trust_domain, "yolozu_managed")
         self.assertEqual(loaded.selection_trust_reason_codes, ())
-        self.assertEqual(loaded.bundles, ())
-        self.assertEqual(loaded.lifecycle.events, ())
+        self.assertEqual(
+            [bundle.to_dict()["bundle_id"] for bundle in loaded.bundles],
+            [
+                "detectron2-faster-rcnn-r50-fpn-1x-coco",
+                "mmdet-faster-rcnn-r50-fpn-1x-coco",
+                "yolox-s-coco",
+            ],
+        )
+        self.assertEqual(len(loaded.lifecycle.events), 6)
+        self.assertTrue(
+            all(
+                bundle.to_dict()["execution_binding"]["status"] == "unbound"
+                for bundle in loaded.bundles
+            )
+        )
 
         checkout = (
             Path(__file__).resolve().parents[1] / "yolozu" / "data" / "adaptive_routing"
@@ -78,6 +94,70 @@ class TestAdaptiveBundleRegistry(unittest.TestCase):
                 checkout.joinpath(basename).read_bytes(),
                 packaged.joinpath(basename).read_bytes(),
             )
+
+    def test_packaged_baselines_exactly_map_live_model_zoo_records(self) -> None:
+        loaded = load_algorithm_bundle_registry()
+        model_records = {
+            record["id"]: record for record in load_registry()["models"]
+        }
+        bundles = {
+            bundle.to_dict()["bundle_id"]: bundle.to_dict()
+            for bundle in loaded.bundles
+        }
+        self.assertEqual(set(bundles), set(model_records))
+
+        for model_id in sorted(model_records):
+            with self.subTest(model_id=model_id):
+                model = model_records[model_id]
+                spec = resolve_model_spec(model_id)
+                bundle = bundles[model_id]
+                artifact = bundle["artifacts"][0]
+                self.assertEqual(bundle["family_id"], model["family"])
+                self.assertEqual(bundle["bundle_version"], model["version"])
+                self.assertEqual(bundle["model_source_id"], spec.source_url)
+                self.assertEqual(bundle["model_revision"], model["version"])
+                self.assertEqual(bundle["adapter_backend_id"], model["family"])
+                self.assertEqual(bundle["execution_binding"]["status"], "unbound")
+                self.assertEqual(
+                    bundle["execution_binding"]["artifact_scope"],
+                    "fetchable_model_assets",
+                )
+                self.assertEqual(
+                    bundle["execution_binding"]["reason_code"],
+                    "runner_artifact_set_incomplete",
+                )
+                self.assertEqual(len(bundle["artifacts"]), 1)
+                self.assertEqual(artifact["source_id"], spec.source_url)
+                self.assertEqual(artifact["source_revision"], model["version"])
+                self.assertEqual(artifact["expected_size_bytes"], model["size_bytes"])
+                self.assertEqual(artifact["sha256"], model["sha256"])
+                self.assertEqual(artifact["license_expression"], model["license"])
+                self.assertEqual(artifact["license_source"], model["license_source"])
+                self.assertEqual(
+                    artifact["license_revision"], model["license_revision"]
+                )
+                self.assertEqual(
+                    artifact["cache_key"],
+                    f"{model_id}/{model['version']}/{spec.file_name}",
+                )
+                self.assertEqual(len(bundle["class_vocabulary"]["labels"]), 80)
+
+                candidate = loaded.lifecycle.channel_pointers[
+                    (model["family"], "Candidate")
+                ]
+                self.assertEqual(
+                    candidate["bundle_spec_digest"], bundle["spec_digest"]
+                )
+                self.assertEqual(candidate["profiles"], [])
+                self.assertEqual(candidate["evidence_bindings"], [])
+                self.assertNotIn(
+                    (model["family"], "Experimental"),
+                    loaded.lifecycle.channel_pointers,
+                )
+                self.assertNotIn(
+                    (model["family"], "Stable"),
+                    loaded.lifecycle.channel_pointers,
+                )
 
     def test_custom_catalog_is_deterministic_and_always_untrusted(self) -> None:
         first = _bundle_payload(version="1.0-rc01")
@@ -207,8 +287,12 @@ class TestAdaptiveBundleRegistry(unittest.TestCase):
             source_trust_domain="yolozu_managed",
         )
         self.assertEqual(
-            load_algorithm_bundle_registry(support_profiles=managed_support).bundles,
-            (),
+            len(
+                load_algorithm_bundle_registry(
+                    support_profiles=managed_support
+                ).bundles
+            ),
+            3,
         )
 
     def test_lifecycle_failures_and_unknown_license_are_not_repaired(self) -> None:
@@ -373,7 +457,12 @@ import yolozu.adaptive.bundle_registry as registry
 heavy = {'torch', 'onnxruntime', 'tensorrt', 'cv2', 'coremltools'}
 assert not (heavy & set(sys.modules))
 assert list(Path('.').iterdir()) == []
-assert registry.load_algorithm_bundle_registry().bundles == ()
+loaded = registry.load_algorithm_bundle_registry()
+assert len(loaded.bundles) == 3
+assert all(
+    bundle.to_dict()['execution_binding']['status'] == 'unbound'
+    for bundle in loaded.bundles
+)
 """
         with tempfile.TemporaryDirectory() as temporary:
             environment = dict(os.environ)
