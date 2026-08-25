@@ -109,11 +109,24 @@ class TestInstalledAiSurface(unittest.TestCase):
                 "bundle_specs.json",
                 "bundle_lifecycle.jsonl",
                 "support_profiles.jsonl",
+                "evidence_activation.jsonl",
             ):
                 self.assertEqual(
                     (installed_adaptive_data / basename).read_bytes(),
                     (checkout_adaptive_data / basename).read_bytes(),
                     f"installed adaptive-routing SSOT differs: {basename}",
+                )
+            installed_schemas = target / "yolozu" / "data" / "schemas"
+            checkout_schemas = repo_root / "yolozu" / "data" / "schemas"
+            for basename in (
+                "local_artifact_inventory.schema.json",
+                "qualification_report.schema.json",
+                "evidence_activation_record.schema.json",
+            ):
+                self.assertEqual(
+                    (installed_schemas / basename).read_bytes(),
+                    (checkout_schemas / basename).read_bytes(),
+                    f"installed adaptive evidence schema differs: {basename}",
                 )
 
             outside = root / "outside.json"

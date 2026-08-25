@@ -189,6 +189,7 @@ include = ["yolozu*", "rtdetr_pose*"]
   "manifest/*.md",
   "adaptive_routing/*.json",
   "adaptive_routing/*.jsonl",
+  "adaptive_routing/qualification_reports/*.json",
   "integrations/*.json",
   "protocols/*.json",
   "schemas/*.json",

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/local_artifact_inventory.schema.json",
+  "title": "YOLOZU LocalArtifactInventory v1",
+  "description": "Trusted-preflight observations for every ordered artifact in one immutable bundle. Persisted records contain no paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "inventory_id",
+    "bundle_spec_digest",
+    "artifact_set_digest",
+    "observations",
+    "artifact_state_fingerprint",
+    "inventory_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "inventory_id": { "$ref": "#/$defs/component" },
+    "bundle_spec_digest": { "$ref": "#/$defs/sha256" },
+    "artifact_set_digest": { "$ref": "#/$defs/sha256" },
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "artifact_state_fingerprint": { "$ref": "#/$defs/sha256" },
+    "inventory_digest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "role",
+        "order",
+        "expected_size_bytes",
+        "expected_sha256",
+        "presence_status",
+        "path_type_status",
+        "read_status",
+        "observed_size_bytes",
+        "observed_sha256",
+        "verified_at",
+        "error_status"
+      ],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/component" },
+        "role": {
+          "enum": [
+            "code_archive",
+            "weight",
+            "config",
+            "class_vocabulary",
+            "tokenizer",
+            "engine",
+            "auxiliary"
+          ]
+        },
+        "order": { "type": "integer", "minimum": 0, "maximum": 31 },
+        "expected_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "expected_sha256": { "$ref": "#/$defs/sha256" },
+        "presence_status": { "enum": ["present", "missing", "unknown"] },
+        "path_type_status": {
+          "enum": ["regular_file", "not_regular_file", "unknown"]
+        },
+        "read_status": {
+          "enum": ["readable", "unreadable", "not_applicable", "unknown"]
+        },
+        "observed_size_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "observed_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "verified_at": { "$ref": "#/$defs/utc" },
+        "error_status": {
+          "enum": [
+            "none",
+            "missing",
+            "not_regular_file",
+            "unreadable",
+            "size_mismatch",
+            "sha256_mismatch",
+            "observation_failed"
+          ]
+        }
+      }
+    }
+  }
+}

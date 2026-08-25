@@ -1078,6 +1078,13 @@
     "title": "YOLOZU Eval Suite Report"
   },
   {
+    "href": "schemas.html#schema-evidence-activation-record-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU EvidenceActivationRecord v1 One event in an append-only per-selection-key evidence activation stream. activated_at event_digest event_id issuer_claim previous_event_digest reason replacement_report_digest replacement_report_id report_digest report_id review_reference reviewer_role_id schema_version selection_key sequence state stream_id trust_domain valid_until docs/schemas/evidence_activation_record.schema.json",
+    "summary": "One event in an append-only per-selection-key evidence activation stream.",
+    "title": "YOLOZU EvidenceActivationRecord v1"
+  },
+  {
     "href": "schemas.html#schema-external-runtime-qualification-schema",
     "kind": "schema",
     "search_text": "YOLOZU external runtime qualification evidence Checked-in YOLOZU JSON Schema. dataset date decision environments kind lanes schema_version docs/schemas/external_runtime_qualification.schema.json",
@@ -1113,6 +1120,13 @@
     "title": "YOLOZU Instance Segmentation Predictions JSON"
   },
   {
+    "href": "schemas.html#schema-local-artifact-inventory-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU LocalArtifactInventory v1 Trusted-preflight observations for every ordered artifact in one immutable bundle. Persisted records contain no paths. artifact_set_digest artifact_state_fingerprint bundle_spec_digest inventory_digest inventory_id observations schema_version docs/schemas/local_artifact_inventory.schema.json",
+    "summary": "Trusted-preflight observations for every ordered artifact in one immutable bundle. Persisted records contain no paths.",
+    "title": "YOLOZU LocalArtifactInventory v1"
+  },
+  {
     "href": "schemas.html#schema-metrics-report-schema",
     "kind": "schema",
     "search_text": "YOLOZU Metrics Report Stable report schema emitted by yolozu.metrics_report.build_report(). losses meta metrics schema_version timestamp docs/schemas/metrics_report.schema.json",
@@ -1132,6 +1146,13 @@
     "search_text": "YOLOZU predictions validation result Checked-in YOLOZU JSON Schema. entry_count errors limits mode ok path repair_enabled schema_version strict tool warnings docs/schemas/predictions_validation_result.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU predictions validation result"
+  },
+  {
+    "href": "schemas.html#schema-qualification-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU QualificationReport v1 Bounded measured-configuration evidence for one immutable bundle, environment, workload, and protocol. Presence is not activation or a Stable support claim. artifact_set_digest artifact_state_fingerprint bundle_spec_digest cold_start collector completed_at conservative_aggregates environment_fingerprint execution_mode failures issuer latency_interval lifetime_memory limitations protocol_fingerprint qualification_workload_fingerprint quality repeats report_digest report_id resolved_pipeline schema_version source_runtime_provenance started_at status sustained_section task valid_until warmup docs/schemas/qualification_report.schema.json",
+    "summary": "Bounded measured-configuration evidence for one immutable bundle, environment, workload, and protocol. Presence is not activation or a Stable support claim.",
+    "title": "YOLOZU QualificationReport v1"
   },
   {
     "href": "schemas.html#schema-qualification-workload-profile-schema",

@@ -1,0 +1,485 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/qualification_report.schema.json",
+  "title": "YOLOZU QualificationReport v1",
+  "description": "Bounded measured-configuration evidence for one immutable bundle, environment, workload, and protocol. Presence is not activation or a Stable support claim.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "report_digest",
+    "collector",
+    "issuer",
+    "status",
+    "task",
+    "execution_mode",
+    "bundle_spec_digest",
+    "artifact_set_digest",
+    "artifact_state_fingerprint",
+    "environment_fingerprint",
+    "qualification_workload_fingerprint",
+    "protocol_fingerprint",
+    "latency_interval",
+    "started_at",
+    "completed_at",
+    "valid_until",
+    "repeats",
+    "conservative_aggregates",
+    "cold_start",
+    "warmup",
+    "lifetime_memory",
+    "sustained_section",
+    "quality",
+    "resolved_pipeline",
+    "source_runtime_provenance",
+    "limitations",
+    "failures"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "report_id": { "$ref": "#/$defs/component" },
+    "report_digest": { "$ref": "#/$defs/sha256" },
+    "collector": { "$ref": "#/$defs/identity" },
+    "issuer": { "$ref": "#/$defs/identity" },
+    "status": { "enum": ["smoke", "qualified", "hold", "failed"] },
+    "task": { "enum": ["object_detection", "instance_segmentation"] },
+    "execution_mode": { "enum": ["batch", "soft_realtime"] },
+    "bundle_spec_digest": { "$ref": "#/$defs/sha256" },
+    "artifact_set_digest": { "$ref": "#/$defs/sha256" },
+    "artifact_state_fingerprint": { "$ref": "#/$defs/sha256" },
+    "environment_fingerprint": { "$ref": "#/$defs/sha256" },
+    "qualification_workload_fingerprint": { "$ref": "#/$defs/sha256" },
+    "protocol_fingerprint": { "$ref": "#/$defs/sha256" },
+    "latency_interval": { "$ref": "#/$defs/latency_interval" },
+    "started_at": { "$ref": "#/$defs/utc" },
+    "completed_at": { "$ref": "#/$defs/utc" },
+    "valid_until": { "$ref": "#/$defs/utc" },
+    "repeats": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/repeat" }
+    },
+    "conservative_aggregates": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/conservative_aggregates" }
+      ]
+    },
+    "cold_start": { "$ref": "#/$defs/cold_start" },
+    "warmup": { "$ref": "#/$defs/warmup" },
+    "lifetime_memory": { "$ref": "#/$defs/lifetime_memory" },
+    "sustained_section": { "$ref": "#/$defs/sustained_section" },
+    "quality": { "$ref": "#/$defs/quality" },
+    "resolved_pipeline": { "$ref": "#/$defs/resolved_pipeline" },
+    "source_runtime_provenance": { "$ref": "#/$defs/provenance" },
+    "limitations": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/text_512" }
+    },
+    "failures": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/text_512" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "canonical_decimal": {
+      "type": "string",
+      "maxLength": 29,
+      "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$"
+    },
+    "nullable_decimal": {
+      "type": ["string", "null"],
+      "maxLength": 29,
+      "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$"
+    },
+    "nullable_integer": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 9223372036854775807
+    },
+    "nullable_uint64": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "nullable_component": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "text_512": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "source_digest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/id" },
+        "source_digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "latency_interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interval_id",
+        "handoff_id",
+        "handoff_version",
+        "included_phases",
+        "publication_boundary"
+      ],
+      "properties": {
+        "interval_id": { "const": "image_e2e_validated_handoff_v1" },
+        "handoff_id": { "const": "image_result_mask_handoff_v1" },
+        "handoff_version": { "const": 1 },
+        "included_phases": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "enum": [
+              "decode_pinned_source_bytes",
+              "preprocess",
+              "predict",
+              "postprocess",
+              "requested_class_prompt_mapping",
+              "strict_result_validation",
+              "mask_validation_encoding",
+              "result_mask_handoff_completion"
+            ]
+          }
+        },
+        "publication_boundary": {
+          "const": "managed_output_transaction_after_interval"
+        }
+      }
+    },
+    "memory_measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value_bytes",
+        "collector_id",
+        "collector_version",
+        "collector_source_digest",
+        "scope",
+        "covered_processes",
+        "covered_devices"
+      ],
+      "properties": {
+        "status": { "enum": ["known", "unknown", "not_applicable"] },
+        "value_bytes": { "$ref": "#/$defs/nullable_integer" },
+        "collector_id": { "$ref": "#/$defs/id" },
+        "collector_version": { "$ref": "#/$defs/id" },
+        "collector_source_digest": { "$ref": "#/$defs/sha256" },
+        "scope": {
+          "enum": [
+            "runner_process_tree",
+            "isolated_cgroup_or_container",
+            "runner_process_tree_all_declared_devices",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "covered_processes": { "enum": ["all", "unknown", "not_applicable"] },
+        "covered_devices": {
+          "enum": ["all_declared", "unknown", "not_applicable"]
+        }
+      }
+    },
+    "repeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repeat_index",
+        "status",
+        "failure_code",
+        "sample_count",
+        "duration_ns",
+        "p50_latency_ms",
+        "p95_latency_ms",
+        "p99_latency_ms",
+        "throughput_processed_count",
+        "throughput_duration_ns",
+        "runner_tree_peak_rss",
+        "accelerator_process_tree_peak"
+      ],
+      "properties": {
+        "repeat_index": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "status": { "enum": ["completed", "failed"] },
+        "failure_code": { "$ref": "#/$defs/nullable_component" },
+        "sample_count": { "$ref": "#/$defs/nullable_integer" },
+        "duration_ns": { "$ref": "#/$defs/nullable_uint64" },
+        "p50_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "p95_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "p99_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "throughput_processed_count": { "$ref": "#/$defs/nullable_integer" },
+        "throughput_duration_ns": { "$ref": "#/$defs/nullable_uint64" },
+        "runner_tree_peak_rss": { "$ref": "#/$defs/memory_measurement" },
+        "accelerator_process_tree_peak": { "$ref": "#/$defs/memory_measurement" }
+      }
+    },
+    "conservative_aggregates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repeat_throughput_source_index",
+        "repeat_throughput_processed_count",
+        "repeat_throughput_duration_ns",
+        "p50_latency_ms",
+        "p95_latency_ms",
+        "p99_latency_ms",
+        "runner_tree_peak_rss",
+        "accelerator_process_tree_peak"
+      ],
+      "properties": {
+        "repeat_throughput_source_index": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "repeat_throughput_processed_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "repeat_throughput_duration_ns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "p50_latency_ms": { "$ref": "#/$defs/canonical_decimal" },
+        "p95_latency_ms": { "$ref": "#/$defs/canonical_decimal" },
+        "p99_latency_ms": { "$ref": "#/$defs/canonical_decimal" },
+        "runner_tree_peak_rss": { "$ref": "#/$defs/memory_measurement" },
+        "accelerator_process_tree_peak": { "$ref": "#/$defs/memory_measurement" }
+      }
+    },
+    "cold_start": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "cold_start_ms",
+        "failure_code",
+        "fresh_runner",
+        "os_cache_state",
+        "interval_id"
+      ],
+      "properties": {
+        "status": { "enum": ["known", "failed"] },
+        "cold_start_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "failure_code": { "$ref": "#/$defs/nullable_component" },
+        "fresh_runner": { "const": true },
+        "os_cache_state": { "const": "uncontrolled" },
+        "interval_id": { "const": "image_e2e_validated_handoff_v1" }
+      }
+    },
+    "warmup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "iteration_count", "failure_code"],
+      "properties": {
+        "status": { "enum": ["completed", "failed"] },
+        "iteration_count": { "$ref": "#/$defs/nullable_integer" },
+        "failure_code": { "$ref": "#/$defs/nullable_component" }
+      }
+    },
+    "lifetime_memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interval_scope",
+        "runner_tree_peak_rss",
+        "accelerator_process_tree_peak"
+      ],
+      "properties": {
+        "interval_scope": { "const": "fresh_runner_creation_through_close" },
+        "runner_tree_peak_rss": { "$ref": "#/$defs/memory_measurement" },
+        "accelerator_process_tree_peak": {
+          "$ref": "#/$defs/memory_measurement"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value"],
+      "properties": {
+        "status": { "enum": ["known", "unknown"] },
+        "value": { "$ref": "#/$defs/nullable_component" }
+      }
+    },
+    "sustained_section": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": { "const": "not_required" },
+            "reason": { "const": "batch_profile" }
+          }
+        },
+        {
+          "$ref": "#/$defs/sustained_measurement"
+        }
+      ]
+    },
+    "sustained_measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "failure_code",
+        "schedule_reset_index",
+        "duration_ns",
+        "processed_count",
+        "sample_count",
+        "max_sustained_samples",
+        "sample_storage_bytes",
+        "aggregation_method",
+        "p95_latency_ms",
+        "p99_latency_ms",
+        "throughput_processed_count",
+        "throughput_duration_ns",
+        "runner_tree_peak_rss",
+        "accelerator_process_tree_peak",
+        "queue_status",
+        "drop_status",
+        "power_observation",
+        "thermal_observation",
+        "warmup_excluded",
+        "cold_start_excluded",
+        "repeat_samples_excluded"
+      ],
+      "properties": {
+        "status": { "enum": ["completed", "failed"] },
+        "failure_code": { "$ref": "#/$defs/nullable_component" },
+        "schedule_reset_index": { "const": 0 },
+        "duration_ns": { "$ref": "#/$defs/nullable_uint64" },
+        "processed_count": { "$ref": "#/$defs/nullable_integer" },
+        "sample_count": { "$ref": "#/$defs/nullable_integer" },
+        "max_sustained_samples": { "const": 1000000 },
+        "sample_storage_bytes": { "$ref": "#/$defs/nullable_integer" },
+        "aggregation_method": { "const": "exact_nearest_rank_all_samples" },
+        "p95_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "p99_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
+        "throughput_processed_count": { "$ref": "#/$defs/nullable_integer" },
+        "throughput_duration_ns": { "$ref": "#/$defs/nullable_uint64" },
+        "runner_tree_peak_rss": { "$ref": "#/$defs/memory_measurement" },
+        "accelerator_process_tree_peak": { "$ref": "#/$defs/memory_measurement" },
+        "queue_status": { "const": "not_applicable" },
+        "drop_status": { "const": "not_applicable" },
+        "power_observation": { "$ref": "#/$defs/observation" },
+        "thermal_observation": { "$ref": "#/$defs/observation" },
+        "warmup_excluded": { "const": true },
+        "cold_start_excluded": { "const": true },
+        "repeat_samples_excluded": { "const": true }
+      }
+    },
+    "quality": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": { "const": "not_required" },
+            "reason": { "const": "request_has_no_quality_requirement" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": { "const": "unknown" },
+            "reason": {
+              "enum": ["no_matching_evaluator", "vocabulary_mismatch"]
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/known_quality"
+        }
+      ]
+    },
+    "known_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "metric_id",
+        "direction",
+        "measured_value",
+        "threshold_context",
+        "evaluation_dataset_id",
+        "evaluation_dataset_sha256",
+        "evaluation_protocol_sha256",
+        "evaluation_vocabulary_id",
+        "predictions_source"
+      ],
+      "properties": {
+        "status": { "const": "known" },
+        "metric_id": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["higher_is_better", "lower_is_better"] },
+        "measured_value": { "$ref": "#/$defs/canonical_decimal" },
+        "threshold_context": { "$ref": "#/$defs/canonical_decimal" },
+        "evaluation_dataset_id": { "$ref": "#/$defs/id" },
+        "evaluation_dataset_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_protocol_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_vocabulary_id": { "$ref": "#/$defs/id" },
+        "predictions_source": { "const": "same_qualification_run" }
+      }
+    },
+    "resolved_pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decoder", "model_input", "preprocess", "postprocess"],
+      "properties": {
+        "decoder": { "$ref": "#/$defs/identity" },
+        "model_input": { "$ref": "#/$defs/identity" },
+        "preprocess": { "$ref": "#/$defs/identity" },
+        "postprocess": { "$ref": "#/$defs/identity" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_source_id",
+        "model_revision",
+        "runtime_id",
+        "runtime_version",
+        "provider_id",
+        "provider_version"
+      ],
+      "properties": {
+        "model_source_id": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "model_revision": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "runtime_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "runtime_version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "provider_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "provider_version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    }
+  }
+}
