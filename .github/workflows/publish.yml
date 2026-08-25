@@ -38,7 +38,7 @@ jobs:
       - name: Validate adaptive vision roadmap projection
         run: |
           python3 tools/generate_adaptive_vision_roadmap.py --check --json
-          python3 -m unittest tests.test_adaptive_vision_roadmap_generator -v
+          python3 -m unittest tests.test_adaptive_vision_roadmap_generator tests.test_adaptive_environment_profile -v
 
       - name: Build wheel only
         run: |
@@ -180,7 +180,7 @@ jobs:
       - name: Validate adaptive vision roadmap projection
         run: |
           python3 tools/generate_adaptive_vision_roadmap.py --check --json
-          python3 -m unittest tests.test_adaptive_vision_roadmap_generator -v
+          python3 -m unittest tests.test_adaptive_vision_roadmap_generator tests.test_adaptive_environment_profile -v
 
       - name: Build
         run: |

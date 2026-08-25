@@ -81,6 +81,7 @@ else
   python3 -m unittest \
     tests.test_adaptive_vision_roadmap_generator \
     tests.test_adaptive_evidence_contracts \
+    tests.test_adaptive_environment_profile \
     tests.test_adaptive_selection_contracts \
     tests.test_schema_governance \
     tests.test_packaged_tools_manifest \

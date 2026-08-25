@@ -15,6 +15,9 @@ The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
 inventory, qualification report, evidence activation, screening/support eligibility
 observations, and selection-decision interface contracts.
+`yolozu doctor` additively emits the validated EnvironmentProfile from bounded,
+privacy-safe live probes. An unsupported or failed probe remains unknown, and
+the profile is configuration input rather than qualification evidence.
 The public bundle registry, lifecycle/support/activation streams, and qualification
 report directory contain no selectable evidence. These contract surfaces are not a
 qualifier, evidence loader, selector, adapter, or execution capability.

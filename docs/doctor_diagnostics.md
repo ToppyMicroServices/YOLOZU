@@ -5,6 +5,7 @@ It is a capability report, not a blanket production-readiness verdict.
 
 ## What is reported
 
+- `environment_profile`: a schema-valid, privacy-safe live environment observation
 - `runtime_capabilities.cuda`: CUDA visibility and GPU presence from `nvidia-smi`
 - `runtime_capabilities.torch`: Torch CUDA + MPS availability/version/cudnn/device count
 - `runtime_capabilities.onnxruntime`: provider list (`CUDAExecutionProvider`, `TensorrtExecutionProvider`, `CoreMLExecutionProvider`)
@@ -13,6 +14,38 @@ It is a capability report, not a blanket production-readiness verdict.
 - `env.PYTORCH_ENABLE_MPS_FALLBACK`: whether MPS CPU fallback is enabled in the current shell
 - `drift_hints`: human-readable likely causes and remediation links
 - `guidance_links`: canonical docs for parity, TensorRT, and baseline reproducibility
+
+## Adaptive environment profile
+
+The additive `environment_profile` key follows
+`docs/schemas/environment_profile.schema.json`. It records bounded OS, CPU,
+memory, accelerator, runtime/provider, and safely observable power-mode facts
+with a privacy-safe fingerprint. It does not change or remove the existing
+doctor keys.
+
+The collector uses at most 32 code-owned probes. A subprocess or optional
+runtime import has a five-second deadline, 64 KiB limits for each output
+stream, and no shell, caller arguments, or inherited environment values. The
+whole profile has a 30-second deadline. Timed-out process groups are terminated
+and reaped. Raw output, exceptions, paths, hostnames, usernames, IP addresses,
+MAC addresses, serials, GPU UUIDs, and environment values are not returned.
+These exclusions apply to `environment_profile`; older doctor keys such as
+`env` remain available for compatibility and should not be exported as routing
+evidence.
+
+`present` and `absent` are measured facts. `unsupported` and `failed` remain
+unknown. In particular, a failed Torch import is not evidence that no
+accelerator exists. This profile is an input to future Experimental routing;
+it is not qualification evidence and does not make a bundle selectable.
+
+The same validated record is available in process:
+
+```python
+from yolozu.adaptive import build_environment_profile
+
+profile = build_environment_profile()
+print(profile.environment_fingerprint)
+```
 
 ## Typical command
 

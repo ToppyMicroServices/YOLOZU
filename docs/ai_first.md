@@ -139,7 +139,12 @@ Schema file: `docs/schemas/predictions_validation_result.schema.json`
 - `gpu`
 - `env`
 - `runtime_capabilities`
+- `environment_profile`
 - `drift_hints`
+
+`environment_profile` is additive and follows the governed EnvironmentProfile
+interface contract. Failed or unsupported probes remain unknown; the record is
+not model qualification evidence.
 
 ### 5.2 `generate_config` response schema
 
