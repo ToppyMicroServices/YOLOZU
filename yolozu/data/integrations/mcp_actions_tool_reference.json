@@ -1403,6 +1403,11 @@
           "default": null
         },
         {
+          "name": "screening_root",
+          "required": false,
+          "default": null
+        },
+        {
           "name": "evidence_root",
           "required": false,
           "default": null
@@ -1444,6 +1449,22 @@
               }
             ],
             "title": "Registry Root",
+            "default": null
+          }
+        },
+        {
+          "name": "screening_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screening Root",
             "default": null
           }
         },
@@ -1503,6 +1524,18 @@
             "title": "Registry Root",
             "default": null
           },
+          "screening_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screening Root",
+            "default": null
+          },
           "evidence_root": {
             "anyOf": [
               {
@@ -1545,6 +1578,17 @@
             "type": "string"
           },
           "registry_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "screening_root": {
             "anyOf": [
               {
                 "type": "string"

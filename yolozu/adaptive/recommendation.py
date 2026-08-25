@@ -51,10 +51,14 @@ from .qualification import (
     qualification_report_has_code_owned_issuer,
 )
 from .selection import (
-    ScreeningEligibilityObservation,
     SupportProfileEligibilityObservation,
-    validate_screening_eligibility_observation,
     validate_support_profile_eligibility_observation,
+)
+from .screening import (
+    CandidateScreeningProjection,
+    MAX_SCREENING_STREAM_BYTES,
+    build_screening_eligibility_observation,
+    load_candidate_screening_jsonl_bytes,
 )
 from .selector import (
     EvidenceEligibilityObservation,
@@ -498,46 +502,48 @@ def _load_evidence(
     )
 
 
-def _screening_observation(
-    bundle: AlgorithmBundleSpec,
-) -> ScreeningEligibilityObservation:
-    record = bundle.to_dict()
-    if record["provenance_class"] == "existing_code_owned":
-        value: dict[str, Any] = {
-            "schema_version": 1,
-            "provider_id": "no_screening_required",
-            "provider_version": "1",
-            "provenance_class": "existing_code_owned",
-            "screening_stream_key": None,
-            "source_revision": None,
-            "status": "not_applicable",
-            "current_record_id": None,
-            "current_record_digest": None,
-            "projection_head_digest": None,
-            "trust_domain": "unknown",
-            "observation_digest": _ZERO_DIGEST,
-        }
+def _load_screening(
+    *,
+    screening_root: Path | None,
+) -> tuple[CandidateScreeningProjection, str]:
+    if screening_root is None:
+        payload = _packaged_bytes(
+            ("adaptive_routing", "candidate_screening.jsonl"),
+            maximum_bytes=MAX_SCREENING_STREAM_BYTES,
+            label="candidate-screening stream",
+        )
+        trust = "yolozu_managed"
+        source = "packaged_ssot"
     else:
-        binding = record["screening_binding"]
-        value = {
-            "schema_version": 1,
-            "provider_id": "screening_projection_unavailable",
-            "provider_version": "1",
-            "provenance_class": "screened_candidate",
-            "screening_stream_key": binding["stream_key"],
-            "source_revision": binding["source_revision"],
-            "status": "absent",
-            "current_record_id": None,
-            "current_record_digest": None,
-            "projection_head_digest": None,
-            "trust_domain": "unknown",
-            "observation_digest": _ZERO_DIGEST,
-        }
-    value["observation_digest"] = canonical_sha256_v1(
-        value,
-        own_digest_field="observation_digest",
-    )
-    return validate_screening_eligibility_observation(value, bundle=bundle)
+        try:
+            payload = _read_regular_at(
+                screening_root,
+                ("candidate_screening.jsonl",),
+                maximum_bytes=MAX_SCREENING_STREAM_BYTES,
+                label="candidate-screening stream",
+            )
+        except RecommendationError as exc:
+            if exc.code == "unsupported_platform":
+                raise
+            raise RecommendationError(
+                "invalid_screening",
+                "candidate-screening stream is invalid",
+            ) from exc
+        trust = "operator_asserted"
+        source = "workspace_screening"
+    try:
+        return (
+            load_candidate_screening_jsonl_bytes(
+                payload,
+                source_trust_domain=trust,
+            ),
+            source,
+        )
+    except (TypeError, ValueError) as exc:
+        raise RecommendationError(
+            "invalid_screening",
+            "candidate-screening stream is invalid",
+        ) from exc
 
 
 def _evidence_trust_for_bundle(
@@ -766,6 +772,7 @@ def recommend_image_pipeline(
     *,
     workspace_root: str | Path = ".",
     registry_root: str | None = None,
+    screening_root: str | None = None,
     evidence_root: str | None = None,
     artifact_root: str | None = None,
     decided_at: str | None = None,
@@ -845,8 +852,22 @@ def recommend_image_pipeline(
         decided_at=decision_time,
     )
 
+    custom_screening: Path | None = None
+    if screening_root is not None:
+        custom_screening = _confined_directory(
+            screening_root,
+            workspace=workspace,
+            label="screening_root",
+        )
+    screening_projection, screening_source = _load_screening(
+        screening_root=custom_screening,
+    )
+
     screening = {
-        bundle.spec_digest: _screening_observation(bundle)
+        bundle.spec_digest: build_screening_eligibility_observation(
+            bundle,
+            screening_projection,
+        )
         for bundle in registry.bundles
     }
     support = _support_observations(
@@ -1009,6 +1030,8 @@ def recommend_image_pipeline(
             "network_used": False,
             "writes_performed": False,
             "registry_source": registry.source_kind,
+            "screening_source": screening_source,
+            "screening_trust_domain": screening_projection.source_trust_domain,
             "evidence_source": evidence_load.source_kind,
             "evidence_trust_domain": evidence_load.trust_domain,
             "input_count": input_inventory.input_count,

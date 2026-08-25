@@ -82,7 +82,7 @@
     },
     "algorithm_bundle_registry_json": {
       "schema": "docs/schemas/algorithm_bundle_registry.schema.json",
-      "summary": "Bounded immutable bundle set loaded from the packaged SSOT or as operator-asserted custom catalog input; the packaged default is empty and selects nothing."
+      "summary": "Bounded immutable bundle set loaded from the packaged SSOT or as operator-asserted custom catalog input; packaged Candidate metadata is non-selectable without all later gates."
     },
     "algorithm_bundle_spec_json": {
       "schema": "docs/schemas/algorithm_bundle_spec.schema.json",
@@ -120,6 +120,10 @@
     "bundle_lifecycle_record_json": {
       "schema": "docs/schemas/bundle_lifecycle_record.schema.json",
       "summary": "Append-only bundle state and channel-pointer record loaded with explicit managed or operator-asserted source trust for future Experimental routing."
+    },
+    "candidate_screening_record_json": {
+      "schema": "docs/schemas/candidate_screening_record.schema.json",
+      "summary": "Append-only non-executing candidate screening facts and deterministic pass, hold, or reject outcome; only a current repository-managed pass can satisfy the screening gate."
     },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
@@ -13529,6 +13533,7 @@
     {
       "contracts": {
         "consumes": [
+          "candidate_screening_record_json",
           "image_job_spec_json"
         ],
         "produces": [
@@ -13575,6 +13580,13 @@
           "description": "Optional workspace-confined custom bundle_specs.json and bundle_lifecycle.jsonl directory; always operator_asserted and non-selectable in v1.",
           "kind": "dir",
           "name": "registry_root",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined directory containing candidate_screening.jsonl; path-derived trust is always operator_asserted and cannot satisfy a managed pass gate.",
+          "kind": "dir",
+          "name": "screening_root",
           "required": false
         },
         {

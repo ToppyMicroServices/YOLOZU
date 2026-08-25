@@ -13,7 +13,7 @@ YOLOZU's current Stable predictions validation and evaluation lane remains uncha
 
 The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
-inventory, qualification report, evidence activation, screening/support eligibility
+inventory, qualification report, evidence activation, candidate screening, screening/support eligibility
 observations, and selection-decision interface contracts.
 `yolozu doctor` additively emits the validated EnvironmentProfile from bounded,
 privacy-safe live probes. An unsupported or failed probe remains unknown, and
@@ -78,6 +78,31 @@ records unavailable fields as `unknown`. A failed or missed source remains expli
 The report kind is not an AlgorithmBundle registry interface contract, and the
 selector cannot load it. Discovery therefore cannot register, qualify, recommend,
 execute, or promote a model.
+
+Candidate screening is a separate, non-executing interface contract. Each
+`CandidateScreeningRecord` binds one credential-free HTTPS source, immutable
+revision, and requested capability. Mechanical checks keep source integrity,
+code/weight/dataset licenses, local availability, predictions interface mapping,
+runtime/provider needs, compute/memory estimates, maintenance, and known
+supply-chain concerns separate from human review. The result is derived as
+`pass`, `hold`, or `reject`; a mandatory unknown remains `hold`, and any failed
+check remains `reject`.
+
+The only repository-managed instance stream is
+`yolozu/data/adaptive_routing/candidate_screening.jsonl`. It is append-only,
+bounded to 8,192 complete records and 64 MiB, and projected by per-candidate
+sequence and predecessor digest rather than timestamps. The packaged stream is
+currently empty. An optional workspace-confined `screening_root` may supply the
+same basename to recommendation preflight, but it is always
+`operator_asserted` and cannot satisfy the managed-pass gate. Trust is derived
+from the selected path, never from JSON content.
+
+Only the current `yolozu_managed` pass for the exact bundle binding can produce
+`current_pass`. Absence, hold, reject, untrusted input, conflicting pass identity,
+or revision mismatch stays explicit and excludes that candidate before artifact
+access. A later hold or reject excludes a previously passed candidate
+immediately. A pass permits later isolated adapter and qualification work only;
+it does not register, select, promote, download, import, or execute anything.
 
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
@@ -817,9 +842,9 @@ through the code-owned ArtifactResolver and a complete LocalArtifactInventory.
 corrupt, or internal failures use `ok=false`.
 
 The tool is MCP-only and `mcp_live`, not `guaranteed_ai_safe`. Optional custom
-registry and evidence roots stay workspace-confined and operator-asserted; they
+registry, screening, and evidence roots stay workspace-confined and operator-asserted; they
 cannot self-assign public trust. The default packaged registry is Candidate-only
-and the public evidence stream remains empty, so an installed default call currently
+and the screening and public evidence streams remain empty, so an installed default call currently
 abstains. No
 SelectionDecision starts inference. `process_images` is the separate explicit
 pinned-execution surface: it defaults to dry-run, rejects stale decisions, and
@@ -872,8 +897,8 @@ shortened policy examples are intentionally not valid schema instances.
 
 ## Non-goals
 
-- No selector, model integration, model download, or benchmark run is made available
-  by these interface contracts or the managed-output helper.
+- No model integration, model download, or benchmark run is made available by the
+  candidate-screening interface contract or managed-output helper.
 - No current algorithm is claimed to meet an accuracy, latency, throughput, memory,
   soft-real-time, or hardware-support objective.
 - No implicit network access, dependency installation, model acquisition, training,

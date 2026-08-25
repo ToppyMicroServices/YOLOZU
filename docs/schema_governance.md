@@ -28,6 +28,8 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/algorithm_scout_report.schema.json`
 - `docs/schemas/bundle_lifecycle_record.schema.json` and
   `yolozu/data/schemas/bundle_lifecycle_record.schema.json`
+- `docs/schemas/candidate_screening_record.schema.json` and
+  `yolozu/data/schemas/candidate_screening_record.schema.json`
 - `docs/schemas/support_profile_spec.schema.json` and
   `yolozu/data/schemas/support_profile_spec.schema.json`
 - `docs/schemas/support_profile_record.schema.json` and
@@ -64,6 +66,7 @@ This packaging check is not real bundle qualification.
 The source-controlled adaptive registry instances have one copy under the packaged
 data tree: `yolozu/data/adaptive_routing/bundle_specs.json`,
 `yolozu/data/adaptive_routing/bundle_lifecycle.jsonl`,
+`yolozu/data/adaptive_routing/candidate_screening.jsonl`,
 `yolozu/data/adaptive_routing/support_profiles.jsonl`, repository-reviewed
 reports under
 `yolozu/data/adaptive_routing/qualification_reports/<report_id>/qualification_report.json`,
@@ -72,8 +75,8 @@ their own source and packaged form; there is no docs copy or serialized mutable
 projection. A report ID is a validated ASCII component, never a path. Site-managed
 reports and activation streams stay under an explicit site-confined root and are
 not copied into the repository package. The default registry contains three
-Candidate baselines matching the model zoo; the public support and activation
-streams remain empty, and there are no public qualification reports. Each baseline
+Candidate baselines matching the model zoo; the screening, public support, and
+activation streams remain empty, and there are no public qualification reports. Each baseline
 has `execution_binding.status=unbound`, so the records are neither selectable nor
 executable. Runtime projections must be
 derived from validated immutable records and complete, strictly ordered event
@@ -81,8 +84,9 @@ chains.
 
 `recommend_image_pipeline` consumes these governed records through a bounded,
 read-only MCP service. It returns the SelectionDecision interface contract and
-privacy-safe aggregate metadata. Custom registry/evidence roots remain
-operator-asserted, and the Candidate-only packaged registry produces abstention with
+privacy-safe aggregate metadata. Custom registry, screening, and evidence roots
+remain operator-asserted. A custom screening record cannot satisfy the managed-pass
+gate even if it claims otherwise. The Candidate-only packaged registry produces abstention with
 `maturity_disallowed`. The service
 does not mutate any schema instance or source-controlled stream.
 
@@ -223,6 +227,7 @@ schema surface for that artifact family.
 | Adaptive vision roadmap projection | `docs/schemas/adaptive_vision_roadmap.schema.json` | [`roadmap.md`](roadmap.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md) | The byte-identical packaged schema and JSON projection describe future scope, not implementation or qualification evidence. |
 | Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md), [`doctor_diagnostics.md`](doctor_diagnostics.md) | Byte-identical packaged schemas accompany standard-library validators. `doctor` produces EnvironmentProfile; recommendation and processing consume the typed request/workload records, but none advertises a selectable model. |
 | Adaptive bundle, lifecycle, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed support scope. Empty packaged SSOT files keep the public default nonselectable. |
+| Adaptive candidate screening | `docs/schemas/candidate_screening_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md), [`algorithm_intake/README.md`](algorithm_intake/README.md) | Non-executing mechanical facts and human review produce pass, hold, or reject. The sole packaged stream is empty; workspace input remains operator-asserted, and screening output is not a bundle registry. |
 | Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. The Experimental qualifier emits an unactivated report; the activation command defaults to dry-run and requires explicit review plus approval for an atomic append. The packaged Candidate baselines have unbound execution, and the runner map and public evidence storage remain empty, keeping the default nonselectable and non-executable. |
 | Adaptive selection observations and decisions | `docs/schemas/screening_eligibility_observation.schema.json`, `docs/schemas/support_profile_eligibility_observation.schema.json`, `docs/schemas/selection_decision.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | File-free typed observations and complete selected/abstained records expose every candidate reason. The pure selector consumes only validated in-memory values. An unpointed excluded catalog entry uses an empty pointed-channel set and a null support observation instead of invented evidence. MCP recommendation returns this interface contract; pinned processing accepts only a complete selected record and repeats current-state validation. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |

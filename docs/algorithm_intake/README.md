@@ -48,6 +48,9 @@ deduplicate by source URL plus version or revision.
 
 The output kind is `yolozu_algorithm_scout_report` with
 `selectability=inbox_only`. It is deliberately different from the AlgorithmBundle
-registry interface contract. A later reviewed screening and registry action is
-required before any candidate can enter lifecycle, qualification, selection, or
-execution paths.
+registry interface contract. The implemented non-executing screening stage can
+turn one immutable candidate into pass, hold, or reject, but only through the
+separate `CandidateScreeningRecord` interface contract. The packaged append-only
+stream is currently empty. A current repository-managed pass and a later registry
+action are both required before a candidate can enter lifecycle, qualification,
+selection, or execution paths.

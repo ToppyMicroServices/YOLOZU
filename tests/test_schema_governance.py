@@ -29,6 +29,7 @@ class TestSchemaGovernance(unittest.TestCase):
             "algorithm_scout_report_json": "algorithm_scout_report.schema.json",
             "algorithm_scout_sources_json": "algorithm_scout_sources.schema.json",
             "bundle_lifecycle_record_json": "bundle_lifecycle_record.schema.json",
+            "candidate_screening_record_json": "candidate_screening_record.schema.json",
             "support_profile_spec_json": "support_profile_spec.schema.json",
             "support_profile_record_json": "support_profile_record.schema.json",
             "local_artifact_inventory_json": "local_artifact_inventory.schema.json",
@@ -73,6 +74,7 @@ class TestSchemaGovernance(unittest.TestCase):
         )
         self.assertEqual((data_root / "support_profiles.jsonl").read_bytes(), b"")
         self.assertEqual((data_root / "evidence_activation.jsonl").read_bytes(), b"")
+        self.assertEqual((data_root / "candidate_screening.jsonl").read_bytes(), b"")
         self.assertEqual(
             list((data_root / "qualification_reports").glob("*.json")), []
         )
@@ -82,6 +84,7 @@ class TestSchemaGovernance(unittest.TestCase):
         for basename in (
             "bundle_specs.json",
             "bundle_lifecycle.jsonl",
+            "candidate_screening.jsonl",
             "support_profiles.jsonl",
             "evidence_activation.jsonl",
         ):
@@ -108,6 +111,7 @@ class TestSchemaGovernance(unittest.TestCase):
         )
         for suite in (
             "tests.test_adaptive_evidence_contracts",
+            "tests.test_adaptive_candidate_screening",
             "tests.test_adaptive_selection_contracts",
             "tests.test_schema_governance",
         ):
@@ -119,10 +123,12 @@ class TestSchemaGovernance(unittest.TestCase):
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/schemas/candidate_screening_record.schema.json",
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
+            "yolozu/data/adaptive_routing/candidate_screening.jsonl",
         ):
             self.assertGreaterEqual(publish.count(resource), 2)
 

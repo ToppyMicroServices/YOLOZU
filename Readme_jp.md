@@ -133,7 +133,13 @@ Experimental `yolozu scout-algorithms` はcanonicalなofficial-source allowlist�
 検証し、`--collect`を明示した場合だけ日付付きcandidate inboxを作ります。defaultは
 network-freeかつwrite-freeのplanです。取得した内容はuntrusted metadataとして扱い、raw
 documentは保持しません。このinboxをAlgorithmBundle registryとしてloadしたり、qualification、
-support、recommendation、adoption、promotionの証拠として使うことはできません。POSIX専用の
+support、recommendation、adoption、promotionの証拠として使うことはできません。
+candidate screeningは、実行を伴わない独立したinterface contractとして実装しました。
+provenance、integrity、code/weight/dataset license、local availability、task/output、
+runtime、resource、maintenance、security、human reviewを分離し、pass、hold、rejectを
+決定します。必須項目のunknownはholdです。packagedのappend-only screening streamは
+現在空で、workspace inputは常にoperator-assertedなので、この実装だけで利用可能な
+candidateが増えることはありません。POSIX専用の
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。
@@ -169,6 +175,8 @@ qualification evidenceにもhuman adoptionの証明にもなりません。
 に現在の3段階の境界を記録しています。先行する
 [algorithm scout foundation report](reports/adaptive_algorithm_scout_foundation_2026-08-26.md)
 にはmonitored-source、retention、parser、nonselectionの境界を記録しています。先行する
+[candidate screening foundation report](reports/adaptive_candidate_screening_foundation_2026-08-26.md)
+にはfail-closed screeningとpath-derived trustの境界を記録しています。先行する
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 では、source、sdist、wheel、installed MCP callで同じ境界を確認しています。positiveな
 selector/executor caseは内部fixtureによるもので、実bundleのqualificationやselectedな
