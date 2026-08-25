@@ -181,9 +181,7 @@ def _read_regular_at(
 ) -> bytes:
     if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
         raise RecommendationError("unsupported_platform", "safe local file access is unavailable")
-    root_fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-    parent_fd = root_fd
-    opened: list[int] = []
+    parent_fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     descriptor = -1
     try:
         for component in parts[:-1]:
@@ -192,8 +190,9 @@ def _read_regular_at(
                 os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
                 dir_fd=parent_fd,
             )
-            opened.append(child)
+            previous = parent_fd
             parent_fd = child
+            os.close(previous)
         descriptor = os.open(
             parts[-1],
             os.O_RDONLY | os.O_NOFOLLOW,
@@ -242,9 +241,7 @@ def _read_regular_at(
     finally:
         if descriptor >= 0:
             os.close(descriptor)
-        for item in reversed(opened):
-            os.close(item)
-        os.close(root_fd)
+        os.close(parent_fd)
 
 
 def _packaged_bytes(parts: tuple[str, ...], *, maximum_bytes: int, label: str) -> bytes:

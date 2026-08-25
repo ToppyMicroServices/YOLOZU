@@ -6,7 +6,9 @@ import unittest
 from pathlib import Path
 
 from PIL import Image
+from unittest.mock import patch
 
+from yolozu.adaptive import recommendation as recommendation_module
 from yolozu.adaptive.recommendation import (
     RecommendationError,
     recommend_image_pipeline,
@@ -40,6 +42,40 @@ def _job() -> dict:
 
 
 class TestAdaptiveRecommendation(unittest.TestCase):
+    def test_evidence_directory_walk_closes_owned_descriptors_on_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "first").mkdir()
+            opened: list[int] = []
+            closed: list[int] = []
+            real_open = os.open
+            real_close = os.close
+
+            def tracked_open(path: object, flags: int, **kwargs: object) -> int:
+                if path == "second":
+                    raise OSError("injected directory-open failure")
+                descriptor = real_open(path, flags, **kwargs)
+                opened.append(descriptor)
+                return descriptor
+
+            def tracked_close(descriptor: int) -> None:
+                closed.append(descriptor)
+                real_close(descriptor)
+
+            with (
+                patch.object(recommendation_module.os, "open", side_effect=tracked_open),
+                patch.object(recommendation_module.os, "close", side_effect=tracked_close),
+                self.assertRaisesRegex(RecommendationError, "qualification report"),
+            ):
+                recommendation_module._read_regular_at(
+                    root,
+                    ("first", "second", "qualification_report.json"),
+                    maximum_bytes=1024,
+                    label="qualification report",
+                )
+
+            self.assertEqual(sorted(opened), sorted(closed))
+
     def test_empty_packaged_registry_abstains_without_writes_or_path_leaks(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             workspace = Path(td)
