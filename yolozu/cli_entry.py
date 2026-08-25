@@ -29,6 +29,7 @@ from .cli_commands import (
     _cmd_predictions,
     _cmd_qualify_image_pipeline,
     _cmd_activate_qualification_evidence,
+    _cmd_scout_algorithms,
     _cmd_validate,
     _cmd_eval_instance_seg,
     _cmd_onnxrt_export,
@@ -1369,6 +1370,42 @@ def main(argv: list[str] | None = None) -> int:
         help="Apply the validated atomic append; omission is always dry-run.",
     )
 
+    scout = sub.add_parser(
+        "scout-algorithms",
+        help="Plan or collect a bounded monitored-source candidate inbox (Experimental).",
+    )
+    scout.add_argument(
+        "--sources",
+        required=True,
+        help="Canonical docs/algorithm_intake/sources.json; no other source file is accepted.",
+    )
+    scout.add_argument(
+        "--output-dir",
+        required=True,
+        help="Explicit workspace-confined parent for dated candidate reports.",
+    )
+    scout.add_argument(
+        "--collection-date",
+        required=True,
+        help="Workflow-supplied Gregorian date in exact YYYY-MM-DD form.",
+    )
+    scout.add_argument(
+        "--trigger",
+        required=True,
+        choices=("schedule", "workflow_dispatch"),
+        help="Validated workflow trigger identity.",
+    )
+    scout.add_argument(
+        "--workspace",
+        default=".",
+        help="Workspace boundary (default: current directory).",
+    )
+    scout.add_argument(
+        "--collect",
+        action="store_true",
+        help="Enable the only network/write path; omission prints a no-write JSON plan.",
+    )
+
     reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
     reg_sub = reg.add_subparsers(dest="registry_command", required=True)
     reg_validate = reg_sub.add_parser("validate", help="Validate the canonical tool manifest (repo checkout required).")
@@ -1456,6 +1493,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_qualify_image_pipeline(args)
     if args.command == "activate-qualification-evidence":
         return _cmd_activate_qualification_evidence(args)
+    if args.command == "scout-algorithms":
+        return _cmd_scout_algorithms(args)
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)

@@ -43,6 +43,7 @@ jobs:
             tests.test_adaptive_evidence_activation \
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
+            tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
@@ -69,6 +70,8 @@ jobs:
           required = {
             "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+            "yolozu/data/schemas/algorithm_scout_sources.schema.json",
+            "yolozu/data/schemas/algorithm_scout_report.schema.json",
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
@@ -198,6 +201,7 @@ jobs:
             tests.test_adaptive_evidence_activation \
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
+            tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
@@ -222,6 +226,8 @@ jobs:
           required = {
             "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+            "yolozu/data/schemas/algorithm_scout_sources.schema.json",
+            "yolozu/data/schemas/algorithm_scout_report.schema.json",
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",

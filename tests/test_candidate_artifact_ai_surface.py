@@ -102,6 +102,8 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                 for required in (
                     "yolozu/adaptive/isolation.py",
                     "yolozu/adaptive/processing.py",
+                    "yolozu/adaptive/algorithm_scout.py",
+                    "yolozu/adaptive/safe_https.py",
                     "yolozu/data/adaptive_routing/bundle_specs.json",
                     "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
                     "yolozu/data/adaptive_routing/support_profiles.jsonl",
@@ -110,6 +112,8 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/qualification_workload_profile.schema.json",
                     "yolozu/data/schemas/environment_profile.schema.json",
                     "yolozu/data/schemas/selection_decision.schema.json",
+                    "yolozu/data/schemas/algorithm_scout_sources.schema.json",
+                    "yolozu/data/schemas/algorithm_scout_report.schema.json",
                     "yolozu/data/integrations/mcp_actions_tool_reference.json",
                 ):
                     self.assertIn(required, sdist_names)
@@ -209,6 +213,8 @@ print(json.dumps({
     "mcp_reference": data.joinpath("integrations").joinpath("mcp_actions_tool_reference.json").is_file(),
     "adaptive_processing": package.joinpath("adaptive").joinpath("processing.py").is_file(),
     "adaptive_isolation": package.joinpath("adaptive").joinpath("isolation.py").is_file(),
+    "adaptive_algorithm_scout": package.joinpath("adaptive").joinpath("algorithm_scout.py").is_file(),
+    "adaptive_safe_https": package.joinpath("adaptive").joinpath("safe_https.py").is_file(),
     "adaptive_registry": data.joinpath("adaptive_routing").joinpath("bundle_specs.json").is_file(),
     "adaptive_lifecycle": data.joinpath("adaptive_routing").joinpath("bundle_lifecycle.jsonl").is_file(),
     "adaptive_support": data.joinpath("adaptive_routing").joinpath("support_profiles.jsonl").is_file(),
@@ -217,6 +223,8 @@ print(json.dumps({
     "adaptive_workload_schema": data.joinpath("schemas").joinpath("qualification_workload_profile.schema.json").is_file(),
     "adaptive_environment_schema": data.joinpath("schemas").joinpath("environment_profile.schema.json").is_file(),
     "adaptive_selection_schema": data.joinpath("schemas").joinpath("selection_decision.schema.json").is_file(),
+    "adaptive_scout_sources_schema": data.joinpath("schemas").joinpath("algorithm_scout_sources.schema.json").is_file(),
+    "adaptive_scout_report_schema": data.joinpath("schemas").joinpath("algorithm_scout_report.schema.json").is_file(),
     "py_typed": package.joinpath("py.typed").is_file(),
     "numpy_available": importlib.util.find_spec("numpy") is not None,
 }, sort_keys=True))
@@ -259,6 +267,7 @@ print(json.dumps({
             )
             for key in (
                 "adaptive_environment_schema",
+                "adaptive_algorithm_scout",
                 "adaptive_evidence",
                 "adaptive_isolation",
                 "adaptive_job_schema",
@@ -266,6 +275,9 @@ print(json.dumps({
                 "adaptive_processing",
                 "adaptive_registry",
                 "adaptive_selection_schema",
+                "adaptive_scout_report_schema",
+                "adaptive_scout_sources_schema",
+                "adaptive_safe_https",
                 "adaptive_support",
                 "adaptive_workload_schema",
                 "manifest",
@@ -282,6 +294,17 @@ print(json.dumps({
             yolozu_entry = venv_dir / executable_dir / (
                 "yolozu.exe" if os.name == "nt" else "yolozu"
             )
+            scout_help = self._run(
+                [str(yolozu_entry), "scout-algorithms", "--help"],
+                cwd=consumer,
+                env=clean_env,
+            )
+            self.assertEqual(
+                scout_help.returncode,
+                0,
+                msg=f"installed scout help failed:\n{scout_help.stdout}\n{scout_help.stderr}",
+            )
+            self.assertIn("--collect", scout_help.stdout)
             strict_validation = self._run(
                 [
                     str(yolozu_entry),

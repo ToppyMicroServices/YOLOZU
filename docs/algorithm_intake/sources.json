@@ -1,0 +1,126 @@
+{
+  "kind": "yolozu_algorithm_scout_sources",
+  "schema_version": 1,
+  "sources": [
+    {
+      "source_id": "detectron2-releases",
+      "enabled": true,
+      "location": {
+        "scheme": "https",
+        "host": "api.github.com",
+        "path": "/repos/facebookresearch/detectron2/releases"
+      },
+      "redirect_allowlist": [],
+      "identity": {
+        "project": "facebookresearch/detectron2",
+        "model": "release inbox"
+      },
+      "tasks": [
+        "object_detection",
+        "instance_segmentation"
+      ],
+      "availability": {
+        "local": "unknown",
+        "hosted": "unknown"
+      },
+      "license": {
+        "status": "unknown",
+        "expression": "unknown"
+      },
+      "weights": {
+        "status": "unknown"
+      },
+      "runtime_hints": []
+    },
+    {
+      "source_id": "mmdetection-releases",
+      "enabled": true,
+      "location": {
+        "scheme": "https",
+        "host": "api.github.com",
+        "path": "/repos/open-mmlab/mmdetection/releases"
+      },
+      "redirect_allowlist": [],
+      "identity": {
+        "project": "open-mmlab/mmdetection",
+        "model": "release inbox"
+      },
+      "tasks": [
+        "object_detection",
+        "instance_segmentation"
+      ],
+      "availability": {
+        "local": "unknown",
+        "hosted": "unknown"
+      },
+      "license": {
+        "status": "unknown",
+        "expression": "unknown"
+      },
+      "weights": {
+        "status": "unknown"
+      },
+      "runtime_hints": []
+    },
+    {
+      "source_id": "ultralytics-releases",
+      "enabled": true,
+      "location": {
+        "scheme": "https",
+        "host": "api.github.com",
+        "path": "/repos/ultralytics/ultralytics/releases"
+      },
+      "redirect_allowlist": [],
+      "identity": {
+        "project": "ultralytics/ultralytics",
+        "model": "release inbox"
+      },
+      "tasks": [
+        "object_detection",
+        "instance_segmentation",
+        "pose_estimation"
+      ],
+      "availability": {
+        "local": "unknown",
+        "hosted": "unknown"
+      },
+      "license": {
+        "status": "unknown",
+        "expression": "unknown"
+      },
+      "weights": {
+        "status": "unknown"
+      },
+      "runtime_hints": []
+    },
+    {
+      "source_id": "yolox-releases",
+      "enabled": true,
+      "location": {
+        "scheme": "https",
+        "host": "api.github.com",
+        "path": "/repos/Megvii-BaseDetection/YOLOX/releases"
+      },
+      "redirect_allowlist": [],
+      "identity": {
+        "project": "Megvii-BaseDetection/YOLOX",
+        "model": "release inbox"
+      },
+      "tasks": [
+        "object_detection"
+      ],
+      "availability": {
+        "local": "unknown",
+        "hosted": "unknown"
+      },
+      "license": {
+        "status": "unknown",
+        "expression": "unknown"
+      },
+      "weights": {
+        "status": "unknown"
+      },
+      "runtime_hints": []
+    }
+  ]
+}

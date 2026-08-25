@@ -1187,6 +1187,56 @@ def _cmd_activate_qualification_evidence(args: argparse.Namespace) -> int:
     return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
 
 
+def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.algorithm_scout import (
+        AlgorithmScoutError,
+        build_scout_plan,
+        collect_algorithm_candidates,
+    )
+
+    try:
+        plan = build_scout_plan(
+            sources_path=str(args.sources),
+            output_dir=str(args.output_dir),
+            collection_date=str(args.collection_date),
+            trigger=str(args.trigger),
+            workspace_root=str(args.workspace),
+        )
+    except (AlgorithmScoutError, OSError, ValueError) as exc:
+        code = getattr(exc, "code", "input_invalid")
+        print(json.dumps({"ok": False, "error": str(code), "exit_code": 2}), file=sys.stderr)
+        return 2
+    if not bool(args.collect):
+        print(json.dumps(plan.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
+    try:
+        _report, exit_code, report_path = collect_algorithm_candidates(
+            plan,
+            workspace_root=str(args.workspace),
+        )
+    except AlgorithmScoutError as exc:
+        input_codes = {
+            "history_limit",
+            "output_dir_invalid",
+            "prior_report_invalid",
+            "workspace_invalid",
+        }
+        exit_code = 2 if exc.code in input_codes else 1
+        print(
+            json.dumps({"ok": False, "error": exc.code, "exit_code": exit_code}),
+            file=sys.stderr,
+        )
+        return exit_code
+    except Exception:
+        print(
+            json.dumps({"ok": False, "error": "bounded_internal_failure", "exit_code": 1}),
+            file=sys.stderr,
+        )
+        return 1
+    print(str(report_path))
+    return int(exit_code)
+
+
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 
