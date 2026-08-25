@@ -149,6 +149,7 @@ from yolozu.adaptive import (
     SelectionDecision,
     SupportProfileEligibilityObservation,
     build_environment_profile,
+    load_algorithm_bundle_registry,
     validate_environment_profile,
 )
 from yolozu.integrations.ai_surface import list_manifest_tools, review_config
@@ -241,6 +242,7 @@ unsafe_review = review_config(
 )
 environment_profile = build_environment_profile().to_dict()
 validate_environment_profile(environment_profile)
+bundle_registry = load_algorithm_bundle_registry()
 print(json.dumps({{
     "module": yolozu.__file__,
     "adaptive_selection_symbols": [
@@ -252,6 +254,13 @@ print(json.dumps({{
         "schema_version": environment_profile["schema_version"],
         "collector_id": environment_profile["collector_id"],
         "fingerprint_length": len(environment_profile["environment_fingerprint"]),
+    }},
+    "bundle_registry": {{
+        "source_kind": bundle_registry.source_kind,
+        "registry_trust_domain": bundle_registry.registry_trust_domain,
+        "lifecycle_trust_domain": bundle_registry.lifecycle_trust_domain,
+        "bundle_count": len(bundle_registry.bundles),
+        "lifecycle_event_count": len(bundle_registry.lifecycle.events),
     }},
     "guaranteed_ids": list_manifest_tools(
         guaranteed=True,
@@ -384,6 +393,16 @@ print(json.dumps({{
                     "schema_version": 1,
                     "collector_id": "yolozu_environment_profiler",
                     "fingerprint_length": 64,
+                },
+            )
+            self.assertEqual(
+                payload["bundle_registry"],
+                {
+                    "source_kind": "packaged_ssot",
+                    "registry_trust_domain": "yolozu_managed",
+                    "lifecycle_trust_domain": "yolozu_managed",
+                    "bundle_count": 0,
+                    "lifecycle_event_count": 0,
                 },
             )
             self.assertEqual(

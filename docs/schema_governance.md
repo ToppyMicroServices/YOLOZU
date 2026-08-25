@@ -64,6 +64,13 @@ these records do not make any model selectable. Runtime projections must be
 derived from validated immutable records and complete, strictly ordered event
 chains.
 
+`load_algorithm_bundle_registry` accepts only the exact packaged registry/lifecycle
+pair above or an explicit workspace-confined directory containing those two exact
+basenames. The packaged pair is `yolozu_managed`; a custom pair is always
+`operator_asserted`, regardless of issuer claims inside its JSON. Loading validates
+the complete bounded input and deterministic bundle order without fetching assets,
+importing a model runtime, or making a bundle selectable.
+
 ## Scope
 
 This governance applies to wrapped prediction-style payloads that include:

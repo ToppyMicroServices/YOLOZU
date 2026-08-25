@@ -124,9 +124,11 @@ Strict request, environment, evidence, eligibility-observation, and
 SelectionDecision interface contracts are packaged for integration work.
 `yolozu doctor --output -` now includes a privacy-safe live
 `environment_profile`; failed probes stay unknown and do not prove that an
-accelerator is absent. The selector, recommendation service, adapters, and
-execution path are still unavailable, and an environment profile alone is not
-qualification evidence.
+accelerator is absent. The packaged empty bundle registry can also be loaded
+and validated without importing a model runtime. Explicit workspace catalogs
+remain operator-asserted and nonselectable. The selector, recommendation
+service, adapters, and execution path are still unavailable; neither registry
+loading nor an environment profile is qualification evidence.
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 

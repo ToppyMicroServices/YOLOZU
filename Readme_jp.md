@@ -123,9 +123,11 @@ flowchart LR
 request、environment、evidence、eligibility observation、SelectionDecision の
 厳密な interface contract は packaged 済みです。`yolozu doctor --output -` は
 privacy-safe な live `environment_profile` を返します。probe failure は unknown
-のままで、accelerator 不在の証明には使いません。selector、recommendation
-service、adapter、execution path はまだ利用できず、environment profile だけでは
-qualification evidence になりません。
+のままで、accelerator 不在の証明には使いません。packaged された空のbundle
+registryは、model runtimeをimportせずに検証して読み込めます。明示したworkspace
+catalogはoperator-assertedのままで、選択対象にはなりません。selector、
+recommendation service、adapter、execution path はまだ利用できず、registryの
+読み込みもenvironment profileもqualification evidenceにはなりません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 

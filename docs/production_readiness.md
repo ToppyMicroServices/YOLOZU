@@ -21,7 +21,7 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Area | Maturity | Production posture | Primary references |
 |---|---|---|---|
 | Predictions validation/evaluation | Stable | Default production lane | [`predictions_schema.md`](predictions_schema.md), [`external_inference.md`](external_inference.md), [`../README.md`](../README.md) |
-| Environment-qualified adaptive local vision | Live profiling foundation only; target routing maturity is Experimental | `doctor` now emits a privacy-safe EnvironmentProfile. Recommendation and execution remain unavailable. Public selection will require exact environment, workload, protocol, support-profile, and active trusted-evidence matches; site-qualified selection remains local to that site. A profile is a configuration observation, not qualification evidence. | [`doctor_diagnostics.md`](doctor_diagnostics.md), [`adaptive_image_routing.md`](adaptive_image_routing.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md), [`roadmap.md`](roadmap.md) |
+| Environment-qualified adaptive local vision | Profiling and registry-loading foundation only; target routing maturity is Experimental | `doctor` emits a privacy-safe EnvironmentProfile, and the exact packaged empty registry/lifecycle SSOT loads without model-runtime imports. Custom workspace catalogs remain operator-asserted and nonselectable. Recommendation and execution remain unavailable. Public selection will require exact environment, workload, protocol, support-profile, and active trusted-evidence matches; site-qualified selection remains local to that site. Neither a profile nor registry integrity is qualification evidence. | [`doctor_diagnostics.md`](doctor_diagnostics.md), [`adaptive_image_routing.md`](adaptive_image_routing.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md), [`roadmap.md`](roadmap.md) |
 | Dataset I/O and mask-only label derivation | Deferred as standalone capabilities | Implemented and tested inside dataset workflows, but implementation presence and a Stable parent CLI are not standalone production-readiness evidence | [`yolozu_spec.md`](yolozu_spec.md), [`dataset_contract.md`](dataset_contract.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Inference constraints and template gating | Deferred as standalone capabilities | Adapter-internal utilities with no independent public production lane; qualify them with the consuming model and protocol | [`yolozu_spec.md`](yolozu_spec.md), [`gate_weight_tuning.md`](gate_weight_tuning.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Backend parity / benchmark orchestration | Experimental | Useful after environment-specific qualification; classification, OBB, segmentation, keypoints, depth, and pose6d have artifact-backed real eval/parity lanes, without claiming backend inference | [`backend_parity_matrix.md`](backend_parity_matrix.md), [`benchmark_mode.md`](benchmark_mode.md), `manual/chapters/09_parity_bench_protocols.tex` |
@@ -91,9 +91,10 @@ The adaptive local-vision roadmap targets an Experimental lane. It does not add 
 [`adaptive_image_routing.md`](adaptive_image_routing.md) is the normative v1 policy.
 Typed request, bundle/lifecycle, artifact-inventory, qualification-report,
 evidence-activation, eligibility-observation, and SelectionDecision validators
-implement record interface contracts only. They do not provide a qualifier,
-evidence loader, selector, adapter, recommendation, or execution capability, and are
-not availability or qualification evidence.
+implement record interface contracts. The bounded bundle-registry loader validates
+only the packaged SSOT or operator-asserted workspace catalog. It does not provide a
+qualifier, selector, adapter, recommendation, or execution capability, and is not
+availability or qualification evidence.
 
 ## Experimental
 

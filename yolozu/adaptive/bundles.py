@@ -16,6 +16,7 @@ __all__ = [
     "AlgorithmBundleSpec",
     "BundleLifecycleProjection",
     "BundleLifecycleRecord",
+    "CODE_OWNED_RUNNER_IDS",
     "SupportProfileProjection",
     "SupportProfileRecord",
     "SupportProfileSpec",
@@ -61,7 +62,9 @@ ARTIFACT_ROLES = frozenset(
         "auxiliary",
     }
 )
-RUNNER_IDS = frozenset(
+# Reserved metadata identifiers for audited code-owned factories. Membership
+# validates a spec identifier; it does not claim that an adapter is available.
+CODE_OWNED_RUNNER_IDS = frozenset(
     {"yolo_runtime", "onnxruntime", "tensorrt", "torchvision", "coreml"}
 )
 LOADER_FORMATS = frozenset(
@@ -618,7 +621,11 @@ def validate_algorithm_bundle_spec(value: Mapping[str, Any]) -> AlgorithmBundleS
             record["tasks"], field="tasks", allowed=TASKS, maximum=2
         ),
         "prompt_modes": prompt_modes,
-        "runner_id": _enum(record["runner_id"], field="runner_id", allowed=RUNNER_IDS),
+        "runner_id": _enum(
+            record["runner_id"],
+            field="runner_id",
+            allowed=CODE_OWNED_RUNNER_IDS,
+        ),
         "runner_version": _token(
             record["runner_version"], field="runner_version"
         ),

@@ -20,7 +20,10 @@ privacy-safe live probes. An unsupported or failed probe remains unknown, and
 the profile is configuration input rather than qualification evidence.
 The public bundle registry, lifecycle/support/activation streams, and qualification
 report directory contain no selectable evidence. These contract surfaces are not a
-qualifier, evidence loader, selector, adapter, or execution capability.
+qualifier, selector, adapter, or execution capability. The package now validates and
+loads the exact empty bundle-registry/lifecycle SSOT without importing a model runtime.
+An explicitly supplied workspace catalog is always operator-asserted and fails the
+public selection trust gate even when its checksums are internally consistent.
 
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
@@ -188,7 +191,11 @@ control record is parsed before object construction with these limits:
   object or array increasing depth by one;
 - at most 100,000 aggregate object members plus array items;
 - object keys at most 256 UTF-8 bytes; and
-- individual strings at most 1,048,576 UTF-8 bytes.
+- individual strings at most 1,048,576 UTF-8 bytes; and
+- integer tokens at most 128 ASCII bytes, with canonical zero written only as `0`.
+
+Binary-float, exponent, non-finite, leading-zero, and negative-zero number spellings
+are invalid. Fractional governed values use CanonicalDecimalV1 strings.
 
 Large user-owned prediction, stream, tracking, or OCR outputs use separate bounded
 incremental writers and validators. They are not loaded as an unrestricted JSON DOM.
