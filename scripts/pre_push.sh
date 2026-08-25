@@ -87,6 +87,7 @@ else
     tests.test_adaptive_managed_output \
     tests.test_adaptive_recommendation \
     tests.test_adaptive_processing \
+    tests.test_adaptive_routing_e2e \
     tests.test_adaptive_selector \
     tests.test_adaptive_selection_contracts \
     tests.test_schema_governance \

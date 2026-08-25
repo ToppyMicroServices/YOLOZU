@@ -41,10 +41,14 @@ invocation fail actionably without dummy evidence. Its \cmd{--help} documents
 the exact-bundle, timeout, pinned-input, and managed-output interface contract.
 
 The installed Python API also exposes \cmd{ManagedOutputTransaction} for
-repository-owned qualifier and future execution outputs. It uses bounded manifests,
+repository-owned qualification and processing outputs. It uses bounded manifests,
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
-not make a model adapter, selector, or image-processing execution path available,
-and it does not silently weaken the guarantee
+not make a model adapter or runnable model bundle available. The installed
+recommendation, selector, and pinned-processing interface contracts are verified,
+but the empty registry, public evidence stream, and runner maps make the default
+recommendation abstain and processing reject with \cmd{selection\_required}.
+Positive selector and executor tests use internal fixtures rather than public
+qualification evidence. The managed output path does not silently weaken its guarantee
 on platforms without the required primitives. Atomic visibility is scoped to a
 successful same-filesystem rename probe; power-loss durability remains best-effort.
 

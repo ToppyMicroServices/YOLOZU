@@ -159,6 +159,11 @@ not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.
 
+The [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
+checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
+positive selector and executor cases use internal fixtures; they do not qualify a
+real bundle or demonstrate a selected public run.
+
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 
 ## Capability Maturity

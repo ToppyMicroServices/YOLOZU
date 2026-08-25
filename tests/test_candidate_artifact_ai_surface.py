@@ -94,6 +94,25 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
             sdists = sorted((archive_source / "dist").glob("yolozu-*.tar.gz"))
             self.assertEqual(len(sdists), 1)
             with tarfile.open(sdists[0], mode="r:gz") as archive:
+                sdist_names = {
+                    member.name.partition("/")[2]
+                    for member in archive.getmembers()
+                    if "/" in member.name
+                }
+                for required in (
+                    "yolozu/adaptive/isolation.py",
+                    "yolozu/adaptive/processing.py",
+                    "yolozu/data/adaptive_routing/bundle_specs.json",
+                    "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
+                    "yolozu/data/adaptive_routing/support_profiles.jsonl",
+                    "yolozu/data/adaptive_routing/evidence_activation.jsonl",
+                    "yolozu/data/schemas/image_job_spec.schema.json",
+                    "yolozu/data/schemas/qualification_workload_profile.schema.json",
+                    "yolozu/data/schemas/environment_profile.schema.json",
+                    "yolozu/data/schemas/selection_decision.schema.json",
+                    "yolozu/data/integrations/mcp_actions_tool_reference.json",
+                ):
+                    self.assertIn(required, sdist_names)
                 archive.extractall(sdist_source, filter="data")
             projects = [
                 path
@@ -188,6 +207,16 @@ print(json.dumps({
     "manifest": data.joinpath("manifest").joinpath("tools_manifest.json").is_file(),
     "schema": data.joinpath("schemas").joinpath("predictions_validation_result.schema.json").is_file(),
     "mcp_reference": data.joinpath("integrations").joinpath("mcp_actions_tool_reference.json").is_file(),
+    "adaptive_processing": package.joinpath("adaptive").joinpath("processing.py").is_file(),
+    "adaptive_isolation": package.joinpath("adaptive").joinpath("isolation.py").is_file(),
+    "adaptive_registry": data.joinpath("adaptive_routing").joinpath("bundle_specs.json").is_file(),
+    "adaptive_lifecycle": data.joinpath("adaptive_routing").joinpath("bundle_lifecycle.jsonl").is_file(),
+    "adaptive_support": data.joinpath("adaptive_routing").joinpath("support_profiles.jsonl").is_file(),
+    "adaptive_evidence": data.joinpath("adaptive_routing").joinpath("evidence_activation.jsonl").is_file(),
+    "adaptive_job_schema": data.joinpath("schemas").joinpath("image_job_spec.schema.json").is_file(),
+    "adaptive_workload_schema": data.joinpath("schemas").joinpath("qualification_workload_profile.schema.json").is_file(),
+    "adaptive_environment_schema": data.joinpath("schemas").joinpath("environment_profile.schema.json").is_file(),
+    "adaptive_selection_schema": data.joinpath("schemas").joinpath("selection_decision.schema.json").is_file(),
     "py_typed": package.joinpath("py.typed").is_file(),
     "numpy_available": importlib.util.find_spec("numpy") is not None,
 }, sort_keys=True))
@@ -229,6 +258,16 @@ print(json.dumps({
                 },
             )
             for key in (
+                "adaptive_environment_schema",
+                "adaptive_evidence",
+                "adaptive_isolation",
+                "adaptive_job_schema",
+                "adaptive_lifecycle",
+                "adaptive_processing",
+                "adaptive_registry",
+                "adaptive_selection_schema",
+                "adaptive_support",
+                "adaptive_workload_schema",
                 "manifest",
                 "schema",
                 "mcp_reference",

@@ -47,6 +47,12 @@ exact managed tree containing `predictions.json`, `provenance.json`,
 `checksums.json`, and only referenced masks. The packaged registry and runner maps
 remain empty, so the installed default cannot execute a real adaptive model.
 
+The source, candidate sdist/wheel, and installed MCP boundaries are checked in the
+[installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).
+Its positive selector and executor cases are internal fixtures below the public
+orchestration gate. They are not qualification evidence and do not demonstrate a
+selected public end-to-end run.
+
 The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
 exact managed bundles. It pins bounded input and artifact descriptors, runs only a
 repository-owned network-free runner in a terminable child process group, applies

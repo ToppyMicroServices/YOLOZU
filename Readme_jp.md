@@ -156,6 +156,11 @@ recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。
 
+[installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
+では、source、sdist、wheel、installed MCP callで同じ境界を確認しています。positiveな
+selector/executor caseは内部fixtureによるもので、実bundleのqualificationやselectedな
+public runを示すものではありません。
+
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
 ## Capability Maturity
