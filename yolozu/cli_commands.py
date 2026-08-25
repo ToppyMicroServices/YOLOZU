@@ -1123,6 +1123,39 @@ def _cmd_benchmark(args: argparse.Namespace) -> int:
     return int(code)
 
 
+def _cmd_qualify_image_pipeline(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.control_records import load_bounded_json
+    from yolozu.adaptive.qualification import qualify_image_pipeline
+
+    workspace = Path(str(args.workspace))
+    try:
+        payload = load_bounded_json(Path(str(args.job)), label="ImageJobSpec")
+        report = qualify_image_pipeline(
+            job=payload,
+            input_path=str(args.input),
+            bundle_id=str(args.bundle_id),
+            bundle_version=str(args.bundle_version),
+            output_dir=str(args.output_dir),
+            workspace_root=workspace,
+            artifact_root=(
+                None
+                if getattr(args, "artifact_root", None) is None
+                else Path(str(args.artifact_root))
+            ),
+            channel=str(args.channel),
+            qualification_timeout_seconds=int(args.qualification_timeout_seconds),
+            smoke=bool(args.smoke),
+            force=bool(args.force),
+            ground_truth_path=getattr(args, "ground_truth", None),
+            evaluator_id=getattr(args, "evaluator_id", None),
+        )
+    except (OSError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+    print(str(workspace / str(args.output_dir) / "qualification_report.json"))
+    print(f"status={report.to_dict()['status']} (unactivated)")
+    return 0
+
+
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 

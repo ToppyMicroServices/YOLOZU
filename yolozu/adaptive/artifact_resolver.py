@@ -7,7 +7,7 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterator
 
 from .bundles import (
     MAX_ARTIFACT_BYTES,
@@ -18,6 +18,7 @@ from .canonical import canonical_sha256_v1
 
 __all__ = [
     "ArtifactResolver",
+    "PinnedVerifiedArtifactSet",
     "VerifiedArtifact",
     "VerifiedArtifactSet",
 ]
@@ -45,6 +46,133 @@ class VerifiedArtifactSet:
     artifact_set_digest: str
     artifact_resolver_state_digest: str
     artifacts: tuple[VerifiedArtifact, ...]
+
+
+@dataclass(frozen=True)
+class _PinnedArtifact:
+    artifact_id: str
+    order: int
+    role: str
+    cache_key: str
+    size_bytes: int
+    sha256: str
+    descriptor: int
+    identity: tuple[int, int, int, int, int, int, int]
+
+
+class PinnedVerifiedArtifactSet:
+    """Verified artifact descriptors retained for one runner lifetime.
+
+    Runner code receives only bounded reads against these descriptors. It is
+    never given a caller-controlled cache path and therefore cannot silently
+    reopen a different file after preflight.
+    """
+
+    def __init__(
+        self,
+        *,
+        bundle_spec_digest: str,
+        artifact_set_digest: str,
+        artifact_resolver_state_digest: str,
+        artifacts: tuple[_PinnedArtifact, ...],
+        revalidate_entry: Callable[[str], tuple[int, int, int, int, int, int, int]],
+    ) -> None:
+        self.bundle_spec_digest = bundle_spec_digest
+        self.artifact_set_digest = artifact_set_digest
+        self.artifact_resolver_state_digest = artifact_resolver_state_digest
+        self._artifacts = artifacts
+        self._by_id = {item.artifact_id: item for item in artifacts}
+        self._revalidate_entry = revalidate_entry
+        self._closed = False
+
+    def __enter__(self) -> "PinnedVerifiedArtifactSet":
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        for artifact in self._artifacts:
+            os.close(artifact.descriptor)
+
+    def _require(self, artifact_id: str) -> _PinnedArtifact:
+        if self._closed:
+            raise RuntimeError("pinned artifact set is closed")
+        try:
+            artifact = self._by_id[artifact_id]
+        except KeyError as exc:
+            raise ValueError("unknown pinned artifact id") from exc
+        current = _file_identity(os.fstat(artifact.descriptor))
+        entry = self._revalidate_entry(artifact.cache_key)
+        if current != artifact.identity or entry != artifact.identity:
+            raise ValueError(f"artifact {artifact_id}: identity changed after verification")
+        return artifact
+
+    def artifact_ids(self) -> tuple[str, ...]:
+        if self._closed:
+            raise RuntimeError("pinned artifact set is closed")
+        return tuple(item.artifact_id for item in self._artifacts)
+
+    def artifact_size_bytes(self, artifact_id: str) -> int:
+        return self._require(artifact_id).size_bytes
+
+    def read_artifact_chunk(
+        self,
+        artifact_id: str,
+        *,
+        offset_bytes: int,
+        maximum_bytes: int,
+    ) -> bytes:
+        artifact = self._require(artifact_id)
+        if (
+            isinstance(offset_bytes, bool)
+            or not isinstance(offset_bytes, int)
+            or offset_bytes < 0
+            or offset_bytes > artifact.size_bytes
+        ):
+            raise ValueError("offset_bytes is outside the pinned artifact")
+        if (
+            isinstance(maximum_bytes, bool)
+            or not isinstance(maximum_bytes, int)
+            or not 1 <= maximum_bytes <= 16 * 1024 * 1024
+        ):
+            raise ValueError("maximum_bytes must be in 1..16777216")
+        data = os.pread(
+            artifact.descriptor,
+            min(maximum_bytes, artifact.size_bytes - offset_bytes),
+            offset_bytes,
+        )
+        self._require(artifact_id)
+        return data
+
+    def iter_local_observations(self) -> Iterator[dict[str, Any]]:
+        """Yield privacy-safe verified observations without paths."""
+
+        for item in self._artifacts:
+            self._require(item.artifact_id)
+            yield {
+                "artifact_id": item.artifact_id,
+                "order": item.order,
+                "role": item.role,
+                "cache_key": item.cache_key,
+                "size_bytes": item.size_bytes,
+                "sha256": item.sha256,
+            }
+
+
+def _file_identity(info: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
+    return (
+        int(info.st_dev),
+        int(info.st_ino),
+        int(info.st_size),
+        int(info.st_mtime_ns),
+        int(info.st_ctime_ns),
+        int(info.st_mode),
+        int(getattr(info, "st_uid", 0)),
+    )
 
 
 class ArtifactResolver:
@@ -155,11 +283,20 @@ class ArtifactResolver:
             raise ValueError("resolved artifact ownership differs from the store root")
         return file_fd, file_stat
 
-    def verify(self, bundle: AlgorithmBundleSpec) -> VerifiedArtifactSet:
-        """Verify every required member before returning local observations."""
+    def _revalidate_cache_key(
+        self, cache_key: str
+    ) -> tuple[int, int, int, int, int, int, int]:
+        descriptor, info = self._open_cache_key(cache_key)
+        try:
+            return _file_identity(info)
+        finally:
+            os.close(descriptor)
+
+    def pin(self, bundle: AlgorithmBundleSpec) -> PinnedVerifiedArtifactSet:
+        """Verify every member and retain the same no-follow descriptors."""
 
         record = bundle.to_dict()
-        resolved: list[VerifiedArtifact] = []
+        pinned: list[_PinnedArtifact] = []
         opened: list[tuple[dict[str, Any], int, os.stat_result]] = []
         identities: set[tuple[int, int]] = set()
         actual_total = 0
@@ -198,24 +335,8 @@ class ArtifactResolver:
                         )
                     digest.update(chunk)
                 after = os.fstat(file_fd)
-                after_identity = (
-                    int(after.st_dev),
-                    int(after.st_ino),
-                    int(after.st_size),
-                    int(after.st_mtime_ns),
-                    int(after.st_ctime_ns),
-                    int(after.st_mode),
-                    int(getattr(after, "st_uid", 0)),
-                )
-                before_identity = (
-                    int(before.st_dev),
-                    int(before.st_ino),
-                    int(before.st_size),
-                    int(before.st_mtime_ns),
-                    int(before.st_ctime_ns),
-                    int(before.st_mode),
-                    int(getattr(before, "st_uid", 0)),
-                )
+                after_identity = _file_identity(after)
+                before_identity = _file_identity(before)
                 if after_identity != before_identity:
                     raise ValueError(
                         f"artifact {artifact['artifact_id']}: identity changed while hashing"
@@ -229,20 +350,23 @@ class ArtifactResolver:
                     raise ValueError(
                         f"artifact {artifact['artifact_id']}: SHA-256 mismatch"
                     )
-                resolved.append(
-                    VerifiedArtifact(
+                pinned.append(
+                    _PinnedArtifact(
                         artifact_id=artifact["artifact_id"],
                         order=artifact["order"],
                         role=artifact["role"],
                         cache_key=artifact["cache_key"],
                         size_bytes=observed,
                         sha256=observed_digest,
-                        local_path=self.root.joinpath(*artifact["cache_key"].split("/")),
+                        descriptor=file_fd,
+                        identity=after_identity,
                     )
                 )
-        finally:
+            opened.clear()
+        except Exception:
             for _artifact, file_fd, _before in opened:
                 os.close(file_fd)
+            raise
         state_digest = canonical_sha256_v1(
             {
                 "resolver_version": RESOLVER_VERSION,
@@ -255,9 +379,33 @@ class ArtifactResolver:
                 "cache_keys": [artifact["cache_key"] for artifact in record["artifacts"]],
             }
         )
-        return VerifiedArtifactSet(
+        return PinnedVerifiedArtifactSet(
             bundle_spec_digest=bundle.spec_digest,
             artifact_set_digest=bundle.artifact_set_digest,
             artifact_resolver_state_digest=state_digest,
-            artifacts=tuple(resolved),
+            artifacts=tuple(pinned),
+            revalidate_entry=self._revalidate_cache_key,
         )
+
+    def verify(self, bundle: AlgorithmBundleSpec) -> VerifiedArtifactSet:
+        """Verify members and return the existing path-bearing local view."""
+
+        with self.pin(bundle) as pinned:
+            artifacts = tuple(
+                VerifiedArtifact(
+                    artifact_id=item["artifact_id"],
+                    order=item["order"],
+                    role=item["role"],
+                    cache_key=item["cache_key"],
+                    size_bytes=item["size_bytes"],
+                    sha256=item["sha256"],
+                    local_path=self.root.joinpath(*item["cache_key"].split("/")),
+                )
+                for item in pinned.iter_local_observations()
+            )
+            return VerifiedArtifactSet(
+                bundle_spec_digest=pinned.bundle_spec_digest,
+                artifact_set_digest=pinned.artifact_set_digest,
+                artifact_resolver_state_digest=pinned.artifact_resolver_state_digest,
+                artifacts=artifacts,
+            )

@@ -27,6 +27,7 @@ from .cli_commands import (
     _cmd_benchmark,
     _cmd_parity,
     _cmd_predictions,
+    _cmd_qualify_image_pipeline,
     _cmd_validate,
     _cmd_eval_instance_seg,
     _cmd_onnxrt_export,
@@ -1248,6 +1249,58 @@ def main(argv: list[str] | None = None) -> int:
     demo_tr.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64).")
     demo_tr.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4).")
 
+    qualify = sub.add_parser(
+        "qualify-image-pipeline",
+        help="Measure one exact local image bundle (Experimental).",
+    )
+    qualify.add_argument("--job", required=True, help="Canonical ImageJobSpec JSON file.")
+    qualify.add_argument("--input", required=True, help="Workspace-confined image or bounded image directory.")
+    qualify.add_argument("--bundle-id", required=True, help="Exact packaged bundle ID.")
+    qualify.add_argument("--bundle-version", required=True, help="Exact packaged bundle version.")
+    qualify.add_argument(
+        "--output-dir",
+        default="reports/image_pipeline_qualification",
+        help="Fresh managed output directory inside --workspace.",
+    )
+    qualify.add_argument("--workspace", default=".", help="Workspace boundary (default: current directory).")
+    qualify.add_argument(
+        "--artifact-root",
+        default=None,
+        help="Optional workspace-confined artifact root; default uses the YOLOZU model cache.",
+    )
+    qualify.add_argument(
+        "--ground-truth",
+        default=None,
+        help="Optional local ground truth for a matching code-owned evaluator.",
+    )
+    qualify.add_argument(
+        "--evaluator-id",
+        default=None,
+        help="Optional exact code-owned evaluator ID; requires --ground-truth and a quality requirement.",
+    )
+    qualify.add_argument(
+        "--channel",
+        choices=("Experimental", "Stable"),
+        default="Experimental",
+        help="Exact lifecycle channel required for the bundle.",
+    )
+    qualify.add_argument(
+        "--qualification-timeout-seconds",
+        type=int,
+        default=3600,
+        help="Outer watchdog in 60..14400 seconds (default: 3600).",
+    )
+    qualify.add_argument(
+        "--smoke",
+        action="store_true",
+        help="Run a short wiring check that emits status smoke, never qualified.",
+    )
+    qualify.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace only a previously validated exact managed output set.",
+    )
+
     reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
     reg_sub = reg.add_subparsers(dest="registry_command", required=True)
     reg_validate = reg_sub.add_parser("validate", help="Validate the canonical tool manifest (repo checkout required).")
@@ -1331,6 +1384,8 @@ def main(argv: list[str] | None = None) -> int:
         if fn is None:
             raise SystemExit("missing registry handler")
         return int(fn(args))
+    if args.command == "qualify-image-pipeline":
+        return _cmd_qualify_image_pipeline(args)
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)

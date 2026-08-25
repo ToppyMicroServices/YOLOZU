@@ -19,11 +19,19 @@ observations, and selection-decision interface contracts.
 privacy-safe live probes. An unsupported or failed probe remains unknown, and
 the profile is configuration input rather than qualification evidence.
 The public bundle registry, lifecycle/support/activation streams, and qualification
-report directory contain no selectable evidence. These contract surfaces are not a
-qualifier, selector, adapter, or execution capability. The package now validates and
-loads the exact empty bundle-registry/lifecycle SSOT without importing a model runtime.
+report directory contain no selectable evidence. The package validates and loads the
+exact empty bundle-registry/lifecycle SSOT without importing a model runtime.
 An explicitly supplied workspace catalog is always operator-asserted and fails the
 public selection trust gate even when its checksums are internally consistent.
+
+The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
+exact managed bundles. It pins bounded input and artifact descriptors, runs only a
+repository-owned network-free runner in a terminable child process group, applies
+the frozen v1 schedule and handoff, and publishes one unactivated report through
+`ManagedOutputTransaction`. The packaged registry and code-owned runner factory map
+are currently empty, so the default command fails with an actionable error and does
+not create synthetic or no-op qualification evidence. It is not a selector,
+recommendation service, model adapter, or general image-processing capability.
 
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
@@ -34,6 +42,35 @@ an unqualified default.
 The word "recommended" has only that bounded meaning in this document. YOLOZU does
 not claim one universal model or the latest model is suitable for every task,
 machine, dataset, or service objective.
+
+## Experimental qualification command
+
+The command accepts a canonical `ImageJobSpec` JSON file, a workspace-confined
+single image or bounded directory, an exact packaged bundle ID/version and lifecycle
+channel, an optional workspace-confined artifact root, and a fresh managed output
+directory. A ground-truth path can be paired only with an exact registered code-owned
+evaluator and a preregistered quality requirement; no evaluator is registered in the
+current empty baseline. `--qualification-timeout-seconds` is restricted to `60..14400`.
+Soft-real-time requests require at least 1,260 seconds so the ten-minute section and
+bounded setup can fit. `--smoke` is a short wiring check and can emit only `smoke`,
+never `qualified`.
+
+```bash
+yolozu qualify-image-pipeline --help
+```
+
+A non-smoke batch qualification uses a fresh runner, one cold-start input, 20
+warm-up iterations, and exactly three reset-at-zero repeats of 200 successful
+validated handoffs. Soft-real-time adds an exact all-sample section lasting at
+least 600 seconds, with a hard one-million-sample cap. The report retains aggregate
+latency, throughput, coverage, and complete-memory status, not raw per-image timing
+events. Missing full runner-tree or all-device memory coverage stays `unknown` and
+cannot pass a matching hard memory gate.
+
+The managed public tree contains only `qualification_report.json` and
+`checksums.json` in the current implementation. It omits filenames, prompt text,
+input hashes, private labels, and raw predictions. Report presence never activates
+the evidence. Activation and support claims require separate reviewed records.
 
 ## Rationale
 

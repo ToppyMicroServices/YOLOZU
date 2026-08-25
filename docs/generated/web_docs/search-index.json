@@ -686,6 +686,13 @@
     "title": "qualify_finetune_lanes"
   },
   {
+    "href": "commands.html#tool-qualify-image-pipeline",
+    "kind": "command",
+    "search_text": "qualify_image_pipeline Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output. experimental tools/qualify_image_pipeline.py --job --input --bundle-id --bundle-version --output-dir --workspace --artifact-root --ground-truth --evaluator-id --channel --qualification-timeout-seconds --smoke --force",
+    "summary": "Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output.",
+    "title": "qualify_image_pipeline"
+  },
+  {
     "href": "commands.html#tool-qualify-sdft-continual",
     "kind": "command",
     "search_text": "qualify_sdft_continual Qualify checkpoint-distillation continual learning across fixed seeds and real COCOeval, including the prospective naive/SDFT-response/replay/combined ablation with selected-query and replay execution gates. research tools/qualify_sdft_continual.py --spec --output-dir --archive --role --source-summary",

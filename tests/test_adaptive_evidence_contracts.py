@@ -65,6 +65,7 @@ def _repeat(index: int) -> dict[str, Any]:
         "p99_latency_ms": str(29 + index),
         "throughput_processed_count": 200,
         "throughput_duration_ns": duration,
+        "input_coverage_counts": [200],
         "runner_tree_peak_rss": _memory(1_000 + index * 100),
         "accelerator_process_tree_peak": _accelerator_not_applicable(),
     }
@@ -357,6 +358,14 @@ class TestAdaptiveEvidenceContracts(unittest.TestCase):
             )
         )
         self.assertEqual(validated.to_dict()["quality"]["status"], "not_required")
+
+    def test_qualification_rejects_incomplete_repeat_coverage(self) -> None:
+        for coverage in ([199], [1, 199], [100, 99]):
+            payload = _report_payload()
+            payload["repeats"][0]["input_coverage_counts"] = coverage
+            _redigest_report(payload)
+            with self.assertRaises(ValueError):
+                validate_qualification_report(payload, as_of=AS_OF)
 
     def test_qualification_rejects_timing_memory_and_freshness_errors(self) -> None:
         cases: list[dict[str, Any]] = []

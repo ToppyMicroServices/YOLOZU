@@ -78,10 +78,12 @@ def _canonical_commands(python: str) -> tuple[set[str], str]:
     commands: set[str] = set()
     for line in proc.stdout.splitlines():
         match = re.match(r"\s{2,}([a-z][a-z0-9-]+)(?:\s+\(([^)]+)\))?\s{2,}", line)
+        if match is None:
+            match = re.fullmatch(r"\s{2,}([a-z][a-z0-9-]+)\s*", line)
         if not match:
             continue
         commands.add(match.group(1))
-        aliases = match.group(2)
+        aliases = match.group(2) if (match.lastindex or 0) >= 2 else None
         if aliases:
             for alias in re.split(r"[, ]+", aliases):
                 alias = alias.strip()

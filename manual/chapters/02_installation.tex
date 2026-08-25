@@ -35,12 +35,16 @@ The installed package also contains the empty adaptive bundle registry and lifec
 SSOT. Its bounded loader validates metadata without importing a model runtime or
 downloading assets. A caller-supplied workspace catalog remains
 \cmd{operator\_asserted} and nonselectable; registry integrity alone is not
-qualification evidence.
+qualification evidence. The Experimental \cmd{yolozu qualify-image-pipeline}
+command is installed, but the empty registry and runner map make the default
+invocation fail actionably without dummy evidence. Its \cmd{--help} documents
+the exact-bundle, timeout, pinned-input, and managed-output interface contract.
 
-The installed Python API also exposes \cmd{ManagedOutputTransaction} for future
-repository-owned qualifier and execution outputs. It uses bounded manifests,
+The installed Python API also exposes \cmd{ManagedOutputTransaction} for
+repository-owned qualifier and future execution outputs. It uses bounded manifests,
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
-not add an image-processing command, and it does not silently weaken the guarantee
+not make a model adapter, selector, or image-processing execution path available,
+and it does not silently weaken the guarantee
 on platforms without the required primitives. Atomic visibility is scoped to a
 successful same-filesystem rename probe; power-loss durability remains best-effort.
 

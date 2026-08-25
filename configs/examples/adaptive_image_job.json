@@ -1,0 +1,21 @@
+{
+  "allowed_maturities": [
+    "Experimental"
+  ],
+  "batch_size": 1,
+  "compute_policy": "auto",
+  "concurrency": 1,
+  "execution_mode": "batch",
+  "fixed_classes": [
+    "person"
+  ],
+  "input_mode": "bounded_directory",
+  "job_timeout_seconds": 3600,
+  "max_images": 2,
+  "max_results_per_image": 100,
+  "network_policy": "deny",
+  "prompt_mode": "fixed_classes",
+  "ranking_policy": "latency_first",
+  "schema_version": 1,
+  "task": "object_detection"
+}

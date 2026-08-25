@@ -567,6 +567,7 @@ def _repeat(value: Any, *, index: int) -> dict[str, Any]:
             "p99_latency_ms",
             "throughput_processed_count",
             "throughput_duration_ns",
+            "input_coverage_counts",
             "runner_tree_peak_rss",
             "accelerator_process_tree_peak",
         }
@@ -601,6 +602,23 @@ def _repeat(value: Any, *, index: int) -> dict[str, Any]:
         )
         if throughput_duration != duration or processed != sample_count:
             raise ValueError(f"{field}: throughput ratio must cover the exact timed samples")
+        raw_coverage = _list(
+            record["input_coverage_counts"],
+            field=f"{field}.input_coverage_counts",
+            minimum=1,
+            maximum=100,
+        )
+        coverage = [
+            _integer(
+                count,
+                field=f"{field}.input_coverage_counts[{position}]",
+                minimum=2,
+                maximum=200,
+            )
+            for position, count in enumerate(raw_coverage)
+        ]
+        if sum(coverage) != sample_count:
+            raise ValueError(f"{field}.input_coverage_counts: must cover all samples")
         percentiles = [
             canonical_decimal_v1(record[name], field=f"{field}.{name}", nonnegative=True)
             for name in ("p50_latency_ms", "p95_latency_ms", "p99_latency_ms")
@@ -613,6 +631,7 @@ def _repeat(value: Any, *, index: int) -> dict[str, Any]:
             raise ValueError(f"{field}: failed repeat measurements must be null")
         sample_count = duration = processed = throughput_duration = None
         percentiles = [None, None, None]
+        coverage = None
     rss = _memory_measurement(
         record["runner_tree_peak_rss"], field=f"{field}.runner_tree_peak_rss", accelerator=False
     )
@@ -634,6 +653,7 @@ def _repeat(value: Any, *, index: int) -> dict[str, Any]:
         "p99_latency_ms": percentiles[2],
         "throughput_processed_count": processed,
         "throughput_duration_ns": throughput_duration,
+        "input_coverage_counts": coverage,
         "runner_tree_peak_rss": rss,
         "accelerator_process_tree_peak": accelerator_memory,
     }

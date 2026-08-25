@@ -10,7 +10,12 @@ from .canonical import (
     canonical_json_v1,
     canonical_sha256_v1,
 )
-from .artifact_resolver import ArtifactResolver, VerifiedArtifact, VerifiedArtifactSet
+from .artifact_resolver import (
+    ArtifactResolver,
+    PinnedVerifiedArtifactSet,
+    VerifiedArtifact,
+    VerifiedArtifactSet,
+)
 from .bundles import (
     AlgorithmBundleRegistry,
     AlgorithmBundleSpec,
@@ -84,6 +89,15 @@ from .managed_output import (
     RecoveryResult,
     recover_managed_output,
 )
+from .qualification import (
+    QUALIFICATION_PROTOCOL_FINGERPRINT,
+    QualificationError,
+    QualificationEvaluator,
+    nanoseconds_to_milliseconds,
+    nearest_rank_nanoseconds,
+    qualification_input_schedule,
+    qualify_image_pipeline,
+)
 from .selection import (
     CANDIDATE_REASON_CODES,
     ScreeningEligibilityObservation,
@@ -117,9 +131,13 @@ __all__ = [
     "ManagedOutputLimits",
     "ManagedOutputTransaction",
     "PinnedArtifactSet",
+    "PinnedVerifiedArtifactSet",
     "PinnedInput",
     "QualificationWorkloadProfile",
     "QualificationReport",
+    "QualificationError",
+    "QualificationEvaluator",
+    "QUALIFICATION_PROTOCOL_FINGERPRINT",
     "RecoveryResult",
     "RunnerProbeResult",
     "ScreeningEligibilityObservation",
@@ -150,9 +168,13 @@ __all__ = [
     "load_evidence_activation_jsonl_bytes",
     "map_fixed_class_outputs",
     "map_text_prompt_outputs",
+    "nanoseconds_to_milliseconds",
+    "nearest_rank_nanoseconds",
     "project_bundle_lifecycle",
     "project_evidence_activations",
     "project_support_profiles",
+    "qualification_input_schedule",
+    "qualify_image_pipeline",
     "recover_managed_output",
     "validate_algorithm_bundle_registry",
     "validate_algorithm_bundle_spec",
