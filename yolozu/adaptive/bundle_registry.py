@@ -51,10 +51,12 @@ class PinnedInput(Protocol):
     """Runner-visible input handle with no caller-controlled path surface."""
 
     @property
-    def input_index(self) -> int: ...
+    def input_index(self) -> int:
+        raise NotImplementedError
 
     @property
-    def source_size_bytes(self) -> int: ...
+    def source_size_bytes(self) -> int:
+        raise NotImplementedError
 
     def read_source_bytes(self) -> bytes:
         """Return bytes from the already pinned and identity-checked source."""
@@ -65,10 +67,12 @@ class PinnedArtifactSet(Protocol):
     """Runner-visible immutable artifact handles bound to one bundle spec."""
 
     @property
-    def bundle_spec_digest(self) -> str: ...
+    def bundle_spec_digest(self) -> str:
+        raise NotImplementedError
 
     @property
-    def artifact_set_digest(self) -> str: ...
+    def artifact_set_digest(self) -> str:
+        raise NotImplementedError
 
     def artifact_ids(self) -> tuple[str, ...]:
         """Return ordered code-owned artifact identifiers."""
@@ -119,10 +123,12 @@ class AlgorithmRunner(Protocol):
     """Typed lifecycle implemented only by audited code-owned runner factories."""
 
     @property
-    def runner_id(self) -> str: ...
+    def runner_id(self) -> str:
+        raise NotImplementedError
 
     @property
-    def runner_version(self) -> str: ...
+    def runner_version(self) -> str:
+        raise NotImplementedError
 
     def probe(
         self,
