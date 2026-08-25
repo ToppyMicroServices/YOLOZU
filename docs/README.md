@@ -49,7 +49,10 @@ The environment-qualified local image-processing program targets an Experimental
   emits only an unactivated report; `yolozu activate-qualification-evidence`
   defaults to a no-write gate report and mutates only with explicit review and
   `--approve`. A file-free pure selector now evaluates already validated records,
-  but no CLI/MCP recommendation or adaptive execution surface is available.
+  and the MCP-only `recommend_image_pipeline` tool exposes its bounded read-only
+  recommendation path. The packaged registry and evidence stream are empty, so
+  the default response is abstention. No model adapter or adaptive execution
+  surface is available.
 
 ## Primary Focus
 

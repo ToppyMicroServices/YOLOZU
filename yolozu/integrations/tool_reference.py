@@ -276,6 +276,8 @@ def _annotation_schema(node: ast.AST | None) -> dict[str, Any]:
         value_schema = _annotation_schema(value_node)
         if value_schema:
             schema["additionalProperties"] = value_schema
+        elif value_node is not None:
+            schema["additionalProperties"] = True
         return schema
     if base in {"Optional"}:
         return {"anyOf": [_annotation_schema(slice_node), {"type": "null"}]}
@@ -645,6 +647,7 @@ def build_tool_surface_reference() -> dict[str, Any]:
             "ai_tools": "discovery",
             "generate_config": "config",
             "review_config": "config",
+            "recommend_image_pipeline": "recommendation",
         }
     )
 

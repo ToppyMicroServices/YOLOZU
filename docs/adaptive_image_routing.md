@@ -2,14 +2,13 @@
 
 ## Status and authority
 
-This document is the normative v1 policy for future adaptive local image routing.
+This document is the normative v1 policy for adaptive local image routing.
 Later interface contracts, qualification evidence, selectors, MCP surfaces, local
 execution, and tests must follow it.
 
-This policy does not add a router, model adapter, recommendation service, or
-execution path to the current release. YOLOZU's current Stable predictions
-validation and evaluation lane remains unchanged. Adaptive routing is future
-delivery work whose target product classification is Experimental.
+The current release adds only an Experimental, read-only MCP recommendation
+surface. It does not add a model adapter or execution path. YOLOZU's current
+Stable predictions validation and evaluation lane remains unchanged.
 
 The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
@@ -29,9 +28,12 @@ filter order, per-channel collapse, hard gates, and exact policy ranking over
 already validated in-memory observations. It never opens registry, lifecycle,
 support, evidence, artifact, or provider files and never imports or runs a model.
 An unpointed registry entry remains a complete `catalog_only` evaluation with an
-empty pointed-channel set and no invented support observation. This internal API
-does not make recommendation available through CLI or MCP. The empty packaged
-registry still produces only abstention.
+empty pointed-channel set and no invented support observation. The Experimental
+MCP-only `recommend_image_pipeline` service validates a structured job and local
+input, applies non-I/O gates before artifact access, and invokes the selector. It
+returns a complete SelectionDecision without inference, model import, downloads,
+writes, network access, natural-language parsing, raw probe output, or absolute
+path disclosure. The empty packaged registry still produces only abstention.
 
 The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
 exact managed bundles. It pins bounded input and artifact descriptors, runs only a
@@ -40,7 +42,7 @@ the frozen v1 schedule and handoff, and publishes one unactivated report through
 `ManagedOutputTransaction`. The packaged registry and code-owned runner factory map
 are currently empty, so the default command fails with an actionable error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
-recommendation service, model adapter, or general image-processing capability.
+model adapter, or general image-processing capability.
 
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
@@ -766,6 +768,22 @@ matching public support profile. A site-qualified recommendation uses reviewed
 `support_scope=site_qualified`, but it does not create a public support or endorsement
 claim. Unseen private vocabularies or datasets require matching private site evidence;
 public numbers are not substituted.
+
+The implemented `recommend_image_pipeline` MCP tool is the read-only orchestration
+surface for these rules. It builds privacy-safe EnvironmentProfile and
+QualificationWorkloadProfile records from bounded local inputs. Registry,
+lifecycle, support, and evidence identity gates run before artifact resolution.
+Candidates rejected by those gates record `not_checked_due_to_prior_filter` and
+their artifacts are not opened or hashed. Only surviving candidates are resolved
+through the code-owned ArtifactResolver and a complete LocalArtifactInventory.
+`ok=true` covers both selected and abstained routing outcomes; malformed, unsafe,
+corrupt, or internal failures use `ok=false`.
+
+The tool is MCP-only and `mcp_live`, not `guaranteed_ai_safe`. Optional custom
+registry and evidence roots stay workspace-confined and operator-asserted; they
+cannot self-assign public trust. The default packaged registry and public evidence
+stream remain empty, so an installed default call currently abstains. No
+SelectionDecision starts inference. Pinned execution is a separate capability.
 
 ## Illustrative decisions
 

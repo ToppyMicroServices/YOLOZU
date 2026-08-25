@@ -4,8 +4,9 @@ Status: **Experimental foundation implemented; no real bundle qualification coll
 
 This report records the repository capability boundary added under
 `YOLOZU-ll2.81.1.9` and the reviewed activation boundary added under
-`YOLOZU-ll2.81.1.10`, and the pure selection boundary added under
-`YOLOZU-ll2.81.1.11`. It is not a `QualificationReport`, activation record,
+`YOLOZU-ll2.81.1.10`, the pure selection boundary added under
+`YOLOZU-ll2.81.1.11`, and the read-only MCP recommendation boundary added under
+`YOLOZU-ll2.81.1.12`. It is not a `QualificationReport`, activation record,
 support claim, benchmark result, or adoption snapshot.
 
 ## Implemented boundary
@@ -45,6 +46,15 @@ support claim, benchmark result, or adoption snapshot.
   evaluations. The selector does not invent support observations, choose the
   newest evidence, normalize scores across candidates, or substitute unknown
   metrics.
+- The Experimental MCP-only `recommend_image_pipeline` service validates a
+  structured job and bounded local input, derives privacy-safe environment and
+  workload profiles, and returns a complete selected or abstained
+  SelectionDecision. Non-I/O gates run before artifact resolution, so a prior
+  rejection records `not_checked_due_to_prior_filter` without opening or hashing
+  that candidate's assets.
+- The recommendation service performs no inference, model import, download,
+  write, network request, or natural-language parsing. It does not return absolute
+  paths, raw probe output, per-file hashes, filenames, or prompt text.
 
 ## Evidence boundary
 
@@ -62,7 +72,7 @@ coverage is recorded as `unknown` and cannot satisfy a hard memory gate.
 ## Remaining work
 
 Real measurement begins only after a bundle, artifacts, lifecycle/license review,
-and audited code-owned runner are registered. The pure selection service is
-implemented, but it is not exposed through CLI or MCP. Recommendation and adaptive
-image execution remain separate Beads tasks. The empty registry and evidence store
-mean no report is active. A smoke run can never be promoted to `qualified`.
+and audited code-owned runner are registered. Read-only recommendation is exposed
+through MCP, but the empty registry and evidence store mean the default call
+abstains and no report is active. Model adapters and adaptive image execution remain
+separate Beads tasks. A smoke run can never be promoted to `qualified`.

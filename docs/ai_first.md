@@ -40,7 +40,7 @@ Best-effort (environment dependent, not in stable AI-safe guarantee):
 - TensorRT build/export
 - OpenCV CUDA/OpenVINO backend execution
 
-The live MCP server registers 25 canonical tool ids. The Actions API shares 21
+The live MCP server registers 26 canonical tool ids. The Actions API shares 21
 canonical operations. `generate_config` and `review_config` are in-process
 config-review tools and are not Actions endpoints. These sets are intentionally
 different and are machine-readable in
@@ -69,7 +69,7 @@ yolozu-mcp --sample-review-config reports/ai_generate_config.json
 when the config cannot be read safely, so agents can use the process status
 without parsing human text.
 
-Inspect all 25 registered MCP operations, or filter the broader manifest
+Inspect all 26 registered MCP operations, or filter the broader manifest
 registry without returning full records:
 
 ```bash
@@ -81,6 +81,16 @@ yolozu-mcp --print-tools --ids-only --maturity stable --tag validation
 execution guarantee: only `guaranteed_ai_safe` carries the deterministic,
 lightweight guarantee, and every other operation remains subject to its
 declared dependencies and runtime inputs.
+
+`recommend_image_pipeline` is an Experimental, MCP-only, read-only operation.
+The caller supplies a structured `job_spec` and workspace-confined `input_path`;
+optional registry, evidence, and artifact roots are also workspace-confined. It
+returns `ok=true` for both `selected` and `abstained` SelectionDecision outcomes.
+Malformed, unsafe, corrupt, or internal failures return `ok=false`. The operation
+does not parse natural language, run a model, download assets, write files, or
+request network access. The packaged registry and public evidence stream are
+empty, so the default installed call currently abstains rather than inventing a
+recommendation.
 
 SynthGen-safe fast path (interface-contract-only, CPU):
 

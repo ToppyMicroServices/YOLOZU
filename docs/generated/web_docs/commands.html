@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">133 manifest entries with declared maturity, inputs,
+  <p class="lead">134 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1444,6 +1444,20 @@ python3 tools/qualify_image_pipeline.py --help</code></pre>
   <pre><code>./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification
 ./.venv/bin/python tools/qualify_sdft_continual.py --spec configs/continual/sdft_response_replay_preregistration.json --output-dir /tmp/yolozu-sdft-response-replay</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_sdft_continual.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/continual_learning.md" target="_blank" rel="noopener noreferrer">continual_learning.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/research_lanes.md" target="_blank" rel="noopener noreferrer">research_lanes.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/sdft_continual_qualification.schema.json" target="_blank" rel="noopener noreferrer">sdft_continual_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/14_continual_learning.tex" target="_blank" rel="noopener noreferrer">14_continual_learning.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/sdft_continual_evidence_2026-07-28.md" target="_blank" rel="noopener noreferrer">sdft_continual_evidence_2026-07-28.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/sdft_confirmatory_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">sdft_confirmatory_evidence_2026-07-30.md</a></p>
+</details>
+
+<details class="card" id="tool-recommend-image-pipeline" data-tool-id="recommend_image_pipeline"
+  data-search-card data-search-text="recommend_image_pipeline Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model. experimental yolozu/integrations/mcp_server.py Call the recommend_image_pipeline MCP tool with a structured job_spec and one workspace-relative input_path.">
+  <summary><code>recommend_image_pipeline</code> — Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>job_spec</code> — required, json</li><li><code>input_path</code> — required, string</li><li><code>registry_root</code> — default=None, dir</li><li><code>evidence_root</code> — default=None, dir</li><li><code>artifact_root</code> — default=None, dir</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the recommend_image_pipeline MCP tool with a structured job_spec and one workspace-relative input_path.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ai_first.md" target="_blank" rel="noopener noreferrer">ai_first.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schema_governance.md" target="_blank" rel="noopener noreferrer">schema_governance.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ssot_capability_coverage_audit.md" target="_blank" rel="noopener noreferrer">ssot_capability_coverage_audit.md</a></p>
 </details>
 
 <details class="card" id="tool-refine-predictions-hessian" data-tool-id="refine_predictions_hessian"

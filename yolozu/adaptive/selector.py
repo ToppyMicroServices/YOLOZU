@@ -631,6 +631,33 @@ def _trace_fail(trace: list[dict[str, Any]], step: int, reasons: list[str]) -> N
     )
 
 
+def _trace_not_applicable(
+    trace: list[dict[str, Any]], step: int, *, detail: str
+) -> None:
+    trace.append(
+        {
+            "step": step,
+            "status": "not_applicable",
+            "reason_code": None,
+            "detail": detail,
+        }
+    )
+
+
+def _evidence_gate_reasons(
+    observation: EvidenceEligibilityObservation | None,
+    *,
+    trust_domain: str,
+) -> list[str]:
+    if observation is None:
+        return ["evidence_inactive"]
+    if observation.status != "active":
+        return [_EVIDENCE_REASON[observation.status]]
+    if trust_domain not in {"yolozu_managed", "site_managed"}:
+        return ["evidence_untrusted"]
+    return []
+
+
 def select_qualified_pipeline(
     *,
     decision_id: str,
@@ -649,12 +676,15 @@ def select_qualified_pipeline(
     artifact_inventories: Mapping[str, LocalArtifactInventory],
     evidence_observations: Mapping[str, EvidenceEligibilityObservation],
     isolation_capabilities: Mapping[str, IsolationCapabilityObservation] | None = None,
+    prefer_evidence_before_artifact_io: bool = False,
     as_of: str | datetime | None = None,
 ) -> SelectionDecision:
     """Select one qualified bundle or return a complete explicit abstention."""
 
     if not isinstance(registry, LoadedAlgorithmBundleRegistry):
         raise TypeError("registry must be a validated LoadedAlgorithmBundleRegistry")
+    if type(prefer_evidence_before_artifact_io) is not bool:
+        raise TypeError("prefer_evidence_before_artifact_io must be bool")
     if len(registry.bundles) > 128 or len(evidence_observations) > 512:
         raise ValueError("registry/evidence_limit_exceeded")
     if len(screening_observations) > 128 or len(support_profile_observations) > 256:
@@ -993,6 +1023,21 @@ def select_qualified_pipeline(
             continue
         _trace_pass(trace, 5)
 
+        step_seven = _evidence_gate_reasons(
+            evidence_observation,
+            trust_domain=evidence_trust,
+        )
+        if prefer_evidence_before_artifact_io and step_seven:
+            evaluation["reason_codes"] = step_seven
+            _trace_not_applicable(
+                trace,
+                6,
+                detail="not_checked_due_to_prior_filter",
+            )
+            _trace_fail(trace, 7, step_seven)
+            prepared.append({"evaluation": evaluation, "rank": None})
+            continue
+
         inventory = artifact_inventories.get(spec_digest)
         if inventory is None:
             reasons = ["artifact_member_missing"]
@@ -1017,14 +1062,6 @@ def select_qualified_pipeline(
         )
         _trace_pass(trace, 6)
 
-        if evidence_observation is None:
-            step_seven = ["evidence_inactive"]
-        elif evidence_observation.status != "active":
-            step_seven = [_EVIDENCE_REASON[evidence_observation.status]]
-        elif evidence_trust not in {"yolozu_managed", "site_managed"}:
-            step_seven = ["evidence_untrusted"]
-        else:
-            step_seven = []
         if step_seven:
             evaluation["reason_codes"] = step_seven
             _trace_fail(trace, 7, step_seven)

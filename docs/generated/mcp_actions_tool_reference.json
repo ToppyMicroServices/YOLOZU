@@ -12,6 +12,7 @@
         "validate_dataset",
         "eval_coco",
         "predict_images",
+        "recommend_image_pipeline",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -1364,6 +1365,241 @@
       "effects": null,
       "requires": null,
       "metadata_source": "mcp_ast"
+    },
+    {
+      "name": "recommend_image_pipeline",
+      "function": "recommend_image_pipeline_tool",
+      "summary": "Recommend a qualified local image pipeline without executing it.",
+      "category": "recommendation",
+      "surface_tiers": [
+        "mcp_live"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "experimental",
+        "local-inference",
+        "mcp",
+        "qualification",
+        "read-only",
+        "routing"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "job_spec",
+          "required": true
+        },
+        {
+          "name": "input_path",
+          "required": true
+        },
+        {
+          "name": "registry_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "evidence_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "artifact_root",
+          "required": false,
+          "default": null
+        }
+      ],
+      "inputs": [
+        {
+          "name": "job_spec",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Job Spec"
+          }
+        },
+        {
+          "name": "input_path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Input Path"
+          }
+        },
+        {
+          "name": "registry_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Root",
+            "default": null
+          }
+        },
+        {
+          "name": "evidence_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Root",
+            "default": null
+          }
+        },
+        {
+          "name": "artifact_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Root",
+            "default": null
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_spec": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Job Spec"
+          },
+          "input_path": {
+            "type": "string",
+            "title": "Input Path"
+          },
+          "registry_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Root",
+            "default": null
+          },
+          "evidence_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Root",
+            "default": null
+          },
+          "artifact_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Root",
+            "default": null
+          }
+        },
+        "title": "recommend_image_pipeline_toolArguments",
+        "type": "object",
+        "required": [
+          "job_spec",
+          "input_path"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_spec": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "input_path": {
+            "type": "string"
+          },
+          "registry_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "evidence_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "artifact_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "job_spec",
+          "input_path"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the recommend_image_pipeline MCP tool with a structured job_spec and one workspace-relative input_path.",
+          "description": "Return a selected or abstained SelectionDecision without model execution, downloads, network access, or writes."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
     },
     {
       "name": "parity_check",

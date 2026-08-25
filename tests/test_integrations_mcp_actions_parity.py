@@ -38,9 +38,9 @@ class TestIntegrationsMcpActionsParity(unittest.TestCase):
         reference = build_tool_surface_reference()
         surfaces = reference["surfaces"]
         self.assertEqual(len(surfaces["guaranteed_ai_safe"]["tool_ids"]), 4)
-        self.assertEqual(len(surfaces["mcp_live"]["tool_ids"]), 25)
+        self.assertEqual(len(surfaces["mcp_live"]["tool_ids"]), 26)
         self.assertEqual(len(surfaces["actions_public"]["tool_ids"]), 21)
-        self.assertEqual(len(reference["mcp_live_tools"]), 25)
+        self.assertEqual(len(reference["mcp_live_tools"]), 26)
         self.assertEqual(len(reference["tools"]), 21)
 
         for tool in reference["tools"]:

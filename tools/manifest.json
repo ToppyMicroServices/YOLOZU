@@ -53,6 +53,7 @@
         "validate_dataset",
         "eval_coco",
         "predict_images",
+        "recommend_image_pipeline",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -13367,6 +13368,106 @@
         "research",
         "sdft",
         "self-distillation"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "image_job_spec_json"
+        ],
+        "produces": [
+          "selection_decision_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/ai_first.md",
+        "docs/llm_integrations.md",
+        "docs/production_readiness.md",
+        "docs/schema_governance.md",
+        "docs/ssot_capability_coverage_audit.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the recommend_image_pipeline MCP tool with a structured job_spec and one workspace-relative input_path.",
+          "description": "Return a selected or abstained SelectionDecision without model execution, downloads, network access, or writes."
+        }
+      ],
+      "id": "recommend_image_pipeline",
+      "inputs": [
+        {
+          "description": "Structured ImageJobSpec v1 object; natural-language parsing remains in the calling AI client.",
+          "kind": "json",
+          "name": "job_spec",
+          "required": true
+        },
+        {
+          "description": "Workspace-confined image file or bounded direct image directory matching job_spec.input_mode.",
+          "kind": "string",
+          "name": "input_path",
+          "required": true
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined custom bundle_specs.json and bundle_lifecycle.jsonl directory; always operator_asserted and non-selectable in v1.",
+          "kind": "dir",
+          "name": "registry_root",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined evidence directory containing evidence_activation.jsonl and qualification_reports/<report_id>/ retained records.",
+          "kind": "dir",
+          "name": "evidence_root",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined local artifact root; omission uses the existing YOLOZU model cache read-only.",
+          "kind": "dir",
+          "name": "artifact_root",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Structured selected or abstained SelectionDecision plus privacy-safe read-only recommendation metadata.",
+          "kind": "json",
+          "name": "selection_decision_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model.",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "experimental",
+        "local-inference",
+        "mcp",
+        "qualification",
+        "read-only",
+        "routing"
       ]
     },
     {

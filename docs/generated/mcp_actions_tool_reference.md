@@ -6,7 +6,7 @@ Source of truth: `yolozu.integrations.tool_runner`, `yolozu.integrations.mcp_ser
 
 | Surface | Tool ids | Availability |
 |---|---|---|
-| `mcp_live` | `ai_tools`, `generate_config`, `review_config`, `doctor`, `validate_predictions`, `validate_dataset`, `eval_coco`, `predict_images`, `parity_check`, `calibrate_predictions`, `eval_instance_seg`, `eval_long_tail`, `run_scenarios`, `convert_dataset`, `train_job`, `export_predictions_job`, `export_onnx_job`, `test_job`, `ttt_job`, `ctta_job`, `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe` | requires optional mcp dependency |
+| `mcp_live` | `ai_tools`, `generate_config`, `review_config`, `doctor`, `validate_predictions`, `validate_dataset`, `eval_coco`, `predict_images`, `recommend_image_pipeline`, `parity_check`, `calibrate_predictions`, `eval_instance_seg`, `eval_long_tail`, `run_scenarios`, `convert_dataset`, `train_job`, `export_predictions_job`, `export_onnx_job`, `test_job`, `ttt_job`, `ctta_job`, `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe` | requires optional mcp dependency |
 | `guaranteed_ai_safe` | `doctor`, `generate_config`, `review_config`, `validate_predictions` | deterministic lightweight guarantee |
 | `config_review` | `generate_config`, `review_config` | in-process config generation and review |
 | `actions_public` | `doctor`, `validate_predictions`, `validate_dataset`, `eval_coco`, `predict_images`, `parity_check`, `calibrate_predictions`, `eval_instance_seg`, `eval_long_tail`, `run_scenarios`, `convert_dataset`, `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`, `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe` | requires optional actions dependencies |

@@ -16,7 +16,7 @@ Inspect the compact registry and exact public surface sets:
 yolozu-mcp --print-tools --guaranteed --ids-only
 ```
 
-Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 25
+Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 26
 registered MCP operations.
 
 Use these tools:
@@ -34,10 +34,16 @@ Why MCP first:
 - same JSON response shape as other integrations
 - minimal glue code
 
-The generated machine-readable reference separates the 25 live MCP tool ids,
+The generated machine-readable reference separates the 26 live MCP tool ids,
 the four guaranteed AI-safe ids, the two config-review ids, and the 21
 canonical Actions operations. A live registration is not by itself a
 deterministic or dependency-free guarantee.
+
+The MCP-only `recommend_image_pipeline` operation is Experimental and read-only.
+It can return a selected or abstained SelectionDecision for a structured local
+image job, but it does not execute a model or download or write assets. The
+packaged registry and public evidence stream are empty, so the default installed
+call currently abstains. It is not exposed through GPT Actions.
 
 ## Route B: GPT Actions (OpenAPI)
 

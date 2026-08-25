@@ -9,7 +9,7 @@ from .layers.api import run_cli_tool, run_cli_tool_redacted
 from .layers.artifacts import collect_artifact_metadata, describe_run, list_runs
 from .layers.core import fail_response
 from .layers.jobs import JobManager
-from .manifest_resources import resolve_workspace_path
+from .manifest_resources import resolve_workspace_path, workspace_root
 
 _SCENARIO_EXTRA_VALUE_FLAGS = frozenset(
     {
@@ -277,6 +277,61 @@ def predict_images_public(
     if force:
         args.append("--force")
     return _with_meta(run_cli_tool_redacted("predict_images", args, artifacts={"predictions": output}))
+
+
+def recommend_image_pipeline(
+    job_spec: dict[str, Any],
+    input_path: str,
+    *,
+    registry_root: str | None = None,
+    evidence_root: str | None = None,
+    artifact_root: str | None = None,
+) -> dict[str, Any]:
+    """Return a read-only qualified selection or explicit abstention."""
+
+    from yolozu.adaptive.recommendation import (
+        RecommendationError,
+        recommend_image_pipeline as recommend,
+    )
+
+    try:
+        payload = recommend(
+            job_spec,
+            input_path,
+            workspace_root=workspace_root(),
+            registry_root=registry_root,
+            evidence_root=evidence_root,
+            artifact_root=artifact_root,
+        )
+    except RecommendationError as exc:
+        payload = {
+            "schema_version": 1,
+            "ok": False,
+            "tool": "recommend_image_pipeline",
+            "summary": "recommendation input or governed state was rejected",
+            "exit_code": 1,
+            "maturity": "experimental",
+            "availability": "mcp_live",
+            "error": {
+                "code": exc.code,
+                "message": exc.public_message,
+            },
+        }
+    except Exception:
+        payload = {
+            "schema_version": 1,
+            "ok": False,
+            "tool": "recommend_image_pipeline",
+            "summary": "recommendation failed internally",
+            "exit_code": 1,
+            "maturity": "experimental",
+            "availability": "mcp_live",
+            "error": {
+                "code": "internal_failure",
+                "message": "the read-only recommendation service failed",
+            },
+        }
+    return _with_meta(payload)
 
 
 def parity_check(

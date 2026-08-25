@@ -141,9 +141,15 @@ registered, so the command currently fails actionably instead of producing
 dummy evidence. A pure internal selector now applies the fixed trust,
 compatibility, artifact, evidence, performance, and deterministic ranking rules
 to already validated in-memory observations. It performs no provider-file,
-model, runner, or network I/O. There is still no CLI/MCP recommendation service,
-model adapter, or adaptive execution path, so adaptive selection is not currently
-available to users. An activation record alone does
+model, runner, or network I/O. The Experimental MCP-only
+`recommend_image_pipeline` tool now exposes the same bounded selection policy as a
+read-only structured recommendation. It validates the typed job and local input,
+checks non-I/O gates before artifact access, and returns either a complete
+SelectionDecision or an honest abstention. It does not run inference, download or
+write assets, parse natural language, or expose absolute paths or raw probe output.
+Because the packaged registry and public evidence stream are empty, the default
+call currently abstains. There is still no model adapter or adaptive execution
+path. An activation record alone does
 not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.
