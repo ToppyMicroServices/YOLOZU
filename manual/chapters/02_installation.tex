@@ -25,6 +25,12 @@ yolozu doctor --output -
 The default stable path is CPU-first install plus predictions evaluation.
 macOS/MPS should be treated as a \textbf{qualification path}: it is supported when \cmd{torch.backends.mps.is_available()} returns true, but it is not implied merely because a tool can run on macOS.
 
+The doctor report additively includes a validated \cmd{environment_profile}.
+Its bounded probes omit host identifiers and keep failed or unsupported facts
+unknown. This EnvironmentProfile interface contract records the observed
+configuration; it is not model qualification evidence and does not make an
+Experimental adaptive pipeline available.
+
 \subsection{First successful run from the installed package}
 For the shortest public-package path with a proof report and PNG evidence:
 \begin{lstlisting}[language=bash]

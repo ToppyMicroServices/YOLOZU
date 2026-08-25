@@ -121,8 +121,9 @@
       "summary": "Promotion decision report derived from continual_eval.json plus optional curation soft gates."
     },
     "environment_profile_json": {
+      "producer": "python3 -m yolozu doctor --output - (environment_profile key)",
       "schema": "docs/schemas/environment_profile.schema.json",
-      "summary": "Privacy-safe measured configuration facts for future Experimental adaptive routing; presence is not qualification evidence."
+      "summary": "Privacy-safe live measured configuration facts for future Experimental adaptive routing; failed probes stay unknown and presence is not qualification evidence."
     },
     "eval_suite_report_json": {
       "producer": "python3 tools/eval_suite.py",

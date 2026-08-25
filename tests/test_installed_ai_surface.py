@@ -34,6 +34,7 @@ class TestInstalledAiSurface(unittest.TestCase):
                     ".worktrees",
                     "build",
                     "dist",
+                    "runs",
                     "*.egg-info",
                     "__pycache__",
                 ),
@@ -119,6 +120,7 @@ class TestInstalledAiSurface(unittest.TestCase):
             installed_schemas = target / "yolozu" / "data" / "schemas"
             checkout_schemas = repo_root / "yolozu" / "data" / "schemas"
             for basename in (
+                "environment_profile.schema.json",
                 "local_artifact_inventory.schema.json",
                 "qualification_report.schema.json",
                 "evidence_activation_record.schema.json",
@@ -146,6 +148,8 @@ from yolozu.adaptive import (
     ScreeningEligibilityObservation,
     SelectionDecision,
     SupportProfileEligibilityObservation,
+    build_environment_profile,
+    validate_environment_profile,
 )
 from yolozu.integrations.ai_surface import list_manifest_tools, review_config
 from yolozu.integrations.tool_runner import (
@@ -235,6 +239,8 @@ unsafe_review = review_config(
     }},
     workspace_root=".",
 )
+environment_profile = build_environment_profile().to_dict()
+validate_environment_profile(environment_profile)
 print(json.dumps({{
     "module": yolozu.__file__,
     "adaptive_selection_symbols": [
@@ -242,6 +248,11 @@ print(json.dumps({{
         SelectionDecision.__name__,
         SupportProfileEligibilityObservation.__name__,
     ],
+    "environment_profile": {{
+        "schema_version": environment_profile["schema_version"],
+        "collector_id": environment_profile["collector_id"],
+        "fingerprint_length": len(environment_profile["environment_fingerprint"]),
+    }},
     "guaranteed_ids": list_manifest_tools(
         guaranteed=True,
         ids_only=True,
@@ -366,6 +377,14 @@ print(json.dumps({{
                     "SelectionDecision",
                     "SupportProfileEligibilityObservation",
                 ],
+            )
+            self.assertEqual(
+                payload["environment_profile"],
+                {
+                    "schema_version": 1,
+                    "collector_id": "yolozu_environment_profiler",
+                    "fingerprint_length": 64,
+                },
             )
             self.assertEqual(
                 payload["guaranteed_ids"],

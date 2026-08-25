@@ -61,6 +61,7 @@ from .evidence import (
     validate_local_artifact_inventory,
     validate_qualification_report,
 )
+from .environment import build_environment_profile
 from .inventory import (
     DecodedInputInventory,
     DecodedInputObservation,
@@ -103,6 +104,7 @@ __all__ = [
     "VerifiedArtifactSet",
     "build_fixed_class_mapping",
     "build_decoded_input_inventory",
+    "build_environment_profile",
     "build_qualification_workload_profile",
     "canonical_decimal_v1",
     "canonical_json_v1",

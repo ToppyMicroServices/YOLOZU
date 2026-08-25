@@ -18,7 +18,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-__all__ = ["build_doctor_report", "explain_doctor_report", "run_doctor_proof", "write_doctor_report"]
+__all__ = [
+    "build_doctor_report",
+    "build_environment_profile",
+    "explain_doctor_report",
+    "run_doctor_proof",
+    "write_doctor_report",
+]
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +32,27 @@ logger = logging.getLogger(__name__)
 _OPTIONAL_IMPORT_ERRORS = (ImportError, ModuleNotFoundError, OSError)
 _PROBE_FALLBACK_ERRORS = (AttributeError, RuntimeError, TypeError, ValueError, OSError)
 _OPTIONAL_RUNTIME_ERRORS = _OPTIONAL_IMPORT_ERRORS + _PROBE_FALLBACK_ERRORS
+
+
+def build_environment_profile(
+    *, include_runtime_diagnostics: bool = False
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Return the validated privacy-safe adaptive environment profile."""
+
+    from yolozu.adaptive.environment import _build_environment_observation
+
+    profile, runtime_diagnostics = _build_environment_observation()
+    payload = profile.to_dict()
+    if include_runtime_diagnostics:
+        return payload, runtime_diagnostics
+    return payload
+
+
+def _profile_runtime(environment_profile: dict[str, Any], runtime_id: str) -> dict[str, Any]:
+    for item in environment_profile.get("runtimes") or []:
+        if isinstance(item, dict) and item.get("runtime_id") == runtime_id:
+            return item
+    return {"runtime_id": runtime_id, "probe_status": "failed"}
 
 
 def _now_utc() -> str:
@@ -100,7 +127,55 @@ def _gather_git_info(*, cwd: Path) -> dict[str, Any]:
     return {"head": head, "dirty": dirty}
 
 
-def _gather_gpu_info() -> dict[str, Any]:
+def _gather_gpu_info(
+    *,
+    environment_profile: dict[str, Any] | None = None,
+    runtime_diagnostics: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    if environment_profile is not None:
+        diagnostics = runtime_diagnostics or {}
+        present_accelerators = [
+            item
+            for item in environment_profile.get("accelerators") or []
+            if isinstance(item, dict) and item.get("probe_status") == "present"
+        ]
+        nvidia_accelerators = [
+            item
+            for item in present_accelerators
+            if str(item.get("accelerator_id") or "").startswith("nvidia_")
+            and item.get("accelerator_id") != "nvidia_inventory"
+        ]
+        nvidia_devices = [
+            f"GPU {index}: {item.get('model')}"
+            for index, item in enumerate(nvidia_accelerators)
+        ]
+        torch_record = _profile_runtime(environment_profile, "torch")
+        torch_diagnostics = (diagnostics.get("torch") or {}).get("details") or {}
+        torch_info = None
+        if torch_record.get("probe_status") == "present":
+            torch_info = {
+                "version": torch_record.get("version"),
+                "cuda_available": bool(torch_diagnostics.get("cuda_available")),
+                "mps_built": bool(torch_diagnostics.get("mps_built")),
+                "mps_available": bool(torch_diagnostics.get("mps_available")),
+            }
+            if bool(torch_info["cuda_available"]):
+                torch_info["device_count"] = int(torch_diagnostics.get("device_count") or 0)
+        ort_record = _profile_runtime(environment_profile, "onnxruntime")
+        ort_diagnostics = (diagnostics.get("onnxruntime") or {}).get("details") or {}
+        ort_info = None
+        if ort_record.get("probe_status") == "present":
+            ort_info = {
+                "version": ort_record.get("version"),
+                "providers": list(ort_diagnostics.get("providers") or []),
+            }
+        return {
+            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+            "nvidia_smi_list": nvidia_devices or None,
+            "torch": torch_info,
+            "onnxruntime": ort_info,
+        }
+
     gpu: dict[str, Any] = {
         "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
         "nvidia_smi_list": None,
@@ -143,7 +218,69 @@ def _gather_gpu_info() -> dict[str, Any]:
     return gpu
 
 
-def _gather_runtime_capabilities(*, tools: dict[str, Any], gpu: dict[str, Any]) -> dict[str, Any]:
+def _gather_runtime_capabilities(
+    *,
+    tools: dict[str, Any],
+    gpu: dict[str, Any],
+    environment_profile: dict[str, Any] | None = None,
+    runtime_diagnostics: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    if environment_profile is not None:
+        diagnostics = runtime_diagnostics or {}
+        torch_record = _profile_runtime(environment_profile, "torch")
+        torch_details = (diagnostics.get("torch") or {}).get("details") or {}
+        ort_record = _profile_runtime(environment_profile, "onnxruntime")
+        ort_details = (diagnostics.get("onnxruntime") or {}).get("details") or {}
+        ort_providers = list(ort_details.get("providers") or [])
+        trt_record = _profile_runtime(environment_profile, "tensorrt")
+        trtexec_record = _profile_runtime(environment_profile, "trtexec")
+        cv2_record = _profile_runtime(environment_profile, "cv2")
+        cv2_details = (diagnostics.get("cv2") or {}).get("details") or {}
+        torch_present = torch_record.get("probe_status") == "present"
+        ort_present = ort_record.get("probe_status") == "present"
+        trt_present = trt_record.get("probe_status") == "present"
+        cv2_present = cv2_record.get("probe_status") == "present"
+        return {
+            "cuda": {
+                "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                "nvidia_smi_available": bool(tools.get("nvidia_smi")),
+                "gpu_count_from_nvidia_smi": len(gpu.get("nvidia_smi_list") or []),
+            },
+            "torch": {
+                "installed": torch_present,
+                "version": torch_record.get("version") if torch_present else None,
+                "cuda_available": bool(torch_details.get("cuda_available")),
+                "cuda_version": torch_details.get("cuda_version"),
+                "cudnn_version": torch_details.get("cudnn_version"),
+                "device_count": int(torch_details.get("device_count") or 0),
+                "mps_built": bool(torch_details.get("mps_built")),
+                "mps_available": bool(torch_details.get("mps_available")),
+            },
+            "onnxruntime": {
+                "installed": ort_present,
+                "version": ort_record.get("version") if ort_present else None,
+                "providers": ort_providers,
+                "cuda_provider": "CUDAExecutionProvider" in ort_providers,
+                "tensorrt_provider": "TensorrtExecutionProvider" in ort_providers,
+                "coreml_provider": "CoreMLExecutionProvider" in ort_providers,
+            },
+            "tensorrt": {
+                "python_package_version": trt_record.get("version") if trt_present else None,
+                "python_module_available": trt_present,
+                "trtexec_available": bool(tools.get("trtexec")),
+                "trtexec_version": (
+                    trtexec_record.get("version")
+                    if trtexec_record.get("probe_status") == "present"
+                    else None
+                ),
+            },
+            "opencv": {
+                "python_package_version": cv2_record.get("version") if cv2_present else None,
+                "module_available": cv2_present,
+                "cuda_enabled_device_count": cv2_details.get("cuda_enabled_device_count"),
+            },
+        }
+
     runtime: dict[str, Any] = {
         "cuda": {
             "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
@@ -346,15 +483,39 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
     here = Path.cwd() if cwd is None else Path(cwd)
 
     required, required_errors = _gather_required_runtime()
+    environment_result = build_environment_profile(include_runtime_diagnostics=True)
+    if isinstance(environment_result, tuple):
+        environment_profile, runtime_diagnostics = environment_result
+    else:  # Test doubles and older in-process callers may return only the profile.
+        environment_profile = environment_result
+        runtime_diagnostics = {}
 
+    nvidia_inventory = [
+        item
+        for item in environment_profile.get("accelerators") or []
+        if isinstance(item, dict)
+        and str(item.get("accelerator_id") or "").startswith("nvidia")
+    ]
+    trtexec_runtime = _profile_runtime(environment_profile, "trtexec")
     tools = {
         "git": bool(_run_capture(["git", "--version"], cwd=here)),
-        "nvidia_smi": bool(_run_capture(["nvidia-smi", "-L"])),
-        "trtexec": bool(_run_capture(["trtexec", "--version"])),
+        "nvidia_smi": any(
+            item.get("probe_status") in {"present", "absent"}
+            for item in nvidia_inventory
+        ),
+        "trtexec": trtexec_runtime.get("probe_status") == "present",
     }
 
-    gpu_info = _gather_gpu_info()
-    runtime_capabilities = _gather_runtime_capabilities(tools=tools, gpu=gpu_info)
+    gpu_info = _gather_gpu_info(
+        environment_profile=environment_profile,
+        runtime_diagnostics=runtime_diagnostics,
+    )
+    runtime_capabilities = _gather_runtime_capabilities(
+        tools=tools,
+        gpu=gpu_info,
+        environment_profile=environment_profile,
+        runtime_diagnostics=runtime_diagnostics,
+    )
 
     report: dict[str, Any] = {
         "kind": "yolozu_doctor",
@@ -391,6 +552,7 @@ def build_doctor_report(*, cwd: Path | None = None) -> tuple[dict[str, Any], int
         "git": _gather_git_info(cwd=here) if tools["git"] else {"head": None, "dirty": None},
         "gpu": gpu_info,
         "runtime_capabilities": runtime_capabilities,
+        "environment_profile": environment_profile,
         "tools": tools,
         "guidance_links": {
             "backend_parity": "docs/backend_parity_matrix.md",
