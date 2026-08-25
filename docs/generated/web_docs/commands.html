@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">134 manifest entries with declared maturity, inputs,
+  <p class="lead">135 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1372,6 +1372,21 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>python3 tools/prepare_voc_seg.py --voc-root /path/to/VOCdevkit/VOC2012 --split train --out data/voc_seg --mode manifest</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_voc_seg.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
+</details>
+
+<details class="card" id="tool-process-images" data-tool-id="process_images"
+  data-search-card data-search-text="process_images Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes. experimental yolozu/integrations/mcp_server.py Call the process_images MCP tool with job_spec, the complete selected SelectionDecision, workspace-relative input_path/output_dir, and dry_run=true. Call the process_images MCP tool again with the same pinned inputs and dry_run=false after reviewing the preflight result.">
+  <summary><code>process_images</code> — Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>job_spec</code> — required, json</li><li><code>selection_decision</code> — required, json</li><li><code>input_path</code> — required, string</li><li><code>--output-dir</code> — required, dir</li><li><code>registry_root</code> — default=None, dir</li><li><code>evidence_root</code> — default=None, dir</li><li><code>artifact_root</code> — default=None, dir</li><li><code>dry_run</code> — default=True, string</li><li><code>force</code> — default=False, string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the process_images MCP tool with job_spec, the complete selected SelectionDecision, workspace-relative input_path/output_dir, and dry_run=true.
+Call the process_images MCP tool again with the same pinned inputs and dry_run=false after reviewing the preflight result.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ai_first.md" target="_blank" rel="noopener noreferrer">ai_first.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schema_governance.md" target="_blank" rel="noopener noreferrer">schema_governance.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ssot_capability_coverage_audit.md" target="_blank" rel="noopener noreferrer">ssot_capability_coverage_audit.md</a></p>
 </details>
 
 <details class="card" id="tool-publish-benchmark-table" data-tool-id="publish_benchmark_table"

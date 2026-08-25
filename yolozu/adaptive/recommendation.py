@@ -45,6 +45,7 @@ from .evidence import (
     validate_qualification_report,
 )
 from .inventory import build_decoded_input_inventory
+from .isolation import _code_owned_isolated_services
 from .qualification import (
     QUALIFICATION_PROTOCOL_FINGERPRINT,
     qualification_report_has_code_owned_issuer,
@@ -722,6 +723,41 @@ def _artifact_inventory(
     return validate_local_artifact_inventory(value, bundle)
 
 
+def _isolation_observations(
+    registry: LoadedAlgorithmBundleRegistry,
+) -> dict[str, IsolationCapabilityObservation]:
+    observations: dict[str, IsolationCapabilityObservation] = {}
+    isolated_services = _code_owned_isolated_services()
+    for bundle in registry.bundles:
+        record = bundle.to_dict()
+        if record["execution_trust_class"] != "third_party_isolated":
+            continue
+        service = isolated_services.get(record["runner_id"])
+        if service is None:
+            observations[bundle.spec_digest] = IsolationCapabilityObservation(
+                "unsupported"
+            )
+            continue
+        try:
+            capability = service.capability
+            if capability.runner_id != record["runner_id"]:
+                raise ValueError("runner mismatch")
+            if capability.status != "available":
+                raise ValueError("capability unavailable")
+            observations[bundle.spec_digest] = IsolationCapabilityObservation(
+                "supported",
+                backend_id=capability.backend_id,
+                backend_version=capability.backend_version,
+                isolation_policy_digest=capability.policy_digest,
+                image_present=capability.image_present,
+            )
+        except (AttributeError, TypeError, ValueError):
+            observations[bundle.spec_digest] = IsolationCapabilityObservation(
+                "unsupported"
+            )
+    return observations
+
+
 def recommend_image_pipeline(
     job_spec: Mapping[str, Any],
     input_path: str,
@@ -819,11 +855,7 @@ def recommend_image_pipeline(
         workload=workload,
         evidence=evidence_load.observations,
     )
-    isolation = {
-        bundle.spec_digest: IsolationCapabilityObservation("unsupported")
-        for bundle in registry.bundles
-        if bundle.to_dict()["execution_trust_class"] == "third_party_isolated"
-    }
+    isolation = _isolation_observations(registry)
     provisional_resolver_digest = canonical_sha256_v1(
         {
             "resolver_version": "artifact-resolver-v1",
@@ -944,6 +976,11 @@ def recommend_image_pipeline(
         as_of=decision_time,
     )
     decision_record = decision.to_dict()
+    resolver_state_by_spec = {
+        item["spec_digest"]: item["resolver_state_digest"]
+        for item in resolver_states
+    }
+    selected_bundle = decision_record["selected_bundle"]
     ordered_status = [
         {
             "spec_digest": item["spec_digest"],
@@ -973,6 +1010,11 @@ def recommend_image_pipeline(
             "evidence_source": evidence_load.source_kind,
             "evidence_trust_domain": evidence_load.trust_domain,
             "input_count": input_inventory.input_count,
+            "selected_artifact_resolver_state_digest": (
+                None
+                if selected_bundle is None
+                else resolver_state_by_spec.get(selected_bundle["spec_digest"])
+            ),
             "artifact_observations": ordered_status,
             "privacy": (
                 "No filenames, absolute paths, per-file hashes, or raw probe output are returned."

@@ -648,6 +648,7 @@ def build_tool_surface_reference() -> dict[str, Any]:
             "generate_config": "config",
             "review_config": "config",
             "recommend_image_pipeline": "recommendation",
+            "process_images": "inference",
         }
     )
 

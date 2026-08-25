@@ -13,6 +13,7 @@
         "eval_coco",
         "predict_images",
         "recommend_image_pipeline",
+        "process_images",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -1591,6 +1592,343 @@
       "effects": {
         "fixed_writes": [],
         "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "process_images",
+      "function": "process_images_tool",
+      "summary": "Revalidate and optionally execute one pinned selected image pipeline.",
+      "category": "inference",
+      "surface_tiers": [
+        "mcp_live"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "experimental",
+        "local-inference",
+        "mcp",
+        "pinned-execution",
+        "qualification",
+        "routing"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "job_spec",
+          "required": true
+        },
+        {
+          "name": "selection_decision",
+          "required": true
+        },
+        {
+          "name": "input_path",
+          "required": true
+        },
+        {
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "name": "registry_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "evidence_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "artifact_root",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": false
+        }
+      ],
+      "inputs": [
+        {
+          "name": "job_spec",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Job Spec"
+          }
+        },
+        {
+          "name": "selection_decision",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Selection Decision"
+          }
+        },
+        {
+          "name": "input_path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Input Path"
+          }
+        },
+        {
+          "name": "output_dir",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Output Dir"
+          }
+        },
+        {
+          "name": "registry_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Root",
+            "default": null
+          }
+        },
+        {
+          "name": "evidence_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Root",
+            "default": null
+          }
+        },
+        {
+          "name": "artifact_root",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Root",
+            "default": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          }
+        },
+        {
+          "name": "force",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Force",
+            "default": false
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_spec": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Job Spec"
+          },
+          "selection_decision": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Selection Decision"
+          },
+          "input_path": {
+            "type": "string",
+            "title": "Input Path"
+          },
+          "output_dir": {
+            "type": "string",
+            "title": "Output Dir"
+          },
+          "registry_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Root",
+            "default": null
+          },
+          "evidence_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Root",
+            "default": null
+          },
+          "artifact_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Root",
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": false
+          }
+        },
+        "title": "process_images_toolArguments",
+        "type": "object",
+        "required": [
+          "job_spec",
+          "selection_decision",
+          "input_path",
+          "output_dir"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_spec": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "selection_decision": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "input_path": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "registry_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "evidence_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "artifact_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "force": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "job_spec",
+          "selection_decision",
+          "input_path",
+          "output_dir"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the process_images MCP tool with job_spec, the complete selected SelectionDecision, workspace-relative input_path/output_dir, and dry_run=true.",
+          "description": "Revalidate the pinned selection and all local state without importing or calling a runner or writing output."
+        },
+        {
+          "command": "Call the process_images MCP tool again with the same pinned inputs and dry_run=false after reviewing the preflight result.",
+          "description": "Execute only the selected registered code-owned route and publish the bounded managed output tree."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "On explicit dry_run=false, atomically publishes only predictions.json, provenance.json, checksums.json, and referenced masks below output_dir.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
       },
       "requires": {
         "network": false,

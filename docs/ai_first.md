@@ -40,7 +40,7 @@ Best-effort (environment dependent, not in stable AI-safe guarantee):
 - TensorRT build/export
 - OpenCV CUDA/OpenVINO backend execution
 
-The live MCP server registers 26 canonical tool ids. The Actions API shares 21
+The live MCP server registers 27 canonical tool ids. The Actions API shares 21
 canonical operations. `generate_config` and `review_config` are in-process
 config-review tools and are not Actions endpoints. These sets are intentionally
 different and are machine-readable in
@@ -69,7 +69,7 @@ yolozu-mcp --sample-review-config reports/ai_generate_config.json
 when the config cannot be read safely, so agents can use the process status
 without parsing human text.
 
-Inspect all 26 registered MCP operations, or filter the broader manifest
+Inspect all 27 registered MCP operations, or filter the broader manifest
 registry without returning full records:
 
 ```bash
@@ -91,6 +91,14 @@ does not parse natural language, run a model, download assets, write files, or
 request network access. The packaged registry and public evidence stream are
 empty, so the default installed call currently abstains rather than inventing a
 recommendation.
+
+`process_images` is the paired Experimental MCP-only processing operation. It
+requires the complete selected decision, repeats the governed and pinned local
+preflight, and defaults to `dry_run=true`, which creates no runner or output.
+Only explicit `dry_run=false` may use a registered code-owned network-free route
+and publish the exact managed predictions/provenance/checksum tree. The packaged
+registry and runner maps are empty, so the default installed surface cannot
+currently execute a real adaptive model. It is not `guaranteed_ai_safe`.
 
 SynthGen-safe fast path (interface-contract-only, CPU):
 

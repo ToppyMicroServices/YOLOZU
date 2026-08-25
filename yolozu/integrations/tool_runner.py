@@ -334,6 +334,66 @@ def recommend_image_pipeline(
     return _with_meta(payload)
 
 
+def process_images(
+    job_spec: dict[str, Any],
+    selection_decision: dict[str, Any],
+    input_path: str,
+    output_dir: str,
+    *,
+    registry_root: str | None = None,
+    evidence_root: str | None = None,
+    artifact_root: str | None = None,
+    dry_run: bool = True,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Revalidate and explicitly execute one pinned selected pipeline."""
+
+    from yolozu.adaptive.processing import (
+        ProcessingError,
+        process_images as process,
+    )
+
+    try:
+        payload = process(
+            job_spec,
+            selection_decision,
+            input_path,
+            output_dir,
+            workspace_root=workspace_root(),
+            registry_root=registry_root,
+            evidence_root=evidence_root,
+            artifact_root=artifact_root,
+            dry_run=dry_run,
+            force=force,
+        )
+    except ProcessingError as exc:
+        payload = {
+            "schema_version": 1,
+            "ok": False,
+            "tool": "process_images",
+            "summary": "pinned image processing was rejected safely",
+            "exit_code": 1,
+            "maturity": "experimental",
+            "availability": "mcp_live",
+            "error": {"code": exc.code, "message": exc.public_message},
+        }
+    except Exception:
+        payload = {
+            "schema_version": 1,
+            "ok": False,
+            "tool": "process_images",
+            "summary": "pinned image processing failed internally",
+            "exit_code": 1,
+            "maturity": "experimental",
+            "availability": "mcp_live",
+            "error": {
+                "code": "internal_failure",
+                "message": "the pinned local processing service failed",
+            },
+        }
+    return _with_meta(payload)
+
+
 def parity_check(
     reference: str,
     candidate: str,

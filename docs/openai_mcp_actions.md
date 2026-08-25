@@ -16,7 +16,7 @@ Inspect the compact registry and exact public surface sets:
 yolozu-mcp --print-tools --guaranteed --ids-only
 ```
 
-Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 26
+Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 27
 registered MCP operations.
 
 Use these tools:
@@ -34,7 +34,7 @@ Why MCP first:
 - same JSON response shape as other integrations
 - minimal glue code
 
-The generated machine-readable reference separates the 26 live MCP tool ids,
+The generated machine-readable reference separates the 27 live MCP tool ids,
 the four guaranteed AI-safe ids, the two config-review ids, and the 21
 canonical Actions operations. A live registration is not by itself a
 deterministic or dependency-free guarantee.
@@ -44,6 +44,12 @@ It can return a selected or abstained SelectionDecision for a structured local
 image job, but it does not execute a model or download or write assets. The
 packaged registry and public evidence stream are empty, so the default installed
 call currently abstains. It is not exposed through GPT Actions.
+
+The paired MCP-only `process_images` operation is also Experimental and not
+exposed through Actions. It requires a complete selected decision, defaults to a
+no-write dry-run, rejects local-state drift, and uses only registered code-owned
+network-free execution. No bundle or runner is registered in the public baseline,
+so it does not make a current runnable-model claim.
 
 ## Route B: GPT Actions (OpenAPI)
 

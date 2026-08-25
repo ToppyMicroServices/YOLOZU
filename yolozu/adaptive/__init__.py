@@ -1,8 +1,8 @@
 """Experimental adaptive-routing interface contracts.
 
 These helpers validate typed records, build privacy-bounded local observations,
-and can return a qualified selection or explicit abstention. They do not execute
-a model.
+return a qualified selection or explicit abstention, and can explicitly execute
+a pinned selected pipeline through the Experimental processing service.
 """
 
 from .canonical import (
@@ -93,6 +93,15 @@ from .managed_output import (
     ManagedOutputTransaction,
     RecoveryResult,
     recover_managed_output,
+    validate_managed_output_destination,
+)
+from .isolation import (
+    IsolatedRunnerCapability,
+    IsolatedRunnerService,
+)
+from .processing import (
+    ProcessingError,
+    process_images,
 )
 from .qualification import (
     QUALIFICATION_PROTOCOL_FINGERPRINT,
@@ -141,6 +150,8 @@ __all__ = [
     "EvidenceEligibilityObservation",
     "ImageJobSpec",
     "IsolationCapabilityObservation",
+    "IsolatedRunnerCapability",
+    "IsolatedRunnerService",
     "LocalArtifactInventory",
     "LoadedAlgorithmBundleRegistry",
     "ManagedOutputCapabilities",
@@ -150,6 +161,7 @@ __all__ = [
     "PinnedArtifactSet",
     "PinnedVerifiedArtifactSet",
     "PinnedInput",
+    "ProcessingError",
     "QualificationWorkloadProfile",
     "QualificationReport",
     "QualificationError",
@@ -194,6 +206,7 @@ __all__ = [
     "project_bundle_lifecycle",
     "project_evidence_activations",
     "project_support_profiles",
+    "process_images",
     "qualification_input_schedule",
     "qualify_image_pipeline",
     "qualification_report_has_code_owned_issuer",
@@ -207,6 +220,7 @@ __all__ = [
     "validate_evidence_activation_record",
     "validate_image_job_spec",
     "validate_local_artifact_inventory",
+    "validate_managed_output_destination",
     "validate_qualification_workload_profile",
     "validate_qualification_report",
     "validate_screening_eligibility_observation",

@@ -148,8 +148,13 @@ checks non-I/O gates before artifact access, and returns either a complete
 SelectionDecision or an honest abstention. It does not run inference, download or
 write assets, parse natural language, or expose absolute paths or raw probe output.
 Because the packaged registry and public evidence stream are empty, the default
-call currently abstains. There is still no model adapter or adaptive execution
-path. An activation record alone does
+call currently abstains. Experimental MCP-only `process_images` now accepts that
+complete selected decision, revalidates the job, current lifecycle/evidence,
+environment, workload, input, class mapping, and pinned artifact state, and defaults
+to a no-write `dry_run=true`. Explicit execution uses only a registered code-owned,
+network-free route and publishes an atomic managed predictions/provenance/checksum
+tree. The packaged registry and runner maps remain empty, so no real adaptive model
+can currently execute; no model adapter or performance claim was added. An activation record alone does
 not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.

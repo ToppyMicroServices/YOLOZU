@@ -27,6 +27,7 @@ __all__ = [
     "ManagedOutputTransaction",
     "RecoveryResult",
     "recover_managed_output",
+    "validate_managed_output_destination",
 ]
 
 
@@ -1221,6 +1222,41 @@ class ManagedOutputTransaction:
             self._stage_fd = None
         if hasattr(self, "_guard"):
             self._guard.close()
+
+
+def validate_managed_output_destination(
+    *,
+    root: Path,
+    destination: str | PurePosixPath,
+    limits: ManagedOutputLimits,
+    force: bool = False,
+) -> None:
+    """Validate one destination without creating a stage or changing the tree."""
+
+    destination_parts = _relative_parts(destination, field="destination")
+    destination_name = destination_parts[-1]
+    if destination_name.startswith("."):
+        raise _fail("path_invalid", "destination basename must not be hidden")
+    guard = _ParentGuard(Path(root), destination_parts[:-1])
+    try:
+        guard.revalidate()
+        if _lstat_at(guard.parent_fd, _marker_name(destination_name)) is not None:
+            raise _fail(
+                "recovery_required",
+                "an existing recovery marker must be handled before writing",
+            )
+        destination_info = _lstat_at(guard.parent_fd, destination_name)
+        if destination_info is None:
+            return
+        if not force:
+            raise _fail("destination_exists", "existing destination requires force")
+        _validate_named_tree(
+            guard.parent_fd,
+            destination_name,
+            limits=limits,
+        )
+    finally:
+        guard.close()
 
 
 def _read_marker(

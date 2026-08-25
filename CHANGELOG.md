@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Expose Experimental read-only image-pipeline recommendation through MCP.
+- Add Experimental dry-run-by-default pinned local image processing through MCP.
 
 ### Fixed
 - Keep repository-wrapper prediction and TTA/TTT log paths anchored to the checkout when invoked from another working directory.

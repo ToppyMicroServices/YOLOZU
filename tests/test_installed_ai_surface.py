@@ -149,6 +149,7 @@ from yolozu.adaptive import (
     IsolationCapabilityObservation,
     ManagedOutputLimits,
     ManagedOutputTransaction,
+    ProcessingError,
     RecommendationError,
     ScreeningEligibilityObservation,
     SelectionDecision,
@@ -156,6 +157,7 @@ from yolozu.adaptive import (
     build_environment_profile,
     compute_advertised_gates_digest,
     load_algorithm_bundle_registry,
+    process_images,
     recommend_image_pipeline,
     select_qualified_pipeline,
     validate_environment_profile,
@@ -256,11 +258,13 @@ print(json.dumps({{
     "adaptive_selection_symbols": [
         EvidenceEligibilityObservation.__name__,
         IsolationCapabilityObservation.__name__,
+        ProcessingError.__name__,
         RecommendationError.__name__,
         ScreeningEligibilityObservation.__name__,
         SelectionDecision.__name__,
         SupportProfileEligibilityObservation.__name__,
         compute_advertised_gates_digest.__name__,
+        process_images.__name__,
         recommend_image_pipeline.__name__,
         select_qualified_pipeline.__name__,
     ],
@@ -402,11 +406,13 @@ print(json.dumps({{
                 [
                     "EvidenceEligibilityObservation",
                     "IsolationCapabilityObservation",
+                    "ProcessingError",
                     "RecommendationError",
                     "ScreeningEligibilityObservation",
                     "SelectionDecision",
                     "SupportProfileEligibilityObservation",
                     "compute_advertised_gates_digest",
+                    "process_images",
                     "recommend_image_pipeline",
                     "select_qualified_pipeline",
                 ],
@@ -442,8 +448,9 @@ print(json.dumps({{
                     "validate_predictions",
                 ],
             )
-            self.assertEqual(len(payload["supported_ids"]), 26)
+            self.assertEqual(len(payload["supported_ids"]), 27)
             self.assertIn("recommend_image_pipeline", payload["supported_ids"])
+            self.assertIn("process_images", payload["supported_ids"])
             self.assertTrue(payload["relative"]["ok"])
             self.assertTrue(payload["relative"]["validation"]["ok"])
             self.assertTrue(payload["absolute"]["ok"])
