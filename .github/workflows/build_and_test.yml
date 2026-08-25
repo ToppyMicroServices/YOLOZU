@@ -184,6 +184,7 @@ jobs:
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
+            tests.test_adaptive_routing_e2e \
             tests.test_adaptive_selector \
             tests.test_adaptive_selection_contracts \
             tests.test_schema_governance \
@@ -252,6 +253,7 @@ jobs:
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
             tests.test_adaptive_processing \
+            tests.test_adaptive_routing_e2e \
             tests.test_adaptive_selector \
             tests.test_adaptive_selection_contracts \
             tests.test_packaged_tools_manifest \
@@ -334,6 +336,7 @@ jobs:
             tests/test_adaptive_qualification.py \
             tests/test_adaptive_recommendation.py \
             tests/test_adaptive_processing.py \
+            tests/test_adaptive_routing_e2e.py \
             tests/test_adaptive_selector.py \
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \

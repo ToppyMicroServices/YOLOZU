@@ -30,10 +30,14 @@ class TestInstalledAiSurface(unittest.TestCase):
                 source,
                 ignore=shutil.ignore_patterns(
                     ".git",
+                    ".beads",
+                    ".pytest_cache",
+                    ".ruff_cache",
                     ".venv*",
                     ".worktrees",
                     "build",
                     "dist",
+                    "reports",
                     "runs",
                     "*.egg-info",
                     "__pycache__",
@@ -55,6 +59,26 @@ class TestInstalledAiSurface(unittest.TestCase):
                 json.dumps(invalid_payload),
                 encoding="utf-8",
             )
+            adaptive_job = {
+                "schema_version": 1,
+                "task": "object_detection",
+                "prompt_mode": "fixed_classes",
+                "fixed_classes": ["cat"],
+                "input_mode": "single_image",
+                "execution_mode": "batch",
+                "batch_size": 1,
+                "concurrency": 1,
+                "max_images": 1,
+                "max_results_per_image": 100,
+                "job_timeout_seconds": 60,
+                "ranking_policy": "latency_first",
+                "allowed_maturities": ["Experimental", "Stable"],
+                "network_policy": "deny",
+                "compute_policy": "auto",
+                "provider_allowlist": [],
+                "precision_allowlist": [],
+                "spdx_allowlist": [],
+            }
 
             build = subprocess.run(
                 [
@@ -120,11 +144,18 @@ class TestInstalledAiSurface(unittest.TestCase):
             installed_schemas = target / "yolozu" / "data" / "schemas"
             checkout_schemas = repo_root / "yolozu" / "data" / "schemas"
             for basename in (
+                "algorithm_bundle_registry.schema.json",
+                "algorithm_bundle_spec.schema.json",
+                "bundle_lifecycle_record.schema.json",
                 "environment_profile.schema.json",
+                "image_job_spec.schema.json",
                 "local_artifact_inventory.schema.json",
                 "qualification_report.schema.json",
+                "qualification_workload_profile.schema.json",
                 "evidence_activation_record.schema.json",
                 "screening_eligibility_observation.schema.json",
+                "support_profile_record.schema.json",
+                "support_profile_spec.schema.json",
                 "support_profile_eligibility_observation.schema.json",
                 "selection_decision.schema.json",
             ):
@@ -133,11 +164,28 @@ class TestInstalledAiSurface(unittest.TestCase):
                     (checkout_schemas / basename).read_bytes(),
                     f"installed adaptive evidence schema differs: {basename}",
                 )
+            self.assertEqual(
+                (
+                    target
+                    / "yolozu"
+                    / "data"
+                    / "integrations"
+                    / "mcp_actions_tool_reference.json"
+                ).read_bytes(),
+                (
+                    repo_root
+                    / "yolozu"
+                    / "data"
+                    / "integrations"
+                    / "mcp_actions_tool_reference.json"
+                ).read_bytes(),
+            )
 
             outside = root / "outside.json"
             script = f"""
 import json
 from pathlib import Path
+from PIL import Image
 import yolozu
 from yolozu.api import (
     APIError,
@@ -150,6 +198,7 @@ from yolozu.adaptive import (
     ManagedOutputLimits,
     ManagedOutputTransaction,
     ProcessingError,
+    QUALIFICATION_PROTOCOL_FINGERPRINT,
     RecommendationError,
     ScreeningEligibilityObservation,
     SelectionDecision,
@@ -253,6 +302,24 @@ unsafe_review = review_config(
 environment_profile = build_environment_profile().to_dict()
 validate_environment_profile(environment_profile)
 bundle_registry = load_algorithm_bundle_registry()
+adaptive_job = {adaptive_job!r}
+Image.new("RGB", (8, 6), color=(10, 20, 30)).save("adaptive_input.png")
+adaptive_recommendation = recommend_image_pipeline(
+    adaptive_job,
+    "adaptive_input.png",
+    decided_at="2026-08-25T14:30:00Z",
+)
+try:
+    process_images(
+        adaptive_job,
+        adaptive_recommendation["decision"],
+        "adaptive_input.png",
+        "adaptive_output",
+    )
+except ProcessingError as exc:
+    adaptive_process_error = exc.code
+else:
+    adaptive_process_error = None
 print(json.dumps({{
     "module": yolozu.__file__,
     "adaptive_selection_symbols": [
@@ -283,6 +350,14 @@ print(json.dumps({{
         "lifecycle_trust_domain": bundle_registry.lifecycle_trust_domain,
         "bundle_count": len(bundle_registry.bundles),
         "lifecycle_event_count": len(bundle_registry.lifecycle.events),
+    }},
+    "adaptive_verification": {{
+        "recommendation_ok": adaptive_recommendation["ok"],
+        "recommendation_status": adaptive_recommendation["decision"]["status"],
+        "registry_bundle_count": adaptive_recommendation["decision"]["registry_bundle_count"],
+        "process_error": adaptive_process_error,
+        "output_exists": Path("adaptive_output").exists(),
+        "protocol_fingerprint_length": len(QUALIFICATION_PROTOCOL_FINGERPRINT),
     }},
     "guaranteed_ids": list_manifest_tools(
         guaranteed=True,
@@ -440,6 +515,17 @@ print(json.dumps({{
                 },
             )
             self.assertEqual(
+                payload["adaptive_verification"],
+                {
+                    "recommendation_ok": True,
+                    "recommendation_status": "abstained",
+                    "registry_bundle_count": 0,
+                    "process_error": "selection_required",
+                    "output_exists": False,
+                    "protocol_fingerprint_length": 64,
+                },
+            )
+            self.assertEqual(
                 payload["guaranteed_ids"],
                 [
                     "doctor",
@@ -558,10 +644,32 @@ async def main():
                     "strict": True,
                 }},
             )
+            recommended = await session.call_tool(
+                "recommend_image_pipeline",
+                {{
+                    "job_spec": {adaptive_job!r},
+                    "input_path": "adaptive_input.png",
+                }},
+            )
+            recommendation_payload = json.loads(recommended.content[0].text)
+            processed = await session.call_tool(
+                "process_images",
+                {{
+                    "job_spec": {adaptive_job!r},
+                    "selection_decision": recommendation_payload["decision"],
+                    "input_path": "adaptive_input.png",
+                    "output_dir": "adaptive_mcp_output",
+                }},
+            )
             print(json.dumps({{
                 "names": [tool.name for tool in listed.tools],
                 "called_error": called.isError,
                 "called": json.loads(called.content[0].text),
+                "recommended_error": recommended.isError,
+                "recommended": recommendation_payload,
+                "processed_error": processed.isError,
+                "processed": json.loads(processed.content[0].text),
+                "adaptive_output_exists": Path("adaptive_mcp_output").exists(),
             }}, sort_keys=True))
 
 asyncio.run(main())
@@ -594,6 +702,19 @@ asyncio.run(main())
                     live_payload["called"]["validation"]["mode"],
                     "strict",
                 )
+                self.assertFalse(live_payload["recommended_error"])
+                self.assertTrue(live_payload["recommended"]["ok"])
+                self.assertEqual(
+                    live_payload["recommended"]["decision"]["status"],
+                    "abstained",
+                )
+                self.assertFalse(live_payload["processed_error"])
+                self.assertFalse(live_payload["processed"]["ok"])
+                self.assertEqual(
+                    live_payload["processed"]["error"]["code"],
+                    "selection_required",
+                )
+                self.assertFalse(live_payload["adaptive_output_exists"])
 
 
 if __name__ == "__main__":

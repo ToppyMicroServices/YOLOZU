@@ -50,6 +50,13 @@ define the Experimental adaptive-routing interface. Their presence, or a read-on
 recommendation response, is not model availability, execution, or qualification
 evidence.
 
+Candidate sdist/wheel and installed-surface tests assert that the packaged schemas,
+empty adaptive SSOT, adaptive Python modules, and generated MCP reference are
+present outside the checkout with `PYTHONPATH` cleared. The exact inventory and
+default abstention/rejection outcomes are recorded in the
+[installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).
+This packaging check is not real bundle qualification.
+
 The source-controlled adaptive registry instances have one copy under the packaged
 data tree: `yolozu/data/adaptive_routing/bundle_specs.json`,
 `yolozu/data/adaptive_routing/bundle_lifecycle.jsonl`,

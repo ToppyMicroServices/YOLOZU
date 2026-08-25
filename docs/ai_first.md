@@ -100,6 +100,11 @@ and publish the exact managed predictions/provenance/checksum tree. The packaged
 registry and runner maps are empty, so the default installed surface cannot
 currently execute a real adaptive model. It is not `guaranteed_ai_safe`.
 
+The [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md)
+checks that source, candidate artifacts, and installed MCP calls retain this exact
+abstention and rejection boundary. Positive selector and executor cases remain
+internal fixtures, not a public routing bypass or real model qualification.
+
 SynthGen-safe fast path (interface-contract-only, CPU):
 
 ```bash
