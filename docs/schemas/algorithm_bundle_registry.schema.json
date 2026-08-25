@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/algorithm_bundle_registry.schema.json",
+  "title": "YOLOZU AlgorithmBundleRegistry v1",
+  "description": "Bounded immutable bundle set for future Experimental adaptive routing; an empty registry is valid and selects nothing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "bundles", "registry_digest"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "registry_id": { "const": "yolozu-bundle-registry-v1" },
+    "bundles": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "algorithm_bundle_spec.schema.json" }
+    },
+    "registry_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

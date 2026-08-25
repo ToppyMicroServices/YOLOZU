@@ -11,7 +11,7 @@ include CITATION.cff
 include tools/manifest.json
 include yolozu/py.typed
 
-recursive-include yolozu/data *.json *.yaml *.yml
+recursive-include yolozu/data *.json *.jsonl *.yaml *.yml
 recursive-include docs *.md *.json
 recursive-include schemas *.json
 recursive-include protocols *.json

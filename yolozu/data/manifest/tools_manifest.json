@@ -78,6 +78,14 @@
       "schema": "docs/schemas/adaptive_vision_roadmap.schema.json",
       "summary": "Dated packaged projection of the future Experimental adaptive local-vision scope; Beads remains authoritative for live task state."
     },
+    "algorithm_bundle_registry_json": {
+      "schema": "docs/schemas/algorithm_bundle_registry.schema.json",
+      "summary": "Bounded immutable bundle set for future Experimental adaptive routing; the packaged default is empty and selects nothing."
+    },
+    "algorithm_bundle_spec_json": {
+      "schema": "docs/schemas/algorithm_bundle_spec.schema.json",
+      "summary": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts; presence is not qualification or availability evidence."
+    },
     "artifact_research_qualification_json": {
       "producer": "python3 tools/qualify_artifact_research.py",
       "schema": "docs/schemas/artifact_research_qualification.schema.json",
@@ -97,6 +105,10 @@
       "producer": "python3 tools/summarize_bop_tless_qualification.py",
       "schema": "docs/schemas/bop_tless_qualification.schema.json",
       "summary": "Strict-GT BOP T-LESS baseline/trained task-native metrics, evidence hashes, hold decision, and independent semantic reproduction result."
+    },
+    "bundle_lifecycle_record_json": {
+      "schema": "docs/schemas/bundle_lifecycle_record.schema.json",
+      "summary": "Append-only global bundle state and per-channel pointer record for future Experimental adaptive routing."
     },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
@@ -191,6 +203,14 @@
       "schema": "docs/schemas/segmentation_predictions.schema.json",
       "summary": "Segmentation predictions JSON (list of {id,mask} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_segmentation_predictions.py <path>"
+    },
+    "support_profile_record_json": {
+      "schema": "docs/schemas/support_profile_record.schema.json",
+      "summary": "Append-only reviewed exact-environment support-profile definition and dormant-set record."
+    },
+    "support_profile_spec_json": {
+      "schema": "docs/schemas/support_profile_spec.schema.json",
+      "summary": "Immutable exact measured environment, workload, protocol, and advertised-gate scope; it does not extrapolate hardware families."
     },
     "synthgen_sample_contract": {
       "schema": "schemas/synthgen_sample.schema.json",
