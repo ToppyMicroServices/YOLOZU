@@ -182,6 +182,7 @@ jobs:
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
+            tests.test_adaptive_selector \
             tests.test_adaptive_selection_contracts \
             tests.test_schema_governance \
             tests.test_packaged_tools_manifest \
@@ -247,6 +248,8 @@ jobs:
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
+            tests.test_adaptive_selector \
+            tests.test_adaptive_selection_contracts \
             tests.test_packaged_tools_manifest \
             tests.test_manifest_docs_references -v
 
@@ -325,6 +328,7 @@ jobs:
             tests/test_adaptive_vision_roadmap_generator.py \
             tests/test_adaptive_evidence_activation.py \
             tests/test_adaptive_qualification.py \
+            tests/test_adaptive_selector.py \
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \

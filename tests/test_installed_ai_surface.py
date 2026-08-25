@@ -145,13 +145,17 @@ from yolozu.api import (
     validate_predictions as api_validate_predictions,
 )
 from yolozu.adaptive import (
+    EvidenceEligibilityObservation,
+    IsolationCapabilityObservation,
     ManagedOutputLimits,
     ManagedOutputTransaction,
     ScreeningEligibilityObservation,
     SelectionDecision,
     SupportProfileEligibilityObservation,
     build_environment_profile,
+    compute_advertised_gates_digest,
     load_algorithm_bundle_registry,
+    select_qualified_pipeline,
     validate_environment_profile,
 )
 from yolozu.integrations.ai_surface import list_manifest_tools, review_config
@@ -248,9 +252,13 @@ bundle_registry = load_algorithm_bundle_registry()
 print(json.dumps({{
     "module": yolozu.__file__,
     "adaptive_selection_symbols": [
+        EvidenceEligibilityObservation.__name__,
+        IsolationCapabilityObservation.__name__,
         ScreeningEligibilityObservation.__name__,
         SelectionDecision.__name__,
         SupportProfileEligibilityObservation.__name__,
+        compute_advertised_gates_digest.__name__,
+        select_qualified_pipeline.__name__,
     ],
     "managed_output_symbols": [
         ManagedOutputLimits.__name__,
@@ -388,9 +396,13 @@ print(json.dumps({{
             self.assertEqual(
                 payload["adaptive_selection_symbols"],
                 [
+                    "EvidenceEligibilityObservation",
+                    "IsolationCapabilityObservation",
                     "ScreeningEligibilityObservation",
                     "SelectionDecision",
                     "SupportProfileEligibilityObservation",
+                    "compute_advertised_gates_digest",
+                    "select_qualified_pipeline",
                 ],
             )
             self.assertEqual(

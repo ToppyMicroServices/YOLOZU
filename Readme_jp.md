@@ -136,8 +136,12 @@ registry/lifecycle、stale-head の全gateをdry-runで確認し、`--approve`�
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。
 ただしpackaged registryはまだ空で、code-owned model runnerも未登録です。そのため
-現在はdummy evidenceを作らず、理由を示して停止します。selector、recommendation
-service、model adapter、adaptive execution pathはまだ利用できません。activation
+現在はdummy evidenceを作らず、理由を示して停止します。内部のpure selectorは、
+検証済みのin-memory observationだけを対象に、固定したtrust、compatibility、artifact、
+evidence、performance、deterministic rankingの規則を適用します。provider file、model、
+runner、networkへのI/Oは行いません。CLI/MCP recommendation service、model adapter、
+adaptive execution pathはまだなく、ユーザがadaptive selectionを利用できる状態では
+ありません。activation
 recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。

@@ -24,6 +24,15 @@ exact empty bundle-registry/lifecycle SSOT without importing a model runtime.
 An explicitly supplied workspace catalog is always operator-asserted and fails the
 public selection trust gate even when its checksums are internally consistent.
 
+The code-owned `select_qualified_pipeline` pure function now implements the fixed
+filter order, per-channel collapse, hard gates, and exact policy ranking over
+already validated in-memory observations. It never opens registry, lifecycle,
+support, evidence, artifact, or provider files and never imports or runs a model.
+An unpointed registry entry remains a complete `catalog_only` evaluation with an
+empty pointed-channel set and no invented support observation. This internal API
+does not make recommendation available through CLI or MCP. The empty packaged
+registry still produces only abstention.
+
 The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
 exact managed bundles. It pins bounded input and artifact descriptors, runs only a
 repository-owned network-free runner in a terminable child process group, applies
