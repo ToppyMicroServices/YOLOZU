@@ -45,7 +45,7 @@ from .evidence import (
     validate_qualification_report,
 )
 from .inventory import build_decoded_input_inventory
-from .isolation import _CODE_OWNED_ISOLATED_SERVICES
+from .isolation import _code_owned_isolated_services
 from .qualification import (
     QUALIFICATION_PROTOCOL_FINGERPRINT,
     qualification_report_has_code_owned_issuer,
@@ -727,11 +727,12 @@ def _isolation_observations(
     registry: LoadedAlgorithmBundleRegistry,
 ) -> dict[str, IsolationCapabilityObservation]:
     observations: dict[str, IsolationCapabilityObservation] = {}
+    isolated_services = _code_owned_isolated_services()
     for bundle in registry.bundles:
         record = bundle.to_dict()
         if record["execution_trust_class"] != "third_party_isolated":
             continue
-        service = _CODE_OWNED_ISOLATED_SERVICES.get(record["runner_id"])
+        service = isolated_services.get(record["runner_id"])
         if service is None:
             observations[bundle.spec_digest] = IsolationCapabilityObservation(
                 "unsupported"

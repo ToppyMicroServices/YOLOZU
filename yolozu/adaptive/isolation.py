@@ -104,3 +104,9 @@ class IsolatedRunnerService(Protocol):
 # Repository-owned adapter modules may populate this map. No environment
 # variable, registry field, MCP argument, entry point, or import string can do so.
 _CODE_OWNED_ISOLATED_SERVICES: dict[str, IsolatedRunnerService] = {}
+
+
+def _code_owned_isolated_services() -> dict[str, IsolatedRunnerService]:
+    """Return the internal live registry without exposing a registration API."""
+
+    return _CODE_OWNED_ISOLATED_SERVICES
