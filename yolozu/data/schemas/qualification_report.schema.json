@@ -218,6 +218,7 @@
         "p99_latency_ms",
         "throughput_processed_count",
         "throughput_duration_ns",
+        "input_coverage_counts",
         "runner_tree_peak_rss",
         "accelerator_process_tree_peak"
       ],
@@ -232,6 +233,17 @@
         "p99_latency_ms": { "$ref": "#/$defs/nullable_decimal" },
         "throughput_processed_count": { "$ref": "#/$defs/nullable_integer" },
         "throughput_duration_ns": { "$ref": "#/$defs/nullable_uint64" },
+        "input_coverage_counts": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": { "type": "integer", "minimum": 2, "maximum": 200 }
+            }
+          ]
+        },
         "runner_tree_peak_rss": { "$ref": "#/$defs/memory_measurement" },
         "accelerator_process_tree_peak": { "$ref": "#/$defs/memory_measurement" }
       }

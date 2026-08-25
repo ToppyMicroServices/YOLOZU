@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -34,6 +34,8 @@ positional arguments:
     train-orchestrate   Plan or execute a small multi-backend training batch from one orchestration spec.
     test                Run scenario suite (dummy/precomputed adapters are CPU-only).
     demo                Run small self-contained demos (CPU-friendly).
+    qualify-image-pipeline
+                        Measure one exact local image bundle (Experimental).
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
 
@@ -256,6 +258,7 @@ Contact: develop@toppymicros.com
 | publish_benchmark_table | stable | tools/publish_benchmark_table.py | Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. |
 | qualify_artifact_research | research | tools/qualify_artifact_research.py | Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. |
 | qualify_finetune_lanes | experimental | tools/qualify_finetune_lanes.py | Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient. |
+| qualify_image_pipeline | experimental | tools/qualify_image_pipeline.py | Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output. |
 | qualify_sdft_continual | research | tools/qualify_sdft_continual.py | Qualify checkpoint-distillation continual learning across fixed seeds and real COCOeval, including the prospective naive/SDFT-response/replay/combined ablation with selected-query and replay execution gates. |
 | refine_predictions_hessian | research | tools/refine_predictions_hessian.py | Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. |
 | release | stable | release.sh | Single-command release automation: validate current metadata, atomically synchronize package version, dated CHANGELOG and CITATION metadata, and explicitly current-release-coupled source/packaged manifest examples; then auto-version, tag, publish a GitHub release, and hand off once to the PyPI and Zenodo workflows. Historical manifest examples require explicit evidence and are not auto-bumped. The publish workflow revalidates synchronized metadata before upload, then verifies that PyPI exposes the released wheel and sdist. The container workflow can reuse the same release_tag for GHCR publication and NGC mirroring under nvcr.io/yolozu/.... |

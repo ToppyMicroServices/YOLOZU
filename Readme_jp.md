@@ -116,7 +116,7 @@ flowchart LR
 
 ## Adaptive local vision roadmap
 
-環境に応じたlocal画像処理は、将来のExperimental delivery workです。現在のStableなprediction validation/evaluationの提供範囲は変わりません。
+環境に応じたlocal画像処理は、引き続きExperimental delivery workです。現在のStableなprediction validation/evaluationの提供範囲は変わりません。
 
 目標とする設計では、AI clientが自然言語をtyped requestへ変換し、YOLOZUはtask、hardware、runtime、workload、protocol、licenseの条件に一致するqualification済みpipelineだけを選択対象にします。証拠が不足または不一致なら、“best”を推測せずabstainします。recommendationとexecutionはlocalで動き、assetを暗黙にdownloadしません。
 
@@ -126,11 +126,14 @@ privacy-safe な live `environment_profile` を返します。probe failure は 
 のままで、accelerator 不在の証明には使いません。packaged された空のbundle
 registryは、model runtimeをimportせずに検証して読み込めます。明示したworkspace
 catalogはoperator-assertedのままで、選択対象にはなりません。POSIX専用の
-`ManagedOutputTransaction` helperは、将来のqualifier/execution向けにboundedな
-no-follow output publicationとfail-closed recoveryを提供しますが、画像処理command
-ではありません。selector、recommendation service、adapter、execution path は
-まだ利用できません。registryの読み込み、environment profile、output publication
-はいずれもqualification evidenceにはなりません。
+Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
+preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
+unactivatedな`qualification_report.json`のatomic publicationを実装しています。
+ただしpackaged registryはまだ空で、code-owned model runnerも未登録です。そのため
+現在はdummy evidenceを作らず、理由を示して停止します。selector、recommendation
+service、model adapter、adaptive execution pathはまだ利用できません。registryの
+読み込み、environment profile、smoke結果、output publicationだけでは
+qualification evidenceにもhuman adoptionの証明にもなりません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 

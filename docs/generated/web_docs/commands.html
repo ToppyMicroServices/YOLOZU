@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">131 manifest entries with declared maturity, inputs,
+  <p class="lead">132 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1399,6 +1399,21 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>./.venv/bin/python tools/qualify_finetune_lanes.py --output-dir /tmp/yolozu-finetune-qualification</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_finetune_lanes.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/finetune_lane_qualification.schema.json" target="_blank" rel="noopener noreferrer">finetune_lane_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_capability_matrix.md" target="_blank" rel="noopener noreferrer">training_capability_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_inference_export.md" target="_blank" rel="noopener noreferrer">training_inference_export.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/16_depth_6dof_symmetry.tex" target="_blank" rel="noopener noreferrer">16_depth_6dof_symmetry.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/finetune_lane_evidence_2026-07-29.md" target="_blank" rel="noopener noreferrer">finetune_lane_evidence_2026-07-29.md</a></p>
+</details>
+
+<details class="card" id="tool-qualify-image-pipeline" data-tool-id="qualify_image_pipeline"
+  data-search-card data-search-text="qualify_image_pipeline Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output. experimental tools/qualify_image_pipeline.py python3 tools/qualify_image_pipeline.py --job configs/examples/adaptive_image_job.json --input data/smoke/images/val --bundle-id example --bundle-version 1 --output-dir reports/image_pipeline_qualification python3 tools/qualify_image_pipeline.py --help">
+  <summary><code>qualify_image_pipeline</code> — Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/qualify_image_pipeline.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--job</code> — required, file</li><li><code>--input</code> — required, string</li><li><code>--bundle-id</code> — required, string</li><li><code>--bundle-version</code> — required, string</li><li><code>--output-dir</code> — default=reports/image_pipeline_qualification, dir</li><li><code>--workspace</code> — default=., dir</li><li><code>--artifact-root</code> — dir</li><li><code>--ground-truth</code> — file</li><li><code>--evaluator-id</code> — string</li><li><code>--channel</code> — default=Experimental, string</li><li><code>--qualification-timeout-seconds</code> — default=3600, number</li><li><code>--smoke</code> — string</li><li><code>--force</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/qualify_image_pipeline.py --job configs/examples/adaptive_image_job.json --input data/smoke/images/val --bundle-id example --bundle-version 1 --output-dir reports/image_pipeline_qualification
+python3 tools/qualify_image_pipeline.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_image_pipeline.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/qualification_report.schema.json" target="_blank" rel="noopener noreferrer">qualification_report.schema.json</a></p>
 </details>
 
 <details class="card" id="tool-qualify-sdft-continual" data-tool-id="qualify_sdft_continual"

@@ -42,7 +42,8 @@ jobs:
             tests.test_adaptive_vision_roadmap_generator \
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
-            tests.test_adaptive_managed_output -v
+            tests.test_adaptive_managed_output \
+            tests.test_adaptive_qualification -v
 
       - name: Build wheel only
         run: |
@@ -190,7 +191,8 @@ jobs:
             tests.test_adaptive_vision_roadmap_generator \
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
-            tests.test_adaptive_managed_output -v
+            tests.test_adaptive_managed_output \
+            tests.test_adaptive_qualification -v
 
       - name: Build
         run: |

@@ -116,7 +116,7 @@ flowchart LR
 
 ## Adaptive Local Vision Roadmap
 
-Environment-aware local image processing is future Experimental delivery work. It does not change the current Stable prediction validation/evaluation surface.
+Environment-aware local image processing remains Experimental delivery work. It does not change the current Stable prediction validation/evaluation surface.
 
 The target design lets an AI client turn natural language into a typed request, then asks YOLOZU to select only among pipelines qualified for the matching task, hardware, runtime, workload, protocol, and license constraints. If the evidence is missing or mismatched, the result is abstention rather than an inferred “best” model. Recommendation and execution remain local and do not implicitly download assets.
 
@@ -126,12 +126,16 @@ SelectionDecision interface contracts are packaged for integration work.
 `environment_profile`; failed probes stay unknown and do not prove that an
 accelerator is absent. The packaged empty bundle registry can also be loaded
 and validated without importing a model runtime. Explicit workspace catalogs
-remain operator-asserted and nonselectable. A POSIX-only
-`ManagedOutputTransaction` helper now gives future qualifier and execution
-paths bounded no-follow output publication and fail-closed recovery; it is an
-integration API, not an image-processing command. The selector, recommendation
-service, adapters, and execution path are still unavailable. Registry loading,
-an environment profile, and output publication are not qualification evidence.
+remain operator-asserted and nonselectable. The Experimental
+`yolozu qualify-image-pipeline` command now implements pinned no-follow input
+and asset preflight, a frozen repeat/soak protocol, bounded child-process
+cancellation, and atomic unactivated `qualification_report.json` publication.
+The packaged registry is still empty and no code-owned model runner is
+registered, so the command currently fails actionably instead of producing
+dummy evidence. The selector, recommendation service, model adapters, and
+adaptive execution path are still unavailable. Registry loading, an
+environment profile, a smoke result, and output publication alone are not
+qualification evidence or proof of human adoption.
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 

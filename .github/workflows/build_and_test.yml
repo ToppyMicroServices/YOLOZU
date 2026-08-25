@@ -67,6 +67,7 @@ jobs:
               - 'Readme_jp.md'
               - 'docs/**'
               - 'reports/adaptive_vision_roadmap.md'
+              - 'reports/adaptive_qualification_foundation_*.md'
               - 'tools/generate_adaptive_vision_roadmap.py'
               - 'tools/run_mcp_server.py'
               - 'tools/run_actions_api.py'
@@ -179,6 +180,7 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_managed_output \
+            tests.test_adaptive_qualification \
             tests.test_adaptive_selection_contracts \
             tests.test_schema_governance \
             tests.test_packaged_tools_manifest \
@@ -243,6 +245,7 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_managed_output \
+            tests.test_adaptive_qualification \
             tests.test_packaged_tools_manifest \
             tests.test_manifest_docs_references -v
 
@@ -319,6 +322,7 @@ jobs:
             tests/test_generated_cli_reference.py \
             tests/test_ssot_capability_coverage.py \
             tests/test_adaptive_vision_roadmap_generator.py \
+            tests/test_adaptive_qualification.py \
             tests/test_benchmark_support_matrix_generator.py \
             tests/test_backend_shape_format_contracts.py \
             tests/test_external_inference_templates_smoke.py \
@@ -388,6 +392,7 @@ jobs:
       - name: CLI smoke (doctor + demo)
         run: |
           yolozu doctor --output -
+          yolozu qualify-image-pipeline --help
           yolozu demo instance-seg --num-images 2 --image-size 48 --max-instances 2 --run-dir "${RUNNER_TEMP}/yolozu_demo"
 
   test:
@@ -412,6 +417,7 @@ jobs:
           python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel
           yolozu doctor --output -
           yolozu export --help
+          yolozu qualify-image-pipeline --help
           python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'schemas/adaptive_vision_roadmap.schema.json' in paths; assert 'manifest/adaptive_vision_roadmap.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"
 
       - name: Install build tooling (hash-locked)

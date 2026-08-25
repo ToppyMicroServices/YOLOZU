@@ -181,8 +181,9 @@
       "summary": "Bounded machine-readable success/failure result for predictions validation."
     },
     "qualification_report_json": {
+      "producer": "python3 tools/qualify_image_pipeline.py --job <job.json> --input <path> --bundle-id <id> --bundle-version <version>",
       "schema": "docs/schemas/qualification_report.schema.json",
-      "summary": "Measured configuration evidence for one exact bundle, artifact set, environment, workload, and protocol; presence is not activation."
+      "summary": "Experimental unactivated measured-configuration evidence for one exact trusted bundle, artifact set, environment, workload, and frozen protocol; activity signals, fixtures, and report presence are not adoption or Stable support."
     },
     "qualification_workload_profile_json": {
       "schema": "docs/schemas/qualification_workload_profile.schema.json",
@@ -12917,6 +12918,156 @@
         "multitask",
         "reproducibility",
         "training"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "algorithm_bundle_registry_json",
+          "image_job_spec_json"
+        ],
+        "produces": [
+          "managed_output_checksums_json",
+          "qualification_report_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/schemas/qualification_report.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Publishes only qualification_report.json and its code-owned checksums.json in one bounded managed directory.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/qualify_image_pipeline.py",
+      "examples": [
+        {
+          "command": "python3 tools/qualify_image_pipeline.py --job configs/examples/adaptive_image_job.json --input data/smoke/images/val --bundle-id example --bundle-version 1 --output-dir reports/image_pipeline_qualification",
+          "description": "Measure an exact eligible packaged bundle; the current empty registry fails actionably without dummy evidence."
+        },
+        {
+          "command": "python3 tools/qualify_image_pipeline.py --help",
+          "description": "Inspect the Experimental bounded qualification interface contract."
+        }
+      ],
+      "id": "qualify_image_pipeline",
+      "inputs": [
+        {
+          "flag": "--job",
+          "kind": "file",
+          "name": "job",
+          "required": true
+        },
+        {
+          "flag": "--input",
+          "kind": "string",
+          "name": "input",
+          "required": true
+        },
+        {
+          "flag": "--bundle-id",
+          "kind": "string",
+          "name": "bundle_id",
+          "required": true
+        },
+        {
+          "flag": "--bundle-version",
+          "kind": "string",
+          "name": "bundle_version",
+          "required": true
+        },
+        {
+          "default": "reports/image_pipeline_qualification",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--artifact-root",
+          "kind": "dir",
+          "name": "artifact_root",
+          "required": false
+        },
+        {
+          "flag": "--ground-truth",
+          "kind": "file",
+          "name": "ground_truth",
+          "required": false
+        },
+        {
+          "flag": "--evaluator-id",
+          "kind": "string",
+          "name": "evaluator_id",
+          "required": false
+        },
+        {
+          "default": "Experimental",
+          "flag": "--channel",
+          "kind": "string",
+          "name": "channel",
+          "required": false
+        },
+        {
+          "default": 3600,
+          "flag": "--qualification-timeout-seconds",
+          "kind": "number",
+          "name": "qualification_timeout_seconds",
+          "required": false
+        },
+        {
+          "flag": "--smoke",
+          "kind": "string",
+          "name": "smoke",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "reports/image_pipeline_qualification",
+          "description": "Managed directory containing qualification_report.json and checksums.json only; the report is unactivated.",
+          "kind": "dir",
+          "name": "qualification_output"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output.",
+      "tags": [
+        "adaptive-inference",
+        "benchmark",
+        "evidence",
+        "experimental",
+        "local-inference",
+        "qualification"
       ]
     },
     {
