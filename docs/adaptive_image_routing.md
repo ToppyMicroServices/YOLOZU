@@ -6,9 +6,9 @@ This document is the normative v1 policy for adaptive local image routing.
 Later interface contracts, qualification evidence, selectors, MCP surfaces, local
 execution, and tests must follow it.
 
-The current release adds only an Experimental, read-only MCP recommendation
-surface. It does not add a model adapter or execution path. YOLOZU's current
-Stable predictions validation and evaluation lane remains unchanged.
+The current release adds Experimental MCP recommendation and pinned-processing
+surfaces. It does not add a model adapter or a registered runnable bundle.
+YOLOZU's current Stable predictions validation and evaluation lane remains unchanged.
 
 The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
@@ -34,6 +34,18 @@ input, applies non-I/O gates before artifact access, and invokes the selector. I
 returns a complete SelectionDecision without inference, model import, downloads,
 writes, network access, natural-language parsing, raw probe output, or absolute
 path disclosure. The empty packaged registry still produces only abstention.
+
+The MCP-only `process_images` service accepts the complete selected decision and
+the same typed job/input roots. It rebuilds current governed state, requires every
+stable decision, environment, workload, input, resolver, artifact, evidence, and
+class-mapping identity to match, and defaults to `dry_run=true`. Dry-run creates no
+runner or output stage. Explicit execution uses a bounded child process for an
+allowlisted `code_owned_audited` runner, or a separately registered code-owned
+isolated service with the exact policy digest for `third_party_isolated`. P0 ships
+the isolation interface and fail-closed gate but no isolated backend. Output is an
+exact managed tree containing `predictions.json`, `provenance.json`,
+`checksums.json`, and only referenced masks. The packaged registry and runner maps
+remain empty, so the installed default cannot execute a real adaptive model.
 
 The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
 exact managed bundles. It pins bounded input and artifact descriptors, runs only a
@@ -225,7 +237,7 @@ never lists itself; when an enclosing output digest exists, that digest covers t
 manifest bytes. A missing, extra, duplicate, reordered, self-referential, or
 mismatched entry is invalid.
 
-`ManagedOutputTransaction` is the shared implementation for these future
+`ManagedOutputTransaction` is the shared implementation for these
 repository-owned trees. It pins the approved root and destination parent, uses
 directory-relative no-follow operations, and publishes a fresh same-filesystem
 stage only after every declared file and the control manifest validate. `force`
@@ -364,7 +376,7 @@ may be selected only when the request allows Experimental. Candidate-channel and
 Research-only work are never selectable. `CandidateEvaluation` is only the name of
 an evaluation record; it does not make a Candidate-channel bundle selectable.
 
-The adaptive-routing capability itself remains future delivery whose target product
+The remaining adaptive-routing capability remains future delivery whose target product
 classification is Experimental. Selecting a Stable-channel bundle does not promote
 adaptive routing itself to Stable.
 
@@ -783,7 +795,9 @@ The tool is MCP-only and `mcp_live`, not `guaranteed_ai_safe`. Optional custom
 registry and evidence roots stay workspace-confined and operator-asserted; they
 cannot self-assign public trust. The default packaged registry and public evidence
 stream remain empty, so an installed default call currently abstains. No
-SelectionDecision starts inference. Pinned execution is a separate capability.
+SelectionDecision starts inference. `process_images` is the separate explicit
+pinned-execution surface: it defaults to dry-run, rejects stale decisions, and
+cannot run until a real governed bundle and code-owned route are registered.
 
 ## Illustrative decisions
 

@@ -55,6 +55,11 @@ support claim, benchmark result, or adoption snapshot.
 - The recommendation service performs no inference, model import, download,
   write, network request, or natural-language parsing. It does not return absolute
   paths, raw probe output, per-file hashes, filenames, or prompt text.
+- The Experimental MCP-only `process_images` service requires that complete
+  selected decision, repeats current lifecycle/evidence/environment/workload/input/
+  resolver/artifact/class-mapping checks, and defaults to a runner-free, no-write
+  dry-run. Explicit execution is restricted to registered code-owned network-free
+  routes and an exact bounded managed output tree.
 
 ## Evidence boundary
 
@@ -74,5 +79,7 @@ coverage is recorded as `unknown` and cannot satisfy a hard memory gate.
 Real measurement begins only after a bundle, artifacts, lifecycle/license review,
 and audited code-owned runner are registered. Read-only recommendation is exposed
 through MCP, but the empty registry and evidence store mean the default call
-abstains and no report is active. Model adapters and adaptive image execution remain
-separate Beads tasks. A smoke run can never be promoted to `qualified`.
+abstains and no report is active. The pinned processing interface is implemented,
+but the empty registry and runner maps mean no real adaptive model can execute.
+Model adapters remain separate Beads tasks. A smoke run can never be promoted to
+`qualified`.

@@ -99,6 +99,11 @@ class TestAdaptiveRecommendation(unittest.TestCase):
                 result["recommendation_metadata"]["artifact_observations"],
                 [],
             )
+            self.assertIsNone(
+                result["recommendation_metadata"][
+                    "selected_artifact_resolver_state_digest"
+                ]
+            )
             rendered = repr(result)
             self.assertNotIn(str(workspace), rendered)
             self.assertNotIn("input.png", rendered)

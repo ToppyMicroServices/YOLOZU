@@ -21,7 +21,7 @@ If your team already has inference outputs and wants fair evaluation without rew
 | Area | Maturity | Production posture | Primary references |
 |---|---|---|---|
 | Predictions validation/evaluation | Stable | Default production lane | [`predictions_schema.md`](predictions_schema.md), [`external_inference.md`](external_inference.md), [`../README.md`](../README.md) |
-| Environment-qualified adaptive local vision | Experimental read-only MCP recommendation; qualification, reviewed activation, and pure-selection foundations implemented | `doctor` emits a privacy-safe EnvironmentProfile. `qualify-image-pipeline` pins bounded inputs/assets, runs the frozen repeat/soak protocol behind a child-process watchdog, and publishes an unactivated managed report. `activate-qualification-evidence` dry-runs every trust, freshness, lifecycle, and stale-head gate and mutates only with explicit review plus `--approve`. `recommend_image_pipeline` validates a structured local job and returns a selected or abstained SelectionDecision without inference, downloads, writes, network access, or natural-language parsing. Local reports are limited to site-qualified scope; arbitrary JSON remains nonselectable. The packaged registry, runner map, and public evidence stream are empty, so the default recommendation abstains, no real bundle can run, and no support evidence is claimed. No model adapter or adaptive execution surface is available. | [`doctor_diagnostics.md`](doctor_diagnostics.md), [`adaptive_image_routing.md`](adaptive_image_routing.md), [`../reports/adaptive_qualification_foundation_2026-08-25.md`](../reports/adaptive_qualification_foundation_2026-08-25.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md), [`roadmap.md`](roadmap.md) |
+| Environment-qualified adaptive local vision | Experimental MCP recommendation and pinned processing; qualification, reviewed activation, and pure-selection foundations implemented | `doctor` emits a privacy-safe EnvironmentProfile. `qualify-image-pipeline` pins bounded inputs/assets, runs the frozen repeat/soak protocol behind a child-process watchdog, and publishes an unactivated managed report. `activate-qualification-evidence` dry-runs every trust, freshness, lifecycle, and stale-head gate and mutates only with explicit review plus `--approve`. `recommend_image_pipeline` returns a selected or abstained SelectionDecision without execution. `process_images` requires that complete decision, repeats pinned current-state checks, defaults to no-write dry-run, and permits explicit bounded managed publication only through registered code-owned network-free routes. Local reports are limited to site-qualified scope; arbitrary JSON remains nonselectable. The packaged registry, runner maps, and public evidence stream are empty, so the default recommendation abstains, no real bundle can run, and no support or performance evidence is claimed. No model adapter is available. | [`doctor_diagnostics.md`](doctor_diagnostics.md), [`adaptive_image_routing.md`](adaptive_image_routing.md), [`../reports/adaptive_qualification_foundation_2026-08-25.md`](../reports/adaptive_qualification_foundation_2026-08-25.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md), [`roadmap.md`](roadmap.md) |
 | Dataset I/O and mask-only label derivation | Deferred as standalone capabilities | Implemented and tested inside dataset workflows, but implementation presence and a Stable parent CLI are not standalone production-readiness evidence | [`yolozu_spec.md`](yolozu_spec.md), [`dataset_contract.md`](dataset_contract.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Inference constraints and template gating | Deferred as standalone capabilities | Adapter-internal utilities with no independent public production lane; qualify them with the consuming model and protocol | [`yolozu_spec.md`](yolozu_spec.md), [`gate_weight_tuning.md`](gate_weight_tuning.md), [`ssot_capability_coverage_audit.md`](ssot_capability_coverage_audit.md) |
 | Backend parity / benchmark orchestration | Experimental | Useful after environment-specific qualification; classification, OBB, segmentation, keypoints, depth, and pose6d have artifact-backed real eval/parity lanes, without claiming backend inference | [`backend_parity_matrix.md`](backend_parity_matrix.md), [`benchmark_mode.md`](benchmark_mode.md), `manual/chapters/09_parity_bench_protocols.tex` |
@@ -87,8 +87,8 @@ These are the areas to rely on first for production adoption.
 ## Experimental adaptive local vision program
 
 The adaptive local-vision roadmap targets an Experimental lane. The current
-read-only recommendation surface does not add a current model, adaptive execution,
-streaming, tracking, or OCR support claim. Its machine-readable scope is
+recommendation and pinned-processing surfaces do not add a current model,
+streaming, tracking, or OCR support claim. Their machine-readable scope is
 [`adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json),
 and the generated public projection is
 [`adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md). Live progress
@@ -102,8 +102,10 @@ only the packaged SSOT or operator-asserted workspace catalog. A separate pure
 selector evaluates validated in-memory inputs without I/O. The Experimental MCP-only
 `recommend_image_pipeline` service adds bounded read-only orchestration over those
 components. The default packaged registry is empty and therefore abstains. The
-service does not provide a model adapter or execution capability, and its presence
-is not model availability or qualification evidence.
+paired `process_images` service adds dry-run-by-default pinned revalidation and an
+explicit bounded execution/publication gate. The packaged runner maps are empty,
+so it cannot currently run a real model. Neither service provides a model adapter,
+and their presence is not model availability or qualification evidence.
 
 ## Experimental
 

@@ -54,6 +54,7 @@
         "eval_coco",
         "predict_images",
         "recommend_image_pipeline",
+        "process_images",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -12727,6 +12728,152 @@
         "pascal_voc",
         "voc",
         "segmentation"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "image_job_spec_json",
+          "selection_decision_json"
+        ],
+        "produces": [
+          "managed_output_checksums_json",
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/ai_first.md",
+        "docs/llm_integrations.md",
+        "docs/production_readiness.md",
+        "docs/schema_governance.md",
+        "docs/ssot_capability_coverage_audit.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "On explicit dry_run=false, atomically publishes only predictions.json, provenance.json, checksums.json, and referenced masks below output_dir.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the process_images MCP tool with job_spec, the complete selected SelectionDecision, workspace-relative input_path/output_dir, and dry_run=true.",
+          "description": "Revalidate the pinned selection and all local state without importing or calling a runner or writing output."
+        },
+        {
+          "command": "Call the process_images MCP tool again with the same pinned inputs and dry_run=false after reviewing the preflight result.",
+          "description": "Execute only the selected registered code-owned route and publish the bounded managed output tree."
+        }
+      ],
+      "id": "process_images",
+      "inputs": [
+        {
+          "description": "Structured ImageJobSpec v1 object; natural-language parsing remains in the calling AI client.",
+          "kind": "json",
+          "name": "job_spec",
+          "required": true
+        },
+        {
+          "description": "Complete selected SelectionDecision returned by recommend_image_pipeline.",
+          "kind": "json",
+          "name": "selection_decision",
+          "required": true
+        },
+        {
+          "description": "Workspace-confined image file or bounded direct image directory matching the pinned job.",
+          "kind": "string",
+          "name": "input_path",
+          "required": true
+        },
+        {
+          "description": "Fresh or exactly validated managed destination below the workspace.",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined custom registry directory; operator_asserted registries remain non-selectable.",
+          "kind": "dir",
+          "name": "registry_root",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined evidence directory using the same trust semantics as recommendation.",
+          "kind": "dir",
+          "name": "evidence_root",
+          "required": false
+        },
+        {
+          "default": null,
+          "description": "Optional workspace-confined local artifact root; omission uses the existing YOLOZU model cache.",
+          "kind": "dir",
+          "name": "artifact_root",
+          "required": false
+        },
+        {
+          "default": true,
+          "description": "When true, stop after full read-only pinned preflight before runner creation or output mutation.",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "default": false,
+          "description": "When true, replace only an exact prior managed output whose checksum manifest validates.",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Structured dry-run or execution result with no absolute paths or raw runner output.",
+          "kind": "json",
+          "name": "processing_result_json"
+        },
+        {
+          "default": null,
+          "description": "For dry_run=false only, managed predictions/provenance/checksums tree with optional referenced masks.",
+          "kind": "dir",
+          "name": "managed_output"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes.",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "experimental",
+        "local-inference",
+        "mcp",
+        "pinned-execution",
+        "qualification",
+        "routing"
       ]
     },
     {

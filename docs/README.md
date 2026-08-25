@@ -50,9 +50,10 @@ The environment-qualified local image-processing program targets an Experimental
   defaults to a no-write gate report and mutates only with explicit review and
   `--approve`. A file-free pure selector now evaluates already validated records,
   and the MCP-only `recommend_image_pipeline` tool exposes its bounded read-only
-  recommendation path. The packaged registry and evidence stream are empty, so
-  the default response is abstention. No model adapter or adaptive execution
-  surface is available.
+  recommendation path. MCP-only `process_images` adds pinned revalidation,
+  dry-run-by-default execution gating, and bounded managed output publication.
+  The packaged registry, evidence stream, and runner maps are empty, so the
+  default response is abstention and no real adaptive model can currently run.
 
 ## Primary Focus
 

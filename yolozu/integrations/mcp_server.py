@@ -27,6 +27,7 @@ from .tool_runner import (
     jobs_status,
     parity_check,
     predict_images,
+    process_images,
     recommend_image_pipeline,
     run_scenarios,
     runs_describe,
@@ -281,6 +282,32 @@ def recommend_image_pipeline_tool(
         registry_root=registry_root,
         evidence_root=evidence_root,
         artifact_root=artifact_root,
+    )
+
+
+@app.tool(name="process_images")
+def process_images_tool(
+    job_spec: dict[str, object],
+    selection_decision: dict[str, object],
+    input_path: str,
+    output_dir: str,
+    registry_root: str | None = None,
+    evidence_root: str | None = None,
+    artifact_root: str | None = None,
+    dry_run: bool = True,
+    force: bool = False,
+) -> dict:
+    """Revalidate and optionally execute one pinned selected image pipeline."""
+    return process_images(
+        job_spec=job_spec,
+        selection_decision=selection_decision,
+        input_path=input_path,
+        output_dir=output_dir,
+        registry_root=registry_root,
+        evidence_root=evidence_root,
+        artifact_root=artifact_root,
+        dry_run=dry_run,
+        force=force,
     )
 
 

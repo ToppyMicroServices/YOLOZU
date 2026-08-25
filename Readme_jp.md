@@ -145,7 +145,13 @@ runner、networkへのI/Oは行いません。ExperimentalかつMCP-onlyの
 完全なSelectionDecisionまたは正直なabstentionを返します。inference、assetのdownloadや
 write、自然言語parse、absolute pathやraw probe outputの返却は行いません。packaged
 registryとpublic evidence streamは空なので、default callは現在abstainします。model
-adapterとadaptive execution pathはまだありません。activation
+adapterはまだありません。ExperimentalかつMCP-onlyの`process_images`は、完全なselected
+decisionを受け取り、job、現在のlifecycle/evidence、environment、workload、input、class mapping、
+pinned artifact stateを再検証します。defaultは書き込みを行わない`dry_run=true`です。明示的な
+実行では、登録済みのcode-ownedかつnetwork-freeなrouteだけを使い、managedな
+predictions/provenance/checksum treeをatomicに公開します。ただしpackaged registryとrunner
+mapは空のため、現時点で実際のadaptive modelは実行できず、model adapterや性能実績を追加した
+ものではありません。activation
 recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。

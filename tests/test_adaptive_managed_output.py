@@ -15,6 +15,7 @@ from yolozu.adaptive.managed_output import (
     ManagedOutputLimits,
     ManagedOutputTransaction,
     recover_managed_output,
+    validate_managed_output_destination,
 )
 
 
@@ -43,6 +44,40 @@ class _InjectedFailure(RuntimeError):
 
 
 class ManagedOutputTransactionTests(TestCase):
+    def test_read_only_destination_preflight_requires_exact_managed_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            validate_managed_output_destination(
+                root=root,
+                destination="fresh",
+                limits=LIMITS,
+            )
+            self.assertFalse((root / "fresh").exists())
+            _publish(root, "result", {"predictions.json": b"[]"})
+            with self.assertRaises(ManagedOutputError) as existing:
+                validate_managed_output_destination(
+                    root=root,
+                    destination="result",
+                    limits=LIMITS,
+                )
+            self.assertEqual(existing.exception.code, "destination_exists")
+            validate_managed_output_destination(
+                root=root,
+                destination="result",
+                limits=LIMITS,
+                force=True,
+            )
+            (root / "result" / "unknown.txt").write_bytes(b"caller")
+            with self.assertRaises(ManagedOutputError) as unknown:
+                validate_managed_output_destination(
+                    root=root,
+                    destination="result",
+                    limits=LIMITS,
+                    force=True,
+                )
+            self.assertEqual(unknown.exception.code, "tree_membership_mismatch")
+            self.assertEqual((root / "result" / "unknown.txt").read_bytes(), b"caller")
+
     def test_publish_builds_exact_manifest_and_reports_scoped_capabilities(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

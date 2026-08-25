@@ -672,6 +672,13 @@
     "title": "prepare_voc_seg"
   },
   {
+    "href": "commands.html#tool-process-images",
+    "kind": "command",
+    "search_text": "process_images Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes. experimental yolozu/integrations/mcp_server.py    --output-dir     ",
+    "summary": "Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes.",
+    "title": "process_images"
+  },
+  {
     "href": "commands.html#tool-publish-benchmark-table",
     "kind": "command",
     "search_text": "publish_benchmark_table Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. stable tools/publish_benchmark_table.py --report --output-json --output-md --title --cadence --protocol-id --source-command --publication-run-id",
