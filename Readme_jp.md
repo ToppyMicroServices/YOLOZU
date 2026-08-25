@@ -120,6 +120,8 @@ flowchart LR
 
 目標とする設計では、AI clientが自然言語をtyped requestへ変換し、YOLOZUはtask、hardware、runtime、workload、protocol、licenseの条件に一致するqualification済みpipelineだけを選択対象にします。証拠が不足または不一致なら、“best”を推測せずabstainします。recommendationとexecutionはlocalで動き、assetを暗黙にdownloadしません。
 
+request、evidence、eligibility observation、SelectionDecisionの厳密なinterface contractはpackaged済みです。selector、recommendation service、adapter、execution pathはまだ利用できません。
+
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
 ## Capability Maturity

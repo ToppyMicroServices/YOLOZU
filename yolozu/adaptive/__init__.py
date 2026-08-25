@@ -66,6 +66,15 @@ from .inventory import (
     DecodedInputObservation,
     build_decoded_input_inventory,
 )
+from .selection import (
+    CANDIDATE_REASON_CODES,
+    ScreeningEligibilityObservation,
+    SelectionDecision,
+    SupportProfileEligibilityObservation,
+    validate_screening_eligibility_observation,
+    validate_selection_decision,
+    validate_support_profile_eligibility_observation,
+)
 
 __all__ = [
     "AlgorithmBundleRegistry",
@@ -74,6 +83,7 @@ __all__ = [
     "BundleLifecycleProjection",
     "BundleLifecycleRecord",
     "CANONICAL_DECIMAL_V1_PATTERN",
+    "CANDIDATE_REASON_CODES",
     "DecodedInputInventory",
     "DecodedInputObservation",
     "EnvironmentProfile",
@@ -83,7 +93,10 @@ __all__ = [
     "LocalArtifactInventory",
     "QualificationWorkloadProfile",
     "QualificationReport",
+    "ScreeningEligibilityObservation",
+    "SelectionDecision",
     "SupportProfileProjection",
+    "SupportProfileEligibilityObservation",
     "SupportProfileRecord",
     "SupportProfileSpec",
     "VerifiedArtifact",
@@ -118,6 +131,9 @@ __all__ = [
     "validate_local_artifact_inventory",
     "validate_qualification_workload_profile",
     "validate_qualification_report",
+    "validate_screening_eligibility_observation",
+    "validate_selection_decision",
+    "validate_support_profile_eligibility_observation",
     "validate_support_profile_record",
     "validate_support_profile_spec",
 ]

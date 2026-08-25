@@ -61,6 +61,9 @@ jobs:
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/schemas/screening_eligibility_observation.schema.json",
+            "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
+            "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           with zipfile.ZipFile(wheels[-1], "r") as archive:
@@ -198,6 +201,9 @@ jobs:
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/schemas/screening_eligibility_observation.schema.json",
+            "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
+            "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           wheels = sorted(glob.glob("dist/*.whl"))

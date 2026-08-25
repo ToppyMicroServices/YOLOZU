@@ -13,7 +13,8 @@ delivery work whose target product classification is Experimental.
 
 The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
-inventory, qualification report, and evidence activation interface contracts.
+inventory, qualification report, evidence activation, screening/support eligibility
+observations, and selection-decision interface contracts.
 The public bundle registry, lifecycle/support/activation streams, and qualification
 report directory contain no selectable evidence. These contract surfaces are not a
 qualifier, evidence loader, selector, adapter, or execution capability.
@@ -701,14 +702,14 @@ A text request with only fixed-class evidence abstains without choosing a fallba
 }
 ```
 
-The eventual `SelectionDecision` interface contract adds the complete bounded digests,
-candidate evaluations, evidence identities, trace, and decision time. These shortened
-examples do not define that schema.
+The implemented `SelectionDecision` interface contract adds the complete bounded
+digests, candidate evaluations, evidence identities, trace, and decision time. These
+shortened policy examples are intentionally not valid schema instances.
 
 ## Non-goals
 
-- No Python implementation, JSON Schema, model integration, model download, or
-  benchmark run is part of this decision.
+- No selector, model integration, model download, or benchmark run is made available
+  by these interface contracts.
 - No current algorithm is claimed to meet an accuracy, latency, throughput, memory,
   soft-real-time, or hardware-support objective.
 - No implicit network access, dependency installation, model acquisition, training,

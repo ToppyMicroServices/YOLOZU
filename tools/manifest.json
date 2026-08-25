@@ -197,6 +197,10 @@
       "summary": "Run provenance metadata interface contract emitted at runs/<run_id>/reports/run_meta.json.",
       "validator": "python3 tools/validate_run_meta.py <path>"
     },
+    "screening_eligibility_observation_json": {
+      "schema": "docs/schemas/screening_eligibility_observation.schema.json",
+      "summary": "Bounded screening projection input for one immutable bundle; the pure future selector does not open screening streams."
+    },
     "sdft_continual_qualification_json": {
       "producer": "python3 tools/qualify_sdft_continual.py --output-dir <fresh-dir>",
       "schema": "docs/schemas/sdft_continual_qualification.schema.json",
@@ -215,6 +219,14 @@
       "schema": "docs/schemas/segmentation_predictions.schema.json",
       "summary": "Segmentation predictions JSON (list of {id,mask} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_segmentation_predictions.py <path>"
+    },
+    "selection_decision_json": {
+      "schema": "docs/schemas/selection_decision.schema.json",
+      "summary": "Complete bounded selected or abstained future adaptive-routing decision with sensitive local digests and explicit candidate reasons."
+    },
+    "support_profile_eligibility_observation_json": {
+      "schema": "docs/schemas/support_profile_eligibility_observation.schema.json",
+      "summary": "Bounded support-profile projection input for one immutable bundle and lifecycle channel; the pure future selector opens no support or lifecycle stream."
     },
     "support_profile_record_json": {
       "schema": "docs/schemas/support_profile_record.schema.json",
