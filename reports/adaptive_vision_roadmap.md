@@ -4,7 +4,7 @@
 
 Snapshot: `2026-08-25` (Asia/Tokyo)
 Planning root: `YOLOZU-ll2.81`
-Beads export commit: `5d3b4f38f87e64db50b9729edcda702f284373d3`
+Beads export commit: `063cfd217c55123bf0456c556927daa2e0b7a168`
 
 > This is a roadmap projection, not qualification evidence. It does not make the adaptive router, model adapters, streaming, tracking, or OCR available in the current release.
 
@@ -86,4 +86,4 @@ Beads is the source of truth for live issue state, dependencies, and completion.
 The packaged JSON at `yolozu/data/manifest/adaptive_vision_roadmap.json` is the dated public scope projection.
 This report is generated at `reports/adaptive_vision_roadmap.md`.
 Refresh Beads with bash refresh_beads_sync.sh before relying on issue status.
-The next foundation decision is `YOLOZU-ll2.81.1.8`.
+The next foundation decision is `YOLOZU-ll2.81.1.9`.

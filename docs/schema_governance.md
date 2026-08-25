@@ -71,6 +71,13 @@ basenames. The packaged pair is `yolozu_managed`; a custom pair is always
 the complete bounded input and deterministic bundle order without fetching assets,
 importing a model runtime, or making a bundle selectable.
 
+Managed output trees use the code-owned `checksums.json` interface contract in
+`yolozu/adaptive/managed_output.py`. The manifest lists every other declared file
+in validated UTF-8 byte order and never lists itself. It has no caller-authored
+schema location or mutable projection: `ManagedOutputTransaction` generates the
+canonical bytes and the same helper validates them before publication, force
+replacement, cleanup, or recovery.
+
 ## Scope
 
 This governance applies to wrapped prediction-style payloads that include:

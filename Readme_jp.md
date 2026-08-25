@@ -125,9 +125,12 @@ request、environment、evidence、eligibility observation、SelectionDecision �
 privacy-safe な live `environment_profile` を返します。probe failure は unknown
 のままで、accelerator 不在の証明には使いません。packaged された空のbundle
 registryは、model runtimeをimportせずに検証して読み込めます。明示したworkspace
-catalogはoperator-assertedのままで、選択対象にはなりません。selector、
-recommendation service、adapter、execution path はまだ利用できず、registryの
-読み込みもenvironment profileもqualification evidenceにはなりません。
+catalogはoperator-assertedのままで、選択対象にはなりません。POSIX専用の
+`ManagedOutputTransaction` helperは、将来のqualifier/execution向けにboundedな
+no-follow output publicationとfail-closed recoveryを提供しますが、画像処理command
+ではありません。selector、recommendation service、adapter、execution path は
+まだ利用できません。registryの読み込み、environment profile、output publication
+はいずれもqualification evidenceにはなりません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
