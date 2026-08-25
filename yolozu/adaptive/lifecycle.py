@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -71,7 +70,6 @@ _PUBLIC_CHANNELS = frozenset({"Experimental", "Stable"})
 _OPERATIONS = frozenset(
     {"disable", "enable", "revoke", "review-license", "rollback-channel"}
 )
-_LICENSE_STATES = frozenset({"approved", "unknown", "blocked"})
 
 FaultHook = Callable[[str], None]
 
@@ -710,11 +708,9 @@ def update_image_pipeline_lifecycle(
         _gate(gates, "occurred_at_invalid", str(exc))
         occurred_text, occurred = _utc(None)
     try:
-        workspace = resolve_workspace_root(workspace_root)
-        loaded = _load_state(workspace)
+        loaded = _load_state(resolve_workspace_root(workspace_root))
     except (OSError, TypeError, ValueError) as exc:
         _gate(gates, "canonical_state_invalid", str(exc))
-        workspace = Path(os.path.abspath(Path(workspace_root)))
 
     if family_id is None or _COMPONENT_RE.fullmatch(family_id) is None:
         _gate(gates, "family_id_invalid", "an exact bounded family_id is required")
