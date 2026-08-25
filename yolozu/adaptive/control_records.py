@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 __all__ = [
+    "MAX_CONTROL_DEPTH",
+    "MAX_CONTROL_INTEGER_BYTES",
     "MAX_CONTROL_KEY_BYTES",
     "MAX_CONTROL_NODES",
     "MAX_CONTROL_RECORD_BYTES",
@@ -25,6 +27,7 @@ MAX_CONTROL_DEPTH = 64
 MAX_CONTROL_NODES = 100_000
 MAX_CONTROL_KEY_BYTES = 256
 MAX_CONTROL_STRING_BYTES = 1024 * 1024
+MAX_CONTROL_INTEGER_BYTES = 128
 
 _NUMBER_RE = re.compile(r"-?(?:0|[1-9][0-9]*)")
 
@@ -91,20 +94,26 @@ class _BoundedParser:
         start = self.position
         self.position += 1
         pieces: list[str] = []
+        byte_count = 0
+
+        def append(piece: str) -> None:
+            nonlocal byte_count
+            byte_count += len(piece.encode("utf-8"))
+            if byte_count > maximum:
+                raise ValueError(f"{self.label}: {field} exceeds byte limit")
+            pieces.append(piece)
+
         while self.position < len(self.text):
             character = self.text[self.position]
             if character == '"':
                 self.position += 1
-                value = "".join(pieces)
-                if len(value.encode("utf-8")) > maximum:
-                    raise ValueError(f"{self.label}: {field} exceeds byte limit")
-                return value
+                return "".join(pieces)
             if ord(character) <= 0x1F:
                 raise ValueError(f"{self.label}: unescaped control character in string")
             if character != "\\":
                 if 0xD800 <= ord(character) <= 0xDFFF:
                     raise ValueError(f"{self.label}: surrogate code point is invalid")
-                pieces.append(character)
+                append(character)
                 self.position += 1
                 continue
             self.position += 1
@@ -123,7 +132,7 @@ class _BoundedParser:
                 "t": "\t",
             }
             if escape in simple:
-                pieces.append(simple[escape])
+                append(simple[escape])
                 continue
             if escape != "u" or self.position + 4 > len(self.text):
                 break
@@ -148,7 +157,7 @@ class _BoundedParser:
                 codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low - 0xDC00)
             elif 0xDC00 <= codepoint <= 0xDFFF:
                 raise ValueError(f"{self.label}: unpaired surrogate escape")
-            pieces.append(chr(codepoint))
+            append(chr(codepoint))
         self.position = start
         raise ValueError(f"{self.label}: malformed JSON string")
 
@@ -160,6 +169,10 @@ class _BoundedParser:
         if end < len(self.text) and self.text[end] in ".eE":
             raise ValueError(f"{self.label}: binary/fractional JSON numbers are invalid")
         token = match.group(0)
+        if len(token.encode("ascii")) > MAX_CONTROL_INTEGER_BYTES:
+            raise ValueError(f"{self.label}: integer token exceeds byte limit")
+        if token == "-0":
+            raise ValueError(f"{self.label}: negative zero is non-canonical")
         self.position = end
         return int(token)
 

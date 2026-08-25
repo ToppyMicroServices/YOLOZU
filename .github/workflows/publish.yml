@@ -38,7 +38,10 @@ jobs:
       - name: Validate adaptive vision roadmap projection
         run: |
           python3 tools/generate_adaptive_vision_roadmap.py --check --json
-          python3 -m unittest tests.test_adaptive_vision_roadmap_generator tests.test_adaptive_environment_profile -v
+          python3 -m unittest \
+            tests.test_adaptive_vision_roadmap_generator \
+            tests.test_adaptive_environment_profile \
+            tests.test_adaptive_bundle_registry -v
 
       - name: Build wheel only
         run: |
@@ -64,6 +67,8 @@ jobs:
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
+            "yolozu/data/adaptive_routing/bundle_specs.json",
+            "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           with zipfile.ZipFile(wheels[-1], "r") as archive:
@@ -180,7 +185,10 @@ jobs:
       - name: Validate adaptive vision roadmap projection
         run: |
           python3 tools/generate_adaptive_vision_roadmap.py --check --json
-          python3 -m unittest tests.test_adaptive_vision_roadmap_generator tests.test_adaptive_environment_profile -v
+          python3 -m unittest \
+            tests.test_adaptive_vision_roadmap_generator \
+            tests.test_adaptive_environment_profile \
+            tests.test_adaptive_bundle_registry -v
 
       - name: Build
         run: |
@@ -204,6 +212,8 @@ jobs:
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
+            "yolozu/data/adaptive_routing/bundle_specs.json",
+            "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           wheels = sorted(glob.glob("dist/*.whl"))

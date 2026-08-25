@@ -146,6 +146,13 @@ Schema file: `docs/schemas/predictions_validation_result.schema.json`
 interface contract. Failed or unsupported probes remain unknown; the record is
 not model qualification evidence.
 
+For integration code, `yolozu.adaptive.load_algorithm_bundle_registry()` validates
+the exact packaged bundle/lifecycle SSOT and returns explicit source trust plus a
+deterministic bundle order. The packaged default is empty. A custom catalog requires
+an explicit workspace-confined directory and remains `operator_asserted`; it cannot
+become selectable through JSON claims. Loading does not import model runtimes,
+download assets, recommend a bundle, or run inference.
+
 ### 5.2 `generate_config` response schema
 
 Schema file: `docs/schemas/ai_generate_config.schema.json`

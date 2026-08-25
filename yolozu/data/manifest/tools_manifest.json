@@ -80,7 +80,7 @@
     },
     "algorithm_bundle_registry_json": {
       "schema": "docs/schemas/algorithm_bundle_registry.schema.json",
-      "summary": "Bounded immutable bundle set for future Experimental adaptive routing; the packaged default is empty and selects nothing."
+      "summary": "Bounded immutable bundle set loaded from the packaged SSOT or as operator-asserted custom catalog input; the packaged default is empty and selects nothing."
     },
     "algorithm_bundle_spec_json": {
       "schema": "docs/schemas/algorithm_bundle_spec.schema.json",
@@ -108,7 +108,7 @@
     },
     "bundle_lifecycle_record_json": {
       "schema": "docs/schemas/bundle_lifecycle_record.schema.json",
-      "summary": "Append-only global bundle state and per-channel pointer record for future Experimental adaptive routing."
+      "summary": "Append-only bundle state and channel-pointer record loaded with explicit managed or operator-asserted source trust for future Experimental routing."
     },
     "coco_eval_report_json": {
       "producer": "python3 tools/eval_coco.py",
