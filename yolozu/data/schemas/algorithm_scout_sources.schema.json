@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/algorithm_scout_sources.schema.json",
+  "title": "YOLOZU algorithm scout source allowlist",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schema_version",
+    "sources"
+  ],
+  "properties": {
+    "kind": {
+      "const": "yolozu_algorithm_scout_sources"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    }
+  },
+  "$defs": {
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheme",
+        "host",
+        "path"
+      ],
+      "properties": {
+        "scheme": {
+          "const": "https"
+        },
+        "host": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9.-]{1,253}$"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/[^?#]{0,4095}$"
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "available",
+        "unavailable",
+        "unknown"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "enabled",
+        "location",
+        "redirect_allowlist",
+        "identity",
+        "tasks",
+        "availability",
+        "license",
+        "weights",
+        "runtime_hints"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "redirect_allowlist": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/location"
+          }
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "project",
+            "model"
+          ],
+          "properties": {
+            "project": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "availability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "local",
+            "hosted"
+          ],
+          "properties": {
+            "local": {
+              "$ref": "#/$defs/status"
+            },
+            "hosted": {
+              "$ref": "#/$defs/status"
+            }
+          }
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "expression"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "approved",
+                "rejected",
+                "review_required",
+                "unknown"
+              ]
+            },
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "$ref": "#/$defs/status"
+            }
+          }
+        },
+        "runtime_hints": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    }
+  }
+}

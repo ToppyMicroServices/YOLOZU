@@ -84,6 +84,7 @@ else
     tests.test_adaptive_evidence_contracts \
     tests.test_adaptive_environment_profile \
     tests.test_adaptive_bundle_registry \
+    tests.test_adaptive_algorithm_scout \
     tests.test_adaptive_managed_output \
     tests.test_adaptive_recommendation \
     tests.test_adaptive_processing \

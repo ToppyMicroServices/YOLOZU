@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,scout-algorithms,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,scout-algorithms,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -38,6 +38,7 @@ positional arguments:
                         Measure one exact local image bundle (Experimental).
     activate-qualification-evidence
                         Review one exact qualification report; dry-run unless --approve is set.
+    scout-algorithms    Plan or collect a bounded monitored-source candidate inbox (Experimental).
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
 
@@ -284,6 +285,7 @@ Contact: develop@toppymicros.com
 | run_trt_pipeline | experimental | tools/run_trt_pipeline.py | Orchestrate the YOLO26 TensorRT pipeline (engine build → predictions export → parity → eval_suite → latency report). |
 | run_ttt_compare | research | tools/run_ttt_compare.py | Run a fail-closed seeded TTT comparison with full checkpoint preflight, real COCO evaluation, adaptation-cost counters, and a concise detector-response boilerplate for selected foreground class/box consistency. |
 | run_ttt_evidence_suite | research | tools/run_ttt_evidence_suite.py | Run and aggregate a fail-closed five-method clean/shifted TTT matrix for at least three seeds. |
+| scout_algorithms | experimental | tools/scout_algorithms.py | Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything. |
 | smoke | stable | scripts/smoke.sh | Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks. |
 | smoke_synthgen | experimental | tools/smoke_synthgen.py | Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks. |
 | summarize_bop19_pose_evidence | research | tools/summarize_bop19_pose_evidence.py | Combine official BOP19 VSD/MSSD/MSPD scores with matched rotation, translation, ADD, ADD-S, symmetry-aware pose success, and optional independent reproduction. |

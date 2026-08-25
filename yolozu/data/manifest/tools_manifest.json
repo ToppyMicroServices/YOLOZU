@@ -88,6 +88,15 @@
       "schema": "docs/schemas/algorithm_bundle_spec.schema.json",
       "summary": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts; presence is not qualification or availability evidence."
     },
+    "algorithm_scout_report_json": {
+      "producer": "python3 tools/scout_algorithms.py --sources docs/algorithm_intake/sources.json --output-dir reports/algorithm_scout --collection-date <YYYY-MM-DD> --trigger <schedule|workflow_dispatch> --collect",
+      "schema": "docs/schemas/algorithm_scout_report.schema.json",
+      "summary": "Dated Experimental monitored-source inbox metadata; this interface contract is not loadable as a bundle registry and is not qualification, support, recommendation, adoption, or promotion evidence."
+    },
+    "algorithm_scout_sources_json": {
+      "schema": "docs/schemas/algorithm_scout_sources.schema.json",
+      "summary": "Canonical credential-free HTTPS scheme/host/path allowlist for the bounded algorithm scout."
+    },
     "artifact_research_qualification_json": {
       "producer": "python3 tools/qualify_artifact_research.py",
       "schema": "docs/schemas/artifact_research_qualification.schema.json",
@@ -17303,6 +17312,127 @@
         "benchmark",
         "evidence",
         "reproducibility"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "algorithm_scout_sources_json"
+        ],
+        "produces": [
+          "algorithm_scout_report_json",
+          "managed_output_checksums_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/README.md",
+        "docs/adaptive_image_routing.md",
+        "docs/algorithm_intake/README.md",
+        "docs/schemas/algorithm_scout_report.schema.json",
+        "docs/schemas/algorithm_scout_sources.schema.json",
+        "manual/chapters/04_cli_reference.tex",
+        "reports/adaptive_algorithm_scout_foundation_2026-08-26.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "With --collect only, atomically publish one dated bounded candidate inbox and checksums manifest inside the workspace.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/scout_algorithms.py",
+      "examples": [
+        {
+          "command": "python3 tools/scout_algorithms.py --sources docs/algorithm_intake/sources.json --output-dir reports/algorithm_scout --collection-date 2026-08-26 --trigger workflow_dispatch",
+          "description": "Validate the canonical allowlist and print a network-free, write-free JSON plan."
+        },
+        {
+          "command": "python3 tools/scout_algorithms.py --sources docs/algorithm_intake/sources.json --output-dir reports/algorithm_scout --collection-date 2026-08-26 --trigger workflow_dispatch --collect",
+          "description": "Collect only bounded metadata from the explicit official-source allowlist and publish one dated inbox report."
+        },
+        {
+          "command": "python3 tools/scout_algorithms.py --help",
+          "description": "Inspect the Experimental monitored-source interface contract."
+        }
+      ],
+      "id": "scout_algorithms",
+      "inputs": [
+        {
+          "flag": "--sources",
+          "kind": "file",
+          "name": "sources",
+          "required": true
+        },
+        {
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "flag": "--collection-date",
+          "kind": "string",
+          "name": "collection_date",
+          "required": true
+        },
+        {
+          "flag": "--trigger",
+          "kind": "string",
+          "name": "trigger",
+          "required": true
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--collect",
+          "kind": "string",
+          "name": "collect",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "<output-dir>/<collection-date>/algorithm_scout_report.json",
+          "description": "Dated candidate inbox with explicit failed/unknown fields and no retained raw source document.",
+          "kind": "file",
+          "name": "algorithm_scout_report"
+        },
+        {
+          "default": "<output-dir>/<collection-date>/checksums.json",
+          "description": "Code-owned checksum manifest for the dated report.",
+          "kind": "file",
+          "name": "checksums"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": true
+      },
+      "runner": "python3",
+      "summary": "Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything.",
+      "tags": [
+        "adaptive-inference",
+        "algorithm-scout",
+        "candidate",
+        "experimental",
+        "provenance"
       ]
     },
     {

@@ -22,6 +22,10 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/algorithm_bundle_spec.schema.json`
 - `docs/schemas/algorithm_bundle_registry.schema.json` and
   `yolozu/data/schemas/algorithm_bundle_registry.schema.json`
+- `docs/schemas/algorithm_scout_sources.schema.json` and
+  `yolozu/data/schemas/algorithm_scout_sources.schema.json`
+- `docs/schemas/algorithm_scout_report.schema.json` and
+  `yolozu/data/schemas/algorithm_scout_report.schema.json`
 - `docs/schemas/bundle_lifecycle_record.schema.json` and
   `yolozu/data/schemas/bundle_lifecycle_record.schema.json`
 - `docs/schemas/support_profile_spec.schema.json` and

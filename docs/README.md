@@ -56,6 +56,9 @@ The environment-qualified local image-processing program targets an Experimental
   unbound execution. The evidence stream and runner maps are empty, so the
   default response records `maturity_disallowed`, abstains, and cannot run a real
   adaptive model.
+- Monitored-source inbox: [`algorithm_intake/README.md`](algorithm_intake/README.md).
+  `yolozu scout-algorithms` is network-free and write-free by default. Explicit
+  collection produces only a dated nonselectable candidate report.
 
 ## Primary Focus
 

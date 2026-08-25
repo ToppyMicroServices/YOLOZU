@@ -26,6 +26,8 @@ class TestSchemaGovernance(unittest.TestCase):
             "environment_profile_json": "environment_profile.schema.json",
             "algorithm_bundle_spec_json": "algorithm_bundle_spec.schema.json",
             "algorithm_bundle_registry_json": "algorithm_bundle_registry.schema.json",
+            "algorithm_scout_report_json": "algorithm_scout_report.schema.json",
+            "algorithm_scout_sources_json": "algorithm_scout_sources.schema.json",
             "bundle_lifecycle_record_json": "bundle_lifecycle_record.schema.json",
             "support_profile_spec_json": "support_profile_spec.schema.json",
             "support_profile_record_json": "support_profile_record.schema.json",
@@ -112,6 +114,8 @@ class TestSchemaGovernance(unittest.TestCase):
             self.assertIn(suite, build)
             self.assertIn(suite, pre_push)
         for resource in (
+            "yolozu/data/schemas/algorithm_scout_sources.schema.json",
+            "yolozu/data/schemas/algorithm_scout_report.schema.json",
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",

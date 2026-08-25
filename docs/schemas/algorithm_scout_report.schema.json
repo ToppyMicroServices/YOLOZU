@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/algorithm_scout_report.schema.json",
+  "title": "YOLOZU Experimental algorithm scout report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schema_version",
+    "maturity",
+    "selectability",
+    "collection_date",
+    "trigger",
+    "started_at",
+    "completed_at",
+    "timezone",
+    "source_policy",
+    "retention",
+    "automation_caveat",
+    "sources",
+    "candidates",
+    "summary"
+  ],
+  "properties": {
+    "kind": {
+      "const": "yolozu_algorithm_scout_report"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "maturity": {
+      "const": "experimental"
+    },
+    "selectability": {
+      "const": "inbox_only"
+    },
+    "collection_date": {
+      "$ref": "#/$defs/date"
+    },
+    "trigger": {
+      "enum": [
+        "schedule",
+        "workflow_dispatch"
+      ]
+    },
+    "started_at": {
+      "$ref": "#/$defs/utc"
+    },
+    "completed_at": {
+      "$ref": "#/$defs/utc"
+    },
+    "timezone": {
+      "const": "UTC"
+    },
+    "source_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_sources",
+        "scope",
+        "coverage",
+        "redirect_limit",
+        "network"
+      ],
+      "properties": {
+        "canonical_sources": {
+          "const": "docs/algorithm_intake/sources.json"
+        },
+        "scope": {
+          "const": "explicit_official_allowlist_only"
+        },
+        "coverage": {
+          "const": "monitored_sources_not_latest_world"
+        },
+        "redirect_limit": {
+          "const": 3
+        },
+        "network": {
+          "const": "https_443_collect_only"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_documents",
+        "candidate_metadata",
+        "history_reports_scanned_max"
+      ],
+      "properties": {
+        "raw_documents": {
+          "const": "not_retained"
+        },
+        "candidate_metadata": {
+          "const": "repository_policy"
+        },
+        "history_reports_scanned_max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 104
+        }
+      }
+    },
+    "automation_caveat": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/source_result"
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled_sources",
+        "collected_sources",
+        "failed_or_missed_sources",
+        "candidate_count",
+        "current_candidate_count",
+        "historical_candidate_count",
+        "decoded_total_bytes",
+        "network_used",
+        "writes_performed"
+      ],
+      "properties": {
+        "enabled_sources": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "collected_sources": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "failed_or_missed_sources": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "candidate_count": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "current_candidate_count": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "historical_candidate_count": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "decoded_total_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 536870912
+        },
+        "network_used": {
+          "const": true
+        },
+        "writes_performed": {
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "nonnegative": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "enum": [
+        "available",
+        "unavailable",
+        "unknown"
+      ]
+    },
+    "source_result": {
+      "type": "object",
+      "required": [
+        "source_id",
+        "source_url",
+        "collected_at",
+        "timezone",
+        "collection_status"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source_url": {
+          "type": "string",
+          "pattern": "^https://[^/?#:]+/[^?#]*$",
+          "maxLength": 4096
+        },
+        "collected_at": {
+          "$ref": "#/$defs/utc"
+        },
+        "timezone": {
+          "const": "UTC"
+        },
+        "collection_status": {
+          "enum": [
+            "collected",
+            "failed",
+            "missed"
+          ]
+        },
+        "failure_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "candidate_count": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "provenance": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_key",
+        "source_id",
+        "source_url",
+        "identity",
+        "version",
+        "revision",
+        "release_date",
+        "tasks",
+        "availability",
+        "license",
+        "weights",
+        "runtime_hints",
+        "collection_status",
+        "collected_at",
+        "timezone",
+        "first_seen_date",
+        "last_seen_date",
+        "history"
+      ],
+      "properties": {
+        "candidate_key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source_url": {
+          "type": "string",
+          "pattern": "^https://[^/?#:]+/[^?#]*$",
+          "maxLength": 4096
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "project",
+            "model"
+          ],
+          "properties": {
+            "project": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "release_date": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "tasks": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "availability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "local",
+            "hosted"
+          ],
+          "properties": {
+            "local": {
+              "$ref": "#/$defs/status"
+            },
+            "hosted": {
+              "$ref": "#/$defs/status"
+            }
+          }
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "expression"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "approved",
+                "rejected",
+                "review_required",
+                "unknown"
+              ]
+            },
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "$ref": "#/$defs/status"
+            }
+          }
+        },
+        "runtime_hints": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "collection_status": {
+          "enum": [
+            "collected",
+            "historical"
+          ]
+        },
+        "collected_at": {
+          "$ref": "#/$defs/utc"
+        },
+        "timezone": {
+          "const": "UTC"
+        },
+        "first_seen_date": {
+          "$ref": "#/$defs/date"
+        },
+        "last_seen_date": {
+          "$ref": "#/$defs/date"
+        },
+        "history": {
+          "type": "array",
+          "maxItems": 104,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "collection_date",
+              "collected_at",
+              "content_sha256"
+            ],
+            "properties": {
+              "collection_date": {
+                "$ref": "#/$defs/date"
+              },
+              "collected_at": {
+                "$ref": "#/$defs/utc"
+              },
+              "content_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

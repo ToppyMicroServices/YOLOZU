@@ -129,6 +129,12 @@ non-promoted Candidate baselines matching the existing model zoo: YOLOX-S,
 Detectron2 Faster R-CNN R50-FPN 1x, and MMDetection Faster R-CNN R50-FPN 1x.
 Their pinned weights are fetchable metadata, but their adaptive execution binding
 is explicitly unbound. Loading and validation do not import a model runtime.
+Experimental `yolozu scout-algorithms` now validates one canonical official-source
+allowlist and, only with `--collect`, writes a dated candidate inbox. The default
+command is a network-free, write-free plan. Collected pages are untrusted metadata;
+raw documents are not retained, and the inbox cannot be loaded as an
+AlgorithmBundle registry or used as qualification, support, recommendation,
+adoption, or promotion evidence.
 Explicit workspace catalogs remain operator-asserted and nonselectable. The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
@@ -164,6 +170,8 @@ qualification evidence or proof of human adoption.
 
 The [baseline bundle registry report](reports/adaptive_baseline_bundle_registry_2026-08-26.md)
 records the current three-way state boundary. The earlier
+[algorithm scout foundation report](reports/adaptive_algorithm_scout_foundation_2026-08-26.md)
+records the monitored-source, retention, parser, and nonselection boundaries. The earlier
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
 positive selector and executor cases use internal fixtures; they do not qualify a

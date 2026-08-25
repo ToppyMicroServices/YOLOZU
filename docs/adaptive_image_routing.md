@@ -69,6 +69,16 @@ fails with an actionable error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
 model adapter, or general image-processing capability.
 
+The Experimental `yolozu scout-algorithms` surface is a separate candidate inbox.
+It accepts only `docs/algorithm_intake/sources.json`. Without `--collect`, it
+validates that file and prints a bounded JSON plan without network access or writes.
+Collection uses credential-free HTTPS on port 443 for the exact scheme/host/path
+allowlist, retains summaries and provenance rather than raw source documents, and
+records unavailable fields as `unknown`. A failed or missed source remains explicit.
+The report kind is not an AlgorithmBundle registry interface contract, and the
+selector cannot load it. Discovery therefore cannot register, qualify, recommend,
+execute, or promote a model.
+
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
 ranked first under the requested policy. `abstained` is a valid routing outcome when

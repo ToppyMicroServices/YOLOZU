@@ -854,6 +854,13 @@
     "title": "run_ttt_evidence_suite"
   },
   {
+    "href": "commands.html#tool-scout-algorithms",
+    "kind": "command",
+    "search_text": "scout_algorithms Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything. experimental tools/scout_algorithms.py --sources --output-dir --collection-date --trigger --workspace --collect",
+    "summary": "Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything.",
+    "title": "scout_algorithms"
+  },
+  {
     "href": "commands.html#tool-smoke",
     "kind": "command",
     "search_text": "smoke Run one-command offline smoke flow (doctor -> validate dataset -> validate predictions -> eval-coco dry-run -> synthgen intake smoke) with optional deep walkthrough checks. stable scripts/smoke.sh --dataset --predictions --report --synthgen-root --synthgen-predictions --output-dir --demo-run-dir --skip-demo --torch-device --profile --walkthrough-report",
@@ -1027,6 +1034,20 @@
     "search_text": "YOLOZU AlgorithmBundleSpec v1 Immutable fetchable-model, optional bound-runner, artifact, vocabulary, and execution facts for Experimental adaptive routing. adapter_backend_id artifact_set_digest artifacts bundle_id bundle_version class_vocabulary decoder execution_binding execution_isolation_policy_digest execution_network_required execution_trust_class family_id loader_format model_input_shapes model_revision model_source_id postprocess preprocess prompt_modes provenance_class runner_id runner_options runner_version runtime schema_version screening_binding spec_digest tasks test_only text_prompt_support unsafe_deserialization_required docs/schemas/algorithm_bundle_spec.schema.json",
     "summary": "Immutable fetchable-model, optional bound-runner, artifact, vocabulary, and execution facts for Experimental adaptive routing.",
     "title": "YOLOZU AlgorithmBundleSpec v1"
+  },
+  {
+    "href": "schemas.html#schema-algorithm-scout-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU Experimental algorithm scout report Checked-in YOLOZU JSON Schema. automation_caveat candidates collection_date completed_at kind maturity retention schema_version selectability source_policy sources started_at summary timezone trigger docs/schemas/algorithm_scout_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU Experimental algorithm scout report"
+  },
+  {
+    "href": "schemas.html#schema-algorithm-scout-sources-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU algorithm scout source allowlist Checked-in YOLOZU JSON Schema. kind schema_version sources docs/schemas/algorithm_scout_sources.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU algorithm scout source allowlist"
   },
   {
     "href": "schemas.html#schema-artifact-research-qualification-schema",
