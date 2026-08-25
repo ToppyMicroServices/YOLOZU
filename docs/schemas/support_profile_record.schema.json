@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/support_profile_record.schema.json",
+  "title": "YOLOZU SupportProfileRecord v1",
+  "description": "One record in the append-only reviewed support-profile definition and dormant-set chain.",
+  "oneOf": [
+    { "$ref": "#/$defs/profile_definition" },
+    { "$ref": "#/$defs/profile_set_assignment" }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$" },
+    "utc": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+    "review_reference": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": { "kind": { "const": "public_repository_id" }, "value": { "$ref": "#/$defs/id" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "status"],
+          "properties": { "kind": { "const": "site_local_status" }, "status": { "enum": ["present", "not_applicable"] } }
+        }
+      ]
+    },
+    "profile_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "profile_digest"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/component" },
+        "profile_digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "common": {
+      "type": "object",
+      "required": ["schema_version", "stream_id", "sequence", "previous_record_digest", "record_id", "kind", "reviewer_role_id", "review_reference", "issuer_claim", "reason", "occurred_at", "record_digest"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "stream_id": { "const": "support-profiles-v1" },
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "previous_record_digest": { "$ref": "#/$defs/sha256" },
+        "record_id": { "$ref": "#/$defs/component" },
+        "kind": { "enum": ["profile_definition", "profile_set_assignment"] },
+        "reviewer_role_id": { "enum": ["repo_maintainer", "release_reviewer", "site_operator", "automation"] },
+        "review_reference": { "$ref": "#/$defs/review_reference" },
+        "issuer_claim": { "enum": ["repository_source", "site_source", "operator_source", "unknown"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "occurred_at": { "$ref": "#/$defs/utc" },
+        "record_digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "profile_definition": {
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "stream_id", "sequence", "previous_record_digest", "record_id", "kind", "reviewer_role_id", "review_reference", "issuer_claim", "reason", "occurred_at", "record_digest", "profile"],
+          "properties": {
+            "schema_version": {}, "stream_id": {}, "sequence": {}, "previous_record_digest": {}, "record_id": {},
+            "kind": { "const": "profile_definition" }, "reviewer_role_id": {}, "review_reference": {}, "issuer_claim": {},
+            "reason": {}, "occurred_at": {}, "record_digest": {},
+            "profile": { "$ref": "support_profile_spec.schema.json" }
+          }
+        }
+      ]
+    },
+    "profile_set_assignment": {
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "stream_id", "sequence", "previous_record_digest", "record_id", "kind", "reviewer_role_id", "review_reference", "issuer_claim", "reason", "occurred_at", "record_digest", "family_id", "channel", "profiles", "profile_set_digest"],
+          "properties": {
+            "schema_version": {}, "stream_id": {}, "sequence": {}, "previous_record_digest": {}, "record_id": {},
+            "kind": { "const": "profile_set_assignment" }, "reviewer_role_id": {}, "review_reference": {}, "issuer_claim": {},
+            "reason": {}, "occurred_at": {}, "record_digest": {},
+            "family_id": { "$ref": "#/$defs/component" },
+            "channel": { "enum": ["Candidate", "Experimental", "Stable"] },
+            "profiles": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/profile_reference" } },
+            "profile_set_digest": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/support_profile_spec.schema.json",
+  "title": "YOLOZU SupportProfileSpec v1",
+  "description": "Immutable exact measured environment, workload, protocol, and advertised gate scope for a future public channel assignment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "profile_digest", "task", "environment_fingerprint", "qualification_workload_fingerprint", "protocol_fingerprint", "advertised_constraints", "public_limitations"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "profile_id": { "$ref": "#/$defs/component" },
+    "profile_digest": { "$ref": "#/$defs/sha256" },
+    "task": { "enum": ["object_detection", "instance_segmentation"] },
+    "environment_fingerprint": { "$ref": "#/$defs/sha256" },
+    "qualification_workload_fingerprint": { "$ref": "#/$defs/sha256" },
+    "protocol_fingerprint": { "$ref": "#/$defs/sha256" },
+    "advertised_constraints": { "$ref": "#/$defs/advertised_constraints" },
+    "public_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$" },
+    "decimal": { "type": "string", "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$", "maxLength": 29 },
+    "quality_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "direction", "threshold", "evaluation_dataset_id", "evaluation_dataset_sha256", "evaluation_protocol_sha256", "evaluation_vocabulary_id"],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["higher_is_better", "lower_is_better"] },
+        "threshold": { "$ref": "#/$defs/decimal" },
+        "evaluation_dataset_id": { "$ref": "#/$defs/id" },
+        "evaluation_dataset_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_protocol_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluation_vocabulary_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "advertised_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_mode"],
+      "minProperties": 2,
+      "properties": {
+        "execution_mode": { "enum": ["batch", "soft_realtime"] },
+        "max_cold_start_ms": { "$ref": "#/$defs/decimal" },
+        "max_p95_latency_ms": { "$ref": "#/$defs/decimal" },
+        "max_runner_tree_peak_rss_bytes": { "type": "integer", "minimum": 1, "maximum": 9223372036854775807 },
+        "max_accelerator_process_tree_peak_bytes": { "type": "integer", "minimum": 1, "maximum": 9223372036854775807 },
+        "min_repeat_throughput_fps": { "$ref": "#/$defs/decimal" },
+        "min_sustained_fps": { "$ref": "#/$defs/decimal" },
+        "quality_requirement": { "$ref": "#/$defs/quality_requirement" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "execution_mode": { "const": "batch" } }, "required": ["execution_mode"] },
+          "then": { "not": { "required": ["min_sustained_fps"] } },
+          "else": { "not": { "required": ["min_repeat_throughput_fps"] } }
+        }
+      ]
+    }
+  }
+}

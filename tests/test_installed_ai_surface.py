@@ -103,6 +103,18 @@ class TestInstalledAiSurface(unittest.TestCase):
                 0,
                 msg=f"wheel install failed:\n{install.stdout}\n{install.stderr}",
             )
+            installed_adaptive_data = target / "yolozu" / "data" / "adaptive_routing"
+            checkout_adaptive_data = repo_root / "yolozu" / "data" / "adaptive_routing"
+            for basename in (
+                "bundle_specs.json",
+                "bundle_lifecycle.jsonl",
+                "support_profiles.jsonl",
+            ):
+                self.assertEqual(
+                    (installed_adaptive_data / basename).read_bytes(),
+                    (checkout_adaptive_data / basename).read_bytes(),
+                    f"installed adaptive-routing SSOT differs: {basename}",
+                )
 
             outside = root / "outside.json"
             script = f"""

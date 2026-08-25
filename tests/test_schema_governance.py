@@ -1,5 +1,6 @@
 import json
 import unittest
+from importlib import resources
 from pathlib import Path
 
 from yolozu.instance_segmentation_predictions import validate_instance_segmentation_predictions_payload
@@ -23,6 +24,11 @@ class TestSchemaGovernance(unittest.TestCase):
             "image_job_spec_json": "image_job_spec.schema.json",
             "qualification_workload_profile_json": "qualification_workload_profile.schema.json",
             "environment_profile_json": "environment_profile.schema.json",
+            "algorithm_bundle_spec_json": "algorithm_bundle_spec.schema.json",
+            "algorithm_bundle_registry_json": "algorithm_bundle_registry.schema.json",
+            "bundle_lifecycle_record_json": "bundle_lifecycle_record.schema.json",
+            "support_profile_spec_json": "support_profile_spec.schema.json",
+            "support_profile_record_json": "support_profile_record.schema.json",
         }
         self.assertEqual(manifest, packaged_manifest)
         for contract_id, basename in expected.items():
@@ -34,6 +40,31 @@ class TestSchemaGovernance(unittest.TestCase):
                 manifest["contracts"][contract_id]["schema"],
                 f"docs/schemas/{basename}",
             )
+
+    def test_adaptive_routing_record_instances_have_one_packaged_ssot(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        data_root = repo_root / "yolozu" / "data" / "adaptive_routing"
+        registry = json.loads((data_root / "bundle_specs.json").read_text(encoding="utf-8"))
+        self.assertEqual(registry["bundles"], [])
+        self.assertEqual((data_root / "bundle_lifecycle.jsonl").read_bytes(), b"")
+        self.assertEqual((data_root / "support_profiles.jsonl").read_bytes(), b"")
+        governance = (repo_root / "docs" / "schema_governance.md").read_text(
+            encoding="utf-8"
+        )
+        for basename in (
+            "bundle_specs.json",
+            "bundle_lifecycle.jsonl",
+            "support_profiles.jsonl",
+        ):
+            self.assertIn(f"`yolozu/data/adaptive_routing/{basename}`", governance)
+            self.assertFalse((repo_root / "docs" / "adaptive_routing" / basename).exists())
+            packaged = (
+                resources.files("yolozu.data")
+                .joinpath("adaptive_routing")
+                .joinpath(basename)
+                .read_bytes()
+            )
+            self.assertEqual(packaged, (data_root / basename).read_bytes())
 
     def test_predictions_schema_copies_declare_current_versions(self):
         repo_root = Path(__file__).resolve().parents[1]

@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from docs/schemas/*.json</span>
   <h1 id="page-title">Schema browser</h1>
-  <p class="lead">35 checked-in JSON Schemas covering predictions,
+  <p class="lead">40 checked-in JSON Schemas covering predictions,
   evaluation reports, training handoff, registry records, and Research artifacts.
   Open the source schema for complete field constraints.</p>
 
@@ -94,6 +94,32 @@
     <dt>Root required</dt><dd><code>issues, ok, schema_version, summary, warnings</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/ai_review_config.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-algorithm-bundle-registry-schema"
+  data-schema-path="docs/schemas/algorithm_bundle_registry.schema.json" data-search-card
+  data-search-text="YOLOZU AlgorithmBundleRegistry v1 Bounded immutable bundle set for future Experimental adaptive routing; an empty registry is valid and selects nothing. docs/schemas/algorithm_bundle_registry.schema.json bundles, registry_digest, registry_id, schema_version bundles, registry_digest, registry_id, schema_version">
+  <h3>YOLOZU AlgorithmBundleRegistry v1</h3>
+  <p>Bounded immutable bundle set for future Experimental adaptive routing; an empty registry is valid and selects nothing.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/algorithm_bundle_registry.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>bundles, registry_digest, registry_id, schema_version</code></dd>
+    <dt>Root required</dt><dd><code>bundles, registry_digest, registry_id, schema_version</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/algorithm_bundle_registry.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-algorithm-bundle-spec-schema"
+  data-schema-path="docs/schemas/algorithm_bundle_spec.schema.json" data-search-card
+  data-search-text="YOLOZU AlgorithmBundleSpec v1 Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing. docs/schemas/algorithm_bundle_spec.schema.json artifact_set_digest, artifacts, bundle_id, bundle_version, class_vocabulary, decoder, execution_isolation_policy_digest, execution_network_required, execution_trust_class, family_id, loader_format, model_input_shapes, model_revision, model_source_id, postprocess, preprocess, prompt_modes, provenance_class, runner_id, runner_options, runner_version, runtime, schema_version, screening_binding, spec_digest, tasks, test_only, text_prompt_support, unsafe_deserialization_required artifact_set_digest, artifacts, bundle_id, bundle_version, decoder, execution_network_required, execution_trust_class, family_id, loader_format, model_input_shapes, model_revision, model_source_id, postprocess, preprocess, prompt_modes, provenance_class, runner_id, runner_options, runner_version, runtime, schema_version, spec_digest, tasks, test_only, unsafe_deserialization_required">
+  <h3>YOLOZU AlgorithmBundleSpec v1</h3>
+  <p>Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/algorithm_bundle_spec.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>artifact_set_digest, artifacts, bundle_id, bundle_version, class_vocabulary, decoder, execution_isolation_policy_digest, execution_network_required, execution_trust_class, family_id, loader_format, model_input_shapes, model_revision, model_source_id, postprocess, preprocess, prompt_modes, provenance_class, runner_id, runner_options, runner_version, runtime, schema_version, screening_binding, spec_digest, tasks, test_only, text_prompt_support, unsafe_deserialization_required</code></dd>
+    <dt>Root required</dt><dd><code>artifact_set_digest, artifacts, bundle_id, bundle_version, decoder, execution_network_required, execution_trust_class, family_id, loader_format, model_input_shapes, model_revision, model_source_id, postprocess, preprocess, prompt_modes, provenance_class, runner_id, runner_options, runner_version, runtime, schema_version, spec_digest, tasks, test_only, unsafe_deserialization_required</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/algorithm_bundle_spec.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-artifact-research-qualification-schema"
@@ -159,6 +185,19 @@
     <dt>Root required</dt><dd><code>dataset_archives, decision, efficacy, environment, ground_truth, kind, promotion_eligible, protocol, qualification_reasons, role, rows, schema_version, seed_count</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/bop_tless_qualification.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-bundle-lifecycle-record-schema"
+  data-schema-path="docs/schemas/bundle_lifecycle_record.schema.json" data-search-card
+  data-search-text="YOLOZU BundleLifecycleRecord v1 One record in the global append-only bundle state and per-channel pointer stream. docs/schemas/bundle_lifecycle_record.schema.json No root properties declared No root required list">
+  <h3>YOLOZU BundleLifecycleRecord v1</h3>
+  <p>One record in the global append-only bundle state and per-channel pointer stream.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/bundle_lifecycle_record.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/bundle_lifecycle_record.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-coco-eval-report-schema"
@@ -445,6 +484,32 @@
     <dt>Root required</dt><dd><code>No root required list</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/segmentation_predictions.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-support-profile-record-schema"
+  data-schema-path="docs/schemas/support_profile_record.schema.json" data-search-card
+  data-search-text="YOLOZU SupportProfileRecord v1 One record in the append-only reviewed support-profile definition and dormant-set chain. docs/schemas/support_profile_record.schema.json No root properties declared No root required list">
+  <h3>YOLOZU SupportProfileRecord v1</h3>
+  <p>One record in the append-only reviewed support-profile definition and dormant-set chain.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/support_profile_record.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/support_profile_record.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-support-profile-spec-schema"
+  data-schema-path="docs/schemas/support_profile_spec.schema.json" data-search-card
+  data-search-text="YOLOZU SupportProfileSpec v1 Immutable exact measured environment, workload, protocol, and advertised gate scope for a future public channel assignment. docs/schemas/support_profile_spec.schema.json advertised_constraints, environment_fingerprint, profile_digest, profile_id, protocol_fingerprint, public_limitations, qualification_workload_fingerprint, schema_version, task advertised_constraints, environment_fingerprint, profile_digest, profile_id, protocol_fingerprint, public_limitations, qualification_workload_fingerprint, schema_version, task">
+  <h3>YOLOZU SupportProfileSpec v1</h3>
+  <p>Immutable exact measured environment, workload, protocol, and advertised gate scope for a future public channel assignment.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/support_profile_spec.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>advertised_constraints, environment_fingerprint, profile_digest, profile_id, protocol_fingerprint, public_limitations, qualification_workload_fingerprint, schema_version, task</code></dd>
+    <dt>Root required</dt><dd><code>advertised_constraints, environment_fingerprint, profile_digest, profile_id, protocol_fingerprint, public_limitations, qualification_workload_fingerprint, schema_version, task</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/support_profile_spec.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-tools-manifest-schema"

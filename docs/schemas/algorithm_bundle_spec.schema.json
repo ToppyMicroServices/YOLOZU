@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/algorithm_bundle_spec.schema.json",
+  "title": "YOLOZU AlgorithmBundleSpec v1",
+  "description": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "family_id",
+    "bundle_id",
+    "bundle_version",
+    "spec_digest",
+    "provenance_class",
+    "test_only",
+    "tasks",
+    "prompt_modes",
+    "runner_id",
+    "runner_version",
+    "execution_trust_class",
+    "loader_format",
+    "unsafe_deserialization_required",
+    "model_source_id",
+    "model_revision",
+    "runtime",
+    "model_input_shapes",
+    "decoder",
+    "preprocess",
+    "postprocess",
+    "execution_network_required",
+    "runner_options",
+    "artifacts",
+    "artifact_set_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "family_id": { "$ref": "#/$defs/component" },
+    "bundle_id": { "$ref": "#/$defs/component" },
+    "bundle_version": { "$ref": "#/$defs/bundle_version" },
+    "spec_digest": { "$ref": "#/$defs/sha256" },
+    "provenance_class": { "enum": ["existing_code_owned", "screened_candidate"] },
+    "screening_binding": { "$ref": "#/$defs/screening_binding" },
+    "test_only": { "type": "boolean" },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["object_detection", "instance_segmentation"] }
+    },
+    "prompt_modes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["fixed_classes", "text"] }
+    },
+    "runner_id": { "enum": ["yolo_runtime", "onnxruntime", "tensorrt", "torchvision", "coreml"] },
+    "runner_version": { "$ref": "#/$defs/id" },
+    "execution_trust_class": { "enum": ["code_owned_audited", "third_party_isolated"] },
+    "execution_isolation_policy_digest": { "$ref": "#/$defs/sha256" },
+    "loader_format": { "enum": ["safetensors", "onnx", "tensorrt_engine", "torchscript", "pytorch_pickle", "python_archive", "native_plugin"] },
+    "unsafe_deserialization_required": { "type": "boolean" },
+    "model_source_id": { "$ref": "#/$defs/text_512" },
+    "model_revision": { "$ref": "#/$defs/text_256" },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "model_input_shapes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/input_shape" }
+    },
+    "decoder": { "$ref": "#/$defs/identity" },
+    "preprocess": { "$ref": "#/$defs/identity" },
+    "postprocess": { "$ref": "#/$defs/identity" },
+    "execution_network_required": { "type": "boolean" },
+    "runner_options": { "$ref": "#/$defs/runner_options" },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "artifact_set_digest": { "$ref": "#/$defs/sha256" },
+    "class_vocabulary": { "$ref": "#/$defs/class_vocabulary" },
+    "text_prompt_support": { "$ref": "#/$defs/text_prompt_support" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "provenance_class": { "const": "screened_candidate" } }, "required": ["provenance_class"] },
+      "then": { "required": ["screening_binding"] },
+      "else": { "not": { "required": ["screening_binding"] } }
+    },
+    {
+      "if": { "properties": { "execution_trust_class": { "const": "third_party_isolated" } }, "required": ["execution_trust_class"] },
+      "then": { "required": ["execution_isolation_policy_digest"] },
+      "else": { "not": { "required": ["execution_isolation_policy_digest"] } }
+    },
+    {
+      "if": { "properties": { "prompt_modes": { "contains": { "const": "fixed_classes" } } }, "required": ["prompt_modes"] },
+      "then": { "required": ["class_vocabulary"] },
+      "else": { "not": { "required": ["class_vocabulary"] } }
+    },
+    {
+      "if": { "properties": { "prompt_modes": { "contains": { "const": "text" } } }, "required": ["prompt_modes"] },
+      "then": { "required": ["text_prompt_support"] },
+      "else": { "not": { "required": ["text_prompt_support"] } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$" },
+    "bundle_version": { "type": "string", "pattern": "^[0-9A-Za-z][0-9A-Za-z._-]{0,63}$" },
+    "text_256": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "text_512": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "screening_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stream_key", "pass_record_id", "pass_record_digest", "source_revision"],
+      "properties": {
+        "stream_key": { "$ref": "#/$defs/id" },
+        "pass_record_id": { "$ref": "#/$defs/id" },
+        "pass_record_digest": { "$ref": "#/$defs/sha256" },
+        "source_revision": { "$ref": "#/$defs/text_256" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "runtime_version", "provider_id", "provider_version", "precision", "architecture", "accelerator_requirement"],
+      "properties": {
+        "runtime_id": { "$ref": "#/$defs/id" },
+        "runtime_version": { "$ref": "#/$defs/id" },
+        "provider_id": { "$ref": "#/$defs/id" },
+        "provider_version": { "$ref": "#/$defs/id" },
+        "precision": { "enum": ["fp32", "tf32", "fp16", "bf16", "int8"] },
+        "architecture": { "$ref": "#/$defs/id" },
+        "accelerator_requirement": { "enum": ["none", "optional", "required"] },
+        "minimum_accelerator_memory_bytes": { "type": "integer", "minimum": 1, "maximum": 68719476736 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "accelerator_requirement": { "const": "none" } }, "required": ["accelerator_requirement"] },
+          "then": { "not": { "required": ["minimum_accelerator_memory_bytes"] } },
+          "else": { "required": ["minimum_accelerator_memory_bytes"] }
+        }
+      ]
+    },
+    "input_shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "layout", "dimensions"],
+      "properties": {
+        "name": { "$ref": "#/$defs/id" },
+        "layout": { "enum": ["NCHW", "NHWC", "CHW", "HWC"] },
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": { "type": "integer", "minimum": 1, "maximum": 65536 }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/id" },
+        "digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "runner_options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "device_policy": { "const": "job_controlled" },
+        "intra_op_threads": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "inter_op_threads": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "optimization_level": { "enum": ["disabled", "basic", "extended", "all"] }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "order", "role", "source_id", "source_revision", "expected_size_bytes", "sha256", "license_expression", "license_source", "license_revision", "cache_key"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/component" },
+        "order": { "type": "integer", "minimum": 0, "maximum": 31 },
+        "role": { "enum": ["code_archive", "weight", "config", "class_vocabulary", "tokenizer", "engine", "auxiliary"] },
+        "source_id": { "$ref": "#/$defs/text_512" },
+        "source_revision": { "$ref": "#/$defs/text_256" },
+        "expected_size_bytes": { "type": "integer", "minimum": 1, "maximum": 17179869184 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "license_expression": { "$ref": "#/$defs/text_256" },
+        "license_source": { "$ref": "#/$defs/text_512" },
+        "license_revision": { "$ref": "#/$defs/text_256" },
+        "cache_key": { "type": "string", "maxLength": 512, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127}){0,7}$" }
+      }
+    },
+    "class_vocabulary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "digest", "labels"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "digest": { "$ref": "#/$defs/sha256" },
+        "labels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+        }
+      }
+    },
+    "text_prompt_support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "output_label_semantics"],
+      "properties": {
+        "mode": { "const": "dynamic_text" },
+        "output_label_semantics": { "const": "request_prompt_index_v1" }
+      }
+    }
+  }
+}

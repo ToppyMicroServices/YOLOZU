@@ -987,6 +987,20 @@
     "title": "AI Review Config"
   },
   {
+    "href": "schemas.html#schema-algorithm-bundle-registry-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU AlgorithmBundleRegistry v1 Bounded immutable bundle set for future Experimental adaptive routing; an empty registry is valid and selects nothing. bundles registry_digest registry_id schema_version docs/schemas/algorithm_bundle_registry.schema.json",
+    "summary": "Bounded immutable bundle set for future Experimental adaptive routing; an empty registry is valid and selects nothing.",
+    "title": "YOLOZU AlgorithmBundleRegistry v1"
+  },
+  {
+    "href": "schemas.html#schema-algorithm-bundle-spec-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU AlgorithmBundleSpec v1 Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing. artifact_set_digest artifacts bundle_id bundle_version class_vocabulary decoder execution_isolation_policy_digest execution_network_required execution_trust_class family_id loader_format model_input_shapes model_revision model_source_id postprocess preprocess prompt_modes provenance_class runner_id runner_options runner_version runtime schema_version screening_binding spec_digest tasks test_only text_prompt_support unsafe_deserialization_required docs/schemas/algorithm_bundle_spec.schema.json",
+    "summary": "Immutable pipeline, artifact, runtime, vocabulary, and execution facts for future Experimental adaptive routing.",
+    "title": "YOLOZU AlgorithmBundleSpec v1"
+  },
+  {
     "href": "schemas.html#schema-artifact-research-qualification-schema",
     "kind": "schema",
     "search_text": "YOLOZU Artifact Research Qualification Checked-in YOLOZU JSON Schema. distillation environment hessian inputs kind qualification schema_version source stable_baseline timestamp docs/schemas/artifact_research_qualification.schema.json",
@@ -1020,6 +1034,13 @@
     "search_text": "YOLOZU BOP T-LESS multitask qualification Checked-in YOLOZU JSON Schema. comparison dataset_archives decision efficacy environment ground_truth kind promotion_eligible protocol qualification_reasons role rows schema_version seed_count docs/schemas/bop_tless_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU BOP T-LESS multitask qualification"
+  },
+  {
+    "href": "schemas.html#schema-bundle-lifecycle-record-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU BundleLifecycleRecord v1 One record in the global append-only bundle state and per-channel pointer stream.  docs/schemas/bundle_lifecycle_record.schema.json",
+    "summary": "One record in the global append-only bundle state and per-channel pointer stream.",
+    "title": "YOLOZU BundleLifecycleRecord v1"
   },
   {
     "href": "schemas.html#schema-coco-eval-report-schema",
@@ -1174,6 +1195,20 @@
     "search_text": "YOLOZU Segmentation Predictions JSON Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.  docs/schemas/segmentation_predictions.schema.json",
     "summary": "Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.",
     "title": "YOLOZU Segmentation Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-support-profile-record-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SupportProfileRecord v1 One record in the append-only reviewed support-profile definition and dormant-set chain.  docs/schemas/support_profile_record.schema.json",
+    "summary": "One record in the append-only reviewed support-profile definition and dormant-set chain.",
+    "title": "YOLOZU SupportProfileRecord v1"
+  },
+  {
+    "href": "schemas.html#schema-support-profile-spec-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SupportProfileSpec v1 Immutable exact measured environment, workload, protocol, and advertised gate scope for a future public channel assignment. advertised_constraints environment_fingerprint profile_digest profile_id protocol_fingerprint public_limitations qualification_workload_fingerprint schema_version task docs/schemas/support_profile_spec.schema.json",
+    "summary": "Immutable exact measured environment, workload, protocol, and advertised gate scope for a future public channel assignment.",
+    "title": "YOLOZU SupportProfileSpec v1"
   },
   {
     "href": "schemas.html#schema-tools-manifest-schema",
