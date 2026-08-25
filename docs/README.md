@@ -48,7 +48,10 @@ The environment-qualified local image-processing program targets an Experimental
 - Current Experimental implementation boundary: `yolozu qualify-image-pipeline`
   emits only an unactivated report; `yolozu activate-qualification-evidence`
   defaults to a no-write gate report and mutates only with explicit review and
-  `--approve`. A bounded non-executing candidate-screening provider derives pass,
+  `--approve`. `yolozu review-image-pipeline-support-profiles` likewise defaults
+  to no-write and can append only a complete reviewed dormant set to the canonical
+  support-profile SSOT. That review does not advertise support or make a model
+  executable. A bounded non-executing candidate-screening provider derives pass,
   hold, or reject before selection. Its packaged stream is empty; custom input
   stays operator-asserted and cannot satisfy the managed-pass gate. A file-free
   pure selector evaluates already validated records, and the MCP-only

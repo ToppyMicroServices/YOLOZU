@@ -32,6 +32,7 @@ class TestSchemaGovernance(unittest.TestCase):
             "candidate_screening_record_json": "candidate_screening_record.schema.json",
             "support_profile_spec_json": "support_profile_spec.schema.json",
             "support_profile_record_json": "support_profile_record.schema.json",
+            "support_profile_set_proposal_json": "support_profile_set_proposal.schema.json",
             "local_artifact_inventory_json": "local_artifact_inventory.schema.json",
             "qualification_report_json": "qualification_report.schema.json",
             "evidence_activation_record_json": "evidence_activation_record.schema.json",
@@ -112,6 +113,7 @@ class TestSchemaGovernance(unittest.TestCase):
         for suite in (
             "tests.test_adaptive_evidence_contracts",
             "tests.test_adaptive_candidate_screening",
+            "tests.test_adaptive_support_profile_governance",
             "tests.test_adaptive_selection_contracts",
             "tests.test_schema_governance",
         ):
@@ -126,9 +128,11 @@ class TestSchemaGovernance(unittest.TestCase):
             "yolozu/data/schemas/candidate_screening_record.schema.json",
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
+            "yolozu/data/schemas/support_profile_set_proposal.schema.json",
             "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
             "yolozu/data/adaptive_routing/candidate_screening.jsonl",
+            "yolozu/data/adaptive_routing/support_profiles.jsonl",
         ):
             self.assertGreaterEqual(publish.count(resource), 2)
 

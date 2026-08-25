@@ -16,7 +16,6 @@ from .bundle_registry import LoadedAlgorithmBundleRegistry, load_algorithm_bundl
 from .bundles import (
     AlgorithmBundleSpec,
     SupportProfileProjection,
-    project_support_profiles,
 )
 from .canonical import canonical_sha256_v1
 from .contracts import (
@@ -29,7 +28,6 @@ from .contracts import (
 from .control_records import (
     MAX_CONTROL_STREAM_BYTES,
     load_bounded_json_bytes,
-    load_bounded_jsonl_bytes,
 )
 from .environment import build_environment_profile
 from .evidence import (
@@ -50,10 +48,7 @@ from .qualification import (
     QUALIFICATION_PROTOCOL_FINGERPRINT,
     qualification_report_has_code_owned_issuer,
 )
-from .selection import (
-    SupportProfileEligibilityObservation,
-    validate_support_profile_eligibility_observation,
-)
+from .selection import SupportProfileEligibilityObservation
 from .screening import (
     CandidateScreeningProjection,
     MAX_SCREENING_STREAM_BYTES,
@@ -63,9 +58,13 @@ from .screening import (
 from .selector import (
     EvidenceEligibilityObservation,
     IsolationCapabilityObservation,
-    compute_advertised_gates_digest,
     evidence_eligibility_from_projection,
     select_qualified_pipeline,
+)
+from .support_profiles import (
+    MAX_SUPPORT_PROFILE_STREAM_BYTES,
+    build_support_profile_eligibility_observation,
+    load_support_profile_jsonl_bytes,
 )
 
 __all__ = [
@@ -74,7 +73,6 @@ __all__ = [
 ]
 
 
-_MAX_SUPPORT_PROFILE_BYTES = 64 * 1024 * 1024
 _MAX_QUALIFICATION_REPORT_BYTES = 64 * 1024 * 1024
 _MAX_CHECKSUM_MANIFEST_BYTES = 4 * 1024 * 1024
 _ZERO_DIGEST = "0" * 64
@@ -265,17 +263,12 @@ def _packaged_bytes(parts: tuple[str, ...], *, maximum_bytes: int, label: str) -
 def _load_support_profiles() -> SupportProfileProjection:
     payload = _packaged_bytes(
         ("adaptive_routing", "support_profiles.jsonl"),
-        maximum_bytes=_MAX_SUPPORT_PROFILE_BYTES,
+        maximum_bytes=MAX_SUPPORT_PROFILE_STREAM_BYTES,
         label="support-profile stream",
     )
     try:
-        records = load_bounded_jsonl_bytes(
+        return load_support_profile_jsonl_bytes(
             payload,
-            label="support-profile stream",
-            max_records=128,
-        )
-        return project_support_profiles(
-            records,
             source_trust_domain="yolozu_managed",
         )
     except (TypeError, ValueError) as exc:
@@ -583,9 +576,7 @@ def _support_observations(
     evidence: Mapping[str, EvidenceEligibilityObservation],
 ) -> dict[tuple[str, str], SupportProfileEligibilityObservation]:
     observations: dict[tuple[str, str], SupportProfileEligibilityObservation] = {}
-    advertised_digest = compute_advertised_gates_digest(job)
     for bundle in registry.bundles:
-        bundle_record = bundle.to_dict()
         evidence_trust, support_scope = _evidence_trust_for_bundle(
             bundle=bundle,
             environment=environment,
@@ -593,94 +584,19 @@ def _support_observations(
             evidence=evidence,
         )
         for channel in ("Experimental", "Stable"):
-            pointer = registry.lifecycle.channel_pointers.get(
-                (bundle_record["family_id"], channel)
+            observed = build_support_profile_eligibility_observation(
+                registry=registry,
+                profiles=profiles,
+                bundle=bundle,
+                channel=channel,
+                job=job,
+                environment=environment,
+                workload=workload,
+                evidence_trust_domain=evidence_trust,
+                support_scope=support_scope,
             )
-            if pointer is None or pointer["bundle_spec_digest"] != bundle.spec_digest:
-                continue
-            if any(
-                pointer.get(field) is None
-                for field in (
-                    "profile_set_record_id",
-                    "profile_set_record_digest",
-                )
-            ):
-                continue
-            matching: list[dict[str, Any]] = []
-            for reference in pointer["profiles"]:
-                profile = profiles.definitions.get(reference["profile_id"])
-                if profile is None or profile.profile_digest != reference["profile_digest"]:
-                    continue
-                value = profile.to_dict()
-                if (
-                    value["task"] == job.to_dict()["task"]
-                    and value["environment_fingerprint"]
-                    == environment.environment_fingerprint
-                    and value["qualification_workload_fingerprint"]
-                    == workload.workload_fingerprint
-                    and value["protocol_fingerprint"]
-                    == QUALIFICATION_PROTOCOL_FINGERPRINT
-                    and canonical_sha256_v1(value["advertised_constraints"])
-                    == advertised_digest
-                ):
-                    matching.append(value)
-            if evidence_trust == "site_managed" and support_scope == "site_qualified":
-                status = "not_required_site"
-            elif len(matching) == 1:
-                status = "matching_one"
-            elif len(matching) > 1:
-                status = "conflict"
-            else:
-                status = "no_match"
-            matched = matching[0] if status == "matching_one" else None
-            value = {
-                "schema_version": 1,
-                "provider_id": "support_profile_projection",
-                "provider_version": "1",
-                "family_id": bundle_record["family_id"],
-                "bundle_spec_digest": bundle.spec_digest,
-                "channel": channel,
-                "lifecycle_assignment_id": (
-                    "assignment-" + pointer["lifecycle_event_digest"][:16]
-                ),
-                "lifecycle_assignment_digest": pointer["lifecycle_event_digest"],
-                "support_profile_index_head_digest": pointer[
-                    "support_profile_index_head"
-                ],
-                "profile_set_record_id": pointer["profile_set_record_id"],
-                "profile_set_record_digest": pointer["profile_set_record_digest"],
-                "profile_set_digest": pointer["profile_set_digest"],
-                "status": status,
-                "profile_id": None if matched is None else matched["profile_id"],
-                "profile_digest": None if matched is None else matched["profile_digest"],
-                "environment_fingerprint": (
-                    None if matched is None else environment.environment_fingerprint
-                ),
-                "qualification_workload_fingerprint": (
-                    None if matched is None else workload.workload_fingerprint
-                ),
-                "protocol_fingerprint": (
-                    None if matched is None else QUALIFICATION_PROTOCOL_FINGERPRINT
-                ),
-                "advertised_gates_digest": (
-                    None if matched is None else advertised_digest
-                ),
-                "trust_domain": (
-                    "yolozu_managed" if matched is not None else "unknown"
-                ),
-                "observation_digest": _ZERO_DIGEST,
-            }
-            value["observation_digest"] = canonical_sha256_v1(
-                value,
-                own_digest_field="observation_digest",
-            )
-            observations[(bundle.spec_digest, channel)] = (
-                validate_support_profile_eligibility_observation(
-                    value,
-                    evidence_trust_domain=evidence_trust,
-                    support_scope=support_scope,
-                )
-            )
+            if observed is not None:
+                observations[(bundle.spec_digest, channel)] = observed
     return observations
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import ipaddress
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -30,6 +31,7 @@ __all__ = [
     "validate_bundle_lifecycle_record",
     "validate_support_profile_record",
     "validate_support_profile_spec",
+    "validate_support_profile_snapshot",
 ]
 
 
@@ -46,6 +48,18 @@ _BUNDLE_VERSION_RE = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,63}\Z")
 _ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}\Z")
 _ROLE_ID_RE = re.compile(r"(?:repo_maintainer|release_reviewer|site_operator|automation)\Z")
 _UTC_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z\Z")
+_UUID_RE = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
+_EMAIL_RE = re.compile(
+    r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@"
+    r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![A-Za-z0-9.-])"
+)
+_ABSOLUTE_PATH_RE = re.compile(
+    r"(?:^|\s)(?:/(?:Users|home|private|tmp|var|etc)/|[A-Za-z]:\\)"
+)
+_IP_TOKEN_RE = re.compile(r"(?<![0-9A-Fa-f:.])(?:[0-9A-Fa-f:.]{3,45})(?![0-9A-Fa-f:.])")
 
 TASKS = frozenset({"object_detection", "instance_segmentation"})
 PROMPT_MODES = frozenset({"fixed_classes", "text"})
@@ -180,6 +194,22 @@ def _safe_text(value: Any, *, field: str, maximum_bytes: int) -> str:
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
         raise ValueError(f"{field}: control characters are invalid")
     return value
+
+
+def _public_text(value: Any, *, field: str, maximum_bytes: int) -> str:
+    text = _safe_text(value, field=field, maximum_bytes=maximum_bytes)
+    if any(unicodedata.category(character).startswith("C") for character in text):
+        raise ValueError(f"{field}: private control/format characters are invalid")
+    if _UUID_RE.search(text) or _EMAIL_RE.search(text) or _ABSOLUTE_PATH_RE.search(text):
+        raise ValueError(f"{field}: private identifiers and paths are invalid")
+    for match in _IP_TOKEN_RE.finditer(text):
+        token = match.group(0).strip(".:")
+        try:
+            ipaddress.ip_address(token)
+        except ValueError:
+            continue
+        raise ValueError(f"{field}: IP addresses are invalid")
+    return text
 
 
 def _utc(value: Any, *, field: str) -> str:
@@ -1072,7 +1102,7 @@ def validate_support_profile_spec(value: Mapping[str, Any]) -> SupportProfileSpe
     if record["schema_version"] != 1 or isinstance(record["schema_version"], bool):
         raise ValueError("SupportProfileSpec.schema_version: expected 1")
     limitations = [
-        _safe_text(item, field="public_limitations[]", maximum_bytes=512)
+        _public_text(item, field="public_limitations[]", maximum_bytes=512)
         for item in _list(
             record["public_limitations"],
             field="public_limitations",
@@ -1798,9 +1828,10 @@ def validate_bundle_lifecycle_record(
     return BundleLifecycleRecord(normalized, trust)
 
 
-def _assert_support_snapshot(
+def validate_support_profile_snapshot(
     event: dict[str, Any], support_profiles: SupportProfileProjection
 ) -> None:
+    """Require one lifecycle pointer to bind an exact historical set snapshot."""
     head = event["support_profile_index_head"]
     if head != ZERO_DIGEST and head not in support_profiles.record_by_digest:
         raise ValueError("lifecycle assignment references unknown support-profile head")
@@ -1919,7 +1950,7 @@ def project_bundle_lifecycle(
                     raise ValueError(
                         "public assignment requires a validated support-profile projection"
                     )
-                _assert_support_snapshot(event, support_profiles)
+                validate_support_profile_snapshot(event, support_profiles)
             elif support_profiles is not None:
                 head = event["support_profile_index_head"]
                 if head != ZERO_DIGEST and head not in support_profiles.record_by_digest:

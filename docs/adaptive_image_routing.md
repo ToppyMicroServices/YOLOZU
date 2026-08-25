@@ -495,6 +495,33 @@ bundle was Candidate. The decision
 pins the current lifecycle projection digest only to detect change between
 recommendation and execution.
 
+### Dormant support-profile review
+
+`yolozu review-image-pipeline-support-profiles` is the implemented Experimental
+maintainer operation for one complete ordered set of 1..32 `SupportProfileSpec`
+records. Its proposal must use exact `canonical_json_v1` bytes, repeat the exact
+family/channel and complete ordered profile IDs, and contain no private/site values.
+The default is a bounded no-write dry-run. An approved append requires the observed
+global support-profile head, the exact current set-record/set digests or explicit
+initial none, a non-personal repository review role, a public review reference, and
+a reason.
+
+Approval appends only new immutable definitions followed by one set assignment to
+`yolozu/data/adaptive_routing/support_profiles.jsonl`, then reads back the complete
+projection. Existing bytes are unchanged and no derived projection file is written.
+This produces a reviewed dormant target scope only. It does not change the current
+lifecycle assignment, activate evidence, bind or import a runner, download assets,
+promote maturity, or advertise support. The canonical stream remains empty until a
+real reviewed proposal is approved; test fixtures are not support evidence.
+
+The loader-derived support-profile provider follows the exact historical set record
+and index prefix pinned by each current lifecycle assignment. A newer dormant review
+does not rewrite that advertised snapshot. Recommendation passes only these typed
+observations to the pure selector. `process_images` reopens the support/lifecycle
+SSOTs and requires the exact pinned observation again immediately before it resolves
+a runner session. Missing, untrusted, conflicting, superseded, or tampered state
+fails closed.
+
 The environment fingerprint identifies a measured configuration, not one unique
 physical host. It excludes identifying host data. Evidence from representative
 images describes only that measured workload. It does not prove the same latency or

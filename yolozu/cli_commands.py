@@ -1187,6 +1187,42 @@ def _cmd_activate_qualification_evidence(args: argparse.Namespace) -> int:
     return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
 
 
+def _cmd_review_image_pipeline_support_profiles(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.support_profiles import (
+        review_image_pipeline_support_profiles,
+    )
+
+    try:
+        outcome = review_image_pipeline_support_profiles(
+            proposal_path=getattr(args, "proposal", None),
+            family_id=getattr(args, "family_id", None),
+            channel=getattr(args, "channel", None),
+            workspace_root=str(args.workspace),
+            expected_head_digest=getattr(args, "expected_head_digest", None),
+            expected_current_profile_set_record_digest=getattr(
+                args,
+                "expected_current_profile_set_record_digest",
+                None,
+            ),
+            expected_current_profile_set_digest=getattr(
+                args,
+                "expected_current_profile_set_digest",
+                None,
+            ),
+            expect_no_current_profile_set=bool(
+                args.expect_no_current_profile_set
+            ),
+            reviewer_role_id=getattr(args, "reviewer_role_id", None),
+            public_review_id=getattr(args, "public_review_id", None),
+            reason=getattr(args, "reason", None),
+            approve=bool(args.approve),
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+    print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
+
+
 def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
     from yolozu.adaptive.algorithm_scout import (
         AlgorithmScoutError,

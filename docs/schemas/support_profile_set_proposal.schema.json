@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/support_profile_set_proposal.schema.json",
+  "title": "YOLOZU SupportProfileSetProposal v1",
+  "description": "Canonical public review input containing one complete ordered dormant support-profile set.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "family_id", "channel", "complete_profile_ids", "profiles"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "family_id": { "$ref": "#/$defs/component" },
+    "channel": { "enum": ["Experimental", "Stable"] },
+    "complete_profile_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/component" }
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "support_profile_spec.schema.json" }
+    }
+  },
+  "$defs": {
+    "component": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" }
+  }
+}

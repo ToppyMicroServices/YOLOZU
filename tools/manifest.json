@@ -254,6 +254,10 @@
       "schema": "docs/schemas/support_profile_record.schema.json",
       "summary": "Append-only reviewed exact-environment support-profile definition and dormant-set record."
     },
+    "support_profile_set_proposal_json": {
+      "schema": "docs/schemas/support_profile_set_proposal.schema.json",
+      "summary": "Canonical public review input that exactly covers one complete ordered dormant support-profile set."
+    },
     "support_profile_spec_json": {
       "schema": "docs/schemas/support_profile_spec.schema.json",
       "summary": "Immutable exact measured environment, workload, protocol, and advertised-gate scope; it does not extrapolate hardware families."
@@ -14420,6 +14424,153 @@
       "tags": [
         "policy",
         "license"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "support_profile_set_proposal_json",
+          "support_profile_spec_json",
+          "support_profile_record_json"
+        ],
+        "produces": [
+          "support_profile_record_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/schemas/support_profile_set_proposal.schema.json",
+        "docs/schemas/support_profile_record.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "With --approve, atomically appends only to the canonical dormant support-profile SSOT.",
+            "kind": "file",
+            "path": "yolozu/data/adaptive_routing/support_profiles.jsonl",
+            "scope": "path"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "tools/review_image_pipeline_support_profiles.py",
+      "examples": [
+        {
+          "command": "python3 tools/review_image_pipeline_support_profiles.py --proposal reports/support_profile_set_proposal.json --family-id yolox --channel Experimental --expected-head-digest <sha256> --expect-no-current-profile-set --reviewer-role-id repo_maintainer --public-review-id gh-<number> --reason 'Review complete dormant target scope'",
+          "description": "Dry-run every complete-set, immutable-definition, review, and stale-head gate; no record is written."
+        },
+        {
+          "command": "python3 tools/review_image_pipeline_support_profiles.py --help",
+          "description": "Inspect the Experimental dormant support-profile review interface contract."
+        }
+      ],
+      "id": "review_image_pipeline_support_profiles",
+      "inputs": [
+        {
+          "flag": "--proposal",
+          "kind": "file",
+          "name": "proposal",
+          "required": false
+        },
+        {
+          "flag": "--family-id",
+          "kind": "string",
+          "name": "family_id",
+          "required": false
+        },
+        {
+          "flag": "--channel",
+          "kind": "string",
+          "name": "channel",
+          "required": false
+        },
+        {
+          "flag": "--expected-head-digest",
+          "kind": "string",
+          "name": "expected_head_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-current-profile-set-record-digest",
+          "kind": "string",
+          "name": "expected_current_profile_set_record_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-current-profile-set-digest",
+          "kind": "string",
+          "name": "expected_current_profile_set_digest",
+          "required": false
+        },
+        {
+          "flag": "--expect-no-current-profile-set",
+          "kind": "string",
+          "name": "expect_no_current_profile_set",
+          "required": false
+        },
+        {
+          "flag": "--reviewer-role-id",
+          "kind": "string",
+          "name": "reviewer_role_id",
+          "required": false
+        },
+        {
+          "flag": "--public-review-id",
+          "kind": "string",
+          "name": "public_review_id",
+          "required": false
+        },
+        {
+          "flag": "--reason",
+          "kind": "string",
+          "name": "reason",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--approve",
+          "kind": "string",
+          "name": "approve",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout",
+          "description": "Bounded machine-readable dry-run or apply outcome that states dormant-only scope.",
+          "kind": "stdout",
+          "name": "support_profile_review_outcome"
+        },
+        {
+          "default": "yolozu/data/adaptive_routing/support_profiles.jsonl",
+          "description": "Canonical append-only reviewed dormant support-profile stream after explicit approval.",
+          "kind": "file",
+          "name": "support_profile_stream"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability.",
+      "tags": [
+        "adaptive-inference",
+        "experimental",
+        "review",
+        "support-profile",
+        "ssot"
       ]
     },
     {

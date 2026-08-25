@@ -21,7 +21,9 @@ from .contracts import (
     HANDOFF_MAX_MASK_ARTIFACTS,
     HANDOFF_MAX_OUTPUT_BYTES,
     HANDOFF_MAX_OUTPUT_FILES,
+    EnvironmentProfile,
     ImageJobSpec,
+    QualificationWorkloadProfile,
     build_qualification_workload_profile,
     validate_image_job_spec,
 )
@@ -58,6 +60,7 @@ from .recommendation import (
     recommend_image_pipeline,
 )
 from .selection import SelectionDecision, validate_selection_decision
+from .support_profiles import build_support_profile_eligibility_observation
 
 __all__ = [
     "IsolatedRunnerCapability",
@@ -213,6 +216,63 @@ def _resolve_execution_route(
             "the isolated runner policy does not match the selected bundle",
         )
     return _ExecutionRoute("third_party_isolated", isolated_service=service)
+
+
+def _revalidate_support_profile_before_execution(
+    *,
+    selected: Mapping[str, Any],
+    pinned_record: Mapping[str, Any],
+    selected_evaluation: Mapping[str, Any],
+    bundle: AlgorithmBundleSpec,
+    job: ImageJobSpec,
+    environment: EnvironmentProfile,
+    workload: QualificationWorkloadProfile,
+) -> tuple[AlgorithmBundleSpec, _ExecutionRoute]:
+    """Reproject the lifecycle-pinned historical support set before runner use."""
+
+    latest_profiles = _load_support_profiles()
+    latest_registry = load_algorithm_bundle_registry(
+        support_profiles=latest_profiles,
+    )
+    if (
+        latest_registry.registry.registry_digest != pinned_record["registry_digest"]
+        or latest_registry.lifecycle.head_digest
+        != pinned_record["lifecycle_projection_digest"]
+    ):
+        raise _fail(
+            "selection_stale",
+            "the bundle or lifecycle projection changed before execution",
+        )
+    latest_bundle = latest_registry.by_spec_digest().get(selected["spec_digest"])
+    if latest_bundle is None or latest_bundle.to_dict() != bundle.to_dict():
+        raise _fail(
+            "selection_stale",
+            "the selected bundle changed before execution",
+        )
+    evidence_identity = selected_evaluation["evidence"]
+    expected_support = selected_evaluation["support_profile_observation"]
+    if evidence_identity is None or expected_support is None:
+        raise _fail(
+            "selection_stale",
+            "the selected support/evidence identity is missing",
+        )
+    observed_support = build_support_profile_eligibility_observation(
+        registry=latest_registry,
+        profiles=latest_profiles,
+        bundle=latest_bundle,
+        channel=selected_evaluation["effective_channel"],
+        job=job,
+        environment=environment,
+        workload=workload,
+        evidence_trust_domain=evidence_identity["trust_domain"],
+        support_scope=selected_evaluation["support_scope"],
+    )
+    if observed_support is None or observed_support.to_dict() != expected_support:
+        raise _fail(
+            "selection_stale",
+            "the lifecycle-pinned support profile changed before execution",
+        )
+    return latest_bundle, _resolve_execution_route(latest_bundle)
 
 
 def _decimal(value: Any, *, field: str) -> Decimal:
@@ -588,7 +648,16 @@ def process_images(
     bundle = registry.by_spec_digest().get(selected["spec_digest"])
     if bundle is None:
         raise _fail("selection_stale", "the selected bundle is no longer registered")
-    route = _resolve_execution_route(bundle)
+    selected_evaluation = next(
+        (
+            item
+            for item in pinned_record["candidate_evaluations"]
+            if item["rank_state"] == "selected"
+        ),
+        None,
+    )
+    if selected_evaluation is None:
+        raise _fail("selection_stale", "the selected candidate evaluation is missing")
 
     try:
         environment = build_environment_profile(collected_at=now)
@@ -650,6 +719,19 @@ def process_images(
                         != pinned_record["selected_artifact_state_fingerprint"]
                     ):
                         raise _fail("selection_stale", "the selected artifact state changed")
+
+                    # A later dormant review is valid, but the lifecycle-pinned
+                    # historical observation must still match immediately before
+                    # a runner route is resolved.
+                    bundle, route = _revalidate_support_profile_before_execution(
+                        selected=selected,
+                        pinned_record=pinned_record,
+                        selected_evaluation=selected_evaluation,
+                        bundle=bundle,
+                        job=job,
+                        environment=environment,
+                        workload=workload,
+                    )
 
                     def session_factory() -> _RunnerSession:
                         if route.kind == "code_owned_audited":

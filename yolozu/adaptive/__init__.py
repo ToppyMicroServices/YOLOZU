@@ -40,6 +40,7 @@ from .bundles import (
     validate_bundle_lifecycle_record,
     validate_support_profile_record,
     validate_support_profile_spec,
+    validate_support_profile_snapshot,
 )
 from .bundle_registry import (
     AlgorithmRunner,
@@ -141,6 +142,13 @@ from .selector import (
     evidence_eligibility_from_projection,
     select_qualified_pipeline,
 )
+from .support_profiles import (
+    MAX_SUPPORT_PROFILE_STREAM_BYTES,
+    SupportProfileReviewOutcome,
+    build_support_profile_eligibility_observation,
+    load_support_profile_jsonl_bytes,
+    review_image_pipeline_support_profiles,
+)
 
 __all__ = [
     "AlgorithmBundleRegistry",
@@ -173,6 +181,7 @@ __all__ = [
     "ManagedOutputTransaction",
     "MAX_SCREENING_RECORDS",
     "MAX_SCREENING_STREAM_BYTES",
+    "MAX_SUPPORT_PROFILE_STREAM_BYTES",
     "PinnedArtifactSet",
     "PinnedVerifiedArtifactSet",
     "PinnedInput",
@@ -188,6 +197,7 @@ __all__ = [
     "ScreeningEligibilityObservation",
     "SelectionDecision",
     "SupportProfileProjection",
+    "SupportProfileReviewOutcome",
     "SupportProfileEligibilityObservation",
     "SupportProfileRecord",
     "SupportProfileSpec",
@@ -195,6 +205,7 @@ __all__ = [
     "VerifiedArtifactSet",
     "build_fixed_class_mapping",
     "build_screening_eligibility_observation",
+    "build_support_profile_eligibility_observation",
     "build_decoded_input_inventory",
     "build_environment_profile",
     "build_qualification_workload_profile",
@@ -217,6 +228,7 @@ __all__ = [
     "load_evidence_activation_jsonl",
     "load_evidence_activation_jsonl_bytes",
     "load_candidate_screening_jsonl_bytes",
+    "load_support_profile_jsonl_bytes",
     "map_fixed_class_outputs",
     "map_text_prompt_outputs",
     "nanoseconds_to_milliseconds",
@@ -225,6 +237,7 @@ __all__ = [
     "project_candidate_screening_records",
     "project_evidence_activations",
     "project_support_profiles",
+    "review_image_pipeline_support_profiles",
     "process_images",
     "qualification_input_schedule",
     "qualify_image_pipeline",
@@ -248,4 +261,5 @@ __all__ = [
     "validate_support_profile_eligibility_observation",
     "validate_support_profile_record",
     "validate_support_profile_spec",
+    "validate_support_profile_snapshot",
 ]

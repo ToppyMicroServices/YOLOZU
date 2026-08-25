@@ -148,6 +148,14 @@ cancellation, and atomic unactivated `qualification_report.json` publication.
 Experimental `yolozu activate-qualification-evidence` now dry-runs every review,
 trust, freshness, registry, lifecycle, and stale-head gate before it can append an
 activation, supersession, or terminal revocation. Mutation requires `--approve`.
+Experimental `yolozu review-image-pipeline-support-profiles` separately reviews one
+complete ordered exact-measured target set. It reads and, only with `--approve`,
+atomically appends to the sole packaged `support_profiles.jsonl` SSOT. A reviewed
+set remains dormant: it does not change a lifecycle pointer, activate evidence,
+bind a runner, download a model, or claim current support. The stream is currently
+empty. Recommendation and execution use the same loader-derived support-profile
+provider, and execution reprojects the lifecycle-pinned historical set before any
+runner session is opened.
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.

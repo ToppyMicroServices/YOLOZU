@@ -145,7 +145,14 @@ preflight、固定したrepeat/soak protocol、child processのbounded cancellat
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。
 Experimental `yolozu activate-qualification-evidence` は、review、trust、freshness、
 registry/lifecycle、stale-head の全gateをdry-runで確認し、`--approve`を明示した場合
-だけactivation、supersession、terminal revocationをatomicに追記します。localで生成
+だけactivation、supersession、terminal revocationをatomicに追記します。
+Experimental `yolozu review-image-pipeline-support-profiles` は、exact-measuredな
+target profileの完全なordered setを別工程でreviewします。sole packaged SSOTである
+`support_profiles.jsonl`だけを読み、`--approve`時だけatomicに追記します。review済み
+setはdormantのままで、lifecycle pointer、evidence activation、runner binding、model
+download、現在利用可能というsupport claimを変更しません。streamは現在空です。
+recommendationとexecutionは同じloader-derived providerを使い、executionはrunner
+sessionを開く直前にlifecycleが固定したhistorical setを再projectします。localで生成
 したreportは`site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。
