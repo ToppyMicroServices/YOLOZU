@@ -104,6 +104,8 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/adaptive/processing.py",
                     "yolozu/adaptive/algorithm_scout.py",
                     "yolozu/adaptive/screening.py",
+                    "yolozu/adaptive/support_profiles.py",
+                    "yolozu/adaptive/control_stream.py",
                     "yolozu/adaptive/safe_https.py",
                     "yolozu/data/adaptive_routing/bundle_specs.json",
                     "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
@@ -117,6 +119,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/algorithm_scout_sources.schema.json",
                     "yolozu/data/schemas/algorithm_scout_report.schema.json",
                     "yolozu/data/schemas/candidate_screening_record.schema.json",
+                    "yolozu/data/schemas/support_profile_set_proposal.schema.json",
                     "yolozu/data/integrations/mcp_actions_tool_reference.json",
                 ):
                     self.assertIn(required, sdist_names)

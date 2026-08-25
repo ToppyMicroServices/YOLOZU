@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,scout-algorithms,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,scout-algorithms,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,scout-algorithms,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,scout-algorithms,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -38,6 +38,8 @@ positional arguments:
                         Measure one exact local image bundle (Experimental).
     activate-qualification-evidence
                         Review one exact qualification report; dry-run unless --approve is set.
+    review-image-pipeline-support-profiles
+                        Review one complete dormant support-profile set; dry-run by default.
     scout-algorithms    Plan or collect a bounded monitored-source candidate inbox (Experimental).
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
@@ -272,6 +274,7 @@ Contact: develop@toppymicros.com
 | render_synthgen_overlay | experimental | tools/render_synthgen_overlay.py | Render semantic + instance + keypoint overlays from SynthGen shard samples. |
 | render_ttt_manual_figures | research | tools/render_ttt_manual_figures.py | Render the six-file docs/manual TTT figure bundle atomically from validated synthetic-fixture or hash-bound measured sources. |
 | report_dependency_licenses | stable | tools/report_dependency_licenses.py | Generate a best-effort dependency license report from installed Python packages (not legal advice). |
+| review_image_pipeline_support_profiles | experimental | tools/review_image_pipeline_support_profiles.py | Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability. |
 | rtdetr_pose_backend_suite | experimental | tools/rtdetr_pose_backend_suite.py | Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence. |
 | rtdetr_pose_train_continual | research | rtdetr_pose/tools/train_continual.py | Continual fine-tuning runner for rtdetr_pose with an explicit initial-checkpoint/FWT baseline, optional no-object-aware foreground response selection, replay/LoRA/EWC/SI, and per-task checkpoint, teacher, data-order, time, memory, and command provenance. |
 | run_actions_api | stable | tools/run_actions_api.py | Run the GPT Actions API, including fail-closed typed TTT/CTTA export jobs with full checkpoint preflight. |

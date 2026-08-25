@@ -29,6 +29,7 @@ from .cli_commands import (
     _cmd_predictions,
     _cmd_qualify_image_pipeline,
     _cmd_activate_qualification_evidence,
+    _cmd_review_image_pipeline_support_profiles,
     _cmd_scout_algorithms,
     _cmd_validate,
     _cmd_eval_instance_seg,
@@ -1370,6 +1371,61 @@ def main(argv: list[str] | None = None) -> int:
         help="Apply the validated atomic append; omission is always dry-run.",
     )
 
+    support_review = sub.add_parser(
+        "review-image-pipeline-support-profiles",
+        help="Review one complete dormant support-profile set; dry-run by default.",
+    )
+    support_review.add_argument(
+        "--proposal",
+        help="Workspace-confined canonical complete-set proposal JSON.",
+    )
+    support_review.add_argument("--family-id", help="Exact bundle family ID.")
+    support_review.add_argument(
+        "--channel",
+        choices=("Experimental", "Stable"),
+        help="Exact future public lifecycle channel.",
+    )
+    support_review.add_argument(
+        "--expected-head-digest",
+        help="Observed global support-profile head; use 64 zeroes initially.",
+    )
+    support_review.add_argument(
+        "--expected-current-profile-set-record-digest",
+        help="Exact current dormant set-assignment record digest.",
+    )
+    support_review.add_argument(
+        "--expected-current-profile-set-digest",
+        help="Exact current dormant ordered profile-set digest.",
+    )
+    support_review.add_argument(
+        "--expect-no-current-profile-set",
+        action="store_true",
+        help="Explicitly require that this family/channel has no prior dormant set.",
+    )
+    support_review.add_argument(
+        "--reviewer-role-id",
+        choices=("repo_maintainer", "release_reviewer"),
+        help="Non-personal repository review role.",
+    )
+    support_review.add_argument(
+        "--public-review-id",
+        help="Bounded public repository review reference.",
+    )
+    support_review.add_argument(
+        "--reason",
+        help="Public review reason in 1..512 UTF-8 bytes.",
+    )
+    support_review.add_argument(
+        "--workspace",
+        default=".",
+        help="Repository workspace containing the canonical SSOT.",
+    )
+    support_review.add_argument(
+        "--approve",
+        action="store_true",
+        help="Apply the atomic append; omission is always dry-run.",
+    )
+
     scout = sub.add_parser(
         "scout-algorithms",
         help="Plan or collect a bounded monitored-source candidate inbox (Experimental).",
@@ -1493,6 +1549,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_qualify_image_pipeline(args)
     if args.command == "activate-qualification-evidence":
         return _cmd_activate_qualification_evidence(args)
+    if args.command == "review-image-pipeline-support-profiles":
+        return _cmd_review_image_pipeline_support_profiles(args)
     if args.command == "scout-algorithms":
         return _cmd_scout_algorithms(args)
     if args.command == "list":

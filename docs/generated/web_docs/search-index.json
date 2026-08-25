@@ -763,6 +763,13 @@
     "title": "report_dependency_licenses"
   },
   {
+    "href": "commands.html#tool-review-image-pipeline-support-profiles",
+    "kind": "command",
+    "search_text": "review_image_pipeline_support_profiles Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability. experimental tools/review_image_pipeline_support_profiles.py --proposal --family-id --channel --expected-head-digest --expected-current-profile-set-record-digest --expected-current-profile-set-digest --expect-no-current-profile-set --reviewer-role-id --public-review-id --reason --workspace --approve",
+    "summary": "Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability.",
+    "title": "review_image_pipeline_support_profiles"
+  },
+  {
     "href": "commands.html#tool-rtdetr-pose-backend-suite",
     "kind": "command",
     "search_text": "rtdetr_pose_backend_suite Fail-closed RT-DETR backend parity + benchmark suite with shared checkpoint compatibility evidence. experimental tools/rtdetr_pose_backend_suite.py --config --checkpoint --allow-partial-checkpoint --device --image-size --batch --samples --seed --onnx --engine --input-name --onnx-meta --engine-meta --embed-meta --trtexec --backends --reference --score-atol --bbox-atol --warmup --iterations --output --dry-run",
@@ -1300,6 +1307,13 @@
     "search_text": "YOLOZU SupportProfileRecord v1 One record in the append-only reviewed support-profile definition and dormant-set chain.  docs/schemas/support_profile_record.schema.json",
     "summary": "One record in the append-only reviewed support-profile definition and dormant-set chain.",
     "title": "YOLOZU SupportProfileRecord v1"
+  },
+  {
+    "href": "schemas.html#schema-support-profile-set-proposal-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SupportProfileSetProposal v1 Canonical public review input containing one complete ordered dormant support-profile set. channel complete_profile_ids family_id profiles schema_version docs/schemas/support_profile_set_proposal.schema.json",
+    "summary": "Canonical public review input containing one complete ordered dormant support-profile set.",
+    "title": "YOLOZU SupportProfileSetProposal v1"
   },
   {
     "href": "schemas.html#schema-support-profile-spec-schema",

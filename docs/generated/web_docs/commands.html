@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">136 manifest entries with declared maturity, inputs,
+  <p class="lead">137 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1561,6 +1561,21 @@ python3 tools/render_ttt_manual_figures.py --docs-assets-dir tmp/ttt_docs --manu
   <h3>Examples</h3>
   <pre><code>python3 tools/report_dependency_licenses.py --output reports/dependency_licenses.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/report_dependency_licenses.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/license_policy.md" target="_blank" rel="noopener noreferrer">license_policy.md</a></p>
+</details>
+
+<details class="card" id="tool-review-image-pipeline-support-profiles" data-tool-id="review_image_pipeline_support_profiles"
+  data-search-card data-search-text="review_image_pipeline_support_profiles Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability. experimental tools/review_image_pipeline_support_profiles.py python3 tools/review_image_pipeline_support_profiles.py --proposal reports/support_profile_set_proposal.json --family-id yolox --channel Experimental --expected-head-digest &lt;sha256&gt; --expect-no-current-profile-set --reviewer-role-id repo_maintainer --public-review-id gh-&lt;number&gt; --reason &#x27;Review complete dormant target scope&#x27; python3 tools/review_image_pipeline_support_profiles.py --help">
+  <summary><code>review_image_pipeline_support_profiles</code> — Dry-run or atomically append one complete reviewed dormant exact-measured support-profile set; review alone never changes lifecycle support or availability.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/review_image_pipeline_support_profiles.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--proposal</code> — file</li><li><code>--family-id</code> — string</li><li><code>--channel</code> — string</li><li><code>--expected-head-digest</code> — string</li><li><code>--expected-current-profile-set-record-digest</code> — string</li><li><code>--expected-current-profile-set-digest</code> — string</li><li><code>--expect-no-current-profile-set</code> — string</li><li><code>--reviewer-role-id</code> — string</li><li><code>--public-review-id</code> — string</li><li><code>--reason</code> — string</li><li><code>--workspace</code> — default=., dir</li><li><code>--approve</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/review_image_pipeline_support_profiles.py --proposal reports/support_profile_set_proposal.json --family-id yolox --channel Experimental --expected-head-digest &lt;sha256&gt; --expect-no-current-profile-set --reviewer-role-id repo_maintainer --public-review-id gh-&lt;number&gt; --reason &#x27;Review complete dormant target scope&#x27;
+python3 tools/review_image_pipeline_support_profiles.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/review_image_pipeline_support_profiles.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/support_profile_set_proposal.schema.json" target="_blank" rel="noopener noreferrer">support_profile_set_proposal.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/support_profile_record.schema.json" target="_blank" rel="noopener noreferrer">support_profile_record.schema.json</a></p>
 </details>
 
 <details class="card" id="tool-rtdetr-pose-backend-suite" data-tool-id="rtdetr_pose_backend_suite"

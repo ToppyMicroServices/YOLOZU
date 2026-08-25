@@ -156,6 +156,7 @@ class TestInstalledAiSurface(unittest.TestCase):
                 "screening_eligibility_observation.schema.json",
                 "support_profile_record.schema.json",
                 "support_profile_spec.schema.json",
+                "support_profile_set_proposal.schema.json",
                 "support_profile_eligibility_observation.schema.json",
                 "selection_decision.schema.json",
             ):

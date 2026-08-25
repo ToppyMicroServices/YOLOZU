@@ -22,6 +22,7 @@ from .bundle_registry import LoadedAlgorithmBundleRegistry, load_algorithm_bundl
 from .bundles import ZERO_DIGEST
 from .canonical import canonical_json_v1, canonical_sha256_v1
 from .control_records import load_bounded_json_bytes
+from .control_stream import atomic_replace_control_stream
 from .evidence import (
     MAX_EVIDENCE_ACTIVATION_BYTES,
     QualificationReport,
@@ -503,92 +504,6 @@ def _event(
     return value
 
 
-def _atomic_replace_stream(
-    *,
-    path: Path,
-    observed_bytes: bytes,
-    replacement_bytes: bytes,
-    fault_hook: FaultHook | None,
-) -> None:
-    if len(replacement_bytes) > MAX_EVIDENCE_ACTIVATION_BYTES:
-        raise ValueError("evidence activation stream exceeds 64 MiB")
-    nofollow = getattr(os, "O_NOFOLLOW", 0)
-    directory_flag = getattr(os, "O_DIRECTORY", 0)
-    if os.name != "posix" or not nofollow or not directory_flag:
-        raise ValueError("atomic activation requires POSIX no-follow primitives")
-    parent_fd = os.open(path.parent, os.O_RDONLY | directory_flag | nofollow)
-    temporary = f".{path.name}.stage.{secrets.token_hex(16)}"
-    descriptor: int | None = None
-    published = False
-    try:
-        try:
-            before = os.stat(path.name, dir_fd=parent_fd, follow_symlinks=False)
-        except FileNotFoundError:
-            before = None
-        if before is not None and (
-            not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
-        ):
-            raise ValueError("activation stream must be one singly linked regular file")
-        current = b"" if before is None else _read_regular(
-            path, maximum_bytes=MAX_EVIDENCE_ACTIVATION_BYTES, label="activation stream"
-        )
-        if current != observed_bytes:
-            raise ValueError("activation stream changed after dry-run validation")
-        if fault_hook is not None:
-            fault_hook("before_stage_open")
-        descriptor = os.open(
-            temporary,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | nofollow,
-            0o600,
-            dir_fd=parent_fd,
-        )
-        written = 0
-        while written < len(replacement_bytes):
-            count = os.write(descriptor, replacement_bytes[written:])
-            if count <= 0:
-                raise OSError("short activation-stream write")
-            written += count
-        os.fsync(descriptor)
-        os.close(descriptor)
-        descriptor = None
-        if fault_hook is not None:
-            fault_hook("before_replace")
-        try:
-            latest = os.stat(path.name, dir_fd=parent_fd, follow_symlinks=False)
-        except FileNotFoundError:
-            latest = None
-        if (before is None) != (latest is None):
-            raise ValueError("activation stream changed before commit")
-        if before is not None and latest is not None and (
-            before.st_dev,
-            before.st_ino,
-            before.st_size,
-            before.st_mtime_ns,
-        ) != (
-            latest.st_dev,
-            latest.st_ino,
-            latest.st_size,
-            latest.st_mtime_ns,
-        ):
-            raise ValueError("activation stream identity changed before commit")
-        os.replace(temporary, path.name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
-        published = True
-        os.fsync(parent_fd)
-        if fault_hook is not None:
-            fault_hook("after_replace")
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
-        if not published:
-            try:
-                info = os.stat(temporary, dir_fd=parent_fd, follow_symlinks=False)
-            except FileNotFoundError:
-                info = None
-            if info is not None and stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
-                os.unlink(temporary, dir_fd=parent_fd)
-        os.close(parent_fd)
-
-
 def activate_qualification_evidence(
     *,
     operation: str,
@@ -993,10 +908,12 @@ def activate_qualification_evidence(
 
     appended = b"".join(canonical_json_v1(item) + b"\n" for item in planned)
     try:
-        _atomic_replace_stream(
+        atomic_replace_control_stream(
             path=stream,
             observed_bytes=raw_stream,
             replacement_bytes=raw_stream + appended,
+            maximum_bytes=MAX_EVIDENCE_ACTIVATION_BYTES,
+            label="activation stream",
             fault_hook=fault_hook,
         )
         readback = _read_regular(

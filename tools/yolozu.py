@@ -53,6 +53,7 @@ _PKG_PASSTHROUGH_COMMANDS = {
     "parity",
     "predictions",
     "qualify-image-pipeline",
+    "review-image-pipeline-support-profiles",
     "scout-algorithms",
     "resources",
     "test",
@@ -1415,6 +1416,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         (
             "qualify-image-pipeline",
             "Delegate to yolozu package CLI qualification command.",
+        ),
+        (
+            "review-image-pipeline-support-profiles",
+            "Delegate to the reviewed dormant support-profile set command.",
         ),
         (
             "scout-algorithms",
