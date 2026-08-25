@@ -57,7 +57,7 @@ Guaranteed AI-safe surface (deterministic/lightweight):
   \item \cmd{validate_predictions}
 \end{itemize}
 
-The live MCP server registers a broader 25-tool surface. The generated JSON
+The live MCP server registers a broader 27-tool surface. The generated JSON
 reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
 \cmd{config_review}, and \cmd{actions_public}; registration alone does not
 promote environment-dependent operations into the guaranteed set.
@@ -68,6 +68,15 @@ unclassified, and filtered discovery reports the number of excluded
 unclassified records.
 Read-only discovery and \cmd{--help} do not create job-storage artifacts;
 \cmd{runs/mcp_jobs} is initialized only when a job operation needs it.
+
+The Experimental \cmd{recommend\_image\_pipeline} tool accepts a typed image job
+and workspace-confined input. Optional registry, candidate-screening, evidence,
+and artifact roots are also confined to that workspace. A custom screening stream
+is always \cmd{operator\_asserted}; JSON content cannot promote it to a
+repository-managed pass. The packaged screening stream is empty, so this
+interface contract does not make a candidate model available. Recommendation is
+read-only and separate from the explicit, dry-run-by-default
+\cmd{process\_images} operation.
 
 Copy-paste sanity checks:
 \begin{lstlisting}[language=bash]

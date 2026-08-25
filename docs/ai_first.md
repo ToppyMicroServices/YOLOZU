@@ -84,13 +84,14 @@ declared dependencies and runtime inputs.
 
 `recommend_image_pipeline` is an Experimental, MCP-only, read-only operation.
 The caller supplies a structured `job_spec` and workspace-confined `input_path`;
-optional registry, evidence, and artifact roots are also workspace-confined. It
+optional registry, screening, evidence, and artifact roots are also workspace-confined.
+Custom screening input is always operator-asserted and cannot produce a managed pass. It
 returns `ok=true` for both `selected` and `abstained` SelectionDecision outcomes.
 Malformed, unsafe, corrupt, or internal failures return `ok=false`. The operation
 does not parse natural language, run a model, download assets, write files, or
 request network access. The packaged registry contains three Candidate baselines
-with unbound execution. Because Candidate is nonselectable and the public evidence
-stream is empty, the default installed call records `maturity_disallowed` and
+with unbound execution. Because Candidate is nonselectable and the screening and
+public evidence streams are empty, the default installed call records `maturity_disallowed` and
 abstains rather than inventing a recommendation.
 
 `process_images` is the paired Experimental MCP-only processing operation. It

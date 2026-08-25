@@ -45,6 +45,8 @@ image job, but it does not execute a model or download or write assets. The
 packaged registry contains three Candidate baselines with unbound execution. The
 public evidence stream is empty, so the default installed call records
 `maturity_disallowed` and abstains. It is not exposed through GPT Actions.
+The optional workspace-confined screening root remains operator-asserted; it cannot
+self-assign a repository-managed pass.
 
 The paired MCP-only `process_images` operation is also Experimental and not
 exposed through Actions. It requires a complete selected decision, defaults to a

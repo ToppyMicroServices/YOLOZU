@@ -716,7 +716,7 @@
   {
     "href": "commands.html#tool-recommend-image-pipeline",
     "kind": "command",
-    "search_text": "recommend_image_pipeline Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model. experimental yolozu/integrations/mcp_server.py     ",
+    "search_text": "recommend_image_pipeline Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model. experimental yolozu/integrations/mcp_server.py      ",
     "summary": "Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model.",
     "title": "recommend_image_pipeline"
   },
@@ -1090,6 +1090,13 @@
     "search_text": "YOLOZU BundleLifecycleRecord v1 One record in the global append-only bundle state and per-channel pointer stream.  docs/schemas/bundle_lifecycle_record.schema.json",
     "summary": "One record in the global append-only bundle state and per-channel pointer stream.",
     "title": "YOLOZU BundleLifecycleRecord v1"
+  },
+  {
+    "href": "schemas.html#schema-candidate-screening-record-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU CandidateScreeningRecord v1 Immutable non-executing screening decision for one candidate source revision and requested capability. Trust is derived by the loader and is not a record field. candidate human_review issuer_claim mechanical_checks overall_status previous_record_digest reason_codes record_digest record_id reviewed_at schema_version sequence stream_key supersedes_record_digest supersedes_record_id docs/schemas/candidate_screening_record.schema.json",
+    "summary": "Immutable non-executing screening decision for one candidate source revision and requested capability. Trust is derived by the loader and is not a record field.",
+    "title": "YOLOZU CandidateScreeningRecord v1"
   },
   {
     "href": "schemas.html#schema-coco-eval-report-schema",

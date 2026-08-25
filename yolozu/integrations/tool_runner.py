@@ -284,6 +284,7 @@ def recommend_image_pipeline(
     input_path: str,
     *,
     registry_root: str | None = None,
+    screening_root: str | None = None,
     evidence_root: str | None = None,
     artifact_root: str | None = None,
 ) -> dict[str, Any]:
@@ -300,6 +301,7 @@ def recommend_image_pipeline(
             input_path,
             workspace_root=workspace_root(),
             registry_root=registry_root,
+            screening_root=screening_root,
             evidence_root=evidence_root,
             artifact_root=artifact_root,
         )

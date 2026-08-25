@@ -135,6 +135,12 @@ command is a network-free, write-free plan. Collected pages are untrusted metada
 raw documents are not retained, and the inbox cannot be loaded as an
 AlgorithmBundle registry or used as qualification, support, recommendation,
 adoption, or promotion evidence.
+Candidate screening is implemented as a separate non-executing interface contract.
+It derives pass, hold, or reject from bounded provenance, integrity, license,
+local-availability, task/output, runtime, resource, maintenance, security, and
+human-review facts. Mandatory unknowns remain hold. The sole packaged append-only
+screening stream is currently empty, and workspace screening input is always
+operator-asserted, so no candidate is made available by this implementation.
 Explicit workspace catalogs remain operator-asserted and nonselectable. The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
@@ -172,6 +178,8 @@ The [baseline bundle registry report](reports/adaptive_baseline_bundle_registry_
 records the current three-way state boundary. The earlier
 [algorithm scout foundation report](reports/adaptive_algorithm_scout_foundation_2026-08-26.md)
 records the monitored-source, retention, parser, and nonselection boundaries. The earlier
+[candidate screening foundation report](reports/adaptive_candidate_screening_foundation_2026-08-26.md)
+records the fail-closed screening and path-derived trust boundaries. The earlier
 [installed-artifact verification report](reports/adaptive_routing_installed_verification_2026-08-26.md)
 checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
 positive selector and executor cases use internal fixtures; they do not qualify a

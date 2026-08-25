@@ -96,6 +96,14 @@ class TestAdaptiveRecommendation(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertTrue(result["ok"])
             self.assertEqual(result["decision"]["status"], "abstained")
+            self.assertEqual(
+                result["recommendation_metadata"]["screening_source"],
+                "packaged_ssot",
+            )
+            self.assertEqual(
+                result["recommendation_metadata"]["screening_trust_domain"],
+                "yolozu_managed",
+            )
             self.assertEqual(result["decision"]["registry_bundle_count"], 3)
             self.assertEqual(
                 [
@@ -138,6 +146,52 @@ class TestAdaptiveRecommendation(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertEqual(result["decision"]["status"], "abstained")
             self.assertFalse((workspace / "cache-not-created").exists())
+
+    def test_custom_screening_is_path_derived_and_malformed_stream_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            workspace = Path(td)
+            Image.new("RGB", (4, 4)).save(workspace / "input.png")
+            screening = workspace / "screening"
+            screening.mkdir()
+            (screening / "candidate_screening.jsonl").write_bytes(b"")
+
+            result = recommend_image_pipeline(
+                _job(),
+                "input.png",
+                workspace_root=workspace,
+                screening_root="screening",
+                decided_at="2026-08-25T14:30:00Z",
+            )
+            self.assertEqual(
+                result["recommendation_metadata"]["screening_source"],
+                "workspace_screening",
+            )
+            self.assertEqual(
+                result["recommendation_metadata"]["screening_trust_domain"],
+                "operator_asserted",
+            )
+
+            (screening / "candidate_screening.jsonl").write_bytes(b"{}")
+            with self.assertRaisesRegex(RecommendationError, "screening") as malformed:
+                recommend_image_pipeline(
+                    _job(),
+                    "input.png",
+                    workspace_root=workspace,
+                    screening_root="screening",
+                    decided_at="2026-08-25T14:30:00Z",
+                )
+            self.assertEqual(malformed.exception.code, "invalid_screening")
+
+            (screening / "candidate_screening.jsonl").unlink()
+            with self.assertRaises(RecommendationError) as missing:
+                recommend_image_pipeline(
+                    _job(),
+                    "input.png",
+                    workspace_root=workspace,
+                    screening_root="screening",
+                    decided_at="2026-08-25T14:30:00Z",
+                )
+            self.assertEqual(missing.exception.code, "invalid_screening")
 
     def test_unsafe_paths_and_malformed_job_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as td:
