@@ -4,7 +4,8 @@ Status: **Experimental foundation implemented; no real bundle qualification coll
 
 This report records the repository capability boundary added under
 `YOLOZU-ll2.81.1.9` and the reviewed activation boundary added under
-`YOLOZU-ll2.81.1.10`. It is not a `QualificationReport`, activation record,
+`YOLOZU-ll2.81.1.10`, and the pure selection boundary added under
+`YOLOZU-ll2.81.1.11`. It is not a `QualificationReport`, activation record,
 support claim, benchmark result, or adoption snapshot.
 
 ## Implemented boundary
@@ -35,6 +36,15 @@ support claim, benchmark result, or adoption snapshot.
   `site_qualified` scope. Arbitrary JSON is `operator_asserted` and cannot be
   activated. Hashes protect post-creation integrity, not provenance against an
   adversarial local operator.
+- `select_qualified_pipeline` consumes only validated in-memory registry,
+  lifecycle, screening, support, artifact, evidence, environment, and workload
+  observations. It applies the documented filter order, per-channel collapse,
+  exact hard gates, and lexicographic ranking without filesystem, provider,
+  model, runner, or network I/O.
+- Unpointed and noncurrent registry entries remain visible as complete excluded
+  evaluations. The selector does not invent support observations, choose the
+  newest evidence, normalize scores across candidates, or substitute unknown
+  metrics.
 
 ## Evidence boundary
 
@@ -52,7 +62,7 @@ coverage is recorded as `unknown` and cannot satisfy a hard memory gate.
 ## Remaining work
 
 Real measurement begins only after a bundle, artifacts, lifecycle/license review,
-and audited code-owned runner are registered. Selection, recommendation, and
-adaptive image execution remain separate Beads tasks. The activation interface is
-implemented, but the empty registry and evidence store mean no report is active.
-A smoke run can never be promoted to `qualified`.
+and audited code-owned runner are registered. The pure selection service is
+implemented, but it is not exposed through CLI or MCP. Recommendation and adaptive
+image execution remain separate Beads tasks. The empty registry and evidence store
+mean no report is active. A smoke run can never be promoted to `qualified`.

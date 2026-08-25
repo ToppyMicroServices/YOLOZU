@@ -112,6 +112,13 @@ from .selection import (
     validate_selection_decision,
     validate_support_profile_eligibility_observation,
 )
+from .selector import (
+    EvidenceEligibilityObservation,
+    IsolationCapabilityObservation,
+    compute_advertised_gates_digest,
+    evidence_eligibility_from_projection,
+    select_qualified_pipeline,
+)
 
 __all__ = [
     "AlgorithmBundleRegistry",
@@ -129,7 +136,9 @@ __all__ = [
     "EvidenceActivationProjection",
     "EvidenceActivationRecord",
     "EvidenceActivationOutcome",
+    "EvidenceEligibilityObservation",
     "ImageJobSpec",
+    "IsolationCapabilityObservation",
     "LocalArtifactInventory",
     "LoadedAlgorithmBundleRegistry",
     "ManagedOutputCapabilities",
@@ -164,8 +173,10 @@ __all__ = [
     "canonical_sha256_v1",
     "compute_environment_fingerprint",
     "compute_artifact_state_fingerprint",
+    "compute_advertised_gates_digest",
     "compute_evidence_selection_key",
     "compute_workload_fingerprint",
+    "evidence_eligibility_from_projection",
     "load_bounded_json",
     "load_bounded_json_bytes",
     "load_bounded_jsonl",
@@ -184,6 +195,7 @@ __all__ = [
     "qualify_image_pipeline",
     "qualification_report_has_code_owned_issuer",
     "recover_managed_output",
+    "select_qualified_pipeline",
     "validate_algorithm_bundle_registry",
     "validate_algorithm_bundle_spec",
     "validate_bundle_lifecycle_record",

@@ -859,7 +859,7 @@ def _candidate_evaluation(
     )
     pointed = [
         _enum(item, field="pointed_channels[]", allowed=CHANNELS)
-        for item in _list(record["pointed_channels"], field="pointed_channels", minimum=1, maximum=3)
+        for item in _list(record["pointed_channels"], field="pointed_channels", minimum=0, maximum=3)
     ]
     matching = [
         _enum(item, field="matching_channels[]", allowed=CHANNELS)
@@ -869,8 +869,10 @@ def _candidate_evaluation(
     canonical_matching = [item for item in ("Candidate", "Experimental", "Stable") if item in matching]
     if pointed != canonical_channels or matching != canonical_matching:
         raise ValueError("candidate channels must be unique and canonically ordered")
-    if effective_channel not in pointed:
+    if pointed and effective_channel not in pointed:
         raise ValueError("effective_channel must be one of pointed_channels")
+    if any(channel not in pointed for channel in matching):
+        raise ValueError("matching_channels must be a subset of pointed_channels")
     if rank_state != "excluded" and effective_channel not in matching:
         raise ValueError("eligible candidate requires a matching effective channel")
 
@@ -899,34 +901,38 @@ def _candidate_evaluation(
         _mapping(record["screening_observation"], field="screening_observation"),
         bundle=bundle,
     ).to_dict()
-    support = validate_support_profile_eligibility_observation(
-        _mapping(record["support_profile_observation"], field="support_profile_observation"),
-        expected_family_id=family_id,
-        expected_spec_digest=spec_digest,
-        expected_channel=effective_channel,
-        expected_environment_fingerprint=(
-            environment_fingerprint
-            if record["support_profile_observation"].get("status") == "matching_one"
-            else None
-        ),
-        expected_workload_fingerprint=(
-            workload_fingerprint
-            if record["support_profile_observation"].get("status") == "matching_one"
-            else None
-        ),
-        expected_protocol_fingerprint=(
-            protocol_fingerprint
-            if record["support_profile_observation"].get("status") == "matching_one"
-            else None
-        ),
-        expected_advertised_gates_digest=(
-            advertised_gates_digest
-            if record["support_profile_observation"].get("status") == "matching_one"
-            else None
-        ),
-        evidence_trust_domain=None if evidence is None else evidence["trust_domain"],
-        support_scope=support_scope,
-    ).to_dict()
+    raw_support = record["support_profile_observation"]
+    support = None
+    if raw_support is not None:
+        support_record = _mapping(raw_support, field="support_profile_observation")
+        support = validate_support_profile_eligibility_observation(
+            support_record,
+            expected_family_id=family_id,
+            expected_spec_digest=spec_digest,
+            expected_channel=effective_channel,
+            expected_environment_fingerprint=(
+                environment_fingerprint
+                if support_record.get("status") == "matching_one"
+                else None
+            ),
+            expected_workload_fingerprint=(
+                workload_fingerprint
+                if support_record.get("status") == "matching_one"
+                else None
+            ),
+            expected_protocol_fingerprint=(
+                protocol_fingerprint
+                if support_record.get("status") == "matching_one"
+                else None
+            ),
+            expected_advertised_gates_digest=(
+                advertised_gates_digest
+                if support_record.get("status") == "matching_one"
+                else None
+            ),
+            evidence_trust_domain=None if evidence is None else evidence["trust_domain"],
+            support_scope=support_scope,
+        ).to_dict()
 
     artifact_state = _nullable_sha256(
         record["artifact_state_fingerprint"], field="artifact_state_fingerprint"
@@ -954,6 +960,8 @@ def _candidate_evaluation(
             raise ValueError("eligible candidate requires one trusted evidence identity")
         if artifact_state is None or support_scope == "none":
             raise ValueError("eligible candidate requires artifact state and support scope")
+        if support is None:
+            raise ValueError("eligible candidate requires one support observation")
         if effective_channel not in {"Experimental", "Stable"}:
             raise ValueError("Candidate channel is not selectable")
         if rank_state == "selected" and rank_position != 1:

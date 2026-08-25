@@ -290,7 +290,7 @@
         "artifact_set_digest": { "$ref": "#/$defs/sha256" },
         "effective_channel": { "$ref": "#/$defs/channel" },
         "pointed_channels": {
-          "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+          "type": "array", "minItems": 0, "maxItems": 3, "uniqueItems": true,
           "items": { "$ref": "#/$defs/channel" }
         },
         "matching_channels": {
@@ -298,7 +298,9 @@
           "items": { "$ref": "#/$defs/channel" }
         },
         "screening_observation": { "$ref": "#/$defs/screening_observation" },
-        "support_profile_observation": { "$ref": "#/$defs/support_observation" },
+        "support_profile_observation": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/support_observation" }]
+        },
         "artifact_state_fingerprint": { "$ref": "#/$defs/nullable_sha256" },
         "class_mapping": {
           "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/class_mapping" }]

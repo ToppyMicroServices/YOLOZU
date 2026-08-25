@@ -138,8 +138,12 @@ workspace JSON remains nonselectable. Repository-managed trust additionally requ
 the retained, tracked review workflow and a public review reference.
 The packaged registry is still empty and no code-owned model runner is
 registered, so the command currently fails actionably instead of producing
-dummy evidence. The selector, recommendation service, model adapters, and
-adaptive execution path are still unavailable. An activation record alone does
+dummy evidence. A pure internal selector now applies the fixed trust,
+compatibility, artifact, evidence, performance, and deterministic ranking rules
+to already validated in-memory observations. It performs no provider-file,
+model, runner, or network I/O. There is still no CLI/MCP recommendation service,
+model adapter, or adaptive execution path, so adaptive selection is not currently
+available to users. An activation record alone does
 not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.

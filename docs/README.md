@@ -48,7 +48,8 @@ The environment-qualified local image-processing program targets an Experimental
 - Current Experimental implementation boundary: `yolozu qualify-image-pipeline`
   emits only an unactivated report; `yolozu activate-qualification-evidence`
   defaults to a no-write gate report and mutates only with explicit review and
-  `--approve`. Selection and adaptive execution are not yet available.
+  `--approve`. A file-free pure selector now evaluates already validated records,
+  but no CLI/MCP recommendation or adaptive execution surface is available.
 
 ## Primary Focus
 
