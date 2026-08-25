@@ -32,6 +32,9 @@ class TestSchemaGovernance(unittest.TestCase):
             "local_artifact_inventory_json": "local_artifact_inventory.schema.json",
             "qualification_report_json": "qualification_report.schema.json",
             "evidence_activation_record_json": "evidence_activation_record.schema.json",
+            "screening_eligibility_observation_json": "screening_eligibility_observation.schema.json",
+            "selection_decision_json": "selection_decision.schema.json",
+            "support_profile_eligibility_observation_json": "support_profile_eligibility_observation.schema.json",
         }
         self.assertEqual(manifest, packaged_manifest)
         for contract_id, basename in expected.items():
@@ -87,6 +90,7 @@ class TestSchemaGovernance(unittest.TestCase):
         )
         for suite in (
             "tests.test_adaptive_evidence_contracts",
+            "tests.test_adaptive_selection_contracts",
             "tests.test_schema_governance",
         ):
             self.assertIn(suite, build)
@@ -95,6 +99,9 @@ class TestSchemaGovernance(unittest.TestCase):
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/schemas/screening_eligibility_observation.schema.json",
+            "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
+            "yolozu/data/schemas/selection_decision.schema.json",
             "yolozu/data/adaptive_routing/evidence_activation.jsonl",
         ):
             self.assertGreaterEqual(publish.count(resource), 2)

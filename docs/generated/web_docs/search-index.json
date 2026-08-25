@@ -1190,6 +1190,13 @@
     "title": "YOLOZU Run Meta Contract"
   },
   {
+    "href": "schemas.html#schema-screening-eligibility-observation-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU ScreeningEligibilityObservation v1 Bounded screening projection input for one immutable adaptive-routing bundle. The pure selector does not open screening streams. current_record_digest current_record_id observation_digest projection_head_digest provenance_class provider_id provider_version schema_version screening_stream_key source_revision status trust_domain docs/schemas/screening_eligibility_observation.schema.json",
+    "summary": "Bounded screening projection input for one immutable adaptive-routing bundle. The pure selector does not open screening streams.",
+    "title": "YOLOZU ScreeningEligibilityObservation v1"
+  },
+  {
     "href": "schemas.html#schema-sdft-continual-qualification-schema",
     "kind": "schema",
     "search_text": "YOLOZU SDFT-Style Continual Qualification Checked-in YOLOZU JSON Schema. comparisons decision efficacy_assessment environment execution_assessment initial_checkpoints inputs kind protocol reproduction role runs schema_version source docs/schemas/sdft_continual_qualification.schema.json",
@@ -1216,6 +1223,20 @@
     "search_text": "YOLOZU Segmentation Predictions JSON Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.  docs/schemas/segmentation_predictions.schema.json",
     "summary": "Predictions artifact for semantic segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.",
     "title": "YOLOZU Segmentation Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-selection-decision-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SelectionDecision v1 Complete bounded local adaptive-routing decision. Presence does not make the future Experimental router available. advertised_gates_digest artifact_resolver_state_digest candidate_evaluations decided_at decision_digest decision_id environment_fingerprint human_summary lifecycle_projection_digest lifecycle_trust_domain local_input_digest local_job_digest prompt_mode protocol_fingerprint qualification_workload_fingerprint ranking_policy reason_codes registry_bundle_count registry_digest registry_id registry_trust_domain schema_version selected_artifact_state_fingerprint selected_bundle selected_class_mapping selected_evidence selection_trace status support_scope docs/schemas/selection_decision.schema.json",
+    "summary": "Complete bounded local adaptive-routing decision. Presence does not make the future Experimental router available.",
+    "title": "YOLOZU SelectionDecision v1"
+  },
+  {
+    "href": "schemas.html#schema-support-profile-eligibility-observation-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU SupportProfileEligibilityObservation v1 Bounded support-profile projection input for one immutable bundle and lifecycle channel. The pure selector does not open support or lifecycle streams. advertised_gates_digest bundle_spec_digest channel environment_fingerprint family_id lifecycle_assignment_digest lifecycle_assignment_id observation_digest profile_digest profile_id profile_set_digest profile_set_record_digest profile_set_record_id protocol_fingerprint provider_id provider_version qualification_workload_fingerprint schema_version status support_profile_index_head_digest trust_domain docs/schemas/support_profile_eligibility_observation.schema.json",
+    "summary": "Bounded support-profile projection input for one immutable bundle and lifecycle channel. The pure selector does not open support or lifecycle streams.",
+    "title": "YOLOZU SupportProfileEligibilityObservation v1"
   },
   {
     "href": "schemas.html#schema-support-profile-record-schema",

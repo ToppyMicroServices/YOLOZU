@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/support_profile_eligibility_observation.schema.json",
+  "title": "YOLOZU SupportProfileEligibilityObservation v1",
+  "description": "Bounded support-profile projection input for one immutable bundle and lifecycle channel. The pure selector does not open support or lifecycle streams.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provider_id",
+    "provider_version",
+    "family_id",
+    "bundle_spec_digest",
+    "channel",
+    "lifecycle_assignment_id",
+    "lifecycle_assignment_digest",
+    "support_profile_index_head_digest",
+    "profile_set_record_id",
+    "profile_set_record_digest",
+    "profile_set_digest",
+    "status",
+    "profile_id",
+    "profile_digest",
+    "environment_fingerprint",
+    "qualification_workload_fingerprint",
+    "protocol_fingerprint",
+    "advertised_gates_digest",
+    "trust_domain",
+    "observation_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "provider_id": { "$ref": "#/$defs/id" },
+    "provider_version": { "$ref": "#/$defs/id" },
+    "family_id": { "$ref": "#/$defs/component" },
+    "bundle_spec_digest": { "$ref": "#/$defs/sha256" },
+    "channel": { "enum": ["Candidate", "Experimental", "Stable"] },
+    "lifecycle_assignment_id": { "$ref": "#/$defs/id" },
+    "lifecycle_assignment_digest": { "$ref": "#/$defs/sha256" },
+    "support_profile_index_head_digest": { "$ref": "#/$defs/sha256" },
+    "profile_set_record_id": { "$ref": "#/$defs/id" },
+    "profile_set_record_digest": { "$ref": "#/$defs/sha256" },
+    "profile_set_digest": { "$ref": "#/$defs/sha256" },
+    "status": {
+      "enum": [
+        "matching_one",
+        "no_match",
+        "absent",
+        "untrusted",
+        "conflict",
+        "not_required_site"
+      ]
+    },
+    "profile_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "profile_digest": { "$ref": "#/$defs/nullable_sha256" },
+    "environment_fingerprint": { "$ref": "#/$defs/nullable_sha256" },
+    "qualification_workload_fingerprint": { "$ref": "#/$defs/nullable_sha256" },
+    "protocol_fingerprint": { "$ref": "#/$defs/nullable_sha256" },
+    "advertised_gates_digest": { "$ref": "#/$defs/nullable_sha256" },
+    "trust_domain": {
+      "enum": ["yolozu_managed", "site_managed", "operator_asserted", "unknown"]
+    },
+    "observation_digest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "component": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullable_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

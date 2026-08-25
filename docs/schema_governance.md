@@ -34,6 +34,12 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/qualification_report.schema.json`
 - `docs/schemas/evidence_activation_record.schema.json` and
   `yolozu/data/schemas/evidence_activation_record.schema.json`
+- `docs/schemas/screening_eligibility_observation.schema.json` and
+  `yolozu/data/schemas/screening_eligibility_observation.schema.json`
+- `docs/schemas/support_profile_eligibility_observation.schema.json` and
+  `yolozu/data/schemas/support_profile_eligibility_observation.schema.json`
+- `docs/schemas/selection_decision.schema.json` and
+  `yolozu/data/schemas/selection_decision.schema.json`
 
 Their standard-library Python validators live under `yolozu/adaptive/`. JSON Schema
 fixes the transport shape and bounds. Python validation additionally performs the
@@ -165,6 +171,7 @@ schema surface for that artifact family.
 | Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Byte-identical packaged schemas accompany standard-library validators. They define strict future Experimental records and do not advertise a selectable model. |
 | Adaptive bundle, lifecycle, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed support scope. Empty packaged SSOT files keep the public default nonselectable. |
 | Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. Empty public evidence storage keeps the packaged default nonselectable. |
+| Adaptive selection observations and decisions | `docs/schemas/screening_eligibility_observation.schema.json`, `docs/schemas/support_profile_eligibility_observation.schema.json`, `docs/schemas/selection_decision.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | File-free typed observations and complete selected/abstained records expose every candidate reason. They do not provide a selector or make a bundle selectable. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |
 | Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |
 | Training handoff | `docs/schemas/training_run_summary.schema.json`, `docs/schemas/training_handoff.schema.json` | [`training_orchestration.md`](training_orchestration.md) | Handoff JSON carries next steps for resume/export/eval/parity. |

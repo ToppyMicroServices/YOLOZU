@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/screening_eligibility_observation.schema.json",
+  "title": "YOLOZU ScreeningEligibilityObservation v1",
+  "description": "Bounded screening projection input for one immutable adaptive-routing bundle. The pure selector does not open screening streams.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provider_id",
+    "provider_version",
+    "provenance_class",
+    "screening_stream_key",
+    "source_revision",
+    "status",
+    "current_record_id",
+    "current_record_digest",
+    "projection_head_digest",
+    "trust_domain",
+    "observation_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "provider_id": { "$ref": "#/$defs/id" },
+    "provider_version": { "$ref": "#/$defs/id" },
+    "provenance_class": {
+      "enum": ["existing_code_owned", "screened_candidate"]
+    },
+    "screening_stream_key": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "source_revision": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "status": {
+      "enum": [
+        "not_applicable",
+        "current_pass",
+        "current_hold",
+        "current_reject",
+        "absent",
+        "untrusted",
+        "conflict",
+        "revision_mismatch"
+      ]
+    },
+    "current_record_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "current_record_digest": { "$ref": "#/$defs/nullable_sha256" },
+    "projection_head_digest": { "$ref": "#/$defs/nullable_sha256" },
+    "trust_domain": {
+      "enum": ["yolozu_managed", "site_managed", "operator_asserted", "unknown"]
+    },
+    "observation_digest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullable_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

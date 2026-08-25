@@ -89,10 +89,11 @@ These are the areas to rely on first for production adoption.
 The adaptive local-vision roadmap targets an Experimental lane. It does not add a current model, router, streaming, tracking, or OCR support claim. Its machine-readable scope is [`adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json), and the generated public projection is [`adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md). Live progress remains in Beads under `YOLOZU-ll2.81`.
 
 [`adaptive_image_routing.md`](adaptive_image_routing.md) is the normative v1 policy.
-Typed request, bundle/lifecycle, artifact-inventory, qualification-report, and
-evidence-activation validators implement record interface contracts only. They do
-not provide a qualifier, evidence loader, selector, adapter, recommendation, or
-execution capability, and are not availability or qualification evidence.
+Typed request, bundle/lifecycle, artifact-inventory, qualification-report,
+evidence-activation, eligibility-observation, and SelectionDecision validators
+implement record interface contracts only. They do not provide a qualifier,
+evidence loader, selector, adapter, recommendation, or execution capability, and are
+not availability or qualification evidence.
 
 ## Experimental
 

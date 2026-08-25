@@ -122,6 +122,9 @@ class TestInstalledAiSurface(unittest.TestCase):
                 "local_artifact_inventory.schema.json",
                 "qualification_report.schema.json",
                 "evidence_activation_record.schema.json",
+                "screening_eligibility_observation.schema.json",
+                "support_profile_eligibility_observation.schema.json",
+                "selection_decision.schema.json",
             ):
                 self.assertEqual(
                     (installed_schemas / basename).read_bytes(),
@@ -138,6 +141,11 @@ from yolozu.api import (
     APIError,
     evaluate_coco as api_evaluate_coco,
     validate_predictions as api_validate_predictions,
+)
+from yolozu.adaptive import (
+    ScreeningEligibilityObservation,
+    SelectionDecision,
+    SupportProfileEligibilityObservation,
 )
 from yolozu.integrations.ai_surface import list_manifest_tools, review_config
 from yolozu.integrations.tool_runner import (
@@ -229,6 +237,11 @@ unsafe_review = review_config(
 )
 print(json.dumps({{
     "module": yolozu.__file__,
+    "adaptive_selection_symbols": [
+        ScreeningEligibilityObservation.__name__,
+        SelectionDecision.__name__,
+        SupportProfileEligibilityObservation.__name__,
+    ],
     "guaranteed_ids": list_manifest_tools(
         guaranteed=True,
         ids_only=True,
@@ -346,6 +359,14 @@ print(json.dumps({{
             )
             payload = json.loads(run.stdout)
             self.assertTrue(str(payload["module"]).startswith(str(target)))
+            self.assertEqual(
+                payload["adaptive_selection_symbols"],
+                [
+                    "ScreeningEligibilityObservation",
+                    "SelectionDecision",
+                    "SupportProfileEligibilityObservation",
+                ],
+            )
             self.assertEqual(
                 payload["guaranteed_ids"],
                 [
