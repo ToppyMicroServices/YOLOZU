@@ -1304,8 +1304,11 @@ def project_evidence_activations(
         active_valid_until: datetime | None = None
         retired: set[tuple[str, str]] = set()
         pending_replacement: tuple[str, str] | None = None
+        terminal_revoked = False
         for expected_sequence, event in enumerate(events, start=1):
             data = event.to_dict()
+            if terminal_revoked:
+                raise ValueError("evidence activation stream continues after terminal revoke")
             if data["sequence"] != expected_sequence:
                 raise ValueError("evidence activation stream has sequence gap or duplicate")
             if data["previous_event_digest"] != previous:
@@ -1358,6 +1361,7 @@ def project_evidence_activations(
                 active_valid_until = None
                 pending_replacement = None
                 terminal_reason[selection_key] = "evidence_revoked"
+                terminal_revoked = True
             previous = data["event_digest"]
             previous_event_time = activated
         if pending_replacement is not None:

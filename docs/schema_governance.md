@@ -53,7 +53,8 @@ The source-controlled adaptive registry instances have one copy under the packag
 data tree: `yolozu/data/adaptive_routing/bundle_specs.json`,
 `yolozu/data/adaptive_routing/bundle_lifecycle.jsonl`,
 `yolozu/data/adaptive_routing/support_profiles.jsonl`, repository-reviewed
-reports under `yolozu/data/adaptive_routing/qualification_reports/<report_id>.json`,
+reports under
+`yolozu/data/adaptive_routing/qualification_reports/<report_id>/qualification_report.json`,
 and `yolozu/data/adaptive_routing/evidence_activation.jsonl`. These files are
 their own source and packaged form; there is no docs copy or serialized mutable
 projection. A report ID is a validated ASCII component, never a path. Site-managed
@@ -63,6 +64,16 @@ append-only streams are empty, and there are no public qualification reports, so
 these records do not make any model selectable. Runtime projections must be
 derived from validated immutable records and complete, strictly ordered event
 chains.
+
+`activate-qualification-evidence` derives trust from this retained workflow or
+from an exact code-owned local qualifier output. It never accepts trust from a
+report field. The default is dry-run; `--approve` is required for one atomic
+append. Local output is limited to `site_managed` and `site_qualified`. Arbitrary
+workspace JSON remains `operator_asserted` and nonselectable. Checksums protect
+integrity after creation, not provenance against an adversarial local operator.
+Repository-managed report directories retain tracked `public_inputs.json`,
+`protocol.json`, `qualification_report.json`, `reproduce.txt`, and a
+`checksums.json` that covers every other file exactly.
 
 `load_algorithm_bundle_registry` accepts only the exact packaged registry/lifecycle
 pair above or an explicit workspace-confined directory containing those two exact
@@ -184,7 +195,7 @@ schema surface for that artifact family.
 | Adaptive vision roadmap projection | `docs/schemas/adaptive_vision_roadmap.schema.json` | [`roadmap.md`](roadmap.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md) | The byte-identical packaged schema and JSON projection describe future scope, not implementation or qualification evidence. |
 | Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md), [`doctor_diagnostics.md`](doctor_diagnostics.md) | Byte-identical packaged schemas accompany standard-library validators. `doctor` now produces EnvironmentProfile; the request/workload records are not yet a routing surface, and none of these records advertises a selectable model. |
 | Adaptive bundle, lifecycle, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed support scope. Empty packaged SSOT files keep the public default nonselectable. |
-| Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. The Experimental qualifier can collect an unactivated report only for an exact managed bundle and code-owned runner. The empty packaged registry, runner map, and public evidence storage keep the default nonselectable and non-executable. |
+| Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. The Experimental qualifier emits an unactivated report; the activation command defaults to dry-run and requires explicit review plus approval for an atomic append. The empty packaged registry, runner map, and public evidence storage keep the default nonselectable and non-executable. |
 | Adaptive selection observations and decisions | `docs/schemas/screening_eligibility_observation.schema.json`, `docs/schemas/support_profile_eligibility_observation.schema.json`, `docs/schemas/selection_decision.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | File-free typed observations and complete selected/abstained records expose every candidate reason. They do not provide a selector or make a bundle selectable. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |
 | Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |

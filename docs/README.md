@@ -45,6 +45,10 @@ The environment-qualified local image-processing program targets an Experimental
 - Human-readable projection: [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md)
 - Packaged machine-readable projection: [`../yolozu/data/manifest/adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json)
 - Live task source and refresh rule: [`roadmap.md`](roadmap.md)
+- Current Experimental implementation boundary: `yolozu qualify-image-pipeline`
+  emits only an unactivated report; `yolozu activate-qualification-evidence`
+  defaults to a no-write gate report and mutates only with explicit review and
+  `--approve`. Selection and adaptive execution are not yet available.
 
 ## Primary Focus
 

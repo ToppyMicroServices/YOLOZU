@@ -69,6 +69,7 @@ __all__ = [
     "nearest_rank_nanoseconds",
     "nanoseconds_to_milliseconds",
     "qualify_image_pipeline",
+    "qualification_report_has_code_owned_issuer",
 ]
 
 
@@ -120,6 +121,27 @@ _ISSUER_IDENTITY = {
         {"workflow": "local_unactivated_qualification", "interface_version": 1}
     ),
 }
+
+
+def qualification_report_has_code_owned_issuer(
+    report: QualificationReport | Mapping[str, Any],
+) -> bool:
+    """Return whether a validated report names the exact code-owned workflow.
+
+    This checks the typed report identity only.  Activation trust is derived
+    separately from the retained workflow and file boundary.
+    """
+
+    validated = (
+        report
+        if isinstance(report, QualificationReport)
+        else validate_qualification_report(report)
+    )
+    payload = validated.to_dict()
+    return (
+        payload["collector"] == _COLLECTOR_IDENTITY
+        and payload["issuer"] == _ISSUER_IDENTITY
+    )
 
 QUALIFICATION_PROTOCOL = {
     "schema_version": 1,

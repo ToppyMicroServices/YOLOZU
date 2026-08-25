@@ -28,6 +28,7 @@ from .cli_commands import (
     _cmd_parity,
     _cmd_predictions,
     _cmd_qualify_image_pipeline,
+    _cmd_activate_qualification_evidence,
     _cmd_validate,
     _cmd_eval_instance_seg,
     _cmd_onnxrt_export,
@@ -1301,6 +1302,73 @@ def main(argv: list[str] | None = None) -> int:
         help="Replace only a previously validated exact managed output set.",
     )
 
+    activate = sub.add_parser(
+        "activate-qualification-evidence",
+        help="Review one exact qualification report; dry-run unless --approve is set.",
+    )
+    activate.add_argument(
+        "operation",
+        nargs="?",
+        choices=("activate", "supersede", "revoke"),
+        default="activate",
+        help="Exact append-only transition (default: activate).",
+    )
+    activate.add_argument("--report", help="Exact QualificationReport JSON file.")
+    activate.add_argument("--report-id", help="Expected exact report ID.")
+    activate.add_argument("--report-digest", help="Expected exact report SHA-256 digest.")
+    activate.add_argument("--selection-key", help="Expected immutable evidence selection key.")
+    activate.add_argument(
+        "--activation-stream",
+        default="yolozu/data/adaptive_routing/evidence_activation.jsonl",
+        help="Workspace-confined append-only activation JSONL stream.",
+    )
+    activate.add_argument(
+        "--prior-report",
+        action="append",
+        default=None,
+        help="Prior report needed to validate existing stream history (repeatable).",
+    )
+    activate.add_argument(
+        "--expected-head-digest",
+        help="Observed per-key head digest; use 64 zeroes for the first event.",
+    )
+    activate.add_argument(
+        "--expected-current-activation-id",
+        help="Observed current active event ID; use none for zero-active.",
+    )
+    activate.add_argument(
+        "--reviewer-role-id",
+        help="Non-personal reviewed role: repo_maintainer, release_reviewer, or site_operator.",
+    )
+    activate.add_argument("--reason", help="Review reason in 1..512 UTF-8 bytes.")
+    activate.add_argument(
+        "--public-review-id",
+        help="Bounded public repository review ID for repository-retained evidence.",
+    )
+    activate.add_argument(
+        "--site-local-review-present",
+        action="store_true",
+        help="Attest that the site-local operator review is present.",
+    )
+    activate.add_argument(
+        "--supersede",
+        metavar="ACTIVATION_ID",
+        help="Exact current activation ID required by the supersede operation.",
+    )
+    activate.add_argument(
+        "--revoke",
+        metavar="ACTIVATION_ID",
+        help="Exact current activation ID required by the revoke operation.",
+    )
+    activate.add_argument(
+        "--workspace", default=".", help="Workspace boundary (default: current directory)."
+    )
+    activate.add_argument(
+        "--approve",
+        action="store_true",
+        help="Apply the validated atomic append; omission is always dry-run.",
+    )
+
     reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
     reg_sub = reg.add_subparsers(dest="registry_command", required=True)
     reg_validate = reg_sub.add_parser("validate", help="Validate the canonical tool manifest (repo checkout required).")
@@ -1386,6 +1454,8 @@ def main(argv: list[str] | None = None) -> int:
         return int(fn(args))
     if args.command == "qualify-image-pipeline":
         return _cmd_qualify_image_pipeline(args)
+    if args.command == "activate-qualification-evidence":
+        return _cmd_activate_qualification_evidence(args)
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)

@@ -16,6 +16,10 @@ from .artifact_resolver import (
     VerifiedArtifact,
     VerifiedArtifactSet,
 )
+from .activation import (
+    EvidenceActivationOutcome,
+    activate_qualification_evidence,
+)
 from .bundles import (
     AlgorithmBundleRegistry,
     AlgorithmBundleSpec,
@@ -97,6 +101,7 @@ from .qualification import (
     nearest_rank_nanoseconds,
     qualification_input_schedule,
     qualify_image_pipeline,
+    qualification_report_has_code_owned_issuer,
 )
 from .selection import (
     CANDIDATE_REASON_CODES,
@@ -123,6 +128,7 @@ __all__ = [
     "EnvironmentProfile",
     "EvidenceActivationProjection",
     "EvidenceActivationRecord",
+    "EvidenceActivationOutcome",
     "ImageJobSpec",
     "LocalArtifactInventory",
     "LoadedAlgorithmBundleRegistry",
@@ -152,6 +158,7 @@ __all__ = [
     "build_decoded_input_inventory",
     "build_environment_profile",
     "build_qualification_workload_profile",
+    "activate_qualification_evidence",
     "canonical_decimal_v1",
     "canonical_json_v1",
     "canonical_sha256_v1",
@@ -175,6 +182,7 @@ __all__ = [
     "project_support_profiles",
     "qualification_input_schedule",
     "qualify_image_pipeline",
+    "qualification_report_has_code_owned_issuer",
     "recover_managed_output",
     "validate_algorithm_bundle_registry",
     "validate_algorithm_bundle_spec",

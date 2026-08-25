@@ -431,6 +431,39 @@ quality for every possible image-content distribution.
 
 ### Activation and freshness
 
+The implemented Experimental command is
+`yolozu activate-qualification-evidence`. It supports exact `activate`,
+`supersede`, and `revoke` operations and prints a complete machine-readable gate
+result. Omission of `--approve` is always a no-write dry-run. Approval also
+requires the exact report ID/digest, selection key, observed per-key head,
+observed current activation ID (`none` for zero-active), a non-personal reviewer
+role, one review reference, and a bounded reason. It never reads Git user names or
+email addresses as an actor.
+
+For a supersession, `--supersede` must name the exact current active event. The
+command writes the contiguous `superseded` and replacement `active` records in one
+atomic stream replacement. For a revocation, `--revoke` must name the exact current
+active event. It writes one terminal `revoked` record, reads the stream back, and
+requires a valid zero-active projection. A stale head/current ID writes nothing.
+Callers must provide prior reports needed to validate the complete retained stream;
+missing history is not reconstructed from newer data.
+
+Repository-managed activation is limited to the canonical stream and tracked,
+unchanged retained material under
+`yolozu/data/adaptive_routing/qualification_reports/<report_id>/`. Site-managed
+activation requires the exact `qualification_report.json` and `checksums.json`
+emitted by the code-owned qualifier plus explicit `--site-local-review-present`;
+its stream remains site-local. Arbitrary workspace JSON is
+`operator_asserted` and cannot self-assign managed trust.
+
+Each repository-managed report directory retains the public, non-sensitive input
+reference record, the exact protocol JSON, the privacy-safe report, one checksum
+manifest covering those files and the reproduction command, and `reproduce.txt`.
+All are tracked and unchanged at the reviewed commit. The report directory name
+must equal its report ID. This retained state supports review and reproduction;
+its hashes still do not establish provenance against a hostile local repository
+operator.
+
 The activation key is the canonical hash of the immutable bundle spec, artifact set,
 environment, qualification workload, and protocol. There may be exactly one active
 report for that key:

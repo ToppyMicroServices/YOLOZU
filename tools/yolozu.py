@@ -37,6 +37,7 @@ from yolozu.inference.export_orchestrator import (  # noqa: E402
 logger = logging.getLogger(__name__)
 
 _PKG_PASSTHROUGH_COMMANDS = {
+    "activate-qualification-evidence",
     "benchmark",
     "calibrate",
     "demo",
@@ -1402,6 +1403,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p_export_dataset.set_defaults(_fn=_passthrough_pkg_cli, _pkg_cmd="export-dataset")
 
     for pkg_cmd, pkg_help in (
+        (
+            "activate-qualification-evidence",
+            "Delegate to the reviewed qualification-evidence activation command.",
+        ),
         ("eval-coco", "Delegate to yolozu package CLI eval-coco command."),
         ("benchmark", "Delegate to yolozu package CLI benchmark command."),
         ("parity", "Delegate to yolozu package CLI parity command."),
