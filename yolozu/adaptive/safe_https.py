@@ -206,11 +206,20 @@ class FetchedDocument:
 
 
 class _SocketLike(Protocol):
-    def sendall(self, data: bytes) -> None: ...
-    def recv(self, size: int) -> bytes: ...
-    def settimeout(self, value: float) -> None: ...
-    def getpeername(self) -> tuple[object, ...]: ...
-    def close(self) -> None: ...
+    def sendall(self, data: bytes) -> None:
+        raise NotImplementedError
+
+    def recv(self, size: int) -> bytes:
+        raise NotImplementedError
+
+    def settimeout(self, value: float) -> None:
+        raise NotImplementedError
+
+    def getpeername(self) -> tuple[object, ...]:
+        raise NotImplementedError
+
+    def close(self) -> None:
+        raise NotImplementedError
 
 
 Resolver = Callable[[str], tuple[str, ...]]
@@ -250,6 +259,7 @@ def _tls_dial(ip: str, host: str, connect_timeout: float, read_timeout: float) -
     raw = socket.create_connection((ip, 443), timeout=connect_timeout)
     try:
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         wrapped = context.wrap_socket(raw, server_hostname=host)
         wrapped.settimeout(read_timeout)
         return wrapped

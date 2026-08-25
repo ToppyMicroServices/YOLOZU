@@ -29,8 +29,8 @@ that time; it does not qualify any release or make it selectable.
 credentials, queries, fragments, IP literals, non-443 destinations, non-public
 IPv4/IPv6 DNS results, changed peer addresses, and redirects not separately
 allowlisted. The socket connects to a vetted resolved address while TLS chain,
-hostname, and SNI verification continue to use the original host. Callers cannot
-provide headers, cookies, or tokens.
+hostname, and SNI verification continue to use the original host. TLS 1.2 is the
+minimum protocol version. Callers cannot provide headers, cookies, or tokens.
 
 The implementation caps connect, read, per-source, and whole-collection time. It
 also caps headers, transferred bytes, decoded bytes per source, and decoded bytes

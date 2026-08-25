@@ -19,7 +19,9 @@ yolozu scout-algorithms \
 allowlisted HTTPS scheme/host/path records on port 443. It rejects credentials,
 queries, fragments, IP literals, non-public DNS or peer addresses, and redirects
 outside the same explicit allowlist. No caller headers, cookies, or tokens are
-accepted. A source gets 30 seconds, the run gets 12 minutes, and the surrounding
+accepted. TLS 1.2 is the minimum protocol version; normal certificate-chain,
+hostname, and SNI validation remain enabled. A source gets 30 seconds, the run
+gets 12 minutes, and the surrounding
 15-minute workflow must keep three minutes for report finalization and failure
 handling.
 

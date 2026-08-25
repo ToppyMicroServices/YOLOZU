@@ -1188,6 +1188,8 @@ def _open_output_chain(workspace: Path, output_dir: str, *, create: bool) -> Non
                 try:
                     os.mkdir(component, mode=0o700, dir_fd=descriptor)
                 except FileExistsError:
+                    # A concurrent creator may win this race; the no-follow open below
+                    # revalidates the component before it is used.
                     pass
                 child = os.open(
                     component,

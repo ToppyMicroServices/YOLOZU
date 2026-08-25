@@ -1,13 +1,13 @@
 import gzip
 import inspect
 import json
+import ssl
 import subprocess
 import sys
 import tempfile
 import time
-import unittest
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from yolozu.adaptive.algorithm_scout import (
     AlgorithmScoutError,
@@ -29,6 +29,7 @@ from yolozu.adaptive.safe_https import (
     SafeHttpsTransport,
     TransportLimits,
     _is_public_address,
+    _tls_dial,
 )
 
 
@@ -147,7 +148,7 @@ def _response(
     ).encode("ascii") + extra + b"\r\n" + body
 
 
-class TestSafeHttpsTransport(unittest.TestCase):
+class TestSafeHttpsTransport(TestCase):
     def _transport(
         self,
         responses: list[bytes],
@@ -189,6 +190,34 @@ class TestSafeHttpsTransport(unittest.TestCase):
         self.assertNotIn(b"Cookie:", sockets[0].sent)
         self.assertNotIn(b"Authorization:", sockets[0].sent)
         self.assertNotIn("headers", inspect.signature(transport.fetch).parameters)
+
+    def test_system_dialer_requires_tls_1_2_or_newer(self) -> None:
+        raw = _FakeSocket(b"")
+
+        class _Context:
+            minimum_version: ssl.TLSVersion | None = None
+            server_hostname: str | None = None
+
+            def wrap_socket(self, sock: _FakeSocket, *, server_hostname: str) -> _FakeSocket:
+                self.server_hostname = server_hostname
+                return sock
+
+        context = _Context()
+        with (
+            mock.patch(
+                "yolozu.adaptive.safe_https.socket.create_connection",
+                return_value=raw,
+            ),
+            mock.patch(
+                "yolozu.adaptive.safe_https.ssl.create_default_context",
+                return_value=context,
+            ),
+        ):
+            wrapped = _tls_dial(PUBLIC_IP, "example.com", 5, 15)
+        self.assertIs(wrapped, raw)
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+        self.assertEqual(context.server_hostname, "example.com")
+        self.assertEqual(raw.timeouts, [15])
 
     def test_redirect_revalidates_exact_allowlist_and_detects_loop(self) -> None:
         first = HttpsLocation(host="example.com", path="/release")
@@ -329,7 +358,8 @@ class _FixtureTransport:
     fetch_count = 0
 
     def __init__(self, *, allowlist: object, limits: object) -> None:
-        del allowlist, limits
+        self.allowlist = allowlist
+        self.limits = limits
 
     def fetch(self, location: HttpsLocation, *, collection_deadline: float) -> FetchedDocument:
         del collection_deadline
@@ -361,7 +391,7 @@ def _fixture_documents() -> dict[str, FetchedDocument]:
     return result
 
 
-class TestAlgorithmScout(unittest.TestCase):
+class TestAlgorithmScout(TestCase):
     def setUp(self) -> None:
         _FixtureTransport.documents = _fixture_documents()
         _FixtureTransport.failures = set()
@@ -580,7 +610,7 @@ class TestAlgorithmScout(unittest.TestCase):
             self.assertEqual(_FixtureTransport.fetch_count, 0)
 
 
-class TestBoundedScoutParsers(unittest.TestCase):
+class TestBoundedScoutParsers(TestCase):
     def _document(self, body: bytes, content_type: str) -> FetchedDocument:
         location = HttpsLocation(host="example.com", path="/document")
         return FetchedDocument(
@@ -787,4 +817,4 @@ class TestBoundedScoutParsers(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
