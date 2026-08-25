@@ -50,7 +50,6 @@ _REVIEWED_REPORT_ROOT = Path(
 _CANONICAL_STREAM = Path("yolozu/data/adaptive_routing/evidence_activation.jsonl")
 
 FaultHook = Callable[[str], None]
-Operation = Literal["activate", "supersede", "revoke"]
 TrustDomain = Literal[
     "yolozu_managed", "site_managed", "operator_asserted", "unknown"
 ]
