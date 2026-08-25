@@ -58,6 +58,10 @@ jobs:
           required = {
             "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+            "yolozu/data/schemas/local_artifact_inventory.schema.json",
+            "yolozu/data/schemas/qualification_report.schema.json",
+            "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           with zipfile.ZipFile(wheels[-1], "r") as archive:
             missing = sorted(required - set(archive.namelist()))
@@ -191,6 +195,10 @@ jobs:
           required = {
             "yolozu/data/manifest/adaptive_vision_roadmap.json",
             "yolozu/data/schemas/adaptive_vision_roadmap.schema.json",
+            "yolozu/data/schemas/local_artifact_inventory.schema.json",
+            "yolozu/data/schemas/qualification_report.schema.json",
+            "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/adaptive_routing/evidence_activation.jsonl",
           }
           wheels = sorted(glob.glob("dist/*.whl"))
           sdists = sorted(glob.glob("dist/*.tar.gz"))

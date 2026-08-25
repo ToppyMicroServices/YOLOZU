@@ -28,6 +28,12 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/support_profile_spec.schema.json`
 - `docs/schemas/support_profile_record.schema.json` and
   `yolozu/data/schemas/support_profile_record.schema.json`
+- `docs/schemas/local_artifact_inventory.schema.json` and
+  `yolozu/data/schemas/local_artifact_inventory.schema.json`
+- `docs/schemas/qualification_report.schema.json` and
+  `yolozu/data/schemas/qualification_report.schema.json`
+- `docs/schemas/evidence_activation_record.schema.json` and
+  `yolozu/data/schemas/evidence_activation_record.schema.json`
 
 Their standard-library Python validators live under `yolozu/adaptive/`. JSON Schema
 fixes the transport shape and bounds. Python validation additionally performs the
@@ -39,12 +45,18 @@ qualification evidence.
 
 The source-controlled adaptive registry instances have one copy under the packaged
 data tree: `yolozu/data/adaptive_routing/bundle_specs.json`,
-`yolozu/data/adaptive_routing/bundle_lifecycle.jsonl`, and
-`yolozu/data/adaptive_routing/support_profiles.jsonl`. The files are their own
-source and packaged form; there is no docs copy or serialized mutable projection.
-The default registry and both append-only streams are empty, so these records do
-not make any model selectable. Runtime projections must be derived from the
-validated immutable bundle set and strictly ordered event chains.
+`yolozu/data/adaptive_routing/bundle_lifecycle.jsonl`,
+`yolozu/data/adaptive_routing/support_profiles.jsonl`, repository-reviewed
+reports under `yolozu/data/adaptive_routing/qualification_reports/<report_id>.json`,
+and `yolozu/data/adaptive_routing/evidence_activation.jsonl`. These files are
+their own source and packaged form; there is no docs copy or serialized mutable
+projection. A report ID is a validated ASCII component, never a path. Site-managed
+reports and activation streams stay under an explicit site-confined root and are
+not copied into the repository package. The default registry and all public
+append-only streams are empty, and there are no public qualification reports, so
+these records do not make any model selectable. Runtime projections must be
+derived from validated immutable records and complete, strictly ordered event
+chains.
 
 ## Scope
 
@@ -152,6 +164,7 @@ schema surface for that artifact family.
 | Adaptive vision roadmap projection | `docs/schemas/adaptive_vision_roadmap.schema.json` | [`roadmap.md`](roadmap.md), [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md) | The byte-identical packaged schema and JSON projection describe future scope, not implementation or qualification evidence. |
 | Adaptive image request, workload, and environment | `docs/schemas/image_job_spec.schema.json`, `docs/schemas/qualification_workload_profile.schema.json`, `docs/schemas/environment_profile.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Byte-identical packaged schemas accompany standard-library validators. They define strict future Experimental records and do not advertise a selectable model. |
 | Adaptive bundle, lifecycle, and support-profile records | `docs/schemas/algorithm_bundle_spec.schema.json`, `docs/schemas/algorithm_bundle_registry.schema.json`, `docs/schemas/bundle_lifecycle_record.schema.json`, `docs/schemas/support_profile_spec.schema.json`, `docs/schemas/support_profile_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Immutable bundle facts are separate from append-only lifecycle and reviewed support scope. Empty packaged SSOT files keep the public default nonselectable. |
+| Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. Empty public evidence storage keeps the packaged default nonselectable. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |
 | Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |
 | Training handoff | `docs/schemas/training_run_summary.schema.json`, `docs/schemas/training_handoff.schema.json` | [`training_orchestration.md`](training_orchestration.md) | Handoff JSON carries next steps for resume/export/eval/parity. |

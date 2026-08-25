@@ -129,6 +129,10 @@
       "schema": "docs/schemas/eval_suite_report.schema.json",
       "summary": "Report payload emitted by tools/eval_suite.py (suite over prediction JSONs)."
     },
+    "evidence_activation_record_json": {
+      "schema": "docs/schemas/evidence_activation_record.schema.json",
+      "summary": "Append-only reviewed activation state for one exact qualification evidence selection key."
+    },
     "external_runtime_qualification_json": {
       "schema": "docs/schemas/external_runtime_qualification.schema.json",
       "summary": "Cross-environment real-training, artifact, resource, failure-normalization, license-boundary, and independent reproduction record for optional external runtimes."
@@ -152,6 +156,10 @@
       "summary": "Instance segmentation predictions JSON (list of {image,instances} or {predictions:[...],meta:{...}}).",
       "validator": "python3 tools/validate_instance_segmentation_predictions.py <path>"
     },
+    "local_artifact_inventory_json": {
+      "schema": "docs/schemas/local_artifact_inventory.schema.json",
+      "summary": "Trusted-preflight observations for every ordered immutable bundle artifact; paths are excluded from the persisted record."
+    },
     "metrics_report_json": {
       "builder": "yolozu/eval/metrics_report.py",
       "schema": "docs/schemas/metrics_report.schema.json",
@@ -166,6 +174,10 @@
       "producer": "python3 tools/validate_predictions.py <path> --json",
       "schema": "docs/schemas/predictions_validation_result.schema.json",
       "summary": "Bounded machine-readable success/failure result for predictions validation."
+    },
+    "qualification_report_json": {
+      "schema": "docs/schemas/qualification_report.schema.json",
+      "summary": "Measured configuration evidence for one exact bundle, artifact set, environment, workload, and protocol; presence is not activation."
     },
     "qualification_workload_profile_json": {
       "schema": "docs/schemas/qualification_workload_profile.schema.json",

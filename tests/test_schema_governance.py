@@ -29,6 +29,9 @@ class TestSchemaGovernance(unittest.TestCase):
             "bundle_lifecycle_record_json": "bundle_lifecycle_record.schema.json",
             "support_profile_spec_json": "support_profile_spec.schema.json",
             "support_profile_record_json": "support_profile_record.schema.json",
+            "local_artifact_inventory_json": "local_artifact_inventory.schema.json",
+            "qualification_report_json": "qualification_report.schema.json",
+            "evidence_activation_record_json": "evidence_activation_record.schema.json",
         }
         self.assertEqual(manifest, packaged_manifest)
         for contract_id, basename in expected.items():
@@ -48,6 +51,10 @@ class TestSchemaGovernance(unittest.TestCase):
         self.assertEqual(registry["bundles"], [])
         self.assertEqual((data_root / "bundle_lifecycle.jsonl").read_bytes(), b"")
         self.assertEqual((data_root / "support_profiles.jsonl").read_bytes(), b"")
+        self.assertEqual((data_root / "evidence_activation.jsonl").read_bytes(), b"")
+        self.assertEqual(
+            list((data_root / "qualification_reports").glob("*.json")), []
+        )
         governance = (repo_root / "docs" / "schema_governance.md").read_text(
             encoding="utf-8"
         )
@@ -55,6 +62,7 @@ class TestSchemaGovernance(unittest.TestCase):
             "bundle_specs.json",
             "bundle_lifecycle.jsonl",
             "support_profiles.jsonl",
+            "evidence_activation.jsonl",
         ):
             self.assertIn(f"`yolozu/data/adaptive_routing/{basename}`", governance)
             self.assertFalse((repo_root / "docs" / "adaptive_routing" / basename).exists())
@@ -65,6 +73,31 @@ class TestSchemaGovernance(unittest.TestCase):
                 .read_bytes()
             )
             self.assertEqual(packaged, (data_root / basename).read_bytes())
+
+    def test_adaptive_evidence_contracts_are_required_by_ci_and_release(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        build = (repo_root / ".github" / "workflows" / "build_and_test.yml").read_text(
+            encoding="utf-8"
+        )
+        pre_push = (repo_root / "scripts" / "pre_push.sh").read_text(
+            encoding="utf-8"
+        )
+        publish = (repo_root / ".github" / "workflows" / "publish.yml").read_text(
+            encoding="utf-8"
+        )
+        for suite in (
+            "tests.test_adaptive_evidence_contracts",
+            "tests.test_schema_governance",
+        ):
+            self.assertIn(suite, build)
+            self.assertIn(suite, pre_push)
+        for resource in (
+            "yolozu/data/schemas/local_artifact_inventory.schema.json",
+            "yolozu/data/schemas/qualification_report.schema.json",
+            "yolozu/data/schemas/evidence_activation_record.schema.json",
+            "yolozu/data/adaptive_routing/evidence_activation.jsonl",
+        ):
+            self.assertGreaterEqual(publish.count(resource), 2)
 
     def test_predictions_schema_copies_declare_current_versions(self):
         repo_root = Path(__file__).resolve().parents[1]

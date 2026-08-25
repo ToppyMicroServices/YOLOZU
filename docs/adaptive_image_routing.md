@@ -11,6 +11,13 @@ execution path to the current release. YOLOZU's current Stable predictions
 validation and evaluation lane remains unchanged. Adaptive routing is future
 delivery work whose target product classification is Experimental.
 
+The source tree now includes strict Python validators and packaged schemas for
+the typed request, workload, environment, bundle, lifecycle, local artifact
+inventory, qualification report, and evidence activation interface contracts.
+The public bundle registry, lifecycle/support/activation streams, and qualification
+report directory contain no selectable evidence. These contract surfaces are not a
+qualifier, evidence loader, selector, adapter, or execution capability.
+
 `selected` means that one registered pipeline survived every hard filter, matched
 one active trusted qualification record for the exact measured configuration, and
 ranked first under the requested policy. `abstained` is a valid routing outcome when
