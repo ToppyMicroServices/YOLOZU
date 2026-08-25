@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">132 manifest entries with declared maturity, inputs,
+  <p class="lead">133 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -66,6 +66,21 @@
     console command.</p>
   </aside>
   <div class="tool-list">
+<details class="card" id="tool-activate-qualification-evidence" data-tool-id="activate_qualification_evidence"
+  data-search-card data-search-text="activate_qualification_evidence Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence. experimental tools/activate_qualification_evidence.py python3 tools/activate_qualification_evidence.py activate --report reports/image_pipeline_qualification/qualification_report.json --report-id &lt;id&gt; --report-digest &lt;sha256&gt; --selection-key &lt;sha256&gt; --expected-head-digest &lt;sha256&gt; --expected-current-activation-id none --reviewer-role-id site_operator --site-local-review-present --reason &#x27;Reviewed exact local evidence&#x27; --activation-stream reports/site/evidence_activation.jsonl python3 tools/activate_qualification_evidence.py --help">
+  <summary><code>activate_qualification_evidence</code> — Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/activate_qualification_evidence.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>operation</code> — default=activate, string</li><li><code>--report</code> — file</li><li><code>--report-id</code> — string</li><li><code>--report-digest</code> — string</li><li><code>--selection-key</code> — string</li><li><code>--activation-stream</code> — default=yolozu/data/adaptive_routing/evidence_activation.jsonl, file</li><li><code>--prior-report</code> — file</li><li><code>--expected-head-digest</code> — string</li><li><code>--expected-current-activation-id</code> — string</li><li><code>--reviewer-role-id</code> — string</li><li><code>--reason</code> — string</li><li><code>--public-review-id</code> — string</li><li><code>--site-local-review-present</code> — string</li><li><code>--supersede</code> — string</li><li><code>--revoke</code> — string</li><li><code>--workspace</code> — default=., dir</li><li><code>--approve</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/activate_qualification_evidence.py activate --report reports/image_pipeline_qualification/qualification_report.json --report-id &lt;id&gt; --report-digest &lt;sha256&gt; --selection-key &lt;sha256&gt; --expected-head-digest &lt;sha256&gt; --expected-current-activation-id none --reviewer-role-id site_operator --site-local-review-present --reason &#x27;Reviewed exact local evidence&#x27; --activation-stream reports/site/evidence_activation.jsonl
+python3 tools/activate_qualification_evidence.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/activate_qualification_evidence.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/evidence_activation_record.schema.json" target="_blank" rel="noopener noreferrer">evidence_activation_record.schema.json</a></p>
+</details>
+
 <details class="card" id="tool-adapter-parity-suite" data-tool-id="adapter_parity_suite"
   data-search-card data-search-text="adapter_parity_suite Run parity checks for multiple adapter outputs against a reference adapter predictions file. experimental tools/adapter_parity_suite.py python3 tools/adapter_parity_suite.py --adapter-predictions rtdetr=reports/pred_rtdetr.json --adapter-predictions mmdet=reports/pred_mmdet.json --adapter-predictions detectron2=reports/pred_detectron2.json --adapter-predictions yolo_runtime=reports/pred_yolo_runtime.json --adapter-predictions opencv_dnn=reports/pred_opencv_dnn.json --adapter-predictions custom_cpp=reports/pred_custom_cpp.json --reference-adapter rtdetr --output reports/adapter_parity_suite.json">
   <summary><code>adapter_parity_suite</code> — Run parity checks for multiple adapter outputs against a reference adapter predictions file.</summary>

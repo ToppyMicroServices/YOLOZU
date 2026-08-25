@@ -130,10 +130,17 @@ remain operator-asserted and nonselectable. The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
 cancellation, and atomic unactivated `qualification_report.json` publication.
+Experimental `yolozu activate-qualification-evidence` now dry-runs every review,
+trust, freshness, registry, lifecycle, and stale-head gate before it can append an
+activation, supersession, or terminal revocation. Mutation requires `--approve`.
+Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
+workspace JSON remains nonselectable. Repository-managed trust additionally requires
+the retained, tracked review workflow and a public review reference.
 The packaged registry is still empty and no code-owned model runner is
 registered, so the command currently fails actionably instead of producing
 dummy evidence. The selector, recommendation service, model adapters, and
-adaptive execution path are still unavailable. Registry loading, an
+adaptive execution path are still unavailable. An activation record alone does
+not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.
 

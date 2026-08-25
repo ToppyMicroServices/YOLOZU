@@ -80,6 +80,7 @@ else
   python3 tools/generate_adaptive_vision_roadmap.py --check --json
   python3 -m unittest \
     tests.test_adaptive_vision_roadmap_generator \
+    tests.test_adaptive_evidence_activation \
     tests.test_adaptive_evidence_contracts \
     tests.test_adaptive_environment_profile \
     tests.test_adaptive_bundle_registry \

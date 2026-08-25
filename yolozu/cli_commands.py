@@ -1156,6 +1156,37 @@ def _cmd_qualify_image_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_activate_qualification_evidence(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.activation import activate_qualification_evidence
+
+    try:
+        outcome = activate_qualification_evidence(
+            operation=str(args.operation),
+            report_path=getattr(args, "report", None),
+            report_id=getattr(args, "report_id", None),
+            report_digest=getattr(args, "report_digest", None),
+            selection_key=getattr(args, "selection_key", None),
+            stream_path=str(args.activation_stream),
+            workspace_root=str(args.workspace),
+            expected_head_digest=getattr(args, "expected_head_digest", None),
+            expected_current_activation_id=getattr(
+                args, "expected_current_activation_id", None
+            ),
+            reviewer_role_id=getattr(args, "reviewer_role_id", None),
+            reason=getattr(args, "reason", None),
+            approve=bool(args.approve),
+            public_review_id=getattr(args, "public_review_id", None),
+            site_local_review_present=bool(args.site_local_review_present),
+            supersede_activation_id=getattr(args, "supersede", None),
+            revoke_activation_id=getattr(args, "revoke", None),
+            prior_report_paths=tuple(args.prior_report or ()),
+        )
+    except (OSError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+    print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+    return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
+
+
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
     import time
 

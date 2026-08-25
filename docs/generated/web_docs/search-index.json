@@ -49,6 +49,13 @@
     "title": "Research"
   },
   {
+    "href": "commands.html#tool-activate-qualification-evidence",
+    "kind": "command",
+    "search_text": "activate_qualification_evidence Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence. experimental tools/activate_qualification_evidence.py  --report --report-id --report-digest --selection-key --activation-stream --prior-report --expected-head-digest --expected-current-activation-id --reviewer-role-id --reason --public-review-id --site-local-review-present --supersede --revoke --workspace --approve",
+    "summary": "Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence.",
+    "title": "activate_qualification_evidence"
+  },
+  {
     "href": "commands.html#tool-adapter-parity-suite",
     "kind": "command",
     "search_text": "adapter_parity_suite Run parity checks for multiple adapter outputs against a reference adapter predictions file. experimental tools/adapter_parity_suite.py --adapter-predictions --reference-adapter --image-size --iou-thresh --score-atol --bbox-atol --output",

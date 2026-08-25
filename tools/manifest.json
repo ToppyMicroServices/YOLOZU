@@ -131,6 +131,7 @@
       "summary": "Report payload emitted by tools/eval_suite.py (suite over prediction JSONs)."
     },
     "evidence_activation_record_json": {
+      "producer": "python3 tools/activate_qualification_evidence.py <activate|supersede|revoke>",
       "schema": "docs/schemas/evidence_activation_record.schema.json",
       "summary": "Append-only reviewed activation state for one exact qualification evidence selection key."
     },
@@ -270,6 +271,185 @@
     "name": "YOLOZU"
   },
   "tools": [
+    {
+      "contracts": {
+        "consumes": [
+          "algorithm_bundle_registry_json",
+          "bundle_lifecycle_record_json",
+          "qualification_report_json",
+          "evidence_activation_record_json"
+        ],
+        "produces": [
+          "evidence_activation_record_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/schemas/evidence_activation_record.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Atomically appends only reviewed activation events; dry-run writes nothing and --approve is mandatory for mutation.",
+            "flag": "--activation-stream",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/activate_qualification_evidence.py",
+      "examples": [
+        {
+          "command": "python3 tools/activate_qualification_evidence.py activate --report reports/image_pipeline_qualification/qualification_report.json --report-id <id> --report-digest <sha256> --selection-key <sha256> --expected-head-digest <sha256> --expected-current-activation-id none --reviewer-role-id site_operator --site-local-review-present --reason 'Reviewed exact local evidence' --activation-stream reports/site/evidence_activation.jsonl",
+          "description": "Dry-run every activation gate; no record is written."
+        },
+        {
+          "command": "python3 tools/activate_qualification_evidence.py --help",
+          "description": "Inspect the Experimental reviewed activation interface contract."
+        }
+      ],
+      "id": "activate_qualification_evidence",
+      "inputs": [
+        {
+          "default": "activate",
+          "kind": "string",
+          "name": "operation",
+          "required": false
+        },
+        {
+          "flag": "--report",
+          "kind": "file",
+          "name": "report",
+          "required": false
+        },
+        {
+          "flag": "--report-id",
+          "kind": "string",
+          "name": "report_id",
+          "required": false
+        },
+        {
+          "flag": "--report-digest",
+          "kind": "string",
+          "name": "report_digest",
+          "required": false
+        },
+        {
+          "flag": "--selection-key",
+          "kind": "string",
+          "name": "selection_key",
+          "required": false
+        },
+        {
+          "default": "yolozu/data/adaptive_routing/evidence_activation.jsonl",
+          "flag": "--activation-stream",
+          "kind": "file",
+          "name": "activation_stream",
+          "required": false
+        },
+        {
+          "flag": "--prior-report",
+          "kind": "file",
+          "name": "prior_report",
+          "required": false
+        },
+        {
+          "flag": "--expected-head-digest",
+          "kind": "string",
+          "name": "expected_head_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-current-activation-id",
+          "kind": "string",
+          "name": "expected_current_activation_id",
+          "required": false
+        },
+        {
+          "flag": "--reviewer-role-id",
+          "kind": "string",
+          "name": "reviewer_role_id",
+          "required": false
+        },
+        {
+          "flag": "--reason",
+          "kind": "string",
+          "name": "reason",
+          "required": false
+        },
+        {
+          "flag": "--public-review-id",
+          "kind": "string",
+          "name": "public_review_id",
+          "required": false
+        },
+        {
+          "flag": "--site-local-review-present",
+          "kind": "string",
+          "name": "site_local_review_present",
+          "required": false
+        },
+        {
+          "flag": "--supersede",
+          "kind": "string",
+          "name": "supersede",
+          "required": false
+        },
+        {
+          "flag": "--revoke",
+          "kind": "string",
+          "name": "revoke",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--approve",
+          "kind": "string",
+          "name": "approve",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout",
+          "description": "Complete machine-readable dry-run or apply outcome with every observed missing gate.",
+          "kind": "stdout",
+          "name": "activation_outcome"
+        },
+        {
+          "default": "<activation-stream>",
+          "description": "Append-only per-selection-key EvidenceActivationRecord stream after explicit approval.",
+          "kind": "file",
+          "name": "evidence_activation_stream"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence.",
+      "tags": [
+        "adaptive-inference",
+        "evidence",
+        "experimental",
+        "qualification",
+        "review",
+        "trust"
+      ]
+    },
     {
       "contracts": {
         "consumes": [

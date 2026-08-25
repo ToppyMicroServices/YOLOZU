@@ -3,7 +3,8 @@
 Status: **Experimental foundation implemented; no real bundle qualification collected**.
 
 This report records the repository capability boundary added under
-`YOLOZU-ll2.81.1.9`. It is not a `QualificationReport`, activation record,
+`YOLOZU-ll2.81.1.9` and the reviewed activation boundary added under
+`YOLOZU-ll2.81.1.10`. It is not a `QualificationReport`, activation record,
 support claim, benchmark result, or adoption snapshot.
 
 ## Implemented boundary
@@ -22,6 +23,18 @@ support claim, benchmark result, or adoption snapshot.
   successful unsigned 64-bit latency up to the fixed one-million-sample cap.
 - Output publication uses the bounded managed transaction and currently emits
   only `qualification_report.json` plus `checksums.json`.
+- `yolozu activate-qualification-evidence` revalidates one exact report against
+  the current canonical registry/lifecycle and its complete per-key stream. It
+  defaults to dry-run and requires explicit `--approve` before an atomic append.
+- Exact stale-head/current-activation checks guard activate, two-record
+  supersede, and terminal revoke operations. A terminal revoke projects a valid
+  zero-active state; gaps, forks, dangling supersession, duplicate active state,
+  or later reactivation fail closed.
+- Source trust is derived from the retained workflow. A code-owned local
+  qualifier output plus explicit local review is only `site_managed` with
+  `site_qualified` scope. Arbitrary JSON is `operator_asserted` and cannot be
+  activated. Hashes protect post-creation integrity, not provenance against an
+  adversarial local operator.
 
 ## Evidence boundary
 
@@ -39,6 +52,7 @@ coverage is recorded as `unknown` and cannot satisfy a hard memory gate.
 ## Remaining work
 
 Real measurement begins only after a bundle, artifacts, lifecycle/license review,
-and audited code-owned runner are registered. Selection, recommendation, evidence
-activation, and adaptive image execution remain separate Beads tasks. A smoke run
-can never be promoted to `qualified`.
+and audited code-owned runner are registered. Selection, recommendation, and
+adaptive image execution remain separate Beads tasks. The activation interface is
+implemented, but the empty registry and evidence store mean no report is active.
+A smoke run can never be promoted to `qualified`.

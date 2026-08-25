@@ -129,9 +129,16 @@ catalogはoperator-assertedのままで、選択対象にはなりません。PO
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。
+Experimental `yolozu activate-qualification-evidence` は、review、trust、freshness、
+registry/lifecycle、stale-head の全gateをdry-runで確認し、`--approve`を明示した場合
+だけactivation、supersession、terminal revocationをatomicに追記します。localで生成
+したreportは`site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
+なりません。repository-managed trustには、追跡されたreview workflowとpublic review
+referenceが別途必要です。
 ただしpackaged registryはまだ空で、code-owned model runnerも未登録です。そのため
 現在はdummy evidenceを作らず、理由を示して停止します。selector、recommendation
-service、model adapter、adaptive execution pathはまだ利用できません。registryの
+service、model adapter、adaptive execution pathはまだ利用できません。activation
+recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。
 
