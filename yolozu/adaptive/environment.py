@@ -284,6 +284,7 @@ def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
             if os.name == "posix":
                 os.killpg(process.pid, signal.SIGTERM)
         except (OSError, ProcessLookupError):
+            # The child may already have exited; termination is best effort.
             pass
         return
     try:
@@ -294,6 +295,7 @@ def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
         process.wait(timeout=0.2)
         return
     except (OSError, ProcessLookupError, subprocess.TimeoutExpired):
+        # Fall through to the stronger termination attempt below.
         pass
     try:
         if os.name == "posix":
@@ -301,10 +303,12 @@ def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
         else:  # pragma: no cover
             process.kill()
     except (OSError, ProcessLookupError):
+        # The process group may have exited between poll and kill.
         pass
     try:
         process.wait(timeout=0.2)
     except (OSError, subprocess.TimeoutExpired):
+        # No further safe cleanup is available after SIGKILL.
         pass
 
 
@@ -395,6 +399,7 @@ def _run_bounded_probe(spec: _ProbeSpec, timeout_seconds: float) -> _ProbeRun:
             try:
                 stream.close()
             except OSError:
+                # Streams are local cleanup handles and may already be closed.
                 pass
 
 
@@ -611,8 +616,8 @@ def _total_memory_record(
             pages = _positive_int(os.sysconf("SC_PHYS_PAGES"))
             page_size = _positive_int(os.sysconf("SC_PAGE_SIZE"))
         except (OSError, ValueError):
-            pages = None
-            page_size = None
+            issues.append(_issue("linux_total_memory", "failed", "sysconf_failed"))
+            return {"probe_status": "failed"}
         if pages is not None and page_size is not None:
             total = pages * page_size
             if total <= 9_223_372_036_854_775_807:
