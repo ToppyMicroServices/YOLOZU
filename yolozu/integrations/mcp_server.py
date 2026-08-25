@@ -27,6 +27,7 @@ from .tool_runner import (
     jobs_status,
     parity_check,
     predict_images,
+    recommend_image_pipeline,
     run_scenarios,
     runs_describe,
     runs_list,
@@ -262,6 +263,24 @@ def predict_images_tool(
         dry_run=dry_run,
         strict=strict,
         force=force,
+    )
+
+
+@app.tool(name="recommend_image_pipeline")
+def recommend_image_pipeline_tool(
+    job_spec: dict[str, object],
+    input_path: str,
+    registry_root: str | None = None,
+    evidence_root: str | None = None,
+    artifact_root: str | None = None,
+) -> dict:
+    """Recommend a qualified local image pipeline without executing it."""
+    return recommend_image_pipeline(
+        job_spec=job_spec,
+        input_path=input_path,
+        registry_root=registry_root,
+        evidence_root=evidence_root,
+        artifact_root=artifact_root,
     )
 
 

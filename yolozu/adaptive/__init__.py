@@ -1,7 +1,8 @@
 """Experimental adaptive-routing interface contracts.
 
-These helpers validate typed records and build privacy-bounded local input
-observations. They do not select or execute a model.
+These helpers validate typed records, build privacy-bounded local observations,
+and can return a qualified selection or explicit abstention. They do not execute
+a model.
 """
 
 from .canonical import (
@@ -103,6 +104,7 @@ from .qualification import (
     qualify_image_pipeline,
     qualification_report_has_code_owned_issuer,
 )
+from .recommendation import RecommendationError, recommend_image_pipeline
 from .selection import (
     CANDIDATE_REASON_CODES,
     ScreeningEligibilityObservation,
@@ -153,6 +155,7 @@ __all__ = [
     "QualificationError",
     "QualificationEvaluator",
     "QUALIFICATION_PROTOCOL_FINGERPRINT",
+    "RecommendationError",
     "RecoveryResult",
     "RunnerProbeResult",
     "ScreeningEligibilityObservation",
@@ -195,6 +198,7 @@ __all__ = [
     "qualify_image_pipeline",
     "qualification_report_has_code_owned_issuer",
     "recover_managed_output",
+    "recommend_image_pipeline",
     "select_qualified_pipeline",
     "validate_algorithm_bundle_registry",
     "validate_algorithm_bundle_spec",

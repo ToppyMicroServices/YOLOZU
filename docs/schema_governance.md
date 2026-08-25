@@ -46,8 +46,9 @@ fixes the transport shape and bounds. Python validation additionally performs th
 normative semantic checks that JSON Schema cannot express directly, including NFKC
 prompt normalization, aggregate UTF-8 limits, canonical digest verification, ordered
 input indices, and privacy-safe environment fingerprint projection. These records
-define a future Experimental interface; their presence is not model availability or
-qualification evidence.
+define the Experimental adaptive-routing interface. Their presence, or a read-only
+recommendation response, is not model availability, execution, or qualification
+evidence.
 
 The source-controlled adaptive registry instances have one copy under the packaged
 data tree: `yolozu/data/adaptive_routing/bundle_specs.json`,
@@ -64,6 +65,12 @@ append-only streams are empty, and there are no public qualification reports, so
 these records do not make any model selectable. Runtime projections must be
 derived from validated immutable records and complete, strictly ordered event
 chains.
+
+`recommend_image_pipeline` consumes these governed records through a bounded,
+read-only MCP service. It returns the SelectionDecision interface contract and
+privacy-safe aggregate metadata. Custom registry/evidence roots remain
+operator-asserted, and the empty packaged registry produces abstention. The service
+does not mutate any schema instance or source-controlled stream.
 
 `activate-qualification-evidence` derives trust from this retained workflow or
 from an exact code-owned local qualifier output. It never accepts trust from a

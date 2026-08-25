@@ -707,6 +707,13 @@
     "title": "qualify_sdft_continual"
   },
   {
+    "href": "commands.html#tool-recommend-image-pipeline",
+    "kind": "command",
+    "search_text": "recommend_image_pipeline Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model. experimental yolozu/integrations/mcp_server.py     ",
+    "summary": "Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model.",
+    "title": "recommend_image_pipeline"
+  },
+  {
     "href": "commands.html#tool-refine-predictions-hessian",
     "kind": "command",
     "search_text": "refine_predictions_hessian Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. research tools/refine_predictions_hessian.py --predictions --output --config --enable --disable --wrap --refine-offsets --dataset --split --device --steps --damping --fd-eps --line-search --line-search-decay --w-reg --w-depth --w-mask --max-step-px --max-total-update-px --tol-delta --tol-loss --log-output --log-steps --dry-run",

@@ -24,6 +24,7 @@ Exposed tools (minimum):
 - `convert_dataset` (optional but available)
 
 Also available in the same backend surface:
+- recommendation: `recommend_image_pipeline` (Experimental, MCP-only, read-only)
 - inference/calibration: `predict_images`, `parity_check`, `calibrate_predictions`
 - evaluation: `eval_instance_seg`, `eval_long_tail`
 - async jobs: `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`
@@ -33,7 +34,7 @@ Also available in the same backend surface:
 Guaranteed AI-safe support:
 - `doctor`, `generate_config`, `review_config`, `validate_predictions`
 
-The server also registers a broader 25-tool live MCP surface. The generated
+The server also registers a broader 26-tool live MCP surface. The generated
 reference distinguishes that live set from the four guaranteed tools, the two
 config-review tools, and the 21 canonical Actions operations. Registration does
 not promote environment-dependent tools into the guaranteed set.
@@ -47,7 +48,7 @@ yolozu-mcp
 # Inspect the four guaranteed AI-safe tools as JSON
 yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
 
-# Inspect all 25 registered MCP operations
+# Inspect all 26 registered MCP operations
 yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
 
 # Deterministic sample I/O (useful for client wiring tests)
@@ -61,6 +62,13 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 Here “registered” means discoverable through the live MCP schema. It does not
 promise that environment-dependent execution will succeed; only the four-tool
 `guaranteed_ai_safe` set carries the lightweight deterministic guarantee.
+
+`recommend_image_pipeline` accepts a structured image job and local input. It
+returns a selected or abstained SelectionDecision without inference, downloads,
+writes, network access, or natural-language parsing. The packaged registry and
+public evidence stream are empty, so the default installed call currently
+abstains. A selected decision would require matching governed evidence and does
+not itself execute the selected pipeline.
 
 Best-effort only (environment-dependent):
 - training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths

@@ -139,9 +139,13 @@ referenceが別途必要です。
 現在はdummy evidenceを作らず、理由を示して停止します。内部のpure selectorは、
 検証済みのin-memory observationだけを対象に、固定したtrust、compatibility、artifact、
 evidence、performance、deterministic rankingの規則を適用します。provider file、model、
-runner、networkへのI/Oは行いません。CLI/MCP recommendation service、model adapter、
-adaptive execution pathはまだなく、ユーザがadaptive selectionを利用できる状態では
-ありません。activation
+runner、networkへのI/Oは行いません。ExperimentalかつMCP-onlyの
+`recommend_image_pipeline`は、この方針をread-onlyのstructured recommendationとして
+公開します。typed jobとlocal inputを検証し、artifactを読む前にnon-I/O gateを適用して、
+完全なSelectionDecisionまたは正直なabstentionを返します。inference、assetのdownloadや
+write、自然言語parse、absolute pathやraw probe outputの返却は行いません。packaged
+registryとpublic evidence streamは空なので、default callは現在abstainします。model
+adapterとadaptive execution pathはまだありません。activation
 recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。

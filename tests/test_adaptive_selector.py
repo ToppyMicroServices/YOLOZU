@@ -537,6 +537,46 @@ class TestAdaptiveSelector(unittest.TestCase):
             list(range(1, 12)),
         )
 
+    def test_service_prefilter_skips_artifact_when_evidence_is_absent(self) -> None:
+        bundle = _bundle_payload()
+        context = _context(bundle)
+        decision = select_qualified_pipeline(
+            decision_id="decision-prefilter",
+            decided_at=DECIDED_AT,
+            job=context.job,
+            local_input_digest="1" * 64,
+            artifact_resolver_state_digest="2" * 64,
+            environment=context.environment,
+            workload=context.workload,
+            protocol_fingerprint=PROTOCOL,
+            registry=context.registry,
+            screening_observations=context.screening,
+            support_profile_observations=context.support,
+            artifact_inventories={},
+            evidence_observations={},
+            prefer_evidence_before_artifact_io=True,
+            as_of=AS_OF,
+        ).to_dict()
+        candidate = decision["candidate_evaluations"][0]
+        self.assertEqual(candidate["reason_codes"], ["evidence_inactive"])
+        self.assertEqual(
+            candidate["ranking_trace"][-2:],
+            [
+                {
+                    "step": 6,
+                    "status": "not_applicable",
+                    "reason_code": None,
+                    "detail": "not_checked_due_to_prior_filter",
+                },
+                {
+                    "step": 7,
+                    "status": "failed",
+                    "reason_code": "evidence_inactive",
+                    "detail": None,
+                },
+            ],
+        )
+
     def test_noncurrent_catalog_entry_is_complete_and_abstains(self) -> None:
         bundle = _bundle_payload()
         context = _context(bundle, channels={bundle["spec_digest"]: []})
