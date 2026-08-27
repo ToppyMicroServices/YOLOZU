@@ -18,6 +18,7 @@ feedback, not from individual usage tracking.
 - [`2026-08-06-baseline.md`](2026-08-06-baseline.md)
 - [`2026-08-13-baseline.md`](2026-08-13-baseline.md)
 - [`2026-08-20-baseline.md`](2026-08-20-baseline.md)
+- [`2026-08-27-baseline.md`](2026-08-27-baseline.md)
 
 ## Monthly feedback review
 
@@ -90,7 +91,7 @@ Retrieve aggregate PyPI Stats data at most once per day:
 
 ```bash
 curl -L --compressed --fail --silent --show-error \
-  -A 'YOLOZU adoption baseline contact=develop@toppymicros.com' \
+  -A 'YOLOZU adoption baseline' \
   https://pypistats.org/api/packages/yolozu/recent
 ```
 
