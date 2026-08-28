@@ -672,6 +672,13 @@
     "title": "prepare_voc_seg"
   },
   {
+    "href": "commands.html#tool-probe-candidate-isolation",
+    "kind": "command",
+    "search_text": "probe_candidate_isolation Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment. experimental tools/probe_candidate_isolation.py ",
+    "summary": "Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment.",
+    "title": "probe_candidate_isolation"
+  },
+  {
     "href": "commands.html#tool-process-images",
     "kind": "command",
     "search_text": "process_images Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes. experimental yolozu/integrations/mcp_server.py    --output-dir     ",
@@ -1104,6 +1111,13 @@
     "search_text": "YOLOZU BundleLifecycleRecord v1 One record in the global append-only bundle state and per-channel pointer stream.  docs/schemas/bundle_lifecycle_record.schema.json",
     "summary": "One record in the global append-only bundle state and per-channel pointer stream.",
     "title": "YOLOZU BundleLifecycleRecord v1"
+  },
+  {
+    "href": "schemas.html#schema-candidate-isolation-probe-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU CandidateIsolationCapabilityProbe v1 Bounded fail-closed observation of the code-owned candidate-isolation decision and host backend presence. backend_observations candidate_execution_attempted capability_status collected_at control_results decision enforcement_boundary platform policy_digest policy_id reason_codes schema_version docs/schemas/candidate_isolation_probe.schema.json",
+    "summary": "Bounded fail-closed observation of the code-owned candidate-isolation decision and host backend presence.",
+    "title": "YOLOZU CandidateIsolationCapabilityProbe v1"
   },
   {
     "href": "schemas.html#schema-candidate-screening-record-schema",

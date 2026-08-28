@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/candidate_isolation_probe.schema.json",
+  "title": "YOLOZU CandidateIsolationCapabilityProbe v1",
+  "description": "Bounded fail-closed observation of the code-owned candidate-isolation decision and host backend presence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_digest",
+    "decision",
+    "capability_status",
+    "enforcement_boundary",
+    "reason_codes",
+    "collected_at",
+    "platform",
+    "backend_observations",
+    "control_results",
+    "candidate_execution_attempted"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_id": { "const": "candidate-isolation-v1" },
+    "policy_digest": { "$ref": "#/$defs/sha256" },
+    "decision": { "const": "none_supported" },
+    "capability_status": { "const": "unsupported" },
+    "enforcement_boundary": { "const": "none" },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/reason" }
+    },
+    "collected_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "release", "architecture"],
+      "properties": {
+        "os": { "$ref": "#/$defs/boundedText" },
+        "release": { "$ref": "#/$defs/boundedText" },
+        "architecture": { "$ref": "#/$defs/boundedText" }
+      }
+    },
+    "backend_observations": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "backend_id",
+          "matrix_status",
+          "applicable",
+          "executable_status",
+          "backend_version",
+          "reason_code"
+        ],
+        "properties": {
+          "backend_id": { "$ref": "#/$defs/id" },
+          "matrix_status": { "enum": ["not_supported", "rejected"] },
+          "applicable": { "type": "boolean" },
+          "executable_status": {
+            "enum": ["present", "absent", "not_applicable", "not_probed"]
+          },
+          "backend_version": { "const": "unknown" },
+          "reason_code": { "$ref": "#/$defs/reason" }
+        }
+      }
+    },
+    "control_results": {
+      "type": "array",
+      "minItems": 28,
+      "maxItems": 28,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "control_id",
+          "probe_id",
+          "status",
+          "reason_code"
+        ],
+        "properties": {
+          "phase": { "enum": ["acquisition", "extraction", "build", "inference"] },
+          "control_id": { "$ref": "#/$defs/id" },
+          "probe_id": { "$ref": "#/$defs/id" },
+          "status": { "const": "not_run" },
+          "reason_code": { "$ref": "#/$defs/reason" }
+        }
+      }
+    },
+    "candidate_execution_attempted": { "const": false }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,127}$"
+    },
+    "reason": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,127}$"
+    },
+    "boundedText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

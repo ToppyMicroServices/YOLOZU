@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">138 manifest entries with declared maturity, inputs,
+  <p class="lead">139 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1372,6 +1372,21 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>python3 tools/prepare_voc_seg.py --voc-root /path/to/VOCdevkit/VOC2012 --split train --out data/voc_seg --mode manifest</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_voc_seg.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
+</details>
+
+<details class="card" id="tool-probe-candidate-isolation" data-tool-id="probe_candidate_isolation"
+  data-search-card data-search-text="probe_candidate_isolation Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment. experimental tools/probe_candidate_isolation.py python3 tools/probe_candidate_isolation.py python3 tools/probe_candidate_isolation.py --help">
+  <summary><code>probe_candidate_isolation</code> — Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/probe_candidate_isolation.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <p>No declared CLI inputs.</p>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/probe_candidate_isolation.py
+python3 tools/probe_candidate_isolation.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/probe_candidate_isolation.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/candidate_isolation_threat_model.md" target="_blank" rel="noopener noreferrer">candidate_isolation_threat_model.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/candidate_isolation_probe.schema.json" target="_blank" rel="noopener noreferrer">candidate_isolation_probe.schema.json</a></p>
 </details>
 
 <details class="card" id="tool-process-images" data-tool-id="process_images"

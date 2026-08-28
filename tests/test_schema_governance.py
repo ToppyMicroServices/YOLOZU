@@ -31,6 +31,7 @@ class TestSchemaGovernance(unittest.TestCase):
             "bundle_lifecycle_record_json": "bundle_lifecycle_record.schema.json",
             "lifecycle_rollback_bindings_json": "lifecycle_rollback_bindings.schema.json",
             "candidate_screening_record_json": "candidate_screening_record.schema.json",
+            "candidate_isolation_probe_json": "candidate_isolation_probe.schema.json",
             "support_profile_spec_json": "support_profile_spec.schema.json",
             "support_profile_record_json": "support_profile_record.schema.json",
             "support_profile_set_proposal_json": "support_profile_set_proposal.schema.json",
@@ -114,6 +115,7 @@ class TestSchemaGovernance(unittest.TestCase):
         for suite in (
             "tests.test_adaptive_evidence_contracts",
             "tests.test_adaptive_candidate_screening",
+            "tests.test_candidate_isolation_policy",
             "tests.test_adaptive_support_profile_governance",
             "tests.test_adaptive_lifecycle_governance",
             "tests.test_adaptive_selection_contracts",
@@ -128,6 +130,7 @@ class TestSchemaGovernance(unittest.TestCase):
             "yolozu/data/schemas/qualification_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
             "yolozu/data/schemas/candidate_screening_record.schema.json",
+            "yolozu/data/schemas/candidate_isolation_probe.schema.json",
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_set_proposal.schema.json",
